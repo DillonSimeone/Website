@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Pacific Trails Resort :: Activities</title>
+<meta charset="utf-8">
+<link href="pacific.css" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--[if lt IE 9]>
+   <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"> </script>   
+<![endif]-->
+<style>
+    #gallery
+    {
+        position: relative;
+    }
+    figure
+    {
+        position: absolute;
+        left: 280px;
+        bottom: -60px;
+        text-align: center;
+        opacity: 0.25;
+    }
+    #gallery ul
+    {
+        width: 300px;
+        list-style-type: none;
+    }
+    #gallery li
+    {
+        display: inline;
+        left: float;
+        padding: 10px;
+    }
+    #gallery img
+    {
+        border: none;
+    }
+    #gallery span
+    {
+        position: absolute;
+        left: -1000px;
+        opacity: 0;
+        transition: opacity 3s ease-in-out;
+    }
+    #gallery a:hover span
+    {
+        position: absolute;
+        top: -20px;
+        left: 320px;
+        text-align: center;
+        opacity: 1;
+    }
+</style>
+</head>
+<body>
+<div id="wrapper">
+<header><h1>Pacific Trails Resort</h1></header>
+<nav>
+  <ul>
+  <li><a href="index.html">Home</a></li>
+  <li><a href="yurts.html">Yurts</a></li>
+  <li><a href="activities.html">Activities</a></li>
+  <li><a href="reservations.html">Reservations</a></li>
+  </ul>
+</nav>
+<div id="trailhero">
+</div>
+<main>
+<h2>Activities at Pacific Trails</h2>
+<h3>Hiking</h3>
+<p>Pacific Trails Resort has 5 miles of hiking trails and is adjacent to a state park. Go it alone or join one of our guided hikes.</p>
+<h3>Kayaking</h3>
+<p>Ocean kayaks are available for guest use.</p>
+<h3>Bird Watching</h3>
+<p>While anytime is a good time for bird watching at Pacific Trails, we offer guided birdwatching trips at sunrise several times a week.</p>
+    <div id="gallery">
+        <ul>
+            <figure>
+                <img src="photo1.jpg">
+            </figure>
+            <li>
+                <a href="photo1.jpg"><img src="photo1thumb.jpg" width="100" height="75" alt="whatever"><span><img src="photo1.jpg" width="400" height="300"><br>Something.</span></a>
+            </li>
+            <li>
+                <a href="photo2.jpg"><img src="photo2thumb.jpg" width="100" height="75" alt="whatever"><span><img src="photo2.jpg" width="400" height="300"><br>Something.</span></a>
+            </li>
+            <li>
+                <a href="photo3.jpg"><img src="photo3thumb.jpg" width="100" height="75" alt="whatever"><span><img src="photo3.jpg" width="400" height="300"><br>Something.</span></a>
+            </li>
+            <li>
+                <a href="photo4.jpg"><img src="photo4thumb.jpg" width="100" height="75" alt="whatever"><span><img src="photo4.jpg" width="400" height="300"><br>Something.</span></a>
+            </li>
+            <li>
+                <a href="photo5.jpg"><img src="photo5thumb.jpg" width="100" height="75" alt="whatever"><span><img src="photo5.jpg" width="400" height="300"><br>Something.</span></a>
+            </li>
+            <li>
+                <a href="photo6.jpg"><img src="photo6thumb.jpg" width="100" height="75" alt="whatever"><span><img src="photo6.jpg" width="400" height="300"><br>Something.</span></a>
+            </li>
+        </ul>
+    </div>
+</main>
+<footer>
+Copyright &copy; 2016 Pacific Trails Resort<br>
+<a href="mailto:yourfirstname@yourlastname.com">yourfirstname@yourlastname.com</a>
+</footer>
+</div>
+</body>
+</html>

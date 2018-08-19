@@ -1,0 +1,296 @@
+body
+{
+    background-color: black;
+    background-image: url(..//media/hurranice2.gif);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    background-attachment: fixed;
+    color: white;
+    width: 90%;
+    margin: auto;
+    font-family: cursive, sans-serif;
+}
+a
+{
+    color: red;
+}
+a:visited 
+{
+    color: darkred;
+}
+nav
+{
+    background: rgb(25, 25, 25);
+    background: rgba(25, 25, 25, 0.85);
+    margin-left: 10%;
+    margin-right:10%;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    padding: 0px;
+    list-style-type: none;
+    text-align: center; 
+    word-spacing: 6px;
+    border-radius: 60px;
+    border: 5px solid black;
+}
+nav ul li
+{
+    display: inline;
+    font-size: 1.5em;
+}
+nav a
+{
+    color: red;
+    text-decoration: none;
+    transition: all 1s;
+}
+nav a:visited 
+{
+    color: darkred;
+}
+nav a:hover
+{
+    color: dimgray;
+    background-color: red;
+    border-radius: 30px;
+    padding: 10px;
+    font-weight: bolder;
+}
+div ul
+{
+    font-size: 1.5em;
+}
+div ul li
+{
+    font-size: 1.5em;
+    text-align: left;
+}
+div
+{
+    text-align: center;
+    background: rgb(25, 25, 25);
+    background: rgba(25, 25, 25, 0.85);
+    padding: 10px;
+    border: 5px solid black;
+    border-radius: 60px;
+    margin-bottom: 20px;
+    margin-top: 10px;
+}
+div dt
+{
+    font-weight: bold;
+}
+div dl
+{
+    font-style: italic;
+}
+div dl, dt, dd
+{
+    text-align: left;
+}
+div p
+{
+    text-align: left;
+    font-size: 2em;
+}
+div figcaption
+{
+    font-size: 1.25em;
+    text-align: center;
+}
+div table
+{
+    margin: 0 10%;
+    width: 80%;
+    background: rgba(0, 0, 0, 0.5);
+    
+
+}
+table, th, td 
+{
+    font-size: 1.25em;
+    border: 5px solid red;
+    border-collapse: collapse;
+}
+h1
+{
+    color: red;
+    font-size: 3.5em;
+    text-align: center;
+    margin-bottom: 0;
+}
+img
+{
+    border: 10px solid black;
+    border-radius: 60px;
+}
+figure img
+{
+    opacity: 0.4;
+}
+.center
+{
+    text-align: center;
+}
+.redtext
+{
+    color: red;
+}
+.boldtext
+{
+    font-weight: bolder;
+}
+.JohnCEENNA:hover
+{
+    background-image: url(..//media/JohnCEENNA.gif);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+form
+{
+    width: 50%;
+    margin: auto;
+}
+fieldset
+{
+    border-radius: 120px;
+}
+legend
+{
+    font-weight: bold;
+}
+label
+{
+    display: block;
+    float: left;
+    width: 150px;
+    text-align: right;
+}
+input, textarea
+{
+    display: block;
+    margin-left: 160px;
+}
+.bottom
+{
+    display:none;
+    
+}
+.rainbowText
+{
+    animation: rainbow ease-in-out 2s infinite alternate;
+}
+@keyframes rainbow
+{
+    from{color: red;}
+    25%{color: green;}
+    50%{color: pink;}
+    75%{color: purple;}
+    to{color: blue;}
+}
+.shadowfire
+{
+
+}
+.flymonkey
+{
+    margin-top: 10px;
+    position: relative;
+    animation: fly ease-in-out 3s infinite alternate;
+}
+@keyframes fly
+{
+    from{transform: rotate(0deg);}
+    to{transform: rotate(360deg);}
+}
+@keyframes shadows
+{
+    from{box-shadow: 10px 0 10px grey, 0 10px 20px red, 0 0 30px grey, 0 40px 40px black, 0 70px 70px black, 0 0 80px black, 0 0 100px black, 0 0 150px black;}
+    to{box-shadow:  10px 10px black, 0 -10px 20px red, 0 15px 30px black, -10px 0 40px grey, 0 0 70px grey, 0 0 80px grey, 0 0 100px grey, 0 0 150px grey;}
+}
+
+@media only screen and (max-width: 64em) 
+{
+    iframe
+    {
+        display: none;
+    }
+    body
+    {
+        background-color: white;
+    }
+    nav
+    {
+        float: none;
+        width: auto;
+        text-align: center;
+        padding: 0.5em;
+    }
+    nav li
+    {
+        display: inline;
+    }
+    footer
+    {
+        margin-left: 0;
+    }
+}
+
+@media only screen and (max-width: 37.5em)
+{
+    body
+    {
+        background-image: none;
+        background-color: black;
+    }
+    header
+    {
+        padding-top: 1em;
+    }
+    main
+    {
+        font-size: 90%;
+    }
+    h1
+    {
+        font-size: 1.5em;
+    }
+    .bottom
+    {
+        display: block;
+    }
+    nav
+    {
+        font-size: 1em;
+        padding: 0;
+        text-align: left;
+    }
+    nav li
+    {
+        display: block;
+        margin: 0;
+        border-bottom: 2px solid black;
+    }
+    nav a
+    {
+        display: block;
+    }
+    figure img
+    {
+        display: none;
+    }
+    div p
+    {
+        font-size: 1em;
+    }
+    #mobile
+    {
+        display: inline;
+    }
+    #desktop
+    {
+        display: none;
+    }
+}

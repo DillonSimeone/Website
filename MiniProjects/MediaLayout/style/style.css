@@ -1,0 +1,134 @@
+
+body
+{
+    background-image: url(../images/jpgs/pepes.jpg);
+    background-size: cover;
+    margin: auto;
+    width: 100%;
+}
+header
+{
+    width: 100%;
+    margin: auto;
+    margin-top: 50px;
+    background-color: rgba(0,0,0,0.8);
+    padding: 100px 0px;
+}
+header h1, h2, p
+{
+    text-align: center;
+    color: white;
+}
+#memes
+{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+#memes figure
+{
+    border: 5px solid black;
+    margin: 40px;
+}
+#memes figure, img
+{
+    height: 300px;
+    width: 200px;
+}
+#memes figure figcaption
+{
+    color: white;
+}
+#memes figure .info
+{
+    display: none;
+}
+#memes figure a:hover + .info
+{
+    display: inline-block;
+    background-color: red;
+    width: 1000px;
+}
+
+nav
+{
+    position: fixed;
+    top:0;
+    height: 50px;
+    width: 100%;
+    margin: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: dimgray;
+    z-index: 1;
+}
+nav a
+{
+    font-size: 1.5em;
+    margin: 0 5px;
+    border-radius: 100px;
+    text-decoration: none;
+    color: white;
+    transition: all 1s;
+}
+nav a:hover
+{
+    color: gray;
+}
+nav h1
+{
+    margin: 0;
+    font-size: 2em;
+}
+nav input
+{
+    margin: 0px 10px;
+    border-radius: 100px;
+    padding: 10px;
+    background:rgba(50, 50, 50, 0.2);
+    border:0px solid #dbdbdb;
+}
+nav #links
+{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: absolute;
+    right: 5px;
+    top: 5%;
+}
+nav #logo
+{
+    width: 130px;
+    height: 100%;
+}
+
+article
+{
+    width: 100%;
+    margin: auto;
+    background-color: dimgray;
+    padding: 100px 0px;
+
+}
+article h1, h2, p
+{
+    color: white;
+}
+
+footer
+{
+    background-color: black;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+footer p
+{
+    margin: 0 10px;
+}
+
+

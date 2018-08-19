@@ -1,0 +1,127 @@
+body
+{
+	width: 100%;
+	margin: auto;
+	background-color: black;
+}
+
+nav
+{
+	position: fixed;
+	top: 0px;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-around;
+	align-items: center;
+	
+	width: 100%;
+	margin: auto;
+	
+	background-color: rgba(0,255,0, 0.1);
+	
+	height: 100px;
+}
+
+a
+{
+	text-decoration: none;
+	color: black;
+	font-size: 2.5em;
+}
+
+.button
+{
+	border-radius: 100px;
+	padding: 10px;
+    background-color: rgba(0,150,0, 0.8);
+	color: black;
+
+    cursor: pointer;
+	
+	font-family: "font1";
+	
+	transition: all 1s;
+}
+
+.button:hover
+{
+	background-color: rgba(0,200,0, 0.8);
+}
+
+header
+{
+	margin-top: 100px;
+}
+section
+{
+	background-color: rgba(100,100,0,0.5);
+	height: 500px;
+	border: 5px solid black;
+	
+	background-size: cover;
+	background-repeat: no-repeat;
+	
+	display: flex;
+	flex-direction: column;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+}
+
+section p
+{
+	background-color: rgba(0,200,0, 0.9);
+	padding: 20px;
+	border-radius: 20px;
+	font-size: 2em;
+	font-family: "font3";
+}
+
+#menus
+{
+	background-image: url(../media/placeholder/placeholder4.jpg);
+}
+
+#catering
+{
+	background-image: url(../media/placeholder/placeholder5.jpg);
+}
+
+#about
+{
+	background-image: url(http://tacorepublictruck.com/images/truck.jpg);
+}
+
+#orderOnline
+{
+	background-image: url(http://www.xiaowaifood.com/UploadFiles/23775/SlideShow/20120904022734.jpg);
+}
+
+#ingredients
+{
+	background-image: url(http://www.aprettylifeinthesuburbs.com/wp-content/uploads/2013/09/Taco-Night-Menu-A-Pretty-Life.jpg);
+}
+
+#social
+{
+	background-color: white;
+}
+
+@font-face 
+{
+	font-family: "font1";
+	src: url(./fonts/font1.TTF);
+}
+
+@font-face 
+{
+	font-family: "font2";
+	src: url(./fonts/font2.TTF);
+}
+
+@font-face 
+{
+	font-family: "font3";
+	src: url(./fonts/font2.TTF);
+}

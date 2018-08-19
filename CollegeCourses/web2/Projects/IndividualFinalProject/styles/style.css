@@ -1,0 +1,299 @@
+body
+{
+    background-color: black;
+    width: 100%;
+    margin: auto;
+}
+h1
+{
+    margin: 0;
+    text-align: center;
+}
+h2
+{
+    margin: 0;
+    color: red;
+    text-align: center;
+}
+nav ul li a
+{
+    text-decoration: none;
+    color: white;
+}
+nav
+{
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    margin-top: 0px;
+}
+nav ul
+{
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+nav ul li
+{
+    background-color: darkred;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 5px;
+    color: red;
+    list-style: none;
+    font-family: Impact, Times, serif;
+    font-size: 1.5em;
+    transition: all 1s;
+}
+nav ul li:hover
+{
+    padding: 0px 15px;
+    background-color: black;
+}
+header
+{
+    position: relative;
+    width: 100%;
+    height: 300px;
+    background-color: black;
+    background-image: url(../images/Title.png), url(../gifs/AnimatedFire.gif);
+    background-size: 300px 150px, 130% 110%;
+    background-blend-mode: difference;
+    background-repeat: no-repeat;
+    background-position: top;
+    margin-bottom: 0;
+}
+header ul
+{
+    margin-top: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+header ul li
+{
+    background-color: darkred;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 5px;
+    color: red;
+    list-style: none;
+    font-family: Impact, Times, serif;
+    font-size: 1.5em;
+    transition: all 1s;
+}
+header ul li a
+{
+    text-decoration: none;
+    color: white;
+}
+header ul li:hover
+{
+    padding: 0px 15px;
+    background-color: black;
+}
+
+section
+{
+    width: 70%;
+    margin: auto;
+    background-image: url(../images/ScrollTexture.jpg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    margin-bottom: 10px;
+}
+p
+{
+    margin: 10px;
+    color: black;
+    font-family: Times, serif;
+    font-size: 1.4em;
+}
+ul li
+{
+    list-style: none;
+    font-size: 1.2em;
+}
+
+section img
+{
+    width: 100%;
+    height: 100%;
+    margin: auto;
+}
+figure figcaption
+{
+    text-align: center;
+}
+section a
+{
+    text-decoration: none;
+}
+
+footer h1
+{
+    
+}
+footer h3, ul
+{
+    margin-left: 10px;
+}
+footer
+{
+    width: 70%;
+    margin: auto;
+    background-image: url(../images/ScrollTexture.jpg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
+footer ul li
+{
+    list-style: none;
+}
+footer ul li a
+{
+    text-decoration: none;
+}
+#diviver
+{
+    width: 50px;
+    height: 50px;
+}
+#preload
+{
+    display: none;
+    visibility: none;
+}
+#leftBackground
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 15%;
+    animation: leftbackground 260s ease-in-out infinite;
+    backface-visibility: hidden;
+    z-index: -1;
+}
+#rightBackground
+{
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 15%;
+    animation: rightbackground 260s ease-in-out infinite;
+    backface-visibility: hidden;
+    z-index: -1;
+}
+@keyframes leftbackground
+{
+    from
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Assassin.jpg);
+		
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: right;
+    }
+    14%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Fighter.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: left;
+    }
+    28%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Ranger.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: right;
+    }
+    42%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Rogue.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: left;
+    }
+    56%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Sorcerer.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: right;
+    }
+    70%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Sorcerer.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: left;
+    }
+    to
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Fighter.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: right;
+        
+    }
+}
+@keyframes rightbackground
+{
+    from
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Assassin.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: left;
+    }
+    14%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/MysticKnight.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: right;
+    }
+    28%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Ranger.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: left;
+    }
+    42%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Rogue.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: right;
+    }
+    56%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Sorcerer.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: left;
+    }
+    70%
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Warrior.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: right;
+    }
+    to
+    {
+        background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/IndividualFinalProject/images/Classes/Fighter.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: left;
+        
+    }
+}

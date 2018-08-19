@@ -1,0 +1,31 @@
+body
+{
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	background-image: url(burning.gif);
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+body div 
+{
+	font-size: 1.5em;
+	background-color: rgba(255,255,255, 0.8);
+	padding: 10px;
+	border: 5px solid rgba(0,0,0, 0.5);
+	border-radius: 10px;
+}
+div table
+{
+	border-collapse: collapse;
+}
+div th, td
+{
+	text-align: left;
+	padding: 10px;
+	margin: 0px auto;
+	border: 2px black solid;
+}
+
+
+

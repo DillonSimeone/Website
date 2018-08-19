@@ -1,0 +1,105 @@
+body 
+{ 
+    padding-left: 39px;
+    padding-right: 39px;
+    background-color: black;
+    color: black;
+    margin-left: auto;
+    margin-right: auto;
+    width: 80%
+}
+
+nav 
+{ 
+    text-align: center;
+    letter-spacing: 1px;
+    word-spacing:  5px;
+    font-size: 30px;
+    font-family: cursive;
+    background-color: black; 
+    color: darkred;
+}
+
+a:link
+{
+       color: blue;  
+}
+    
+a:visited
+{
+       color:purple;  
+}
+
+footer 
+{ 
+    font-weight: bold;
+    margin: 5px;
+    background-color: #7B7B7B;
+
+}
+
+
+.center 
+{ 
+        text-align: center;
+}
+
+.centerpicture
+{ 
+    text-align: center;
+    margin: 5px;
+}
+
+.centerpicturedillon
+{ 
+    text-align: center;
+    background-image:  url(..//media/dillon.jpg);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin: 5px;
+}
+
+.title
+{
+    text-align: center;
+    background-color:#7B7B7B;
+    font-size: 2em;
+    margin-bottom: 5px;
+}
+
+.text
+{
+    text-align: left;
+    background-color: #7B7B7B;
+    padding-left: 10px;
+    font-size: 2em;
+}
+
+.header
+{
+    text-align: center;
+    background-image:
+url(..//media/firstGif.gif),
+url(..//media/daftpunk.gif);
+    background-repeat: no-repeat;
+    background-position:center, center;
+    background-size: 868px 340px, 865px 340px;
+    margin: 12px;
+    height: 340px;
+}
+
+ul
+{
+    font-style: italic;
+}
+
+footer
+{
+    font-style: italic;
+    font-size: 1.5em;
+}
+h1
+{
+    color: white
+}

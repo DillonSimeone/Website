@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Randomized Background</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body{
+            height: 1vh;
+            width: 1vw;
+        }
+    </style>
+</head> 
+	<body>
+        <div id="Background">
+        </div>
+        <script>
+            //Play area for svgs
+            function backgroundSetUp(){
+                var element = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                var viewW = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                var viewH = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                element.setAttribute("width", viewW);
+                element.setAttribute("height", viewH);
+                element.setAttribute("id", "playground");
+                document.body.appendChild(element);
+            }
+            //Background Creation
+            function background(amount){
+                var playground = document.getElementById("playground");
+                var viewW = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                var viewH = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                var targets = document.getElementsByClassName("circles");
+                
+                for(let i = 0; i < amount; i++){
+                    var circle = document.createElementNS('http://www.w3.org/2000/svg', "circle");
+                    let randomSize = (Math.random() * viewW) * 0.1;
+                    circle.setAttribute('cy', (viewH * Math.random()));
+                    circle.setAttribute('cx', (viewW * Math.random()));
+                    circle.setAttribute('r', randomSize);
+                    circle.setAttribute('class', 'circles');
+                    circle.style.fill = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() + ")";
+                    circle.style.stroke = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() + ")";;
+                    circle.style.strokeWidth = Math.random() * viewW * 0.01;
+                    circle.style.transition = "all 0.05s";
+                    circle.style.opacity = "0";
+                    playground.appendChild(circle);
+                    breathOut(targets[i]);
+                    /**
+                    setTimeout(function(){
+                      targets[i].style.opacity = "1";
+                        setTimeout(function(){
+                            targets[i].setAttribute('r', 1);
+                        }, Math.random() * 10000)
+                    },Math.random() * 10000);
+                    **/
+                }
+            };
+            
+            function breathIn(element){
+                var viewW = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                setTimeout(function(){
+                    element.setAttribute('r', (Math.random() * viewW) * 0.1);
+                    element.style.opacity = "0.6";
+                    breathOut(element);
+                }, Math.random() * 1000);
+            }
+            
+            function breathOut(element){
+                var viewW = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                setTimeout(function(){
+                    element.setAttribute('r', 1);
+                    element.style.opacity = 0.1;
+                    element.style.fill = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() + ")";
+                    element.style.stroke = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() + ")";;
+                    breathIn(element);
+                }, Math.random() * 1000);
+            }
+                
+                
+            
+            function test(num){
+                console.log(num);
+                i++;
+            }
+            backgroundSetUp();
+            background(100);
+        </script>
+	</body>
+</html>

@@ -1,0 +1,209 @@
+html
+{
+    width: 900px;
+    margin: auto;
+    background-color: #f1efda;
+}
+header
+{
+    display: flex;
+    margin-bottom: 15px;
+}
+.ritLogo
+{
+    background-image: url(rit_logo.png);
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: bottom;
+    height: 60px;
+    width: 200px;
+    margin: 15px;
+}
+
+.title
+{
+    display: flex;
+    align-items: center;
+    background-color: #f8f7ed;
+    color: #87080e;
+	font-family: times, Arial, Helvetica, sans-serif;
+    font-size: 2em;
+    padding-left: 10px;
+    width: 600px;
+    height: 50px;
+    border: 5px solid #eae7c8;
+}
+
+.content
+{
+    display: flex;
+}
+
+nav
+{
+    border: 5px solid #eae7c8;
+}
+
+nav ul li
+{
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    margin: 3px 0px;
+    margin-left: -40px;
+    width: 235px;
+    background-color: #f8f7ed;
+    transition: all 0.5s;
+}
+
+nav ul li:hover
+{
+    /*font-size: 1.1em;
+    padding: 5px 0px;*/
+    margin-bottom: 15px;
+    margin-top: 8px;
+    box-shadow: 10px 10px 5px #888888;
+}
+
+section
+{
+    margin-left: 40px;
+    margin-right: 3px;
+    background-color: white;
+    border: 5px solid #eae7c8;
+}
+
+h1
+{
+    text-align: center;
+    font-size: 1em;
+    background-color: #eae7c8;
+    color: #87080e;
+    padding: 2px;
+}
+
+footer
+{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    height: 60px;
+    margin-top: -10px;
+    background-color: #f8f7ed;
+    border: 5px solid #eae7c8;
+}
+footer a, section a
+{
+    transition: all 0.5s;
+}
+footer a:hover, section a:hover
+{
+    font-size: 1.1em;
+}
+
+a
+{
+    text-decoration: none;
+    color: #660000;
+}
+
+a:visited
+{
+        color: #990000;
+}
+
+section P
+{
+    margin: 8px;
+    font-family: times, Arial, Helvetica, sans-serif;
+}
+
+.padding
+{
+    padding: 5px;
+}
+
+.left
+{
+    text-align: left;
+    float: left;
+}
+
+.right
+{
+    text-align: right;
+    float: right;
+}
+
+.flex
+{
+    flex: auto;
+}
+
+.bonniePic
+{
+    float: right;
+    background-image: url(Jacob-NTID.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid black;
+    border-radius: 40px;
+    width: 200px;
+}
+
+/* Average size of smartphones. */
+@media screen and (max-width: 360px)
+{
+    footer a:hover, section a:hover
+    {
+        font-size: 1.0em;
+    }
+    nav ul li:hover
+    {
+        /* Me trying to force the buttons to stay still, to no anvil.*/
+        margin: 3px 0px; /*pre-hover values. Strange,  that this isn't working, huh?*/
+        margin-left: -40px;
+        box-shadow: none;
+    }
+    
+}
+
+/* Average size of pretend */
+@media screen and (min-width: 360px) and (max-width: 380px)
+{
+    footer a:hover, section a:hover
+    {
+        font-size: 1.0em;
+    }
+    nav ul li:hover
+    {
+        /* Me trying to force the buttons to stay still, to no anvil.*/
+        margin: 3px 0px; /*pre-hover values. Strange,  that this isn't working, huh?*/
+        margin-left: -40px;
+        box-shadow: none;
+    }
+    
+}
+
+/* Average Size of tablets */
+@media screen and (min-width: 380px) and (max-width: 900px)
+{
+    footer a:hover, section a:hover
+    {
+        font-size: 1.0em;
+    }
+    nav ul li:hover
+    {
+        /* Me trying to force the buttons to stay still, to no anvil.*/
+        margin: 3px 0px; /*pre-hover values. Strange,  that this isn't working, huh?*/
+        margin-left: -40px;
+        box-shadow: none;
+    }
+}
+
+/* Uhhh... Computer screens. */
+@media screen and (min-width: 900px)
+{
+    
+}

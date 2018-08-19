@@ -1,0 +1,97 @@
+body 
+{ 
+    background-color: #F5F5DC;
+    color: #2E0000;
+    font-family: Verdana, Arial, sans-serif; 
+    background-image: url(javabackground.gif);
+}
+
+header 
+{ 
+    background-color: #D2B48C;
+}
+nav 
+{ 
+    font-weight: bold;
+    text-align: center;
+    background-color: #E6D6A9;
+    padding: 10px;
+}
+nav a 
+{ 
+    text-decoration: none; 
+}
+
+h1 
+{  
+    font-family: Georgia, "Times New Roman", serif;
+    height: 100px;
+    margin: 0;
+    background-image: url(javalogo.gif);
+    background-repeat: no-repeat;
+    background-position: center;
+    text-indent: -9999px;
+}
+
+h2 
+{  
+    font-family: Georgia, "Times New Roman", serif;  
+}
+
+h3 
+{  
+    background-color: #E6D6A9;
+    text-transform: uppercase; 
+}
+
+dt 
+{ 
+    font-weight: bold; 
+}
+
+ul 
+{ 
+    list-style-image: url(marker.gif); 
+}
+
+footer 
+{ 
+    background-color: #D2B48C;
+    color: #000000;
+    font-size: .60em;
+    font-style: italic;
+    text-align: center;
+    padding: 10px;
+}
+
+#wrapper
+{
+    margin-left: auto;
+    margin-right: auto;
+    width: 80%;
+    background-color: #F5F5DC;
+    min-width: 960px;
+    max-width: 2048px;
+    box-shadow: 3px 3px 3px #2E0000;
+}
+
+main
+{
+    padding: 20px;
+    display: block;
+}
+
+#hero
+{
+    height: 300px;
+    color: white;
+    background-image: url(heroroad.jpg);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+.news
+{
+    margin-left: 20%;
+    margin-right: 20%;
+}

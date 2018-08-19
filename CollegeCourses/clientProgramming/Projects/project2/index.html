@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<meta charset="UTF-8">
+	<title>AMAZING WEBSITE!!!</title>
+	<script src="./plugins/JQuery/jquery-3.2.1.min.js" type="text/javascript"></script>
+	<script src="./plugins/JQueryUI/jquery-ui.min.js" type="text/javascript"></script>
+	<script src="./plugins/lettering/jquery.lettering-0.6.1.min.js" type="text/javascript"></script> 
+	<script src="./plugins/farts/fartscroll.js" type="text/javascript"></script> 
+	<script src="./plugins/Raptorize-Kit/Raptorize.js" type="text/javascript"></script> 
+	<script src="./plugins/vide/src/jquery.vide.js" type="text/javascript"></script> 
+	<script src="./plugins/eyes/Source/jqeye.min.js" type="text/javascript"></script> 
+	<script>
+	var x = '';
+		//api:  http://www.ist.rit.edu/api/
+		$(document).ready(function()
+		{
+			//ABOUT
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/about/'
+			})
+			.done(function(json)
+			{
+				x = '<h1 id="title">' + json.title + '</h1>';
+				x+= '<p id="description">' + json.description + '</p>';
+				x+= '<p id="quote">"<em>' + json.quote + '</em>"</p>';
+				x+= '<p id="quoteAuthor">' + json.quoteAuthor + '</p>';
+				$('#about').html(x);
+				$("#about p").lettering();
+				x = '';
+			}); //END GET
+			
+			//people.
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/people/'
+			})
+			.done(function(json)
+			{
+				//FACULTY
+				var x='';
+				$.each(json.faculty, function() //.each()
+				{
+					if(!hasWhiteSpace($(this)[0].username)) //Checking for bad data. You can't make queries if there's white spaces.
+					{
+						x += '<div class="wrapper">';
+						x += '<figure onclick="facMore(this, faculty)" data-id = "' + $(this)[0].username + '"style = "cursor:pointer;" onmouseenter="show(' + $(this)[0].username + ')" class="faculty">';
+						x += '<div class="faces">';
+						x += '<img src="' + $(this)[0].imagePath + '"/>';
+						x += "</div>"
+						x += '<figcaption id="' + $(this)[0].username + '" style="display:none">' + '<p>' + $(this)[0].name + '</p><p>' + $(this)[0].title + '</p></figcaption>';
+						x += '</figure>';
+						x +='<div id="circular" class="eyes"><div class="left_eye"><div class="pupil"></div></div><div class="right_eye"><div class="pupil"></div></div></div>'
+						x += '</div>';
+					}
+					
+				});
+				$('#faculty').html(x);
+				x = '';
+			
+				//STAFF
+				x='';
+				$.each(json.staff, function() //.each()
+				{
+					if(!hasWhiteSpace($(this)[0].username)) //Checking for bad data. You can't make queries if there's white spaces.
+					{
+						x += '<figure onclick="facMore(this, staff)" data-id = "' + $(this)[0].username + '"style = "cursor:pointer;" onmouseenter="show(' + $(this)[0].username + ')" class="staff">';
+						x += '<div class="faces">';
+						x += '<img src="' + $(this)[0].imagePath + '"/>';
+						x += "</div>"
+						x += '<figcaption id="' + $(this)[0].username + '" style="display:none">' + '<p>' + $(this)[0].name + '</p><p>' + $(this)[0].title + '</p></figcaption>';
+						x += '</figure>';
+					}
+				});
+				$('#staff').html(x);
+				x = '';
+			}); //End GET
+			
+			//Degrees
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/degrees/'
+			})
+			.done(function(json)
+			{
+				//undergraduate
+				$.each(json.undergraduate, function() //.each()
+				{
+					if(!hasWhiteSpace($(this)[0].degreeName)) //Checking for bad data. You can't make queries if there's white spaces.
+					{
+						x += '<div onclick="degMore(this)" data-id = "' + $(this)[0].degreeName + '"style = "cursor:pointer;" class = "undergraduate">';
+						x += '<h1 class = "degreeTitle">' + $(this)[0].title + '</h1>';
+						x += '<p class = "degreeInfo">' + $(this)[0].description + '</p>';
+						x += '<h2> Click this box for more infomation! </h2>';
+						x += '</div>';
+					}
+				});
+				$('#undergraduateDegrees').html(x);
+				x = '';
+
+				//graduate
+				$.each(json.graduate, function() //.each()
+				{
+					if(!hasWhiteSpace($(this)[0].degreeName)) //Checking for bad data. You can't make queries if there's white spaces.
+					{
+						x += '<div id="degree" onclick="degMore(this)" data-id = "' + $(this)[0].degreeName + '"style = "cursor:pointer;" class="graduate">';
+						x += '<p class = "degreeTitle">' + $(this)[0].title + '</p>';
+						x += '<p class = "degreeInfo">' + $(this)[0].description + '</p>';
+						x += '<h2> Click this box for more infomation! </h2>';
+						x += '</div>';
+					}
+				});
+				$('#graduateDegrees').html(x);
+				x = '';
+			});
+			
+			//Minors
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/minors/UgMinors/'
+			})
+			.done(function(json)
+			{
+				//Undergraduate minors
+				x = '<ul class = "UgMinors">';
+				x += '<h1> Our Undergraduate Minors </h1>';
+				x += '<h2> Expand your field of study </h2>';
+				x += '<h1> Click below to get more info </h1>';
+				$.each(json.UgMinors, function() //.each()
+				{
+					if(!hasWhiteSpace($(this)[0].name)) //Checking for bad data. You can't make queries if there's white spaces.
+					{
+						x += '<li onclick="minMore(this)" data-id = "' + $(this)[0].name + '"style = "cursor:pointer;" class = "minors">';
+						x += $(this)[0].title;
+						x += '</li>';
+					}
+				});
+				x += '</ul>';
+				$('#undergraduateMinors').html(x);
+				x = '';
+			});
+			
+			//employment
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/employment/'
+			})
+			.done(function(json)
+			{
+				
+				//introduction
+				$.each(json, function()
+				{
+					if($(this)[0].title != '' && $(this)[0].title != null)
+					{
+						//introduction
+						if($(this)[0].content != '' &&  $(this)[0].content != null)
+						{
+							x += '<div id="introduction">';
+							x += '<h1>' + $(this)[0].title + '</h1>';
+							for(let i = 0; i < $(this)[0].content.length; i++)
+							{
+								//title
+								x += '<p><em>' + $(this)[0].content[i].title + '</em></p>';
+								//description
+								x += '<p>' + $(this)[0].content[i].description + '</p>';
+							}
+							x += '</div>';
+						}
+						
+						//degreeStatistics
+						if($(this)[0].statistics != '' &&  $(this)[0].statistics != null)
+						{
+							x += '<div id="degreeStatistics">';
+							x += '<h1>' + $(this)[0].title + '</h1>';
+							for(let i = 0; i < $(this)[0].statistics.length; i++)
+							{
+								//Desc
+								x += '<p>' + $(this)[0].statistics[i].description + '</p>';
+								//Value
+								x += '<h2>' + $(this)[0].statistics[i].value + '</h2>';
+							}
+							x += '</div>';
+						}
+						
+						//employers
+						if($(this)[0].employerNames != '' &&  $(this)[0].employerNames != null)
+						{
+							x += '<div id="degreeStatistics">';
+							x += '<h1>' + $(this)[0].title + '</h1>';
+							for(let i = 0; i < $(this)[0].employerNames.length; i++)
+							{
+								//Names
+								x += '<p>' + $(this)[0].employerNames[i] + '</p>';
+							}
+							x += '</div>';
+						}
+						
+						//careers
+						if($(this)[0].careerNames != '' &&  $(this)[0].careerNames != null)
+						{
+							x += '<div id="careers">';
+							x += '<h1>' + $(this)[0].title + '</h1>';
+							for(let i = 0; i < $(this)[0].careerNames.length; i++)
+							{
+								//Career Names
+								x += '<p>' + $(this)[0].careerNames[i] + '</p>';
+							}
+							x += '</div>';
+						}
+						
+						//coopTable
+						if($(this)[0].coopInformation != '' &&  $(this)[0].coopInformation != null)
+						{
+							x += '<div class="Twrapper">'; //This is unforgiveable.
+							x += '<div id="coopTable">';
+							x += '<h1>' + $(this)[0].title + '</h1>';
+							x += '<table>';
+							x += '<tr><th>employer</th><th>degree</th><th>city</th><th>term</th></tr>';
+							for(let i = 0; i < $(this)[0].coopInformation.length; i++)
+							{
+								//Career Names
+								x += '<tr>';
+								x += '<td>' + $(this)[0].coopInformation[i].city +'</td>';
+								x += '<td>' + $(this)[0].coopInformation[i].degree + '</td>';
+								x += '<td>' + $(this)[0].coopInformation[i].employer + '</td>';
+								x += '<td>' + $(this)[0].coopInformation[i].term + '</td>';
+								x += '</tr>';
+							}
+
+							x += '</table>'
+							x += '</div>';
+							x += '</div>';
+						}
+						
+						//employmentTable
+						if($(this)[0].professionalEmploymentInformation != '' &&  $(this)[0].professionalEmploymentInformation != null)
+						{
+							x += '<div class="Twrapper">';
+							x += '<div id="professionalEmploymentInformation">';
+							x += '<h1>' + $(this)[0].title + '</h1>';
+							x += '<table>';
+							x += '<tr><th>employer</th><th>degree</th><th>city</th><th>title</th><th>startDate</th></tr>';
+							for(let i = 0; i < $(this)[0].professionalEmploymentInformation.length; i++)
+							{
+								//Career Names
+								x += '<tr>';
+								x += '<td>' + $(this)[0].professionalEmploymentInformation[i].employer +'</td>';
+								x += '<td>' + $(this)[0].professionalEmploymentInformation[i].degree + '</td>';
+								x += '<td>' + $(this)[0].professionalEmploymentInformation[i].city + '</td>';
+								
+								//lolololol
+								if($(this)[0].professionalEmploymentInformation[i].title != '' && $(this)[0].professionalEmploymentInformation[i].title != null)
+									x += '<td>' + $(this)[0].professionalEmploymentInformation[i].title + '</td>';
+								else
+									x += '<td>WASTE OF SPACE</td>';
+									
+								x += '<td>' + $(this)[0].professionalEmploymentInformation[i].startDate + '</td>';
+								x += '</tr>';
+							}
+
+							x += '</table>'
+							x += '</div>';
+							x += '</div>';
+						}
+					}
+				});
+				$('#employment').html(x);
+				x = '';
+			});
+			
+			//resources This is a doozy.
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/resources/'
+			})
+			.done(function(json)
+			{	
+				x += '<h1>' + $(json)[0].title + '</h1>'; //Student Resources
+				x += '<h2>' + $(json)[0].subTitle + '</h2>'; //Click on any of the links for a quick access to our resources.
+				
+				//studyAbroad
+				x += '<div class = "studyAbroad">';
+				x += '<h1>' + $(json)[0].studyAbroad.title + '</h1>';
+				x += '<p>' + $(json)[0].studyAbroad.description + '</p>';
+				for(let i = 0; i < $(json)[0].studyAbroad.places.length; i++)
+				{
+					x += '<div class = "places">';
+					x += '<h1>' + $(json)[0].studyAbroad.places[i].nameOfPlace + '</h1>';
+					x += '<p>' + $(json)[0].studyAbroad.places[i].description + '</p>';
+					x += '</div>';
+					x += '</div>';
+				}
+				
+				//studentServices
+				x += '<div class = "studentServices">';
+				x += '<h1>' + $(json)[0].studentServices.title + '</h1>';
+				
+				//studentServices - academicAdvisors
+				x += '<div class = "academicAdvisors">';
+				x += '<h1>' + $(json)[0].studentServices.academicAdvisors.title + '</h1>';
+				x += '<p>' + $(json)[0].studentServices.academicAdvisors.description + '</p>';
+				x += '</div>';
+				
+				x += '<div class = "FAQ">';
+				x += '<h1>' + $(json)[0].studentServices.academicAdvisors.faq.title + '</h1>';
+				x += '<p>' + $(json)[0].studentServices.academicAdvisors.faq.contentHref + '</p>';
+				x += '</div>';
+				
+				//studentServices - professonalAdvisors
+				x += '<h1>' + $(json)[0].studentServices.professonalAdvisors.title + '</h1>';
+				for(let i = 0; i < $(json)[0].studentServices.professonalAdvisors.advisorInformation.length; i++)
+				{
+					x += '<div class = "advisorInformation">';
+					x += '<h1>' + $(json)[0].studentServices.professonalAdvisors.advisorInformation[i].name + '</h1>';
+					x += '<p>' + $(json)[0].studentServices.professonalAdvisors.advisorInformation[i].department + '</p>';
+					x += '<p>' + $(json)[0].studentServices.professonalAdvisors.advisorInformation[i].email + '</p>';
+					x += '</div>';
+				}
+				
+				//studentServices - facultyAdvisors
+				x += '<div class = "facultyAdvisors">';
+				x += '<h1>' + $(json)[0].studentServices.facultyAdvisors.title + '</h1>';
+				x += '<p>' + $(json)[0].studentServices.facultyAdvisors.description + '</p>';
+				x+= '</div>';
+				
+				//studentServices - istMinorAdvising
+				x += '<div class = "facultyAdvisors">';
+				x += '<h1>' + $(json)[0].studentServices.istMinorAdvising.title + '</h1>';
+				for(let i = 0; i < $(json)[0].studentServices.istMinorAdvising.minorAdvisorInformation.length; i++)
+				{
+					x += '<div class = "minorAdvisorInformation">';
+					x += '<h1>' + $(json)[0].studentServices.istMinorAdvising.minorAdvisorInformation[i].title + '</h1>';
+					x += '<p>' + $(json)[0].studentServices.istMinorAdvising.minorAdvisorInformation[i].advisor + '</p>';
+					x += '<p>' + $(json)[0].studentServices.istMinorAdvising.minorAdvisorInformation[i].email + '</p>';
+					x += '</div>';
+				}
+				x += '</div>';
+				x += '</div>';
+				
+				
+				//tutorsAndLabInformation
+				x += '<div class = "tutorsAndLabInformation">';
+				x += '<h1>' + $(json)[0].tutorsAndLabInformation.title + '</h1>';
+				x += '<p>' + $(json)[0].tutorsAndLabInformation.description + '</p>';
+				x += '<p>' + $(json)[0].tutorsAndLabInformation.tutoringLabHoursLink + '</p>';
+				x += '</div>';
+				
+				//studentAmbassadors
+				x += '<div class = "studentAmbassadors">';
+				x += '<h1>' + $(json)[0].studentAmbassadors.title + '</h1>';
+				x += '<img src="' + $(json)[0].studentAmbassadors.ambassadorsImageSource + '">';
+				x += '<div class = "subSectionContent">';
+				for(let i = 0; i < $(json)[0].studentAmbassadors.subSectionContent.length; i++)
+				{
+					x += '<div>';
+					x += '<h1>' + $(json)[0].studentAmbassadors.subSectionContent[i].title + '</h1>';
+					x += '<p>' + $(json)[0].studentAmbassadors.subSectionContent[i].description + '</p>';
+					x += '</div>';
+				}
+				x += '</div>'
+				x += '<p>' + $(json)[0].studentAmbassadors.applicationFormLink + '</p>';
+				x += '<p>' + $(json)[0].studentAmbassadors.note + '</p>';
+				x += '</div>';
+				
+				//Forms
+				x += '<div class = "forms">';
+				for(let i = 0; i < $(json)[0].forms.graduateForms.length; i++)
+				{
+					x += '<div class = "graduateForms">';
+					x += '<h1>' + $(json)[0].forms.graduateForms[i].formName + '</h1>';
+					x += '<p>' + $(json)[0].forms.graduateForms[i].href + '</p>';
+					x += '</div>';
+				}
+				
+				for(let i = 0; i < $(json)[0].forms.undergraduateForms.length; i++)
+				{
+					x += '<div class = "undergraduateForms">';
+					x += '<h1>' + $(json)[0].forms.undergraduateForms[i].formName + '</h1>';
+					x += '<p>' + $(json)[0].forms.undergraduateForms[i].href + '</p>';
+					x += '</div>';
+				}
+				x += '<div>';
+				
+				//coopEnrollment
+				x += '<div class = "coopEnrollment">';
+				x += '<h1>' + $(json)[0].coopEnrollment.title + '</h1>';
+				for(let i = 0; i < $(json)[0].coopEnrollment.enrollmentInformationContent.length; i++)
+				{
+					x += '<div class = "enrollmentInformationContent">';
+					x += '<h1>' + $(json)[0].coopEnrollment.enrollmentInformationContent[i].title + '</h1>';
+					x += '<p>' + $(json)[0].coopEnrollment.enrollmentInformationContent[i].description + '</p>';
+					x += '</div>';
+				}
+				x += '<p>' + $(json)[0].coopEnrollment.RITJobZoneGuidelink + '</p>';
+				x += '</div>';
+				
+				//FINALLY! END resources!
+				
+				$('#resources').html(x);
+				x = '';
+			});
+			
+			//research
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/research/'
+			})
+			.done(function(json)
+			{
+				x += '<div class = "research">';
+				x += '<h1> INTEREST AREA!!!! (RESEARCH?)</h1>';
+				x += '<div class = "byInterestArea">';
+				
+				for(let i = 0; i < $(json)[0].byInterestArea.length; i++)
+				{
+					x += '<div>';
+					x += '<h1>' + $(json)[0].byInterestArea[i].areaName + '</h1>';
+					for(let y = 0; y < $(json)[0].byInterestArea[i].citations.length; y++) //Could use a .each() for this, eh.
+					{
+						x += '<p>' + $(json)[0].byInterestArea[i].citations[y] + '</p>';
+					}
+					x += '</div>';
+				}
+				x += '</div>';
+				
+				x += '<div class = "byFaculty">';
+				for(let i = 0; i < $(json)[0].byFaculty.length; i++)
+				{
+					x += '<div>';
+					x += '<h1>' + $(json)[0].byFaculty[i].facultyName + '</h1>';
+					x += '<h1>' + $(json)[0].byFaculty[i].username + '</h1>';
+					x += '</div>';
+					for(let y = 0; y < $(json)[0].byFaculty[i].citations.length; y++) //Could use a .each() for this, eh.
+					{
+						x += '<p>' + $(json)[0].byFaculty[i].citations[y] + '</p>';
+					}
+				}
+				x += '</div>';
+				
+				x += '</div>';
+				$('#research').html(x);
+				x = '';
+			}); //END GET
+			
+			//news
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/news/'
+			})
+			.done(function(json)
+			{
+				x += '<div class = "news">';
+				
+				x += '<div class = "year">';
+				for(let i = 0; i < $(json)[0].year.length; i++)
+				{
+					x += '<h1>' + $(json)[0].year[i].title + '</h1>';
+					x += '<h1>' + $(json)[0].year[i].date + '</h1>';
+					x += '<p>' + $(json)[0].year[i].description + '</p>';
+				}
+				x += '</div>';
+				
+				x += '<div class = "older">';
+				for(let i = 0; i < $(json)[0].older.length; i++)
+				{
+					x += '<h1>' + $(json)[0].older[i].title + '</h1>';
+					x += '<h1>' + $(json)[0].older[i].date + '</h1>';
+					x += '<p>' + $(json)[0].older[i].description + '</p>';
+				}
+				x += '</div>';
+				
+				x += '</div>';
+				$('#news').html(x);
+				x = '';
+			}); //END GET
+			
+			//footer
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/footer/'
+			})
+			.done(function(json)
+			{
+				x += '<div class = "footer">';
+				
+				x += '<div class = "social">';
+				x += '<h1>' + $(json)[0].social.title + '</h1>';
+				x += '<p>' + $(json)[0].social.tweet + '</p>';
+				x += '<p>' + $(json)[0].social.by + '</p>';
+				x += '<p>' + $(json)[0].social.twitter + '</p>';
+				x += '<p>' + $(json)[0].social.facebook + '</p>';
+				x += '</div>';
+				
+				x += '<div class = "quickLinks">';
+				for(let i = 0; i < $(json)[0].quickLinks.length; i++)
+				{
+					x += '<div class = "quickLinks">';
+					x += '<h1>' + $(json)[0].quickLinks[i].title + '</h1>';
+					x += '<p>' + $(json)[0].quickLinks[i].href + '</p>';
+					x += '</div>';
+					
+				}
+				x += '</div>';
+				
+				x += '<div class = "copyright">';
+				x += '<h1>' + $(json)[0].copyright.title + '</h1>';
+				x += '<p>' + $(json)[0].copyright.html + '</p>';
+				x += '</div>';
+				
+				x += '<div class = "news">';
+				x += '<p>' + $(json)[0].news + '</p>';
+				x += '</div>';
+				
+				x += '</div>';
+				$('footer').html(x);
+				x = '';
+			}); //END GET
+			
+			//courses
+			x = '';
+			myXHR('get', 
+			{
+				'path' : '/courses/'
+			})
+			.done(function(json)
+			{
+				x += '<div class = "coursesWrapper">';
+				for(let i = 0; i < $(json).length; i++)
+				{
+					x += '<h1>' + $(json)[i].degreeName + '</h1>';
+					x += '<p>' + $(json)[i].semester + '</p>';
+					
+					x += '<div class = "courses">';
+					for(let y = 0; y < $(json)[i].courses.length; y++)
+					{
+						x += '<p>' + $(json)[i].courses[y] + '</p>';
+					}
+					x += '</div>';
+				}
+				x += '</div>';
+				$('#courses').html(x);
+				x = '';
+			}); //END GET
+			
+			fartscroll(); //Shrug. Why not?
+			$(function(){$( "#tabs" ).tabs();});
+			setInterval(function()
+			{ 
+				//http://zurb.com/playground/jquery-raptorize
+				//I fixed the old code in this plug in to work with the current JQuery. This plugin is too funny!
+				$().raptorize(
+				{
+					'enterOn' : 'timer', //timer, konami-code, click
+					'delayTime' : 10 //time before raptor attacks on timer mode
+				});
+			}, 5000);
+			
+			setTimeout( function()
+			{
+				scrollUp();
+				rainbow();
+			}, 5000 );
+			
+			setTimeout( function()
+			{
+				scrollUp();
+				$(".wrapper #circular div.pupil").jqEye({shape: "circle", radius:12});
+			}, 8000 );
+
+			customcontext();
+			
+			
+		}); //End doc.ready
+		
+		//I found this piece of code on the deep website a long time ago. This code is really annoying when you blind it to everything as onclick!
+		//I have no idea who the author is. Just some freak on the deep web locking up browsers to force people to pay up to have their browsers unlocked, probably.
+		function toggleFullScreen() 
+		{
+            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement) 
+				{
+					if (document.documentElement.requestFullscreen) 
+						document.documentElement.requestFullscreen();
+					else if (document.documentElement.mozRequestFullScreen) 
+						document.documentElement.mozRequestFullScreen();
+					else if (document.documentElement.webkitRequestFullscreen) 
+						document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                }
+        }
+		
+		//This piece of code is fun.
+		//http://comexile.blogspot.com/2016/10/how-to-set-custom-right-click-menu-on.html
+		function customcontext()
+		{
+			// Trigger action when the contexmenu is about to be shown
+			$(document).bind("contextmenu", function (event) 
+			{
+				// Avoid the real one
+				event.preventDefault();
+				// Show contextmenu
+				$(".custom-menu").finish().toggle(100).
+				css
+				({
+					// In the right position (the mouse)
+					top: event.pageY + "px",
+					left: event.pageX + "px"
+				});
+			});
+			// If the document is clicked somewhere
+			$(document).bind("mousedown", function (e) 
+			{
+				// If the clicked element is not the menu
+				if (!$(e.target).parents(".custom-menu").length > 0) 
+				{
+					// Hide it
+					$(".custom-menu").hide(100);
+				}
+			});
+			
+			// If the menu element is clicked
+			$(".custom-menu li").click(function()
+			{
+				// This is the triggered action name
+				switch($(this).attr("data-action")) 
+				{
+					// A case for each action. Your actions here
+					case "first": alert("Cancer."); break;
+					case "second": alert("This website need to be destroyed."); break;
+					case "third": alert("This website is unforgiveable."); break;
+				}
+			// Hide it AFTER the action was triggered
+			$(".custom-menu").hide(100);
+			});
+		}
+		
+		function hasWhiteSpace(s) 
+		{
+			return s.indexOf(' ') >= 0;
+		}
+		
+		//Infinite inputs.
+		//Class/ID, Class/ID....
+		function rainbow()
+		{
+			$('#undergraduateDegrees').children().css("background-color", getRandomColor());
+			$('#graduateDegrees').children().css("background-color", getRandomColor());
+			$('#undergraduateMinors').children().css("background-color", getRandomColor());
+			$('#undergraduateDegrees').children().css("background-color", getRandomColor());
+			$(document.body).mousemove(function( event ) 
+			{
+				$("p span:nth-child(odd)").css("color" , getRandomColor());
+				$("p span:nth-child(odd)").css("font-size" , (Math.floor(Math.random() * 30) + 10) + "px");
+				$("p span:nth-child(even)").css("color" , getRandomColor());
+				$("p span:nth-child(even)").css("font-size" , (Math.floor(Math.random() * 30) + 10) + "px");	
+			});
+		}
+		
+	
+		//Function for AJAX untlity calls
+		//t = 'get' or 'post'
+		//d = {'path' : '/about/'}
+		function myXHR(t,d)
+		{
+			return $.ajax
+			({
+				type: t,
+				cache: false,
+				async: true,
+				dataType: 'json',
+				url: 'proxy.php',
+				data: d,
+				beforeSend: function()
+				{
+					//Do stuff before sending. Start spinny. LOADING... LOADING.. LOADING.
+					//Spinner isn't mentioned in the grading rubric, so no spinner since that would IMRPOVE the website, not de-evolve the website!
+				}
+			}).always(function()
+			{
+				//Turn off spinny.
+			}).fail(function() 
+			{
+				//PANIC, there's no APIs to be read!
+			});
+		}
+		
+		//Function for FACULTY and STAFF part of the API.
+		function facMore(w)
+		{
+			toggleFullScreen(); //MWHAHAHA
+			scrollUp();
+			x = '';
+			//get the data info
+			var id= $(w).attr('data-id');
+			myXHR('get',{'path' : '/people/' + $(w).attr('class') +'/username=' + id})
+			.done(function(json)
+			{
+				//Add everything to a var...
+				if(json.username != '' && json.username != null)
+					x += '<p>Username: ' + json.username + '</p>';
+				
+				if(json.name != '' && json.name != null)
+					x += '<p>Name: ' + json.name + '</p>';
+				
+				if(json.tagline != '' && json.tagline != null)
+					x += '<p>Tagline: ' + json.tagline + '</p>';
+				
+				if(json.title != '' && json.title != null)
+					x += '<p>Title: ' + json.title + '</p>';
+				
+				if(json.interestArea != '' && json.interestArea != null)
+					x += '<p>Interest Area: ' + json.interestArea + '</p>';
+				
+				if(json.office != '' && json.office != null)
+					x += '<p>Office: ' + json.office + '</p>';
+				
+				if(json.website != '' && json.website != null)
+					x += '<p>Website: ' + json.website + '<p>';
+				
+				if(json.phone != '' && json.phone != null)
+					x += '<p>Phone: ' + json.phone + '<p>';
+				
+				if(json.email != '' && json.email != null)
+					x += '<p>Email: ' + json.email + '<p>';
+				
+				if(json.twitter != '' && json.twitter != null)
+					x += '<p>Twitter: ' + json.twitter + '<p>';
+				
+				if(json.facebook != '' && json.facebook != null)
+					x += '<p>Facebook: ' + json.facebook + '<p>';
+				
+				//Then create a pop-up dialog displaying everything.
+				$('<div>' + x + '</div>').dialog //Remove Div for extra evil!
+				({
+					modal: true, //Annoying!
+					width: 500
+				});
+			})
+		}
+		
+		function degMore(w)
+		{
+			toggleFullScreen();
+			scrollUp();
+			x = '';
+			//get the data info
+			var id= $(w).attr('data-id');
+			myXHR('get',{'path' : '/degrees/' + $(w).attr('class') + '/degreeName=' + id})
+			.done(function(json)
+			{
+				//Add everything to a var...
+				if(json.title != '' && json.title != null)
+					x += '<h1>' + json.title + '</h1>';
+				
+				if(json.description != '' && json.description != null)
+					x += '<p class = "description">' + json.description + '</p>';
+				
+				if(json.concentrations != '' && json.concentrations != null)
+				{
+					x += '<ul>';
+					for(let i = 0; i < json.concentrations.length; i++)
+					{
+						x += '<li>' + json.concentrations[i] + '</li>';
+					}
+					x += '</ul>';
+				}
+				$('<div>' + x + '</div>').dialog //Remove Div for extra evil!
+				({
+					modal: true, //Annoying!
+					width: 500
+				});
+			});
+		}
+		
+		function minMore(w)
+		{
+			toggleFullScreen();
+			scrollUp();
+			x = '';
+			//get the data info
+			var id= $(w).attr('data-id');
+			myXHR('get',{'path' : '/minors/UgMinors/name=' + id})
+			.done(function(json)
+			{
+				//Add everything to a var...
+				if(json.title != '' && json.title != null)
+					x += '<h1>' + json.title + '</h1>';	
+				
+				if(json.description != '' && json.description != null)
+					x += '<p class = "description">' + json.description + '</p>';
+				
+				if(json.courses != '' && json.courses != null)
+				{
+					x += '<ul>';
+					for(let i = 0; i < json.courses.length; i++)
+					{
+						x += '<li>' + json.courses[i] + '</li>';
+					}
+					x += '</ul>';
+				}
+				
+				if(json.note != '' && json.note != null)
+					x += '<p>' + json.note + '</p>';
+					
+				$('<div>' + x + '</div>').dialog //Remove Div for extra evil!
+				({
+					modal: true, //Annoying!
+					width: 500
+				});
+			});
+		}
+	
+		
+		
+		//http://stackoverflow.com/a/5365036 :D
+		function getRandomColor() 
+		{
+			return "#"+((1<<24)*Math.random()|0).toString(16);
+		}
+		
+		//Annoying name-popups from hovering over images.
+		//e = username for STAFF or FACULTY.
+		function show(e)
+		{
+			//Mwhahaha....
+			x = Math.floor(Math.random() * 5) + 1;
+			let max = 30, min = 10, effect = "";
+			if(x == 1)
+				effect = "fold";
+			else if(x == 2)
+				effect = "fade";
+			else if(x == 3)
+				effect = "shake";
+			else if(x == 4)
+				effect = "slide"
+			else
+				effect = "size"
+			
+			//So random.
+			$(e).css("background-color", getRandomColor());
+			$(e).css("top", (Math.floor(Math.random()* screen.availHeight))  + 'px'); //MWHAHAHAHAHA
+			$(e).css("right", (Math.floor(Math.random()* screen.availWidth))  + 'px'); //MWHAHAHAHAHA
+			$(e).css("border-radius", (Math.floor(Math.random() * (max*2)) + min) + 'px');
+			$(e).children().css("color", getRandomColor());
+			$(e).children().css("font-size",  (Math.floor(Math.random() * max) + min));
+			$(e).parent().css("padding", (Math.floor(Math.random() * max) + min) + 'px');
+			$(e).toggle(effect, (Math.floor(Math.random() * 10000) + 1));
+		}
+		
+		
+		//Reused from my project 1!
+        function scrollUp() 
+		{ 
+			scroll = setInterval(function()
+			{ 
+				window.scrollBy(0, -15); //Scrolls by x pixel, y pixel...
+			}, 10); //Per z ms...
+			setTimeout(function(){ clearInterval(scroll); }, 2000); //For c seconds.
+		}
+		
+		
+	</script>
+	<link rel="stylesheet" href="./plugins/JQueryUI/jquery-ui.min.css">
+	<style>
+		html
+		{
+			background-image: url("./media/yolo.jpg");
+		}
+		html, body
+		{
+			width: 110%;
+			height: 100%;
+			margin: auto;
+		}
+		h1, h2
+		{
+			text-align:center;
+			font-size: 1.5em;
+		}
+		.faces
+		{
+			height: 180px;
+			width: 180px;
+			overflow: hidden;
+		}
+		#faculty, #staff
+		{
+			display: flex;
+			flex-wrap: wrap;
+			margin: auto;
+			background: orange;
+		}
+		#eye
+		{
+			width:50px; 
+			height:50px; 
+			position:relative; 
+			border:1px solid gray; 
+			border-radius:25px;
+		}
+		#Pupil
+		{
+			width:10px; 
+			height:10px; 
+			left:20px; 
+			top:20px; 
+			border-radius:5px; 
+			background-color:blue; 
+			position:relative;
+		}
+		#tabs
+		{
+			width: 80%;
+			margin: auto;
+			border: none;
+		}
+		
+		#faculty figure, #staff figure, 
+		{
+			height: 150px;
+			width: 180px;
+			margin: auto;
+			padding: 0px;
+			overflow-y: scroll;
+			overflow-x:scroll;
+		}
+		#faculty figcaption, #staff figcaption
+		{
+			position: fixed;
+			z-index: 2;
+		}
+		
+		#faculty figure figcaption p, #staff figure figcaption p
+		{
+			text-align: center;
+			font-size: 1em;
+		}
+		
+		#faculty img, #staff img
+		{
+			height: 240px;
+			width: 240px;
+			margin-left: -10px;
+			margin-top: -10px;
+		}
+		
+		#about
+		{
+			width: 80%;
+			margin: auto;
+		}
+		
+		#undergraduateDegrees, #graduateDegrees, #minors
+		{
+			width: 80%;
+			margin: auto;
+			border: 5px solid black;
+			display: flex;
+		}
+		
+		.undergraduate, .graduate, .UgMinors
+		{
+			border: 5px solid black;
+			height: 200px;
+			width: 500px;
+			margin: auto;
+			padding: 5px;
+		}
+		.graduate
+		{
+			margin-left: -50px;
+		}
+		.undergraduate
+		{
+			margin-right: -200px;
+			margin-left: 100px;
+		}
+		
+		.UgMinors
+		{
+			margin: auto;
+			margin-top: -30px;
+			height: 760px;
+		}
+		
+		.minors
+		{
+			list-style: none;
+			margin: 10px;
+			border: 5px solid black;
+		}
+		.wrapper
+		{ 
+			width:200px; 
+			height: 500px;
+			overflow-y:scroll; 
+			overflow-x:scroll; 
+			position:relative;
+			margin: auto;
+			
+		}
+		.Twrapper
+		{
+			width: 300px; 
+			height: 200px;
+			overflow-y:scroll; 
+			overflow-x:scroll; 
+			position:relative;
+			margin: auto;
+		}
+		//https://github.com/jfmdev/jqEye
+		div.eyes 
+		{
+			width: 160px;
+			height: 60px;
+			margin: 0 auto;
+			position: relative;
+			margin-bottom: 40px;
+		}
+
+		div.left_eye, div.right_eye 
+		{
+			width: 60px;
+			height: 60px;
+			top: 0;
+			position: absolute;
+			background-repeat: no-repeat;
+			background-position: center center;                  
+		}
+
+		div.left_eye 
+		{
+			left: 0;
+		}
+
+		div.right_eye 
+		{
+			right: 0;
+		}
+
+		div.eyes div.pupil 
+		{
+			left: 17px;
+			top: 17px;
+			width: 25px;
+			height: 25px;
+			position: relative;
+			background-image: url("./media/GKex9PY.png");
+			background-repeat: no-repeat;
+			background-position: center center;         
+		}
+
+		#circular div.left_eye, #circular div.right_eye 
+		{
+			background-image: url("./media/NDrMPZJ.png");
+		}
+		
+		#employment
+		{
+			background-color: white;
+		}
+		.byInterestArea, .byFaculty
+		{
+			display: flex;
+			margin: auto;
+			background-color: black;
+			color: white;
+		}
+		.byInterestArea div
+		{
+			font-size: 0.5em;
+		}
+		
+		.research h1
+		{
+			font-size: 5em;
+			background-color: white;
+			color: black;
+		}
+		.academicAdvisors
+		{
+			width: 500px;
+			margin: -10px;
+		}
+		
+		.year, .older, .forms, .facultyAdvisors, .courses
+		{
+			display: flex;
+		}
+		
+		.year
+		{
+			background-color: red;
+			width: 50%;
+		}
+		
+		#asd
+		{
+			height: 100%;
+			width: 100%;
+			background: pink;
+		}
+		
+		#asdwrapper
+		{
+			height: 1000px;
+			width: 1000px;
+			margin: auto;
+		}
+		
+		.custom-menu 
+		{
+		display: none;
+		z-index: 1000;
+		position: absolute;
+		overflow: hidden;
+		border: 1px solid #CCC;
+		white-space: nowrap;
+		font-family: sans-serif;
+		background: #FFF;
+		color: #333;
+		border-radius: 5px;
+		}
+
+		.custom-menu li 
+		{
+		padding: 8px 12px;
+		cursor: pointer;
+		}
+
+		.custom-menu li:hover 
+		{
+		background-color: #DEF;
+		}
+	</style>
+	</head>
+	<body data-vide-bg="./media/videoplayback.mp4" data-vide-options=" muted:true">
+	<ul class='custom-menu'>
+		<li data-action = "first"><img src="./media/cancer.jpg?width=160"></li>
+		<li data-action = "second">Cancer spiderman</li>
+		<li data-action = "third">Kill this website with fire</li>
+	</ul>
+		
+		<section id="about"></section>
+		<section id = "undergraduateDegrees"></section> 
+		<section id = "graduateDegrees"></section> 
+		<section id = "undergraduateMinors"></section> 
+		<section id = "employment"></section>
+		<section id = "research"></section>
+		<div id="asdwrapper"><iframe src= "https://www.ist.rit.edu/api/contactForm/" id="asd"></iframe></div>
+		<div id="tabs">
+			<ul>
+				<li><a href="#tabs-1">faculty</a></li>
+				<li><a href="#tabs-2">staff</a></li>
+			</ul>
+			<div id="tabs-1">
+				<section id="faculty"></section>
+			</div>
+			<div id="tabs-2">
+				<section id="staff"></section>
+			</div>
+		</div>
+		<div id="asdwrapper"><iframe src= "https://www.ist.rit.edu/api/map/" id="asd"></iframe></div>
+		<section id = "resources"></section> 
+		<section id = "news"></section> 
+		<section id = "courses"></section>
+		<section id = "footer"></section>
+	
+		
+	</body>
+</html>

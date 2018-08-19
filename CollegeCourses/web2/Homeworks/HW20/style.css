@@ -1,0 +1,19 @@
+body
+{
+	display: flex;
+	justify-content: center;
+	background-image: url(burning.gif);
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+body div 
+{
+	position: fixed;
+	font-size: 2em;
+	top: 40%;
+	left: 50%;
+	background-color: rgba(255,255,255, 0.8);
+	padding: 10px;
+	border: 5px solid rgba(0,0,0, 0.5);
+	border-radius: 10px;
+}

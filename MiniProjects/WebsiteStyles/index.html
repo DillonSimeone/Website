@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Dillon Simeone</title>
+	<link href="./Styles/style.css" rel="stylesheet" id="styles">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+</head> 
+	<body>
+		<nav>
+			<h1>Styles</h1>
+			<ol>
+				<li onclick="changeStyle(this.innerHTML)">Style One</li>
+				<li>Click me</li>
+				<li>Click me</li>
+				<li>Click me</li>
+				<li>Click me</li>
+			</ol>
+		</nav>
+		<section>
+			<h1>JavaScript testing</h1>
+			<blockquote>
+				<p id="output">
+				</p>
+			</blockquote>
+		</section>
+		<script>
+			var out = document.getElementById("output");
+			var styles = document.getElementById("styles");
+			
+			function output(text){
+				out.innerHTML += text;
+			}
+			
+			function changeStyle(e){
+				console.log("Loading " + e + " up...");
+				console.log(styles.href);
+			}
+		</script>
+	</body>
+</html>

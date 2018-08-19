@@ -1,0 +1,444 @@
+html
+{
+	background-size: contain;
+	background-attachment: fixed;
+	background-repeat: no-repeat;
+	background-color: rgba(0,0,0,1);
+	background-position: center; 
+}
+body
+{
+    width: 100%;
+	height: 100%;
+    margin: auto;
+	background-color: rgba(0,0,0,1);
+	font-family: "Jet Set";
+	overflow-x: hidden;
+}
+
+/* header and associated */
+
+header
+{
+    height: 100px;
+    width: 100%;
+    margin: auto;
+    text-align: center;
+	background-image: url(https://people.rit.edu/dys8701/Practical/web2/Projects/GroupFinalProject/image/jpg/scroller.PNG);
+	filter: saturate(25);
+}
+
+header img
+{
+    height: 100%;
+	filter: saturate(0.1);
+	filter: brightness(20%);
+	background-color: rgba(0,0,0,0.8);
+	opacity: 0.9;
+}
+
+header figure
+{
+	height: 100%;
+	background-color: rbga(0,0,255,1);
+}
+
+/* Navigation and Dropdown menus */
+
+nav
+{
+	position: fixed;
+	top: 0;
+	width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+	flex-wrap: wrap;
+    border-top: 5px solid rgba(0,255,0, 0.8);
+    border-bottom: 5px solid rgba(0,255,0, 0.8);
+	background-color: rgba(0,255,0, 0.2);
+}
+
+
+article a
+{
+	color: rgb(0,255,0);
+	animation: neon 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes neon 
+{
+  from 
+  {
+    text-shadow: 0 0 10px rgb(0,150,0), 0 0 20px rgb(0,150,0), 0 0 30px rgb(0,150,0), 0 0 40px rgb(0,150,0);
+  }
+  to 
+    {
+    text-shadow: 0 0 5px rgb(0,150,0), 0 0 10px rgb(0,150,0), 0 0 15px rgb(0,150,0), 0 0 20px rgb(0,150,0);
+  }
+}
+
+nav a
+{
+    display: block;
+    text-decoration: none;
+    color: black;
+    padding: 10px;
+	
+}
+nav form
+{
+	align-self: center;
+}
+
+nav form input
+{
+	background-color: rgba(0,255,0, 0.5);
+	border: 2px rgba(0,255,0, 0.5) solid;
+	border-radius: 20px;
+}
+
+nav .button
+{
+    display: inline-block;
+    background-color: rgba(0,255,0, 0.2);
+    padding: 10px;
+	border: 2px solid rgba(0,255,0, 0.8);
+    border-radius: 10px;
+    margin: 10px 20px;
+    cursor: pointer;
+    transition: all 1s;
+	color: white;
+}
+
+.dropdown:hover .button, nav .button:hover
+{
+    background-color: rgba(0,255,0, 0.8);
+	color: green;
+}
+
+.dropdown 
+{
+    position: relative;
+    display: inline-block;
+
+}
+
+.dropdown-content 
+{
+    display: none;
+    position: absolute;
+    background-color: rgba(0,255,0, 0.6);
+    box-shadow: 0px 8px 16px 0px rgba(0,255,0,0.2);
+	border: 5px rgba(0,255,0,0.7) solid;
+    margin: 0;
+    min-width: 160px;
+	z-index: 2; /*If you don't know why this is needed... Ask Dillon in person. He'll demo.*/
+}
+
+.dropdown-content a:hover
+{
+    background-color: black;
+	color: green;
+}
+
+.dropdown:hover .dropdown-content 
+{
+    display: block;
+}
+
+.tasks
+{
+	font-size: 1em;
+	margin: 0px auto 0px 10px;
+	display: flex;
+	flex-direction: column;
+}
+/* article, its content and footer */
+
+article, footer
+{
+	box-shadow: 0px 8px 100px 0px rgba(0,255,0,0.2);
+    width: 80%;
+    margin: 30px auto;
+    border: 5px rgba(0,255,0,0.7) solid;
+	background-color: rgba(0,0,0,.1);
+	color: rgba(0,255,0,1);
+	transition: all 0.5s;
+	padding: 10px;
+}
+
+footer
+{
+	display: none;
+}
+
+article h1
+{
+    margin: 5px;
+	font-family: "Designer Block";
+	text-align: center;
+	font-size: 40px;
+	letter-spacing: 5px;
+}
+
+article h2 {
+	font-size: 24px;
+	text-decoration: underline;
+	margin-left: 10px;
+	letter-spacing: 2px;
+}
+
+article h3 {
+	margin-left: 15px;
+	letter-spacing: 2px;
+}
+
+article p, footer p
+{
+    margin: 15px;
+	color: rgba(0,255,0,.5);
+}
+
+article ul li, ol li
+{
+	color: rgba(0,255,0,.5);
+}
+
+article .boxed {
+	margin-left: 60px;
+	padding: 5px;
+	font-size: 1.2em;
+	color: rgba(255,255,255,1);
+}
+
+
+article .bold {
+	margin: 5px;
+	padding: 8px;
+	font-size: 1.1em;
+	color: rgba(255,255,255,1);
+}
+
+article figure
+{
+	text-align: center;
+}
+
+article figure img
+{
+	border: 5px rgba(0,255,0,0.7) solid;
+	box-shadow: 0px 8px 16px 0px rgba(0,255,0,0.2);
+	width: 640px;
+	height: 380px;
+}
+
+article form
+{
+	display: flex;
+	justify-content: center;
+	margin: auto;
+}
+
+article form .form
+{
+	text-align: right;
+
+}
+article form input
+{
+	margin: 5px;
+	background-color: rgba(200,255,200, 0.9);
+	border: 1px solid rgba(0,255,0, 0.8);
+	padding: 5px;
+	font-size: 1.1em;
+	font-family: "Jet Set";
+	src: url(fonts/Jet_Set_Italic__9_1_.ttf);
+}
+
+.buttons
+{
+	text-align: center;
+}
+
+article #doomsday
+{
+	text-align: center;
+	
+}
+
+article #doomsday progress
+{
+	background-color: green;
+}
+
+article b
+{
+	color: rgba(0,255,0,1);
+	font-size: 1.1em;
+}
+
+div img 
+{
+	width: 100%;
+	height: auto;
+}
+
+sup
+{
+	color: rgba(255,255,255,1);
+}
+
+ol 
+{
+	color: rgba(255,255,255,1);
+}
+
+ol li p 
+{
+	color: rgba(0,255,0,0.5);
+}
+
+ol s
+{
+	color: rgba(0,100,0,1);
+}
+
+s li
+{
+	color: rgba(0,100,0,1.5);
+}
+
+table
+{
+	text-align: center;
+	margin: auto;
+	border-collapse: collapse;
+}
+
+table tr td, tr th
+{
+	border: 1px solid rgba(255,255,255,1);
+	color: rgba(255,255,255,1);
+	padding: 5px;
+}
+
+#attention
+{
+	display:none;
+}
+
+#sandbox
+{
+	opacity: 0;
+	width: 0px;
+	height: 100%;
+	position: fixed;
+	left: -395px;
+	top: 0;
+	transition: all 0.5s;
+	border: 5px rgba(0,255,0,0.7) solid;
+	background-color: rgba(0,0,0,.1);
+	color: rgba(0,255,0,1);
+}
+
+#gods
+{
+	display: flex;
+	flex-wrap: wrap;
+}
+
+#gods figure
+{
+	display: inline-block;
+	margin: 80px auto 80px auto;
+}
+
+#gods figure figcaption
+{
+	text-align: center;
+}
+
+#gods figure img
+{
+	width: 350px;
+	margin: 50px;
+	margin-bottom: 0px;
+}
+
+#overlord
+{
+	display: flex;
+	flex-direction: column;
+}
+
+#overlord img
+{
+	margin: 20px auto 40px auto;
+	border: 5px rgba(0,255,0,0.7) solid; 
+	width: 500px;  
+	box-shadow: 0px 8px 16px 0px rgba(0,255,0,0.2);
+}
+
+.quiz
+{
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	margin: auto;
+}
+
+.comments
+{
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	margin: auto;
+	text-align: center;
+}
+
+.Mastery
+{
+	display: flex;
+	flex-direction: row;
+	padding: 10px;
+	justify-content: space-between;
+}
+
+.Mastery progress
+{
+	background-color: green;
+}
+
+#stats
+{
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: column;
+	width: 30%;
+	margin: auto;
+	align-content: flex-start;
+}
+
+.comment
+{
+	text-align: center;
+	width: 50%;
+	margin: 10px auto 0px auto;
+	border: 1px solid green;
+}
+
+iframe
+{
+	scrolling: no;
+}
+
+/* Custom fonts */
+@font-face {
+	font-family: "Designer Block";
+	src: url(fonts/DESIB___.ttf);
+}
+@font-face {
+	font-family: "Jet Set";
+	src: url(fonts/Jet_Set_Italic__9_1_.ttf);
+}

@@ -1,0 +1,262 @@
+body 
+{ 
+    color: black;
+    margin-left: auto;
+    margin-right: auto;
+    width: 70%;
+}
+.bodyBackground
+{
+        
+    background-image: url(media/Gifs/GlowPizza.gif);
+    background-position: center;
+    background-repeat: repeat;
+    background-size: 100%;
+    transform: rotate(1.1deg); /*You said that we could do whatever we wanted for our homepage. This is what I want! Heck yeah!*/
+}
+wrapper
+{
+    background-color: red;
+}
+div
+{
+    background-color: black;
+    border-radius: 20px;
+    padding: 10px;
+}
+nav 
+{ 
+    letter-spacing: 1px;
+    word-spacing:  5px;
+    font-size: 30px;
+    font-family: cursive;
+    background-color: dimgray; 
+    color: darkred;
+}
+.fixedWindow /*Not working. Strange.*/
+{
+    -webkit-transform: translateZ(0); /*Heard that Google Chrome won't render the fixed window without this. However, adding this didn't do anything. Strange.*/
+    position: fixed;
+    background-color: #f00;
+    height: 100px;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+a:link
+{
+       color: blue;  
+}
+    
+a:visited
+{
+       color:purple;  
+}
+
+footer 
+{ 
+    font-weight: bold;
+    margin: 5px;
+    background-color: #7B7B7B;
+
+}
+
+.title
+{
+    background-image: url(media/Pictures/scribblename.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 560px;
+    height: 80px;
+    margin-bottom: 5px;
+}
+
+.text
+{
+    text-align: left;
+    background-color: #7B7B7B;
+    padding-left: 10px;
+    font-size: 1.5em;
+}
+.dillon
+{
+    background-image: url(media/Pictures/dillon.jpg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    height: 220px;
+    width: 240px
+}
+figcaption
+{
+    font-size: 15px;
+    text-align: center;
+}
+.header
+{
+    background-image:
+        url(media/Gifs/firstGif.gif),
+        url(media/Gifs/daftpunk.gif);
+    background-repeat: no-repeat;
+    background-position: bottom, center;
+    background-size: 600px 400px, 600px 400px;
+    height: 400px;
+    width: 600px;
+    margin: auto;
+    display: block;
+    border-radius: 200px;
+    
+}
+.floatRight
+{
+    float: right;
+}
+footer
+{
+    font-style: italic;
+    font-size: 1.5em;
+}
+div ul li
+{
+    font-size: 1.8em;
+    font-style: italic;
+    text-align: left;
+    line-height: 30px;
+    padding-left: 10%;
+    border-radius: 50px;
+    margin: 10px;
+    display: block;
+}
+div ul
+{
+    text-align: right;
+}
+a
+{
+    color: red;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+a:visited 
+{
+    color: darkred;
+}
+.RainBowRight:hover
+{
+    color: dimgray;
+    border-radius: 30px;
+    padding: 5px;
+    padding-left: 50%;
+    font-weight: bolder;
+    animation: 
+        BackgroundColor ease-in-out 1.5s infinite alternate;
+}
+
+h1
+{
+    text-align: left;
+    color: red;
+    font-size: 40px;
+}
+@keyframes BackgroundColor
+{
+    from
+    {background-color: black;}
+    15%{background-color: brown}
+    25%{background-color: pink;}
+    50%{background-color: green;}
+    75%{background-color: yellow;}
+    to{background-color: blue;}
+}
+
+@media only screen and (max-width: 37.5em)
+{
+    body
+    {
+        background-image: none;
+        background-color: black;
+    }
+    header
+    {
+        padding-top: 1em;
+    }
+    main
+    {
+        font-size: 90%;
+    }
+    h1
+    {
+        font-size: 1.5em;
+    }
+    .bottom
+    {
+        display: block;
+    }
+    nav
+    {
+        font-size: 1em;
+        padding: 0;
+        text-align: left;
+    }
+    nav li
+    {
+        display: block;
+        margin: 0;
+        border-bottom: 2px solid black;
+    }
+    nav a
+    {
+        display: block;
+    }
+    figure img
+    {
+        display: none;
+    }
+    div p
+    {
+        font-size: 1em;
+    }
+    #mobile
+    {
+        display: inline;
+    }
+    #desktop
+    {
+        display: none;
+    }
+}
+@media only screen and (max-width: 64em) 
+{
+    iframe
+    {
+        display: none;
+    }
+    body
+    {
+        background-color: white;
+    }
+    main
+    {
+        margin-left: 0;
+    }
+    nav
+    {
+        float: none;
+        width: auto;
+        text-align: center;
+        padding: 0.5em;
+    }
+    nav li
+    {
+        display: inline;
+    }
+    #homehero, #yurthero, #trailhero
+    {
+        margin-left: 0;
+        height: 200px;
+    }
+    footer
+    {
+        margin-left: 0;
+    }
+}

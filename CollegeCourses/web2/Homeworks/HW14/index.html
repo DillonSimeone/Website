@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<HTML lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Homework14</title>
+  <meta name="description" content="A homework!.">
+  <meta name="author" content="Dillon Simeone">
+  <link rel="stylesheet" href="./style/style.css">
+</head>
+<body>
+    <header>
+    </header>
+    <form action="https://people.rit.edu/dys8701/Homeworks/Homework14/index.html" method="get" name="orderForm">
+        <div id="userInfo">
+            <h1>Your shipping Address: </h1>
+            <div class="form">
+                <div class="question">
+                    <label for="name">Full Name: </label>
+                    <input type="text" size="25" id="name" required>
+                </div>
+                
+                <div class="question">
+                    <label for="hairColor">Hair color: </label>
+                    <input type="text" size="20" id="hairColor" title="This is super important! The fate of the universe depends on your answer! ANSWER THIS QUESTION!" required>
+                </div>
+                
+                <div class="question">
+                    <label for="streetAddress">Street Address: </label>
+                    <input type="text" size="30" id="streetAddress" required>
+                </div>
+                
+                <div class="question">
+                    <label for="zipCode">Five-digit Zip Code: </label>
+                    <input type="text" size="5" pattern ="[0-9]{5}" title="Five-digit zip Code." id="zipCode" required>
+                </div>
+                
+                <div class="question">
+                    <label for="state">State: </label>
+                    <input type="text" size="2" pattern="[a-zA-Z]{2}" title="Two letters, example: OR for oregon." id="state" required>
+                </div>
+                
+                <div class="question">
+                    <label for="email">Email: </label>
+                    <input type="email" size="25" title="Email" id="email" required>
+                </div>
+                
+                <div class="question">
+                    <input type="checkbox" name="mailingList"><b>Plase add my address to the mailing list!</b>
+                </div>
+                
+                <div class="question">
+                    <input type="checkbox" name="emailingList"><b>Plase add my email address to the spam list!</b>
+                </div>
+                
+            </div>
+        </div>
+        <div id="widgetInfo">
+            <h1>The new monster you want to order: </h1>
+            <div class="form">
+                <div class="radioQuestion">
+                    <label>Monster Color:</label>
+                    
+                    <div class="radio">
+                        <input type="radio" name="color" required><b>Red</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="color" required><b>Blue</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="color" required><b class="rainbowText">EverythingAtOnce!</b>
+                    </div>
+                </div>
+                <div class="radioQuestion">
+                    <label>Monster Size:</label>
+                    
+                    <div class="radio">
+                        <input type="radio" name="size" required><b>Small</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="size" required><b>Medium</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="size" required><b>Large</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="size" required><b class="rainbowText">MASSIVE, as in larger than the universe!</b>
+                    </div>
+                </div>
+                <div class="radioQuestion" >
+                    <label>Monster Shape:</label>
+                    
+                    <div class="radio">
+                        <input type="radio" name="shape" required><b>Sphere</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="shape" required><b>Cube</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="shape" required><b>Star</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="shape" required><b class="rainbowText">Non-euclidean!</b>
+                    </div>
+                </div>
+            </div>
+            <div class="question">
+                <label>Monster status of life: </label>
+                <select name ="status">
+                    <option>Non-living</option>
+                    <option>Living</option>
+                    <option class="rainbowText">Both!</option>
+                </select>
+            </div>
+            <div class="question">
+                <label>Your new Monster's name: </label>
+                <input type="text" size="25" name="name" required>
+            </div>
+        </div>
+        <div class="buttons">
+            <input type="submit"> <input type="reset">
+        </div>
+    </form>
+</body>
+</HTML>

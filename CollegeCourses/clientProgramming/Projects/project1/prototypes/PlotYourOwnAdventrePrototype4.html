@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style type="text/css">
+
+		div
+		{
+			margin: auto;
+			width: 60%;
+			display: flex;
+			flex-direction: column;
+		}
+		div select
+		{
+			width: 50%;
+            height: 50px;
+            font-size: 1.5em;
+			margin: 50px auto 50px auto;
+		}
+		div p
+		{
+            font-size: 1.5em;
+			transition all 1s;
+		}
+        div h1
+        {
+            text-align: center;
+        }
+        div img
+        {
+            margin: auto;
+            width: 50%;
+            border: 5px solid black;
+        }
+	</style>
+    
+<title>Project 2 - Client Programming</title>
+    
+</head>
+<body> 
+	<form method="post" action="" id="superform">
+	</form>
+	<script>
+		
+		
+		//http://www.slapastory.com/short/What_would_you_do_(Choose_your_own_Adventure)
+		var pages =
+		{
+			1: {
+				story: 
+					"You're traveling to a distance castle to find work. As you draw close to the city, you hear what sounds like a small fight a little off the path. You venture closer to see what is happening. Three guards are trying to trap one man. The man looks to be a weary traveller like yourself, wearing cheap leather clothes, and also like yourself, has a descent sword. What do you do?", 
+				choices: 
+					[
+						"Continue to the castle, this has nothing to do with you.", 
+						"Help the guards. Maybe they can help you can get a job.",
+						"Attack the guards, this isn’t a fair fight, and you like to fight!",
+						"Wait and see if someone drops something shinny!"
+					], 
+					goTo: 
+					[
+						2, 
+						3,
+						4,
+						2
+					],
+					image: "../media/guards.jpg"
+				},
+			2: {
+				story: 
+					"Another group of guards finds you. They draw their weapons and start to speak in a language you don’t understand. What do you do?", 
+					choices: 
+					[
+						"Try to explain yourself. You did nothing wrong.", 
+						"Attack the guards! Who the h*ll are they!",
+						"Run! They must be slower."
+					], 
+					goTo: 
+					[
+						5, 
+						6,
+						7
+					],
+                    image: "../media/guards.jpg"
+				},
+			3: 	{
+					story: 
+						"You try to help the guards, but end up killing the person they were trying to capture. The guards speak in a language that you don’t understand, but one of them points to you and says “murderer”. What do you do?", 
+					choices: 
+					[
+						"Try to explain yourself. You were trying to help!", 
+						"Attack the guards! You can take them!",
+						"Run! They must be tried."
+					], 
+					goTo: 
+					[
+						5,
+						6,
+						7
+					],
+                    image: "../media/arrest.jpg"
+				},
+			4: {
+					story: 
+						"The two of you end up killing the three guards. The person you helped looks at you suspiciously and doesn’t put his sword away. What do you do?", 
+					choices: 
+						[
+							"Attack him, why not?", 
+							"Start to loot the bodies of the guards, but keeping an eye on the other guy.",
+							"Leave the area, but keep an eye on the other guy."
+						], 
+					goTo: 
+					[
+						6,
+						8,
+						7
+					],
+                    image: "../media/victory.jpg"
+				},
+			5:	{
+					story: 
+						"The guards don’t understand you and attack you. You are caught off guard and killed.",
+					choices:
+					[
+					],
+					goTo:
+					[
+					],
+                    image: "../media/death.jpg"
+				},
+			6:
+				{
+					story: 
+						"You kill everyone! All the loot is yours!",
+					choices:
+					[
+					],
+					goTo:
+					[
+					],
+                    image: "../media/victory.jpg"
+				},
+			7:	
+				{
+					story: 
+						"You escape, but you dare not go to the city. You start your travels in another direction.",
+					choices:
+					[	
+					],
+					goTo:
+					[
+					],
+                    image: "../media/escape.jpg"
+				},
+			8:
+				{
+					story: 
+						"The man ends up trusting you somewhat. He puts his sword away, and helps you loot the bodies. The two of you decide to travel together, but not to the city.",
+					choices:
+					[
+					],
+					goTo:
+					[
+					],
+                    image: "../media/escape.jpg"
+				}
+		};
+		//Note to self:
+		//STORE CURRENT ID
+		//STORE ACTIVE PAGES
+		//MAKE FOREACH FUNCTION TO SPAWN ACTIVE PAGES
+		var activePages = [];
+		var id = 1;
+		var form = document.getElementById('superform');
+		
+		function loadPage(num, num2)
+		{
+			if(num != 0)
+			{
+                //Let there be light
+				let div;
+                let img;
+				let text;
+				let select;
+				let option;
+				let node;
+				
+				//Deletes any newer options than current option.
+				//This MUST run BEFORE anything is spawned. Else, nothing works.
+				let loop = true;
+				let is = parseInt(num2) + 1;
+				do
+				{
+					if(exists(is))
+					{
+						remove(is);
+						id -= 1;
+					}
+					else
+						loop = false;
+						
+					is++;
+				}while(loop)
+				//End of deletion loop.
+				
+				div = document.createElement("div");
+				div.id = id;
+			
+				text = document.createElement("p");
+				node = document.createTextNode(pages[num].story); //Pulls the text in the story datafield of pages.
+				text.appendChild(node); //Appends the text to the newly created p element.
+			
+				div.appendChild(text); //Puts the p element into the div.
+				select = document.createElement("select");
+				select.name = id;
+				select.onchange = function()
+                {
+                    if(this.value != 0) //If this if statement is not used, clicking on 'select' would break the program since it would try to load page 0.
+                        {
+                            loadPage(this.value, 
+                            parseInt(this.name))
+                        }
+                };
+			
+				//Creating default 'Select' option.
+				option = document.createElement("option");
+				option.value = 0;
+				node = document.createTextNode("Select");
+				option.appendChild(node);
+				select.appendChild(option);
+                
+                //PICTURES! SUCH AWE!
+                if(pages[num].image != "")
+                {
+                    img = document.createElement("img");
+                    img.src = pages[num].image;
+                    div.appendChild(img);
+                }
+				
+				//Creating choices from datafields in Array.
+				if(pages[num].choices.length != 0)
+				{
+					for(var i = 0; i < pages[num].choices.length; i++)
+					{
+						option = document.createElement("option");
+						option.value = pages[num].goTo[i]; //This is the page number to go to.
+				
+						node = document.createTextNode(pages[num].choices[i]);
+						option.appendChild(node);
+						select.appendChild(option);
+					}
+					div.appendChild(select);
+				}
+				else
+				{
+					text = document.createElement("h1");
+					node = document.createTextNode("STORY OVER!");
+					text.appendChild(node);
+					div.appendChild(text);
+					
+				}
+                
+                
+				form.appendChild(div);
+			}
+            //window.scrollTo(0,document.body.scrollHeight);
+            //document.getElementById( id ).scrollIntoView();
+            //console.log(document.getElementById( id ));
+            
+            start_scroll_down();
+            
+			id++;
+		}
+		loadPage(1, 1);
+        
+        function start_scroll_down() 
+            { 
+                scroll = setInterval(function()
+                                    { 
+                                        window.scrollBy(0, 10); console.log('start');
+                                    }, 10);
+                setTimeout(function(){ clearInterval(scroll); }, 1000);
+                
+            }
+		
+		function remove(ids)
+			{
+				var elem = document.getElementById(ids);
+				if(elem)
+					elem.parentNode.removeChild(elem);
+			}
+		
+			//Checks if an element exists or not.
+			function exists(ids)
+			{
+				var elem = document.getElementById(ids);
+				if(elem == null)
+					return false;
+				else
+					return true;
+			}
+		
+	</script>
+	</body>
+<html>

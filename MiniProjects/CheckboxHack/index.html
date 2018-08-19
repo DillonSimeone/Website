@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Dillon Simeone</title>
+	<link href="./Styles/style.css" rel="stylesheet">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head> 
+	<body>
+        <section>
+            <h1>Checkbox Hack</h1>
+            <p>
+                A way to fake onclick events with only HTML and CSS styles. Perfect for avoiding JavaScript!
+            </p>
+            <h2>More info:</h2>
+            <blockquote>
+                <ul>
+                    <li><a href="https://css-tricks.com/the-checkbox-hack/">CSS Tricks</a></li>
+                    <li><a href="https://codepen.io/TimPietrusky/pen/fHmiI">Color change example</a></li>
+                    <li><a href="https://codepen.io/bloom-dan/pen/vKdoar">Drop-menu example</a></li>
+                    <li><a href="https://www.google.com/search?q=Checkbox+hack&oq=Checkbox+hack&aqs=chrome..69i57j69i59j69i60j69i61j69i60.1983j0j9&sourceid=chrome&ie=UTF-8">More</a></li>
+                </ul>
+            </blockquote>
+        </section>
+        <section>
+            <h1>Dillon's take on the Checkbox Hack</h1>
+            
+            <h2>The problem:</h2>
+            <blockquote>
+                <p>
+                    When I attempted to implement the hack as a way to navigate around a test website, I quickly discovered that when the inputs are toggled, they can only affect sibling elements. This meant that I couldn't just throw radio buttons into a nav bar and made it so pages would display when their corresponding inputs are toggled.
+                </p>
+            </blockquote>
+            
+            <h2>Dillon's Solution:</h2>
+            <blockquote>
+                <p>
+                    After some random experiments, I discovered that labels can be connected to inputs from anywhere in a website page! When you click on a label, it's good as clicking on the inputs!
+                </p>
+                <p>
+                    So, I can just put input elements right next to what they're supposed to affect when toggled, and put the labels anywhere in the website such as a nav menu, and perfection! It's as if the website is running off JavaScript! Almost. This isn't a good replacement for JavaScript's onClick events, but if you're determined to avoid JavaScript at all cost, this will work for you.
+                </p>
+            </blockquote>
+            <h2>Issues with Dillon's Solution:</h2>
+            <blockquote>
+                <ul>
+                    <li>Since labels and inputs isn't grouped, inputs won't be able to affect labels. This makes it a bit harder for the user to see that their clicks was noticed or not.</li>
+                    <li>It's still abuse of CSS. CSS is meant for the front-end, not behavior stuff.</li>
+                    <li>You have to track your names more carefully. ID this, ID that, class there, etc. You do this less with JavaScript.</li>
+                </ul>
+            </blockquote>
+        </section>
+        
+        <nav>
+            <label for="navTestOneR">Test One</label>
+            <label for="navTestTwoR">Test Two</label>
+            <label for="navTestThreeR">Test Three</label>
+        </nav>
+        
+        <input id="navTestOneR" type="radio" name="nav" checked="checked">
+        <section id="TestOneSection">
+            <h1>Checkbox Hack Test One</h1>
+            <h2>Goal:</h2>
+            <blockquote>
+                <p>Implement a quick vanilla checkbox hack.</p>
+            </blockquote>
+            <h2>Result:</h2>
+            <blockquote>
+                Success!
+            </blockquote>
+            <h2>Notes:</h2>
+            <blockquote>
+                I discovered the scope issue when I tried to make the test below to look nicer by placing the inputs and labels into a div of their own to give the elements a different layout, this is shown in test two.
+            </blockquote>
+            
+            <div id="TestOne">
+                <input id="TestOneItemOneR" type="radio" name="TestOne">
+                <label id="TestOneItemOneL" for="TestOneItemOneR">Label: Item One</label>
+                
+                
+                <input id="TestOneItemTwoR" type="radio" name="TestOne">
+                <label id="TestOneItemTwoL" for="TestOneItemTwoR">Label: Item Two</label>
+                
+                <input id="TestOneItemThreeR" type="radio" name="TestOne">
+                <label id="TestOneItemThreeL" for="TestOneItemThreeR">Label: Item Three</label>
+                
+                <input id="TestOneItemFourR" type="radio" name="TestOne">
+                <label id="TestOneItemFourL" for="TestOneItemFourR">Label: Item Four</label>
+                
+                <div id="TestOneItemOneE">
+                    <h1>Item One</h1>
+                </div>
+                
+                <div id="TestOneItemTwoE">
+                    <h1>Item Two</h1>
+                </div>
+                
+                <div id="TestOneItemThreeE">
+                    <h1>Item Three</h1>
+                </div>
+                
+                <div id="TestOneItemFourE">
+                    <h1>Item Four</h1>
+                </div>
+            </div>
+            
+            
+            <div class="testHTML">
+                <h1>HTML Codes</h1>
+                <pre>
+                    &lt;div id="TestOne"&gt;
+                        &lt;input id="ItemOneR" type="radio" name="TestOne"&gt;
+                        &lt;label id="ItemOneL" for="ItemOneR"&gt;Label: Item One&lt;/label&gt;
+
+
+                        &lt;input id="ItemTwoR" type="radio" name="TestOne"&gt;
+                        &lt;label id="ItemTwoL" for="ItemTwoR"&gt;Label: Item Two&lt;/label&gt;
+
+                        &lt;input id="ItemThreeR" type="radio" name="TestOne"&gt;
+                        &lt;label id="ItemThreeL" for="ItemThreeR"&gt;Label: Item Three&lt;/label&gt;
+
+                        &lt;input id="ItemFourR" type="radio" name="TestOne"&gt;
+                        &lt;label id="ItemFourL" for="ItemFourR"&gt;Label: Item Four&lt;/label&gt;
+
+                        &lt;div id="ItemOneE"&gt;
+                            &lt;h1&gt;Item One&lt;/h1&gt;
+                        &lt;/div&gt;
+
+                        &lt;div id="ItemTwoE"&gt;
+                            &lt;h1&gt;Item Two&lt;/h1&gt;
+                        &lt;/div&gt;
+
+                        &lt;div id="ItemThreeE"&gt;
+                            &lt;h1&gt;Item Three&lt;/h1&gt;
+                        &lt;/div&gt;
+
+                        &lt;div id="ItemFourE"&gt;
+                            &lt;h1&gt;Item Four&lt;/h1&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                </pre>
+            </div>
+            
+            <div class="testCSS">
+                <h1>CSS Codes</h1>
+                <pre>
+                    #TestOne{
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-around;
+                        align-items: center;
+                        border: 5px black solid;
+                    }
+
+                    #TestOne label{
+                        border: 1px solid black;
+                        margin: 10px auto 10px;
+                        width: 130px;
+                        padding: 10px;
+                    }
+
+                    #ItemOneR:checked ~ #ItemOneE{
+                        background-color: red;
+                    }
+
+                    #ItemOneR:checked ~ #ItemOneL{
+                        background-color: blue;
+                    }
+
+                    #ItemTwoR:checked ~ #ItemTwoE{
+                        background-color: red;
+                    }
+
+                    #ItemTwoR:checked ~ #ItemTwoL{
+                        background-color: blue;
+                    }
+
+                    #ItemThreeR:checked ~ #ItemThreeE{
+                        background-color: red;
+                    }
+
+                    #ItemThreeR:checked ~ #ItemThreeL{
+                        background-color: blue;
+                    }
+
+                    #ItemFourR:checked ~ #ItemFourE{
+                        background-color: red;
+                    }
+
+                    #ItemFourR:checked ~ #ItemFourL{
+                        background-color: blue;
+                    }
+                </pre>
+            </div>
+        </section>
+        
+        <input id="navTestTwoR" type="radio" name="nav">
+        <section id="TestTwoSection">
+            <h1>Checkbox Hack Test Two</h1>
+            <h2>Goal:</h2>
+            <blockquote>
+                Improve layout of the inputs and labels by putting them into their own container.
+            </blockquote>
+            <h2>Result:</h2>
+            <blockquote>
+                Failure! I didn't realize that I could only affect the Input's sibling elements using :checked in CSS. 
+            </blockquote>
+            
+            <div id="TestTwo">
+                <div id="TestTwoInputLayout">
+                    <input id="TestTwoItemOneR" type="radio" name="TestTwo">
+                    <label id="TestTwoItemOneL" for="TestTwoItemOneR">Label: Item One</label>
+
+
+                    <input id="TestTwoItemTwoR" type="radio" name="TestTwo">
+                    <label id="TestTwoItemTwoL" for="TestTwoItemTwoR">Label: Item Two</label>
+
+                    <input id="TestTwoItemThreeR" type="radio" name="TestTwo">
+                    <label id="TestTwoItemThreeL" for="TestTwoItemThreeR">Label: Item Three</label>
+
+                    <input id="TestTwoItemFourR" type="radio" name="TestTwo">
+                    <label id="TestTwoItemFourL" for="TestTwoItemFourR">Label: Item Four</label>
+                </div>
+                
+                
+                <div id="TestTwoItemOneE">
+                    <h1>Item One</h1>
+                </div>
+                
+                <div id="TestTwoItemTwoE">
+                    <h1>Item Two</h1>
+                </div>
+                
+                <div id="TestTwoItemThreeE">
+                    <h1>Item Three</h1>
+                </div>
+                
+                <div id="TestTwoItemFourE">
+                    <h1>Item Four</h1>
+                </div>
+            </div>
+            
+            <div class ="testHTML">
+                <h1>HTML Codes</h1>
+                <pre>
+                    &lt;div id="TestTwoInputLayout"&gt;
+                        &lt;input id="TestTwoItemOneR" type="radio" name="TestTwo"&gt;
+                        &lt;label id="TestTwoItemOneL" for="TestTwoItemOneR"&gt;Label: Item One&lt;/label&gt;
+
+
+                        &lt;input id="TestTwoItemTwoR" type="radio" name="TestTwo"&gt;
+                        &lt;label id="TestTwoItemTwoL" for="TestTwoItemTwoR"&gt;Label: Item Two&lt;/label&gt;
+
+                        &lt;input id="TestTwoItemThreeR" type="radio" name="TestTwo"&gt;
+                        &lt;label id="TestTwoItemThreeL" for="TestTwoItemThreeR"&gt;Label: Item Three&lt;/label&gt;
+
+                        &lt;input id="TestTwoItemFourR" type="radio" name="TestTwo"&gt;
+                        &lt;label id="TestTwoItemFourL" for="TestTwoItemFourR"&gt;Label: Item Four&lt;/label&gt;
+                    &lt;/div&gt;
+
+
+                    &lt;div id="TestTwoItemOneE"&gt;
+                        &lt;h1&gt;Item One&lt;/h1&gt;
+                    &lt;/div&gt;
+
+                    &lt;div id="TestTwoItemTwoE"&gt;
+                        &lt;h1&gt;Item Two&lt;/h1&gt;
+                    &lt;/div&gt;
+
+                    &lt;div id="TestTwoItemThreeE"&gt;
+                        &lt;h1&gt;Item Three&lt;/h1&gt;
+                    &lt;/div&gt;
+
+                    &lt;div id="TestTwoItemFourE"&gt;
+                        &lt;h1&gt;Item Four&lt;/h1&gt;
+                    &lt;/div&gt;
+                </pre>
+            </div>
+            
+            <div class ="testCSS">
+                <h1>CSS Codes</h1>
+                <pre>
+                    #TestTwo{
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-around;
+                        align-items: center;
+                        border: 5px green solid;
+                    }
+
+                    #TestTwo label{
+                        font-size: 2em;
+                        margin: 10px auto 10px;
+                        width: 130px;
+                        padding: 10px;
+                        transition: 2s;
+                    }
+
+                    #TestTwo label:hover{
+                        background-color: green;
+                    }
+
+                    #TestTwoInputLayout{
+                        padding: 20px;
+                    }
+
+
+                    #TestTwoItemOneR:checked ~ #TestTwoItemOneE{
+                        background-color: red;
+                    }
+
+                    #TestTwoItemOneR:checked ~ #TestTwoItemOneL{
+                        background-color: blue;
+                    }
+
+                    #TestTwoItemTwoR:checked ~ #TestTwoItemTwoE{
+                        background-color: red;
+                    }
+
+                    #TestTwoItemTwoR:checked ~ #TestTwoItemTwoL{
+                        background-color: blue;
+                    }
+
+                    #TestTwoItemThreeR:checked ~ #TestTwoItemThreeE{
+                        background-color: red;
+                    }
+
+                    #TestTwoItemThreeR:checked ~ #TestTwoItemThreeL{
+                        background-color: blue;
+                    }
+
+                    #TestTwoItemFourR:checked ~ #TestTwoItemFourE{
+                        background-color: red;
+                    }
+
+                    #TestTwoItemFourR:checked ~ #TestTwoItemFourL{
+                        background-color: blue;
+                    }
+                </pre>
+            </div>
+        </section>
+        
+        <input id="navTestThreeR" type="radio" name="nav">
+        <section id="TestThreeSection">
+            <h1>Checkbox Hack Test Three</h1>
+            <h2>Goal:</h2>
+            <blockquote>
+                Get this whole thingy working somehow!
+            </blockquote>
+            <h2>Result:</h2>
+            <blockquote>
+                Success! The placement of labels do not matter long as their for field properly links to inputs! It also turns out that you can connect more than one label to an input.
+            </blockquote>
+            <h2>Note:</h2>
+            <blockquote>
+                Due to to the label and the inputs not being siblings anymore, it's impossible for inputs to change the background of the labels when they're toggled. I haven't found an easy solution to that issue yet. This website page is using the result of this test. (The buttons for Test One, Two, and Three)
+            </blockquote>
+            
+            <div id="TestThree">
+                <div>
+                    <label class="TestThreeItemOneL" for="TestThreeItemOneR">Label: Item One</label>
+
+                    <label class="TestThreeItemTwoL" for="TestThreeItemTwoR">Label: Item Two</label>
+
+                    
+                    <label class="TestThreeItemThreeL" for="TestThreeItemThreeR">Label: Item Three</label>
+
+                    
+                    <label class="TestThreeItemFourL" for="TestThreeItemFourR">Label: Item Four</label>
+                </div>
+                
+                <input id="TestThreeItemOneR" type="radio" name="TestThree">
+                <div id="TestThreeItemOneE">
+                    <h1>Item One</h1>
+                </div>
+                
+                <input id="TestThreeItemTwoR" type="radio" name="TestThree">
+                <div id="TestThreeItemTwoE">
+                    <h1>Item Two</h1>
+                </div>
+                
+                <input id="TestThreeItemThreeR" type="radio" name="TestThree">
+                <div id="TestThreeItemThreeE">
+                    <h1>Item Three</h1>
+                </div>
+                
+                <input id="TestThreeItemFourR" type="radio" name="TestThree">
+                <div id="TestThreeItemFourE">
+                    <h1>Item Four</h1>
+                </div>
+                
+                <div>
+                    <label class="TestThreeItemOneL" for="TestThreeItemOneR">Label: Item One</label>
+
+                    <label class="TestThreeItemTwoL" for="TestThreeItemTwoR">Label: Item Two</label>
+
+                    
+                    <label class="TestThreeItemThreeL" for="TestThreeItemThreeR">Label: Item Three</label>
+
+                    
+                    <label class="TestThreeItemFourL" for="TestThreeItemFourR">Label: Item Four</label>
+                </div>
+            </div>
+            
+            <div>
+                <h1>HTML Codes</h1>
+                <pre>
+                    &lt;div&gt;
+                        &lt;label class="TestThreeItemOneL" for="TestThreeItemOneR"&gt;Label: Item One&lt;/label&gt;
+                        &lt;label class="TestThreeItemTwoL" for="TestThreeItemTwoR"&gt;Label: Item Two&lt;/label&gt;
+                        &lt;label class="TestThreeItemThreeL" for="TestThreeItemThreeR"&gt;Label: Item Three&lt;/label&gt;
+                        &lt;label class="TestThreeItemFourL" for="TestThreeItemFourR"&gt;Label: Item Four&lt;/label&gt;
+                    &lt;/div&gt;
+                
+                    &lt;input id="TestThreeItemOneR" type="radio" name="TestThree"&gt;
+                    &lt;div id="TestThreeItemOneE"&gt;
+                        &lt;h1&gt;Item One&lt;/h1&gt;
+                    &lt;/div&gt;
+
+                    &lt;input id="TestThreeItemTwoR" type="radio" name="TestThree"&gt;
+                    &lt;div id="TestThreeItemTwoE"&gt;
+                        &lt;h1&gt;Item Two&lt;/h1&gt;
+                    &lt;/div&gt;
+
+                    &lt;input id="TestThreeItemThreeR" type="radio" name="TestThree"&gt;
+                    &lt;div id="TestThreeItemThreeE"&gt;
+                        &lt;h1&gt;Item Three&lt;/h1&gt;
+                    &lt;/div&gt;
+
+                    &lt;input id="TestThreeItemFourR" type="radio" name="TestThree"&gt;
+                    &lt;div id="TestThreeItemFourE"&gt;
+                        &lt;h1&gt;Item Four&lt;/h1&gt;
+                    &lt;/div&gt;
+
+                    &lt;div&gt;
+                        &lt;label class="TestThreeItemOneL" for="TestThreeItemOneR"&gt;Label: Item One&lt;/label&gt;
+                        &lt;label class="TestThreeItemTwoL" for="TestThreeItemTwoR"&gt;Label: Item Two&lt;/label&gt;
+                        &lt;label class="TestThreeItemThreeL" for="TestThreeItemThreeR"&gt;Label: Item Three&lt;/label&gt;
+                        &lt;label class="TestThreeItemFourL" for="TestThreeItemFourR"&gt;Label: Item Four&lt;/label&gt;
+                    &lt;/div&gt;
+                </pre>
+            </div>
+            
+            <div>
+                <h1>CSS Codes</h1>
+                <pre>
+                    #TestThree{
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-around;
+                        align-items: center;
+                        border: 5px green solid;
+                        padding: 10px;
+                    }
+
+                    #TestThree div{
+                        margin: 10px 0px 10px 0px;
+                    }
+
+                    #TestThree label{
+                        font-size: 2em;
+                        margin: 10px auto 10px;
+                        width: 130px;
+                        padding: 10px;
+                    }
+
+                    #TestThreeInputLayout{
+                        padding: 20px;
+                    }
+
+
+                    #TestThreeItemOneR:checked ~ #TestThreeItemOneE{
+                        background-color: red;
+                    }
+
+                    #TestThreeItemOneR:checked ~ .TestThreeItemOneL{
+                        background-color: blue;
+                    }
+
+                    #TestThreeItemTwoR:checked ~ #TestThreeItemTwoE{
+                        background-color: red;
+                    }
+
+                    #TestThreeItemTwoR:checked ~ .TestThreeItemTwoL{
+                        background-color: blue;
+                    }
+
+                    #TestThreeItemThreeR:checked ~ #TestThreeItemThreeE{
+                        background-color: red;
+                    }
+
+                    #TestThreeItemThreeR:checked ~ .TestThreeItemThreeL{
+                        background-color: blue;
+                    }
+
+                    #TestThreeItemFourR:checked ~ #TestThreeItemFourE{
+                        background-color: red;
+                    }
+
+                    #TestThreeItemFourR:checked ~ .TestThreeItemFourL{
+                        background-color: blue;
+                    }
+                </pre>
+            </div>
+            
+        </section>
+   
+	</body>
+</html>
