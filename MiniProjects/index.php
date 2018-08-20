@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
 	<title>Dillon Simeone</title>
-	<link href="https://people.rit.edu/dys8701/Prototypes/Styles/style.css" rel="stylesheet">
+	<link href="./style.css" rel="stylesheet">
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 </head> 
 	<body>
-	
         <section>
             <a href="CheckboxHack/index.html"><h1>Checkbox Hack</h1></a>
             <p>My research into how to fake onclick events using only HTML5 and CSS. I wanted to see how easily I could avoid JavaScript.</p>
