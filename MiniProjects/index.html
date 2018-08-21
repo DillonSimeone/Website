@@ -6,7 +6,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 </head> 
-	<body onload="masonry();" onresize="masonry();">
+	<body onload="masonry();">
         <section>
             <h1>MiniProjects</h1>
             <p>
@@ -20,6 +20,9 @@
                         <p>
                             I was playing with <a href="https://grasshopper.codes/">Google's grasshopper</a> app the other day, and was somewhat impressed by how easy it was to animate SVGs using JavaScript's D3 package... And decided to play around with that idea on my desktop, only to become frustasted when attempting to get the D3 package to work with SVGs, but I discovered that if I use basic JavaScript with CSS3 stylings, I can achieve the same result easily!
                         </p>
+                        <div class="clockOuter">
+                            asdasd
+                        </div>
                     </blockquote>
                 </div>
 
@@ -53,11 +56,15 @@
                 </div>
 
                 <div class = "grid-item">
-                    <h1><a href="./GrandFatherClock/playground.html">Grandfather Clock</a></h1>
+                    <h1>Keyframes</h1>
                     <blockquote>
                         <p>
-                            Soon as I learned how to make Keyframe animations with CSS3, this was the result! Fun!
+                            Keyframe doodles here! The grandfather clock is my first Keyframe doodle, which I pretty much made right away after learning about CSS keyframes for the first time. So easy, and customizable!
                         </p>
+                        <ul>
+                            <li><a href="./GrandFatherClock/playground.html">Grandfather Clock</a></li>
+                            <li><a href="./TickingMovement/index.html">Steps</a></li>
+                        </ul>
                     </blockquote>
                 </div>
 
@@ -134,9 +141,11 @@
             <div class="grid">
                 <h1>Project Ideas</h1>
                 <div class = "grid-item">
-                    <h2>Steam Interface</h2>
+                    <h1>Steam Interface</h1>
                     <blockquote>
-                        Design a custom website that uses Steam's APIs to make a better search engine. Steam's GUIs are very basic, and lacks a lot of functions... Due to that, it can be hard to find new and interesting games that you haven't already seen. I've dug up a few too much overlooked gems to not consider attempting to design something better.
+                        <p>
+                            Design a custom website that uses Steam's APIs to make a better search engine. Steam's GUIs are very basic, and lacks a lot of functions... Due to that, it can be hard to find new and interesting games that you haven't already seen. I've dug up a few too much overlooked gems to not consider attempting to design something better.
+                        </p>
                         <ul>
                             <li><a href="https://steamcommunity.com/dev">Steam API</a></li>
                             <li><a href="https://partner.steamgames.com/doc/webapi_overview">Steam API documentions</a></li>
@@ -147,6 +156,7 @@
         </section>
         <script src="masonry.pkgd.min.js"></script>
         <script>
+            
             var elem = document.querySelector('.grid');
                 var msnry = new Masonry( elem, {
                   // options
@@ -154,11 +164,23 @@
                     columnWidth: '.grid-item',
                     percentPosition: true,
                     gutter: 10,
-                    isFitWidth: true
                 });
+            
             function masonry(){
                 msnry.layout();
             };
+            
+            function gridItemsHeaderColorSet(){
+                targets = document.getElementsByClassName("grid-item");
+                for(let i = 0; i < targets.length; i++){
+                    let r = 100 + (Math.random() * 155);
+                    let g = 100 + (Math.random() * 155);
+                    let b = 100 + (Math.random() * 155);
+                    targets[i].children[0].style.backgroundColor = "rgb(" + r + "," + g + "," + b + ")";
+                }
+            };
+            
+            gridItemsHeaderColorSet();
         </script>
 	</body>
 </html>

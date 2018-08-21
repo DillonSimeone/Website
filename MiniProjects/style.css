@@ -3,18 +3,27 @@ body, html{
     margin: 0;
     padding: 0;
 }
+p{
+    font-size: 10pt;
+}
+
 section{
     width: 90%;
     margin: auto;
 }
 
 .grid-item{
-    width: 30%;
+    max-width: 30%;
 }
 
 .grid-item{
     margin: 10px auto 10px auto;
     border: 5px solid black;
+    transition: all 1s;
+}
+
+.grid-item:hover{
+    border: 5px solid red;
 }
 
 .grid-item h1{
@@ -24,7 +33,12 @@ section{
 }
 
 .grid{
-    width: 90%;
-    margin:0 auto;
-    
+    max-width: 90%;
+    margin: 0 auto;
+}
+
+@media all and (max-width: 1500px) {
+    .grid-item, .grid{
+        max-width: 100%;
+    }
 }
