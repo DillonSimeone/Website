@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Amazing Title</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        <
+    </style>
+</head> 
+	<body>
+        <script src="trianglify.min.js"></script>
+        <script>
+            var pattern = Trianglify({
+                width: window.innerWidth,
+                height: window.innerHeight,
+                seed: seed
+            });
+            var seed = "ABC";
+            var variance = 0;
+            var flag = 0;
+            
+            document.body.appendChild(pattern.canvas());
+            var backgroundCanvas = document.getElementsByTagName("canvas")[0];
+            
+            
+            function clearBackground(){
+                let c = backgroundCanvas.getContext("2d");
+                c.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+            };
+            
+            function randomBackground(){
+                
+                if(variance > 1)
+                    flag = 1;
+                
+                if(variance < 0)
+                    flag = 0;
+                
+                if(flag === 1)
+                    variance += 0.01;
+                else
+                    variance -= 0.01;
+                    
+                
+                console.log(variance);
+                
+                pattern = Trianglify({
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    seed: seed,
+                    variance: variance
+                });
+                pattern.canvas(backgroundCanvas);
+                setTimeout(function(){randomBackground();}, 10);
+            };
+            randomBackground();
+        </script>
+	</body>
+</html>

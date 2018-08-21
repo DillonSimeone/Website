@@ -6,7 +6,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 </head> 
-	<body onload="masonry();">
+	<body onload="masonry();" onresize="reponsiveMasonry();">
         <section>
             <h1>MiniProjects</h1>
             <p>
@@ -20,9 +20,9 @@
                         <p>
                             I was playing with <a href="https://grasshopper.codes/">Google's grasshopper</a> app the other day, and was somewhat impressed by how easy it was to animate SVGs using JavaScript's D3 package... And decided to play around with that idea on my desktop, only to become frustasted when attempting to get the D3 package to work with SVGs, but I discovered that if I use basic JavaScript with CSS3 stylings, I can achieve the same result easily!
                         </p>
-                        <div class="clockOuter">
-                            asdasd
-                        </div>
+                        <ul>
+                            <li><a href="./trianglify/index.html">Playing with Trianglify Library</a></li>
+                        </ul>
                     </blockquote>
                 </div>
 
@@ -169,6 +169,11 @@
             function masonry(){
                 msnry.layout();
             };
+            
+            //If you suddenly resize the browser from narrow to wide, masonry might stay just as one column. This fixes that.
+            function reponsiveMasonry(){
+                setTimeout(function(){msnry.layout();}, 1000);
+            }
             
             function gridItemsHeaderColorSet(){
                 targets = document.getElementsByClassName("grid-item");
