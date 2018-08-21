@@ -6,121 +6,159 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 </head> 
-	<body>
+	<body onload="masonry();" onresize="masonry();">
         <section>
             <h1>MiniProjects</h1>
             <p>
                 Most of what you see on this page are barely more than code doodles.
             </p>
             
-            <h2><a href="./Breath/index.html">SVG fun</a></h2>
-            <blockquote>
-                <p>
-                    I was playing with <a href="https://grasshopper.codes/">Google's grasshopper</a> app the other day, and was somewhat impressed by how easy it was to animate SVGs using JavaScript's D3 package... And decided to play around with that idea on my desktop, only to become frustasted when attempting to get the D3 package to work with SVGs, but I discovered that if I use basic JavaScript with CSS3 stylings, I can achieve the same result easily!
-                </p>
-            </blockquote>
-            
-            <h2><a href="./ThreeJs/index.html">ThreeJs</a></h2>
-            <blockquote>
-                <p>
-                    I became very interested in <a href="https://threejs.org/">ThreeJS</a> when I discovered that the library had support for VR gears. I thought, why not make a personal world instead of a personal website, like in those weird japan animes? This "Hello World" experiment with ThreeJs showed me that the learning curve with this library is very gentle. It's easy to do anything with ThreeJS, just read the documentions! It's very well documented, and there's PLENTY examples to reverse-engineer for whatever you need!
-                </p>
-                <p>
-                    Move around using the WASD keys. There's fun settings and drop-downs in the menu in the upper right corner to play with too.
-                </p>
-            </blockquote>
-            
-            <h2><a href="./CircleOfLife/index.html">Circle</a></h2>
-            <blockquote>
-                <p>
-                    On a whim, I decided to try to find a way to arrange texts into a circle. I thought it would be easy... It wasn't easy at all! Some trigonometry was required to arrange everything into circle. The result of this miniproject is that I now have a very easily reuseable snippet of code that can arrange anything into circles... If I wanted to, I could make it recursive, circles all the way down and up!
-                </p>
-                <p>
-                    I've used the circle snippet I made when redoing one of my old course homeworks for fun, see details below.
-                </p>
-                <ul>
-                    <li><a href="../CollegeCourses/web2/Homeworks/HW10/GradingRubrics.jpg">Homework 10 Grading Rubrics</a></li>
-                    <li><a href="../CollegeCourses/web2/Homeworks/HW10/index.html">Homework 10 (First Attempt)</a></li>
-                    <li><a href="./Web2Homework10Redo/index.html">Homework 10 (Second Attempt)</a></li>
-                </ul>
-            </blockquote>
-            
-            <h2><a href="./GrandFatherClock/playground.html">Grandfather Clock</a></h2>
-            <blockquote>
-                <p>
-                    Soon as I learned how to make Keyframe animations with CSS3, this was the result! Fun!
-                </p>
-            </blockquote>
-            
-            <h2><a href="./CheckboxHack/index.html">Checkbox Hack</a></h2>
-            <blockquote>
-                <p>
-                    I heard that by cheesing how HTML and CSS works, you can make onclick events to occur without using any scripting languages. This miniproject is my attempt at the checkbox hack.
-                </p>
-                <p>
-                    The checkbox hack is a VERY interesting approach to accessibility. It's bad semantics, but it's very dobable to design websites that fake onclick events by using the checkbox hacks. The main drawback is that it will not degrace gracefully when used in older browsers... Instead of degrading in any ways, it would just break, completely!
-                </p>
-            </blockquote>
-            
-            <h2><a href="./MovingPopUp/Trap.html">Moving Popup</a></h2>
-            <blockquote>
-                <p>
-                    I was inspired by a random attack by randsomwares and annoying pop-ups on a website to see how annoying I could make those pop-ups to be! What I came up with is a pop-up that, soon as it's spawned, start running around the screen making it very frustrating to try to close the pop-up.
-                </p>
-                <p>
-                    One big thing I learned from this miniproject was that pop-ups can only be triggered by the client's actions, limited to a single pop-up per action, so you can't for example, cause thousands of pop-ups to appear on a single click.
-                </p>
-                <p>
-                    I found a few ways to completely lock up the browser in a way where the task manager is needed to kill the browser... Because that vector of attack is so annoying, I'm not posting it here! The one I'm making public is harmless, you can stop the pop-up window from moving by closing the website page that spawned the pop-up. 
-                </p>
-            </blockquote>
-            
-            <h2><a href="./MediaLayout/index.html">Flex Layout Practice</a></h2>
-            <blockquote>
-                <p>
-                    <a href="https://css-tricks.com/snippets/css/a-guide-to-flexbox/">Flexbox</a> layouts are awesome! It made making this goofy site very easy! I didn't have to worry about screen sizes, etc... Flex takes care of all of that!
-                </p>
-                <p>
-                    I barely remember this <a href="Restaurant/index.html">website page</a> I made, but it's vaugely related to flexbox!
-                </p>
-            </blockquote>
-            
-            <h2>Browser Detector</h2>
-            <blockquote>
-                <p>
-                    I made this prototype a long time ago when someone asked me if I could get more infomation about their vistors without using third-party scripts. It was much easier than I expected. I did it in both PHP and JavaScript. With PHP, it was much easier to extract infomation about visters, and it was easy to set the script to email me asking me to update it when it encounters a new type of browser and devices.
-                </p>
-                <ul>
-                    <li><a href="./BrowserDetect/BrowserDetectJavaScript.html">JavaScript Browser Detect</a></li>
-                    <li><a href="./BrowserDetect/BrowserDetectPHP.php">PHP Browser Detect</a></li>
-                </ul>
-            </blockquote>
-            
-            <h2><a href=""></a>JavaScript Text Adventure</h2>
-            <blockquote>
-                <p>
-                    A random idea I came up with for a class project when on the topic of dynamic programming. This short text adventure was made to test how easy it is to implement. It turned out to be nearly effortless to make the whole thing once you've planned out the routes.
-                </p>
-                <ul>
-                    <li><a href="./ChooseYourAdventure/ChooseYourOwnAdventurePrototype1.html">Prototype1</a></li>
-                    <li><a href="./ChooseYourAdventure/ChooseYourOwnAdventurePrototype2.html">Prototype2</a></li>
-                    <li><a href="./ChooseYourAdventure/ChooseYourOwnAdventurePrototype3.html">Prototype3</a></li>
-                    <li><a href="./ChooseYourAdventure/ChooseYourOwnAdventurePrototype4.html">Prototype4</a></li>
-                </ul>
-            </blockquote>
-            
+            <div class="grid">
+                <div class = "grid-item">
+                    <h1><a href="./Breath/index.html">SVG fun</a></h1>
+                    <blockquote>
+                        <p>
+                            I was playing with <a href="https://grasshopper.codes/">Google's grasshopper</a> app the other day, and was somewhat impressed by how easy it was to animate SVGs using JavaScript's D3 package... And decided to play around with that idea on my desktop, only to become frustasted when attempting to get the D3 package to work with SVGs, but I discovered that if I use basic JavaScript with CSS3 stylings, I can achieve the same result easily!
+                        </p>
+                    </blockquote>
+                </div>
+
+                <div class = "grid-item">
+                    <h1><a href="./ThreeJs/index.html">ThreeJs</a></h1>
+                    <blockquote>
+                        <p>
+                            I became very interested in <a href="https://threejs.org/">ThreeJS</a> when I discovered that the library had support for VR gears. I thought, why not make a personal world instead of a personal website, like in those weird japan animes? This "Hello World" experiment with ThreeJs showed me that the learning curve with this library is very gentle. It's easy to do anything with ThreeJS, just read the documentions! It's very well documented, and there's PLENTY examples to reverse-engineer for whatever you need!
+                        </p>
+                        <p>
+                            Move around using the WASD keys. There's fun settings and drop-downs in the menu in the upper right corner to play with too.
+                        </p>
+                    </blockquote>
+                </div>
+
+                <div class = "grid-item">
+                    <h1><a href="./CircleOfLife/index.html">Circle</a></h1>
+                    <blockquote>
+                        <p>
+                            On a whim, I decided to try to find a way to arrange texts into a circle. I thought it would be easy... It wasn't easy at all! Some trigonometry was required to arrange everything into circle. The result of this miniproject is that I now have a very easily reuseable snippet of code that can arrange anything into circles... If I wanted to, I could make it recursive, circles all the way down and up!
+                        </p>
+                        <p>
+                            I've used the circle snippet I made when redoing one of my old course homeworks for fun, see details below.
+                        </p>
+                        <ul>
+                            <li><a href="../CollegeCourses/web2/Homeworks/HW10/GradingRubrics.jpg">Homework 10 Grading Rubrics</a></li>
+                            <li><a href="../CollegeCourses/web2/Homeworks/HW10/index.html">Homework 10 (First Attempt)</a></li>
+                            <li><a href="./Web2Homework10Redo/index.html">Homework 10 (Second Attempt)</a></li>
+                        </ul>
+                    </blockquote>
+                </div>
+
+                <div class = "grid-item">
+                    <h1><a href="./GrandFatherClock/playground.html">Grandfather Clock</a></h1>
+                    <blockquote>
+                        <p>
+                            Soon as I learned how to make Keyframe animations with CSS3, this was the result! Fun!
+                        </p>
+                    </blockquote>
+                </div>
+
+                <div class = "grid-item">
+                    <h1><a href="./CheckboxHack/index.html">Checkbox Hack</a></h1>
+                    <blockquote>
+                        <p>
+                            I heard that by cheesing how HTML and CSS works, you can make onclick events to occur without using any scripting languages. This miniproject is my attempt at the checkbox hack.
+                        </p>
+                        <p>
+                            The checkbox hack is a VERY interesting approach to accessibility. It's bad semantics, but it's very dobable to design websites that fake onclick events by using the checkbox hacks. The main drawback is that it will not degrace gracefully when used in older browsers... Instead of degrading in any ways, it would just break, completely!
+                        </p>
+                    </blockquote>
+                </div>
+
+                <div class = "grid-item">
+                    <h1><a href="./MovingPopUp/Trap.html">Moving Popup</a></h1>
+                    <blockquote>
+                        <p>
+                            I was inspired by a random attack by randsomwares and annoying pop-ups on a website to see how annoying I could make those pop-ups to be! What I came up with is a pop-up that, soon as it's spawned, start running around the screen making it very frustrating to try to close the pop-up.
+                        </p>
+                        <p>
+                            One big thing I learned from this miniproject was that pop-ups can only be triggered by the client's actions, limited to a single pop-up per action, so you can't for example, cause thousands of pop-ups to appear on a single click.
+                        </p>
+                        <p>
+                            I found a few ways to completely lock up the browser in a way where the task manager is needed to kill the browser... Because that vector of attack is so annoying, I'm not posting it here! The one I'm making public is harmless, you can stop the pop-up window from moving by closing the website page that spawned the pop-up. 
+                        </p>
+                    </blockquote>
+                </div>
+
+                <div class = "grid-item">
+                    <h1><a href="./MediaLayout/index.html">Flex Layout Practice</a></h1>
+                    <blockquote>
+                        <p>
+                            <a href="https://css-tricks.com/snippets/css/a-guide-to-flexbox/">Flexbox</a> layouts are awesome! It made making this goofy site very easy! I didn't have to worry about screen sizes, etc... Flex takes care of all of that!
+                        </p>
+                        <p>
+                            I barely remember this <a href="Restaurant/index.html">website page</a> I made, but it's vaugely related to flexbox!
+                        </p>
+                    </blockquote>
+                </div>
+
+                <div class = "grid-item">
+                    <h1>Browser Detector</h1>
+                    <blockquote>
+                        <p>
+                            I made this prototype a long time ago when someone asked me if I could get more infomation about their vistors without using third-party scripts. It was much easier than I expected. I did it in both PHP and JavaScript. With PHP, it was much easier to extract infomation about visters, and it was easy to set the script to email me asking me to update it when it encounters a new type of browser and devices.
+                        </p>
+                        <ul>
+                            <li><a href="./BrowserDetect/BrowserDetectJavaScript.html">JavaScript Browser Detect</a></li>
+                            <li><a href="./BrowserDetect/BrowserDetectPHP.php">PHP Browser Detect</a></li>
+                        </ul>
+                    </blockquote>
+                </div>
+
+                <div class = "grid-item">
+                    <h1><a href=""></a>JavaScript Text Adventure</h1>
+                    <blockquote>
+                        <p>
+                            A random idea I came up with for a class project when on the topic of dynamic programming. This short text adventure was made to test how easy it is to implement. It turned out to be nearly effortless to make the whole thing once you've planned out the routes.
+                        </p>
+                        <ul>
+                            <li><a href="./ChooseYourAdventure/ChooseYourOwnAdventurePrototype1.html">Prototype1</a></li>
+                            <li><a href="./ChooseYourAdventure/ChooseYourOwnAdventurePrototype2.html">Prototype2</a></li>
+                            <li><a href="./ChooseYourAdventure/ChooseYourOwnAdventurePrototype3.html">Prototype3</a></li>
+                            <li><a href="./ChooseYourAdventure/ChooseYourOwnAdventurePrototype4.html">Prototype4</a></li>
+                        </ul>
+                    </blockquote>
+                </div>
+            </div>
         </section>
         
         <section>
-            <h1>Project Ideas</h1>
-            <h2>Steam Interface</h2>
-            <blockquote>
-                Design a custom website that uses Steam's APIs to make a better search engine. Steam's GUIs are very basic, and lacks a lot of functions... Due to that, it can be hard to find new and interesting games that you haven't already seen. I've dug up a few too much overlooked gems to not consider attempting to design something better.
-                <ul>
-                    <li><a href="https://steamcommunity.com/dev">Steam API</a></li>
-                    <li><a href="https://partner.steamgames.com/doc/webapi_overview">Steam API documentions</a></li>
-                </ul>
-            </blockquote>
+            <div class="grid">
+                <h1>Project Ideas</h1>
+                <div class = "grid-item">
+                    <h2>Steam Interface</h2>
+                    <blockquote>
+                        Design a custom website that uses Steam's APIs to make a better search engine. Steam's GUIs are very basic, and lacks a lot of functions... Due to that, it can be hard to find new and interesting games that you haven't already seen. I've dug up a few too much overlooked gems to not consider attempting to design something better.
+                        <ul>
+                            <li><a href="https://steamcommunity.com/dev">Steam API</a></li>
+                            <li><a href="https://partner.steamgames.com/doc/webapi_overview">Steam API documentions</a></li>
+                        </ul>
+                    </blockquote>
+                </div>
+            </div>
         </section>
+        <script src="masonry.pkgd.min.js"></script>
+        <script>
+            var elem = document.querySelector('.grid');
+                var msnry = new Masonry( elem, {
+                  // options
+                    itemSelector: '.grid-item',
+                    columnWidth: '.grid-item',
+                    percentPosition: true,
+                    gutter: 10,
+                    isFitWidth: true
+                });
+            function masonry(){
+                msnry.layout();
+            };
+        </script>
 	</body>
 </html>

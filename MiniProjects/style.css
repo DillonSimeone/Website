@@ -1,37 +1,30 @@
-html, body{
-	padding: 0px;
-	margin: 0px;
-}
-
-body{
-	background-image: url("./media/Circuit_faded.png");
-	background-size: 10% 5%;
-}
-
-section{
-    background-color: rgba(255, 255, 255, 0.9);
-	width: 80%;
-	margin: 10px auto 10px auto;
-	border: 5px solid black;
-    border-radius: 10px;
-	padding: 10px;
-}
-
-section h1{
-	text-align: center;
-	font-size: 2em;
-    padding: 0;
+body, html{
+    width: 100%;
     margin: 0;
-
+    padding: 0;
+}
+section{
+    width: 90%;
+    margin: auto;
 }
 
-section h2{
-	border-bottom: 5px dashed black;
-    margin-left: -2%;
+.grid-item{
+    width: 30%;
+}
+
+.grid-item{
+    margin: 10px auto 10px auto;
+    border: 5px solid black;
+}
+
+.grid-item h1{
+    border-bottom: 1px solid black;
     padding: 10px;
-    background-color: white;
-    border-right: 5px solid black;
-    border-left: 5px solid black;
-    border-top: 5px solid black;
-    border-radius: 10px;
+    margin: 0;
+}
+
+.grid{
+    width: 90%;
+    margin:0 auto;
+    
 }
