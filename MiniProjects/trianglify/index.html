@@ -5,101 +5,63 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body {
-          background: #303030;
-        }
-        .circle {
-          width: 400px;
-          height: 400px;
-        }
-        path {
-          fill: transparent;
-          transform-origin: center bottom;
-          transition: all 1s;
-        }
-        .invisible {
-          opacity: 0.05;
-        }
+        <
     </style>
 </head> 
 	<body>
-        <div class="trianglify"></div>
-        <div class="circle"></div>
         <script src="trianglify.min.js"></script>
         <script>
-            var cells = Math.ceil(window.innerHeight/10);
-            var reveal = Math.ceil(window.innerWidth/3);
-            
+            var seed = "ABC";
+            var variance = 0.6;
+            var flag = 1;
+            var cellSize = 200;
             var pattern = Trianglify({
-              width: window.innerWidth,
-              height: window.innerHeight,
-              cell_size: cells,
-              variance: 1
-            }).svg(); // Render as SVG.
-
-            // Add pattern to DOM.
-            var container = document.querySelector('.trianglify');
-            container.insertBefore(pattern, container.firstChild);
-
-            // Get all pattern polygons.
-            var polyArray = [].slice.call(pattern.children);
-
-            // Get polygon coords and hide them.
-            var polyPoints = polyArray.map(function(poly) {
-              poly.classList.add('poly', 'invisible');
-              var rect = poly.getBoundingClientRect();
-              var point = {
-                x: rect.left + rect.width / 2,
-                y: rect.top + rect.height / 2
-              };
-              return point;
+                width: window.innerWidth,
+                height: window.innerHeight,
+                cell_size: cellSize,
+                seed: seed
             });
             
-            // Get circle for hover.
-            var circle = document.querySelector('.circle');
-            document.addEventListener('mousemove', onMouseMove);
-            //circle.addEventListener(document.removeEventListener('mousemove', onMouseMove));
-
-            function onMouseMove(e) {
-              var radius = circle.clientWidth / 2;
-              var center = {
-                x: e.clientX,
-                y: e.clientY
-              };
-                
-              var circleCenter = {
-                x: center.x - radius,
-                y: center.y - radius
-              };
-                
-                
-              circle.setAttribute('style', 'transform: translate(' + 
-                                  circleCenter.x + 'px, ' + 
-                                  circleCenter.y + 'px)');
-              polyPoints.forEach(function(point, i) {
-                // Swap if to invert the effect.
-                if (detectPointInCircle(point, radius, center)) {
-                    polyArray[i].classList.remove('invisible');
-                    polyArray[i].style.stroke = "rgb(" + randomColor() + "," + randomColor() + "," + randomColor() + ")";
-                } else {
-                  polyArray[i].classList.add('invisible');
-                }
-              });
-            };
-
-            function detectPointInCircle(point, radius, center) {
-              var xp = point.x;
-              var yp = point.y;
-              var xc = center.x;
-              var yc = center.y;
-              var d = radius * radius;
-              var isInside = Math.pow(xp - xc, 2) + Math.pow(yp - yc, 2) <= d;
-              return isInside;
+            document.body.appendChild(pattern.canvas());
+            var backgroundCanvas = document.getElementsByTagName("canvas")[0];
+            
+            
+            function clearBackground(){
+                let c = backgroundCanvas.getContext("2d");
+                c.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
             };
             
-            function randomColor(min){
-                return Math.floor(Math.random() * 255);
+            function randomBackground(){
+                
+                if(variance > 0.7)
+                    flag = 1;
+                
+                if(variance < 0.6)
+                    flag = 0;
+                
+                if(flag === 1)
+                    variance = variance - 0.002;
+                else
+                    variance = variance + 0.002;
+                
+                let points = [];
+                for(let i = 0; i < 100; i++){
+                    let x = window.innerWidth * Math.random();
+                    let y = window.innerHeight * Math.random();
+                    points.push(x, y);
+                }
+                
+                pattern = Trianglify({
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    seed: seed,
+                    cell_size: cellSize,
+                    variance: variance
+                });
+                pattern.canvas(backgroundCanvas);
+                setTimeout(function(){randomBackground();}, 10);
             };
+            randomBackground();
         </script>
 	</body>
 </html>
