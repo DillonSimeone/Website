@@ -11,14 +11,16 @@
 	<body>
         <script src="trianglify.min.js"></script>
         <script>
+            var seed = "ABC";
+            var variance = 0.6;
+            var flag = 1;
+            var cellSize = 200;
             var pattern = Trianglify({
                 width: window.innerWidth,
                 height: window.innerHeight,
+                cell_size: cellSize,
                 seed: seed
             });
-            var seed = "ABC";
-            var variance = 0;
-            var flag = 0;
             
             document.body.appendChild(pattern.canvas());
             var backgroundCanvas = document.getElementsByTagName("canvas")[0];
@@ -31,24 +33,29 @@
             
             function randomBackground(){
                 
-                if(variance > 1)
+                if(variance > 0.7)
                     flag = 1;
                 
-                if(variance < 0)
+                if(variance < 0.5)
                     flag = 0;
                 
                 if(flag === 1)
-                    variance += 0.01;
+                    variance = variance - 0.002;
                 else
-                    variance -= 0.01;
-                    
+                    variance = variance + 0.002;
                 
-                console.log(variance);
+                let points = [];
+                for(let i = 0; i < 100; i++){
+                    let x = window.innerWidth * Math.random();
+                    let y = window.innerHeight * Math.random();
+                    points.push(x, y);
+                }
                 
                 pattern = Trianglify({
                     width: window.innerWidth,
                     height: window.innerHeight,
                     seed: seed,
+                    cell_size: cellSize,
                     variance: variance
                 });
                 pattern.canvas(backgroundCanvas);
