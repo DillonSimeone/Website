@@ -1,0 +1,39 @@
+body {
+    background: #303030;
+}
+.circle {
+    width: 400px;
+    height: 400px;
+    }
+path {
+    fill: transparent;
+    transform-origin: center bottom;
+    transition: all 1s;
+}
+.invisible {
+    opacity: 0.05;
+}
+.trianglify{
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -9999;
+    overflow: hidden;
+}
+.item{
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    margin: auto;
+    width: auto;
+    z-index: 999;
+}
+
+.item h1{
+    margin: auto;
+    text-align: center;
+}
+
+.circle {
+            width: 30%;
+            height: 30%;
+        }
