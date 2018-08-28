@@ -5,15 +5,16 @@
 	<link href="./style.css" rel="stylesheet">
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Anton|Bitter|M+PLUS+Rounded+1c|Roboto+Mono" rel="stylesheet">
 </head> 
-	<body>
+	<body onresize="redraw();">
         <header>
-            <h1>Dillon Simeone</h1>
-            <blockquote>
+            <h1 id="name">Dillon Simeone</h1>
+            <p>
                 A Web and Mobile Computing junior with a focus on the programming side of everything.
-            </blockquote>
+            </p>
         </header>
-        <div class = "masonry">
+        <div class = "items">
             <div class = "item">
                 <h1><a href="">Projects</a></h1>
                 <blockquote>
@@ -27,10 +28,37 @@
                 </blockquote>
             </div>
             <div class = "item">
+                <h1><a href="">About Me</a></h1>
+                <blockquote>
+                    Random Dillon facts.
+                </blockquote>
+            </div>
+            <div class = "item">
                 <h1><a href="">Courseworks</a></h1>
                 <blockquote>
                     A collection of my old courseworks. Not recommanded to look through this junk pile.
                 </blockquote>
+            </div>
+        </div>
+        <div>
+        </div>
+        <div class = "about">
+            <h1>Dillon Facts</h1>
+            <div>
+                <h2>Dillon Likes</h2>
+                <p>...</p>
+            </div>
+            <div>
+                <h2>Dillon Dislikes</h2>
+                <p>...</p>
+            </div>
+            <div>
+                <h2>Dillon's Hobbies includes</h2>
+                <p>...</p>
+            </div>
+            <div>
+                <h2>Dillon's Interests</h2>
+                <p>...</p>
             </div>
         </div>
         <div class="trianglify">
@@ -38,64 +66,104 @@
         </div>
         <script src="trianglify.min.js"></script>
         <script>
-            //Makes it so all screens looks similar no matter what their sizes are.
-            var cells = Math.ceil(window.innerHeight/15);
+            let polyPoints, polyArray, circleHover;
+            let container = document.querySelector('.trianglify');
+            //This makes it so nothing happens until user is done resizing.
+            let resize;
+            function redraw(){
+                clearTimeout(resize);
+                resize = setTimeout(
+                    function(){
+                        draw();
+                    }, 500
+                );
+            };
             
-            var pattern = Trianglify({
-              width: window.innerWidth,
-              height: window.innerHeight,
-              cell_size: cells,
-              variance: 1
-            }).svg(); // Render as SVG.
+            function draw(){
+                let cells = Math.ceil(window.innerHeight/7);
+                
+                
+                let pattern = Trianglify({
+                  width: window.innerWidth,
+                  height: window.innerHeight,
+                  cell_size: cells,
+                  variance: 1,
+                  stroke_width: 0.5
+                }).svg(); // Render as SVG.
+                
+                let circleElement = document.createElement("div");
+                circleElement.className = "circle";
+                
+                //Clears out old stuff.
+                container.innerHTML = "";
+                container.insertBefore(pattern, container.firstChild);
+                container.appendChild(circleElement);
+                //For mouse movement events. This is more efficient instead of having this ran on each mouse movement.
+                circleHover = document.querySelector('.circle');
+                
+                
+                polyArray = [].slice.call(pattern.children);
+                
+                // Get polygon coords and hide them.
+                polyPoints = polyArray.map(function(poly) {
+                  poly.classList.add('poly', 'fade');
+                  let rect = poly.getBoundingClientRect();
+                  let point = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                  };
+                  return point;
+                });
+                
+                randomizeFillColor(polyPoints, polyArray);
+                ItemColors(150, 0.9);
+                
+                //Clear out old listeners if any exists. With JQuery, I once learned the hard way that JQuery didn't remove old eventListeners when attempting to overwrite them, resulting in n events being fired each time for whatever, where n is the number of new events being created. Vanilla JavaScript appears to not have this issue, but I'm removing the listener anyway because I lost like a half day to that JQuery event listener thingy!
+                document.removeEventListener('mousemove', onMouseMove);
+                //New listener for new circle and screensize.
+                document.addEventListener('mousemove', onMouseMove);
+                
+            };
+            draw();
 
-            // Add pattern to DOM.
-            var container = document.querySelector('.trianglify');
-            container.insertBefore(pattern, container.firstChild);
-
-            // Get all pattern polygons.
-            var polyArray = [].slice.call(pattern.children);
-
-            // Get polygon coords and hide them.
-            var polyPoints = polyArray.map(function(poly) {
-              poly.classList.add('poly', 'invisible');
-              var rect = poly.getBoundingClientRect();
-              var point = {
-                x: rect.left + rect.width / 2,
-                y: rect.top + rect.height / 2
-              };
-              return point;
-            });
+            //Instead of having all polygons to show up with a single fill color until hovered over, randomize all of their colors.
+            function randomizeFillColor(polyPoints, polyArray){
+                polyPoints.forEach(function(point, i){
+                    polyArray[i].style.fill = "rgb(" + randomColor(100) + "," + randomColor(100) + "," + randomColor(100) + ")";    
+                });
+            };
             
-            // Set circle to follow mouse movements, or touches on screen.
-            var circle = document.querySelector('.circle');
-            document.addEventListener('mousemove', onMouseMove);
+            //Set circle to follow mouse movements, or touches on screen.
             
             function onMouseMove(e) {
-              var radius = circle.clientWidth / 2;
-              var center = {
-                x: e.clientX,
-                y: e.clientY
-              };
+                //Hmm. This commented out line below isn't efficient, I feel.
+                //let circle = document.querySelector('.circle');
+                var radius = circleHover.clientWidth / 2;
+                var center = {
+                    x: e.clientX,
+                    y: e.clientY
+                };
                 
-              var circleCenter = {
-                x: center.x - radius,
-                y: center.y - radius
-              };
+                var circleCenter = {
+                    x: center.x - radius,
+                    y: center.y - radius
+                };
                 
-                
-              circle.setAttribute('style', 'transform: translate(' + 
+                //Smooth movement toward mouse location in viewport.
+                circleHover.setAttribute('style', 'transform: translate(' + 
                                   circleCenter.x + 'px, ' + 
                                   circleCenter.y + 'px)');
-              polyPoints.forEach(function(point, i) {
-                // Swap if to invert the effect.
-                if (detectPointInCircle(point, radius, center)) {
-                    polyArray[i].classList.remove('invisible');
-                    polyArray[i].style.stroke = "rgb(" + randomColor() + "," + randomColor() + "," + randomColor() + ")";
-                    polyArray[i].style.fill = "rgb(" + randomColor() + "," + randomColor() + "," + randomColor() + ")";
-                } else {
-                  polyArray[i].classList.add('invisible');
-                }
-              });
+                
+                polyPoints.forEach(function(point, i) {
+                    // Swap if to invert the effect.
+                    if (detectPointInCircle(point, radius, center)) {
+                        polyArray[i].classList.remove('fade');
+                        polyArray[i].style.stroke = randomRgb(100);
+                        polyArray[i].style.fill = randomRgb(50);
+                    } else {
+                        polyArray[i].classList.add('fade');
+                    }
+                });
             };
             
             //Checks if polygons are under circle
@@ -110,8 +178,52 @@
             };
             
             function randomColor(min){
-                return Math.floor(Math.random() * 255);
+                let color = Math.floor(Math.random() * (255));
+                if (color < min)
+                    color = min;
+                return color;
             };
+            
+            function randomRgba(min, alpha){
+                return "rgba(" + randomColor(min) + "," + randomColor(min) + "," + randomColor(min) + "," + alpha + ")";
+            };
+            
+            function randomRgb(min){
+                return "rgb(" + randomColor(min) + "," + randomColor(min) + "," + randomColor(min) + ")";
+            }
+            
+            //Add random linear gradient to items.
+            function ItemColors(min, alpha){
+                targets = document.getElementsByClassName("item");
+                for(let i = 0; i < targets.length; i++){
+                    targets[i].style.background = "linear-gradient(to right, " + randomRgba(min, alpha) + " , " + randomRgba(min, alpha) + " , " + randomRgba(min, alpha) + ")";
+                    targets[i].querySelector('h1').style.backgroundColor = randomRgba(175, 0.9);
+                }
+            };
+            
+            //Wraps letters in spans and apply randomized colors.
+            function letterings(text){
+                let fancyText = "";
+                for(let i = 0; i < text.innerHTML.length; i++){
+                    fancyText += "<span>" + text.innerHTML.charAt(i) + "</span>";
+                }
+                text.innerHTML = fancyText;
+                lettersResize(text.getElementsByTagName('span'));
+                window.addEventListener('resize', function(){
+                    lettersResize(text.getElementsByTagName('span'));
+                });
+            };
+            letterings(document.getElementById('name'));
+            
+            //Makes all letters a bit different in font sizes, when still easily fitting most screens.
+            function lettersResize(targets){
+                    for(let i = 0; i < targets.length; i++){
+                        targets[i].style.color = randomRgb(100);
+                        targets[i].style.fontSize = 10 + (Math.random() * 5) + "vw";
+                    }
+                
+            }
+            
         </script>
 	</body>
 </html>
