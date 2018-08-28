@@ -1,6 +1,7 @@
 body{
     background-color: #303030;
     margin: 0;
+    overflow: hidden;
 }
 
 header{
@@ -23,7 +24,6 @@ header h1 span{
     font-family: 'M PLUS Rounded 1c', sans-serif;
     font-size: 3em;
 }
-
 
 .circle {
     width: 30%;
@@ -72,6 +72,41 @@ path {
 .circle{
     width: 20%;
     height: 20%;
+}
+
+#rightUpperCorner{
+    position: fixed;
+    top: 5%;
+    right: -20%;
+    background-color: red;
+}
+
+
+#leftLowerCorner{
+    position: fixed;
+    bottom: 5%;
+    left: -20%;    
+    background-color: blue;
+}
+
+#leftLowerCorner, #rightUpperCorner{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-content: center;
+    transform: rotate(5deg);
+    height: 60px;
+    width: 100%;
+    color: white;
+    font-size: 2em;
+    margin: 0;
+    padding-left: 10%;
+    padding-right: 10%;
+}
+
+#leftLowerCorner p, #rightUpperCorner p{
+    margin: 10px;
+    transform: rotate(-5deg);
 }
 
 @media all and (max-width: 800px) {
