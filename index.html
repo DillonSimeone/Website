@@ -117,10 +117,6 @@
         </div>
         <script src="trianglify.min.js"></script>
         <script>
-            //Dang mobiles resizing website pages when moving up!
-            document.addEventListener("touchmove", function(e) { e.preventDefault() });
-            window.scrollTo(0,1); // Hides URL bar
-            
             //This makes it so nothing happens until user is done resizing.
             let resize;
             function redraw(){
