@@ -7,15 +7,38 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 </head> 
 	<body>
-        <div class = "item">
-            <h1><a href="./MiniProjects/index.html">MiniProjects</a></h1>
+        <header>
+            <h1>Dillon Simeone</h1>
             <blockquote>
-                A collection of my code doodles.
+                A Web and Mobile Computing junior with a focus on the programming side of everything.
             </blockquote>
+        </header>
+        <div class = "masonry">
+            <div class = "item">
+                <h1><a href="">Projects</a></h1>
+                <blockquote>
+                    A collection of deployable projects.
+                </blockquote>
+            </div>
+            <div class = "item">
+                <h1><a href="./MiniProjects/index.html">MiniProjects</a></h1>
+                <blockquote>
+                    A collection of my code doodles and ideas.
+                </blockquote>
+            </div>
+            <div class = "item">
+                <h1><a href="">Courseworks</a></h1>
+                <blockquote>
+                    A collection of my old courseworks. Not recommanded to look through this junk pile.
+                </blockquote>
+            </div>
         </div>
-        <div class="trianglify"><div class="circle"></div></div>
+        <div class="trianglify">
+            <div class="circle"></div>
+        </div>
         <script src="trianglify.min.js"></script>
         <script>
+            //Makes it so all screens looks similar no matter what their sizes are.
             var cells = Math.ceil(window.innerHeight/15);
             
             var pattern = Trianglify({
@@ -43,11 +66,10 @@
               return point;
             });
             
-            // Get circle for hover.
+            // Set circle to follow mouse movements, or touches on screen.
             var circle = document.querySelector('.circle');
             document.addEventListener('mousemove', onMouseMove);
-            //circle.addEventListener(document.removeEventListener('mousemove', onMouseMove));
-
+            
             function onMouseMove(e) {
               var radius = circle.clientWidth / 2;
               var center = {
@@ -69,12 +91,14 @@
                 if (detectPointInCircle(point, radius, center)) {
                     polyArray[i].classList.remove('invisible');
                     polyArray[i].style.stroke = "rgb(" + randomColor() + "," + randomColor() + "," + randomColor() + ")";
+                    polyArray[i].style.fill = "rgb(" + randomColor() + "," + randomColor() + "," + randomColor() + ")";
                 } else {
                   polyArray[i].classList.add('invisible');
                 }
               });
             };
-
+            
+            //Checks if polygons are under circle
             function detectPointInCircle(point, radius, center) {
               var xp = point.x;
               var yp = point.y;
