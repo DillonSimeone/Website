@@ -53,14 +53,19 @@ path {
     flex-wrap: wrap;
     justify-content: space-around;
     width: 90%;
-    height: auto;
     margin: 0 auto;
 }
 
 .item{
+    position: fixed;
+    top: 10.5%;
+    height: 75.9%;
+    width: 100%;
+    transform: rotate(5deg);
     margin: 10px;
     color: white;
     border-radius: 10px;
+    border: 5px solid black;
 }
 
 .item h1{
@@ -95,13 +100,13 @@ path {
     justify-content: center;
     align-content: center;
     transform: rotate(5deg);
-    height: 60px;
+    height: 6%;
     width: 100%;
     color: white;
     font-size: 2em;
     margin: 0;
-    padding-left: 10%;
-    padding-right: 10%;
+    padding-left: 20%;
+    padding-right: 20%;
 }
 
 #leftLowerCorner p, #rightUpperCorner p{
