@@ -31,7 +31,6 @@ header h1 span{
 }
 
 path {
-    fill: transparent;
     transform-origin: center bottom;
     transition: all 1s;
 }
@@ -98,7 +97,7 @@ path {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    align-content: center;
+    align-items: center;
     transform: rotate(5deg);
     height: 6%;
     width: 100%;
@@ -107,11 +106,14 @@ path {
     margin: 0;
     padding-left: 20%;
     padding-right: 20%;
+    z-index: 9999;
+    border: 5px black solid;
 }
 
-#leftLowerCorner p, #rightUpperCorner p{
-    margin: 10px;
-    transform: rotate(-5deg);
+#leftLowerCorner svg, #rightUpperCorner svg{
+    display: block;
+    height: 100%;
+    margin: 5%;
 }
 
 @media all and (max-width: 800px) {
