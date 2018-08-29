@@ -8,44 +8,19 @@
     <link href="https://fonts.googleapis.com/css?family=Anton|Bitter|M+PLUS+Rounded+1c|Roboto+Mono" rel="stylesheet">
 </head> 
 	<body onresize="redraw();">
-        <header>
-            <h1 id="name">Dillon Simeone</h1>
-            <p>
-                A Web and Mobile Computing junior with a focus on the programming side of everything.
-            </p>
-        </header>
         <div id="rightUpperCorner" class="nav">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="pattern1" height="100%" width="100%" patternContentUnits="objectBoundingBox">
-                        <image height="1" width="1" preserveAspectRatio="none" xlink:href="http://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Gl%C3%BChwendel_brennt_durch.jpg/399px-Gl%C3%BChwendel_brennt_durch.jpg" />
-                    </pattern>
-                </defs>
-                <polygon style="stroke: #999DA3;" fill="url(#pattern1)" points="50 1 95 25 95 75 50 99 5 75 5 25"/>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('intro', this)" class="navButton">
+                <path d="M208 448V320h96v128h97.6V256H464L256 64 48 256h62.4v192z"/>
             </svg>
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="pattern1" height="100%" width="100%" patternContentUnits="objectBoundingBox">
-                        <image height="1" width="1" preserveAspectRatio="none" xlink:href="http://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Gl%C3%BChwendel_brennt_durch.jpg/399px-Gl%C3%BChwendel_brennt_durch.jpg" />
-                    </pattern>
-                </defs>
-                <polygon style="stroke: #999DA3;" fill="url(#pattern1)" points="50 1 95 25 95 75 50 99 5 75 5 25"/>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('about', this);" class="navButton">
+                <path d="M289 448h-66v-65h66v65zm-1-98h-64c0-101 96-95.1 96-159 0-35.2-28.8-63.4-64-63.4S192 158 192 192h-64c0-71 57.3-128 128-128s128 56.4 128 127c0 79.9-96 89-96 159z"/>
             </svg>
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="pattern1" height="100%" width="100%" patternContentUnits="objectBoundingBox">
-                        <image height="1" width="1" preserveAspectRatio="none" xlink:href="http://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Gl%C3%BChwendel_brennt_durch.jpg/399px-Gl%C3%BChwendel_brennt_durch.jpg" />
-                    </pattern>
-                </defs>
-                <polygon style="stroke: #999DA3;" fill="url(#pattern1)" points="50 1 95 25 95 75 50 99 5 75 5 25"/>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('miniprojects', this)" class="navButton">
+                <path d="M336 272c0-29.8-16.3-55.7-40.4-69.5l73.1-124.1C335.6 59.1 297.1 48 256 48c-41.2 0-79.9 11.2-113.1 30.6l71.6 125C191.4 217.6 176 243 176 272H32c0 83.3 46.9 153.4 114.4 192l70.1-122.4c11.7 6.6 25.1 10.4 39.5 10.4 14.3 0 27.7-3.8 39.3-10.3L365.6 464C433.1 425.4 480 355.3 480 272H336z"/>
             </svg>
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="pattern1" height="100%" width="100%" patternContentUnits="objectBoundingBox">
-                        <image height="1" width="1" preserveAspectRatio="none" xlink:href="http://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Gl%C3%BChwendel_brennt_durch.jpg/399px-Gl%C3%BChwendel_brennt_durch.jpg" />
-                    </pattern>
-                </defs>
-                <polygon style="stroke: #999DA3;" fill="url(#pattern1)" points="50 1 95 25 95 75 50 99 5 75 5 25"/>
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('projects', this)" class="navButton">
+                <path d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z"/>
             </svg>
         </div>
         
@@ -84,33 +59,36 @@
             </svg>
         </div>
         <div class = "items">
-            <div class = "item">
-                <h1><a href="">Projects</a></h1>
-                <blockquote>
-                    A collection of deployable projects.
-                </blockquote>
-                
+            <div class="item" id="intro">
+                <h1 id="name">Dillon Simeone</h1>
+                <p>
+                    A Web and Mobile Computing junior with a focus on the programming side of everything.
+                </p>
             </div>
-            <!--
-            <div class = "item">
-                <h1><a href="./MiniProjects/index.html">MiniProjects</a></h1>
-                <blockquote>
-                    A collection of my code doodles and ideas.
-                </blockquote>
-            </div>
-            <div class = "item">
+            <div class = "item" id="about">
                 <h1><a href="">About Me</a></h1>
                 <blockquote>
                     Random Dillon facts.
                 </blockquote>
             </div>
-            <div class = "item">
+            <div class = "item" id="projects">
+                <h1><a href="">Projects</a></h1>
+                <blockquote>
+                    A collection of deployable projects.
+                </blockquote>
+            </div>
+            <div class = "item" id="miniprojects">
+                <h1><a href="./MiniProjects/index.html">MiniProjects</a></h1>
+                <blockquote>
+                    A collection of my code doodles and ideas.
+                </blockquote>
+            </div>
+            <div class = "item" id="Courseworks">
                 <h1><a href="">Courseworks</a></h1>
                 <blockquote>
                     A collection of my old courseworks. Not recommanded to look through this junk pile.
                 </blockquote>
             </div>
-            -->
         </div>
         <div class="trianglify">
             <div class="circle"></div>
@@ -151,15 +129,13 @@
                                 initalHeight = window.innerHeight;
                             }, 500
                         );
-                    }
-                        
+                    }       
                 }
             };
             
             function draw(){
                 let container = document.querySelector('.trianglify');
-                let cells = Math.ceil(window.innerHeight/7);
-                
+                let cells = Math.ceil(window.innerHeight/5);
                 
                 let pattern = Trianglify({
                   width: window.innerWidth,
@@ -178,7 +154,6 @@
                 container.appendChild(circleElement);
                 //For mouse movement events. This is more efficient instead of having this ran on each mouse movement.
                 let circleHover = document.querySelector('.circle');
-                
                 
                 let polyArray = [].slice.call(pattern.children);
                 
@@ -292,6 +267,38 @@
                     }
                 
             }
+            
+            function hideAll(targetID, buttonID){
+                items = document.getElementsByClassName('item');
+                navButtons = document.getElementsByClassName("navButton");
+                for(let i = 0; i < items.length; i++){
+                    if(items[i].getAttribute('id') === targetID){
+                        
+                    }else{
+                        items[i].style.top = "200%";
+                        items[i].style.transform = "rotate(100deg)";
+                    } 
+                }
+                
+                for(let i = 0; i < navButtons.length; i++){
+                    if(navButtons[i].getAttribute('id') === buttonID){
+                        
+                    }else{
+                        navButtons[i].style.fill = "black";
+                    }
+                }
+            };
+            
+            function reveal(targetID, button){
+                hideAll(targetID, button);
+                button.style.fill = "red";
+                setTimeout(function(){
+                    target = document.getElementById(targetID);
+                    target.style.top = "12%";
+                    target.style.transform = "rotate(5deg)";
+                }, 500);
+            };
+            reveal('intro', document.querySelector('svg'));
             
         </script>
 	</body>

@@ -13,27 +13,6 @@ body{
     width: 100%;
 }
 
-header{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-content: center;
-    height: 75vh;
-    margin: auto;
-    color: white;
-}
-
-header h1, header p{
-    text-align: center;
-    padding: 0;
-    margin: 0;
-}
-
-header h1 span{
-    font-family: 'M PLUS Rounded 1c', sans-serif;
-    font-size: 3em;
-}
-
 .circle {
     width: 30%;
     height: 30%;
@@ -66,14 +45,14 @@ path {
 
 .item{
     position: fixed;
-    top: 10.5%;
+    /*top: 12%;*/
+    top: 200%;
     height: 75.9%;
     width: 100%;
-    transform: rotate(5deg);
-    margin: 10px;
     color: white;
-    border-radius: 10px;
+    transform: rotate(5deg);
     border: 5px solid black;
+    transition: all 0.5s;
 }
 
 .item h1{
