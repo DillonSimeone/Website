@@ -55,8 +55,9 @@ path {
 }
 
 .item iframe{
-    height: 100%;
+    height: 59vh;
     width: 100%;
+    border: none;
 }
 
 .circle{
