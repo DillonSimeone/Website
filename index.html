@@ -25,38 +25,6 @@
         </div>
         
         <div id="leftLowerCorner" class="nav">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="pattern1" height="100%" width="100%" patternContentUnits="objectBoundingBox">
-                        <image height="1" width="1" preserveAspectRatio="none" xlink:href="http://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Gl%C3%BChwendel_brennt_durch.jpg/399px-Gl%C3%BChwendel_brennt_durch.jpg" />
-                    </pattern>
-                </defs>
-                <polygon style="stroke: #999DA3;" fill="url(#pattern1)" points="50 1 95 25 95 75 50 99 5 75 5 25"/>
-            </svg>
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="pattern1" height="100%" width="100%" patternContentUnits="objectBoundingBox">
-                        <image height="1" width="1" preserveAspectRatio="none" xlink:href="http://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Gl%C3%BChwendel_brennt_durch.jpg/399px-Gl%C3%BChwendel_brennt_durch.jpg" />
-                    </pattern>
-                </defs>
-                <polygon style="stroke: #999DA3;" fill="url(#pattern1)" points="50 1 95 25 95 75 50 99 5 75 5 25"/>
-            </svg>
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="pattern1" height="100%" width="100%" patternContentUnits="objectBoundingBox">
-                        <image height="1" width="1" preserveAspectRatio="none" xlink:href="http://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Gl%C3%BChwendel_brennt_durch.jpg/399px-Gl%C3%BChwendel_brennt_durch.jpg" />
-                    </pattern>
-                </defs>
-                <polygon style="stroke: #999DA3;" fill="url(#pattern1)" points="50 1 95 25 95 75 50 99 5 75 5 25"/>
-            </svg>
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="pattern1" height="100%" width="100%" patternContentUnits="objectBoundingBox">
-                        <image height="1" width="1" preserveAspectRatio="none" xlink:href="http://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Gl%C3%BChwendel_brennt_durch.jpg/399px-Gl%C3%BChwendel_brennt_durch.jpg" />
-                    </pattern>
-                </defs>
-                <polygon style="stroke: #999DA3;" fill="url(#pattern1)" points="50 1 95 25 95 75 50 99 5 75 5 25"/>
-            </svg>
         </div>
         <div class = "items">
             <div class="item" id="intro">
@@ -66,27 +34,27 @@
                 </p>
             </div>
             <div class = "item" id="about">
-                <h1><a href="">About Me</a></h1>
+                <h1>About Me</h1>
                 <blockquote>
-                    Random Dillon facts.
+                    Random Dillon facts. TODO: Make up lies
                 </blockquote>
             </div>
             <div class = "item" id="projects">
-                <h1><a href="">Projects</a></h1>
+                <h1>Projects</h1>
                 <blockquote>
-                    A collection of deployable projects.
+                    A collection of deployable projects. TODO: Throw projects into here.
                 </blockquote>
             </div>
             <div class = "item" id="miniprojects">
-                <h1><a href="./MiniProjects/index.html">MiniProjects</a></h1>
+                <h1>MiniProjects</h1>
                 <blockquote>
-                    A collection of my code doodles and ideas.
+                    A collection of my code doodles and ideas. TODO: Iframe here? <a href="MiniProjects/index.html">Miniproject website page</a>
                 </blockquote>
             </div>
             <div class = "item" id="Courseworks">
-                <h1><a href="">Courseworks</a></h1>
+                <h1>Courseworks</h1>
                 <blockquote>
-                    A collection of my old courseworks. Not recommanded to look through this junk pile.
+                    A collection of my old courseworks. Not recommanded to look through this junk pile. TODO: Use MiniProject styles for all old junk?
                 </blockquote>
             </div>
         </div>
@@ -116,10 +84,12 @@
                         }, 500
                     );
                 }else{
+                    /*
                     let text = ("Mobile Device detected.");
                     text += ("<br>Inital width and height: " + initalWidth + " " + initalHeight);
                     text +=("<br>Current width and height: " + window.innerWidth + " " + window.innerHeight);
                     document.querySelector('p').innerHTML = text;
+                    */
                     if((window.innerHeight === initalWidth) && (window.innerWidth === initalHeight)){
                         clearTimeout(resize);
                         resize = setTimeout(
@@ -245,27 +215,30 @@
                 }
             };
             
-            //Wraps letters in spans and apply randomized colors.
-            function letterings(text){
-                let fancyText = "";
-                for(let i = 0; i < text.innerHTML.length; i++){
-                    fancyText += "<span>" + text.innerHTML.charAt(i) + "</span>";
+            //Wraps all h1s into spans and apply random colors and shapes.
+            function letterings(){
+                targets = document.getElementsByTagName("h1");
+                for(let i = 0; i < targets.length; i++){
+                    let fancyText = "";
+                    for(let j = 0; j < targets[i].innerHTML.length; j++){
+                        fancyText += "<span>" + targets[i].innerHTML.charAt(j) + "</span>";
+                    }
+                    targets[i].innerHTML = fancyText;
+                    lettersResize(targets[i].getElementsByTagName('span'));
+                    window.addEventListener('resize', function(){
+                        lettersResize(targets[i].getElementsByTagName('span'));
+                    });
                 }
-                text.innerHTML = fancyText;
-                lettersResize(text.getElementsByTagName('span'));
-                window.addEventListener('resize', function(){
-                    lettersResize(text.getElementsByTagName('span'));
-                });
+                
             };
-            letterings(document.getElementById('name'));
+            letterings();
             
             //Makes all letters a bit different in font sizes, when still easily fitting most screens.
             function lettersResize(targets){
                     for(let i = 0; i < targets.length; i++){
                         targets[i].style.color = randomRgb(100);
-                        targets[i].style.fontSize = 10 + (Math.random() * 5) + "vw";
+                        targets[i].style.fontSize = 8 + (Math.random() * 5) + "vw";
                     }
-                
             }
             
             function hideAll(targetID, buttonID){
