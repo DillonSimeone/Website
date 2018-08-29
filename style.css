@@ -61,9 +61,19 @@ path {
     text-align: center;
 }
 
+.item blockquote{
+    font-size: 3vw;
+}
+
+.item blockquote a{
+    color: blue;
+    font-weight: 900;
+    background-color: rgba(0,0,0,0.7)
+}
+
 .circle{
-    width: 20%;
-    height: 20%;
+    width: 30vw;
+    height: 30vh;
 }
 
 #rightUpperCorner{
@@ -109,7 +119,7 @@ path {
         width: 100%;
     }
     .circle{
-        width: 40%;
-        height: 40%;
+        width: 50%;
+        height: 50%;
     }
 }
