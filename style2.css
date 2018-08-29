@@ -1,10 +1,16 @@
-html, body{
+html{
     overflow: hidden;
+    width: 100%;
 }
 body{
     position: fixed;
-    margin: 0;
+    top: 0;
+    left: 0;
     background-color: #303030;
+    margin: 0;
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
 }
 
 .circle {
@@ -29,13 +35,24 @@ path {
     overflow: hidden;
 }
 
+.items{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    width: 90%;
+    margin: 0 auto;
+}
+
 .item{
     position: fixed;
+    /*top: 12%;*/
     top: 200%;
+    height: 75.9%;
     width: 100%;
     color: white;
+    transform: rotate(5deg);
+    border: 5px solid black;
     transition: all 0.5s;
-    overflow-y: auto;
 }
 
 .item h1{
@@ -54,43 +71,46 @@ path {
     background-color: rgba(0,0,0,0.7)
 }
 
-.item iframe{
-    height: 100%;
-    width: 100%;
-}
-
 .circle{
     width: 30vw;
     height: 30vh;
 }
 
-
 #rightUpperCorner{
     position: fixed;
-    top: 0;
-
+    top: 5%;
+    right: -20%;
+    background-color: red;
 }
 
 
 #leftLowerCorner{
     position: fixed;
-    bottom: 0;
+    bottom: 5%;
+    left: -20%;    
+    background-color: blue;
 }
-
 
 #leftLowerCorner, #rightUpperCorner{
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    width: 100%;
+    transform: rotate(5deg);
     height: 6%;
+    width: 100%;
+    color: white;
+    font-size: 2em;
+    margin: 0;
+    padding-left: 20%;
+    padding-right: 20%;
+    z-index: 9999;
     border: 5px black solid;
 }
 
 #leftLowerCorner svg, #rightUpperCorner svg{
     display: block;
-    height: 6vh;
+    height: 100%;
     margin: 5%;
 }
 

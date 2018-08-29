@@ -24,8 +24,6 @@
             </svg>
         </div>
         
-        <div id="leftLowerCorner" class="nav">
-        </div>
         <div class = "items">
             <div class="item" id="intro">
                 <h1 id="name">Dillon Simeone</h1>
@@ -47,20 +45,22 @@
             </div>
             <div class = "item" id="miniprojects">
                 <h1>MiniProjects</h1>
-                <blockquote>
-                    A collection of my code doodles and ideas. TODO: Iframe here? <a href="MiniProjects/index.html">Miniproject website page</a>
-                </blockquote>
+                <iframe src="MiniProjects/index.html"></iframe>
             </div>
-            <div class = "item" id="Courseworks">
+            <div class = "item" id="courseworks">
                 <h1>Courseworks</h1>
                 <blockquote>
                     A collection of my old courseworks. Not recommanded to look through this junk pile. TODO: Use MiniProject styles for all old junk?
                 </blockquote>
             </div>
         </div>
+        
+        <div id="leftLowerCorner" class="nav">Anchor links here</div>
+        
         <div class="trianglify">
             <div class="circle"></div>
         </div>
+        
         <script src="trianglify.min.js"></script>
         <script>
             //Mobile browsers likes to resize website pages when their URL bars hides when the user moves down, and reappears when the user moves up. Very annoying.
@@ -267,8 +267,8 @@
                 button.style.fill = "red";
                 setTimeout(function(){
                     target = document.getElementById(targetID);
-                    target.style.top = "12%";
-                    target.style.transform = "rotate(5deg)";
+                    target.style.top = window.getComputedStyle(document.getElementById("rightUpperCorner")).getPropertyValue("height");
+                    target.style.transform = "rotate(0deg)";
                 }, 500);
             };
             reveal('intro', document.querySelector('svg'));
