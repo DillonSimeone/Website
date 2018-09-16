@@ -7,9 +7,12 @@ body{
     background-color: #303030;
 }
 
-.circle {
-    width: 30%;
-    height: 30%;
+/*=======================================================
+                Trianglify Witchery
+=========================================================*/
+.circle{
+    width: 30vw;
+    height: 30vh;
 }
 
 path {
@@ -29,70 +32,67 @@ path {
     overflow: hidden;
 }
 
+/*=======================================================
+                Main contents
+=========================================================*/
+nav{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100vw;
+    height: 5vh;
+    border: 5px black solid;
+}
+
+nav svg{
+    display: block;
+    height: 5vh;
+}
+
 .item{
-    position: fixed;
-    top: 200%;
+    position: fixed ;
+    top: 6vh;
     width: 100%;
     color: white;
-    transition: all 0.5s;
+    transition: all 0.3s;
     overflow-y: auto;
 }
 
 .item h1{
+    font-size: 10vh;
     border-bottom: 3px dashed black;
     margin: auto;
     text-align: center;
+    background-color: rgba(0,0,0,0.5);
 }
 
-.item blockquote{
+.item p{
     font-size: 3vw;
+    margin: 10px;
 }
 
-.item blockquote a{
+.item a{
     color: blue;
     font-weight: 900;
     background-color: rgba(0,0,0,0.7)
 }
 
-.item iframe{
-    height: 59vh;
-    width: 100%;
-    border: none;
+/*=======================================================
+                Fun reveal/hide css animation!
+=========================================================*/
+.reveal{
+    top: 6vh;
+    left: 0;
+    right: 0;
+    transform: rotate(0deg);
 }
 
-.circle{
-    width: 30vw;
-    height: 30vh;
+.hide{
+    left: -100vw;
 }
 
-
-#rightUpperCorner{
-    position: fixed;
-    top: 0;
-
-}
-
-
-#leftLowerCorner{
-    position: fixed;
-    bottom: 0;
-}
-
-
-#leftLowerCorner, #rightUpperCorner{
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 6%;
-    border: 5px black solid;
-}
-
-#leftLowerCorner svg, #rightUpperCorner svg{
-    display: block;
-    height: 6vh;
-    margin: 5%;
+.spin{
+    transform: rotate(90deg);
 }
 
 @media all and (max-width: 800px) {
