@@ -39,9 +39,7 @@
             </div>
             <div class = "item" id="projects">
                 <h1>Projects</h1>
-                <p>
-                    A collection of deployable projects. TODO: Throw projects into here.
-                </p>
+                <iframe src="./Projects/index.html"></iframe>
             </div>
             <div class = "item" id="miniprojects">
                 <h1>MiniProjects</h1>
@@ -58,7 +56,7 @@
         <div class="trianglify">
             <div class="circle"></div>
         </div>
-        
+        <script src="randomColors.js"></script>
         <script src="trianglify.min.js"></script>
         <script>
             //Mobile browsers likes to resize website pages when their URL bars hides when the user moves down, and reappears when the user moves up. Very annoying.
@@ -137,7 +135,7 @@
                 });
                 
                 randomizeFillColor(polyPoints, polyArray);
-                ItemColors(150, 0.9);
+                ItemColors(150, 0.9, 'nav');
                 
                 //This below, is JavaScript witchery at its finest! Put simply, what I did was to store a reference to the anonymous event listener (document.fn) created below in the document, so I can destroy the anonymous event listener once it's outdated, and start up a new event listener that will work with the current values after a resize. If I didn't do this...Amount of eventListeners going off on mousemove = (times resized browser).
                 document.removeEventListener('mousemove', document.fn);
@@ -183,13 +181,6 @@
               return isInside;
             };
             
-            function randomColor(min){
-                let color = Math.floor(Math.random() * (255));
-                if (color < min)
-                    color = min;
-                return color;
-            };
-            
             //Instead of having all polygons to show up with a single fill color until hovered over, randomize all of their colors.
             function randomizeFillColor(polyPoints, polyArray){
                 polyPoints.forEach(function(point, i){
@@ -197,47 +188,8 @@
                 });
             };
             
-            function randomRgba(min, alpha){
-                return "rgba(" + randomColor(min) + "," + randomColor(min) + "," + randomColor(min) + "," + alpha + ")";
-            };
-            
-            function randomRgb(min){
-                return "rgb(" + randomColor(min) + "," + randomColor(min) + "," + randomColor(min) + ")";
-            }
-            
-            //Add random linear gradient to angled nav bars.
-            function ItemColors(min, alpha){
-                targets = document.getElementsByClassName('nav');
-                for(let i = 0; i < targets.length; i++){
-                    targets[i].style.background = "linear-gradient(to right, " + randomRgba(min, alpha) + " , " + randomRgba(min, alpha) + " , " + randomRgba(min, alpha) + ")";
-                }
-            };
-            
-            //Wraps all h1s into spans and apply random colors and shapes.
-            function letterings(){
-                targets = document.getElementsByTagName("h1");
-                for(let i = 0; i < targets.length; i++){
-                    let fancyText = "";
-                    for(let j = 0; j < targets[i].innerHTML.length; j++){
-                        fancyText += "<span>" + targets[i].innerHTML.charAt(j) + "</span>";
-                    }
-                    targets[i].innerHTML = fancyText;
-                    lettersResize(targets[i].getElementsByTagName('span'));
-                    window.addEventListener('resize', function(){
-                        lettersResize(targets[i].getElementsByTagName('span'));
-                    });
-                }
-                
-            };
-            letterings();
-            
-            //Random colors for letters
-            function lettersResize(targets){
-                    for(let i = 0; i < targets.length; i++){
-                        targets[i].style.color = randomRgb(100);
-                    }
-            }
-            
+            letterings('h1');
+
             function hideAll(targetID, buttonID){
                 items = document.getElementsByClassName('item');
                 navButtons = document.getElementsByClassName("navButton");
@@ -267,6 +219,8 @@
                 }, 500);
             };
             reveal('intro', document.querySelector('#homeBtn'));
+            
+            
         </script>
 	</body>
 </html>

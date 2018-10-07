@@ -51,7 +51,7 @@ nav svg{
 
 .item{
     position: fixed ;
-    top: 6vh;
+    top: 7vh;
     width: 100%;
     color: white;
     transition: all 0.3s;
@@ -64,6 +64,7 @@ nav svg{
     margin: auto;
     text-align: center;
     background-color: rgba(0,0,0,0.5);
+    /*background-image: url("https://www.transparenttextures.com/patterns/white-diamond.png");*/
 }
 
 .item p{
@@ -82,6 +83,9 @@ iframe{
     height: 82vh;
     border: none;
     background: white;
+    background-color: white;
+    background-image: url("https://www.transparenttextures.com/patterns/clean-gray-paper.png");
+    /* This is mostly intended for prototyping; please download the pattern and re-host for production environments. Thank you! */
 }
 
 /*=======================================================
