@@ -77,6 +77,13 @@ nav svg{
     background-color: rgba(0,0,0,0.7)
 }
 
+iframe{
+    width: 100vw;
+    height: 82vh;
+    border: none;
+    background: white;
+}
+
 /*=======================================================
                 Fun reveal/hide css animation!
 =========================================================*/
