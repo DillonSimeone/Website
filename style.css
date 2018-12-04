@@ -1,6 +1,7 @@
 html, body{
     overflow: hidden;
 }
+
 body{
     position: fixed;
     margin: 0;
@@ -93,19 +94,53 @@ iframe{
                 Fun reveal/hide css animation!
 =========================================================*/
 .reveal{
+    /*
+    animation: revealy .25s ease-in-out 0s 1 normal forwards;
+    */
     top: 6vh;
     left: 0;
-    right: 0;
     transform: rotate(0deg);
 }
 
 .hide{
+    /*
+    animation: hidey .25s ease-in-out 0s 1 normal forwards;
+    */
     left: -100vw;
 }
 
 .spin{
     transform: rotate(90deg);
 }
+
+/*
+@keyframes revealy{
+    from{
+        left: -100vw;
+        transform: rotate(90deg);
+    }
+
+    to{
+        top: 6vh;
+        left: 0;
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes hidey{
+    from{
+        top: 6vh;
+        left: 0;
+        transform: rotate(0deg);
+    }
+
+    to{
+        top: 0;
+        left: -100vw;
+        transform: rotate(90deg);
+    }
+}
+*/
 
 @media all and (max-width: 800px) {
     .masonry, .item{
