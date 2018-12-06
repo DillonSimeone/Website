@@ -42,7 +42,7 @@
                     circle.style.fill = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() + ")";
                     circle.style.stroke = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() + ")";;
                     circle.style.strokeWidth = Math.random() * viewW * 0.01;
-                    circle.style.transition = "all 0.05s";
+                    circle.style.transition = "all 0.25s";
                     circle.style.opacity = "0";
                     playground.appendChild(circle);
                     breathOut(targets[i]);
@@ -63,7 +63,7 @@
                     element.setAttribute('r', (Math.random() * viewW) * 0.1);
                     element.style.opacity = "0.6";
                     breathOut(element);
-                }, Math.random() * 1000);
+                }, Math.random() * 2000);
             }
             
             function breathOut(element){
@@ -74,7 +74,7 @@
                     element.style.fill = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() + ")";
                     element.style.stroke = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() + ")";;
                     breathIn(element);
-                }, Math.random() * 1000);
+                }, Math.random() * 2000);
             }
                 
                 
