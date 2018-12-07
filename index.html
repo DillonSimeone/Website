@@ -284,12 +284,15 @@
             function reveal(targetID, buttonID, timedelay){
                 if(timedelay == undefined)
                     timedelay = 30; //Default value
-                    
-                if(buttonID !== undefined)
-                    buttonID.style.fill = "red";
+
+                
 
                 setTimeout(function(){
                     hideAll(targetID, buttonID);
+
+                    if(buttonID !== undefined)
+                        buttonID.style.fill = "red";
+                        
                     target = document.getElementById(targetID);
                     target.className = "item reveal";
                 }, timedelay);
