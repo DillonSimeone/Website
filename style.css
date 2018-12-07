@@ -36,6 +36,16 @@ path {
 /*=======================================================
                 Main contents
 =========================================================*/
+iframe{
+    width: 100%;
+    height: 80vh;
+    border: none;
+    background: white;
+    background-color: white;
+    background-image: url("https://www.transparenttextures.com/patterns/clean-gray-paper.png");
+    /* This is mostly intended for prototyping; please download the pattern and re-host for production environments. Thank you! */
+}
+
 nav{
     display: flex;
     flex-direction: row;
@@ -56,7 +66,7 @@ nav svg{
     width: 100%;
     height: 93vh;
     color: white;
-    transition: all 0.3s;
+    transition: all 0.5s;
     overflow: auto;
 }
 
@@ -80,15 +90,53 @@ nav svg{
     background-color: rgba(0,0,0,0.7)
 }
 
-iframe{
-    width: 100%;
-    height: 80vh;
-    border: none;
-    background: white;
-    background-color: white;
-    background-image: url("https://www.transparenttextures.com/patterns/clean-gray-paper.png");
-    /* This is mostly intended for prototyping; please download the pattern and re-host for production environments. Thank you! */
+#loading{
+    height: 100vh;
+    width: 100vw;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: black;
+    z-index: 100;
 }
+
+#loading h1{
+    position: absolute;
+    bottom: 0;
+}
+
+#loading #dots:after{
+    animation: loading 3s linear infinite normal;
+    display: inline-block;
+    content: "";
+    font-size: 80px;
+}
+
+@keyframes loading {
+    0%{
+        color: red;
+        content: ".";
+    }
+    25%{
+        color: pink;
+        content: "..";
+    }
+    50%{
+        color: blue;
+        content: "...";
+    }
+    75%{
+        color: green;
+        content: "...."
+    }
+    100%{
+        color: yellow;
+        content: ".....";
+    }
+}
+
 
 /*=======================================================
                 Fun reveal/hide css animation!
@@ -106,7 +154,9 @@ iframe{
     /*
     animation: hidey .25s ease-in-out 0s 1 normal forwards;
     */
-    left: -100vw;
+    
+    left: -200vw !important; /*Note: Mobile displays are taller than they are narrow, so with -100, parts would still be shown on the screen. 
+    Fix !IMPORTANT, this is needed to override the class values for the loading screen.*/
 }
 
 .spin{

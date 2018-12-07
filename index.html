@@ -23,6 +23,11 @@
         </nav>
         
         <div class = "items">
+            <div class="item" id="loading">
+                <h1>Loading fun stuff</h1>
+                <span id="dots"></span>
+            </div>
+
             <div class="item" id="intro">
                 <h1 id="name">Dillon Simeone</h1>
                 <p>
@@ -94,11 +99,12 @@
             };
             
             //Since when you rotate your mobile device by 90 degree, the height becomes the width and the width becomes the height. Check for that to trigger a resize instead of any resizing, so the URL address resizing the website page don't affect anything.
-            let initalHeight = window.innerHeight;
-            let initalWidth = window.innerWidth;
+            const initalHeight = window.innerHeight;
+            const initalWidth = window.innerWidth;
+
             //This makes it so nothing happens until user is done resizing.
             let resize;
-            function redraw(){
+            function redraw(){ //Note: Used in the HTML. `<body onresize="redraw();">`
                 if(!mobilecheck()){
                     clearTimeout(resize);
                     resize = setTimeout(
@@ -113,6 +119,7 @@
                     text +=("<br>Current width and height: " + window.innerWidth + " " + window.innerHeight);
                     document.querySelector('p').innerHTML = text;
                     */
+                   //Mobile support here. This checks for when the user turns the mobile sideway.
                     if((window.innerHeight === initalWidth) && (window.innerWidth === initalHeight)){
                         clearTimeout(resize);
                         resize = setTimeout(
@@ -125,12 +132,28 @@
                     }       
                 }
             };
+
+            //Instead of having all polygons to show up with a single fill color until hovered over, randomize all of their colors.
+            function randomizeFillColor(polyPoints, polyArray){
+                polyPoints.forEach(function(point, i){
+                    polyArray[i].style.fill = "rgb(" + randomColor(100) + "," + randomColor(100) + "," + randomColor(100) + ")";    
+                });
+            };
+            
+            let cells;
+            let divisor = 10; //This affects the amount of cells that's spawned. Bigger the number is, more cells that appears. Cells have a heavy impact on performace. Need to cook dinner? Set this to 1000!
             
             function draw(){
-                let container = document.querySelector('.trianglify');
-                let cells = Math.ceil(window.innerHeight/5);
+                const container = document.querySelector('.trianglify');
                 
-                let pattern = Trianglify({
+
+                if(window.innerHeight > window.innerWidth) //This ensures the smallest value of either height/width is used. Performace reasons.
+                    cells = Math.ceil(window.innerHeight/divisor);
+                else
+                    cells = Math.ceil(window.innerWidth/divisor);
+                
+                //Generates the colorful background for the website.
+                const pattern = Trianglify({
                   width: window.innerWidth,
                   height: window.innerHeight,
                   cell_size: cells,
@@ -138,62 +161,88 @@
                   stroke_width: 0.5
                 }).svg(); // Render as SVG.
                 
-                let circleElement = document.createElement("div");
+                //Circle used to check what polys are being hovered over.
+                const circleElement = document.createElement("div");
                 circleElement.className = "circle";
+                
                 
                 //Clears out old stuff.
                 container.innerHTML = "";
                 container.insertBefore(pattern, container.firstChild);
                 container.appendChild(circleElement);
-                //For mouse movement events. This is more efficient instead of having this ran on each mouse movement.
-                let circleHover = document.querySelector('.circle');
+
+                //For mouse movement events.
+                const circleHover = document.querySelector('.circle');
+
+                //Makes an array of all of the polys from Pattern, disregerding everything else.
+                const polyArray = [].slice.call(pattern.children); 
                 
-                let polyArray = [].slice.call(pattern.children);
-                
-                // Get polygon coords and hide them.
-                let polyPoints = polyArray.map(function(poly) {
+                // Get polygon coords and set their "hit boxes" for the detectPointInCircle function to work with.
+                const polyPoints = polyArray.map(function(poly) {
                   poly.classList.add('poly', 'fade');
-                  let rect = poly.getBoundingClientRect();
-                  let point = {
+                  const rect = poly.getBoundingClientRect(); //This takes a lot of firepower to run each time the mouse moves.
+                  const point = {
                     x: rect.left + rect.width / 2,
                     y: rect.top + rect.height / 2
                   };
                   return point;
                 });
                 
-                randomizeFillColor(polyPoints, polyArray);
-                ItemColors(150, 0.9, 'nav');
+                randomizeFillColor(polyPoints, polyArray); //Randomized colors for the polys on draw.
+                ItemColors(150, 0.9, 'nav'); //Random gradient color for nav bar.
                 
-                //This below, is JavaScript witchery at its finest! Put simply, what I did was to store a reference to the anonymous event listener (document.fn) created below in the document, so I can destroy the anonymous event listener once it's outdated, and start up a new event listener that will work with the current values after a resize. If I didn't do this...Amount of eventListeners going off on mousemove = (times resized browser).
+                /*
+                This below, is JavaScript witchery at its finest! Put simply, what I did was to store a reference to the anonymous event listener (document.fn) 
+                created below in the document, so I can destroy the anonymous event listener once it's outdated, and start up a new event listener that will work 
+                with the current values after a resize. If I don't do this...Amount of eventListeners going off on mousemove = (times resized browser).
+                */
                 document.removeEventListener('mousemove', document.fn);
                 
                 document.addEventListener('mousemove', document.fn=function fn(e){
-                    var radius = circleHover.clientWidth / 2;
-                    var center = {
+                    const radius = circleHover.clientWidth / 2;
+
+                    //Gets the pointer's x and y coords.
+                    const center = {
                         x: e.clientX,
                         y: e.clientY
                     };
                     
-                    var circleCenter = {
+                    //Defines where the the circle needs to go for its center to be right over the pointer's x and y coords.
+                    const circleCenter = {
                         x: center.x - radius,
                         y: center.y - radius
                     };
                     
+                    //Moves the circle to the pointer's postion.
                     circleHover.setAttribute('style', 'transform: translate(' + 
                                   circleCenter.x + 'px, ' + 
                                   circleCenter.y + 'px)');
+                    /*
+                    //Not working, polyPoints[i] returns undefined errors instead of a point object as expected. Look at `const polyPoints = polyArray.map(function(poly) {` above.
+                    for(let i = polyPoints.length; i; i--){
+                        //Swap if to invert the effect.
+                        console.log(polyPoints[i]);
+                        if(detectPointInCircle(polyPoints[i], radius, center)){
+                            polyArray[i].classList.remove('list');
+                            polyArray[i].style.stroke = randomRgb(100);
+                            polyArray[i].style.fill = randomRgb(50);
+                        }
+                        else
+                            polyArray[i].classList.add('fade');
+                    }
+                    */
                     
+                    //Checks for points under the circle, and apply effects. 
                     polyPoints.forEach(function(point, i) {
                         // Swap if to invert the effect.
                         if (detectPointInCircle(point, radius, center)) {
                             polyArray[i].classList.remove('fade');
                             polyArray[i].style.stroke = randomRgb(100);
                             polyArray[i].style.fill = randomRgb(50);
-                        } else {
+                        } else 
                             polyArray[i].classList.add('fade');
-                        }
                     });
-                }); 
+                }); //End Event Listener magic
             };
             draw();
             
@@ -208,26 +257,20 @@
               return isInside;
             };
             
-            //Instead of having all polygons to show up with a single fill color until hovered over, randomize all of their colors.
-            function randomizeFillColor(polyPoints, polyArray){
-                polyPoints.forEach(function(point, i){
-                    polyArray[i].style.fill = "rgb(" + randomColor(100) + "," + randomColor(100) + "," + randomColor(100) + ")";    
-                });
-            };
-            
+            //Sets letters to random colors.
             letterings('h1');
 
+            //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
             function hideAll(targetID, buttonID){
                 items = document.getElementsByClassName('item');
                 navButtons = document.getElementsByClassName("navButton");
                 for(let i = 0; i < items.length; i++){
                     if(items[i].getAttribute('id') === targetID){
-                        
+                        //This is the one to not hide.
                     }else{
                         items[i].className = "item hide spin";
                     } 
                 }
-                
                 for(let i = 0; i < navButtons.length; i++){
                     if(navButtons[i].getAttribute('id') === buttonID){
                         
@@ -237,15 +280,22 @@
                 }
             };
             
-            function reveal(targetID, button){
-                hideAll(targetID, button);
-                button.style.fill = "red";
+            //Reveals a page.
+            function reveal(targetID, buttonID, timedelay){
+                if(timedelay == undefined)
+                    timedelay = 30; //Default value
+                    
+                if(buttonID !== undefined)
+                    buttonID.style.fill = "red";
+
                 setTimeout(function(){
+                    hideAll(targetID, buttonID);
                     target = document.getElementById(targetID);
                     target.className = "item reveal";
-                }, 500);
+                }, timedelay);
             };
-            reveal('intro', document.querySelector('#homeBtn'));
+            
+            reveal('intro', document.querySelector('#homeBtn'), 1000);
             
             
         </script>
