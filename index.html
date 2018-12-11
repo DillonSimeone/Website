@@ -177,7 +177,7 @@
                 //Makes an array of all of the polys from Pattern, disregerding everything else.
                 const polyArray = [].slice.call(pattern.children); 
                 
-                // Get polygon coords and set their "hit boxes" for the detectPointInCircle function to work with.
+                // Get polygon coords and set their "hit boxes" for the detectPointInCircle function to work with. This takes about 20-30ms on my desktop. This is a very heavy block of code.
                 const polyPoints = polyArray.map(function(poly) {
                   poly.classList.add('poly', 'fade');
                   const rect = poly.getBoundingClientRect(); //This takes a lot of firepower to run each time the mouse moves.
@@ -217,21 +217,23 @@
                     circleHover.setAttribute('style', 'transform: translate(' + 
                                   circleCenter.x + 'px, ' + 
                                   circleCenter.y + 'px)');
-                    /*
-                    //Not working, polyPoints[i] returns undefined errors instead of a point object as expected. Look at `const polyPoints = polyArray.map(function(poly) {` above.
-                    for(let i = polyPoints.length; i; i--){
+
+                    
+
+                    
+                    //This is more efficient than the forEach approach below this block. 
+                    for(let i = polyPoints.length - 1; i; i--){
                         //Swap if to invert the effect.
-                        console.log(polyPoints[i]);
                         if(detectPointInCircle(polyPoints[i], radius, center)){
-                            polyArray[i].classList.remove('list');
+                            polyArray[i].classList.remove('fade');
                             polyArray[i].style.stroke = randomRgb(100);
                             polyArray[i].style.fill = randomRgb(50);
                         }
                         else
                             polyArray[i].classList.add('fade');
                     }
-                    */
                     
+                    /*
                     //Checks for points under the circle, and apply effects. 
                     polyPoints.forEach(function(point, i) {
                         // Swap if to invert the effect.
@@ -242,19 +244,20 @@
                         } else 
                             polyArray[i].classList.add('fade');
                     });
+                    */
+
                 }); //End Event Listener magic
             };
             draw();
             
-            //Checks if polygons are under circle
+            //Checks if polygons are under circle. Credits to Claudio on Codepen for figuring out the math bits: https://codepen.io/claudiocalautti/pen/VLzWrz
             function detectPointInCircle(point, radius, center) {
-              var xp = point.x;
-              var yp = point.y;
-              var xc = center.x;
-              var yc = center.y;
-              var d = radius * radius;
-              var isInside = Math.pow(xp - xc, 2) + Math.pow(yp - yc, 2) <= d;
-              return isInside;
+              const xp = point.x;
+              const yp = point.y;
+              const xc = center.x;
+              const yc = center.y;
+              const d = radius * radius;
+              return Math.pow(xp - xc, 2) + Math.pow(yp - yc, 2) <= d;
             };
             
             //Sets letters to random colors.
@@ -273,7 +276,7 @@
                 }
                 for(let i = 0; i < navButtons.length; i++){
                     if(navButtons[i].getAttribute('id') === buttonID){
-                        
+                        //Do nothing.
                     }else{
                         navButtons[i].style.fill = "black";
                     }
@@ -298,7 +301,7 @@
                 }, timedelay);
             };
             
-            reveal('intro', document.querySelector('#homeBtn'), 1000);
+            reveal('intro', document.querySelector('#homeBtn'), 500);
             
             
         </script>
