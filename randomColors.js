@@ -22,6 +22,12 @@ function ItemColors(min, alpha, target){
     document.querySelector(target).style.background = "linear-gradient(to right, " + randomRgba(min, alpha) + " , " + randomRgba(min, alpha) + " , " + randomRgba(min, alpha) + ")";
 };
 
+//Add random linear gradient to target elements.
+function ItemsColors(min, alpha, targets){
+    const elements = [].slice.call(document.querySelectorAll(targets)); //Turns nodeListOf from querySelectorAll into an array of objects.
+    elements.map( element => element.style.background = "linear-gradient(to right, " + randomRgba(min, alpha) + " , " + randomRgba(min, alpha) + " , " + randomRgba(min, alpha) + ")");
+}
+
 //Wraps all of the letters inside target elements in a span wrapper, then apply random colors.
 function letterings(target){
     target = document.querySelectorAll(target);
