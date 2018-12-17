@@ -9,7 +9,7 @@
 </head> 
 	<body onresize="redraw();">
         <nav>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('intro', this)" class="navButton animationHouse" id="homeBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('elevatorPitch', this)" class="navButton animationHouse" id="homeBtn">
                 <path d="M208 448V320h96v128h97.6V256H464L256 64 48 256h62.4v192z"/>
             </svg>
 
@@ -28,49 +28,26 @@
                 <span id="dots"></span>
             </div>
 
-            <div class="item" id="intro">
+            <div class="item" id="elevatorPitch">
                 <h1 id="name">Dillon Simeone</h1>
-                <p>
-                    Make up lies. A lot of lies to hide the fact that I'm an internet addict that stays plugged in all day and night long, even when sleeping... Video games... HTML/CSS/JS witchery.
-                </p>
-                <p>
-                    <a href = "./MiniProjects/BarGraph/index.html">Maybe set up the contents below like this... But with the bars going left or right depending on likes, and a tooltip displaying my opinion of the topic.</a>
-                </p>
-                <h2>Adores</h2>
-                <ul>
-                    <li>Glass and metals - So recycleable! Oh man! Melt them again and again forever! MELT!</li>
-                    <li>Concept of uploading! Throw my meat suit into a soygreen factory after uploading my ghost into a METAL SUIT! Then... Recycle? Recycle! </li>
-                    <li>Wikipedia's hover pop-ups! Makes me feel like I'm using something VERY modern, like Endless Legend 2... Dang, I love that UI/UX set-up!</li>
-                    <li>Technology!</li>
-                </ul>
-                <h2>Likes</h2>
-                <ul>
-                    <li>Video Games - Complex systems... Dwarf Fortress, Dark Days Ahead, Factrio, etc.</li>
-                    <li>Shiny objects - Mirrors, metals, etc</li>
-                    <li>POTATOES - NEED EAT ALL POTATOES EAT</li>
-                    <li>Hiking</li>
-                    <li>Horror game/movie/stories - Ah, how nice it is that our lives isn't that screwed up!</li>
-                    <li>Being industrious - Putting personal opinions and feelings aside to get stuff done!</li>
-                    <li>Anime - So colorful! Colorful visuals and stories!</li>
-                    <li>Books - My virutal library is vast! VAST. When the internet goes out, I often end up wandering around in my library, grabbing books that catch my eyes then tossing 
-                        them aside soon soon as I lose interest. Enough books that the odds of me ever stumbling across the book I tossed aside is very very very low! Makes me to feel so extravagant! 
-                    </li>
-                </ul>
-                <h2>Indifference</h2>
-                <ul>
-                    <li>The Human Condition - Our AI overlords are in the making!</li>
-                    <li>Politics - Coding and whatever makes more sense than all of this pile of undefined moving parts!</li>
-                    <li>History - With all of this crazy tech magic stuff going on, who cares about the past? Not me! Blast off into the dazzling future!</li>
-                </ul>
-                <h2>Dislikes</h2>
-                <ul>
-                    <li>Smells - Very sensitive nose!</li>
-                    <li>Lettuce - Makes me to gag!</li>
-                </ul>
-                <h2>Loathe</h2>
-                <ul>
-                    <li>Brutal reality - Not going to think about how cruel the world can be! Playing a random video game instead! </li>
-                </ul>
+                <section>
+                    <h3>Elevator Pitch</h3>
+                    <div class="bg1">
+                        <h2>A fullstack developer based in Portland, Oregon.</h2>
+                        <p>
+                            I'm a college student majoring in Website and Mobile Computering. This major focuses on designing responsive websites. On top of what is taught at my college, Rochester Institute Of Technology, I've picked up on a lot of different languages and became comfortable with using random libraries to solve the problems I'm faced with.
+                        </p>
+                        <div id = "jobs">
+                            <span><a herf="./">Need a website?</a></span>
+                            <span><a href="mailto:dillonsimeone@gmail.com">Hiring?</a></span> 
+                        </div>
+                    </div>
+                </section>
+                
+            </div>
+            <div id="preferences">
+                test
+            </div>
             </div>
 
             <div class = "item" id="projects">
@@ -281,6 +258,7 @@
             //Since when you rotate your mobile device by 90 degree, the height becomes the width and the width becomes the height. Check for that to trigger a resize instead of any resizing, so the URL address resizing the website page don't affect anything.
             const initalHeight = window.innerHeight;
             const initalWidth = window.innerWidth;
+            let backgroundHoverEventCounter = 0;
 
             //This makes it so nothing happens until user is done resizing.
             let resize;
@@ -313,7 +291,7 @@
                 }
             };
 
-            //Instead of having all polygons to show up with a single fill color until hovered over, randomize all of their colors.
+            //Instead of having all polygons to show up with a single fill color until backgroundHoverEventCountered over, randomize all of their colors.
             function randomizeFillColor(polyPoints, polyArray){
                 polyPoints.forEach(function(point, i){
                     polyArray[i].style.fill = "rgb(" + randomColor(100) + "," + randomColor(100) + "," + randomColor(100) + ")";    
@@ -341,7 +319,7 @@
                   stroke_width: 0.5
                 }).svg(); // Render as SVG.
                 
-                //Circle used to check what polys are being hovered over.
+                //Circle used to check what polys are being backgroundHoverEventCountered over.
                 const circleElement = document.createElement("div");
                 circleElement.className = "circle";
                 
@@ -352,7 +330,7 @@
                 container.appendChild(circleElement);
 
                 //For mouse movement events.
-                const circleHover = document.querySelector('.circle');
+                const circlebackgroundHoverEventCounter = document.querySelector('.circle');
 
                 //Makes an array of all of the polys from Pattern, disregerding everything else.
                 const polyArray = [].slice.call(pattern.children); 
@@ -367,11 +345,8 @@
                   };
                   return point;
                 });
-                
+
                 randomizeFillColor(polyPoints, polyArray); //Randomized colors for the polys on draw.
-                ItemColors(150, 0.9, 'nav'); //Random gradient color for nav bar.
-                ItemsColors(150, 0.9, 'h2');
-                ItemsColors(150, 0.5, '.grid-item');
                 
                 /*
                 This below, is JavaScript witchery at its finest! Put simply, what I did was to store a reference to the anonymous event listener (document.fn) 
@@ -381,57 +356,38 @@
                 document.removeEventListener('mousemove', document.fn);
                 
                 document.addEventListener('mousemove', document.fn=function fn(e){
-                    const radius = circleHover.clientWidth / 2;
-
-                    //Gets the pointer's x and y coords.
-                    const center = {
-                        x: e.clientX,
-                        y: e.clientY
-                    };
-                    
-                    //Defines where the the circle needs to go for its center to be right over the pointer's x and y coords.
-                    const circleCenter = {
-                        x: center.x - radius,
-                        y: center.y - radius
-                    };
-                    
-                    //Moves the circle to the pointer's postion.
-                    circleHover.setAttribute('style', 'transform: translate(' + 
-                                  circleCenter.x + 'px, ' + 
-                                  circleCenter.y + 'px)');
-
-                    
-
-                    
-                    //This is more efficient than the forEach approach below this block. 
-                    for(let i = polyPoints.length - 1; i; i--){
-                        //Swap if to invert the effect.
-                        if(detectPointInCircle(polyPoints[i], radius, center)){
-                            polyArray[i].classList.remove('fade');
-                            polyArray[i].style.stroke = randomRgb(100);
-                            polyArray[i].style.fill = randomRgb(50);
+                    if(backgroundHoverEventCounter >= 15 || mobilecheck()){ //Gentler on desktops. Mobile devices don't trigger backgroundHoverEventCounters as often, so hence the OR operator. 
+                        const radius = circlebackgroundHoverEventCounter.clientWidth / 2;
+                        //Gets the pointer's x and y coords.
+                        const center = {
+                            x: e.clientX,
+                            y: e.clientY
+                        };
+                        //Defines where the the circle needs to go for its center to be right over the pointer's x and y coords.
+                        const circleCenter = {
+                            x: center.x - radius,
+                            y: center.y - radius
+                        };
+                        //Moves the circle to the pointer's postion.
+                        circlebackgroundHoverEventCounter.setAttribute('style', 'transform: translate(' + 
+                                    circleCenter.x + 'px, ' + 
+                                    circleCenter.y + 'px)');
+                        for(let i = polyPoints.length - 1; i; i--){
+                            //Swap if to invert the effect.
+                            if(detectPointInCircle(polyPoints[i], radius, center)){
+                                polyArray[i].classList.remove('fade');
+                                polyArray[i].style.stroke = randomRgb(100);
+                                polyArray[i].style.fill = randomRgb(50);
+                            }
+                            else
+                                polyArray[i].classList.add('fade');
                         }
-                        else
-                            polyArray[i].classList.add('fade');
+                        backgroundHoverEventCounter = 0;
                     }
-                    
-                    /*
-                    //Checks for points under the circle, and apply effects. 
-                    polyPoints.forEach(function(point, i) {
-                        // Swap if to invert the effect.
-                        if (detectPointInCircle(point, radius, center)) {
-                            polyArray[i].classList.remove('fade');
-                            polyArray[i].style.stroke = randomRgb(100);
-                            polyArray[i].style.fill = randomRgb(50);
-                        } else 
-                            polyArray[i].classList.add('fade');
-                    });
-                    */
-
+                    backgroundHoverEventCounter++;
                 }); //End Event Listener magic
             };
-            draw();
-            
+
             //Checks if polygons are under circle. Credits to Claudio on Codepen for figuring out the math bits: https://codepen.io/claudiocalautti/pen/VLzWrz
             function detectPointInCircle(point, radius, center) {
               const xp = point.x;
@@ -441,9 +397,6 @@
               const d = radius * radius;
               return Math.pow(xp - xc, 2) + Math.pow(yp - yc, 2) <= d;
             };
-            
-            //Sets letters to random colors.
-            letterings('h1');
 
             //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
             function hideAll(targetID, buttonID){
@@ -470,8 +423,6 @@
                 if(timedelay == undefined)
                     timedelay = 30; //Default value
 
-                
-
                 setTimeout(function(){
                     hideAll(targetID, buttonID);
 
@@ -483,7 +434,24 @@
                 }, timedelay);
             };
             
-            reveal('intro', document.querySelector('#homeBtn'), 500);
+            function randomizeColor(){
+                ItemColors(150, 0.9, 'nav'); //Random gradient color for nav bar.
+                ItemsColors(150, 0.9, '#miniprojects h2');
+                ItemsColors(150, 0.5, '#miniprojects .grid-item');
+                ItemsColors(150, 0.9, '#elevatorPitch h2');
+                ItemsColors(150, 0.5, '#elevatorPitch div');
+                letterings('h1'); //Sets letters to random colors.
+            }
+
+            function setUp(){
+                draw();
+                randomizeColor();
+                reveal('elevatorPitch', document.querySelector('#homeBtn'), 500);
+            }
+
+
+            //Let there be light.
+            setUp();
             
             
         </script>
