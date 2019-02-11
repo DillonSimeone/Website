@@ -1,459 +1,495 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-	<title>Amazing Title</title>
-	<link href="./style.css" rel="stylesheet">
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Amazing Title</title>
+    <link href="./style.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://fonts.googleapis.com/css?family=Anton|Bitter|M+PLUS+Rounded+1c|Roboto+Mono" rel="stylesheet">
-</head> 
-	<body onresize="redraw();">
-        <nav>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('elevatorPitch', this)" class="navButton animationHouse" id="homeBtn">
-                <path d="M208 448V320h96v128h97.6V256H464L256 64 48 256h62.4v192z"/>
-            </svg>
+</head>
 
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('miniprojects', this)" class="navButton" id="miniBtn">
-                <path d="M336 272c0-29.8-16.3-55.7-40.4-69.5l73.1-124.1C335.6 59.1 297.1 48 256 48c-41.2 0-79.9 11.2-113.1 30.6l71.6 125C191.4 217.6 176 243 176 272H32c0 83.3 46.9 153.4 114.4 192l70.1-122.4c11.7 6.6 25.1 10.4 39.5 10.4 14.3 0 27.7-3.8 39.3-10.3L365.6 464C433.1 425.4 480 355.3 480 272H336z"/>
-            </svg>
-            
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('projects', this)" class="navButton" id="prjBtn">
-                <path d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z"/>
-            </svg>
-        </nav>
-        
-        <div class = "items">
-            <div class="item" id="loading">
-                <h1>Loading fun stuff</h1>
-                <span id="dots"></span>
-            </div>
+<body onresize="redraw();">
+    <nav>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('elevatorPitch', this)" class="navButton animationHouse"
+            id="homeBtn">
+            <path d="M208 448V320h96v128h97.6V256H464L256 64 48 256h62.4v192z" />
+        </svg>
 
-            <div class="item" id="elevatorPitch">
-                <h1 id="name">Dillon Simeone</h1>
-                <section>
-                    <h3>Elevator Pitch</h3>
-                    <div class="bg1">
-                        <h2>A fullstack developer based in Portland, Oregon.</h2>
-                        <p>
-                            I'm a college student majoring in Website and Mobile Computering. This major focuses on designing responsive websites. On top of what is taught at my college, Rochester Institute Of Technology, I've picked up on a lot of different languages and became comfortable with using random libraries to solve the problems I'm faced with.
-                        </p>
-                        <div id = "jobs">
-                            <span><a herf="./">Need a website?</a></span>
-                            <span><a href="mailto:dillonsimeone@gmail.com">Hiring?</a></span> 
-                        </div>
-                    </div>
-                </section>
-                
-            </div>
-            <div id="preferences">
-                test
-            </div>
-            </div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('miniprojects', this)" class="navButton"
+            id="miniBtn">
+            <path d="M336 272c0-29.8-16.3-55.7-40.4-69.5l73.1-124.1C335.6 59.1 297.1 48 256 48c-41.2 0-79.9 11.2-113.1 30.6l71.6 125C191.4 217.6 176 243 176 272H32c0 83.3 46.9 153.4 114.4 192l70.1-122.4c11.7 6.6 25.1 10.4 39.5 10.4 14.3 0 27.7-3.8 39.3-10.3L365.6 464C433.1 425.4 480 355.3 480 272H336z" />
+        </svg>
 
-            <div class = "item" id="projects">
-                <h1>Projects</h1>
-                <iframe src="./Projects/index.html"></iframe>
-            </div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('projects', this)" class="navButton"
+            id="prjBtn">
+            <path d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z" />
+        </svg>
+    </nav>
 
-            <div class = "item" id="miniprojects">
-                <h1>MiniProjects</h1>
-                <section>
-                    <h2>
-                        Doodles, ideas and notes to self.
-                    </h2>
-        
-                    <div class="grid">
-                        <div class = "grid-item">
-                            <h2>SVG fun</h2>
-                                <p>
-                                    I was playing with Google's grasshopper app the other day, and was somewhat impressed by how 
-                                    easy it was to animate SVGs using JavaScript's D3 package... And decided to play around with 
-                                    that idea on my desktop, only to become frustasted when attempting to get the D3 package to 
-                                    work with SVGs, but I discovered that if I use basic JavaScript with CSS3 stylings, 
-                                    I can achieve the same result easily!
-                                </p>
-                                <ul>
-                                    <li><a href="./MiniProjects/Breath/index.html">Breath</a></li>
-                                    <li><a href="./MiniProjects/trianglify/index.html">Playing with Trianglify Library</a></li>
-                                    <li><a href="./MiniProjects/trianglify/index2.html">Playing with Trianglify Library 2</a></li>
-                                    <li><a href="./MiniProjects/trianglify/index3.html">Playing with Trianglify Library 3 (Attempting SVG morph)</a></li>
-                                    <li><a href="./MiniProjects/trianglify/index4.html">Playing with Trianglify Library 4</a></li>
-                                </ul>
-                        </div>
-        
-                        <div class = "grid-item">
-                            <h2>ThreeJs</h2>
-                                <p>
-                                    I became very interested in ThreeJS when I discovered that the library had support for VR gears. 
-                                    I thought, why not make a personal world instead of a personal website, like in those weird japan 
-                                    animes? This "Hello World" experiment with ThreeJs showed me that the learning curve with this library 
-                                    is very gentle. It's easy to do anything with ThreeJS, just read the documentions! It's very well documented, 
-                                    and there's PLENTY examples to reverse-engineer for whatever you need!
-                                </p>
-                                <ul>
-                                    <li><a href="./MiniProjects/ThreeJs/index.html">First ThreeJs doodle</a></li>
-                                </ul>
-                        </div>
-        
-                        <div class = "grid-item">
-                            <h2>Circle</h2>
-                                <p>
-                                    On a whim, I decided to try to find a way to arrange texts into a circle. 
-                                    I thought it would be easy... It wasn't easy at all! Some trigonometry was 
-                                    required to arrange everything into circle. The result of this miniproject 
-                                    is that I now have a very easily reuseable snippet of code that can arrange 
-                                    anything into circles... If I wanted to, I could make it recursive, circles all 
-                                    the way down and up!
-                                </p>
-                                <p>
-                                    I've used the circle snippet I made when redoing one of my old course homeworks for fun, see details below.
-                                </p>
-                                <ul>
-                                    <li><a href="./MiniProjects/CircleOfLife/index.html">Circle</a></li>
-                                    <li><a href="./CollegeCourses/web2/Homeworks/HW10/GradingRubrics.jpg">Homework 10 Grading Rubrics</a></li>
-                                    <li><a href="./CollegeCourses/web2/Homeworks/HW10/index.html">Homework 10 (First Attempt)</a></li>
-                                    <li><a href="./MiniProjects/Web2Homework10Redo/index.html">Homework 10 (Second Attempt, years after first attempt)</a></li>
-                                </ul>
-                        </div>
-        
-                        <div class = "grid-item">
-                            <h2>Keyframes</h2>
-                                <p>
-                                    Keyframe doodles here! The grandfather clock is my first Keyframe doodle, 
-                                    which I pretty much made right away after learning about CSS keyframes for 
-                                    the first time. So easy, and customizable!
-                                </p>
-                                <ul>
-                                    <li><a href="./MiniProjects/GrandFatherClock/playground.html">Grandfather Clock</a></li>
-                                    <li><a href="./MiniProjects/TickingMovement/index.html">Steps</a></li>
-                                    <li><a href="./MiniProjects/BarGraph/index.html">CSS3 grid/keyframes doodle</a></li>
-                                </ul>
-                        </div>
-        
-                        <div class = "grid-item">
-                            <h2>Checkbox Hack</h2>
-                                <p>
-                                    I heard that by cheesing how HTML and CSS works, you can make onclick-like 
-                                    events to occur without using any scripting languages. This miniproject is 
-                                    my attempt at the checkbox hack.
-                                </p>
-                                <p>
-                                    The checkbox hack is a VERY interesting approach to accessibility. It's bad 
-                                    semantics, but it's very dobable to design websites that fake onclick events 
-                                    by using the checkbox hacks. The main drawback is that it will not degrace 
-                                    gracefully when used in older browsers... Instead of degrading in any ways, 
-                                    it would just break, completely!
-                                </p>
-                                <ul>
-                                    <li><a href="./MiniProjects/CheckboxHack/index.html">Checkbox Hack</a></li>
-                                </ul>
-                        </div>
-        
-                        <div class = "grid-item">
-                            <h2>Moving Popup</h2>
-                                <p>
-                                    I was inspired by a random attack by randsomwares and annoying pop-ups on a 
-                                    website to see how annoying I could make those pop-ups to be! What I came up 
-                                    with is a pop-up that, soon as it's spawned, start running around the screen 
-                                    making it very frustrating to try to close the pop-up.
-                                </p>
-                                <p>
-                                    One big thing I learned from this miniproject was that pop-ups can only be 
-                                    triggered by the client's actions, limited to a single pop-up per action, so 
-                                    you can't for example, cause thousands of pop-ups to appear on a single click.
-                                </p>
-                                <p>
-                                    I found a few ways to completely lock up the browser in a way where the task 
-                                    manager is needed to kill the browser... Because that vector of attack is so 
-                                    annoying, I'm not posting it here! The one I'm making public is harmless, you 
-                                    can stop the pop-up window from moving by closing the website page that spawned 
-                                    the pop-up. 
-                                </p>
-                                <ul>
-                                    <li><a href="./MiniProjects/MovingPopUp/Trap.html">Popup Trap</a></li>
-                                </ul>
-                        </div>
-        
-                        <div class = "grid-item">
-                            <h2>Flex Layout Practice</h2>
-                                <p>
-                                    <a href="https://css-tricks.com/snippets/css/a-guide-to-flexbox/">Flexbox</a> layouts are awesome! 
-                                    It made making this goofy site very easy! I didn't have to worry about screen sizes, etc... Flex takes 
-                                    care of all of that!
-                                </p>
-                                <ul>
-                                    <li><a href="./MiniProjects/MediaLayout/index.html">Pepe Layout</a></li>
-                                    <li><a href="./MiniProjects/Restaurant/index.html">Random Restaurant</a></li>
-                                </ul>
-                        </div>
-        
-                        <div class = "grid-item">
-                            <h2>Browser Detector</h2>
-                                <p>
-                                    I made this prototype a long time ago when someone asked me if 
-                                    I could get more infomation about their vistors without using 
-                                    third-party scripts. It was much easier than I expected. I did 
-                                    it in both PHP and JavaScript. With PHP, it was much easier to 
-                                    extract infomation about visters, and it was easy to set the script 
-                                    to email me asking me to update it when it encounters a new type of 
-                                    browser and devices.
-                                </p>
-                                <ul>
-                                    <li><a href="./MiniProjects/BrowserDetect/BrowserDetectJavaScript.html">JavaScript Browser Detect</a></li>
-                                    <li><a href="./MiniProjects/BrowserDetect/BrowserDetectPHP.php">PHP Browser Detect</a>(PHP is not installed here.)</li>
-                                </ul>
-                        </div>
-        
-                        <div class = "grid-item">
-                            <h2>JavaScript Text Adventure</h2>
-                                <p>
-                                    A random idea I came up with for a class project when on the 
-                                    topic of dynamic programming. This short text adventure was made 
-                                    to test how easy it is to implement. It turned out to be nearly 
-                                    effortless to make the whole thing once you've planned out the routes.
-                                </p>
-                                <ul>
-                                    <li><a href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype1.html">Prototype1</a></li>
-                                    <li><a href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype2.html">Prototype2</a></li>
-                                    <li><a href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype3.html">Prototype3</a></li>
-                                    <li><a href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype4.html">Prototype4</a></li>
-                                </ul>
-                        </div>
-                        
-                    </div>
-                </section>
-                
-                <section>
-                    <div class="grid">
-                        <h1>Project Ideas</h1>
-                        <div class = "grid-item">
-                            <h1>Steam Interface</h1>
-                                <p>
-                                    Design a custom website that uses Steam's APIs to make a better search engine. Steam's GUIs are very basic, and lacks a lot of functions... Due to that, it can be hard to find new and interesting games that you haven't already seen. I've dug up a few too much overlooked gems to not consider attempting to design something better.
-                                </p>
-                                <ul>
-                                    <li><a href="https://steamcommunity.com/dev">Steam API</a></li>
-                                    <li><a href="https://partner.steamgames.com/doc/webapi_overview">Steam API documentions</a></li>
-                                </ul>
-                        </div>
-                    </div>
-                </section>
-                <!-- <iframe src="MiniProjects/index.html"></iframe> -->
-            </div>
+    <div class="items">
+        <div class="item" id="loading">
+            <h1>Loading fun stuff</h1>
+            <span id="dots"></span>
         </div>
-        
-        <div class="trianglify">
-            <div class="circle"></div>
-        </div>
-        <script src="randomColors.js"></script>
-        <script src="trianglify.min.js"></script>
-        <script>
-            //Mobile browsers likes to resize website pages when their URL bars hides when the user moves down, and reappears when the user moves up. Very annoying.
-            window.mobilecheck = function() {
-              var check = false;
-              (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
-              return check;
-            };
-            
-            //Since when you rotate your mobile device by 90 degree, the height becomes the width and the width becomes the height. Check for that to trigger a resize instead of any resizing, so the URL address resizing the website page don't affect anything.
-            const initalHeight = window.innerHeight;
-            const initalWidth = window.innerWidth;
-            let backgroundHoverEventCounter = 0;
 
-            //This makes it so nothing happens until user is done resizing.
-            let resize;
-            function redraw(){ //Note: Used in the HTML. `<body onresize="redraw();">`
-                if(!mobilecheck()){
+        <div class="item" id="elevatorPitch">
+            <h1 id="name">Dillon Simeone</h1>
+            <section>
+                <h3>Elevator Pitch</h3>
+                <div class="bg1">
+                    <h2>A fullstack developer based in Portland, Oregon.</h2>
+                    <p>
+                        I'm a college student majoring in Website and Mobile Computering. This major focuses on
+                        designing responsive websites. On top of what is taught at my college, Rochester Institute Of
+                        Technology, I've picked up on a lot of different languages and became comfortable with using
+                        random libraries to solve the problems I'm faced with.
+                    </p>
+                    <div id="jobs">
+                        <span><a herf="./">Need a website?</a></span>
+                        <span><a href="mailto:dillonsimeone@gmail.com">Hiring?</a></span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+        <div id="preferences">
+            test
+        </div>
+    </div>
+
+    <div class="item" id="projects">
+        <h1>Projects</h1>
+        <iframe src="./Projects/index.html"></iframe>
+    </div>
+
+    <div class="item" id="miniprojects">
+        <h1>MiniProjects</h1>
+        <section>
+            <h2>
+                Doodles, ideas and notes to self.
+            </h2>
+
+            <div class="grid">
+                <div class="grid-item">
+                    <h2>JavaScript Fun</h2>
+                    <p>
+                        A random nerd challenged a room filled with nerds to take a string and arrange all of the
+                        letters so the block of letters appears as a perfect block. Many nerds came up with random
+                        approachs to this random challenge.
+                    </p>
+                    <p>
+                        The random challenge is silly enough that I might come back to this from time to time as my
+                        scripting skills improves over the years.
+                    </p>
+                    <ul>
+                        <li><a href="./ColorfulLettersSquare/Spinning.html">Approach 1 - JavaScript and Keyframes</a></li>
+                        <li><a href="./ColorfulLettersSquare/Sweeping.html">Approach 2 - Javascript and Keyframes</a></li>
+                    </ul>
+                </div>
+                <div class="grid-item">
+                    <h2>SVG fun</h2>
+                    <p>
+                        I was playing with Google's grasshopper app the other day, and was somewhat impressed by how
+                        easy it was to animate SVGs using JavaScript's D3 package... And decided to play around with
+                        that idea on my desktop, only to become frustasted when attempting to get the D3 package to
+                        work with SVGs, but I discovered that if I use basic JavaScript with CSS3 stylings,
+                        I can achieve the same result easily!
+                    </p>
+                    <ul>
+                        <li><a href="./MiniProjects/Breath/index.html">Breath</a></li>
+                        <li><a href="./MiniProjects/trianglify/index.html">Playing with Trianglify Library</a></li>
+                        <li><a href="./MiniProjects/trianglify/index2.html">Playing with Trianglify Library 2</a></li>
+                        <li><a href="./MiniProjects/trianglify/index3.html">Playing with Trianglify Library 3 - Attempting SVG morph</a></li>
+                        <li><a href="./MiniProjects/trianglify/index4.html">Playing with Trianglify Library 4</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>ThreeJs</h2>
+                    <p>
+                        I became very interested in ThreeJS when I discovered that the library had support for VR gears. I thought, why not make a personal world instead of a personal website, like in those weird japan animes? This "Hello World" experiment with ThreeJs showed me that the learning curve with this library is very gentle. It's easy to do anything with ThreeJS, just read the documentions! It's very well documented, and there's PLENTY examples to reverse-engineer for whatever you need!
+                    </p>
+                    <ul>
+                        <li><a href="./MiniProjects/ThreeJs/index.html">First ThreeJs doodle</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>Circle</h2>
+                    <p>
+                        On a whim, I decided to try to find a way to arrange texts into a circle.
+                        I thought it would be easy... It wasn't easy at all! Some trigonometry was
+                        required to arrange everything into circle. The result of this miniproject
+                        is that I now have a very easily reuseable snippet of code that can arrange
+                        anything into circles... If I wanted to, I could make it recursive, circles all
+                        the way down and up!
+                    </p>
+                    <p>
+                        I've used the circle snippet I made when redoing one of my old course homeworks for fun, see
+                        details below.
+                    </p>
+                    <ul>
+                        <li><a href="./MiniProjects/CircleOfLife/index.html">Circle</a></li>
+                        <li><a href="./CollegeCourses/web2/Homeworks/HW10/GradingRubrics.jpg">Homework 10 Grading
+                                Rubrics</a></li>
+                        <li><a href="./CollegeCourses/web2/Homeworks/HW10/index.html">Homework 10 (First Attempt)</a></li>
+                        <li><a href="./MiniProjects/Web2Homework10Redo/index.html">Homework 10 (Second Attempt, years
+                                after first attempt)</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>Keyframes</h2>
+                    <p>
+                        Keyframe doodles here! The grandfather clock is my first Keyframe doodle,
+                        which I pretty much made right away after learning about CSS keyframes for
+                        the first time. So easy, and customizable!
+                    </p>
+                    <ul>
+                        <li><a href="./MiniProjects/GrandFatherClock/playground.html">Grandfather Clock</a></li>
+                        <li><a href="./MiniProjects/TickingMovement/index.html">Steps</a></li>
+                        <li><a href="./MiniProjects/BarGraph/index.html">CSS3 grid/keyframes doodle</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>Checkbox Hack</h2>
+                    <p>
+                        I heard that by cheesing how HTML and CSS works, you can make onclick-like
+                        events to occur without using any scripting languages. This miniproject is
+                        my attempt at the checkbox hack.
+                    </p>
+                    <p>
+                        The checkbox hack is a VERY interesting approach to accessibility. It's bad
+                        semantics, but it's very dobable to design websites that fake onclick events
+                        by using the checkbox hacks. The main drawback is that it will not degrace
+                        gracefully when used in older browsers... Instead of degrading in any ways,
+                        it would just break, completely!
+                    </p>
+                    <ul>
+                        <li><a href="./MiniProjects/CheckboxHack/index.html">Checkbox Hack</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>Moving Popup</h2>
+                    <p>
+                        I was inspired by a random attack by randsomwares and annoying pop-ups on a
+                        website to see how annoying I could make those pop-ups to be! What I came up
+                        with is a pop-up that, soon as it's spawned, start running around the screen
+                        making it very frustrating to try to close the pop-up.
+                    </p>
+                    <p>
+                        One big thing I learned from this miniproject was that pop-ups can only be
+                        triggered by the client's actions, limited to a single pop-up per action, so
+                        you can't for example, cause thousands of pop-ups to appear on a single click.
+                    </p>
+                    <p>
+                        I found a few ways to completely lock up the browser in a way where the task
+                        manager is needed to kill the browser... Because that vector of attack is so
+                        annoying, I'm not posting it here! The one I'm making public is harmless, you
+                        can stop the pop-up window from moving by closing the website page that spawned
+                        the pop-up.
+                    </p>
+                    <ul>
+                        <li><a href="./MiniProjects/MovingPopUp/Trap.html">Popup Trap</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>Flex Layout Practice</h2>
+                    <p>
+                        <a href="https://css-tricks.com/snippets/css/a-guide-to-flexbox/">Flexbox</a> layouts are
+                        awesome!
+                        It made making this goofy site very easy! I didn't have to worry about screen sizes, etc...
+                        Flex takes
+                        care of all of that!
+                    </p>
+                    <ul>
+                        <li><a href="./MiniProjects/MediaLayout/index.html">Pepe Layout</a></li>
+                        <li><a href="./MiniProjects/Restaurant/index.html">Random Restaurant</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>Browser Detector</h2>
+                    <p>
+                        I made this prototype a long time ago when someone asked me if
+                        I could get more infomation about their vistors without using
+                        third-party scripts. It was much easier than I expected. I did
+                        it in both PHP and JavaScript. With PHP, it was much easier to
+                        extract infomation about visters, and it was easy to set the script
+                        to email me asking me to update it when it encounters a new type of
+                        browser and devices.
+                    </p>
+                    <ul>
+                        <li><a href="./MiniProjects/BrowserDetect/BrowserDetectJavaScript.html">JavaScript Browser
+                                Detect</a></li>
+                        <li><a href="./MiniProjects/BrowserDetect/BrowserDetectPHP.php">PHP Browser Detect</a>(PHP is
+                            not installed here.)</li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>JavaScript Text Adventure</h2>
+                    <p>
+                        A random idea I came up with for a class project when on the
+                        topic of dynamic programming. This short text adventure was made
+                        to test how easy it is to implement. It turned out to be nearly
+                        effortless to make the whole thing once you've planned out the routes.
+                    </p>
+                    <ul>
+                        <li><a href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype1.html">Prototype1</a></li>
+                        <li><a href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype2.html">Prototype2</a></li>
+                        <li><a href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype3.html">Prototype3</a></li>
+                        <li><a href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype4.html">Prototype4</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="grid">
+                <h1>Project Ideas</h1>
+                <div class="grid-item">
+                    <h1>Steam Interface</h1>
+                    <p>
+                        Design a custom website that uses Steam's APIs to make a better search engine. Steam's GUIs are
+                        very basic, and lacks a lot of functions... Due to that, it can be hard to find new and
+                        interesting games that you haven't already seen. I've dug up a few too much overlooked gems to
+                        not consider attempting to design something better.
+                    </p>
+                    <ul>
+                        <li><a href="https://steamcommunity.com/dev">Steam API</a></li>
+                        <li><a href="https://partner.steamgames.com/doc/webapi_overview">Steam API documentions</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        <!-- <iframe src="MiniProjects/index.html"></iframe> -->
+    </div>
+    </div>
+
+    <div class="trianglify">
+        <div class="circle"></div>
+    </div>
+    <script src="randomColors.js"></script>
+    <script src="trianglify.min.js"></script>
+    <script>
+        //Mobile browsers likes to resize website pages when their URL bars hides when the user moves down, and reappears when the user moves up. Very annoying.
+        window.mobilecheck = function () {
+            var check = false;
+            (function (a) {
+                if (
+                    /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i
+                    .test(a) ||
+                    /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i
+                    .test(a.substr(0, 4))) check = true;
+            })(navigator.userAgent || navigator.vendor || window.opera);
+            return check;
+        };
+
+        //Since when you rotate your mobile device by 90 degree, the height becomes the width and the width becomes the height. Check for that to trigger a resize instead of any resizing, so the URL address resizing the website page don't affect anything.
+        const initalHeight = window.innerHeight;
+        const initalWidth = window.innerWidth;
+        let backgroundHoverEventCounter = 0;
+
+        //This makes it so nothing happens until user is done resizing.
+        let resize;
+
+        function redraw() { //Note: Used in the HTML. `<body onresize="redraw();">`
+            if (!mobilecheck()) {
+                clearTimeout(resize);
+                resize = setTimeout(
+                    function () {
+                        draw();
+                    }, 500
+                );
+            } else {
+                /*
+                let text = ("Mobile Device detected.");
+                text += ("<br>Inital width and height: " + initalWidth + " " + initalHeight);
+                text +=("<br>Current width and height: " + window.innerWidth + " " + window.innerHeight);
+                document.querySelector('p').innerHTML = text;
+                */
+                //Mobile support here. This checks for when the user turns the mobile sideway.
+                if ((window.innerHeight === initalWidth) && (window.innerWidth === initalHeight)) {
                     clearTimeout(resize);
                     resize = setTimeout(
-                        function(){
+                        function () {
                             draw();
+                            initalWidth = window.innerWidth;
+                            initalHeight = window.innerHeight;
                         }, 500
                     );
-                }else{
-                    /*
-                    let text = ("Mobile Device detected.");
-                    text += ("<br>Inital width and height: " + initalWidth + " " + initalHeight);
-                    text +=("<br>Current width and height: " + window.innerWidth + " " + window.innerHeight);
-                    document.querySelector('p').innerHTML = text;
-                    */
-                   //Mobile support here. This checks for when the user turns the mobile sideway.
-                    if((window.innerHeight === initalWidth) && (window.innerWidth === initalHeight)){
-                        clearTimeout(resize);
-                        resize = setTimeout(
-                            function(){
-                                draw();
-                                initalWidth = window.innerWidth;
-                                initalHeight = window.innerHeight;
-                            }, 500
-                        );
-                    }       
                 }
-            };
+            }
+        };
 
-            //Instead of having all polygons to show up with a single fill color until backgroundHoverEventCountered over, randomize all of their colors.
-            function randomizeFillColor(polyPoints, polyArray){
-                polyPoints.forEach(function(point, i){
-                    polyArray[i].style.fill = "rgb(" + randomColor(100) + "," + randomColor(100) + "," + randomColor(100) + ")";    
-                });
-            };
-            
-            let cells;
-            let divisor = 10; //This affects the amount of cells that's spawned. Bigger the number is, more cells that appears. Cells have a heavy impact on performace. Need to cook dinner? Set this to 1000!
-            
-            function draw(){
-                const container = document.querySelector('.trianglify');
-                
+        //Instead of having all polygons to show up with a single fill color until backgroundHoverEventCountered over, randomize all of their colors.
+        function randomizeFillColor(polyPoints, polyArray) {
+            polyPoints.forEach(function (point, i) {
+                polyArray[i].style.fill = "rgb(" + randomColor(100) + "," + randomColor(100) + "," +
+                    randomColor(100) + ")";
+            });
+        };
 
-                if(window.innerHeight > window.innerWidth) //This ensures the smallest value of either height/width is used. Performace reasons.
-                    cells = Math.ceil(window.innerHeight/divisor);
-                else
-                    cells = Math.ceil(window.innerWidth/divisor);
-                
-                //Generates the colorful background for the website.
-                const pattern = Trianglify({
-                  width: window.innerWidth,
-                  height: window.innerHeight,
-                  cell_size: cells,
-                  variance: 1,
-                  stroke_width: 0.5
-                }).svg(); // Render as SVG.
-                
-                //Circle used to check what polys are being backgroundHoverEventCountered over.
-                const circleElement = document.createElement("div");
-                circleElement.className = "circle";
-                
-                
-                //Clears out old stuff.
-                container.innerHTML = "";
-                container.insertBefore(pattern, container.firstChild);
-                container.appendChild(circleElement);
+        let cells;
+        let divisor = 10; //This affects the amount of cells that's spawned. Bigger the number is, more cells that appears. Cells have a heavy impact on performace. Need to cook dinner? Set this to 1000!
 
-                //For mouse movement events.
-                const circlebackgroundHoverEventCounter = document.querySelector('.circle');
+        function draw() {
+            const container = document.querySelector('.trianglify');
 
-                //Makes an array of all of the polys from Pattern, disregerding everything else.
-                const polyArray = [].slice.call(pattern.children); 
-                
-                // Get polygon coords and set their "hit boxes" for the detectPointInCircle function to work with. This takes about 20-30ms on my desktop. This is a very heavy block of code.
-                const polyPoints = polyArray.map(function(poly) {
-                  poly.classList.add('poly', 'fade');
-                  const rect = poly.getBoundingClientRect(); //This takes a lot of firepower to run each time the mouse moves.
-                  const point = {
+
+            if (window.innerHeight > window.innerWidth) //This ensures the smallest value of either height/width is used. Performace reasons.
+                cells = Math.ceil(window.innerHeight / divisor);
+            else
+                cells = Math.ceil(window.innerWidth / divisor);
+
+            //Generates the colorful background for the website.
+            const pattern = Trianglify({
+                width: window.innerWidth,
+                height: window.innerHeight,
+                cell_size: cells,
+                variance: 1,
+                stroke_width: 0.5
+            }).svg(); // Render as SVG.
+
+            //Circle used to check what polys are being backgroundHoverEventCountered over.
+            const circleElement = document.createElement("div");
+            circleElement.className = "circle";
+
+
+            //Clears out old stuff.
+            container.innerHTML = "";
+            container.insertBefore(pattern, container.firstChild);
+            container.appendChild(circleElement);
+
+            //For mouse movement events.
+            const circlebackgroundHoverEventCounter = document.querySelector('.circle');
+
+            //Makes an array of all of the polys from Pattern, disregerding everything else.
+            const polyArray = [].slice.call(pattern.children);
+
+            // Get polygon coords and set their "hit boxes" for the detectPointInCircle function to work with. This takes about 20-30ms on my desktop. This is a very heavy block of code.
+            const polyPoints = polyArray.map(function (poly) {
+                poly.classList.add('poly', 'fade');
+                const rect = poly.getBoundingClientRect(); //This takes a lot of firepower to run each time the mouse moves.
+                const point = {
                     x: rect.left + rect.width / 2,
                     y: rect.top + rect.height / 2
-                  };
-                  return point;
-                });
+                };
+                return point;
+            });
 
-                randomizeFillColor(polyPoints, polyArray); //Randomized colors for the polys on draw.
-                
-                /*
-                This below, is JavaScript witchery at its finest! Put simply, what I did was to store a reference to the anonymous event listener (document.fn) 
-                created below in the document, so I can destroy the anonymous event listener once it's outdated, and start up a new event listener that will work 
-                with the current values after a resize. If I don't do this...Amount of eventListeners going off on mousemove = (times resized browser).
-                */
-                document.removeEventListener('mousemove', document.fn);
-                
-                document.addEventListener('mousemove', document.fn=function fn(e){
-                    if(backgroundHoverEventCounter >= 15 || mobilecheck()){ //Gentler on desktops. Mobile devices don't trigger backgroundHoverEventCounters as often, so hence the OR operator. 
-                        const radius = circlebackgroundHoverEventCounter.clientWidth / 2;
-                        //Gets the pointer's x and y coords.
-                        const center = {
-                            x: e.clientX,
-                            y: e.clientY
-                        };
-                        //Defines where the the circle needs to go for its center to be right over the pointer's x and y coords.
-                        const circleCenter = {
-                            x: center.x - radius,
-                            y: center.y - radius
-                        };
-                        //Moves the circle to the pointer's postion.
-                        circlebackgroundHoverEventCounter.setAttribute('style', 'transform: translate(' + 
-                                    circleCenter.x + 'px, ' + 
-                                    circleCenter.y + 'px)');
-                        for(let i = polyPoints.length - 1; i; i--){
-                            //Swap if to invert the effect.
-                            if(detectPointInCircle(polyPoints[i], radius, center)){
-                                polyArray[i].classList.remove('fade');
-                                polyArray[i].style.stroke = randomRgb(100);
-                                polyArray[i].style.fill = randomRgb(50);
-                            }
-                            else
-                                polyArray[i].classList.add('fade');
-                        }
-                        backgroundHoverEventCounter = 0;
+            randomizeFillColor(polyPoints, polyArray); //Randomized colors for the polys on draw.
+
+            /*
+            This below, is JavaScript witchery at its finest! Put simply, what I did was to store a reference to the anonymous event listener (document.fn) 
+            created below in the document, so I can destroy the anonymous event listener once it's outdated, and start up a new event listener that will work 
+            with the current values after a resize. If I don't do this...Amount of eventListeners going off on mousemove = (times resized browser).
+            */
+            document.removeEventListener('mousemove', document.fn);
+
+            document.addEventListener('mousemove', document.fn = function fn(e) {
+                if (backgroundHoverEventCounter >= 15 || mobilecheck()) { //Gentler on desktops. Mobile devices don't trigger backgroundHoverEventCounters as often, so hence the OR operator. 
+                    const radius = circlebackgroundHoverEventCounter.clientWidth / 2;
+                    //Gets the pointer's x and y coords.
+                    const center = {
+                        x: e.clientX,
+                        y: e.clientY
+                    };
+                    //Defines where the the circle needs to go for its center to be right over the pointer's x and y coords.
+                    const circleCenter = {
+                        x: center.x - radius,
+                        y: center.y - radius
+                    };
+                    //Moves the circle to the pointer's postion.
+                    circlebackgroundHoverEventCounter.setAttribute('style', 'transform: translate(' +
+                        circleCenter.x + 'px, ' +
+                        circleCenter.y + 'px)');
+                    for (let i = polyPoints.length - 1; i; i--) {
+                        //Swap if to invert the effect.
+                        if (detectPointInCircle(polyPoints[i], radius, center)) {
+                            polyArray[i].classList.remove('fade');
+                            polyArray[i].style.stroke = randomRgb(100);
+                            polyArray[i].style.fill = randomRgb(50);
+                        } else
+                            polyArray[i].classList.add('fade');
                     }
-                    backgroundHoverEventCounter++;
-                }); //End Event Listener magic
-            };
-
-            //Checks if polygons are under circle. Credits to Claudio on Codepen for figuring out the math bits: https://codepen.io/claudiocalautti/pen/VLzWrz
-            function detectPointInCircle(point, radius, center) {
-              const xp = point.x;
-              const yp = point.y;
-              const xc = center.x;
-              const yc = center.y;
-              const d = radius * radius;
-              return Math.pow(xp - xc, 2) + Math.pow(yp - yc, 2) <= d;
-            };
-
-            //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
-            function hideAll(targetID, buttonID){
-                items = document.getElementsByClassName('item');
-                navButtons = document.getElementsByClassName("navButton");
-                for(let i = 0; i < items.length; i++){
-                    if(items[i].getAttribute('id') === targetID){
-                        //This is the one to not hide.
-                    }else{
-                        items[i].className = "item hide spin";
-                    } 
+                    backgroundHoverEventCounter = 0;
                 }
-                for(let i = 0; i < navButtons.length; i++){
-                    if(navButtons[i].getAttribute('id') === buttonID){
-                        //Do nothing.
-                    }else{
-                        navButtons[i].style.fill = "black";
-                    }
+                backgroundHoverEventCounter++;
+            }); //End Event Listener magic
+        };
+
+        //Checks if polygons are under circle. Credits to Claudio on Codepen for figuring out the math bits: https://codepen.io/claudiocalautti/pen/VLzWrz
+        function detectPointInCircle(point, radius, center) {
+            const xp = point.x;
+            const yp = point.y;
+            const xc = center.x;
+            const yc = center.y;
+            const d = radius * radius;
+            return Math.pow(xp - xc, 2) + Math.pow(yp - yc, 2) <= d;
+        };
+
+        //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
+        function hideAll(targetID, buttonID) {
+            items = document.getElementsByClassName('item');
+            navButtons = document.getElementsByClassName("navButton");
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].getAttribute('id') === targetID) {
+                    //This is the one to not hide.
+                } else {
+                    items[i].className = "item hide spin";
                 }
-            };
-            
-            //Reveals a page.
-            function reveal(targetID, buttonID, timedelay){
-                if(timedelay == undefined)
-                    timedelay = 30; //Default value
-
-                setTimeout(function(){
-                    hideAll(targetID, buttonID);
-
-                    if(buttonID !== undefined)
-                        buttonID.style.fill = "red";
-                        
-                    target = document.getElementById(targetID);
-                    target.className = "item reveal";
-                }, timedelay);
-            };
-            
-            function randomizeColor(){
-                ItemColors(150, 0.9, 'nav'); //Random gradient color for nav bar.
-                ItemsColors(150, 0.9, '#miniprojects h2');
-                ItemsColors(150, 0.5, '#miniprojects .grid-item');
-                ItemsColors(150, 0.9, '#elevatorPitch h2');
-                ItemsColors(150, 0.5, '#elevatorPitch div');
-                letterings('h1'); //Sets letters to random colors.
             }
-
-            function setUp(){
-                draw();
-                randomizeColor();
-                reveal('elevatorPitch', document.querySelector('#homeBtn'), 500);
+            for (let i = 0; i < navButtons.length; i++) {
+                if (navButtons[i].getAttribute('id') === buttonID) {
+                    //Do nothing.
+                } else {
+                    navButtons[i].style.fill = "black";
+                }
             }
+        };
+
+        //Reveals a page.
+        function reveal(targetID, buttonID, timedelay) {
+            if (timedelay == undefined)
+                timedelay = 30; //Default value
+
+            setTimeout(function () {
+                hideAll(targetID, buttonID);
+
+                if (buttonID !== undefined)
+                    buttonID.style.fill = "red";
+
+                target = document.getElementById(targetID);
+                target.className = "item reveal";
+            }, timedelay);
+        };
+
+        function randomizeColor() {
+            ItemColors(150, 0.9, 'nav'); //Random gradient color for nav bar.
+            ItemsColors(150, 0.9, '#miniprojects h2');
+            ItemsColors(150, 0.5, '#miniprojects .grid-item');
+            ItemsColors(150, 0.9, '#elevatorPitch h2');
+            ItemsColors(150, 0.5, '#elevatorPitch div');
+            letterings('h1'); //Sets letters to random colors.
+        }
+
+        function setUp() {
+            draw();
+            randomizeColor();
+            reveal('elevatorPitch', document.querySelector('#homeBtn'), 500);
+        }
 
 
-            //Let there be light.
-            setUp();
-            
-            
-        </script>
-	</body>
+        //Let there be light.
+        setUp();
+    </script>
+</body>
+
 </html>
