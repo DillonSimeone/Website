@@ -430,7 +430,7 @@
             container.appendChild(circleElement);
 
             //For mouse movement events.
-            const circlebackgroundHoverEventCounter = document.querySelector('.circle');
+            const circle = document.querySelector('.circle');
 
             //Makes an array of all of the polys from Pattern, disregerding everything else.
             const polyArray = [].slice.call(pattern.children);
@@ -457,9 +457,7 @@
             document.removeEventListener('mousemove', document.fn);
 
             document.addEventListener('mousemove', document.fn = function fn(e) {
-                if (backgroundHoverEventCounter >= 15 ||
-                mobilecheck()) { //Gentler on desktops. Mobile devices don't trigger backgroundHoverEventCounters as often, so hence the OR operator. 
-                    const radius = circlebackgroundHoverEventCounter.clientWidth / 2;
+                    const radius = circle.clientWidth / 2;
                     //Gets the pointer's x and y coords.
                     const center = {
                         x: e.clientX,
@@ -471,7 +469,7 @@
                         y: center.y - radius
                     };
                     //Moves the circle to the pointer's postion.
-                    circlebackgroundHoverEventCounter.setAttribute('style', 'transform: translate(' +
+                    circle.setAttribute('style', 'transform: translate(' +
                         circleCenter.x + 'px, ' +
                         circleCenter.y + 'px)');
                     for (let i = polyPoints.length - 1; i; i--) {
@@ -483,9 +481,6 @@
                         } else
                             polyArray[i].classList.add('fade');
                     }
-                    backgroundHoverEventCounter = 0;
-                }
-                backgroundHoverEventCounter++;
             }); //End Event Listener magic
         };
 
