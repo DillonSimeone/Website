@@ -49,6 +49,7 @@ nav{
 nav svg{
     display: block;
     height: 5vh;
+    cursor: pointer;
 }
 
 .item{
@@ -143,7 +144,6 @@ nav svg{
 }
 
 #elevatorPitch div{
-    width: 80%;
     border: 3px solid black;
 }
 
@@ -157,9 +157,6 @@ nav svg{
     border-top: 3px solid black;
     width: 100%;
     font-size: 2rem;
-}
-
-#elevatorPitch #jobs a{
 }
 
 #elevatorPitch h2{
@@ -180,16 +177,21 @@ nav svg{
                 MiniProjects
 =========================================================*/
 
+#miniprojects section{
+    display: flex;
+    flex-direction: column;
+}
+
+#miniprojects section h1, h2{
+    width: 100%;
+    text-align: center;
+}
+
 #miniprojects .grid{
     width: 80%;
     margin: auto;
     display: flex;
     flex-wrap: wrap;
-}
-
-#miniprojects h2{
-    text-align: center;
-    margin: 1.5rem auto 1.5rem auto;
 }
 
 #miniprojects .grid-item h2{
@@ -212,6 +214,21 @@ nav svg{
 /*=======================================================
                 Projects
 =========================================================*/
+#projects{
+    overflow: hidden;
+}
+
+#projects section{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+#projects section h2{
+    font-size: 3rem;
+}
 
 
 /*=======================================================
