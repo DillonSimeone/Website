@@ -1,3 +1,39 @@
+/* //From https://coolors.co! Useful site.
+const colorScheme1 = ["#bee6ce", "#bcffdb", "#8dffcd", "#44bba4", "4f9d69"];
+
+function SchemeColors(scheme){
+    switch(scheme){
+        case 1: 
+            return colorScheme1;
+            break;
+        default:
+            return colorScheme1;
+            break;
+    }
+}
+
+
+function randomSchemeColor(scheme){
+    switch(scheme){
+        case 1: 
+            return colorScheme1[Math.ceil(Math.random() * colorScheme1.length)] 
+            break;
+        default:
+            return colorScheme1[Math.ceil(Math.random() * colorScheme1.length)] 
+            break;
+    }
+}
+
+function ItemSchemeColors(scheme, which, target){
+    scheme = SchemeColors(scheme);
+    target = document.querySelector(target);
+    if(which >= scheme.length)
+        target.style.backgroundColor = scheme[0];
+    else
+        target.style.backgroundColor = scheme[which];
+    
+} */
+
 //Returns random colors. For use in other functions, don't use this directly.
 function randomColor(min, max){
     let color = Math.floor(Math.random() * (255));
@@ -7,6 +43,7 @@ function randomColor(min, max){
         color = max;
     return color;
 };
+
 
 //Returns a random rgb, the higher the min value is, the blighter the colors will be. (Less than 255!)
 function randomRgb(min, max){
@@ -30,6 +67,22 @@ function ItemsColors(min, max, alpha, targets){
     elements.map( element => element.style.background = "linear-gradient(to right, " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + ")");
 }
 
+
+
+function ItemsSchemeColors(scheme, which, targets){
+    scheme = SchemeColors(scheme);
+    targets = [].slice.call(document.querySelectorAll(targets));
+    if(which >= scheme.length)
+        targets.forEach(element => {
+            element.style.backgroundColor = scheme[0];
+        });
+    else
+    targets.forEach(element => {
+        element.style.backgroundColor = scheme[which];
+    });
+    
+}
+
 //Wraps all of the letters inside target elements in a span wrapper, then apply random colors.
 function letterings(target){
     target = document.querySelectorAll(target);
@@ -44,9 +97,6 @@ function letterings(target){
            lettersColors(target[i].getElementsByTagName('span')); 
         });
     }
-    
-    
-    
 };
 
 //Random colors for letters

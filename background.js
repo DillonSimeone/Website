@@ -55,8 +55,8 @@ function redraw() { //Note: Used in the HTML. `<body onresize="redraw();">`
 //Instead of having all polygons to show up with a single fill color until backgroundHovers, randomize all of their colors.
 function randomizeFillColor(polyPoints, polyArray) {
     polyPoints.forEach(function (point, i) {
-        polyArray[i].style.fill = "rgb(" + randomColor(min, max) + "," + randomColor(min, max) + "," +
-            randomColor(min, max) + ")";
+        polyArray[i].style.fill = "rgb(" + randomColor(min, max) + "," + randomColor(min, max) + "," + randomColor(min, max) + ")";
+        //polyArray[i].style.fill = randomSchemeColor();
     });
 };
 
@@ -139,8 +139,8 @@ function draw() {
                 //Swap if to invert the effect.
                 if (detectPointInCircle(polyPoints[i], radius, center)) {
                     polyArray[i].classList.remove('fade');
-                    polyArray[i].style.stroke = randomRgb(min, max);
-                    polyArray[i].style.fill = randomRgb(min, max);
+                    polyArray[i].style.stroke = randomRgb(min, max);//randomSchemeColor();
+                    polyArray[i].style.fill = randomRgb(min, max);// randomSchemeColor();
                 } else
                     polyArray[i].classList.add('fade');
             }
