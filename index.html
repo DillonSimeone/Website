@@ -356,6 +356,7 @@
     <script src="trianglify.min.js"></script>
     <script src="background.js"></script>
     <script>
+        let selectedButton = "";
         //History Api witchery
         window.addEventListener('popstate', function (e) {
             reveal(e.state.previousPage, e.state.previousButton, 30, true);
@@ -369,8 +370,11 @@
             setTimeout(function () {
                 hideAll(targetID, buttonID);
 
-                if (button !== undefined)
+                if (button !== undefined){
                     button.style.fill = "grey";
+                    selectedButton = buttonID;
+                }
+                    
 
                 target = document.getElementById(targetID);
                 target.className = "item reveal";
@@ -399,18 +403,10 @@
                 if (navButtons[i].getAttribute('id') === buttonID) {
                     //Do nothing.
                 } else {
-                    navButtons[i].style.fill = "white";
+                    navButtons[i].style.fill = "#666";
                 }
             }
         };
-
-        let colors = ["#1abc9c", "#2ecc71","#3498db", "#9b59b6", "#34495e", "#16a085", "#27ae60", "#2980b9", "#8e44ad", "#2c3e50", "#f1c40f", "#e67e22", "#e74c3c", "#ecf0f1", "#95a5a6", "#f39c12", "#d35400", "#c0392b", "#bdc3c7", "#7f8c8d"];
-        function randomPaletteColor2(){
-            return colors[Math.ceil(Math.random * colors.length)];
-        }
-
-
-
 
         function randomizeColor() {
             //ItemColors(150, 200, 0.9, 'nav'); //Random gradient color for nav bar.
@@ -428,7 +424,7 @@
             ItemsSchemeColors(1,3, '#elevatorPitch div'); 
             */
             letterings('h1'); //Sets letters to random colors.
-            let buttons = [...document.querySelectorAll("nav svg path")];
+            let buttons = [...document.querySelectorAll("nav svg")];
             //console.log(buttons)
             
             buttons.forEach(element => {
@@ -439,8 +435,13 @@
                         //console.log(this.style.fill)
                     }
                     element.onmouseout = function(){
-                        this.style.fill = "#666;";
-                        console.log("Exiting")
+                        if(this.id !== selectedButton)
+                            {
+                                this.style.fill = "#666";
+                                //this.firstChild.style.fill = "#666"
+                                //console.log("Setting to grey")
+                            }
+                        //console.log(`${this.id} !== ${selectedButton}? ${this.id !== selectedButton}`)
                     }
             });
             

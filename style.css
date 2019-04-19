@@ -67,10 +67,6 @@ nav path{
     opacity: 1;
 }
 
-nav path:hover{
-    fill: grey;
-}
-
 .item{
     position: fixed;
     top: 0;
