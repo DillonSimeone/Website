@@ -8,6 +8,7 @@
 
 html, body{
     overflow: hidden;
+    font-family: sans-serif;
 }
 
 body{
@@ -157,36 +158,26 @@ nav svg:hover{
                 Elevator pitch
 =========================================================*/
 
-#elevatorPitch h1{
-    margin-left: 1rem;
-}
-
 #elevatorPitch section{
-    width: 50%;
-    margin: 10rem 5rem;
-    
+    margin: 5% 15%;
 }
-
 
 #elevatorPitch #jobs{
-    margin: auto;
-    width: 100%;
-    font-size: 2rem;
+    margin-top: 5%;
 }
 
-button{
-    background: none;
-    border: none;
-    border-radius: 10px;
+#elevatorPitch a{
+    text-decoration: none;
     font-weight: 700;
     color: #666;
-    margin-left: 1rem;
+    border-radius: 80px;
+    font-size: 18px;
+    margin-right: 5%;
 }
 
-#hire{
+#elevatorPitch a#hire{
+    padding: 14px 64px;
     color: white;
-    width: 6rem;
-    padding: 0.3rem;
 }
 
 
