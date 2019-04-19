@@ -167,6 +167,7 @@ nav svg:hover{
 
 #elevatorPitch section{
     margin: 5% 15%;
+    padding: 10px;
 }
 
 #elevatorPitch #jobs{
@@ -209,6 +210,9 @@ nav svg:hover{
 /*=======================================================
                 MiniProjects
 =========================================================*/
+#projects{
+    width: 100%;
+}
 
 #projects section{
     margin: 5% 15%;
@@ -243,23 +247,14 @@ nav svg:hover{
     max-width: 100%;
 }
 
-#projects .grid-item.project div{
-    display: flex;
-    padding: 1rem;
-}
-
-#projects .grid-item.project div div{
-    display: block;
-}
-
-#projects .project img, #miniprojects .project a{
-    max-width: 100%;
-    margin: auto;
-}
-
 @media only screen and (max-width: 600px) {
-    #projects .grid .grid-item{
+
+    #projects .grid, #projects .grid .grid-item, #projects .grid-item.project{
         max-width: 100%;
+        min-width: 100%;
+        width: 100%;
+        margin: auto;
+        
     }
   }
 
