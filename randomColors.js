@@ -99,6 +99,15 @@ function letterings(target){
     }
 };
 
+function printIt(string){
+    string = string.split('');
+    let string2 ="";
+    for(var i=0; i<string.length;i++){
+        string2 += string[i];
+        console.log(string2)
+    }
+}
+
 //Random colors for letters
 function lettersColors(targets){
         for(let i = 0; i < targets.length; i++){
