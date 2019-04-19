@@ -370,7 +370,7 @@
                 hideAll(targetID, buttonID);
 
                 if (button !== undefined)
-                    button.style.fill = "red";
+                    button.style.fill = "grey";
 
                 target = document.getElementById(targetID);
                 target.className = "item reveal";
@@ -399,7 +399,7 @@
                 if (navButtons[i].getAttribute('id') === buttonID) {
                     //Do nothing.
                 } else {
-                    navButtons[i].style.fill = "black";
+                    navButtons[i].style.fill = "white";
                 }
             }
         };
@@ -420,6 +420,18 @@
             ItemsSchemeColors(1,3, '#elevatorPitch div'); 
             */
             letterings('h1'); //Sets letters to random colors.
+            let buttons = [...document.querySelectorAll("svg")];
+            console.log(buttons)
+            /*
+            buttons.forEach(element => {
+                    element.onmouseover = function(){
+                        this.style.fill = "grey";
+                    }
+                    element.onmouseout = function(){
+                        this.style.fill = "white";
+                    }
+            });
+            */
         }
 
         function setUp() {

@@ -53,7 +53,6 @@ nav{
     justify-content: space-around;
     width: 100vw;
     height: 5vh;
-    border: 5px black solid;
 }
 
 nav svg{
@@ -62,9 +61,17 @@ nav svg{
     cursor: pointer;
 }
 
+nav path{
+    opacity: 1;
+}
+
+nav path:hover{
+    fill: grey;
+}
+
 .item{
     position: fixed;
-    top: 7vh;
+    top: 6vh;
     width: 100%;
     height: 94vh;
     color: black;
@@ -278,7 +285,7 @@ nav svg{
     /*
     animation: revealy .25s ease-in-out 0s 1 normal forwards;
     */
-    top: 6vh;
+    top: 5vh;
     left: 0;
     transform: rotate(0deg);
 }

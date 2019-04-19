@@ -35,7 +35,7 @@ function ItemSchemeColors(scheme, which, target){
         target.style.backgroundColor = scheme[which];
     
 } 
-/* 
+
 //Returns random colors. For use in other functions, don't use this directly.
 function randomColor(min, max){
     let color = Math.floor(Math.random() * (255));
@@ -45,9 +45,9 @@ function randomColor(min, max){
         color = max;
     return color;
 };
- */
+ 
 
- function randomColor(){
+ function randomPaletteColor(){
      return palette[Math.ceil(Math.random * palette.length)];
  }
 //Returns a random rgb, the higher the min value is, the blighter the colors will be. (Less than 255!)
@@ -103,15 +103,6 @@ function letterings(target){
         });
     }
 };
-
-function printIt(string){
-    string = string.split('');
-    let string2 ="";
-    for(var i=0; i<string.length;i++){
-        string2 += string[i];
-        console.log(string2)
-    }
-}
 
 //Random colors for letters
 function lettersColors(targets){
