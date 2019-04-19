@@ -51,6 +51,7 @@ nav{
     display: flex;
     flex-direction: row;
     justify-content: space-around;
+    align-items: center;
     width: 100vw;
     height: 5vh;
     margin-top: 3vh;
@@ -91,6 +92,7 @@ nav svg:hover{
     margin: auto;
     /*background-image: url("https://www.transparenttextures.com/patterns/white-diamond.png");*/
 }
+
 
 .item p{
     font-size: 1.5rem;
@@ -154,9 +156,15 @@ nav svg:hover{
 /*=======================================================
                 Elevator pitch
 =========================================================*/
+
+#elevatorPitch h1{
+    margin-left: 1rem;
+}
+
 #elevatorPitch section{
-    width: 60%;
-    margin: 1rem auto 1rem auto;
+    width: 50%;
+    margin: 10rem 5rem;
+    
 }
 
 
@@ -166,19 +174,21 @@ nav svg:hover{
     font-size: 2rem;
 }
 
-#elevatorPitch h2{
-    margin-left: -3rem;
+button{
+    background: none;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    color: #666;
+    margin-left: 1rem;
+}
+
+#hire{
     color: white;
+    width: 6rem;
+    padding: 0.3rem;
 }
 
-#elevatorPitch h3{
-    text-decoration: underline black;
-    color: white;
-}
-
-@keyframes elevator{
-
-}
 
 /*=======================================================
                 MiniProjects
@@ -223,7 +233,6 @@ nav svg:hover{
 
 #projects .grid-item.project div{
     display: flex;
-    justify-content: space-around;
     padding: 1rem;
 }
 

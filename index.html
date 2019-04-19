@@ -36,24 +36,20 @@
         </div>
 
         <article class="item" id="elevatorPitch">
-            <h1 id="name">Dillon Simeone</h1>
             <section>
-                <h3>Elevator Pitch</h3>
+                <h1 id="name">Dillon Simeone</h1>
+                <h2>A fullstack developer based in Portland, Oregon.</h2>
                 <div class="bg1">
-                    <h2>A fullstack developer based in Portland, Oregon.</h2>
-                    <p>I'm looking to work with a company that can help me grow my practical web development skills
-                        while fulfilling my college work experience requirements.
+                    <p>I'm looking to work with a company that can help me grow my practical web development skills while fulfilling my college work experience requirements.
                     </p>
                     <p>Since my major focuses on responsive web design, I've put a lot of extra time and effort into
                         learning accompanying skills such as Javascript and backend coding.
                     </p>
                     <div id="jobs">
+                            <a href="mailto:dillonsimeone@gmail.com"><button id="hire">Hire Me</button></a>
                         <a
-                            href="https://docs.google.com/forms/d/1ilD3JP_cmKYbNtK3GW7WCcwadHkKhheBcyOnAmDFPAI/viewform?">Need
-                            a website?</a>
-                        <a
-                            href="https://docs.google.com/document/d/10dUlifontf8QLPHARD8PnuSWtsepIWtiYE59wv1GJy4/edit?usp=sharing">Resume</a>
-                        <a href="mailto:dillonsimeone@gmail.com">Hiring?</a>
+                            href="https://docs.google.com/document/d/10dUlifontf8QLPHARD8PnuSWtsepIWtiYE59wv1GJy4/edit?usp=sharing"><button>Read my resume</button></a>
+                        
                     </div>
                 </div>
         </article>
@@ -409,24 +405,9 @@
         };
 
         function randomizeColor() {
-            //ItemColors(150, 200, 0.9, 'nav'); //Random gradient color for nav bar.
-            //ItemsColors(150, 200, 0.9, '#projects h2');
-           // ItemsColors(150, 200, 0.7, '#projects .grid-item');
-            //ItemsColors(150, 200, 0.9, '#elevatorPitch h2');
-            //ItemsColors(150, 200, 0.7, '#elevatorPitch div');
-
-            //I think I like randomized colors better. That's just me, though. A lot people don't share the same feeling. Meh, MY WEBSITE! 
-            /*
-            ItemSchemeColors(1, 1, 'nav');
-            ItemsSchemeColors(1, 0, '#projects h2');
-            ItemsSchemeColors(1, 3, '#projects .grid-item');
-            ItemsSchemeColors(1, 0, '#elevatorPitch h2');
-            ItemsSchemeColors(1,3, '#elevatorPitch div'); 
-            */
-            letterings('h1'); //Sets letters to random colors.
-            let buttons = [...document.querySelectorAll("nav svg")];
-            //console.log(buttons)
-            
+            let hireMe = document.querySelector('#hire');
+            hireMe.style.backgroundColor = palette[Math.ceil(Math.random() * palette.length)];
+            let buttons = [...document.querySelectorAll("nav svg")];   
             buttons.forEach(element => {
                     element.onmouseover = function(){
                         let string = "" + randomPaletteColor() + ";";
