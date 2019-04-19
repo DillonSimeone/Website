@@ -28,6 +28,7 @@ path {
     transform-origin: center bottom;
     transition: all 1s;
     opacity: 0.1;
+    fill: #666;
 }
 
 .fade {
