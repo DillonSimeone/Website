@@ -61,10 +61,15 @@ nav svg{
     display: block;
     height: 5vh;
     cursor: pointer;
+    transition: all 1s;
 }
 
 nav path{
     opacity: 1;
+}
+
+nav svg:hover{
+    opacity: 0.3;
 }
 
 .item{
@@ -179,13 +184,11 @@ nav path{
 }
 
 #elevatorPitch h2{
-    text-align: left;
     margin-left: -3rem;
     color: white;
 }
 
 #elevatorPitch h3{
-    text-align: right;
     text-decoration: underline black;
     color: white;
 }
@@ -205,7 +208,6 @@ nav path{
 
 #projects section h1, h2{
     width: 100%;
-    text-align: center;
 }
 
 #projects .grid{
@@ -216,7 +218,7 @@ nav path{
 }
 
 #projects .grid-item h2{
-    text-align: right;
+
     padding-right: 10%;
     margin-top: 0;
     margin-right: -1rem;
