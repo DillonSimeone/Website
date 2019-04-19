@@ -49,7 +49,7 @@ function randomColor(min, max){
  
 
  function randomPaletteColor(){
-     return palette[Math.ceil(Math.random * palette.length)];
+     return palette[Math.floor(Math.random() * palette.length)];
  }
 //Returns a random rgb, the higher the min value is, the blighter the colors will be. (Less than 255!)
 function randomRgb(min, max){
