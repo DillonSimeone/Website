@@ -224,7 +224,7 @@ nav svg:hover{
 #projects .grid .grid-item{
     max-width: 45%;
     margin: 1rem;
-    box-shadow: #666 1px 1px 10px;
+    box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
     padding: 10px;
     
 }
