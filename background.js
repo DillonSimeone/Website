@@ -1,6 +1,7 @@
 //Color settings. See randomColor function in randomColors.js 
-let min = 20
-let max = 80
+const min = 20
+const max = 80
+
 
 //Mobile browsers likes to resize website pages when their URL bars hides when the user moves down, and reappears when the user moves up. Very annoying.
 window.mobilecheck = function () {
@@ -55,7 +56,7 @@ function redraw() { //Note: Used in the HTML. `<body onresize="redraw();">`
 //Instead of having all polygons to show up with a single fill color until backgroundHovers, randomize all of their colors.
 function randomizeFillColor(polyPoints, polyArray) {
     polyPoints.forEach(function (point, i) {
-        polyArray[i].style.fill = "rgb(" + randomColor(min, max) + "," + randomColor(min, max) + "," + randomColor(min, max) + ")";
+        polyArray[i].style.fill = randomColor();//"rgb(" + randomColor(min, max) + "," + randomColor(min, max) + "," + randomColor(min, max) + ")";
         //polyArray[i].style.fill = randomSchemeColor();
     });
 };
@@ -139,8 +140,8 @@ function draw() {
                 //Swap if to invert the effect.
                 if (detectPointInCircle(polyPoints[i], radius, center)) {
                     polyArray[i].classList.remove('fade');
-                    polyArray[i].style.stroke = randomRgb(min, max);//randomSchemeColor();
-                    polyArray[i].style.fill = randomRgb(min, max);// randomSchemeColor();
+                    //polyArray[i].style.stroke = randomRgb(min, max);//randomSchemeColor();
+                    polyArray[i].style.fill = randomColor();//randomRgb(min, max);// randomSchemeColor();
                 } else
                     polyArray[i].classList.add('fade');
             }

@@ -20,17 +20,18 @@ body{
                 Trianglify Witchery
 =========================================================*/
 .circle{
-    width: 30vw;
-    height: 30vh;
+    width: 40vw;
+    height: 40vh;
 }
 
 path {
     transform-origin: center bottom;
     transition: all 1s;
+    opacity: 0.1;
 }
 
 .fade {
-    opacity: 0.05;
+    opacity: 0.8;
 }
 
 .trianglify{
@@ -39,6 +40,7 @@ path {
     left: 0;
     z-index: -9999;
     overflow: hidden;
+    background-color: white;
 }
 
 /*=======================================================

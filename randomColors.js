@@ -1,5 +1,7 @@
-/* //From https://coolors.co! Useful site.
+//From https://coolors.co! Useful site.
 const colorScheme1 = ["#bee6ce", "#bcffdb", "#8dffcd", "#44bba4", "4f9d69"];
+//From shrio
+const palette = ["#1abc9c", "#2ecc71","#3498db", "#9b59b6", "#34495e", "#16a085", "#27ae60", "#2980b9", "#8e44ad", "#2c3e50", "#f1c40f", "#e67e22", "#e74c3c", "#ecf0f1", "#95a5a6", "#f39c12", "#d35400", "#c0392b", "#bdc3c7", "#7f8c8d"];
 
 function SchemeColors(scheme){
     switch(scheme){
@@ -32,8 +34,8 @@ function ItemSchemeColors(scheme, which, target){
     else
         target.style.backgroundColor = scheme[which];
     
-} */
-
+} 
+/* 
 //Returns random colors. For use in other functions, don't use this directly.
 function randomColor(min, max){
     let color = Math.floor(Math.random() * (255));
@@ -43,8 +45,11 @@ function randomColor(min, max){
         color = max;
     return color;
 };
+ */
 
-
+ function randomColor(){
+     return palette[Math.ceil(Math.random * palette.length)];
+ }
 //Returns a random rgb, the higher the min value is, the blighter the colors will be. (Less than 255!)
 function randomRgb(min, max){
     return "rgb(" + randomColor(min, max) + "," + randomColor(min, max) + "," + randomColor(min, max) + ")";
