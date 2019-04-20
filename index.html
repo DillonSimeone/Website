@@ -11,22 +11,30 @@
 
 <body onresize="redraw();">
     <nav>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('elevatorPitch', this.id)"
-            class="navButton animationHouse" id="homeBtn">
-            <path d="M208 448V320h96v128h97.6V256H464L256 64 48 256h62.4v192z" />
-        </svg>
+        <div class="navButton animationHouse" id="homeBtn" onclick="reveal('elevatorPitch', this.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path d="M208 448V320h96v128h97.6V256H464L256 64 48 256h62.4v192z" />
+            </svg>
+        </div>
 
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('projects', this.id)"
-            class="navButton" id="miniBtn">
-            <path
-                d="M336 272c0-29.8-16.3-55.7-40.4-69.5l73.1-124.1C335.6 59.1 297.1 48 256 48c-41.2 0-79.9 11.2-113.1 30.6l71.6 125C191.4 217.6 176 243 176 272H32c0 83.3 46.9 153.4 114.4 192l70.1-122.4c11.7 6.6 25.1 10.4 39.5 10.4 14.3 0 27.7-3.8 39.3-10.3L365.6 464C433.1 425.4 480 355.3 480 272H336z" />
-        </svg>
+        <div class="navButton" id="miniBtn" onclick="reveal('projects', this.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path
+                    d="M336 272c0-29.8-16.3-55.7-40.4-69.5l73.1-124.1C335.6 59.1 297.1 48 256 48c-41.2 0-79.9 11.2-113.1 30.6l71.6 125C191.4 217.6 176 243 176 272H32c0 83.3 46.9 153.4 114.4 192l70.1-122.4c11.7 6.6 25.1 10.4 39.5 10.4 14.3 0 27.7-3.8 39.3-10.3L365.6 464C433.1 425.4 480 355.3 480 272H336z" />
+            </svg>
+        </div>
 
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onclick="reveal('work', this.id)"
-            class="navButton" id="prjBtn">
-            <path
-                d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z" />
-        </svg>
+        <div class="navButton" id="prjBtn" onclick="reveal('work', this.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path
+                    d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z" />
+            </svg>
+        </div>
+
+
+
+
+
     </nav>
 
     <div class="items">
@@ -347,7 +355,7 @@
                 </div>
             </div>
         </section>
-        <!-- <iframe src="MiniProjects/index.html"></iframe> -->
+
     </article>
     </div>
 
@@ -359,6 +367,7 @@
     <script src="background.js"></script>
     <script>
         let selectedButton = "";
+
         //History Api witchery
         window.addEventListener('popstate', function (e) {
             reveal(e.state.previousPage, e.state.previousButton, 30, true);
@@ -373,20 +382,25 @@
                 hideAll(targetID, buttonID);
 
                 if (button !== undefined) {
-                    button.style.fill = "grey";
                     selectedButton = buttonID;
                 }
-
-
                 target = document.getElementById(targetID);
                 target.className = "item reveal";
             }, timedelay);
 
-            if (historyAPI !== true)
-                history.pushState({
-                    previousPage: `${targetID}`,
-                    previousButton: `${buttonID}`
-                }, '', ``); //Maybe ${targetID}.html for the third spot...?
+
+            if (historyAPI !== true) {
+                if (buttonID === "homeBtn")
+                    history.replaceState({
+                        previousPage: `${targetID}`,
+                        previousButton: `${buttonID}`
+                    }, '', `/`); //So ? homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
+                else
+                    history.pushState({
+                        previousPage: `${targetID}`,
+                        previousButton: `${buttonID}`
+                    }, '', `?page=${buttonID}`);
+            }
 
         };
 
@@ -396,7 +410,7 @@
             navButtons = document.getElementsByClassName("navButton");
             for (let i = 0; i < items.length; i++) {
                 if (items[i].getAttribute('id') === targetID) {
-                    //This is the one to not hide.
+                    //Those items are not the items you are looking for. *Waving hand*
                 } else {
                     items[i].className = "item hide spin";
                 }
@@ -412,31 +426,37 @@
 
         function randomizeColor() {
             let hireMe = document.querySelector('#hire');
-            hireMe.style.backgroundColor = palette[Math.ceil(Math.random() * palette.length)];
-            let buttons = [...document.querySelectorAll("nav svg")];
+            hireMe.style.backgroundColor = randomPaletteColor();
+            let buttons = [...document.querySelectorAll("nav div")];
             buttons.forEach(element => {
                 element.onmouseover = function () {
-                    let string = "" + randomPaletteColor() + ";";
-                    //Weird that randomPaletteColor() is returning undefined here, yet it's working for the background.
-                    this.style.fill = palette[Math.ceil(Math.random() * palette.length)];
-                    //console.log(this.style.fill)
+                    this.style.fill = randomPaletteColor();
                 }
-                element.onmouseout = function () {
+                element.onmouseout = function () { //Selected buttons keeps their random hover colors.
                     if (this.id !== selectedButton) {
                         this.style.fill = "#666";
-                        //this.firstChild.style.fill = "#666"
-                        //console.log("Setting to grey")
                     }
-                    //console.log(`${this.id} !== ${selectedButton}? ${this.id !== selectedButton}`)
                 }
             });
-
         }
 
+        function getUrlVars() {
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+                vars[key] = value;
+            });
+            return vars;
+        }
+
+
         function setUp() {
+            let page = getUrlVars().page;
             draw();
             randomizeColor();
-            reveal('elevatorPitch', 'homeBtn', 30);
+            if (page !== undefined) {
+                document.querySelector(`#${page}`).click();
+            } else
+                reveal('elevatorPitch', 'homeBtn', 30);
         }
 
 
