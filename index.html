@@ -394,12 +394,12 @@
                     history.replaceState({
                         previousPage: `${targetID}`,
                         previousButton: `${buttonID}`
-                    }, '', `/`); //So ? homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
+                    }, '', `/Website/`); //So ? homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
                 else
                     history.pushState({
                         previousPage: `${targetID}`,
                         previousButton: `${buttonID}`
-                    }, '', `?page=${buttonID}`);
+                    }, '', `/Website/?page=${buttonID}`);
             }
 
         };
