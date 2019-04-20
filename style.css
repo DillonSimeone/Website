@@ -117,49 +117,14 @@ nav svg:hover{
 =========================================================*/
 
 #loading{
-    visibility: hidden;
     height: 100vh;
     width: 100vw;
     top: 0;
     left: 0;
-    background-color: black;
+    background-color: white;
     z-index: 100;
 }
 
-#loading h1{
-    position: absolute;
-    bottom: 0;
-}
-
-#loading #dots:after{
-    animation: loading 3s linear infinite normal;
-    display: inline-block;
-    content: "";
-    font-size: 80px;
-}
-
-@keyframes loading {
-    0%{
-        color: red;
-        content: ".";
-    }
-    25%{
-        color: pink;
-        content: "..";
-    }
-    50%{
-        color: blue;
-        content: "...";
-    }
-    75%{
-        color: green;
-        content: "...."
-    }
-    100%{
-        color: yellow;
-        content: ".....";
-    }
-}
 
 /*=======================================================
                 Elevator pitch

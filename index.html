@@ -39,8 +39,6 @@
 
     <div class="items">
         <div class="item" id="loading">
-            <h1>Loading fun stuff</h1>
-            <span id="dots"></span>
         </div>
 
         <article class="item" id="elevatorPitch">
@@ -367,6 +365,7 @@
     <script src="background.js"></script>
     <script>
         let selectedButton = "";
+        let HistoryAPIControlsEnable = true;
 
         //History Api witchery
         window.addEventListener('popstate', function (e) {
@@ -374,34 +373,40 @@
         });
 
         function reveal(targetID, buttonID, timedelay, historyAPI) {
-            button = document.getElementById(buttonID);
+            if(buttonID !== "")
+                button = document.getElementById(buttonID);
+
             if (timedelay == undefined)
                 timedelay = 30; //Default value
 
             setTimeout(function () {
                 hideAll(targetID, buttonID);
-
+                console.log("Hello world!")
                 if (button !== undefined) {
                     selectedButton = buttonID;
                 }
+
+                
                 target = document.getElementById(targetID);
                 target.className = "item reveal";
             }, timedelay);
 
-
-            if (historyAPI !== true) {
-                if (buttonID === "homeBtn")
-                    history.replaceState({
-                        previousPage: `${targetID}`,
-                        previousButton: `${buttonID}`
-                    }, '', `/Website/`); //So ? homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
-                else
-                    history.pushState({
-                        previousPage: `${targetID}`,
-                        previousButton: `${buttonID}`
-                    }, '', `/Website/?page=${buttonID}`);
+            if (HistoryAPIControlsEnable) { //Toggle for history api functionality. 
+                if (historyAPI !==
+                    true) { //This checks if the popstate event was fired, so the user don't get trapped in an infinite loop in history!
+                    if (buttonID === "homeBtn" || buttonID === "")
+                        history.replaceState({
+                            previousPage: `${targetID}`,
+                            previousButton: `${buttonID}`
+                        }, '',
+                        `/Website/`); //So ? homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
+                    else
+                        history.pushState({
+                            previousPage: `${targetID}`,
+                            previousButton: `${buttonID}`
+                        }, '', `/Website/?page=${buttonID}`);
+                }
             }
-
         };
 
         //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
@@ -424,6 +429,7 @@
             }
         };
 
+        //Wonder if CSS will be able to generate random colors one day. Could replace this bit by using a keyframe with the palette of color in it... Switch between the colors, from start to end over a few minutes or something.
         function randomizeColor() {
             let hireMe = document.querySelector('#hire');
             hireMe.style.backgroundColor = randomPaletteColor();
@@ -440,6 +446,7 @@
             });
         }
 
+        //Handy snippet that reads the url bar and gets all of the vars there.
         function getUrlVars() {
             var vars = {};
             var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
@@ -450,13 +457,15 @@
 
 
         function setUp() {
+            reveal('loading', '', 100)
             let page = getUrlVars().page;
             draw();
             randomizeColor();
+
             if (page !== undefined) {
                 document.querySelector(`#${page}`).click();
             } else
-                reveal('elevatorPitch', 'homeBtn', 30);
+                reveal('elevatorPitch', 'homeBtn', 130);
         }
 
 
