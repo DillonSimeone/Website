@@ -457,7 +457,7 @@
 
         function setUp() {
             let page = getUrlVars().page;
-            reveal('loading', '', 50) //Note to self, if the delay on this is higher than any of the other panels... This gets called AFTER those panels, resulting in infinite loading!
+            reveal('loading', '', 30) //Note to self, if the delay on this is higher than any of the other panels... This gets called AFTER those panels, resulting in infinite loading!
             draw();
             randomizeColor();
             console.log(`URL var: ${page}`)
