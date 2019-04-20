@@ -2,7 +2,6 @@
 const min = 20
 const max = 80
 
-
 //Mobile browsers likes to resize website pages when their URL bars hides when the user moves down, and reappears when the user moves up. Very annoying.
 window.mobilecheck = function () {
     var check = false;
@@ -21,10 +20,10 @@ const initalHeight = window.innerHeight;
 const initalWidth = window.innerWidth;
 let backgroundHoverEventCounter = 0;
 
-//This makes it so nothing happens until user is done resizing.
+//This makes it so nothing happens until user is done resizing (In the redraw function below).
 let resize;
 
-function redraw() { //Note: Used in the HTML. `<body onresize="redraw();">`
+function redraw() { //Used in the HTML. `<body onresize="redraw();">`
     if (!mobilecheck()) {
         clearTimeout(resize);
         resize = setTimeout(
@@ -53,21 +52,10 @@ function redraw() { //Note: Used in the HTML. `<body onresize="redraw();">`
     }
 };
 
-//Instead of having all polygons to show up with a single fill color until backgroundHovers, randomize all of their colors.
-function randomizeFillColor(polyPoints, polyArray) {
-    polyPoints.forEach(function (point, i) {
-        polyArray[i].style.fill = randomPaletteColor(); //palette[Math.floor(Math.random * palette.length)] //"rgb(" + randomColor(min, max) + "," + randomColor(min, max) + "," + randomColor(min, max) + ")";
-        //polyArray[i].style.fill = randomSchemeColor();
-    });
-};
-
 let cells;
 let divisor = 10; //This affects the amount of cells that's spawned. Bigger the number is, more cells that appears. Cells have a heavy impact on performace. Need to cook dinner? Set this to 1000!
-
 function draw() {
     const container = document.querySelector('.trianglify');
-
-
     if (window.innerHeight > window
         .innerWidth) //This ensures the smallest value of either height/width is used. Performace reasons.
         cells = Math.ceil(window.innerHeight / divisor);
@@ -80,13 +68,12 @@ function draw() {
         height: window.innerHeight,
         cell_size: cells,
         variance: 1,
-        stroke_width: 0.5
+        stroke_width: 0
     }).svg(); // Render as SVG.
 
     //Circle used to check what polys are being backgroundHoverEventCountered over.
     const circleElement = document.createElement("div");
     circleElement.className = "circle";
-
 
     //Clears out old stuff.
     container.innerHTML = "";
@@ -99,7 +86,7 @@ function draw() {
     //Makes an array of all of the polys from Pattern, disregerding everything else.
     const polyArray = [].slice.call(pattern.children);
 
-    // Get polygon coords and set their "hit boxes" for the detectPointInCircle function to work with. This takes about 20-30ms on my desktop. This is a very heavy block of code.
+    // Get polygon coords and set their "hit boxes" for the detectPointInCircle function to work with. This takes about 20-30ms on my desktop. This is a very heavy block of code. Could just save a copy of this and use it forever. It's not like anyone is going to really notice or care that the map doesn't match the patterns they get exactly. 
     const polyPoints = polyArray.map(function (poly) {
         poly.classList.add('poly', 'fade');
         const rect = poly.getBoundingClientRect(); //This takes a lot of firepower to run each time the mouse moves.
@@ -108,9 +95,14 @@ function draw() {
             y: rect.top + rect.height / 2
         };
         return point;
-    });
+    }); 
 
-    //randomizeFillColor(polyPoints, polyArray); //Randomized colors for the polys on draw.
+    //Easy way of accessing each paths of the generated .svg. Good for... Something? Maybe do weird SVG morphs? Make the paths to wriggle by changing them each second, or something?
+    /* function randomizeFillColor(polyPoints, polyArray) {
+        polyPoints.forEach(function (point, i) {
+        });
+    };
+    randomizeFillColor(polyPoints, polyArray);  */
 
     /*
     This below, is JavaScript witchery at its finest! Put simply, what I did was to store a reference to the anonymous event listener (document.fn) 

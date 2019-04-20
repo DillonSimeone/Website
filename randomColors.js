@@ -1,44 +1,40 @@
-//From https://coolors.co! Useful site.
-const colorScheme1 = ["#bee6ce", "#bcffdb", "#8dffcd", "#44bba4", "4f9d69"];
 //From shrio
 const palette = ["#1abc9c", "#2ecc71","#3498db", "#9b59b6", "#34495e", "#16a085", "#27ae60", "#2980b9", "#8e44ad", "#2c3e50", "#f1c40f", "#e67e22", "#e74c3c", "#ecf0f1", "#95a5a6", "#f39c12", "#d35400", "#c0392b", "#bdc3c7", "#7f8c8d"];
 
-
-function SchemeColors(scheme){
-    switch(scheme){
-        case 1: 
-            return colorScheme1;
-            break;
-        default:
-            return colorScheme1;
-            break;
-    }
+/**
+ * Returns a color randomly selected from a palette.
+ */
+function randomPaletteColor(){
+    return palette[Math.floor(Math.random() * palette.length)];
 }
 
-
-function randomSchemeColor(scheme){
-    switch(scheme){
-        case 1: 
-            return colorScheme1[Math.ceil(Math.random() * colorScheme1.length)] 
-            break;
-        default:
-            return colorScheme1[Math.ceil(Math.random() * colorScheme1.length)] 
-            break;
-    }
+/**
+ * Adds a linear-gradient background to an element using colors selected from the palette.
+ * @param {string} target DOM element class/id/tag.
+ */
+function ItemPaletteColors(target){
+    document.querySelector(target).style.background = "linear-gradient(to right, " + randomPaletteColor() + " , " + randomPaletteColor() + " , " + randomPaletteColor() + ")";
 }
 
-function ItemSchemeColors(scheme, which, target){
-    scheme = SchemeColors(scheme);
-    target = document.querySelector(target);
-    if(which >= scheme.length)
-        target.style.backgroundColor = scheme[0];
-    else
-        target.style.backgroundColor = scheme[which];
-    
-} 
-
-//Returns random colors. For use in other functions, don't use this directly.
+/**
+ * Returns a value between min - max
+ * @param {integar} min lowest rgb value
+ * @param {integar} max highest rgb value
+ */
 function randomColor(min, max){
+    
+    if(min < 0)
+        min = 0;
+    if(max < 0)
+        max = 0;
+    if(min > 255)
+        min = 255;
+    if(max > 255)
+        max = 255;
+    
+    if(max === min)
+        return max;
+    
     let color = Math.floor(Math.random() * (255));
     if (color < min)
         color = min;
@@ -46,71 +42,71 @@ function randomColor(min, max){
         color = max;
     return color;
 };
- 
 
- function randomPaletteColor(){
-     return palette[Math.floor(Math.random() * palette.length)];
- }
-//Returns a random rgb, the higher the min value is, the blighter the colors will be. (Less than 255!)
+/**
+ * Adds a linear-gradient background to an element using random colors.
+ * @param {integar} min lowest rgb value
+ * @param {integar} max highest rgb value
+ * @param {integar} alpha opacity
+ * @param {string} target DOM element class/id/tag.
+ */
+function ItemColors(min, max, alpha, target){
+    document.querySelector(target).style.background = "linear-gradient(to right, " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + ")";
+};
+
+/**
+ * Adds a linear-gradient background to elements using random colors.
+ * @param {integar} min lowest rgb value
+ * @param {integar} max highest rgb value
+ * @param {integar} alpha opacity
+ * @param {string} target DOM element class/id/tag.
+ */
+function ItemsColors(min, max, alpha, targets){
+    const elements = [].slice.call(document.querySelectorAll(targets)); //Turns nodeListOf from querySelectorAll into an array of objects.
+    elements.map( element => element.style.background = "linear-gradient(to right, " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + ")");
+}
+
+/**
+ * Returns a random rgb. The range between min and max is how blight, or dark the random color will be.
+ * @param {integar} min lowest rgb value
+ * @param {integar} max highest rgb value
+ */
 function randomRgb(min, max){
     return "rgb(" + randomColor(min, max) + "," + randomColor(min, max) + "," + randomColor(min, max) + ")";
 }
 
 //Returns a random rgba, the higher the min value is, the blighter the colors will be. (Less than 255!)
 //Alpha fades the colors out.
+/**
+ * Returns a random rgba. The range between min and max is how blight, or dark the random color will be. Alpha affects the opacity of the color. 
+ * @param {integar} min lowest rgb value
+ * @param {integar} max highest rgb value
+ * @param {integar} alpha opacity
+ */
 function randomRgba(min, max, alpha){
+    if(alpha > 1)
+        alpha = 1;
+    if(alpha < 0)
+        alpha = 0;
     return "rgba(" + randomColor(min, max) + "," + randomColor(min, max) + "," + randomColor(min,max) + "," + alpha + ")";
 };
 
-function ItemPaletteColors(target){
-    document.querySelector(target).style.background = "linear-gradient(to right, " + randomPaletteColor() + " , " + randomPaletteColor() + " , " + randomPaletteColor() + ")";
-}
-//Add random linear gradient to target element.
-function ItemColors(min, max, alpha, target){
-    document.querySelector(target).style.background = "linear-gradient(to right, " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + ")";
-};
-
-//Add random linear gradient to target elements.
-function ItemsColors(min, max, alpha, targets){
-    const elements = [].slice.call(document.querySelectorAll(targets)); //Turns nodeListOf from querySelectorAll into an array of objects.
-    elements.map( element => element.style.background = "linear-gradient(to right, " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + " , " + randomRgba(min, max, alpha) + ")");
-}
-
-
-
-function ItemsSchemeColors(scheme, which, targets){
-    scheme = SchemeColors(scheme);
-    targets = [].slice.call(document.querySelectorAll(targets));
-    if(which >= scheme.length)
-        targets.forEach(element => {
-            element.style.backgroundColor = scheme[0];
-        });
-    else
-    targets.forEach(element => {
-        element.style.backgroundColor = scheme[which];
-    });
-    
-}
-
-//Wraps all of the letters inside target elements in a span wrapper, then apply random colors.
-function letterings(target){
-    target = document.querySelectorAll(target);
+/**
+ * Wraps each of the letters inside target elements in a span wrapper, then apply random colors. 
+ * @param {string} target DOM element
+ * @param {integar} min lowest rgb value
+ * @param {integar} max highest rgb value
+ */
+function letterings(min, max, target){
+    target = [...document.querySelectorAll(target)];
     for(let i = 0; i < target.length; i++){
         let fancyText = "";
         for(let j = 0; j < target[i].innerHTML.length; j++){
             fancyText += "<span>" + target[i].innerHTML.charAt(j) + "</span>";
         }
         target[i].innerHTML = fancyText;
-        lettersColors(target[i].getElementsByTagName('span'));
-        window.addEventListener('resize', function(){
-           lettersColors(target[i].getElementsByTagName('span')); 
+        target.forEach(element => {
+            target.style.color = randomColor(min, max);
         });
     }
 };
-
-//Random colors for letters
-function lettersColors(targets){
-        for(let i = 0; i < targets.length; i++){
-            targets[i].style.color = randomRgb(100);
-        }
-}
