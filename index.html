@@ -377,23 +377,20 @@
                 button = document.getElementById(buttonID);
 
             if (timedelay == undefined)
-                timedelay = 30; //Default value
+                timedelay = 60; //Default value
 
             setTimeout(function () {
                 hideAll(targetID, buttonID);
-                console.log("Hello world!")
                 if (button !== undefined) {
                     selectedButton = buttonID;
                 }
 
-                
                 target = document.getElementById(targetID);
                 target.className = "item reveal";
             }, timedelay);
 
             if (HistoryAPIControlsEnable) { //Toggle for history api functionality. 
-                if (historyAPI !==
-                    true) { //This checks if the popstate event was fired, so the user don't get trapped in an infinite loop in history!
+                if (historyAPI !== true) { //This checks if the popstate event was fired, so the user don't get trapped in an infinite loop in history!
                     if (buttonID === "homeBtn" || buttonID === "")
                         history.replaceState({
                             previousPage: `${targetID}`,
@@ -411,22 +408,24 @@
 
         //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
         function hideAll(targetID, buttonID) {
-            items = document.getElementsByClassName('item');
-            navButtons = document.getElementsByClassName("navButton");
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].getAttribute('id') === targetID) {
+            items = [...document.getElementsByClassName('item')];
+
+            navButtons = [...document.getElementsByClassName("navButton")];
+            items.forEach(element => {
+                if (element.getAttribute('id') === targetID) {
                     //Those items are not the items you are looking for. *Waving hand*
                 } else {
-                    items[i].className = "item hide spin";
+                    element.className = "item hide spin";
                 }
-            }
-            for (let i = 0; i < navButtons.length; i++) {
-                if (navButtons[i].getAttribute('id') === buttonID) {
+            });
+
+            navButtons.forEach(element => {
+                if (element.getAttribute('id') === buttonID) {
                     //Do nothing.
                 } else {
-                    navButtons[i].style.fill = "#666";
+                    element.style.fill = "#666";
                 }
-            }
+            });
         };
 
         //Wonder if CSS will be able to generate random colors one day. Could replace this bit by using a keyframe with the palette of color in it... Switch between the colors, from start to end over a few minutes or something.
@@ -457,15 +456,16 @@
 
 
         function setUp() {
-            reveal('loading', '', 100)
             let page = getUrlVars().page;
+            reveal('loading', '', 50) //Note to self, if the delay on this is higher than any of the other panels... This gets called AFTER those panels, resulting in infinite loading!
             draw();
             randomizeColor();
-
+            console.log(`URL var: ${page}`)
             if (page !== undefined) {
                 document.querySelector(`#${page}`).click();
+                console.log(document.querySelector(`#${page}`))
             } else
-                reveal('elevatorPitch', 'homeBtn', 130);
+                reveal('elevatorPitch', 'homeBtn');
         }
 
 
