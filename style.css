@@ -177,21 +177,20 @@ nav svg:hover{
 
 #projects section{
     margin: 5% 15%;
+    width: 80%;
 }
 
 #projects .grid{
-    width: 90%;
-    margin: auto;
+    width: 100%;
     display: flex;
     flex-wrap: wrap;
 }
 
 #projects .grid .grid-item{
-    max-width: 45%;
-    margin: 1rem;
+    margin: 1rem auto 1rem auto;
+    width: 40%;
     box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
     padding: 10px;
-    
 }
 
 #projects .grid .grid-item ul, #projects .grid-item.project ul{
@@ -208,15 +207,15 @@ nav svg:hover{
     max-width: 100%;
 }
 
-@media only screen and (max-width: 600px) {
-
-    #projects .grid, #projects .grid .grid-item, #projects .grid-item.project{
-        max-width: 100%;
-        min-width: 100%;
+@media only screen and (max-width: 1000px) {
+    #projects .grid .grid-item{
         width: 100%;
-        margin: auto;
-        
     }
+
+    #projects section{
+        margin: auto;
+    }
+
   }
 
 /*=======================================================
