@@ -142,7 +142,6 @@ nav svg:hover{
     align-items: center;
 }
 #elevatorPitch a{
-    text-decoration: none;
     font-weight: 700;
     color: #666;
     border-radius: 80px;
@@ -152,8 +151,8 @@ nav svg:hover{
 
 #elevatorPitch a#hire{
     padding: 14px 64px;
+    text-decoration: none;
     color: white;
-
 }
 
 @media only screen and (max-width: 600px) {
@@ -227,6 +226,33 @@ nav svg:hover{
 #work section{
     margin: 5% 15%;
 }
+
+/*=======================================================
+                modal
+=========================================================*/
+.tingle-modal-box{
+    width: auto;
+    height: auto;
+}
+
+.tingle-modal-box__content{
+    padding: 1rem;
+}
+
+.tingle-modal-box ul{
+    list-style: none;
+    padding: 0;
+}
+
+.tingle-modal-box ul li{
+    margin: 1rem;
+}
+
+.tingle-modal--visible .tingle-modal-box__footer{
+    display: flex;
+    justify-content: center;
+}
+
 
 /*=======================================================
                 Fun reveal/hide css animation!
