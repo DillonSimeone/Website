@@ -3,7 +3,9 @@
 
 <head>
     <title>Dillon Simeone</title>
-    <link href="./tingle/src/tingle.css" rel="stylesheet">
+    <!--
+        <link href="./tingle/src/tingle.css" rel="stylesheet">
+    -->
     <link href="./style.css" rel="stylesheet">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -54,7 +56,7 @@
                         learning accompanying skills such as Javascript and backend coding.
                     </p>
                     <div id="jobs">
-                        <a id="hire" onclick="modal.open()">
+                        <a id="hire" href="mailto:dillonsimeone@gmail.com">
                             Hire Me
                         </a>
                         <a
@@ -107,7 +109,7 @@
                     </ul>
                 </div>
                 -->
-                
+
                 <div class="grid-item">
                     <h2>JavaScript Fun</h2>
                     <p>
@@ -365,7 +367,9 @@
     <script src="randomColors.js"></script>
     <script src="trianglify.min.js"></script>
     <script src="background.js"></script>
-    <script src="./tingle/src/tingle.js"></script>
+    <!--
+        <script src="./tingle/src/tingle.js"></script>
+    -->
     <script>
         let selectedButton = "";
         let HistoryAPIControlsEnable = true;
@@ -394,14 +398,15 @@
 
             if (HistoryAPIControlsEnable) { //Toggle for history api functionality. 
                 if (historyAPI !==
-                    true) { //This checks if the popstate event was fired, so the user don't get trapped in an infinite loop in history!
+                    true
+                    ) { //This checks if the popstate event was fired, so the user don't get trapped in an infinite loop in history!
                     if (buttonID === "homeBtn" || buttonID === "")
                         history.replaceState({
                                 previousPage: `${targetID}`,
                                 previousButton: `${buttonID}`
                             }, '',
                             `/Website/`
-                            ); //So ? homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
+                        ); //So ? homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
                     else
                         history.pushState({
                             previousPage: `${targetID}`,
@@ -458,10 +463,12 @@
             });
             return vars;
         }
+
         function setUp() {
             let page = getUrlVars().page;
             reveal('loading', '',
-                30) //Note to self, if the delay on this is higher than any of the other panels... This gets called AFTER those panels, resulting in infinite loading!
+                    30
+                    ) //Note to self, if the delay on this is higher than any of the other panels... This gets called AFTER those panels, resulting in infinite loading!
             draw();
             randomizeColor();
             console.log(`URL var: ${page}`)
@@ -471,29 +478,29 @@
             } else
                 reveal('elevatorPitch', 'homeBtn');
         }
+        /* 
+                var modal = new tingle.modal({
+                    footer: true,
+                    stickyFooter: false,
+                    closeMethods: ['overlay', 'button', 'escape'],
+                    closeLabel: "Close",
+                    cssClass: ['custom-class-1', 'custom-class-2'],
+                    onOpen: function () {
+                        //console.log('modal open');
+                    },
+                    onClose: function () {
+                        //console.log('modal closed');
+                    },
+                    beforeClose: function () {
+                        return true; // nothing happens
+                    }
+                });
 
-        var modal = new tingle.modal({
-            footer: true,
-            stickyFooter: false,
-            closeMethods: ['overlay', 'button', 'escape'],
-            closeLabel: "Close",
-            cssClass: ['custom-class-1', 'custom-class-2'],
-            onOpen: function () {
-                //console.log('modal open');
-            },
-            onClose: function () {
-                //console.log('modal closed');
-            },
-            beforeClose: function () {
-                return true; // nothing happens
-            }
-        });
-
-        modal.setContent('<h1>Contact Me!</h1><ul><li>Email: <a href="mailto:dillonsimeone@gmail.com">Dillonsimeone@gmail.com</a></li><li>Text: (541) 357-8716 </li></ul>');
-        modal.addFooterBtn('Close', 'tingle-btn tingle-btn--primary', function() {
-            modal.close();
-        });
-
+                modal.setContent('<h1>Contact Me!</h1><ul><li>Email: <a href="mailto:dillonsimeone@gmail.com">Dillonsimeone@gmail.com</a></li><li>Text: (541) 357-8716 </li></ul>');
+                modal.addFooterBtn('Close', 'tingle-btn tingle-btn--primary', function() {
+                    modal.close();
+                });
+         */
 
         //Let there be light.
         setUp();
