@@ -9,7 +9,6 @@
     <link href="./style.css" rel="stylesheet">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css?family=Anton|Bitter|M+PLUS+Rounded+1c|Roboto+Mono" rel="stylesheet">
 </head>
 
 <body onresize="redraw();">
@@ -64,6 +63,7 @@
                             my resume</a>
                     </div>
                 </div>
+                </section>
         </article>
 
     </div>
@@ -359,7 +359,7 @@
         </section>
 
     </article>
-    </div>
+
 
     <div class="trianglify">
         <div class="circle"></div>
@@ -471,10 +471,10 @@
                     ) //Note to self, if the delay on this is higher than any of the other panels... This gets called AFTER those panels, resulting in infinite loading!
             draw();
             randomizeColor();
-            console.log(`URL var: ${page}`)
+            //console.log(`URL var: ${page}`)
             if (page !== undefined) {
                 document.querySelector(`#${page}`).click();
-                console.log(document.querySelector(`#${page}`))
+                //console.log(document.querySelector(`#${page}`))
             } else
                 reveal('elevatorPitch', 'homeBtn');
         }
