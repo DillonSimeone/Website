@@ -47,6 +47,8 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
 ; //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
 
 function hideAll(targetID, buttonID) {
+    let items;
+    let navButtons;
     try{
         items = _toConsumableArray(document.getElementsByClassName('item'));
         navButtons = _toConsumableArray(document.getElementsByClassName("navButton"));
