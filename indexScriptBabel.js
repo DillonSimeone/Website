@@ -47,8 +47,13 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
 ; //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
 
 function hideAll(targetID, buttonID) {
-  items = _toConsumableArray(document.getElementsByClassName('item'));
-  navButtons = _toConsumableArray(document.getElementsByClassName("navButton"));
+    try{
+        items = _toConsumableArray(document.getElementsByClassName('item'));
+        navButtons = _toConsumableArray(document.getElementsByClassName("navButton"));
+    }catch(error){
+        console.log(error)
+    }
+  
   items.forEach(function (element) {
     if (element.getAttribute('id') === targetID) {//Those items are not the items you are looking for. *Waving hand*
     } else {
@@ -69,7 +74,12 @@ function randomizeColor() {
   var hireMe = document.querySelector('#hire');
   hireMe.style.backgroundColor = randomPaletteColor();
 
-  var buttons = _toConsumableArray(document.querySelectorAll("nav div"));
+  try{
+    var buttons = _toConsumableArray(document.querySelectorAll("nav div"));
+  }catch(error){
+      console.log(error)
+  }
+  
 
   buttons.forEach(function (element) {
     element.onmouseover = function () {
