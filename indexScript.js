@@ -1,5 +1,5 @@
 let selectedButton = "";
-let HistoryAPIControlsEnable = false;
+let HistoryAPIControlsEnable = true;
 
 //History Api witchery
 window.addEventListener('popstate', function (e) {
@@ -72,7 +72,7 @@ function randomizeColor() {
     hireMe.style.backgroundColor = randomPaletteColor();
 
     let buttons = Array.from(document.querySelectorAll("nav div"));
-    
+
     buttons.forEach(element => {
         element.onmouseover = function () {
             this.style.fill = randomPaletteColor();
