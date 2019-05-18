@@ -1,5 +1,5 @@
 let selectedButton = "";
-let HistoryAPIControlsEnable = true;
+let HistoryAPIControlsEnable = false;
 
 //History Api witchery
 window.addEventListener('popstate', function (e) {
@@ -45,9 +45,10 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
 
 //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
 function hideAll(targetID, buttonID) {
-    items = [...document.getElementsByClassName('item')];
+    let items =  Array.from(document.getElementsByClassName('item'));
+    let navButtons = Array.from(document.getElementsByClassName("navButton"));
 
-    navButtons = [...document.getElementsByClassName("navButton")];
+
     items.forEach(element => {
         if (element.getAttribute('id') === targetID) {
             //Those items are not the items you are looking for. *Waving hand*
@@ -69,7 +70,9 @@ function hideAll(targetID, buttonID) {
 function randomizeColor() {
     let hireMe = document.querySelector('#hire');
     hireMe.style.backgroundColor = randomPaletteColor();
-    let buttons = [...document.querySelectorAll("nav div")];
+
+    let buttons = Array.from(document.querySelectorAll("nav div"));
+    
     buttons.forEach(element => {
         element.onmouseover = function () {
             this.style.fill = randomPaletteColor();
