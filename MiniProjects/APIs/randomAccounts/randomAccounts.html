@@ -28,14 +28,14 @@
             <div class="tooltip">
                 <h2>Fancy Tool Tip - Pagination</h2>
                 <p>The page number. Push one of the buttons here to change pages! Amazing! FYI, you can't go into
-                    negative pages, because reasons! REASONS</p>
+                    negative pages, because reasons! <strong>REASONS</strong></p>
             </div>
         </div>
         <h2>Seed</h2>
         <div class="seed">
             <div>
                 <label>Seed</label>
-                <input placeholder="seed">
+                <input placeholder="seed" id="seed">
             </div>
 
             <div class="tooltip">
@@ -49,11 +49,11 @@
         <div class="pictureSetting">
             <div>
                 <label>Size</label>
-                <input type="number" name="pictureSize" min=1>
+                <input type="number" min=1 id="pictureSize">
             </div>
             <div>
                 <label>Quality</label>
-                <select>
+                <select id="quality">
                     <option>Small</option>
                     <option>Medium</option>
                     <option>Large</option>
@@ -72,7 +72,7 @@
         <div class="splatterSetting">
             <div>
                 <label>Color</label>
-                <select>
+                <select id="colorSplatter">
                     <option>Red</option>
                     <option>Blue</option>
                     <option>Green</option>
@@ -80,39 +80,39 @@
             </div>
             <div>
                 <label>Shades</label>
-                <input type="number" name="shades" max=255 min=0>
+                <input type="number" id="shades" max=255 min=0>
             </div>
             <div>
                 <label>Amount</label>
-                <input type="number" name="amount" min=1>
+                <input type="number" id="amount" min=1>
             </div>
             <div>
                 <label>Angle</label>
-                <input type="number" name="angle" min=1>
+                <input type="number" id="angle" min=1>
             </div>
             <div>
                 <label>AngleXdelta</label>
-                <input type="number" name="angleXdelta" min=1>
+                <input type="number" id="angleXdelta" min=1>
             </div>
             <div>
                 <label>Angleydelta</label>
-                <input type="number" name="angleYdelta" min=1>
+                <input type="number" id="angleYdelta" min=1>
             </div>
             <div>
                 <label>Randomness</label>
-                <input type="number" name="randomness" min=1>
+                <input type="number" id="randomness" min=1>
             </div>
             <div>
                 <label>Size</label>
-                <input type="number" name="size" min=1>
+                <input type="number" id="size" min=1>
             </div>
             <div>
                 <label>SizeDelta</label>
-                <input type="number" name="sizeDelta" min=1>
+                <input type="number" id="sizeDelta" min=1>
             </div>
             <div>
                 <label>Life</label>
-                <input type="number" name="life" min=1>
+                <input type="number" id="life" min=1>
             </div>
 
             <div class="tooltip">
@@ -152,8 +152,8 @@
         }
 
         const splatterSetting = {
-            "color": "red", //Color for each circles
-            "shades": 20, //Possible ranges of shades
+            "color": `red`, //Color for each circles
+            "shades": 150, //Possible ranges of shades
             "amount": pictureSettings.size / 2, //Amount of circles to spawn to make a splatter
             "angle": 5, //Spacing between circles. Bigger this is, the further the circles will travel from eachother.
             "angleXdelta": pictureSettings.size / 10, //How far the circles can travel on the x-axis
@@ -165,7 +165,44 @@
                 50 // How long it takes to animate the circles. Automically set to 0 if size < 0.
         }
 
+        function updateState() {
+            let seed = document.querySelector("#seed"),
+                pictureSize = document.querySelector("#pictureSize"),
+                pictureQuality = document.querySelector("#quality"),
+                colorSplatter = document.querySelector("#colorSplatter"),
+                selectedColorSplatter = colorSplatter.options[colorSplatter.selectedIndex].text,
+                shades = doucment.querySelector("#shades"),
+                amount = doucment.querySelector("#amount"),
+                angle = document.querySelector("#angle"),
+                angleXdelta = document.querySelector("#angleXdelta"),
+                angleYdelta = document.querySelector("#angleYdelta"),
+                randomness = document.querySelector("#randomness"),
+                size = document.querySelector("#size"),
+                sizeDelta = document.querySelector("#sizeDelta"),
+                life = document.querySelector("life")
 
+            pictureSettings.size = cleanNumber(pictureSize);
+            pictureSettings.quality = pictureQuality.options[pictureQuality.selectedIndex].text;
+
+            splatterSetting.color = selectedColorSplatter;
+            splatterSetting.shades = cleanNumber(shades);
+            splatterSetting.amount = pictureSettings.size / cleanNumber(amount);
+            splatterSetting.angle = cleanNumber(angle);
+            splatterSetting.angleXdelta = pictureSettings.size / cleanNumber(angleXdelta);
+            splatterSetting.angleYdelta = pictureSettings.size / cleanNumber(angleYdelta);
+            splatterSetting.randomness = cleanNumber(randomness);
+            splatterSetting.size = size + Math.random() * 3;
+            splatterSetting.sizeDelta = sizeDelta;
+            splatterSetting.life = life + Math.random() * 50;
+        }
+
+        function cleanNumber(string) {
+            string = string.replace(/\D/g, '')
+            if (string < 0)
+                return 1
+            else
+                return string;
+        }
 
         function request() {
             let url = "https://randomuser.me/api/?";
@@ -305,9 +342,26 @@
         function render() {
             canvases.forEach(object => {
                 let ctx = object.canvas.getContext('2d')
-                ctx.strokeStyle = "rgba(0,0,0,0.5)"
+                console.log(splatterSetting.color.toLowerCase())
                 object.particles.forEach(particle => {
-                    ctx.fillStyle = `rgb(${(Math.random() * 100)+140}, 0, 0)`
+                    switch (splatterSetting.color.toLowerCase()) {
+                        case "red":
+                            ctx.fillStyle =
+                                `rgba(${(Math.random() * splatterSetting.shades) + (255-splatterSetting.shades)}, 0, 0, ${(Math.random() * 1)})`
+                            break
+                        case "blue":
+                            ctx.fillStyle =
+                            `rgba(0, 0, ${(Math.random() * splatterSetting.shades) + (255-splatterSetting.shades)}, ${Math.random() * 1})`
+                                
+                            break
+                        case "green":
+                            ctx.fillStyle =
+                            `rgba(0, ${(Math.random() * splatterSetting.shades) + (255-splatterSetting.shades)}, 0, ${Math.random() * 1})`
+                            break
+                        default:
+                        ctx.fillStyle = `rgba(255, 255, 255, 0.5)`
+                            break
+                    }
                     ctx.beginPath();
                     ctx.arc(particle.x, particle.y, particle.size + 1, 2, Math.PI * 2, false);
                     ctx.fill();
@@ -315,10 +369,7 @@
             })
         }
 
-
-
         //Start the loop!
-
         (function animloop() {
             requestAnimationFrame(animloop);
             animateBloodsplatters();
