@@ -1,0 +1,68 @@
+header{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+header h1{
+    font-size: 3rem;
+    text-align: center;
+}
+
+header input{
+    width: 300px;
+    margin: auto;
+}
+
+nav{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+nav button{
+    margin: 2rem;
+}
+
+.accounts{
+    display: flex;
+    flex-wrap: wrap;
+    background-color: gray;
+}
+
+.cards{
+    margin: 1rem auto -3rem auto;
+    padding: 1rem;
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 1px 1px 10px black;
+    background-color: rgba(255, 255, 255, 1);
+    border-top-left-radius: 2rem;
+    border-top-right-radius: 2rem;
+    transition: all 1s;
+    z-index: 100;
+}
+
+.cards:hover{
+    transform: translateY(-1rem)
+}
+
+.cards:hover img{
+    transform: rotate(360deg);
+}
+
+.cards h1{
+    text-transform: capitalize;
+    font-size: 2rem;
+}
+
+.cards ul{
+    list-style: none;
+}
+
+@media only screen and (max-width: 600px){
+
+}
