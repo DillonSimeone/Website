@@ -1,33 +1,145 @@
-header{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-header h1{
-    font-size: 3rem;
-    text-align: center;
-}
-
-header input{
-    width: 300px;
-    margin: auto;
+body,html{
+    margin: 0;
+    padding: 0;
 }
 
 nav{
+    z-index: 1000;
+    background-color: darkgray;
+    position: fixed;
+    top: 1rem;
+    left: -20rem;
+    width: 20rem;
+    flex-direction: column;
+    transition: 1s left;
+}
+
+nav h2{
+    width: 100%;
+    border-bottom: 0.2rem solid black;
+    text-align: center;
+}
+
+nav, nav div{
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+}
+
+nav div{
+    flex-direction: column;
+}
+
+nav div div{
+    flex-direction: row;
+    margin: 1rem 0 0 3rem;
+}
+
+nav div div *{
+    margin: 0.2rem;
+}
+
+nav:hover{
+    left: 0;
+}
+
+nav:hover > .controls{
+    transform: rotate(0deg);
+    left: 20rem;
+    background-color: #6666;
 }
 
 nav button{
     margin: 2rem;
 }
 
+
+nav .controls{
+    position: fixed;
+    top: 1rem;
+    left: -4.5rem;
+    padding: 2rem;
+    transform: rotate(90deg);
+    transition: 1s all;
+}
+
+nav .controls button{
+    font-size: 2rem;
+    margin: 0;
+    padding:0;
+}
+
+nav .pagination{
+    flex-direction: row;
+    width: 100%;
+}
+
+nav .pagination h2{
+    text-align: left;
+    border-bottom: none;
+}
+
+nav .pagination:hover > .tooltip{
+    opacity: 1;
+    top: 7rem;
+}
+
+nav .seed{
+    width: 100%;
+}
+
+nav .seed:hover > .tooltip{
+    opacity: 1;
+    top: 10rem;
+}
+
+nav .pictureSetting{
+    width: 100%;
+}
+
+nav .pictureSetting:hover > .tooltip{
+    opacity: 1;
+    top: 17rem;
+}
+
+nav .splatterSetting{
+    width: 100%;
+}
+
+nav .splatterSetting:hover > .tooltip{
+    opacity: 1;
+    width: 40rem;
+    right: -42rem;
+    top: 23rem;
+}
+
+nav .tooltip{
+    z-index: -100;
+    flex-direction: column;
+    position: absolute;
+    top: -100rem;
+    right: -32rem;
+    opacity: 0;
+    font-size: 1rem;
+    width: 30rem;
+    transition: 0.2s all;
+    background-color: lightgray;
+    padding: 1rem;
+}
+
+nav .tooltip h2{
+    border-bottom: 0.2rem solid black;
+}
+
+nav .tooltip ul li{
+    font-size: 1.2rem;
+}
+
 .accounts{
     display: flex;
     flex-wrap: wrap;
     background-color: gray;
+    overflow: hidden;
 }
 
 .cards{

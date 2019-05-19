@@ -16,15 +16,122 @@
 </head>
 
 <body>
-    <header>
-        <h1>Random Account Generator</h1>
-        <input placeholder="seed">
-    </header>
     <nav>
-        <button onclick="previous()">Previous</button>
-        <h2>Page 1</h2>
-        <button onclick="next()">Next</button>
+        <h2>Random Account Generator</h2>
+        <div class="controls">
+            <button>Controls</button>
+        </div>
+        <div class="pagination">
+            <button onclick="previous()">Previous</button>
+            <h2>Page 1</h2>
+            <button onclick="next()">Next</button>
+            <div class="tooltip">
+                <h2>Fancy Tool Tip - Pagination</h2>
+                <p>The page number. Push one of the buttons here to change pages! Amazing! FYI, you can't go into
+                    negative pages, because reasons! REASONS</p>
+            </div>
+        </div>
+        <h2>Seed</h2>
+        <div class="seed">
+            <div>
+                <label>Seed</label>
+                <input placeholder="seed">
+            </div>
 
+            <div class="tooltip">
+                <h2>Fancy Tool Tip - Seed</h2>
+                <p>All of the accounts here are generated from a random seed! You can make it less random by setting the
+                    seed.</p>
+                <p>(Changes won't take place until you change the page)</p>
+            </div>
+        </div>
+        <h2>Picture Settings</h2>
+        <div class="pictureSetting">
+            <div>
+                <label>Size</label>
+                <input type="number" name="pictureSize" min=1>
+            </div>
+            <div>
+                <label>Quality</label>
+                <select>
+                    <option>Small</option>
+                    <option>Medium</option>
+                    <option>Large</option>
+                </select>
+            </div>
+            <div class="tooltip">
+                <h2>Fancy Tool Tip - Picture Settings</h2>
+                <p>Affects the pictures for each accounts.</p>
+                <ul>
+                    <li>Size: The size of the pictures, what else?</li>
+                    <li>Quality: The resolution of the pictures.</li>
+                </ul>
+            </div>
+        </div>
+        <h2>Splatter Setting</h2>
+        <div class="splatterSetting">
+            <div>
+                <label>Color</label>
+                <select>
+                    <option>Red</option>
+                    <option>Blue</option>
+                    <option>Green</option>
+                </select>
+            </div>
+            <div>
+                <label>Shades</label>
+                <input type="number" name="shades" max=255 min=0>
+            </div>
+            <div>
+                <label>Amount</label>
+                <input type="number" name="amount" min=1>
+            </div>
+            <div>
+                <label>Angle</label>
+                <input type="number" name="angle" min=1>
+            </div>
+            <div>
+                <label>AngleXdelta</label>
+                <input type="number" name="angleXdelta" min=1>
+            </div>
+            <div>
+                <label>Angleydelta</label>
+                <input type="number" name="angleYdelta" min=1>
+            </div>
+            <div>
+                <label>Randomness</label>
+                <input type="number" name="randomness" min=1>
+            </div>
+            <div>
+                <label>Size</label>
+                <input type="number" name="size" min=1>
+            </div>
+            <div>
+                <label>SizeDelta</label>
+                <input type="number" name="sizeDelta" min=1>
+            </div>
+            <div>
+                <label>Life</label>
+                <input type="number" name="life" min=1>
+            </div>
+
+            <div class="tooltip">
+                <h2>Fancy Tool Tip - Splatter Setting</h2>
+                <p>Setting for the silly canvas onclick events for all of the account pictures.</p>
+                <ul>
+                    <li>Color: The colors for the splatters.</li>
+                    <li>Shades: Possible shades of colors. (255 > && < 0)</li> <li>Amount: How much splatter particles
+                            to generate on click. ( > 1 )</li>
+                    <li>Angle: Spacing between particles. ( > 1 )</li>
+                    <li>AngleXdelta: Affects the distance of particles on the x-axis. ( > 1 )</li>
+                    <li>AngleYdelta: Affects the distance of particles on the y-axis. ( > 1 )</li>
+                    <li>Randomness: Affects the distance particles travels on either axises. ( > 1 )</li>
+                    <li>Size: Affects the size of particles. ( > 1 )</li>
+                    <li>SizeDelta: Affects how big the particles will be ( > 1)</li>
+                    <li>Life: Affects the size and render time for particles. ( > 1)</li>
+                </ul>
+            </div>
+        </div>
     </nav>
     <div class="accounts">
     </div>
@@ -42,13 +149,15 @@
         const pictureSettings = {
             "size": 150, //Size of the canvas elements with the images in them.
             "quality": "medium" //Three options: large, medium, thumbnail. Default: thumbnail
-        };
+        }
 
         const splatterSetting = {
-            "amount": pictureSettings.size/2, //Amount of circles to spawn to make a splatter
+            "color": "red", //Color for each circles
+            "shades": 20, //Possible ranges of shades
+            "amount": pictureSettings.size / 2, //Amount of circles to spawn to make a splatter
             "angle": 5, //Spacing between circles. Bigger this is, the further the circles will travel from eachother.
-            "angleXdelta": pictureSettings.size/10, //How far the circles can travel on the x-axis
-            "angleYdelta": pictureSettings.size/10, //How far the circles can travel on the y-axis
+            "angleXdelta": pictureSettings.size / 10, //How far the circles can travel on the x-axis
+            "angleYdelta": pictureSettings.size / 10, //How far the circles can travel on the y-axis
             "randomness": 15, // How far the circles could travel on either axis. (Example: angleXdelta * randomness)
             "size": 5 + Math.random() * 3, //Circles starts at this then start shrinking to zero.
             "sizeDelta": 10, //The max size
@@ -56,7 +165,7 @@
                 50 // How long it takes to animate the circles. Automically set to 0 if size < 0.
         }
 
-        
+
 
         function request() {
             let url = "https://randomuser.me/api/?";
@@ -167,8 +276,6 @@
         let delta = 0,
             last = Date.now()
 
-
-
         function animateBloodsplatters() {
             delta = Date.now() - last;
             last = Date.now();
@@ -225,7 +332,7 @@
             return listItem;
         }
 
-        let pageNumber = document.querySelector('nav').querySelector('h2')
+        let pageNumber = document.querySelector('.pagination').querySelector('h2')
         let seed = document.querySelector('input')
         console.log(pageNumber)
 
