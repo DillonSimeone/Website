@@ -1,5 +1,5 @@
 let selectedButton = "";
-let HistoryAPIControlsEnable = true;
+let HistoryAPIControlsEnable = false;
 
 //History Api witchery
 window.addEventListener('popstate', function (e) {
@@ -109,29 +109,4 @@ function setUp() {
         reveal('elevatorPitch', 'homeBtn');
 }
 
-/* 
-        var modal = new tingle.modal({
-            footer: true,
-            stickyFooter: false,
-            closeMethods: ['overlay', 'button', 'escape'],
-            closeLabel: "Close",
-            cssClass: ['custom-class-1', 'custom-class-2'],
-            onOpen: function () {
-                //console.log('modal open');
-            },
-            onClose: function () {
-                //console.log('modal closed');
-            },
-            beforeClose: function () {
-                return true; // nothing happens
-            }
-        });
-
-        modal.setContent('<h1>Contact Me!</h1><ul><li>Email: <a href="mailto:dillonsimeone@gmail.com">Dillonsimeone@gmail.com</a></li><li>Text: (541) 357-8716 </li></ul>');
-        modal.addFooterBtn('Close', 'tingle-btn tingle-btn--primary', function() {
-            modal.close();
-        });
- */
-
-//Let there be light.
 setUp();
