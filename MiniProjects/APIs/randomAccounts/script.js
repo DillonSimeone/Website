@@ -1,5 +1,6 @@
 let canvases = [], //For blood splatter animations.
-    changeTimer = 0
+    changeTimer = 0,
+    renderLoop = true //Controls the render loop
 
 const accounts = document.querySelector('.accounts'),
     inputs = document.querySelectorAll('input'),
@@ -22,12 +23,11 @@ const accounts = document.querySelector('.accounts'),
         "randomness": 15, // How far the circles could travel on either axis. (Example: angleXdelta * randomness)
         "size": 5 + Math.random() * 3, //Circles starts at this then start shrinking to zero.
         "sizeDelta": 10, //The max size
-        "life": 200 + Math.random() *
-            50 // How long it takes to animate the circles. Automically set to 0 if size < 0.
+        "life": 200 + Math.random() * 50 // How long it takes to animate the circles. Automically set to 0 if size < 0.
     }
 
 function updateState() {
-    let seed = document.querySelector("#seed"),
+    let seed = document.querySelector("#seed")/** ,
         pictureSize = document.querySelector("#pictureSize"),
         pictureQuality = document.querySelector("#quality"),
         colorSplatter = document.querySelector("#colorSplatter"),
@@ -41,11 +41,14 @@ function updateState() {
         size = document.querySelector("#size"),
         sizeDelta = document.querySelector("#sizeDelta"),
         life = document.querySelector("life")
+        */
 
     data.seed = seed.value
+    console.log(seed.value)
     canvases = []
+    getAccounts()
 
-    pictureSettings.size = cleanNumber(pictureSize)
+    /* pictureSettings.size = cleanNumber(pictureSize)
     pictureSettings.quality = pictureQuality.options[pictureQuality.selectedIndex].text
 
     splatterSetting.color = selectedColorSplatter
@@ -57,15 +60,15 @@ function updateState() {
     splatterSetting.randomness = cleanNumber(randomness)
     splatterSetting.size = size + Math.random() * 3
     splatterSetting.sizeDelta = sizeDelta
-    splatterSetting.life = life + Math.random() * 50
-    getAccounts()
+    splatterSetting.life = life + Math.random() * 50 */
+    
     console.log("Updated!")
 }
 
 for(input of inputs){
     input.onchange = function(){
-        clearTimeout(changeTimer)
-        changeTimer = setTimeout(updateState(), 1000)
+        console.log("Changed!")
+        updateState()
     }
 }
 
@@ -242,11 +245,15 @@ function render() {
 }
 
 //Start the loop!
-(function animloop() {
-    requestAnimationFrame(animloop);
-    animateBloodsplatters();
-    render();
-})();
+function animloop() {
+    if(renderLoop){
+        console.log("Rendering...")
+        requestAnimationFrame(animloop);
+        animateBloodsplatters();
+        render();
+    }
+}
+animloop();
 
 
 function listItem(text) {
