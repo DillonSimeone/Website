@@ -111,3 +111,10 @@ footer{
     padding-bottom: 20px;
     margin-bottom: -20px;
 }
+
+#twitter{
+    height: 50vh;
+    width: 40%;
+    overflow: scroll;
+    overflow-x: hidden;
+}
