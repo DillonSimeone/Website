@@ -80,9 +80,10 @@ nav ul li {
 section{
     background-color: rgba(255, 255, 255, 0.233);
     width: 70%;
-    margin: auto;
-    padding: 10px;
+    margin: 6px auto 6px auto;
+    padding: 1px;
     font-size: 1.3rem;
+    box-shadow: 10px 0px 10px rgba(255, 255, 255, 0.233), -10px 0px 10px rgba(255, 255, 255, 0.233);
 }
 
 section:first-of-type{
