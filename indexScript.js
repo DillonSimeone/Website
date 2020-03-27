@@ -1,5 +1,5 @@
 let selectedButton = "";
-let HistoryAPIControlsEnable = false;
+let HistoryAPIControlsEnable = true;
 
 //History Api witchery
 window.addEventListener('popstate', function (e) {
