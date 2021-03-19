@@ -67,7 +67,102 @@
         <section>
             <h1>Mark V King</h1>
             <p><a href="https://markvking.netlify.com/">Made a website for a client!</a></p>
-            <p>Todo: Write blog about the website</p>
+            <p>
+                It’s a Gatsby front end, with a headless wordpress on the backend, and a Disqus comment system… Ah, yes,
+                and a google sheet contact form! Hosted on Netlify! I put everything together with the goal of keeping
+                the monthly costs close to free as possible, and ease of use for Mark.
+            </p>
+            <h2>
+                Why Gatsby?
+            </h2>
+            <p>
+                Gatsby is a static site generator. The static sites it outputs is unmatched in speeds, due to everything
+                being compressed down much as possible, far beyond what’s normally done with a hand-crafted website from
+                ten years ago! This makes it so the website downloads and displays on people’s devices faster.
+            </p>
+            <p>
+                One of the many ways Gatsby achieves its speed is to pull in all of the contents it’ll be using from all
+                over the place via GraphQL when it’s generating a static website, and merge all of the files that makes
+                up the website into a single file with a minimum amount of white spaces in it!
+            </p>
+            <p>
+                A normal hand-made website from before Gatsby’s time would have a lot of files that needs to be
+                downloaded one at a time… Styles, pages, pictures, javascript, etc. When people’s devices are
+                downloading files, there is a bit of lag between files, which can easily add up to seconds before the
+                website is finally completely loaded.
+            </p>
+            <p>
+                It’s faster to download a single file than many files, even if the single file is bigger than all of the
+                other files put together!
+            </p>
+            <p>
+                And oh boy, there’s the plugins… Long story short, there’s a bunch of black magic going on out of sight
+                deep within Gatsby’s guts. Goat sacrifices, cultist chanting, elder gods stirring in their slumbers,
+                etc. I’m still not quite sure what’s going on, but I like it! I’ll be using Gatsby more often down the
+                road.
+            </p>
+            <h2>
+                Why WordPress?
+            </h2>
+            <p>
+                WordPress have a smartphone app for posting posts from, and is much easier to pull data from than
+                twitter or facebook. I figured that this would be the best option for Mark. Install the smartphone app
+                on his phone, and have his nurses to make posts, with pictures, videos or whatever! Poke the app, make
+                post, text away, post and done!
+            </p>
+            <p>
+                WordPress have a bunch of drawbacks if you’re also using it as the front end for your website… Slow load
+                speeds, due to each visitors needing to download many, many files before the website displays. There’s a
+                lot of moving parts on the server side too!
+            </p>
+            <p>
+                WordPress also doesn’t allow you to have custom styles unless you sign up for a monthly plan, among
+                other numerous limits.
+            </p>
+            <p>
+
+                Chopping the head off (Headless CMS!) solves a lot of those issues. Each time the Gatsby front end is
+                rebuilt, it pulls all posts from WordPress. The power of the WordPress, and the speed of Gatsby, folded
+                into a single entity!
+            </p>
+            <h2>Why Disqus?</h2>
+            <p>
+                Somehow linking up comments between wordpress and the gatsby front end was an option, but it turned out
+                to be much easier to just throw a Disqus comment widget into the blog page, and have different threads
+                to be loaded for each selected posts.
+            </p>
+            <p>Disqus is also designed just for comments… So they have more support for comments. In WordPress’s case,
+                it’s like being a jack of all trades, master of none. Using Disqus’s comment system instead of
+                WordPress’s comment system also makes it much easier to display comments in real time rather than
+                requiring the website to be destroyed and rebuilt each time someone posted a new comment. </p>
+            <h2>Google Sheets? Are you crazy!?</h2>
+            <p>A bit! My initial plan was to just use Netlify’s form system to handle the contact form, but it turned
+                out that there was a limit to the number of forms the system would accept for a free account! 100
+                submission a month!</p>
+            <p>This work-around I implemented adds a lot of flexibility in that area. As it is now, messages sent though
+                the contact form gets passed to a google script web app that appends the google sheet with the name,
+                email and message then email Mark’s Gmail with the information, along with a link to the google sheet so
+                he won’t miss a single thing! Cool thing about this, in the gmail window, he’ll be able to just click on
+                the email address to start writing an email to them right away! That wouldn’t had been possible with
+                Netlify’s system!</p>
+            <h2>Why Netlify?</h2>
+            <p>Netlify is one of the two options out there (Heroku is the other). I went with Netlify because for
+                months, I’ve heard nothing but praise from my nerdy friends about how easy Netlify makes everything.</p>
+            <p>I’m blown away! Netlify is a match made in heaven for Gatsby, because of the webhooks Netlify provides.
+                Attach those hooks to something, and when that something changes, the hook’ll get tugged on which
+                trigger an action… In this case, a rebuild of the gatsby website! Soon as a new wordpress post is made,
+                WordPress tugs on the webhook I dragged over from Netlify into wordpress’s guts to trigger a rebuild of
+                the Gastby front end! </p>
+            <h2>Total Montly Costs?</h2>
+            <p>And in the end, I've managed to keep the monthly cost at zero for this set-up!</p>
+            <p>The sweetest thing is, if any part suddenly goes up into flames. Like, google dissolving somehow, easy as
+                pie for me or any other nerds that have a vague understanding of what's going on here to pop out the
+                burning parts and plug in a different part! Take the comment system, for example, there's like ten other
+                options out there! (And even more ways to craft one out of nothing... Like using google sheets!)</p>
+            <p>Wordpress goes down into flames? Find a new content management service and chop off the head then attach
+                Gatsby over the bloody stump!</p>
+            <p>Nettlify goes nuclear? Heroku!</p>
+            <p>Everything but Gatsby melts down somehow? Self-hosting!</p>
         </section>
         <section>
             <h1>Non-Disclosure Agreement</h1>
