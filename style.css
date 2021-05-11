@@ -223,8 +223,8 @@ nav svg:hover{
 }
 
 #work section{
-    width: 50%;
-    margin: auto;
+    margin: 5% 15%;
+    width: 80%;
     box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
     padding: 10px;
 }
