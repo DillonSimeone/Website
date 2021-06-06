@@ -40,6 +40,10 @@ path {
                 Defaults
 =========================================================*/
 
+article{
+    padding-bottom: 100px;
+}
+
 nav{
     display: flex;
     flex-direction: row;
@@ -165,7 +169,6 @@ nav svg:hover{
     }
 }
 
-
 /*=======================================================
                 MiniProjects/Projects
 =========================================================*/
@@ -174,7 +177,7 @@ nav svg:hover{
 }
 
 #projects section{
-    margin: 5% 15%;
+    margin: auto;
     width: 80%;
 }
 
@@ -208,6 +211,10 @@ nav svg:hover{
     #projects .grid .grid-item{
         width: 100%;
     }
+    
+    #projects .grid{
+        padding-bottom: 100px;
+    }
 
     #projects section{
         margin: auto;
@@ -223,14 +230,14 @@ nav svg:hover{
 }
 
 #work section{
-    margin: 5% 15%;
+    margin: auto;
     width: 80%;
     box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
     padding: 10px;
 }
 
 #work section{
-    margin: 5% 15%;
+    margin-bottom: 5%;
 }
 
 /*=======================================================
