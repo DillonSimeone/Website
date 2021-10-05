@@ -19,11 +19,12 @@
         border: 5px solid black;
         display: grid;
         grid-template:
-        'Timestamp Timestamp Timestamp CompanyName AnchorLink AnchorLink AnchorLink'
-        '. . . JobPostLink . . .'
-        '. JobDescHeader . JobTitle . MemoHeader .'
-        'JobDescription JobDescription JobDescription . Memo Memo Memo';
-        padding: 10px;
+        'Timestamp Timestamp Timestamp CompanyName CompanyName AnchorLink AnchorLink AnchorLink'
+        '. . . JobPostLink JobPostLink . . .'
+        '. JobDescHeader . JobTitle JobTitle . MemoHeader .'
+        'JobDescription JobDescription JobDescription JobDescription Memo Memo Memo Memo';
+        grid-gap: 10px;
+        padding: 10px; 
       }
 
       .Timestamp{
@@ -52,6 +53,7 @@
 
       .JobTitle{
         grid-area: JobTitle;
+        text-align: center;
       }
 
       .JobDescription{
@@ -59,7 +61,8 @@
         height: 200px;
         overflow-y: auto;
         white-space: pre-wrap;
-        width: 100%;
+        border-top: 1px black dashed;
+        padding-top: 25px;
       }
 
       .JobDescHeader{
@@ -71,7 +74,8 @@
         height: 200px;
         overflow-y: auto;
         white-space: pre-wrap;
-        width: 100%;
+        border-top: 1px black dashed;
+        padding-top: 25px;
       }
 
       .MemoHeader{
