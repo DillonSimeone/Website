@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+  <!--<![endif]-->
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title></title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="" />
+    <style>
+      .card{
+        width: 80%;
+        margin: 20px auto;
+        border: 5px solid black;
+        display: grid;
+        grid-template:
+        'Timestamp Timestamp Timestamp CompanyName AnchorLink AnchorLink AnchorLink'
+        '. . . JobPostLink . . .'
+        '. JobDescHeader . JobTitle . MemoHeader .'
+        'JobDescription JobDescription JobDescription . Memo Memo Memo';
+        padding: 10px;
+      }
+
+      .Timestamp{
+        grid-area: Timestamp;
+
+      }
+      
+      .Timestamp::before{
+        content: "Timestamp: ";
+      }
+
+      .AnchorLink{
+        grid-area: AnchorLink;
+        text-align: right;
+      }
+
+      .JobPostLink{
+        grid-area: JobPostLink;
+        text-align: center;
+      }
+
+      .CompanyName{
+        grid-area: CompanyName;
+        text-align: center;
+      }
+
+      .JobTitle{
+        grid-area: JobTitle;
+      }
+
+      .JobDescription{
+        grid-area: JobDescription;
+        height: 200px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        width: 100%;
+      }
+
+      .JobDescHeader{
+        grid-area: JobDescHeader;
+      }
+
+      .Memo{
+        grid-area: Memo;
+        height: 200px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        width: 100%;
+      }
+      .MemoHeader{
+        grid-area: MemoHeader;
+      }
+
+    </style>
+  </head>
+  <body>
+    <h1 style="text-align: center;">Dillon Job Hunting Application Tracker</h1>
+    <p style="text-align: center;">(Work in process)</p>
+    <!--[if lt IE 7]>
+      <p class="browsehappy">
+        You are using an <strong>outdated</strong> browser. Please
+        <a href="#">upgrade your browser</a> to improve your experience.
+      </p>
+    <![endif]-->
+    <script src="./PapaParse-5.0.2/papaparse.min.js"></script>
+    <script>
+      function init() //Gets the data from Dillon's job applications google sheets
+        {
+          Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTkHcPKUN9o5GSKiEJH1LjCIJp5K3C2WmdDw3btwE8rLDTu39nISCBE0JfHfbMflV9XAieKbbZOgbuA/pub?output=csv', 
+          {
+            download: true,
+            header: true,
+            delimiter: ",", 
+            newline: "\r\n",
+            skipEmptyLines: false,
+            error: function(){
+              alert("Something went wrong with extracting data from Dillon's spreadsheet!");
+            },
+            complete: function(results) 
+              {
+                var rows = results.data //Get all rows from Dillon's spreadsheet as an array of objects.
+                //console.log(rows)
+                document.body.appendChild(createCards(rows)) // Transform each rows into a card then append to body.
+              }
+          })
+        }
+        window.addEventListener('DOMContentLoaded', init);
+        
+      function createCards(rows){
+        var cards = document.createElement("div")
+        cards.className = "cards"
+
+        var counter = 0; //To create easy anchor links with in the upper right corner of the cards.
+        
+
+        rows.map((row) => { //Iterate over each rows
+          var card = document.createElement("div")
+          card.className = "card"
+
+          var anchorLink = document.createElement("a")
+          anchorLink.className = "anchorLink"
+          anchorLink.innerHTML = (counter++) //TODO: Find out why this doesn't add to the first card, only new cards after the first.
+          anchorLink.id = (counter)
+          anchorLink.className = "AnchorLink"
+          card.appendChild(anchorLink)
+          
+                  for(const column in row){
+                    //console.log(`${column}: ${row[column]}`)
+                    //Order of columns: Timestamp, Job Post Link, Company Name, Job Title, Job Description, Memo
+                    card.appendChild(createCardContents(column, row)) //Div for each cells.
+                  }
+                  var headers = document.createElement("h2") //Hmm... Clean later.
+                  headers.className = "JobDescHeader"
+                  headers.innerHTML = "Job Description"
+                  card.appendChild(headers); 
+
+                  headers = document.createElement("h2")
+                  headers.className = "MemoHeader"
+                  headers.innerHTML = "Memo"
+                  card.appendChild(headers); 
+
+
+                  cards.appendChild(card)
+                })
+                return cards;
+      }
+
+      function createCardContents(column, row){
+        var content = document.createElement("div")
+        content.className = column.replace(/\s/g,'') //Remove white spaces from column name, so you get one classname, not x whitespace amount of classnames.
+
+        if(content.className == "JobPostLink"){ //Becoming smelly... Clean later?
+          content = document.createElement("a")
+          content.href = `${row[column]}`
+          content.className = column.replace(/\s/g,'')
+          content.innerHTML = "Job Post Link"
+        }else
+          content.innerHTML = `${row[column]}`
+        return content
+        
+      }
+    </script>
+  </body>
+</html>
