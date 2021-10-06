@@ -13,23 +13,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="" />
     <style>
+      body {
+          background-color: #53854c;
+          background-image: 
+          radial-gradient(at 47% 33%, hsl(162.44, 86%, 27%) 0, transparent 59%), 
+          radial-gradient(at 82% 65%, hsl(134.06, 69%, 19%) 0, transparent 55%);
+          height: 100vh;
+      }
+
+      .canvas{
+        position: fixed;
+        top:0;
+        left:0;
+        z-index: -1000;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3);
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background-color: rgba(123, 202, 168, 0.5)
+      }
+
+      * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(123, 202, 168, 0.5) rgba(0, 0, 0, 0.3);
+      }
+      
       .card{
+        color: white;
         width: 80%;
         margin: 20px auto;
         border: 5px solid black;
         display: grid;
         grid-template:
         'Timestamp Timestamp Timestamp CompanyName CompanyName AnchorLink AnchorLink AnchorLink'
-        '. . . JobPostLink JobPostLink . . .'
-        '. JobDescHeader . JobTitle JobTitle . MemoHeader .'
+        '. . . JobTitle JobTitle . . .'
+        '. JobDescHeader . JobPostLink JobPostLink . MemoHeader .'
         'JobDescription JobDescription JobDescription JobDescription Memo Memo Memo Memo';
         grid-gap: 10px;
         padding: 10px; 
+        /*glassmorphism!*/
+        backdrop-filter: blur(21px) saturate(200%);
+        -webkit-backdrop-filter: blur(21px) saturate(200%);
+        background-color: rgba(26, 38, 33, 0.64);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.125);
       }
 
       .Timestamp{
         grid-area: Timestamp;
-
+        color: lightgray;
       }
       
       .Timestamp::before{
@@ -38,17 +75,26 @@
 
       .AnchorLink{
         grid-area: AnchorLink;
+        color: lightgray;
         text-align: right;
       }
 
       .JobPostLink{
+        color: white;
+        text-decoration: none;
         grid-area: JobPostLink;
         text-align: center;
+        background-color: green;
+        width: 30%;
+        border-radius: 50px;
+        padding: 5px;
+        margin: auto;
       }
 
       .CompanyName{
         grid-area: CompanyName;
         text-align: center;
+        font-size: 1.5rem;
       }
 
       .JobTitle{
@@ -67,6 +113,8 @@
 
       .JobDescHeader{
         grid-area: JobDescHeader;
+        position: relative;
+        bottom: -20px;
       }
 
       .Memo{
@@ -80,6 +128,8 @@
 
       .MemoHeader{
         grid-area: MemoHeader;
+        position: relative;
+        bottom: -20px;
       }
 
       .loading{
@@ -183,27 +233,29 @@
             'Timestamp Timestamp AnchorLink'
             '. . .'
             '. CompanyName .'
-            '. JobPostLink .'
             '. JobTitle .'
+            '. JobPostLink .'
             '. JobDescHeader .'
             '. JobDescription .'
             '. MemoHeader .'
             '. Memo .';
         }
+        .JobPostLink{
+          width: 50%;
+        }
       }
     </style>
+    <script src="./PapaParse-5.0.2/papaparse.min.js"></script>
   </head>
   <body>
-    <h1 style="text-align: center;">Dillon Job Hunting Application Tracker</h1>
-    <p style="text-align: center;">(Work in process)</p>
     <div class="loading"></div>
+    <svg class="canvas" viewBox="0 0 1920 1080" preserveAspectRatio="xMaxYMid slice" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs"><rect width="1920" height="1080" fill="hsl(310, 65%, 15%)"></rect><defs><linearGradient x1="0.5" y1="0" x2="0" y2="1" id="SvgjsLinearGradient1119"><stop stop-color="#8a2866" offset="0"></stop><stop stop-color="#140b06" offset="0.1"></stop></linearGradient><linearGradient x1="0.5" y1="0" x2="0" y2="1" id="SvgjsLinearGradient1120"><stop stop-color="#60288a" offset="0"></stop><stop stop-color="#14060c" offset="0.22857142857142856"></stop></linearGradient><linearGradient x1="0.5" y1="0" x2="0" y2="1" id="SvgjsLinearGradient1121"><stop stop-color="#60288a" offset="0"></stop><stop stop-color="#14060c" offset="0.3571428571428571"></stop></linearGradient><linearGradient x1="0.5" y1="0" x2="0" y2="1" id="SvgjsLinearGradient1122"><stop stop-color="#f2c0e9" offset="0"></stop><stop stop-color="#d75b42" offset="0.48571428571428565"></stop></linearGradient><linearGradient x1="0.5" y1="0" x2="0" y2="1" id="SvgjsLinearGradient1123"><stop stop-color="#dcc0f2" offset="0"></stop><stop stop-color="#d74282" offset="0.6142857142857142"></stop></linearGradient><linearGradient x1="0.5" y1="0" x2="0" y2="1" id="SvgjsLinearGradient1124"><stop stop-color="#f0c0f2" offset="0"></stop><stop stop-color="#d74247" offset="0.7428571428571429"></stop></linearGradient><linearGradient x1="0.5" y1="0" x2="0" y2="1" id="SvgjsLinearGradient1125"><stop stop-color="#f0c0f2" offset="0"></stop><stop stop-color="#d74247" offset="0.8714285714285713"></stop></linearGradient></defs><path d="M0,-550.5062480725234C68.67578523482219,-525.9183956239121,277.071868200131,-444.77319236229175,412.05471140893314,-402.97913338085635C547.0375546177353,-361.18507439942096,685.6884528285872,-333.032985059054,809.8970592528126,-299.7418941839111C934.105665677038,-266.4508033087682,1040.0374164932202,-231.39852572779725,1157.306349954286,-203.23258812999904C1274.5752834153516,-175.06665053220084,1386.3950516782543,-162.86732527336784,1513.5106600192066,-130.7462685971219C1640.626268360159,-98.62521192087597,1852.2517766698677,-30.546251493289812,1920,-10.506248072523391L 1920 1080 L 0 1080 Z" fill="url(&quot;#SvgjsLinearGradient1119&quot;)"></path><path d="M0,-387.1007242638302C45.15974526241288,-369.66905706131587,178.56051912974573,-311.1666943333977,270.9584715744773,-282.5107210487442C363.3564240192089,-253.85474776409066,466.1303384955083,-231.99982710600025,554.3877146683894,-215.1648845559091C642.6450908412705,-198.32994200581797,713.8088294891559,-210.26637114487494,800.502728611764,-181.5010657481973C887.1966277343722,-152.73576035151967,982.719054398773,-77.87914741702616,1074.5511094040387,-42.57305217584323C1166.3831644093045,-7.266956934660307,1258.994176642045,10.473074083455,1351.4950586433586,30.335505698900214C1443.9959406446721,50.197937314345424,1534.8055778524802,53.79329012966406,1629.5564014119204,76.60153751682805C1724.3072249713607,99.40978490399203,1871.5927335686533,152.08774793770812,1920,167.18499002188412L 1920 1080 L 0 1080 Z" fill="url(&quot;#SvgjsLinearGradient1120&quot;)"></path><path d="M0,-305.0141154645631C48.761545181427,-281.858032904439,185.4456655435162,-194.8710400063074,292.569271088562,-166.07762010381882C399.6928766336078,-137.28420020133024,525.9863723994505,-160.04723713400222,642.7416332702746,-132.25359604963154C759.4968941410988,-104.45995496526085,892.0234646381606,-28.266345834398166,993.1008363135068,0.6842264024052866C1094.1782079888528,29.63479863920874,1149.9018533941257,11.170113352321472,1249.2058633223514,41.44983737118918C1348.5098732505771,71.72956139005689,1477.1258731032522,145.3446578929988,1588.9248958828603,182.36257051561154C1700.7239186624683,219.38048313822426,1864.8208159804767,250.0248560083232,1920,263.55731310686554L 1920 1080 L 0 1080 Z" fill="url(&quot;#SvgjsLinearGradient1121&quot;)"></path><path d="M0,-129.4029207049951C32.87221487418409,-112.4175181087029,118.50894060405827,-49.468103850950826,197.23328924510454,-27.49050512724184C275.9576378861508,-5.512906403532849,379.03566945915384,-23.745166699071635,472.34609184627766,2.462671637258822C565.6565142334015,28.67050997358928,675.0735503081421,97.11264627242755,757.0958235678474,129.7565248907409C839.1180968275528,162.40040350905426,896.465649517329,179.74569232159405,964.4797314045101,198.32594334713895C1032.4938132916911,216.90619437268384,1091.8307393205569,228.54739821343387,1165.1803148909341,241.23803104401028C1238.5298904613114,253.9286638745867,1326.0988947278342,258.48249561799264,1404.5771848267743,274.46974033059746C1483.0554749257144,290.4569850432023,1550.1462529557036,307.33075234938065,1636.0500554845746,337.16149931963906C1721.9538580134456,366.9922462898975,1872.675009247429,434.072101680063,1920,453.4542221521478L 1920 1080 L 0 1080 Z" fill="url(&quot;#SvgjsLinearGradient1122&quot;)"></path><path d="M0,18.18848541166983C47.99085271753082,37.04975922657975,180.25023960799524,108.0108069079151,287.9451163051849,131.3561283011294C395.6399930023746,154.7014496943437,542.3552123054221,123.27041582482073,646.1692601831379,158.2604137709556C749.9833080608537,193.2504117170905,804.7938370245956,299.96635484866033,910.8294035714792,341.2961159779386C1016.8649701183629,382.62587710721687,1167.9101191892596,370.08891078871557,1282.3826594644393,406.23898054662516C1396.855199739619,442.38905030453475,1491.3950884666306,523.3478075240791,1597.6646452225573,558.1965345253961C1703.934201978484,593.0452615267131,1866.2774408704263,605.8088745496719,1920,615.331342554527L 1920 1080 L 0 1080 Z" fill="url(&quot;#SvgjsLinearGradient1123&quot;)"></path><path d="M0,106.27958787888464C82.37988106250232,132.43935015222473,336.36749841415343,209.81213368106552,494.2792863750139,263.2381615189252C652.1910743358744,316.6641893567849,791.9400371461451,375.1212177189993,947.4707277651628,426.8357549060427C1103.0014183841804,478.55029209308617,1265.3752180499805,525.0466505742836,1427.46343008912,573.5253846411858C1589.5516421282596,622.0041187080881,1837.91057168152,693.6776968630777,1920,717.7081593074561L 1920 1080 L 0 1080 Z" fill="url(&quot;#SvgjsLinearGradient1124&quot;)"></path><path d="M0,256.49148804594506C34.61156765967538,275.21261350981524,124.23112150304499,346.22263301007604,207.6694059580523,368.81824082916614C291.1076904130596,391.41384864825625,415.5330748681281,369.32354979507295,500.62970673004384,392.0651349604855C585.7263385919596,414.8067201258981,645.5370297752642,480.9686282426566,718.2491971295468,505.26775182164175C790.9613644838295,529.5668754006268,855.2686029136635,516.8334010199754,936.90271085574,537.8598764343963C1018.5368187978165,558.8863518488171,1119.2925060680727,600.8426385199558,1208.0538447820063,631.4266043081664C1296.81518349594,662.0105700963769,1391.8105218599585,688.7016002785243,1469.4707431393417,721.3636711636593C1547.130964418725,754.0257420487943,1598.9269629815294,800.5920125195478,1674.0151724583059,827.3990296189763C1749.1033819350823,854.2060467184049,1879.002528743051,873.0713164033551,1920,882.2057737602308L 1920 1080 L 0 1080 Z" fill="url(&quot;#SvgjsLinearGradient1125&quot;)"></path></svg>
     <!--[if lt IE 7]>
       <p class="browsehappy">
         You are using an <strong>outdated</strong> browser. Please
         <a href="#">upgrade your browser</a> to improve your experience.
       </p>
     <![endif]-->
-    <script src="./PapaParse-5.0.2/papaparse.min.js"></script>
     <script>
       function init() //Gets the data from Dillon's job applications google sheets
         {
@@ -226,7 +278,7 @@
               }
           })
         }
-        window.addEventListener('DOMContentLoaded', init);
+        window.addEventListener('DOMContentLoaded', init); //Make the cards and toss them all into the body!
         
       function createCards(rows){
         var cards = document.createElement("div")
@@ -260,7 +312,6 @@
                   headers.className = "MemoHeader"
                   headers.innerHTML = "Memo"
                   card.appendChild(headers); 
-
                   cards.appendChild(card)
                 })
                 return cards;
@@ -278,7 +329,6 @@
         }else
           content.innerHTML = `${row[column]}`
         return content
-        
       }
     </script>
   </body>
