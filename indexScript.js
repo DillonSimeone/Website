@@ -1,5 +1,6 @@
 let selectedButton = "";
 let HistoryAPIControlsEnable = true;
+let shattered = false;
 
 //History Api witchery
 window.addEventListener('popstate', function (e) {
@@ -23,7 +24,7 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
         target.className = "item reveal";
     }, timedelay);
 
-    if (HistoryAPIControlsEnable) { //Toggle for history api functionality. 
+    if (HistoryAPIControlsEnable) { //Toggle for history api functionality, at the top of this script (For hot reloading functionability for testing)
         if (historyAPI !==
             true
         ) { //This checks if the popstate event was fired, so the user don't get trapped in an infinite loop in history!
@@ -32,8 +33,8 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
                         previousPage: `${targetID}`,
                         previousButton: `${buttonID}`
                     }, '',
-                    `/Website/`
-                ); //So ? homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
+                    //`/Website/`
+                ); //So ?page=homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
             else
                 history.pushState({
                     previousPage: `${targetID}`,
@@ -41,8 +42,39 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
                 }, '', `/Website/?page=${buttonID}`);
         }
     }
+
+    if(shattered)
+        unShatter();
 };
 
+function superReveal(targetID, buttonID, timedelay, historyAPI) { //Like the reveal function, but with a few extra actions to get rid of the background in a neat way.
+    reveal(targetID, buttonID, timedelay, historyAPI) //Yay for DRY!
+    /*Extra features
+        1. Sends all polys away in random directions. Note to self: Remember make it easy for this to be undone.
+        2. Spawns all elements in via fading them in while sliding them up.
+        3. ???
+        4. Profit!
+    */
+   shatter();
+}
+
+function shatter(){
+    animations = [`flyUp`, `flyDown`, `flyLeft`, `flyRight`]; //CSS classes to be added to trigger animations.
+    let polys = document.querySelectorAll('.trianglify svg path')
+    polys.forEach(poly =>{
+        let random = animations[Math.floor(Math.random() * animations.length)];
+        poly.className.baseVal = `poly fade ${random}`
+    })
+    shattered = true;
+}
+
+function unShatter(){
+    let polys = document.querySelectorAll('.trianglify svg path')
+    polys.forEach(poly =>{
+        poly.className.baseVal = `poly fade`
+    })
+    shattered = false;
+}
 //Hides all pages expect targetID and sets buttonID's style to show that it's selected when setting all other buttons' colors to the default.
 function hideAll(targetID, buttonID) {
     let items =  Array.from(document.getElementsByClassName('item'));

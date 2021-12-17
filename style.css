@@ -36,6 +36,31 @@ path {
     background-color: white;
 }
 
+/*animations for the shatter function in indexScript.js*/
+.flyUp{
+    transition: all 3s;
+    transform: translate(0px,-200vh);
+    opacity: 1;
+}
+
+.flyDown{
+    transition: all 3s;
+    transform: translate(0px,200vh);
+    opacity: 1;
+}
+
+.flyRight{
+    transition: all 3s;
+    transform: translate(200vw, 0px);
+    opacity: 1;
+}
+
+.flyLeft{
+    transition: all 3s;
+    transform: translate(-200vw,0px);
+    opacity: 1;
+}
+
 /*=======================================================
                 Defaults
 =========================================================*/
