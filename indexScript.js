@@ -100,8 +100,10 @@ function hideAll(targetID, buttonID) {
 
 //Wonder if CSS will be able to generate random colors one day. Could replace this bit by using a keyframe with the palette of color in it... Switch between the colors, from start to end over a few minutes or something.
 function randomizeColor() {
-    let hireMe = document.querySelector('#hire');
-    hireMe.style.backgroundColor = randomPaletteColor();
+    let hireMe = document.querySelector('#hire')
+    let hireMe2 = document.querySelector('#hire2')
+    hireMe.style.backgroundColor = randomPaletteColor()
+    hireMe2.style.backgroundColor = randomPaletteColor()
 
     let buttons = Array.from(document.querySelectorAll("nav div"));
 
