@@ -28,7 +28,7 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
         if (historyAPI !==
             true
         ) { //This checks if the popstate event was fired, so the user don't get trapped in an infinite loop in history!
-            if (buttonID === "homeBtn" || buttonID === "")
+            if (buttonID === "")
                 history.replaceState({
                         previousPage: `${targetID}`,
                         previousButton: `${buttonID}`
@@ -39,7 +39,7 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
                 history.pushState({
                     previousPage: `${targetID}`,
                     previousButton: `${buttonID}`
-                }, '', `/Website/?page=${buttonID}`);
+                }, '', `/?page=${buttonID}`);
         }
     }
 
