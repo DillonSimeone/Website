@@ -41,7 +41,7 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
                 history.pushState({
                     previousPage: `${targetID}`,
                     previousButton: `${buttonID}`
-                }, '', `/?page=${buttonID}`);
+                }, '', `Website/?page=${buttonID}`);
         }
     }
 
