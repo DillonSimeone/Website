@@ -8,6 +8,7 @@ window.addEventListener('popstate', function (e) {
 });
 
 function reveal(targetID, buttonID, timedelay, historyAPI) {
+    let button;
     if (buttonID !== "")
         button = document.getElementById(buttonID);
 
@@ -20,8 +21,9 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
             selectedButton = buttonID;
         }
 
-        target = document.getElementById(targetID);
+        let target = document.getElementById(targetID);
         target.className = "item reveal";
+        //console.log(`Target: ${targetID}`)
     }, timedelay);
 
     if (HistoryAPIControlsEnable) { //Toggle for history api functionality, at the top of this script (For hot reloading functionability for testing)
