@@ -33,14 +33,12 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
                 history.replaceState({
                         previousPage: `${targetID}`,
                         previousButton: `${buttonID}`
-                    }, '',
-                    //`/Website/`
-                ); //So ?page=homeBtn don't display, because that page is displayed by default. Makes the URL to look nicer, in case people shares it when viewing the first page.
+                    }, '', window.location.pathname)
             else
                 history.pushState({
                     previousPage: `${targetID}`,
                     previousButton: `${buttonID}`
-                }, '', `/Website/?page=${buttonID}`);
+                }, '', `?page=${buttonID}`);
         }
     }
 
