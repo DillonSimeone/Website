@@ -27,8 +27,7 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
     }, timedelay);
 
     if (HistoryAPIControlsEnable) { //Toggle for history api functionality, at the top of this script (For hot reloading functionability for testing)
-        if (historyAPI !==
-            true
+        if (historyAPI !== true
         ) { //This checks if the popstate event was fired, so the user don't get trapped in an infinite loop in history!
             if (buttonID === "")
                 history.replaceState({
@@ -41,7 +40,7 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
                 history.pushState({
                     previousPage: `${targetID}`,
                     previousButton: `${buttonID}`
-                }, '', `Website/?page=${buttonID}`);
+                }, '', `/Website/?page=${buttonID}`);
         }
     }
 
