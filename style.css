@@ -196,62 +196,6 @@ nav svg:hover{
 
 
 /*=======================================================
-                Work Policy
-=========================================================*/
-#rulesOfThree{
-    width: 80%;
-    height: 80%;
-    margin: 5% 15%;
-    padding: 10px;
-    text-align: center;
-}
-
-#rulesOfThree h3{
-    text-align: left;
-    font-size: 2rem;
-    margin: 0;
-}
-
-#rulesOfThree p {
-    width: 100%;
-    display: inline-block;
-    text-align: left;
-}
-
-#rulesOfThree a{
-    display: inline-block; 
-    font-weight: 700;
-    color: white;
-    border-radius: 80px;
-    font-size: 1.5rem;
-    margin: 0 1rem;
-}
-
-#hire2{
-    padding: 14px 64px;
-    text-decoration: none;
-    color: white;
-}
-
-@media only screen and (max-width: 600px) {
-    #rulesOfThree{
-        width: 90%;
-        height: 90%;
-        margin: 15% auto;
-    }
-
-    #rulesOfThree h2{
-        font-size: 1.2rem;
-    }
-
-    #rulesOfThree h3{
-        font-size: 1rem;
-    }
-}
-
-
-
-/*=======================================================
                 MiniProjects/Projects
 =========================================================*/
 #projects{
@@ -326,35 +270,8 @@ nav svg:hover{
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 1rem;
-    box-shadow: -1em 0 4em black;
+    box-shadow: 0 0 1em black;
 }
-
-/*=======================================================
-                modal
-=========================================================*/
-.tingle-modal-box{
-    width: auto;
-    height: auto;
-}
-
-.tingle-modal-box__content{
-    padding: 1rem;
-}
-
-.tingle-modal-box ul{
-    list-style: none;
-    padding: 0;
-}
-
-.tingle-modal-box ul li{
-    margin: 1rem;
-}
-
-.tingle-modal--visible .tingle-modal-box__footer{
-    display: flex;
-    justify-content: center;
-}
-
 
 /*=======================================================
                 Fun reveal/hide css animation!
