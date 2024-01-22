@@ -1,0 +1,611 @@
+html {
+    scroll-behavior: smooth;
+}
+
+html,
+body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: rgb(255, 255, 255);
+}
+
+h1 {
+    font-family: Alegreya_Sans;
+    color: azure;
+}
+
+h2 {
+    font-display: swap;
+}
+
+p,
+blockquote {
+    font-family: Roboto;
+}
+
+header {
+    position: relative;
+    display: flex;
+    padding: 10px;
+    border-bottom: 3px solid black;
+    background-color: teal;
+    height: 50px;
+}
+
+nav {
+    position: fixed;
+    display: flex;
+    z-index: 999;
+    top: 0;
+    right: 0;
+    background-color: teal;
+    padding: 10px;
+    border-radius: 10px;
+    transition: 0.5s all;
+}
+
+.navSlide {
+    transform: rotate(90deg);
+}
+
+
+nav a, nav button {
+    display: block;
+    font-family: Quicksand;
+    font-size: 1.5rem;
+    color: coral;
+    border-right: 2px solid black;
+    background-color: rgb(2, 65, 65);
+    padding: 5px;
+    border-radius: 10px;
+    margin-right: 5px;
+    transition: 0.5s all;
+    text-decoration: none;
+}
+
+nav .logo {
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    align-self: center;
+    vertical-align: middle;
+    border-right: 1px solid black;
+}
+
+nav a:last-child {
+    padding: 0;
+}
+
+a:hover {
+    color: darkturquoise;
+}
+
+.banner {
+    position: relative;
+    display: flex;
+    height: 20vw;
+    margin-bottom: -15px;
+    background-image: url("../media/backgrounds/tyler-milligan-dSIcpkddKrM-unsplash2200w.webp");
+    background-size: cover;
+    background-position-y: 55%;
+    background-repeat: no-repeat;
+}
+
+.banner h1 {
+    background-color: teal;
+    padding: 30px;
+    margin-bottom: 0;
+    margin-left: 35px;
+    box-shadow: 10px 20px 30px black;
+}
+
+.banner blockquote {
+    font-size: large;
+    margin: 5px;
+    margin-left: 45px;
+}
+
+.banner .littleBackground {
+    width: 90%;
+    margin-left: 35px;
+    margin-top: -25px;
+    background-color: rgba(228, 228, 238, 0.8);
+}
+
+.banner div {
+    margin-left: 5%;
+}
+
+.testimonials {
+    display: flex;
+    justify-content: space-around;
+    padding: 30px;
+}
+
+.testimonial {
+    position: relative;
+    width: 30%;
+    height: 150px;
+}
+
+.testimonial blockquote {
+    position: absolute;
+    bottom: 0;
+}
+
+#intro {
+    width: 100%;
+}
+
+#intro h1 {
+    font-size: 3rem;
+    text-align: center;
+}
+
+#intro ul li{
+    margin-bottom: 20px;
+    margin-left: -20px;
+}
+
+#intro ul li h3{
+    font-size: 1rem;
+    margin: 0;
+    display: inline-block;
+}
+
+
+#intro .heroTexts {
+    width: 40%;
+    border: 3px solid black;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: rgba(228, 228, 238, 0.856);
+    box-shadow: 10px 10px 15px;
+    margin: 40px auto;
+}
+
+#intro .heroTexts h1{
+    color: black;
+    text-decoration: underline;
+}
+
+
+#intro .heroTexts img {
+    float: right;
+    width: 300px;
+    border: 3px solid black;
+    border-radius: 10px;
+    box-shadow: 10px 10px 20px;
+    margin: 40px 40px;
+}
+
+.right1 {
+    transform: translate(-60%, -10%)
+}
+
+.left {
+    transform: translate(60%, -40%)
+}
+
+.right2 {
+    transform: translate(-60%, -80%)
+}
+
+.background1 {
+    position: relative;
+    background-image: url(../media/backgrounds/susan-q-yin-2JIvboGLeho-unsplash2200w.webp);
+    background-size: cover;
+}
+
+.background2 {
+    position: relative;
+    background-image: url(../media/backgrounds/nick-morrison-FHnnjk1Yj7Y-unsplash2200w.webp);
+    background-size: cover;
+    background-position-y: center;
+    background-repeat: no-repeat;
+}
+
+.background3 {
+    position: relative;
+    background-image: url(../media/backgrounds/alexander-grey-eMP4sYPJ9x0-unsplash2200w.webp);
+    background-size: cover;
+}
+
+.fadeTop::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 15%;
+    background: linear-gradient(to top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.fadeBottom::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 15%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.logo {
+    width: 50px;
+    height: 50px;
+    border: 2px solid black;
+    border-radius: 4px;
+}
+
+.darkOcean {
+    position: relative;
+    padding-top: 10%;
+    background-image: url(../media/backgrounds/OceanRipples1.webp);
+    background-size: 516px 516px;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.why {
+    font-size: 3rem;
+    background-color: teal;
+    color: azure;
+    margin: auto;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 5px 5px 15px black;
+    z-index: 10;
+}
+
+.reasons,
+.courses {
+    width: 90vw;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    justify-items: center;
+}
+
+.reason,
+.course {
+    background-color: rgba(228, 228, 238, 0.856);
+    width: 250px;
+    margin: 20px;
+    border: 1px solid black;
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 5px 5px 15px;
+    z-index: 10;
+}
+
+.certificate {
+    display: flex;
+    flex-direction: column;
+}
+
+.certificate h1 {
+    font-size: 3rem;
+    border-top-right-radius: 100px;
+    padding: 10px;
+    padding-right: 50px;
+
+    color: azure;
+    background-color: teal;
+    margin: auto;
+    margin-left: 4.3%;
+}
+
+.certificate p {
+    background-color: rgba(228, 228, 238, 0.856);
+    margin: auto;
+    margin-left: 4.3%;
+    width: 50%;
+    padding: 10px;
+}
+
+
+.course {
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+}
+
+.course p {
+    height: 100%;
+}
+
+.reason h3,
+.course h2 {
+    text-align: center;
+    background-color: white;
+    padding: 10px;
+    padding: 1px;
+    margin: -5px;
+    margin-bottom: 5px;
+}
+
+.course button, .course a {
+    width: 200px;
+    height: 35px;
+    align-self: center;
+    vertical-align: bottom;
+    margin-bottom: 10px;
+}
+
+footer {
+    position: relative;
+    background-color: teal;
+    color: white;
+    border-top: 5px solid black;
+    height: 75px;
+    padding: 20px;
+    margin-bottom: -20px;
+}
+
+footer {
+    display: flex;
+    justify-content: flex-start;
+}
+
+footer a {
+    color: azure;
+}
+
+footer .copyright {
+    position: absolute;
+    right: 1%;
+    bottom: 0;
+}
+
+footer .misc ul li {
+    list-style-type: none;
+}
+
+.faded {
+    opacity: 0;
+    -webkit-transform: translateX(-40px);
+    -moz-transform: translateX(-40px);
+    -ms-transform: translateX(-40px);
+    -o-transform: translateX(-40px);
+    transform: translateX(-40px);
+    -webkit-transition: all 0.6s ease-out;
+    -moz-transition: all 0.6s ease-out;
+    -ms-transition: all 0.6s ease-out;
+    -o-transition: all 0.6s ease-out;
+    transition: all 0.6s ease-out;
+}
+
+.visible {
+    opacity: 1;
+    -webkit-transform: translateX(0px);
+    -moz-transform: translateX(0px);
+    -ms-transform: translateX(0px);
+    -o-transform: translateX(0px);
+    transform: translateX(0px);
+}
+
+.tingle-modal-box__content iframe {
+    height: 80vh;
+}
+
+.tingle-modal-box__content {
+    display: flex;
+    flex-direction: column;
+}
+
+.tingle-modal-box__content .StevenHeroBackground {
+    padding: 10px;
+    background-image: url(../media/StevenBaldwin/StevenBaldwin.jpg);
+    background-position-y: 20%;
+    border-radius: 10px;
+    box-shadow: 10px 10px 20px;
+    background-size: cover;
+    background-position-y: -10px;
+}
+
+.tingle-modal-box__content h1 {
+    display: inline-block;
+    color: azure;
+    background-color: teal;
+    display: inline-block;
+    text-align: left;
+    margin-left: -15%;
+    padding: 10px;
+    font-family: "Alegreya_Sans";
+    font-size: 3rem;
+}
+
+.tingle-modal-box__content blockquote {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 3px solid black;
+    box-shadow: 10px 10px 20px;
+    padding: 10px;
+    margin-left: -10%;
+}
+
+.tingle-modal-box__content img {
+    position: fixed;
+    height: 200px;
+    right: 5%;
+    border: 3px solid black;
+    border-radius: 10px;
+    box-shadow: 10px 10px 20px;
+}
+
+.tingle-modal__closeIcon {
+    display: none;
+}
+
+
+.fadeOutBottom {
+    position: absolute;
+    bottom: 0;
+    left: -5%;
+    width: 100%;
+    height: 100px;
+    /* adjust as needed */
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff);
+}
+
+.fadeOutTop {
+    position: absolute;
+    top: 0;
+    left: -5%;
+    width: 100%;
+    height: 100px;
+    /* adjust as needed */
+    background: linear-gradient(to top, rgba(255, 255, 255, 0), #fff);
+}
+
+@font-face {
+    font-family: "Alegreya_Sans";
+    src: url(../media/fonts/Alegreya_Sans/AlegreyaSans-Bold.ttf);
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Quicksand";
+    src: url(../media/fonts/Quicksand/Quicksand-VariableFont_wght.ttf);
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Roboto";
+    src: url(../media/fonts/Roboto/Roboto-Light.ttf);
+    font-display: swap;
+}
+
+@media only screen and (max-width: 1450px) {
+    body {
+        background-color: white;
+    }
+
+    .banner {
+        height: 50vh;
+    }
+
+    .testimonials {
+        flex-direction: column;
+        align-items: center;
+        padding: 10%;
+    }
+
+    .testimonial {
+        width: 70%;
+        padding-bottom: 45px;
+    }
+
+    #intro .heroTexts {
+        width: 80%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #intro .heroTexts img {
+        border: 3px solid black;
+        border-radius: 10px;
+        box-shadow: 10px 10px 20px;
+        margin: auto;
+    }
+
+    .right1 {
+        transform: translate(0, -5%);
+    }
+
+    .left {
+        transform: translate(0);
+    }
+
+    .right2 {
+        transform: translate(0);
+    }
+
+    .background1,
+    .background2,
+    .background3 {
+        padding-bottom: 25px;
+        padding-top: 25px;
+    }
+
+    .tingle-modal-box {
+        width: 80%;
+    }
+
+    .tingle-modal-box__content img {
+        display: block;
+        position: static;
+        margin: auto;
+    }
+
+    .certificate p {
+        width: 80%;
+    }
+}
+
+@media only screen and (max-width: 600px) {
+    .tingle-modal__closeIcon {
+        display: block;
+        color: red;
+        position: fixed;
+        border: 3px solid black;
+        padding: 5px;
+        background-color: white;
+        width: 50px;
+        height: 50px;
+        top: 7%;
+        right: 3%;
+    }
+
+    .tingle-modal-box {
+        width: 100%;
+    }
+
+    .tingle-modal-box__content {
+        width: 100%;
+        padding: 0;
+    }
+
+
+    .tingle-modal-box__content .StevenHeroBackground {
+        background-position-y: bottom;
+    }
+
+    .tingle-modal-box__content h1 {
+        margin: auto;
+    }
+
+    .tingle-modal-box__content blockquote {
+        margin: auto;
+    }
+
+    .testimonial {
+        width: 90%;
+        padding-bottom: 55px;
+    }
+
+    nav a {
+        font-size: 20px;
+    }
+
+    .banner h1 {
+        margin-left: 10px;
+    }
+
+    .banner blockquote {
+        margin-left: 10px;
+    }
+
+    .banner .littleBackground {
+        margin-left: 15px;
+    }
+}
+
+@media only screen and (max-width: 600px) {
+    .testimonial {
+        width: 90%;
+        padding-bottom: 75px;
+    }
+}
