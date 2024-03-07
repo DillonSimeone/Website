@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./scripts/CircleType-master/dist/circletype.min.js"></script>
+    <script src="./scripts/dmauro-Keypress-2.1.5-0-g70a58fb/dmauro-Keypress-70a58fb/keypress-2.1.5.min.js"></script>
+</head>
+
+<body>
+    <nav>
+        <img src="./media/logos/ShakeitOffLogo.png">
+        <a href="./index.html">Home</a>
+        <a href="./FAQ.html">FAQ</a>
+        <a href="./about.html">About</a>
+        <a href="./services.html">Services</a>
+    </nav>
+    <header>
+        <h1>Hello, Felines and Humans!</h1>
+        <img src="./media/logos/ShakeitOffLogo.png" class="MainLogo">
+        <img class="monster cutie" src="./media/logos/Icon/Full Color/Web/ShakeitOffIcon.png">
+        <div id="services">
+            <h3 style="text-align: center;">Your in-home cat grooming services</h3>
+            <ul>
+                <li>Bath</li>
+                <li>Dry</li>
+                <li>Brush out</li>
+                <li>Specialty Shampoos</li>
+                <li>Nail Services</li>
+                <li>Haircuts</li>
+                <li>Mat removal</li>
+            </ul>
+        </div>
+        <p>
+            Are you tired of the inconvenience and stress of taking your pets to crowded, noisy grooming facilities?
+            Shake It Off's at-home service offers the convenience and comfort of a professional groomer in the familiar
+            surroundings of your own home. With Shake It Off, you don't have to worry about noisy equipment or the added
+            stress of taking your pet out of their familiar environment. Plus, with just one groomer - Alexis, a deaf
+            woman - you can trust that your pet will receive personalized, one-on-one attention.
+        </p>
+        <p>
+            Only the highest-quality products are used at Shake It Off to ensure the health and safety of your furry
+            friend. The personalized grooming services are tailored to meet your pet's unique needs and preferences, all
+            in the comfort of your own home. Shake It Off understands that every pet is different, which is why the time
+            is taken to get to know your pet and adjust the services accordingly. With no crowded grooming facilities or
+            distractions, your pet can relax and enjoy a stress-free grooming experience.
+        </p>
+        <a href="https://booking.moego.pet/go/?name=ShakeItOffCatGroomz&book=0">
+            <h3 style="text-align:center">
+                Book your appointment today and give your pet the royal treatment they deserve!
+            </h3>
+        </a>
+
+        <a href="./services.html">
+            <h4>Read more about my services</h4>
+        </a>
+    </header>
+    <footer>
+        <img src="./media/logos/ShakeitOffLogo.png" class="miniLogo">
+        <h5>Where the cat calls, she goes</h5>
+        <div class="contacts">
+            <a href="mailto:shakeitoffcatgroomz@gmail.com"><img src="./media/logos/Icon/gmail/Gmail_Logo.svg"
+                    class="icon"></p>
+                <a href="https://www.instagram.com/shakeitoffcatgroomzllc/?igshid=YmMyMTA2M2Y%3D"><img
+                        src="./media/logos/Icon/instagram/instagram-logo-svgrepo-com.svg" class="icon"></a>
+        </div>
+        <p>(Text Only) +1 (458) 216-5584</p>
+        <ul>
+            <li><a href="./index.html">Home</a></li>
+            <li><a href="./FAQ.html">FAQ</a></li>
+            <li><a href="./services.html">Services</a></li>
+            <li><a href="./about.html">About</a></li>
+            <li><a href="./PrivacyPolicy.html">Privacy Policy</a></li>
+        </ul>
+        <p id="copyright">©2023 Shake It Off, All Rights Reserved</p>
+    </footer>
+    <script>
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        }
+
+        let monster = document.querySelector(".monster")
+        monster.addEventListener('animationend', () => {
+            monster.classList.remove('cutie')
+            let randomTime = getRandomInt(5, 10) * 1000;
+            setTimeout(() => {
+                monster.classList.add('cutie');
+            }, randomTime) //Repeats once randomly between 5 and 10 seconds.
+        })
+    </script>
+</body>
+
+</html>
