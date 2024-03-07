@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+    <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+    <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+    <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+    <!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="./styles.css">
+        <script src="./scripts/CircleType-master/dist/circletype.min.js"></script>
+        <script src="./scripts/dmauro-Keypress-2.1.5-0-g70a58fb/dmauro-Keypress-70a58fb/keypress-2.1.5.min.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+        <nav class="hidden">
+            <a href="./home.html"><img src="./media/logos/ShakeitOffLogo.png"></a>
+            <a href="./FAQ.html">FAQ</a>
+            <a href="./about.html">About</a>
+            <a href="./services.html">Services</a>
+        </nav>
+        <header>
+            <h1 id="coming">Coming soon in March 2023!</h1>
+            <img src="./media/logos/ShakeitOffLogo.png" class="MainLogo">
+            <img id="cutie" src="./media/logos/Icon/Full Color/Web/ShakeitOffIcon.png">
+            <div id="services">
+                <h3 style="text-align: center;">Your in-home cat grooming services</h3>
+                <ul>
+                    <li>Bath</li>
+                    <li>Dry</li>
+                    <li>Brush out</li>
+                    <li>Specialty Shampoos</li>
+                    <li>Nail Services</li>
+                    <li>Haircuts</li>
+                    <li>Mat removal</li>
+                </ul>
+            </div>
+            
+            <form>
+                <h2 style="color:black; margin-bottom: 0;">Sign up for email alerts</h2>
+                <p style="font-size: small;">This service will only be within Oregon!</p>
+                <div>
+                    <input type="email" id="email" placeholder="Email" required>
+                    <input type="text" id="name" placeholder="Name" required>
+                    <input type="number" id="zipcode" placeholder="Zipcode" required maxlength="6" minlength="6">
+                </div>
+                <div>
+                    <input type="submit" value="Submit" onclick="magic(event)">
+                </div>
+            </form>
+        </header>
+        <ul class="bubbles">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+        <script>
+            const circleType = new CircleType(document.querySelector("#coming"))
+            circleType.radius(700).dir(1);
+
+            var listener = new window.keypress.Listener();
+            listener.simple_combo("shift q", function() {
+                console.log("meep")
+                document.querySelector("nav").className = "fadeIN"
+            });
+
+
+            function fontSwap(element){
+                console.log(element)
+                console.log(element.style.fontFamily)
+                fonts = element.style.fontFamily;
+                switch(fonts){
+                    case "q":
+                        element.style.fontFamily = "w"
+                        break;
+                    case "w":
+                        element.style.fontFamily = "e"
+                        break;
+                    case "e":
+                        element.style.fontFamily = "r"
+                        break;
+                    case "r":
+                        element.style.fontFamily = "t"
+                        break;
+                    case "t":
+                        element.style.fontFamily = "y"
+                        break;
+                    case "y":
+                        element.style.fontFamily ="u"
+                        break;
+                    case "u":
+                        element.style.fontFamily = "q"
+                        break;
+                    default:
+                        element.style.fontFamily = "w"
+                        break;
+                } 
+            }
+            let targets = document.querySelectorAll("h1, h2, h3, p, li")
+            targets.forEach(element => {
+                element.onclick = function() {fontSwap(this)}
+                element.style.zindex = "10"
+            });
+
+
+            function magic(event){
+                event.preventDefault();
+                let email = document.querySelector("#email")
+                let name = document.querySelector("#name")
+                let zipcode = document.querySelector("#zipcode")
+
+                if (email.validity.typeMismatch){
+                    email.setCustomValidity("Paw-don me, input your email");
+                    email.reportValidity();
+                }else if(zipcode.value.length !== 5){
+                    zipcode.setCustomValidity("This is not a zipcode! UNACCEPTABLE! FIVE characters!")
+                    zipcode.reportValidity();
+                }else{
+                    email.setCustomValidity("");
+                    zipcode.setCustomValidity("");
+                    fetch("https://api.apispreadsheets.com/data/RqkH6WLemhs9kIlF/", {
+                        method: "POST",
+                        body: JSON.stringify({"data": {"name":`${name.value}`,"email":`${email.value}`,"zipcode":`${zipcode.value}`}}),
+                    })
+                    .then(res =>{
+                        if (res.status === 201){
+                            // SUCCESS
+                            console.log("Success")
+                            let form = document.querySelector("form")
+                            let child = form.lastElementChild;
+                            while(child){
+                                form.removeChild(child);
+                                child = form.lastElementChild;
+                            }
+                            let thanks = document.createElement("h1")
+                            thanks.innerHTML = "Thank you!"
+                            form.appendChild(thanks)
+                        }
+                        else{
+                            // ERROR
+                        }
+                    })
+                }
+               
+                
+            }
+        </script>
+    </body>
+</html>
