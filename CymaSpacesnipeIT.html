@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Dillon Simeone</title>
+    <link href="./style.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="randomColors.js"></script>
+    <script src="trianglify.min.js"></script>
+    <script src="background.js"></script>
+    <style>
+        .assets{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            height: 100vh;
+            overflow-y: scroll;
+            
+        }
+        .asset{
+            width: 20%;
+            margin: 10px;
+            border: solid 1px black;
+            padding: 10px;
+            box-shadow: 10px 10px 10px black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .asset img{
+            width: 200px;
+            height: 200px;
+            margin: auto;
+           
+        }
+
+        
+
+        .asset p, .asset h3{
+            text-align: center;
+            margin: 0;
+        }
+
+        .asset h3{
+            margin: 20px;
+        }
+    </style>
+</head>
+
+<body onresize="redraw();">
+    <div class="assets"></div>
+
+    <div class="trianglify">
+        <div class="circle"></div>
+    </div>
+
+    <script>
+        draw() //Draws the background.
+
+        fetch('https://cymaspacesnipeitinventoryextractor.dillonsimeone-bd8.workers.dev/', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(assets => {
+                //console.log(assets)
+                const assetsContainer = document.querySelector('.assets')
+
+                assets.rows.forEach(row => {
+                    const item = document.createElement('div');
+                    item.classList.add('asset'); // Use classList.add for modern approach
+
+                    const img = document.createElement('img');
+                    img.src = row.image;
+                    item.appendChild(img);
+
+                    const title = document.createElement('h3');
+                    title.textContent = `${row.category.name}: ${row.model.name}`;
+                    item.appendChild(title);
+
+                    const location = document.createElement('p');
+                    location.textContent = `Location: ${row.rtd_location.name}`;
+                    item.appendChild(location);
+
+                    const status = document.createElement('p');
+                    status.textContent = `Status: ${row.status_label.name}`;
+                    item.appendChild(status);
+
+                    const checkout = document.createElement('p');
+                    checkout.textContent = `Users can checkout: ${row.user_can_checkout}`;
+                    item.appendChild(checkout);
+
+                    assetsContainer.appendChild(item);
+                });
+
+
+
+            })
+            .catch(error => console.error(error));
+    </script>
+</body>
+
+</html>
