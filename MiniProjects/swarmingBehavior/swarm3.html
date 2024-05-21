@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Swarm</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const shapes = ['circle', 'square', 'triangle'];
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 10 + 5;
+                this.shape = shapes[Math.floor(Math.random() * shapes.length)];
+                this.color = this.randomColor();
+                this.speed = Math.random() * 2 + 1;
+            }
+
+            randomColor() {
+                const r = Math.floor(Math.random() * 256);
+                const g = Math.floor(Math.random() * 256);
+                const b = Math.floor(Math.random() * 256);
+                return `rgba(${r}, ${g}, ${b}, 0.7)`;
+            }
+
+            draw() {
+                ctx.beginPath();
+                switch (this.shape) {
+                    case 'circle':
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        break;
+                    case 'square':
+                        ctx.rect(this.x, this.y, this.size, this.size);
+                        break;
+                    case 'triangle':
+                        ctx.moveTo(this.x, this.y - this.size);
+                        ctx.lineTo(this.x - this.size, this.y + this.size);
+                        ctx.lineTo(this.x + this.size, this.y + this.size);
+                        ctx.closePath();
+                        break;
+                }
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            update(mouseX, mouseY) {
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.hypot(dx, dy);
+                const angle = Math.atan2(dy, dx);
+                this.x += Math.cos(angle) * this.speed;
+                this.y += Math.sin(angle) * this.speed;
+
+                if (distance < 20) {
+                    this.color = this.randomColor();
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                }
+
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+        }
+
+        function init() {
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(particle => {
+                particle.update(mouse.x, mouse.y);
+                particle.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        const mouse = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+        };
+
+        canvas.addEventListener('mousemove', (event) => {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        init();
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
