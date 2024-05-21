@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sketch</title>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <script src="libraries/p5.min.js"></script>
+    <script src="libraries/p5.sound.min.js"></script>
+</head>
+
+<body>
+    <script src="sketch.js"></script>
+    <script src="psoFunk.js"></script>
+    <script>
+        class Buzz {
+            constructor(x, y, a, b, red, green, blue) {
+                this.pBest = createVector(a, b);
+                this.loc = createVector(x, y);
+                this.velocity = createVector(random(-2.0, 2.0), random(-2.0, 2.0));
+                this.maxVelocity = 2.0;
+
+                this.sizeX = 6;
+                this.sizeY = 6;
+                this.red = red;
+                this.green = green;
+                this.blue = blue;
+            }
+
+            update(globalBest, inertia, c1, c2, r1, r2) {
+                let inertiaTerm = p5.Vector.mult(this.velocity, inertia);
+                let personalTerm = p5.Vector.sub(this.pBest, this.loc).mult(c1).mult(r1);
+                let socialTerm = p5.Vector.sub(globalBest, this.loc).mult(c2).mult(r2);
+
+                this.velocity = p5.Vector.add(inertiaTerm, personalTerm).add(socialTerm);
+                this.velocity.limit(this.maxVelocity);
+
+                this.loc.add(this.velocity);
+
+                // Boundary checks
+                this.loc.x = constrain(this.loc.x, 0, width - this.sizeX);
+                this.loc.y = constrain(this.loc.y, 0, height - this.sizeY);
+            }
+
+            makeBuzz() {
+                noStroke();
+                fill(this.red, this.green, this.blue);
+                rect(this.loc.x, this.loc.y, this.sizeX, this.sizeY);
+            }
+        }
+
+        let buzzezMany = 5;
+        let buzzez = [];
+        let inertia = 0.5;
+        let c1 = 0.1;
+        let c2 = 1.3;
+        let r1 = 0.2;
+        let r2 = 0.5;
+
+        let buzzRed = [0, 100, 175, 225, 255];
+        let buzzGr = [0, 255, 50, 0, 100];
+        let buzzBl = [255, 0, 255, 125, 0];
+
+        let globalBest;
+
+        function setup() {
+            createCanvas(1000, 1000);
+            for (let i = 0; i < buzzezMany; i++) {
+                let randCol = int(random(5));
+                let randX = random(0, width);
+                let randY = random(0, height);
+                let randA = randX - random(3, 20);
+                let randB = randY - random(3, 20);
+                buzzez[i] = new Buzz(randX, randY, randA, randB, buzzRed[randCol], buzzGr[randCol], buzzBl[randCol]);
+            }
+            globalBest = createVector(buzzez[0].loc.x, buzzez[0].loc.y);
+        }
+
+        function draw() {
+            background(220, 200, 100);
+            updateObjective();
+            updateParticles();
+            drawParticles();
+        }
+
+        function updateParticles() {
+            for (let i = 0; i < buzzezMany; i++) {
+                buzzez[i].update(globalBest, inertia, c1, c2, r1, r2);
+            }
+            updateGlobalBest();
+        }
+
+        function drawParticles() {
+            for (let i = 0; i < buzzezMany; i++) {
+                buzzez[i].makeBuzz();
+            }
+        }
+
+        function updateGlobalBest() {
+            let objective = createVector(mouseX, mouseY);
+            for (let i = 0; i < buzzezMany; i++) {
+                let currentDistance = dist(buzzez[i].loc.x, buzzez[i].loc.y, objective.x, objective.y);
+                let gBestDistance = dist(globalBest.x, globalBest.y, objective.x, objective.y);
+                if (currentDistance < gBestDistance) {
+                    globalBest = createVector(buzzez[i].loc.x, buzzez[i].loc.y);
+                }
+            }
+        }
+
+        function updateObjective() {
+            // Here you can define any specific behavior for the objective if needed
+        }
+    </script>
+</body>
+
+</html>
