@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Swarm</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const shapes = ['circle', 'square', 'triangle'];
+        const images = ['./images/2-2-rdy.webp', './images/360_F_559917754_dPi14NuRWEofju2XA0Jz07kSITgjYYJm.jpg', './images/funny-shrek-meme-png-vet71-ggivopnb7jrag9d0.png', './images/pngtree-shrek-mask-png-image_4485157.jpg','./images/shrek-3d-model-png-wky7-e1fxosetubmm29nw.png']; // Add your image paths here
+        const target = { x: canvas.width - 110, y: canvas.height - 110 };
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 10 + 15;
+                this.shape = this.randomShape();
+                this.color = this.randomColor();
+                this.speed = Math.random() * 2 + 1;
+                this.angle = Math.random() * Math.PI * 2;
+                this.image = this.randomImage();
+            }
+
+            randomShape() {
+                return shapes[Math.floor(Math.random() * shapes.length)];
+            }
+
+            randomColor() {
+                const r = Math.floor(Math.random() * 256);
+                const g = Math.floor(Math.random() * 256);
+                const b = Math.floor(Math.random() * 256);
+                return `rgba(${r}, ${g}, ${b}, 0.7)`;
+            }
+
+            randomImage() {
+                const img = new Image();
+                img.src = images[Math.floor(Math.random() * images.length)];
+                return img;
+            }
+
+            draw() {
+                if (this.image.complete) {
+                    ctx.drawImage(this.image, this.x - this.size, this.y - this.size, this.size * 2, this.size * 2);
+                } else {
+                    this.drawShape();
+                }
+            }
+
+            drawShape() {
+                ctx.beginPath();
+                switch (this.shape) {
+                    case 'circle':
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        break;
+                    case 'square':
+                        ctx.rect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+                        break;
+                    case 'triangle':
+                        ctx.moveTo(this.x, this.y - this.size);
+                        ctx.lineTo(this.x - this.size, this.y + this.size);
+                        ctx.lineTo(this.x + this.size, this.y + this.size);
+                        ctx.closePath();
+                        break;
+                }
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            update() {
+                const dx = target.x - this.x;
+                const dy = target.y - this.y;
+                const distance = Math.hypot(dx, dy);
+
+                if (distance < 50) {
+                    this.circleAroundTarget();
+                } else {
+                    this.moveToTarget(dx, dy);
+                }
+
+                this.handleCanvasEdges();
+            }
+
+            circleAroundTarget() {
+                this.angle += 0.05;
+                this.x = target.x + Math.cos(this.angle) * 50;
+                this.y = target.y + Math.sin(this.angle) * 50;
+            }
+
+            moveToTarget(dx, dy) {
+                const angle = Math.atan2(dy, dx);
+                this.x += Math.cos(angle) * this.speed;
+                this.y += Math.sin(angle) * this.speed;
+            }
+
+            handleCanvasEdges() {
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+        }
+
+        function initParticles() {
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            checkTargetProximity();
+            requestAnimationFrame(animateParticles);
+        }
+
+        function checkTargetProximity() {
+            const closeParticles = particles.filter(p => Math.hypot(p.x - target.x, p.y - target.y) < 50);
+            if (closeParticles.length >= particles.length * 0.3) {
+                teleportTarget();
+            }
+        }
+
+        function teleportTarget() {
+            target.x = Math.random() * (canvas.width / 2) + canvas.width / 4;
+            target.y = Math.random() * (canvas.height / 2) + canvas.height / 4;
+        }
+
+        function handleResize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', handleResize);
+
+        initParticles();
+        animateParticles();
+    </script>
+</body>
+</html>
