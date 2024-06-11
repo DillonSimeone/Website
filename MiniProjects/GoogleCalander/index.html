@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Calendar Events</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1f1f1f;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .calendar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90%;
+            display: flex;
+            flex-wrap: wrap;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .event-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 25%;
+            min-width: 250px;
+            margin: 40px 10px;
+            background-color: #444;
+            border-radius: 10px;
+            padding-bottom: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .event-card:hover {
+            background-color: #555;
+        }
+
+        .event-date {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            
+            border-top-right-radius: 10px;
+            border-top-left-radius: 10px;
+            width: 100%;
+            margin: 0;
+            margin-top: -30px;
+            margin-bottom: 10px;
+            padding: 10px 0;
+            background-color: brown;
+            
+        }
+
+        .event-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .event-details {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .event-details,
+        .event-details[close] {
+            transition: all 10s ease-out;
+            overflow: hidden;
+            max-height: 1.5em;
+            font-size: 0.75rem;
+            /* Height for the closed state */
+        }
+
+        .event-details[open] {
+            max-height: 1000px;
+            transition: all 10s ease-out;
+            /* Large enough to display content */
+            opacity: 1;
+        }
+
+        .event-location {
+            text-align: center;
+            color: rgb(219, 218, 218);
+            font-size: 0.75rem;
+            width: 75%;
+        }
+
+        .event-link {
+            display: block;
+            text-align: center;
+            width: 50%;
+            border-radius: 20px;
+            text-decoration: none;
+            color: white;
+            padding: 10px;
+
+            background-color: brown;
+        }
+
+        .blue .event-date,
+        .blue .event-link {
+            background-color: blue;
+        }
+
+        .green .event-date,
+        .green .event-link {
+            background-color: green;
+        }
+
+        .purple .event-date,
+        .purple .event-link {
+            background-color: purple;
+        }
+
+        .cta-button {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            background-color: #007bff;
+            /* Blue */
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .cta-button:hover {
+            background-color: #0056b3;
+            /* Darker blue */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="calendar" id="calendar"></div>
+    <script src="./rrules.js"></script>
+
+    <script>
+        const apiKey = 'AIzaSyC4TJudtEnaR4RILiwAjMFOdpgg6UeJvos';
+        const calendarId = '114c605c4a403e08817034e51cb607ffc972723336e77143e8878c52da2a5bf4@group.calendar.google.com';
+        const apiUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?key=${apiKey}`;
+
+        async function fetchEvents() {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                const events = data.items;
+                console.log(events);
+
+                const calendarDiv = document.getElementById('calendar');
+                const currentDate = new Date();
+                const endDateLimit = new Date();
+                endDateLimit.setDate(currentDate.getDate() + 31);
+
+                let allEvents = [];
+
+                events.forEach(event => {
+                    const startDate = new Date(event.start.date);
+                    const endDate = new Date(event.end.date);
+                    const recurrence = event.recurrence || [];
+
+                    // Function to create and append an event card
+                    const createEventCard = (eventDate) => {
+                        // Create card element
+                        const card = document.createElement('div');
+                        card.className = `event-card ${getRandomColor()}`
+
+                        // Event Date
+                        const eventDateElement = document.createElement('p');
+                        eventDateElement.textContent = `${eventDate.toDateString()}`;
+                        eventDateElement.className = `event-date`
+                        card.appendChild(eventDateElement);
+
+                        // Event Title
+                        const eventTitle = document.createElement('h3');
+                        eventTitle.textContent = event.summary;
+                        eventTitle.className = `event-title`
+                        card.appendChild(eventTitle);
+
+                        // Event More Details
+                        const eventDetails = document.createElement('details');
+                        const summary = document.createElement('summary');
+                        summary.textContent = 'More Details';
+                        eventDetails.className = `event-details`
+                        eventDetails.appendChild(summary);
+
+                        const detailsContent = document.createElement('p');
+                        detailsContent.textContent = stripHtmlTags(event.description) ||
+                            'No additional details available.';
+                        console.log(event.description)
+                        eventDetails.appendChild(detailsContent);
+
+                        card.appendChild(eventDetails);
+
+                        // Event Location
+                        if (event.location) {
+                            const eventLocation = document.createElement('p');
+                            eventLocation.textContent = `${event.location}`;
+                            eventLocation.className = `event-location`
+                            card.appendChild(eventLocation);
+                        }
+
+                        // Event Google Calendar Link
+                        const eventLink = document.createElement('a');
+                        eventLink.href = event.htmlLink;
+                        eventLink.textContent = 'View event';
+                        eventLink.target = '_blank';
+                        eventLink.className = `event-link`
+                        card.appendChild(eventLink);
+
+                        // Append card to calendarDiv
+                        calendarDiv.appendChild(card);
+                    };
+
+                    // Check if the event is within the next 31 days
+                    if (startDate >= currentDate && startDate <= endDateLimit) {
+                        allEvents.push({
+                            date: startDate,
+                            createCard: () => createEventCard(startDate)
+                        });
+                    }
+
+                    // Handle recurring events
+                    if (recurrence.length > 0) {
+                        recurrence.forEach(ruleString => {
+                            const rule = RRule.fromString(ruleString);
+                            const ruleDates = rule.between(currentDate, endDateLimit);
+
+                            ruleDates.forEach(date => {
+                                if (date >= currentDate) {
+                                    allEvents.push({
+                                        date: date,
+                                        createCard: () => createEventCard(date)
+                                    });
+                                }
+                            });
+                        });
+                    }
+                });
+
+                // Sort all events by date
+                allEvents.sort((a, b) => a.date - b.date);
+
+                // Render sorted events
+                allEvents.forEach(event => event.createCard());
+
+            } catch (error) {
+                console.error('Error fetching events:', error);
+            }
+        }
+
+        function stripHtmlTags(str) {
+            let div = document.createElement('div');
+            div.innerHTML = str;
+            return div.textContent || div.innerText || '';
+        }
+
+        function getRandomColor() {
+            const colors = ['blue', 'green', 'purple'];
+            const randomIndex = Math.floor(Math.random() * colors.length);
+            return colors[randomIndex];
+        }
+
+        fetchEvents();
+    </script>
+</body>
+
+</html>
