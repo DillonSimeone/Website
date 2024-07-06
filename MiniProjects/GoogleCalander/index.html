@@ -8,8 +8,9 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #1f1f1f;
-            color: #fff;
+            background-image: url(./620bd6d655f2044afa28bff4_glassmorphism-p-1080.jpeg);
+            background-size: cover;
+            color: black;
             margin: 0;
             padding: 0;
         }
@@ -35,22 +36,27 @@
             width: 25%;
             min-width: 250px;
             margin: 40px 10px;
-            background-color: #444;
+
             border-radius: 10px;
             padding-bottom: 20px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            /* From https://css.glass */
+            background: rgba(255, 255, 255, 0.16);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .event-card:hover {
-            background-color: #555;
+      
         }
 
         .event-date {
             font-size: 24px;
             font-weight: bold;
             text-align: center;
-            
+
             border-top-right-radius: 10px;
             border-top-left-radius: 10px;
             width: 100%;
@@ -58,8 +64,8 @@
             margin-top: -30px;
             margin-bottom: 10px;
             padding: 10px 0;
-            background-color: brown;
-            
+       
+
         }
 
         .event-title {
@@ -92,7 +98,6 @@
 
         .event-location {
             text-align: center;
-            color: rgb(219, 218, 218);
             font-size: 0.75rem;
             width: 75%;
         }
@@ -103,7 +108,6 @@
             width: 50%;
             border-radius: 20px;
             text-decoration: none;
-            color: white;
             padding: 10px;
 
             background-color: brown;
