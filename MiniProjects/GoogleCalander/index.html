@@ -109,23 +109,24 @@
             border-radius: 20px;
             text-decoration: none;
             padding: 10px;
-
+            color: black;
+            font-weight: bolder;
             background-color: brown;
         }
 
         .blue .event-date,
         .blue .event-link {
-            background-color: blue;
+            background-color: rgb(112, 112, 247)
         }
 
         .green .event-date,
         .green .event-link {
-            background-color: green;
+            background-color: rgb(129, 255, 129);
         }
 
         .purple .event-date,
         .purple .event-link {
-            background-color: purple;
+            background-color: rgb(255, 138, 255);
         }
 
         .cta-button {
@@ -152,7 +153,7 @@
     <script src="./rrules.js"></script>
 
     <script>
-        const apiKey = 'AIzaSyC4TJudtEnaR4RILiwAjMFOdpgg6UeJvos';
+	    const apiKey = 'AIzaSyC4TJudtEnaR4RILiwAjMFOdpgg6UeJvos';
         const calendarId = '114c605c4a403e08817034e51cb607ffc972723336e77143e8878c52da2a5bf4@group.calendar.google.com';
         const apiUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?key=${apiKey}`;
 
