@@ -10,15 +10,15 @@
     <script src="trianglify.min.js"></script>
     <script src="background.js"></script>
     <style>
-        .assets{
+        .assets {
             display: flex;
             flex-wrap: wrap;
             justify-content: space-around;
             height: 100vh;
             overflow-y: scroll;
-            
         }
-        .asset{
+
+        .asset {
             width: 20%;
             margin: 10px;
             border: solid 1px black;
@@ -29,20 +29,24 @@
             align-items: center;
             justify-content: center;
         }
-        
-        .asset img{
-            width: 200px;
-            height: 200px;
+
+        .asset img {
+            aspect-ratio: 1/1;
+            width: 100%;
             margin: auto;
-           
+
         }
 
-        .asset p, .asset h3{
+        .asset p,
+        .asset h3 {
+            margin: 10px;
+            font-size: 1rem;
+            width: 100%;
+            text-align: left;
+        }
+
+        .asset h3 {
             text-align: center;
-            margin: 0;
-        }
-
-        .asset h3{
             margin: 20px;
         }
     </style>
@@ -74,25 +78,47 @@
                     const item = document.createElement('div');
                     item.classList.add('asset'); // Use classList.add for modern approach
 
-                    const img = document.createElement('img');
+                    const img = document.createElement('img')
                     img.src = row.image;
                     item.appendChild(img);
 
-                    const title = document.createElement('h3');
-                    title.textContent = `${row.category.name}: ${row.model.name}`;
+                    const title = document.createElement('h3')
+                    title.textContent = `${row.category.name}: ${row.model.name}`
                     item.appendChild(title);
 
                     const location = document.createElement('p');
-                    location.textContent = `Location: ${row.rtd_location.name}`;
+                    location.innerHTML = `<strong>Location:</strong>  ${row.rtd_location.name}`
                     item.appendChild(location);
 
                     const status = document.createElement('p');
-                    status.textContent = `Status: ${row.status_label.name}`;
+                    status.innerHTML = `<strong>Status:</strong> ${row.status_label.name.toUpperCase()}`;
+
+                    if (row.status_label.name === "Deployable") {
+                        status.style.backgroundColor = 'lightgreen';
+                    } else {
+                        status.style.backgroundColor = 'lightcoral';
+                    }
+
+                    status.style.padding = '5px';
+                    status.style.borderRadius = '100px';
+
                     item.appendChild(status);
 
                     const checkout = document.createElement('p');
-                    checkout.textContent = `Users can checkout: ${row.user_can_checkout}`;
+                    checkout.innerHTML =
+                        `<strong>Users can checkout:</strong> ${row.user_can_checkout.toString().toUpperCase()}`;
+
+                    if (row.user_can_checkout) {
+                        checkout.style.backgroundColor = 'lightgreen';
+                    } else {
+                        checkout.style.backgroundColor = 'lightcoral';
+                    }
+
+                    checkout.style.padding = '5px';
+                    checkout.style.borderRadius = '100px';
+
                     item.appendChild(checkout);
+
 
                     assetsContainer.appendChild(item);
                 });
