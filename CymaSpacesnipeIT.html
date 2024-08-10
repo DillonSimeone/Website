@@ -19,7 +19,7 @@
         }
 
         .asset {
-            width: 20%;
+            width: 10vw;
             margin: 10px;
             border: solid 1px black;
             padding: 10px;
@@ -30,9 +30,22 @@
             justify-content: center;
         }
 
+        @media (max-width: 1200px) {
+            .asset {
+                width: 40vw;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .asset {
+                width: 90vw;
+            }
+        }
+
         .asset img {
             aspect-ratio: 1/1;
             width: 100%;
+            max-width: 25vw;
             margin: auto;
 
         }
@@ -99,7 +112,7 @@
                         status.style.backgroundColor = 'lightcoral';
                     }
 
-                    status.style.padding = '5px';
+                    status.style.padding = '10px';
                     status.style.borderRadius = '100px';
 
                     item.appendChild(status);
@@ -114,7 +127,7 @@
                         checkout.style.backgroundColor = 'lightcoral';
                     }
 
-                    checkout.style.padding = '5px';
+                    checkout.style.padding = '10px';
                     checkout.style.borderRadius = '100px';
 
                     item.appendChild(checkout);
