@@ -237,14 +237,14 @@ nav svg:hover{
     align-items: center;
 }
 
-#laser .medias .images{
+#laser .images{
     display: flex;
     flex-wrap: wrap;
     width: 80%;
     margin: auto;
 }
 
-#laser .medias .images img{
+#laser img{
     aspect-ratio: 1/1;
     width: 30%;
     margin: auto;
