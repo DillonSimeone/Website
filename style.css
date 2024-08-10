@@ -194,6 +194,63 @@ nav svg:hover{
     }
 }
 
+/*=======================================================
+                Lasers page
+=========================================================*/
+#laser section{
+    margin: 5% 15%;
+    padding: 10px;
+}
+
+#laser .headers{
+    margin-bottom: 1em;
+}
+
+#laser .artworks{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#laser .artwork{
+    background-color: rgba(255,255,255,0.3);
+    padding: 10px;
+    box-shadow: 10px 10px 20px black;
+    margin-top: 20px;
+}
+
+#laser .artwork h2{
+    margin: 0;
+}
+
+#laser .medias{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#laser .medias .videos{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#laser .medias .images{
+    display: flex;
+    flex-wrap: wrap;
+    width: 80%;
+    margin: auto;
+}
+
+#laser .medias .images img{
+    aspect-ratio: 1/1;
+    width: 30%;
+    margin: auto;
+    margin-top: 5px;
+}
+
 
 /*=======================================================
                 MiniProjects/Projects
@@ -245,7 +302,6 @@ nav svg:hover{
     #projects section{
         margin: auto;
     }
-
   }
 
 /*=======================================================
