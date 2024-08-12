@@ -92,15 +92,22 @@
                     item.classList.add('asset'); // Use classList.add for modern approach
 
                     const img = document.createElement('img')
-                    img.src = row.image;
-                    item.appendChild(img);
+                    if (row.image) {
+                        img.src = row.image;
+                        item.appendChild(img);
+                    }
 
                     const title = document.createElement('h3')
-                    title.textContent = `${row.category.name}: ${row.model.name}`
+                    title.textContent = `${row.category.name}: ${row.name}`
+                    console.log(row)
                     item.appendChild(title);
 
                     const location = document.createElement('p');
-                    location.innerHTML = `<strong>Default location:</strong>  ${row.rtd_location.name || "NAN"}`
+                    if (row.rtd_location && row.rtd_location.name) {
+                        location.innerHTML = `<strong>Default location:</strong> ${row.rtd_location.name}`;
+                    } else {
+                        location.innerHTML = `<strong>Default location:</strong> Not available`;
+                    }
                     item.appendChild(location);
 
                     const status = document.createElement('p');
