@@ -100,7 +100,7 @@
                     item.appendChild(title);
 
                     const location = document.createElement('p');
-                    location.innerHTML = `<strong>Default location:</strong>  ${row.rtd_location.name}`
+                    location.innerHTML = `<strong>Default location:</strong>  ${row.rtd_location.name || "NAN"}`
                     item.appendChild(location);
 
                     const status = document.createElement('p');
