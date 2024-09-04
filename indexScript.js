@@ -137,7 +137,7 @@ function setUp() {
         document.querySelector(`#${page}`).click();
         //console.log(document.querySelector(`#${page}`))
     } else
-        reveal('elevatorPitch', 'homeBtn');
+        reveal('elevatorPitch', 'LandingPage');
 }
 
 setUp();
