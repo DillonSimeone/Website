@@ -195,65 +195,72 @@ nav svg:hover{
 }
 
 /*=======================================================
-                Lasers page
+                hobby page
 =========================================================*/
-#laser section{
+#hobby section{
     margin: 5% 15%;
     padding: 10px;
 }
 
-#laser .headers{
+#hobby .headers{
     margin-bottom: 1em;
 }
 
-#laser .artworks{
+#hobby .artworks{
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-#laser .artwork{
+#hobby .artwork{
     background-color: rgba(255,255,255,0.3);
     padding: 10px;
     box-shadow: 10px 10px 20px black;
     margin-top: 20px;
 }
 
-#laser .artwork h2{
+#hobby .artwork h2{
     margin: 0;
 }
 
-#laser .medias{
+#hobby .medias{
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 
-#laser .medias .videos{
+#hobby .medias .videos{
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-#laser .medias .videos iframe{
+#hobby .medias .videos iframe{
     aspect-ratio: 1/2;
     width: 30%;
+    min-width: 200px;
+    border-radius: 20px;
+    border: 3px solid black;
 }
 
-#laser .images{
+#hobby .images{
     display: flex;
     flex-wrap: wrap;
-    width: 80%;
+    width: 100%;
     margin: auto;
 }
 
-#laser img{
+#hobby img{
     aspect-ratio: 1/1;
     width: 30%;
+    min-width: 200px;
+    max-width: 300px;
     margin: auto;
     margin-top: 5px;
+    border-radius: 20px;
+    border: 3px solid black;
 }
 
 
