@@ -158,6 +158,7 @@ nav svg:hover{
 #elevatorPitch section{
     margin: 5% 15%;
     padding: 10px;
+    padding-bottom: 10vh;
 }
 
 #elevatorPitch #jobs{
@@ -200,6 +201,7 @@ nav svg:hover{
 #hobby section{
     margin: 5% 15%;
     padding: 10px;
+    padding-bottom: 10vh;
 }
 
 #hobby .headers{
@@ -263,6 +265,62 @@ nav svg:hover{
     border: 3px solid black;
 }
 
+/* Smartphones (portrait and landscape) */
+@media only screen and (max-width: 600px) {
+    #hobby section {
+        margin: auto;
+    }
+
+    #hobby .artworks,
+    #hobby .artwork,
+    #hobby .medias,
+    #hobby .images {
+        width: 90vw;
+    }
+
+    #hobby .artwork {
+        box-shadow: 5px 5px 10px black;
+        margin-top: 15px;
+    }
+
+    #hobby .medias .videos iframe,
+    #hobby img {
+        width: 90vw;
+        border-radius: 10px;
+    }
+}
+
+/* Tablets (portrait and landscape) */
+@media only screen and (min-width: 601px) and (max-width: 1024px) {
+    #hobby section {
+        margin: auto;
+    }
+
+    #hobby .artworks,
+    #hobby .artwork,
+    #hobby .medias,
+    #hobby .images {
+        width: 90vw;
+    }
+
+    #hobby .artwork {
+        box-shadow: 8px 8px 15px black;
+    }
+
+    #hobby .medias .videos iframe {
+        width: 90vw;
+        aspect-ratio: 16/9;
+        border-radius: 15px;
+    }
+
+    #hobby img {
+        width: 45vw;
+        border-radius: 15px;
+    }
+}
+
+
+
 
 /*=======================================================
                 MiniProjects/Projects
@@ -274,6 +332,7 @@ nav svg:hover{
 #projects section{
     margin: auto;
     width: 80%;
+    padding-bottom: 10vh;
 }
 
 #projects .grid{
@@ -328,6 +387,7 @@ nav svg:hover{
     width: 80%;
     box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
     padding: 10px;
+    padding-bottom: 10vh;
 }
 
 #work section{
