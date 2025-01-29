@@ -6,3 +6,13 @@ html, body {
 canvas {
   display: block;
 }
+
+h2{
+  position: absolute;
+  font-size: 10vw;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+  color: white;
+  background-color: rgba(rgb(2, 0, 0), rgb(0, 0, 0), rgb(0, 0, 0), 0.8);
+}
