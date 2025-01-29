@@ -38,6 +38,26 @@ function draw() {
     
     // Remove off-screen shapes and add new ones ahead
     shapes = shapes.filter(shape => shape.x + cardSize > offsetX - width && shape.y + cardSize > offsetY - height);
+    /*
+      About above line...
+
+      Normally running bounding code is really expensive to compute. This is an extreme shortcut to checking what cards are still in the viewport by 
+      just looking at their offsetX and offsetY. 
+      
+      Condition: shape.x + cardSize > offsetX - width
+
+        shape.x + cardSize: right edge of shape
+        offsetX - width: position left out of the viewport
+
+        if the right edge of the shape is greater than offsetX - width, it stays.
+
+      Condition: shape.y + cardSize > offsetY - height
+
+        shape.y + cardSize: bottom edge of shape
+        offsetY - height: position above the viewport
+
+        if the bottom edge of the shape is grater than offsetY - height, it stays.
+    */
     
     for (let y = floor(offsetY / cardSize) * cardSize - cardSize; y < offsetY + height; y += cardSize) {
         for (let x = floor(offsetX / cardSize) * cardSize - cardSize; x < offsetX + width; x += cardSize) {
