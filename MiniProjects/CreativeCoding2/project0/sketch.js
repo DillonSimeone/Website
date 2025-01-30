@@ -1,5 +1,5 @@
 let shapes = [];
-let cardSize = 120;
+let cardSize = 60;
 let speed = 1;
 let colors = ["#FF5733", "#33FF57", "#3357FF", "#F5A623", "#9B59B6", "#E74C3C"];
 let offsetX = 0,
@@ -82,58 +82,32 @@ function draw() {
     offsetX += speed;
     offsetY += speed;
 
-    // Remove off-screen shapes and add new ones ahead
-
-    shapes = shapes.filter(shape => shape.x + cardSize > offsetX - width && shape.y + cardSize > offsetY - height);
-    /*
-    About above line...
-
-    Normally running bounding code is really expensive to compute. This is an extreme shortcut to checking what cards are still in the viewport by just looking at 
-    their offsetX and offsetY. It works really well too because elements in the array list don't get shifted around as each elements are evaluated on one-by-one basis 
-    as you would with normal bounding code. 
+    // Remove off-screen cards and add new ones ahead
+    for (let i = shapes.length - 1; i >= 0; i--) {
+        let shape = shapes[i];
+        
+        let outside =  
+            shape.x + cardSize < offsetX ||    // Too far left
+            shape.y + cardSize < offsetY ||    // Too far up
+            shape.x > offsetX + width ||       // Too far right
+            shape.y > offsetY + height;        // Too far down
     
-    With filter, the entire list is processed, and a new list is created in one smooth step. 
-      
-        Condition: shape.x + cardSize > offsetX - width
-
-            shape.x + cardSize: right edge of shape
-            offsetX - width: position left out of the viewport
-
-            if the right edge of the shape is greater than offsetX - width, it stays.
-
-        Condition: shape.y + cardSize > offsetY - height
-
-            shape.y + cardSize: bottom edge of shape
-            offsetY - height: position above the viewport
-
-            if the bottom edge of the shape is grater than offsetY - height, it stays.
-
-    Normal bounding code would look something like this below:
-
-            function isWithinViewport(shape) {
-            return (
-                shape.x + cardSize >= offsetX && // Right edge of shape is within viewport
-                shape.y + cardSize >= offsetY && // Bottom edge of shape is within viewport
-                shape.x <= offsetX + width && // Left edge of shape is within viewport
-                shape.y <= offsetY + height // Top edge of shape is within viewport
-            );
-            }
-            
-            for (let i = shapes.length - 1; i >= 0; i--) {
-                if (!isWithinViewport(shapes[i])) {
-                    shapes.splice(i, 1);
-                }
-            }
-            ```
-    */
-
+        if (outside) {
+            console.log("Removing shape at:", shape.x, shape.y);
+            shapes.splice(i, 1);
+        }
+    }
+    
+    //Make new cards
     for (let y = floor(offsetY / cardSize) * cardSize - cardSize; y < offsetY + height; y += cardSize) {
         for (let x = floor(offsetX / cardSize) * cardSize - cardSize; x < offsetX + width; x += cardSize) {
             if (!shapes.some(shape => shape.x === x && shape.y === y)) {
                 shapes.push(new ShapeCard(x, y));
+                console.log("Made new shape at", x, y)
             }
         }
     }
+    console.log("shapes.length:", shapes.length);
     drawCentralShape();
 }
 
