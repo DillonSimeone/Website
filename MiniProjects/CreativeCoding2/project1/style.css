@@ -6,3 +6,36 @@ html, body {
 canvas {
   display: block;
 }
+
+div{
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 10px;
+  color: yellow;
+  font-size: 1rem;
+  background-color: black;
+  width: 10%;
+}
+
+/* Tablet screens (768px - 1024px) */
+@media screen and (max-width: 1024px) {
+  div {
+    position: absolute;
+    top: 0;
+    font-size: 0.75rem; /* Even larger text for readability on small screens */
+    width: 100%; /* Wider for visibility */
+    text-align: center; /* Center the text */
+  }
+}
+
+/* Smartphone screens (up to 767px) */
+@media screen and (max-width: 767px) {
+  div {
+    position: absolute;
+    top: 0;
+    font-size: 0.75rem; /* Even larger text for readability on small screens */
+    width: 100%; /* Wider for visibility */
+    text-align: center; /* Center the text */
+  }
+}

@@ -17,7 +17,6 @@ let phaseSlider, colorPicker;
 function setup() {
   createCanvas(windowWidth, windowHeight)
 
-  // Commiting a WWW warcrime...
   statsDiv = createDiv(`
       <h2>Creative Coding 2 - Project 1: Moon Phases</h2>
       <p>A creative exploration of raycasting and moon phases, blending physics-based light with magical effects.</p>
@@ -26,16 +25,6 @@ function setup() {
       <br>
       <label>Liquid Particle Lifetime: <input id="lifetimeInput" type="number" value="${liquidParticlesLifeTime}" min="5" max="100" step="1"></label>
     `);
-
-  statsDiv.style('position', 'absolute');
-  statsDiv.style('top', '10px');
-  statsDiv.style('right', '10px');
-  statsDiv.style('padding', '10px');
-  statsDiv.style('background', 'rgba(0, 0, 0, 0.75)');
-  statsDiv.style('color', 'white');
-  statsDiv.style('font-family', 'Arial');
-  statsDiv.style('border-radius', '5px');
-  statsDiv.style('width', '250px');
 
   // Get inputs and attach event listeners
   raysInput = select('#raysInput');
@@ -65,7 +54,7 @@ function setup() {
   walls.push(new Boundary(0, height, 0, 0))
 
   // Choose a radius for each moons.
-  let r = 80;
+  let r = windowWidth/20;
   // Resolutions for each moons.
   let numSegments = 30;
 
