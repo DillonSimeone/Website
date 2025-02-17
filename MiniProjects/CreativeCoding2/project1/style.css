@@ -1,6 +1,7 @@
 html, body {
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 canvas {
@@ -9,8 +10,8 @@ canvas {
 
 div{
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 10px;
+  right: 10px;
   padding: 10px;
   color: yellow;
   font-size: 1rem;
@@ -18,10 +19,64 @@ div{
   width: 10%;
 }
 
+#QRcode{
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.85);
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+}
+
+#QRcode img{
+  width: 25%;
+}
+
+/* Fade-in animation for Show */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* Fade-out animation for Hide */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    visibility: visible;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Show class */
+.Show {
+  animation: fadeIn 0.5s ease-in forwards;
+}
+
+/* Hide class */
+.Hide {
+  animation: fadeOut 0.5s ease-out forwards;
+}
+
 /* Tablet screens (768px - 1024px) */
 @media screen and (max-width: 1024px) {
   div {
-    position: absolute;
+    position: fixed;
     top: 0;
     font-size: 0.75rem; /* Even larger text for readability on small screens */
     width: 100%; /* Wider for visibility */
@@ -31,9 +86,11 @@ div{
 
 /* Smartphone screens (up to 767px) */
 @media screen and (max-width: 767px) {
+  html, body{
+    overflow-y: scroll;
+  }
   div {
-    position: absolute;
-    top: 0;
+    position: static;
     font-size: 0.75rem; /* Even larger text for readability on small screens */
     width: 100%; /* Wider for visibility */
     text-align: center; /* Center the text */

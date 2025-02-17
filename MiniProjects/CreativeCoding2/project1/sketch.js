@@ -68,6 +68,11 @@ function setup() {
   particle = new Particle(100, 200)
 }
 
+function keyPressed() {
+  let qrDiv = document.getElementById("QRcode");
+  qrDiv.className = qrDiv.className === "Show" ? "Hide" : "Show";
+}
+
 function draw() {
   background(0)
 
