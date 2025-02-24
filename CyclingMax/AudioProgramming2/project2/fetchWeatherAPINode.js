@@ -22,7 +22,7 @@ async function getWeather(lat, lon) {
 
         const pointsResponse = await fetch(pointsUrl, {
             headers: {
-                'User-Agent': 'CyclingMax/1.0 (myemail@example.com)',
+                'User-Agent': 'CyclingMax/1.0',
                 'Accept': 'application/ld+json'
             }
         });
