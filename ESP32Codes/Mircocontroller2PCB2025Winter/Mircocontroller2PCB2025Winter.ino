@@ -4,7 +4,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h> 
 #include <driver/i2s.h>
-#include "DFRobot_BNO055.h"
 
 // Define motor control pins
 #define MOTOR1A 17
@@ -53,7 +52,6 @@ i2s_config_t i2s_config = {
     .fixed_mclk = 0
   };
 
-
 i2s_pin_config_t i2s_mic_pins = {
 .bck_io_num = SCK_PIN,
 .ws_io_num = WS_PIN,
@@ -62,23 +60,6 @@ i2s_pin_config_t i2s_mic_pins = {
 };
 
 int32_t raw_samples[SAMPLE_BUFFER_SIZE];
-
-//IMU Configuration
-typedef DFRobot_BNO055_IIC    BNO;
-BNO   bno(&Wire, 0x28);    // input TwoWire interface and IIC address
-
-void printLastOperateStatus(BNO::eStatus_t eStatus)
-{
-  switch(eStatus) {
-  case BNO::eStatusOK:   Serial.println("everything ok"); break;
-  case BNO::eStatusErr:  Serial.println("unknow error"); break;
-  case BNO::eStatusErrDeviceNotDetect:   Serial.println("device not detected"); break;
-  case BNO::eStatusErrDeviceReadyTimeOut:    Serial.println("device ready time out"); break;
-  case BNO::eStatusErrDeviceStatus:    Serial.println("device internal status error"); break;
-  default: Serial.println("unknow status"); break;
-  }
-}
-
 
 void setup() {
     Serial.begin(115200);
@@ -101,7 +82,7 @@ void setup() {
     digitalWrite(MOTOR2B, LOW);
     
     // Initialize I2C communication
-    Wire.begin(20, 19); // Flip SDA/SCL due to Dillon fucking up the traces on the PCB.--
+    Wire.begin(); // Flip SDA/SCL due to Dillon fucking up the traces on the PCB.--
     
     // Initialize microphone pins (typically as inputs, but check your microphone datasheet)
     pinMode(SD_PIN, INPUT);
@@ -126,24 +107,6 @@ void setup() {
     i2s_set_pin(I2S_NUM_0, &i2s_mic_pins);
     Serial.println("I2S Microphone Initialized!");
 
-    // start up the IMU sensor
-    bno.reset();
-    while(bno.begin() != BNO::eStatusOK) {
-      Serial.println("bno begin faild");
-      printLastOperateStatus(bno.lastOperateStatus);
-      delay(2000);
-    }
-      Serial.println("bno begin success");
-    }
-
-    #define printAxisData(sAxis) \
-    Serial.print(" x: "); \
-    Serial.print(sAxis.x); \
-    Serial.print(" y: "); \
-    Serial.print(sAxis.y); \
-    Serial.print(" z: "); \
-    Serial.println(sAxis.z)
-
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
@@ -153,7 +116,6 @@ void setup() {
     delay(1000);
 }
 
-
 void loop() {
      size_t bytes_read = 0;
      i2s_read(I2S_NUM_0, raw_samples, sizeof(int32_t) * SAMPLE_BUFFER_SIZE, &bytes_read, portMAX_DELAY);
@@ -162,26 +124,10 @@ void loop() {
       Serial.printf("%ld\n", raw_samples[i]);
       }
 
-      BNO::sAxisAnalog_t   sAccAnalog, sMagAnalog, sGyrAnalog, sLiaAnalog, sGrvAnalog;
-      BNO::sEulAnalog_t    sEulAnalog;
-      BNO::sQuaAnalog_t    sQuaAnalog;
-      sAccAnalog = bno.getAxis(BNO::eAxisAcc);    // read acceleration
-      sMagAnalog = bno.getAxis(BNO::eAxisMag);    // read geomagnetic
-      sGyrAnalog = bno.getAxis(BNO::eAxisGyr);    // read gyroscope
-      sLiaAnalog = bno.getAxis(BNO::eAxisLia);    // read linear acceleration
-      sGrvAnalog = bno.getAxis(BNO::eAxisGrv);    // read gravity vector
-      sEulAnalog = bno.getEul();                  // read euler angle
-      sQuaAnalog = bno.getQua();                  // read quaternion
-      Serial.println();
-      Serial.println("======== analog data print start ========");
-      Serial.print("acc analog: (unit mg)       "); printAxisData(sAccAnalog);
-      Serial.print("mag analog: (unit ut)       "); printAxisData(sMagAnalog);
-      Serial.print("gyr analog: (unit dps)      "); printAxisData(sGyrAnalog);
-      Serial.print("lia analog: (unit mg)       "); printAxisData(sLiaAnalog);
-      Serial.print("grv analog: (unit mg)       "); printAxisData(sGrvAnalog);
-      Serial.print("eul analog: (unit degree)   "); Serial.print(" head: "); Serial.print(sEulAnalog.head); Serial.print(" roll: "); Serial.print(sEulAnalog.roll);  Serial.print(" pitch: "); Serial.println(sEulAnalog.pitch);
-      Serial.print("qua analog: (no unit)       "); Serial.print(" w: "); Serial.print(sQuaAnalog.w); printAxisData(sQuaAnalog);
-      Serial.println("========  analog data print end  ========");
-
-      delay(1000);
+      display.clearDisplay();
+      display.setTextSize(1);
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(10, 10);
+      display.println("Hello World");
+      display.display();
 }
