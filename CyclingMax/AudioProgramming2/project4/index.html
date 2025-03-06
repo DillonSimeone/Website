@@ -35,7 +35,6 @@
         let ui = document.createElement("div"); 
         ui.className = "ui";
         document.body.appendChild(ui);
-
         document.body.appendChild(canvas);
 
         let handLandmarker;
@@ -47,7 +46,12 @@
         // **Dials**
         let dials = { index: 0, middle: 0, ring: 0, pinky: 0, index2: 0, middle2: 0, ring2: 0, pinky2: 0 };
         let activeDials = { hand1: null, hand2: null }; 
-        let sendTimeout = null; 
+        let sendTimeout = null;
+
+        // **Special Mode: X/Y Control**
+        let xyMode = false;
+        let xyValues = { x: 0, y: 0 };
+
 
         // Hand Connections
         const HAND_CONNECTIONS = [
@@ -120,20 +124,37 @@
                         return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
                     }
 
+                    // **Check for Normal Dial Pinches**
                     let indexTouch = distance(thumbTip, indexTip) < TOUCH_THRESHOLD;
                     let middleTouch = distance(thumbTip, middleTip) < TOUCH_THRESHOLD;
                     let ringTouch = distance(thumbTip, ringTip) < TOUCH_THRESHOLD;
                     let pinkyTouch = distance(thumbTip, pinkyTip) < TOUCH_THRESHOLD;
 
+                    // **Check if all fingers touch thumb → Activate X/Y Mode**
+                    let allFingersTouch = indexTouch && middleTouch && ringTouch && pinkyTouch;
+                    if (allFingersTouch) {
+                        xyMode = true;
+                        xyValues.x = Math.floor(indexTip.x * 127);
+                        xyValues.y = Math.floor((1 - indexTip.y) * 127);  // Flip Y so top = 127, bottom = 0
+                    } 
+
                     let adjusting = false;
 
-                    if (indexTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "index" + handPrefix; adjusting = true; }
-                    else if (middleTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "middle" + handPrefix; adjusting = true; }
-                    else if (ringTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "ring" + handPrefix; adjusting = true; }
-                    else if (pinkyTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "pinky" + handPrefix; adjusting = true; }
+                    if (!xyMode) {
+                        // **Normal Dial Adjustments**
+                        if (indexTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "index" + handPrefix; adjusting = true; }
+                        else if (middleTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "middle" + handPrefix; adjusting = true; }
+                        else if (ringTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "ring" + handPrefix; adjusting = true; }
+                        else if (pinkyTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "pinky" + handPrefix; adjusting = true; }
 
-                    if (activeDials[isRightHand ? "hand1" : "hand2"]) {
-                        dials[activeDials[isRightHand ? "hand1" : "hand2"]] = dialValue;
+                        if (activeDials[isRightHand ? "hand1" : "hand2"]) {
+                            dials[activeDials[isRightHand ? "hand1" : "hand2"]] = dialValue;
+                        }
+                    }
+
+                    if (xyMode && h === 1 && indexTouch) {
+                        sendToMax({ xyMode: 1, x: xyValues.x, y: xyValues.y });
+                        xyMode = false;
                     }
 
                     if (adjusting) {
@@ -146,8 +167,12 @@
                     hand.forEach((point, i) => {
                         ctx.beginPath();
                         ctx.arc(point.x * canvas.width, point.y * canvas.height, 6, 0, 2 * Math.PI);
-                        ctx.fillStyle = "red";
-
+                        if(xyMode){
+                            ctx.fillStyle = "yellow";
+                        }else{
+                            ctx.fillStyle = "red";
+                        }
+                        
                         if (i === 8 && indexTouch) ctx.fillStyle = "blue"; 
                         if (i === 12 && middleTouch) ctx.fillStyle = "green"; 
                         if (i === 16 && ringTouch) ctx.fillStyle = "yellow"; 
@@ -156,7 +181,11 @@
                         ctx.fill();
                     });
 
-                    ctx.strokeStyle = "green";
+                    if(xyMode){
+                        ctx.strokeStyle = "yellow";
+                    }else{
+                        ctx.strokeStyle = "green";
+                    }
                     ctx.lineWidth = 2;
                     HAND_CONNECTIONS.forEach(([start, end]) => {
                         let startPoint = hand[start];
@@ -173,9 +202,11 @@
 
                     let textY = canvas.height - (isRightHand ? 20 : 60);
                     ctx.fillText(
-                        activeDials[isRightHand ? "hand1" : "hand2"]
-                            ? `ADJUSTING ${activeDials[isRightHand ? "hand1" : "hand2"].toUpperCase()} - VALUE: ${dials[activeDials[isRightHand ? "hand1" : "hand2"]]}`
-                            : "",
+                        xyMode 
+                            ? `X/Y MODE ACTIVE - X: ${xyValues.x}, Y: ${xyValues.y}`
+                            : activeDials[isRightHand ? "hand1" : "hand2"]
+                                ? `ADJUSTING ${activeDials[isRightHand ? "hand1" : "hand2"].toUpperCase()} - VALUE: ${dials[activeDials[isRightHand ? "hand1" : "hand2"]]}`
+                                : "",
                         10,
                         textY
                     );
