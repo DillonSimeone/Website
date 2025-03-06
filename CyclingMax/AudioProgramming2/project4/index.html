@@ -1,5 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+    <style>
+        body{
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ui{
+            padding: 25px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        .ui h3{
+            text-align: center;
+        }
+    </style>
 
 <head>
     <title>MediaPipe Hand Tracking</title>
@@ -12,42 +31,56 @@
 
         let canvas = document.createElement("canvas");
         let ctx = canvas.getContext("2d");
+
+        let ui = document.createElement("div"); 
+        ui.className = "ui";
+        document.body.appendChild(ui);
+
         document.body.appendChild(canvas);
 
         let handLandmarker;
 
-        // Variables to store dial values
-        let dials = { index: 64, middle: 64, ring: 64, pinky: 64 };
-        let activeDial = null; // Track which dial is being adjusted
-        let sendTimeout = null; // Timer for delaying message sending
+        // **UI Controlled Variables**
+        let TOUCH_THRESHOLD = 0.075;
+        let SEND_DELAY = 50;
+
+        // **Dials**
+        let dials = { index: 0, middle: 0, ring: 0, pinky: 0, index2: 0, middle2: 0, ring2: 0, pinky2: 0 };
+        let activeDials = { hand1: null, hand2: null }; 
+        let sendTimeout = null; 
+
+        // Hand Connections
+        const HAND_CONNECTIONS = [
+            [0, 1], [1, 2], [2, 3], [3, 4],  
+            [0, 5], [5, 6], [6, 7], [7, 8],  
+            [0, 9], [9, 10], [10, 11], [11, 12],  
+            [0, 13], [13, 14], [14, 15], [15, 16],  
+            [0, 17], [17, 18], [18, 19], [19, 20]   
+        ];
 
         async function setupHandTracking() {
             console.log("Starting hand tracking setup...");
 
-            // Set up webcam
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
                 console.log("Webcam initialized!");
-
                 await new Promise(resolve => (video.onloadedmetadata = resolve));
             } catch (err) {
                 console.error("Webcam access denied:", err);
                 return;
             }
 
-            // Set canvas size to match video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             console.log(`Canvas set to ${canvas.width}x${canvas.height}`);
 
-            // Load MediaPipe Hand Landmarker
             try {
                 const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm");
                 handLandmarker = await HandLandmarker.createFromOptions(vision, {
                     baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task" },
                     runningMode: "VIDEO",
-                    numHands: 1
+                    numHands: 2 
                 });
 
                 console.log("MediaPipe Hand Landmarker loaded!");
@@ -56,6 +89,7 @@
                 return;
             }
 
+            createUI();
             detectHands();
             console.log("Hand tracking started.");
         }
@@ -65,99 +99,126 @@
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             const result = await handLandmarker.detectForVideo(video, performance.now());
+
             if (result.landmarks.length > 0) {
-                let hand = result.landmarks[0];
-                
-                let thumbTip = hand[4];
-                let indexTip = hand[8];
-                let middleTip = hand[12];
-                let ringTip = hand[16];
-                let pinkyTip = hand[20];
+                for (let h = 0; h < result.landmarks.length; h++) {
+                    let hand = result.landmarks[h];
 
-                // Hand X-position determines dial value
-                let handX = indexTip.x; // Normalized 0 (left) to 1 (right)... TODO: Use active finger tips instead of defaulting to index tip. 
+                    let thumbTip = hand[4];
+                    let indexTip = hand[8];
+                    let middleTip = hand[12];
+                    let ringTip = hand[16];
+                    let pinkyTip = hand[20];
 
-                // Adjust range to 80% of screen width (leaving 10% dead zone on both sides)
-                let minX = 0.1; // 10% from the left
-                let maxX = 0.9; // 90% (leaving 10% on the right)
-                handX = Math.max(minX, Math.min(maxX, handX)); // Clamp within range
-                let dialValue = Math.floor(((handX - minX) / (maxX - minX)) * 127);
-                dialValue = Math.max(0, Math.min(127, dialValue)); // Final clamp between 0-127
+                    let isRightHand = h === 0;
+                    let handPrefix = isRightHand ? "" : "2";
 
-                // Distance function
-                function distance(a, b) {
-                    return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+                    let handX = indexTip.x;
+                    let dialValue = Math.floor(handX * 127);
+
+                    function distance(a, b) {
+                        return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+                    }
+
+                    let indexTouch = distance(thumbTip, indexTip) < TOUCH_THRESHOLD;
+                    let middleTouch = distance(thumbTip, middleTip) < TOUCH_THRESHOLD;
+                    let ringTouch = distance(thumbTip, ringTip) < TOUCH_THRESHOLD;
+                    let pinkyTouch = distance(thumbTip, pinkyTip) < TOUCH_THRESHOLD;
+
+                    let adjusting = false;
+
+                    if (indexTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "index" + handPrefix; adjusting = true; }
+                    else if (middleTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "middle" + handPrefix; adjusting = true; }
+                    else if (ringTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "ring" + handPrefix; adjusting = true; }
+                    else if (pinkyTouch) { activeDials[isRightHand ? "hand1" : "hand2"] = "pinky" + handPrefix; adjusting = true; }
+
+                    if (activeDials[isRightHand ? "hand1" : "hand2"]) {
+                        dials[activeDials[isRightHand ? "hand1" : "hand2"]] = dialValue;
+                    }
+
+                    if (adjusting) {
+                        if (sendTimeout) clearTimeout(sendTimeout);
+                        sendTimeout = setTimeout(() => {
+                            sendToMax(dials); 
+                        }, SEND_DELAY);
+                    }
+
+                    hand.forEach((point, i) => {
+                        ctx.beginPath();
+                        ctx.arc(point.x * canvas.width, point.y * canvas.height, 6, 0, 2 * Math.PI);
+                        ctx.fillStyle = "red";
+
+                        if (i === 8 && indexTouch) ctx.fillStyle = "blue"; 
+                        if (i === 12 && middleTouch) ctx.fillStyle = "green"; 
+                        if (i === 16 && ringTouch) ctx.fillStyle = "yellow"; 
+                        if (i === 20 && pinkyTouch) ctx.fillStyle = "purple"; 
+
+                        ctx.fill();
+                    });
+
+                    ctx.strokeStyle = "green";
+                    ctx.lineWidth = 2;
+                    HAND_CONNECTIONS.forEach(([start, end]) => {
+                        let startPoint = hand[start];
+                        let endPoint = hand[end];
+
+                        ctx.beginPath();
+                        ctx.moveTo(startPoint.x * canvas.width, startPoint.y * canvas.height);
+                        ctx.lineTo(endPoint.x * canvas.width, endPoint.y * canvas.height);
+                        ctx.stroke();
+                    });
+
+                    ctx.fillStyle = "white";
+                    ctx.font = "2rem Arial";
+
+                    let textY = canvas.height - (isRightHand ? 20 : 60);
+                    ctx.fillText(
+                        activeDials[isRightHand ? "hand1" : "hand2"]
+                            ? `ADJUSTING ${activeDials[isRightHand ? "hand1" : "hand2"].toUpperCase()} - VALUE: ${dials[activeDials[isRightHand ? "hand1" : "hand2"]]}`
+                            : "",
+                        10,
+                        textY
+                    );
                 }
-
-                // Check if fingers are touching the thumb
-                const TOUCH_THRESHOLD = 0.075;
-                let indexTouch = distance(thumbTip, indexTip) < TOUCH_THRESHOLD;
-                let middleTouch = distance(thumbTip, middleTip) < TOUCH_THRESHOLD;
-                let ringTouch = distance(thumbTip, ringTip) < TOUCH_THRESHOLD;
-                let pinkyTouch = distance(thumbTip, pinkyTip) < TOUCH_THRESHOLD;
-
-                let adjusting = false;
-
-                // If a pinch is detected, set the active dial
-                if (indexTouch) { activeDial = "index"; adjusting = true; }
-                else if (middleTouch) { activeDial = "middle"; adjusting = true; }
-                else if (ringTouch) { activeDial = "ring"; adjusting = true; }
-                else if (pinkyTouch) { activeDial = "pinky"; adjusting = true; }
-
-                // If fingers are still touching, update the dial value based on X-position
-                if (activeDial) {
-                    dials[activeDial] = dialValue
-                }
-
-                // Reset the timeout every time a dial is being adjusted
-                if (adjusting) {
-                    if (sendTimeout) clearTimeout(sendTimeout)
-                    sendTimeout = setTimeout(() => {
-                        if (activeDial) {
-                            sendToMax({ [activeDial]: dials[activeDial] })
-                            activeDial = null; // Reset active dial
-                        }
-                    }, 500); 
-                }
-
-                // Draw hand keypoints with colors for finger touches
-                hand.forEach((point, i) => {
-                    ctx.beginPath()
-                    ctx.arc(point.x * canvas.width, point.y * canvas.height, 6, 0, 2 * Math.PI);
-                    ctx.fillStyle = "red"; // Default color
-
-                    if (i === 8 && indexTouch) ctx.fillStyle = "blue"; // Index Finger
-                    if (i === 12 && middleTouch) ctx.fillStyle = "green"; // Middle Finger
-                    if (i === 16 && ringTouch) ctx.fillStyle = "yellow"; // Ring Finger
-                    if (i === 20 && pinkyTouch) ctx.fillStyle = "purple"; // Pinky Finger
-
-                    ctx.fill();
-                });
-
-                // Draw the current adjustment text at the bottom
-                ctx.fillStyle = "white";
-                ctx.font = "2rem Arial";
-                ctx.fillText(
-                    activeDial ? `ADJUSTING ${activeDial.toUpperCase()} - VALUE: ${dials[activeDial]}` : "",
-                    0,
-                    canvas.height - 20
-                );
             }
 
-            requestAnimationFrame(detectHands)
+            requestAnimationFrame(detectHands);
         }
 
-        const ws = new WebSocket("ws://localhost:8080")
+        const ws = new WebSocket("ws://localhost:8080");
 
         function sendToMax(data) {
             if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(data))
+                ws.send(JSON.stringify(data));
+                console.log("Sent to Max:", data);
             }
         }
 
-        ws.onopen = () => console.log("Connected to Max")
-        ws.onerror = (err) => console.error("WebSocket Error:", err)
-        setupHandTracking()
+        ws.onopen = () => console.log("Connected to Max");
+        ws.onerror = (err) => console.error("WebSocket Error:", err);
+
+        function createUI() {
+            ui.innerHTML = `
+                <h3>Hand Tracker Settings</h3>
+                <label>Touch Threshold: <span id="touchThresholdVal">${TOUCH_THRESHOLD}</span></label>
+                <input type="range" min="0.02" max="0.1" step="0.005" value="${TOUCH_THRESHOLD}" id="touchThreshold">
+                
+                <label>Send Delay (ms): <span id="sendDelayVal">${SEND_DELAY}</span></label>
+                <input type="range" min="50" max="1000" step="50" value="${SEND_DELAY}" id="sendDelay">
+            `;
+
+            document.getElementById("touchThreshold").oninput = (e) => {
+                TOUCH_THRESHOLD = parseFloat(e.target.value);
+                document.getElementById("touchThresholdVal").innerText = TOUCH_THRESHOLD.toFixed(3);
+            };
+
+            document.getElementById("sendDelay").oninput = (e) => {
+                SEND_DELAY = parseInt(e.target.value);
+                document.getElementById("sendDelayVal").innerText = SEND_DELAY;
+            };
+        }
+
+        setupHandTracking();
     </script>
 </head>
 
