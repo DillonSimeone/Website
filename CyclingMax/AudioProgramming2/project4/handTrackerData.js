@@ -14,5 +14,3 @@ wss.on("connection", (ws) => {
 
     ws.send("Connected to Max!");
 });
-
-maxApi.post("WebSocket Server running on port 8080");
