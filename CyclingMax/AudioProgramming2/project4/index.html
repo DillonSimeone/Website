@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>MediaPipe Hand Tracking</title>
+    <script type="module">
+        import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest";
+
+        let video = document.createElement("video");
+        video.setAttribute("autoplay", "");
+        video.setAttribute("playsinline", "");
+
+        let canvas = document.createElement("canvas");
+        let ctx = canvas.getContext("2d");
+        document.body.appendChild(canvas);
+
+        let handLandmarker;
+
+        // Variables to store dial values
+        let dials = { index: 64, middle: 64, ring: 64, pinky: 64 };
+        let activeDial = null; // Track which dial is being adjusted
+        let sendTimeout = null; // Timer for delaying message sending
+
+        async function setupHandTracking() {
+            console.log("Starting hand tracking setup...");
+
+            // Set up webcam
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                console.log("Webcam initialized!");
+
+                await new Promise(resolve => (video.onloadedmetadata = resolve));
+            } catch (err) {
+                console.error("Webcam access denied:", err);
+                return;
+            }
+
+            // Set canvas size to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            console.log(`Canvas set to ${canvas.width}x${canvas.height}`);
+
+            // Load MediaPipe Hand Landmarker
+            try {
+                const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm");
+                handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                    baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task" },
+                    runningMode: "VIDEO",
+                    numHands: 1
+                });
+
+                console.log("MediaPipe Hand Landmarker loaded!");
+            } catch (err) {
+                console.error("Error loading Hand Landmarker:", err);
+                return;
+            }
+
+            detectHands();
+            console.log("Hand tracking started.");
+        }
+
+        async function detectHands() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const result = await handLandmarker.detectForVideo(video, performance.now());
+            if (result.landmarks.length > 0) {
+                let hand = result.landmarks[0];
+                
+                let thumbTip = hand[4];
+                let indexTip = hand[8];
+                let middleTip = hand[12];
+                let ringTip = hand[16];
+                let pinkyTip = hand[20];
+
+                // Hand X-position determines dial value
+                let handX = indexTip.x; // Normalized 0 (left) to 1 (right)... TODO: Use active finger tips instead of defaulting to index tip. 
+
+                // Adjust range to 80% of screen width (leaving 10% dead zone on both sides)
+                let minX = 0.1; // 10% from the left
+                let maxX = 0.9; // 90% (leaving 10% on the right)
+                handX = Math.max(minX, Math.min(maxX, handX)); // Clamp within range
+                let dialValue = Math.floor(((handX - minX) / (maxX - minX)) * 127);
+                dialValue = Math.max(0, Math.min(127, dialValue)); // Final clamp between 0-127
+
+                // Distance function
+                function distance(a, b) {
+                    return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+                }
+
+                // Check if fingers are touching the thumb
+                const TOUCH_THRESHOLD = 0.075;
+                let indexTouch = distance(thumbTip, indexTip) < TOUCH_THRESHOLD;
+                let middleTouch = distance(thumbTip, middleTip) < TOUCH_THRESHOLD;
+                let ringTouch = distance(thumbTip, ringTip) < TOUCH_THRESHOLD;
+                let pinkyTouch = distance(thumbTip, pinkyTip) < TOUCH_THRESHOLD;
+
+                let adjusting = false;
+
+                // If a pinch is detected, set the active dial
+                if (indexTouch) { activeDial = "index"; adjusting = true; }
+                else if (middleTouch) { activeDial = "middle"; adjusting = true; }
+                else if (ringTouch) { activeDial = "ring"; adjusting = true; }
+                else if (pinkyTouch) { activeDial = "pinky"; adjusting = true; }
+
+                // If fingers are still touching, update the dial value based on X-position
+                if (activeDial) {
+                    dials[activeDial] = dialValue
+                }
+
+                // Reset the timeout every time a dial is being adjusted
+                if (adjusting) {
+                    if (sendTimeout) clearTimeout(sendTimeout)
+                    sendTimeout = setTimeout(() => {
+                        if (activeDial) {
+                            sendToMax({ [activeDial]: dials[activeDial] })
+                            activeDial = null; // Reset active dial
+                        }
+                    }, 500); 
+                }
+
+                // Draw hand keypoints with colors for finger touches
+                hand.forEach((point, i) => {
+                    ctx.beginPath()
+                    ctx.arc(point.x * canvas.width, point.y * canvas.height, 6, 0, 2 * Math.PI);
+                    ctx.fillStyle = "red"; // Default color
+
+                    if (i === 8 && indexTouch) ctx.fillStyle = "blue"; // Index Finger
+                    if (i === 12 && middleTouch) ctx.fillStyle = "green"; // Middle Finger
+                    if (i === 16 && ringTouch) ctx.fillStyle = "yellow"; // Ring Finger
+                    if (i === 20 && pinkyTouch) ctx.fillStyle = "purple"; // Pinky Finger
+
+                    ctx.fill();
+                });
+
+                // Draw the current adjustment text at the bottom
+                ctx.fillStyle = "white";
+                ctx.font = "2rem Arial";
+                ctx.fillText(
+                    activeDial ? `ADJUSTING ${activeDial.toUpperCase()} - VALUE: ${dials[activeDial]}` : "",
+                    0,
+                    canvas.height - 20
+                );
+            }
+
+            requestAnimationFrame(detectHands)
+        }
+
+        const ws = new WebSocket("ws://localhost:8080")
+
+        function sendToMax(data) {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(data))
+            }
+        }
+
+        ws.onopen = () => console.log("Connected to Max")
+        ws.onerror = (err) => console.error("WebSocket Error:", err)
+        setupHandTracking()
+    </script>
+</head>
+
+<body></body>
+
+</html>
