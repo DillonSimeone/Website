@@ -256,146 +256,68 @@ function predictWebcam() {
 function processHandDetection(hands) {
     const now = performance.now();
     hands.forEach((hand, hIndex) => {
-        const thumbTip = hand[4];
-        const indexTip = hand[8];
-        const wrist = hand[0];
-
-        // Compute raw pinch position in canvas coordinates.
-        let rawPinchPos = {
-            x: indexTip.x * outputCanvas.width,
-            y: indexTip.y * outputCanvas.height,
-            z: indexTip.z || 0
-        };
-        // If z is zero, compute a synthetic z using the distance from the wrist to the index tip.
-        if (rawPinchPos.z === 0) {
-            const dWristIndex = Math.hypot(
-                wrist.x - indexTip.x,
-                wrist.y - indexTip.y
-            );
-            // Heuristic: larger dWristIndex means hand is closer (use appropriate scaling).
-            rawPinchPos.z = Math.max(0, Math.min(1, 1 - dWristIndex));
-        }
-
-        // Determine pinch detection from thumb-index distance.
-        const dx = thumbTip.x - indexTip.x;
-        const dy = thumbTip.y - indexTip.y;
-        const dz = (thumbTip.z || 0) - (indexTip.z || 0);
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        const pinchDetected = dist < TOUCH_THRESHOLD;
-
-        // Smooth pinch position.
-        let newPinchPos = rawPinchPos;
-        if (handStates[hIndex].isPinching) {
-            newPinchPos = {
-                x: handStates[hIndex].lastPinchPos.x * SMOOTHING_ALPHA + rawPinchPos.x * (1 - SMOOTHING_ALPHA),
-                y: handStates[hIndex].lastPinchPos.y * SMOOTHING_ALPHA + rawPinchPos.y * (1 - SMOOTHING_ALPHA),
-                z: handStates[hIndex].lastPinchPos.z * SMOOTHING_ALPHA + rawPinchPos.z * (1 - SMOOTHING_ALPHA)
-            };
-        }
-        handStates[hIndex].lastPinchPos = newPinchPos;
-        handStates[hIndex].lastUpdate = now; //TODO: Z adjusts size of polys
-
-        // If a pinch is detected…
-        if (pinchDetected) {
-            // Check if the hand is already controlling a polygon.
-            if (handStates[hIndex].isPinching && handStates[hIndex].grabbedPieceId !== null) {
-                // Get the currently grabbed piece.
-                let currentPiece = maskPieces[handStates[hIndex].grabbedPieceId];
-                if (currentPiece) {
-                    // Compute the distance from the current polygon's centroid to the new pinch position.
-                    const currentCent = computeCentroid(currentPiece.polygon);
-                    const distanceToCurrent = Math.hypot(currentCent.x - newPinchPos.x, currentCent.y - newPinchPos.y);
-                    // If the pinch moves far from the currently grabbed piece, release it.
-                    if (distanceToCurrent > GRAB_DISTANCE_THRESHOLD * 1.5) {
-                        currentPiece.grabbed = false;
-                        currentPiece.grabbedBy = null;
-                        handStates[hIndex].grabbedPieceId = null;
-                        handStates[hIndex].isPinching = false;
-                    }
-                }
+      const thumbTip = hand[4];
+      const indexTip = hand[8];
+      
+      // Compute 2D pinch distance.
+      const dx = thumbTip.x - indexTip.x;
+      const dy = thumbTip.y - indexTip.y;
+      const pinchDistance = Math.sqrt(dx * dx + dy * dy);
+      const pinchDetected = pinchDistance < TOUCH_THRESHOLD;
+      
+      // Compute pinch position in canvas coordinates.
+      const pinchPos = {
+        x: indexTip.x * outputCanvas.width,
+        y: indexTip.y * outputCanvas.height
+      };
+      
+      if (pinchDetected) {
+        // If the hand isn't already controlling a polygon, try to hit-test.
+        if (handStates[hIndex].grabbedPieceId === null) {
+          let candidateIndex = null;
+          // Loop through polygons and see if the pinch point is inside.
+          for (let i = 0; i < maskPieces.length; i++) {
+            const piece = maskPieces[i];
+            if (piece && pointInPolygon(pinchPos, piece.polygon)) {
+              candidateIndex = i;
+              break;
             }
-
-            // If this hand isn't currently controlling a polygon, do candidate selection.
-            if (!handStates[hIndex].isPinching || handStates[hIndex].grabbedPieceId === null) {
-                // Look for a candidate among all pieces (attached or detached) that are not currently grabbed.
-                let candidate = null;
-                let candidateIndex = null;
-                let candidateDistance = Infinity;
-                maskPieces.forEach((piece, idx) => {
-                    if (!piece.grabbed) {
-                        // If the piece is detached, use a larger threshold.
-                        let threshold = piece.attached ? GRAB_DISTANCE_THRESHOLD : GRAB_DISTANCE_THRESHOLD * 2;
-                        const cent = computeCentroid(piece.polygon);
-                        const d = Math.hypot(cent.x - newPinchPos.x, cent.y - newPinchPos.y);
-                        if (d < threshold && d < candidateDistance) {
-                            candidate = piece;
-                            candidateIndex = idx;
-                            candidateDistance = d;
-                        }
-                    }
-                });
-                if (candidate !== null) {
-                    // Lock candidate to this hand.
-                    candidate.grabbed = true;
-                    candidate.grabbedBy = hIndex;
-                    candidate.lastHandPos = {
-                        ...newPinchPos
-                    };
-                    // Record the offset from the pinch position to the polygon’s centroid.
-                    const cent = computeCentroid(candidate.polygon);
-                    candidate.dragOffset = {
-                        dx: cent.x - newPinchPos.x,
-                        dy: cent.y - newPinchPos.y
-                    };
-                    candidate.initialPinchZ = newPinchPos.z;
-                    candidate.originalPolygon = candidate.polygon.map(pt => ({
-                        ...pt
-                    }));
-                    // Mark as detached.
-                    candidate.attached = false;
-                    handStates[hIndex].grabbedPieceId = candidateIndex;
-                }
-                handStates[hIndex].isPinching = true;
-            } else {
-                // Already pinching: update the piece grabbed by this hand.
-                const grabbedIndex = handStates[hIndex].grabbedPieceId;
-                if (grabbedIndex !== null && maskPieces[grabbedIndex]) {
-                    const piece = maskPieces[grabbedIndex];
-                    // Compute target centroid: current pinch position plus stored offset.
-                    const targetCentroid = {
-                        x: newPinchPos.x + piece.dragOffset.dx,
-                        y: newPinchPos.y + piece.dragOffset.dy
-                    };
-                    // Compute z delta relative to initial pinch.
-                    const zDelta = newPinchPos.z - piece.initialPinchZ;
-                    let scaleFactor = 1 - Z_SCALE_SENSITIVITY * zDelta;
-                    scaleFactor = Math.max(scaleFactor, 0.5);
-                    const origCentroid = computeCentroid(piece.originalPolygon);
-                    const translation = {
-                        x: targetCentroid.x - origCentroid.x,
-                        y: targetCentroid.y - origCentroid.y
-                    };
-                    const newPolygon = piece.originalPolygon.map(pt => ({
-                        x: (pt.x - origCentroid.x) * scaleFactor + origCentroid.x + translation.x,
-                        y: (pt.y - origCentroid.y) * scaleFactor + origCentroid.y + translation.y,
-                        z: pt.z
-                    }));
-                    piece.polygon = newPolygon;
-                    piece.lastHandPos = {
-                        ...newPinchPos
-                    };
-                }
-            }
-            handStates[hIndex].lastPinchTimestamp = now;
+          }
+          if (candidateIndex !== null) {
+            // Lock that polygon to this hand.
+            maskPieces[candidateIndex].grabbed = true;
+            maskPieces[candidateIndex].grabbedBy = hIndex;
+            // Mark it as detached permanently.
+            maskPieces[candidateIndex].attached = false;
+            handStates[hIndex].grabbedPieceId = candidateIndex;
+            // Save the initial pinch position.
+            handStates[hIndex].lastPinchPos = { ...pinchPos };
+          }
         } else {
-            // No pinch detected: clear the hand state (but leave any previously grabbed polygon in place).
-            if (now - handStates[hIndex].lastUpdate >= HOLD_TIMEOUT) {
-                handStates[hIndex].isPinching = false;
-                handStates[hIndex].grabbedPieceId = null;
-            }
+          // Hand is controlling a polygon; update its position by translating.
+          const piece = maskPieces[handStates[hIndex].grabbedPieceId];
+          if (piece) {
+            const deltaX = pinchPos.x - handStates[hIndex].lastPinchPos.x;
+            const deltaY = pinchPos.y - handStates[hIndex].lastPinchPos.y;
+            piece.polygon = piece.polygon.map(pt => ({
+              x: pt.x + deltaX,
+              y: pt.y + deltaY,
+              z: 0
+            }));
+            handStates[hIndex].lastPinchPos = { ...pinchPos };
+          }
         }
+        handStates[hIndex].lastUpdate = now;
+        handStates[hIndex].isPinching = true;
+      } else {
+        // When pinch is released, clear the hand's grabbed state (but do not reattach the polygon).
+        if (now - handStates[hIndex].lastUpdate >= 100) {
+          handStates[hIndex].isPinching = false;
+          handStates[hIndex].grabbedPieceId = null;
+        }
+      }
     });
-}
+  }
 
 // ---------------- Send Polygon Data ----------------
 function sendPolygonLocations() {
@@ -410,7 +332,7 @@ function sendPolygonLocations() {
             attached: piece.attached
         };
     });
-    console.log("Sending polygon data:", data);
+    //console.log("Sending polygon data:", data);
     try {
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(data));
@@ -514,20 +436,13 @@ function expandPolygon(polygon, scale) {
 }
 
 function computeCentroid(polygon) {
-    let sumX = 0,
-        sumY = 0,
-        sumZ = 0;
+    let sumX = 0, sumY = 0;
     polygon.forEach(pt => {
-        sumX += pt.x;
-        sumY += pt.y;
-        sumZ += pt.z || 0;
+      sumX += pt.x;
+      sumY += pt.y;
     });
-    return {
-        x: sumX / polygon.length,
-        y: sumY / polygon.length,
-        z: sumZ / polygon.length
-    };
-}
+    return { x: sumX / polygon.length, y: sumY / polygon.length };
+  }
 
 function getBoundingBox(polygon) {
     let minX = Infinity,
@@ -625,16 +540,14 @@ function intersection(P, Q, A, B) {
 function pointInPolygon(point, polygon) {
     let inside = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const xi = polygon[i].x,
-            yi = polygon[i].y;
-        const xj = polygon[j].x,
-            yj = polygon[j].y;
-        const intersect = ((yi > point.y) !== (yj > point.y)) &&
-            (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
+      const xi = polygon[i].x, yi = polygon[i].y;
+      const xj = polygon[j].x, yj = polygon[j].y;
+      const intersect = ((yi > point.y) !== (yj > point.y)) &&
+        (point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
     }
     return inside;
-}
+  }
 
 function drawHands(hands) {
     if (!hands) return;
@@ -711,8 +624,8 @@ function createControlsUI() {
     polyCountLabel.innerText = "Polygon Count: ";
     const polyCountSlider = document.createElement("input");
     polyCountSlider.type = "range";
-    polyCountSlider.min = 3;
-    polyCountSlider.max = 20;
+    polyCountSlider.min = 10;
+    polyCountSlider.max = 100;
     polyCountSlider.value = SEED_COUNT;
     polyCountSlider.step = 1;
     polyCountSlider.oninput = () => {
