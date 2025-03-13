@@ -1,58 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Face Mask Demo</title>
-    <style>
-        body, html{
-            background-color: black;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
 
-        #controls{
-            background-color: grey;
-            width: auto;
-            border: 1px solid black;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-      /* Position video and canvas on top of each other */
-      #webcam {
-        position: absolute;
-        top: 100px;
-        left: 100px;
-        z-index: 0;
+<head>
+  <meta charset="UTF-8" />
+  <title>Face Mask Demo</title>
+  <style>
+    body,
+    html {
+      background-color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
 
-      }
-      #static_canvas {
-        position: absolute;
-        top: 100px;
-        left: 100px;
-        z-index: 1;
-      }
+    #controls {
+      background-color: grey;
+      width: auto;
+      border: 1px solid black;
+      padding: 50px;
+      display: flex;
+      flex-direction: column;
+    }
 
-      #output_canvas {
-        position: absolute;
-        top: 100px;
-        left: 100px;
-        z-index: 2; /* ensure canvas is above the video */
-      }
-      #webcamButton{
-        z-index: 3;
-      }
-    </style>
-  </head>
-  <body>
-    <button id="webcamButton">Enable Face Detection</button>
-    <div>
-        <video id="webcam" autoplay muted playsinline></video>
-        <canvas id="static_canvas"></canvas>
-        <canvas id="output_canvas"></canvas>
-    </div>
-    <script type="module" src="faceTracker.js"></script>
-  </body>
+    /* Position video and canvas on top of each other */
+    #webcam {
+      z-index: 0;
+
+    }
+
+    #static_canvas {
+      z-index: 1;
+    }
+
+    #output_canvas {
+      z-index: 2;
+      /* ensure canvas is above the video */
+    }
+
+    #webcamButton {
+      padding: 50px;
+      font-size: 2.5rem;
+      z-index: 3;
+    }
+
+    #videofeed {
+      display: grid;
+      place-items: center;
+      position: relative;
+      /* Keeps everything inside */
+    }
+
+
+    #videofeed>* {
+      grid-area: 1 / 1;
+      /* All elements share the same grid cell */
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* Ensures the video and canvases scale correctly */
+    }
+  </style>
+</head>
+
+<body>
+  <button id="webcamButton">Enable Face & Hand Tracking</button>
+  <div id="videofeed">
+    <video id="webcam" autoplay muted playsinline></video>
+    <canvas id="static_canvas"></canvas>
+    <canvas id="output_canvas"></canvas>
+  </div>
+  <script type="module" src="faceTracker.js"></script>
+</body>
+
 </html>
