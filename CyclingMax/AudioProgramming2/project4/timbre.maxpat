@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 77.0, 1395.0, 929.0 ],
+		"rect" : [ 34.0, 77.0, 1852.0, 929.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -45,7 +45,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 31.5, 794.0, 150.0, 62.0 ],
+					"patching_rect" : [ 36.0, 901.829290390014648, 150.0, 62.0 ],
 					"text" : "Reminder to self, line~ outside of this subpatch keeps the entire thing from going out of control"
 				}
 
@@ -70,7 +70,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 1019.540176391601562, 503.0, 386.0, 178.0 ],
+					"patching_rect" : [ 1773.170773983001709, 926.829290390014648, 386.0, 178.0 ],
 					"text" : "Expected outputs:\n\nINPUT: Current Instance: 1, total instances: 10\n\nOUTPUT:\n0.6\n\nINPUT: Current Instance: 2, total instances: 10\n\nOUTPUT:\n0.03..."
 				}
 
@@ -83,7 +83,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "bang" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 1157.540176391601562, 429.0, 24.0, 24.0 ]
+					"patching_rect" : [ 1910.975655317306519, 853.658556938171387, 24.0, 24.0 ]
 				}
 
 			}
@@ -93,8 +93,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 1236.540176391601562, 346.0, 149.0, 20.0 ],
-					"presentation_linecount" : 2,
+					"patching_rect" : [ 1990.243949890136719, 770.731725692749023, 149.0, 20.0 ],
 					"text" : "Total Possible Instances"
 				}
 
@@ -105,7 +104,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 950.540176391601562, 346.0, 97.0, 20.0 ],
+					"patching_rect" : [ 1703.65857720375061, 770.731725692749023, 97.0, 20.0 ],
 					"text" : "Current instance"
 				}
 
@@ -118,7 +117,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 1253.540176391601562, 374.0, 101.0, 28.0 ]
+					"patching_rect" : [ 2007.317121028900146, 798.78050684928894, 101.0, 28.0 ]
 				}
 
 			}
@@ -129,7 +128,7 @@
 					"numinlets" : 6,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 1253.540176391601562, 412.0, 97.0, 22.0 ],
+					"patching_rect" : [ 2007.317121028900146, 836.585385799407959, 97.0, 22.0 ],
 					"text" : "scale 0 127 0 10"
 				}
 
@@ -142,7 +141,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 950.540176391601562, 374.0, 101.0, 28.0 ]
+					"patching_rect" : [ 1703.65857720375061, 798.78050684928894, 101.0, 28.0 ]
 				}
 
 			}
@@ -153,7 +152,7 @@
 					"numinlets" : 6,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 950.540176391601562, 412.0, 97.0, 22.0 ],
+					"patching_rect" : [ 1703.65857720375061, 836.585385799407959, 97.0, 22.0 ],
 					"text" : "scale 0 127 0 10"
 				}
 
@@ -166,7 +165,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 1068.540176391601562, 293.0, 158.0, 39.0 ],
+					"patching_rect" : [ 1821.951262950897217, 717.073187828063965, 158.0, 39.0 ],
 					"text" : "Sanity test"
 				}
 
@@ -178,7 +177,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 946.540176391601562, 470.0, 315.0, 22.0 ],
+					"patching_rect" : [ 1700.000040531158447, 893.902460336685181, 315.0, 22.0 ],
 					"text" : "expr (0.6 * ($i1 == 1)) + ((0.3 / max(1\\, $i2 - 1)) * ($i1 != 1))"
 				}
 
@@ -191,7 +190,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 946.540176391601562, 512.0, 50.0, 36.0 ],
+					"patching_rect" : [ 1700.000040531158447, 936.58538818359375, 50.0, 36.0 ],
 					"text" : "0.033333"
 				}
 
@@ -203,7 +202,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 946.540176391601562, 439.0, 29.5, 22.0 ],
+					"patching_rect" : [ 1700.000040531158447, 863.414654731750488, 29.5, 22.0 ],
 					"text" : "3"
 				}
 
@@ -215,7 +214,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 1242.540176391601562, 439.0, 29.5, 22.0 ],
+					"patching_rect" : [ 1996.341511011123657, 863.414654731750488, 29.5, 22.0 ],
 					"text" : "10"
 				}
 
@@ -330,7 +329,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 143.0, 152.0, 309.5, 154.0 ],
+					"patching_rect" : [ 143.0, 152.0, 314.0, 154.0 ],
 					"text" : "instance 1 = cycle~ * 1 (fundamental)\ninstance 2 = cycle~ * 2 (1st harmonic)\ninstance 3 = cycle~ * 3 (2nd harmonic)\n...\n\nCould put drunk between this? 0 - 2 mult. to the instance index, with steps of 0.25? 0.5?"
 				}
 
@@ -366,7 +365,7 @@
 					"maxclass" : "scope~",
 					"numinlets" : 2,
 					"numoutlets" : 0,
-					"patching_rect" : [ 221.0, 794.0, 638.0, 203.0 ],
+					"patching_rect" : [ 224.0, 901.829290390014648, 638.0, 203.0 ],
 					"style" : "rnbohighcontrast"
 				}
 
@@ -378,6 +377,10 @@
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 570.0, 149.0, 35.0, 22.0 ],
+					"saved_object_attributes" : 					{
+						"attr_comment" : ""
+					}
+,
 					"text" : "out 1"
 				}
 
@@ -390,7 +393,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 95.078948140144348, 45.0, 80.921051859855652, 22.0 ],
-					"text" : "36.708096"
+					"text" : "77"
 				}
 
 			}
@@ -436,7 +439,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 570.039215624332428, 209.0, 50.0, 22.0 ],
-					"text" : "1"
+					"text" : "10"
 				}
 
 			}
@@ -458,7 +461,11 @@
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 80.5, 752.0, 42.0, 22.0 ],
+					"patching_rect" : [ 80.5, 831.0, 42.0, 22.0 ],
+					"saved_object_attributes" : 					{
+						"attr_comment" : ""
+					}
+,
 					"text" : "out~ 1"
 				}
 
@@ -495,10 +502,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 95.078948140144348, 6.0, 28.0, 22.0 ],
-					"saved_object_attributes" : 					{
-						"attr_comment" : ""
-					}
-,
 					"text" : "in 1"
 				}
 

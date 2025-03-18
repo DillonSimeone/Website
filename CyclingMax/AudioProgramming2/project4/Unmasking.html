@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Face Mask Demo</title>
+  <title>Unmasking</title>
   <style>
     .dark {
       background-color: black;
@@ -109,15 +109,15 @@
       font-size: 3rem;
     }
 
-    #about summary{
+    #about summary {
       transition: all 1s;
       color: rgb(255, 255, 105);
       font-size: 3rem;
       cursor: pointer;
     }
 
-    #about summary:hover{
-      
+    #about summary:hover {
+
       color: rgb(255, 255, 255);
     }
 
@@ -152,17 +152,22 @@
   <div id="about">
     <h1>Unmasking</h1>
     <h2 style="margin: 0;">ABOUT THIS PROJECT</h2>
-    <p style="text-align: center; margin: 0; font-size: 1.5rem; color: rgb(146, 146, 1)">(Click to expand/collapse details for each section below.)</p>
+    <p style="text-align: center; margin: 0; font-size: 1.5rem; color: rgb(146, 146, 1)">(Click to expand/collapse
+      details for each section below.)</p>
 
     <details open>
       <summary>Usage</summary>
       <p>Press the Enable face & hand tracking button below, approve the camera usage request and let the javaScript to
-        download code as
-        needed. Once the polygon mask appears, pinch at pieces of the mask with your thumb and index finger and drag
-        them away. A pinch is successfully detected when the hands changes color.</p>
+        download code as needed. Once the polygon mask appears, pinch at pieces of the mask with your thumb and index
+        finger and drag them away. A pinch is successfully detected when the hands changes color.</p>
+      <p>Each polygons plays their own notes, determined by their x-y coordinations, measured to the center of their
+        polygons... So each masks makes different sounds, given the random nature of each polygons, and your distance to
+        the camera, and where you're looking at, and so on. Breaking a piece of polygon off the mask stops that polygon
+        from moving around with your face.</p>
       <ul>
         <li>Adjust the polygon count to affect the overall behavior of the sounds.</li>
-        <li>Adjust the pinch thereshold if you want to pinch from further away, or closer. (Very WIP feature, the math is a bit confusing)</li>
+        <li>Adjust the pinch thereshold if you want to pinch from further away, or closer. (Very WIP feature, the math
+          is a bit confusing)</li>
         <li>Use the track polygon drop-down menu to see what data is being tracked in each pieces</li>
       </ul>
     </details>
@@ -186,11 +191,15 @@
       <summary>Sounds</summary>
       <p>Sounds made by piping data over to Cycling Max via websocket through its node server object. X and Y coords of
         each detached polygons affects the final output, along with percentage of the static mask exposed. Download my
-        max
-        patch zip<a href="./facetrackingPolygonsstatic.maxpat" download>here</a>. The zip contains the patch, node
-        script
-        and the WebSocket nodejs package. Run as is locally, with this website page on the same machine and you'll get
+        max patch zip <a href="./Unmasking.zip" download>here</a>. The zip contains the patch, node
+        script and the WebSocket nodejs package. Run the max patch as is locally, then start up the website page in any browsers on the same machine and you'll get
         sounds.</p>
+    </details>
+
+    <details>
+      <summary>Story</summary>
+      <p>There is no story. Polygons just have been on the front of my brain for a while, and things fell into place
+        like this.</p>
     </details>
 
 
@@ -201,7 +210,7 @@
     <canvas id="static_canvas"></canvas>
     <canvas id="output_canvas"></canvas>
   </div>
-  <script type="module" src="faceTracker.js"></script>
+  <script type="module" src="Unmasking.js"></script>
 </body>
 
 </html>
