@@ -17,6 +17,7 @@ let handLandmarker = null;
 const runningMode = "VIDEO";
 let webcamRunning = false;
 
+//Controls the size of the mask. Set to 1.5 to hide cheeks, top of head, etc.
 const maskSizeFactor = 1.5;
 
 // Smoothing factor between 0 (no smoothing) and 1 (full inertia)
@@ -141,15 +142,6 @@ function enableCam() {
     }
 }
 
-function getRandomColor() {
-    const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
-
 // ---------------- Main Loop ----------------
 let lastVideoTime = -1;
 
@@ -224,9 +216,16 @@ function predictWebcam() {
     }
 
     // --- Hand Detection & Interaction ---
+    /*
+     Google was really smart in how they pulled their AIs together. Video frames are stored in a buffer along with a timestamp, and is processed when possible. Asynco AI! 
+     The smart part is that if the AI sees that it have fallen too far behind, it start discarding older frames+timestamps in the buffer, making it so it's really performant
+     on all sorts of device; squeezing blood out of rocks.
+
+     This is nonblocking programming.
+    */
     try {
-        const handStartTime = performance.now();
-        const handResult = handLandmarker.detectForVideo(video, handStartTime);
+        const handStartTime = performance.now(); // Gets a timestamp in milliseconds
+        const handResult = handLandmarker.detectForVideo(video, handStartTime); // The mediapipe AI uses the timestamp to figure out which videoframe to process. This is the secret spice; Asynco AI!
         if (handResult.landmarks && handResult.landmarks.length > 0) {
             currentHands = handResult.landmarks;
             processHandDetection(currentHands);
@@ -253,86 +252,90 @@ function predictWebcam() {
 }
 
 // ---------------- Process Hand Detection ----------------
+// This is where the pinch ability is implemented, for pinching pieces of the mask.
 function processHandDetection(hands) {
     const now = performance.now();
     hands.forEach((hand, hIndex) => {
-      const thumbTip = hand[4];
-      const indexTip = hand[8];
-      
-      // Compute 2D pinch distance.
-      const dx = thumbTip.x - indexTip.x;
-      const dy = thumbTip.y - indexTip.y;
-      const pinchDistance = Math.sqrt(dx * dx + dy * dy);
-      const pinchDetected = pinchDistance < TOUCH_THRESHOLD;
-      
-      // Compute pinch position in canvas coordinates.
-      const pinchPos = {
-        x: indexTip.x * outputCanvas.width,
-        y: indexTip.y * outputCanvas.height
-      };
-      
-      if (pinchDetected) {
-        // If the hand isn't already controlling a polygon, try to hit-test.
-        if (handStates[hIndex].grabbedPieceId === null) {
-          let candidateIndex = null;
-          // Loop through polygons and see if the pinch point is inside.
-          for (let i = 0; i < maskPieces.length; i++) {
-            const piece = maskPieces[i];
-            if (piece && pointInPolygon(pinchPos, piece.polygon)) {
-              candidateIndex = i;
-              break;
+        const thumbTip = hand[4];
+        const indexTip = hand[8];
+
+        // Compute 2D pinch distance.
+        const dx = thumbTip.x - indexTip.x;
+        const dy = thumbTip.y - indexTip.y;
+        const pinchDistance = Math.sqrt(dx * dx + dy * dy);
+        const pinchDetected = pinchDistance < TOUCH_THRESHOLD;
+
+        // Compute pinch position in canvas coordinates.
+        const pinchPos = {
+            x: indexTip.x * outputCanvas.width,
+            y: indexTip.y * outputCanvas.height
+        };
+
+        if (pinchDetected) {
+            // If the hand isn't already controlling a polygon, try to hit-test.
+            if (handStates[hIndex].grabbedPieceId === null) {
+                let candidateIndex = null;
+                // Loop through polygons and see if the pinch point is inside.
+                for (let i = 0; i < maskPieces.length; i++) {
+                    const piece = maskPieces[i];
+                    if (piece && pointInPolygon(pinchPos, piece.polygon)) {
+                        candidateIndex = i;
+                        break;
+                    }
+                }
+                if (candidateIndex !== null) {
+                    // Lock that polygon to this hand.
+                    maskPieces[candidateIndex].grabbed = true;
+                    maskPieces[candidateIndex].grabbedBy = hIndex;
+                    // Mark it as detached permanently.
+                    maskPieces[candidateIndex].attached = false;
+                    handStates[hIndex].grabbedPieceId = candidateIndex;
+                    // Save the initial pinch position.
+                    handStates[hIndex].lastPinchPos = {
+                        ...pinchPos
+                    };
+                }
+            } else {
+                // Hand is controlling a polygon; update its position by translating.
+                const piece = maskPieces[handStates[hIndex].grabbedPieceId];
+                if (piece) {
+                    const deltaX = pinchPos.x - handStates[hIndex].lastPinchPos.x;
+                    const deltaY = pinchPos.y - handStates[hIndex].lastPinchPos.y;
+                    piece.polygon = piece.polygon.map(pt => ({
+                        x: pt.x + deltaX,
+                        y: pt.y + deltaY,
+                        z: 0
+                    }));
+                    handStates[hIndex].lastPinchPos = {
+                        ...pinchPos
+                    };
+                }
             }
-          }
-          if (candidateIndex !== null) {
-            // Lock that polygon to this hand.
-            maskPieces[candidateIndex].grabbed = true;
-            maskPieces[candidateIndex].grabbedBy = hIndex;
-            // Mark it as detached permanently.
-            maskPieces[candidateIndex].attached = false;
-            handStates[hIndex].grabbedPieceId = candidateIndex;
-            // Save the initial pinch position.
-            handStates[hIndex].lastPinchPos = { ...pinchPos };
-          }
+            handStates[hIndex].lastUpdate = now;
+            handStates[hIndex].isPinching = true;
         } else {
-          // Hand is controlling a polygon; update its position by translating.
-          const piece = maskPieces[handStates[hIndex].grabbedPieceId];
-          if (piece) {
-            const deltaX = pinchPos.x - handStates[hIndex].lastPinchPos.x;
-            const deltaY = pinchPos.y - handStates[hIndex].lastPinchPos.y;
-            piece.polygon = piece.polygon.map(pt => ({
-              x: pt.x + deltaX,
-              y: pt.y + deltaY,
-              z: 0
-            }));
-            handStates[hIndex].lastPinchPos = { ...pinchPos };
-          }
+            // When pinch is released, clear the hand's grabbed state (but do not reattach the polygon).
+            if (now - handStates[hIndex].lastUpdate >= 100) {
+                handStates[hIndex].isPinching = false;
+                handStates[hIndex].grabbedPieceId = null;
+            }
         }
-        handStates[hIndex].lastUpdate = now;
-        handStates[hIndex].isPinching = true;
-      } else {
-        // When pinch is released, clear the hand's grabbed state (but do not reattach the polygon).
-        if (now - handStates[hIndex].lastUpdate >= 100) {
-          handStates[hIndex].isPinching = false;
-          handStates[hIndex].grabbedPieceId = null;
-        }
-      }
     });
-  }
+}
 
 // ---------------- Send Polygon Data ----------------
 function sendPolygonLocations() {
     const data = maskPieces.map((piece, idx) => {
         const cent = computeCentroid(piece.polygon);
-        const zVal = piece.grabbed && piece.lastHandPos ? piece.lastHandPos.z : 0;
         return {
+            total: maskPieces.length,
             id: idx,
             x: cent.x,
             y: cent.y,
-            z: zVal,
             attached: piece.attached
         };
     });
-    //console.log("Sending polygon data:", data);
+    console.log("Sending polygon data:", data);
     try {
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(data));
@@ -343,22 +346,78 @@ function sendPolygonLocations() {
 }
 
 // ---------------- Draw the Polygon Mask Pieces ----------------
+function getRandomColor() {
+    const letters = "0123456789ABCDEF";
+    let color = "#";
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
 function drawMaskPieces() {
     maskPieces.forEach(piece => {
         drawPolygon(piece.polygon, piece.color);
     });
 }
 
+const textureImage = new Image();
+textureImage.src = "./Ocean.webp";
+
+textureImage.onload = () => {
+    console.log("Texture loaded")
+};
+
+const tempCanvas = document.createElement("canvas");
+const tempCtx = tempCanvas.getContext("2d");
+
+
 function drawPolygon(vertices, color) {
-    if (!vertices || vertices.length === 0) return;
-    canvasCtx.beginPath();
-    canvasCtx.moveTo(vertices[0].x, vertices[0].y);
-    for (let i = 1; i < vertices.length; i++) {
-        canvasCtx.lineTo(vertices[i].x, vertices[i].y);
+    if (!vertices || vertices.length === 0 || !textureImage.complete) return;
+
+    if (maskPieces.length <= 10) {
+        // Set canvas size to match the main canvas
+        tempCanvas.width = canvasCtx.canvas.width;
+        tempCanvas.height = canvasCtx.canvas.height;
+
+        tempCtx.beginPath();
+        tempCtx.moveTo(vertices[0].x, vertices[0].y);
+        for (let i = 1; i < vertices.length; i++) {
+            tempCtx.lineTo(vertices[i].x, vertices[i].y);
+        }
+        tempCtx.closePath();
+
+        // Draw the texture onto the temporary canvas
+        tempCtx.drawImage(textureImage, 0, 0, tempCanvas.width, tempCanvas.height);
+
+        // Apply the mask by setting the composite operation
+        tempCtx.globalCompositeOperation = "destination-in";
+        tempCtx.fill();
+
+        // Draw the result onto the main canvas
+        canvasCtx.drawImage(tempCanvas, 0, 0);
+
+        // Add stroke for borders
+        canvasCtx.strokeStyle = getRandomColor(); // Assign random color
+        canvasCtx.lineWidth = 2; // Adjust line thickness
+        canvasCtx.beginPath();
+        canvasCtx.moveTo(vertices[0].x, vertices[0].y);
+        for (let i = 1; i < vertices.length; i++) {
+            canvasCtx.lineTo(vertices[i].x, vertices[i].y);
+        }
+        canvasCtx.closePath();
+        canvasCtx.stroke();
+    } else {
+        canvasCtx.beginPath();
+        canvasCtx.moveTo(vertices[0].x, vertices[0].y);
+        for (let i = 1; i < vertices.length; i++) {
+            canvasCtx.lineTo(vertices[i].x, vertices[i].y);
+        }
+        canvasCtx.closePath();
+        canvasCtx.fillStyle = color;
+        canvasCtx.fill();
     }
-    canvasCtx.closePath();
-    canvasCtx.fillStyle = color;
-    canvasCtx.fill();
+
 }
 
 // ---------------- Draw the Static Mask (Noise) ----------------
@@ -435,15 +494,21 @@ function expandPolygon(polygon, scale) {
     }));
 }
 
+// Center of a polygon
 function computeCentroid(polygon) {
-    let sumX = 0, sumY = 0;
+    let sumX = 0,
+        sumY = 0;
     polygon.forEach(pt => {
-      sumX += pt.x;
-      sumY += pt.y;
+        sumX += pt.x;
+        sumY += pt.y;
     });
-    return { x: sumX / polygon.length, y: sumY / polygon.length };
-  }
+    return {
+        x: sumX / polygon.length,
+        y: sumY / polygon.length
+    };
+}
 
+// Hitbox
 function getBoundingBox(polygon) {
     let minX = Infinity,
         minY = Infinity,
@@ -540,14 +605,16 @@ function intersection(P, Q, A, B) {
 function pointInPolygon(point, polygon) {
     let inside = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-      const xi = polygon[i].x, yi = polygon[i].y;
-      const xj = polygon[j].x, yj = polygon[j].y;
-      const intersect = ((yi > point.y) !== (yj > point.y)) &&
-        (point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
+        const xi = polygon[i].x,
+            yi = polygon[i].y;
+        const xj = polygon[j].x,
+            yj = polygon[j].y;
+        const intersect = ((yi > point.y) !== (yj > point.y)) &&
+            (point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
     }
     return inside;
-  }
+}
 
 function drawHands(hands) {
     if (!hands) return;
@@ -604,10 +671,34 @@ function drawHands(hands) {
     });
 }
 
+// ---------------- Misc helper functions ----------
+function percentageDetached() {
+    let detached = 0;
+    maskPieces.forEach(maskPiece => {
+        if (maskPiece.attached == false)
+            detached += 1;
+
+    });
+
+    if (detached == 0)
+        return 0;
+    else
+        return (detached / maskPieces.length);
+}
+
 // ---------------- UI Controls ----------------
 function createControlsUI() {
     const controlDiv = document.createElement("div");
     controlDiv.id = "controls";
+    // Dark mode toggle
+    const darktoggle = document.createElement("button");
+    darktoggle.innerText = "Toggle dark mode";
+    darktoggle.onclick = () => {
+        document.querySelector("html").classList.toggle("dark");
+        document.querySelector("body").classList.toggle("dark");
+    }
+    controlDiv.appendChild(darktoggle);
+    controlDiv.appendChild(document.createElement("br"));
 
     // Reset Button
     const resetButton = document.createElement("button");
@@ -624,7 +715,7 @@ function createControlsUI() {
     polyCountLabel.innerText = "Polygon Count: ";
     const polyCountSlider = document.createElement("input");
     polyCountSlider.type = "range";
-    polyCountSlider.min = 10;
+    polyCountSlider.min = 2;
     polyCountSlider.max = 100;
     polyCountSlider.value = SEED_COUNT;
     polyCountSlider.step = 1;
@@ -702,7 +793,8 @@ function updatePolygonUI() {
             "X: " + cent.x.toFixed(2) + "<br>" +
             "Y: " + cent.y.toFixed(2) + "<br>" +
             //"Z: " + cent.z.toFixed(2) + "<br>" +
-            "Attached: " + maskPieces[selectedPolygonIndex].attached;
+            "Attached: " + maskPieces[selectedPolygonIndex].attached + "<br>" +
+            "Percentage polygons detached: " + percentageDetached();
     } else {
         polyDataDiv.innerHTML = "No data";
     }
