@@ -73,7 +73,6 @@ let handStates = [{
 ];
 
 // ---------------- WebSocket Setup ----------------
-// If a WebSocket server is available, send data; if not, just log.
 let ws = null;
 try {
     ws = new WebSocket("ws://localhost:8080");
@@ -324,18 +323,30 @@ function processHandDetection(hands) {
 }
 
 // ---------------- Send Polygon Data ----------------
+function clamp(number, floor, ceiling) {
+    return Math.min(Math.max(number, floor), ceiling);
+}
+
+let sendInterval = 50; // Adjustable interval in milliseconds
+let lastSentTime = 0;  // Tracks the last send time
+
 function sendPolygonLocations() {
+    const now = Date.now();
+    if (now - lastSentTime < sendInterval) return; // Skip sending if too soon
+    lastSentTime = now; // Update last sent time
+
     const data = maskPieces.map((piece, idx) => {
         const cent = computeCentroid(piece.polygon);
         return {
             total: maskPieces.length,
             id: idx,
-            x: cent.x,
-            y: cent.y,
-            attached: piece.attached
+            x: clamp(cent.x, 0, 650),
+            y: clamp(cent.y, 0, 650),
+            attached: piece.attached,
+            staticPercentage: percentageStatic
         };
     });
-    console.log("Sending polygon data:", data);
+
     try {
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(data));
@@ -716,7 +727,7 @@ function createControlsUI() {
     const polyCountSlider = document.createElement("input");
     polyCountSlider.type = "range";
     polyCountSlider.min = 2;
-    polyCountSlider.max = 100;
+    polyCountSlider.max = 50;
     polyCountSlider.value = SEED_COUNT;
     polyCountSlider.step = 1;
     polyCountSlider.oninput = () => {
@@ -782,8 +793,10 @@ function createControlsUI() {
 }
 
 let selectedPolygonIndex = 0;
+let percentageStatic = 0;
 
 function updatePolygonUI() {
+    percentageStatic = percentageDetached();
     const polySelect = document.getElementById("polySelect");
     selectedPolygonIndex = parseInt(polySelect.value);
     const polyDataDiv = document.getElementById("polyData");
@@ -794,7 +807,7 @@ function updatePolygonUI() {
             "Y: " + cent.y.toFixed(2) + "<br>" +
             //"Z: " + cent.z.toFixed(2) + "<br>" +
             "Attached: " + maskPieces[selectedPolygonIndex].attached + "<br>" +
-            "Percentage polygons detached: " + percentageDetached();
+            "Percentage polygons detached: " + percentageStatic;
     } else {
         polyDataDiv.innerHTML = "No data";
     }
