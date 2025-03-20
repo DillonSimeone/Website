@@ -49,6 +49,12 @@ let currentFaceHull = null;
 // Global variable for hand landmarks (for drawing).
 let currentHands = [];
 
+// Global variables for detection-detection.
+let faceDetected = false;
+let handsDetected = false;
+let lastFaceTime = Date.now();
+const faceTimeout = 3000; // 3 seconds before resetting mask
+
 // Per-hand state (assuming up to 2 hands).
 let handStates = [{
         isPinching: false,
@@ -144,7 +150,16 @@ function enableCam() {
 // ---------------- Main Loop ----------------
 let lastVideoTime = -1;
 
+function resetMaskIfNeeded() {
+    if (!faceDetected && Date.now() - lastFaceTime > faceTimeout) {
+        console.log("Face lost for too long! Resetting polygon mask.");
+        maskPieces = [];
+        maskGenerated = false;
+    }
+}
+
 function predictWebcam() {
+    resetMaskIfNeeded();
     // Set canvas sizes to match video.
     staticCanvas.width = video.videoWidth;
     staticCanvas.height = video.videoHeight;
@@ -161,11 +176,13 @@ function predictWebcam() {
         const faceStartTime = performance.now();
         const faceResult = faceLandmarker.detectForVideo(video, faceStartTime);
 
-        if (faceResult.faceLandmarks && faceResult.faceLandmarks.length > 0) {
+        if (faceResult.faceLandmarks && faceResult.faceLandmarks.length > 0) { // Face is detected
+            faceDetected = true;
+            lastFaceTime = Date.now();
+            
             const landmarks = faceResult.faceLandmarks[0].map(pt => ({
                 x: pt.x * outputCanvas.width,
-                y: pt.y * outputCanvas.height,
-                z: pt.z || 0
+                y: pt.y * outputCanvas.height
             }));
             let hull = computeConvexHull(landmarks);
             hull = expandPolygon(hull, maskSizeFactor);
@@ -207,6 +224,9 @@ function predictWebcam() {
                 }
             }
         }
+        else{
+            faceDetected = false; // THERE IS NO FACE
+        }
     }
 
     // --- Draw the Static Mask (Noise) Over the Face Hull Only ---
@@ -228,6 +248,7 @@ function predictWebcam() {
         if (handResult.landmarks && handResult.landmarks.length > 0) {
             currentHands = handResult.landmarks;
             processHandDetection(currentHands);
+            drawHands(currentHands); // --- Draw Hand Landmarks & Connections ---
         }
     } catch (err) {
         console.error("Hand detection error:", err);
@@ -236,8 +257,8 @@ function predictWebcam() {
     // --- Draw the Polygon Mask Pieces on Top ---
     drawMaskPieces();
 
-    // --- Draw Hand Landmarks & Connections ---
-    drawHands(currentHands);
+    
+    
 
     // --- Log & Send Polygon Data ---
     sendPolygonLocations();
