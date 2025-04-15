@@ -78,20 +78,6 @@ let handStates = [{
     }
 ];
 
-// ---------------- WebSocket Setup ----------------
-let ws = null;
-try {
-    ws = new WebSocket("ws://localhost:8080");
-    ws.onopen = () => console.log("Connected to Max via WebSocket");
-    ws.onerror = (err) => {
-        console.error("WebSocket Error:", err);
-        ws = null;
-    };
-} catch (err) {
-    console.error("WebSocket connection failed:", err);
-    ws = null;
-}
-
 // ---------------- Initialization Functions ----------------
 async function createFaceLandmarker() {
     const filesetResolver = await FilesetResolver.forVisionTasks(
@@ -127,8 +113,12 @@ createHandLandmarker();
 
 // ---------------- Enable Webcam ----------------
 enableWebcamButton.addEventListener("click", enableCam);
-
+let staticEnabled = false
 function enableCam() {
+    if(!staticEnabled){
+        initStaticNoise()
+        staticEnabled = true
+    }
     if (!faceLandmarker || !handLandmarker) {
         console.log("Wait for detectors to load.");
         return;
@@ -179,7 +169,7 @@ function predictWebcam() {
         if (faceResult.faceLandmarks && faceResult.faceLandmarks.length > 0) { // Face is detected
             faceDetected = true;
             lastFaceTime = Date.now();
-            
+
             const landmarks = faceResult.faceLandmarks[0].map(pt => ({
                 x: pt.x * outputCanvas.width,
                 y: pt.y * outputCanvas.height
@@ -223,8 +213,7 @@ function predictWebcam() {
                     };
                 }
             }
-        }
-        else{
+        } else {
             faceDetected = false; // THERE IS NO FACE
         }
     }
@@ -340,39 +329,103 @@ function processHandDetection(hands) {
     });
 }
 
-// ---------------- Send Polygon Data ----------------
+// ---------------- Send Polygon Data to syth ----------------
 function clamp(number, floor, ceiling) {
     return Math.min(Math.max(number, floor), ceiling);
 }
 
 let sendInterval = 50; // Adjustable interval in milliseconds
-let lastSentTime = 0;  // Tracks the last send time
+let lastSentTime = 0; // Tracks the last send time
 
 function sendPolygonLocations() {
     const now = Date.now();
     if (now - lastSentTime < sendInterval) return; // Skip sending if too soon
-    lastSentTime = now; // Update last sent time
+    lastSentTime = now;
 
-    const data = maskPieces.map((piece, idx) => {
-        const cent = computeCentroid(piece.polygon);
-        return {
-            total: maskPieces.length,
-            id: idx,
-            x: clamp(cent.x, 0, 650),
-            y: clamp(cent.y, 0, 650),
-            attached: piece.attached,
-            staticPercentage: percentageStatic
-        };
-    });
+    const total = maskPieces.length;
 
-    try {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(data));
+    maskPieces.forEach((piece, idx) => {
+        if (!piece.attached) {
+            const cent = computeCentroid(piece.polygon);
+            const x = clamp(cent.x, 0, 650);
+            const y = clamp(cent.y, 0, 650);
+
+            createSynth(idx, total, x, y);
         }
-    } catch (err) {
-        console.error("Error sending polygon data:", err);
-    }
+    })
+
+    const unattachedCount = maskPieces.filter(p => !p.attached).length
+    const totalCount = maskPieces.length
+
+    const volume = clamp(unattachedCount / Math.max(1, totalCount), 0, 1)
+    console.log(`current volume static: ${volume}`)
+
+    staticGainNode.gain.linearRampToValueAtTime(volume * 0.4, 1)
 }
+
+// ---------------- Syth Magic ----------------
+const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+let activeVoices = [];
+
+
+function createSynth(index, total, x, y) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    // Random waveform
+    const types = ['sine', 'sawtooth', 'square'];
+    osc.type = types[Math.floor(Math.random() * types.length)];
+
+    // Frequency based on Y (100–1000Hz)
+    osc.frequency.value = 100 + (y / 650) * 900;
+
+    // Amplitude scaling
+    const amp = (index === 0) ?
+        0.6 :
+        (0.3 / Math.max(1, total - 1));
+
+    // Ramp based on X position
+    const ramp = clamp(x / 650, 0, 1);
+    const attack = ramp;
+    const decay = 1 - ramp;
+
+    // Gain envelope
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(amp, now + attack); // Attack
+    gain.gain.linearRampToValueAtTime(0.0001, now + attack + decay); // Decay
+
+    // Connect and play
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + attack + decay + 0.01); // Cleanup
+}
+
+//Static noise
+
+let staticNoiseNode, staticGainNode;
+
+function initStaticNoise() {
+    const bufferSize = 2 * audioCtx.sampleRate;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+    }
+
+    staticNoiseNode = audioCtx.createBufferSource();
+    staticNoiseNode.buffer = noiseBuffer;
+    staticNoiseNode.loop = true;
+
+    staticGainNode = audioCtx.createGain();
+    staticGainNode.gain.value = 0; // start silent
+    console.log(`Static Volume: ${staticGainNode.gain.value}`)
+
+    staticNoiseNode.connect(staticGainNode).connect(audioCtx.destination);
+    staticNoiseNode.start();
+}
+
 
 // ---------------- Draw the Polygon Mask Pieces ----------------
 function getRandomColor() {
@@ -833,5 +886,3 @@ function updatePolygonUI() {
 
 // Initialize the UI controls.
 createControlsUI();
-
-// ---------------- End of Code ----------------
