@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>3D Binary File Visualizer</title>
+  <style>
+    body { background: #111; color: #eee; font-family: monospace; margin: 0; overflow: hidden; display: flex; }
+    #uiColumn { width: 30vw; height: 100vh; background: #222; padding: 10px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column;}
+    #fileInput {margin: 30px;}
+    #controls label { display: block; margin-top: 5px; text-align: center;}
+    #legend p { margin: 0; }
+    #infoPanel { margin-top: 20px; border-top: 1px solid #444; padding-top: 10px; }
+    #viewer { flex-grow: 1; position: relative; }
+    canvas { display: block; }
+    #explanation {border-bottom: 3px dotted white;}
+    #legendExplanation div { margin-top: 20px;}
+    a {color: lightblue}
+    #Inspiration { margin-top: auto; padding-bottom: 25px; padding-top: 50px; border-top: 3px dotted white;}
+  </style>
+</head>
+<body>
+    <div id="uiColumn">
+        <div id="about">
+            <p>This is a binary file visualizer written entirely in JavaScript. It runs locally in your browser. No data ever leaves your machine.</p>
+            <p>By default, it loads a sample file hosted on my server. For real exploration, use the file picker below to load any binary file from your system.</p>
+            <p><strong>Controls:</strong></p>
+            <blockquote>
+              <p><strong>Left click + drag</strong>: Pan view</p>
+              <p><strong>Right click + drag</strong>: Orbit camera</p>
+              <p><strong>Scroll wheel</strong>: Zoom</p>
+              <p><strong>Click voxel</strong>: Inspect trigram and entropy</p>
+            </blockquote>
+          </div>
+        <div id="controls">
+          <input type="file" id="fileInput">
+          <label>Entropy Min Threshold: <input type="number" id="entropyMin" min="0" max="1" step="0.001" value="0"></label>
+          <label>Entropy Max Threshold: <input type="number" id="entropyMax" min="0" max="1" step="0.001" value="1"></label>
+          <label><input type="checkbox" id="filterEnabled" checked> Enable Entropy Filtering</label>
+          <label><input type="checkbox" id="voxelAnimation"> Animate Voxels</label>
+        </div>
+        <div id="infoPanel">
+            <div id="explanation">
+                <h3>Selected Cube Explanation</h3>
+                <pre id="cubeInfo">(click a cube to inspect)</pre>
+            </div>
+            <div id="legend"></div>
+            <p><strong>Legend:</strong></p>
+                <blockquote>
+                <p>Yellow = Start of File</p>
+                <p>White = Middle</p>
+                <p>Blue = End of File</p>
+                <p>Brightness = Entropy</p>
+                </blockquote>
+            </div>
+            <div id="legendExplanation">
+                <p><strong>What is entropy?</strong></p>
+                <p>Entropy is a measure of randomness in data. A segment with all 0s has low entropy (dark), while compressed or encrypted data has high entropy (bright).</p>
+                <p><strong>What is a trigram?</strong></p>
+                <p>A trigram is a sequence of 3 consecutive bytes. Each unique trigram is rendered as one voxel (cube) in the 3D space using its 3 bytes as X, Y, Z coordinates.</p>
+                <p><strong>How do you read the cube?</strong></p>
+                <p>The color hue indicates position in the file (yellow = start, blue = end). Brightness reflects entropy. Clicking a cube shows the byte values, file segment, entropy, and how often that sequence occurred.</p>
+                <p><strong>Example: PNG Image:</strong></p>
+                <p>Low-entropy yellow clusters at the start represent PNG headers and structure like IHDR. Dense blue-white clusters at the end indicate compressed image data with high entropy.</p>
+            </div>
+            <div id="Inspiration">
+                Inspired by <a href="https://codisec.com/binary-data-visualization/">Veles Visualization</a>, I wanted to make visualizers like those more accessible to everyone so I wrote one in JavaScript+threeJs!
+            </div>
+        </div>
+    </div>
+    <div id="viewer"></div>
+    
+
+  <script type="module">
+    import * as THREE from './js/three.module.js';
+    import { OrbitControls } from './js/OrbitControls.js';
+
+    const DEFAULT_FILE = "default.bin";
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    const uiColumn = document.getElementById("uiColumn");
+    const viewer = document.getElementById("viewer");
+
+    function updateRendererSize() {
+        const uiWidth = uiColumn.offsetWidth;
+        const width = window.innerWidth - uiWidth;
+        const height = window.innerHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+    updateRendererSize();
+    window.addEventListener("resize", updateRendererSize);
+    document.getElementById("viewer").appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    camera.position.z = 100;
+    controls.update();
+
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const infoPanel = document.getElementById("cubeInfo");
+
+    const voxelAnimationCheckbox = document.getElementById("voxelAnimation");
+
+    let instancedMesh, trigramKeysRef = [], trigramMapRef = {}, entropyMapRef = [], animationData = [];
+
+    function calculateEntropy(segment) {
+      const freq = new Array(256).fill(0);
+      for (let i = 0; i < segment.length; i++) freq[segment[i]]++;
+      const total = segment.length;
+      let entropy = 0;
+      for (let i = 0; i < 256; i++) {
+        if (freq[i] === 0) continue;
+        const p = freq[i] / total;
+        entropy -= p * Math.log2(p);
+      }
+      return entropy / 8;
+    }
+
+    function draw3DFromBytes(byteArray) {
+      if (instancedMesh) scene.remove(instancedMesh);
+
+      const trigramMap = new Map();
+      const segmentCount = 64;
+      const voxelSize = 1.0;
+      const geometry = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
+
+      const segmentSize = Math.floor(byteArray.length / segmentCount);
+      const entropyMap = new Array(segmentCount).fill(0);
+      for (let i = 0; i < segmentCount; i++) {
+        const start = i * segmentSize;
+        const end = i === segmentCount - 1 ? byteArray.length : start + segmentSize;
+        const segment = byteArray.slice(start, end);
+        entropyMap[i] = calculateEntropy(segment);
+      }
+
+      for (let i = 0; i + 2 < byteArray.length; i++) {
+        const key = `${byteArray[i]},${byteArray[i + 1]},${byteArray[i + 2]}`;
+        const segment = Math.floor(i / byteArray.length * segmentCount);
+        if (!trigramMap.has(key)) trigramMap.set(key, { count: 0, segments: new Array(segmentCount).fill(0) });
+        const entry = trigramMap.get(key);
+        entry.count++;
+        entry.segments[segment]++;
+      }
+
+      const trigramKeys = Array.from(trigramMap.keys());
+      const material = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.6, depthWrite: false });
+      instancedMesh = new THREE.InstancedMesh(geometry, material, trigramKeys.length);
+
+      const dummy = new THREE.Object3D();
+      const color = new THREE.Color();
+      const colorAttr = new Float32Array(trigramKeys.length * 3);
+      let visibleIndex = 0;
+
+      const entropyMin = parseFloat(document.getElementById("entropyMin").value);
+      const entropyMax = parseFloat(document.getElementById("entropyMax").value);
+      const filterEnabled = document.getElementById("filterEnabled").checked;
+
+      trigramKeysRef = [];
+      trigramMapRef = Object.fromEntries(trigramMap.entries());
+      entropyMapRef = entropyMap;
+      animationData = [];
+
+      for (let i = 0; i < trigramKeys.length; i++) {
+        const [xRaw, yRaw, zRaw] = trigramKeys[i].split(',').map(Number);
+        const data = trigramMap.get(trigramKeys[i]);
+
+        const x = xRaw / 255 * 64;
+        const y = yRaw / 255 * 64;
+        const z = zRaw / 255 * 64;
+
+        const maxSegment = data.segments.indexOf(Math.max(...data.segments));
+        const positionRatio = maxSegment / (segmentCount - 1);
+        const entropy = entropyMap[maxSegment];
+
+        if (filterEnabled && (entropy < entropyMin || entropy > entropyMax)) continue;
+
+        dummy.position.set(x, y, z);
+        dummy.scale.set(0.5, 0.5, 0.5);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        instancedMesh.setMatrixAt(visibleIndex, dummy.matrix);
+
+        let r = 1.0, g = 1.0, b = 1.0;
+        if (positionRatio < 0.3) {
+          r = 1.0;
+          g = 1.0 - positionRatio * 3.3;
+          b = 0.0;
+        } else if (positionRatio > 0.7) {
+          r = 0.0;
+          g = 0.0;
+          b = 1.0;
+        }
+
+        r *= entropy;
+        g *= entropy;
+        b *= entropy;
+
+        color.setRGB(r, g, b);
+        colorAttr[visibleIndex * 3] = color.r;
+        colorAttr[visibleIndex * 3 + 1] = color.g;
+        colorAttr[visibleIndex * 3 + 2] = color.b;
+
+        trigramKeysRef.push(trigramKeys[i]);
+        animationData.push({
+          basePos: new THREE.Vector3(x, y, z),
+          phase: Math.random() * Math.PI * 2,
+          spin: Math.random() * 0.01 + 0.005
+        });
+        visibleIndex++;
+      }
+
+      instancedMesh.count = visibleIndex;
+      geometry.setAttribute('color', new THREE.InstancedBufferAttribute(colorAttr, 3));
+      instancedMesh.position.set(-32, -32, -32);
+      scene.add(instancedMesh);
+    }
+
+    function animate(time) {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      if (voxelAnimationCheckbox.checked && instancedMesh) {
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < instancedMesh.count; i++) {
+          const anim = animationData[i];
+          const pulse = 0.3 + Math.sin(time * 0.001 + anim.phase) * 0.1;
+          dummy.position.copy(anim.basePos);
+          dummy.rotation.y += anim.spin;
+          dummy.scale.set(pulse, pulse, pulse);
+          dummy.updateMatrix();
+          instancedMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instancedMesh.instanceMatrix.needsUpdate = true;
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener("click", (event) => {
+      mouse.x = (event.clientX - 320) / (window.innerWidth - 320) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObject(instancedMesh);
+      if (intersects.length > 0) {
+        const index = intersects[0].instanceId;
+        const key = trigramKeysRef[index];
+        const [r, g, b] = key.split(',').map(Number);
+        const segmentHits = trigramMapRef[key].segments;
+        const mostCommonSegment = segmentHits.indexOf(Math.max(...segmentHits));
+        const entropy = entropyMapRef[mostCommonSegment].toFixed(3);
+        infoPanel.textContent = `Trigram: [${r}, ${g}, ${b}]
+Position Segment: ${mostCommonSegment} (out of 64)
+Entropy in Segment: ${entropy}
+Occurrences in File: ${trigramMapRef[key].count}`;
+      }
+    });
+
+    document.getElementById("fileInput").addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const data = new Uint8Array(e.target.result);
+          draw3DFromBytes(data);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    });
+
+    ["entropyMin", "entropyMax", "filterEnabled"].forEach(id => {
+      document.getElementById(id).addEventListener("input", () => {
+        const fileInput = document.getElementById("fileInput");
+        if (fileInput.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const data = new Uint8Array(e.target.result);
+            draw3DFromBytes(data);
+          };
+          reader.readAsArrayBuffer(fileInput.files[0]);
+        }
+      });
+    });
+
+    fetch(DEFAULT_FILE)
+      .then(resp => resp.arrayBuffer())
+      .then(buf => draw3DFromBytes(new Uint8Array(buf)))
+      .catch(() => console.warn("Default binary file not found."));
+
+    window.addEventListener("resize", () => {
+      camera.aspect = (window.innerWidth - 320) / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth - 320, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
