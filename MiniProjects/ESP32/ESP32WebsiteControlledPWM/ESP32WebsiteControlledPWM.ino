@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <DNSServer.h>
 #include <WebServer.h>
+#include <ESPmDNS.h>
 
 // DNS/captive portal setup
 const byte DNS_PORT = 53;
@@ -174,13 +175,16 @@ void startAP(){
   WiFi.softAPConfig(apIP, apIP, IPAddress(255,255,255,0));
   dnsServer.start(DNS_PORT, "*", apIP);
   inAPmode = true;
-  Serial.println("AP mode: ESP32-AP @ 192.168.4.1");
+  MDNS.begin("esp32");
+  Serial.println("AP mode: ESP32-AP @ 192.168.4.1, mDNS: esp32.local");
 }
 
 void startSTA(){
   inAPmode = false;
+  MDNS.begin("esp32");
   Serial.print("STA mode IP: ");
-  Serial.println(WiFi.localIP());
+  Serial.print(WiFi.localIP());
+  Serial.println(", mDNS: esp32.local");
 }
 
 void setup(){
