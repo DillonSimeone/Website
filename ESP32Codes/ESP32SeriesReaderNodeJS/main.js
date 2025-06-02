@@ -1,6 +1,5 @@
 import SerialBridge from './serialYoinker.js';
 
-//If serial message matches " ", log to console and do nothing.
 SerialBridge.onSerialMatch("Ping!", (line, port) => {
   console.log(`[EVENT] ${port}: ${line}`);
   SerialBridge.sendToESP32("Pong!");
