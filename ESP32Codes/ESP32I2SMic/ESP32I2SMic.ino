@@ -195,13 +195,33 @@ void ledFreqAmp() {
   // Map magnitude to brightness
   uint8_t brightness = map(mag, minMag, maxMag, 0, LED_BRIGHTNESS);
 
-#ifdef USE_FASTLED
-  FastLED.setBrightness(brightness);
-#else
-  strip.setBrightness(brightness);
-#endif
+  #ifdef USE_FASTLED
+    FastLED.setBrightness(brightness);
+  #else
+    strip.setBrightness(brightness);
+  #endif
 
   ledApplyHue(currentHue);
+}
+
+// ===== MOTOR CONTROL FROM AMPLITUDE (Multi-Pin Safe) =====
+void motorControl(uint8_t pin, uint16_t threshold) {
+  static bool initializedPins[40] = { false }; // Assume max GPIO number = 39
+
+  if (!initializedPins[pin]) {
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
+    initializedPins[pin] = true;
+  }
+
+  if (audioMagnitude > threshold) {
+    digitalWrite(pin, HIGH);
+    Serial.print("MOTOR ");
+    Serial.print(pin);
+    Serial.println(" IS ON");
+  } else {
+    digitalWrite(pin, LOW);
+  }
 }
 
 void setup() {
@@ -214,4 +234,8 @@ void setup() {
 void loop() {
   analyzeFreq();
   ledFreqAmp();
+  motorControl(21, 1000);
+  motorControl(20, 1500);
+  motorControl(10, 2000);
+  motorControl(9, 2500);
 }
