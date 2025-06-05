@@ -12,14 +12,10 @@ uniform vec2 u_offset;
 #define PHI 1.61803398875
 #define MAX_ITER 25
 
-// A lightweight “fract‐smooth” function to approximate smooth iteration
 float fractSmooth(float zmag, float iter) {
-  // Turn the magnitude into a fractional remainder
-  // We assume zmag ≥ 1.0, so log2(zmag) is valid. Then fract gives a smooth ramp.
   return fract(log2(zmag) * 0.5 + iter);
 }
 
-// Convert HSV to RGB (mediump‐safe, no weird syntax)
 vec3 hsv2rgb(in vec3 c) {
   vec3 p = abs(fract(vec3(c.x, c.x + 2.0/3.0, c.x + 1.0/3.0)) * 6.0 - 3.0);
   vec3 rgb = c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);
