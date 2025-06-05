@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Infinity Visualizer</title>
   <style>
-    body, html {
+    html,
+    body {
       margin: 0;
       padding: 0;
       width: 100%;
@@ -14,13 +15,14 @@
       font-family: sans-serif;
       background-color: black;
     }
+
     #introOverlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.85);
       color: #fff;
       display: flex;
       align-items: center;
@@ -31,47 +33,108 @@
       z-index: 100;
       cursor: pointer;
     }
+
+    #introOverlay .content {
+      max-width: 800px;
+      width: 80%;
+      margin: 0 auto;
+    }
+
     #introOverlay h1 {
       margin-bottom: 10px;
       font-size: 2em;
     }
     #introOverlay p {
-      font-size: 1.2em;
-      line-height: 1.5;
+      font-size: 1.1em;
+      line-height: 1.4;
+      margin: 8px 0;
+    }
+    #introOverlay p.bold {
+      font-weight: bold;
+      margin-top: 16px;
+    }
+
+    #introOverlay ul {
+      display: inline-block;
+      list-style: disc inside;
+      padding-left: 0;
+      text-align: left;
+    }
+    #introOverlay li {
+      margin-bottom: 6px;
+      font-size: 1em;
+    }
+
+    #introOverlay img {
+      display: block;
+      max-width: 150px;
+      width: 40%;
+      height: auto;
+      margin: 12px auto;
+      border: 2px solid #fff;
+      border-radius: 8px;
+    }
+
+    #introOverlay a {
+      color: #66ccff;
+      text-decoration: none;
+      word-break: break-word;
+    }
+    #introOverlay a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      #introOverlay {
+        padding: 0px;
+      }
+      #introOverlay .content {
+        width: 90%;
+      }
+      #introOverlay h1 {
+        font-size: 1em;
+      }
+      #introOverlay p,
+      #introOverlay li {
+        font-size: 0.85em;
+      }
+      #introOverlay img {
+        max-width: 120px;
+        width: 50%;
+      }
     }
   </style>
 </head>
 <body>
   <div id="introOverlay">
-    <div style="width: 50%;">
+    <div class="content">
       <h1>Infinity Visualizer</h1>
-      <p>Explore a library of audio-reactive fractal and procedural shaders.</p><br>
-      <p style ="font-weight: bolder;">Controls</p>
-      <ul style="text-align: left;">
-        <li>Double click on shaders - Toggle full screen</li>
-        <li>Double click / ESC in full screen - Disables full screen</li>
-        <li>WASD keys - Move the camera view around</li>
-        <li>Arrow keys - zoom in, and affect the time factor</li>
-        <li>Q and E keys - toggles flags that toggles some behaviors for the shaders</li>
-        <li>Spacebar toggles sound reactive mode</li>
-      </ul>
+      <p>Explore a library of audio‐reactive fractal and procedural shaders.</p>
+      <p class="bold">Controls</p>
+      <div style="text-align: center;">
+        <ul>
+          <li>Double click on shaders – Toggle full screen</li>
+          <li>Double click / ESC in full screen – Exit full screen</li>
+          <li>WASD keys – Move the camera view around</li>
+          <li>Arrow keys – Zoom in, and affect the time factor</li>
+          <li>Q and E keys – Toggle shader behaviors</li>
+          <li>Spacebar – Toggle sound reactive mode</li>
+        </ul>
+      </div>
       <p>Click anywhere to begin.</p>
-      <img src="qrCode.jpg">
-      <p>Inspiration: I made this almost four years ago. Back then, I did not know how to use shaders, so I was generating the image pixels by pixels. With modern shaders? The entire library is running smoothly, all at once.</p>
-      <a href="https://codepen.io/DillonSimeone/pen/JjZQYdX">Ancient Code</a>
-      <p>Most of my ideas came from the wiki page for fractals.</p>
-      <a href="https://en.wikipedia.org/wiki/List_of_fractals_by_Hausdorff_dimension">Wiki - List of fractals by Hausdorff dimension</a>
-      <p>Peep at the shaders code here: <a href="https://github.com/DillonSimeone/Website/tree/master/CollegeCourses/MathInArts/FinalProject/shaders">Shaders</a></p>
-      
+      <img src="qrCode.jpg" alt="QR Code" />
+      <p>Inspiration: I made this almost four years ago. Back then, I did not know how to use shaders, so I was generating the image pixels by pixels. With modern shaders, the entire library runs smoothly, all at once.</p>
+      <p><a href="https://codepen.io/DillonSimeone/pen/JjZQYdX" target="_blank" rel="noopener">View Ancient Code on CodePen</a></p>
+      <p>Most of my ideas came from the wiki page for fractals:</p>
+      <p><a href="https://en.wikipedia.org/wiki/List_of_fractals_by_Hausdorff_dimension" target="_blank" rel="noopener">Wiki – List of fractals by Hausdorff dimension</a></p>
+      <p>Peep at the shaders code here:</p>
+      <p><a href="https://github.com/DillonSimeone/Website/tree/master/CollegeCourses/MathInArts/FinalProject/shaders" target="_blank" rel="noopener">GitHub – Shader Library</a></p>
     </div>
   </div>
 
-  <!-- The main script will create the shader grid inside a container -->
   <script type="module" src="js/main.js"></script>
-
   <script>
-    // Dismiss intro on click
-    document.getElementById('introOverlay').addEventListener('click', function() {
+    document.getElementById('introOverlay').addEventListener('click', function () {
       this.style.display = 'none';
     });
   </script>

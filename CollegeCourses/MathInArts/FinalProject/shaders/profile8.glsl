@@ -9,7 +9,6 @@ uniform bool u_invert;
 uniform bool u_rotate;
 uniform vec2 u_offset;
 
-// Convert HSV to RGB
 vec3 hsv2rgb(in vec3 c) {
   vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
   vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
@@ -38,7 +37,6 @@ float mandelbulbDE(vec3 p) {
   return 0.5 * log(r) * r / dr;
 }
 
-// Ray march the Mandelbulb
 float rayMarch(vec3 ro, vec3 rd) {
   float totalDist = 0.0;
   for(int i = 0; i < 100; i++) {
