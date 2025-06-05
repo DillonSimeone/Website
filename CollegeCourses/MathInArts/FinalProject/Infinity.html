@@ -2,13 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Infinity - Julia Fractal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Infinity Visualizer</title>
   <style>
-    html, body { margin: 0; overflow: hidden; background: black; }
-    canvas { display: block; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
+      background-color: black;
+    }
+    #introOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+      z-index: 100;
+      cursor: pointer;
+    }
+    #introOverlay h1 {
+      margin-bottom: 10px;
+      font-size: 2em;
+    }
+    #introOverlay p {
+      font-size: 1.2em;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
-    <script type="module" src="./js/main.js"></script>
+  <div id="introOverlay">
+    <div style="width: 50%;">
+      <h1>Infinity Visualizer</h1>
+      <p>Explore a library of audio-reactive fractal and procedural shaders.</p><br>
+      <p style ="font-weight: bolder;">Controls</p>
+      <ul style="text-align: left;">
+        <li>Double click on shaders - Toggle full screen</li>
+        <li>Double click / ESC in full screen - Disables full screen</li>
+        <li>WASD keys - Move the camera view around</li>
+        <li>Arrow keys - zoom in, and affect the time factor</li>
+        <li>Q and E keys - toggles flags that toggles some behaviors for the shaders</li>
+        <li>Spacebar toggles sound reactive mode</li>
+      </ul>
+      <p>Click anywhere to begin.</p>
+      <img src="qrCode.jpg">
+      <p>Inspiration: I made this almost four years ago. Back then, I did not know how to use shaders, so I was generating the image pixels by pixels. With modern shaders? The entire library is running smoothly, all at once.</p>
+      <a href="https://codepen.io/DillonSimeone/pen/JjZQYdX">Ancient Code</a>
+      <p>Most of my ideas came from the wiki page for fractals.</p>
+      <a href="https://en.wikipedia.org/wiki/List_of_fractals_by_Hausdorff_dimension">Wiki - List of fractals by Hausdorff dimension</a>
+      <p>Peep at the shaders code here: <a href="https://github.com/DillonSimeone/Website/tree/master/CollegeCourses/MathInArts/FinalProject/shaders">Shaders</a></p>
+      
+    </div>
+  </div>
+
+  <!-- The main script will create the shader grid inside a container -->
+  <script type="module" src="js/main.js"></script>
+
+  <script>
+    // Dismiss intro on click
+    document.getElementById('introOverlay').addEventListener('click', function() {
+      this.style.display = 'none';
+    });
+  </script>
 </body>
 </html>

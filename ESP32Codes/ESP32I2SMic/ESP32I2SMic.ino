@@ -6,7 +6,7 @@
 // #define USE_FASTLED
 
 // ===== LED CONFIGURATION =====
-#define LED_PIN     8
+#define LED_PIN     21
 #define LED_COUNT   60
 #define LED_BRIGHTNESS 128
 
@@ -27,11 +27,11 @@
   It happens that human speech energy is between 85 Hz and 4,000 Hz. This is what most I2S MEMS mics are aimed at. 
   So 8,000hz sample rate is ideal. 
 */ 
-#define I2S_SD   1   // DO
-#define I2S_SCK  2   // SCK
+#define I2S_SD   22  // DO
+#define I2S_SCK  23   // SCK
 #define I2S_WS   4   // WS
 #define I2S_PORT I2S_NUM_0
-#define MIC_SEL  3   // SEL (LOW = left channel)
+#define MIC_SEL  5   // SEL (LOW = left channel)
 
 #define SAMPLE_RATE     16000 //This seems to get the max 4,000hz most I2S MEMs microphones are capable of.
 #define BUFFER_SIZE     1024
@@ -234,8 +234,8 @@ void setup() {
 void loop() {
   analyzeFreq();
   ledFreqAmp();
-  motorControl(21, 1000);
-  motorControl(20, 1500);
-  motorControl(10, 2000);
-  motorControl(9, 2500);
+  motorControl(20, 1000);
+  motorControl(19, 1500);
+  motorControl(16, 2000);
+  motorControl(17, 2500);
 }
