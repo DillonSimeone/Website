@@ -10,7 +10,7 @@ uniform bool u_rotate;
 uniform vec2 u_offset;
 
 #define PHI 1.61803398875
-#define MAX_ITER 300
+#define MAX_ITER 30
 
 void main() {
   vec2 uv = (gl_FragCoord.xy / u_resolution.xy) * 2.0 - 1.0;
