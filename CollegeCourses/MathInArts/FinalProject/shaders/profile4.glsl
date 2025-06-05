@@ -14,6 +14,7 @@ void main() {
   uv.x *= u_resolution.x / u_resolution.y;
 
   float t = u_invert ? -u_time : u_time;
+
   vec2 z = (uv + u_offset) * u_zoom;
 
   vec2 c = u_rotate
@@ -32,19 +33,24 @@ void main() {
 
   float mag = dot(z, z);
   float sval = i - log2(log2(mag + 1.00001));
-  float depth = pow(sval / 500.0, 0.6);
+  float norm = sval / 500.0;
+  float bands = abs(fract(norm * 12.0) - 0.5) * 2.0;  
 
-  vec3 normal = normalize(vec3(dFdx(depth), dFdy(depth), 0.03));
+  float contrast = mix(0.6, 1.8, u_fft_high);  
+  bands = pow(bands, contrast);
+
+  float depth = pow(norm, 0.6);
+  vec3 normal = normalize(vec3(dFdx(depth), dFdy(depth), 0.02));
   vec3 lightDir = normalize(vec3(0.5, 0.8, 1.0));
   float lighting = dot(normal, lightDir) * 0.5 + 0.5;
 
   vec3 baseColor = vec3(
-    0.4 + 0.6 * sin(depth * 8.0 + 0.0),
-    0.4 + 0.6 * sin(depth * 8.0 + 2.0),
-    0.4 + 0.6 * sin(depth * 8.0 + 4.0)
+    0.3 + 0.7 * sin(depth * 16.0 + 0.0),
+    0.3 + 0.7 * sin(depth * 16.0 + 2.0),
+    0.3 + 0.7 * sin(depth * 16.0 + 4.0)
   );
 
-  baseColor *= lighting * (1.0 + u_fft_high * 0.5);
+  vec3 color = baseColor * bands * (lighting * (1.0 + u_fft_low * 0.3));
 
-  gl_FragColor = vec4(baseColor, 1.0);
+  gl_FragColor = vec4(color, 1.0);
 }
