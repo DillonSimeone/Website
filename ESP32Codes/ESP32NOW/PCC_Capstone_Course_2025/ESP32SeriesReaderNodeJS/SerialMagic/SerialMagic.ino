@@ -12,7 +12,7 @@ the serial monitor to pass data to the computer.
 #include <FastLED.h>
 
 // === CONFIG ===
-bool isMaster = false;
+bool isMaster = true;
 const int ledPin = 2;
 const int dataPin = 13;
 const int ledCount = 200;
