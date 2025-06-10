@@ -1,6 +1,12 @@
-import { SerialPort } from 'serialport';
-import { SerialPortStream } from '@serialport/stream';
-import { autoDetect } from '@serialport/bindings-cpp';
+import {
+  SerialPort
+} from 'serialport';
+import {
+  SerialPortStream
+} from '@serialport/stream';
+import {
+  autoDetect
+} from '@serialport/bindings-cpp';
 import chalk from 'chalk';
 
 const Binding = autoDetect();
@@ -48,10 +54,14 @@ class SerialBridge {
 
     // Check listeners
     for (const listener of this.listeners) {
-      if (line === listener.match) {
+      if (
+        (typeof listener.match === 'string' && line.includes(listener.match)) ||
+        (listener.match instanceof RegExp && listener.match.test(line))
+      ) {
         listener.callback(line, portPath);
       }
     }
+
   }
 
   sendToESP32(message) {
@@ -59,7 +69,10 @@ class SerialBridge {
   }
 
   onSerialMatch(matchString, callback) {
-    this.listeners.push({ match: matchString, callback });
+    this.listeners.push({
+      match: matchString,
+      callback
+    });
   }
 }
 

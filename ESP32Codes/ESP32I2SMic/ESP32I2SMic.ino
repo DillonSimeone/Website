@@ -234,8 +234,5 @@ void setup() {
 void loop() {
   analyzeFreq();
   ledFreqAmp();
-  motorControl(20, 1000);
-  motorControl(19, 1500);
-  motorControl(16, 2000);
-  motorControl(17, 2500);
+  motorControl(17, 1000);
 }

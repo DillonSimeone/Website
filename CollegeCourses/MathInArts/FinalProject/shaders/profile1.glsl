@@ -10,7 +10,7 @@ uniform bool u_rotate;
 uniform vec2 u_offset;
 
 #define PHI 1.61803398875
-#define MAX_ITER 25
+#define MAX_ITER 50
 
 float fractSmooth(float zmag, float iter) {
   return fract(log2(zmag) * 0.5 + iter);
