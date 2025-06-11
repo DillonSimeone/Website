@@ -1,3 +1,6 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DNSServer.h>
 #include <driver/i2s.h>
 #include <arduinoFFT.h>
 
@@ -28,12 +31,12 @@
   So 8,000hz sample rate is ideal. 
 */ 
 #define I2S_SD   22  // DO
-#define I2S_SCK  23   // SCK
+#define I2S_SCK  23  // SCK
 #define I2S_WS   4   // WS
 #define I2S_PORT I2S_NUM_0
 #define MIC_SEL  5   // SEL (LOW = left channel)
 
-#define SAMPLE_RATE     16000 //This seems to get the max 4,000hz most I2S MEMs microphones are capable of.
+#define SAMPLE_RATE     16000
 #define BUFFER_SIZE     1024
 
 // ===== AUDIO STATE =====
@@ -48,6 +51,10 @@ float audioFrequency = 0;
 float currentHue = 0;
 float targetHue = 0;
 float hueDecayRate = 0.2;
+
+// ===== MOTOR CONTROL =====
+const int motorPins[] = {17};
+int motorThresholds[] = {1000};
 
 // ===== I2S SETUP =====
 void setupI2SMic() {
@@ -140,88 +147,93 @@ void analyzeFreq() {
   }
 
   audioFrequency = maxIndex * ((float)SAMPLE_RATE / BUFFER_SIZE);
-
-  static uint32_t lastPrint = 0;
-  if (millis() - lastPrint > 250) {
-    Serial.print("Average magnitude: ");
-    Serial.print(audioMagnitude);
-    Serial.print(" | Dominant frequency: ");
-    Serial.println(audioFrequency);
-    lastPrint = millis();
-  }
-}
-
-// ===== LED FROM AMPLITUDE =====
-void ledAmp() {
-  const uint16_t minMag = 10;
-  const uint16_t maxMag = 500;
-
-  uint16_t mag = audioMagnitude;
-  if (mag < minMag) mag = minMag;
-  if (mag > maxMag) mag = maxMag;
-
-  targetHue = map(mag, minMag, maxMag, 0, 255);
-  currentHue += (targetHue - currentHue) * hueDecayRate;
-  ledApplyHue(currentHue);
-}
-
-// ===== LED FROM FREQUENCY =====
-void ledFreq() {
-  float freq = audioFrequency;
-  if (freq < 50.0) freq = 50.0;
-  if (freq > 2000.0) freq = 2000.0;
-
-  targetHue = map(freq, 50.0, 2000.0, 0, 255);
-  currentHue += (targetHue - currentHue) * hueDecayRate;
-  ledApplyHue(currentHue);
 }
 
 // ===== LED FROM FREQUENCY + AMPLITUDE =====
 void ledFreqAmp() {
-  // Clamp frequency range (color)
   float freq = audioFrequency;
   if (freq < 10.0) freq = 10.0;
   if (freq > 4000.0) freq = 4000.0;
   targetHue = map(freq, 10.0, 4000.0, 0, 255);
   currentHue += (targetHue - currentHue) * hueDecayRate;
 
-  // Clamp amplitude range (brightness)
   const uint16_t minMag = 30;
   const uint16_t maxMag = 500;
   uint16_t mag = audioMagnitude;
   if (mag < minMag) mag = minMag;
   if (mag > maxMag) mag = maxMag;
 
-  // Map magnitude to brightness
   uint8_t brightness = map(mag, minMag, maxMag, 0, LED_BRIGHTNESS);
 
-  #ifdef USE_FASTLED
-    FastLED.setBrightness(brightness);
-  #else
-    strip.setBrightness(brightness);
-  #endif
+#ifdef USE_FASTLED
+  FastLED.setBrightness(brightness);
+#else
+  strip.setBrightness(brightness);
+#endif
 
   ledApplyHue(currentHue);
 }
 
-// ===== MOTOR CONTROL FROM AMPLITUDE (Multi-Pin Safe) =====
+// ===== MOTOR CONTROL =====
 void motorControl(uint8_t pin, uint16_t threshold) {
-  static bool initializedPins[40] = { false }; // Assume max GPIO number = 39
-
+  static bool initializedPins[40] = { false };
   if (!initializedPins[pin]) {
     pinMode(pin, OUTPUT);
     digitalWrite(pin, LOW);
     initializedPins[pin] = true;
   }
-
   if (audioMagnitude > threshold) {
     digitalWrite(pin, HIGH);
-    Serial.print("MOTOR ");
-    Serial.print(pin);
-    Serial.println(" IS ON");
+    Serial.printf("MOTOR %d IS ON\n", pin);
   } else {
     digitalWrite(pin, LOW);
   }
+}
+
+// ===== WiFi Captive Portal Setup =====
+DNSServer dnsServer;
+WebServer server(80);
+const byte DNS_PORT = 53;
+
+void handleRoot() {
+  String html = "<html><body><h2>Audio Thresholds</h2>";
+  for (int i = 0; i < sizeof(motorPins)/sizeof(motorPins[0]); i++) {
+    html += "Ouput Pin" + String(motorPins[i]) + ": <input type='range' min='100' max='10000' step='50' value='" + String(motorThresholds[i]) + "' onchange='update(" + String(i) + ", this.value)'><span id='val" + String(i) + "'>" + String(motorThresholds[i]) + "</span><br>";
+  }
+  html += R"rawliteral(
+    <script>
+      function update(index, value) {
+        document.getElementById('val'+index).innerText = value;
+        fetch(`/set?index=${index}&value=${value}`);
+      }
+    </script>
+    </body></html>
+  )rawliteral";
+  server.send(200, "text/html", html);
+}
+
+void handleSet() {
+  if (server.hasArg("index") && server.hasArg("value")) {
+    int i = server.arg("index").toInt();
+    int v = server.arg("value").toInt();
+    if (i >= 0 && i < sizeof(motorThresholds)/sizeof(motorThresholds[0])) {
+      motorThresholds[i] = v;
+    }
+  }
+  server.send(200, "text/plain", "OK");
+}
+
+void setupCaptivePortal() {
+  WiFi.softAP("ESP32-InfinityMirror-Controller");
+  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+  server.on("/", handleRoot);
+  server.on("/set", handleSet);
+  server.begin();
+}
+
+void updateWebPortal() {
+  dnsServer.processNextRequest();
+  server.handleClient();
 }
 
 void setup() {
@@ -229,10 +241,14 @@ void setup() {
   delay(500);
   setupI2SMic();
   ledSetup();
+  setupCaptivePortal();
 }
 
 void loop() {
   analyzeFreq();
   ledFreqAmp();
-  motorControl(17, 1000);
+  for (int i = 0; i < sizeof(motorPins)/sizeof(motorPins[0]); i++) {
+    motorControl(motorPins[i], motorThresholds[i]);
+  }
+  updateWebPortal();
 }
