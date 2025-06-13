@@ -1,24 +1,17 @@
-/*
-
-This is meant to work with main.js from ESP32SeriesReaderNodeJs.
-
-The goal of this is to join ESP32NOW networks to any computers connected to other internets by using
-the serial monitor to pass data to the computer.
-
-*/
-
 #include <WiFi.h>
 #include <esp_now.h>
 #include <FastLED.h>
 
 // === CONFIG ===
-bool isMaster = true;
-const int ledPin = 2;
-const int dataPin = 13;
-const int ledCount = 200;
-int rainbowSpeed = 10;
-float glitchness = 0.8;
-unsigned long glitchDuration = 650;
+bool isMaster = true;       // Set true for master, false for follower
+const int ledPin = 2;       // Onboard blue LED
+const int dataPin = 13;     // LED strip data pin
+const int ledCount = 60;    // Number of LEDs on the strip
+int rainbowSpeed = 10;      // Lower = faster animation
+float glitchness = 0.5;     // 0.0 to 1.0, how intense the glitch is
+unsigned long glitchDuration = 1000;  // In milliseconds
+unsigned long glitchIntervalMin = 5000; // Random glitch every 5–15 sec
+unsigned long glitchIntervalMax = 35000;
 
 // === FASTLED SETUP ===
 CRGB leds[ledCount];
@@ -30,10 +23,10 @@ unsigned long ledOnTime = 0;
 unsigned long lastRainbowUpdate = 0;
 bool ledState = false;
 bool rainbowPaused = false;
-unsigned long rainbowPauseUntil = 0;
 uint8_t hueOffset = 0;
 
-// === PEERS ===
+unsigned long nextRandomGlitch = 0;
+
 uint8_t followerMACs[][6] = {
   {0x2C, 0xBC, 0xBB, 0x4D, 0x7E, 0x9C}, // Master ESP32 (1)
   {0x08, 0xA6, 0xF7, 0xB0, 0x77, 0x84}, // Follower (2)
@@ -45,6 +38,9 @@ uint8_t followerMACs[][6] = {
   {0xEC, 0x64, 0xC9, 0x5D, 0xC0, 0xF8}, // Follower (8)
   {0xF4, 0x65, 0x0B, 0x40, 0x8D, 0xE4}, // Follower (9)
   {0xF0, 0xF5, 0xBD, 0x07, 0x82, 0xF8}  // RFID Reader 1
+  {0x2C, 0xBC, 0xBB, 0x4D, 0x7E, 0x9C},
+  {0x08, 0xA6, 0xF7, 0xB0, 0x77, 0x84},
+  {0x08, 0xA6, 0xF7, 0xB0, 0x7B, 0xCC}
 };
 
 // === UTIL ===
@@ -82,9 +78,14 @@ void rainbowAnimation() {
 }
 
 void glitchAnimation() {
+  int flickerRate = map(glitchness * 100, 0, 100, 0, 10);
   for (int i = 0; i < ledCount; i++) {
     if (random(100) < glitchness * 100) {
-      leds[i] = (random(2) == 0) ? CRGB::Black : CRGB(CHSV(random8(), 255, 255));
+      if (random(2) == 0) {
+        leds[i] = CRGB::Black;
+      } else {
+        leds[i] = CHSV(random8(), 255, 255);
+      }
     } else {
       leds[i] = CRGB::Black;
     }
@@ -118,6 +119,14 @@ void onDataRecv(const esp_now_recv_info_t *recvInfo, const uint8_t *data, int le
       Serial.print((char)data[i]);
     }
     Serial.println();
+
+    // Master reacts and broadcasts glitch
+    triggerLED();
+    triggerAnimation(glitchAnimation, glitchDuration);
+    uint8_t signal[1] = {42};
+    for (int i = 0; i < sizeof(followerMACs) / 6; i++) {
+      esp_now_send(followerMACs[i], signal, 1);
+    }
   }
 }
 
@@ -127,17 +136,13 @@ void setupESPNow() {
     Serial.println("ESP-NOW init failed");
     return;
   }
-
-  if (isMaster) {
-    for (int i = 0; i < sizeof(followerMACs) / 6; i++) {
-      esp_now_peer_info_t peer{};
-      memcpy(peer.peer_addr, followerMACs[i], 6);
-      peer.channel = 0;
-      peer.encrypt = false;
-      esp_now_add_peer(&peer);
-    }
+  for (int i = 0; i < sizeof(followerMACs) / 6; i++) {
+    esp_now_peer_info_t peer{};
+    memcpy(peer.peer_addr, followerMACs[i], 6);
+    peer.channel = 0;
+    peer.encrypt = false;
+    esp_now_add_peer(&peer);
   }
-
   esp_now_register_recv_cb(onDataRecv);
 }
 
@@ -148,11 +153,11 @@ void setup() {
   digitalWrite(ledPin, LOW);
 
   FastLED.addLeds<WS2812B, dataPin, GRB>(leds, ledCount);
-  FastLED.clear();
-  FastLED.show();
+  FastLED.clear(); FastLED.show();
 
   printMAC();
   setupESPNow();
+  nextRandomGlitch = millis() + random(glitchIntervalMin, glitchIntervalMax);
 }
 
 // === LOOP ===
@@ -180,6 +185,16 @@ void loop() {
       incoming = "";
     } else {
       incoming += c;
+    }
+  }
+
+  if (now > nextRandomGlitch) {
+    triggerLED();
+    triggerAnimation(glitchAnimation, glitchDuration);
+    nextRandomGlitch = now + random(glitchIntervalMin, glitchIntervalMax);
+    uint8_t signal[1] = {42};
+    for (int i = 0; i < sizeof(followerMACs) / 6; i++) {
+      esp_now_send(followerMACs[i], signal, 1);
     }
   }
 
