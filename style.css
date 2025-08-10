@@ -255,8 +255,7 @@ nav svg:hover{
 }
 
 #hobby img{
-    aspect-ratio: 1/1;
-    width: 30%;
+    width: 50%;
     min-width: 200px;
     max-width: 300px;
     margin: auto;
@@ -398,6 +397,19 @@ nav svg:hover{
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 1rem;
+}
+
+#work figure{
+    width: 75%;
+    margin: auto;
+}
+
+#work figure img{
+    width: 100%;
+}
+
+#work figure figcaption{
+    text-align: center;
 }
 
 /*=======================================================

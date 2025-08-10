@@ -17,15 +17,14 @@
 #define LED_COUNT      60
 #define LED_BRIGHTNESS 128
 
-// ===== I2S + MIC CONFIGURATION =====
-// Wiring on the Pico:
-//   SD (DIN)     → GP0
-//   WS (LRCLK)   → GP1
-//   SCK (BCLK)   → GP2
-//   SEL (Left/Right select) → GP3
+// ===== I2S + MIC CONFIGURATION =====n// Pico pins:
+//   SD (DIN)   → GP0
+//   WS (LRCLK) → GP1
+//   SCK (BCLK) → GP2
+//   SEL (L/R)  → GP3
 #define I2S_SD         0
-#define I2S_WS         1
-#define I2S_SCK        2
+#define I2S_WS         2
+#define I2S_SCK        1
 #define MIC_SEL        3
 
 #define SAMPLE_RATE    16000
@@ -39,16 +38,17 @@ ArduinoFFT<float> FFT(vReal, vImag, BUFFER_SIZE, SAMPLE_RATE);
 uint16_t audioMagnitude = 0;
 float   audioFrequency = 0;
 
-// ===== COLOR STATE =====
+// ===== COLOR STATE =====n// (for LEDs)
 float currentHue   = 0;
 float targetHue    = 0;
 float hueDecayRate = 0.2;
 
-// ===== MOTOR CONTROL =====
-const int motorPins[]      = { 17 };
-int       motorThresholds[] = { 1000 };
+// Onboard LED
+const int LED_ONBOARD = 25;
+unsigned long lastBlink = 0;
+const unsigned long blinkInterval = 200; // ms
 
-// Create the I2S port for input
+// I2S port
 I2S i2s = I2S(INPUT);
 
 #ifdef USE_FASTLED
@@ -59,18 +59,15 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 // ===== I2S SETUP =====
 void setupI2SMic() {
-  // Select left channel on the MEMS mic
   pinMode(MIC_SEL, OUTPUT);
   digitalWrite(MIC_SEL, LOW);
 
-  // WS is on GP1 and BCLK on GP2 (WS < BCLK), so swap clocks:
   i2s.setBCLK(I2S_WS);
   i2s.swapClocks();
-
   i2s.setDATA(I2S_SD);
   i2s.setBitsPerSample(16);
   i2s.setFrequency(SAMPLE_RATE);
-  i2s.setSysClk(SAMPLE_RATE);  // optimize CPU clock for audio rates
+  i2s.setSysClk(SAMPLE_RATE);
   i2s.begin();
 }
 
@@ -86,7 +83,7 @@ void ledSetup() {
 #endif
 }
 
-// ===== DRAW A SOLID HUE =====
+// ===== APPLY SOLID HUE =====
 void ledApplyHue(float hue) {
 #ifdef USE_FASTLED
   for (int i = 0; i < LED_COUNT; i++)
@@ -106,7 +103,6 @@ void analyzeFreq() {
   int16_t left, right;
   uint32_t sum = 0;
 
-  // Fill buffers with left‐channel samples
   for (int i = 0; i < BUFFER_SIZE; i++) {
     if (i2s.read16(&left, &right)) {
       vReal[i] = left;
@@ -118,12 +114,10 @@ void analyzeFreq() {
   }
   audioMagnitude = sum / BUFFER_SIZE;
 
-  // FFT
   FFT.windowing(vReal, BUFFER_SIZE, FFT_WIN_TYP_HAMMING, FFT_FORWARD);
   FFT.compute(vReal, vImag, BUFFER_SIZE, FFT_FORWARD);
   FFT.complexToMagnitude(vReal, vImag, BUFFER_SIZE);
 
-  // Find peak bin
   int   maxIndex = 1;
   float maxValue = vReal[1];
   for (int i = 2; i < BUFFER_SIZE/2; i++) {
@@ -135,14 +129,12 @@ void analyzeFreq() {
   audioFrequency = maxIndex * ((float)SAMPLE_RATE / BUFFER_SIZE);
 }
 
-// ===== MAP FREQ + AMP TO COLOR + MOTOR =====
+// ===== MAP FREQ + AMP → HUE/BRIGHTNESS =====
 void ledFreqAmp() {
-  // Map freq → hue
   float freq = constrain(audioFrequency, 10.0, 4000.0);
   targetHue   = map(freq, 10.0, 4000.0, 0, 255);
   currentHue += (targetHue - currentHue) * hueDecayRate;
 
-  // Map magnitude → brightness
   const uint16_t minMag = 30, maxMag = 500;
   uint16_t mag = constrain(audioMagnitude, minMag, maxMag);
   uint8_t  br  = map(mag, minMag, maxMag, 0, LED_BRIGHTNESS);
@@ -154,20 +146,13 @@ void ledFreqAmp() {
 #endif
 
   ledApplyHue(currentHue);
-
-  // Motor on/off
-  for (unsigned i = 0; i < (sizeof motorPins / sizeof *motorPins); i++) {
-    digitalWrite(motorPins[i], audioMagnitude > motorThresholds[i] ? HIGH : LOW);
-  }
 }
 
 void setup() {
   Serial.begin(115200);
-  // init motor pins
-  for (unsigned i = 0; i < (sizeof motorPins / sizeof *motorPins); i++) {
-    pinMode(motorPins[i], OUTPUT);
-    digitalWrite(motorPins[i], LOW);
-  }
+  delay(200);
+  pinMode(LED_ONBOARD, OUTPUT);
+  digitalWrite(LED_ONBOARD, LOW);
 
   setupI2SMic();
   ledSetup();
@@ -175,5 +160,23 @@ void setup() {
 
 void loop() {
   analyzeFreq();
+
+  // —— Blink onboard LED if no input ——
+  unsigned long now = millis();
+  if (audioMagnitude == 0) {
+    if (now - lastBlink >= blinkInterval) {
+      digitalWrite(LED_ONBOARD, !digitalRead(LED_ONBOARD));
+      lastBlink = now;
+    }
+  } else {
+    digitalWrite(LED_ONBOARD, LOW);
+  }
+
+  // —— Serial output ——
+  Serial.print("Magnitude: ");
+  Serial.print(audioMagnitude);
+  Serial.print("    Frequency: ");
+  Serial.println(audioFrequency, 1);
+
   ledFreqAmp();
 }
