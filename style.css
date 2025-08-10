@@ -225,7 +225,10 @@ nav svg:hover{
   background-clip: text;
   color: transparent;
   animation: rainbow-shift 3s alternate infinite;
-  text-shadow: 0 0 0.01px rgba(0,0,0,0.01); /* keeps glyphs crisp on some browsers */
+  filter: drop-shadow(3px 3px 1px black)
+          drop-shadow(-3px 3px 1px black)
+          drop-shadow(3px -3px 1px black)
+          drop-shadow(-3px -3px 1px black);
 }
 
 @keyframes rainbow-shift {
