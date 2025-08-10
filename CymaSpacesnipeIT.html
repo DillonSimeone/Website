@@ -94,6 +94,7 @@
                     const img = document.createElement('img')
                     if (row.image) {
                         img.src = row.image;
+                        img.alt = row.name || 'asset image';
                         item.appendChild(img);
                     }
 
