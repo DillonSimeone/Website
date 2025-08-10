@@ -184,6 +184,12 @@ nav svg:hover{
     color: white;
 }
 
+@media only screen and (max-width: 1000px){
+    #elevatorPitch a {
+        margin: auto;
+    }
+}
+
 @media only screen and (max-width: 600px) {
     #jobs{
         display: flex;
@@ -193,11 +199,45 @@ nav svg:hover{
     #elevatorPitch section{
         margin: auto;
     }
+
+    
 }
 
 /*=======================================================
                 hobby page
 =========================================================*/
+#hobby h1{
+    font-size: 4em;
+    text-align: center;
+    padding: 35px;
+      background: linear-gradient(
+    90deg,
+    #ff0040,
+    #ff8a00,
+    #ffd400,
+    #3cd500,
+    #00c2ff,
+    #7a00ff,
+    #ff0040
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow-shift 3s alternate infinite;
+  text-shadow: 0 0 0.01px rgba(0,0,0,0.01); /* keeps glyphs crisp on some browsers */
+}
+
+@keyframes rainbow-shift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+  
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    #hobby h1 { animation: none; }
+  }
+
 #hobby section{
     margin: 5% 15%;
     padding: 10px;
@@ -342,7 +382,7 @@ nav svg:hover{
 
 #projects .grid .grid-item{
     margin: 1rem auto 1rem auto;
-    width: 40%;
+    width: 100%;
     box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
     padding: 10px;
 }
@@ -355,24 +395,6 @@ nav svg:hover{
 #projects .grid .grid-item ul li, #projects .grid-item.project ul li{
     margin: 1rem;
 }
-
-#projects .grid-item.project{
-    width: 90%;
-}
-
-@media only screen and (max-width: 1000px) {
-    #projects .grid .grid-item{
-        width: 100%;
-    }
-    
-    #projects .grid{
-        padding-bottom: 100px;
-    }
-
-    #projects section{
-        margin: auto;
-    }
-  }
 
 /*=======================================================
                 Work
@@ -400,7 +422,7 @@ nav svg:hover{
 }
 
 #work figure{
-    width: 75%;
+    width: 50%;
     margin: auto;
 }
 
@@ -410,6 +432,20 @@ nav svg:hover{
 
 #work figure figcaption{
     text-align: center;
+}
+
+#work .medias{
+    margin: auto;
+    width: 80%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+#work .medias img{
+    width: 26%;
 }
 
 /*=======================================================
