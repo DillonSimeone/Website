@@ -9,8 +9,8 @@
 // #define USE_FASTLED
 
 // ===== LED CONFIGURATION =====
-#define LED_PIN     8
-#define LED_COUNT   60
+#define LED_PIN     13
+#define LED_COUNT   64
 #define LED_BRIGHTNESS 128
 
 #ifdef USE_FASTLED
@@ -22,11 +22,11 @@
 #endif
 
 // ===== I2S CONFIGURATION =====
-#define I2S_SD   1  
-#define I2S_SCK  2  
-#define I2S_WS   4  
+#define I2S_SD   16  
+#define I2S_SCK  4  
+#define I2S_WS   15  
 #define I2S_PORT I2S_NUM_0
-#define MIC_SEL  3  
+#define MIC_SEL  2  
 
 #define SAMPLE_RATE     16000
 #define BUFFER_SIZE     1024
@@ -124,6 +124,7 @@ void analyzeFreq() {
     sum += abs(samples[i]);
   }
   audioMagnitude = sum / BUFFER_SIZE;
+  Serial.println(audioMagnitude);
 
   FFT.windowing(vReal, BUFFER_SIZE, FFT_WIN_TYP_HAMMING, FFT_FORWARD);
   FFT.compute(vReal, vImag, BUFFER_SIZE, FFT_FORWARD);
@@ -237,13 +238,13 @@ void setup() {
   delay(500);
   setupI2SMic();
   ledSetup();
-  setupCaptivePortal();
+  //setupCaptivePortal();
 }
 
 void loop() {
   analyzeFreq();
   ledFreqAmp();
-  for (int i = 0; i < sizeof(motorPins)/sizeof(motorPins[0]); i++)
-    motorControl(motorPins[i], motorThresholds[i]);
-  updateWebPortal();
+  // for (int i = 0; i < sizeof(motorPins)/sizeof(motorPins[0]); i++)
+  //   motorControl(motorPins[i], motorThresholds[i]);
+  // updateWebPortal();
 }
