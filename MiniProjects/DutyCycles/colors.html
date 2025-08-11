@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Temporal Color Mixing Demo</title>
+  <style>
+    :root{--bg:#0b0c10;--fg:#e8e8e8;--muted:#9aa0a6}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg)}
+    header{padding:16px 20px;border-bottom:1px solid #222}
+    h1{margin:0;font-size:18px}
+    main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:16px}
+    @media (max-width: 900px){main{grid-template-columns:1fr}}
+    .panel{background:#111;border:1px solid #222;border-radius:12px}
+    .controls{padding:14px 16px;display:grid;gap:14px}
+    .row{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:center}
+    .row label{color:var(--muted);font-size:13px}
+    input[type="color"]{width:100%;height:36px;border:none;background:#000;border-radius:8px}
+    input[type="range"]{width:100%}
+    .numbers{display:flex;gap:10px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+    .numbers div{background:#0e0f12;border:1px solid #222;border-radius:8px;padding:8px 10px;font-size:12px;color:#cfd2d6}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;padding:16px}
+    .card{background:#0e0f12;border:1px solid #222;border-radius:12px;overflow:hidden}
+    .card header{border-bottom:1px solid #222;background:#0f1115}
+    .swatch{height:180px}
+    .note{padding:10px 12px;color:#aab0b6;font-size:12px;border-top:1px dashed #222}
+    .play{display:flex;gap:8px}
+    button{background:#1b1f2a;border:1px solid #2a2f3a;color:#e6e6e6;border-radius:10px;padding:8px 12px;cursor:pointer}
+    button:active{transform:translateY(1px)}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Temporal Color Mixing: alternate two colors at a chosen Hz and duty</h1>
+  </header>
+  <main>
+    <section class="panel controls" aria-label="controls">
+      <div class="row">
+        <label for="c1">Color 1</label>
+        <input id="c1" type="color" value="#ff0000" />
+      </div>
+      <div class="row">
+        <label for="c2">Color 2</label>
+        <input id="c2" type="color" value="#0000ff" />
+      </div>
+      <div class="row">
+        <label for="hz">Frequency (Hz)</label>
+        <input id="hz" type="range" min="1" max="1000" value="120" step="1" />
+      </div>
+      <div class="row">
+        <label for="duty">Duty to Color 1 (%)</label>
+        <input id="duty" type="range" min="0" max="100" value="50" step="1" />
+      </div>
+      <div class="row">
+        <label for="size">Preview size (px)</label>
+        <input id="size" type="range" min="120" max="600" step="1" value="220" />
+      </div>
+      <div class="numbers mono" id="readouts"></div>
+      <div class="play">
+        <button id="toggle">Pause</button>
+        <button id="invert">Invert colors</button>
+        <button id="reset">Reset</button>
+      </div>
+    </section>
+
+    <section class="grid" aria-label="previews">
+      <div class="card">
+        <header><h2 style="margin:0;font-size:14px;padding:10px 12px">Flicker preview</h2></header>
+        <div id="flicker" class="swatch" role="img" aria-label="Flickering color region"></div>
+        <div class="note">This region alternates background color according to Hz and duty. If your display runs at 60 Hz you may not see changes above that as distinct flicker. Your eye still integrates the time average.</div>
+      </div>
+      <div class="card">
+        <header><h2 style="margin:0;font-size:14px;padding:10px 12px">Computed average (linear RGB)</h2></header>
+        <div id="avg" class="swatch" role="img" aria-label="Computed average color"></div>
+        <div class="note">This is the mathematical average with gamma taken into account. It is a target that the temporal mix approximates perceptually.</div>
+      </div>
+      <div class="card">
+        <header><h2 style="margin:0;font-size:14px;padding:10px 12px">Color 1</h2></header>
+        <div id="sw1" class="swatch" aria-label="Color 1 swatch"></div>
+      </div>
+      <div class="card">
+        <header><h2 style="margin:0;font-size:14px;padding:10px 12px">Color 2</h2></header>
+        <div id="sw2" class="swatch" aria-label="Color 2 swatch"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const el = id => document.getElementById(id)
+    const c1 = el('c1')
+    const c2 = el('c2')
+    const hz = el('hz')
+    const duty = el('duty')
+    const size = el('size')
+    const flicker = el('flicker')
+    const avg = el('avg')
+    const sw1 = el('sw1')
+    const sw2 = el('sw2')
+    const readouts = el('readouts')
+    const toggleBtn = el('toggle')
+    const invertBtn = el('invert')
+    const resetBtn = el('reset')
+
+    let running = true
+
+    function hexToRgb(h){
+      const s = h.replace('#','')
+      const n = parseInt(s.length === 3 ? s.split('').map(ch=>ch+ch).join('') : s, 16)
+      return {r:(n>>16)&255, g:(n>>8)&255, b:n&255}
+    }
+    function rgbToHex({r,g,b}){
+      return '#' + [r,g,b].map(v=>{
+        const s = Math.round(v).toString(16).padStart(2,'0')
+        return s
+      }).join('')
+    }
+    function srgbToLinear(v){
+      v/=255
+      return v<=0.04045? v/12.92 : Math.pow((v+0.055)/1.055,2.4)
+    }
+    function linearToSrgb(v){
+      const s = v<=0.0031308? v*12.92 : 1.055*Math.pow(v,1/2.4)-0.055
+      return Math.min(255, Math.max(0, s*255))
+    }
+    function mixHex(aHex,bHex,weightA){
+      const a = hexToRgb(aHex), b = hexToRgb(bHex)
+      const wa = weightA, wb = 1-weightA
+      const rl = wa*srgbToLinear(a.r)+wb*srgbToLinear(b.r)
+      const gl = wa*srgbToLinear(a.g)+wb*srgbToLinear(b.g)
+      const bl = wa*srgbToLinear(a.b)+wb*srgbToLinear(b.b)
+      return rgbToHex({r:linearToSrgb(rl), g:linearToSrgb(gl), b:linearToSrgb(bl)})
+    }
+
+    function updateSwatches(){
+      sw1.style.background = c1.value
+      sw2.style.background = c2.value
+      const w = clamp(parseInt(duty.value,10)/100, 0, 1)
+      avg.style.background = mixHex(c1.value, c2.value, w)
+      const px = parseInt(size.value,10)
+      ;[flicker,avg,sw1,sw2].forEach(d=>{d.style.height = px+'px'})
+    }
+
+    function clamp(v,min,max){return v<min?min:v>max?max:v}
+
+    function renderReadouts(){
+      const freq = parseInt(hz.value,10)
+      const d = parseInt(duty.value,10)
+      const periodMs = 1000/freq
+      const onMs = periodMs * d/100
+      const offMs = periodMs - onMs
+      const w = clamp(d/100,0,1)
+      const blended = mixHex(c1.value, c2.value, w)
+
+      readouts.innerHTML = ''
+      const items = [
+        [`Hz`, freq.toString()],
+        [`Period`, periodMs.toFixed(3)+ ' ms'],
+        [`On to C1`, onMs.toFixed(3)+ ' ms'],
+        [`On to C2`, offMs.toFixed(3)+ ' ms'],
+        [`Duty to C1`, d + ' %'],
+        [`Avg color`, blended]
+      ]
+      for(const [k,v] of items){
+        const div = document.createElement('div')
+        div.textContent = `${k}: ${v}`
+        readouts.appendChild(div)
+      }
+    }
+
+    let start = performance.now()
+    function tick(now){
+      if(running){
+        const freq = parseInt(hz.value,10)
+        const d = parseInt(duty.value,10)
+        const period = 1000/freq
+        const w = clamp(d/100,0,1)
+        const t = (now - start) % period
+        const showC1 = t < period * w
+        flicker.style.background = showC1 ? c1.value : c2.value
+      }
+      requestAnimationFrame(tick)
+    }
+
+    c1.addEventListener('input', ()=>{updateSwatches(); renderReadouts()})
+    c2.addEventListener('input', ()=>{updateSwatches(); renderReadouts()})
+    hz.addEventListener('input', ()=>{renderReadouts()})
+    duty.addEventListener('input', ()=>{updateSwatches(); renderReadouts()})
+    size.addEventListener('input', ()=>{updateSwatches()})
+
+    toggleBtn.addEventListener('click', ()=>{
+      running = !running
+      toggleBtn.textContent = running ? 'Pause' : 'Run'
+    })
+    invertBtn.addEventListener('click', ()=>{
+      const t = c1.value
+      c1.value = c2.value
+      c2.value = t
+      updateSwatches(); renderReadouts()
+    })
+    resetBtn.addEventListener('click', ()=>{
+      c1.value = '#ff0000'
+      c2.value = '#0000ff'
+      hz.value = 120
+      duty.value = 50
+      size.value = 220
+      running = true
+      toggleBtn.textContent = 'Pause'
+      updateSwatches(); renderReadouts()
+    })
+
+    updateSwatches(); renderReadouts(); requestAnimationFrame(tick)
+  </script>
+</body>
+</html>
