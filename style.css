@@ -451,6 +451,14 @@ nav svg:hover{
     width: 26%;
 }
 
+#work .videos{
+    text-align: center;
+}
+
+#work iframe{
+    height: 500px;
+}
+
 #work ul p{
     margin: 5px;
 }
