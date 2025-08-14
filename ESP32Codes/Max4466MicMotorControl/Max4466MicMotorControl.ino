@@ -30,9 +30,9 @@ ArduinoFFT<double> FFT(vReal, vImag, SAMPLES, FS);
 
 // Motor speed mapping knobs
 const float LEVEL_GATE = 900.0f;   // Audio level below which motor is off
-const float LEVEL_HIGH = 2500.0f;  // Audio level that maps to max motor speed
+const float LEVEL_HIGH = 1000.0f;  // Audio level that maps to max motor speed
 const int   DUTY_START = 160;      // Motor duty at just above LEVEL_GATE
-const int   DUTY_MAX   = 255;      // Max motor PWM duty (0-255)
+const int   DUTY_MAX   = 200;      // Max motor PWM duty (0-255)
 const float SMOOTH     = 0.25f;    // Motor speed smoothing factor (0..1)
 
 float levelLP = 0.0f;              // Smoothed audio level for motor
