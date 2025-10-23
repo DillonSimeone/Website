@@ -4,560 +4,964 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three.js Polygon Crush Simulator</title>
-    <!-- Load Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom CSS for the container */
-        #container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        /* Style for the range inputs */
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #ef4444; /* red-500 */
-            cursor: pointer;
-            margin-top: -6px; /* Adjusting for border */
-        }
-        input[type=range] {
-            accent-color: #ef4444; /* red-500 */
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans h-screen overflow-hidden">
-
+<body>
     <!-- Three.js Canvas Container -->
     <div id="container"></div>
 
     <!-- UI Overlay (Input and Status) -->
-    <div class="fixed top-0 left-0 p-4 z-10 w-full flex flex-col sm:flex-row justify-between items-start space-y-4 sm:space-y-0">
-        
-        <!-- File Input and Randomize Button -->
-        <div class="flex items-center space-x-4">
-            <div class="bg-gray-800 p-3 rounded-lg shadow-xl flex items-center space-x-3">
-                <label for="modelFile" class="text-sm font-medium">Load Model:</label>
-                <input type="file" id="modelFile" accept=".gltf, .glb, .obj" class="text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600 transition-colors cursor-pointer">
+    <div class="ui-top-bar">
+        <div class="ui-top-group">
+            <div class="ui-card">
+                <label for="modelFile" class="input-label">Load Model:</label>
+                <input type="file" id="modelFile" accept=".gltf, .glb, .obj">
             </div>
-            <button id="randomizeButton" class="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95">
-                Random Model
-            </button>
+            <button id="randomizeButton" class="btn-base btn-blue">Random Model</button>
         </div>
 
-        <!-- Crush Button and Info -->
-        <div class="flex items-center space-x-4 bg-gray-800 p-3 rounded-lg shadow-xl">
-            <button id="crushButton" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 disabled:bg-gray-600 disabled:cursor-not-allowed" disabled>
-                HOLD TO CRUSH
-            </button>
-            <div id="statusText" class="text-sm font-mono text-gray-400">
-                Awaiting Model...
-            </div>
+        <div class="ui-top-group ui-card">
+            <button id="crushButton" class="btn-base btn-red" disabled>HOLD TO CRUSH</button>
+            <div id="statusText">Awaiting Model...</div>
         </div>
     </div>
 
-    <!-- Control Panel -->
-    <div id="controlPanel" class="fixed top-20 right-4 p-4 z-10 w-64 bg-gray-800 bg-opacity-90 rounded-xl shadow-2xl space-y-4">
-        
-        <!-- Crush Type Selection -->
-        <h2 class="text-lg font-bold text-indigo-400 border-b border-gray-700 pb-2">Crush Type</h2>
-        <select id="crushType" class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-2.5 transition-colors">
+    <!-- Control Panel (Right Side) -->
+    <div id="controlPanel">
+        <h2 class="gui-header">Crush Type</h2>
+        <select id="crushType">
             <option value="crushPoints">Crush Points (Localized)</option>
             <option value="allCrush">All Crush (Uniform)</option>
             <option value="scaledCrush">Scaled Crush (Axis)</option>
             <option value="twistCrush">Twist-Crush (Rotation)</option>
         </select>
 
-        <!-- Crush Parameters -->
-        <h2 id="crushParamHeader" class="text-lg font-bold text-indigo-400 border-b border-gray-700 pb-2 pt-4">Localized Parameters</h2>
-        <div id="localizedParams" class="space-y-4">
-            <div>
-                <label for="numPoints" class="block text-sm font-medium">Crush Points: <span id="numPointsValue">5</span></label>
-                <input type="range" id="numPoints" min="1" max="20" value="5" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        <h2 class="gui-header">Crush Randomness</h2>
+        <div class="input-group-row">
+            <label for="snapVertices" class="input-label">Snap Vertices to Position</label>
+            <input type="checkbox" id="snapVertices" checked class="checkbox">
+        </div>
+
+        <h2 id="crushParamHeader" class="gui-header">Localized Parameters</h2>
+        <div id="localizedParams" class="input-group">
+            <div class="input-group-row">
+                <label for="numPoints" class="input-label">Crush Points: <span id="numPointsValue">5</span></label>
+                <input type="range" id="numPoints" min="1" max="20" value="5" step="1">
             </div>
-            <div>
-                <label for="crushRadius" class="block text-sm font-medium">Radius: <span id="crushRadiusValue">2.0</span></label>
-                <input type="range" id="crushRadius" min="0.1" max="5.0" value="2.0" step="0.1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+            <div class="input-group-row">
+                <label for="crushRadius" class="input-label">Radius: <span id="crushRadiusValue">2.0</span></label>
+                <input type="range" id="crushRadius" min="0.1" max="5.0" value="2.0" step="0.1">
             </div>
-            <div>
-                <label for="falloffPower" class="block text-sm font-medium">Falloff Power: <span id="falloffPowerValue">2.0</span></label>
-                <input type="range" id="falloffPower" min="1.0" max="5.0" value="2.0" step="0.1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+            <div class="input-group-row">
+                <label for="falloffPower" class="input-label">Falloff Power: <span id="falloffPowerValue">2.0</span></label>
+                <input type="range" id="falloffPower" min="1.0" max="5.0" value="2.0" step="0.1">
             </div>
         </div>
         
-        <!-- Animation Type Controls -->
-        <h2 class="text-lg font-bold text-indigo-400 border-b border-gray-700 pb-2 pt-4">Animation Type</h2>
-        <select id="animSpeedType" class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-2.5 transition-colors">
+        <h2 class="gui-header">Animation Type</h2>
+        <select id="animSpeedType">
             <option value="smooth">Smooth</option>
             <option value="janky">Caving (Threshold)</option>
         </select>
 
-        <!-- Smooth Speed Parameter (Visible for Smooth Type) -->
-        <div id="smoothParams" class="space-y-4">
-            <div>
-                <label for="smoothCrushSpeed" class="block text-sm font-medium">Crush Speed: <span id="smoothCrushSpeedValue">0.5</span></label>
-                <input type="range" id="smoothCrushSpeed" min="0.1" max="2.0" value="0.5" step="0.1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        <div id="smoothParams" class="input-group">
+            <div class="input-group-row">
+                <label for="smoothCrushSpeed" class="input-label">Crush Speed: <span id="smoothCrushSpeedValue">0.5</span></label>
+                <input type="range" id="smoothCrushSpeed" min="0.1" max="2.0" value="0.5" step="0.1">
             </div>
         </div>
 
-        <!-- Caving Parameters (Visible for Caving Type) -->
-        <div id="jankyParams" class="space-y-4 hidden">
-            <h3 class="text-md font-medium text-gray-300">Caving Behavior</h3>
-            <div>
-                <label for="jerkRate" class="block text-sm font-medium">Caving Threshold (%): <span id="jerkRateValue">50</span></label>
-                <input type="range" id="jerkRate" min="10" max="90" value="50" step="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        <div id="jankyParams" class="input-group" style="display:none;">
+            <h3 class="data-header">Caving Behavior</h3>
+            <div class="input-group-row">
+                <label for="jerkRate" class="input-label">Caving Threshold (%): <span id="jerkRateValue">50</span></label>
+                <input type="range" id="jerkRate" min="10" max="90" value="50" step="5">
             </div>
-            <div>
-                <label for="jerkMagnitude" class="block text-sm font-medium">Caving Multiplier: <span id="jerkMagnitudeValue">3.0</span></label>
-                <input type="range" id="jerkMagnitude" min="1.0" max="10.0" value="3.0" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+            <div class="input-group-row">
+                <label for="jerkMagnitude" class="input-label">Caving Multiplier: <span id="jerkMagnitudeValue">3.0</span></label>
+                <input type="range" id="jerkMagnitude" min="1.0" max="10.0" value="3.0" step="0.5">
             </div>
         </div>
         
-        <!-- Lighting Controls -->
-        <h2 class="text-lg font-bold text-indigo-400 border-b border-gray-700 pb-2 pt-4">Lighting Controls</h2>
-        
-        <div class="flex items-center justify-between">
-            <label for="lightColor" class="text-sm font-medium">Color:</label>
-            <input type="color" id="lightColor" value="#ffffff" class="w-12 h-8 rounded-md cursor-pointer">
-        </div>
-
-        <div>
-            <label for="lightIntensity" class="block text-sm font-medium">Intensity: <span id="lightIntensityValue">1.5</span></label>
-            <input type="range" id="lightIntensity" min="0.1" max="5.0" value="1.5" step="0.1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-        </div>
-
-        <div>
-            <label for="lightAzimuth" class="block text-sm font-medium">Azimuth (Yaw): <span id="lightAzimuthValue">45°</span></label>
-            <input type="range" id="lightAzimuth" min="0" max="360" value="45" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-        </div>
-        <div>
-            <label for="lightElevation" class="block text-sm font-medium">Elevation (Pitch): <span id="lightElevationValue">45°</span></label>
-            <input type="range" id="lightElevation" min="0" max="90" value="45" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-        </div>
-
-        <!-- Data Display -->
-        <div class="pt-2 border-t border-gray-700">
-            <h3 class="text-md font-bold text-gray-300">Live Data</h3>
-            <p id="data-crush-progress" class="text-xs font-mono mt-1">Progress: 0.0%</p>
-            <p id="data-vertex-count" class="text-xs font-mono">Vertices: 0</p>
-            <p id="data-crush-type" class="text-xs font-mono">Type: Crush Points</p>
-            <p id="data-anim-speed" class="text-xs font-mono">Type: Smooth</p>
+        <h2 class="gui-header">Lighting Controls</h2>
+        <div class="input-group">
+            <div class="input-group-row">
+                <label for="lightColor" class="input-label">Color:</label>
+                <input type="color" id="lightColor" value="#ffffff">
+            </div>
+            <div class="input-group-row">
+                <label for="lightIntensity" class="input-label">Intensity: <span id="lightIntensityValue">1.5</span></label>
+                <input type="range" id="lightIntensity" min="0.1" max="5.0" value="1.5" step="0.1">
+            </div>
+            <div class="input-group-row">
+                <label for="lightAzimuth" class="input-label">Azimuth (Yaw): <span id="lightAzimuthValue">45°</span></label>
+                <input type="range" id="lightAzimuth" min="0" max="360" value="45" step="1">
+            </div>
+            <div class="input-group-row">
+                <label for="lightElevation" class="input-label">Elevation (Pitch): <span id="lightElevationValue">45°</span></label>
+                <input type="range" id="lightElevation" min="0" max="90" value="45" step="1">
+            </div>
         </div>
     </div>
 
-    <!-- Loading Indicators -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-20 hidden">
-        <div class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
-            <p class="mt-4 text-white text-lg font-semibold">Loading Model...</p>
+    <!-- Data Display (Bottom Left) -->
+    <div id="liveDataPanel" class="ui-card">
+        <h3 class="data-header">Live Data</h3>
+        <p id="data-crush-progress" class="data-text">Progress: 0.0%</p>
+        <p id="data-vertex-count" class="data-text">Vertices: 0</p>
+        <p id="data-crush-type" class="data-text">Type: Crush Points</p>
+        <p id="data-anim-speed" class="data-text">Type: Smooth</p>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p class="loading-text">Loading Model...</p>
         </div>
     </div>
 
-    <!-- Load Three.js and essential extensions -->
+    <!-- Three.js Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="app.js"></script>
+
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #111827;
+            color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Canvas Container */
+        #container {
+            position: absolute;
+            inset: 0;
+        }
+
+        /* UI Components */
+        .ui-card {
+            background-color: #1f2937;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        .ui-top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            z-index: 10;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .ui-top-bar {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .ui-top-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Buttons */
+        .btn-base {
+            padding: 0.75rem 1rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            color: white;
+            transition: all 0.15s;
+        }
+
+        .btn-base:active {
+            transform: scale(0.95);
+        }
+
+        .btn-base:disabled {
+            background-color: #4b5563;
+            cursor: not-allowed;
+        }
+
+        .btn-blue {
+            background-color: #2563eb;
+        }
+
+        .btn-blue:hover:not(:disabled) {
+            background-color: #1d4ed8;
+        }
+
+        .btn-red {
+            background-color: #dc2626;
+            padding: 0.75rem 1.5rem;
+        }
+
+        .btn-red:hover:not(:disabled) {
+            background-color: #b91c1c;
+        }
+
+        /* File Input */
+        #modelFile {
+            font-size: 0.875rem;
+            color: #d1d5db;
+        }
+
+        #modelFile::file-selector-button {
+            margin-right: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            border: 0;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background-color: #4f46e5;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+
+        #modelFile::file-selector-button:hover {
+            background-color: #4338ca;
+        }
+
+        #statusText {
+            font-size: 0.875rem;
+            font-family: 'Courier New', monospace;
+            color: #9ca3af;
+        }
+
+        /* Control Panel */
+        #controlPanel {
+            position: fixed;
+            top: 5rem;
+            right: 1rem;
+            z-index: 10;
+            width: 16rem;
+            max-height: calc(100vh - 6rem);
+            overflow-y: auto;
+            background-color: rgba(31, 41, 55, 0.95);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .gui-header {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #a5b4fc;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 0.5rem;
+            padding-top: 1rem;
+        }
+
+        .gui-header:first-child {
+            padding-top: 0;
+        }
+
+        /* Form Elements */
+        select {
+            width: 100%;
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            color: white;
+            font-size: 0.875rem;
+            border-radius: 0.5rem;
+            padding: 0.625rem;
+            cursor: pointer;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .input-group-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 0.5rem;
+            background-color: #374151;
+            border-radius: 0.5rem;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: #ef4444;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: #ef4444;
+            cursor: pointer;
+            border: none;
+        }
+
+        input[type="color"] {
+            border: none;
+            border-radius: 0.375rem;
+            width: 3rem;
+            height: 2rem;
+            padding: 0;
+            cursor: pointer;
+            appearance: none;
+            background: none;
+        }
+
+        .checkbox {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+        }
+
+        /* Data Panel */
+        #liveDataPanel {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            z-index: 10;
+            width: 16rem;
+            background-color: rgba(31, 41, 55, 0.95);
+        }
+
+        .data-header {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #d1d5db;
+            margin-bottom: 0.5rem;
+        }
+
+        .data-text {
+            font-size: 0.75rem;
+            font-family: 'Courier New', monospace;
+            margin-top: 0.25rem;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(17, 24, 40, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            height: 3rem;
+            width: 3rem;
+            margin: 0 auto;
+        }
+
+        .loading-text {
+            margin-top: 1rem;
+            color: white;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar Styling */
+        #controlPanel::-webkit-scrollbar {
+            width: 0.5rem;
+        }
+
+        #controlPanel::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        #controlPanel::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 0.25rem;
+        }
+    </style>
 
     <script>
-        // --- CORE THREE.JS SETUP ---
-        let scene, camera, renderer, controls;
-        let modelMesh = null;
-        let originalPositions = null;
-        let crushRandomFactors = null;
-        let geometry = null;
-        let directionalLight;
-        let hemisphereLight; 
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const CONFIG = {
+            LOCAL_MODEL_PATH: 'models/',
+            NUM_LOCAL_MODELS: 5,
+            MAX_CRUSH: 0.9,
+            BASE_UNCRUSH_SPEED: 1.0,
+            DEFAULT_CRUSH_SPEED: 0.5
+        };
 
-        // --- CRUSH MECHANISM PARAMETERS (GUI Controlled) ---
-        let NUM_CRUSH_POINTS = 5;
-        let CRUSH_RADIUS = 2.0;
-        let FALLOFF_POWER = 2.0;
-        let crushPoints = []; 
-        let vertexToCrushPointDistances = null; 
-        
-        // --- ANIMATION JANKY/CAVING STATE ---
-        let DEFAULT_CRUSH_SPEED = 0.5;
-        let SMOOTH_CRUSH_SPEED = 0.5;
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        const state = {
+            // Three.js objects
+            scene: null,
+            camera: null,
+            renderer: null,
+            controls: null,
+            modelMesh: null,
+            directionalLight: null,
+            hemisphereLight: null,
+            
+            // Geometry data
+            geometry: null,
+            originalPositions: null,
+            crushRandomFactors: null,
+            vertexToCrushPointDistances: null,
+            crushPoints: [],
+            
+            // Crush parameters
+            numCrushPoints: 5,
+            crushRadius: 2.0,
+            falloffPower: 2.0,
+            snapVertices: true,
+            
+            // Animation state
+            crushProgress: 0.0,
+            isCrushing: false,
+            currentCrushType: 'crushPoints',
+            currentAnimSpeed: 'smooth',
+            smoothCrushSpeed: 0.5,
+            cavingThreshold: 0.5,
+            cavingMultiplier: 3.0,
+            
+            // Timing
+            lastTime: 0
+        };
 
-        let CAVING_THRESHOLD = 0.5;
-        let CAVING_MULTIPLIER = 3.0;
+        // ============================================
+        // DOM ELEMENTS
+        // ============================================
+        const elements = {
+            crushButton: document.getElementById('crushButton'),
+            randomizeButton: document.getElementById('randomizeButton'),
+            fileInput: document.getElementById('modelFile'),
+            statusText: document.getElementById('statusText'),
+            loadingOverlay: document.getElementById('loadingOverlay'),
+            
+            crushType: document.getElementById('crushType'),
+            animSpeedType: document.getElementById('animSpeedType'),
+            localizedParams: document.getElementById('localizedParams'),
+            smoothParams: document.getElementById('smoothParams'),
+            jankyParams: document.getElementById('jankyParams'),
+            crushParamHeader: document.getElementById('crushParamHeader'),
+            
+            numPoints: document.getElementById('numPoints'),
+            crushRadius: document.getElementById('crushRadius'),
+            falloffPower: document.getElementById('falloffPower'),
+            snapVertices: document.getElementById('snapVertices'),
+            smoothCrushSpeed: document.getElementById('smoothCrushSpeed'),
+            jerkRate: document.getElementById('jerkRate'),
+            jerkMagnitude: document.getElementById('jerkMagnitude'),
+            
+            lightColor: document.getElementById('lightColor'),
+            lightIntensity: document.getElementById('lightIntensity'),
+            lightAzimuth: document.getElementById('lightAzimuth'),
+            lightElevation: document.getElementById('lightElevation'),
+            
+            dataCrushProgress: document.getElementById('data-crush-progress'),
+            dataVertexCount: document.getElementById('data-vertex-count'),
+            dataCrushType: document.getElementById('data-crush-type'),
+            dataAnimSpeed: document.getElementById('data-anim-speed')
+        };
 
-        // --- DEFORMATION STATE ---
-        let crushProgress = 0.0; 
-        let isCrushing = false;
-        const BASE_UNCRUSH_SPEED = 1.0; 
-        const MAX_CRUSH = 0.9;
-        
-        let CURRENT_CRUSH_TYPE = 'crushPoints';
-        let CURRENT_ANIM_SPEED = 'smooth';
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function showLoading() {
+            elements.loadingOverlay.style.display = 'flex';
+        }
 
-        // --- RANDOM MODEL LIST (Simulating API) ---
-        const RANDOM_MODEL_URLS = [
-            'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
-            'https://threejs.org/examples/models/gltf/DamagedHelmet/DamagedHelmet.glb',
-            'https://threejs.org/examples/models/gltf/WaterBottle/WaterBottle.glb',
-            'https://threejs.org/examples/models/gltf/LittlestTokyo/LittlestTokyo.glb',
-            'https://threejs.org/examples/models/gltf/SheenChair/SheenChair.glb'
-        ];
+        function hideLoading() {
+            elements.loadingOverlay.style.display = 'none';
+        }
 
-        // --- DOM Elements ---
-        const crushButton = document.getElementById('crushButton');
-        const randomizeButton = document.getElementById('randomizeButton');
-        const fileInput = document.getElementById('modelFile');
-        const statusText = document.getElementById('statusText');
-        const loadingOverlay = document.getElementById('loadingOverlay');
+        function updateStatus(message) {
+            elements.statusText.textContent = message;
+        }
 
-        const crushTypeInput = document.getElementById('crushType');
-        const animSpeedTypeInput = document.getElementById('animSpeedType');
-        const localizedParamsDiv = document.getElementById('localizedParams');
-        const smoothParamsDiv = document.getElementById('smoothParams');
-        const jankyParamsDiv = document.getElementById('jankyParams');
-        const crushParamHeader = document.getElementById('crushParamHeader');
-
-        const numPointsInput = document.getElementById('numPoints');
-        const crushRadiusInput = document.getElementById('crushRadius');
-        const falloffPowerInput = document.getElementById('falloffPower');
-        const numPointsValue = document.getElementById('numPointsValue');
-        const crushRadiusValue = document.getElementById('crushRadiusValue');
-        const falloffPowerValue = document.getElementById('falloffPowerValue');
-        
-        const smoothCrushSpeedInput = document.getElementById('smoothCrushSpeed');
-        const smoothCrushSpeedValue = document.getElementById('smoothCrushSpeedValue');
-
-        const jerkRateInput = document.getElementById('jerkRate'); // Caving Threshold
-        const jerkMagnitudeInput = document.getElementById('jerkMagnitude'); // Caving Multiplier
-        const jerkRateValue = document.getElementById('jerkRateValue');
-        const jerkMagnitudeValue = document.getElementById('jerkMagnitudeValue');
-
-        const dataCrushProgress = document.getElementById('data-crush-progress');
-        const dataVertexCount = document.getElementById('data-vertex-count');
-        const dataCrushType = document.getElementById('data-crush-type');
-        const dataAnimSpeed = document.getElementById('data-anim-speed');
-
-        const lightColorInput = document.getElementById('lightColor');
-        const lightIntensityInput = document.getElementById('lightIntensity');
-        const lightIntensityValue = document.getElementById('lightIntensityValue');
-        const lightAzimuthInput = document.getElementById('lightAzimuth');
-        const lightAzimuthValue = document.getElementById('lightAzimuthValue');
-        const lightElevationInput = document.getElementById('lightElevation');
-        const lightElevationValue = document.getElementById('lightElevationValue');
-
-
-        // --- UTILITY: CRUSH DATA INITIALIZATION ---
-        
+        // ============================================
+        // CRUSH DATA INITIALIZATION
+        // ============================================
         function reInitializeCrushData() {
-            if (!geometry || !originalPositions) return;
+            if (!state.geometry || !state.originalPositions) return;
 
-            const positions = originalPositions;
+            const currentPositions = state.geometry.attributes.position.array;
+            currentPositions.set(state.originalPositions);
+            state.geometry.attributes.position.needsUpdate = true;
+            state.geometry.computeVertexNormals();
+
+            const positions = state.originalPositions;
             const vertexCount = positions.length / 3;
             
-            // 1. Randomize General Crush Factors (Noise) 
-            crushRandomFactors = new Float32Array(vertexCount);
-            for (let i = 0; i < vertexCount; i++) {
-                crushRandomFactors[i] = 0.5 + Math.random(); // Range: [0.5, 1.5]
+            state.crushRandomFactors = new Float32Array(vertexCount);
+            
+            if (state.snapVertices) {
+                const positionToFactorMap = new Map();
+                for (let i = 0; i < vertexCount; i++) {
+                    const x = positions[i * 3].toFixed(6);
+                    const y = positions[i * 3 + 1].toFixed(6);
+                    const z = positions[i * 3 + 2].toFixed(6);
+                    const key = `${x},${y},${z}`;
+
+                    if (!positionToFactorMap.has(key)) {
+                        positionToFactorMap.set(key, 0.5 + Math.random());
+                    }
+                    state.crushRandomFactors[i] = positionToFactorMap.get(key);
+                }
+                console.log(`Vertex Snapping ON. Processed ${positionToFactorMap.size} unique positions.`);
+            } else {
+                for (let i = 0; i < vertexCount; i++) {
+                    state.crushRandomFactors[i] = 0.5 + Math.random();
+                }
+                console.log("Vertex Snapping OFF. Each vertex has independent randomness.");
             }
 
-            // 2. Select Random Crush Points 
-            crushPoints = [];
-            for (let i = 0; i < NUM_CRUSH_POINTS; i++) {
+            state.crushPoints = [];
+            for (let i = 0; i < state.numCrushPoints; i++) {
                 const randomIndex = Math.floor(Math.random() * vertexCount);
                 const x = positions[randomIndex * 3];
                 const y = positions[randomIndex * 3 + 1];
                 const z = positions[randomIndex * 3 + 2];
-                crushPoints.push(new THREE.Vector3(x, y, z));
+                state.crushPoints.push(new THREE.Vector3(x, y, z));
             }
             
-            // 3. Calculate Distance to Closest Crush Point for every vertex
-            vertexToCrushPointDistances = new Float32Array(vertexCount);
+            state.vertexToCrushPointDistances = new Float32Array(vertexCount);
             const tempVertex = new THREE.Vector3();
 
             for (let i = 0; i < vertexCount; i++) {
                 tempVertex.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
                 
                 let minDistanceSq = Infinity;
-                
-                for (const crushPoint of crushPoints) {
+                for (const crushPoint of state.crushPoints) {
                     const distanceSq = tempVertex.distanceToSquared(crushPoint);
                     if (distanceSq < minDistanceSq) {
                         minDistanceSq = distanceSq;
                     }
                 }
-                vertexToCrushPointDistances[i] = Math.sqrt(minDistanceSq);
+                state.vertexToCrushPointDistances[i] = Math.sqrt(minDistanceSq);
             }
 
-            console.log(`Crush data re-initialized: ${NUM_CRUSH_POINTS} points set.`);
+            console.log(`Crush data re-initialized: ${state.numCrushPoints} points set.`);
         }
 
+        // ============================================
+        // MESH INITIALIZATION
+        // ============================================
         function initMeshDeformation(mesh) {
-            // Find the first BufferGeometry in the loaded object
-            let geometryObject = null;
+            const geometriesToMerge = [];
+            
             mesh.traverse(child => {
                 if (child.isMesh && child.geometry.isBufferGeometry) {
-                    geometryObject = child.geometry;
+                    const cloneGeometry = child.geometry.clone();
+                    const matrix = new THREE.Matrix4();
+                    matrix.compose(child.position, child.quaternion, child.scale);
+                    cloneGeometry.applyMatrix4(matrix);
+                    child.position.set(0, 0, 0);
+                    child.rotation.set(0, 0, 0);
+                    child.scale.set(1, 1, 1);
+                    geometriesToMerge.push(cloneGeometry);
                 }
             });
             
-            if (!geometryObject) {
+            if (geometriesToMerge.length === 0) {
                 console.error("No suitable BufferGeometry found in the loaded model.");
-                statusText.textContent = 'Error: Model must contain BufferGeometry.';
-                dataVertexCount.textContent = 'Vertices: 0';
+                updateStatus('Error: Model must contain BufferGeometry.');
+                elements.dataVertexCount.textContent = 'Vertices: 0';
                 return false;
             }
 
-            geometry = geometryObject;
-            
-            const positionsArray = geometry.attributes.position.array;
-            originalPositions = new Float32Array(positionsArray.length);
-            originalPositions.set(positionsArray);
-            
-            reInitializeCrushData();
-
-            geometry.computeBoundingBox();
-            geometry.computeBoundingSphere();
-            dataVertexCount.textContent = `Vertices: ${positionsArray.length / 3}`;
-            
-            // Ensure model position is centered on the origin for deformation calculations
-            mesh.position.set(0, 0, 0);
-            
-            // Recenter geometry on the origin (important for Twist-Crush)
-            geometry.center();
-
-            return true;
-        }
-
-        // --- DEFORMATION LOGIC (Runs every frame) ---
-
-        function getCrushSpeed(deltaTime) {
-            if (CURRENT_ANIM_SPEED === 'smooth') {
-                return SMOOTH_CRUSH_SPEED * deltaTime;
-            } 
-            
-            // Logic for 'janky' (Caving Threshold)
-            const normalizedProgress = crushProgress / MAX_CRUSH;
-            
-            if (normalizedProgress < CAVING_THRESHOLD) {
-                // Initial phase: Slow and steady deformation (10% of default speed)
-                return (DEFAULT_CRUSH_SPEED * 0.1) * deltaTime;
-            } else {
-                // Caving phase: Sudden jerk/fast movement
-                return DEFAULT_CRUSH_SPEED * CAVING_MULTIPLIER * deltaTime;
-            }
-        }
-
-        function updateCrush(deltaTime) {
-            let crushChange = 0;
-            let uncrushComplete = false;
-            let finalCrushFactor = 0;
-
-            if (isCrushing) {
-                crushChange = getCrushSpeed(deltaTime);
-                crushProgress = Math.min(crushProgress + crushChange, MAX_CRUSH);
-            } else if (crushProgress > 0.0) {
-                // Uncrush phase is always smooth at the BASE_UNCRUSH_SPEED
-                crushChange = BASE_UNCRUSH_SPEED * deltaTime;
-                let newProgress = Math.max(crushProgress - crushChange, 0.0);
-                
-                if (crushProgress > 0.0 && newProgress <= 0.0) {
-                    uncrushComplete = true;
-                    newProgress = 0.0;
-                }
-                crushProgress = newProgress;
-            } else {
-                return;
-            }
-
-            if (uncrushComplete && modelMesh) {
-                // Reset non-vertex transforms (scale and rotation) and randomize crush points
-                modelMesh.scale.set(1, 1, 1);
-                modelMesh.rotation.set(0, 0, 0);
-                reInitializeCrushData(); 
-            }
-
-            if (!geometry || !originalPositions || !vertexToCrushPointDistances) return;
-            
-            const positions = geometry.attributes.position.array;
-            
-            // --- 1. APPLY DEFORMATION BASED ON CRUSH TYPE ---
-            for (let i = 0; i < positions.length; i += 3) {
-                const vertexIndex = i / 3;
-                const originalX = originalPositions[i];
-                const originalY = originalPositions[i + 1];
-                const originalZ = originalPositions[i + 2];
-
-                let falloff = 1.0; 
-                
-                // Calculate falloff for localized crush types
-                if (CURRENT_CRUSH_TYPE === 'crushPoints' || CURRENT_CRUSH_TYPE === 'scaledCrush' || CURRENT_CRUSH_TYPE === 'twistCrush') {
-                    const distance = vertexToCrushPointDistances[vertexIndex];
-                    if (distance < CRUSH_RADIUS) {
-                        const normalizedDistance = distance / CRUSH_RADIUS; 
-                        falloff = 1.0 - Math.pow(normalizedDistance, FALLOFF_POWER);
-                    } else {
-                        falloff = 0.0;
-                    }
-                }
-                
-                // Combine progress, noise, and falloff
-                const overallCrush = crushProgress * crushRandomFactors[vertexIndex];
-                finalCrushFactor = overallCrush * falloff;
-                
-                // --- 2. APPLY CORE CRUSH (Lerp to zero) ---
-                let newX = originalX * (1.0 - finalCrushFactor);
-                let newY = originalY * (1.0 - finalCrushFactor);
-                let newZ = originalZ * (1.0 - finalCrushFactor);
-
-                // --- 3. APPLY SPECIAL CRUSH MODIFIERS ---
-                if (CURRENT_CRUSH_TYPE === 'scaledCrush') {
-                    // Vertically scale down the entire object mesh based on crush progress
-                    const scaleFactorY = 1.0 - (crushProgress * 0.5); // Shrink up to 50%
-                    newY = originalY * scaleFactorY;
-                    
-                } else if (CURRENT_CRUSH_TYPE === 'twistCrush') {
-                    const maxRadius = geometry.boundingSphere.radius || 1;
-                    const normalizedY = originalY / maxRadius; 
-                    
-                    // Twist factor: positive for top half, negative for bottom half
-                    const twistMagnitude = crushProgress * 0.5; 
-                    const twistAngle = twistMagnitude * -normalizedY; 
-
-                    // Apply rotation matrix to the new (crushed) position
-                    const currentPos = new THREE.Vector3(newX, newY, newZ);
-                    currentPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), twistAngle);
-                    
-                    newX = currentPos.x;
-                    newY = currentPos.y;
-                    newZ = currentPos.z;
-                }
-                
-                // --- 4. COMMIT POSITIONS ---
-                positions[i]     = newX;
-                positions[i + 1] = newY;
-                positions[i + 2] = newZ;
-            }
-
-            geometry.attributes.position.needsUpdate = true;
-            geometry.computeVertexNormals();
-            geometry.computeBoundingSphere();
-        }
-
-        // --- LIGHTING SETUP & CONTROL ---
-        
-        function setupLighting() {
-            if (hemisphereLight) scene.remove(hemisphereLight);
-            if (directionalLight) scene.remove(directionalLight);
-            
-            hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2);
-            scene.add(hemisphereLight);
-
-            directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-            scene.add(directionalLight);
-
-            updateLightDirection(parseFloat(lightAzimuthInput.value), parseFloat(lightElevationInput.value));
-            updateLightIntensity(parseFloat(lightIntensityInput.value));
-            updateLightColor(lightColorInput.value);
-        }
-
-        function updateLightDirection(azimuthDeg, elevationDeg) {
-            const azimuthRad = azimuthDeg * (Math.PI / 180);
-            const elevationRad = elevationDeg * (Math.PI / 180);
-            const distance = 5; 
-            
-            const x = distance * Math.cos(elevationRad) * Math.sin(azimuthRad);
-            const y = distance * Math.sin(elevationRad);
-            const z = distance * Math.cos(elevationRad) * Math.cos(azimuthRad);
-
-            directionalLight.position.set(x, y, z);
-            
-            lightAzimuthValue.textContent = `${azimuthDeg}°`;
-            lightElevationValue.textContent = `${elevationDeg}°`;
-        }
-
-        function updateLightIntensity(intensity) {
-            directionalLight.intensity = intensity;
-            lightIntensityValue.textContent = intensity.toFixed(1);
-        }
-        
-        function updateLightColor(colorHex) {
-            directionalLight.color.set(colorHex);
-        }
-
-        // --- THREE.JS INITIALIZATION & RUN LOOP ---
-
-        window.onload = function () {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x333333);
-
-            const aspect = window.innerWidth / window.innerHeight;
-            camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-            camera.position.set(2, 2, 3);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('container').appendChild(renderer.domElement);
-
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; 
-
-            setupLighting();
-            
-            const planeGeometry = new THREE.PlaneGeometry(100, 100);
-            const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x444444 });
-            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-            plane.rotation.x = -Math.PI / 2;
-            scene.add(plane);
-
-            animate();
-            setupEventListeners();
-            
-            // Load a random model on start
-            loadRandomModel();
-        };
-
-        // --- MAIN ANIMATION LOOP ---
-        let lastTime = 0;
-        function animate(time) {
-            requestAnimationFrame(animate);
-
-            const deltaTime = (time - lastTime) / 1000;
-            lastTime = time;
-
-            if (modelMesh) {
-                updateCrush(deltaTime);
-                dataCrushProgress.textContent = `Progress: ${(crushProgress / MAX_CRUSH * 100).toFixed(1)}%`;
-            }
-            
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        // --- MODEL LOADING FUNCTIONS ---
-        
-        function loadRandomModel() {
-            const randomIndex = Math.floor(Math.random() * RANDOM_MODEL_URLS.length);
-            const modelUrl = RANDOM_MODEL_URLS[randomIndex];
-            loadSource(modelUrl);
-        }
-
-        function loadSource(source) {
-            loadingOverlay.classList.remove('hidden');
-
-            // --- Cleanup ---
-            if (modelMesh) {
-                scene.remove(modelMesh);
-                modelMesh.traverse(child => {
+            if (state.modelMesh) {
+                state.scene.remove(state.modelMesh);
+                state.modelMesh.traverse(child => {
                     if (child.isMesh) {
                         child.geometry.dispose();
                         child.material.dispose();
                     }
                 });
-                modelMesh = null;
-                geometry = null;
-                crushProgress = 0.0;
+            }
+
+            let totalVertices = 0;
+            let totalIndices = 0;
+            
+            for (const geom of geometriesToMerge) {
+                if (geom.attributes.position) {
+                    totalVertices += geom.attributes.position.count;
+                    if (geom.index) {
+                        totalIndices += geom.index.count;
+                    } else {
+                        totalIndices += geom.attributes.position.count;
+                    }
+                }
+            }
+
+            const mergedPositions = new Float32Array(totalVertices * 3);
+            const mergedIndices = new Uint32Array(totalIndices);
+            
+            let posOffset = 0;
+            let indexOffset = 0;
+            let vertexOffset = 0;
+            
+            for (const geom of geometriesToMerge) {
+                if (geom.attributes.position) {
+                    const posArray = geom.attributes.position.array;
+                    mergedPositions.set(posArray, posOffset);
+                    
+                    if (geom.index) {
+                        const indexArray = geom.index.array;
+                        for (let i = 0; i < indexArray.length; i++) {
+                            mergedIndices[indexOffset + i] = indexArray[i] + vertexOffset;
+                        }
+                        indexOffset += indexArray.length;
+                    } else {
+                        const vertCount = geom.attributes.position.count;
+                        for (let i = 0; i < vertCount; i++) {
+                            mergedIndices[indexOffset + i] = vertexOffset + i;
+                        }
+                        indexOffset += vertCount;
+                    }
+                    
+                    posOffset += posArray.length;
+                    vertexOffset += geom.attributes.position.count;
+                }
+                geom.dispose();
+            }
+
+            state.geometry = new THREE.BufferGeometry();
+            state.geometry.setAttribute('position', new THREE.BufferAttribute(mergedPositions, 3));
+            state.geometry.setIndex(new THREE.BufferAttribute(mergedIndices, 1));
+            state.geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(totalVertices * 3), 3));
+
+            const crushMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffa500,
+                specular: 0xffffff,
+                shininess: 50,
+                side: THREE.DoubleSide,
+                flatShading: true
+            });
+            
+            state.modelMesh = new THREE.Mesh(state.geometry, crushMaterial);
+
+            const positionsArray = state.geometry.attributes.position.array;
+            state.originalPositions = new Float32Array(positionsArray.length);
+            state.originalPositions.set(positionsArray);
+            
+            state.geometry.computeVertexNormals();
+            reInitializeCrushData();
+
+            state.geometry.computeBoundingBox();
+            state.geometry.computeBoundingSphere();
+            elements.dataVertexCount.textContent = `Vertices: ${positionsArray.length / 3}`;
+            
+            state.modelMesh.position.set(0, 0, 0);
+            state.geometry.center();
+            
+            if (state.geometry.boundingSphere) {
+                state.modelMesh.position.y = state.geometry.boundingSphere.radius;
+            } else {
+                state.modelMesh.position.y = 1;
+            }
+
+            return true;
+        }
+
+        // ============================================
+        // DEFORMATION LOGIC
+        // ============================================
+        function getCrushSpeed(deltaTime) {
+            if (state.currentAnimSpeed === 'smooth') {
+                return state.smoothCrushSpeed * deltaTime;
+            }
+            
+            const normalizedProgress = state.crushProgress / CONFIG.MAX_CRUSH;
+            if (normalizedProgress < state.cavingThreshold) {
+                return (CONFIG.DEFAULT_CRUSH_SPEED * 0.1) * deltaTime;
+            } else {
+                return CONFIG.DEFAULT_CRUSH_SPEED * state.cavingMultiplier * deltaTime;
+            }
+        }
+
+        function updateCrush(deltaTime) {
+            if (!state.geometry || !state.originalPositions || !state.geometry.attributes.position) {
+                return;
+            }
+            
+            let uncrushComplete = false;
+
+            if (state.isCrushing) {
+                const crushChange = getCrushSpeed(deltaTime);
+                state.crushProgress = Math.min(state.crushProgress + crushChange, CONFIG.MAX_CRUSH);
+            } else if (state.crushProgress > 0.0) {
+                const crushChange = CONFIG.BASE_UNCRUSH_SPEED * deltaTime;
+                let newProgress = Math.max(state.crushProgress - crushChange, 0.0);
+                
+                if (state.crushProgress > 0.0 && newProgress <= 0.0) {
+                    uncrushComplete = true;
+                    newProgress = 0.0;
+                }
+                state.crushProgress = newProgress;
+            } else {
+                return;
+            }
+
+            if (uncrushComplete && state.modelMesh) {
+                state.modelMesh.scale.set(1, 1, 1);
+                state.modelMesh.rotation.set(0, 0, 0);
+                reInitializeCrushData();
+            }
+
+            if (!state.vertexToCrushPointDistances) return;
+            
+            const positions = state.geometry.attributes.position.array;
+            
+            for (let i = 0; i < positions.length; i += 3) {
+                const vertexIndex = i / 3;
+                const originalX = state.originalPositions[i];
+                const originalY = state.originalPositions[i + 1];
+                const originalZ = state.originalPositions[i + 2];
+
+                let falloff = 1.0;
+                
+                if (state.currentCrushType === 'crushPoints' || 
+                    state.currentCrushType === 'scaledCrush' || 
+                    state.currentCrushType === 'twistCrush') {
+                    const distance = state.vertexToCrushPointDistances[vertexIndex];
+                    if (distance < state.crushRadius) {
+                        const normalizedDistance = distance / state.crushRadius;
+                        falloff = 1.0 - Math.pow(normalizedDistance, state.falloffPower);
+                    } else {
+                        falloff = 0.0;
+                    }
+                }
+                
+                const overallCrush = state.crushProgress * state.crushRandomFactors[vertexIndex];
+                const finalCrushFactor = overallCrush * falloff;
+                
+                let newX = originalX * (1.0 - finalCrushFactor);
+                let newY = originalY * (1.0 - finalCrushFactor);
+                let newZ = originalZ * (1.0 - finalCrushFactor);
+
+                if (state.currentCrushType === 'scaledCrush') {
+                    const scaleFactorY = 1.0 - (state.crushProgress * 0.5);
+                    newY = originalY * scaleFactorY;
+                } else if (state.currentCrushType === 'twistCrush') {
+                    const maxRadius = state.geometry.boundingSphere.radius || 1;
+                    const normalizedY = originalY / maxRadius;
+                    const twistMagnitude = state.crushProgress * 0.5;
+                    const twistAngle = twistMagnitude * -normalizedY;
+                    const currentPos = new THREE.Vector3(newX, newY, newZ);
+                    currentPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), twistAngle);
+                    newX = currentPos.x;
+                    newY = currentPos.y;
+                    newZ = currentPos.z;
+                }
+                
+                positions[i] = newX;
+                positions[i + 1] = newY;
+                positions[i + 2] = newZ;
+            }
+
+            state.geometry.attributes.position.needsUpdate = true;
+            state.geometry.computeVertexNormals();
+            state.geometry.computeBoundingSphere();
+        }
+
+        // ============================================
+        // LIGHTING
+        // ============================================
+        function setupLighting() {
+            if (state.hemisphereLight) state.scene.remove(state.hemisphereLight);
+            if (state.directionalLight) state.scene.remove(state.directionalLight);
+            
+            state.hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2);
+            state.scene.add(state.hemisphereLight);
+
+            state.directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            state.scene.add(state.directionalLight);
+
+            updateLightDirection(
+                parseFloat(elements.lightAzimuth.value),
+                parseFloat(elements.lightElevation.value)
+            );
+            updateLightIntensity(parseFloat(elements.lightIntensity.value));
+            updateLightColor(elements.lightColor.value);
+        }
+
+        function updateLightDirection(azimuthDeg, elevationDeg) {
+            const azimuthRad = azimuthDeg * (Math.PI / 180);
+            const elevationRad = elevationDeg * (Math.PI / 180);
+            const distance = 5;
+            
+            const x = distance * Math.cos(elevationRad) * Math.sin(azimuthRad);
+            const y = distance * Math.sin(elevationRad);
+            const z = distance * Math.cos(elevationRad) * Math.cos(azimuthRad);
+
+            state.directionalLight.position.set(x, y, z);
+            document.getElementById('lightAzimuthValue').textContent = `${azimuthDeg}°`;
+            document.getElementById('lightElevationValue').textContent = `${elevationDeg}°`;
+        }
+
+        function updateLightIntensity(intensity) {
+            state.directionalLight.intensity = intensity;
+            document.getElementById('lightIntensityValue').textContent = intensity.toFixed(1);
+        }
+        
+        function updateLightColor(colorHex) {
+            state.directionalLight.color.set(colorHex);
+        }
+
+        // ============================================
+        // PRIMITIVE FALLBACK
+        // ============================================
+        function createPrimitiveMesh() {
+            const primitives = ['Box', 'Sphere', 'Cylinder'];
+            const randomPrimitive = primitives[Math.floor(Math.random() * primitives.length)];
+            const size = 1.0;
+            const detail = 32;
+
+            let geom;
+            switch (randomPrimitive) {
+                case 'Box':
+                    geom = new THREE.BoxGeometry(2 * size, 2 * size, 2 * size, 10, 10, 10);
+                    break;
+                case 'Sphere':
+                    geom = new THREE.SphereGeometry(size, detail, detail);
+                    break;
+                case 'Cylinder':
+                    geom = new THREE.CylinderGeometry(size, size, 2 * size, detail);
+                    break;
+            }
+
+            const crushMaterial = new THREE.MeshPhongMaterial({
+                color: 0xffa500,
+                specular: 0xffffff,
+                shininess: 50,
+                side: THREE.DoubleSide,
+                flatShading: true
+            });
+
+            const mesh = new THREE.Mesh(geom, crushMaterial);
+            
+            if (state.modelMesh) {
+                state.scene.remove(state.modelMesh);
+                state.modelMesh.traverse(child => {
+                    if (child.isMesh) {
+                        child.geometry.dispose();
+                        child.material.dispose();
+                    }
+                });
+            }
+
+            if (initMeshDeformation(mesh)) {
+                state.modelMesh = mesh;
+                state.modelMesh.position.y = size;
+                state.scene.add(state.modelMesh);
+                elements.crushButton.disabled = false;
+                updateStatus(`Fallback: Loaded random ${randomPrimitive} geometry.`);
+            } else {
+                updateStatus(`Error: Failed to initialize primitive ${randomPrimitive}.`);
+                elements.crushButton.disabled = true;
+            }
+            hideLoading();
+        }
+
+        // ============================================
+        // MODEL LOADING
+        // ============================================
+        async function loadRandomModel() {
+            if (CONFIG.NUM_LOCAL_MODELS < 1) {
+                console.warn('NUM_LOCAL_MODELS is less than 1. Falling back to primitive geometry.');
+                createPrimitiveMesh();
+                return;
+            }
+            
+            const modelIndex = Math.floor(Math.random() * CONFIG.NUM_LOCAL_MODELS) + 1;
+            const modelUrl = `${CONFIG.LOCAL_MODEL_PATH}${modelIndex}.gltf`;
+            
+            updateStatus(`Probing file existence for: ${modelIndex}.gltf...`);
+            showLoading();
+
+            try {
+                const response = await fetch(modelUrl, { method: 'HEAD', mode: 'no-cors' });
+
+                if (response.type === 'opaque' || response.ok) {
+                    updateStatus(`Loading local model: ${modelIndex}.gltf...`);
+                    loadSource(modelUrl, true);
+                } else {
+                    console.warn(`File not found at ${modelUrl}. Initiating primitive fallback.`);
+                    createPrimitiveMesh();
+                }
+            } catch (e) {
+                console.error(`Network or URL resolution error while checking ${modelUrl}.`, e);
+                createPrimitiveMesh();
+            }
+        }
+
+        function loadSource(source, isRandomAttempt = false) {
+            showLoading();
+
+            if (state.modelMesh) {
+                state.scene.remove(state.modelMesh);
+                state.modelMesh.traverse(child => {
+                    if (child.isMesh) {
+                        child.geometry.dispose();
+                        child.material.dispose();
+                    }
+                });
+                state.modelMesh = null;
+                state.geometry = null;
+                state.crushProgress = 0.0;
             }
 
             let url;
@@ -573,12 +977,11 @@
                 const urlParts = source.split('/');
                 fileName = urlParts[urlParts.length - 1].toLowerCase();
             } else {
-                statusText.textContent = 'Error: Invalid model source.';
-                loadingOverlay.classList.add('hidden');
-                crushButton.disabled = true;
+                updateStatus('Error: Invalid model source.');
+                hideLoading();
+                elements.crushButton.disabled = true;
                 return;
             }
-
 
             let loader;
             if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
@@ -586,36 +989,33 @@
             } else if (fileName.endsWith('.obj')) {
                 loader = new THREE.OBJLoader();
             } else {
-                statusText.textContent = `Error: Unsupported file type: ${fileName}`;
-                loadingOverlay.classList.add('hidden');
-                crushButton.disabled = true;
+                updateStatus(`Error: Unsupported file type: ${fileName}`);
+                hideLoading();
+                elements.crushButton.disabled = true;
                 if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke);
                 return;
             }
 
-            // High-contrast, shiny material for visibility
-            const crushMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0xffa500, 
-                specular: 0xffffff, 
-                shininess: 50, 
+            const crushMaterial = new THREE.MeshPhongMaterial({
+                color: 0xffa500,
+                specular: 0xffffff,
+                shininess: 50,
                 side: THREE.DoubleSide,
-                flatShading: true 
+                flatShading: true
             });
-
 
             loader.load(
                 url,
                 (loaded) => {
                     let mesh;
-                    if (loaded.scene) { 
+                    if (loaded.scene) {
                         mesh = loaded.scene;
                         mesh.traverse((child) => {
                             if (child.isMesh) {
-                                // Apply uniform crush material for consistent testing
                                 child.material = crushMaterial;
                             }
                         });
-                    } else if (loaded.type === 'Group' || loaded.type === 'Mesh') { 
+                    } else if (loaded.type === 'Group' || loaded.type === 'Mesh') {
                         mesh = loaded;
                         mesh.traverse((child) => {
                             if (child.isMesh) {
@@ -625,174 +1025,206 @@
                     }
 
                     if (mesh) {
+                        // FIX: Rotate model to face viewer (rotate 180° around Y-axis)
+                        mesh.rotation.y = Math.PI;
+                        
                         const success = initMeshDeformation(mesh);
                         
                         if (success) {
-                            modelMesh = mesh;
-                            if (geometry.boundingSphere) {
-                                // Center on Y-axis for ground visibility
-                                modelMesh.position.y = geometry.boundingSphere.radius;
-                            } else {
-                                modelMesh.position.y = 1; 
-                            }
-                            scene.add(modelMesh);
-                            
-                            crushButton.disabled = false;
-                            statusText.textContent = `Model "${fileName}" loaded successfully.`;
+                            state.scene.add(state.modelMesh);
+                            elements.crushButton.disabled = false;
+                            updateStatus(`Model "${fileName}" loaded successfully. Vertices: ${state.geometry.attributes.position.count}`);
                         } else {
-                            statusText.textContent = 'Error: Geometry initialization failed.';
-                            crushButton.disabled = true;
+                            updateStatus('Error: Geometry initialization failed.');
+                            elements.crushButton.disabled = true;
                         }
                     } else {
-                         statusText.textContent = 'Error: Could not extract mesh from file.';
-                         crushButton.disabled = true;
+                        updateStatus('Error: Could not extract mesh from file.');
+                        elements.crushButton.disabled = true;
                     }
 
-                    loadingOverlay.classList.add('hidden');
+                    hideLoading();
                     if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke);
                 },
                 (xhr) => {
                     const percent = Math.floor(xhr.loaded / xhr.total * 100);
-                    statusText.textContent = `Loading: ${percent}%`;
+                    updateStatus(`Loading model: ${percent}%`);
                 },
                 (error) => {
-                    // --- ERROR FIX: More descriptive error logging for network issues ---
-                    console.error('An error happened during model loading:', error);
-                    let errorMessage = `Failed to load model from ${url}.`;
-
-                    if (error && error.type === 'error' && error.target && error.target.status === 0) {
-                        errorMessage += ' This is often due to network issues, CORS policy, or the model URL being invalid.';
-                    } else if (error && error.message) {
-                        errorMessage += ` Reason: ${error.message}`;
+                    console.error(`Asynchronous Load Failure for ${url}:`, error);
+                    if (isRandomAttempt) {
+                        console.warn('Random model failed to load asynchronously. Initiating primitive fallback.');
+                        createPrimitiveMesh();
+                    } else {
+                        updateStatus(`Error: Failed to load ${fileName}. Check console.`);
+                        hideLoading();
+                        elements.crushButton.disabled = true;
                     }
-
-                    statusText.textContent = `Error: ${errorMessage}`;
-                    loadingOverlay.classList.add('hidden');
                     if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke);
-                    crushButton.disabled = true;
-                    // --- END ERROR FIX ---
                 }
             );
         }
 
-        // --- INPUT HANDLING ---
-
+        // ============================================
+        // GUI UPDATES
+        // ============================================
         function updateCrushGUI() {
-            const isLocalized = CURRENT_CRUSH_TYPE !== 'allCrush';
+            const isLocalized = state.currentCrushType !== 'allCrush';
+            elements.localizedParams.style.display = isLocalized ? 'flex' : 'none';
             
-            // Show/hide localized parameters
-            localizedParamsDiv.classList.toggle('hidden', !isLocalized);
+            const headers = {
+                crushPoints: 'Localized Parameters',
+                scaledCrush: 'Crush & Scale Params',
+                twistCrush: 'Twist & Crush Params',
+                allCrush: 'Uniform Crush (No Params)'
+            };
+            elements.crushParamHeader.textContent = headers[state.currentCrushType];
             
-            // Update header based on crush type
-            if (CURRENT_CRUSH_TYPE === 'crushPoints') {
-                crushParamHeader.textContent = 'Localized Parameters';
-            } else if (CURRENT_CRUSH_TYPE === 'scaledCrush') {
-                crushParamHeader.textContent = 'Crush & Scale Params';
-            } else if (CURRENT_CRUSH_TYPE === 'twistCrush') {
-                crushParamHeader.textContent = 'Twist & Crush Params';
-            } else if (CURRENT_CRUSH_TYPE === 'allCrush') {
-                crushParamHeader.textContent = 'Uniform Crush (No Params)';
-            }
+            const isSmooth = state.currentAnimSpeed === 'smooth';
+            elements.smoothParams.style.display = isSmooth ? 'flex' : 'none';
+            elements.jankyParams.style.display = isSmooth ? 'none' : 'flex';
             
-            // Show/hide animation specific parameters
-            const isSmooth = CURRENT_ANIM_SPEED === 'smooth';
-            smoothParamsDiv.classList.toggle('hidden', !isSmooth);
-            jankyParamsDiv.classList.toggle('hidden', isSmooth);
-            
-            // Update data display
-            dataCrushType.textContent = `Type: ${crushTypeInput.options[crushTypeInput.selectedIndex].text}`;
-            dataAnimSpeed.textContent = `Type: ${animSpeedTypeInput.options[animSpeedTypeInput.selectedIndex].text}`;
+            elements.dataCrushType.textContent = `Type: ${elements.crushType.options[elements.crushType.selectedIndex].text}`;
+            elements.dataAnimSpeed.textContent = `Type: ${elements.animSpeedType.options[elements.animSpeedType.selectedIndex].text}`;
         }
 
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
         function setupEventListeners() {
-            // Crush button listeners
-            crushButton.addEventListener('mousedown', () => {
-                if (modelMesh) isCrushing = true;
+            elements.crushButton.addEventListener('mousedown', () => {
+                if (state.modelMesh) state.isCrushing = true;
             });
             
-            crushButton.addEventListener('mouseup', () => {
-                isCrushing = false;
+            elements.crushButton.addEventListener('mouseup', () => {
+                state.isCrushing = false;
             });
             
-            crushButton.addEventListener('mouseleave', () => {
-                 isCrushing = false;
+            elements.crushButton.addEventListener('mouseleave', () => {
+                state.isCrushing = false;
             });
             
-            // --- CRUSH TYPE & ANIMATION TYPE LISTENERS ---
-            crushTypeInput.addEventListener('change', (e) => {
-                CURRENT_CRUSH_TYPE = e.target.value;
+            elements.crushType.addEventListener('change', (e) => {
+                state.currentCrushType = e.target.value;
                 updateCrushGUI();
-                if (modelMesh) reInitializeCrushData();
+                if (state.modelMesh) reInitializeCrushData();
             });
 
-            animSpeedTypeInput.addEventListener('change', (e) => {
-                CURRENT_ANIM_SPEED = e.target.value;
+            elements.animSpeedType.addEventListener('change', (e) => {
+                state.currentAnimSpeed = e.target.value;
                 updateCrushGUI();
             });
-
-            // --- CRUSH GUI Slider Listeners ---
-            numPointsInput.addEventListener('input', (e) => {
-                NUM_CRUSH_POINTS = parseInt(e.target.value);
-                numPointsValue.textContent = NUM_CRUSH_POINTS;
-                if (modelMesh) reInitializeCrushData(); 
+            
+            elements.snapVertices.addEventListener('change', (e) => {
+                state.snapVertices = e.target.checked;
+                if (state.modelMesh) reInitializeCrushData();
             });
 
-            crushRadiusInput.addEventListener('input', (e) => {
-                CRUSH_RADIUS = parseFloat(e.target.value);
-                crushRadiusValue.textContent = CRUSH_RADIUS.toFixed(1);
+            elements.numPoints.addEventListener('input', (e) => {
+                state.numCrushPoints = parseInt(e.target.value);
+                document.getElementById('numPointsValue').textContent = state.numCrushPoints;
+                if (state.modelMesh) reInitializeCrushData();
             });
 
-            falloffPowerInput.addEventListener('input', (e) => {
-                FALLOFF_POWER = parseFloat(e.target.value);
-                falloffPowerValue.textContent = FALLOFF_POWER.toFixed(1);
+            elements.crushRadius.addEventListener('input', (e) => {
+                state.crushRadius = parseFloat(e.target.value);
+                document.getElementById('crushRadiusValue').textContent = state.crushRadius.toFixed(1);
             });
 
-            // --- SMOOTH SPEED PARAM LISTENER ---
-            smoothCrushSpeedInput.addEventListener('input', (e) => {
-                SMOOTH_CRUSH_SPEED = parseFloat(e.target.value);
-                smoothCrushSpeedValue.textContent = SMOOTH_CRUSH_SPEED.toFixed(1);
+            elements.falloffPower.addEventListener('input', (e) => {
+                state.falloffPower = parseFloat(e.target.value);
+                document.getElementById('falloffPowerValue').textContent = state.falloffPower.toFixed(1);
             });
 
-
-            // --- CAVING PARAM LISTENERS ---
-            jerkRateInput.addEventListener('input', (e) => {
-                // Caving Threshold (converted from percent to factor)
-                CAVING_THRESHOLD = parseFloat(e.target.value) / 100;
-                jerkRateValue.textContent = e.target.value;
+            elements.smoothCrushSpeed.addEventListener('input', (e) => {
+                state.smoothCrushSpeed = parseFloat(e.target.value);
+                document.getElementById('smoothCrushSpeedValue').textContent = state.smoothCrushSpeed.toFixed(1);
             });
 
-            jerkMagnitudeInput.addEventListener('input', (e) => {
-                // Caving Multiplier
-                CAVING_MULTIPLIER = parseFloat(e.target.value);
-                jerkMagnitudeValue.textContent = CAVING_MULTIPLIER.toFixed(1);
+            elements.jerkRate.addEventListener('input', (e) => {
+                state.cavingThreshold = parseFloat(e.target.value) / 100;
+                document.getElementById('jerkRateValue').textContent = e.target.value;
             });
 
-            // --- LIGHTING GUI Listeners ---
-            lightColorInput.addEventListener('input', (e) => updateLightColor(e.target.value));
-            lightIntensityInput.addEventListener('input', (e) => updateLightIntensity(parseFloat(e.target.value)));
-            lightAzimuthInput.addEventListener('input', (e) => updateLightDirection(parseFloat(e.target.value), parseFloat(lightElevationInput.value)));
-            lightElevationInput.addEventListener('input', (e) => updateLightDirection(parseFloat(lightAzimuthInput.value), parseFloat(e.target.value)));
+            elements.jerkMagnitude.addEventListener('input', (e) => {
+                state.cavingMultiplier = parseFloat(e.target.value);
+                document.getElementById('jerkMagnitudeValue').textContent = state.cavingMultiplier.toFixed(1);
+            });
 
+            elements.lightColor.addEventListener('input', (e) => updateLightColor(e.target.value));
+            elements.lightIntensity.addEventListener('input', (e) => updateLightIntensity(parseFloat(e.target.value)));
+            elements.lightAzimuth.addEventListener('input', (e) => updateLightDirection(parseFloat(e.target.value), parseFloat(elements.lightElevation.value)));
+            elements.lightElevation.addEventListener('input', (e) => updateLightDirection(parseFloat(elements.lightAzimuth.value), parseFloat(e.target.value)));
 
-            // File input listener (Upload)
-            fileInput.addEventListener('change', (event) => {
+            elements.fileInput.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (file) loadSource(file);
             });
             
-            // Randomize button listener
-            randomizeButton.addEventListener('click', loadRandomModel);
+            elements.randomizeButton.addEventListener('click', createPrimitiveMesh);
             
-            // Handle window resize
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
+                state.camera.aspect = window.innerWidth / window.innerHeight;
+                state.camera.updateProjectionMatrix();
+                state.renderer.setSize(window.innerWidth, window.innerHeight);
             });
             
-            // Initial GUI state update
             updateCrushGUI();
         }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        function init() {
+            state.scene = new THREE.Scene();
+            state.scene.background = new THREE.Color(0x333333);
+
+            const aspect = window.innerWidth / window.innerHeight;
+            state.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+            state.camera.position.set(2, 2, 3);
+
+            state.renderer = new THREE.WebGLRenderer({ antialias: true });
+            state.renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('container').appendChild(state.renderer.domElement);
+
+            state.controls = new THREE.OrbitControls(state.camera, state.renderer.domElement);
+            state.controls.enableDamping = true;
+
+            setupLighting();
+            
+            const planeGeometry = new THREE.PlaneGeometry(100, 100);
+            const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x444444 });
+            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.rotation.x = -Math.PI / 2;
+            state.scene.add(plane);
+
+            setupEventListeners();
+            loadRandomModel();
+            animate();
+        }
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        function animate(time) {
+            requestAnimationFrame(animate);
+
+            const deltaTime = (time - state.lastTime) / 1000;
+            state.lastTime = time;
+
+            if (state.modelMesh) {
+                updateCrush(deltaTime);
+                elements.dataCrushProgress.textContent = `Progress: ${(state.crushProgress / CONFIG.MAX_CRUSH * 100).toFixed(1)}%`;
+            }
+            
+            state.controls.update();
+            state.renderer.render(state.scene, state.camera);
+        }
+
+        // ============================================
+        // START APPLICATION
+        // ============================================
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
