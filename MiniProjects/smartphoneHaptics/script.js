@@ -7,25 +7,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusText = document.getElementById('statusText');
     const presetBtns = document.querySelectorAll('.preset-buttons button');
 
-    // State
+    let audioCtx;
+
+    function initAudio() {
+        if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                audioCtx = new AudioContext();
+            }
+        }
+    }
+
     let currentPattern = [200];
 
-    // Check support
     if (!("vibrate" in navigator)) {
+        const msg = "Your browser does not support the Vibration API.\nPlease use a modern version of Chrome on Android.";
+        alert(msg);
         statusText.innerHTML = "Error: Vibration API not found.<br>Try Chrome/Firefox on Android.";
         statusText.style.color = "#ff4757";
         return;
     }
 
-    // Utility: Update Pattern from Inputs
     function updatePatternFromInputs() {
         const customText = customPatternInput.value.trim();
         
         if (customText) {
-            // Parse custom pattern
             try {
                 const parts = customText.split(',').map(p => parseInt(p.trim(), 10));
-                // Filter out NaNs
                 const cleanParts = parts.filter(n => !isNaN(n) && n > 0);
                 if (cleanParts.length > 0) {
                     currentPattern = cleanParts;
@@ -37,76 +45,79 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Fallback to slider duration
         const dur = parseInt(durationInput.value, 10);
         currentPattern = [dur];
         statusText.textContent = `Pattern: Single Pulse (${dur}ms)`;
     }
 
-    // Event: Duration Slider
+    async function unlockAudioAndVibrate(pattern) {
+        statusText.innerHTML = "Requesting...";
+        
+        try {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+
+            if (audioCtx) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                gain.gain.value = 0.001; 
+                osc.start(0);
+                osc.stop(audioCtx.currentTime + 0.1);
+            }
+
+            const success = navigator.vibrate(pattern);
+            
+            if (success) {
+                statusText.innerHTML = `Vibrating... (Audio: ${audioCtx ? audioCtx.state : 'N/A'})`;
+                const totalTime = pattern.length ? pattern.reduce((a, b) => a + b, 0) : 0;
+                setTimeout(() => statusText.textContent = "Ready", totalTime || 1000);
+            } else {
+                statusText.innerHTML = "Vibrate returned <b>FALSE</b>";
+            }
+
+        } catch (e) {
+            statusText.innerHTML = `Error: ${e.message}`;
+        }
+    }
+
     durationInput.addEventListener('input', (e) => {
         durationVal.textContent = e.target.value;
-        // Clear custom input to indicate we are using slider
         customPatternInput.value = '';
         updatePatternFromInputs();
     });
 
-    // Event: Custom Input
     customPatternInput.addEventListener('input', () => {
         updatePatternFromInputs();
     });
 
-    // Event: Presets
     presetBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const patternStr = btn.getAttribute('data-pattern');
             customPatternInput.value = patternStr;
             updatePatternFromInputs();
-            // Optional: Provide instant feedback
-            try {
-                navigator.vibrate(50); 
-            } catch(e) { console.log(e); }
+            unlockAudioAndVibrate(50);
         });
     });
 
-    // Event: Trigger
     triggerBtn.addEventListener('click', () => {
-        updatePatternFromInputs(); // Ensure latest
-        
-        statusText.innerHTML = "Processing...";
-        
-        if (!window.isSecureContext) {
-            statusText.innerHTML = "Warning: Not Secure Context (HTTPS needed?)";
-        }
-
+        updatePatternFromInputs();
         if (currentPattern.length > 0) {
-            try {
-                // navigator.vibrate returns boolean: true if successful, false if failed
-                const success = navigator.vibrate(currentPattern);
-                
-                if (success) {
-                    statusText.textContent = `Vibrating... (Success: true)`;
-                    
-                    // Reset text after approximate duration
-                    const totalTime = currentPattern.reduce((a, b) => a + b, 0);
-                    setTimeout(() => {
-                        statusText.textContent = "Ready";
-                    }, totalTime);
-                } else {
-                    statusText.innerHTML = "Vibrate returned <b>FALSE</b>.<br>Check user gesture or settings.";
-                }
-            } catch (e) {
-                statusText.innerHTML = `Exception: ${e.message}`;
-            }
+            unlockAudioAndVibrate(currentPattern);
         }
     });
 
-    // Event: Stop
     stopBtn.addEventListener('click', () => {
         navigator.vibrate(0);
         statusText.textContent = "Stopped";
     });
 
-    // Initialize
+    document.getElementById('simpleTestBtn').addEventListener('click', () => {
+        unlockAudioAndVibrate([200]);
+    });
+
     updatePatternFromInputs();
 });
