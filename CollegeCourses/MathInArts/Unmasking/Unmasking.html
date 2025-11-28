@@ -34,6 +34,7 @@
       padding: 25px;
       display: flex;
       flex-direction: column;
+      margin: 20px;
     }
 
     #controls label {
@@ -62,6 +63,7 @@
     }
 
     #webcamButton {
+      margin: 20px;
       padding: 50px;
       font-size: 2.5rem;
       z-index: 3;
@@ -79,11 +81,9 @@
 
     #videofeed>* {
       grid-area: 1 / 1;
-      /* All elements share the same grid cell */
       width: 100%;
       height: 100%;
       object-fit: cover;
-      /* Ensures the video and canvases scale correctly */
     }
 
     #about {
@@ -157,7 +157,7 @@
 
     <details open>
       <summary>Usage</summary>
-      <p>Press the Enable face & hand tracking button below, approve the camera usage request and let the javaScript to
+      <p><b>Press the Enable face & hand tracking button below</b>, approve the camera usage request and let the javaScript to
         download code as needed. Once the polygon mask appears, pinch at pieces of the mask with your thumb and index
         finger and drag them away. A pinch is successfully detected when the hands changes color.</p>
       <p>Each polygons plays their own notes, determined by their x-y coordinations, measured to the center of their
@@ -207,6 +207,20 @@
     <canvas id="output_canvas"></canvas>
   </div>
   <script type="module" src="UnmaskingPureJS.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const webcamButton = document.getElementById('webcamButton');
+        if (webcamButton) {
+            webcamButton.addEventListener('click', (e) => {
+                if (!window.unmaskingAppReady) {
+                    e.stopPropagation(); // Stop the event from reaching other listeners
+                    e.preventDefault();  // Prevent default button action (if any)
+                    alert('Warning: Your browser has blocked the face and finger tracking app. This app will not work. Try a different browser if you do not know how to unblock.');
+                }
+            }, true); // Use capturing phase to run before other listeners
+        }
+    });
+  </script>
 </body>
 
 </html>
