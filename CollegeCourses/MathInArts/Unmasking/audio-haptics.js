@@ -10,11 +10,13 @@
  */
 
 (function() {
-    console.log("Initializing Audio Haptics...");
+    console.log("Initializing Audio Haptics (High Intensity Mode)...");
 
-    const HAPTIC_THRESHOLD = 50; // Amplitude threshold (0-255) to trigger vibration
-    const VIBRATION_DURATION = 15; // ms
-    const VIBRATION_INTERVAL = 30; // ms (debounce)
+    // TWEAKED PARAMETERS FOR STRONGER HAPTICS
+    const HAPTIC_THRESHOLD = 20;   // Lower threshold to catch more sounds (0-255)
+    const VIBRATION_DURATION = 200; // Significantly increased duration for better perceptibility
+    const VIBRATION_INTERVAL = 150; // Debounce interval to prevent "muddled" vibration signals
+    
     let lastVibrationTime = 0;
     let isHapticsEnabled = false;
 
@@ -31,10 +33,7 @@
         // Intercept AudioContext creation
         window.AudioContext = window.webkitAudioContext = function(...args) {
             const ctx = new OriginalAudioContext(...args);
-            
-            // Attach our logic to this context
             setupContextHaptics(ctx);
-            
             return ctx;
         };
         // Restore prototype chain
@@ -44,11 +43,8 @@
     function setupContextHaptics(context) {
         try {
             const analyser = context.createAnalyser();
-            analyser.fftSize = 256; // Small FFT size for performance and broad bass detection
-            
-            // We need to tap into the destination.
-            // Since we can't easily read FROM destination, we rely on the 'connect' override
-            // to link nodes to this analyser when they connect to destination.
+            analyser.fftSize = 256; 
+            analyser.smoothingTimeConstant = 0.3; // Less smoothing for quicker reaction
             
             // Tag this analyser as belonging to this context
             context._hapticsAnalyser = analyser;
@@ -69,11 +65,9 @@
             if (this.context._hapticsAnalyser) {
                 try {
                     // Connect this node to the haptics analyser as well
-                    // Use a gain node to prevent feedback loops if necessary, 
-                    // though parallel connection usually is fine.
                     originalConnect.apply(this, [this.context._hapticsAnalyser]);
                 } catch (err) {
-                    // Ignore errors (e.g., already connected)
+                    // Ignore errors
                 }
             }
         }
@@ -87,44 +81,34 @@
         if (element._hapticsAttached) return;
         
         try {
-            // We need a context to process media element audio
-            // We'll reuse a global one or create one if needed, 
-            // but we must be careful about CORS and strict browser policies.
-            // Note: createMediaElementSource usually requires the element to be playing
-            // or ready, and can only be called ONCE per element.
-            
-            // A safer bet for existing pages that might already use createMediaElementSource
-            // is to skip this if we detect it might conflict, but we can't easily know.
-            // We'll try to create a separate context for haptics.
-            
             const HapticCtx = window.AudioContext || window.webkitAudioContext;
             if (!HapticCtx) return;
 
+            // Reuse existing context if available in a global scope, otherwise create new
+            // Creating too many contexts can be an issue, but for now this is safe for simple apps.
             const ctx = new HapticCtx();
             const source = ctx.createMediaElementSource(element);
             const analyser = ctx.createAnalyser();
             analyser.fftSize = 256;
             
             source.connect(analyser);
-            source.connect(ctx.destination); // Ensure audio still plays through this context if needed
+            source.connect(ctx.destination);
             
             activeAnalysers.add(analyser);
             element._hapticsAttached = true;
             
-            // Resume context if suspended
             if (ctx.state === 'suspended') {
+                const resume = () => ctx.resume();
                 ['click', 'touchstart', 'keydown'].forEach(evt => 
-                    document.addEventListener(evt, () => ctx.resume(), { once: true })
+                    document.addEventListener(evt, resume, { once: true })
                 );
             }
 
         } catch (e) {
-            // Typically fails if CORS issues or already connected
             // console.warn("Could not attach haptics to media element:", e);
         }
     }
 
-    // Observer to watch for new media elements
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
@@ -138,17 +122,14 @@
         });
     });
 
-    // Start observing
     observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
-    
-    // Attach to existing elements
     document.querySelectorAll('audio, video').forEach(attachToMediaElement);
 
 
     // ---------------------------------------------------------
     // 3. Vibration Logic Loop
     // ---------------------------------------------------------
-    const dataArray = new Uint8Array(128); // Half of fftSize
+    const dataArray = new Uint8Array(128); 
 
     function processHaptics() {
         if (!isHapticsEnabled) {
@@ -156,37 +137,39 @@
             return;
         }
 
-        let totalBass = 0;
-        let activeSources = 0;
+        let maxBass = 0; // Use max instead of average for better peak detection
 
         for (const analyser of activeAnalysers) {
             analyser.getByteFrequencyData(dataArray);
             
-            // Calculate average energy in the lower frequencies (Bass)
-            // Bins 0-10 roughly correspond to sub-bass/bass depending on sample rate
-            let bassSum = 0;
-            const bassBins = 10;
-            
-            for (let i = 0; i < bassBins; i++) {
-                bassSum += dataArray[i];
+            // Scan bass frequencies (approx 0-350Hz with fft 256 @ 44.1k)
+            // Bins 0-20
+            for (let i = 0; i < 20; i++) {
+                if (dataArray[i] > maxBass) {
+                    maxBass = dataArray[i];
+                }
             }
-            
-            totalBass += (bassSum / bassBins);
-            activeSources++;
         }
 
-        if (activeSources > 0) {
-            const avgBass = totalBass / activeSources;
-            const now = Date.now();
-
-            if (avgBass > HAPTIC_THRESHOLD && (now - lastVibrationTime > VIBRATION_INTERVAL)) {
-                // Check if Vibration API is supported
-                if (navigator.vibrate) {
-                    // Vibrate based on intensity? 
-                    // Simple pulse for now
-                    navigator.vibrate(VIBRATION_DURATION);
-                    lastVibrationTime = now;
+        const now = Date.now();
+        if (maxBass > HAPTIC_THRESHOLD && (now - lastVibrationTime > VIBRATION_INTERVAL)) {
+            if (navigator.vibrate) {
+                // Dynamic duration based on intensity?
+                // Let's stick to a strong pulse for now to ensure visibility/feeling
+                // or scale it: 
+                // Low bass (20-100) -> 50ms
+                // High bass (100-255) -> 200ms
+                
+                let duration = VIBRATION_DURATION;
+                if (maxBass < 100) {
+                    duration = 50; 
+                } else {
+                    duration = 200;
                 }
+
+                // console.log(`Triggering Haptics! Intensity: ${maxBass}, Duration: ${duration}ms`);
+                navigator.vibrate(duration);
+                lastVibrationTime = now;
             }
         }
 
@@ -199,19 +182,19 @@
     function enableHaptics() {
         if (isHapticsEnabled) return;
         isHapticsEnabled = true;
-        console.log("Audio Haptics Enabled via user interaction.");
+        console.log("Audio Haptics Enabled. (Touch detected)");
         
-        // Resume all contexts we know about
-        // (This is handled by individual context creation/element attachment usually, but good to ensure)
+        // Try a tiny vibration to 'unlock' the motor on some browsers?
+        if (navigator.vibrate) {
+            navigator.vibrate(10);
+        }
     }
 
-    // Auto-enable on first interaction
-    const userEvents = ['click', 'touchstart', 'keydown'];
+    const userEvents = ['click', 'touchstart', 'keydown', 'mousedown'];
     userEvents.forEach(evt => {
         document.addEventListener(evt, enableHaptics, { once: true });
     });
 
-    // Start the loop
     processHaptics();
 
 })();
