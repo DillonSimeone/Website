@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haptic Control</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="glass-container">
+        <h1>Haptic Controller</h1>
+        
+        <div class="main-controls">
+            <button id="triggerBtn" class="glass-btn primary">VIBRATE</button>
+            <button id="stopBtn" class="glass-btn danger">STOP</button>
+        </div>
+
+        <div class="control-panel">
+            <div class="control-group">
+                <label for="duration">Duration (ms): <span id="durationVal">200</span></label>
+                <input type="range" id="duration" min="50" max="2000" step="50" value="200">
+            </div>
+
+            <div class="control-group">
+                <label>Presets</label>
+                <div class="preset-buttons">
+                    <button class="glass-btn small" data-pattern="200">Single</button>
+                    <button class="glass-btn small" data-pattern="200,100,200">Double</button>
+                    <button class="glass-btn small" data-pattern="100,50,100,50,100">Pulse</button>
+                    <button class="glass-btn small" data-pattern="500,110,500,110,450,110,200,110,170,40,450,110,200,110,170,40,500">Mario</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="customPattern">Custom Pattern (ms, pause, ms...)</label>
+                <input type="text" id="customPattern" class="glass-input" placeholder="e.g. 100, 50, 100">
+            </div>
+            
+            <div class="status-indicator">
+                Status: <span id="statusText">Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
