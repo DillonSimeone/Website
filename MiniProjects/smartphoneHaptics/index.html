@@ -14,11 +14,23 @@
     </div>
 
     <div class="glass-container">
+        <div class="info-header" style="margin-bottom: 20px; font-size: 0.9rem; opacity: 0.9;">
+            <p><strong>The Web Vibration API is finally here!</strong></p>
+            <p style="font-size: 0.8rem; margin-bottom: 10px;">
+                <em>Note: This works best on modern Chrome browsers on Android.</em>
+            </p>
+            <p>
+                <a href="https://googlechrome.github.io/samples/vibration/" target="_blank" style="color: var(--primary-color);">Google Demo</a> | 
+                <a href="https://developer.mozilla.org/en-US/docs/Web/API/Vibration_API" target="_blank" style="color: var(--primary-color);">MDN Docs</a>
+            </p>
+        </div>
+
         <h1>Haptic Controller</h1>
         
         <div class="main-controls">
             <button id="triggerBtn" class="glass-btn primary">VIBRATE</button>
             <button id="stopBtn" class="glass-btn danger">STOP</button>
+            <button id="simpleTestBtn" class="glass-btn">SIMPLE TEST</button>
         </div>
 
         <div class="control-panel">
@@ -44,6 +56,21 @@
             
             <div class="status-indicator">
                 Status: <span id="statusText">Ready</span>
+            </div>
+        </div>
+
+        <div class="troubleshooting" style="margin-top: 30px; text-align: left; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+            <h3 style="margin-top: 0;">Not Vibrating?</h3>
+            <p>If the status says "Success" but you feel nothing:</p>
+            <ol style="padding-left: 20px; line-height: 1.6;">
+                <li>Go to <strong>Settings > Sound & vibration > Vibration & haptics</strong>.</li>
+                <li>Ensure <strong>Touch feedback</strong> (or <em>Interactive haptics</em>) is ON and sliders are <strong>MAXED</strong>.</li>
+                <li>Ensure <strong>Media vibration</strong> is also ON.</li>
+                <li>Try toggling <strong>Adaptive vibration</strong> off/on.</li>
+            </ol>
+            <div style="text-align: center; margin-top: 15px;">
+                <p><em>Example Working Settings:</em></p>
+                <img src="hapticSettings.jpg" alt="Android Haptic Settings Example" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
             </div>
         </div>
     </div>
