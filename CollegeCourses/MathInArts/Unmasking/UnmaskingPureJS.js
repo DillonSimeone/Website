@@ -108,8 +108,16 @@ async function createHandLandmarker() {
     });
 }
 
-createFaceLandmarker();
-createHandLandmarker();
+window.unmaskingAppReady = false; // Initialize to false
+
+async function initUnmaskingApp() {
+    await createFaceLandmarker();
+    await createHandLandmarker();
+    window.unmaskingAppReady = true; // Set to true once both are loaded
+    console.log("Unmasking App is ready!");
+}
+
+initUnmaskingApp();
 
 // ---------------- Enable Webcam ----------------
 enableWebcamButton.addEventListener("click", enableCam);
