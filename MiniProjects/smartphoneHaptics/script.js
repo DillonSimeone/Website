@@ -20,10 +20,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentPattern = [200];
 
-    if (!("vibrate" in navigator)) {
-        const msg = "Your browser does not support the Vibration API.\nPlease use a modern version of Chrome on Android.";
+    // Check support
+    const ua = navigator.userAgent;
+    
+    // Detect supported engines but EXCLUDE DuckDuckGo (which masquerades as Chrome but lacks haptics)
+    const isTargetBrowser = /Chrome|Edg|OPR/i.test(ua);
+    const isDuckDuckGo = /DuckDuckGo/i.test(ua);
+    const hasVibrate = "vibrate" in navigator;
+
+    if (!hasVibrate || !isTargetBrowser || isDuckDuckGo) {
+        const msg = "Your browser does not support the Vibration API.\nSupported: Chrome, Edge, Opera.\n(DuckDuckGo and iOS are not supported)";
         alert(msg);
-        statusText.innerHTML = "Error: Vibration API not found.<br>Try Chrome/Firefox on Android.";
+        statusText.innerHTML = "Error: Browser not supported.<br>Use Chrome, Edge, or Opera.";
         statusText.style.color = "#ff4757";
         return;
     }
