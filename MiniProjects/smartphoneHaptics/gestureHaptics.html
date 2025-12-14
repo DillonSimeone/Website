@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesture Haptics Control</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="glass-container">
+        <div class="info-header" style="margin-bottom: 20px; font-size: 0.9rem; opacity: 0.9;">
+            <p><strong>Control Haptics with MPU Gestures!</strong></p>
+            <p style="font-size: 0.8rem; margin-bottom: 10px;">
+                <em>Note: This requires a device with Motion Sensors and Web Vibration API support.</em>
+            </p>
+            <p>
+                <a href="https://developer.mozilla.org/en-US/docs/Web/API/Accelerometer" target="_blank" style="color: var(--primary-color);">Accelerometer Docs</a> | 
+                <a href="https://developer.mozilla.org/en-US/docs/Web/API/Vibration_API" target="_blank" style="color: var(--primary-color);">Vibration API Docs</a>
+            </p>
+        </div>
+
+        <h1>Gesture Haptics</h1>
+        
+        <div class="main-controls">
+            <button id="startGestureHapticsBtn" class="glass-btn primary">START GESTURE HAPTICS</button>
+            <button id="stopGestureHapticsBtn" class="glass-btn danger">STOP GESTURE HAPTICS</button>
+        </div>
+
+        <div class="control-panel">
+            <div class="control-group">
+                <label for="deadzone">Deadzone: <span id="deadzoneVal">0.1</span></label>
+                <input type="range" id="deadzone" min="0" max="1" step="0.01" value="0.1">
+            </div>
+
+            <div class="control-group">
+                <label for="sensitivity">Sensitivity: <span id="sensitivityVal">1.0</span></label>
+                <input type="range" id="sensitivity" min="0.1" max="5" step="0.1" value="1.0">
+            </div>
+            
+            <div class="control-group">
+                <label for="intensityCap">Intensity Cap: <span id="intensityCapVal">1000</span></label>
+                <input type="range" id="intensityCap" min="0" max="2000" step="50" value="1000">
+            </div>
+
+            <div class="control-group">
+                <label for="patternSelect">Haptic Pattern:</label>
+                <select id="patternSelect" class="glass-input">
+                    <option value="single">Single Pulse</option>
+                    <option value="double">Double Pulse</option>
+                    <option value="ramp_up">Ramp Up</option>
+                    <option value="ramp_down">Ramp Down</option>
+                </select>
+            </div>
+
+            <h3>MPU Readouts:</h3>
+            <div id="mpuReadouts" class="status-indicator" style="text-align: left; opacity: 1;">
+                <p>X: <span id="accelX">0.00</span></p>
+                <p>Y: <span id="accelY">0.00</span></p>
+                <p>Z: <span id="accelZ">0.00</span></p>
+                <p>Combined Accel: <span id="combinedAccel">0.00</span></p>
+            </div>
+            
+            <div class="status-indicator" style="margin-top: 1rem; text-align: center; opacity: 0.6;">
+                Status: <span id="statusText">Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/gestureScript.js"></script>
+</body>
+</html>
