@@ -14,20 +14,20 @@
     </div>
 
     <div class="glass-container">
-        <div class="info-header" style="margin-bottom: 20px; font-size: 0.9rem; opacity: 0.9;">
+        <div class="info-header">
             <p><strong>Control Haptics with MPU Gestures!</strong></p>
-            <p style="font-size: 0.8rem; margin-bottom: 10px;">
-                <em>Note: This requires a device with Motion Sensors and Web Vibration API support.</em>
+            <p class="note">
+                Note: This requires a device with Motion Sensors and Web Vibration API support.
             </p>
             <p>
-                <a href="https://developer.mozilla.org/en-US/docs/Web/API/Accelerometer" target="_blank" style="color: var(--primary-color);">Accelerometer Docs</a> | 
-                <a href="https://developer.mozilla.org/en-US/docs/Web/API/Vibration_API" target="_blank" style="color: var(--primary-color);">Vibration API Docs</a>
+                <a href="https://developer.mozilla.org/en-US/docs/Web/API/Accelerometer" target="_blank">Accelerometer Docs</a> | 
+                <a href="https://developer.mozilla.org/en-US/docs/Web/API/Vibration_API" target="_blank">Vibration API Docs</a>
             </p>
         </div>
 
         <h1>Gesture Haptics</h1>
         
-        <div class="status-indicator" style="margin-bottom: 1rem; text-align: center; opacity: 0.6;">
+        <div class="status-indicator">
             Status: <span id="statusText">Ready</span>
         </div>
 
@@ -63,14 +63,12 @@
             </div>
 
             <h3>MPU Readouts:</h3>
-            <div id="mpuReadouts" class="status-indicator" style="text-align: left; opacity: 1;">
+            <div id="mpuReadouts" class="status-indicator left-align">
                 <p>X: <span id="accelX">0.00</span></p>
                 <p>Y: <span id="accelY">0.00</span></p>
                 <p>Z: <span id="accelZ">0.00</span></p>
                 <p>Combined Accel: <span id="combinedAccel">0.00</span></p>
             </div>
-            
-
         </div>
     </div>
 

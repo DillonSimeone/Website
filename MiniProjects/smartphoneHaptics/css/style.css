@@ -5,18 +5,55 @@
     --primary-color: #00ff88;
     --danger-color: #ff4757;
     --text-color: #ffffff;
+    --bg-gradient-start: #24243e;
+    --bg-gradient-mid: #302b63;
+    --bg-gradient-end: #0f0c29;
 }
 
+/* =========================================
+   Base
+   ========================================= */
 body {
     margin: 0;
     min-height: 100vh;
     display: flex;
     background: #0f0c29;
-    background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+    background: linear-gradient(to right, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: var(--text-color);
 }
 
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+h1 {
+    font-weight: 300;
+    letter-spacing: 2px;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* =========================================
+   Layout / Background
+   ========================================= */
 .background-blobs {
     position: fixed;
     width: 100%;
@@ -66,6 +103,11 @@ body {
     100% { transform: translate(30px, 50px); }
 }
 
+/* =========================================
+   Components
+   ========================================= */
+
+/* Glass Container */
 .glass-container {
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
@@ -73,6 +115,7 @@ body {
     border: 1px solid var(--glass-border);
     border-radius: 20px;
     padding: 2rem;
+    padding-top: 0; /* Align with updated index.html style */
     width: 90%;
     max-width: 400px;
     box-shadow: var(--glass-shadow);
@@ -80,19 +123,24 @@ body {
     margin: auto;
 }
 
-h1 {
-    margin-top: 0;
-    font-weight: 300;
-    letter-spacing: 2px;
-    margin-bottom: 2rem;
+/* Info Header */
+.info-header {
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    opacity: 0.9;
 }
 
-.main-controls {
-    display: grid;
-    gap: 1rem;
-    margin-bottom: 2rem;
+.info-header p {
+    margin: 5px 0;
 }
 
+.info-header .note {
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+/* Buttons */
 .glass-btn {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
@@ -103,8 +151,10 @@ h1 {
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 5px;
     font-weight: bold;
+    width: 100%; /* Ensure buttons take full width in grid/flex contexts if needed */
+    box-sizing: border-box;
 }
 
 .glass-btn:hover {
@@ -141,21 +191,29 @@ h1 {
     font-size: 0.9rem;
 }
 
+/* Controls */
+.main-controls {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
 .control-panel {
     text-align: left;
 }
 
 .control-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.8rem;
 }
 
-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-    opacity: 0.8;
+.control-group.boxed {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
 }
 
+/* Inputs */
 input[type="range"] {
     width: 100%;
     height: 6px;
@@ -163,6 +221,7 @@ input[type="range"] {
     border-radius: 5px;
     outline: none;
     -webkit-appearance: none;
+    margin-top: 5px;
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -173,12 +232,6 @@ input[type="range"]::-webkit-slider-thumb {
     background: var(--primary-color);
     cursor: pointer;
     box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-}
-
-.preset-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
 }
 
 .glass-input {
@@ -198,9 +251,171 @@ input[type="range"]::-webkit-slider-thumb {
     background: rgba(0, 0, 0, 0.3);
 }
 
+/* Status Indicator */
 .status-indicator {
-    margin-top: 1rem;
     font-size: 0.8rem;
     text-align: center;
     opacity: 0.6;
+    margin-bottom: 1rem;
+}
+
+.status-indicator.left-align {
+    text-align: left;
+    opacity: 1;
+}
+
+/* Presets */
+.preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+/* Troubleshooting */
+.troubleshooting {
+    margin-top: 30px; 
+    text-align: left; 
+    font-size: 0.85rem; 
+    border-top: 1px solid rgba(255,255,255,0.1); 
+    padding-top: 20px;
+}
+
+.troubleshooting ol {
+    padding-left: 20px;
+    line-height: 1.6;
+}
+
+.troubleshooting img {
+    max-width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    margin-top: 15px;
+}
+
+/* Visualizer (Mic & Camera) */
+.visualizer {
+    width: 100%;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.visualizer__bar {
+    width: 0%;
+    height: 100%;
+    background-color: var(--primary-color);
+    transition: width 0.1s ease-out;
+}
+
+.visualizer-value {
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* Video Feed */
+.video-feed {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    margin-bottom: 1rem;
+    transform: scaleX(-1); /* Mirror effect */
+    display: block;
+}
+
+.hidden-canvas {
+    display: none;
+}
+
+/* Toggle Switch */
+.switch-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Helper Classes */
+.switch-label {
+    margin: 0;
+    font-weight: bold;
+}
+
+.status-indicator--footer {
+    margin-top: 20px;
+}
+
+.text-primary {
+    color: var(--primary-color);
+}
+
+.peer-id-display {
+    font-size: 0.8em;
+    opacity: 0.7;
+    margin-top: 5px;
+    display: none;
+}
+
+.mode-description {
+    font-size: 0.8rem;
+    margin-top: 10px;
+    opacity: 0.8;
+}
+
+/* Faded Controls */
+.faded-controls {
+    transition: opacity 0.3s;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.faded-controls.active {
+    opacity: 1;
+    pointer-events: auto;
 }
