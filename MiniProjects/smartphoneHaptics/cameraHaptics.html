@@ -5,19 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera Haptics Control</title>
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        video {
-            width: 100%;
-            height: auto;
-            border-radius: 10px;
-            background-color: rgba(0,0,0,0.5);
-            margin-bottom: 1rem;
-            transform: scaleX(-1); /* Mirror for front camera selfie view */
-        }
-        canvas {
-            display: none; /* Hidden canvas for processing */
-        }
-    </style>
 </head>
 <body>
     <div class="background-blobs">
@@ -27,20 +14,20 @@
     </div>
 
     <div class="glass-container">
-        <div class="info-header" style="margin-bottom: 20px; font-size: 0.9rem; opacity: 0.9;">
+        <div class="info-header">
             <p><strong>Control Haptics with Camera Pixels!</strong></p>
-            <p style="font-size: 0.8rem; margin-bottom: 10px;">
-                <em>Note: This requires a device with a camera and Web Vibration API support.</em>
+            <p class="note">
+                Note: This requires a device with a camera and Web Vibration API support.
             </p>
             <p>
-                <a href="https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia" target="_blank" style="color: var(--primary-color);">getUserMedia Docs</a> | 
-                <a href="https://developer.mozilla.org/en-US/docs/Web/API/Vibration_API" target="_blank" style="color: var(--primary-color);">Vibration API Docs</a>
+                <a href="https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia" target="_blank">getUserMedia Docs</a> | 
+                <a href="https://developer.mozilla.org/en-US/docs/Web/API/Vibration_API" target="_blank">Vibration API Docs</a>
             </p>
         </div>
 
         <h1>Camera Haptics</h1>
         
-        <div class="status-indicator" style="margin-bottom: 1rem; text-align: center; opacity: 0.6;">
+        <div class="status-indicator">
             Status: <span id="statusText">Ready</span>
         </div>
         
@@ -50,8 +37,14 @@
         </div>
 
         <div class="control-panel">
-            <video id="cameraFeed" autoplay playsinline></video>
-            <canvas id="cameraCanvas"></canvas>
+            <video id="cameraFeed" class="video-feed" autoplay playsinline></video>
+            <canvas id="cameraCanvas" class="hidden-canvas"></canvas>
+
+            <h3>Processed Value:</h3>
+            <div id="processedLevelVisualizer" class="visualizer">
+                <div id="processedLevelBar" class="visualizer__bar"></div>
+            </div>
+            <p class="visualizer-value">Current Value: <span id="currentProcessedLevel">0.00</span></p>
 
             <div class="control-group">
                 <label for="cameraSelect">Camera:</label>
@@ -92,14 +85,6 @@
                     <option value="pulse_dynamic">Dynamic Pulse</option>
                 </select>
             </div>
-
-            <h3>Processed Value:</h3>
-            <div id="processedLevelVisualizer" style="width: 100%; height: 20px; background-color: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-bottom: 10px;">
-                <div id="processedLevelBar" style="width: 0%; height: 100%; background-color: var(--primary-color);"></div>
-            </div>
-            <p style="text-align: center; font-size: 0.9rem;">Current Value: <span id="currentProcessedLevel">0.00</span></p>
-
-
         </div>
     </div>
 
