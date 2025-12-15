@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSC Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for a modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="glass-container main-layout">
+        <header>
+            <h1 class="app-title">OSC MONITOR</h1>
+            <div class="connection-display">
+                <div class="conn-item">
+                    <span class="conn-label">LOCAL IP</span>
+                    <span class="conn-value" id="ip-display">Loading...</span>
+                </div>
+                <div class="conn-divider">:</div>
+                <div class="conn-item">
+                    <span class="conn-label">PORT</span>
+                    <span class="conn-value" id="port-display">3330</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="controls-section glass-panel">
+            <div class="control-group">
+                <label for="port-input">LISTENING PORT</label>
+                <input type="number" id="port-input" value="3330">
+            </div>
+            <div class="button-group">
+                <button id="btn-start" onclick="startServer()" class="btn btn-primary">START LISTENER</button>
+                <button id="btn-stop" onclick="stopServer()" disabled class="btn btn-danger">STOP</button>
+                <button id="btn-clear" onclick="clearLog()" class="btn btn-secondary">CLEAR LOG</button>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">STOPPED</span>
+            </div>
+        </div>
+
+        <div class="content-split">
+            <div class="info-panel glass-panel">
+                <h2>HOW TO CONNECT</h2>
+                <div class="instruction-step">
+                    <span class="step-num">1</span>
+                    <p>Identify your sender (e.g., PatchXR, TouchOSC).</p>
+                </div>
+                <div class="instruction-step">
+                    <span class="step-num">2</span>
+                    <p>Set the <strong>Destination IP</strong> to the "LOCAL IP" shown above.</p>
+                </div>
+                <div class="instruction-step">
+                    <span class="step-num">3</span>
+                    <p>Set the <strong>Destination Port</strong> to match the "PORT" above.</p>
+                </div>
+                <div class="instruction-note">
+                    <strong>PatchXR Example:</strong><br>
+                    Use an <code>execute</code> block:<br>
+                    <code class="code-snippet">remote_ip <span id="ip-snippet">...</span></code><br>
+                    <code class="code-snippet">port_out <span id="port-snippet">3330</span></code>
+                </div>
+            </div>
+
+            <div class="log-panel glass-panel">
+                <div class="log-header">
+                    <span>MESSAGE LOG</span>
+                    <span class="log-count" id="log-count">0 messages</span>
+                </div>
+                <div id="log-container">
+                    <!-- OSC messages will appear here -->
+                    <div class="empty-state">Waiting for OSC messages...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
