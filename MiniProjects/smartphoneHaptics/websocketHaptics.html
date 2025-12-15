@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Haptics</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- PeerJS for serverless P2P communication -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="glass-container">
+        <div class="info-header" style="margin-bottom: 20px; font-size: 0.9rem; opacity: 0.9;">
+            <p><strong>Remote Haptics Controller</strong></p>
+            <p style="font-size: 0.8rem; margin-bottom: 10px;">
+                <em>One device acts as Host, others as Clients.</em>
+            </p>
+        </div>
+
+        <h1>Remote Haptics</h1>
+        
+        <div class="status-indicator" style="text-align: center; margin-bottom: 15px;">
+            Connection: <span id="connectionStatus" style="color: var(--primary-color);">Disconnected</span>
+            <div id="peerIdDisplay" style="font-size: 0.8em; opacity: 0.7; margin-top: 5px; display: none;">ID: <span id="myPeerId">...</span></div>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="control-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="hostToggle" style="margin: 0; font-weight: bold;">Enable Host Mode</label>
+                <label class="switch" style="position: relative; display: inline-block; width: 60px; height: 34px;">
+                    <input type="checkbox" id="hostToggle">
+                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; -webkit-transition: .4s; transition: .4s; border-radius: 34px;"></span>
+                    <style>
+                        .switch input { opacity: 0; width: 0; height: 0; }
+                        .slider.round:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; -webkit-transition: .4s; transition: .4s; border-radius: 50%; }
+                        input:checked + .slider { background-color: var(--primary-color); }
+                        input:checked + .slider:before { -webkit-transform: translateX(26px); -ms-transform: translateX(26px); transform: translateX(26px); }
+                    </style>
+                </label>
+            </div>
+            <p id="modeDescription" style="font-size: 0.8rem; margin-top: 10px; opacity: 0.8;">
+                Client Mode: Receiving haptics...
+            </p>
+        </div>
+        
+        <!-- Controls (Hidden for Clients by default, but we can leave them visible for testing local feedback too) -->
+        <div id="hostControls" class="faded-controls" style="transition: opacity 0.3s; opacity: 0.5; pointer-events: none;">
+            <div class="main-controls">
+                <button id="triggerBtn" class="glass-btn primary">BROADCAST VIBRATE</button>
+                <button id="stopBtn" class="glass-btn danger">STOP ALL</button>
+            </div>
+
+            <div class="control-panel">
+                <div class="control-group">
+                    <label>Presets</label>
+                    <div class="preset-buttons">
+                        <button class="glass-btn small" data-pattern="200">Single</button>
+                        <button class="glass-btn small" data-pattern="200,100,200">Double</button>
+                        <button class="glass-btn small" data-pattern="100,50,100,50,100">Pulse</button>
+                        <button class="glass-btn small" data-pattern="500,110,500,110,450,110,200,110,170,40,450,110,200,110,170,40,500">Mario</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="customPattern">Custom Pattern</label>
+                    <input type="text" id="customPattern" class="glass-input" placeholder="e.g. 100, 50, 100">
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-indicator" style="margin-top: 20px; text-align: center;">
+            Haptic Status: <span id="statusText">Ready</span>
+        </div>
+
+    </div>
+
+    <script src="js/websocketScript.js"></script>
+</body>
+</html>

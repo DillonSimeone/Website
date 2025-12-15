@@ -8,6 +8,7 @@ This project demonstrates various ways to utilize smartphone sensor inputs (butt
 -   `gestureHaptics.html`: Haptics based on device motion (accelerometer/MPU).
 -   `micHaptics.html`: Haptics based on microphone sound levels.
 -   `cameraHaptics.html`: Haptics based on camera pixel data (brightness, motion).
+-   `websocketHaptics.html`: Remote haptics control using PeerJS (WebRTC) for device-to-device communication.
 
 Each HTML file has a corresponding JavaScript file in the `js/` directory (e.g., `gestureHaptics.html` uses `js/gestureScript.js`).
 All pages share common styling from `css/style.css`.
