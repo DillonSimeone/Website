@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function unlockAudioAndVibrate(pattern) {
+        logInteraction();
         statusText.innerHTML = "Requesting...";
         
         try {

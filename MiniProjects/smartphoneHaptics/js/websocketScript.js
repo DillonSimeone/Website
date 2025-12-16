@@ -25,6 +25,7 @@ let isHost = false;
 
 // Initialize
 function init() {
+    logInteraction();
     // Default to Client mode
     startClientMode();
 

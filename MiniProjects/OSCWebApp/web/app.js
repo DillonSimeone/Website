@@ -21,7 +21,7 @@ function updatePortDisplay() {
     document.getElementById('port-snippet').textContent = port;
 }
 
-function logMessage(address, args) {
+function logMessage(address, args, ip, port) {
     const container = document.getElementById('log-container');
     
     // Remove empty state if present
@@ -37,7 +37,8 @@ function logMessage(address, args) {
     
     entry.innerHTML = `
         <div class="log-meta">
-            <span>${time}.${ms}</span>
+            <span class="log-time">${time}.${ms}</span>
+            <span class="log-source" title="Source IP:Port">${ip}:${port}</span>
         </div>
         <div class="log-content">
             <span class="log-address">${address}</span>
@@ -116,7 +117,7 @@ function addToConsole(msg_json) {
         argsStr = argsStr.substring(1, argsStr.length - 1); 
         if (argsStr.length === 0) argsStr = "(no data)";
         
-        logMessage(data.address, argsStr);
+        logMessage(data.address, argsStr, data.ip || '?', data.port || '?');
     } catch (e) {
         console.error("Bad JSON", e);
     }

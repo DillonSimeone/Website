@@ -261,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     startCameraHapticsBtn.addEventListener('click', () => {
+        logInteraction();
         startCamera(cameraSelect.value);
     });
     stopCameraHapticsBtn.addEventListener('click', stopCamera);

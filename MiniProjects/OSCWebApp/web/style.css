@@ -402,7 +402,7 @@ input[type="number"]:focus {
     padding: 6px 10px;
     border-radius: 4px;
     display: grid;
-    grid-template-columns: 80px 1fr;
+    grid-template-columns: 120px 1fr;
     gap: 10px;
     animation: slideIn 0.2s ease-out;
 }
@@ -416,6 +416,14 @@ input[type="number"]:focus {
     font-size: 0.75rem;
     display: flex;
     flex-direction: column;
+}
+
+.log-source {
+    color: #5d5dff;
+    font-size: 0.7rem;
+    margin-top: 2px;
+    opacity: 0.8;
+    font-weight: 600;
 }
 
 .log-content {
