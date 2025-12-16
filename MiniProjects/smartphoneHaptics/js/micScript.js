@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Audio Processing ---
     async function startMicrophone() {
+        logInteraction();
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             audioContext = new (window.AudioContext || window.webkitAudioContext)();

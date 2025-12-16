@@ -218,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     startGestureHapticsBtn.addEventListener('click', () => {
+        logInteraction();
         // Request permission if needed (iOS)
         if (typeof DeviceMotionEvent.requestPermission === 'function') {
             DeviceMotionEvent.requestPermission().then(permissionState => {

@@ -32,19 +32,20 @@ class OSCApp:
     def on_closing(self):
         self.stop_server()
 
-    def handle_osc_message(self, address, *args):
+    def handle_osc_message(self, client_address, address, *args):
         """Callback for captured OSC messages."""
         if self._window:
             payload = {
                 "address": address,
-                "args": args
+                "args": args,
+                "ip": client_address[0],
+                "port": client_address[1]
             }
             # Serialize to JSON and escape for JS string safety
             json_str = json.dumps(payload)
             safe_str = json_str.replace("'", "\'" ).replace('"', '\"')
             
             # Send to JS
-            # Note: evaluate_js from a thread other than the UI thread works in pywebview
             try:
                 self._window.evaluate_js(f"addToConsole('{safe_str}')")
             except Exception as e:
@@ -56,7 +57,7 @@ class OSCApp:
 
         try:
             dispatcher = Dispatcher()
-            dispatcher.map("*", self.handle_osc_message) # Wildcard to catch everything
+            dispatcher.map("*", self.handle_osc_message, needs_reply_address=True) # Wildcard to catch everything
 
             # 0.0.0.0 listens on all interfaces
             self.server = ThreadingOSCUDPServer(("0.0.0.0", port), dispatcher)
