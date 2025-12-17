@@ -26,7 +26,9 @@ def announce_mdns(ip, host):
     # Type: A (1), Class: IN (1), TTL: 120
     packet += b'\x00\x01\x00\x01\x00\x00\x00\x78'
     # Data Length: 4, Address
-    packet += b'\x00\x04' + usocket.inet_pton(usocket.AF_INET, ip)
+    # Manual IP parsing since inet_pton might be missing
+    ip_parts = [int(x) for x in ip.split('.')]
+    packet += b'\x00\x04' + struct.pack('BBBB', *ip_parts)
     
     try:
         sock.sendto(packet, (MCAST_GRP, MCAST_PORT))
