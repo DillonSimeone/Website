@@ -49,24 +49,32 @@
 
         <div class="content-split">
             <div class="info-panel glass-panel">
-                <h2>HOW TO CONNECT</h2>
-                <div class="instruction-step">
-                    <span class="step-num">1</span>
-                    <p>Identify your sender (e.g., PatchXR, TouchOSC).</p>
+                <div class="info-group">
+                    <h2>HOW TO CONNECT</h2>
+                    <div class="instruction-content">
+                        <div class="instruction-step">
+                            <span class="step-num">1</span>
+                            <p>Identify your sender (e.g., PatchXR).</p>
+                        </div>
+                        <div class="instruction-step">
+                            <span class="step-num">2</span>
+                            <p>Set <strong>Dest IP</strong> to "LOCAL IP".</p>
+                        </div>
+                        <div class="instruction-step">
+                            <span class="step-num">3</span>
+                            <p>Set <strong>Dest Port</strong> to "PORT".</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="instruction-step">
-                    <span class="step-num">2</span>
-                    <p>Set the <strong>Destination IP</strong> to the "LOCAL IP" shown above.</p>
-                </div>
-                <div class="instruction-step">
-                    <span class="step-num">3</span>
-                    <p>Set the <strong>Destination Port</strong> to match the "PORT" above.</p>
-                </div>
-                <div class="instruction-note">
-                    <strong>PatchXR Example:</strong><br>
-                    Use an <code>execute</code> block:<br>
-                    <code class="code-snippet">remote_ip <span id="ip-snippet">...</span></code><br>
-                    <code class="code-snippet">port_out <span id="port-snippet">3330</span></code>
+
+                <div class="info-group flex-grow">
+                    <h2>FORWARD TO</h2>
+                    <div class="client-list-container">
+                        <ul id="client-list">
+                            <!-- Clients will be added here dynamically -->
+                            <li class="empty-list">No devices detected yet.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 

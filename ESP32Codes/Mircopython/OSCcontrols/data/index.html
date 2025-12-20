@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSC Device</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600&family=Inter:wght@300;400;600&display=swap');
+
+        :root { 
+            --bg-grad: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --glass: rgba(0, 0, 0, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #e0e0e0;
+            --accent: #00bcd4; 
+            --accent-glow: rgba(0, 188, 212, 0.3);
+            --danger: #ff5252; 
+            --success: #00e676;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-grad); 
+            background-attachment: fixed;
+            color: var(--text); 
+            padding: 20px; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            min-height: 100vh;
+        }
+
+        .mono { font-family: 'Roboto Mono', monospace; }
+
+        .card { 
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+        }
+
+        h1, h2, h3 { color: var(--accent); margin-top: 0; font-weight: 600; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: #aaa; padding: 10px 20px;
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--accent); color: #000; font-weight: bold;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Forms */
+        label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #aaa; }
+        input, select, button { 
+            width: 100%; padding: 10px; margin-bottom: 10px;
+            border-radius: 6px; border: 1px solid var(--glass-border); 
+            background: rgba(0,0,0,0.3); color: white; box-sizing: border-box;
+        }
+        input:focus { outline: none; border-color: var(--accent); }
+        input[type="range"] { padding: 0; margin-top: 5px; }
+        
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+        
+        button { 
+            cursor: pointer; font-weight: 600; text-transform: uppercase; 
+            background: rgba(255,255,255,0.1); border: none;
+        }
+        button:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover { background: #00acc1; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: #000; }
+
+        /* Mappings */
+        .mapping-item { 
+            border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02);
+            padding: 15px; border-radius: 8px; margin-bottom: 10px;
+        }
+        .wildcard-badge { 
+            background: #ff9800; color: black; font-size: 0.7rem; 
+            padding: 2px 5px; border-radius: 4px; font-weight: bold;
+        }
+        .range-val { float:right; color: var(--accent); font-weight:bold; }
+    </style>
+</head>
+<body>
+
+    <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h1 style="margin:0; font-size:1.5rem;">OSC Device</h1>
+            <div class="mono" style="font-size:0.9rem; color:#aaa;">
+                IP: <span id="dev-ip">...</span> | Port: <span id="dev-port">...</span>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-success" onclick="startOSC()" style="width:auto; padding: 8px 20px;">Start OSC Engine</button>
+            <button class="btn-primary" onclick="saveSettings()" style="width:auto; padding: 8px 20px;">Save Config</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('mappings')">Mappings</button>
+        <button class="tab-btn" onclick="switchTab('ping')">Test Ping</button>
+        <button class="tab-btn" onclick="switchTab('wifi')">WiFi</button>
+    </div>
+
+    <!-- MAPPINGS TAB -->
+    <div id="tab-mappings" class="tab-content active">
+        <div class="card">
+            <h3>Global Settings</h3>
+            <label>Device Listening Port</label>
+            <input type="number" id="osc-port" value="8000">
+        </div>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3>Pin Mappings</h3>
+                <button onclick="addMapping()" style="width:auto; font-size:0.8rem;">+ Add New</button>
+            </div>
+            <div id="mapping-list"></div>
+        </div>
+    </div>
+
+    <!-- PING TAB -->
+    <div id="tab-ping" class="tab-content">
+        <div class="card">
+            <h3>Send Test Message</h3>
+            <div class="row">
+                <div class="col"><label>Target IP</label><input type="text" id="ping-ip" placeholder="192.168.4.2"></div>
+                <div class="col"><label>Target Port</label><input type="number" id="ping-port" value="8000"></div>
+            </div>
+            <label>OSC Address</label>
+            <input type="text" id="ping-addr" value="/test">
+            
+            <label>Argument (Float)</label>
+            <input type="number" id="ping-arg" value="1.0" step="0.1">
+            
+            <button class="btn-primary" onclick="sendPing()">Send Packet</button>
+        </div>
+    </div>
+
+    <!-- WIFI TAB -->
+    <div id="tab-wifi" class="tab-content">
+        <div class="card">
+            <h3>WiFi Connection</h3>
+            <button onclick="scanWifi()">Scan Networks</button>
+            <div id="wifi-list" style="margin-top:10px;"></div>
+            
+            <div id="wifi-form" style="display:none; margin-top:20px; border-top:1px solid var(--glass-border); padding-top:20px;">
+                <label>Connect to <b id="target-ssid"></b></label>
+                <input type="password" id="wifi-pass" placeholder="Password">
+                <button class="btn-primary" onclick="saveWifi()">Connect & Reboot</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let settings = { osc_port: 8000, mappings: [] };
+        const validPins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
+
+        function switchTab(t) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-'+t).classList.add('active');
+        }
+
+        async function init() {
+            try {
+                const s = await fetch('/api/status').then(r=>r.json());
+                document.getElementById('dev-ip').innerText = s.ip;
+                document.getElementById('dev-port').innerText = s.port;
+                
+                settings = await fetch('/api/settings').then(r=>r.json());
+                document.getElementById('osc-port').value = settings.osc_port || 8000;
+                renderMappings();
+            } catch(e) { console.error(e); }
+        }
+
+        function renderMappings() {
+            const list = document.getElementById('mapping-list');
+            list.innerHTML = '';
+            
+            settings.mappings.forEach((m, i) => {
+                const div = document.createElement('div');
+                div.className = 'mapping-item';
+                
+                let pinOpts = validPins.map(p => 
+                    `<option value="${p}" ${m.pin==p?'selected':''}>GPIO ${p}</option>`
+                ).join('');
+
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong class="mono">Mapping #${i+1}</strong>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-success" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="triggerMapping(${i})">Test</button>
+                            <button class="btn-danger" style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="removeMapping(${i})">X</button>
+                        </div>
+                    </div>
+                    
+                    <div class="row" style="margin-top:10px;">
+                        <div class="col" style="flex:2;">
+                            <label>Address Pattern ${m.wildcard ? '<span class="wildcard-badge">ANY</span>' : ''}</label>
+                            <input type="text" class="mono" value="${m.address}" onchange="updateM(${i}, 'address', this.value)" ${m.wildcard?'disabled':''}>
+                            <div style="font-size:0.8rem;">
+                                <input type="checkbox" style="width:auto;" ${m.wildcard?'checked':''} onchange="updateM(${i}, 'wildcard', this.checked)"> Accept Any Address
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label>Pin</label>
+                            <select onchange="updateM(${i}, 'pin', this.value)">${pinOpts}</select>
+                            <div style="font-size:0.8rem; margin-top:5px;">
+                                <input type="checkbox" style="width:auto;" ${m.invert?'checked':''} onchange="updateM(${i}, 'invert', this.checked)"> Invert Output
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col">
+                            <label>Mode</label>
+                            <select onchange="updateM(${i}, 'type', this.value); renderMappings();">
+                                <option value="toggle" ${m.type=='toggle'?'selected':''}>Toggle</option>
+                                <option value="pulse" ${m.type=='pulse'?'selected':''}>Pulse</option>
+                                <option value="pwm" ${m.type=='pwm'?'selected':''}>PWM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    ${m.type === 'pulse' ? `
+                    <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:5px; margin-top:10px;">
+                        <label>Pulse Duration <span class="range-val">${m.pulse_ms||50} ms</span></label>
+                        <input type="range" min="1" max="100" value="${m.pulse_ms||50}" 
+                               oninput="this.previousElementSibling.firstElementChild.innerText = this.value + ' ms'"
+                               onchange="updateM(${i}, 'pulse_ms', this.value)">
+                    </div>
+                    ` : ''}
+
+                    ${m.type === 'toggle' ? `
+                    <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:5px; margin-top:10px;">
+                        <label>Active Brightness <span class="range-val">${Math.round((m.toggle_val||1023)/10.23)}%</span></label>
+                        <input type="range" min="0" max="1023" value="${m.toggle_val||1023}" 
+                               oninput="this.previousElementSibling.firstElementChild.innerText = Math.round(this.value/10.23) + '%'"
+                               onchange="updateM(${i}, 'toggle_val', this.value)">
+                    </div>
+                    ` : ''}
+
+                    ${m.type === 'pwm' ? `
+                    <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:5px; margin-top:10px;">
+                        <label style="color:var(--accent);">PWM Calibration</label>
+                        <div class="row">
+                            <div class="col"><label>In Min</label><input type="number" step="0.1" value="${m.min_in||0}" onchange="updateM(${i}, 'min_in', this.value)"></div>
+                            <div class="col"><label>In Max</label><input type="number" step="0.1" value="${m.max_in||1}" onchange="updateM(${i}, 'max_in', this.value)"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col"><label>Out Min (0-1023)</label><input type="number" value="${m.min_out||0}" onchange="updateM(${i}, 'min_out', this.value)"></div>
+                            <div class="col"><label>Out Max (0-1023)</label><input type="number" value="${m.max_out||1023}" onchange="updateM(${i}, 'max_out', this.value)"></div>
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updateM(i, k, v) {
+            if (k === 'invert' || k === 'wildcard') {
+                settings.mappings[i][k] = v;
+            } else {
+                settings.mappings[i][k] = (k === 'pin' || k.includes('out') || k.includes('val') || k.includes('ms')) ? parseInt(v) : (k.includes('in') ? parseFloat(v) : v);
+            }
+            if(k === 'wildcard' && v) settings.mappings[i].address = "*";
+            // Re-render only if structure changes
+            if(['wildcard', 'invert', 'type'].includes(k)) renderMappings();
+        }
+
+        function addMapping() {
+            settings.mappings.push({
+                address: "/led", wildcard: false, pin: 2, type: "toggle", invert: false,
+                pulse_ms: 50, toggle_val: 1023,
+                min_in: 0, max_in: 1, min_out: 0, max_out: 1023
+            });
+            renderMappings();
+        }
+
+        function removeMapping(i) {
+            if(confirm("Delete?")) {
+                settings.mappings.splice(i, 1);
+                renderMappings();
+            }
+        }
+        
+        async function triggerMapping(i) {
+            try {
+                await fetch('/api/trigger', {
+                    method: 'POST',
+                    body: JSON.stringify({index: i})
+                });
+            } catch(e) { alert("Trigger failed: " + e); }
+        }
+
+        async function saveSettings() {
+            settings.osc_port = parseInt(document.getElementById('osc-port').value);
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST', body: JSON.stringify(settings)
+                });
+                if(res.ok) alert("Saved!");
+                else alert("Error saving.");
+            } catch(e) { alert("Error: "+e); }
+        }
+
+        async function sendPing() {
+            const data = {
+                ip: document.getElementById('ping-ip').value,
+                port: parseInt(document.getElementById('ping-port').value),
+                address: document.getElementById('ping-addr').value,
+                args: [parseFloat(document.getElementById('ping-arg').value)]
+            };
+            try {
+                await fetch('/api/ping', { method:'POST', body:JSON.stringify(data) });
+                alert("Sent!");
+            } catch(e) { alert(e); }
+        }
+        
+        async function startOSC() {
+            if(confirm("🚀 START OSC ENGINE?\n\nWebsite will disconnect. Press BOOT button to restore.")) {
+                try {
+                    await fetch('/api/mode/osc');
+                    document.body.innerHTML = "<div style='color:white; text-align:center; padding:50px;'><h1>OSC Engine Running</h1><p>Website Disabled.</p><p>Press BOOT button on device to restore.</p></div>";
+                } catch(e) {}
+            }
+        }
+
+        let selSSID = "";
+        async function scanWifi() {
+            document.getElementById('wifi-list').innerText = "Scanning...";
+            try {
+                const nets = await fetch('/api/wifi/scan').then(r=>r.json());
+                const list = document.getElementById('wifi-list');
+                list.innerHTML = "";
+                nets.sort((a,b)=>b.rssi-a.rssi).forEach(n => {
+                    const d = document.createElement('div');
+                    d.style.padding = "10px"; d.style.borderBottom = "1px solid #444";
+                    d.style.cursor = "pointer";
+                    d.innerHTML = `<b>${n.ssid}</b> (${n.rssi} dBm)`;
+                    d.onclick = () => {
+                        selSSID = n.ssid;
+                        document.getElementById('target-ssid').innerText = n.ssid;
+                        document.getElementById('wifi-form').style.display = 'block';
+                    };
+                    list.appendChild(d);
+                });
+            } catch(e) { document.getElementById('wifi-list').innerText = "Error scanning."; }
+        }
+        
+        async function saveWifi() {
+            const pass = document.getElementById('wifi-pass').value;
+            await fetch('/api/wifi/save', { method:'POST', body:JSON.stringify({ssid:selSSID, password:pass}) });
+            alert("Saved! Rebooting...");
+        }
+
+        init();
+    </script>
+</body>
+</html>
