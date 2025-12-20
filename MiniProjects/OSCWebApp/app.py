@@ -5,6 +5,7 @@ import socket
 import webview
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
+from pythonosc.udp_client import SimpleUDPClient
 
 class OSCApp:
     def __init__(self):
@@ -12,6 +13,7 @@ class OSCApp:
         self.server = None
         self.server_thread = None
         self.is_running = False
+        self.known_clients = {} # "ip:port" -> {ip, port, enabled, client_obj}
 
     def set_window(self, window):
         self._window = window
@@ -32,14 +34,58 @@ class OSCApp:
     def on_closing(self):
         self.stop_server()
 
+    def toggle_client(self, ip, port, enabled):
+        """Called from JS to toggle forwarding for a specific client."""
+        key = f"{ip}:{port}"
+        if key in self.known_clients:
+            self.known_clients[key]['enabled'] = enabled
+            print(f"Client {key} forwarding set to {enabled}")
+            
+            # Initialize UDP client if needed
+            if enabled and self.known_clients[key]['client_obj'] is None:
+                try:
+                    self.known_clients[key]['client_obj'] = SimpleUDPClient(ip, int(port))
+                except Exception as e:
+                    print(f"Error creating OSC client for {key}: {e}")
+        else:
+            print(f"Warning: Toggled unknown client {key}")
+
     def handle_osc_message(self, client_address, address, *args):
         """Callback for captured OSC messages."""
+        sender_ip = client_address[0]
+        sender_port = client_address[1]
+        sender_key = f"{sender_ip}:{sender_port}"
+
+        # 1. Register new client
+        if sender_key not in self.known_clients:
+            self.known_clients[sender_key] = {
+                "ip": sender_ip,
+                "port": sender_port,
+                "enabled": False, # Default disabled to prevent spam/loops initially
+                "client_obj": None
+            }
+            if self._window:
+                # Notify JS to add to list
+                self._window.evaluate_js(f"addClient('{sender_ip}', {sender_port})")
+
+        # 2. Forwarding Logic
+        # Forward to ALL enabled clients EXCEPT the sender
+        for key, client_data in self.known_clients.items():
+            if client_data['enabled'] and key != sender_key:
+                client = client_data['client_obj']
+                if client:
+                    try:
+                        client.send_message(address, args)
+                    except Exception as e:
+                        print(f"Failed to forward to {key}: {e}")
+
+        # 3. Update UI Log
         if self._window:
             payload = {
                 "address": address,
                 "args": args,
-                "ip": client_address[0],
-                "port": client_address[1]
+                "ip": sender_ip,
+                "port": sender_port
             }
             # Serialize to JSON and escape for JS string safety
             json_str = json.dumps(payload)
@@ -102,4 +148,4 @@ if __name__ == '__main__':
     window.events.closed += api.on_closing
     
     # gui='qt' forces the Qt backend (PyQt6/PySide6)
-    webview.start(debug=True, gui='qt')
+    webview.start(debug=False, gui='qt')

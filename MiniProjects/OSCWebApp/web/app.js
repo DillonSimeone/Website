@@ -122,3 +122,35 @@ function addToConsole(msg_json) {
         console.error("Bad JSON", e);
     }
 }
+
+// Client Management
+const knownClients = new Set();
+
+function addClient(ip, port) {
+    const key = `${ip}:${port}`;
+    if (knownClients.has(key)) return;
+
+    knownClients.add(key);
+    
+    const list = document.getElementById('client-list');
+    const emptyState = list.querySelector('.empty-list');
+    if (emptyState) emptyState.remove();
+
+    const li = document.createElement('li');
+    li.className = 'client-item';
+    li.dataset.key = key;
+    li.innerHTML = `
+        <div class="client-info">${ip}:${port}</div>
+        <div class="client-status"></div>
+    `;
+
+    li.addEventListener('click', () => {
+        const isSelected = li.classList.toggle('selected');
+        // Notify Python to enable/disable forwarding for this client
+        if (window.pywebview && window.pywebview.api) {
+            pywebview.api.toggle_client(ip, port, isSelected);
+        }
+    });
+
+    list.appendChild(li);
+}
