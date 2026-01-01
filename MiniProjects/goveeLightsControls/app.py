@@ -1,4 +1,5 @@
 import os
+import sys
 import uuid
 import json
 import requests
@@ -139,7 +140,14 @@ if __name__ == '__main__':
     api = GoveeApp()
     
     # Create window
-    entry_point = os.path.join(os.getcwd(), 'web', 'index.html')
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller temp folder
+        base_dir = sys._MEIPASS
+    else:
+        # Development mode
+        base_dir = os.path.abspath(".")
+
+    entry_point = os.path.join(base_dir, 'web', 'index.html')
     
     window = webview.create_window(
         'Govee Control Station', 
@@ -153,4 +161,4 @@ if __name__ == '__main__':
     
     api.set_window(window)
     # Force QT because pythonnet (needed for WinForms) is not available on Python 3.14
-    webview.start(debug=True, gui='qt')
+    webview.start(debug=False, gui='qt')

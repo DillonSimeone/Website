@@ -1,21 +1,15 @@
 let devices = [];
 let selectedDevices = new Set();
 
-window.addEventListener('pywebviewready', function() {
+// Wait for DOM to load
+document.addEventListener('DOMContentLoaded', function() {
     logToConsole("System initialized.");
     loadDevices();
 });
 
-if (!window.pywebview) {
-    console.log("PyWebView not detected yet.");
-}
-
-function addToConsole(msg) {
-    logToConsole(msg);
-}
-
 function logToConsole(msg) {
     const consoleDiv = document.getElementById('console-output');
+    if (!consoleDiv) return;
     const entry = document.createElement('div');
     entry.className = 'console-entry';
     
@@ -26,15 +20,28 @@ function logToConsole(msg) {
     consoleDiv.scrollTop = consoleDiv.scrollHeight;
 }
 
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 async function loadDevices() {
     showStatus("Fetching devices...");
     logToConsole("Requesting device list from API...");
     try {
-        const response = await window.pywebview.api.get_devices();
-        devices = response;
-        renderDevices();
-        showStatus(`Loaded ${devices.length} devices.`);
-        logToConsole(`Successfully loaded ${devices.length} devices.`);
+        const response = await fetch('/api/devices');
+        const data = await response.json();
+        
+        if (data.code === 200) {
+            devices = data.data;
+            renderDevices();
+            showStatus(`Loaded ${devices.length} devices.`);
+            logToConsole(`Successfully loaded ${devices.length} devices.`);
+        } else {
+            throw new Error(JSON.stringify(data));
+        }
     } catch (err) {
         showStatus("Error loading devices.");
         logToConsole("Error: " + err);
@@ -100,20 +107,41 @@ async function controlPower(state) {
         return;
     }
     
-    const action = state ? 'on' : 'off';
+    const actionValue = state ? 1 : 0;
     const count = selectedDevices.size;
-    showStatus(`Turning ${action.toUpperCase()} ${count} devices...`);
-    logToConsole(`Sending ${action.toUpperCase()} command to ${count} devices...`);
+    showStatus(`Turning ${state ? 'ON' : 'OFF'} ${count} devices...`);
     
-    try {
-        const results = await window.pywebview.api.bulk_control(Array.from(selectedDevices), action);
-        // Python returns list of results
-        logToConsole(`Command finished. Processed ${results.length} actions.`);
-        showStatus("Command sent.");
-    } catch (err) {
-        showStatus("Error: " + err);
-        logToConsole("Error executing command: " + err);
+    for (const mac of selectedDevices) {
+        const device = devices.find(d => d.device === mac);
+        if (!device) continue;
+
+        const payload = {
+            "requestId": uuidv4(),
+            "payload": {
+                "sku": device.sku,
+                "device": mac,
+                "capability": {
+                    "type": "devices.capabilities.on_off",
+                    "instance": "powerSwitch",
+                    "value": actionValue
+                }
+            }
+        };
+
+        try {
+            logToConsole(`Sending command to ${device.deviceName}...`);
+            await fetch('/api/control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (err) {
+            logToConsole(`Error for ${device.deviceName}: ${err}`);
+        }
     }
+    
+    showStatus("Commands finished.");
+    logToConsole("Bulk power command processing complete.");
 }
 
 async function applyColor() {
@@ -130,20 +158,43 @@ async function applyColor() {
     const colorInt = (r << 16) | (g << 8) | b;
 
     showStatus(`Setting color to ${colorHex}...`);
-    logToConsole(`Setting color to ${colorHex} (Int: ${colorInt}) for ${selectedDevices.size} devices...`);
+    
+    for (const mac of selectedDevices) {
+        const device = devices.find(d => d.device === mac);
+        if (!device) continue;
 
-    try {
-        const results = await window.pywebview.api.bulk_control(Array.from(selectedDevices), 'color', colorInt);
-        logToConsole(`Color command finished.`);
-        showStatus("Color command sent.");
-    } catch (err) {
-        showStatus("Error: " + err);
-        logToConsole("Error setting color: " + err);
+        const payload = {
+            "requestId": uuidv4(),
+            "payload": {
+                "sku": device.sku,
+                "device": mac,
+                "capability": {
+                    "type": "devices.capabilities.color_setting",
+                    "instance": "colorRgb",
+                    "value": colorInt
+                }
+            }
+        };
+
+        try {
+            logToConsole(`Setting color for ${device.deviceName}...`);
+            await fetch('/api/control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (err) {
+            logToConsole(`Error for ${device.deviceName}: ${err}`);
+        }
     }
+
+    logToConsole(`Color command finished.`);
+    showStatus("Color command sent.");
 }
 
 function showStatus(msg) {
     const el = document.getElementById('status-message');
+    if (!el) return;
     el.innerText = msg;
     setTimeout(() => {
         if (el.innerText === msg) el.innerText = "Ready";
