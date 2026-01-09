@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Paladin Waste Consulting LLC identifies overcharges and secures shared savings with your waste providers. No upfront fees. No risk.">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Paladin Waste Consulting LLC | Strategic Negotiation">
+    <meta property="og:description"
+        content="Stop overpaying. We negotiate better rates with your waste providers and only get paid when you save money.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="header.png">
+
+    <title>Paladin Waste Consulting LLC | Strategic Negotiation</title>
+
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+
+    <header>
+        <div class="header-content">
+            <div class="logo-wrapper">
+                <img src="header.png" alt="Paladin Waste Consulting LLC Logo"
+                    title="Paladin Waste Consulting - Strategic Negotiation" class="header-logo">
+            </div>
+            <p class="tagline">
+                STRATEGIC NEGOTIATION • SHARED SAVINGS
+            </p>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <h1 class="hero-title">No Upfront Fees. No Risk.</h1>
+                <div class="hero-text">
+                    <p>We identify overcharges and negotiate better rates with your <strong>waste providers</strong>.
+                    </p>
+                    <p>Our fee is a percentage of the money we save you—if we don't find savings, you don't pay.</p>
+                </div>
+            </section>
+
+            <!-- Why Choose Us -->
+            <section id="why-choose-us" class="mb-8">
+                <div class="section-title">
+                    <h2>Why Choose Paladin?</h2>
+                    <div class="accent-line"></div>
+                </div>
+                <div class="grid grid-3">
+                    <div class="card">
+                        <div class="card-icon">🎯</div>
+                        <h3>Zero Risk</h3>
+                        <p>We only get paid when we find you savings. No savings means no fee, guaranteed.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">⚖️</div>
+                        <h3>Expert Negotiation</h3>
+                        <p>We leverage industry data and relationships to get you the lowest possible rates.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">⚡</div>
+                        <h3>Quick Results</h3>
+                        <p>Most clients see savings within the first 30-60 days of our review process.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works -->
+            <section id="how-it-works" class="glass-section mb-8">
+                <div class="section-title">
+                    <h2>How It Works</h2>
+                    <div class="accent-line"></div>
+                </div>
+                <div class="flex-grid">
+                    <div class="flex-grid-item">
+                        <div class="card">
+                            <div class="card-icon">1</div>
+                            <h3>Submit Data</h3>
+                            <p>Provide your recent waste bills and contracts for a thorough analysis.</p>
+                        </div>
+                    </div>
+                    <div class="flex-grid-item">
+                        <div class="card">
+                            <div class="card-icon">2</div>
+                            <h3>We Negotiate</h3>
+                            <p>Our experts identify overcharges and negotiate directly with your providers.</p>
+                        </div>
+                    </div>
+                    <div class="flex-grid-item centered">
+                        <div class="card">
+                            <div class="card-icon">3</div>
+                            <h3>Start Saving</h3>
+                            <p>Enjoy lower rates and shared savings. We continue to monitor your bills monthly.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Who We Help -->
+            <section id="who-we-help" class="mb-8">
+                <div class="section-title">
+                    <h2>Who We Help</h2>
+                    <div class="accent-line"></div>
+                </div>
+                <div class="grid grid-3">
+                    <div class="card">
+                        <h3>Commercial</h3>
+                        <p>Retailers, restaurants, and office complexes looking to optimize operational costs.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Industrial</h3>
+                        <p>Manufacturing facilities with complex waste streams and high disposal fees.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Multi-Family</h3>
+                        <p>Apartment complexes and property managers seeking to maximize NOI through expense reduction.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Form Section -->
+            <section id="review-form" class="form-container">
+                <div class="form-header">
+                    Start Your Free Savings Review
+                </div>
+
+                <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field"
+                    enctype="multipart/form-data">
+                    <p class="hidden">
+                        <label>Don’t fill this out if you're human: <input name="bot-field" /></label>
+                    </p>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" name="name" required placeholder="Your full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" name="phone" required placeholder="(555) 000-0000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Service Address</label>
+                        <input type="text" name="address" required placeholder="Street, City, State, Zip">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" required placeholder="email@company.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>How can we help?</label>
+                        <textarea name="message" rows="4" maxlength="1000"
+                            placeholder="e.g. I currently have a 4yd dumpster and feel I am overpaying..."></textarea>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 0.25rem;">
+                            <p style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Maximum
+                                1000 characters</p>
+                        </div>
+                    </div>
+
+                    <div class="file-upload-box">
+                        <p>Optional: Attach Recent Bills or Contracts</p>
+                        <input type="file" name="bill_upload" multiple
+                            style="font-size: 0.75rem; color: var(--text-muted);">
+                        <p style="font-size: 10px; opacity: 0.7; margin-top: 0.5rem; text-transform: uppercase;">
+                            Providing data upfront accelerates your review process</p>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        Request Free Review
+                    </button>
+                </form>
+            </section>
+
+            <!-- FAQ Section -->
+            <section id="faq" class="mb-4" style="margin-top: 5rem;">
+                <div class="section-title">
+                    <h2>Frequently Asked Questions</h2>
+                    <div class="accent-line"></div>
+                </div>
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <div class="faq-item">
+                        <div class="faq-question">How does shared savings work? <span>+</span></div>
+                        <div class="faq-answer">If we find savings, we share a percentage of those savings with you for
+                            a specified period. If we don't find savings, you owe us nothing.</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">Do I have to switch waste providers? <span>+</span></div>
+                        <div class="faq-answer">Not necessarily. We often negotiate better rates with your current
+                            provider. Switching is only recommended if it offers significantly better value.</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">What info do you need to start? <span>+</span></div>
+                        <div class="faq-answer">A copy of your most recent waste bill and your current service contract
+                            is all we need to perform an initial analysis.</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <nav class="footer-nav">
+                <a href="#why-choose-us">Benefits</a>
+                <a href="#how-it-works">Process</a>
+                <a href="#review-form">Request Review</a>
+                <a href="#faq">FAQ</a>
+            </nav>
+
+            <div class="footer-company">
+                <p style="font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem; text-transform: uppercase;">
+                    Paladin Waste Consulting LLC</p>
+                <p class="footer-copyright">&copy; 2026 Paladin Waste Consulting LLC. All Rights Reserved.</p>
+                <p style="font-size: 0.65rem; color: var(--text-muted); font-style: italic; margin-top: 1rem;">
+                    Strategically reducing waste costs through expert negotiation and shared savings.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>
