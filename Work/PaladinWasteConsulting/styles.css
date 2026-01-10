@@ -111,13 +111,17 @@ header::before {
 }
 
 .logo-wrapper {
-    background: white;
-    /* Keep logo readable */
-    padding: 1.5rem;
-    border-radius: 1.5rem;
-    box-shadow: var(--shadow-lg);
+    padding: 1rem;
     margin-bottom: 1.5rem;
     transition: var(--transition);
+}
+
+[data-theme="light"] .header-logo {
+    mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] .header-logo {
+    filter: brightness(1.6) contrast(1.2) saturate(1.3) drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
 }
 
 .logo-wrapper:hover {
