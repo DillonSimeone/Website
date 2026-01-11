@@ -3,8 +3,7 @@
 
 <head>
     <title>Dillon Simeone</title>
-    <link href="./style.css"
-          rel="stylesheet">
+    <link href="./style.css" rel="stylesheet">
     <style>
         .swal2-popup {
             backdrop-filter: blur(10px);
@@ -23,8 +22,11 @@
         }
     </style>
     <meta charset="utf-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+        content="Dillon Simeone - Multifaceted innovator, maker, developer, and designer specializing in accessibility, embedded tech, haptics, and creative hardware.">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
     <script src="randomColors.js"></script>
     <script src="trianglify.min.js"></script>
     <script src="background.js"></script>
@@ -32,59 +34,42 @@
 
 <body onresize="redraw();">
     <nav>
-        <div class="navButton animationHouse"
-             id="LandingPage"
-             onclick="reveal('elevatorPitch', this.id)">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 viewBox="0 0 512 512">
+        <div class="navButton animationHouse" id="LandingPage" onclick="reveal('elevatorPitch', this.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                 <path d="M208 448V320h96v128h97.6V256H464L256 64 48 256h62.4v192z" />
             </svg>
         </div>
 
-        <div class="navButton"
-             id="Hobby"
-             onclick="reveal('hobby', this.id)">
-            <svg version="1.1"
-                 id="Layer_1"
-                 xmlns="http://www.w3.org/2000/svg"
-                 xmlns:xlink="http://www.w3.org/1999/xlink"
-                 viewBox="0 0 512 512">
+        <div class="navButton" id="Hobby" onclick="reveal('hobby', this.id)">
+            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512">
                 <polygon
-                         points="612.35,108.29 151.556,108.29 186.289,98.983 186.718,98.869 184.176,89.386 148.318,98.994   214.222,60.944 209.314,52.441 143.41,90.49 169.346,64.555 169.658,64.242 162.716,57.3 136.468,83.548 174.517,17.645   166.015,12.736 127.965,78.64 137.458,43.21 137.572,42.782 128.09,40.24 118.481,76.099 118.481,0 108.663,0 108.663,76.099   99.055,40.24 89.571,42.782 99.178,78.636 61.352,13.119 61.13,12.736 52.628,17.645 90.678,83.55 64.741,57.612 64.428,57.3   57.485,64.241 83.735,90.491 17.832,52.441 12.922,60.943 78.826,98.993 43.397,89.5 42.969,89.386 40.427,98.869 75.587,108.29   0,108.29 0,118.48 75.588,118.48 40.855,127.788 40.428,127.902 42.969,137.386 78.828,127.777 13.306,165.605 12.923,165.828   17.832,174.33 83.733,136.282 57.485,162.528 64.428,169.471 90.678,143.222 52.849,208.743 52.628,209.127 61.131,214.034   99.181,148.131 89.572,183.988 99.056,186.53 108.663,150.676 108.663,226.771 118.481,226.771 118.481,150.677 127.974,186.102   128.088,186.529 137.572,183.988 127.964,148.129 166.015,214.035 174.517,209.125 136.47,143.226 162.402,169.159 162.716,169.471   169.658,162.528 143.41,136.281 209.312,174.33 214.222,165.828 148.317,127.778 183.748,137.271 184.176,137.386 186.718,127.902   151.558,118.48 612.35,118.48 " />
+                    points="612.35,108.29 151.556,108.29 186.289,98.983 186.718,98.869 184.176,89.386 148.318,98.994   214.222,60.944 209.314,52.441 143.41,90.49 169.346,64.555 169.658,64.242 162.716,57.3 136.468,83.548 174.517,17.645   166.015,12.736 127.965,78.64 137.458,43.21 137.572,42.782 128.09,40.24 118.481,76.099 118.481,0 108.663,0 108.663,76.099   99.055,40.24 89.571,42.782 99.178,78.636 61.352,13.119 61.13,12.736 52.628,17.645 90.678,83.55 64.741,57.612 64.428,57.3   57.485,64.241 83.735,90.491 17.832,52.441 12.922,60.943 78.826,98.993 43.397,89.5 42.969,89.386 40.427,98.869 75.587,108.29   0,108.29 0,118.48 75.588,118.48 40.855,127.788 40.428,127.902 42.969,137.386 78.828,127.777 13.306,165.605 12.923,165.828   17.832,174.33 83.733,136.282 57.485,162.528 64.428,169.471 90.678,143.222 52.849,208.743 52.628,209.127 61.131,214.034   99.181,148.131 89.572,183.988 99.056,186.53 108.663,150.676 108.663,226.771 118.481,226.771 118.481,150.677 127.974,186.102   128.088,186.529 137.572,183.988 127.964,148.129 166.015,214.035 174.517,209.125 136.47,143.226 162.402,169.159 162.716,169.471   169.658,162.528 143.41,136.281 209.312,174.33 214.222,165.828 148.317,127.778 183.748,137.271 184.176,137.386 186.718,127.902   151.558,118.48 612.35,118.48 " />
             </svg>
         </div>
 
-        <div class="navButton"
-             id="MiniProjects"
-             onclick="reveal('projects', this.id)">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 viewBox="0 0 512 512">
+        <div class="navButton" id="MiniProjects" onclick="reveal('projects', this.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                 <path
-                      d="M336 272c0-29.8-16.3-55.7-40.4-69.5l73.1-124.1C335.6 59.1 297.1 48 256 48c-41.2 0-79.9 11.2-113.1 30.6l71.6 125C191.4 217.6 176 243 176 272H32c0 83.3 46.9 153.4 114.4 192l70.1-122.4c11.7 6.6 25.1 10.4 39.5 10.4 14.3 0 27.7-3.8 39.3-10.3L365.6 464C433.1 425.4 480 355.3 480 272H336z" />
+                    d="M336 272c0-29.8-16.3-55.7-40.4-69.5l73.1-124.1C335.6 59.1 297.1 48 256 48c-41.2 0-79.9 11.2-113.1 30.6l71.6 125C191.4 217.6 176 243 176 272H32c0 83.3 46.9 153.4 114.4 192l70.1-122.4c11.7 6.6 25.1 10.4 39.5 10.4 14.3 0 27.7-3.8 39.3-10.3L365.6 464C433.1 425.4 480 355.3 480 272H336z" />
             </svg>
         </div>
 
-        <div class="navButton"
-             id="Projects"
-             onclick="reveal('work', this.id)">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 viewBox="0 0 512 512">
+        <div class="navButton" id="Projects" onclick="reveal('work', this.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                 <path
-                      d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z" />
+                    d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z" />
             </svg>
         </div>
     </nav>
 
     <div class="items">
-        <div class="item"
-             id="loading">
+        <div class="item" id="loading">
         </div>
 
-        <article class="item"
-                 id="elevatorPitch">
+        <article class="item" id="elevatorPitch">
             <section>
-                <h1 id="name"
-                    onclick="shatter()">Dillon Simeone</h1>
+                <h1 id="name" onclick="shatter()">Dillon Simeone</h1>
                 <h2>A multifaceted innovator driving accessibility in technology.</h2>
                 <div>
                     <p>
@@ -93,11 +78,14 @@
                         responsive, accessible sites to custom hardware for live performances. These days I’m a Lead
                         Design Engineer, but I still take on freelance work of all shapes and sizes: 3D printing parts,
                         prototyping gadgets, creating interactive art, or helping bring “wouldn’t it be cool if…”
-                        concepts to life. You can see some of my projects on my <a href="https://www.youtube.com/@Dillonsimeone/shorts" style="margin: 0; font-size: 1rem; color: blue;">youtube</a>!
+                        concepts to life. You can see some of my projects on my <a
+                            href="https://www.youtube.com/@Dillonsimeone/shorts"
+                            style="margin: 0; font-size: 1rem; color: blue;">youtube</a>!
                     </p>
                     <p>
                         As a Deaf developer, inclusivity is built into everything I create. I’ve found that the most
-                        interesting projects often come from unexpected collaborations; engineers, artists, educators, or
+                        interesting projects often come from unexpected collaborations; engineers, artists, educators,
+                        or
                         just curious people with wild ideas. If you’ve got something unconventional in mind, I’m all
                         ears (metaphorically speaking).
                     </p>
@@ -117,12 +105,11 @@
                     </p>
 
                     <div id="jobs">
-                        <a id="hire"
-                           href="mailto:dillonsimeone@gmail.com">
+                        <a id="hire" href="mailto:dillonsimeone@gmail.com">
                             Email me, let’s build something together!
                         </a>
                         <a
-                           href="https://docs.google.com/document/d/17at4VC7BOsuEL0SFwjbOCelqJ94owcdG1yyveG8QO0Y/edit?usp=sharing">Read
+                            href="https://docs.google.com/document/d/17at4VC7BOsuEL0SFwjbOCelqJ94owcdG1yyveG8QO0Y/edit?usp=sharing">Read
                             my resume</a>
                         </p>
                     </div>
@@ -131,8 +118,7 @@
         </article>
     </div>
 
-    <article class="item"
-             id="hobby">
+    <article class="item" id="hobby">
         <section>
             <div class="headers">
                 <h1>Dillon's hobbies</h1>
@@ -142,17 +128,15 @@
                 </p>
                 <p>
                     You can find many of my other projects on <a
-                       href="https://www.youtube.com/@Dillonsimeone/shorts">YouTube</a>; most of my shorts are just me
+                        href="https://www.youtube.com/@Dillonsimeone/shorts">YouTube</a>; most of my shorts are just me
                     screaming until the neighbors call the police, but some are pretty neat!
                 </p>
             </div>
 
             <h1>Lasered Artworks</h1>
             <div class="images">
-                <img src="./Hobby/Lasering/LaserCutting.jpg"
-                     alt="Laser Cutting">
-                <img src="./Hobby/Lasering/LaserCutting2.jpg"
-                     alt="Laser Cutting2">
+                <img loading="lazy" src="./Hobby/Lasering/LaserCutting.jpg" alt="Laser Cutting">
+                <img loading="lazy" src="./Hobby/Lasering/LaserCutting2.jpg" alt="Laser Cutting2">
             </div>
 
             <div class="artwork">
@@ -163,35 +147,28 @@
                         1000 DPI. See the video playlist below along with pictures.</p>
                     <div class="medias">
                         <div class="videos">
-                            <iframe src="https://www.youtube.com/embed/videoseries?si=Pl1qUfM3CcUs8lvi&amp;list=PLcxiGFE9LOcmVUtL2xqboaRPji664gkHD"
-                                    title="Videos of lasered metal cards"
-                                    allowfullscreen></iframe>
+                            <iframe
+                                src="https://www.youtube.com/embed/videoseries?si=Pl1qUfM3CcUs8lvi&amp;list=PLcxiGFE9LOcmVUtL2xqboaRPji664gkHD"
+                                title="Videos of lasered metal cards" allowfullscreen></iframe>
                         </div>
                         <div class="images">
-                            <img src="./Hobby/Lasering/Metalsheets/castlePictureFrame.jpg"
-                                 alt="castle Picture Frame">
-                            <img src="./Hobby/Lasering/Metalsheets/darkSoul.jpg"
-                                 alt="dark Soul">
-                            <img src="./Hobby/Lasering/Metalsheets/darksoul2.jpg"
-                                 alt="darksoul2">
-                            <img src="./Hobby/Lasering/Metalsheets/deafHero3.jpg"
-                                 alt="deaf Hero3">
-                            <img src="./Hobby/Lasering/Metalsheets/deafHero4.jpg"
-                                 alt="deaf Hero4">
-                            <img src="./Hobby/Lasering/Metalsheets/framedDeafHeroes.jpg"
-                                 alt="framed Deaf Heroes">
-                            <img src="./Hobby/Lasering/Metalsheets/framedDeafHeroes2.jpg"
-                                 alt="framed Deaf Heroes2">
-                            <img src="./Hobby/Lasering/Metalsheets/MylesHaptics.jpg"
-                                 alt="Myles Haptics">
-                            <img src="./Hobby/Lasering/Metalsheets/mylesHero.jpg"
-                                 alt="myles Hero">
-                            <img src="./Hobby/Lasering/Metalsheets/PreppingFrames.jpg"
-                                 alt="Prepping Frames">
-                            <img src="./Hobby/Lasering/Metalsheets/PreppingFrames.jpg"
-                                 alt="Prepping Frames">
-                            <img src="./Hobby/Lasering/Metalsheets/steelsheet.jpg"
-                                 alt="steelsheet">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/castlePictureFrame.jpg"
+                                alt="castle Picture Frame">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/darkSoul.jpg" alt="dark Soul">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/darksoul2.jpg" alt="darksoul2">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/deafHero3.jpg" alt="deaf Hero3">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/deafHero4.jpg" alt="deaf Hero4">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/framedDeafHeroes.jpg"
+                                alt="framed Deaf Heroes">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/framedDeafHeroes2.jpg"
+                                alt="framed Deaf Heroes2">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/MylesHaptics.jpg" alt="Myles Haptics">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/mylesHero.jpg" alt="myles Hero">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/PreppingFrames.jpg"
+                                alt="Prepping Frames">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/PreppingFrames.jpg"
+                                alt="Prepping Frames">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/steelsheet.jpg" alt="steelsheet">
                         </div>
                     </div>
                 </div>
@@ -203,16 +180,14 @@
                         cafe!</a></p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/Lasering//WoodenCoasters/cymaSpaceLogo.jpg"
-                             alt="cyma Space Logo">
-                        <img src="./Hobby/Lasering//WoodenCoasters/cymaSpaceLogo2.jpg"
-                             alt="cyma Space Logo2">
-                        <img src="./Hobby/Lasering//WoodenCoasters/cymaSpaceLogo3.jpg"
-                             alt="cyma Space Logo3">
-                        <img src="./Hobby/Lasering//WoodenCoasters/GivingTree.jpg"
-                             alt="Giving Tree">
-                        <img src="./Hobby/Lasering//WoodenCoasters/GivingTree2.jpg"
-                             alt="Giving Tree2">
+                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/cymaSpaceLogo.jpg"
+                            alt="cyma Space Logo">
+                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/cymaSpaceLogo2.jpg"
+                            alt="cyma Space Logo2">
+                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/cymaSpaceLogo3.jpg"
+                            alt="cyma Space Logo3">
+                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/GivingTree.jpg" alt="Giving Tree">
+                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/GivingTree2.jpg" alt="Giving Tree2">
                     </div>
                 </div>
             </div>
@@ -222,14 +197,10 @@
                 <p>It turns out my laser cutter works great on rocks, ceramics, and more!</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/Lasering/Cemaric/Andre.jpg"
-                             alt="Andre">
-                        <img src="./Hobby/Lasering/Cemaric/CymaSpaceLogo.jpg"
-                             alt="Cyma Space Logo">
-                        <img src="./Hobby/Lasering/Cemaric/CymaSpaceLogo2.jpg"
-                             alt="Cyma Space Logo2">
-                        <img src="./Hobby/Lasering/Cemaric/Squeaky.jpg"
-                             alt="Squeaky">
+                        <img loading="lazy" src="./Hobby/Lasering/Cemaric/Andre.jpg" alt="Andre">
+                        <img loading="lazy" src="./Hobby/Lasering/Cemaric/CymaSpaceLogo.jpg" alt="Cyma Space Logo">
+                        <img loading="lazy" src="./Hobby/Lasering/Cemaric/CymaSpaceLogo2.jpg" alt="Cyma Space Logo2">
+                        <img loading="lazy" src="./Hobby/Lasering/Cemaric/Squeaky.jpg" alt="Squeaky">
                     </div>
                 </div>
             </div>
@@ -241,16 +212,11 @@
                 <div class="medias">
                     <div class="medias">
                         <div class="images">
-                            <img src="./Hobby/Lasering/Chladnipatterns/patterns.jpg"
-                                 alt="patterns">
-                            <img src="./Hobby/Lasering/Chladnipatterns/patterns2.jpg"
-                                 alt="patterns2">
-                            <img src="./Hobby/Lasering/Chladnipatterns/patterns3.jpg"
-                                 alt="patterns3">
-                            <img src="./Hobby/Lasering/Chladnipatterns/patterns4.jpg"
-                                 alt="patterns4">
-                            <img src="./Hobby/Lasering/Chladnipatterns/patterns5.jpg"
-                                 alt="patterns5">
+                            <img loading="lazy" src="./Hobby/Lasering/Chladnipatterns/patterns.jpg" alt="patterns">
+                            <img loading="lazy" src="./Hobby/Lasering/Chladnipatterns/patterns2.jpg" alt="patterns2">
+                            <img loading="lazy" src="./Hobby/Lasering/Chladnipatterns/patterns3.jpg" alt="patterns3">
+                            <img loading="lazy" src="./Hobby/Lasering/Chladnipatterns/patterns4.jpg" alt="patterns4">
+                            <img loading="lazy" src="./Hobby/Lasering/Chladnipatterns/patterns5.jpg" alt="patterns5">
                         </div>
                     </div>
                 </div>
@@ -262,16 +228,11 @@
                     cutting can't do?</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/Lasering/clocks/ASLclock.jpg"
-                             alt="ASLclock">
-                        <img src="./Hobby/Lasering/clocks/ASLclock1.jpg"
-                             alt="ASLclock1">
-                        <img src="./Hobby/Lasering/clocks/ASLclock2.jpg"
-                             alt="ASLclock2">
-                        <img src="./Hobby/Lasering/clocks/ASLclock3.jpg"
-                             alt="ASLclock3">
-                        <img src="./Hobby/Lasering/clocks/ASLclock4.jpg"
-                             alt="ASLclock4">
+                        <img loading="lazy" src="./Hobby/Lasering/clocks/ASLclock.jpg" alt="ASLclock">
+                        <img loading="lazy" src="./Hobby/Lasering/clocks/ASLclock1.jpg" alt="ASLclock1">
+                        <img loading="lazy" src="./Hobby/Lasering/clocks/ASLclock2.jpg" alt="ASLclock2">
+                        <img loading="lazy" src="./Hobby/Lasering/clocks/ASLclock3.jpg" alt="ASLclock3">
+                        <img loading="lazy" src="./Hobby/Lasering/clocks/ASLclock4.jpg" alt="ASLclock4">
                     </div>
                 </div>
             </div>
@@ -281,27 +242,21 @@
                 <p>I've gotten really good at lasering detailed artworks out on wood!</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/Lasering/fanArts/breathOfFire.jpg"
-                             alt="breath Of Fire">
-                        <img src="./Hobby/Lasering/fanArts/breathOfFire2.jpg"
-                             alt="breath Of Fire2">
+                        <img loading="lazy" src="./Hobby/Lasering/fanArts/breathOfFire.jpg" alt="breath Of Fire">
+                        <img loading="lazy" src="./Hobby/Lasering/fanArts/breathOfFire2.jpg" alt="breath Of Fire2">
                     </div>
                 </div>
             </div>
 
             <div class="artwork">
-                <h2>Goid Foil</h2>
+                <h2>Gold Foil</h2>
                 <p>My laser cutter works pretty amazingly with thin foil glued to pieces of wood!</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/Lasering/goldFoil/NASA.jpg"
-                             alt="NASA">
-                        <img src="./Hobby/Lasering/goldFoil/NASA1.jpg"
-                             alt="NASA1">
-                        <img src="./Hobby/Lasering/goldFoil/NASA2.jpg"
-                             alt="NASA2">
-                        <img src="./Hobby/Lasering/goldFoil/NASA3.jpg"
-                             alt="NASA3">
+                        <img loading="lazy" src="./Hobby/Lasering/goldFoil/NASA.jpg" alt="NASA">
+                        <img loading="lazy" src="./Hobby/Lasering/goldFoil/NASA1.jpg" alt="NASA1">
+                        <img loading="lazy" src="./Hobby/Lasering/goldFoil/NASA2.jpg" alt="NASA2">
+                        <img loading="lazy" src="./Hobby/Lasering/goldFoil/NASA3.jpg" alt="NASA3">
                     </div>
                 </div>
             </div>
@@ -311,12 +266,9 @@
                 <p>I've been making signs for items on sale!</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/Lasering/signs/signs.jpg"
-                             alt="signs">
-                        <img src="./Hobby/Lasering/signs/signs2.jpg"
-                             alt="signs2">
-                        <img src="./Hobby/Lasering/signs/signs3.jpg"
-                             alt="signs3">
+                        <img loading="lazy" src="./Hobby/Lasering/signs/signs.jpg" alt="signs">
+                        <img loading="lazy" src="./Hobby/Lasering/signs/signs2.jpg" alt="signs2">
+                        <img loading="lazy" src="./Hobby/Lasering/signs/signs3.jpg" alt="signs3">
                     </div>
                 </div>
             </div>
@@ -328,16 +280,16 @@
                     machine's outputs while protecting my lungs.</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/Lasering/ventingSystem/VentingSystem1.jpg"
-                             alt="Venting System1">
-                        <img src="./Hobby/Lasering/ventingSystem/VentingSystem2.jpg"
-                             alt="Venting System2">
-                        <img src="./Hobby/Lasering/ventingSystem/VentingSystem3.jpg"
-                             alt="Venting System3">
-                        <img src="./Hobby/Lasering/ventingSystem/VentingSystem4.jpg"
-                             alt="Venting System4">
-                        <img src="./Hobby/Lasering/ventingSystem/VentingSystem5.jpg"
-                             alt="Venting System5">
+                        <img loading="lazy" src="./Hobby/Lasering/ventingSystem/VentingSystem1.jpg"
+                            alt="Venting System1">
+                        <img loading="lazy" src="./Hobby/Lasering/ventingSystem/VentingSystem2.jpg"
+                            alt="Venting System2">
+                        <img loading="lazy" src="./Hobby/Lasering/ventingSystem/VentingSystem3.jpg"
+                            alt="Venting System3">
+                        <img loading="lazy" src="./Hobby/Lasering/ventingSystem/VentingSystem4.jpg"
+                            alt="Venting System4">
+                        <img loading="lazy" src="./Hobby/Lasering/ventingSystem/VentingSystem5.jpg"
+                            alt="Venting System5">
                     </div>
                 </div>
             </div>
@@ -345,14 +297,12 @@
             <div class="artwork">
                 <h2>ASL Dice Game</h2>
                 <p>Made a wooden dice game quickly for ASL game night at the <a
-                       href="https://www.cymaspace.org/events/asl-game-night-at-the-sign-language-cafe/">Deaf Cafe</a>.
+                        href="https://www.cymaspace.org/events/asl-game-night-at-the-sign-language-cafe/">Deaf Cafe</a>.
                 </p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/Lasering/ASLdiceGame/ASL dice game.jpg"
-                             alt="ASL dice game">
-                        <img src="./Hobby/Lasering/ASLdiceGame/ASL dice game2.jpg"
-                             alt="ASL dice game2">
+                        <img loading="lazy" src="./Hobby/Lasering/ASLdiceGame/ASL dice game.jpg" alt="ASL dice game">
+                        <img loading="lazy" src="./Hobby/Lasering/ASLdiceGame/ASL dice game2.jpg" alt="ASL dice game2">
                     </div>
                 </div>
                 <p>The rules are as follows:</p>
@@ -466,58 +416,34 @@
                     headaches of handling molten glass or mixing dyes.</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/3Dprinting/3dPainting/andre.jpg"
-                             alt="andre">
-                        <img src="./Hobby/3Dprinting/3dPainting/AndreAndTree.jpg"
-                             alt="Andre And Tree">
-                        <img src="./Hobby/3Dprinting/3dPainting/AndreGlow.jpg"
-                             alt="Andre Glow">
-                        <img src="./Hobby/3Dprinting/3dPainting/andreGlow2.jpg"
-                             alt="andre Glow2">
-                        <img src="./Hobby/3Dprinting/3dPainting/batman1.jpg"
-                             alt="batman1">
-                        <img src="./Hobby/3Dprinting/3dPainting/batman2.jpg"
-                             alt="batman2">
-                        <img src="./Hobby/3Dprinting/3dPainting/batman3.jpg"
-                             alt="batman3">
-                        <img src="./Hobby/3Dprinting/3dPainting/batman4.jpg"
-                             alt="batman4">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge.jpg"
-                             alt="Hue Forge">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge10.jpg"
-                             alt="Hue Forge10">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge11.jpg"
-                             alt="Hue Forge11">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge12.jpg"
-                             alt="Hue Forge12">
-                        <img src="./Hobby/3Dprinting/3dPainting/Hueforge13.jpg"
-                             alt="Hueforge13">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge2.jpg"
-                             alt="Hue Forge2">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge3.jpg"
-                             alt="Hue Forge3">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge4.jpg"
-                             alt="Hue Forge4">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge5.jpg"
-                             alt="Hue Forge5">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge6.jpg"
-                             alt="Hue Forge6">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge7.jpg"
-                             alt="Hue Forge7">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge8.jpg"
-                             alt="Hue Forge8">
-                        <img src="./Hobby/3Dprinting/3dPainting/HueForge9.jpg"
-                             alt="Hue Forge9">
-                        <img src="./Hobby/3Dprinting/3dPainting/repeatingPatterns.jpg"
-                             alt="repeating Patterns">
-                        <img src="./Hobby/3Dprinting/3dPainting/repeatingPatterns2.jpg"
-                             alt="repeating Patterns2">
-                        <img src="./Hobby/3Dprinting/3dPainting/spaceman.jpg"
-                             alt="spaceman">
-                        <img src="./Hobby/3Dprinting/3dPainting/spaceman2.jpg"
-                             alt="spaceman2">
-                        <img src="./Hobby/3Dprinting/3dPainting/spaceman3.jpg"
-                             alt="spaceman3">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/andre.jpg" alt="andre">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/AndreAndTree.jpg" alt="Andre And Tree">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/AndreGlow.jpg" alt="Andre Glow">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/andreGlow2.jpg" alt="andre Glow2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/batman1.jpg" alt="batman1">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/batman2.jpg" alt="batman2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/batman3.jpg" alt="batman3">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/batman4.jpg" alt="batman4">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge.jpg" alt="Hue Forge">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge10.jpg" alt="Hue Forge10">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge11.jpg" alt="Hue Forge11">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge12.jpg" alt="Hue Forge12">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/Hueforge13.jpg" alt="Hueforge13">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge2.jpg" alt="Hue Forge2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge3.jpg" alt="Hue Forge3">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge4.jpg" alt="Hue Forge4">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge5.jpg" alt="Hue Forge5">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge6.jpg" alt="Hue Forge6">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge7.jpg" alt="Hue Forge7">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge8.jpg" alt="Hue Forge8">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/HueForge9.jpg" alt="Hue Forge9">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/repeatingPatterns.jpg"
+                            alt="repeating Patterns">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/repeatingPatterns2.jpg"
+                            alt="repeating Patterns2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/spaceman.jpg" alt="spaceman">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/spaceman2.jpg" alt="spaceman2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/3dPainting/spaceman3.jpg" alt="spaceman3">
                     </div>
                 </div>
             </div>
@@ -527,12 +453,9 @@
                 <p>These patterns come out nicely when 3D printed!</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/3Dprinting/Chladnipatterns/pattern1.jpg"
-                             alt="pattern1">
-                        <img src="./Hobby/3Dprinting/Chladnipatterns/pattern2.jpg"
-                             alt="pattern2">
-                        <img src="./Hobby/3Dprinting/Chladnipatterns/pattern3.jpg"
-                             alt="pattern3">
+                        <img loading="lazy" src="./Hobby/3Dprinting/Chladnipatterns/pattern1.jpg" alt="pattern1">
+                        <img loading="lazy" src="./Hobby/3Dprinting/Chladnipatterns/pattern2.jpg" alt="pattern2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/Chladnipatterns/pattern3.jpg" alt="pattern3">
                     </div>
                 </div>
             </div>
@@ -542,10 +465,8 @@
                 <p>Magnets are the solution!</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/3Dprinting/magnets/rats.jpg"
-                             alt="rats">
-                        <img src="./Hobby/3Dprinting/magnets/rats2.jpg"
-                             alt="rats2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/magnets/rats.jpg" alt="rats">
+                        <img loading="lazy" src="./Hobby/3Dprinting/magnets/rats2.jpg" alt="rats2">
                     </div>
                 </div>
             </div>
@@ -555,10 +476,8 @@
                 <p>Masks Masks Masked Masks Masks for Masks MASKS</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/3Dprinting/mask/mask.jpg"
-                             alt="mask">
-                        <img src="./Hobby/3Dprinting/mask/mask2.jpg"
-                             alt="mask2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/mask/mask.jpg" alt="mask">
+                        <img loading="lazy" src="./Hobby/3Dprinting/mask/mask2.jpg" alt="mask2">
                     </div>
                 </div>
             </div>
@@ -569,16 +488,11 @@
                     is more useful than a map... Try getting lost in there with this in your hand!</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/3Dprinting/renders/bathroom.jpg"
-                             alt="bathroom">
-                        <img src="./Hobby/3Dprinting/renders/bathroom2.jpg"
-                             alt="bathroom2">
-                        <img src="./Hobby/3Dprinting/renders/bathroom3.jpg"
-                             alt="bathroom3">
-                        <img src="./Hobby/3Dprinting/renders/bathroom4.jpg"
-                             alt="bathroom4">
-                        <img src="./Hobby/3Dprinting/renders/bathroom5.jpg"
-                             alt="bathroom5">
+                        <img loading="lazy" src="./Hobby/3Dprinting/renders/bathroom.jpg" alt="bathroom">
+                        <img loading="lazy" src="./Hobby/3Dprinting/renders/bathroom2.jpg" alt="bathroom2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/renders/bathroom3.jpg" alt="bathroom3">
+                        <img loading="lazy" src="./Hobby/3Dprinting/renders/bathroom4.jpg" alt="bathroom4">
+                        <img loading="lazy" src="./Hobby/3Dprinting/renders/bathroom5.jpg" alt="bathroom5">
                     </div>
                 </div>
             </div>
@@ -589,12 +503,9 @@
                     but still, it's a cool option.</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/3Dprinting/signs/Signs.jpg"
-                             alt="Signs">
-                        <img src="./Hobby/3Dprinting/signs/signs2.jpg"
-                             alt="signs2">
-                        <img src="./Hobby/3Dprinting/signs/signs3.jpg"
-                             alt="signs3">
+                        <img loading="lazy" src="./Hobby/3Dprinting/signs/Signs.jpg" alt="Signs">
+                        <img loading="lazy" src="./Hobby/3Dprinting/signs/signs2.jpg" alt="signs2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/signs/signs3.jpg" alt="signs3">
                     </div>
                 </div>
             </div>
@@ -604,26 +515,16 @@
                 <p>Embrace the chaos.</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/3Dprinting/misc/batteries.jpg"
-                             alt="batteries">
-                        <img src="./Hobby/3Dprinting/misc/Butterflies.jpg"
-                             alt="Butterflies">
-                        <img src="./Hobby/3Dprinting/misc/dragon.jpg"
-                             alt="dragon">
-                        <img src="./Hobby/3Dprinting/misc/dragon2.jpg"
-                             alt="dragon2">
-                        <img src="./Hobby/3Dprinting/misc/flexiables.jpg"
-                             alt="flexiables">
-                        <img src="./Hobby/3Dprinting/misc/lizard.jpg"
-                             alt="lizard">
-                        <img src="./Hobby/3Dprinting/misc/lizard2.jpg"
-                             alt="lizard2">
-                        <img src="./Hobby/3Dprinting/misc/lizard3.jpg"
-                             alt="lizard3">
-                        <img src="./Hobby/3Dprinting/misc/skull.jpg"
-                             alt="skull">
-                        <img src="./Hobby/3Dprinting/misc/tableChair.jpg"
-                             alt="table Chair">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/batteries.jpg" alt="batteries">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/Butterflies.jpg" alt="Butterflies">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/dragon.jpg" alt="dragon">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/dragon2.jpg" alt="dragon2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/flexiables.jpg" alt="flexiables">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/lizard.jpg" alt="lizard">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/lizard2.jpg" alt="lizard2">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/lizard3.jpg" alt="lizard3">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/skull.jpg" alt="skull">
+                        <img loading="lazy" src="./Hobby/3Dprinting/misc/tableChair.jpg" alt="table Chair">
                     </div>
                 </div>
             </div>
@@ -635,18 +536,17 @@
                     put it on modern ESP32s and managed to fit everything into a laser-cut box.</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster.jpg"
-                             alt="Beat Monster">
-                        <img src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster2.jpg"
-                             alt="Beat Monster2">
-                        <img src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster3.jpg"
-                             alt="Beat Monster3">
-                        <img src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster4.jpg"
-                             alt="Beat Monster4">
-                        <img src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster5.jpg"
-                             alt="Beat Monster5">
-                        <img src="./Hobby/EmbeddedTechology/beatMonsters/sensorBox.jpg"
-                             alt="sensor Box">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster.jpg"
+                            alt="Beat Monster">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster2.jpg"
+                            alt="Beat Monster2">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster3.jpg"
+                            alt="Beat Monster3">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster4.jpg"
+                            alt="Beat Monster4">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster5.jpg"
+                            alt="Beat Monster5">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/beatMonsters/sensorBox.jpg" alt="sensor Box">
                     </div>
                 </div>
             </div>
@@ -658,23 +558,18 @@
                 <div class="medias">
                     <div class="videos">
                         <iframe src="https://www.youtube.com/embed/Qa_9AyWTcEE?si=dS9GpeCppOm-3wQN"
-                                title="YouTube video player"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin"
-                                allowfullscreen></iframe>
+                            title="YouTube video player" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                         <iframe src="https://www.youtube.com/embed/P-pbT7RUz88?si=lixLBVOUgu9Nx70w"
-                                title="YouTube video player"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin"
-                                allowfullscreen></iframe>
+                            title="YouTube video player" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                     </div>
                     <div class="images">
-                        <img src="./Hobby/EmbeddedTechology/wearables/hapticGlove1.jpg"
-                             alt="haptic Glove1">
-                        <img src="./Hobby/EmbeddedTechology/wearables/wearable.jpg"
-                             alt="wearable">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/wearables/hapticGlove1.jpg"
+                            alt="haptic Glove1">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/wearables/wearable.jpg" alt="wearable">
                     </div>
                 </div>
             </div>
@@ -685,14 +580,14 @@
                     constantly.</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/EmbeddedTechology/scream-time clock/Scream-TimeClock.jpg"
-                             alt="Scream Time Clock">
-                        <img src="./Hobby/EmbeddedTechology/scream-time clock/Scream-TimeClock2.jpg"
-                             alt="Scream Time Clock2">
-                        <img src="./Hobby/EmbeddedTechology/scream-time clock/Scream-TimeClock3.jpg"
-                             alt="Scream Time Clock3">
-                        <img src="./Hobby/EmbeddedTechology/scream-time clock/Scream-TimeClock4.jpg"
-                             alt="Scream Time Clock4">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/scream-time clock/Scream-TimeClock.jpg"
+                            alt="Scream Time Clock">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/scream-time clock/Scream-TimeClock2.jpg"
+                            alt="Scream Time Clock2">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/scream-time clock/Scream-TimeClock3.jpg"
+                            alt="Scream Time Clock3">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/scream-time clock/Scream-TimeClock4.jpg"
+                            alt="Scream Time Clock4">
                     </div>
                 </div>
             </div>
@@ -704,12 +599,9 @@
                 <p>The wall outside my lab. It overflows!</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/displayWall.jpg"
-                             alt="display Wall">
-                        <img src="./Hobby/displayWall2.jpg"
-                             alt="display Wall2">
-                        <img src="./Hobby/displayWall3.jpg"
-                             alt="display Wall3">
+                        <img loading="lazy" src="./Hobby/displayWall.jpg" alt="display Wall">
+                        <img loading="lazy" src="./Hobby/displayWall2.jpg" alt="display Wall2">
+                        <img loading="lazy" src="./Hobby/displayWall3.jpg" alt="display Wall3">
                     </div>
                 </div>
             </div>
@@ -717,16 +609,13 @@
             <div class="artwork">
                 <h1>Sale Kiosk</h1>
                 <p>A sale kiosk I built for my artworks to be sold at the <a
-                       href="https://www.instagram.com/woodstockcafepdx/?hl=en">Deaf Cafe</a>! It's a good way for me
+                        href="https://www.instagram.com/woodstockcafepdx/?hl=en">Deaf Cafe</a>! It's a good way for me
                     to get rid of artworks before I drown in them. I'm way more interested in making than keeping.</p>
                 <div class="medias">
                     <div class="images">
-                        <img src="./Hobby/saleKioskAtDeafCafe.jpg"
-                             alt="sale Kiosk At Deaf Cafe">
-                        <img src="./Hobby/saleKioskAtDeafCafe2.jpg"
-                             alt="sale Kiosk At Deaf Cafe2">
-                        <img src="./Hobby/saleKioskAtDeafCafe3.jpg"
-                             alt="sale Kiosk At Deaf Cafe3">
+                        <img loading="lazy" src="./Hobby/saleKioskAtDeafCafe.jpg" alt="sale Kiosk At Deaf Cafe">
+                        <img loading="lazy" src="./Hobby/saleKioskAtDeafCafe2.jpg" alt="sale Kiosk At Deaf Cafe2">
+                        <img loading="lazy" src="./Hobby/saleKioskAtDeafCafe3.jpg" alt="sale Kiosk At Deaf Cafe3">
                     </div>
                 </div>
             </div>
@@ -735,8 +624,7 @@
 
     </article>
 
-    <article class="item"
-             id="work">
+    <article class="item" id="work">
 
         <section>
             <h1>Past Works</h1>
@@ -744,19 +632,23 @@
             <div>
                 <h2><a href="https://patchxr.com/">PatchXR</a> reactive toy</h2>
                 <figure>
-                    <img src="./Images/patchXRinteractive/giphy.gif"
-                     alt="Patchathon gif">
-                     <figcaption>Todd's flyer for the PatchXR contest</figcaption>
+                    <img loading="lazy" src="./Images/patchXRinteractive/giphy.gif" alt="Patchathon gif">
+                    <figcaption>Todd's flyer for the PatchXR contest</figcaption>
                 </figure>
                 <p>
-                    Todd Fadel launched a contest for PatchXR, with winners judged on best use of AR, AI, or physics, plus a “kindest overall” category. 
-                    PatchXR is an important tool for the Deaf community, providing accessible, modern music-making environments and a quick way to collaborate remotely. 
+                    Todd Fadel launched a contest for PatchXR, with winners judged on best use of AR, AI, or physics,
+                    plus a “kindest overall” category.
+                    PatchXR is an important tool for the Deaf community, providing accessible, modern music-making
+                    environments and a quick way to collaborate remotely.
                     I designed and built custom award pieces for the winners.
                 </p>
                 <p>
-                    Each award was based on the PatchXR logo, with the “XR” portion mounted to a motor that spins when it detects a loud enough sound. 
-                    I integrated <a href="https://www.adafruit.com/product/5509">n00ds</a> (flexible LED filaments) on the motor to mimic PatchXR’s in-app glowing signal wires. 
-                    Under the “Patch” letters, I installed addressable LED strips programmed to map brightness to loudness level and color to frequency. 
+                    Each award was based on the PatchXR logo, with the “XR” portion mounted to a motor that spins when
+                    it detects a loud enough sound.
+                    I integrated <a href="https://www.adafruit.com/product/5509">n00ds</a> (flexible LED filaments) on
+                    the motor to mimic PatchXR’s in-app glowing signal wires.
+                    Under the “Patch” letters, I installed addressable LED strips programmed to map brightness to
+                    loudness level and color to frequency.
                     This mirrors the signal-mapping concept that’s core to PatchXR’s design.
                 </p>
                 <h3>Bill of Materials</h3>
@@ -767,76 +659,93 @@
                         <p>— printed with an Bambu A1 with PLA filaments</p>
                     </li>
                     <li>
-                        <a href="https://www.amazon.com/ESP32-C3-Development-Supermini-Bluetooth-Compatible-Arduino/dp/B0CP78NQJK">ESP32-C3 Superminis</a>
+                        <a
+                            href="https://www.amazon.com/ESP32-C3-Development-Supermini-Bluetooth-Compatible-Arduino/dp/B0CP78NQJK">ESP32-C3
+                            Superminis</a>
                         <p>— compact, reliable microcontroller at the core of the build.</p>
                     <li>
-                        <a href="https://www.amazon.com/AITRIP-Trigger-5V9V12V20V-Charger-Delivery/dp/B0D14D8PQZ/">PD decoys</a>
+                        <a href="https://www.amazon.com/AITRIP-Trigger-5V9V12V20V-Charger-Delivery/dp/B0D14D8PQZ/">PD
+                            decoys</a>
                         <p>— to handle current draw limitations on the ESP32’s 5 V pin.</p>
                     </li>
                     <li>
-                        <a href="https://www.amazon.com/MTDELE-High-Power-Trigger-0-20KHz-Control/dp/B0D9VWWLCB/">Motor Drivers</a>
-                        <p>— <a href="https://en.wikipedia.org/wiki/Pulse-width_modulation">PWM</a> control of motor and n00ds brightness. </p>
-                        
+                        <a href="https://www.amazon.com/MTDELE-High-Power-Trigger-0-20KHz-Control/dp/B0D9VWWLCB/">Motor
+                            Drivers</a>
+                        <p>— <a href="https://en.wikipedia.org/wiki/Pulse-width_modulation">PWM</a> control of motor and
+                            n00ds brightness. </p>
+
                     </li>
                     <li>
-                        <a href="https://www.amazon.com/LEDLOCLB-Flexible-Filament-Bendable-Accessories/dp/B0D2NMYMBY/">Flexiable Led Filament</a>
+                        <a href="https://www.amazon.com/LEDLOCLB-Flexible-Filament-Bendable-Accessories/dp/B0D2NMYMBY/">Flexiable
+                            Led Filament</a>
                         <p>— flexible single color lighting. (n00ds)</p>
                     </li>
                     <li>
-                        <a href="https://www.amazon.com/California-JOS-15000RPM-Electric-Experiments/dp/B0CJHT46M8/">3V motors</a>
+                        <a href="https://www.amazon.com/California-JOS-15000RPM-Electric-Experiments/dp/B0CJHT46M8/">3V
+                            motors</a>
                         <p>— fast but lightweight rotation for the XR segment.</p>
                     </li>
                     <li>
-                        <a href="https://www.amazon.com/Zixtec-LM2596-Converter-Module-1-25V-30V/dp/B07VVXF7YX/">Buck Converter</a>
+                        <a href="https://www.amazon.com/Zixtec-LM2596-Converter-Module-1-25V-30V/dp/B07VVXF7YX/">Buck
+                            Converter</a>
                         <p>— step-down from 5 V to 3 V for motor and n00ds.</p>
                     </li>
                     <li>
-                        <a href="https://www.amazon.com/16-4FT-WS2812B-Individual-Addressable-5050SMD/dp/B0CFTP3S41/">Led Strips</a>
+                        <a href="https://www.amazon.com/16-4FT-WS2812B-Individual-Addressable-5050SMD/dp/B0CFTP3S41/">Led
+                            Strips</a>
                         <p>— primary color/frequency mapping output.</p>
                     </li>
                     <li>
-                        <a href="https://www.amazon.com/Microphone-Amplifier-Adjustable-Preamplifier-Compatible/dp/B08TTM371D/">Max4466</a>
+                        <a
+                            href="https://www.amazon.com/Microphone-Amplifier-Adjustable-Preamplifier-Compatible/dp/B08TTM371D/">Max4466</a>
                         <p>— simple analog mic with full audible frequency range.</p>
                     </li>
                     <li>
-                        <a href="https://github.com/DillonSimeone/Website/blob/main/ESP32Codes/Max4466MicMotorControl/Max4466MicMotorControl.ino">Arduino C++ source code</a>
+                        <a
+                            href="https://github.com/DillonSimeone/Website/blob/main/ESP32Codes/Max4466MicMotorControl/Max4466MicMotorControl.ino">Arduino
+                            C++ source code</a>
                         <p>— fully commented for easy parameter changes.</p>
                     </li>
                     <li>
-                        <a href="https://www.amazon.com/Soldering-Adjustable-Temperature-Repairing-Multimeter/dp/B0BQG4RL99/">Misc. tools</a>
+                        <a
+                            href="https://www.amazon.com/Soldering-Adjustable-Temperature-Repairing-Multimeter/dp/B0BQG4RL99/">Misc.
+                            tools</a>
                         <p>— wiring, adhesives, soldering equipment.</p>
                     </li>
                 </ul>
                 <h3>Demo videos</h3>
                 <div class="videos">
-                    <iframe src="https://www.youtube.com/embed/pFeCpRr-6NM"
-                            title="Video of the patchwork in action!"
-                            frameborder="0"
-                            allowfullscreen>
+                    <iframe src="https://www.youtube.com/embed/pFeCpRr-6NM" title="Video of the patchwork in action!"
+                        frameborder="0" allowfullscreen>
                     </iframe>
-                    <iframe src="https://www.youtube.com/embed/dVWHkyo8F-Y"
-                            title="Lights off!"
-                            frameborder="0"
-                            allowfullscreen>
+                    <iframe src="https://www.youtube.com/embed/dVWHkyo8F-Y" title="Lights off!" frameborder="0"
+                        allowfullscreen>
                     </iframe>
-                    <iframe src="https://www.youtube.com/embed/aLt04NDY9Gg"
-                        title="Lights off!"
-                        frameborder="0"
+                    <iframe src="https://www.youtube.com/embed/aLt04NDY9Gg" title="Lights off!" frameborder="0"
                         allowfullscreen>
                     </iframe>
                 </div>
                 <h3>Pictures</h3>
                 <div class="medias">
-                    <img src="./Images/patchXRinteractive/photo_1_2025-08-13_17-41-52.jpg">
-                    <img src="./Images/patchXRinteractive/photo_2_2025-08-13_17-41-52.jpg">
-                    <img src="./Images/patchXRinteractive/photo_3_2025-08-13_17-41-52.jpg">
-                    <img src="./Images//patchXRinteractive/photo_4_2025-08-13_17-41-52.jpg">
-                    <img src="./Images//patchXRinteractive/photo_5_2025-08-13_17-41-52.jpg">
-                    <img src="./Images//patchXRinteractive/photo_6_2025-08-13_17-41-52.jpg">
-                    <img src="./Images//patchXRinteractive/photo_7_2025-08-13_17-41-52.jpg">
+                    <img loading="lazy" src="./Images/patchXRinteractive/photo_1_2025-08-13_17-41-52.jpg"
+                        alt="PatchXR reactive award front view">
+                    <img loading="lazy" src="./Images/patchXRinteractive/photo_2_2025-08-13_17-41-52.jpg"
+                        alt="PatchXR award internal wiring">
+                    <img loading="lazy" src="./Images/patchXRinteractive/photo_3_2025-08-13_17-41-52.jpg"
+                        alt="PatchXR award LED strip detail">
+                    <img loading="lazy" src="./Images/patchXRinteractive/photo_4_2025-08-13_17-41-52.jpg"
+                        alt="PatchXR award motor assembly">
+                    <img loading="lazy" src="./Images/patchXRinteractive/photo_5_2025-08-13_17-41-52.jpg"
+                        alt="PatchXR award finished product">
+                    <img loading="lazy" src="./Images/patchXRinteractive/photo_6_2025-08-13_17-41-52.jpg"
+                        alt="PatchXR award packaging">
+                    <img loading="lazy" src="./Images/patchXRinteractive/photo_7_2025-08-13_17-41-52.jpg"
+                        alt="PatchXR awards ready for shipping">
                 </div>
                 <p>
-                    The packages was wrapped up with duct tape after I added a little Shrek figure. <a href="https://www.pirateship.com/">Pirateship</a> have made this extremely affordable for everyone! 
+                    The packages was wrapped up with duct tape after I added a little Shrek figure. <a
+                        href="https://www.pirateship.com/">Pirateship</a> have made this extremely affordable for
+                    everyone!
                 </p>
             </div>
 
@@ -844,19 +753,20 @@
                 <h2>STEM kits for Oregon Museum of Science and Industry</h2>
                 <p>
                     OMSI reached out to CymaSpace about its <a href="https://omsi.edu/events/oregon-sci-fest/">Oregon
-                    Science Festival</a>, then CymaSpace reached out to me. I was given a specific budget, so I did
+                        Science Festival</a>, then CymaSpace reached out to me. I was given a specific budget, so I did
                     my best to make a kit that fits the budget. A lot of corners was cut, but I managed to pull together
                     something pretty neat!
                 </p>
                 <figure>
-                    <img src="./Images/StemKits/STEMkit.png"
-                         alt="STEMkit">
+                    <img loading="lazy" src="./Images/StemKits/STEMkit.png" alt="STEMkit">
                     <figcaption>CymaSpace's basic STEM kit, designed for all age!</figcaption>
                 </figure>
 
                 <p>
-                    The <a href="https://microbit.org/new-microbit/">Micro Bit V2s</a> are pre-flashed with <a href="https://microblocks.fun/">Microblocks</a>, 
-                    which makes reprogramming it possible and easy with any devices capable of running chrome, including smartphones! I was able to secure a bulk 
+                    The <a href="https://microbit.org/new-microbit/">Micro Bit V2s</a> are pre-flashed with <a
+                        href="https://microblocks.fun/">Microblocks</a>,
+                    which makes reprogramming it possible and easy with any devices capable of running chrome, including
+                    smartphones! I was able to secure a bulk
                     deal to get 30 kits within the budget.
                 </p>
                 <p>
@@ -868,14 +778,10 @@
                     themes, lights, motors, sensing, etc.
                 </p>
                 <div class="medias">
-                    <img src="./Images/StemKits/StemKitHeld.jpg"
-                         alt="Stem Kit Held">
-                    <img src="./Images/StemKits/StemKittop.jpg"
-                         alt="Stem Kittop">
-                    <img src="./Images/StemKits/stemKitLasered.jpg"
-                         alt="stem Kit Lasered">
-                    <img src="./Images/StemKits/StemKitBackside.jpg"
-                         alt="Stem Kit Backside">
+                    <img loading="lazy" src="./Images/StemKits/StemKitHeld.jpg" alt="Stem Kit Held">
+                    <img loading="lazy" src="./Images/StemKits/StemKittop.jpg" alt="Stem Kittop">
+                    <img loading="lazy" src="./Images/StemKits/stemKitLasered.jpg" alt="stem Kit Lasered">
+                    <img loading="lazy" src="./Images/StemKits/StemKitBackside.jpg" alt="Stem Kit Backside">
                 </div>
             </div>
 
@@ -903,41 +809,41 @@
                     event.
                 </p>
                 <figure>
-                    <img src="./Images/LedControllerWorkshop/LedControllerWorkshop.webp"
-                         alt="Led Controller Workshop">
+                    <img loading="lazy" src="./Images/LedControllerWorkshop/LedControllerWorkshop.webp"
+                        alt="Led Controller Workshop">
                     <figcaption>The flyer for the event!</figcaption>
                 </figure>
 
                 <figure>
-                    <img src="./Images/LedControllerWorkshop/ledKIT.jpeg"
-                         alt="led KIT">
+                    <img loading="lazy" src="./Images/LedControllerWorkshop/ledKIT.jpeg" alt="led KIT">
                     <figcaption>The LED kits I pulled together for the workshop</figcaption>
                 </figure>
 
                 <div class="videos" style="text-align: center;">
-                    <iframe src="https://www.youtube.com/embed/5FQTU6P2Hps"
-                            title="Video of the patchwork in action!"
-                            frameborder="0"
-                            allowfullscreen>
+                    <iframe src="https://www.youtube.com/embed/5FQTU6P2Hps" title="Video of the patchwork in action!"
+                        frameborder="0" allowfullscreen>
                     </iframe>
-                    <p>Video of the workshop happening! This was possible thanks to Meagan Bogard and Harris Miller for volunteering as interperters!</p>
+                    <p>Video of the workshop happening! This was possible thanks to Meagan Bogard and Harris Miller for
+                        volunteering as interpreters!</p>
                 </div>
             </div>
 
             <div>
                 <h2>GestoLumina GeLu</h2>
                 <p>
-                    I helped design and build GeLu for Universal Music Design at CymaSpace. It is a pair of wearables for
-                    gesture input, fingertip haptics, and audio-reactive light so Deaf folks can perform and feel music. We
+                    I helped design and build GeLu for Universal Music Design at CymaSpace. It is a pair of wearables
+                    for
+                    gesture input, fingertip haptics, and audio-reactive light so Deaf folks can perform and feel music.
+                    We
                     premiered it at NIME 2024. <a href="https://nime.org/proc/nime2024_15/">Read the research paper</a>
                 </p>
                 <p>
-                    GeLu v2 was the final version created under UMD. From GeLu v3 onward, all design and development have been conducted independently by me using my own resources.
+                    GeLu v2 was the final version created under UMD. From GeLu v3 onward, all design and development
+                    have been conducted independently by me using my own resources.
                 </p>
 
                 <figure>
-                    <img src="./Images/HapticBracerDemoBunnie.jpg"
-                         alt="Haptic Bracer Demo Bunnie">
+                    <img loading="lazy" src="./Images/HapticBracerDemoBunnie.jpg" alt="Haptic Bracer Demo Bunnie">
                     <figcaption><a href="https://en.wikipedia.org/wiki/Andrew_Huang_(hacker)">Andrew Huang wearing the
                             GeLu Prototype 3!</a></figcaption>
                 </figure>
@@ -994,8 +900,7 @@
                     rebuild, and a strong reminder that curiosity scales way better than volume knobs.
                 </p>
                 <figure>
-                    <img src="./Images/hapticZoo.jpg"
-                         alt="haptic Zoo">
+                    <img loading="lazy" src="./Images/hapticZoo.jpg" alt="haptic Zoo">
                     <figcaption>The Universal Music Design group</figcaption>
                 </figure>
             </div>
@@ -1224,8 +1129,7 @@
         </section>
     </article>
 
-    <article class="item"
-             id="projects">
+    <article class="item" id="projects">
 
         <section>
             <h1>MiniProjects / Projects</h1>
@@ -1268,7 +1172,8 @@
                         <li><a href="./MiniProjects/smartphoneHaptics/gestureHaptics.html">Gesture to Haptics</a></li>
                         <li><a href="./MiniProjects/smartphoneHaptics/micHaptics.html">Mic to Haptics</a></li>
                         <li><a href="./MiniProjects/smartphoneHaptics/cameraHaptics.html">Camera to haptics</a></li>
-                        <li><a href="./MiniProjects/smartphoneHaptics/websocketHaptics.html">Websocket host/client to control all of the client haptics</a></li>
+                        <li><a href="./MiniProjects/smartphoneHaptics/websocketHaptics.html">Websocket host/client to
+                                control all of the client haptics</a></li>
                     </ul>
                 </div>
 
@@ -1278,23 +1183,26 @@
                     <div>
                         <h3>VoxGame</h3>
                         <p>
-                            I developed a custom game engine for my finals! Have fun poking at it. <a href="https://www.youtube.com/watch?v=C3MpDxGY3m8&feature=youtu.be">Youtube video recording</a>
+                            I developed a custom game engine for my finals! Have fun poking at it. <a
+                                href="https://www.youtube.com/watch?v=C3MpDxGY3m8&feature=youtu.be">Youtube video
+                                recording</a>
                         </p>
-                            <p>Controls:</p>
-                            <blockquote>
-                                <ul>
-                                    <li>WASD - Movement</li>
-                                    <li>Mouse pointer - Look around</li>
-                                    <li>Spacebar - Jump</li>
-                                    <li>E - Load the next "level"</li>
-                                </ul>
-                            </blockquote>
+                        <p>Controls:</p>
+                        <blockquote>
+                            <ul>
+                                <li>WASD - Movement</li>
+                                <li>Mouse pointer - Look around</li>
+                                <li>Spacebar - Jump</li>
+                                <li>E - Load the next "level"</li>
+                            </ul>
+                        </blockquote>
                         <ul>
                             <li><a href="./Projects/CustomGameEngine/index.html">VoxGame</a></li>
                         </ul>
                         <h3>Game dev</h3>
                         <p>
-                            I needed something that I can iterate on quicker than Unity Engine allows me to fine-tune an algorithm for a project.
+                            I needed something that I can iterate on quicker than Unity Engine allows me to fine-tune an
+                            algorithm for a project.
                         </p>
                         <ul>
                             <li>
@@ -1367,14 +1275,14 @@
                         <h4>Magic Cubes - ThreeJS</h4>
                         <p>
                             Normally, in my creative coding class, we use the <a
-                               href="https://processing.org/">Processing</a>
+                                href="https://processing.org/">Processing</a>
                             programming language. For my final project, I decided to kick that to the side and do it in
                             Javascript with Three.JS. What I did would be extremely challenging to pull off in
                             Processing due to its synchronous nature.
                         </p>
                         <p>
                             <a
-                               href="./MiniProjects/FinalProjectCreativeCoding1/threeJS/examples/DillonFinalsProject.html">Project
+                                href="./MiniProjects/FinalProjectCreativeCoding1/threeJS/examples/DillonFinalsProject.html">Project
                                 Link</a>. The API key is currently expired, but it's still pretty cool without that
                             extra feature. Fail gracefully!
                         </p>
@@ -1518,16 +1426,16 @@
                         <li><a href="./Projects/ChooseYourOwnAdventure/purpose/project1.pdf">Project requirment
                                 sheet</a></li>
                         <li><a
-                               href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype1.html">Prototype1</a>
+                                href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype1.html">Prototype1</a>
                         </li>
                         <li><a
-                               href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype2.html">Prototype2</a>
+                                href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype2.html">Prototype2</a>
                         </li>
                         <li><a
-                               href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype3.html">Prototype3</a>
+                                href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype3.html">Prototype3</a>
                         </li>
                         <li><a
-                               href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype4.html">Prototype4</a>
+                                href="./MiniProjects/ChooseYourAdventure/ChooseYourOwnAdventurePrototype4.html">Prototype4</a>
                         </li>
                         <li>
                             <a href="./Projects/ChooseYourOwnAdventure/screenshot.PNG">
@@ -1558,10 +1466,10 @@
                     <p>
                         2025 update - I was just looking at this dusty script again, and remembering how far browsers
                         have came. I was likely one of the reasons for the current policies blocking the old script
-                        from working! Good times. I've added a modernized evil redo... It's somewhat evil. 
+                        from working! Good times. I've added a modernized evil redo... It's somewhat evil.
                     </p>
                     <ul>
-                        <li><a href="./MiniProjects/MovingPopUp/modernEvil.html">Modernized Evil</li>
+                        <li><a href="./MiniProjects/MovingPopUp/modernEvil.html">Modernized Evil</a></li>
                         <li><a href="./MiniProjects/MovingPopUp/Trap.html">Popup Trap</a></li>
                     </ul>
                 </div>
