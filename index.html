@@ -63,6 +63,13 @@
         </div>
     </nav>
 
+    <!-- Global mobile toggle for section navigation -->
+    <div class="global-nav-toggle" id="globalNavToggle" onclick="toggleGlobalNav()">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+
     <div class="items">
         <div class="item" id="loading">
         </div>
@@ -119,6 +126,17 @@
     </div>
 
     <article class="item" id="hobby">
+        <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <aside class="section-nav" data-target-container=".artwork" data-title-selector="h2">
+            <div class="sideNavContent">
+                <h3>Hobby Directory</h3>
+                <ul class="dynamic-links"></ul>
+            </div>
+        </aside>
         <section>
             <div class="headers">
                 <h1>Dillon's hobbies</h1>
@@ -162,7 +180,8 @@
                                 alt="framed Deaf Heroes">
                             <img loading="lazy" src="./Hobby/Lasering/Metalsheets/framedDeafHeroes2.webp"
                                 alt="framed Deaf Heroes2">
-                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/MylesHaptics.webp" alt="Myles Haptics">
+                            <img loading="lazy" src="./Hobby/Lasering/Metalsheets/MylesHaptics.webp"
+                                alt="Myles Haptics">
                             <img loading="lazy" src="./Hobby/Lasering/Metalsheets/mylesHero.webp" alt="myles Hero">
                             <img loading="lazy" src="./Hobby/Lasering/Metalsheets/PreppingFrames.webp"
                                 alt="Prepping Frames">
@@ -546,7 +565,8 @@
                             alt="Beat Monster4">
                         <img loading="lazy" src="./Hobby/EmbeddedTechology/beatMonsters/BeatMonster5.webp"
                             alt="Beat Monster5">
-                        <img loading="lazy" src="./Hobby/EmbeddedTechology/beatMonsters/sensorBox.webp" alt="sensor Box">
+                        <img loading="lazy" src="./Hobby/EmbeddedTechology/beatMonsters/sensorBox.webp"
+                            alt="sensor Box">
                     </div>
                 </div>
             </div>
@@ -625,7 +645,17 @@
     </article>
 
     <article class="item" id="work">
-
+        <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <aside class="section-nav" data-target-container="section > div" data-title-selector="h2">
+            <div class="sideNavContent">
+                <h3>Projects Directory</h3>
+                <ul class="dynamic-links"></ul>
+            </div>
+        </aside>
         <section>
             <h1>Past Works</h1>
 
@@ -1130,7 +1160,17 @@
     </article>
 
     <article class="item" id="projects">
-
+        <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <aside class="section-nav" data-target-container=".grid-item" data-title-selector="h2">
+            <div class="sideNavContent">
+                <h3>Mini-Projects Directory</h3>
+                <ul class="dynamic-links"></ul>
+            </div>
+        </aside>
         <section>
             <h1>MiniProjects / Projects</h1>
             <h2>
