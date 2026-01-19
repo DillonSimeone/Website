@@ -1,9 +1,10 @@
-html, body{
+html,
+body {
     overflow: hidden;
     font-family: sans-serif;
 }
 
-body{
+body {
     position: fixed;
     margin: 0;
     background-color: #303030;
@@ -12,7 +13,7 @@ body{
 /*=======================================================
                 Trianglify Witchery
 =========================================================*/
-.circle{
+.circle {
     width: 40vw;
     height: 40vh;
 }
@@ -27,7 +28,7 @@ path {
     opacity: 0.3;
 }
 
-.trianglify{
+.trianglify {
     position: fixed;
     top: 0;
     left: 0;
@@ -37,27 +38,27 @@ path {
 }
 
 /*animations for the shatter function in indexScript.js*/
-.flyUp{
+.flyUp {
     transition: all 3s;
-    transform: translate(0px,-200vh);
+    transform: translate(0px, -200vh);
     opacity: 1;
 }
 
-.flyDown{
+.flyDown {
     transition: all 3s;
-    transform: translate(0px,200vh);
+    transform: translate(0px, 200vh);
     opacity: 1;
 }
 
-.flyRight{
+.flyRight {
     transition: all 3s;
     transform: translate(200vw, 0px);
     opacity: 1;
 }
 
-.flyLeft{
+.flyLeft {
     transition: all 3s;
-    transform: translate(-200vw,0px);
+    transform: translate(-200vw, 0px);
     opacity: 1;
 }
 
@@ -65,11 +66,11 @@ path {
                 Defaults
 =========================================================*/
 
-article{
+article {
     padding-bottom: 100px;
 }
 
-nav{
+nav {
     display: flex;
     flex-direction: row;
     justify-content: space-around;
@@ -80,22 +81,22 @@ nav{
     z-index: 1;
 }
 
-nav svg{
+nav svg {
     display: block;
     height: 5vh;
     cursor: pointer;
     transition: all 1s;
 }
 
-nav path{
+nav path {
     opacity: 1;
 }
 
-nav svg:hover{
+nav svg:hover {
     opacity: 0.3;
 }
 
-.item{
+.item {
     position: fixed;
     top: 0;
     width: 100%;
@@ -109,35 +110,35 @@ nav svg:hover{
     z-index: -1;
 }
 
-.item h1{
+.item h1 {
     font-size: 5rem;
     margin: 0;
 }
 
-.item h2{
+.item h2 {
     font-size: 2rem;
 }
 
 
-.item p{
+.item p {
     font-size: 1rem;
 }
 
 @media only screen and (max-width: 600px) {
-    .item h1{
+    .item h1 {
         font-size: 3rem;
     }
 
-    .item h2{
+    .item h2 {
         font-size: 1.5rem;
     }
 
-    .item p{
+    .item p {
         font-size: 1rem;
     }
-  }
+}
 
-.item a{
+.item a {
     color: blue;
 }
 
@@ -145,7 +146,7 @@ nav svg:hover{
                 Loading Screen
 =========================================================*/
 
-#loading{
+#loading {
     background-color: white;
     z-index: 100;
 }
@@ -155,22 +156,23 @@ nav svg:hover{
                 Elevator pitch
 =========================================================*/
 
-#elevatorPitch section{
+#elevatorPitch section {
     margin: 5% 15%;
     padding: 10px;
     padding-bottom: 10vh;
 }
 
-#elevatorPitch #jobs{
+#elevatorPitch #jobs {
     margin-top: 5%;
 }
 
-#jobs{
+#jobs {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
 }
-#elevatorPitch a{
+
+#elevatorPitch a {
     font-weight: 700;
     color: #666;
     border-radius: 80px;
@@ -178,111 +180,113 @@ nav svg:hover{
     margin: 0 1rem 1rem 1rem;
 }
 
-#elevatorPitch a#hire{
+#elevatorPitch a#hire {
     padding: 14px 64px;
     text-decoration: none;
     color: white;
 }
 
-@media only screen and (max-width: 1000px){
+@media only screen and (max-width: 1000px) {
     #elevatorPitch a {
         margin: auto;
     }
 }
 
 @media only screen and (max-width: 600px) {
-    #jobs{
+    #jobs {
         display: flex;
         flex-direction: column;
     }
 
-    #elevatorPitch section{
+    #elevatorPitch section {
         margin: auto;
     }
 
-    
+
 }
 
 /*=======================================================
                 hobby page
 =========================================================*/
-#hobby h1{
+#hobby h1 {
     font-size: 4em;
     text-align: center;
     padding: 35px;
-      background: linear-gradient(
-    90deg,
-    #ff0040,
-    #ff8a00,
-    #ffd400,
-    #3cd500,
-    #00c2ff,
-    #7a00ff,
-    #ff0040
-  );
-  background-size: 300% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: rainbow-shift 3s alternate infinite;
-  filter: drop-shadow(3px 3px 1px black)
-          drop-shadow(-3px 3px 1px black)
-          drop-shadow(3px -3px 1px black)
-          drop-shadow(-3px -3px 1px black);
+    background: linear-gradient(90deg,
+            #ff0040,
+            #ff8a00,
+            #ffd400,
+            #3cd500,
+            #00c2ff,
+            #7a00ff,
+            #ff0040);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow-shift 3s alternate infinite;
+    filter: drop-shadow(3px 3px 1px black) drop-shadow(-3px 3px 1px black) drop-shadow(3px -3px 1px black) drop-shadow(-3px -3px 1px black);
 }
 
 @keyframes rainbow-shift {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 100% 50%; }
-  }
-  
-  /* Respect reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    #hobby h1 { animation: none; }
-  }
+    0% {
+        background-position: 0% 50%;
+    }
 
-#hobby section{
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    #hobby h1 {
+        animation: none;
+    }
+}
+
+#hobby section {
     margin: 5% 15%;
     padding: 10px;
     padding-bottom: 10vh;
 }
 
-#hobby .headers{
+#hobby .headers {
     margin-bottom: 1em;
 }
 
-#hobby .artworks{
+#hobby .artworks {
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-#hobby .artwork{
-    background-color: rgba(255,255,255,0.3);
+#hobby .artwork {
+    background-color: rgba(255, 255, 255, 0.3);
     padding: 10px;
     box-shadow: 10px 10px 20px black;
     margin-top: 20px;
 }
 
-#hobby .artwork h2{
+#hobby .artwork h2 {
     margin: 0;
 }
 
-#hobby .medias{
+#hobby .medias {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 
-#hobby .medias .videos{
+#hobby .medias .videos {
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-#hobby .medias .videos iframe{
+#hobby .medias .videos iframe {
     aspect-ratio: 1/2;
     width: 30%;
     min-width: 200px;
@@ -290,14 +294,14 @@ nav svg:hover{
     border: 3px solid black;
 }
 
-#hobby .images{
+#hobby .images {
     display: flex;
     flex-wrap: wrap;
     width: 100%;
     margin: auto;
 }
 
-#hobby img{
+#hobby img {
     width: 50%;
     min-width: 200px;
     max-width: 300px;
@@ -367,46 +371,48 @@ nav svg:hover{
 /*=======================================================
                 MiniProjects/Projects
 =========================================================*/
-#projects{
+#projects {
     width: 100%;
 }
 
-#projects section{
+#projects section {
     margin: auto;
     width: 80%;
     padding-bottom: 10vh;
 }
 
-#projects .grid{
+#projects .grid {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
 }
 
-#projects .grid .grid-item{
+#projects .grid .grid-item {
     margin: 1rem auto 1rem auto;
     width: 100%;
     box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
     padding: 10px;
 }
 
-#projects .grid .grid-item ul, #projects .grid-item.project ul{
+#projects .grid .grid-item ul,
+#projects .grid-item.project ul {
     list-style: none;
     padding: 0;
 }
 
-#projects .grid .grid-item ul li, #projects .grid-item.project ul li{
+#projects .grid .grid-item ul li,
+#projects .grid-item.project ul li {
     margin: 1rem;
 }
 
 /*=======================================================
                 Work
 =========================================================*/
-#work{
+#work {
     margin: auto;
 }
 
-#work section{
+#work section {
     margin: auto;
     width: 80%;
     box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
@@ -414,30 +420,30 @@ nav svg:hover{
     padding-bottom: 10vh;
 }
 
-#work section{
+#work section {
     margin-bottom: 5%;
 }
 
-#work div{
+#work div {
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 1rem;
 }
 
-#work figure{
+#work figure {
     width: 50%;
     margin: auto;
 }
 
-#work figure img{
+#work figure img {
     width: 100%;
 }
 
-#work figure figcaption{
+#work figure figcaption {
     text-align: center;
 }
 
-#work .medias{
+#work .medias {
     margin: auto;
     width: 80%;
     display: flex;
@@ -447,26 +453,26 @@ nav svg:hover{
     align-items: center;
 }
 
-#work .medias img{
+#work .medias img {
     width: 26%;
 }
 
-#work .videos{
+#work .videos {
     text-align: center;
 }
 
-#work iframe{
+#work iframe {
     height: 500px;
 }
 
-#work ul p{
+#work ul p {
     margin: 5px;
 }
 
 /*=======================================================
                 Fun reveal/hide css animation!
 =========================================================*/
-.reveal{
+.reveal {
     /*
     animation: revealy .25s ease-in-out 0s 1 normal forwards;
     */
@@ -475,16 +481,17 @@ nav svg:hover{
     transform: rotate(0deg);
 }
 
-.hide{
+.hide {
     /*
     animation: hidey .25s ease-in-out 0s 1 normal forwards;
     */
-    
-    left: -200vw !important; /*Note: Mobile displays are taller than they are narrow, so with -100, parts would still be shown on the screen. 
+
+    left: -200vw !important;
+    /*Note: Mobile displays are taller than they are narrow, so with -100, parts would still be shown on the screen. 
     Fix !IMPORTANT, this is needed to override the class values for the loading screen.*/
 }
 
-.spin{
+.spin {
     transform: rotate(90deg);
 }
 
@@ -518,11 +525,194 @@ nav svg:hover{
 */
 
 @media all and (max-width: 800px) {
-    .masonry, .item{
+
+    .masonry,
+    .item {
         width: 100%;
     }
-    .circle{
+
+    .circle {
         width: 50%;
         height: 50%;
     }
+}
+
+/* =======================================================
+                Section Navigation (TOC)
+========================================================= */
+
+.section-nav {
+    position: absolute;
+    top: 10%;
+    right: 0;
+    width: 200px;
+    max-height: 480px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 20px 0 0 20px;
+    box-shadow: -8px 8px 32px 0 rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    text-align: center;
+
+    /* Hidden state - only 20% visible */
+    transform: translateX(80%);
+    /* Pure CSS transition for smooth slide */
+    transition: transform 0.6s ease-in-out, background 0.4s ease;
+}
+
+.section-nav:hover {
+    transform: translateX(0);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Nudge class for periodic peek - toggled by JS */
+.section-nav.nudge {
+    transform: translateX(70%);
+}
+
+.section-nav .sideNavContent h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    color: #000;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.section-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.section-nav ul li {
+    margin-bottom: 12px;
+}
+
+.section-nav ul li a {
+    color: #000;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    display: block;
+    opacity: 0.7;
+}
+
+.section-nav ul li a:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Toggle Button for Mobile */
+.section-nav-toggle {
+    display: none;
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    z-index: 1001;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.section-nav-toggle .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #000;
+    margin: 5px 0;
+    transition: 0.4s;
+}
+
+/* Global mobile toggle - outside scroll containers */
+.global-nav-toggle {
+    display: none;
+    position: fixed;
+    top: 70px;
+    right: 15px;
+    z-index: 9999;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.global-nav-toggle .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #000;
+    margin: 5px 0;
+    transition: 0.4s;
+}
+
+.global-nav-toggle.active .bar:nth-child(1) {
+    transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.global-nav-toggle.active .bar:nth-child(2) {
+    opacity: 0;
+}
+
+.global-nav-toggle.active .bar:nth-child(3) {
+    transform: rotate(45deg) translate(-5px, -6px);
+}
+
+@media only screen and (max-width: 1024px) {
+    .section-nav {
+        position: fixed;
+        right: 0;
+        top: 0;
+        height: 100vh;
+        max-height: 100vh;
+        width: 220px;
+        border-radius: 0;
+        background: rgba(255, 255, 255, 0.95);
+        border: none;
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        float: none;
+        margin-right: 0;
+    }
+
+    .section-nav:hover {
+        transform: translateX(100%) !important;
+    }
+
+    .section-nav.active {
+        transform: translateX(0) !important;
+    }
+
+    .section-nav.nudge {
+        transform: translateX(100%);
+        /* No nudge on mobile */
+    }
+
+    .section-nav-toggle {
+        display: none !important;
+        /* Hide section toggles on mobile */
+    }
+
+    .global-nav-toggle {
+        display: block;
+        /* Show global toggle on mobile */
+    }
+}
+
+/* Smooth scrolling for anchor links within sections */
+.item {
+    scroll-behavior: smooth;
 }
