@@ -120,19 +120,22 @@
             color: #fff;
         }
 
-        /* Image Gallery */
+        /* Image Gallery - Flexbox Centering */
         .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 1.5rem;
             margin-bottom: 4rem;
         }
 
         .gallery-item {
+            flex: 0 1 350px;
             border-radius: 16px;
             overflow: hidden;
             border: 1px solid var(--glass-border);
-            aspect-ratio: 4/3;
+            aspect-ratio: 4 / 3;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
         .gallery-item img {
@@ -146,25 +149,31 @@
             transform: scale(1.05);
         }
 
-        /* Video Grid Centered with Flexbox */
+        /* Video Grid - Optimized for YouTube Shorts (9:16) */
         .video-grid {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 1.5rem;
+            gap: 2rem;
             margin-bottom: 4rem;
         }
 
         .video-wrapper {
             position: relative;
-            padding-bottom: 177.78%;
-            /* 9:16 aspect ratio */
-            height: 0;
-            flex: 1 1 200px;
-            max-width: 280px;
-            border-radius: 16px;
+            flex: 0 1 350px;
+            /* Forces wrap to 3 per row on 1200px container */
+            aspect-ratio: 9 / 16;
+            background: #000;
+            border-radius: 20px;
             overflow: hidden;
             border: 1px solid var(--glass-border);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .video-wrapper:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: var(--accent-primary);
         }
 
         .video-wrapper iframe {
@@ -217,6 +226,7 @@
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .download-btn {
@@ -247,20 +257,62 @@
 
         /* Warning Banner */
         .warning-banner {
-            background: rgba(255, 50, 50, 0.1);
-            border: 1px solid rgba(255, 50, 50, 0.3);
+            background: rgba(255, 50, 50, 0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 50, 50, 0.2);
             border-left: 4px solid #ff3232;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-top: 2rem;
+            padding: 2rem;
+            border-radius: 20px;
+            margin: 4rem auto;
+            max-width: 800px;
+            text-align: center;
         }
 
         .warning-banner h3 {
             color: #ff3232;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
             display: flex;
+            justify-content: center;
             align-items: center;
             gap: 0.5rem;
+            font-size: 1.75rem;
+        }
+
+        /* Lightning Plasma Animation */
+        .plasma-text {
+            display: inline-block;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-primary);
+            text-shadow: 0 0 10px var(--accent-primary);
+            animation: thunder-flash 2s infinite ease-in-out;
+        }
+
+        @keyframes thunder-flash {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: rotate(-10deg);
+                filter: brightness(1) drop-shadow(0 0 5px var(--accent-primary));
+            }
+
+            10%,
+            30%,
+            50% {
+                opacity: 0.8;
+                filter: brightness(2) drop-shadow(0 0 20px #fff);
+            }
+
+            20%,
+            40% {
+                opacity: 1;
+                filter: brightness(1.5) drop-shadow(0 0 10px var(--accent-primary));
+            }
+
+            50% {
+                transform: rotate(10deg);
+            }
         }
 
         footer {
@@ -312,6 +364,40 @@
                 providing an intensity that most DIY hobbyists rarely encounter without salvaging old CRT televisions.
             </p>
         </section>
+
+        <section class="glass-card">
+            <h2>Real Life</h2>
+            <p>
+                It works! Things eventually melt even when I run 20W worth of plasma over their surfaces. I imagine
+                it'll
+                be even more fun at 100W. The more I play with the plasma gun, the more applications I discover. It's
+                very versatile!
+            </p>
+            <p>
+                It's fun flash-boiling ants.</p>
+
+            <p style="text-align: center;">
+                DAMN THOSE SUGAR ANTS!
+                STAY
+                OUT OF MY COFFEE! NIBBLE ON SOME <span class="plasma-text">PLASMA</span> INSTEAD!
+            </p>
+        </section>
+
+        <section class="glass-card" style="border-color: rgba(255, 50, 50, 0.3);">
+            <h2 style="background: linear-gradient(to right, #ff3232, #fff); -webkit-background-clip: text;">Extreme
+                Super
+                Duper Lethal Danger</h2>
+            <p>
+                Unfortunately, given how dangerous making plasma like this is, I can't just casually make one for just
+                anyone. This prototype was made as a gift for a gift-exchanging event among engineers. Other engineers
+                probably won't get vaporized by this! Probably.
+            </p>
+            <p style="font-weight: 600; font-size: 1.3rem; text-align: center;">
+                10x cheaper than a welder, 10x more dangerous! If you are not afraid of the arc gun, it'll destroy you!
+            </p>
+        </section>
+
+
 
         <section class="gallery">
             <div class="gallery-item">
@@ -373,8 +459,8 @@
 
             <section class="glass-card">
                 <h2>Build Resources</h2>
-                <p>Download the 3D models to print your own housing or explore the design in SketchUp.</p>
-                <div class="download-box">
+                <p style="text-align: center;">Download files for 3D printing, laser engraving, and design.</p>
+                <div class="download-box" style="margin-bottom: 1.5rem;">
                     <a href="arcGun.stl" class="download-btn" download="arcGun.stl">
                         Download STL <span>.stl</span>
                     </a>
@@ -386,16 +472,26 @@
                         SketchUp Model
                     </a>
                 </div>
-
-                <div class="warning-banner">
-                    <h3>⚠️ HIGH VOLTAGE DANGER</h3>
-                    <p>
-                        I quickly learned how dangerous plasma is. This module generates extreme heat and high-voltage
-                        arcs. Never operate without proper insulation, eye protection, and a deadman switch. Good times,
-                        but stay safe!
-                    </p>
+                <div class="download-box">
+                    <a href="arcGeneratorPlacard.xcs" class="download-btn" download="arcGeneratorPlacard.xcs"
+                        style="background: #4a4a4a;">
+                        Placard File <span>.xcs</span>
+                    </a>
+                    <a href="arcGeneratorPlacard.svg" class="download-btn" download="arcGeneratorPlacard.svg"
+                        style="background: #4a4a4a;">
+                        Placard SVG <span>.svg</span>
+                    </a>
                 </div>
             </section>
+        </div>
+
+        <div class="warning-banner">
+            <h3>⚠️ HIGH VOLTAGE DANGER</h3>
+            <p>
+                I quickly learned how dangerous plasma is. This module generates extreme heat and high-voltage
+                arcs. Never operate without proper insulation, eye protection, and a deadman switch. Good times,
+                but stay safe!
+            </p>
         </div>
 
         <footer>
