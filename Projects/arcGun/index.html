@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arc Gun | High-Power Plasma Project</title>
+    <meta name="description"
+        content="An extreme outlier in plasma arc generation, capable of up to 100W. A deep dive into DIY engineering, 3D printing glass, and the power of plasma.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050608;
+            --accent-primary: #00f2ff;
+            --accent-secondary: #7000ff;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #e0e0e0;
+            --text-dim: #a0a0a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(112, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(0, 242, 255, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 242, 255, 0.05);
+        }
+
+        /* Header / Hero */
+        header {
+            text-align: center;
+            padding: 4rem 0 6rem;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 10vw, 5rem);
+            font-weight: 800;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #fff 30%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .hero-sub {
+            font-size: 1.25rem;
+            color: var(--text-dim);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid var(--accent-primary);
+            color: var(--accent-primary);
+            border-radius: 99px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Content Sections */
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #fff, var(--text-dim));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            font-size: 1.15rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-dim);
+        }
+
+        strong {
+            color: #fff;
+        }
+
+        /* Image Gallery */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .gallery-item {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            aspect-ratio: 4/3;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Video Grid Centered with Flexbox */
+        .video-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 177.78%;
+            /* 9:16 aspect ratio */
+            height: 0;
+            flex: 1 1 200px;
+            max-width: 280px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Material List */
+        .material-list {
+            list-style: none;
+        }
+
+        .material-list li {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .material-list li:last-child {
+            border-bottom: none;
+        }
+
+        .material-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .material-link:hover {
+            color: #fff;
+        }
+
+        .material-link::after {
+            content: '↗';
+            font-size: 0.8rem;
+        }
+
+        /* Download Section */
+        .download-box {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .download-btn:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
+
+        .download-btn span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Warning Banner */
+        .warning-banner {
+            background: rgba(255, 50, 50, 0.1);
+            border: 1px solid rgba(255, 50, 50, 0.3);
+            border-left: 4px solid #ff3232;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+        }
+
+        .warning-banner h3 {
+            color: #ff3232;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 4rem 0;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .glass-card {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <span class="badge">Extreme DIY Engineering</span>
+            <h1>Arc Gun</h1>
+            <p class="hero-sub">Exploring the limits of plasma arcs with a 100W powerhouse. From dirt boiling dreams to
+                hand-held plasma 3D printing.</p>
+        </header>
+
+        <section class="glass-card">
+            <h2>The Project Vision</h2>
+            <p>
+                This project started as a dream of <strong>boiling dirt into brown glass</strong>, crushing the
+                resulting glass into powder, and then melting it into glass rods. The ultimate goal? To manually 3D
+                print objects by hand, feeding a glass rod tip into a plasma arc while manipulating both in free space.
+            </p>
+            <p>
+                This arc gun is an absolute beast. While it's capable of pushing upwards of <strong>100 Watts</strong>,
+                I initially tested it at 20W due to power supply constraints. Even at lower power, the results were
+                staggering.
+            </p>
+            <p>
+                Most modules on the market top out at 5 to 10 watts. This specific generator is a massive outlier,
+                providing an intensity that most DIY hobbyists rarely encounter without salvaging old CRT televisions.
+            </p>
+        </section>
+
+        <section class="gallery">
+            <div class="gallery-item">
+                <img src="arc2.jpg" alt="Plasma Arc Close-up">
+            </div>
+            <div class="gallery-item">
+                <img src="photo_2026-01-21_00-44-29.jpg" alt="Arc Gun Assembly">
+            </div>
+            <div class="gallery-item" style="border-color: rgba(255, 50, 50, 0.3);">
+                <img src="warning.jpg" alt="Safety Warning High Voltage">
+            </div>
+        </section>
+
+        <section class="glass-card">
+            <h2>Live Demonstrations</h2>
+            <div class="video-grid">
+                <div class="video-wrapper">
+                    <iframe src="https://www.youtube.com/embed/Iz4_LofyZes" allowfullscreen></iframe>
+                </div>
+                <div class="video-wrapper">
+                    <iframe src="https://www.youtube.com/embed/pkp9YSweduk" allowfullscreen></iframe>
+                </div>
+                <div class="video-wrapper">
+                    <iframe src="https://www.youtube.com/embed/dhUC6SfajcY" allowfullscreen></iframe>
+                </div>
+                <div class="video-wrapper">
+                    <iframe src="https://www.youtube.com/embed/tEnjqsrL0oc" allowfullscreen></iframe>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+            <section class="glass-card">
+                <h2>Bill of Materials</h2>
+                <ul class="material-list">
+                    <li>
+                        <span>Arc Generator + PCB</span>
+                        <a href="https://www.aliexpress.us/item/3256808683130136.html" class="material-link"
+                            target="_blank">AliExpress</a>
+                    </li>
+                    <li>
+                        <span>PD Decoy (100W Capable)</span>
+                        <a href="https://www.aliexpress.us/item/3256806823745791.html" class="material-link"
+                            target="_blank">AliExpress</a>
+                    </li>
+                    <li>
+                        <span>40mm 12V Cooling Fan</span>
+                        <a href="https://www.aliexpress.us/item/3256804015858581.html" class="material-link"
+                            target="_blank">AliExpress</a>
+                    </li>
+                    <li>
+                        <span>12V Arcade Push Button</span>
+                        <a href="https://www.aliexpress.us/item/3256807689466272.html" class="material-link"
+                            target="_blank">AliExpress</a>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="glass-card">
+                <h2>Build Resources</h2>
+                <p>Download the 3D models to print your own housing or explore the design in SketchUp.</p>
+                <div class="download-box">
+                    <a href="arcGun.stl" class="download-btn" download="arcGun.stl">
+                        Download STL <span>.stl</span>
+                    </a>
+                    <a href="arcGun.3mf" class="download-btn" download="arcGun.3mf">
+                        Bambu A1 Profile <span>.3mf</span>
+                    </a>
+                    <a href="https://app.sketchup.com/share/tc/northAmerica/DCgO63hDjIE?source=web&stoken=w_L2OrYc7z40raHBPbA2aqeew_MEMN5VIyHvuuew_D8IBGdvIxyxuiDqL3VdDXQJ"
+                        class="download-btn" style="background: #232d3f;" target="_blank">
+                        SketchUp Model
+                    </a>
+                </div>
+
+                <div class="warning-banner">
+                    <h3>⚠️ HIGH VOLTAGE DANGER</h3>
+                    <p>
+                        I quickly learned how dangerous plasma is. This module generates extreme heat and high-voltage
+                        arcs. Never operate without proper insulation, eye protection, and a deadman switch. Good times,
+                        but stay safe!
+                    </p>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Plasma Projects & Engineering</p>
+        </footer>
+    </div>
+</body>
+
+</html>
