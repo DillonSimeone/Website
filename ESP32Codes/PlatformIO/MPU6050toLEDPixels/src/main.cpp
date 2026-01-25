@@ -5,9 +5,9 @@
 #include <FastLED.h>
 
 //--- Pin Definitions ---
-#define LED_PIN 20
-#define SCL_PIN 10
-#define SDA_PIN 9
+#define LED_PIN 2
+#define SCL_PIN 0
+#define SDA_PIN 1
 #define INT_PIN 5
 
 //--- LED Strip Configuration ---
