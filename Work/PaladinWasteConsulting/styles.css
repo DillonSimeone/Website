@@ -29,13 +29,15 @@
     --secondary: #06b6d4;
     --bg-main: #0f172a;
     --bg-surface: #1e293b;
-    --bg-surface-alt: #334155;
+    --bg-surface-alt: #0d0d0e;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --text-inverse: #0f172a;
     --border: #334155;
     --glass-bg: rgba(15, 23, 42, 0.7);
     --glass-border: rgba(255, 255, 255, 0.1);
+    --primary-light: rgba(59, 130, 246, 0.15);
+    /* Slightly lighter for glow */
 }
 
 * {
@@ -111,17 +113,36 @@ header::before {
 }
 
 .logo-wrapper {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
+    padding: 1.5rem 3.5rem;
+    margin-bottom: 2rem;
     transition: var(--transition);
+    border-radius: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    max-width: fit-content;
 }
+
+[data-theme="dark"] .logo-wrapper {
+    background: rgba(255, 255, 255, 0.40);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+/* Dark mode specific radial glow removed in favor of glassmorphism wrapper above */
 
 [data-theme="light"] .header-logo {
     mix-blend-mode: multiply;
 }
 
 [data-theme="dark"] .header-logo {
-    filter: brightness(1.6) contrast(1.2) saturate(1.3) drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.5));
+    /* Tight shadow to clean up edges */
+    opacity: 1;
 }
 
 .logo-wrapper:hover {
@@ -292,10 +313,8 @@ main {
 .card-icon {
     font-size: 2.5rem;
     margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    display: inline-block;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .card h3 {
