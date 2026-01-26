@@ -62,23 +62,12 @@ body {
 
 /* ==================== DARK MODE SPECIFICS ==================== */
 
-/* Subtle scanline effect overlay */
+/* Subtle scanline effect overlay - disabled for performance */
+/*
 body.dark-mode::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(0deg,
-            transparent,
-            transparent 2px,
-            rgba(0, 0, 0, 0.3) 2px,
-            rgba(0, 0, 0, 0.3) 4px);
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0.15;
+    ...
 }
+*/
 
 /* Dark mode trianglify overlay - High Visibility Rainbow Grid */
 /* Dark mode trianglify overlay - High Visibility Rainbow Grid */
@@ -198,11 +187,21 @@ body.dark-mode .item {
     font-family: 'Share Tech Mono', monospace;
 }
 
-body.dark-mode .item h1,
-body.dark-mode .item h2 {
+body.dark-mode .item h1 {
     font-family: 'Orbitron', sans-serif;
+    font-size: 3.5rem;
+    /* Reduced to match light mode width/area */
     color: var(--neon-cyan);
     text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    text-transform: uppercase;
+}
+
+body.dark-mode .item h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    /* Reduced to match light mode area */
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
     text-transform: uppercase;
 }
 
@@ -214,11 +213,16 @@ body.dark-mode .item h2::before {
 }
 
 body.dark-mode .item h3,
+body.dark-mode .item h4,
 body.dark-mode .item strong,
 body.dark-mode .item b {
     color: var(--neon-green);
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 0.1em;
+}
+
+body.dark-mode .item h3 {
+    font-size: 1.3rem;
 }
 
 body.dark-mode .item p,
