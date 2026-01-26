@@ -70,44 +70,51 @@ body.dark-mode::after {
 */
 
 /* Dark mode trianglify overlay - High Visibility Rainbow Grid */
-/* Dark mode trianglify overlay - High Visibility Rainbow Grid */
+/* Dark mode trianglify overlay - Optimized for Performance */
 body.dark-mode .trianglify {
     background-color: #000000;
-    filter: grayscale(1) brightness(0.2);
-    /* Monochrome dark shards for Black Ice look */
+    /* Remove expensive global filter. Use opacity to blend with black bg for "dark" look */
+    /* filter: grayscale(1) brightness(0.2); REMOVED for performance */
+    opacity: 0.15;
 }
 
 body.dark-mode .trianglify path {
-    opacity: 0.9;
-    /* Active state (hovered) */
-    stroke-width: 1.5px;
-    filter: drop-shadow(0 0 5px currentColor);
-    /* Transition inherited from base path (1s) for smooth shatter */
+    opacity: 1;
+    stroke-width: 0;
+    /* Remove expensive drop-shadow. Use stroke/fill brightness instead */
+    /* filter: drop-shadow(0 0 5px currentColor); REMOVED for performance */
+    transition: opacity 0.3s, fill 0.3s;
 }
 
 body.dark-mode .trianglify .fade {
-    opacity: 0.4;
-    /* Idle state */
-    filter: none;
+    opacity: 0.2;
+    /* Darker idle state */
 }
 
-/* Rainbow Edges */
+/* Rainbow Edges - Optimized */
+/* We keep the stroke colors but remove the glow/filter */
 body.dark-mode .trianglify path:nth-child(3n) {
+    fill: #00f0ff;
     stroke: #00f0ff;
 }
 
 body.dark-mode .trianglify path:nth-child(3n+1) {
+    fill: #ff00ff;
     stroke: #ff00ff;
 }
 
 body.dark-mode .trianglify path:nth-child(3n+2) {
+    fill: #00ff66;
     stroke: #00ff66;
 }
 
-body.dark-mode .trianglify path:hover {
+body.dark-mode .trianglify path:hover,
+body.dark-mode .trianglify path:not(.fade) {
     opacity: 1;
-    stroke-width: 2px;
-    filter: drop-shadow(0 0 10px currentColor);
+    stroke-width: 0;
+    /* Use a simpler highlight */
+    fill: #ffffff;
+    /* Flash white/bright on interaction */
 }
 
 /* Dark mode nav styling - Pinned to Top */
