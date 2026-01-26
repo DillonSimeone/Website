@@ -989,6 +989,20 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
     left: -200vw !important;
     /*Note: Mobile displays are taller than they are narrow, so with -100, parts would still be shown on the screen. 
     Fix !IMPORTANT, this is needed to override the class values for the loading screen.*/
+
+    /* [PERFORMANCE] Tell browser to stop rendering this completely */
+    content-visibility: hidden;
+    contain-intrinsic-size: 100vw 100vh;
+}
+
+/* [PERFORMANCE] Lazy render off-screen content in long lists */
+.artwork,
+.grid-item,
+#work section,
+.images {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 500px;
+    /* Estimate height to prevent scrollbar jumping */
 }
 
 .spin {
