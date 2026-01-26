@@ -1,3 +1,65 @@
+/*=======================================================
+                Theme Toggle - Cyberpunk Dark Mode
+=========================================================*/
+
+/**
+ * 🌙 Initialize theme from localStorage or system preference
+ * Runs immediately to prevent flash of wrong theme
+ */
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.body.classList.add('dark-mode');
+    }
+}
+
+// Run immediately (before DOM fully loads) to prevent flash
+initTheme();
+
+/**
+ * ☀️🌙 Toggle between light and dark mode with a cool transition
+ */
+function toggleTheme() {
+    const body = document.body;
+    const isDark = body.classList.toggle('dark-mode');
+
+    // Save preference
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+    // Trigger a subtle "flash" effect on toggle
+    const toggle = document.getElementById('themeToggle');
+    if (toggle) {
+        toggle.style.transform = 'scale(1.3) rotate(360deg)';
+        setTimeout(() => {
+            toggle.style.transform = '';
+        }, 400);
+    }
+
+    // Re-generate trianglify with new color palette after theme switch
+    if (typeof draw === 'function') {
+        setTimeout(() => draw(), 100);
+    }
+
+    // Update nav button colors for the new theme
+    if (typeof randomizeColor === 'function') {
+        setTimeout(() => randomizeColor(), 150);
+    }
+}
+
+// Attach event listener once DOM is ready
+document.addEventListener('DOMContentLoaded', function () {
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+});
+
+/*=======================================================
+                Main Portfolio Scripts
+=========================================================*/
+
 let selectedButton = "";
 let HistoryAPIControlsEnable = true;
 let shattered = false;
@@ -107,19 +169,51 @@ function hideAll(targetID, buttonID) {
 };
 
 //Wonder if CSS will be able to generate random colors one day. Could replace this bit by using a keyframe with the palette of color in it... Switch between the colors, from start to end over a few minutes or something.
+
+// Cyberpunk neon palette for dark mode
+const neonPalette = ["#00f0ff", "#ff00ff", "#00ff66", "#ff3355", "#ffee00", "#00ddff", "#ff44aa"];
+
+function randomNeonColor() {
+    return neonPalette[Math.floor(Math.random() * neonPalette.length)];
+}
+
 function randomizeColor() {
-    let hireMe = document.querySelector('#hire')
-    hireMe.style.backgroundColor = randomPaletteColor()
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    let hireMe = document.querySelector('#hire');
+
+    if (isDarkMode) {
+        const color = randomNeonColor();
+        hireMe.style.backgroundColor = 'transparent';
+        hireMe.style.borderColor = color;
+        hireMe.style.color = color;
+        hireMe.style.boxShadow = `0 0 15px ${color}`;
+    } else {
+        hireMe.style.backgroundColor = randomPaletteColor();
+        hireMe.style.borderColor = 'transparent';
+        hireMe.style.color = '#000';
+        hireMe.style.boxShadow = '';
+    }
 
     let buttons = Array.from(document.querySelectorAll("nav div"));
 
     buttons.forEach(element => {
         element.onmouseover = function () {
-            this.style.fill = randomPaletteColor();
+            const color = isDarkMode ? randomNeonColor() : randomPaletteColor();
+            this.style.fill = color;
+            if (isDarkMode) {
+                this.style.filter = `drop-shadow(0 0 8px ${color})`;
+            } else {
+                this.style.filter = ''; // Clear dark mode glow
+            }
         }
         element.onmouseout = function () { //Selected buttons keeps their random hover colors.
             if (this.id !== selectedButton) {
-                this.style.fill = "#666";
+                this.style.fill = isDarkMode ? "#a0a0b0" : "#666";
+                if (isDarkMode) {
+                    this.style.filter = `drop-shadow(0 0 3px #00f0ff)`;
+                } else {
+                    this.style.filter = '';
+                }
             }
         }
     });
@@ -149,6 +243,7 @@ function setUp() {
         reveal('elevatorPitch', 'LandingPage');
 
     generateDynamicNavs();
+    injectFooters();
 }
 
 function generateDynamicNavs() {
@@ -250,5 +345,55 @@ document.addEventListener('click', function (e) {
         }
     }
 });
+
+/**
+ * 🦶 Injects a cute footer at the bottom of all content sections
+ * Fetches last commit date from GitHub API for the "Last updated" text
+ */
+function injectFooters() {
+    // Sections that should have a footer (exclude loading and elevator pitch)
+    const sectionsWithFooter = ['hobby', 'work', 'projects', 'embedded'];
+
+    sectionsWithFooter.forEach(sectionId => {
+        const article = document.getElementById(sectionId);
+        if (!article) return;
+
+        const section = article.querySelector('section');
+        if (!section) return;
+
+        // Create footer element
+        const footer = document.createElement('footer');
+        footer.className = 'site-footer';
+        footer.innerHTML = `
+            <p>Last updated: <span class="last-updated">Loading...</span></p>
+            <p>© Dillon Simeone | <a href="https://github.com/DillonSimeone/Website">View on GitHub</a></p>
+        `;
+
+        section.appendChild(footer);
+    });
+
+    // Fetch last commit date from GitHub API and update all footers
+    fetch('https://api.github.com/repos/DillonSimeone/Website/commits?per_page=1')
+        .then(response => response.json())
+        .then(data => {
+            if (data && data[0] && data[0].commit && data[0].commit.committer.date) {
+                const date = new Date(data[0].commit.committer.date);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                // Update all footer dates
+                document.querySelectorAll('.last-updated').forEach(el => {
+                    el.textContent = formattedDate;
+                });
+            }
+        })
+        .catch(() => {
+            document.querySelectorAll('.last-updated').forEach(el => {
+                el.textContent = 'Recently';
+            });
+        });
+}
 
 setUp();

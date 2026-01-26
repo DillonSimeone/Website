@@ -25,8 +25,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description"
         content="Dillon Simeone - Multifaceted innovator, maker, developer, and designer specializing in accessibility, embedded tech, haptics, and creative hardware.">
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+    <meta name="author" content="Dillon Simeone">
+    <meta name="keywords"
+        content="accessibility, embedded tech, laser cutting, 3D printing, web development, haptics, Deaf, creative coding">
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Dillon Simeone - Portfolio">
+    <meta property="og:description"
+        content="Multifaceted innovator driving accessibility in technology. Maker, developer, and designer specializing in embedded tech, haptics, and creative hardware.">
+    <meta property="og:url" content="https://dillonsimeone.github.io/Website/">
+    <meta property="og:image" content="./Images/HapticBracerDemoBunnie.webp">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
     <script src="randomColors.js"></script>
     <script src="trianglify.min.js"></script>
     <script src="background.js"></script>
@@ -59,6 +72,29 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                 <path
                     d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z" />
+            </svg>
+        </div>
+
+        <div class="navButton" id="ESP32" onclick="reveal('embedded', this.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path
+                    d="M352 128H160c-17.67 0-32 14.33-32 32v192c0 17.67 14.33 32 32 32h192c17.67 0 32-14.33 32-32V160c0-17.67-14.33-32-32-32zm-16 208H176V176h160v160z" />
+                <rect x="144" y="64" width="32" height="48" />
+                <rect x="208" y="64" width="32" height="48" />
+                <rect x="272" y="64" width="32" height="48" />
+                <rect x="336" y="64" width="32" height="48" />
+                <rect x="144" y="400" width="32" height="48" />
+                <rect x="208" y="400" width="32" height="48" />
+                <rect x="272" y="400" width="32" height="48" />
+                <rect x="336" y="400" width="32" height="48" />
+                <rect x="64" y="144" width="48" height="32" />
+                <rect x="64" y="208" width="48" height="32" />
+                <rect x="64" y="272" width="48" height="32" />
+                <rect x="64" y="336" width="48" height="32" />
+                <rect x="400" y="144" width="48" height="32" />
+                <rect x="400" y="208" width="48" height="32" />
+                <rect x="400" y="272" width="48" height="32" />
+                <rect x="400" y="336" width="48" height="32" />
             </svg>
         </div>
     </nav>
@@ -118,7 +154,6 @@
                         <a
                             href="https://docs.google.com/document/d/17at4VC7BOsuEL0SFwjbOCelqJ94owcdG1yyveG8QO0Y/edit?usp=sharing">Read
                             my resume</a>
-                        </p>
                     </div>
                 </div>
             </section>
@@ -199,14 +234,14 @@
                         cafe!</a></p>
                 <div class="medias">
                     <div class="images">
-                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/cymaSpaceLogo.webp"
+                        <img loading="lazy" src="./Hobby/Lasering/WoodenCoasters/cymaSpaceLogo.webp"
                             alt="cyma Space Logo">
-                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/cymaSpaceLogo2.webp"
+                        <img loading="lazy" src="./Hobby/Lasering/WoodenCoasters/cymaSpaceLogo2.webp"
                             alt="cyma Space Logo2">
-                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/cymaSpaceLogo3.webp"
+                        <img loading="lazy" src="./Hobby/Lasering/WoodenCoasters/cymaSpaceLogo3.webp"
                             alt="cyma Space Logo3">
-                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/GivingTree.webp" alt="Giving Tree">
-                        <img loading="lazy" src="./Hobby/Lasering//WoodenCoasters/GivingTree2.webp" alt="Giving Tree2">
+                        <img loading="lazy" src="./Hobby/Lasering/WoodenCoasters/GivingTree.webp" alt="Giving Tree">
+                        <img loading="lazy" src="./Hobby/Lasering/WoodenCoasters/GivingTree2.webp" alt="Giving Tree2">
                     </div>
                 </div>
             </div>
@@ -615,7 +650,7 @@
             <h1>Misc</h1>
 
             <div class="artwork">
-                <h1>Art wall</h1>
+                <h2>Art wall</h2>
                 <p>The wall outside my lab. It overflows!</p>
                 <div class="medias">
                     <div class="images">
@@ -627,7 +662,7 @@
             </div>
 
             <div class="artwork">
-                <h1>Sale Kiosk</h1>
+                <h2>Sale Kiosk</h2>
                 <p>A sale kiosk I built for my artworks to be sold at the <a
                         href="https://www.instagram.com/woodstockcafepdx/?hl=en">Deaf Cafe</a>! It's a good way for me
                     to get rid of artworks before I drown in them. I'm way more interested in making than keeping.</p>
@@ -693,6 +728,7 @@
                             href="https://www.amazon.com/ESP32-C3-Development-Supermini-Bluetooth-Compatible-Arduino/dp/B0CP78NQJK">ESP32-C3
                             Superminis</a>
                         <p>— compact, reliable microcontroller at the core of the build.</p>
+                    </li>
                     <li>
                         <a href="https://www.amazon.com/AITRIP-Trigger-5V9V12V20V-Charger-Delivery/dp/B0D14D8PQZ/">PD
                             decoys</a>
@@ -920,7 +956,7 @@
                 <p>
                     Think petting zoo, but instead of goats and chickens, it’s a bunch of hacked-together machines that
                     poke, buzz, rumble, and squish in strange ways. I set up a room full of different haptic devices so
-                    people could walk around and touch sound — bass thumps you can feel in your chest, fingertip buzzers
+                    people could walk around and touch sound, bass thumps you can feel in your chest, fingertip buzzers
                     that tickle like carbonated water, and low-frequency shakers that make tables feel alive. The goal
                     was to explore how many ways we can send information through skin and bones instead of ears.
                 </p>
@@ -967,6 +1003,19 @@
                     <a href="https://prezi.com/view/bW9rCwxzbSLHtgYIg9hE/">Confluence workshops</a> I’ve led for the
                     Universal Music
                     Design group over the years.
+                </p>
+            </div>
+
+            <div>
+                <h2>STM32 Cable Tester Demo</h2>
+                <p><a href="./Work/CustomCableTester/index.html">View Demo Page</a></p>
+                <p>
+                    This is a demonstration page for an STM32H743IIT6 development board project I built for a client.
+                    The actual device performs cable testing with analog reads, continuity checks, and reporting
+                    features.
+                    Due to client confidentiality, further technical details are under wraps, but the demo page
+                    showcases
+                    example code categories and UI patterns used in the project.
                 </p>
             </div>
 
@@ -1174,7 +1223,7 @@
         <section>
             <h1>MiniProjects / Projects</h1>
             <h2>
-                Doodles, ideas and notes to self.
+                Personal projects, doodles, ideas and notes to self.
             </h2>
             <!-- Copy and paste this template for each items in the grids!
                 <div class="grid-item">
@@ -1182,25 +1231,43 @@
                     <p>
                     </p>
                     <ul>
-                        <lu>
+                        <li>
+                            <a href=""></a>
+                        </li>
                     </ul>
                 </div>
             -->
 
             <div class="grid">
-                <!--
+
                 <div class="grid-item">
-                    <h2>Goofing around with APIs</h2>
+                    <h2>Hands to STL</h2>
                     <p>
-                        APIs are cool. Lately, more and more websites been opening up access to their APIs, which makes
-                        all kinds of fun stuff possible.
+                        Ever wanted to 3D print a custom hand sculpture without losing your mind in Blender? This tool
+                        uses MediaPipe's hand tracking to capture your hand pose from a webcam and converts it directly
+                        into a printable STL file. Multiple artistic styles available: solid bones, winding ribbons,
+                        crystalline formations, and organic metaball blobs.
+                    </p>
+                    <p>
+                        Perfect for making custom jewelry displays, ASL letter sculptures, or just freezing a gesture
+                        in time without modeling skills.
                     </p>
                     <ul>
-                        <li><a href="./MiniProjects/APIs/index.html">Random account generator API</a></li>
-                        <li><a href="./MiniProjects/">Reddit API - Infinite memes previewer</a></li>
+                        <li><a href="./MiniProjects/HandsToSTL/hand_pose_capture.html">Full-featured version</a></li>
+                        <li><a href="./MiniProjects/HandsToSTL/hand_pose_capture_lowPoly.html">Low-poly version</a></li>
+                        <li><a href="./MiniProjects/HandsToSTL/hand_pose_capture_Mesh.html">Mesh version</a></li>
                     </ul>
                 </div>
-                -->
+
+                <div class="grid-item">
+                    <h2>Arc Gun</h2>
+                    <p>
+                        Built an arc gun for a gift among engineers! The plasma arc is bewitching.
+                    </p>
+                    <ul>
+                        <li><a href="./Projects/ArcGun/index.html">Arc Gun</a></li>
+                    </ul>
+                </div>
 
                 <div class="grid-item">
                     <h2>Prototypes</h2>
@@ -1560,9 +1627,93 @@
         </section>
     </article>
 
+    <article class="item" id="embedded">
+        <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <aside class="section-nav" data-target-container=".grid-item" data-title-selector="h2">
+            <div class="sideNavContent">
+                <h3>Embedded Directory</h3>
+                <ul class="dynamic-links"></ul>
+            </div>
+        </aside>
+        <section>
+            <h1>ESP32 / Embedded Tech</h1>
+            <h2>
+                Microcontrollers, IoT projects, and tiny computers doing big things.
+            </h2>
+
+            <div class="grid">
+                <div class="grid-item">
+                    <h2>ESP32-S3 Camera</h2>
+                    <p>
+                        Built a better camera for my 3D printer using a Freenove ESP32-WROVER-DEV board.
+                        Got massively sidetracked with forcing defective cameras to work flawlessly through
+                        creative software solutions. Features mDNS for network discovery and a slick
+                        glassmorphism-styled web interface for streaming.
+                    </p>
+                    <ul>
+                        <li>
+                            <a href="./ESP32Codes/PlatformIO/ESP32Cameras/ESP32S3/Website/index.html">ESP32 Camera
+                                Project</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>ESP32-C3 SuperMini Starter Kit</h2>
+                    <p>
+                        A complete knowledge base for the ESP32-C3 SuperMini — a tiny RISC-V development board
+                        with WiFi and Bluetooth 5 (BLE). I've documented everything from pin mappings to
+                        PlatformIO setup, including working code examples for blink, PWM, and WiFi scanning.
+                    </p>
+                    <p>
+                        These boards cost under $2 each in bulk but pack 4MB flash and run at 160MHz. Perfect
+                        for IoT projects, wearables, and general tinkering.
+                    </p>
+                    <ul>
+                        <li><a href="./ESP32Codes/ESP32C3Starter/">Starter Kit Files</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>MicroPython on ESP32-C3</h2>
+                    <p>
+                        A self-contained workflow for flashing and running MicroPython on the ESP32-C3 SuperMini.
+                        Includes automated PowerShell scripts for flashing, erasing, and port detection.
+                        Useful for rapid prototyping when Arduino feels too heavy.
+                    </p>
+                    <ul>
+                        <li><a href="./ESP32Codes/Mircopython/">MicroPython Setup</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>PlatformIO Projects</h2>
+                    <p>
+                        Various PlatformIO-based ESP32 projects including microphone sanity tests,
+                        Bluetooth streaming experiments, and more. PlatformIO offers automatic port
+                        detection and better dependency management than the Arduino IDE.
+                    </p>
+                    <ul>
+                        <li><a href="./ESP32Codes/PlatformIO/">Browse PlatformIO Projects</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </article>
+
     <div class="trianglify">
         <div class="circle"></div>
     </div>
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
+        <span class="icon-sun">☀️</span>
+        <span class="icon-moon">🌙</span>
+    </button>
 
     <script src="./indexScript.js"></script>
 </body>
