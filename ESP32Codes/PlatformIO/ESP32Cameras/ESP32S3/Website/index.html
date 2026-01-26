@@ -403,7 +403,7 @@
         .callout {
             background: rgba(255, 0, 255, 0.05);
             border-left: 4px solid var(--neon-magenta);
-            padding: 20px;
+            padding: 18px 25px;
             margin: 20px 0;
             border-radius: 0 8px 8px 0;
         }
@@ -416,6 +416,97 @@
         .callout.warning {
             background: rgba(255, 200, 0, 0.05);
             border-left-color: #ffcc00;
+        }
+
+        /* Unordered list styling for Final Solution */
+        .final-solution-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .final-solution-list li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 12px;
+        }
+
+        .final-solution-list li::before {
+            content: '>';
+            position: absolute;
+            left: 0;
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+
+        /* Blockquote style for "Why O(1) Matters" */
+        .block-quote {
+            background: rgba(0, 240, 255, 0.03);
+            border-left: 4px solid var(--neon-cyan);
+            padding: 20px 30px;
+            margin: 20px 0 20px 40px;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: var(--text-primary);
+            box-shadow: -10px 0 20px rgba(0, 240, 255, 0.05);
+        }
+
+        /* ==================== PUNK BUTTONS ==================== */
+        .button-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .punk-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: transparent;
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            text-decoration: none;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            position: relative;
+            transition: all 0.3s;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .punk-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--neon-cyan);
+            transition: all 0.3s;
+            z-index: -1;
+        }
+
+        .punk-btn:hover {
+            color: var(--dark-bg);
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        .punk-btn:hover::before {
+            left: 0;
+        }
+
+        .punk-btn.magenta {
+            color: var(--neon-magenta);
+            border-color: var(--neon-magenta);
+        }
+
+        .punk-btn.magenta::before {
+            background: var(--neon-magenta);
+        }
+
+        .punk-btn.magenta:hover {
+            box-shadow: 0 0 20px var(--neon-magenta);
         }
 
         /* ==================== FOOTER ==================== */
@@ -444,6 +535,11 @@
             .glitch-title {
                 font-size: 1.8rem;
             }
+
+            .block-quote {
+                margin-left: 20px;
+                padding: 15px 20px;
+            }
         }
     </style>
 </head>
@@ -462,7 +558,9 @@
             <li><a href="#hardware">Hardware</a></li>
             <li><a href="#features">Features</a></li>
             <li><a href="#algorithm">Algorithm</a></li>
+            <li><a href="#heat">Heat Management</a></li>
             <li><a href="#gallery">Gallery</a></li>
+            <li><a href="#marketplace">Marketplace</a></li>
             <li><a href="#api">API</a></li>
         </ul>
     </nav>
@@ -474,7 +572,8 @@
                 <h2>Project Overview</h2>
                 <p>A camera streaming project for monitoring 3D prints with integrated LED strip control, featuring
                     <strong>advanced client-side post-processing</strong> that fixes dead pixels in real-time without
-                    any firmware modifications.</p>
+                    any firmware modifications.
+                </p>
 
                 <div class="callout success">
                     <strong>The Breakthrough:</strong> We achieved <strong>O(1) per-frame complexity</strong> for dead
@@ -502,7 +601,7 @@
                     </tr>
                     <tr>
                         <td>Camera Sensor</td>
-                        <td><strong>OV2640</strong> (2 Megapixel CMOS)</td>
+                        <td><strong>OV5640</strong> (5 Megapixel CMOS)</td>
                     </tr>
                     <tr>
                         <td>LED Strip</td>
@@ -603,7 +702,7 @@
             <div class="card">
                 <h2>The Dead Pixel Fix Algorithm</h2>
 
-                <p>Cheap camera modules—like the <strong>OV2640</strong> commonly paired with ESP32-S3 boards—often have
+                <p>Cheap camera modules—like the <strong>OV5640</strong> commonly paired with ESP32-S3 boards—often have
                     manufacturing defects. These "hot pixels" are permanently stuck at a bright color.</p>
 
                 <div class="callout warning">
@@ -614,7 +713,8 @@
                 <h3>The Naive Approach (Why It Fails)</h3>
                 <p>A 640x480 frame has <strong>307,200 pixels</strong>. At 30 FPS, scanning every pixel means
                     <strong>9.2 million checks per second</strong>. With ~20 operations per pixel, that's 180+ million
-                    operations per second. <em>Your browser freezes.</em></p>
+                    operations per second. <em>Your browser freezes.</em>
+                </p>
 
                 <h3>The Evolution: 7 Versions</h3>
                 <div class="version-list">
@@ -655,25 +755,57 @@
 
                 <h3>The Final Solution</h3>
                 <div class="callout success">
-                    <ol>
+                    <ul class="final-solution-list">
                         <li><strong>Scan once</strong> — On first frame, find all outlier pixels and cache their (x, y)
                             coordinates.</li>
                         <li><strong>Fix forever</strong> — Every subsequent frame, only process the ~10-50 cached
                             pixels.</li>
                         <li><strong>O(1) complexity</strong> — Processing time is constant regardless of image size.
                         </li>
-                    </ol>
+                    </ul>
                 </div>
 
                 <h3>Why O(1) Matters</h3>
-                <p>Imagine you're a librarian asked to find typos in a book:</p>
-                <ul>
-                    <li><strong>O(n):</strong> Read every word, every time. 100,000 words = 100,000 reads.</li>
-                    <li><strong>O(1):</strong> Read once, write down page numbers on a sticky note. Future requests?
-                        Just look at the note.</li>
-                </ul>
-                <p>For video: <strong>O(n)</strong> means bigger images = slower. <strong>O(1)</strong> means 640x480 or
-                    4K, same speed.</p>
+                <div class="block-quote">
+                    <p>Imagine you're a librarian asked to find typos in a book:</p>
+                    <ul style="list-style-type: square; margin-left: 20px;">
+                        <li><strong>O(n):</strong> Read every word, every time. 100,000 words = 100,000 reads.</li>
+                        <li><strong>O(1):</strong> Read once, write down page numbers on a sticky note. Future requests?
+                            Just look at the note.</li>
+                    </ul>
+                    <p style="margin-top: 15px;">For video: <strong>O(n)</strong> means bigger images = slower.
+                        <strong>O(1)</strong> means 640x480 or 4K, same speed.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- HEAT MANAGEMENT SECTION -->
+        <section id="heat" class="section">
+            <div class="card">
+                <h2>Thermal Anarchy: Heat Management</h2>
+                <p>Silicon gets angry when it's hot. The <strong>ESP32-S3</strong> and <strong>OV5640</strong> are
+                    high-performance components squeezed into a tiny footprint. Without intervention, they generate
+                    enough heat to cause literal visual corruption.</p>
+
+                <div class="callout warning">
+                    <strong>The Pink Creep:</strong> As the sensor temperature climbs, a localized "pink aura" begins to
+                    bleed into the frame from the edges. Left unchecked, this thermal noise consumes the entire feed
+                    until the sensor either halts or sustained damage occurs.
+                </div>
+
+                <h3>Hard Lessons in Cooling</h3>
+                <p>These modules are cheap, but their thermal overhead is steep. For stable 24/7 monitoring (like
+                    40-hour 3D prints), active cooling or significant passive heat-sinking is
+                    <strong>mandatory</strong>. Failure to manage heat doesn't just ruin the image—it melts the thin
+                    plastic housing and kills the hardware.
+                </p>
+
+                <div class="block-quote"
+                    style="border-left-color: var(--neon-magenta); background: rgba(255, 0, 255, 0.03);">
+                    <p>In the world of cybernetics, heat is the ultimate enemy of uptime. If you don't sink it, you'll
+                        sink with it.</p>
+                </div>
             </div>
         </section>
 
@@ -691,21 +823,53 @@
                         <figcaption>Hardware Setup</figcaption>
                     </figure>
                     <figure class="image-card">
-                        <img src="../pictures/3.jpg" alt="3D Printer Monitoring">
-                        <figcaption>3D Printer Monitoring</figcaption>
+                        <img src="../pictures/3.jpg" alt="Alexpress bag">
+                        <figcaption>Alexpress bag</figcaption>
                     </figure>
                     <figure class="image-card">
                         <img src="../pictures/deadpixel.png" alt="Dead Pixel Before Fix">
-                        <figcaption>Dead Pixel — Before Fix</figcaption>
+                        <figcaption>Dead Pixel - Before Fix</figcaption>
                     </figure>
                     <figure class="image-card">
-                        <img src="../pictures/deadpixel2.png" alt="Dead Pixel Detection Map">
-                        <figcaption>Detection Map Visualization</figcaption>
+                        <img src="../pictures/deadpixel2.png" alt="Dead Pixel Before Fix">
+                        <figcaption>Dead Pixel - Before Fix</figcaption>
                     </figure>
                     <figure class="image-card">
                         <img src="../pictures/deadpixel3.png" alt="Dead Pixel After Fix">
-                        <figcaption>Dead Pixel — After Fix</figcaption>
+                        <figcaption>Dead Pixel - After Fix</figcaption>
                     </figure>
+                    <figure class="image-card">
+                        <img src="../pictures/heatCreepCausingPinkCreep.png" alt="Early Heat Creep">
+                        <figcaption>Phase 1: Early Thermal Leak</figcaption>
+                    </figure>
+                    <figure class="image-card">
+                        <img src="../pictures/heatCreepCausingPinkCreep2.png" alt="Advancing Pink Creep">
+                        <figcaption>Phase 2: Advancing Pink Aura</figcaption>
+                    </figure>
+                    <figure class="image-card">
+                        <img src="../pictures/heatCreepCausingPinkCreepExtremeOverheating.png"
+                            alt="Extreme Overheating">
+                        <figcaption>Phase 3: Thermal Total Shutdown</figcaption>
+                    </figure>
+                </div>
+            </div>
+        </section>
+
+        <!-- MARKETPLACE SECTION -->
+        <section id="marketplace" class="section">
+            <div class="card">
+                <h2>AliExpress Marketplace</h2>
+                <p>Acquire the hardware components used in this project through the links below. <em>Note: Always verify
+                        version numbers before purchase.</em></p>
+
+                <div class="button-group">
+                    <a href="https://www.aliexpress.us/item/3256807121725323.html" target="_blank" class="punk-btn">
+                        ESP32-S3 N16R8 [LINK]
+                    </a>
+                    <a href="https://www.aliexpress.us/item/3256803892794950.html" target="_blank"
+                        class="punk-btn magenta">
+                        OV5640 SENSOR [LINK]
+                    </a>
                 </div>
             </div>
         </section>

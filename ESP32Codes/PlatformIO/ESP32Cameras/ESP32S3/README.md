@@ -5,7 +5,7 @@ A camera streaming project for monitoring 3D prints with integrated LED strip co
 ## Hardware
 
 - **Board**: ESP32-S3 WROOM N16R8 CAM Development Board
-- **Camera**: OV2640/OV5640 module
+- **Camera**: OV5640 module
 - **Memory**: 16MB Flash, 8MB PSRAM
 - **LED Strip**: WS2812B on GPIO 14
 
