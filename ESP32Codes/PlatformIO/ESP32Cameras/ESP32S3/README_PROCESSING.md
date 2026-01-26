@@ -2,7 +2,7 @@
 
 ## The Problem
 
-Cheap camera modules—like the **OV2640** commonly paired with the **ESP32-S3 WROOM N16R8** development boards—often have manufacturing defects. These defects manifest as "hot pixels" or "dead pixels": tiny spots on the sensor that are permanently stuck at a bright color (usually white or a single saturated channel like pure red/green/blue).
+Cheap camera modules—like the **OV5640** commonly paired with the **ESP32-S3 WROOM N16R8** development boards—often have manufacturing defects. These defects manifest as "hot pixels" or "dead pixels": tiny spots on the sensor that are permanently stuck at a bright color (usually white or a single saturated channel like pure red/green/blue).
 
 For a $5 camera module, this is expected. But it's *incredibly* annoying when you're trying to monitor your 3D printer or stream video, because that one bright speck is always there, drawing your eye away from the actual content.
 
@@ -15,7 +15,7 @@ For a $5 camera module, this is expected. But it's *incredibly* annoying when yo
 | Component | Model |
 |---|---|
 | **Microcontroller** | ESP32-S3 WROOM N16R8 (16MB Flash, 8MB PSRAM) |
-| **Camera Sensor** | OV2640 (2 Megapixel CMOS) |
+| **Camera Sensor** | OV5640 (5 Megapixel CMOS) |
 | **Interface** | MJPEG over HTTP |
 | **Resolution** | Up to 1024x768 (XGA) |
 | **Frame Rate** | ~15-30 FPS depending on resolution/quality |
@@ -193,6 +193,16 @@ for (let y = R; y < h - R; y++) {
 - [ ] **WebWorker Offloading**: Move the detection pass to a background thread.
 - [ ] **GPU Acceleration**: Use WebGL shaders for the fix pass (though this may be overkill given O(1) performance).
 - [ ] **Automatic Periodic Recalibration**: Re-scan every N minutes to catch sensor drift.
+
+---
+
+## Heat Management: The Pink Creep
+
+As these sensors are often used in enclosed spaces (like 3D printer housings), heat becomes a critical failure point.
+
+*   **The Phenomenon**: As the sensor overheats, a "pink aura" or thermal noise bleeds into the image.
+*   **The Risk**: Sustained high temperatures can cause permanent pixel damage or melt the plastic sensor housing.
+*   **The Fix**: Heatsinks are mandatory for 24/7 operation.
 
 ---
 
