@@ -37,10 +37,8 @@ function toggleTheme() {
         }, 400);
     }
 
-    // Re-generate trianglify with new color palette after theme switch
-    if (typeof draw === 'function') {
-        setTimeout(() => draw(), 100);
-    }
+    // [PERFORMANCE] Background styling is now handled purely by CSS (filters)
+    // to avoid expensive SVG regeneration that impacts mobile performance.
 
     // Update nav button colors for the new theme
     if (typeof randomizeColor === 'function') {

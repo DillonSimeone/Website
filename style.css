@@ -15,7 +15,7 @@
     --accent-gradient: linear-gradient(90deg, #ff0040, #ff8a00, #ffd400, #3cd500, #00c2ff, #7a00ff, #ff0040);
 
     /* Transition for smooth theme switching */
-    --theme-transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+    --theme-transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease;
 }
 
 /* ==================== DARK MODE - REFINED BLACK ICE ==================== */
@@ -189,8 +189,8 @@ body.dark-mode .item {
 
 body.dark-mode .item h1 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 3.5rem;
-    /* Reduced to match light mode width/area */
+    font-size: 3rem;
+    /* Further reduced for area parity */
     color: var(--neon-cyan);
     text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
     text-transform: uppercase;
@@ -198,8 +198,8 @@ body.dark-mode .item h1 {
 
 body.dark-mode .item h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.8rem;
-    /* Reduced to match light mode area */
+    font-size: 1.6rem;
+    /* Further reduced for area parity */
     color: var(--neon-cyan);
     text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
     text-transform: uppercase;
@@ -222,7 +222,12 @@ body.dark-mode .item b {
 }
 
 body.dark-mode .item h3 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
+    /* Matched to browser default area */
+}
+
+body.dark-mode .item h4 {
+    font-size: 0.9rem;
 }
 
 body.dark-mode .item p,
