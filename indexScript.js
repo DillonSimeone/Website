@@ -84,15 +84,21 @@ function reveal(targetID, buttonID, timedelay, historyAPI) {
         let target = document.getElementById(targetID);
         target.className = "item reveal";
 
-        // Hide mobile hamburger on landing page (no nav there)
+        // Handle mobile hamburger and side-nav resets
         const globalToggle = document.getElementById('globalNavToggle');
         if (globalToggle) {
+            globalToggle.classList.remove('active'); // Close hamburger when changing pages
             if (targetID === 'elevatorPitch' || targetID === 'loading') {
                 globalToggle.style.display = 'none';
             } else {
-                globalToggle.style.display = ''; // Reset to CSS default
+                globalToggle.style.display = ''; // Let CSS media queries handle it
             }
         }
+
+        // Ensure all section-navs are closed when switching pages
+        document.querySelectorAll('.section-nav').forEach(nav => {
+            nav.classList.remove('active');
+        });
     }, timedelay);
 
     if (HistoryAPIControlsEnable) { //Toggle for history api functionality, at the top of this script (For hot reloading functionability for testing)
@@ -254,13 +260,17 @@ function generateDynamicNavs() {
 
         if (!section || !list) return;
 
+        list.innerHTML = ''; // Clear existing to prevent duplicates
+
         const targets = section.querySelectorAll(containerSelector);
         targets.forEach(target => {
             const titleEl = target.querySelector(titleSelector);
             if (!titleEl) return;
 
             const titleText = titleEl.innerText || titleEl.textContent;
-            // Generate ID on the TITLE ELEMENT (not the container)
+            if (!titleText.trim()) return;
+
+            // Generate unique ID on the TITLE ELEMENT
             if (!titleEl.id) {
                 titleEl.id = titleText.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
             }

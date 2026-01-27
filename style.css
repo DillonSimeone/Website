@@ -571,7 +571,8 @@ nav svg:hover {
     scrollbar-width: thin;
     padding-top: 0;
     /* Fixed padding to prevent shift relative to 60px nav */
-    z-index: -1;
+    z-index: 10;
+    /* Positive z-index for content */
 }
 
 /* Custom Scrollbar for Dark Mode */
@@ -967,12 +968,12 @@ section {
                 Fun reveal/hide css animation!
 =========================================================*/
 .reveal {
-    /*
-    animation: revealy .25s ease-in-out 0s 1 normal forwards;
-    */
     top: 0;
     left: 0;
-    transform: rotate(0deg);
+    transform: none !important;
+    /* Critical: 'none' allows fixed children to stay truly fixed on screen */
+    z-index: 20;
+    /* Bring active section to front */
 }
 
 .hide {
@@ -1046,7 +1047,7 @@ section {
     top: 15%;
     right: 0;
     width: 200px;
-    max-height: 60vh;
+    max-height: 80vh;
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(15px);
@@ -1054,7 +1055,8 @@ section {
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 20px 0 0 20px;
     box-shadow: -8px 8px 32px 0 rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    z-index: 2000;
+    /* Ensure it stays above navigation bar and content */
     padding: 20px;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.2) transparent;

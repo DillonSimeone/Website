@@ -9,7 +9,7 @@ const mobileSVGData = "<svg viewBox=\"0 0 800 1200\" preserveAspectRatio=\"xMidY
 const min = 20;
 const max = 80;
 
-window.mobilecheck = function() {
+window.mobilecheck = function () {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
@@ -48,7 +48,7 @@ function draw() {
     const polyPoints = paths.map(poly => {
         poly.classList.add('poly', 'fade');
         const rect = poly.getBoundingClientRect();
-        return { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     });
 
     document.removeEventListener('mousemove', document.fn);
@@ -92,3 +92,5 @@ if (document.readyState === 'loading') {
 } else {
     draw();
 }
+
+window.redraw = draw;
