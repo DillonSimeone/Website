@@ -83,7 +83,7 @@ body.dark-mode .trianglify path {
     stroke-width: 0;
     /* Remove expensive drop-shadow. Use stroke/fill brightness instead */
     /* filter: drop-shadow(0 0 5px currentColor); REMOVED for performance */
-    transition: opacity 0.3s, fill 0.3s;
+    transition: opacity 0.3s, fill 0.3s, transform 1s;
 }
 
 body.dark-mode .trianglify .fade {
@@ -150,7 +150,7 @@ body.dark-mode nav svg:hover {
 /* Card styling in Black Ice Mode */
 body.dark-mode .grid-item,
 body.dark-mode .artwork,
-body.dark-mode #work section {
+body.dark-mode #work section>div {
     position: relative;
     background: var(--bg-glass);
     /* Translucent black */
@@ -161,13 +161,14 @@ body.dark-mode #work section {
     transition: transform 0.3s, border-color 0.3s;
 }
 
-body.dark-mode .grid-item:hover {
+body.dark-mode .grid-item:hover,
+body.dark-mode .artwork:hover {
     border-color: rgba(0, 240, 255, 0.3);
 }
 
 body.dark-mode .grid-item::before,
 body.dark-mode .artwork::before,
-body.dark-mode #work section::before {
+body.dark-mode #work section>div::before {
     content: '';
     position: absolute;
     top: 0;
@@ -480,27 +481,27 @@ path {
 
 /*animations for the shatter function in indexScript.js*/
 .flyUp {
-    transition: all 3s;
-    transform: translate(0px, -200vh);
-    opacity: 1;
+    transition: all 3s !important;
+    transform: translate(0px, -200vh) !important;
+    opacity: 1 !important;
 }
 
 .flyDown {
-    transition: all 3s;
-    transform: translate(0px, 200vh);
-    opacity: 1;
+    transition: all 3s !important;
+    transform: translate(0px, 200vh) !important;
+    opacity: 1 !important;
 }
 
 .flyRight {
-    transition: all 3s;
-    transform: translate(200vw, 0px);
-    opacity: 1;
+    transition: all 3s !important;
+    transform: translate(200vw, 0px) !important;
+    opacity: 1 !important;
 }
 
 .flyLeft {
-    transition: all 3s;
-    transform: translate(-200vw, 0px);
-    opacity: 1;
+    transition: all 3s !important;
+    transform: translate(-200vw, 0px) !important;
+    opacity: 1 !important;
 }
 
 /*=======================================================
@@ -568,7 +569,7 @@ nav svg:hover {
     /* Prevent horizontal jitter */
     scrollbar-color: black white;
     scrollbar-width: thin;
-    padding-top: 100px;
+    padding-top: 0;
     /* Fixed padding to prevent shift relative to 60px nav */
     z-index: -1;
 }
@@ -637,7 +638,40 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
 }
 
 .item a {
-    color: blue;
+    color: var(--link-color);
+}
+
+/* Generic Grid & Card System */
+.grid {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.grid-item,
+.artwork,
+#work section>div {
+    margin: 1rem auto;
+    width: 100%;
+    box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
+    padding: 10px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 500px;
+}
+
+.grid-item ul,
+.artwork ul,
+#work section>div ul {
+    list-style: none;
+    padding: 0;
+}
+
+.grid-item li,
+.artwork li,
+#work section>div li {
+    margin: 1rem;
 }
 
 /*=======================================================
@@ -649,15 +683,19 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
     z-index: 100;
 }
 
-
 /*=======================================================
                 Elevator pitch
 =========================================================*/
+section {
+    padding-top: 100px;
+    padding-bottom: 10vh;
+    margin: auto 15vw;
+    /* Balanced side margins */
+}
 
 #elevatorPitch section {
-    margin: 5% 15%;
-    padding: 10px;
-    padding-bottom: 10vh;
+    margin: 0 15%;
+    /* Keep original specific layout */
 }
 
 #elevatorPitch #jobs {
@@ -743,11 +781,7 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
     }
 }
 
-#hobby section {
-    margin: 5% 15%;
-    padding: 10px;
-    padding-bottom: 10vh;
-}
+
 
 #hobby .headers {
     margin-bottom: 1em;
@@ -760,9 +794,6 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
 }
 
 #hobby .artwork {
-    background-color: rgba(255, 255, 255, 0.3);
-    padding: 10px;
-    box-shadow: 10px 10px 20px black;
     margin-top: 20px;
 }
 
@@ -873,37 +904,7 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
     width: 100%;
 }
 
-#projects section {
-    margin: auto;
-    width: 80%;
-    padding-bottom: 10vh;
-}
 
-#projects .grid {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-}
-
-#projects .grid .grid-item {
-    margin: 1rem auto 1rem auto;
-    width: 100%;
-    box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-}
-
-#projects .grid .grid-item ul,
-#projects .grid-item.project ul {
-    list-style: none;
-    padding: 0;
-}
-
-#projects .grid .grid-item ul li,
-#projects .grid-item.project ul li {
-    margin: 1rem;
-}
 
 /*=======================================================
                 Work
@@ -913,14 +914,7 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
 }
 
 #work section {
-    margin: auto;
-    width: 80%;
-    box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
-    padding: 10px;
-    padding-bottom: 10vh;
-}
-
-#work section {
+    /* Uses base section styles */
     margin-bottom: 5%;
 }
 
@@ -995,15 +989,7 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
     contain-intrinsic-size: 100vw 100vh;
 }
 
-/* [PERFORMANCE] Lazy render off-screen content in long lists */
-.artwork,
-.grid-item,
-#work section,
-.images {
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 500px;
-    /* Estimate height to prevent scrollbar jumping */
-}
+/* Performance optimization: lazy render handled by global .grid-item/.artwork blocks */
 
 .spin {
     transform: rotate(90deg);
@@ -1238,35 +1224,7 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
     width: 100%;
 }
 
-#embedded section {
-    margin: auto;
-    width: 80%;
-    padding-bottom: 10vh;
-}
 
-#embedded .grid {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-}
-
-#embedded .grid .grid-item {
-    margin: 1rem auto 1rem auto;
-    width: 100%;
-    box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-}
-
-#embedded .grid .grid-item ul {
-    list-style: none;
-    padding: 0;
-}
-
-#embedded .grid .grid-item ul li {
-    margin: 1rem;
-}
 
 /*=======================================================
                 Footer Styles
