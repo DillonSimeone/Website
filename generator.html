@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SVG Background Generator</title>
+    <script src="trianglify.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #f0f0f0;
+            margin: 0;
+        }
+
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        h2 {
+            margin-top: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loader"></div>
+    <h2 id="status">Generating new patterns...</h2>
+
+    <script>
+        async function generate() {
+            try {
+                // Configuration derived from your site's needs
+                const desktopConfig = {
+                    width: 1920,
+                    height: 1080,
+                    cell_size: 150,
+                    variance: 0.75,
+                    x_colors: 'random'
+                };
+
+                const mobileConfig = {
+                    width: 800,
+                    height: 1200,
+                    cell_size: 80,
+                    variance: 0.8,
+                    x_colors: 'random'
+                };
+
+                document.getElementById('status').innerText = "Generating Desktop Pattern...";
+                const desktopPattern = Trianglify(desktopConfig);
+                const desktopSVG = desktopPattern.svg().outerHTML;
+
+                document.getElementById('status').innerText = "Generating Mobile Pattern...";
+                const mobilePattern = Trianglify(mobileConfig);
+                const mobileSVG = mobilePattern.svg().outerHTML;
+
+                document.getElementById('status').innerText = "Sending to server...";
+
+                const response = await fetch('/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        desktop: desktopSVG,
+                        mobile: mobileSVG
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById('status').innerText = "Success! You can close this window.";
+                    setTimeout(() => window.close(), 1000);
+                } else {
+                    document.getElementById('status').innerText = "Server Error: " + await response.text();
+                }
+            } catch (e) {
+                document.getElementById('status').innerText = "Error: " + e.message;
+                console.error(e);
+            }
+        }
+
+        window.onload = generate;
+    </script>
+</body>
+
+</html>
