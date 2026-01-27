@@ -150,6 +150,8 @@ if (document.readyState === 'loading') {
 } else {
     draw();
 }
+
+window.redraw = draw;
 """
     final_content = template.replace("{{DESKTOP_SVG}}", desktop_svg).replace("{{MOBILE_SVG}}", mobile_svg)
     with open('background.js', 'w', encoding='utf-8') as f:
