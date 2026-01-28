@@ -18,19 +18,16 @@
     --theme-transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease;
 }
 
-/* ==================== DARK MODE - REFINED BLACK ICE ==================== */
+/* ==================== DARK MODE - BLACK ICE ==================== */
 body.dark-mode {
-    /* Refined Tech Palette */
     --neon-cyan: #00f0ff;
     --neon-magenta: #ff00ff;
     --neon-green: #00ff66;
 
     --bg-primary: #050508;
-    /* Deeper, richer black */
     --bg-secondary: rgba(15, 15, 25, 0.7);
     --bg-glass: rgba(20, 20, 30, 0.8);
     --text-primary: #ffffff;
-    /* Crisp white for readability */
     --text-secondary: #a0a0b0;
     --text-muted: #62627a;
     --border-color: rgba(0, 240, 255, 0.2);
@@ -60,39 +57,24 @@ body {
     background-color: var(--bg-primary);
 }
 
-/* ==================== DARK MODE SPECIFICS ==================== */
+/* ==================== BACKGROUND EFFECTS ==================== */
 
-/* Subtle scanline effect overlay - disabled for performance */
-/*
-body.dark-mode::after {
-    ...
-}
-*/
-
-/* Dark mode trianglify overlay - High Visibility Rainbow Grid */
-/* Dark mode trianglify overlay - Optimized for Performance */
 body.dark-mode .trianglify {
     background-color: #000000;
-    /* Remove expensive global filter. Use opacity to blend with black bg for "dark" look */
-    /* filter: grayscale(1) brightness(0.2); REMOVED for performance */
     opacity: 0.15;
 }
 
 body.dark-mode .trianglify path {
     opacity: 1;
     stroke-width: 0;
-    /* Remove expensive drop-shadow. Use stroke/fill brightness instead */
-    /* filter: drop-shadow(0 0 5px currentColor); REMOVED for performance */
     transition: opacity 0.3s, fill 0.3s, transform 1s;
 }
 
 body.dark-mode .trianglify .fade {
     opacity: 0.2;
-    /* Darker idle state */
 }
 
-/* Rainbow Edges - Optimized */
-/* We keep the stroke colors but remove the glow/filter */
+/* Rainbow Edges */
 body.dark-mode .trianglify path:nth-child(3n) {
     fill: #00f0ff;
     stroke: #00f0ff;
@@ -112,12 +94,11 @@ body.dark-mode .trianglify path:hover,
 body.dark-mode .trianglify path:not(.fade) {
     opacity: 1;
     stroke-width: 0;
-    /* Use a simpler highlight */
     fill: #ffffff;
-    /* Flash white/bright on interaction */
 }
 
-/* Dark mode nav styling - Pinned to Top */
+/* ==================== NAVIGATION ==================== */
+
 body.dark-mode nav {
     background: rgba(10, 10, 20, 0.95);
     backdrop-filter: blur(20px);
@@ -126,7 +107,6 @@ body.dark-mode nav {
 
 body.dark-mode nav svg {
     height: 35px;
-    /* Consistent with light mode */
     width: 35px;
     filter: drop-shadow(0 0 5px var(--neon-cyan));
     transition: all 0.3s;
@@ -134,7 +114,6 @@ body.dark-mode nav svg {
 
 body.dark-mode nav svg path {
     fill: #ffffff;
-    /* Explicitly color the path */
     transition: all 0.3s;
 }
 
@@ -147,13 +126,12 @@ body.dark-mode nav svg:hover {
     opacity: 1;
 }
 
-/* Card styling in Black Ice Mode */
+/* Card styling in Black Ice Mode - Unified across all sections */
 body.dark-mode .grid-item,
 body.dark-mode .artwork,
 body.dark-mode #work section>div {
     position: relative;
     background: var(--bg-glass);
-    /* Translucent black */
     border: 1px solid rgba(0, 240, 255, 0.2);
     backdrop-filter: blur(15px);
     border-radius: 12px;
@@ -162,7 +140,8 @@ body.dark-mode #work section>div {
 }
 
 body.dark-mode .grid-item:hover,
-body.dark-mode .artwork:hover {
+body.dark-mode .artwork:hover,
+body.dark-mode #work section>div:hover {
     border-color: rgba(0, 240, 255, 0.3);
 }
 
@@ -195,22 +174,21 @@ body.dark-mode .item {
     font-family: 'Share Tech Mono', monospace;
 }
 
-body.dark-mode .item h1 {
+body.dark-mode .item h1,
+body.dark-mode .item h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 3rem;
-    /* Further reduced for area parity */
     color: var(--neon-cyan);
-    text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
     text-transform: uppercase;
 }
 
+body.dark-mode .item h1 {
+    font-size: 3rem;
+    text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+}
+
 body.dark-mode .item h2 {
-    font-family: 'Orbitron', sans-serif;
     font-size: 1.6rem;
-    /* Further reduced for area parity */
-    color: var(--neon-cyan);
     text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
-    text-transform: uppercase;
 }
 
 body.dark-mode .item h1::before,
@@ -231,7 +209,6 @@ body.dark-mode .item b {
 
 body.dark-mode .item h3 {
     font-size: 1.1rem;
-    /* Matched to browser default area */
 }
 
 body.dark-mode .item h4 {
@@ -242,7 +219,6 @@ body.dark-mode .item p,
 body.dark-mode .item li,
 body.dark-mode .item span {
     color: #e0e0e8;
-    /* Clean tech-grey */
     font-weight: 400;
 }
 
@@ -575,21 +551,14 @@ nav svg:hover {
     /* Positive z-index for content */
 }
 
-/* Custom Scrollbar for Dark Mode */
-/* Custom Scrollbar for Dark Mode - Matches width */
+/* ==================== CUSTOM SCROLLBARS ==================== */
+
 body.dark-mode .item {
     scrollbar-color: var(--neon-cyan) #050508;
 }
 
-/* Ensure consistent width to prevent shifting */
 .item::-webkit-scrollbar {
     width: 12px;
-    /* Standardize width for both modes if possible, or just keep it standard */
-}
-
-body.dark-mode .item::-webkit-scrollbar {
-    width: 12px;
-    /* Matched standard scrollbar width */
 }
 
 body.dark-mode .item::-webkit-scrollbar-track {
@@ -600,7 +569,6 @@ body.dark-mode .item::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, var(--neon-cyan), var(--neon-magenta));
     border-radius: 6px;
     border: 3px solid #050508;
-    /* Padding effect */
 }
 
 body.dark-mode .item::-webkit-scrollbar-thumb:hover {
@@ -615,7 +583,6 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
 .item h2 {
     font-size: 2rem;
 }
-
 
 .item p,
 .item li,
@@ -649,22 +616,38 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
     flex-wrap: wrap;
 }
 
+/* ==================== CONTENT SECTIONS ==================== */
+
+section {
+    padding-top: 100px;
+    padding-bottom: 10vh;
+    margin: auto 15vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Generic Card Component */
 .grid-item,
 .artwork,
 #work section>div {
     margin: 1rem auto;
     width: 100%;
     box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
-    padding: 10px;
+    padding: 20px;
     background: var(--bg-secondary);
-    border-radius: 8px;
+    border-radius: 12px;
     content-visibility: auto;
     contain-intrinsic-size: 1px 500px;
+    transition: transform 0.3s, border-color 0.3s;
 }
 
 .grid-item ul,
 .artwork ul,
-#work section>div ul {
+#work section>div ul,
+.grid-item li,
+.artwork li,
+#work section>div li {
     list-style: none;
     padding: 0;
 }
@@ -687,16 +670,8 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
 /*=======================================================
                 Elevator pitch
 =========================================================*/
-section {
-    padding-top: 100px;
-    padding-bottom: 10vh;
-    margin: auto 15vw;
-    /* Balanced side margins */
-}
-
 #elevatorPitch section {
     margin: 0 15%;
-    /* Keep original specific layout */
 }
 
 #elevatorPitch #jobs {
@@ -738,8 +713,6 @@ section {
     #elevatorPitch section {
         margin: auto;
     }
-
-
 }
 
 /*=======================================================
@@ -781,8 +754,6 @@ section {
         animation: none;
     }
 }
-
-
 
 #hobby .headers {
     margin-bottom: 1em;
@@ -833,6 +804,71 @@ section {
     margin: auto;
 }
 
+/* ==================== SPOILER (DETAILS/SUMMARY) ==================== */
+details {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin: 20px 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+body.dark-mode details {
+    background: rgba(0, 240, 255, 0.03);
+    border-color: rgba(0, 240, 255, 0.2);
+}
+
+details summary {
+    padding: 15px 20px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    color: var(--neon-cyan);
+    list-style: none;
+    position: relative;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+details summary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+details summary::-webkit-details-marker {
+    display: none;
+}
+
+details summary::after {
+    content: '▼';
+    position: absolute;
+    right: 20px;
+    transition: transform 0.3s;
+}
+
+details[open] summary::after {
+    transform: rotate(180deg);
+}
+
+.spoiler-content {
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 #hobby img,
 #work .medias img,
 .gallery-thumbnail img {
@@ -852,52 +888,68 @@ body.dark-mode .gallery-thumbnail img {
     border-color: var(--border-color);
 }
 
-/* Smartphones (portrait and landscape) */
+/* Unified Smartphone Layout (portrait and landscape) */
 @media only screen and (max-width: 600px) {
-    #hobby section {
+    section {
         margin: auto;
+        padding-top: 80px;
+        padding-left: 20px;
+        padding-right: 20px;
     }
 
-    #hobby .artworks,
-    #hobby .artwork,
-    #hobby .medias,
-    #hobby .images {
-        width: 90vw;
+    .grid-item,
+    .artwork,
+    #work section>div,
+    .item section h1,
+    .item section h2,
+    .item section p,
+    .item section ul,
+    .item section blockquote {
+        width: 100%;
+        max-width: 100%;
     }
 
-    #hobby .artwork {
-        box-shadow: 5px 5px 10px black;
+    .grid-item,
+    .artwork,
+    #work section>div {
+        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
         margin-top: 15px;
+        padding: 15px;
     }
 
+    iframe,
     #hobby .medias .videos iframe,
-    #hobby img {
-        width: 90vw;
+    #hobby img,
+    #work .medias img {
+        width: 100% !important;
+        max-width: 100% !important;
         border-radius: 10px;
+    }
+
+    /* 🎨 Hobby Header Mobile Optimization */
+    #hobby h1 {
+        font-size: 2.2rem !important;
+        padding: 10px !important;
+        line-height: 1.2;
+        margin-top: 20px;
+    }
+
+    #hobby h2 {
+        font-size: 1.4rem !important;
     }
 }
 
 /* Tablets (portrait and landscape) */
 @media only screen and (min-width: 601px) and (max-width: 1024px) {
-    #hobby section {
-        margin: auto;
+    section {
+        margin: auto 5vw;
     }
 
-    #hobby .artworks,
-    #hobby .artwork,
-    #hobby .medias,
-    #hobby .images {
+    .grid-item,
+    .artwork,
+    #work section>div {
         width: 90vw;
-    }
-
-    #hobby .artwork {
-        box-shadow: 8px 8px 15px black;
-    }
-
-    #hobby .medias .videos iframe {
-        width: 90vw;
-        aspect-ratio: 16/9;
-        border-radius: 15px;
+        box-shadow: 8px 8px 15px rgba(0, 0, 0, 0.2);
     }
 
     #hobby img {
@@ -906,34 +958,19 @@ body.dark-mode .gallery-thumbnail img {
     }
 }
 
-
-
-
-/*=======================================================
-                MiniProjects/Projects
-=========================================================*/
-#projects {
+/* Full-width generic sections */
+#projects,
+#work,
+#embedded {
     width: 100%;
 }
 
-
-
-/*=======================================================
-                Work
-=========================================================*/
 #work {
     margin: auto;
 }
 
 #work section {
-    /* Uses base section styles */
     margin-bottom: 5%;
-}
-
-#work div {
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 1rem;
 }
 
 #work figure {
@@ -959,9 +996,7 @@ body.dark-mode .gallery-thumbnail img {
     align-items: center;
 }
 
-#work .medias img {
-    /* Styles inherited from global block above */
-}
+/* #work .medias img inherited from global block */
 
 #work .videos {
     text-align: center;
@@ -975,28 +1010,17 @@ body.dark-mode .gallery-thumbnail img {
     margin: 5px;
 }
 
-/*=======================================================
-                Fun reveal/hide css animation!
-=========================================================*/
+/* ==================== VIEWPORT ANIMATIONS ==================== */
 .reveal {
     top: 0;
     left: 0;
     transform: none !important;
-    /* Critical: 'none' allows fixed children to stay truly fixed on screen */
+    /* Critical: allows fixed children to stay truly fixed */
     z-index: 20;
-    /* Bring active section to front */
 }
 
 .hide {
-    /*
-    animation: hidey .25s ease-in-out 0s 1 normal forwards;
-    */
-
     left: -200vw !important;
-    /*Note: Mobile displays are taller than they are narrow, so with -100, parts would still be shown on the screen. 
-    Fix !IMPORTANT, this is needed to override the class values for the loading screen.*/
-
-    /* [PERFORMANCE] Tell browser to stop rendering this completely */
     content-visibility: hidden;
     contain-intrinsic-size: 100vw 100vh;
 }
@@ -1141,7 +1165,9 @@ body.dark-mode .gallery-thumbnail img {
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.section-nav-toggle .bar {
+/* Unified Toggle Bars */
+.section-nav-toggle .bar,
+.global-nav-toggle .bar {
     width: 25px;
     height: 3px;
     background-color: #000;
