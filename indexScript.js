@@ -136,12 +136,27 @@ function hideAll(targetID, buttonID) {
     });
 }
 
-/*=======================================================
-                Interactive Styling
-=========================================================*/
-
 const neonPalette = ["#00f0ff", "#ff00ff", "#00ff66", "#ff3355", "#ffee00", "#00ddff", "#ff44aa"];
+const standardPalette = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e", "#16a085", "#27ae60", "#2980b9", "#8e44ad", "#2c3e50", "#e67e22", "#e74c3c", "#f39c12", "#d35400", "#c0392b"];
+
 const randomNeonColor = () => neonPalette[Math.floor(Math.random() * neonPalette.length)];
+const randomPaletteColor = () => standardPalette[Math.floor(Math.random() * standardPalette.length)];
+
+/**
+ * Returns a random component value between min and max (0-255).
+ */
+const randomColorComponent = (min = 0, max = 255) => {
+    min = Math.max(0, Math.min(255, min));
+    max = Math.max(0, Math.min(255, max));
+    if (max === min) return max;
+    const val = Math.floor(Math.random() * 256);
+    return Math.max(min, Math.min(max, val));
+};
+
+/**
+ * Generates a random RGB string within the specified brightness range.
+ */
+const randomRgb = (min, max) => `rgb(${randomColorComponent(min, max)},${randomColorComponent(min, max)},${randomColorComponent(min, max)})`;
 
 /**
  * Dynamic thematic color application.
