@@ -67,13 +67,6 @@
             </svg>
         </div>
 
-        <div class="navButton" id="Projects" onclick="reveal('work', this.id)">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                <path
-                    d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z" />
-            </svg>
-        </div>
-
         <div class="navButton" id="ESP32" onclick="reveal('embedded', this.id)">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                 <path
@@ -94,6 +87,13 @@
                 <rect x="400" y="208" width="48" height="32" />
                 <rect x="400" y="272" width="48" height="32" />
                 <rect x="400" y="336" width="48" height="32" />
+            </svg>
+        </div>
+
+        <div class="navButton" id="Projects" onclick="reveal('work', this.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path
+                    d="M352 144v-39.6C352 82 334 64 311.6 64H200.4C178 64 160 82 160 104.4V144H48v263.6C48 430 66 448 88.4 448h335.2c22.4 0 40.4-18 40.4-40.4V144H352zm-40 0H200v-40h112v40z" />
             </svg>
         </div>
     </nav>
@@ -1699,7 +1699,9 @@
                         real-time O(1) algorithms in the browser.
                     </p>
                     <ul>
-                        <li><a href="./ESP32Codes/PlatformIO/ESP32Cameras/ESP32S3/Website/index.html">Write-up</a></li>
+                        <li><a
+                                href="./ESP32Codes/PlatformIO/Cameras/ESP32Cameras/ESP32S3/Website/index.html">Write-up</a>
+                        </li>
                     </ul>
                 </div>
 
@@ -1711,7 +1713,7 @@
                         iterations without ever needing to reflash the ESP32-C3.
                     </p>
                     <ul>
-                        <li><a href="./ESP32Codes/PlatformIO/WebFastLed/">Pattern Engine Files</a></li>
+                        <li><a href="./ESP32Codes/PlatformIO/Visuals_Art/WebFastLed/">Pattern Engine Files</a></li>
                     </ul>
                 </div>
 
@@ -1723,7 +1725,8 @@
                         tactile "spectral awareness" of their environment.
                     </p>
                     <ul>
-                        <li><a href="./ESP32Codes/PlatformIO/ESP32HapticControl_INMP441/">FFT Haptic Files</a></li>
+                        <li><a href="./ESP32Codes/PlatformIO/Microphones/ESP32HapticControl_INMP441/">FFT Haptic
+                                Files</a></li>
                     </ul>
                 </div>
 
@@ -1735,7 +1738,7 @@
                         with minimal latency.
                     </p>
                     <ul>
-                        <li><a href="./ESP32Codes/PlatformIO/blueToothMic/">Bluetooth Mic Files</a></li>
+                        <li><a href="./ESP32Codes/PlatformIO/Microphones/blueToothMic/">Bluetooth Mic Files</a></li>
                     </ul>
                 </div>
 
@@ -1759,7 +1762,7 @@
                         sanity checks.
                     </p>
                     <ul>
-                        <li><a href="./ESP32Codes/PlatformIO/INMP411sanitytest/">Mic Utility Files</a></li>
+                        <li><a href="./ESP32Codes/PlatformIO/Microphones/INMP411sanitytest/">Mic Utility Files</a></li>
                     </ul>
                 </div>
 
@@ -1771,7 +1774,8 @@
                         reacts to physical movement.
                     </p>
                     <ul>
-                        <li><a href="./ESP32Codes/PlatformIO/MPU6050toLEDPixels/">Inertial Visualizer Files</a></li>
+                        <li><a href="./ESP32Codes/PlatformIO/Hardware_Specific/MPU6050toLEDPixels/">Inertial Visualizer
+                                Files</a></li>
                     </ul>
                 </div>
 
@@ -1819,8 +1823,42 @@
                         and localized NodeJS monitoring.
                     </p>
                     <ul>
-                        <li><a href="./ESP32Codes/PlatformIO/ESP32NOW/PCC_Capstone_Course_2025/">Capstone Project
+                        <li><a href="./ESP32Codes/PlatformIO/Communications/ESP32NOW/PCC_Capstone_Course_2025/">Capstone
+                                Project
                                 Files</a></li>
+                    </ul>
+                </div>
+                <div class="grid-item">
+                    <h2>DataGlove: ESP-NOW Input Device</h2>
+                    <p>
+                        A custom-built wireless input device for robotics and VR, using ESP-NOW for ultra-low latency
+                        communication. Features a combination of flex sensors and IMUs for precise gesture tracking.
+                    </p>
+                    <ul>
+                        <li><a href="./ESP32Codes/PlatformIO/Robotics_Vehicles/DataGlove/">Glove Project Files</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>CymaSpace: Audio-Reactive LED Visuals</h2>
+                    <p>
+                        High-performance LED animation engines built for the CymaSpace project. Optimized for the ESP32
+                        to handle real-time FFT and complex spatial mapping for thousands of pixels.
+                    </p>
+                    <ul>
+                        <li><a href="./ESP32Codes/PlatformIO/Visuals_Art/CymaSpace/">Visuals Project Files</a></li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h2>ESP32 Cheap Yellow Display (CYD)</h2>
+                    <p>
+                        Exploration of the ESP32-2432S028R development board. Includes custom drivers, UI patterns
+                        with LVGL, and sensor integration demos for this all-in-one IoT display.
+                    </p>
+                    <ul>
+                        <li><a href="./ESP32Codes/PlatformIO/Hardware_Specific/ESP32-2432S028R/">CYD Project Files</a>
+                        </li>
                     </ul>
                 </div>
             </div>

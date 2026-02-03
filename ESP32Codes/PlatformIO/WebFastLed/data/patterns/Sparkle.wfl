@@ -1,5 +1,0 @@
-// Sparkle effect
-pos = index / pixelCount;
-sparkle = sin(index * 17 + time * 10);
-bright = sparkle > 0.95 ? 1 : 0.05;
-hsv(0.1, 0.2, bright);
