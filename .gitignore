@@ -11,7 +11,21 @@ ESP32Codes/Mircopython/OSCcontrols/src/secrets.h
 ESP32Codes/Mircopython/OSCcontrols/mainDebug.cpp
 ESP32Codes/Mircopython/OSCcontrols/ESP32-C3 SuperMini datasheet.pdf
 ESP32Codes/Mircopython/OSCcontrols/GEMINI.md
-build
-.pio
-node_modules
-secrets.h
+# Python virtual environments
+**/venv/
+**/.venv/
+
+# Visual Studio files
+**/.vs/
+
+# PlatformIO folders
+**/.pio/
+
+# UI/JS builds
+**/node_modules/
+**/build/
+**/dist/
+
+# Large assets and clones
+# Massive Three.js clone (Magic Cubes project)
+MiniProjects/FinalProjectCreativeCoding1/threeJS/
