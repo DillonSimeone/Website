@@ -8,6 +8,13 @@
 - **Asset Format:** .GLB (Compressed via gltf-pipeline / Draco)
 - **Lighting:** XREstimatedLight (WebXR Light Estimation API)
 
+## Training & Tooling (Local)
+- **Tool:** NFT-Marker-Creator (Node-based) for AR.js or Custom Python Auditor.
+- **Workflow:** 1. Author drops Image into `/input`.
+  2. Python script runs `cv2.ORB_create()` to check feature density.
+  3. Script outputs a "Heatmap" (for the artist) and the `.fset` files (for the dev).
+- **No-Cloud Rule:** All binaries and descriptors are hosted on the project's private server.
+
 ## Core Logic Requirements
 1. **Image Anchoring:** Define physical width (meters) for each target. Anchor 3D models to the center of the detected quadrilateral.
 2. **Smoothing (The Jitter-Killer):** - Apply a **Deadzone** (Threshold: 0.005 units).

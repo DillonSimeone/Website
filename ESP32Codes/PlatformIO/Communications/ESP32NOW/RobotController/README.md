@@ -3,20 +3,24 @@
 This project is the receiver side for the Omni-Wheel Robot. it runs on a Freenove ESP32 and controls two L298N motor drivers.
 
 ## Features
+- **Web-Based Pin Config:** Connect to `OmniBot_Setup` (Pass: `12345678`) to reassign pins on the fly.
 - **ESP-NOW Receiver:** Listens for broadcast commands from the CYD Controller.
-- **Dual Motor Driver Support:** Wired for 4-wheel Omni-drive.
-- **Serial Debugging:** Prints all received commands for testing.
+- **L298N Mini Support:** Optimized for 2-pin driver logic (PWM on IN1/IN2, no Enable pin).
+- **Persistent Settings:** settings saved to NVS.
 
-## Hardware Preparation (6-Pin PWM Mode)
+## Hardware Preparation (L298N Mini)
 
-To use this code, you must prepare your L298N drivers for PWM speed control:
+This code is designed for **L298N Mini** or similar 2-pin H-Bridges:
 
-1. **Yank the Jumpers**: Remove the two black jumpers on the ENA and ENB headers.
-2. **Solder the Signal Pins**: Connect the ESP32 PWM pins to the **OUTER** pins of the ENA/ENB headers (the ones further from the heatsink).
-3. **WARNING**: The inner pins of those headers output **5V**. Connecting these to an ESP32 will likely destroy the GPIO pin or the whole chip. Always double-check with a multimeter or by tracing the traces on the bottom of the PCB.
+1.  **Wiring:** Connect 2 ESP32 pins to the IN1/IN2 of each motor driver channel.
+2.  **Power:** Ensure common ground between the Battery and ESP32.
+3.  **Warning:** The code defaults to a safe pinout (avoiding input-only pins 34-39), but the web interface allows remapping. Ensure you only select valid OUTPUT pins.
 
-## Common Ground
-Ensure the **Negative (-)** terminal of your motor battery is connected to the **GND** of the ESP32. Without a common ground, the signals will not work.
+## Default Pinout (Configurable)
+- **RF:** 32, 33
+- **LF:** 25, 26
+- **RB:** 27, 14
+- **LB:** 12, 13 (Swapped from 34/35 due to hardware limits)
 
 ## Getting Started
 1. Wire the motors according to `PINS.md`.
