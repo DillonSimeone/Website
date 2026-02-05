@@ -9,9 +9,14 @@
  * Omni-Wheel Robot Controller for ESP32-2432S028R (CYD)
  * 
  * Features:
- * - 9-button touch interface
+ * - 6-button touch interface (3x2 grid)
  * - ESP-NOW Broadcast control
+ * - Stop on release (no dedicated STOP button)
  * - Visual feedback on touch
+ * 
+ * Button Layout:
+ * [ROT_L]  [UP]    [ROT_R]
+ * [SLIDE_L][DOWN]  [SLIDE_R]
  */
 
 // --- Touch Screen Settings ---
@@ -36,9 +41,14 @@ struct_message controlData;
 esp_now_peer_info_t peerInfo;
 
 // --- UI Constants ---
-#define BUTTON_COUNT 9
+#define BUTTON_COUNT 6
 #define COL_COUNT 3
-#define ROW_COUNT 3
+#define ROW_COUNT 2
+
+// Color Palette (Glassmorphism-inspired)
+#define COLOR_ROT   0x780F   // Purple
+#define COLOR_MOVE  0x03E0   // Green
+#define COLOR_SLIDE 0x001F   // Blue
 
 struct Button {
     int x, y, w, h;
@@ -47,25 +57,29 @@ struct Button {
     uint16_t color;
 };
 
+// Matching RobotController's web UI layout:
+// Top Row:    ROT_L,  UP,    ROT_R
+// Bottom Row: SLIDE_L, DOWN, SLIDE_R
 Button buttons[BUTTON_COUNT] = {
-    {0, 0, 0, 0, "SLIDE L", "SLIDE_L", TFT_BLUE},    // [0,0]
-    {0, 0, 0, 0, "UP", "UP", TFT_DARKGREEN},        // [1,0]
-    {0, 0, 0, 0, "SLIDE R", "SLIDE_R", TFT_BLUE},    // [2,0]
-    {0, 0, 0, 0, "LEFT", "LEFT", TFT_DARKGREEN},    // [0,1]
-    {0, 0, 0, 0, "STOP (X)", "STOP", TFT_RED},       // [1,1]
-    {0, 0, 0, 0, "RIGHT", "RIGHT", TFT_DARKGREEN},  // [2,1]
-    {0, 0, 0, 0, "ROT L", "ROT_L", TFT_PURPLE},     // [0,2]
-    {0, 0, 0, 0, "DOWN", "DOWN", TFT_DARKGREEN},    // [1,2]
-    {0, 0, 0, 0, "ROT R", "ROT_R", TFT_PURPLE}      // [2,2]
+    {0, 0, 0, 0, "ROT L",   "ROT_L", COLOR_ROT},     // [0,0]
+    {0, 0, 0, 0, "UP",      "UP",    COLOR_MOVE},    // [1,0]
+    {0, 0, 0, 0, "ROT R",   "ROT_R", COLOR_ROT},     // [2,0]
+    {0, 0, 0, 0, "SLIDE L", "LEFT",  COLOR_SLIDE},   // [0,1] - Sends LEFT (strafe)
+    {0, 0, 0, 0, "DOWN",    "DOWN",  COLOR_MOVE},    // [1,1]
+    {0, 0, 0, 0, "SLIDE R", "RIGHT", COLOR_SLIDE}    // [2,1] - Sends RIGHT (strafe)
 };
 
 void drawButton(int i, bool pressed) {
     uint16_t color = pressed ? TFT_WHITE : buttons[i].color;
     uint16_t txtColor = pressed ? TFT_BLACK : TFT_WHITE;
     
-    tft.fillRect(buttons[i].x + 2, buttons[i].y + 2, buttons[i].w - 4, buttons[i].h - 4, color);
-    tft.drawRect(buttons[i].x, buttons[i].y, buttons[i].w, buttons[i].h, TFT_LIGHTGREY);
+    // Draw filled button with rounded-ish look (small inset)
+    tft.fillRect(buttons[i].x + 3, buttons[i].y + 3, buttons[i].w - 6, buttons[i].h - 6, color);
     
+    // Border
+    tft.drawRect(buttons[i].x + 1, buttons[i].y + 1, buttons[i].w - 2, buttons[i].h - 2, TFT_LIGHTGREY);
+    
+    // Label
     tft.setTextColor(txtColor);
     tft.setTextSize(2);
     tft.setTextDatum(MC_DATUM);
@@ -73,18 +87,25 @@ void drawButton(int i, bool pressed) {
 }
 
 void initUI() {
-    int bw = tft.width() / 3;
-    int bh = tft.height() / 3;
+    // 3 columns, 2 rows
+    int bw = tft.width() / COL_COUNT;
+    int bh = tft.height() / ROW_COUNT;
     
     for (int i = 0; i < BUTTON_COUNT; i++) {
-        int col = i % 3;
-        int row = i / 3;
+        int col = i % COL_COUNT;
+        int row = i / COL_COUNT;
         buttons[i].x = col * bw;
         buttons[i].y = row * bh;
         buttons[i].w = bw;
         buttons[i].h = bh;
         drawButton(i, false);
     }
+}
+
+void sendCommand(const char* cmd) {
+    strcpy(controlData.command, cmd);
+    esp_now_send(broadcastAddress, (uint8_t *) &controlData, sizeof(controlData));
+    Serial.printf("Sent: %s\n", cmd);
 }
 
 void setup() {
@@ -120,7 +141,8 @@ void setup() {
     }
 
     initUI();
-    Serial.println("Robot Controller Ready");
+    Serial.println("Robot Controller Ready (Stop-on-Release Mode)");
+    Serial.print("MAC: "); Serial.println(WiFi.macAddress());
 }
 
 int lastButtonPressed = -1;
@@ -129,44 +151,40 @@ void loop() {
     if (touch.touched()) {
         TS_Point p = touch.getPoint();
         
-        // Map touch to screen coordinates
-        // Re-calibrated for Typical CYD Rotation 1 (Landscape)
-        // Adjust these if buttons are still swapped:
+        // Map touch to screen coordinates (Landscape, Rotation 1)
         int x = map(p.x, 200, 3800, 0, 320); 
         int y = map(p.y, 200, 3800, 0, 240);
 
-        // DEBUG: Uncomment to see raw vs mapped values if it's still wrong
-        // Serial.printf("Raw X:%d Y:%d | Mapped X:%d Y:%d\n", p.x, p.y, x, y);
+        // Constrain to screen bounds
+        x = constrain(x, 0, 319);
+        y = constrain(y, 0, 239);
 
-        int col = x / (320 / 3);
-        int row = y / (240 / 3);
-        int buttonIndex = row * 3 + col;
+        // Calculate button index (3 cols x 2 rows)
+        int col = x / (320 / COL_COUNT);
+        int row = y / (240 / ROW_COUNT);
+        int buttonIndex = row * COL_COUNT + col;
 
         if (buttonIndex >= 0 && buttonIndex < BUTTON_COUNT) {
             if (buttonIndex != lastButtonPressed) {
-                // Release old button
-                if (lastButtonPressed != -1) drawButton(lastButtonPressed, false);
+                // Release old button visually
+                if (lastButtonPressed != -1) {
+                    drawButton(lastButtonPressed, false);
+                }
                 
                 // Press new button
                 drawButton(buttonIndex, true);
-                strcpy(controlData.command, buttons[buttonIndex].cmd);
-                
-                esp_now_send(broadcastAddress, (uint8_t *) &controlData, sizeof(controlData));
-                Serial.printf("Sent Command: %s\n", controlData.command);
+                sendCommand(buttons[buttonIndex].cmd);
                 
                 lastButtonPressed = buttonIndex;
             }
         }
     } else {
+        // Touch released - STOP the robot
         if (lastButtonPressed != -1) {
             drawButton(lastButtonPressed, false);
-            
-            // Send STOP when released (or we can just let it be)
-            // strcpy(controlData.command, "STOP");
-            // esp_now_send(broadcastAddress, (uint8_t *) &controlData, sizeof(controlData));
-            
+            sendCommand("STOP");
             lastButtonPressed = -1;
         }
     }
-    delay(50);
+    delay(30); // 30ms for responsive control
 }

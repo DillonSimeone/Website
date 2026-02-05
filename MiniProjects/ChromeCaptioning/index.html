@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Live Caption Trigger</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --accent-color: #00d2ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f3460);
+            overflow: hidden;
+            color: var(--text-color);
+        }
+
+        /* Abstract background elements */
+        .blob {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, var(--accent-color), #3a7bd5);
+            filter: blur(80px);
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.4;
+            animation: move 20s infinite alternate;
+        }
+
+        @keyframes move {
+            from {
+                transform: translate(-20%, -20%);
+            }
+
+            to {
+                transform: translate(20%, 20%);
+            }
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            padding: 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            text-align: center;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #fff, var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            margin-bottom: 30px;
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 30px;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            /* Mirror effect */
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-left: 5px;
+        }
+
+        select,
+        input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: white;
+            outline: none;
+        }
+
+        option {
+            background: #16213e;
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            background: var(--accent-color);
+            border: none;
+            border-radius: 12px;
+            color: #1a1a2e;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid var(--glass-border);
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--accent-color);
+            min-height: 1.2em;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="blob"></div>
+
+    <div class="container">
+        <h1>Caption Trigger</h1>
+        <p>Select your OBS sources and click Start.</p>
+
+        <div class="video-wrapper">
+            <video id="webcam" autoplay playsinline muted></video>
+        </div>
+
+        <div class="visualizer-container">
+            <canvas id="visualizer"></canvas>
+        </div>
+
+        <div class="controls-grid">
+            <div class="control-group">
+                <label for="videoSource">Video Source</label>
+                <select id="videoSource"></select>
+            </div>
+            <div class="control-group">
+                <label for="audioSource">Audio Source</label>
+                <select id="audioSource"></select>
+            </div>
+            <div class="control-group" style="grid-column: span 2;">
+                <label for="monitorVolume">Monitor Volume (for Chrome to "hear")</label>
+                <input type="range" id="monitorVolume" min="0" max="1" step="0.01" value="0.1">
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn">Start Stream</button>
+            <button id="stopBtn" class="secondary">Stop</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        const canvas = document.getElementById('visualizer');
+        const canvasCtx = canvas.getContext('2d');
+        const videoSelect = document.getElementById('videoSource');
+        const audioSelect = document.getElementById('audioSource');
+        const volumeSlider = document.getElementById('monitorVolume');
+
+        let stream = null;
+        let audioCtx = null;
+        let source = null;
+        let analyser = null;
+        let gainNode = null;
+        let animationId = null;
+
+        async function getDevices() {
+            try {
+                // Request temporary permission to get device names
+                const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                const devices = await navigator.mediaDevices.enumerateDevices();
+
+                // Clear existing
+                videoSelect.innerHTML = '';
+                audioSelect.innerHTML = '';
+
+                devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    if (device.kind === 'videoinput') {
+                        option.text = device.label || `Camera ${videoSelect.length + 1}`;
+                        videoSelect.appendChild(option);
+                    } else if (device.kind === 'audioinput') {
+                        option.text = device.label || `Mic ${audioSelect.length + 1}`;
+                        audioSelect.appendChild(option);
+                    }
+                });
+
+                // Stop the temp stream
+                tempStream.getTracks().forEach(track => track.stop());
+            } catch (err) {
+                status.textContent = "Error listing devices: " + err.message;
+            }
+        }
+
+        getDevices();
+
+        function draw() {
+            animationId = requestAnimationFrame(draw);
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+
+            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let barHeight;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] / 2;
+                canvasCtx.fillStyle = `rgb(0, ${barHeight + 100}, 255)`;
+                canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+        }
+
+        volumeSlider.addEventListener('input', () => {
+            if (gainNode) {
+                gainNode.gain.value = volumeSlider.value;
+            }
+        });
+
+        startBtn.addEventListener('click', async () => {
+            try {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                status.textContent = "Connecting sources...";
+
+                const constraints = {
+                    video: { deviceId: videoSelect.value ? { exact: videoSelect.value } : undefined },
+                    audio: {
+                        deviceId: audioSelect.value ? { exact: audioSelect.value } : undefined,
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                source = audioCtx.createMediaStreamSource(stream);
+                source.connect(analyser);
+
+                gainNode = audioCtx.createGain();
+                gainNode.gain.value = volumeSlider.value;
+
+                analyser.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+
+                draw();
+
+                status.textContent = "Stream active. Chrome should now show Live Captions if enabled.";
+
+            } catch (err) {
+                console.error("Error accessing media: ", err);
+                status.textContent = "Error: " + err.message;
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            if (audioCtx) {
+                audioCtx.close();
+            }
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            status.textContent = "Stream stopped.";
+
+            // Clear visualizer
+            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+    </script>
+</body>
+
+</html>
