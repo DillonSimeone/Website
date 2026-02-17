@@ -1,33 +1,36 @@
-# blueToothMic
+# blueToothMic (HFP)
 
-A PlatformIO project for the **ESP32-C3 SuperMini** to stream audio from an **INMP441 I2S Microphone** to a smartphone.
+A PlatformIO project for the **ESP32** to stream audio from an **INMP441 I2S Microphone** to a smartphone using **Bluetooth HFP**.
 
 ## Goal
-Stream real-time audio to a smartphone's live transcript application, acting as an external microphone.
+Stream real-time audio to a smartphone's live transcript application (like Google Live Transcript), acting as a Bluetooth headset microphone.
 
 ## Hardware Setup
-- **Board:** ESP32-C3 SuperMini
+- **Board:** ESP32 DevKit (Full ESP32 required for Bluetooth Classic / HFP)
 - **Mic:** INMP441 (I2S Digital Microphone)
 
 ### Wiring
-| INMP441 Pin | ESP32-C3 Pin | Notes |
+| INMP441 Pin | ESP32 Pin | Notes |
 | :--- | :--- | :--- |
 | **VDD** | 3.3V | |
 | **GND** | GND | |
 | **L/R** | GND | Left Channel |
-| **WS** | GPIO 3 | Word Select |
-| **SCK** | GPIO 5 | Serial Clock |
-| **SD** | GPIO 4 | Serial Data |
+| **WS** | D15 | Word Select |
+| **SCK** | D4 | Serial Clock |
+| **SD** | D5 | Serial Data |
+| **LED** | D2 | Built-in LED for amplitude visualization |
 
 ## Development Notes
-- **Bluetooth:** The ESP32-C3 supports **BLE only**. Standard Bluetooth Hands-Free (HFP) / Headset (HSP) profiles used by most transcript apps typically require Bluetooth Classic (supported by original ESP32). 
-- **LE Audio:** This project explores the use of LE Audio or custom BLE transmission. 
-- **PlatformIO:** Integrated with the `ESP32C3Starter` workflow.
+- **Bluetooth:** Uses **Bluetooth Classic HFP (Hands-Free Profile)**. This allows the ESP32 to be recognized as a standard headset mic.
+- **Codec:** Supports **mSBC (Wideband Speech)** at 16kHz for high-quality audio or **CVSD** at 8kHz.
+- **Framework:** ESP-IDF v5.1.2.
+- **Gain:** Includes digital gain boost for the INMP441.
 
 ## Quick Start
 1.  Connect your INMP441 microphone as per the wiring table.
 2.  Double-click `upload.bat` to build and upload the code.
-3.  Open the Serial Monitor to verify I2S initialization.
+3.  Pair your phone with `ESP32-Mic`.
+4.  Open a phone call or Google Live Transcript to test.
 
-## Credits
-Based on the [ESP32C3Starter](../ESP32C3Starter) template.
+## Documentation
+For detailed architectural notes, troubleshooting, and critical fixes, see [GEMINI.md](./GEMINI.md).
