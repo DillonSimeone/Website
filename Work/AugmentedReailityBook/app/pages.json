@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "description": "AR Book Page Registry. Each entry maps a 2D tracking image to a 3D model.",
+    "trackingDescriptor": "targets/book_targets.mind",
+    "notes": "To add a new page: 1) Drop image in /trainingImages, 2) Drop .glb in /3dModel, 3) Compile .mind file, 4) Add entry below."
+  },
+  "pages": [
+    {
+      "id": "page_001_shrek",
+      "pageNumber": 1,
+      "label": "Shrek",
+      "trackingImage": "../trainingImages/shrek.webp",
+      "physicalWidthM": 0.15,
+      "model": {
+        "src": "../3dModel/shrek_pocket_shrek_and_animations.glb",
+        "scale": 0.355,
+        "offsetY": 0.0,
+        "offsetX": 0.0,
+        "offsetZ": 0.03,
+        "rotationX": 12,
+        "rotationY": 180,
+        "rotationZ": 0
+      },
+      "animation": {
+        "autoplay": true,
+        "clipIndex": 0,
+        "loop": true
+      },
+      "peel": {
+        "enabled": true,
+        "duration": 1.5,
+        "curlRadius": 0.3
+      }
+    }
+  ]
+}
