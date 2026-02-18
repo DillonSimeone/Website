@@ -1,315 +1,212 @@
 /**
- * app.js — AR Book (MindAR + Three.js)
- * With sliding dev console and pose smoothing
+ * app.js — Architecture v31 (Defensive + Follower)
+ * - Fixed: crash on 'setting onchange of null'
+ * - Preserved: Animation Selector + Debug Toggle
  */
 (function () {
     'use strict';
     const THREE = window.THREE;
+
     const arContainer = document.getElementById('ar-container');
     const loadingScreen = document.getElementById('loading-screen');
     const startBtn = document.getElementById('start-ar-btn');
+    const statusText = document.getElementById('status-text');
+    const statusDot = document.querySelector('.status-dot');
+    const devConsole = document.getElementById('dev-console');
+    const devToggle = document.getElementById('dev-toggle');
 
     let mindarThree, renderer, scene, camera;
-    const mixers = [];
-    let currentModel = null;
+    const clock = new THREE.Clock();
+
+    // State
+    const pageStates = new Map();
+    let pages = [];
+    let activePageIndex = 0;
+
+    // UI
+    const sl = {
+        s: null, px: null, py: null, pz: null, rx: null, ry: null, rz: null,
+        lerp: null, hold: null, fade: null, sel: null,
+        anim: null, debug: null
+    };
     let devOpen = false;
 
-    // Smoothing state
-    const smoothedPos = new THREE.Vector3();
-    const smoothedQuat = new THREE.Quaternion();
-    let smoothInitialized = false;
-    const LERP_ALPHA = 0.12; // Lower = smoother (0.05–0.3 is the sweet spot)
+    // --- Helpers ---
+    function getVal(id, def) { const el = sl[id]; return el ? (parseFloat(el.value) || def) : def; }
 
-    // ============================================
-    //  DEVELOPER CONSOLE
-    // ============================================
-    function createDevConsole() {
-        const panel = document.createElement('div');
-        panel.id = 'dev-console';
-        panel.innerHTML = `
-            <div class="section">📐 MODEL TRANSFORM</div>
-            <div class="row">
-                <label>Scale</label>
-                <input type="range" id="ds-scale" min="-4" max="1" step="0.01" value="${Math.log10(0.355).toFixed(2)}">
-                <span class="val" id="ds-scale-val">0.355</span>
-            </div>
-            <div class="row">
-                <label>Pos X</label>
-                <input type="range" id="ds-px" min="-2" max="2" step="0.01" value="0">
-                <span class="val" id="ds-px-val">0.00</span>
-            </div>
-            <div class="row">
-                <label>Pos Y</label>
-                <input type="range" id="ds-py" min="-2" max="2" step="0.01" value="0">
-                <span class="val" id="ds-py-val">0.00</span>
-            </div>
-            <div class="row">
-                <label>Pos Z</label>
-                <input type="range" id="ds-pz" min="-2" max="2" step="0.01" value="0.03">
-                <span class="val" id="ds-pz-val">0.03</span>
-            </div>
-            <div class="row">
-                <label>Rot X</label>
-                <input type="range" id="ds-rx" min="-180" max="180" step="1" value="12">
-                <span class="val" id="ds-rx-val">12°</span>
-            </div>
-            <div class="row">
-                <label>Rot Y</label>
-                <input type="range" id="ds-ry" min="-180" max="180" step="1" value="180">
-                <span class="val" id="ds-ry-val">180°</span>
-            </div>
-            <div class="row">
-                <label>Rot Z</label>
-                <input type="range" id="ds-rz" min="-180" max="180" step="1" value="0">
-                <span class="val" id="ds-rz-val">0°</span>
-            </div>
-            <div class="section">🎯 SMOOTHING</div>
-            <div class="row">
-                <label>Lerp α</label>
-                <input type="range" id="ds-lerp" min="0.02" max="1" step="0.01" value="${LERP_ALPHA}">
-                <span class="val" id="ds-lerp-val">${LERP_ALPHA}</span>
-            </div>
-            <div class="row">
-                <button id="ds-copy">📋 Copy JSON</button>
-                <button id="ds-reset">🔄 Reset</button>
-            </div>
-        `;
-        document.body.appendChild(panel);
-
-        // Toggle button
-        const toggle = document.createElement('button');
-        toggle.id = 'dev-toggle';
-        toggle.textContent = '⚙ DEV';
-        toggle.onclick = () => toggleDevConsole();
-        document.body.appendChild(toggle);
-
-        // Wire up sliders
-        const sliders = {
-            scale: document.getElementById('ds-scale'),
-            px: document.getElementById('ds-px'),
-            py: document.getElementById('ds-py'),
-            pz: document.getElementById('ds-pz'),
-            rx: document.getElementById('ds-rx'),
-            ry: document.getElementById('ds-ry'),
-            rz: document.getElementById('ds-rz'),
-            lerp: document.getElementById('ds-lerp'),
-        };
-
-        function applyValues() {
-            if (!currentModel) return;
-
-            const scale = Math.pow(10, parseFloat(sliders.scale.value));
-            currentModel.scale.set(scale, scale, scale);
-            document.getElementById('ds-scale-val').textContent = scale < 0.01 ? scale.toExponential(2) : scale.toFixed(3);
-
-            currentModel.position.set(
-                parseFloat(sliders.px.value),
-                parseFloat(sliders.py.value),
-                parseFloat(sliders.pz.value)
-            );
-            document.getElementById('ds-px-val').textContent = parseFloat(sliders.px.value).toFixed(2);
-            document.getElementById('ds-py-val').textContent = parseFloat(sliders.py.value).toFixed(2);
-            document.getElementById('ds-pz-val').textContent = parseFloat(sliders.pz.value).toFixed(2);
-
-            currentModel.rotation.set(
-                parseFloat(sliders.rx.value) * Math.PI / 180,
-                parseFloat(sliders.ry.value) * Math.PI / 180,
-                parseFloat(sliders.rz.value) * Math.PI / 180
-            );
-            document.getElementById('ds-rx-val').textContent = sliders.rx.value + '°';
-            document.getElementById('ds-ry-val').textContent = sliders.ry.value + '°';
-            document.getElementById('ds-rz-val').textContent = sliders.rz.value + '°';
-
-            document.getElementById('ds-lerp-val').textContent = parseFloat(sliders.lerp.value).toFixed(2);
-        }
-
-        Object.values(sliders).forEach(s => s.addEventListener('input', applyValues));
-
-        document.getElementById('ds-copy').addEventListener('click', () => {
-            const scale = Math.pow(10, parseFloat(sliders.scale.value));
-            const json = {
-                scale: parseFloat(scale.toFixed(6)),
-                offsetX: parseFloat(parseFloat(sliders.px.value).toFixed(3)),
-                offsetY: parseFloat(parseFloat(sliders.py.value).toFixed(3)),
-                offsetZ: parseFloat(parseFloat(sliders.pz.value).toFixed(3)),
-                rotationX: parseInt(sliders.rx.value),
-                rotationY: parseInt(sliders.ry.value),
-                rotationZ: parseInt(sliders.rz.value),
-            };
-            navigator.clipboard.writeText(JSON.stringify(json, null, 2)).then(() => {
-                alert('Copied:\n' + JSON.stringify(json, null, 2));
-            });
-        });
-
-        document.getElementById('ds-reset').addEventListener('click', () => {
-            sliders.scale.value = Math.log10(0.355).toFixed(2);
-            sliders.px.value = 0; sliders.py.value = 0; sliders.pz.value = 0.03;
-            sliders.rx.value = 12; sliders.ry.value = 180; sliders.rz.value = 0;
-            sliders.lerp.value = LERP_ALPHA;
-            applyValues();
-        });
-
-        return sliders;
+    function applyConfig(model, config) {
+        if (!model) return;
+        const s = Math.max(0.001, config.scale || 0.355);
+        model.scale.set(s, s, s);
+        model.position.set(config.offsetX || 0, config.offsetY || 0, config.offsetZ || 0);
+        model.rotation.set(
+            THREE.Math.degToRad(config.rotationX || 0),
+            THREE.Math.degToRad(config.rotationY || 0),
+            THREE.Math.degToRad(config.rotationZ || 0)
+        );
     }
 
-    function toggleDevConsole() {
-        devOpen = !devOpen;
-        const panel = document.getElementById('dev-console');
-        panel.classList.toggle('open', devOpen);
-        // Resize AR viewport
-        arContainer.style.height = devOpen ? 'calc(100% - var(--dev-height))' : '100%';
-        // Notify MindAR to resize
-        if (renderer) {
-            setTimeout(() => {
-                renderer.setSize(arContainer.clientWidth, arContainer.clientHeight);
-                if (camera) {
-                    camera.aspect = arContainer.clientWidth / arContainer.clientHeight;
-                    camera.updateProjectionMatrix();
+    function addDebugBox(group) {
+        const g = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const m = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, visible: true });
+        const mesh = new THREE.Mesh(g, m);
+        group.add(mesh);
+        return mesh;
+    }
+
+    // --- UI Init ---
+    function buildDev() {
+        if (!devConsole) return;
+        devConsole.innerHTML = `
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(110,231,183,0.1);padding-bottom:12px;margin-bottom:12px;">
+                <span style="color:#6ee7b7;font-size:10px;font-weight:800;letter-spacing:0.1em;">TRANSFORM TUNER</span>
+                <select id="dsel" style="background:#000;color:#6ee7b7;border:1px solid #333;font-size:10px;padding:2px 6px;"></select>
+            </div>
+            
+            <div style="margin-bottom:12px; display:flex; gap:10px; align-items:center;">
+                <select id="danim" style="flex:1; background:#111; color:#fff; border:1px solid #333; font-size:10px; padding:4px; height:24px;"></select>
+                <div style="display:flex; align-items:center; gap:6px; background:rgba(255,0,0,0.1); padding:2px 6px; border-radius:4px; border:1px solid rgba(255,0,0,0.3);">
+                    <input type="checkbox" id="ddebug" checked style="accent-color:red;">
+                    <label for="ddebug" style="font-size:10px; color:#ff9999; font-weight:700; cursor:pointer;">DEBUG</label>
+                </div>
+            </div>
+
+            <div class="ctrl"><label>Scale</label><input type="range" id="ds" min="-3" max="1" step="0.01"><span class="v" id="dsv"></span></div>
+            <div class="ctrl"><label>Pos X</label><input type="range" id="dpx" min="-1" max="1" step="0.01"><span class="v" id="dpxv"></span></div>
+            <div class="ctrl"><label>Pos Y</label><input type="range" id="dpy" min="-1" max="1" step="0.01"><span class="v" id="dpyv"></span></div>
+            <div class="ctrl"><label>Pos Z</label><input type="range" id="dpz" min="-1" max="1" step="0.01"><span class="v" id="dpzv"></span></div>
+            <div class="ctrl"><label>Rot X</label><input type="range" id="drx" min="-180" max="180" step="1"><span class="v" id="drxv"></span></div>
+            <div class="ctrl"><label>Rot Y</label><input type="range" id="dry" min="-180" max="180" step="1"><span class="v" id="dryv"></span></div>
+            <div class="ctrl"><label>Rot Z</label><input type="range" id="drz" min="-180" max="180" step="1"><span class="v" id="drzv"></span></div>
+            <div style="margin-top:8px; display:flex; gap:10px;">
+                <div class="ctrl" style="flex:1;"><label>Hold</label><input type="range" id="dghold" min="0" max="5" step="0.1" value="1.5"></div>
+                <div class="ctrl" style="flex:1;"><label>Fade</label><input type="range" id="dgfade" min="0.5" max="5" step="0.1" value="1.5"></div>
+            </div>
+            <div class="ctrl" style="margin-top:8px;"><label>Lerp</label><input type="range" id="dlerp" min="0.01" max="1" step="0.01" value="0.1"></div>
+            <button id="dcopy" style="margin-top:12px; width:100%; height:34px; background:var(--accent); color:#000; border:none; border-radius:8px; font-weight:800; cursor:pointer; font-size:10px;">📋 COPY CONFIG</button>
+        `;
+
+        // Manual Bind to ensure no 'null' errors
+        sl.sel = document.getElementById('dsel');
+        sl.anim = document.getElementById('danim');
+        sl.debug = document.getElementById('ddebug');
+
+        const ids = ['ds', 'dpx', 'dpy', 'dpz', 'drx', 'dry', 'drz', 'dghold', 'dgfade', 'dlerp'];
+        ids.forEach(id => sl[id.replace('d', '').replace('g', '')] = document.getElementById(id));
+
+        // Populate Page Select
+        if (sl.sel) {
+            pages.forEach((p, i) => { const o = document.createElement('option'); o.value = i; o.textContent = p.label; sl.sel.appendChild(o); });
+            sl.sel.onchange = () => { activePageIndex = parseInt(sl.sel.value); loadCfg(); };
+        }
+
+        // Animation Change
+        if (sl.anim) {
+            sl.anim.onchange = () => {
+                const st = pageStates.get(activePageIndex);
+                if (!st || !st.mixer || !st.animations) return;
+                const clip = st.animations[parseInt(sl.anim.value)];
+                if (clip) {
+                    st.mixer.stopAllAction();
+                    const action = st.mixer.clipAction(clip);
+                    action.play();
+                    st.activeClipIndex = parseInt(sl.anim.value);
                 }
-            }, 350); // After CSS transition
+            };
+        }
+
+        // Debug Toggle
+        if (sl.debug) {
+            sl.debug.onchange = () => {
+                const vis = sl.debug.checked;
+                pageStates.forEach(st => { if (st.debugCube) st.debugCube.visible = vis; });
+            };
+        }
+
+        // Transform Sync
+        const sync = () => { if (sl.s && sl.s.value) writeCfg(); };
+        [sl.s, sl.px, sl.py, sl.pz, sl.rx, sl.ry, sl.rz, sl.lerp].forEach(e => e && (e.oninput = sync));
+
+        const copyBtn = document.getElementById('dcopy');
+        if (copyBtn) {
+            copyBtn.onclick = () => { const st = pageStates.get(activePageIndex); if (st) navigator.clipboard.writeText(JSON.stringify(st.config, null, 2)).then(() => alert('Copied!')); };
+        }
+
+        if (devToggle) devToggle.onclick = () => { devOpen = !devOpen; devConsole.classList.toggle('open', devOpen); };
+    }
+
+    function loadCfg() {
+        const st = pageStates.get(activePageIndex);
+        if (!st || !sl.s) return;
+        const c = st.config;
+        sl.s.value = Math.log10(c.scale || 0.355).toFixed(2);
+        sl.px.value = c.offsetX; sl.py.value = c.offsetY; sl.pz.value = c.offsetZ;
+        sl.rx.value = c.rotationX; sl.ry.value = c.rotationY; sl.rz.value = c.rotationZ;
+        showVals();
+
+        // Refresh Animation List
+        if (sl.anim) {
+            sl.anim.innerHTML = '';
+            if (st.animations && st.animations.length > 0) {
+                st.animations.forEach((clip, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = clip.name;
+                    sl.anim.appendChild(opt);
+                });
+                sl.anim.value = st.activeClipIndex || 0;
+            } else {
+                sl.anim.innerHTML = '<option>No Animations</option>';
+            }
         }
     }
 
-    // ============================================
-    //  INJECT STYLES
-    // ============================================
-    function injectDevStyles() {
-        const style = document.createElement('style');
-        style.textContent = `
-            :root {
-                --dev-height: 280px;
-            }
-
-            #ar-container {
-                position: fixed !important;
-                top: 0;
-                left: 0;
-                width: 100% !important;
-                height: 100% !important;
-                transition: height 0.3s ease;
-                z-index: 0;
-            }
-
-            #dev-console {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                z-index: 9999;
-                background: rgba(8, 8, 16, 0.92);
-                color: #6ee7b7;
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                padding: 10px 14px;
-                height: var(--dev-height);
-                transform: translateY(100%);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                overflow-y: auto;
-                border-top: 2px solid rgba(110, 231, 183, 0.3);
-                backdrop-filter: blur(16px);
-            }
-
-            #dev-console.open {
-                transform: translateY(0);
-            }
-
-            #dev-console .row {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin: 3px 0;
-            }
-
-            #dev-console label {
-                min-width: 55px;
-                color: #6ee7b7;
-                font-size: 11px;
-            }
-
-            #dev-console input[type=range] {
-                flex: 1;
-                height: 4px;
-                accent-color: #6ee7b7;
-            }
-
-            #dev-console .val {
-                min-width: 60px;
-                text-align: right;
-                color: #e2e8f0;
-                font-size: 11px;
-            }
-
-            #dev-console .section {
-                color: #fbbf24;
-                font-weight: bold;
-                font-size: 11px;
-                margin-top: 4px;
-                padding-top: 4px;
-                border-top: 1px solid rgba(255,255,255,0.06);
-            }
-
-            #dev-console .section:first-child {
-                border-top: none;
-                margin-top: 0;
-            }
-
-            #dev-console button {
-                background: #6ee7b7;
-                color: #000;
-                border: none;
-                padding: 5px 14px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-weight: bold;
-                font-size: 11px;
-                margin: 2px;
-            }
-
-            #dev-toggle {
-                position: fixed;
-                bottom: 10px;
-                right: 10px;
-                z-index: 10000;
-                background: rgba(110, 231, 183, 0.85);
-                color: #000;
-                border: none;
-                padding: 8px 14px;
-                border-radius: 24px;
-                font-size: 12px;
-                font-weight: bold;
-                cursor: pointer;
-                box-shadow: 0 2px 12px rgba(110, 231, 183, 0.3);
-                transition: bottom 0.3s ease;
-            }
-
-            #dev-console.open ~ #dev-toggle {
-                bottom: calc(var(--dev-height) + 10px);
-            }
-        `;
-        document.head.appendChild(style);
+    function writeCfg() {
+        const st = pageStates.get(activePageIndex);
+        if (!st || !sl.s) return;
+        st.config.scale = Math.pow(10, parseFloat(sl.s.value));
+        st.config.offsetX = parseFloat(sl.px.value); st.config.offsetY = parseFloat(sl.py.value); st.config.offsetZ = parseFloat(sl.pz.value);
+        st.config.rotationX = parseInt(sl.rx.value); st.config.rotationY = parseInt(sl.ry.value); st.config.rotationZ = parseInt(sl.rz.value);
+        applyConfig(st.model, st.config);
+        if (st.smoother) st.smoother.lerpAlpha = getVal('lerp', 0.1);
+        showVals();
     }
 
-    // ============================================
-    //  INIT
-    // ============================================
-    let sliders;
+    function showVals() {
+        const st = pageStates.get(activePageIndex);
+        if (!st) return;
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        set('dsv', st.config.scale.toFixed(3));
+    }
+
+    function setModelOpacity(model, opacity) {
+        if (!model) return;
+        const isTransparent = opacity < 0.99;
+        model.traverse(c => {
+            if (c.isMesh && c.material) {
+                const mats = Array.isArray(c.material) ? c.material : [c.material];
+                mats.forEach(m => {
+                    m.transparent = isTransparent;
+                    m.opacity = opacity;
+                    m.depthWrite = !isTransparent;
+                    m.depthTest = true;
+                    m.side = THREE.FrontSide;
+                });
+            }
+        });
+    }
 
     async function init() {
-        injectDevStyles();
-        sliders = createDevConsole();
-
         const res = await fetch('pages.json');
-        const config = await res.json();
-        const pages = config.pages || [];
+        const data = await res.json();
+        pages = data.pages || [];
+        buildDev();
 
         mindarThree = new window.MINDAR.IMAGE.MindARThree({
             container: arContainer,
-            imageTargetSrc: config.meta?.trackingDescriptor || 'targets/book_targets.mind',
-            maxTrack: 1,
-            uiLoading: 'no',
-            uiScanning: 'no',
-            filterMinCF: 0.0001,
-            filterBeta: 0.5
+            imageTargetSrc: data.meta?.trackingDescriptor || 'targets/book_targets.mind',
+            maxTrack: 1, filterMinCF: 0.0001, filterBeta: 0.1,
+            uiLoading: 'no', uiScanning: 'no'
         });
 
         renderer = mindarThree.renderer;
@@ -317,138 +214,127 @@
         camera = mindarThree.camera;
         renderer.setClearColor(0x000000, 0);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+        scene.add(new THREE.AmbientLight(0xffffff, 1.2));
         const dl = new THREE.DirectionalLight(0xffffff, 1.5);
-        dl.position.set(0, 5, 5);
-        scene.add(dl);
+        dl.position.set(1, 5, 3); scene.add(dl);
 
-        const anchor = mindarThree.addAnchor(0);
+        pages.forEach((p, i) => {
+            const anchor = mindarThree.addAnchor(i);
+            scene.add(anchor.group);
+            const debugMesh = addDebugBox(anchor.group);
 
-        // Ghosting: track visibility
-        let isTracking = false;
-        let ghostOpacity = 1;
-        let ghostFading = false;
+            const follower = new THREE.Group();
+            scene.add(follower);
 
-        anchor.onTargetFound = () => {
-            isTracking = true;
-            ghostFading = false;
-            ghostOpacity = 1;
-            setGroupOpacity(anchor.group, 1);
-            anchor.group.visible = true;
-            smoothInitialized = false; // Reset smoothing on re-acquire
-        };
+            const state = {
+                anchor, follower, debugCube: debugMesh,
+                model: null, mixer: null, animations: [], activeClipIndex: 0,
 
-        anchor.onTargetLost = () => {
-            isTracking = false;
-            ghostFading = true;
-        };
+                isTracking: false, isGhosting: false, lostTime: 0,
 
-        const page = pages[0];
-        if (page) {
-            const loader = new THREE.GLTFLoader();
-            loader.load(page.model.src, (gltf) => {
-                const model = gltf.scene;
-                currentModel = model;
+                visiblePos: new THREE.Vector3(),
+                visibleQuat: new THREE.Quaternion(),
+                visibleScale: new THREE.Vector3(1, 1, 1),
 
-                // Apply transform from pages.json
-                const s = page.model.scale || 0.355;
-                model.scale.set(s, s, s);
-                model.position.set(
-                    page.model.offsetX || 0,
-                    page.model.offsetY || 0,
-                    page.model.offsetZ || 0
-                );
-                model.rotation.set(
-                    (page.model.rotationX || 0) * Math.PI / 180,
-                    (page.model.rotationY || 0) * Math.PI / 180,
-                    (page.model.rotationZ || 0) * Math.PI / 180
-                );
-
-                model.traverse(child => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                    }
-                });
-
-                anchor.group.add(model);
-                console.log('Model added at scale', s);
-
-                if (gltf.animations.length > 0) {
-                    const mixer = new THREE.AnimationMixer(model);
-                    mixer.clipAction(gltf.animations[0]).play();
-                    mixers.push(mixer);
+                config: {
+                    scale: p.model.scale || 0.355,
+                    offsetX: p.model.offsetX || 0, offsetY: p.model.offsetY || 0, offsetZ: p.model.offsetZ || 0,
+                    rotationX: p.model.rotationX || 0, rotationY: p.model.rotationY || 0, rotationZ: p.model.rotationZ || 0
                 }
-            }, undefined, (err) => console.error('GLB ERROR:', err));
-        }
+            };
+            pageStates.set(i, state);
+
+            anchor.onTargetFound = () => {
+                const wasGhosting = state.isGhosting;
+                state.isTracking = true; state.isGhosting = false; state.lostTime = 0;
+
+                if (state.debugCube) state.debugCube.visible = sl.debug ? sl.debug.checked : true;
+
+                if (!wasGhosting) {
+                    anchor.group.updateMatrixWorld(true);
+                    anchor.group.matrixWorld.decompose(state.visiblePos, state.visibleQuat, state.visibleScale);
+                    state.follower.position.copy(state.visiblePos);
+                    state.follower.quaternion.copy(state.visibleQuat);
+                    state.follower.scale.copy(state.visibleScale);
+                }
+
+                if (statusText) statusText.textContent = 'TRACKING: ' + p.label;
+                if (statusDot) { statusDot.classList.remove('lost'); statusDot.classList.add('active'); }
+                if (sl.sel) { sl.sel.value = i; activePageIndex = i; loadCfg(); }
+            };
+
+            anchor.onTargetLost = () => {
+                state.isTracking = false; state.isGhosting = true; state.lostTime = 0;
+                if (state.debugCube) state.debugCube.visible = false;
+                if (statusText) statusText.textContent = 'SCANNING...';
+                if (statusDot) { statusDot.classList.remove('active'); statusDot.classList.add('lost'); }
+            };
+
+            const loader = new THREE.GLTFLoader();
+            loader.load(p.model.src, (gltf) => {
+                state.model = gltf.scene;
+                state.animations = gltf.animations || [];
+
+                follower.add(state.model);
+                applyConfig(state.model, state.config);
+                setModelOpacity(state.model, 1);
+
+                if (state.animations.length > 0) {
+                    state.mixer = new THREE.AnimationMixer(state.model);
+                    const clip = state.animations[0];
+                    state.mixer.clipAction(clip).play();
+                }
+
+                if (activePageIndex === i) loadCfg();
+            });
+        });
 
         loadingScreen.classList.add('hidden');
         startBtn.classList.remove('hidden');
+    }
 
-        // Animation loop
-        startBtn.addEventListener('click', async () => {
-            startBtn.classList.add('hidden');
-            await mindarThree.start();
+    startBtn.onclick = async () => {
+        startBtn.classList.add('hidden');
+        await mindarThree.start();
+        renderer.setAnimationLoop(() => {
+            const dt = clock.getDelta();
 
-            renderer.setAnimationLoop(() => {
-                const dt = 0.016;
-                mixers.forEach(m => m.update(dt));
+            pageStates.forEach(state => {
+                if (state.mixer) state.mixer.update(dt);
+                const holdTime = getVal('hold', 1.5);
+                const fadeTime = getVal('fade', 1.5);
+                const lerpAlpha = getVal('lerp', 0.1);
+                const model = state.model;
+                if (!model) return;
 
-                // --- POSE SMOOTHING ---
-                // Read anchor's current world position, smooth it, write it back
-                if (anchor.group.visible) {
-                    anchor.group.updateMatrixWorld(true);
+                if (state.isTracking) {
+                    state.anchor.group.updateMatrixWorld(true);
+                    const rawP = new THREE.Vector3(); const rawQ = new THREE.Quaternion(); const rawS = new THREE.Vector3();
+                    state.anchor.group.matrixWorld.decompose(rawP, rawQ, rawS);
 
-                    const rawPos = new THREE.Vector3();
-                    const rawQuat = new THREE.Quaternion();
-                    const rawScale = new THREE.Vector3();
-                    anchor.group.matrixWorld.decompose(rawPos, rawQuat, rawScale);
+                    state.visiblePos.lerp(rawP, lerpAlpha);
+                    state.visibleQuat.slerp(rawQ, lerpAlpha);
+                    state.visibleScale.lerp(rawS, lerpAlpha);
 
-                    const alpha = parseFloat(sliders.lerp.value) || LERP_ALPHA;
+                    state.follower.position.copy(state.visiblePos);
+                    state.follower.quaternion.copy(state.visibleQuat);
+                    state.follower.scale.copy(state.visibleScale);
 
-                    if (!smoothInitialized) {
-                        smoothedPos.copy(rawPos);
-                        smoothedQuat.copy(rawQuat);
-                        smoothInitialized = true;
-                    } else {
-                        smoothedPos.lerp(rawPos, alpha);
-                        smoothedQuat.slerp(rawQuat, alpha);
-                    }
-
-                    // Write smoothed values back
-                    anchor.group.position.copy(smoothedPos);
-                    anchor.group.quaternion.copy(smoothedQuat);
+                    state.follower.visible = true;
+                    setModelOpacity(model, 1);
                 }
-
-                // --- GHOSTING ---
-                if (ghostFading) {
-                    ghostOpacity -= dt * 0.5; // 2-second fade
-                    if (ghostOpacity <= 0) {
-                        ghostOpacity = 0;
-                        ghostFading = false;
-                        anchor.group.visible = false;
-                    }
-                    setGroupOpacity(anchor.group, Math.max(0, ghostOpacity));
+                else if (state.isGhosting) {
+                    state.lostTime += dt;
+                    state.follower.visible = true;
+                    if (state.lostTime > holdTime) {
+                        const op = Math.max(0, 1 - (state.lostTime - holdTime) / fadeTime);
+                        setModelOpacity(model, op);
+                        if (op <= 0) state.follower.visible = false;
+                    } else { setModelOpacity(model, 1); }
                 }
-
-                renderer.render(scene, camera);
             });
-
-            console.log('AR STARTED');
+            renderer.render(scene, camera);
         });
-    }
-
-    function setGroupOpacity(group, opacity) {
-        group.traverse(child => {
-            if (child.isMesh && child.material) {
-                const mats = Array.isArray(child.material) ? child.material : [child.material];
-                mats.forEach(m => {
-                    m.transparent = opacity < 1;
-                    m.opacity = opacity;
-                });
-            }
-        });
-    }
-
+    };
     init();
 })();
