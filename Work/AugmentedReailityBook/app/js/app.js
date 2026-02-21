@@ -1,7 +1,5 @@
 /**
- * app.js — Architecture v31 (Defensive + Follower)
- * - Fixed: crash on 'setting onchange of null'
- * - Preserved: Animation Selector + Debug Toggle
+ * app.js — Architecture v45 (Light Hierarchy Fix)
  */
 (function () {
     'use strict';
@@ -16,6 +14,7 @@
     const devToggle = document.getElementById('dev-toggle');
 
     let mindarThree, renderer, scene, camera;
+    let lightEstimator;
     const clock = new THREE.Clock();
 
     // State
@@ -27,12 +26,18 @@
     const sl = {
         s: null, px: null, py: null, pz: null, rx: null, ry: null, rz: null,
         lerp: null, hold: null, fade: null, sel: null,
-        anim: null, debug: null
+        anim: null,
+        lint: null, lbias: null, lnear: null, lfar: null,
+        lmanual: null, lmx: null, lmy: null, lso: null,
+        lshowh: null, lshowf: null
     };
     let devOpen = false;
 
     // --- Helpers ---
-    function getVal(id, def) { const el = sl[id]; return el ? (parseFloat(el.value) || def) : def; }
+    function getVal(id, def) {
+        if (sl[id]) return parseFloat(sl[id].value) || def;
+        return def;
+    }
 
     function applyConfig(model, config) {
         if (!model) return;
@@ -54,9 +59,33 @@
         return mesh;
     }
 
-    // --- UI Init ---
+    function createShadowPlane() {
+        const g = new THREE.PlaneGeometry(2, 2);
+        const m = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.2, transparent: true });
+        const plane = new THREE.Mesh(g, m);
+        plane.name = 'FloorBase';
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = -0.02;
+        plane.receiveShadow = true;
+
+        const m2 = new THREE.ShadowMaterial({ opacity: 0.7 });
+        const catcher = new THREE.Mesh(g, m2);
+        catcher.name = 'Catcher';
+        catcher.rotation.x = -Math.PI / 2;
+        catcher.position.y = -0.01;
+        catcher.receiveShadow = true;
+
+        const group = new THREE.Group();
+        group.add(plane);
+        group.add(catcher);
+        return group;
+    }
+
     function buildDev() {
         if (!devConsole) return;
+        devConsole.style.overflowY = 'auto';
+        devConsole.style.maxHeight = '80vh';
+
         devConsole.innerHTML = `
             <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(110,231,183,0.1);padding-bottom:12px;margin-bottom:12px;">
                 <span style="color:#6ee7b7;font-size:10px;font-weight:800;letter-spacing:0.1em;">TRANSFORM TUNER</span>
@@ -65,10 +94,6 @@
             
             <div style="margin-bottom:12px; display:flex; gap:10px; align-items:center;">
                 <select id="danim" style="flex:1; background:#111; color:#fff; border:1px solid #333; font-size:10px; padding:4px; height:24px;"></select>
-                <div style="display:flex; align-items:center; gap:6px; background:rgba(255,0,0,0.1); padding:2px 6px; border-radius:4px; border:1px solid rgba(255,0,0,0.3);">
-                    <input type="checkbox" id="ddebug" checked style="accent-color:red;">
-                    <label for="ddebug" style="font-size:10px; color:#ff9999; font-weight:700; cursor:pointer;">DEBUG</label>
-                </div>
             </div>
 
             <div class="ctrl"><label>Scale</label><input type="range" id="ds" min="-3" max="1" step="0.01"><span class="v" id="dsv"></span></div>
@@ -83,47 +108,65 @@
                 <div class="ctrl" style="flex:1;"><label>Fade</label><input type="range" id="dgfade" min="0.5" max="5" step="0.1" value="1.5"></div>
             </div>
             <div class="ctrl" style="margin-top:8px;"><label>Lerp</label><input type="range" id="dlerp" min="0.01" max="1" step="0.01" value="0.1"></div>
+
+            <!-- SHADOW TUNER SECTION (Clean) -->
+            <div style="margin-top:20px; border-top: 1px solid #333; padding-top: 10px;">
+                <div style="color:#6ee7b7;font-size:10px;font-weight:800;letter-spacing:0.1em;margin-bottom:8px;">SHADOW TUNER</div>
+                
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <input type="checkbox" id="dlshowh" checked> <label for="dlshowh" style="font-size:10px;">HELPERS</label>
+                    </div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <input type="checkbox" id="dlshowf" checked> <label for="dlshowf" style="font-size:10px;">FLOOR</label>
+                    </div>
+                </div>
+
+                <div class="ctrl"><label>Intensity</label><input type="range" id="dlint" min="0" max="8" step="0.1" value="4.0"></div>
+                <div class="ctrl"><label>Bias</label><input type="range" id="dlbias" min="-0.005" max="0.005" step="0.0001" value="-0.0001"></div>
+                <div class="ctrl"><label>Near</label><input type="range" id="dlnear" min="0.1" max="5" step="0.1" value="0.1"></div>
+                <div class="ctrl"><label>Shadow Y</label><input type="range" id="dlso" min="-0.2" max="0.2" step="0.001" value="-0.01"></div>
+                
+                <div style="margin-top:10px; display:flex; gap:6px; align-items:center; background:#111; padding:4px; border:1px solid #333;">
+                    <input type="checkbox" id="dlmanual"> <label for="dlmanual" style="font-size:10px; font-weight:bold;">MANUAL LIGHT</label>
+                </div>
+                <div class="ctrl"><label>Light X</label><input type="range" id="dlmx" min="-10" max="10" step="0.1" value="0"></div>
+                <div class="ctrl"><label>Light Y</label><input type="range" id="dlmy" min="-10" max="10" step="0.1" value="5"></div>
+            </div>
+
             <button id="dcopy" style="margin-top:12px; width:100%; height:34px; background:var(--accent); color:#000; border:none; border-radius:8px; font-weight:800; cursor:pointer; font-size:10px;">📋 COPY CONFIG</button>
         `;
 
-        // Manual Bind to ensure no 'null' errors
         sl.sel = document.getElementById('dsel');
         sl.anim = document.getElementById('danim');
-        sl.debug = document.getElementById('ddebug');
+
+        sl.lint = document.getElementById('dlint');
+        sl.lbias = document.getElementById('dlbias');
+        sl.lnear = document.getElementById('dlnear');
+        sl.lso = document.getElementById('dlso');
+        sl.lmanual = document.getElementById('dlmanual');
+        sl.lmx = document.getElementById('dlmx');
+        sl.lmy = document.getElementById('dlmy');
+        sl.lshowh = document.getElementById('dlshowh');
+        sl.lshowf = document.getElementById('dlshowf');
 
         const ids = ['ds', 'dpx', 'dpy', 'dpz', 'drx', 'dry', 'drz', 'dghold', 'dgfade', 'dlerp'];
         ids.forEach(id => sl[id.replace('d', '').replace('g', '')] = document.getElementById(id));
 
-        // Populate Page Select
         if (sl.sel) {
             pages.forEach((p, i) => { const o = document.createElement('option'); o.value = i; o.textContent = p.label; sl.sel.appendChild(o); });
             sl.sel.onchange = () => { activePageIndex = parseInt(sl.sel.value); loadCfg(); };
         }
 
-        // Animation Change
         if (sl.anim) {
             sl.anim.onchange = () => {
                 const st = pageStates.get(activePageIndex);
                 if (!st || !st.mixer || !st.animations) return;
                 const clip = st.animations[parseInt(sl.anim.value)];
-                if (clip) {
-                    st.mixer.stopAllAction();
-                    const action = st.mixer.clipAction(clip);
-                    action.play();
-                    st.activeClipIndex = parseInt(sl.anim.value);
-                }
+                if (clip) { st.mixer.stopAllAction(); st.mixer.clipAction(clip).play(); st.activeClipIndex = parseInt(sl.anim.value); }
             };
         }
 
-        // Debug Toggle
-        if (sl.debug) {
-            sl.debug.onchange = () => {
-                const vis = sl.debug.checked;
-                pageStates.forEach(st => { if (st.debugCube) st.debugCube.visible = vis; });
-            };
-        }
-
-        // Transform Sync
         const sync = () => { if (sl.s && sl.s.value) writeCfg(); };
         [sl.s, sl.px, sl.py, sl.pz, sl.rx, sl.ry, sl.rz, sl.lerp].forEach(e => e && (e.oninput = sync));
 
@@ -144,20 +187,12 @@
         sl.rx.value = c.rotationX; sl.ry.value = c.rotationY; sl.rz.value = c.rotationZ;
         showVals();
 
-        // Refresh Animation List
         if (sl.anim) {
             sl.anim.innerHTML = '';
             if (st.animations && st.animations.length > 0) {
-                st.animations.forEach((clip, i) => {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.textContent = clip.name;
-                    sl.anim.appendChild(opt);
-                });
+                st.animations.forEach((clip, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = clip.name; sl.anim.appendChild(opt); });
                 sl.anim.value = st.activeClipIndex || 0;
-            } else {
-                sl.anim.innerHTML = '<option>No Animations</option>';
-            }
+            } else { sl.anim.innerHTML = '<option>No Animations</option>'; }
         }
     }
 
@@ -168,7 +203,6 @@
         st.config.offsetX = parseFloat(sl.px.value); st.config.offsetY = parseFloat(sl.py.value); st.config.offsetZ = parseFloat(sl.pz.value);
         st.config.rotationX = parseInt(sl.rx.value); st.config.rotationY = parseInt(sl.ry.value); st.config.rotationZ = parseInt(sl.rz.value);
         applyConfig(st.model, st.config);
-        if (st.smoother) st.smoother.lerpAlpha = getVal('lerp', 0.1);
         showVals();
     }
 
@@ -183,15 +217,18 @@
         if (!model) return;
         const isTransparent = opacity < 0.99;
         model.traverse(c => {
-            if (c.isMesh && c.material) {
-                const mats = Array.isArray(c.material) ? c.material : [c.material];
-                mats.forEach(m => {
-                    m.transparent = isTransparent;
-                    m.opacity = opacity;
-                    m.depthWrite = !isTransparent;
-                    m.depthTest = true;
-                    m.side = THREE.FrontSide;
-                });
+            if (c.isMesh) {
+                if (!c.castShadow) { c.castShadow = true; c.receiveShadow = true; }
+                if (c.material) {
+                    const mats = Array.isArray(c.material) ? c.material : [c.material];
+                    mats.forEach(m => {
+                        m.transparent = isTransparent;
+                        m.opacity = opacity;
+                        m.depthWrite = !isTransparent;
+                        m.depthTest = true;
+                        m.side = THREE.FrontSide;
+                    });
+                }
             }
         });
     }
@@ -213,10 +250,12 @@
         scene = mindarThree.scene;
         camera = mindarThree.camera;
         renderer.setClearColor(0x000000, 0);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-        const dl = new THREE.DirectionalLight(0xffffff, 1.5);
-        dl.position.set(1, 5, 3); scene.add(dl);
+        // Global Ambient
+        const amb = new THREE.AmbientLight(0xffffff, 0.2);
+        scene.add(amb);
 
         pages.forEach((p, i) => {
             const anchor = mindarThree.addAnchor(i);
@@ -226,16 +265,36 @@
             const follower = new THREE.Group();
             scene.add(follower);
 
+            // NOTE: LightRoot is separate from Follower to avoid Scale issues
+            const lightRoot = new THREE.Group();
+            scene.add(lightRoot);
+
+            const dl = new THREE.DirectionalLight(0xffffff, 4.0);
+            dl.castShadow = true;
+            dl.shadow.mapSize.width = 1024; dl.shadow.mapSize.height = 1024;
+            dl.shadow.bias = -0.0001;
+            dl.shadow.normalBias = 0.05;
+
+            const d = 2;
+            dl.shadow.camera.left = -d; dl.shadow.camera.right = d;
+            dl.shadow.camera.top = d; dl.shadow.camera.bottom = -d;
+            dl.shadow.camera.near = 0.1; dl.shadow.camera.far = 20;
+
+            lightRoot.add(dl);
+            lightRoot.add(dl.target);
+
+            const camHelper = new THREE.CameraHelper(dl.shadow.camera);
+            scene.add(camHelper);
+
+            // Shadow Plane (Stays on follower)
+            const shadowPlaneGroup = createShadowPlane();
+            follower.add(shadowPlaneGroup);
+
             const state = {
-                anchor, follower, debugCube: debugMesh,
+                anchor, follower, debugCube: debugMesh, lightRoot, dl, camHelper,
                 model: null, mixer: null, animations: [], activeClipIndex: 0,
-
                 isTracking: false, isGhosting: false, lostTime: 0,
-
-                visiblePos: new THREE.Vector3(),
-                visibleQuat: new THREE.Quaternion(),
-                visibleScale: new THREE.Vector3(1, 1, 1),
-
+                visiblePos: new THREE.Vector3(), visibleQuat: new THREE.Quaternion(), visibleScale: new THREE.Vector3(1, 1, 1),
                 config: {
                     scale: p.model.scale || 0.355,
                     offsetX: p.model.offsetX || 0, offsetY: p.model.offsetY || 0, offsetZ: p.model.offsetZ || 0,
@@ -248,16 +307,19 @@
                 const wasGhosting = state.isGhosting;
                 state.isTracking = true; state.isGhosting = false; state.lostTime = 0;
 
-                if (state.debugCube) state.debugCube.visible = sl.debug ? sl.debug.checked : true;
-
                 if (!wasGhosting) {
                     anchor.group.updateMatrixWorld(true);
                     anchor.group.matrixWorld.decompose(state.visiblePos, state.visibleQuat, state.visibleScale);
+
                     state.follower.position.copy(state.visiblePos);
                     state.follower.quaternion.copy(state.visibleQuat);
                     state.follower.scale.copy(state.visibleScale);
-                }
 
+                    // LightRoot follows pos/rot but stays scale 1
+                    state.lightRoot.position.copy(state.visiblePos);
+                    state.lightRoot.quaternion.copy(state.visibleQuat);
+                    state.lightRoot.scale.set(1, 1, 1);
+                }
                 if (statusText) statusText.textContent = 'TRACKING: ' + p.label;
                 if (statusDot) { statusDot.classList.remove('lost'); statusDot.classList.add('active'); }
                 if (sl.sel) { sl.sel.value = i; activePageIndex = i; loadCfg(); }
@@ -266,6 +328,7 @@
             anchor.onTargetLost = () => {
                 state.isTracking = false; state.isGhosting = true; state.lostTime = 0;
                 if (state.debugCube) state.debugCube.visible = false;
+
                 if (statusText) statusText.textContent = 'SCANNING...';
                 if (statusDot) { statusDot.classList.remove('active'); statusDot.classList.add('lost'); }
             };
@@ -274,7 +337,6 @@
             loader.load(p.model.src, (gltf) => {
                 state.model = gltf.scene;
                 state.animations = gltf.animations || [];
-
                 follower.add(state.model);
                 applyConfig(state.model, state.config);
                 setModelOpacity(state.model, 1);
@@ -284,7 +346,6 @@
                     const clip = state.animations[0];
                     state.mixer.clipAction(clip).play();
                 }
-
                 if (activePageIndex === i) loadCfg();
             });
         });
@@ -296,8 +357,24 @@
     startBtn.onclick = async () => {
         startBtn.classList.add('hidden');
         await mindarThree.start();
+        console.log("APP: STARTING LIGHT ESTIMATOR...");
+        if (window.LightEstimator) {
+            lightEstimator = new window.LightEstimator(renderer, scene);
+        } else { console.error("APP: LightEstimator class not found!"); }
+
         renderer.setAnimationLoop(() => {
             const dt = clock.getDelta();
+            if (lightEstimator) lightEstimator.update();
+
+            const uiInt = parseFloat(sl.lint?.value || 4.0);
+            const uiBias = parseFloat(sl.lbias?.value || -0.0001);
+            const uiNear = parseFloat(sl.lnear?.value || 0.1);
+            const uiManual = sl.lmanual?.checked || false;
+            const uiMX = parseFloat(sl.lmx?.value || 0);
+            const uiMY = parseFloat(sl.lmy?.value || 5);
+            const uiSO = parseFloat(sl.lso?.value || -0.01);
+            const uiShowH = sl.lshowh ? sl.lshowh.checked : true;
+            const uiShowF = sl.lshowf ? sl.lshowf.checked : true;
 
             pageStates.forEach(state => {
                 if (state.mixer) state.mixer.update(dt);
@@ -307,29 +384,73 @@
                 const model = state.model;
                 if (!model) return;
 
+                // Visibility Logic
+                if (state.camHelper) state.camHelper.visible = uiShowH;
+                if (state.isTracking && state.debugCube) state.debugCube.visible = uiShowH;
+
+                state.follower.traverse(c => {
+                    if (c.name === 'FloorBase') c.visible = uiShowF;
+                    if (c.name === 'Catcher') c.position.y = uiSO;
+                });
+
+                // Light Updates
+                if (state.dl) {
+                    let intensity = uiInt;
+                    if (lightEstimator && !uiManual) {
+                        intensity = (lightEstimator.currentIntensity / 2.0) * uiInt;
+                    }
+
+                    state.dl.intensity = intensity;
+                    state.dl.shadow.bias = uiBias;
+                    state.dl.shadow.camera.near = uiNear;
+                    state.dl.shadow.camera.updateProjectionMatrix();
+
+                    if (uiManual) {
+                        state.dl.position.set(uiMX, uiMY, 6);
+                    } else if (lightEstimator) {
+                        state.dl.position.copy(lightEstimator.currentOffset);
+                    }
+                    state.dl.target.position.set(0, 0, 0);
+                    if (state.camHelper) state.camHelper.update();
+                }
+
                 if (state.isTracking) {
                     state.anchor.group.updateMatrixWorld(true);
                     const rawP = new THREE.Vector3(); const rawQ = new THREE.Quaternion(); const rawS = new THREE.Vector3();
                     state.anchor.group.matrixWorld.decompose(rawP, rawQ, rawS);
 
+                    // Lerp Visible Bounds
                     state.visiblePos.lerp(rawP, lerpAlpha);
                     state.visibleQuat.slerp(rawQ, lerpAlpha);
                     state.visibleScale.lerp(rawS, lerpAlpha);
 
+                    // Apply to Follower (Scaled)
                     state.follower.position.copy(state.visiblePos);
                     state.follower.quaternion.copy(state.visibleQuat);
                     state.follower.scale.copy(state.visibleScale);
 
+                    // Apply to LightRoot (Unscaled)
+                    if (state.lightRoot) {
+                        state.lightRoot.position.copy(state.visiblePos);
+                        state.lightRoot.quaternion.copy(state.visibleQuat);
+                        state.lightRoot.scale.set(1, 1, 1);
+                    }
+
                     state.follower.visible = true;
+                    if (state.lightRoot) state.lightRoot.visible = true;
                     setModelOpacity(model, 1);
-                }
-                else if (state.isGhosting) {
+                } else if (state.isGhosting) {
                     state.lostTime += dt;
                     state.follower.visible = true;
+                    if (state.lightRoot) state.lightRoot.visible = true;
+
                     if (state.lostTime > holdTime) {
                         const op = Math.max(0, 1 - (state.lostTime - holdTime) / fadeTime);
                         setModelOpacity(model, op);
-                        if (op <= 0) state.follower.visible = false;
+                        if (op <= 0) {
+                            state.follower.visible = false;
+                            if (state.lightRoot) state.lightRoot.visible = false;
+                        }
                     } else { setModelOpacity(model, 1); }
                 }
             });
