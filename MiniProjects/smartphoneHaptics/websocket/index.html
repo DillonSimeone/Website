@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Remote Haptics</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
     <!-- PeerJS for serverless P2P communication -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
+
 <body>
     <div class="background-blobs">
         <div class="blob blob-1"></div>
@@ -24,7 +26,7 @@
         </div>
 
         <h1>Remote Haptics</h1>
-        
+
         <div class="status-indicator">
             Connection: <span id="connectionStatus" class="text-primary">Disconnected</span>
             <div id="peerIdDisplay" class="peer-id-display">ID: <span id="myPeerId">...</span></div>
@@ -43,7 +45,7 @@
                 Client Mode: Receiving haptics...
             </p>
         </div>
-        
+
         <!-- Controls (Hidden for Clients by default) -->
         <div id="hostControls" class="faded-controls">
             <div class="main-controls">
@@ -58,7 +60,8 @@
                         <button class="glass-btn small" data-pattern="200">Single</button>
                         <button class="glass-btn small" data-pattern="200,100,200">Double</button>
                         <button class="glass-btn small" data-pattern="100,50,100,50,100">Pulse</button>
-                        <button class="glass-btn small" data-pattern="500,110,500,110,450,110,200,110,170,40,450,110,200,110,170,40,500">Mario</button>
+                        <button class="glass-btn small"
+                            data-pattern="500,110,500,110,450,110,200,110,170,40,450,110,200,110,170,40,500">Mario</button>
                     </div>
                 </div>
 
@@ -68,14 +71,15 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="status-indicator status-indicator--footer">
             Haptic Status: <span id="statusText">Ready</span>
         </div>
 
     </div>
 
-    <script src="js/logger.js"></script>
-    <script src="js/websocketScript.js"></script>
+    <script src="../js/logger.js"></script>
+    <script src="../js/websocketScript.js"></script>
 </body>
+
 </html>
