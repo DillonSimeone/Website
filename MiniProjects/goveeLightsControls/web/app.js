@@ -2,7 +2,7 @@ let devices = [];
 let selectedDevices = new Set();
 
 // Wait for DOM to load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     logToConsole("System initialized.");
     loadDevices();
 });
@@ -12,16 +12,16 @@ function logToConsole(msg) {
     if (!consoleDiv) return;
     const entry = document.createElement('div');
     entry.className = 'console-entry';
-    
+
     const time = new Date().toLocaleTimeString();
     entry.innerHTML = `<span class="console-timestamp">[${time}]</span> ${msg}`;
-    
+
     consoleDiv.appendChild(entry);
     consoleDiv.scrollTop = consoleDiv.scrollHeight;
 }
 
 function uuidv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
@@ -33,7 +33,7 @@ async function loadDevices() {
     try {
         const response = await fetch('/api/devices');
         const data = await response.json();
-        
+
         if (data.code === 200) {
             devices = data.data;
             renderDevices();
@@ -60,8 +60,8 @@ function renderDevices() {
     devices.forEach(dev => {
         const item = document.createElement('div');
         item.className = 'device-item';
-        const mac = dev.device; 
-        
+        const mac = dev.device;
+
         if (selectedDevices.has(mac)) {
             item.classList.add('selected');
         }
@@ -106,11 +106,11 @@ async function controlPower(state) {
         showStatus("No devices selected.");
         return;
     }
-    
+
     const actionValue = state ? 1 : 0;
     const count = selectedDevices.size;
     showStatus(`Turning ${state ? 'ON' : 'OFF'} ${count} devices...`);
-    
+
     for (const mac of selectedDevices) {
         const device = devices.find(d => d.device === mac);
         if (!device) continue;
@@ -139,9 +139,52 @@ async function controlPower(state) {
             logToConsole(`Error for ${device.deviceName}: ${err}`);
         }
     }
-    
+
     showStatus("Commands finished.");
     logToConsole("Bulk power command processing complete.");
+}
+
+async function applyBrightness() {
+    if (selectedDevices.size === 0) {
+        showStatus("No devices selected.");
+        return;
+    }
+
+    const brightnessValue = parseInt(document.getElementById('brightness-slider').value);
+
+    showStatus(`Setting brightness to ${brightnessValue}%...`);
+
+    for (const mac of selectedDevices) {
+        const device = devices.find(d => d.device === mac);
+        if (!device) continue;
+
+        const payload = {
+            "requestId": uuidv4(),
+            "payload": {
+                "sku": device.sku,
+                "device": mac,
+                "capability": {
+                    "type": "devices.capabilities.range",
+                    "instance": "brightness",
+                    "value": brightnessValue
+                }
+            }
+        };
+
+        try {
+            logToConsole(`Setting brightness for ${device.deviceName}...`);
+            await fetch('/api/control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (err) {
+            logToConsole(`Error for ${device.deviceName}: ${err}`);
+        }
+    }
+
+    logToConsole(`Brightness command finished.`);
+    showStatus("Brightness command sent.");
 }
 
 async function applyColor() {
@@ -158,7 +201,7 @@ async function applyColor() {
     const colorInt = (r << 16) | (g << 8) | b;
 
     showStatus(`Setting color to ${colorHex}...`);
-    
+
     for (const mac of selectedDevices) {
         const device = devices.find(d => d.device === mac);
         if (!device) continue;

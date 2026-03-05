@@ -44,14 +44,18 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    min-width: 0; /* Prevent flex overflow */
+    min-width: 0;
+    /* Prevent flex overflow */
 }
 
 /* Device Panel */
 #device-panel {
-    flex: 1; /* Takes available space */
-    min-height: 0; /* Allow shrinking for scroll */
-    overflow: hidden; /* Container doesn't scroll, child does */
+    flex: 1;
+    /* Takes available space */
+    min-height: 0;
+    /* Allow shrinking for scroll */
+    overflow: hidden;
+    /* Container doesn't scroll, child does */
 }
 
 #device-list {
@@ -59,13 +63,15 @@ body {
     flex-direction: column;
     gap: 10px;
     overflow-y: auto;
-    padding-right: 5px; /* Space for scrollbar */
+    padding-right: 5px;
+    /* Space for scrollbar */
     height: 100%;
 }
 
 /* Console Panel */
 #console-panel {
-    height: 200px; /* Fixed height for console */
+    height: 200px;
+    /* Fixed height for console */
     flex-shrink: 0;
 }
 
@@ -84,7 +90,7 @@ body {
 
 .console-entry {
     margin-bottom: 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     padding-bottom: 2px;
 }
 
@@ -131,7 +137,8 @@ body {
 #controls-column {
     width: 300px;
     gap: 20px;
-    overflow-y: auto; /* Fix overflow on small screens */
+    overflow-y: auto;
+    /* Fix overflow on small screens */
 }
 
 h2 {
@@ -202,6 +209,29 @@ h2 {
     border: none;
     background: none;
     cursor: pointer;
+}
+
+/* Range Slider */
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+    margin-top: 5px;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
 /* Scrollbar */
