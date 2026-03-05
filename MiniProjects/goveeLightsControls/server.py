@@ -53,6 +53,7 @@ class GoveeHandler(http.server.SimpleHTTPRequestHandler):
                         self.send_header("Content-type", "text/css")
                     elif requested_file.endswith(".js"):
                         self.send_header("Content-type", "application/javascript")
+                    self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
                     self.end_headers()
                     with open(requested_file, 'rb') as f:
                         self.wfile.write(f.read())

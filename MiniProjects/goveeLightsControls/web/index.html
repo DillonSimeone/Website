@@ -36,6 +36,12 @@
             </div>
 
             <div class="control-group">
+                <span class="control-label">Brightness: <span id="bright-val">100</span>%</span>
+                <input type="range" id="brightness-slider" min="1" max="100" value="100" class="slider" oninput="document.getElementById('bright-val').innerText = this.value">
+                <button class="btn btn-action" onclick="applyBrightness()" style="margin-top: 10px;">Set Brightness</button>
+            </div>
+
+            <div class="control-group">
                 <span class="control-label">Color</span>
                 <input type="color" id="color-picker" value="#ffffff">
                 <button class="btn btn-action" onclick="applyColor()" style="margin-top: 10px;">Apply Color</button>
