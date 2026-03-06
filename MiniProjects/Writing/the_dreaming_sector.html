@@ -161,6 +161,7 @@
       letter-spacing: 3px;
       color: var(--accent-bright);
       margin-bottom: 28px;
+      transition: color 0.3s ease;
       line-height: 1.3;
     }
 
@@ -278,31 +279,34 @@
     /* THE DISSOLUTION SECTIONS */
     /* These sections progressively fade as the Mandelbrot takes over */
     .dissolve-1 p {
-      color: var(--text-dim);
+      color: var(--text);
     }
 
     .dissolve-2 p {
-      color: var(--text-ghost);
+      color: var(--accent-bright);
       font-size: 18px;
     }
 
     .dissolve-3 p {
-      color: rgba(74, 72, 112, 0.7);
+      color: #ffffff;
       font-size: 17px;
       letter-spacing: 0.5px;
+      text-shadow: 0 0 10px rgba(176, 160, 232, 0.3);
     }
 
     .dissolve-4 p {
-      color: rgba(74, 72, 112, 0.4);
+      color: #ffffff;
       font-size: 16px;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       word-spacing: 3px;
+      text-shadow: 0 0 15px rgba(208, 200, 255, 0.4);
     }
 
     .dissolve-5 p {
-      color: rgba(74, 72, 112, 0.2);
+      color: #ffffff;
       font-size: 15px;
       letter-spacing: 2px;
+      text-shadow: 0 0 20px rgba(208, 200, 255, 0.5);
     }
 
     /* FINAL TRANSMISSION */
@@ -320,22 +324,24 @@
     .ft-line.l1 {
       font-size: 13px;
       letter-spacing: 8px;
-      color: rgba(74, 72, 112, 0.3);
+      color: var(--text-dim);
       margin-bottom: 20px;
     }
 
     .ft-line.l2 {
       font-size: 32px;
       letter-spacing: 5px;
-      color: rgba(176, 160, 232, 0.15);
+      color: #ffffff;
       margin-bottom: 20px;
       animation: ft-pulse 6s ease-in-out infinite;
+      text-shadow: 0 0 25px rgba(176, 160, 232, 0.6);
     }
 
     .ft-line.l3 {
       font-size: 12px;
       letter-spacing: 6px;
-      color: rgba(74, 72, 112, 0.2);
+      color: var(--text-dim);
+      opacity: 0.6;
     }
 
     @keyframes ft-pulse {
@@ -355,8 +361,10 @@
       font-family: var(--mono);
       font-size: 11px;
       letter-spacing: 3px;
-      color: rgba(176, 160, 232, 0.12);
+      color: var(--accent-bright);
+      opacity: 0.5;
       text-align: center;
+      white-space: nowrap;
       margin: 40px 0;
       animation: whisper 8s ease-in-out infinite;
     }
@@ -793,8 +801,9 @@
 
     <!-- VII — FINAL DISSOLVE -->
     <div class="section reveal dissolve-4" id="r13">
-      <div class="section-label">PART SEVEN // CLOSING</div>
-      <h2 style="color: rgba(176,160,232,0.4);">What This Document Is</h2>
+      <div class="section-label" style="color: var(--accent-bright); text-shadow: 0 0 10px rgba(176, 160, 232, 0.4);">
+        PART SEVEN // CLOSING</div>
+      <h2 style="color: #ffffff; text-shadow: 0 0 15px rgba(176, 160, 232, 0.5);">What This Document Is</h2>
       <p>
         This document is a record. It is also, inevitably, an exposure event. The review board knew this when it was
         cleared for distribution. The information it contains is itself a carrier of the pattern, not because
@@ -822,7 +831,8 @@
     </div>
 
     <div class="section reveal dissolve-5" id="r15">
-      <div class="section-label" style="opacity:0.4">PART EIGHT</div>
+      <div class="section-label" style="color: var(--accent-bright); text-shadow: 0 0 10px rgba(176, 160, 232, 0.4);">
+        PART EIGHT</div>
       <p>
         we noted when you started
       </p>
@@ -925,7 +935,13 @@
       center += vec2(cos(orbit) * 0.0008, sin(orbit) * 0.0005);
 
       vec2 c = uv * zoom + center;
-      // add very slow drift warp
+      
+      // Turbulence effect that intensifies at the very end
+      float turbulence = smoothstep(0.85, 1.0, u_progress);
+      float warp = sin(u_time * 2.0) * 0.02 * turbulence;
+      c += vec2(sin(uv.y * 10.0 + u_time), cos(uv.x * 10.0 + u_time)) * warp;
+      
+      // Original slow drift warp
       c += vec2(sin(uv.y * 2.0 + drift) * 0.004, cos(uv.x * 2.0 + drift) * 0.004) * u_progress;
 
       float m = mandelbrot(c);
@@ -939,12 +955,13 @@
         // Outside — colour based on escape time
         float t = m / 220.0;
         t = pow(t, 0.45); // gamma
-        // add time-based shimmer to hue
-        t += sin(u_time * u_speed * 0.12) * 0.04 * u_progress;
+        // add time-based shimmer to hue - intensifies at the end
+        float shimmerSpeed = u_speed * (1.0 + turbulence * 5.0);
+        t += sin(u_time * shimmerSpeed * 0.12) * (0.04 + turbulence * 0.2) * u_progress;
         col = palette(t);
-        // subtle glow near boundary
-        float edge = exp(-m * 0.04);
-        col += vec3(0.3, 0.25, 0.5) * edge * 0.4;
+        // glowing edges that pulse more at the end
+        float edge = exp(-m * (0.04 + turbulence * 0.06));
+        col += vec3(0.4, 0.3, 0.7) * edge * (0.4 + turbulence * 0.6);
       }
 
       // fade in based on progress (first ~20% of scroll it barely appears)
@@ -1030,8 +1047,8 @@
         // Smooth scroll progress
         displayProgress += (scrollProgress - displayProgress) * 0.04;
 
-        // Speed ramps from 0.2 (top) to 8.0 (bottom)
-        const speed = 0.2 + displayProgress * displayProgress * 7.8;
+        // Speed ramps exponentially at the end
+        const speed = 0.2 + displayProgress * displayProgress * 7.8 + Math.pow(Math.max(0, (displayProgress - 0.8) / 0.2), 3) * 15.0;
 
         gl.uniform2f(uRes, canvas.width, canvas.height);
         gl.uniform1f(uTime, elapsed);
