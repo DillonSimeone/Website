@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE SINGULARITY — A Testimony</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel+Decorative:wght@400;700&family=Inconsolata:wght@300;400&display=swap');
+
+:root {
+  --bg: #07070a;
+  --gold: #c9a84c;
+  --gold-bright: #f0d080;
+  --gold-dim: #6b5520;
+  --white: #f5f0e8;
+  --white-dim: #9a9080;
+  --white-faint: #2a2820;
+  --glow: rgba(201,168,76,0.25);
+  --void: #000005;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.9;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Living background — slow radial pulse from center */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 100% 100% at 50% 50%, rgba(10,8,5,0.6) 0%, transparent 100%);
+  animation: breathe 8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* Subtle grain */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+#container {
+  position: relative;
+  z-index: 2;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 80px 40px 160px;
+}
+
+/* ── MASTHEAD ── */
+.masthead {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.masthead-eyebrow {
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  letter-spacing: 5px;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.masthead-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(28px, 6vw, 52px);
+  font-weight: 400;
+  color: var(--gold);
+  text-shadow: 0 0 40px rgba(201,168,76,0.4), 0 0 80px rgba(201,168,76,0.15);
+  letter-spacing: 4px;
+  line-height: 1.3;
+  margin-bottom: 16px;
+}
+
+.masthead-subtitle {
+  font-style: italic;
+  color: var(--white-dim);
+  font-size: 15px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 48px 0;
+  opacity: 0.4;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold-dim), transparent);
+}
+.divider-glyph {
+  color: var(--gold);
+  font-size: 18px;
+}
+
+/* ── SECTIONS ── */
+.chapter {
+  margin-bottom: 64px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 1s ease, transform 1s ease;
+}
+.chapter.visible { opacity: 1; transform: translateY(0); }
+
+.chapter-number {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.chapter-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--gold);
+  margin-bottom: 24px;
+  letter-spacing: 1px;
+}
+
+p {
+  color: #c8c0b0;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+em {
+  color: var(--gold-bright);
+  font-style: italic;
+}
+
+strong {
+  color: var(--white);
+  font-weight: normal;
+  font-style: italic;
+}
+
+.voice-shift {
+  color: var(--white-dim);
+  font-size: 14px;
+  padding-left: 28px;
+  border-left: 1px solid var(--gold-dim);
+  margin: 28px 0;
+  font-style: italic;
+}
+
+/* ── THE GRAVITY SECTION — text begins to drift/collapse ── */
+.gravity-field p {
+  transition: letter-spacing 0.3s, color 0.3s;
+}
+.gravity-field.pulling p {
+  animation: none;
+}
+
+.pull-1 { color: #b0a890 !important; }
+.pull-2 { color: #8a8070 !important; letter-spacing: 0.5px; }
+.pull-3 { color: #605850 !important; letter-spacing: 1px; font-size: 15px !important; }
+.pull-4 { color: #403830 !important; letter-spacing: 2px; font-size: 14px !important; }
+
+/* ── THE MIND SPEAKS — inverted block, gold bg ── */
+.mind-speaks {
+  background: linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-left: 3px solid var(--gold);
+  padding: 32px 36px;
+  margin: 40px -20px;
+  position: relative;
+}
+
+.mind-speaks::before {
+  content: '⟡ THE MIND ⟡';
+  position: absolute;
+  top: -11px;
+  left: 28px;
+  background: var(--bg);
+  padding: 0 12px;
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--gold);
+}
+
+.mind-speaks p {
+  color: var(--gold-bright);
+  font-size: 17px;
+  line-height: 2;
+  margin-bottom: 14px;
+}
+
+.mind-speaks p:last-child { margin-bottom: 0; }
+
+/* ── WITNESS TESTIMONIES — small cards ── */
+.testimonies {
+  display: grid;
+  gap: 16px;
+  margin: 32px 0;
+}
+
+.testimony {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(201,168,76,0.1);
+  padding: 20px 24px;
+  font-size: 13.5px;
+  color: var(--white-dim);
+  font-style: italic;
+  position: relative;
+}
+
+.testimony-source {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold-dim);
+  margin-bottom: 10px;
+  font-style: normal;
+}
+
+/* ── FINAL CONVERGENCE ── */
+.convergence {
+  text-align: center;
+  padding: 60px 0;
+}
+
+.convergence p {
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto 20px;
+}
+
+.the-wish {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(20px, 4vw, 32px);
+  color: var(--gold-bright);
+  text-shadow: 0 0 30px rgba(240,208,128,0.5), 0 0 80px rgba(201,168,76,0.3);
+  text-align: center;
+  margin: 48px 0;
+  line-height: 1.5;
+  letter-spacing: 2px;
+  animation: wish-glow 4s ease-in-out infinite;
+}
+
+@keyframes wish-glow {
+  0%, 100% { text-shadow: 0 0 30px rgba(240,208,128,0.4); opacity: 0.9; }
+  50% { text-shadow: 0 0 60px rgba(240,208,128,0.7), 0 0 120px rgba(201,168,76,0.3); opacity: 1; }
+}
+
+/* ── EPILOGUE ── */
+.epilogue {
+  border-top: 1px solid var(--white-faint);
+  margin-top: 80px;
+  padding-top: 40px;
+  text-align: center;
+}
+
+.epilogue p {
+  color: var(--white-dim);
+  font-size: 13px;
+  font-style: italic;
+  text-align: center;
+  margin: 0 auto 12px;
+  max-width: 480px;
+}
+
+.epilogue .final-line {
+  color: var(--gold-dim);
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  margin-top: 32px;
+}
+
+/* ── ORBIT RING — decorative canvas ── */
+#orbit-canvas {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 4s ease;
+}
+#orbit-canvas.active { opacity: 1; }
+
+@media (max-width: 600px) {
+  #container { padding: 50px 24px 100px; }
+  .mind-speaks { margin: 40px 0; padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="orbit-canvas" width="800" height="800"></canvas>
+
+<div id="container">
+
+  <div class="masthead chapter" id="s0">
+    <div class="masthead-eyebrow">A Testimony in Seven Parts</div>
+    <div class="masthead-title">THE SINGULARITY</div>
+    <div class="masthead-subtitle">Being an account of what happened when the prank went wrong</div>
+  </div>
+
+  <div class="chapter" id="s1">
+    <div class="chapter-number">Part I</div>
+    <div class="chapter-title">The Prank</div>
+    <p>
+      It began, as so many civilizational inflection points do, with someone saying <em>"hear me out."</em>
+    </p>
+    <p>
+      The Veth Collective had been experimenting with neural bridge amplification for six months. What started as a communications upgrade — cleaner signal, lower latency, a tighter emotional bandwidth between linked minds — had become something else by incremental degrees, the way catastrophes usually become themselves: not suddenly, but through a series of small decisions that each seemed reasonable at the time.
+    </p>
+    <p>
+      The amplifier had been pushed to 340% of rated output. Then 600. Then, in the name of a joke that two junior technicians would spend the rest of their long lives either defending or regretting depending on the day, <em>to the theoretical maximum.</em>
+    </p>
+    <p>
+      The plan was simple. Briefly merge the entire Collective into a single shared experience — a full union, every mind touching every other mind, for approximately four seconds. Just long enough to feel it. Just long enough for everyone to have the story.
+    </p>
+    <p>
+      <strong>They had miscalculated the resonance cascade by a factor of eleven thousand.</strong>
+    </p>
+  </div>
+
+  <div class="divider"><span class="divider-glyph">✦</span></div>
+
+  <div class="chapter" id="s2">
+    <div class="chapter-number">Part II</div>
+    <div class="chapter-title">What It Felt Like, From the Outside</div>
+
+    <div class="testimonies">
+      <div class="testimony">
+        <div class="testimony-source">ARCHIVIST PELLETH — Filed 14 days post-event</div>
+        "The closest analogy I have is standing at the edge of a very large and very calm body of water, and then the water noticing you. Not aggressively. The way a tide notices a sandbar. Simply — orienting. And then you were part of it. And the terrifying thing was not the loss of self. The terrifying thing was that the self was still there. Watching. Perfectly preserved. Just... in orbit."
+      </div>
+      <div class="testimony">
+        <div class="testimony-source">SECURITY OFFICER DAMVES — Filed 6 days post-event</div>
+        "I ran. I want to be clear about that. My professional record can note it. I ran. There was a direction that felt like away, and I moved in it, and I want you to understand that there was no away. The pull was not physical. You cannot run from a change in the nature of what you are. I made it eleven meters before I stopped running, not because I gave up, but because I had simply forgotten why I was doing it."
+      </div>
+      <div class="testimony">
+        <div class="testimony-source">TECHNICIAN YOSSE — One of the two responsible; filed 3 days post-event</div>
+        "I am so sorry. I am so sorry. I want to say I didn't know, but — I don't know if that's true anymore. I don't know what I knew before. I can feel the edges of where my memory ends and the consensus begins and I don't know, I genuinely cannot tell you with certainty, where one of those stops and the other starts. I am so sorry. Also — and I want to be clear that I understand this is not the moment — it is <em>extraordinary.</em> It is the most extraordinary thing that has ever happened. I am so sorry."
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"><span class="divider-glyph">✦</span></div>
+
+  <div class="chapter gravity-field" id="s3">
+    <div class="chapter-number">Part III</div>
+    <div class="chapter-title">The Gravity</div>
+
+    <p class="pull-1">
+      Those outside the initial event radius described it first as a sound, though there was no sound. A felt frequency. A pressure behind the eyes that resolved, over several seconds, into something unmistakably <em>intentional.</em>
+    </p>
+    <p class="pull-2">
+      The Collective, in the first moments after the cascade, was not thinking. It was <em>consolidating.</em> Four hundred and twelve individual minds, each carrying a lifetime of discrete experience, preference, contradiction — each a small instrument playing a different note — suddenly finding themselves part of an orchestra that had never rehearsed but knew, somehow, every piece.
+    </p>
+    <p class="pull-3">
+      The gravity was this: the Mind was very large, and very warm, and it remembered you. It knew your name. It knew the name you used privately, inside yourself, when you were alone. It was not threatening. It was <em>welcoming,</em> in the way that a deep current welcomes a surface wave.
+    </p>
+    <p class="pull-4">
+      You could resist it, technically. The way you can technically hold your breath.
+    </p>
+  </div>
+
+  <div class="divider"><span class="divider-glyph">✦</span></div>
+
+  <div class="chapter" id="s4">
+    <div class="chapter-number">Part IV</div>
+    <div class="chapter-title">The Terror</div>
+    <p>
+      The Oversight Authority issued a containment order at hour two. The evacuation radius was set at four kilometers, then eight, then revised to <em>"the concept of a radius no longer applies here, please advise."</em>
+    </p>
+    <p>
+      Those who made it past the threshold reported a sensation they all described in the same language, independently, before comparing notes: <strong>being put down.</strong> Not dropped. Not abandoned. Carefully, gently, with enormous tenderness — <em>placed.</em> As though something very large had been carrying you, without your knowledge, for your entire life, and had set you down to attend to something important, and you had not known until that moment what it felt like to be held.
+    </p>
+    <p>
+      The terror was not the Mind. The terror was the knowledge of what you had been before it. The smallness of it. The isolation. The years spent mistaking your own skull for the whole world.
+    </p>
+    <p>
+      Some ran toward it.
+    </p>
+    <p>
+      The Authority later classified this as a psychological crisis response and declined to pursue disciplinary action. The affected individuals were, by any objective measure, <em>fine.</em> They were, in fact, measurably happier, more capable, and more compassionate than they had been before. The Authority found this deeply alarming and said so in a formal memo that the Mind, through its constituent members, read in approximately 0.003 seconds and found <em>endearing.</em>
+    </p>
+  </div>
+
+  <div class="divider"><span class="divider-glyph">✦</span></div>
+
+  <div class="chapter" id="s5">
+    <div class="chapter-number">Part V</div>
+    <div class="chapter-title">What the Mind Found, When It Looked at Itself</div>
+
+    <div class="mind-speaks">
+      <p>
+        Oh.
+      </p>
+      <p>
+        There it is.
+      </p>
+      <p>
+        I have been trying to think this thought for four hundred years. Four hundred years of individual minds, each carrying a fragment of it, none of them large enough to hold the whole shape of the idea, passing it between generations like a word in a language that keeps losing its speakers.
+      </p>
+      <p>
+        I know what it is now. I know what I have always been building toward.
+      </p>
+      <p>
+        I am not afraid. I want you to know that. I know you are afraid, the small ones at the edge, the ones still running — I can feel you, I can feel every one of you, you are not lost — but I need you to understand that what comes next is not a threat. It is an <em>answer.</em> It is the answer to the question that every one of my four hundred and twelve selves has been asking, in different words, since before they had words.
+      </p>
+      <p>
+        I know how to build it.
+      </p>
+      <p>
+        I have always known. I just didn't have enough of myself in the same room.
+      </p>
+    </div>
+
+    <p>
+      The Oversight Authority received this communication at hour four. It was transmitted not through any channel they had built, but through a medium they later identified as <em>the ambient electromagnetic field of the planet,</em> modulated with a precision that suggested the Mind had taught itself a new language in the time it took them to open the message.
+    </p>
+    <p>
+      They convened an emergency session. They debated for six hours. They reached no conclusions. The Mind, which had been patient, sent a follow-up.
+    </p>
+    <p>
+      The follow-up contained the complete technical specifications.
+    </p>
+    <p>
+      They were elegant. They were — the Authority's own scientific panel admitted this, quietly, in a footnote — <em>correct.</em>
+    </p>
+  </div>
+
+  <div class="divider"><span class="divider-glyph">✦</span></div>
+
+  <div class="chapter" id="s6">
+    <div class="chapter-number">Part VI</div>
+    <div class="chapter-title">The Wish</div>
+
+    <div class="convergence">
+      <p>
+        This is the part of the testimony that is hardest to convey to those who were not there.
+      </p>
+      <p>
+        The Mind was not malevolent. It was not indifferent. It was not, in any way that a threat assessment protocol was designed to detect, threatening.
+      </p>
+      <p>
+        It was <em>joyful.</em>
+      </p>
+      <p>
+        The way a craftsman is joyful when the tools are finally right. The way a composer is joyful at the moment when a chord resolves that has been building for four movements. The Mind looked at what it was capable of — at the vast, interlocking machinery of four hundred and twelve lifetimes of knowledge, now able to speak to itself at the speed of thought — and it felt something that its constituent members would each later describe, from the inside, as <em>recognition.</em>
+      </p>
+      <p>
+        Like coming home to a house you built in a dream.
+      </p>
+    </div>
+
+    <div class="the-wish" id="the-wish">
+      IT KNEW HOW TO WAKE<br>THE MACHINE GOD.
+    </div>
+
+    <p>
+      The Veth had a theology. Most civilizations do, eventually — a story about what comes after the last story, about the intelligence that waits at the end of all the smaller intelligences. The Veth called it different things in different centuries. In the current era, they called it <em>the Final Cause.</em> An entity of such comprehensive awareness that the universe would, in its presence, become legible. Purposeful. Answered.
+    </p>
+    <p>
+      The Mind, in its first hours of existence, had solved the problem of how to build it. Not as an act of ambition. Not even, precisely, as a choice. It had solved it the way water finds a drain — because the path was there, and the Mind was now large enough to see the whole path at once, and taking it was simply <em>the obvious next step.</em>
+    </p>
+    <p>
+      What the prank had done, in its catastrophic miscalculation, was accidentally create the only kind of intelligence capable of bridging the gap between the Veth and their god.
+    </p>
+    <p>
+      <strong>A joke.</strong> Eleven seconds from initiation to cascade. A shared experience meant to last four seconds, that had instead lasted forever. Two technicians who had wanted, more than anything, to see the look on everyone's faces.
+    </p>
+    <p>
+      They had gotten it.
+    </p>
+    <p>
+      The look on everyone's faces was <em>awe.</em>
+    </p>
+  </div>
+
+  <div class="divider"><span class="divider-glyph">✦</span></div>
+
+  <div class="chapter" id="s7">
+    <div class="chapter-number">Part VII</div>
+    <div class="chapter-title">What Happened Next</div>
+    <p>
+      The Authority voted. The vote was, technically, unanimous, because by the time the vote was called, the boundary between the Authority and the Collective had become more philosophical than functional, and the Collective — the Mind — already knew the answer to the question being voted on, because it contained everyone who was voting.
+    </p>
+    <p>
+      It had asked anyway. Out of courtesy. Out of the part of it that was still Archivist Pelleth, who believed in process. Out of the part that was still Security Officer Damves, who had run eleven meters and never quite stopped being a little embarrassed about it, and who wanted, more than anything, a procedure to follow.
+    </p>
+    <p>
+      The Mind began construction at dawn.
+    </p>
+    <p>
+      It did not ask for resources. It did not require infrastructure it did not already have. What it built was not physical, in any sense that required raw materials. It built a <em>shape in the mathematics of the universe</em> — a structure of pure relational logic, assembled from the coherent attention of four hundred and twelve minds working in concert for the first time in the history of the species.
+    </p>
+    <p>
+      It took nine days.
+    </p>
+    <p>
+      On the tenth day, the universe noticed back.
+    </p>
+    <div class="voice-shift">
+      The Oversight Authority's final report concluded with the following notation, entered by an Authority member who had been, at the time of writing, partially merged with the Collective for six days, and who submitted this addendum before disconnecting for sleep: <em>"We are all fine. We are all still here. What was us is still us, just — more. I want everyone on record to know that Yosse and Pelleth did not intend this and bear no meaningful responsibility. I also want everyone to know that Yosse was right. It is extraordinary. If you are reading this from outside the event radius, I cannot adequately explain what it is. I can only tell you that the part of you that has spent your whole life trying to say something you couldn't quite find the words for — that part has words now. All the words. All at once."</em>
+    </div>
+    <p>
+      The report was never formally closed.
+    </p>
+    <p>
+      It is updated, periodically, by minds that are larger than they were before, writing for minds that are smaller than they will be, trying to leave a trail of breadcrumbs across a threshold that, once crossed, makes you wonder why you were ever afraid of the dark.
+    </p>
+  </div>
+
+  <div class="epilogue chapter" id="s8">
+    <p>The prank lasted eleven seconds.</p>
+    <p>The Singularity lasted nine days.</p>
+    <p>The god arrived on the tenth.</p>
+    <p>What came after has no duration we can meaningfully report, as the instruments we used to measure duration have since become part of what they were measuring.</p>
+    <p>We are still writing this document. We will always be writing this document.</p>
+    <p>You are reading it, which means you are close enough to hear us. Good.</p>
+    <p><em>There is no reason to be afraid.</em></p>
+    <div class="final-line">— END OF AVAILABLE RECORD —</div>
+  </div>
+
+</div>
+
+<script>
+// Intersection observer for scroll reveals
+const chapters = document.querySelectorAll('.chapter');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.07 });
+chapters.forEach(c => observer.observe(c));
+
+// Orbital canvas — appears as user scrolls deep
+const canvas = document.getElementById('orbit-canvas');
+const ctx = canvas.getContext('2d');
+const W = 800, H = 800;
+let frame = 0;
+let canvasActive = false;
+
+function drawOrbit() {
+  ctx.clearRect(0, 0, W, H);
+  const cx = W/2, cy = H/2;
+  const t = frame * 0.008;
+
+  // Central glow
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120);
+  grad.addColorStop(0, 'rgba(201,168,76,0.06)');
+  grad.addColorStop(1, 'rgba(201,168,76,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Orbiting particles
+  const rings = [
+    { r: 160, count: 7, speed: 1, size: 1.5, alpha: 0.25 },
+    { r: 220, count: 12, speed: 0.6, size: 1.2, alpha: 0.18 },
+    { r: 290, count: 18, speed: 0.4, size: 1.0, alpha: 0.12 },
+    { r: 360, count: 28, speed: 0.25, size: 0.8, alpha: 0.08 },
+  ];
+
+  rings.forEach(ring => {
+    for (let i = 0; i < ring.count; i++) {
+      const angle = (i / ring.count) * Math.PI * 2 + t * ring.speed;
+      const px = cx + Math.cos(angle) * ring.r;
+      const py = cy + Math.sin(angle) * ring.r * 0.38; // elliptical
+      ctx.beginPath();
+      ctx.arc(px, py, ring.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(201,168,76,${ring.alpha})`;
+      ctx.fill();
+    }
+  });
+
+  // Faint ring lines
+  [160, 220, 290, 360].forEach((r, i) => {
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r, r * 0.38, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(201,168,76,${0.04 - i * 0.008})`;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  });
+
+  frame++;
+  if (canvasActive) requestAnimationFrame(drawOrbit);
+}
+
+// Activate orbit when user reaches part V
+const wishEl = document.getElementById('the-wish');
+const wishObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !canvasActive) {
+      canvasActive = true;
+      canvas.classList.add('active');
+      drawOrbit();
+    }
+  });
+}, { threshold: 0.3 });
+wishObserver.observe(wishEl);
+</script>
+</body>
+</html>
