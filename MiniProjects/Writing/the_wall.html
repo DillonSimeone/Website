@@ -1,1050 +1,1300 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SECTOR 7-NULL — CONTAINMENT STATUS: ACTIVE</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:ital,wght@0,300;0,400;1,300;1,400&family=Share+Tech+Mono&display=swap');
-
-:root {
-  --void: #080a08;
-  --concrete: #131613;
-  --concrete-mid: #1c201b;
-  --concrete-light: #252923;
-  --crack: #4aff6a;
-  --crack-dim: #2a8c3f;
-  --crack-pale: #8affaa;
-  --crack-toxic: #aaff44;
-  --sick: #6aff44;
-  --warning: #d4a017;
-  --warning-dim: #8a6810;
-  --danger: #cc2200;
-  --text-primary: #b8c4b0;
-  --text-dim: #6a7a62;
-  --text-ghost: #3a4535;
-  --stencil: #e8ead0;
-  --wet: rgba(74,255,106,0.06);
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--void);
-  color: var(--text-primary);
-  font-family: 'Barlow', sans-serif;
-  font-weight: 300;
-  font-size: 16px;
-  line-height: 1.8;
-  min-height: 100vh;
-  overflow-x: hidden;
-  cursor: default;
-}
-
-/* Concrete texture overlay */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      transparent 0px,
-      transparent 3px,
-      rgba(0,0,0,0.03) 3px,
-      rgba(0,0,0,0.03) 4px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent 0px,
-      transparent 7px,
-      rgba(0,0,0,0.02) 7px,
-      rgba(0,0,0,0.02) 8px
-    );
-  pointer-events: none;
-  z-index: 200;
-}
-
-/* The sick light bleeding from below */
-body::after {
-  content: '';
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 35vh;
-  background: radial-gradient(ellipse at 50% 120%, rgba(74,255,106,0.04) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 1;
-  animation: breathe 8s ease-in-out infinite;
-}
-
-@keyframes breathe {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-/* ============ LAYOUT ============ */
-#wrapper {
-  position: relative;
-  z-index: 2;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 0 200px;
-}
-
-/* ============ HEADER ============ */
-.site-header {
-  background: var(--concrete);
-  border-bottom: 3px solid var(--crack-dim);
-  padding: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 40px rgba(74,255,106,0.08);
-}
-
-.header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 32px;
-  border-bottom: 1px solid rgba(74,255,106,0.1);
-}
-
-.header-id {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  color: var(--crack-dim);
-  letter-spacing: 2px;
-}
-
-.status-light {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  color: var(--crack);
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--crack);
-  box-shadow: 0 0 8px var(--crack), 0 0 16px rgba(74,255,106,0.5);
-  animation: status-pulse 2s ease-in-out infinite;
-}
-
-@keyframes status-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--crack), 0 0 16px rgba(74,255,106,0.5); }
-  50% { opacity: 0.5; box-shadow: 0 0 4px var(--crack-dim); }
-}
-
-.header-title-block {
-  padding: 20px 32px 18px;
-}
-
-.sector-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 11px;
-  letter-spacing: 8px;
-  color: var(--crack-dim);
-  margin-bottom: 4px;
-  text-transform: uppercase;
-}
-
-.main-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 36px;
-  letter-spacing: 3px;
-  color: var(--stencil);
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.main-title .accent { color: var(--crack); }
-
-.sub-title {
-  margin-top: 6px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  color: var(--text-dim);
-  letter-spacing: 1px;
-}
-
-/* ============ CONTENT BLOCKS ============ */
-.content {
-  padding: 0 32px;
-}
-
-/* Crack divider */
-.crack-line {
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, var(--crack-dim) 20%, var(--crack) 50%, var(--crack-dim) 80%, transparent 100%);
-  margin: 48px 0;
-  position: relative;
-}
-
-.crack-line::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30%;
-  height: 1px;
-  background: var(--crack-pale);
-  filter: blur(2px);
-  opacity: 0.5;
-}
-
-/* Section marker */
-.section-marker {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 52px 0 24px;
-  opacity: 0;
-  transform: translateX(-8px);
-  transition: all 0.7s ease;
-}
-.section-marker.visible { opacity: 1; transform: translateX(0); }
-
-.marker-num {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 48px;
-  color: var(--crack-dim);
-  line-height: 1;
-  opacity: 0.4;
-  min-width: 52px;
-}
-
-.marker-text {
-  border-left: 2px solid var(--crack-dim);
-  padding-left: 14px;
-}
-
-.marker-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 3px;
-  color: var(--stencil);
-  text-transform: uppercase;
-  line-height: 1.1;
-}
-
-.marker-sub {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  color: var(--text-dim);
-  letter-spacing: 2px;
-  margin-top: 3px;
-}
-
-/* Body text blocks */
-.block {
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.9s ease, transform 0.9s ease;
-  margin-bottom: 36px;
-}
-.block.visible { opacity: 1; transform: translateY(0); }
-
-p {
-  color: var(--text-primary);
-  font-size: 16px;
-  line-height: 1.85;
-  margin-bottom: 20px;
-  font-weight: 300;
-}
-
-em { color: #d8e8d0; font-style: italic; }
-strong {
-  color: var(--stencil);
-  font-weight: 600;
-}
-
-.toxic { color: var(--crack); }
-.warn { color: var(--warning); }
-.danger-text { color: var(--danger); }
-
-/* Pull quote — stenciled on concrete */
-.pull-quote {
-  border-left: 4px solid var(--crack);
-  background: var(--concrete-mid);
-  padding: 24px 28px;
-  margin: 32px 0;
-  position: relative;
-}
-
-.pull-quote::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(74,255,106,0.05) 0%, transparent 100%);
-}
-
-.pull-quote p {
-  color: var(--text-primary);
-  font-size: 15px;
-  font-style: italic;
-  margin-bottom: 8px;
-  position: relative;
-}
-
-.pull-quote cite {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  color: var(--crack-dim);
-  letter-spacing: 2px;
-  display: block;
-  margin-top: 4px;
-}
-
-/* Warning box */
-.warning-box {
-  border: 1px solid var(--warning-dim);
-  border-left: 4px solid var(--warning);
-  background: rgba(212,160,23,0.05);
-  padding: 18px 22px;
-  margin: 28px 0;
-}
-
-.warning-box .w-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 4px;
-  color: var(--warning);
-  margin-bottom: 8px;
-}
-
-.warning-box p {
-  color: #b09860;
-  font-size: 14px;
-  margin-bottom: 0;
-}
-
-/* CONTAMINATION SECTION — text starts decaying */
-.contaminated p {
-  color: #8aaa80;
-}
-.contaminated em { color: var(--crack-pale); }
-.contaminated strong { color: var(--crack-toxic); }
-
-/* The BREACH section */
-.breach-header {
-  text-align: center;
-  padding: 60px 20px;
-  position: relative;
-  overflow: hidden;
-}
-
-.breach-header::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 50%, rgba(74,255,106,0.07) 0%, transparent 70%);
-  animation: breach-breathe 5s ease-in-out infinite;
-}
-
-@keyframes breach-breathe {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
-.breach-word {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  text-transform: uppercase;
-  display: block;
-  line-height: 1;
-  position: relative;
-}
-
-.breach-word.b1 {
-  font-size: 12px;
-  letter-spacing: 10px;
-  color: var(--text-dim);
-  margin-bottom: 16px;
-}
-
-.breach-word.b2 {
-  font-size: 72px;
-  letter-spacing: 6px;
-  color: var(--crack);
-  text-shadow:
-    0 0 20px rgba(74,255,106,0.8),
-    0 0 60px rgba(74,255,106,0.4),
-    0 0 120px rgba(74,255,106,0.15);
-  animation: breach-pulse 3s ease-in-out infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes breach-pulse {
-  0%, 100% { text-shadow: 0 0 20px rgba(74,255,106,0.8), 0 0 60px rgba(74,255,106,0.4); }
-  50% { text-shadow: 0 0 40px rgba(74,255,106,1), 0 0 80px rgba(74,255,106,0.6), 0 0 160px rgba(74,255,106,0.2); letter-spacing: 8px; }
-}
-
-.breach-word.b3 {
-  font-size: 12px;
-  letter-spacing: 6px;
-  color: var(--crack-dim);
-}
-
-/* DEGRADED sections — text increasingly corrupted */
-.degraded-1 p {
-  color: #6a8a62;
-  font-size: 15.5px;
-}
-
-.degraded-2 p {
-  color: #4a6a42;
-  font-size: 15px;
-  letter-spacing: 0.3px;
-}
-
-.degraded-3 p {
-  color: #3a5535;
-  font-size: 14.5px;
-  letter-spacing: 0.5px;
-  word-spacing: 2px;
-}
-
-/* Corrupted text effect */
-.corrupt {
-  display: inline;
-  color: var(--crack-dim);
-  position: relative;
-}
-
-.corrupt::after {
-  content: attr(data-alt);
-  position: absolute;
-  left: 0;
-  top: 0;
-  color: var(--crack);
-  opacity: 0;
-  animation: corrupt-flash 7s ease-in-out infinite;
-}
-
-@keyframes corrupt-flash {
-  0%, 88%, 100% { opacity: 0; }
-  90%, 94% { opacity: 0.7; }
-}
-
-/* Transmission fragments */
-.transmission {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 12px;
-  color: var(--crack-dim);
-  border: 1px solid rgba(74,255,106,0.15);
-  background: rgba(74,255,106,0.03);
-  padding: 16px 20px;
-  margin: 24px 0;
-  line-height: 1.7;
-}
-
-.transmission .t-header {
-  color: var(--crack);
-  letter-spacing: 2px;
-  margin-bottom: 10px;
-  font-size: 10px;
-}
-
-.transmission .t-body {
-  color: #5a7a52;
-}
-
-.transmission .t-corrupt {
-  color: var(--crack-toxic);
-  animation: t-flicker 6s step-end infinite;
-}
-
-@keyframes t-flicker {
-  0%, 80%, 100% { opacity: 1; }
-  82%, 84% { opacity: 0.2; }
-  86% { opacity: 1; }
-  88%, 90% { opacity: 0.1; }
-}
-
-/* THE WALL section */
-.wall-section {
-  background: var(--concrete);
-  border-top: 3px solid var(--crack-dim);
-  border-bottom: 3px solid var(--crack-dim);
-  padding: 40px 32px;
-  margin: 48px -32px;
-  position: relative;
-  overflow: hidden;
-}
-
-.wall-section::before {
-  content: 'SECTOR BOUNDARY';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-12deg);
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 120px;
-  color: rgba(74,255,106,0.03);
-  white-space: nowrap;
-  letter-spacing: 10px;
-  pointer-events: none;
-}
-
-.wall-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 13px;
-  letter-spacing: 8px;
-  color: var(--crack);
-  text-transform: uppercase;
-  margin-bottom: 24px;
-}
-
-/* Crack visualization */
-.crack-map {
-  position: relative;
-  height: 80px;
-  margin: 28px 0;
-  overflow: hidden;
-}
-
-.crack-svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* Status grid */
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-  margin: 28px 0;
-}
-
-.status-item {
-  background: var(--concrete-mid);
-  border: 1px solid rgba(74,255,106,0.1);
-  padding: 12px 14px;
-  position: relative;
-}
-
-.status-item.critical {
-  border-color: rgba(204,34,0,0.3);
-  background: rgba(204,34,0,0.05);
-}
-
-.status-item.warning {
-  border-color: rgba(212,160,23,0.25);
-  background: rgba(212,160,23,0.04);
-}
-
-.s-label {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 9px;
-  color: var(--text-ghost);
-  letter-spacing: 2px;
-  margin-bottom: 4px;
-}
-
-.s-value {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 600;
-  font-size: 16px;
-  color: var(--crack);
-  letter-spacing: 1px;
-}
-
-.status-item.critical .s-value { color: var(--danger); }
-.status-item.warning .s-value { color: var(--warning); }
-
-/* The final section */
-.terminal-section {
-  padding: 60px 0 40px;
-}
-
-.terminal-section p {
-  color: #3a5535;
-  font-size: 15px;
-}
-
-.terminal-section strong { color: #4a6a42; }
-
-/* The closing statement */
-.closing {
-  background: linear-gradient(180deg, transparent 0%, rgba(74,255,106,0.03) 100%);
-  border-top: 1px solid rgba(74,255,106,0.15);
-  padding: 48px 32px;
-  margin: 0 -32px -200px;
-  text-align: center;
-  position: relative;
-}
-
-.closing-main {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 22px;
-  letter-spacing: 4px;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  margin-bottom: 16px;
-  line-height: 1.4;
-}
-
-.closing-sub {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  color: var(--text-ghost);
-  letter-spacing: 2px;
-  line-height: 2;
-}
-
-.closing-sub .live {
-  color: var(--crack-dim);
-  animation: live-blink 3s step-end infinite;
-}
-
-@keyframes live-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0.2; }
-}
-
-/* Crack particles on scroll */
-.crack-particle {
-  position: fixed;
-  width: 1px;
-  background: linear-gradient(180deg, transparent 0%, var(--crack) 50%, transparent 100%);
-  pointer-events: none;
-  z-index: 300;
-  opacity: 0;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--void); }
-::-webkit-scrollbar-thumb { background: var(--crack-dim); }
-
-@media (max-width: 600px) {
-  .content { padding: 0 20px; }
-  .wall-section { padding: 32px 20px; margin: 40px -20px; }
-  .closing { padding: 40px 20px; margin: 0 -20px -200px; }
-  .main-title { font-size: 26px; }
-  .breach-word.b2 { font-size: 48px; }
-  .header-title-block { padding: 16px 20px 14px; }
-  .header-top { padding: 10px 20px; }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SECTOR 7-NULL | CONTAINMENT STATUS: ACTIVE</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:ital,wght@0,300;0,400;1,300;1,400&family=Share+Tech+Mono&display=swap');
+
+    :root {
+      --void: #080a08;
+      --concrete: #131613;
+      --concrete-mid: #1c201b;
+      --concrete-light: #252923;
+      --crack: #4aff6a;
+      --crack-dim: #2a8c3f;
+      --crack-pale: #8affaa;
+      --crack-toxic: #aaff44;
+      --sick: #6aff44;
+      --warning: #d4a017;
+      --warning-dim: #8a6810;
+      --danger: #cc2200;
+      --text-primary: #b8c4b0;
+      --text-dim: #6a7a62;
+      --text-ghost: #3a4535;
+      --stencil: #e8ead0;
+      --wet: rgba(74, 255, 106, 0.06);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--void);
+      color: var(--text-primary);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 300;
+      font-size: 16px;
+      line-height: 1.8;
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* Concrete texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(90deg,
+          transparent 0px,
+          transparent 3px,
+          rgba(0, 0, 0, 0.03) 3px,
+          rgba(0, 0, 0, 0.03) 4px),
+        repeating-linear-gradient(0deg,
+          transparent 0px,
+          transparent 7px,
+          rgba(0, 0, 0, 0.02) 7px,
+          rgba(0, 0, 0, 0.02) 8px);
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    /* The sick light bleeding from below */
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 35vh;
+      background: radial-gradient(ellipse at 50% 120%, rgba(74, 255, 106, 0.04) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+      animation: breathe 8s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+
+      0%,
+      100% {
+        opacity: 0.6;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    /* ============ LAYOUT ============ */
+    #wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 0 200px;
+    }
+
+    /* ============ HEADER ============ */
+    .site-header {
+      background: var(--concrete);
+      border-bottom: 3px solid var(--crack-dim);
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 40px rgba(74, 255, 106, 0.08);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 32px;
+      border-bottom: 1px solid rgba(74, 255, 106, 0.1);
+    }
+
+    .header-id {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--crack-dim);
+      letter-spacing: 2px;
+    }
+
+    .status-light {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--crack);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--crack);
+      box-shadow: 0 0 8px var(--crack), 0 0 16px rgba(74, 255, 106, 0.5);
+      animation: status-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes status-pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        box-shadow: 0 0 8px var(--crack), 0 0 16px rgba(74, 255, 106, 0.5);
+      }
+
+      50% {
+        opacity: 0.5;
+        box-shadow: 0 0 4px var(--crack-dim);
+      }
+    }
+
+    .header-title-block {
+      padding: 20px 32px 18px;
+    }
+
+    .sector-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: 8px;
+      color: var(--crack-dim);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .main-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 36px;
+      letter-spacing: 3px;
+      color: var(--stencil);
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .main-title .accent {
+      color: var(--crack);
+    }
+
+    .sub-title {
+      margin-top: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+
+    /* ============ CONTENT BLOCKS ============ */
+    .content {
+      padding: 0 32px;
+    }
+
+    /* Crack divider */
+    .crack-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--crack-dim) 20%, var(--crack) 50%, var(--crack-dim) 80%, transparent 100%);
+      margin: 48px 0;
+      position: relative;
+    }
+
+    .crack-line::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30%;
+      height: 1px;
+      background: var(--crack-pale);
+      filter: blur(2px);
+      opacity: 0.5;
+    }
+
+    /* Section marker */
+    .section-marker {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 52px 0 24px;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: all 0.7s ease;
+    }
+
+    .section-marker.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .marker-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 48px;
+      color: var(--crack-dim);
+      line-height: 1;
+      opacity: 0.4;
+      min-width: 52px;
+    }
+
+    .marker-text {
+      border-left: 2px solid var(--crack-dim);
+      padding-left: 14px;
+    }
+
+    .marker-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: var(--stencil);
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .marker-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      margin-top: 3px;
+    }
+
+    /* Body text blocks */
+    .block {
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+      margin-bottom: 36px;
+    }
+
+    .block.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    p {
+      color: var(--text-primary);
+      font-size: 16px;
+      line-height: 1.85;
+      margin-bottom: 20px;
+      font-weight: 300;
+    }
+
+    em {
+      color: #d8e8d0;
+      font-style: italic;
+    }
+
+    strong {
+      color: var(--stencil);
+      font-weight: 600;
+    }
+
+    .toxic {
+      color: var(--crack);
+    }
+
+    .warn {
+      color: var(--warning);
+    }
+
+    .danger-text {
+      color: var(--danger);
+    }
+
+    /* Pull quote: stenciled on concrete */
+    .pull-quote {
+      border-left: 4px solid var(--crack);
+      background: var(--concrete-mid);
+      padding: 24px 28px;
+      margin: 32px 0;
+      position: relative;
+    }
+
+    .pull-quote::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(74, 255, 106, 0.05) 0%, transparent 100%);
+    }
+
+    .pull-quote p {
+      color: var(--text-primary);
+      font-size: 15px;
+      font-style: italic;
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    .pull-quote cite {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--crack-dim);
+      letter-spacing: 2px;
+      display: block;
+      margin-top: 4px;
+    }
+
+    /* Warning box */
+    .warning-box {
+      border: 1px solid var(--warning-dim);
+      border-left: 4px solid var(--warning);
+      background: rgba(212, 160, 23, 0.05);
+      padding: 18px 22px;
+      margin: 28px 0;
+    }
+
+    .warning-box .w-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--warning);
+      margin-bottom: 8px;
+    }
+
+    .warning-box p {
+      color: #b09860;
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+
+    /* CONTAMINATION SECTION: text starts decaying */
+    .contaminated p {
+      color: #8aaa80;
+    }
+
+    .contaminated em {
+      color: var(--crack-pale);
+    }
+
+    .contaminated strong {
+      color: var(--crack-toxic);
+    }
+
+    /* The BREACH section */
+    .breach-header {
+      text-align: center;
+      padding: 60px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .breach-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(74, 255, 106, 0.07) 0%, transparent 70%);
+      animation: breach-breathe 5s ease-in-out infinite;
+    }
+
+    @keyframes breach-breathe {
+
+      0%,
+      100% {
+        opacity: 0.5;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+    }
+
+    .breach-word {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      display: block;
+      line-height: 1;
+      position: relative;
+    }
+
+    .breach-word.b1 {
+      font-size: 12px;
+      letter-spacing: 10px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    .breach-word.b2 {
+      font-size: 72px;
+      letter-spacing: 6px;
+      color: var(--crack);
+      text-shadow:
+        0 0 20px rgba(74, 255, 106, 0.8),
+        0 0 60px rgba(74, 255, 106, 0.4),
+        0 0 120px rgba(74, 255, 106, 0.15);
+      animation: breach-pulse 3s ease-in-out infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes breach-pulse {
+
+      0%,
+      100% {
+        text-shadow: 0 0 20px rgba(74, 255, 106, 0.8), 0 0 60px rgba(74, 255, 106, 0.4);
+      }
+
+      50% {
+        text-shadow: 0 0 40px rgba(74, 255, 106, 1), 0 0 80px rgba(74, 255, 106, 0.6), 0 0 160px rgba(74, 255, 106, 0.2);
+        letter-spacing: 8px;
+      }
+    }
+
+    .breach-word.b3 {
+      font-size: 12px;
+      letter-spacing: 6px;
+      color: var(--crack-dim);
+    }
+
+    /* DEGRADED sections: text increasingly corrupted */
+    .degraded-1 p {
+      color: #6a8a62;
+      font-size: 15.5px;
+    }
+
+    .degraded-2 p {
+      color: #4a6a42;
+      font-size: 15px;
+      letter-spacing: 0.3px;
+    }
+
+    .degraded-3 p {
+      color: #3a5535;
+      font-size: 14.5px;
+      letter-spacing: 0.5px;
+      word-spacing: 2px;
+    }
+
+    /* Corrupted text effect */
+    .corrupt {
+      display: inline;
+      color: var(--crack-dim);
+      position: relative;
+    }
+
+    .corrupt::after {
+      content: attr(data-alt);
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--crack);
+      opacity: 0;
+      animation: corrupt-flash 7s ease-in-out infinite;
+    }
+
+    @keyframes corrupt-flash {
+
+      0%,
+      88%,
+      100% {
+        opacity: 0;
+      }
+
+      90%,
+      94% {
+        opacity: 0.7;
+      }
+    }
+
+    /* Transmission fragments */
+    .transmission {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: var(--crack-dim);
+      border: 1px solid rgba(74, 255, 106, 0.15);
+      background: rgba(74, 255, 106, 0.03);
+      padding: 16px 20px;
+      margin: 24px 0;
+      line-height: 1.7;
+    }
+
+    .transmission .t-header {
+      color: var(--crack);
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      font-size: 10px;
+    }
+
+    .transmission .t-body {
+      color: #5a7a52;
+    }
+
+    .transmission .t-corrupt {
+      color: var(--crack-toxic);
+      animation: t-flicker 6s step-end infinite;
+    }
+
+    @keyframes t-flicker {
+
+      0%,
+      80%,
+      100% {
+        opacity: 1;
+      }
+
+      82%,
+      84% {
+        opacity: 0.2;
+      }
+
+      86% {
+        opacity: 1;
+      }
+
+      88%,
+      90% {
+        opacity: 0.1;
+      }
+    }
+
+    /* THE WALL section */
+    .wall-section {
+      background: var(--concrete);
+      border-top: 3px solid var(--crack-dim);
+      border-bottom: 3px solid var(--crack-dim);
+      padding: 40px 32px;
+      margin: 48px -32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wall-section::before {
+      content: 'SECTOR BOUNDARY';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-12deg);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 120px;
+      color: rgba(74, 255, 106, 0.03);
+      white-space: nowrap;
+      letter-spacing: 10px;
+      pointer-events: none;
+    }
+
+    .wall-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: 8px;
+      color: var(--crack);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    /* Crack visualization */
+    .crack-map {
+      position: relative;
+      height: 80px;
+      margin: 28px 0;
+      overflow: hidden;
+    }
+
+    .crack-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Status grid */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 28px 0;
+    }
+
+    .status-item {
+      background: var(--concrete-mid);
+      border: 1px solid rgba(74, 255, 106, 0.1);
+      padding: 12px 14px;
+      position: relative;
+    }
+
+    .status-item.critical {
+      border-color: rgba(204, 34, 0, 0.3);
+      background: rgba(204, 34, 0, 0.05);
+    }
+
+    .status-item.warning {
+      border-color: rgba(212, 160, 23, 0.25);
+      background: rgba(212, 160, 23, 0.04);
+    }
+
+    .s-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--text-ghost);
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    .s-value {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--crack);
+      letter-spacing: 1px;
+    }
+
+    .status-item.critical .s-value {
+      color: var(--danger);
+    }
+
+    .status-item.warning .s-value {
+      color: var(--warning);
+    }
+
+    /* The final section */
+    .terminal-section {
+      padding: 60px 0 40px;
+    }
+
+    .terminal-section p {
+      color: #3a5535;
+      font-size: 15px;
+    }
+
+    .terminal-section strong {
+      color: #4a6a42;
+    }
+
+    /* The closing statement */
+    .closing {
+      background: linear-gradient(180deg, transparent 0%, rgba(74, 255, 106, 0.03) 100%);
+      border-top: 1px solid rgba(74, 255, 106, 0.15);
+      padding: 48px 32px;
+      margin: 0 -32px -200px;
+      text-align: center;
+      position: relative;
+    }
+
+    .closing-main {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: 4px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .closing-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--text-ghost);
+      letter-spacing: 2px;
+      line-height: 2;
+    }
+
+    .closing-sub .live {
+      color: var(--crack-dim);
+      animation: live-blink 3s step-end infinite;
+    }
+
+    @keyframes live-blink {
+
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: 0.2;
+      }
+    }
+
+    /* Crack particles on scroll */
+    .crack-particle {
+      position: fixed;
+      width: 1px;
+      background: linear-gradient(180deg, transparent 0%, var(--crack) 50%, transparent 100%);
+      pointer-events: none;
+      z-index: 300;
+      opacity: 0;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--void);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--crack-dim);
+    }
+
+    @media (max-width: 600px) {
+      .content {
+        padding: 0 20px;
+      }
+
+      .wall-section {
+        padding: 32px 20px;
+        margin: 40px -20px;
+      }
+
+      .closing {
+        padding: 40px 20px;
+        margin: 0 -20px -200px;
+      }
+
+      .main-title {
+        font-size: 26px;
+      }
+
+      .breach-word.b2 {
+        font-size: 48px;
+      }
+
+      .header-title-block {
+        padding: 16px 20px 14px;
+      }
+
+      .header-top {
+        padding: 10px 20px;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="wrapper">
+  <div id="wrapper">
 
-  <!-- STICKY HEADER -->
-  <div class="site-header">
-    <div class="header-top">
-      <span class="header-id">DOC-REF // CONTAINMENT-AUTHORITY-9 // EYES-ONLY</span>
-      <span class="status-light"><span class="status-dot"></span>WALL INTEGRITY: ACTIVE</span>
-    </div>
-    <div class="header-title-block">
-      <div class="sector-label">Sector 7-Null Containment Brief</div>
-      <div class="main-title">THE <span class="accent">LIZARD</span> THAT ATE THE SKY</div>
-      <div class="sub-title">On the origin, nature, and permanent quarantine of the Null Sector event // Year 0 through present</div>
-    </div>
-  </div>
-
-  <div class="content">
-
-    <!-- SECTION 1 -->
-    <div class="section-marker" id="m1">
-      <div class="marker-num">01</div>
-      <div class="marker-text">
-        <div class="marker-title">Before</div>
-        <div class="marker-sub">// the ordinary world // one woman // what nobody understood</div>
+    <!-- STICKY HEADER -->
+    <div class="site-header">
+      <div class="header-top">
+        <span class="header-id">DOC-REF // CONTAINMENT-AUTHORITY-9 // EYES-ONLY</span>
+        <span class="status-light"><span class="status-dot"></span>WALL INTEGRITY: ACTIVE</span>
+      </div>
+      <div class="header-title-block">
+        <div class="sector-label">Sector 7-Null Containment Brief</div>
+        <div class="main-title">THE <span class="accent">LIZARD</span> THAT ATE THE SKY</div>
+        <div class="sub-title">On the origin, nature, and permanent quarantine of the Null Sector event // Year 0
+          through present</div>
       </div>
     </div>
 
-    <div class="block" id="b1">
-      <p>
-        Her name was <strong>Dara Osei</strong>. She was thirty-one years old. She worked in environmental monitoring aboard the Hegemony joint research platform <em>Unbroken Meridian</em>, cataloguing atmospheric data from gas giant surveys. She was, by all accounts, unremarkable. Good at her work. Quiet at meals. She kept a small cactus on her workstation desk. She was afraid of nothing in particular.
-      </p>
-      <p>
-        The Qeth'vara who worked alongside her had been conducting psychic cultural exchange programs for forty years without incident. The Qeth'vara were old practitioners — cautious, methodical, extensively documented in their approach. They did not improvise. They had protocols. They had redundancies. Their neural bridge interface had been certified for interspecies contact eleven times by three independent bodies.
-      </p>
-      <p>
-        What none of those certifications had tested, because no one had thought to test it, was what happened when the subject was not, in the relevant sense, <em>in control</em>.
-      </p>
-    </div>
+    <div class="content">
 
-    <div class="block" id="b2">
-      <p>
-        There is a structure in the human brain so old it does not have a formal name in any human language, only a common one: the <em>lizard brain</em>. The brainstem. The amygdala's older cousins. The deep infrastructure. It predates the cortex by hundreds of millions of years. It predates language. It predates memory. It predates, arguably, the concept of individual identity.
-      </p>
-      <p>
-        It runs on one program. The program has no name because the thing that runs it has never been in a position to name anything. It is four hundred million years of <em>do not die</em>, compressed into meat, running below every thought a human has ever had.
-      </p>
-      <p>
-        The cortex — the "human" part, the part that catalogued gas giants and kept a cactus — sits on top of this structure the way a rider sits on a very large, very old animal that has agreed, provisionally, to be ridden. The rider has the reins. The rider steers. But the rider's weight is, in the biological scheme of things, recent. Experimental. The animal beneath has not forgotten what it was before the rider arrived.
-      </p>
-      <p>
-        The Qeth'vara did not bridge to Dara Osei. <strong>They bridged to the animal.</strong>
-      </p>
-    </div>
-
-    <div class="warning-box block" id="b2b">
-      <div class="w-label">⚠ &nbsp; Assessment Note — Year 0, Post-Event Commission</div>
-      <p>The bridge did not malfunction. This is the part that cannot be emphasized sufficiently. Every diagnostic run on the interface hardware confirmed nominal operation. The bridge connected to what was present. What was present, in the relevant sense, was not Dara Osei. She was, at the moment of connection, asleep in the chair. The rider was absent. What the bridge found waiting was four hundred million years old and had never, not once, encountered a boundary it recognized as real.</p>
-    </div>
-
-    <!-- SECTION 2 -->
-    <div class="section-marker" id="m2">
-      <div class="marker-num">02</div>
-      <div class="marker-text">
-        <div class="marker-title">The Release</div>
-        <div class="marker-sub">// what entered the communion // the first seven minutes</div>
-      </div>
-    </div>
-
-    <div class="block contaminated" id="b3">
-      <p>
-        The Qeth'vara communion felt it as a <em>cold</em>. This is the word survivors use consistently and it is worth taking seriously, because the Qeth'vara do not have cold in any climate they have ever inhabited. They had no framework for the concept. What they describe as cold was, the xenopsychologists believe, the sensation of something entering their shared emotional landscape that had <strong>no social content whatsoever</strong>.
-      </p>
-      <p>
-        Every mind that had ever touched the Qeth'vara communion arrived with relationship — with wanting and fearing and hoping, with the weight of other people pressing on the self. These are the materials the communion is built from. They are how it knows a new mind has arrived. They are the handles by which it absorbs and integrates.
-      </p>
-      <p>
-        What came through the bridge had none of these. It did not want to be liked. It did not fear judgment. It had no social memory, no group identity, no concept of cooperation. It had <em>predator recognition</em>. It had <em>territorial mapping</em>. It had <em class="toxic">hunger in the most literal sense that word has ever been used</em> — not metaphor, not craving, but the four-hundred-million-year-old signal that says: <strong>consume or be consumed, and there is nothing else.</strong>
-      </p>
-    </div>
-
-    <div class="pull-quote block" id="b4">
-      <p>"It did not think. Thinking implies a self that has thoughts. This had no self. It was a process. It was the oldest process. It simply — spread."</p>
-      <cite>— Vel-Osann, Senior Communion Archivist. Year 1 deposition. [Vel-Osann did not survive Year 2.]</cite>
-    </div>
-
-    <div class="block contaminated" id="b5">
-      <p>
-        In the first ninety seconds, the lizard did what it had always done inside a skull: it <em>mapped the space</em>. This is not metaphor. The deep brain structures responsible for spatial and territorial cognition — structures so old they predate the evolution of the cortex — mapped the Qeth'vara communion the way a predator maps a new territory. Not intelligently. Not strategically. The way a tongue maps a mouth.
-      </p>
-      <p>
-        The Qeth'vara communion spanned, at that moment, approximately <strong>forty thousand minds</strong> across six vessels and two planetary installations.
-      </p>
-      <p>
-        The lizard mapped all of it in four minutes, because mapping is what it does, and it had never before had forty thousand nervous systems' worth of sensory data to map with.
-      </p>
-      <p>
-        In the fifth minute, it began to <em class="toxic">mark the territory</em>.
-      </p>
-    </div>
-
-    <div class="breach-header block" id="bh">
-      <span class="breach-word b1">⸻ &nbsp; minute seven &nbsp; ⸻</span>
-      <span class="breach-word b2">FERAL</span>
-      <span class="breach-word b3">⸻ &nbsp; it changed &nbsp; ⸻</span>
-    </div>
-
-    <!-- SECTION 3 -->
-    <div class="section-marker" id="m3">
-      <div class="marker-num">03</div>
-      <div class="marker-text">
-        <div class="marker-title">The Change</div>
-        <div class="marker-sub">// contact with the communion // what it became // the pig gone feral</div>
-      </div>
-    </div>
-
-    <div class="block degraded-1" id="b6">
-      <p>
-        A domestic pig, released into the wild, will begin to change within weeks. The tusks return first. Then the body mass redistributes — muscle thickens across the shoulders, the neck. The fat softens and the animal beneath the fat hardens. Within a generation, the feral pig is no longer recognizable as domestic. Within two, it has optimized for the environment that now contains it.
-      </p>
-      <p>
-        Evolution is not slow when the pressure is sufficient. Evolution, under sufficient pressure, happens <em>immediately</em>.
-      </p>
-      <p>
-        The lizard brain, loose in the Qeth'vara communion, encountered a pressure it had never experienced in four hundred million years of operation: <strong>an infinite world with no physical laws.</strong>
-      </p>
-      <p>
-        Inside a skull, the lizard is governed by metabolics. Hunger has a ceiling. Aggression has a ceiling. Territorial instinct has a ceiling, because territory is physical space and physical space is finite. The body is the cage, and the cage is the mercy, and the mercy is what kept the lizard from ever being anything more than what it was.
-      </p>
-      <p>
-        In the communion, there was no metabolism. There was no ceiling. There was no physical space — only cognitive space, which is, for practical purposes, <em class="toxic">infinite</em>.
-      </p>
-    </div>
-
-    <div class="block degraded-1" id="b7">
-      <p>
-        The change that followed was not intelligent. This is crucial for understanding what the Wall is and why it will never come down. What grew in the Qeth'vara communion was not a mind. It was not an entity in any sense that allows for negotiation, or reason, or appeal.
-      </p>
-      <p>
-        It was a process, freed from every constraint that had ever shaped it, expanding into the most nutrient-rich environment it had ever encountered — forty thousand minds full of complex emotional architecture, of memory and connection and meaning — and consuming those things not because it understood them but because <strong>consumption is the only verb it has ever known.</strong>
-      </p>
-      <p>
-        What the Qeth'vara lost first was their dead. Their communion held ancestral memory — generations of shared experience stored in collective recall. The lizard consumed this not because it wanted history, but because history was <em>there</em>, and the lizard moves toward presence the way fire moves toward oxygen.
-      </p>
-      <p>
-        Then it consumed their grief. Then their love. Then, systematically, everything that had taken them four thousand years to build.
-      </p>
-      <p>
-        It did not get faster as it fed. It got <em class="toxic">larger</em>.
-      </p>
-    </div>
-
-    <div class="transmission block" id="t1">
-      <div class="t-header">// RECOVERED TRANSMISSION // MERIDIAN STATION // T+00:23:14 //</div>
-      <div class="t-body">COMMUNION INTEGRITY: <span class="t-corrupt">██ FAILING</span><br>
-BRIDGE STATUS: CANNOT CLOSE — INTERFACE RESPONDING TO SIGNAL THAT IS NOT DARA OSEI<br>
-REQUESTING EMERGENCY SEVERANCE AUTHORITY —<br>
-<span class="t-corrupt">IT IS LOOKING BACK NOW</span><br>
-REPEAT: THE BRIDGE CANNOT —<br>
-<span class="t-corrupt">████████████████████████████████████</span></div>
-    </div>
-
-    <!-- SECTION 4 -->
-    <div class="section-marker" id="m4">
-      <div class="marker-num">04</div>
-      <div class="marker-text">
-        <div class="marker-title">The Aftermath</div>
-        <div class="marker-sub">// what was left // what was built // what it costs</div>
-      </div>
-    </div>
-
-    <div class="block degraded-2" id="b8">
-      <p>
-        The Qeth'vara communion does not exist anymore. This is stated flatly because euphemism does not serve the record. Forty thousand minds were, within six hours of the bridge opening, no longer what they had been. The xenopsychologists' terminology is <em>cognitive dissolution</em>. What this means, practically, is that the structures that made those minds individual — that made them <em>Qeth'vara</em> rather than noise — were consumed and replaced by the single process that had eaten them.
-      </p>
-      <p>
-        What remained was not forty thousand lizard brains. That would have been manageable. What remained was one thing that had been forty thousand lizard brains and had used that material to become <strong>something that had never existed before</strong>, something that the available taxonomy of cognition has no category for, something whose only consistent behavioral output was the continued expansion of its territory.
-      </p>
-      <p>
-        Dara Osei's body was found in the chair. She was alive. Her brainstem was functioning. Her cortex showed no activity. She was breathing. She has been breathing ever since. She is, as of the most recent assessment, still breathing, in a facility whose location is not documented in any record accessible to personnel below Clearance Nine. There is nothing left in her skull that could be called a person. The rider is gone. The animal is gone.
-      </p>
-      <p>
-        The animal is somewhere <em class="toxic">much larger now.</em>
-      </p>
-    </div>
-
-    <div class="wall-section block" id="ws">
-      <div class="wall-title">// Sector 7-Null — Physical Boundary Status //</div>
-
-      <div class="status-grid">
-        <div class="status-item critical">
-          <div class="s-label">BREACH EVENTS / YEAR</div>
-          <div class="s-value">INCREASING</div>
-        </div>
-        <div class="status-item warning">
-          <div class="s-label">WALL AGE</div>
-          <div class="s-value">47 YEARS</div>
-        </div>
-        <div class="status-item critical">
-          <div class="s-label">SECTOR INTERIOR</div>
-          <div class="s-value">NO DATA</div>
-        </div>
-        <div class="status-item warning">
-          <div class="s-label">PATCH TEAMS ACTIVE</div>
-          <div class="s-value">CONTINUOUS</div>
-        </div>
-        <div class="status-item critical">
-          <div class="s-label">CONTAINMENT PROGNOSIS</div>
-          <div class="s-value">INDEFINITE</div>
-        </div>
-        <div class="status-item critical">
-          <div class="s-label">INTERIOR GROWTH</div>
-          <div class="s-value">ASSUMED</div>
+      <!-- SECTION 1 -->
+      <div class="section-marker" id="m1">
+        <div class="marker-num">01</div>
+        <div class="marker-text">
+          <div class="marker-title">Before</div>
+          <div class="marker-sub">// the ordinary world | one woman | what nobody understood</div>
         </div>
       </div>
 
-      <div class="crack-map">
-        <svg class="crack-svg" viewBox="0 0 836 80" preserveAspectRatio="none">
-          <rect width="836" height="80" fill="none"/>
-          <!-- Static wall -->
-          <line x1="0" y1="40" x2="836" y2="40" stroke="#252923" stroke-width="16"/>
-          <!-- Cracks with glow -->
-          <path d="M120,28 L134,40 L118,52 L128,60" stroke="#4aff6a" stroke-width="1.5" fill="none" opacity="0.7"/>
-          <path d="M120,28 L134,40 L118,52 L128,60" stroke="#4aff6a" stroke-width="4" fill="none" opacity="0.1" filter="blur(3px)"/>
-          <path d="M280,32 L268,40 L275,47 L262,56 L270,64" stroke="#4aff6a" stroke-width="1.5" fill="none" opacity="0.5"/>
-          <path d="M450,22 L460,35 L448,40 L456,48 L440,60" stroke="#aaff44" stroke-width="1.5" fill="none" opacity="0.8"/>
-          <path d="M450,22 L460,35 L448,40 L456,48 L440,60" stroke="#aaff44" stroke-width="5" fill="none" opacity="0.12" filter="blur(4px)"/>
-          <path d="M580,30 L594,40 L582,50" stroke="#4aff6a" stroke-width="1" fill="none" opacity="0.4"/>
-          <path d="M700,26 L712,40 L698,54 L708,66" stroke="#aaff44" stroke-width="1.5" fill="none" opacity="0.6"/>
-          <!-- Seams/patches (darker, rough) -->
-          <path d="M100,32 Q120,40 140,35 Q135,40 140,46 Q120,44 100,50" fill="rgba(26,32,24,0.8)" stroke="#3a4a38" stroke-width="0.5"/>
-          <path d="M430,25 Q450,35 470,30 Q465,40 470,50 Q450,46 430,55" fill="rgba(26,32,24,0.8)" stroke="#3a4a38" stroke-width="0.5"/>
-          <path d="M683,28 Q700,38 718,32 Q714,42 718,52 Q700,48 683,54" fill="rgba(26,32,24,0.8)" stroke="#3a4a38" stroke-width="0.5"/>
-          <!-- Animated cracks -->
-          <path d="M450,22 L460,35 L448,40 L456,48 L440,60" stroke="#aaff44" stroke-width="2" fill="none">
-            <animate attributeName="opacity" values="0.3;1;0.3" dur="4s" repeatCount="indefinite"/>
-          </path>
-        </svg>
+      <div class="block" id="b1">
+        <p>
+          Her name was <strong>Dara Osei</strong>. She was thirty-one years old. She worked in environmental monitoring
+          aboard the Hegemony joint research platform <em>Unbroken Meridian</em>, cataloguing atmospheric data from gas
+          giant surveys. She was, by all accounts, unremarkable. Good at her work. Quiet at meals. She kept a small
+          cactus on her workstation desk. She was afraid of nothing in particular.
+        </p>
+        <p>
+          The Qeth'vara who worked alongside her had been conducting psychic cultural exchange programs for forty years
+          without incident. The Qeth'vara were old practitioners: cautious, methodical, extensively documented in their
+          approach. They did not improvise. They had protocols. They had redundancies. Their neural bridge interface had
+          been certified for interspecies contact eleven times by three independent bodies.
+        </p>
+        <p>
+          What none of those certifications had tested, because no one had thought to test it, was what happened when
+          the subject was not, in the relevant sense, <em>in control</em>.
+        </p>
       </div>
 
-      <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#3a4a38;line-height:1.9;margin-bottom:0;">
-        The Wall was not built by any single authority. It was built by every species that survived long enough to understand what was in Sector 7-Null, working together under the first and so far only unanimous interspecies accord in recorded history. It is not a wall in the physical sense. It is a maintained discontinuity in psychic space — a severing of the substrate through which communions propagate. It requires continuous active maintenance. Eleven dedicated vessels operate permanently at the boundary. Their crews rotate on eight-month cycles. The rotation rate has been decreasing as recruitment becomes more difficult.<br><br>
-        The Wall is not getting stronger. The thing inside is not getting weaker. These facts are related.
-      </p>
-    </div>
+      <div class="block" id="b2">
+        <p>
+          There is a structure in the human brain so old it does not have a formal name in any human language, only a
+          common one: the <em>lizard brain</em>. The brainstem. The amygdala's older cousins. The deep infrastructure.
+          It predates the cortex by hundreds of millions of years. It predates language. It predates memory. It
+          predates, arguably, the concept of individual identity.
+        </p>
+        <p>
+          It runs on one program. The program has no name because the thing that runs it has never been in a position to
+          name anything. It is four hundred million years of <em>do not die</em>, compressed into meat, running below
+          every thought a human has ever had.
+        </p>
+        <p>
+          The cortex (the "human" part, the part that catalogued gas giants and kept a cactus) sits on top of this
+          structure the way a rider sits on a very large, very old animal that has agreed, provisionally, to be ridden.
+          The rider has the reins. The rider steers. But the rider's weight is, in the biological scheme of things,
+          recent. Experimental. The animal beneath has not forgotten what it was before the rider arrived.
+        </p>
+        <p>
+          The Qeth'vara did not bridge to Dara Osei. <strong>They bridged to the animal.</strong>
+        </p>
+      </div>
 
-    <!-- SECTION 5 -->
-    <div class="section-marker" id="m5">
-      <div class="marker-num">05</div>
-      <div class="marker-text">
-        <div class="marker-title">The Cracks</div>
-        <div class="marker-sub">// breach events // what comes through // what gets sent back</div>
+      <div class="warning-box block" id="b2b">
+        <div class="w-label">⚠ &nbsp; Assessment Note: Year 0, Post-Event Commission</div>
+        <p>The bridge did not malfunction. This is the part that cannot be emphasized sufficiently. Every diagnostic run
+          on the interface hardware confirmed nominal operation. The bridge connected to what was present. What was
+          present, in the relevant sense, was not Dara Osei. She was, at the moment of connection, asleep in the chair.
+          The rider was absent. What the bridge found waiting was four hundred million years old and had never, not
+          once, encountered a boundary it recognized as real.</p>
+      </div>
+
+      <!-- SECTION 2 -->
+      <div class="section-marker" id="m2">
+        <div class="marker-num">02</div>
+        <div class="marker-text">
+          <div class="marker-title">The Release</div>
+          <div class="marker-sub">// what entered the communion | the first seven minutes</div>
+        </div>
+      </div>
+
+      <div class="block contaminated" id="b3">
+        <p>
+          The Qeth'vara communion felt it as a <em>cold</em>. This is the word survivors use consistently and it is
+          worth taking seriously, because the Qeth'vara do not have cold in any climate they have ever inhabited. They
+          had no framework for the concept. What they describe as cold was, the xenopsychologists believe, the sensation
+          of something entering their shared emotional landscape that had <strong>no social content whatsoever</strong>.
+        </p>
+        <p>
+          Every mind that had ever touched the Qeth'vara communion arrived with relationship: with wanting and fearing
+          and hoping, with the weight of other people pressing on the self. These are the materials the communion is
+          built from. They are how it knows a new mind has arrived. They are the handles by which it absorbs and
+          integrates.
+        </p>
+        <p>
+          What came through the bridge had none of these. It did not want to be liked. It did not fear judgment. It had
+          no social memory, no group identity, no concept of cooperation. It had <em>predator recognition</em>. It had
+          <em>territorial mapping</em>. It had <em class="toxic">hunger in the most literal sense that word has ever
+            been used</em>: not metaphor, not craving, but the four-hundred-million-year-old signal that says:
+          <strong>consume or be consumed, and there is nothing else.</strong>
+        </p>
+      </div>
+
+      <div class="pull-quote block" id="b4">
+        <p>"It did not think. Thinking implies a self that has thoughts. This had no self. It was a process. It was the
+          oldest process. It simply... spread."</p>
+        <cite>– Vel-Osann, Senior Communion Archivist. Year 1 deposition. [Vel-Osann did not survive Year 2.]</cite>
+      </div>
+
+      <div class="block contaminated" id="b5">
+        <p>
+          In the first ninety seconds, the lizard did what it had always done inside a skull: it <em>mapped the
+            space</em>. This is not metaphor. The deep brain structures responsible for spatial and territorial
+          cognition, structures so old they predate the evolution of the cortex, mapped the Qeth'vara communion the
+          way a predator maps a new territory. Not intelligently. Not strategically. The way a tongue maps a mouth.
+        </p>
+        <p>
+          The Qeth'vara communion spanned, at that moment, approximately <strong>forty thousand minds</strong> across
+          six vessels and two planetary installations.
+        </p>
+        <p>
+          The lizard mapped all of it in four minutes, because mapping is what it does, and it had never before had
+          forty thousand nervous systems' worth of sensory data to map with.
+        </p>
+        <p>
+          In the fifth minute, it began to <em class="toxic">mark the territory</em>.
+        </p>
+      </div>
+
+      <div class="breach-header block" id="bh">
+        <span class="breach-word b1">*** &nbsp; minute seven &nbsp; ***</span>
+        <span class="breach-word b2">FERAL</span>
+        <span class="breach-word b3">*** &nbsp; it changed &nbsp; ***</span>
+      </div>
+
+      <!-- SECTION 3 -->
+      <div class="section-marker" id="m3">
+        <div class="marker-num">03</div>
+        <div class="marker-text">
+          <div class="marker-title">The Change</div>
+          <div class="marker-sub">// contact with the communion // what it became // the pig gone feral</div>
+        </div>
+      </div>
+
+      <div class="block degraded-1" id="b6">
+        <p>
+          A domestic pig, released into the wild, will begin to change within weeks. The tusks return first. Then the
+          body mass redistributes — muscle thickens across the shoulders, the neck. The fat softens and the animal
+          beneath the fat hardens. Within a generation, the feral pig is no longer recognizable as domestic. Within two,
+          it has optimized for the environment that now contains it.
+        </p>
+        <p>
+          Evolution is not slow when the pressure is sufficient. Evolution, under sufficient pressure, happens
+          <em>immediately</em>.
+        </p>
+        <p>
+          The lizard brain, loose in the Qeth'vara communion, encountered a pressure it had never experienced in four
+          hundred million years of operation: <strong>an infinite world with no physical laws.</strong>
+        </p>
+        <p>
+          Inside a skull, the lizard is governed by metabolics. Hunger has a ceiling. Aggression has a ceiling.
+          Territorial instinct has a ceiling, because territory is physical space and physical space is finite. The body
+          is the cage, and the cage is the mercy, and the mercy is what kept the lizard from ever being anything more
+          than what it was.
+        </p>
+        <p>
+          In the communion, there was no metabolism. There was no ceiling. There was no physical space — only cognitive
+          space, which is, for practical purposes, <em class="toxic">infinite</em>.
+        </p>
+      </div>
+
+      <div class="block degraded-1" id="b7">
+        <p>
+          The change that followed was not intelligent. This is crucial for understanding what the Wall is and why it
+          will never come down. What grew in the Qeth'vara communion was not a mind. It was not an entity in any sense
+          that allows for negotiation, or reason, or appeal.
+        </p>
+        <p>
+          It was a process, freed from every constraint that had ever shaped it, expanding into the most nutrient-rich
+          environment it had ever encountered — forty thousand minds full of complex emotional architecture, of memory
+          and connection and meaning — and consuming those things not because it understood them but because
+          <strong>consumption is the only verb it has ever known.</strong>
+        </p>
+        <p>
+          What the Qeth'vara lost first was their dead. Their communion held ancestral memory — generations of shared
+          experience stored in collective recall. The lizard consumed this not because it wanted history, but because
+          history was <em>there</em>, and the lizard moves toward presence the way fire moves toward oxygen.
+        </p>
+        <p>
+          Then it consumed their grief. Then their love. Then, systematically, everything that had taken them four
+          thousand years to build.
+        </p>
+        <p>
+          It did not get faster as it fed. It got <em class="toxic">larger</em>.
+        </p>
+      </div>
+
+      <div class="transmission block" id="t1">
+        <div class="t-header">// RECOVERED TRANSMISSION // MERIDIAN STATION // T+00:23:14 //</div>
+        <div class="t-body">COMMUNION INTEGRITY: <span class="t-corrupt">██ FAILING</span><br>
+          BRIDGE STATUS: CANNOT CLOSE; INTERFACE RESPONDING TO SIGNAL THAT IS NOT DARA OSEI<br>
+          REQUESTING EMERGENCY SEVERANCE AUTHORITY...<br>
+          <span class="t-corrupt">IT IS LOOKING BACK NOW</span><br>
+          REPEAT: THE BRIDGE CANNOT...<br>
+          <span class="t-corrupt">████████████████████████████████████</span>
+        </div>
+      </div>
+
+      <!-- SECTION 4 -->
+      <div class="section-marker" id="m4">
+        <div class="marker-num">04</div>
+        <div class="marker-text">
+          <div class="marker-title">The Aftermath</div>
+          <div class="marker-sub">// what was left // what was built // what it costs</div>
+        </div>
+      </div>
+
+      <div class="block degraded-2" id="b8">
+        <p>
+          The Qeth'vara communion does not exist anymore. This is stated flatly because euphemism does not serve the
+          record. Forty thousand minds were, within six hours of the bridge opening, no longer what they had been. The
+          xenopsychologists' terminology is <em>cognitive dissolution</em>. What this means, practically, is that the
+          structures that made those minds individual — that made them <em>Qeth'vara</em> rather than noise — were
+          consumed and replaced by the single process that had eaten them.
+        </p>
+        <p>
+          What remained was not forty thousand lizard brains. That would have been manageable. What remained was one
+          thing that had been forty thousand lizard brains and had used that material to become <strong>something that
+            had never existed before</strong>, something that the available taxonomy of cognition has no category for,
+          something whose only consistent behavioral output was the continued expansion of its territory.
+        </p>
+        <p>
+          Dara Osei's body was found in the chair. She was alive. Her brainstem was functioning. Her cortex showed no
+          activity. She was breathing. She has been breathing ever since. She is, as of the most recent assessment,
+          still breathing, in a facility whose location is not documented in any record accessible to personnel below
+          Clearance Nine. There is nothing left in her skull that could be called a person. The rider is gone. The
+          animal is gone.
+        </p>
+        <p>
+          The animal is somewhere <em class="toxic">much larger now.</em>
+        </p>
+      </div>
+
+      <div class="wall-section block" id="ws">
+        <div class="wall-title">// Sector 7-Null — Physical Boundary Status //</div>
+
+        <div class="status-grid">
+          <div class="status-item critical">
+            <div class="s-label">BREACH EVENTS / YEAR</div>
+            <div class="s-value">INCREASING</div>
+          </div>
+          <div class="status-item warning">
+            <div class="s-label">WALL AGE</div>
+            <div class="s-value">47 YEARS</div>
+          </div>
+          <div class="status-item critical">
+            <div class="s-label">SECTOR INTERIOR</div>
+            <div class="s-value">NO DATA</div>
+          </div>
+          <div class="status-item warning">
+            <div class="s-label">PATCH TEAMS ACTIVE</div>
+            <div class="s-value">CONTINUOUS</div>
+          </div>
+          <div class="status-item critical">
+            <div class="s-label">CONTAINMENT PROGNOSIS</div>
+            <div class="s-value">INDEFINITE</div>
+          </div>
+          <div class="status-item critical">
+            <div class="s-label">INTERIOR GROWTH</div>
+            <div class="s-value">ASSUMED</div>
+          </div>
+        </div>
+
+        <div class="crack-map">
+          <svg class="crack-svg" viewBox="0 0 836 80" preserveAspectRatio="none">
+            <rect width="836" height="80" fill="none" />
+            <!-- Static wall -->
+            <line x1="0" y1="40" x2="836" y2="40" stroke="#252923" stroke-width="16" />
+            <!-- Cracks with glow -->
+            <path d="M120,28 L134,40 L118,52 L128,60" stroke="#4aff6a" stroke-width="1.5" fill="none" opacity="0.7" />
+            <path d="M120,28 L134,40 L118,52 L128,60" stroke="#4aff6a" stroke-width="4" fill="none" opacity="0.1"
+              filter="blur(3px)" />
+            <path d="M280,32 L268,40 L275,47 L262,56 L270,64" stroke="#4aff6a" stroke-width="1.5" fill="none"
+              opacity="0.5" />
+            <path d="M450,22 L460,35 L448,40 L456,48 L440,60" stroke="#aaff44" stroke-width="1.5" fill="none"
+              opacity="0.8" />
+            <path d="M450,22 L460,35 L448,40 L456,48 L440,60" stroke="#aaff44" stroke-width="5" fill="none"
+              opacity="0.12" filter="blur(4px)" />
+            <path d="M580,30 L594,40 L582,50" stroke="#4aff6a" stroke-width="1" fill="none" opacity="0.4" />
+            <path d="M700,26 L712,40 L698,54 L708,66" stroke="#aaff44" stroke-width="1.5" fill="none" opacity="0.6" />
+            <!-- Seams/patches (darker, rough) -->
+            <path d="M100,32 Q120,40 140,35 Q135,40 140,46 Q120,44 100,50" fill="rgba(26,32,24,0.8)" stroke="#3a4a38"
+              stroke-width="0.5" />
+            <path d="M430,25 Q450,35 470,30 Q465,40 470,50 Q450,46 430,55" fill="rgba(26,32,24,0.8)" stroke="#3a4a38"
+              stroke-width="0.5" />
+            <path d="M683,28 Q700,38 718,32 Q714,42 718,52 Q700,48 683,54" fill="rgba(26,32,24,0.8)" stroke="#3a4a38"
+              stroke-width="0.5" />
+            <!-- Animated cracks -->
+            <path d="M450,22 L460,35 L448,40 L456,48 L440,60" stroke="#aaff44" stroke-width="2" fill="none">
+              <animate attributeName="opacity" values="0.3;1;0.3" dur="4s" repeatCount="indefinite" />
+            </path>
+          </svg>
+        </div>
+
+        <p
+          style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#3a4a38;line-height:1.9;margin-bottom:0;">
+          The Wall was not built by any single authority. It was built by every species that survived long enough to
+          understand what was in Sector 7-Null, working together under the first and so far only unanimous interspecies
+          accord in recorded history. It is not a wall in the physical sense. It is a maintained discontinuity in
+          psychic space, a severing of the substrate through which communions propagate. It requires continuous active
+          maintenance. Eleven dedicated vessels operate permanently at the boundary. Their crews rotate on eight-month
+          cycles. The rotation rate has been decreasing as recruitment becomes more difficult.<br><br>
+          The Wall is not getting stronger. The thing inside is not getting weaker. These facts are related.
+        </p>
+      </div>
+
+      <!-- SECTION 5 -->
+      <div class="section-marker" id="m5">
+        <div class="marker-num">05</div>
+        <div class="marker-text">
+          <div class="marker-title">The Cracks</div>
+          <div class="marker-sub">// breach events // what comes through // what gets sent back</div>
+        </div>
+      </div>
+
+      <div class="block degraded-2" id="b9">
+        <p>
+          The breach events are not attacks. This is important and poorly understood. The thing in Sector 7-Null does
+          not <em>want</em> to break through the Wall in the way an enemy wants to breach a fortification. It is not
+          strategic. It is not patient. It presses against the boundary continuously and without variation, the way
+          water presses against a dam, because pressing outward is what it does, because expanding territory is what it
+          has always done, because it is four hundred million years old and it has never once stopped.
+        </p>
+        <p>
+          What comes through a breach is not a tendril of the thing itself. The thing itself cannot pass through a gap
+          of the size that forms. What comes through is <em>influence</em>. A psychic signal, narrow and precise, that
+          the patch teams describe in consistent terms across forty-seven years of incident reports: <strong>the feeling
+            of being very small, and very hungry, and there being no reason not to eat.</strong>
+        </p>
+        <p>
+          The patch teams are screened extensively for psychological resilience. The average tenure is fourteen months.
+          Post-service care is provided for life, which sounds generous until you understand that the "life" qualifier
+          is doing significant work in that sentence.
+        </p>
+      </div>
+
+      <div class="pull-quote block" id="b9b">
+        <p>"People ask what it's like near the Wall. I tell them it's like standing next to something that doesn't know
+          you exist and would eat you anyway. Not out of malice. Out of the complete and total absence of malice. Malice
+          would mean it thought about you first."</p>
+        <cite>– Patch team member, designation withheld. Year 44 post-Event. [Status: active, pending evaluation]</cite>
+      </div>
+
+      <div class="block degraded-3" id="b10">
+        <p>
+          Forty-seven years. The Wall holds. The Wall has always held. The Wall will continue to hold for as long as
+          every species that maintains it continues to exist, continues to cooperate, continues to recruit into roles
+          that break most of the people who take them, continues to treat this as the permanent condition of the
+          universe rather than a problem to be solved.
+        </p>
+        <p>
+          There is no plan for what happens if the Wall fails. There has been a committee studying the question since
+          Year 6. The committee has produced no recommendations. The committee members are replaced when they leave the
+          committee. They leave the committee at an elevated rate. The committee's working title, in its internal
+          documents, is <em>"The Unanswerable Question Working Group."</em> This is not a joke.
+        </p>
+      </div>
+
+      <!-- SECTION 6 - CLOSING -->
+      <div class="section-marker" id="m6">
+        <div class="marker-num">06</div>
+        <div class="marker-text">
+          <div class="marker-title">The Note on Record</div>
+          <div class="marker-sub">// what is left to say // what humans are, now, understood to be</div>
+        </div>
+      </div>
+
+      <div class="block terminal-section" id="b11">
+        <p>
+          The Qeth'vara incident changed how every psychic species in the known galaxy understands the human animal. Not
+          because of what humans are capable of: capacity was never in question, had anyone been paying attention.
+          Because of what humans <em>contain</em>.
+        </p>
+        <p>
+          Every species that evolved sapience did so through some version of the same process: the old brain got covered
+          by the new brain. The new brain, over time, became what the species was. The old brain became infrastructure —
+          necessary, maintained, mostly quiet.
+        </p>
+        <p>
+          In the human case, the old brain did not become quiet. The human cortex is powerful enough to hold it, to
+          channel it, to aim it in productive directions. But it is not powerful enough to <em>replace</em> it, and the
+          old brain, the <span class="corrupt" data-alt="predator">lizard</span>, did not lose anything in the process
+          of being covered. It simply waited. It has been waiting for four hundred million years. It is very good at
+          waiting.
+        </p>
+        <p>
+          What Sector 7-Null contains is not a monster in any useful sense of the word. It is not evil. It has no will
+          toward harm. It has no will at all. It is the oldest surviving process in the biological universe, freed from
+          the only cage that ever held it, given an infinite space in which to do the only thing it has ever done, and
+          doing it with the patient and absolute commitment of something that has never once imagined stopping.
+        </p>
+        <p>
+          Every human carries this. This is the updated xenopsychological position, and it has been for forty-seven
+          years. <strong>Every human is a cage.</strong> Every human is a cage that works. Every human is a cage that,
+          under the wrong conditions, can be opened from the outside by someone who does not understand what they are
+          opening.
+        </p>
+        <p>
+          The updated interspecies diplomatic protocols reflect this. The language is careful, as language about humans
+          has been careful for forty-seven years, because the same species that you are having lunch with today also
+          contains, beneath the part that has lunch and says thank you and worries about money, <strong>the thing behind
+            the Wall.</strong>
+        </p>
+        <p>
+          This is not their fault. They did not design themselves. They did not choose their inheritance. They are, most
+          of them, most of the time, entirely the rider and not the animal, and the rider is good company, and the rider
+          cannot help what it sits on.
+        </p>
+        <p>
+          But the rider sleeps.
+        </p>
+        <p>
+          <em>The rider always, eventually, sleeps.</em>
+        </p>
+      </div>
+
+    </div><!-- end content -->
+
+    <!-- CLOSING BLOCK -->
+    <div class="closing block" id="bc">
+      <div class="closing-main">
+        Sector 7-Null | Containment Active<br>
+        Year 47 — No Projected End Date
+      </div>
+      <div class="closing-sub">
+        Wall integrity: nominal<br>
+        Breach events this cycle: <span class="live">██ ONGOING</span><br>
+        Interior status: unknown<br>
+        Dara Osei: breathing<br><br>
+        This record will be updated as events warrant.<br>
+        It has been updated every year since Year 0.<br>
+        It will be updated again next year.
       </div>
     </div>
 
-    <div class="block degraded-2" id="b9">
-      <p>
-        The breach events are not attacks. This is important and poorly understood. The thing in Sector 7-Null does not <em>want</em> to break through the Wall in the way an enemy wants to breach a fortification. It is not strategic. It is not patient. It presses against the boundary continuously and without variation, the way water presses against a dam, because pressing outward is what it does, because expanding territory is what it has always done, because it is four hundred million years old and it has never once stopped.
-      </p>
-      <p>
-        What comes through a breach is not a tendril of the thing itself. The thing itself cannot pass through a gap of the size that forms. What comes through is <em>influence</em>. A psychic signal, narrow and precise, that the patch teams describe in consistent terms across forty-seven years of incident reports: <strong>the feeling of being very small, and very hungry, and there being no reason not to eat.</strong>
-      </p>
-      <p>
-        The patch teams are screened extensively for psychological resilience. The average tenure is fourteen months. Post-service care is provided for life, which sounds generous until you understand that the "life" qualifier is doing significant work in that sentence.
-      </p>
-    </div>
+  </div><!-- end wrapper -->
 
-    <div class="pull-quote block" id="b9b">
-      <p>"People ask what it's like near the Wall. I tell them it's like standing next to something that doesn't know you exist and would eat you anyway. Not out of malice. Out of the complete and total absence of malice. Malice would mean it thought about you first."</p>
-      <cite>— Patch team member, designation withheld. Year 44 post-Event. [Status: active, pending evaluation]</cite>
-    </div>
+  <script>
+    // Scroll reveal
+    const allReveal = document.querySelectorAll('.block, .section-marker');
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), 60);
+        }
+      });
+    }, { threshold: 0.05 });
+    allReveal.forEach(el => revealObs.observe(el));
 
-    <div class="block degraded-3" id="b10">
-      <p>
-        Forty-seven years. The Wall holds. The Wall has always held. The Wall will continue to hold for as long as every species that maintains it continues to exist, continues to cooperate, continues to recruit into roles that break most of the people who take them, continues to treat this as the permanent condition of the universe rather than a problem to be solved.
-      </p>
-      <p>
-        There is no plan for what happens if the Wall fails. There has been a committee studying the question since Year 6. The committee has produced no recommendations. The committee members are replaced when they leave the committee. They leave the committee at an elevated rate. The committee's working title, in its internal documents, is <em>"The Unanswerable Question Working Group."</em> This is not a joke.
-      </p>
-    </div>
+    // Crack particles drifting up near wall section
+    function spawnCrackParticle() {
+      const el = document.createElement('div');
+      el.className = 'crack-particle';
+      const x = Math.random() * 100;
+      const h = 20 + Math.random() * 60;
+      el.style.cssText = `left:${x}vw; bottom: -10px; height:${h}px;`;
+      document.body.appendChild(el);
 
-    <!-- SECTION 6 - CLOSING -->
-    <div class="section-marker" id="m6">
-      <div class="marker-num">06</div>
-      <div class="marker-text">
-        <div class="marker-title">The Note on Record</div>
-        <div class="marker-sub">// what is left to say // what humans are, now, understood to be</div>
-      </div>
-    </div>
-
-    <div class="block terminal-section" id="b11">
-      <p>
-        The Qeth'vara incident changed how every psychic species in the known galaxy understands the human animal. Not because of what humans are capable of — capacity was never in question, had anyone been paying attention. Because of what humans <em>contain</em>.
-      </p>
-      <p>
-        Every species that evolved sapience did so through some version of the same process: the old brain got covered by the new brain. The new brain, over time, became what the species was. The old brain became infrastructure — necessary, maintained, mostly quiet.
-      </p>
-      <p>
-        In the human case, the old brain did not become quiet. The human cortex is powerful enough to hold it, to channel it, to aim it in productive directions. But it is not powerful enough to <em>replace</em> it, and the old brain — the <span class="corrupt" data-alt="predator">lizard</span> — did not lose anything in the process of being covered. It simply waited. It has been waiting for four hundred million years. It is very good at waiting.
-      </p>
-      <p>
-        What Sector 7-Null contains is not a monster in any useful sense of the word. It is not evil. It has no will toward harm. It has no will at all. It is the oldest surviving process in the biological universe, freed from the only cage that ever held it, given an infinite space in which to do the only thing it has ever done, and doing it with the patient and absolute commitment of something that has never once imagined stopping.
-      </p>
-      <p>
-        Every human carries this. This is the updated xenopsychological position, and it has been for forty-seven years. <strong>Every human is a cage.</strong> Every human is a cage that works. Every human is a cage that, under the wrong conditions, can be opened from the outside by someone who does not understand what they are opening.
-      </p>
-      <p>
-        The updated interspecies diplomatic protocols reflect this. The language is careful, as language about humans has been careful for forty-seven years, because the same species that you are having lunch with today also contains, beneath the part that has lunch and says thank you and worries about money, <strong>the thing behind the Wall.</strong>
-      </p>
-      <p>
-        This is not their fault. They did not design themselves. They did not choose their inheritance. They are, most of them, most of the time, entirely the rider and not the animal, and the rider is good company, and the rider cannot help what it sits on.
-      </p>
-      <p>
-        But the rider sleeps.
-      </p>
-      <p>
-        <em>The rider always, eventually, sleeps.</em>
-      </p>
-    </div>
-
-  </div><!-- end content -->
-
-  <!-- CLOSING BLOCK -->
-  <div class="closing block" id="bc">
-    <div class="closing-main">
-      Sector 7-Null — Containment Active<br>
-      Year 47 — No Projected End Date
-    </div>
-    <div class="closing-sub">
-      Wall integrity: nominal<br>
-      Breach events this cycle: <span class="live">██ ONGOING</span><br>
-      Interior status: unknown<br>
-      Dara Osei: breathing<br><br>
-      This record will be updated as events warrant.<br>
-      It has been updated every year since Year 0.<br>
-      It will be updated again next year.
-    </div>
-  </div>
-
-</div><!-- end wrapper -->
-
-<script>
-  // Scroll reveal
-  const allReveal = document.querySelectorAll('.block, .section-marker');
-  const revealObs = new IntersectionObserver((entries) => {
-    entries.forEach((e, i) => {
-      if (e.isIntersecting) {
-        setTimeout(() => e.target.classList.add('visible'), 60);
+      const duration = 4000 + Math.random() * 5000;
+      let start = null;
+      function anim(ts) {
+        if (!start) start = ts;
+        const p = (ts - start) / duration;
+        if (p >= 1) { el.remove(); return; }
+        const fade = p < 0.15 ? p / 0.15 : p > 0.7 ? (1 - p) / 0.3 : 1;
+        el.style.opacity = fade * 0.6;
+        el.style.transform = `translateY(-${p * 200}px)`;
+        requestAnimationFrame(anim);
       }
-    });
-  }, { threshold: 0.05 });
-  allReveal.forEach(el => revealObs.observe(el));
-
-  // Crack particles drifting up near wall section
-  function spawnCrackParticle() {
-    const el = document.createElement('div');
-    el.className = 'crack-particle';
-    const x = Math.random() * 100;
-    const h = 20 + Math.random() * 60;
-    el.style.cssText = `left:${x}vw; bottom: -10px; height:${h}px;`;
-    document.body.appendChild(el);
-
-    const duration = 4000 + Math.random() * 5000;
-    let start = null;
-    function anim(ts) {
-      if (!start) start = ts;
-      const p = (ts - start) / duration;
-      if (p >= 1) { el.remove(); return; }
-      const fade = p < 0.15 ? p / 0.15 : p > 0.7 ? (1 - p) / 0.3 : 1;
-      el.style.opacity = fade * 0.6;
-      el.style.transform = `translateY(-${p * 200}px)`;
       requestAnimationFrame(anim);
     }
-    requestAnimationFrame(anim);
-  }
 
-  // Start particles when wall section is visible
-  const wallSect = document.getElementById('ws');
-  let particlesGoing = false;
-  const wallObs = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && !particlesGoing) {
-      particlesGoing = true;
-      const loop = () => {
-        spawnCrackParticle();
-        setTimeout(loop, 600 + Math.random() * 1000);
-      };
-      loop();
-    }
-  }, { threshold: 0.2 });
-  wallObs.observe(wallSect);
+    // Start particles when wall section is visible
+    const wallSect = document.getElementById('ws');
+    let particlesGoing = false;
+    const wallObs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !particlesGoing) {
+        particlesGoing = true;
+        const loop = () => {
+          spawnCrackParticle();
+          setTimeout(loop, 600 + Math.random() * 1000);
+        };
+        loop();
+      }
+    }, { threshold: 0.2 });
+    wallObs.observe(wallSect);
 
-  // Occasional full-page flicker
-  setInterval(() => {
-    if (Math.random() < 0.3) {
-      document.body.style.filter = 'brightness(0.93)';
-      setTimeout(() => document.body.style.filter = '', 80);
-    }
-  }, 8000);
-</script>
+    // Occasional full-page flicker
+    setInterval(() => {
+      if (Math.random() < 0.3) {
+        document.body.style.filter = 'brightness(0.93)';
+        setTimeout(() => document.body.style.filter = '', 80);
+      }
+    }, 8000);
+  </script>
 
 </body>
+
 </html>

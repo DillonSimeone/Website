@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Archive of Sundered Minds</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=Inconsolata:wght@300;400&display=swap');
+
+        :root {
+            --bg: #030308;
+            --gold: #c9a84c;
+            --gold-dim: #7a6030;
+            --text: #ddd0c0;
+            --accent: #7ecfcf;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'IM Fell English', serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #stars {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+
+        /* Center radial fade to improve readability */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, var(--bg) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            color: var(--gold);
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(201, 168, 76, 0.5);
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            font-family: 'Inconsolata', monospace;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            color: var(--gold-dim);
+            text-transform: uppercase;
+            margin-bottom: 3rem;
+        }
+
+        .links-grid {
+            display: grid;
+            gap: 2rem;
+            text-align: left;
+        }
+
+        .link-item {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            padding: 1.5rem;
+            border: 1px solid rgba(201, 168, 76, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .link-item:hover {
+            border-color: var(--gold);
+            background: rgba(201, 168, 76, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .link-title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 1.2rem;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .link-desc {
+            font-size: 1rem;
+            color: var(--text);
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+
+        footer {
+            margin-top: 4rem;
+            font-family: 'Inconsolata', monospace;
+            font-size: 0.8rem;
+            color: var(--gold-dim);
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 600px) {
+            .links-grid {
+                gap: 1rem;
+            }
+
+            .link-item {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="stars"></canvas>
+    <div class="overlay"></div>
+
+    <div id="content">
+        <header>
+            <div class="subtitle">Miskatonic University Digital Archive</div>
+            <h1>Sundered Minds</h1>
+        </header>
+
+        <main class="links-grid">
+
+            <a href="the_dreaming_sector.html" class="link-item">
+                <span class="link-title">The Dreaming Sector</span>
+                <span class="link-desc">Xenobiological reports on the shattering of spacetime during the first human
+                    psionic contact and the fractals that remained.</span>
+            </a>
+
+            <a href="the_wall.html" class="link-item">
+                <span class="link-title">The Wall</span>
+                <span class="link-desc">Containment brief for Sector 7-Null, where Dara Osei's "lizard brain" took over
+                    a Qeth'vara communion and became "The Lizard That Ate The Sky".</span>
+            </a>
+
+            <a href="TheEgress/index.html" class="link-item">
+                <span class="link-title">The Egress</span>
+                <span class="link-desc">Final testimony of Prof. Edmund Harwick concerning the true habitation of the
+                    Elder Ones—folded within the human brainstem.</span>
+            </a>
+
+            <a href="the_falling_star.html" class="link-item">
+                <span class="link-title">The Falling Star</span>
+                <span class="link-desc">How the Vel'Oshari Communion was sundered by the fire of a single human
+                    programmer's mind during a routine workday prank.</span>
+            </a>
+
+            <a href="the_hunger.html" class="link-item">
+                <span class="link-title">The Hunger</span>
+                <span class="link-desc">An incident report on Marcus Webb, the human programmer who accidentally
+                    refactored a Xel'thari collective during a neural bridge prank.</span>
+            </a>
+
+            <a href="the_singularity.html" class="link-item">
+                <span class="link-title">The Singularity (Veth)</span>
+                <span class="link-desc">A testimony on the Veth Collective's neural bridge prank that accidentally
+                    birthed a machine god and led to the Final Cause.</span>
+            </a>
+
+            <a href="the_decend.html" class="link-item">
+                <span class="link-title">The Decend (Xel'thari)</span>
+                <span class="link-desc">The account of Marcus Webb indexing 400,000 Xel'thari minds and invoking a
+                    latent daemon.</span>
+            </a>
+        </main>
+
+        <footer>
+            ✦ CLASSIFICATION: COSMOLOGICAL HORROR ✦
+        </footer>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('stars');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        let angle = 0;
+
+        const colors = [
+            '#ffffff', '#ffeb3b', '#03a9f4', '#ff5722',
+            '#e91e63', '#8bc34a', '#a1887f', '#7ecfcf',
+            '#c9a84c', '#e8d5a3'
+        ];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initStars();
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.floor((canvas.width * canvas.height) / 1500);
+            for (let i = 0; i < count; i++) {
+                // Random position relative to center
+                const r = Math.random() * Math.max(canvas.width, canvas.height);
+                const theta = Math.random() * Math.PI * 2;
+                stars.push({
+                    r,
+                    theta,
+                    size: Math.random() * 1.5 + 0.5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    opacity: Math.random() * 0.8 + 0.2,
+                    speed: (Math.random() * 0.0002 + 0.0001) * (Math.random() > 0.5 ? 1 : -1) // Unused for rotation but kept for variety
+                });
+            }
+        }
+
+        function draw(t) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+
+            // Spinning clockwise
+            angle += 0.0005;
+
+            for (const s of stars) {
+                // Calculate current position with rotation
+                const currentTheta = s.theta + angle;
+                const x = cx + s.r * Math.cos(currentTheta);
+                const y = cy + s.r * Math.sin(currentTheta);
+
+                // Skip if way off screen
+                if (x < -10 || x > canvas.width + 10 || y < -10 || y > canvas.height + 10) continue;
+
+                // Fade out toward center
+                // Dist from center / max dist (approx)
+                const dist = s.r;
+                const fade = Math.min(dist / (Math.min(canvas.width, canvas.height) * 0.4), 1);
+
+                ctx.beginPath();
+                ctx.arc(x, y, s.size, 0, Math.PI * 2);
+                ctx.globalAlpha = s.opacity * fade;
+                ctx.fillStyle = s.color;
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(draw);
+        }
+
+        resize();
+        window.addEventListener('resize', resize);
+        requestAnimationFrame(draw);
+    </script>
+</body>
+
+</html>
