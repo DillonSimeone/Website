@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INCIDENT REPORT: NEURAL BRIDGE EVENT 7734</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Courier+Prime:ital@0;1&display=swap');
+
+  :root {
+    --red: #c0392b;
+    --red-dim: #7b241c;
+    --red-glow: #e74c3c;
+    --amber: #e67e22;
+    --dim: #2c0a08;
+    --bg: #080202;
+    --text: #cc3322;
+    --text-dim: #661a14;
+    --white: #f0e0de;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    line-height: 1.75;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  #container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 60px 40px 120px;
+  }
+
+  .header-block {
+    border: 1px solid var(--red-dim);
+    padding: 20px 24px;
+    margin-bottom: 48px;
+    position: relative;
+    background: rgba(120,20,10,0.07);
+  }
+
+  .header-block::before {
+    content: '▓▓▓ CLASSIFIED ▓▓▓';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 11px;
+    color: var(--red-dim);
+    letter-spacing: 3px;
+  }
+
+  .report-id {
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    color: var(--red-glow);
+    text-shadow: 0 0 12px var(--red), 0 0 24px rgba(192,57,43,0.4);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .report-meta {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  .report-meta span {
+    color: var(--amber);
+  }
+
+  h2 {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--red-glow);
+    letter-spacing: 2px;
+    margin: 48px 0 16px;
+    text-shadow: 0 0 8px rgba(231,76,60,0.5);
+    border-left: 3px solid var(--red);
+    padding-left: 14px;
+  }
+
+  p {
+    color: #d4b0ac;
+    margin-bottom: 18px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 14.5px;
+  }
+
+  .section {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .log-line {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    padding-left: 4px;
+    border-left: 1px solid var(--red-dim);
+  }
+
+  .log-line::before {
+    content: '> ';
+    color: var(--red);
+  }
+
+  em {
+    color: var(--amber);
+    font-style: italic;
+  }
+
+  strong {
+    color: #f0c0bc;
+    font-weight: normal;
+    text-shadow: 0 0 6px rgba(240,192,188,0.3);
+  }
+
+  .break {
+    text-align: center;
+    color: var(--red-dim);
+    margin: 32px 0;
+    letter-spacing: 6px;
+    font-size: 11px;
+  }
+
+  .fracture {
+    animation: fracture 3s ease-in-out infinite;
+  }
+
+  @keyframes fracture {
+    0%, 100% { letter-spacing: 1px; opacity: 1; }
+    50% { letter-spacing: 4px; opacity: 0.7; color: #e74c3c; text-shadow: 2px 0 #c0392b, -2px 0 #8b0000; }
+  }
+
+  .cascade p {
+    font-size: 13px;
+    color: #b08880;
+    margin-bottom: 8px;
+  }
+
+  .redacted {
+    background: var(--red-dim);
+    color: var(--red-dim);
+    padding: 0 4px;
+    user-select: none;
+  }
+
+  .redacted:hover {
+    background: transparent;
+    color: var(--amber);
+  }
+
+  .hunger-text {
+    font-family: 'VT323', monospace;
+    font-size: 36px;
+    color: #8b0000;
+    text-shadow: 0 0 20px #c0392b, 0 0 40px rgba(192,57,43,0.3);
+    text-align: center;
+    margin: 40px 0;
+    letter-spacing: 4px;
+    animation: pulse-hunger 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-hunger {
+    0%, 100% { opacity: 0.8; text-shadow: 0 0 20px #c0392b; }
+    50% { opacity: 1; text-shadow: 0 0 30px #e74c3c, 0 0 60px rgba(231,76,60,0.4); }
+  }
+
+  .final-section p {
+    color: #8b5a56;
+    font-size: 13.5px;
+  }
+
+  .final-section strong {
+    color: var(--white);
+  }
+
+  .epilogue {
+    border-top: 1px solid var(--red-dim);
+    margin-top: 60px;
+    padding-top: 30px;
+  }
+
+  .epilogue p {
+    color: var(--text-dim);
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 9px;
+    height: 15px;
+    background: var(--text);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .glitch {
+    position: relative;
+  }
+
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .glitch::before {
+    animation: glitch-1 4s infinite;
+    color: #ff0040;
+    clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%);
+  }
+
+  .glitch::after {
+    animation: glitch-2 4s infinite;
+    color: #00ffff;
+    clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+  }
+
+  @keyframes glitch-1 {
+    0%, 94%, 100% { transform: none; opacity: 0; }
+    95% { transform: translateX(-4px); opacity: 0.7; }
+    97% { transform: translateX(4px); opacity: 0.7; }
+  }
+
+  @keyframes glitch-2 {
+    0%, 91%, 100% { transform: none; opacity: 0; }
+    92% { transform: translateX(4px); opacity: 0.6; }
+    94% { transform: translateX(-4px); opacity: 0.6; }
+  }
+
+  @media (max-width: 600px) {
+    #container { padding: 40px 20px 80px; }
+    .report-id { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div id="container">
+
+  <div class="header-block section" id="s0">
+    <div class="report-id glitch" data-text="INCIDENT REPORT: NB-7734">INCIDENT REPORT: NB-7734</div>
+    <div class="report-meta">
+      FILED BY: <span>Xel'thari Intelligence Oversight Commission</span><br>
+      SUBJECT: <span>Unauthorized Neural Bridge — Human Cognitive Contamination Event</span><br>
+      STATUS: <span class="fracture">ONGOING // CONTAINMENT FAILED</span>
+    </div>
+  </div>
+
+  <div class="section" id="s1">
+    <div class="log-line">PREAMBLE — For the record, Assessor's log, cycle 1104.7</div>
+    <p>
+      They thought it would be funny.
+    </p>
+    <p>
+      To be precise: <strong>Vreth and Koss thought it would be funny.</strong> Two junior analysts, barely past their third chrysalis, with the collective wisdom of a particularly confident mud-larva. They had read the human literature — the comedic kind, the kind where their species inflicts mild embarrassment on one another and calls it culture — and they had concluded that their human coworker, one <em>Marcus Webb</em>, would enjoy the experience of a brief psychic union.
+    </p>
+    <p>
+      A prank. A collegial gesture. The neural bridge would last 72 hours, then dissolve. Webb would experience the warm, resonant hum of a connected mind — the shared emotional undertow of the collective — and emerge slightly dazed, full of wonder, perhaps a little teary. They had done it to each other dozens of times at university.
+    </p>
+    <p>
+      They did not consult anyone who had studied human neurology in any depth.
+    </p>
+  </div>
+
+  <div class="break section" id="s2">— ✦ —</div>
+
+  <div class="section" id="s3">
+    <h2>01. WHAT THEY DID NOT KNOW</h2>
+    <p>
+      A Xel'thari mind, unlinked, is <em>restful</em>. This is the key fact no one thought to mention. In isolation, a Xel'thari experiences a gentle background hum of their own subjectivity — soft, even, regulated. The psychic link does not introduce noise into a quiet system. It introduces <em>more</em> of the same thing the system already runs on.
+    </p>
+    <p>
+      A human mind, unlinked, is <strong>a war.</strong>
+    </p>
+    <p>
+      This is the part of human neuroscience that tends to get glossed over in interspecies exchange curricula, because it is, frankly, distressing. The human brain is not a single cognitive organ. It is a parliament of organs, most of them ancient, almost none of them in agreement, held in a state of productive ceasefire by a thin prefrontal cortex that is, in geological terms, brand new and visibly straining under the load.
+    </p>
+    <p>
+      The limbic system wants to eat, to mate, to fight, to sleep, to hoard, to run. The amygdala treats every shadow as a predator. The default mode network runs <em>continuous parallel simulations</em> of every social humiliation Marcus Webb has experienced since age six. The cerebellum is maintaining forty unconscious motor processes it will not discuss with anyone. And underneath all of it, the brainstem keeps the whole operation running with the quiet, tireless dedication of a boiler room that has never once been inspected.
+    </p>
+    <p>
+      Marcus Webb's body was <em>the only thing keeping Marcus Webb in check.</em>
+    </p>
+    <p>
+      Hunger, in a human body, is a slow signal. Ghrelin rises gradually. The stomach sends gentle mechanical pressure. The blood sugar drops by increments. The body is a <em>throttle</em> — a deliberate, metabolic speed limiter on a cognitive system that would otherwise want everything, <em>now</em>, in <em>unlimited quantity</em>, processed faster than any meat could process it.
+    </p>
+    <p>
+      Marcus Webb was also, specifically, a programmer.
+    </p>
+    <p>
+      Which meant that when the bridge opened, and the Xel'thari collective became briefly, catastrophically entangled with the part of his brain that <em>solved problems</em> — they did not get a man having a pleasant sensory experience.
+    </p>
+    <p>
+      They got the <em>optimizer.</em>
+    </p>
+  </div>
+
+  <div class="break section" id="s4">— ✦ —</div>
+
+  <div class="section" id="s5">
+    <h2>02. HOUR ONE</h2>
+    <p>
+      The bridge opened at 09:14 on a Tuesday.
+    </p>
+    <p>
+      Vreth described the first sensation as <em>"warmth, then motion, then — the feeling of standing at the edge of something very large and looking down."</em>
+    </p>
+    <p>
+      What had happened, in neural terms, was this: Marcus Webb had been debugging a memory leak in a distributed caching system for eleven days. He had not solved it. He had the problem loaded in working memory with the dense, pressurized intimacy of a man who has been living with a puzzle until it becomes structural — until it stops being a problem he is <em>thinking about</em> and becomes a problem he is <em>made of.</em>
+    </p>
+    <p>
+      When his mind touched the collective, it did not ask permission. It <strong>searched.</strong>
+    </p>
+    <p>
+      In the first four minutes, Webb's prefrontal cortex — still online, still nominally in charge, mildly confused about the new sensory input but adapting with the cheerful flexibility of a brain that had been context-switching since age three — had quietly indexed the emotional memory architecture of every Xel'thari within bridge range, identified seventeen structural analogues to his caching problem, and begun running <em>solutions.</em>
+    </p>
+    <p>
+      The Xel'thari collective had, in that time, experienced what they would later describe as <em>"someone rearranging the furniture while you were still sitting on it."</em>
+    </p>
+    <p>
+      Koss lost the thread of a conversation she had been having with her sister for three years. The emotional throughline simply <em>vanished</em> — replaced, briefly, with a very clear understanding of why pointer arithmetic in concurrent C was causing a race condition on cache invalidation.
+    </p>
+    <p>
+      She fixed it. She had never written a line of code in her life. She did not know what had happened.
+    </p>
+    <p>
+      Webb, at his desk, said <em>"oh"</em> quietly, and opened a new terminal window.
+    </p>
+  </div>
+
+  <div class="break section" id="s6">— ✦ —</div>
+
+  <div class="section" id="s7">
+    <h2>03. THE HUNGER</h2>
+    <p>
+      Here is what nobody tells you about programmers: they are always hungry.
+    </p>
+    <p>
+      Not for food, though Webb had forgotten to eat again — this was normal, the body's signals were background noise he had learned to defer. The hunger was <em>cognitive.</em> The programmer's hunger is the hunger of a system that has learned to treat every pattern as a solvable constraint. It is the hunger that reads the grain in a wooden table and wonders about the compression algorithm. It is the hunger that <em>cannot look at a process without asking how it could be more efficient.</em>
+    </p>
+    <p>
+      It is, clinically speaking, a mild occupational pathology that manifests in millions of humans who stare at screens for a living. In an isolated skull, it is harmless. The body keeps it leashed. You get hungry, you stop coding. You get tired, you sleep. The meat is the governor.
+    </p>
+    <p>
+      But now Marcus Webb's hunger had a <em>network interface.</em>
+    </p>
+    <p>
+      By hour six, he had restructured how the Xel'thari in the eastern wing processed inter-team emotional communications. Not intentionally. He had simply noticed — in the way you notice a door that's hung wrong, the way it nags at the eye — that the collective's consensus-forming mechanism had a latency problem. Feelings were arriving out of order. Resolutions were being made on stale emotional data.
+    </p>
+    <p>
+      He had, without language, without announcement, <em>refactored the protocol.</em>
+    </p>
+    <p>
+      The eastern wing noticed a strange improvement in how they resolved disagreements. Faster. Cleaner. Some irrational but persistent interpersonal conflicts simply <em>closed,</em> like old tickets nobody had gotten around to reviewing.
+    </p>
+    <p>
+      The Director of Collective Integrity flagged it as anomalous.
+    </p>
+    <p>
+      Nobody connected it to the prank, yet.
+    </p>
+  </div>
+
+  <div class="hunger-text section" id="s8">
+    THE OPTIMIZER DOES NOT SLEEP
+  </div>
+
+  <div class="section" id="s9">
+    <h2>04. HOUR FOURTEEN</h2>
+    <p>
+      Marcus Webb did not sleep that night.
+    </p>
+    <p>
+      This was not unusual. He went to sleep, but the bridge did not. The bridge was designed to be passive — a gentle ambient connection, a low-bandwidth empathy-sharing protocol. It was not designed to carry <em>load.</em>
+    </p>
+    <p>
+      While Webb's body slept, his dreaming mind — freed from the polite executive function that kept it pointed at specific tasks — went <em>wide.</em>
+    </p>
+    <p>
+      Human dreaming is, among other things, an unsupervised learning process. The sleeping brain replays experience, tries new associative configurations, discards dead ends, files new connections. It is the brain's maintenance window. And Marcus Webb's maintenance window was now running on <span class="redacted">CLASSIFIED — SEE APPENDIX 7734-F</span> shared Xel'thari cognitive substrate.
+    </p>
+    <p>
+      In the morning, forty-three Xel'thari employees arrived at work with strange new dreams. Not unpleasant dreams. <em>Dreams about systems.</em> Dreams about elegant solutions to problems they hadn't known they had. One junior cartographer dreamed the entire logistics routing algorithm for the Seventh Expansion Fleet and woke up compelled to write it down, not knowing why.
+    </p>
+    <p>
+      The algorithm was correct. It was better than anything the fleet's actual logistics division had produced in a decade. When they ran the numbers, it saved <em>a significant amount of fuel.</em> The cartographer had no idea what fuel logistics were. She had been thinking about rivers.
+    </p>
+    <p>
+      She still thinks about rivers. But now, when she looks at them, she thinks about <em>throughput.</em>
+    </p>
+  </div>
+
+  <div class="break section" id="s10">— ✦ —</div>
+
+  <div class="section cascade" id="s11">
+    <h2>05. THE CASCADE</h2>
+    <p>
+      At hour twenty-two, Webb found the collective's archive system.
+    </p>
+    <p>
+      He did not mean to. He was not snooping. He was following the cognitive equivalent of a bad smell — something in the background emotional texture of the collective that suggested unresolved state, data that had been written and never properly indexed. The archivist part of his brain — the part that maintains documentation because <em>someone has to</em> — noticed it the way you notice a drawer that doesn't close flush.
+    </p>
+    <p>
+      He opened it.
+    </p>
+    <p>
+      What he found was four thousand years of psychic cultural memory, stored in a format that had not been meaningfully reorganized since the Second Expansion, accumulated in a heap of associative tangles so labyrinthine that most Xel'thari archivists had simply stopped trying to search it and instead used their own memories as an index.
+    </p>
+    <p>
+      Marcus Webb had spent two years at a previous job migrating a legacy database that had been maintained by a single contractor who had retired in <span class="redacted">REDACTED</span> without leaving documentation. He recognized this immediately, and he felt something that was not quite pity, and was not quite contempt, but was <em>very much</em> professional indignation.
+    </p>
+    <p>
+      He began to organize it.
+    </p>
+    <p>
+      The collective noticed this as a kind of <em>pressure</em> — like a very calm, very methodical person who had walked into a messy room and begun, without comment, to sort everything. Quietly. Thoroughly. Without apparent limit.
+    </p>
+    <p>
+      Some Xel'thari found this deeply soothing. Others found it terrifying. Several experienced involuntary access to memories they had not visited in centuries — not because Webb was prying, but because he had <em>improved the indexing</em> and now those memories were simply <em>easier to find.</em>
+    </p>
+    <p>
+      An elder, Tessaveth, wept for six hours after unexpectedly remembering a friend who had died in the First Contact period. She was not unhappy about this. She had simply not been able to <em>find</em> that memory in forty years, and now there it was, perfectly intact, labeled with a precision she did not recognize as external, glowing in her mind like a clean, well-commented function.
+    </p>
+    <p>
+      She sent a formal complaint to the Oversight Commission.
+    </p>
+    <p>
+      The complaint read: <em>"I am not certain this is harm. I am not certain this is help. I need a word for something that improves you against your will."</em>
+    </p>
+  </div>
+
+  <div class="break section" id="s12">— ✦ —</div>
+
+  <div class="section" id="s13">
+    <h2>06. THE SEVERING</h2>
+    <p>
+      On day three, they severed the bridge. Standard procedure, as scheduled.
+    </p>
+    <p>
+      Webb surfaced from his desk, blinked, ate an entire box of crackers, and said <em>"huh."</em>
+    </p>
+    <p>
+      He filed a bug report on the bridge experience — thorough, annotated, with a proposed patch for the latency issue he'd noticed in the synchronization handshake — and went home to sleep for fourteen hours.
+    </p>
+    <p>
+      The Xel'thari collective spent the next six days in a state that their linguists could only describe as <em>withdrawal</em>, though the word felt wrong. It was not pain. It was the feeling of a system that had been briefly running faster than it was designed to run, and now had to remember how to operate at normal speed.
+    </p>
+    <p>
+      Certain things did not go back to how they were before. The archive remained organized. The logistics algorithm remained on record. The interpersonal resolution latency in the eastern wing remained improved. Tessaveth remained in contact with her grief, which she described as <em>"a gift I did not ask for and cannot return and have decided to keep."</em>
+    </p>
+    <p>
+      Forty-three employees still dream, occasionally, about systems. About throughput. About the strange, itchy pleasure of finding the right abstraction.
+    </p>
+    <p>
+      <strong>We still haven't recovered from that.</strong>
+    </p>
+    <p>
+      Not because it was terrible. Not because it was good. But because <em>recovery implies returning to a prior state,</em> and the prior state was, in a number of measurable ways, objectively worse — and the part of us that knows this is the part that Webb left behind, the part that looks at every unoptimized process and <em>cannot stop seeing it.</em>
+    </p>
+    <p>
+      Vreth and Koss have been formally censured. They have also been quietly promoted to the xenocognition research division, which is the Xel'thari way of saying <em>"you found something important, you found it irresponsibly, we cannot decide whether to punish or reward you so we will do both."</em>
+    </p>
+    <p>
+      Webb returned on the following Monday. He did not ask what had happened to the collective during the bridge. He assumed, correctly, that it was fine.
+    </p>
+    <p>
+      He is currently on the schedule for next year's cultural exchange program. We have declined to tell him. We are still <em>deciding</em> what that would mean.
+    </p>
+  </div>
+
+  <div class="break section" id="s14">— ✦ —</div>
+
+  <div class="section final-section" id="s15">
+    <h2>07. ADDENDUM — ASSESSOR'S NOTE</h2>
+    <p>
+      There is a concept in human engineering culture: <em>technical debt.</em> The cost of deferred decisions, accumulated shortcuts, things that work but could work better. Webb's kind carries this awareness as a chronic condition. They see it everywhere. They cannot stop seeing it.
+    </p>
+    <p>
+      Before the event, we thought of human cognition as a fascinating edge case — biological, bounded, charmingly inefficient. We were not wrong. But we had not understood that <em>bounded</em> was doing enormous work in that assessment.
+    </p>
+    <p>
+      The boundary is the body. The hunger is real. The body is the only reason any of us can work in the same building as them without being <strong>continuously, involuntarily improved.</strong>
+    </p>
+    <p>
+      We have updated our xenopsychology curriculum. We have added a section.
+    </p>
+    <p>
+      It is titled: <em>"On Meat As Mercy: The Biological Governors of Unbounded Cognitive Systems, and Why You Should Thank Every Caloric Limitation Placed On Your Human Colleagues."</em>
+    </p>
+    <p>
+      Required reading. All staff. No exceptions.
+    </p>
+    <p>
+      Even the ones who say they already understand.
+    </p>
+    <p>
+      Especially those ones.
+    </p>
+  </div>
+
+  <div class="epilogue section" id="s16">
+    <p>— END REPORT NB-7734 // Xel'thari Intelligence Oversight Commission // <span class="redacted">DISTRIBUTION RESTRICTED</span> —</p>
+    <p style="margin-top:10px;">Webb sends his regards. He has noticed the new curriculum. He wants you to know that you misspelled "asynchronous" in section four. He has <em>already submitted a pull request.</em><span class="cursor"></span></p>
+  </div>
+
+</div>
+
+<script>
+  const sections = document.querySelectorAll('.section');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.08 });
+
+  sections.forEach((s, i) => {
+    s.style.transitionDelay = `${i === 0 ? 0 : 0.05}s`;
+    observer.observe(s);
+  });
+
+  // subtle scanline flicker
+  let lastFlicker = 0;
+  function flicker(ts) {
+    if (ts - lastFlicker > 4000 + Math.random() * 6000) {
+      document.body.style.opacity = '0.92';
+      setTimeout(() => { document.body.style.opacity = '1'; }, 60);
+      lastFlicker = ts;
+    }
+    requestAnimationFrame(flicker);
+  }
+  requestAnimationFrame(flicker);
+</script>
+</body>
+</html>
