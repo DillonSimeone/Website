@@ -83,6 +83,7 @@ body::before {
     max-width: 720px;
     margin: 0 auto;
     padding: 80px 48px 120px;
+    touch-action: pan-y;
 }
 
 /* ── HEADER ── */
