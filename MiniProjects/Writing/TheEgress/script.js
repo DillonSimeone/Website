@@ -22,10 +22,18 @@
 
     // ── MOUSE TRACKING ──
     let mouseX = -100, mouseY = -100;
-    window.addEventListener('mousemove', e => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-    });
+    const updateMouse = (e) => {
+        if (e.touches && e.touches.length > 0) {
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        } else {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        }
+    };
+    window.addEventListener('mousemove', updateMouse);
+    window.addEventListener('touchstart', updateMouse, { passive: true });
+    window.addEventListener('touchmove', updateMouse, { passive: true });
 
     function resize() {
         W = canvas.width = window.innerWidth;
@@ -682,8 +690,21 @@
     }, { passive: false });
 
     window.addEventListener('touchmove', e => {
-        if (!captured) e.preventDefault();
+        if (!captured) return; // Allow normal scrolling if not captured
+        e.preventDefault();
+        // Mimic shake behavior on touch-drag up/down too
+        if (e.touches && e.touches.length > 0) {
+            const touch = e.touches[0];
+            const dy = touch.clientY - (lastTouchY || touch.clientY);
+            shakeAmount = Math.min(shakeAmount + Math.abs(dy) * 0.1, 18);
+            lastTouchY = touch.clientY;
+        }
     }, { passive: false });
+
+    let lastTouchY = 0;
+    window.addEventListener('touchstart', e => {
+        if (e.touches && e.touches.length > 0) lastTouchY = e.touches[0].clientY;
+    }, { passive: true });
 
     window.addEventListener('keydown', e => {
         if (!captured) return;
