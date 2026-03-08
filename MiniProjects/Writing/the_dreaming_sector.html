@@ -30,6 +30,7 @@
 
     html {
       scroll-behavior: smooth;
+      overflow-x: hidden;
     }
 
     body {
@@ -39,6 +40,8 @@
       font-weight: 300;
       min-height: 100vh;
       overflow-x: hidden;
+      touch-action: pan-y;
+      overscroll-behavior-y: none;
     }
 
     /* WEBGL CANVAS */
@@ -128,6 +131,8 @@
       color: var(--accent-dim);
       font-size: 12px;
       letter-spacing: 8px;
+      max-width: 100%;
+      overflow: hidden;
     }
 
     /* SECTIONS */
@@ -364,9 +369,9 @@
       color: var(--accent-bright);
       opacity: 0.5;
       text-align: center;
-      white-space: nowrap;
       margin: 40px 0;
       animation: whisper 8s ease-in-out infinite;
+      word-break: break-all;
     }
 
     @keyframes whisper {
@@ -387,7 +392,7 @@
     /* SCROLL REVEALS */
     .reveal {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(4px);
       transition: opacity 1s ease, transform 1s ease;
     }
 
@@ -414,8 +419,12 @@
     }
 
     @media (max-width:600px) {
+      html {
+        scroll-behavior: auto;
+      }
+
       #content {
-        padding: 80px 24px 60vh;
+        padding: 80px 20px 60vh;
       }
 
       .doc-title {
@@ -424,6 +433,23 @@
 
       p {
         font-size: 17px;
+      }
+
+      .fractal-whisper {
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        white-space: normal;
+        padding: 0 10px;
+      }
+
+      .doc-divider {
+        letter-spacing: 4px;
+        gap: 8px;
+      }
+
+      .ft-line.l2 {
+        font-size: 24px;
+        letter-spacing: 2px;
       }
     }
   </style>
