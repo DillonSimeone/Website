@@ -10,8 +10,9 @@ export function drawReincarnation(ctx, w, h, alpha, time, chapterProgress, curre
   const mP = currentState === 'REINCARNATION' ? chapterProgress : 1;
   const mVal = Math.max(0, (mP - 0.1) * 1.5); // Maps progress to overlap range
   
-  // Font scales massively as they meet
-  const fontSize = 3 + Math.min(1.2, mVal) * 5;
+  // Font scales based on width and progress
+  const baseScale = Math.min(1, w / 1200);
+  const fontSize = (1.5 + Math.min(1.2, mVal) * 3) * (0.6 + baseScale * 0.4);
   
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';

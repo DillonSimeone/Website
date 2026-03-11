@@ -120,37 +120,48 @@ export function drawHumanWorld(ctx, w, h, alpha, time, scrollPos) {
   clouds.forEach(c => c.draw(ctx, w, alpha));
 
   // 3. Varied Distant Buildings (Solid Silhouettes)
-  for (let i = 0; i < 15; i++) {
-    const bW = 80 + (Math.sin(i * 1.5) * 40);
+  const bSpacing = Math.max(120, w / 8); 
+  const bCount = Math.ceil((w + 400) / bSpacing) + 2;
+  
+  for (let i = 0; i < bCount; i++) {
+    const bW = 60 + (Math.sin(i * 1.5) * 30);
     const bH = 60 + (Math.cos(i * 1.2) * 40);
-    const bx = (i * 150 - (scrollPos * 0.35)) % (w + 200) - 100;
+    const bx = ((i * bSpacing - (scrollPos * 0.35)) % (w + 400)) - 200;
     
     // Solid dark purple/charcoal building
-    ctx.fillStyle = `rgba(15, 15, 35, ${0.95 * alpha})`; 
+    ctx.fillStyle = `rgba(12, 12, 30, ${0.98 * alpha})`; 
     ctx.fillRect(bx, h - bH, bW, bH);
     
     // Building Highlight (top/side)
-    ctx.strokeStyle = `rgba(79, 70, 229, ${0.3 * alpha})`;
+    ctx.strokeStyle = `rgba(79, 70, 229, ${0.35 * alpha})`;
     ctx.strokeRect(bx, h - bH, bW, bH);
     
-    // Windows (Brighter now that building is solid)
-    ctx.fillStyle = `rgba(0, 229, 255, ${0.4 * alpha})`;
-    if ((i % 3) === 0) ctx.fillRect(bx + 15, h - bH + 15, 8, 8);
-    if ((i % 2) === 0) ctx.fillRect(bx + bW - 25, h - bH + 30, 10, 10);
+    // Windows
+    ctx.fillStyle = `rgba(0, 229, 255, ${0.45 * alpha})`;
+    if ((i % 3) === 0) ctx.fillRect(bx + 12, h - bH + 12, 6, 6);
+    if ((i % 2) === 0) ctx.fillRect(bx + bW - 20, h - bH + 25, 8, 8);
   }
 
   // 4. Street Lights
-  for (let i = 0; i < 10; i++) {
-    const lx = (i * 300 - (scrollPos * 0.9)) % (w + 200) - 100;
+  const lSpacing = Math.max(200, w / 4);
+  const lCount = Math.ceil((w + 400) / lSpacing) + 1;
+
+  for (let i = 0; i < lCount; i++) {
+    const lx = ((i * lSpacing - (scrollPos * 0.9)) % (w + 400)) - 200;
     const ly = h - 60;
+    
+    // Post
     ctx.fillStyle = `rgba(20, 20, 20, ${alpha})`;
-    ctx.fillRect(lx, ly, 4, 60);
-    const r = ctx.createRadialGradient(lx + 2, ly + 3, 0, lx + 2, ly + 3, 40);
-    r.addColorStop(0, `rgba(255, 210, 100, ${0.7 * alpha})`);
+    ctx.fillRect(lx, ly, 3, 60);
+
+    // Glow
+    const glowR = Math.min(40, w * 0.1); 
+    const r = ctx.createRadialGradient(lx + 1.5, ly + 3, 0, lx + 1.5, ly + 3, glowR);
+    r.addColorStop(0, `rgba(255, 210, 100, ${0.75 * alpha})`);
     r.addColorStop(1, `rgba(255, 210, 100, 0)`);
     ctx.fillStyle = r;
     ctx.beginPath();
-    ctx.arc(lx + 2, ly + 3, 40, 0, Math.PI * 2);
+    ctx.arc(lx + 1.5, ly + 3, glowR, 0, Math.PI * 2);
     ctx.fill();
   }
 
