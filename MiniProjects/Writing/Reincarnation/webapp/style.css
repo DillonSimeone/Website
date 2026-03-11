@@ -2,7 +2,7 @@
 
 :root {
   --bg-deep: #050508;
-  --bg-panel: rgba(15, 15, 25, 0.8);
+  --bg-panel: rgba(15, 15, 25, 0.82);
   --accent-blue: #00e5ff;
   --accent-purple: #9d50bb;
   --accent-cyan: #00e5ff;
@@ -12,6 +12,15 @@
   --font-mono: 'JetBrains Mono', monospace;
   --font-display: 'Syne', sans-serif;
   --header-h: 140px;
+  --section-w: 800px;
+  --inner-pad: 3rem;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-h: 100px;
+    --inner-pad: 1.5rem;
+  }
 }
 
 * {
@@ -52,6 +61,7 @@ header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   z-index: 1000;
   overflow: hidden;
+  padding-top: env(safe-area-inset-top);
 }
 
 .header-inner {
@@ -85,9 +95,9 @@ header {
   padding: 0 2rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end; /* Move content down for better visibility */
   height: 100%;
-  padding: 1rem 0;
+  padding: 0.75rem 0;
 }
 
 #header-label {
@@ -98,15 +108,17 @@ header {
   letter-spacing: 0.1em;
   color: var(--accent-blue);
   opacity: 0.8;
+  margin-bottom: 0.5rem;
 }
 
 #scroll-prompt {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.2rem;
   animation: pulse 2s infinite;
+  margin-bottom: 0.25rem;
 }
 
 /* Story Sections */
@@ -116,9 +128,9 @@ header {
 }
 
 .story-section {
-  max-width: 800px;
+  max-width: var(--section-w);
   margin: 0 auto 15vh auto;
-  padding: 4rem 3rem;
+  padding: 4rem var(--inner-pad);
   background: rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -128,6 +140,7 @@ header {
   transform: translateY(50px);
   transition: all 1s cubic-bezier(0.2, 0.8, 0.2, 1);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  width: 92%; /* Ensure small gutter on mobile */
 }
 
 .story-section.active {
@@ -205,11 +218,12 @@ header {
 .data-block {
   background: rgba(0, 229, 255, 0.05);
   border: 1px solid rgba(0, 229, 255, 0.2);
-  padding: 2.5rem;
+  padding: 2.5rem 1rem;
   border-radius: 12px;
   text-align: center;
   margin: 2rem 0;
   font-family: var(--font-mono);
+  overflow: hidden;
 }
 
 .data-block .label {
@@ -220,7 +234,7 @@ header {
 }
 
 .data-block .value {
-  font-size: 3.5rem;
+  font-size: clamp(2rem, 10vw, 3.5rem);
   font-weight: 900;
   color: var(--accent-blue);
   text-shadow: 0 0 30px rgba(0, 229, 255, 0.6);
@@ -228,7 +242,7 @@ header {
 
 .character-data {
   margin: 2rem 0;
-  padding: 2.5rem;
+  padding: 2rem var(--inner-pad);
   background: rgba(157, 80, 187, 0.05);
   border-left: 5px solid var(--accent-purple);
   font-family: var(--font-mono);
@@ -238,6 +252,8 @@ header {
 .data-row {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-bottom: 0.8rem;
   border-bottom: 1px solid rgba(157, 80, 187, 0.1);
   padding-bottom: 0.5rem;
@@ -250,10 +266,10 @@ header {
 
 .complexity-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
   margin: 2rem 0;
-  padding: 2rem;
+  padding: 1.2rem;
   background: rgba(0, 229, 255, 0.03);
   border: 1px solid rgba(0, 229, 255, 0.1);
   border-radius: 12px;
@@ -261,7 +277,7 @@ header {
 
 .grid-cell {
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 8px;
   position: relative;
@@ -324,11 +340,11 @@ header {
 
 .magic-hero {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 12vw, 5.5rem); 
+  font-size: clamp(3rem, 15vw, 6.5rem); 
   font-weight: 900;
   text-align: center;
-  margin: 5rem 0;
-  line-height: 1.1;
+  margin: 3.5rem 0;
+  line-height: 1;
   background: linear-gradient(to bottom, var(--accent-blue), #fff);
   -webkit-background-clip: text;
   background-clip: text;
@@ -336,12 +352,13 @@ header {
   opacity: 0.1;
   transform: scale(0.9);
   transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  filter: blur(5px);
 }
 
 .story-section.active .magic-hero {
   opacity: 1;
   transform: scale(1);
-  filter: drop-shadow(0 0 30px rgba(0, 229, 255, 0.4));
+  filter: blur(0) drop-shadow(0 0 30px rgba(0, 229, 255, 0.4));
 }
 
 .opt-prompt {
@@ -364,11 +381,38 @@ header {
 }
 
 .impact-text {
-  font-size: 1.4rem;
+  font-size: clamp(1.1rem, 4vw, 1.4rem);
   font-weight: 800;
   color: var(--accent-blue);
   text-transform: uppercase;
   margin-top: 2rem;
   letter-spacing: 0.15rem;
   text-align: center;
+}
+
+/* Mobile Overrides */
+@media (max-width: 480px) {
+  .main-title {
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
+  }
+  .sub-title {
+    font-size: 1.5rem;
+  }
+  .story-section {
+    padding: 2.5rem 1.25rem;
+  }
+  .data-block .value {
+    font-size: 2.2rem;
+  }
+  .timeline-log {
+    font-size: 0.6rem;
+  }
+  .character-data {
+    font-size: 0.85rem;
+  }
+  #header-label {
+    margin-right: 1rem;
+    font-size: 0.65rem;
+  }
 }

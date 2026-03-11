@@ -191,5 +191,5 @@ function animate(time) {
 // Initialize
 initResize();
 initBackground();
-initHumanWorld(window.innerWidth, 140);
+initHumanWorld(window.innerWidth, hCanvas.height || 140);
 requestAnimationFrame(animate);
