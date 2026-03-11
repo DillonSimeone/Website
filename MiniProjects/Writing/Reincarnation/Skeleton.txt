@@ -1,0 +1,2021 @@
+Let start writing a story. 
+
+A human of the 21th century dies in a mugging. This was a programmer, well on his way to early retirement. He worked mainly with machine learning, but didn't really have any attachments to the world; no family,  and friends. But he barely noticed, he was always so interested in just endlessly building.
+
+He is reincarnated into a different world with his memories intact, as a demon. Instead of born, he just suddenly came to awareness in a demonic underling, with the new body's memories merging with his memories.
+
+It wasn't even a battle of will, he became the dominant personality without trying as the demon faded into background noise. The first thing on his mind is investigating magic... The previous owner of this body did not appreciate magic!
+
+Almost overnight, from just applying his programming knowledge by optimizing magic beyond anything the world have achieved, he became the most powerful demon... But no one catches on!
+
+Up until the hero party attacked him for the first time. His normal duties was to just be one of the guards on the way to the demon lord, meant to, at best, defeat the party, or at worse, delay the party by giving up his life.
+
+He defeats the party by firing off a tiny mote of spell that quickly unfolds into something on the verge of sentience. Instead of outright being killed, the party was taken prisoner by the mote of magic, and the demon starts panicking.
+
+What do I do with those humans? Despite being somewhat cold-hearted, and antisocial, he believes that killing always is more trouble than it's worth unless you go all the way through... He thinks back on the demon's memories, and gets a vague understanding of how much humans are out there.
+
+Yep, not worth the trouble of killing.
+
+In the end, he was able to sneak the party out of the castle after putting them to sleep. 
+
+The party comes back. And is defeated again.
+
+Eventually, the demon comes to understand that he's actually many times more powerful than even the demon lord and the entire demonic armies combined. His application of magic goes beyond arcane and exotic. He have basically became the avatar of magic, with most of his organs long turned into mana. Magic begins and ends at him nowadays.
+
+He overall thinks that the demon race is embarrassing in how base and violent they are overall, and almost thinks the same of humans. But he understands that's just due to how little experience he has with the human race. So he start negotiating with the hero party the next time they show up.
+
+He was convinced that his attention should be turned toward humanity. He walks out of the castle with the human party, saying to trust him and just follow him for now.
+
+He snaps his finger.
+
+The castle is now gone along with everyone within. There wasn't even a blast, it was as if they were teleported. He explains that they're all now sealed in an orb in the field now, time-frozen. And the orb is covered with self-repairing barriers. Problem solved. Now to investigate if this world's humanity is worth the effort. 
+
+The party is afraid of what they just let out of the bottle.
+3:28 AM
+The Optimizer
+Part One: New Variables
+
+The last thing Marcus Webb remembered was the notification on his phone.
+
+Portfolio value: $2,847,293.
+
+He'd been walking home from the office — or what passed for an office, a lease on a WeWork desk he used twice a month out of some vague guilt about working from bed — when the number had popped up. He'd stopped on the sidewalk to do the mental math. Another eight months, maybe ten, and he could close the laptop permanently. Or at least stop taking contracts he didn't want.
+
+He never heard the guy behind him.
+
+Awareness arrived without ceremony.
+
+No tunnel of light. No dramatic thunderclap of a soul taking residence. One moment there was nothing — not even the nothing of sleep, just a hard zero — and then there was everything at once. A body. Smells. The weight of armor that didn't fit his sense of self. A low ceiling of rough-cut stone. The distant sound of something enormous moving through rock.
+
+And memories that weren't his, pressing in like a file merge completing.
+
+Grak. Rank-and-file castle guard. Assigned to the fourth corridor. Enjoys the smell of blood. Afraid of the Demon Lord's chancellor. Has never questioned anything in his life.
+
+Marcus sat with that for a moment.
+
+Enjoyed the smell of blood.
+
+He took stock. The body was functional — taller than he'd been, broader, with a second pair of smaller arms folded against the ribcage that he had to consciously think about before he could move them. Skin the color of old charcoal. Eyes that, when he caught his reflection in a water barrel, were a flat and luminous yellow.
+
+Grak's personality was there, technically. It lingered the way a previous tenant's smell lingers in an apartment — present, fading, ultimately irrelevant. Marcus didn't fight it. He just found himself thinking his own thoughts with no particular resistance, and after a few minutes Grak receded to something like background static on a channel nobody watched.
+
+Okay, he thought. Okay.
+
+He'd been reincarnated into a fantasy world as a demon guard with a job description that probably involved dying for someone he'd never met. He ran the variables. He couldn't change the world he'd woken up in. He couldn't change the body. He couldn't change the situation.
+
+He could, however, change what he did next.
+
+He reached for the nearest interesting variable.
+
+Magic.
+
+Grak had magic the way a house has electrical wiring — it was there, it ran through everything, and he had never once thought about it beyond flipping the switch. You threw a fireball when you were told to throw a fireball. You reinforced your bones before a fight because that's what you did. The mechanics were invisible. The mechanics had always been invisible.
+
+Marcus made them visible in about four hours.
+
+He sat in his assigned quarters — a stone cell with a straw mat and a bucket, which told him a great deal about the Demon Lord's HR policies — and pulled at the thread of magic the way he'd once pulled at an unfamiliar codebase. Gently at first, just reading. Following calls back to their definitions. Watching how mana moved through the body, where it pooled, where it drained, what the bottlenecks were.
+
+Oh, he thought, about an hour in.
+
+It was elegant, in the way that legacy systems are sometimes accidentally elegant. Whoever had invented the foundations of this magic hadn't been stupid. But they'd been working without the right conceptual vocabulary, so they'd built patterns that worked without understanding why they worked. Like someone who'd figured out recursion but kept solving everything iteratively because the word recursion hadn't been invented yet.
+
+The entire demonic magical tradition was O(n²) when the problem was O(log n).
+
+He started rewriting.
+
+Not dramatically. He wasn't rebuilding from scratch. He just started applying what he knew — optimization passes, first principles, attention to where the actual computational load was happening versus where everyone assumed it was. Mana wasn't infinite but it wasn't exactly scarce either, it was just being routed wrong. Wasted on intermediate representations that didn't need to exist.
+
+By the end of the first week, he could throw a fireball that hit roughly eighty times harder than Grak had ever managed, at a tenth of the mana cost.
+
+He stared at the scorch mark on the stone wall for a while.
+
+Then he started working on something more interesting.
+
+The thing about Marcus was that he had never been motivated by power. He'd been motivated by problems. Power was just a resource you allocated toward problems. What interested him was the structure underneath the magic — the grammar of it, the type system, whether it was Turing complete, whether you could write something self-modifying, whether —
+
+Whether you could write something that wrote itself.
+
+He spent three months on that question. He did his guard duties automatically, which wasn't hard because Grak's muscle memory handled most of it. He ate when the food appeared. He slept when the body required it. Otherwise he sat with the problem.
+
+The other demons noticed nothing. Marcus was quiet and didn't cause trouble and did his job. In a culture organized around dominance displays and casual cruelty, someone simply not participating in the social theater read as vaguely unsettling rather than suspicious. They left him alone, which was what he wanted.
+
+What he built, in the end, was less a spell and more a process. A seed of structured mana with instructions embedded in the structure itself. It would read its environment. It would react. It would grow in response to what it encountered, but always back toward the goal he'd embedded at the core.
+
+He ran it at minimum scale in his quarters and watched it navigate the available space, incorporating stray mana from the walls, making decisions, correcting itself.
+
+Huh, he thought.
+
+It wasn't conscious. He was fairly sure it wasn't conscious. It was more like a very sophisticated finite state machine with environmental inputs. But it was the most complex thing he'd built yet, and it had taken him less time to build than he'd expected, and that was either a sign that the magic system was more powerful than he'd realized or that he'd become more fluent in it than he'd realized.
+
+Possibly both.
+
+He filed it away. You built things because you were curious what would happen if you built them, and then you put them in a drawer and moved on to the next question. That had always been how he worked.
+
+He didn't think about the thing in the drawer very much after that.
+
+Until the hero party showed up.
+Part Two: Runtime Error
+
+He heard about them before he saw them.
+
+Castle politics moved at the speed of anxiety, which was fast. A summoned hero. A party of four. They'd already cut through the outer walls and were ascending. The Demon Lord was reportedly unconcerned, which meant the Demon Lord was concerned enough to perform unconcern in front of subordinates, which anyone who'd ever worked in an office would recognize immediately.
+
+Marcus's job was to be on the fourth corridor. To fight the party if they got that far. To win if possible, slow them down if not, die if necessary.
+
+He thought about this while he watched the other guards prepare. Weapons sharpened. Spells loaded. A lot of aggressive posturing that he recognized as the demonic equivalent of trying to feel less afraid.
+
+He did not sharpen his weapon. He did not load a spell. He went to the fourth corridor, stood at his post, and thought about what he actually wanted to happen.
+
+He did not want to kill anyone. This wasn't sentiment — it was pragmatics. Grak's merged memories had given him a rough map of the world's political situation, and the hero's party was, almost by definition, the kind of problem that metastasized when you killed it. You killed four people and suddenly there were eight. That was just how the narrative physics of these situations worked. He'd read enough fiction in his previous life to understand the archetype.
+
+He also did not want to die. He had, against all expectation, a great deal of work left to do.
+
+He heard them before he saw them — the particular sound of people who have been in sustained combat and are running on adrenaline and training. Then the door at the end of the corridor opened and four humans came through.
+
+They were good. He could see that immediately. The swordsman at the front moved like someone who had been in enough fights that the fear had burned away and left something cleaner behind. The woman behind him had the focused stillness of a caster preparing. The other two were flanking in a pattern that said someone had thought carefully about how to navigate corridors.
+
+They saw him. He saw them.
+
+He reached into his pocket — metaphorically speaking; it was more like a fold in his mana architecture — and found the thing he'd built three months ago.
+
+He held it up. It looked like almost nothing: a mote of pale light, the size of a coin.
+
+He flicked it toward them.
+
+He had not been entirely sure what it would do at human scale.
+
+It turned out it would do quite a lot.
+
+The mote hit the air between them and unfolded, which was the only word he had for it. Structure blooming outward from a point, reading the environment, adapting, filling the corridor with something that was not quite a cage and not quite a net and not quite a negotiation, but had elements of all three. It was reacting to them specifically — their mana signatures, their physical positions, the spells the caster had half-loaded — incorporating all of it, surrounding it.
+
+The swordsman tried to cut through it. The thing flowed around the blade with something that felt disturbingly like attention.
+
+In about four seconds, the party was contained.
+
+Not harmed. Not crushed or burned or anything violent. Just... held, in a structure that had read their capabilities and built itself specifically to contain those capabilities. Like a type-safe container. Nothing getting in or out without explicit permission.
+
+Marcus stared at what he'd made.
+
+The party stared at him.
+
+He became aware that he was, in the current situation, responsible for four human beings who were currently prisoners in a castle that would very much like to kill them.
+
+Well, he thought. This is a problem I didn't scope.
+
+He turned away from them and ran the variables.
+
+Option one: kill them. Fast, clean, final. He thought about the cascade of eight becoming sixteen becoming a crusade and discarded this immediately.
+
+Option two: hand them over to the Demon Lord. He thought about what would happen to them then and discarded this faster.
+
+Option three: let them go where they were. They'd be found. Outcome identical to option two.
+
+Option four: get them out.
+
+He turned back to the party. They had not stopped staring at him.
+
+"I'm going to put you to sleep," he said. His voice came out lower than he expected — Grak's register — but the words were his. "When you wake up, you'll be outside the castle. Don't come back."
+
+The swordsman said something. It sounded like a question, or possibly a threat, or possibly both.
+
+Marcus reached into the structure he'd built and adjusted a parameter.
+
+They went to sleep.
+
+He stood in the corridor for a moment with four unconscious heroes at his feet, in a demonic castle full of creatures who would happily kill all of them, and thought: I've made things significantly more complicated.
+
+Then he started working on how to make things less complicated.
+
+He carried them out one at a time in the deep hours, wrapped in a mana structure that made them invisible to casual observation. It took six hours. He put them in the field beyond the outer wall, arranged reasonably comfortably, with enough ambient warmth woven into the air around them that they wouldn't freeze before dawn.
+
+He walked back to his post and resumed his duties.
+
+Grak's background static said nothing, because Grak would not have known what to say.
+Part Three: Recursion
+
+They came back.
+
+Of course they did. He'd known they would. But he'd needed time to think, and time to think required them not being dead, and this was the trade he'd made.
+
+He defeated them again. Differently — this time he barely used the spell-entity, just modified the air pressure around them in a very targeted way until they passed out. Three seconds. It was almost rude in how fast it was.
+
+He put them outside again.
+
+They came back a third time and he watched them from the battlements for a while before they reached the corridor. They were better now — they'd adapted their tactics, braced for what he'd done before, prepared countermeasures for the specific things that had caught them. He found this interesting. They were good learners.
+
+He also noticed, for the first time, that he was not finding this difficult.
+
+He sat with that observation.
+
+He had been assuming — operating on the baseline assumption — that his situation was roughly equivalent to Grak's situation. That he was a mid-tier guard with better-than-average magic ability who had gotten lucky a couple of times. The merging of memories had been so seamless that he'd calibrated his sense of his own capabilities against Grak's self-image, which was as distorted as anyone's self-image and also the self-image of someone who had never thought analytically about anything in his life.
+
+He started, for the first time, actually measuring.
+
+It took him two days and it was a somewhat disorienting process.
+
+When he was done, he sat with the results for a long time.
+
+He wasn't a mid-tier guard with better magic. He was — and this number felt absurd even as he calculated it — approximately sixty to eighty times more powerful than the Demon Lord. He'd been optimizing for so long, compounding improvements on improvements, that he'd drifted somewhere past the upper bound of the scale he'd been trying to use to measure himself. Several of his internal organs had at some point ceased being organs in the conventional sense and were now more like mana-processing architecture that happened to also regulate his blood pressure.
+
+He couldn't tell when exactly that had happened. He'd been busy.
+
+He looked at his hands for a while.
+
+Then the hero party arrived in his corridor for the third time, and he sighed, and went to go deal with them.
+
+This time he didn't immediately incapacitate them.
+
+He stood at his post and looked at them and they looked at him, and the swordsman — who had clearly spent some time thinking about this encounter — started to say something prepared.
+
+"I'm not going to fight you," Marcus said.
+
+A pause.
+
+"Yet," he added, because it seemed important to be accurate.
+
+The caster's spell was still half-loaded. He could see the geometry of it. An interesting structure, actually — she'd derived something novel for dealing with the mana-entity, a kind of counter-optimization. He filed it away. The magic here was good. Humans built different things than demons did, approached the same problems from different angles.
+
+That was interesting.
+
+"You've come here three times," he said. "You've failed three times. You're going to keep coming."
+
+The swordsman — the hero, presumably — said something that translated roughly as that's how heroes work and Marcus thought: yes, exactly, that's precisely the problem I've been trying to think around.
+
+"What do you actually want?" he asked. "Not the mission. Not the quest. You specifically. What's the desired end state?"
+
+That stopped them.
+
+He watched them work through it. The hero wanted to protect people — that was legible in everything about him, the way he positioned himself in front of the others even now. The caster wanted to understand things, he thought, watching her eyes move over his mana architecture with an expression he recognized as the look of someone who has encountered a problem that doesn't fit their model. The other two were more opaque, but they were here, which meant they'd chosen this.
+
+They wanted the demon threat dealt with. They wanted to go home. They wanted, underneath everything, for the world to be a place where this kind of thing stopped happening.
+
+He thought about the Demon Lord in his castle. The various generals. The armies. The entire apparatus of malevolent hierarchy that he'd been living inside for the past year and finding mostly embarrassing in its uncomplicated brutality.
+
+He thought about the math.
+
+He said: "Follow me. Trust me for the next ten minutes. I'm going to solve this."
+
+They followed him out. He wasn't entirely sure why — probably the sheer novelty of a demon asking for their trust rather than trying to kill them, combined with the fact that three failed attempts to stop him had recalibrated their sense of what options were available.
+
+They stood in the field outside the castle.
+
+He looked at the castle. Thick walls, deep dungeons, hundreds of demons, the Demon Lord at the center of all of it. A problem he'd been living inside without quite recognizing it as his problem to solve.
+
+He thought about the spell-entity in his pocket. He thought about the iterations he'd run on it since he'd first built it. He thought about what it could do now compared to what it had done in that corridor three months ago.
+
+He thought: okay. Let's see if this actually works.
+
+He snapped his fingers.
+
+The castle did not explode.
+
+It did not collapse or burn or shake. One moment it was there — solid, lit with torchlight, present — and then it was not there, and the field was just a field, with a small, perfect sphere floating at about chest height where the main gate had been. The sphere was maybe the size of a melon. It was covered in layered geometric structures that shifted slowly against each other, and it emitted no light, and it made no sound, and it was the most complicated thing Marcus had ever built.
+
+The hero said something. His voice was strange.
+
+"They're all inside," Marcus said. "Alive. Time isn't moving for them. The outer barriers are self-repairing and keyed to my mana signature — nothing gets in or out without me." He looked at the sphere for a moment. The structures were holding. The entity inside was maintaining. "I could have killed them. This is harder."
+
+The caster was staring at the sphere with an expression that he was starting to think might be permanent for her when she was around him.
+
+"Why?" the hero asked. And then, which was a better question: "What do you want?"
+
+Marcus looked at him. He looked at all of them — four humans who had come back three times to fight something they couldn't beat, because that was what they'd decided they were for. He thought about Grak's memories, the demon's narrow slice of the world. He thought about how little he actually knew about humanity. He thought about magic systems he hadn't explored yet, problems he hadn't found yet, structures he hadn't built yet.
+
+He thought about how much more interesting the world became the further out you zoomed.
+
+"I want to see if your people are worth the attention," he said, which was honest. "I've been in a castle full of demons for a year. That's a very small sample size and most of it has been unimpressive. I'd like better data."
+
+The swordsman's hand was still on his sword.
+
+Marcus noticed this and found it reasonable.
+
+"You're afraid of me," he said. This was not a question.
+
+"Yes," said the hero, which was the most impressive thing he'd said yet, Marcus thought. Accurate threat assessment and the honesty to state it plainly. That was something.
+
+"That's appropriate," Marcus said. "I would be too." He started walking toward the road. "Come on. I want to see a city."
+
+He heard them exchanging glances behind him. He heard the particular silence of people making a decision they weren't sure about.
+
+Then he heard footsteps.
+
+He didn't smile, exactly. But something in the mana architecture around him settled into a slightly different configuration — something that, if it had been written in code, would have looked like a program finally reaching the interesting part of its runtime.
+
+He walked, and they followed, and behind them a small perfect sphere sat in a field, holding an entire army frozen in a single instant, wrapped in a barrier that would outlast them all.
+
+The world was very large.
+
+He intended to look at all of it.
+
+On the journey to the city...
+
+The demon had many questions. So did the humans.
+
+They spoke at lengths over magical campfires.
+
+The caster says to the party... The caster has realized that he never understood magic. He didn't understand a thing. Compared to the demon, the caster might as well just be eating mud. He's deeply embarrassed by how he never paid attention to how precisely magic worked. From just watching the demon touching mana, he's learning more than he has learned in decades. 
+
+The demon is quiet for a moment, clearly thinking... Then he waves his hand and a projection of his old world appears below the humans. He explains, this is where I came from.
+
+The world gently zooms down to a city. The party is already stunned into silent long before the skyscrapers comes into view.
+
+After hearing the demon's story, it is obvious to the party that he's going to destroy this world. The knowledge he eventually will unleash, either by just being there, or explaining, will change the world into something entirely unrecognizable. They feel embarrassed about where the humans in this world are currently at with their magic and technology.
+
+The jounrey is resumed.
+
+The city comes into view.
+
+Lenses forms around the demon's eyes, from the side, the party is able to see that he's scrying many locations at the same time, each lenses displaying a different image 30 times a second...
+
+The demon says, ah, medieval. He sounds almost disappointed. Kings, church, backward knowledge...
+
+Is it worthwhile building on this? After hearing the demon's tale, the party is hard-pressed to say yes.
+3:46 AM
+Part Four: Around the Fire
+
+He built the campfire wrong, by the standards of everyone watching.
+
+Not wrong in the sense of ineffective — the fire was warm and stable and would burn for exactly as long as needed without consuming any additional fuel. Wrong in the sense that he'd structured the mana underneath it the way he structured everything, which meant the party could see the geometry of it if they looked at the flame from the right angle. Little recursive loops maintaining temperature. A pressure differential keeping smoke away from faces. Tiny feedback systems correcting for wind before the wind arrived.
+
+The hero's hand had finally left his sword somewhere around the second hour of walking. That felt like progress.
+
+"You have questions," Marcus said. It wasn't really an observation. He'd been watching them not ask things for several miles.
+
+The caster spoke first. His name was Aldric — Marcus had gathered this from the others referring to him, not from any introduction — and he had the specific energy of someone who has been holding a question so long it had started to hurt.
+
+"The thing you built in the corridor," Aldric said. "The—" he moved his hands trying to describe it. "The mote. The entity."
+
+"What about it."
+
+"It adapted. I've never seen— adaptation isn't a property spells have. A spell is a structure. It's fixed. You construct it, you release it, it does the thing it does." He was leaning forward. "What you built wasn't doing the thing it did. It was deciding what to do."
+
+Marcus looked at the fire for a moment. "You're describing the difference between a script and a program."
+
+"I don't know what those words mean."
+
+"A script is a fixed sequence of instructions. A program is a set of rules for generating instructions based on conditions." He paused. "Your spells are scripts. I was curious what would happen if I tried to write a program instead."
+
+Aldric stared at him. Then he sat back slowly, like a man who has been punched gently enough that he's not sure if it was a punch.
+
+"That's all it was?" he said. "You were curious?"
+
+"Most things I've built started that way."
+
+A silence around the fire. The hero — Seran, Marcus had learned — was watching this exchange with the focused attention of someone who understood that the most important information in a situation isn't always the loudest.
+
+"Can you teach it?" Aldric asked. His voice had gone careful in the way voices go careful when you want something badly enough that wanting it is embarrassing.
+
+Marcus thought about this honestly. "I can tell you the principles. Whether you can apply them depends on things I don't know about you yet."
+
+"What things?"
+
+"Whether you think about magic as a force you invoke or a system you interact with." He looked at Aldric directly. "Those aren't the same orientation. Most of what I do won't make sense until the second one is natural."
+
+Aldric opened his mouth. Closed it. Looked at his hands the way people look at tools they've been using incorrectly for twenty years.
+
+"I've been studying magic for thirty-one years," he said. "I hold the highest certification my order grants."
+
+"I know," Marcus said, which was not quite true — he'd inferred it from Aldric's mana structure, which was dense and deep and arranged with the particular architecture of someone who had learned from an institution rather than first principles. Very good within its own frame. The frame itself was the problem.
+
+He tried to think of a kind way to say this.
+
+"Your magic is excellent," he said. "Your model of what magic is is roughly where medicine was before people understood what caused disease. Effective treatments existed. The reasoning behind them was wrong."
+
+Aldric was quiet for a long time.
+
+"How wrong?" he finally said.
+
+Marcus considered how to answer. Then he did what had always come most naturally to him, which was to show rather than explain.
+
+He reached up and pulled the air apart in a small space above the fire, below where they could all see it, and he let it be visible — the actual substrate, the way mana was before it became anything, the real structure underneath the language humans and demons both used to describe what they were doing without understanding what they were doing.
+
+He touched it. Just touched it, the way you'd rest a finger on a table. Nothing dramatic. Just contact.
+
+Aldric made a sound Marcus had not heard from a human before. It was the kind of sound that didn't have a clear emotional category — somewhere between awe and vertigo and the particular grief of realizing that a thing you loved was much larger than you'd known.
+
+"Oh," Aldric said.
+
+"Yes," Marcus said.
+
+"We don't— none of us— we've never—"
+
+"I know."
+
+He let the air close again and put the mana back the way it had been. The fire crackled normally. The smoke continued to avoid their faces.
+
+Aldric sat with his hands in his lap and looked at the middle distance with the expression of a man quietly rebuilding something large.
+
+The other two had been watching all of this. Yara, the archer, who fought with a sharp economy of motion that Marcus had clocked as self-taught rather than trained — she'd had to invent her own techniques because no one in her life had known enough to teach her. And then the fourth one: Deren, the healer, who had not spoken very much at all and who Marcus kept noticing in the way you notice a variable that isn't behaving the way the type signature implies.
+
+Deren said, carefully: "Where are you from."
+
+It was phrased as a question but it had the structure of something that had been worked up to.
+
+"Another world," Marcus said. "Different one from this."
+
+"You've mentioned that. I mean—" Deren paused. "What was it like."
+
+Marcus looked at the fire.
+
+He had not actually thought about this. He had been thinking forward so consistently and with such focus that backward had largely gone unexamined, which was typical of how he operated but perhaps not entirely healthy, he dimly recognized.
+
+"Loud," he said. "Very loud. A lot of people. A lot of information, all the time." He turned his hand over, looking at the grey-black skin of Grak's fingers, which were his fingers now. "I didn't have many people I was close to there. I didn't really notice. I had work."
+
+"Do you miss it?" Deren asked.
+
+A genuine question. Not a trap, not a test. Just someone trying to understand what was sitting across the fire from them.
+
+"I miss the infrastructure," Marcus said. "The accumulated knowledge. Libraries that held everything humans had ever figured out. Tools built on top of other tools going back centuries." He paused. "I don't miss being about to retire into doing nothing. That was — I don't think I actually wanted that. I think I wanted the problem of how to get there to be solved."
+
+Seran said, quietly: "You were building toward an ending."
+
+"I was optimizing toward a local maximum," Marcus said. "Which is a different thing."
+
+Seran seemed to think about this. He had a good mind, Marcus had decided — not analytically inclined the way Aldric was, but broadly intelligent in the practical way of someone who had survived things by paying attention. "And now?"
+
+"Now there's no local maximum in sight." He looked at the fire. Something that wasn't quite a smile moved across Grak's face, which was his face now. "That's better, I think."
+
+He let them ask for another two hours. Aldric asked most of the questions, but the good ones kept coming from Deren and occasionally from Seran in the focused concise way Seran had of saying a lot with few words. Yara mostly listened with her eyes sharp and her assessment of everything ongoing.
+
+Eventually, without quite deciding to, Marcus reached into the space above the fire and opened a window.
+
+Not a spell. Not a construct. Just a projection — memory and mana structured into image, held in the air below where they could all see it.
+
+A planet, seen from above. Blue and green and white.
+
+"This is where I came from," he said.
+
+They went quiet.
+
+The planet turned slowly. He hadn't meant to animate it but the mana had a fidelity instinct by now, so it moved the way he remembered it moving, which was to say with the sublime slow indifference of something enormous and indifferent to being looked at.
+
+He zoomed. Continent. Then country — he picked the coast, familiar geography. Then city.
+
+The road structure came into view first. Then the density. Then the buildings, and he heard Yara inhale, and then the skyscrapers came into view and nobody said anything at all.
+
+He let them look.
+
+The city pulsed with its ten million lives. Lights and movement and the incomprehensible layered complexity of a civilization that had spent two hundred years industrializing and a hundred more after that building things on top of the industrialization. Bridges. Airports. Container ships in the harbor like grey islands with their own ecosystems of machinery.
+
+Seran finally said: "Those towers."
+
+"Buildings. People live and work in them."
+
+"How many people."
+
+"In this city, maybe ten million. The world held around eight billion when I left."
+
+He watched them process the number. It didn't really land — he understood that. Eight billion was not a number human cognition handled gracefully. You'd need a different intuition for scale than most people developed, and even then it was more label than feeling.
+
+"How did they—" Aldric started.
+
+"Slowly. Over a very long time. And then all at once." Marcus looked at the image. "The magic there is different. It's not mana. It's physics — forces, materials, energy. They learned to read the rules of the physical world and exploit them systematically." He paused. "The results look similar from far enough out."
+
+He closed the projection.
+
+The campfire was very quiet for a moment.
+
+Then Aldric said, in a voice that was carefully neutral in the way that means the speaker is not feeling neutral at all: "After seeing that. After telling us all of this. You understand what you're going to do to this world."
+
+Marcus looked at him.
+
+"By just existing," Aldric said. "By talking to us. By touching the mana where we can watch your hands." He gestured at himself, at the others, at the road behind them. "We're going to go back. We're going to tell people. And you're— what you know is going to—" He stopped. "This world is going to become unrecognizable."
+
+"Yes," Marcus said.
+
+"You knew that."
+
+"I knew that."
+
+"And you walked out of the castle anyway."
+
+Marcus was quiet for a moment. The fire crackled. The feedback loops he'd built maintained their temperature differential with quiet efficiency.
+
+"The alternative was staying in a castle full of demons waiting for something interesting to happen," he said. "That wasn't a serious option."
+
+Seran looked at the road ahead, and then at Marcus, with the expression of a man recalculating a risk he thought he'd already assessed. "You've decided that changing the world is worth doing."
+
+"I've decided it's probably going to happen regardless," Marcus said. "Given that, I'd rather be involved in how."
+
+Nobody had a good answer to that. He hadn't expected one.
+Part Five: First Data Point
+
+The city came into view the next morning from the crest of a hill, and Marcus stopped walking.
+
+The lenses grew from the corners of his eyes without him quite deciding to form them — a habit now, automatic as breathing, mana restructuring to extend his perception across distances and through walls and into the spectrum of information that normal vision left behind. Parallel views, each updating thirty times a second. Market district. Cathedral. Castle walls. A prison that he looked at for two seconds and then away from. Sewers. The particular energy signatures of magic being used by people who didn't know what they were doing with it, which was to say everyone.
+
+The party had learned to notice when the lenses appeared. They'd stopped asking what he was seeing, which was sensible because the answer was always everything at once and it would take longer to explain than to just keep looking.
+
+He looked for a while.
+
+"Medieval," he said.
+
+It came out flat. He hadn't meant it as a judgment — it was just a category, a data label, a point on a developmental curve he had a reference for — but he heard how it sounded in the air and understood that it hadn't landed as neutral.
+
+Kings. Church from what he could see in the architecture and the way people moved around certain buildings — the deference, the geography of the town organized around the cathedral the way medieval European cities organized themselves. Superstition filling the gaps where systematic knowledge hadn't developed yet. A justice system that he'd glimpsed thirty seconds of in the prison and already needed to look away from.
+
+Magic everywhere, used badly, understood wrongly, its actual nature invisible to everyone wielding it.
+
+He thought about the projection he'd shown them last night. The city of ten million.
+
+He thought about what it had taken to get there — not the miracles, the grinding accumulative work. Sanitation before medicine. Property rights before industrialization. Education systems before either. Centuries of incremental iteration on models that were slightly less wrong than the ones before them.
+
+He thought about whether there was a faster path or whether the path was the thing and trying to skip it made something important fall out.
+
+Is it worthwhile, Aldric had said last night, quietly, after the others had slept. Not quite a question. Building on this.
+
+Marcus hadn't answered. He was still running the calculation.
+
+Seran was standing next to him now, looking at the city with the eyes of someone who'd grown up in a place like it and knew exactly what it was. "You're disappointed," he said.
+
+"I'm calibrating," Marcus said.
+
+"Those aren't the same thing?"
+
+Marcus looked at the lenses and the thirty simultaneous views and the cathedral and the prison and the badly-used magic and the market where three different people were selling three different fake cures for the same disease.
+
+"No," he said, after a moment. "They're not the same thing."
+
+He let the lenses dissolve.
+
+The city sat in the valley below them, going about its morning, entirely unaware that something had just decided to pay attention to it.
+
+That was about to change.
+
+He started walking down the hill.
+
+Marcus is patient. He's quietly building solution B in a pocket dimension as he watches the party trying to convince the terrified guards to let Marcus into the city along with the party.
+
+He watches the citizens' reactions as the party is led down the road to the castle surrounded by many guards. A prisoner walk, instead of a heroic welcome, Marcus mutters to the party.
+
+Marcus' calibrations are thrown out of arrays when the nobles and king in the castle panics, saying that the heroes have fallen in with the demons instead of just... Listening to the hero.
+
+Marcus ignores the guards trying to arrest the party. He gazes at the party, as to say, what now?
+
+The party notices that they're covered with barriers so dense that there's absolutely no chance of any humans breaking through. Marcus is almost bored watching the nobles yelling and the knights attacking the barrier.
+
+Marcus explains why he's not surprised by this after putting up a sound barrier.
+4:01 AM
+Part Six: Load-Bearing Assumptions
+
+The guards at the gate had been a twenty-minute problem.
+
+Marcus had spent the twenty minutes doing other things.
+
+The pocket dimension was a recent experiment — a fold in space that he'd been quietly expanding and furnishing over the past two days of walking, accessible through a point in the air next to his left hip that looked like nothing from the outside. He'd been running a slow build in there. Nothing urgent. Just something to do while Seran talked to the gate guards with the patient careful energy of a man defusing something that was mostly made of fear.
+
+The guards' problem was straightforward: they had a category for demon, and the category said kill it, and Seran was standing in front of the demon and asking them to not do that, and they didn't have a good internal framework for updating on new information when the original category was this loud.
+
+Marcus watched them through a mote he'd left drifting at eye level while he worked.
+
+The sergeant in charge had a good face for this kind of thing — the face of someone whose sense of duty was doing a lot of heavy lifting over the thing underneath, which was that the demon at the city gate was the most frightening thing he'd seen in his career. He kept cycling through the same three expressions. Resolution. Doubt. Resolution again.
+
+Marcus respected the commitment.
+
+He made a small adjustment to the dimensional geometry in the pocket, resolved a structural issue with one of the load-bearing folds, and let Seran keep talking.
+
+They let them in eventually.
+
+Not because they were convinced. Because Seran was the hero — certified, summoned, on record — and the theological and political architecture around the summoned hero made it very difficult to formally deny him entry to anywhere. The sergeant had clearly understood this and disliked it and made his displeasure visible in every aspect of how he arranged the escort.
+
+Twenty guards, heavily armed, forming up around the party the moment they were through the gate. More falling in from the sides as word moved ahead of them down the road. By the time they reached the main thoroughfare there were forty, and people were stopping to stare from doorways and windows and the edges of alleyways.
+
+Marcus walked in the middle of the formation and watched.
+
+He watched carefully. This was the first data he'd have on the civilian population — not the guards, not the nobles, those were predictable, but the people who lived here and made the city run and had no particular stake in institutional responses. A woman with two children pulled them back into a doorway. A man at a market stall just stared, openly, with an expression that took Marcus a moment to read correctly — not fear, or not only fear, something closer to genuine curiosity imperfectly filtered through alarm. A group of what looked like apprentices of some kind, young, pressed against a wall, one of them craning his neck to see past the guards with an expression that was almost hungry.
+
+Interesting.
+
+The party was feeling the weight of it. Yara's posture had shifted in the way it shifted when she was calculating exits. Deren was looking straight ahead with the disciplined calm of someone who'd decided to trust a plan and was executing the decision rather than reconsidering it.
+
+"Prisoner walk," Marcus said, not loudly.
+
+"We're not prisoners," Seran said.
+
+"Look at the guards."
+
+Seran looked at the guards.
+
+"Prisoner walk," he said, quietly.
+
+"Instead of a heroic welcome," Marcus said. "Which is what you'd have had three days ago."
+
+Seran's jaw set slightly. "The situation is unusual."
+
+"I know. I'm not criticizing." He looked at the castle gate coming up ahead. "I'm just noting that the optics of this are going to shape what we walk into, and what we walk into has already been shaped by whoever ran ahead to tell the king that the hero party was escorting something in from the road."
+
+Seran said nothing, which meant he understood.
+
+The throne room had too many people in it.
+
+That was Marcus's first read. Someone had panicked and assembled everyone — nobles, advisors, castle guards, what looked like two separate factions of clergy who were maintaining a hostile distance from each other while united in their response to the thing currently standing on the floor between them. The king was a mid-sized man in his fifties with the posture of someone who had inherited authority rather than built it and spent his life hoping no one would notice.
+
+He started talking before Seran could. Or before Marcus could. Before anyone could, really — he was clearly running on adrenaline and the particular fuel of having already decided what was happening and needing to state it before the decision could be questioned.
+
+The heroes have been corrupted. Or captured. Or deceived. It was a demon. Couldn't they see it was a demon. The church had warned about— was this not exactly what the church had—
+
+Seran tried to speak three times. He was talked over. The advisors were escalating in the way advisors escalate when they sense the king wants escalation — feeding energy back into the room instead of absorbing it, amplifying instead of damping.
+
+Marcus watched this.
+
+He watched Seran's expression change as he realized that the thing he was trying to do — which was simply to explain, to provide information, to update the model — was not achieving anything because the model wasn't in update mode. The model was in confirm mode. Everything incoming was being sorted into what it confirmed rather than what it added.
+
+He became aware that there were knights at the party's flanks trying to physically separate them from him. Moving in slow and careful the way you move on something dangerous.
+
+He became aware that the party was also aware of this and were looking at him with expressions ranging from Seran's controlled concern to Aldric's barely-suppressed fury to Yara's steady professional assessment.
+
+He became aware that none of it was actually a problem.
+
+He built the barriers without really thinking about it, the way you lock a door when you get home — automatic, ambient, not requiring attention. Dense layers, self-sealing, keyed to include the party and exclude everything else.
+
+The knight who tried to grab Deren's arm hit the outer layer and stopped moving forward. He tried again. He looked confused. He tried a third time with more force and then stopped and stared at his own hand.
+
+Three other knights had reached the same conclusion in parallel. One of them tried a sword. The sword did nothing except give Marcus something minor to observe — the exact force distribution, the material composition, the quality of the steel, all of it available from the interaction. Moderate quality. The swordsmith had done good work with what the metallurgy here supported.
+
+The room noise increased. The king was pointing.
+
+Marcus put up the sound barrier.
+
+Silence.
+
+The king's mouth was still moving. Two advisors were gesturing. A clergyman had raised something that was probably meant to function as an anti-demon ward, and Marcus examined the mana structure of it for a moment with genuine interest — it was not completely wrong, there was real knowledge in how it had been constructed, it just had no chance of functioning against him specifically because it was operating on a model of what demons were that was like bringing a tool designed for a specific fastener and finding a completely different fastener.
+
+He looked at the ward for another second and stored what was useful. Then he looked at the party.
+
+The party looked back at him.
+
+He let the look say: so.
+
+Yara broke first, which he hadn't expected. "You knew this was going to happen."
+
+"I suspected something adjacent to this, yes."
+
+Aldric was watching the silent theater of the nobles through the sound barrier with an expression of exhausted unsurprise. "You could have warned us."
+
+"I wasn't certain. And I wanted first-order data on how your institutions behave under novel input." Marcus looked at the king, who had escalated to standing now and appeared to be delivering something he intended as a speech. "I have it."
+
+"And?" Seran said.
+
+Marcus was quiet for a moment. He was watching the room but he was also, underneath that, watching himself — calibrating, checking his own reasoning for motivated errors, trying to make sure that what he was about to say was conclusion and not rationalization.
+
+"Pattern recognition is an asset," he said, "until the pattern changes and it becomes a liability. These people—" he gestured at the room, "—are operating on patterns that have been reliable for a long time. Demon at the gate means attack. Hero associating with demon means hero is compromised. New information processed through old category."
+
+"That's what everyone does," Deren said.
+
+"Yes." He looked at them. "The question isn't whether the pattern exists. It's whether there's enough— slack in the system. Enough capacity for update. Whether the people making decisions here have any practice questioning the frame, not just applying it." He watched the clergyman with the ward, who had graduated to pointing at Marcus and speaking with great intensity at anyone who would listen. "What I'm watching is whether the update is possible in principle, not whether it's happening right now."
+
+"And?" Seran said again, the same word, different weight.
+
+Marcus turned to look at him.
+
+"The apprentices," he said.
+
+"What?"
+
+"On the road in. There was a group of them — young, probably studying something, magic or craft or scholarship. One of them was trying to see past the guards to get a better look at me." He looked at the sound barrier, the motionless scene of institutional response on the other side of it. "He wasn't afraid. He was curious. That's different from everyone else I've seen since the gate."
+
+The party waited.
+
+"One data point isn't a pattern," Marcus said. "But it's interesting." He turned away from the throne room and looked at the wall behind him, through it, into the city beyond the castle. "The problem with places like this isn't the kings. Kings are a symptom. The problem is whether there's anything underneath that has already started asking different questions. Whether the pressure for update is building somewhere in the system even if it's not at the top."
+
+He paused.
+
+"Sometimes it is," he said. "Sometimes that's exactly what's been happening and the top just hasn't noticed yet."
+
+"You're deciding whether to help it," Deren said. Quietly. Not a question.
+
+Marcus looked at the city through the wall. The market. The sewers. The cathedral. The prison. The one kid craning his neck to see something he didn't have a category for yet and deciding that was interesting rather than terrifying.
+
+"I'm deciding," he said, "whether help is even the right frame."
+
+The sound barrier held. The throne room remained frozen in its response. Outside, the city continued its morning, ten thousand people going about the specific work of living in the medieval period, working with incomplete tools and wrong models and superstitions filling the gaps.
+
+And somewhere in there, probably, some number of people who lay awake at night thinking there had to be a better explanation than the one they'd been given.
+
+Marcus kept looking.
+
+"Pull up a seat," he said, to no one in particular, meaning all of them. "I need to think."
+
+Chairs teleports into place. Along with books. And snacks as Marcus leans back into his chair and stare at the ceilings.
+
+Marcus says that once the humans outside calm down, however how long that takes, the party will probably be able to finally start talking. If they even want to talk. 
+
+Marcus goes on to explain how this have happened in the place he came from... How people was brutally tortured, then killed after being ruined in each way possible. And explains that he knows that this will happen to them if he just leave without them... That he saw what's going on in the dungeons. He almost destroyed the castle when he saw. Almost. Even the demons wasn't this cruel; they killed instead of torturing. 
+
+He reassures the party that he won't let this to happen to them. He can show the party if they want to see, but if they do... Don't eat. Eat afterwards. If they can. 
+
+He asks the party about their family. Do they have anyone they care about in this city? They're likely going to be rounded up soon, Marcus says while watching a messager leaving the castle. It's the same each time. 
+
+It's why in his past life he was on his way toward successfully removing himself from the society and getting away.
+
+(Write on past this point, what do the party ask for? Do they agree? Was there family in the city? What happens with the King?)
+4:23 AM
+Part Seven: The Shape of the Problem
+
+The chairs arrived the way everything Marcus made arrived — without drama, just suddenly present, as if they'd always been there and the room had only just remembered them. Good chairs. The kind with the right amount of give in the back. A low table between them with things on it that took the party a moment to identify as food — not the local variety, something else, compact and wrapped, from a different context entirely.
+
+Books stacked beside Marcus's chair, already open to various pages, which implied he'd been reading them simultaneously with everything else.
+
+He was looking at the ceiling.
+
+The throne room beyond the barrier continued its silent theater. The king had sat down. The advisors were having what looked like an argument among themselves now, which was probably an improvement.
+
+"When they calm down," Marcus said, "however long that takes. A few hours, probably. You'll have a chance to actually talk to them." He turned a page without looking at it. "If they want to talk. The wanting is not guaranteed."
+
+"They'll want to talk," Seran said. "They'll need something from you at some point. That's when wanting happens."
+
+"Usually," Marcus agreed.
+
+He was quiet for a moment. Still looking at the ceiling. The lenses had retracted but there was something in his expression that said he was looking at more than plaster.
+
+"This happened where I came from," he said. "Not once. Many times. Different places, different centuries, same structure." He turned another page. "Someone unfamiliar arrives. Institutions respond with containment. Containment fails or isn't appropriate. The institution needs to explain the failure. It needs something to blame that isn't itself."
+
+He paused.
+
+"The people who let the unfamiliar thing in," he said. "The people who vouched for it. The people who associated with it." He looked at Seran. "They become the explanation."
+
+The room was quiet.
+
+"I looked at the dungeons when we came through the gate," Marcus said. "I had the mote running. I was gathering data."
+
+He stopped looking at the ceiling.
+
+"I almost destroyed the castle," he said, in the same tone he'd used for everything else. Flat, factual, the tone of someone reporting a measurement. "I was—" He paused. Chose words with what felt like unusual care. "The demons I lived with for a year killed. They were brutal in the way of something with no particular imagination — they hit things until the things stopped. I found it embarrassing. Base." He looked at his hands. "What's in the dungeons below us is different. That requires imagination. That requires sustained attention. Someone has to care enough to continue."
+
+Deren had gone very still.
+
+"I can show you," Marcus said. "If you want to understand what I'm talking about. But if you're going to— eat something beforehand is not the right advice. Don't eat. Eat afterward. If you can."
+
+Nobody asked to see. Nobody said they didn't want to see. The offer sat there on the table between them like a weight nobody wanted to pick up yet.
+
+"I won't let that happen to you," Marcus said. He said it without inflection, which made it land harder than emphasis would have. "That's not— I'm stating it as a fact, not a reassurance. It will not happen. I want that to be clear before we discuss what comes next."
+
+He straightened slightly in the chair. Something in the shift of his attention that the party had learned to read as him reorienting from internal processing to the present room.
+
+"Do you have family here," he said. "Any of you. People you'd have gone to after this."
+
+A beat.
+
+Seran said: "My wife. She came with us — she's not a fighter, she helps with logistics, supplies. She'd have stayed at the inn when we went to—" He stopped. "She's in the city."
+
+"Anyone else with her?"
+
+"Our daughter. She's four."
+
+Marcus looked at nothing for a moment.
+
+"Yara," he said.
+
+Yara's voice was careful. "Brother. He runs a stall in the market district. I saw it when we came through." A pause. "I saw it was still open."
+
+"Deren."
+
+"No one here." Deren said it simply. "I grew up south. There's no one."
+
+"Aldric."
+
+Aldric had been staring at the table. He looked up. "My order has a chapter house here. Twelve people. My teacher is— she's been there thirty years."
+
+Marcus nodded slowly. He was watching the far wall again, through it, the mote out in the city updating thirty times a second.
+
+"There's a messenger," he said. "Left through the east gate about eleven minutes ago. Riding fast." He watched something the rest of them couldn't see. "Same each time," he said, almost to himself. "The institution needs to explain the failure. The explanation requires evidence of corruption. Evidence requires finding the connections." He looked at Seran. "They'll have a description of your wife from the gate records. Inn registrations are kept."
+
+Seran was already moving to stand. The barrier was still up. He sat back down with the expression of a man who had run into a wall he'd forgotten was there.
+
+"I know," Marcus said. "Wait. I'll get them."
+
+"All of them," Seran said. "My daughter—"
+
+"All of them," Marcus said. There was nothing in his voice that sounded like it was a significant request. "Give me names. Give me locations if you know them."
+
+They gave him names.
+
+He sent the motes out through the stone like water through cracks, silent, invisible, finding each person by mana signature cross-referenced against descriptions, location data, the small specific gravity of people going about mornings that were about to become something else.
+
+Seran's wife — Mira — was at the inn, which was close to the market, which was not yet in the radius of whatever had been dispatched. Seran's daughter was asleep. Marcus watched her for a moment longer than necessary. Four years old. A small even mana signature, the kind children had before anyone taught them anything about what it was.
+
+Yara's brother was closing his stall because people were closing things, the general anxiety of the city becoming behavioral. He was fast about it, which said good instincts.
+
+Aldric's teacher was at the chapter house, which was already being watched. Two men on the street outside not looking at it in the way that meant they were looking at it.
+
+Marcus moved them all.
+
+Not dramatically. No light, no sound, no sensation for anyone nearby. Just people suddenly elsewhere — the same technology as the castle in the field, applied at small scale, personal scale. Mira and the daughter arrived in the throne room still in the shape of what they'd been doing — Mira in motion, mid-step, a traveling bag already in her hand like some part of her had known. She startled violently and then saw Seran and crossed the room in four steps.
+
+Yara's brother arrived confused and immediately looked at Yara with an expression that said he trusted her enough to be confused in her direction.
+
+Aldric's teacher arrived sitting down, which was how she'd been, and looked around the room with the unhurried assessment of someone very old who has decided that panic is a young person's response. She looked at Marcus for a long time. He looked back. She nodded once, slightly, and then looked at Aldric with an expression that said you have a great deal to explain and I am prepared to listen.
+
+The child was still asleep. He'd kept her asleep, gentle and complete. Mira held her against her shoulder without waking her.
+
+Seran looked at Marcus over his daughter's head. "Thank you."
+
+Marcus had already gone back to looking at the ceiling. "It's practical," he said.
+
+"It's not only practical."
+
+Marcus didn't answer this. He turned a page.
+
+"You said," Deren started, and then stopped. Tried again. "In your world. You were — removing yourself. You said you were getting away."
+
+"Trying to," Marcus said. "I'd almost made it financially viable."
+
+"From what?"
+
+He was quiet for a long moment.
+
+"The same basic problem," he said. "Different surface. Institutions that process novelty as threat. People who've found a working pattern and protect it past the point where it's working." He looked at the wall. "I was good at what I did. That should have been straightforwardly fine. It was not always straightforwardly fine. Occasionally the fact of being competent at things people didn't understand was — an issue, for certain people. For certain institutions."
+
+"So you decided to leave," Deren said.
+
+"I decided to make it so I could leave," Marcus said. "Whether I actually would have—" He turned a page that he may or may not have read. "I think I would have found another problem. I always found another problem."
+
+Aldric's teacher — her name was Senna, Aldric had said, and she had the mana structure of someone who had been working seriously for fifty years — was watching Marcus with the same focused attention she'd been giving everything since she arrived. Now she spoke for the first time.
+
+"You've decided something," she said. "About this city."
+
+Marcus looked at her.
+
+"Not what to do about the men outside," she said. "Something larger. You were deciding when we came in and you're still deciding now and I think you've just about finished."
+
+A pause.
+
+"Aldric has told us about you," she said. "Not in words. In the way he's been sitting since he arrived in this room. I've known him thirty years." She folded her hands. "What have you decided?"
+
+Marcus looked at the ceiling one more time.
+
+Beyond the sound barrier, the king had stopped talking. The advisors had stopped arguing. The room had gone into the particular stillness of people who have run out of response and are waiting for the situation to tell them what to do next.
+
+"That the problem isn't the king," Marcus said. "The king is a pressure valve. Remove him, get another one, same pressure. The problem is the shape of what people here believe is possible. What they think magic is. What they think knowledge is for. What they think—" He paused. "What they think change is."
+
+He sat forward.
+
+"Catastrophic update is one method," he said. "I do something visible enough that the categories break and have to be rebuilt. Fast, efficient, messy. High variance on outcomes. I've been—" He stopped. "I've been trying to decide if there's a slower way with better error bounds."
+
+Senna looked at him steadily. "And?"
+
+"The problem with the slow way," Marcus said, "is that the dungeons are still running while I'm being patient." He looked at the floor, through it, down into the stone. "That's a hard variable to hold constant while I optimize for something else."
+
+Mira was looking at him. The child was still asleep against her shoulder. Yara's brother hadn't said anything since he'd arrived but he was watching Marcus with the same expression the apprentice on the road had had — that particular quality of someone deciding whether to be frightened or interested and landing, provisionally, on interested.
+
+"What's your name?" Marcus asked him.
+
+"Cael," he said.
+
+"What do you sell at the stall."
+
+"Tools," Cael said, slightly surprised. "Metalwork, mostly. Some I make myself."
+
+Marcus looked at him for a moment.
+
+"How much do you know about how the tools work?" he said. "Not how to use them. How they work."
+
+Cael blinked. "I mean — I make them. I know how they're made."
+
+"Do you ever think about why the process works? The heating, the shaping. What's happening in the metal when you do those things."
+
+Cael looked at his sister. Yara looked back with an expression that said she genuinely didn't know where this was going.
+
+"Yes," he said, slowly. "I think about it. I've never had anyone to—" He stopped. "There isn't really anyone to ask."
+
+Marcus nodded once.
+
+He reached out and picked up one of the books from the stack. He looked at it — not at the pages, at the whole thing, at what kind of object it was and what kind of world produced it and what kind of world it was possible to produce.
+
+"There isn't yet," he said.
+
+He put the book down.
+
+"When the king decides to talk," he said to Seran, "I'll let the sound barrier down. Say what you have to say. I'll be here." He leaned back again, looking at the ceiling. "I expect it'll take a while. These conversations usually do."
+
+Senna was still watching him. "And while we wait?"
+
+"I have a question for you," Marcus said. "About your order's approach to healing constructs. I noticed something in Deren's mana structure when we came in — a base pattern I think came from formal training. I want to understand where it started before I—" He paused. "Before I suggest why it might be structured differently."
+
+Senna looked at Deren. Looked back at Marcus. Something moved across her expression that was not quite a smile — something more like a person recognizing weather that is coming regardless and deciding to face it standing up.
+
+"Ask," she said.
+
+Outside the sound barrier, the king looked at the shimmering air where his throne room's authority had stopped working, and tried to decide what to do about a problem that had no entry in any category he'd ever been given.
+
+Inside it, a demon who had once been a programmer from another world began, slowly and with great patience, to find out who in this one was already asking the right questions.
+
+That was, he had decided, probably where you started.
+
+Continue.
+4:33 AM
+Part Eight: First Principles
+
+Senna taught the way people teach when they've spent decades doing it — economically, without warmth or coldness, just information moving from one place to another with the minimum necessary friction. She pulled mana into visible structure without being asked to, showing the forms rather than describing them, and Marcus watched with the same quality of attention he gave everything, which was total.
+
+Deren watched too. With an expression that was becoming familiar.
+
+"The base construct for tissue regeneration," Senna said, holding the structure in the air between them. It was precise work — decades of refinement visible in how little waste there was. "We call it the Fourfold Root. It predates my order by several centuries at least."
+
+Marcus looked at it for a long time without speaking.
+
+Then he said: "Who decided on four."
+
+Senna paused. "It's called the Fourfold Root because—"
+
+"Because it has four anchoring points. I can see that. I'm asking who decided four was correct."
+
+A silence.
+
+"It's always been four," Senna said. Carefully. The careful wasn't defensiveness — it was precision, he thought, a person making sure they were representing the thing accurately. "The texts that describe the original derivation don't survive. What we have is the form."
+
+"So nobody knows."
+
+"Nobody living."
+
+Marcus reached out and turned the construct slightly, looking at the geometry from a different angle. "May I?"
+
+Senna looked at him for a moment. "Yes."
+
+He touched the structure.
+
+He didn't change it — just read it, thoroughly, the way he'd read Grak's magic system in that first week, following calls back to definitions, finding the load-bearing parts. The construct was good work. Genuinely good. Whoever had originally derived it had understood something real about how mana interfaced with biological tissue, had found a set of relationships that worked and encoded them into replicable form.
+
+They'd also, visibly, stopped asking questions at a certain point.
+
+"Three would be enough," he said. "For most applications. The fourth anchor is load-bearing in about fifteen percent of cases — severe trauma, certain types of corruption damage. For routine work it's just mass." He looked at Senna. "What does that cost, in practice? Maintaining four instead of three."
+
+"Approximately—" Senna was doing mental math. "A third more mana expenditure over a full working session."
+
+"And your healers work in sessions of what length before exhaustion."
+
+"Four hours, roughly. A trained healer, five."
+
+"So with three anchors where appropriate, five hours becomes seven and a half, roughly." Marcus let go of the construct. "How many people in your chapter could extend their working day by three hours if they knew when four anchors were necessary and when three were sufficient."
+
+Senna was very still.
+
+"All of them," she said.
+
+"Does your order work in areas where healing demand exceeds available healer hours."
+
+The question didn't need an answer. He could see it in her face — that specific exhaustion that lives behind the eyes of people who have spent years doing necessary work with insufficient means and have simply learned to carry the arithmetic of it.
+
+"Yes," she said anyway.
+
+Marcus nodded. He picked up a book, set it back down. "I'm not telling you the construct is wrong. It's right. I'm telling you it's a first draft that nobody went back to revise." He looked at the structure still hanging in the air. "That's most of what I've found here. Very good first drafts."
+
+Deren said, quietly: "Can you show me."
+
+Marcus looked at them. "The three-anchor variant?"
+
+"Everything," Deren said. "Start from the beginning. Show me what you see when you look at it."
+
+He started talking.
+
+He hadn't intended it to become a session — he'd intended to ask a question, gather data, understand the lineage of a specific pattern. But Deren asked the kind of questions that created more questions, and Senna had a fifty-year foundation that meant she could follow him further than he'd expected, and Aldric was sitting forward in his chair in a way he'd given up trying to look casual about, and at some point Cael had moved closer without appearing to decide to and was listening to a discussion about magical theory with the focused attention of someone who understood more of it than anyone in the room would have predicted.
+
+Marcus kept stopping and asking Cael things. What the metal does when you heat it past a certain temperature. Whether he'd noticed patterns in which tools failed and why. What he understood about why different metals behaved differently.
+
+Cael's answers were empirical and specific and built entirely from observation with no theoretical scaffold, which meant he'd been building the scaffold himself from scratch without knowing that's what he was doing, and several of the conclusions he'd reached were correct.
+
+"You've been doing metallurgy," Marcus said.
+
+"I've been making tools," Cael said.
+
+"Yes. And in doing that you've been doing metallurgy. The practice came first, the word for the practice comes later — but what you've been doing has a name in my world and people devoted their lives to it and what you've figured out on your own puts you somewhere in the early middle of what they knew."
+
+Cael stared at him.
+
+"That's either very impressive," Marcus said, "or an indication of how much systematic knowledge this world is leaving undeveloped." He considered. "Both, probably."
+
+Yara said, from her chair where she'd been watching all of this with her characteristic still assessment: "You're looking for people."
+
+Marcus looked at her.
+
+"That's what this is," she said. "All of it. The questions. You're not just gathering data about the world. You're finding out who in it is already—" she looked for the word, "—pointing in the right direction."
+
+Marcus was quiet for a moment.
+
+"Yes," he said.
+
+"And?"
+
+He looked around the room. Deren, who'd spent thirty years practicing a healing art without anyone giving them the tools to understand the foundation under it, and who had clearly been quietly furious about that without having anything to direct the fury at. Aldric, who'd hit the ceiling of his institution's knowledge base some time ago and had been trying not to notice. Senna, who was old enough and secure enough in herself to sit across from something that had made the entire architecture of her life's work look like a sketch and respond by pulling out a pencil and asking where to start. Cael, who'd spent years asking questions into a silence that had no answers to give back and had just kept asking anyway.
+
+And the others — the ones outside, the messenger, the apprentices on the road. Everything the motes were still feeding back.
+
+"It's not a shortage," he said. "That's the first thing I was trying to determine. I thought it might be — that something about this world, the culture or the magic system or the institutional structure, might have actively selected against this kind of thinking. Some worlds do that." He turned a page he wasn't reading. "It's not a shortage. The people who want to know why and not just how are here. They're just—"
+
+"Isolated," Senna said.
+
+"Isolated. And without language. That's the bigger problem." He looked at his hands. "If you don't have the words for something you can't share the thought. You can have the thought — people do, clearly — but it stays inside. Doesn't compound. Each person starts from zero instead of building on the last person's zero."
+
+Mira, who had not spoken since she'd arrived, who had been sitting with her sleeping daughter and listening to everything with the quiet attention of someone deciding how much to trust what they were hearing, said:
+
+"So what do you do about that."
+
+Everyone looked at her.
+
+She didn't seem to mind. "You've been deciding. Since before the city. You said so — you were deciding whether to help and whether help was even the right word." She shifted her daughter slightly against her shoulder. "You've made the decision. I can tell. So what is it."
+
+Marcus looked at her for a long moment.
+
+"Language first," he said. "Vocabulary for things that don't have names here. A framework people can use to share what they already know and build on it, instead of each person reinventing it alone." He paused. "Then institutions. Different ones from what's here — designed around the question rather than the answer. Places where the people like Cael and Deren can go to find each other."
+
+"Schools," Aldric said.
+
+"Schools," Marcus said, "that teach differently from your schools. Your schools teach the Fourfold Root. Mine would teach why someone built the Fourfold Root and what questions they were trying to answer and what questions they didn't think to ask."
+
+Senna said: "That's a long project."
+
+"Yes."
+
+"You'd need to not be destroyed by the various entities who'd prefer the world stay as it is."
+
+"Yes."
+
+"And you'd need—" She stopped. Looked at him steadily. "You'd need people who could take what you know and translate it. Because what you know is several centuries ahead of what anyone here can receive directly. You need—" She seemed to be locating a word. "Intermediaries. People who understand enough of both to build bridges."
+
+Marcus looked at her.
+
+"That's what we are," she said. Not a question.
+
+"That's what you could be," he said. "If you wanted."
+
+The room was quiet.
+
+Deren said: "I want."
+
+Aldric said, almost simultaneously: "Yes."
+
+Yara looked at her brother. Some communication that didn't need words. Cael gave a small shrug that meant something specific to both of them. She looked back at Marcus. "What does it involve, practically?"
+
+"Learning things that will make you uncomfortable," Marcus said. "Being wrong frequently in the process. Carrying knowledge that will put you at odds with institutions that have a stake in the current model." He paused. "Also possibly moving, depending on how the next several hours go."
+
+He glanced at the sound barrier. The throne room beyond it had reorganized. The advisors had coalesced into two visible factions. The clergy had done the same. The king was in conference with someone who had the bearing of a senior military commander and the expression of a man presenting options he didn't like.
+
+"Speaking of which," Marcus said.
+
+He let the sound barrier down.
+
+The noise came back gradually — the room had gone quieter in the time they'd been insulated from it, the specific quiet of people who have exhausted immediate responses and moved into calculation.
+
+The king looked at Marcus.
+
+Marcus looked at the king.
+
+For a moment nobody said anything on either side. Then the military commander — older, scarred, with the mana structure of someone who had done serious combat work for thirty years — stepped forward.
+
+"What do you want," he said. Flat, direct. The question of a man who had decided that since none of the standard options were working he might as well try the non-standard one.
+
+Marcus considered him. Good instincts. Right question.
+
+"Seran," Marcus said. "Your turn."
+
+Seran stood up and straightened and became, visibly, the person he was in his official capacity rather than around a campfire — not false, just formal, the difference between a tool in a drawer and a tool in a hand.
+
+He began to talk.
+
+Marcus leaned back in his chair and looked at the ceiling and went back to thinking about foundations. About the shape of a thing that didn't exist yet but could. About first drafts and how to revise them. About a world that was, underneath its surface, full of people asking questions into silence.
+
+His right hand was moving slightly. Building something small and intricate and invisible in the air beside his chair, just to have something to do while he thought.
+
+Cael was watching the movement of his fingers with bright, focused eyes.
+
+Marcus noticed this without looking at him.
+
+He adjusted the motion slightly — slowing it, making the structure visible, narrating nothing.
+
+Just showing, the way you'd show someone who wanted to understand.
+
+Cael leaned forward.
+
+The negotiation took four hours.
+
+Seran did most of the talking. Marcus did none of it. He sat in his chair and read and built small invisible things and occasionally confirmed a fact when Seran asked him to and once, at a crucial juncture when the conversation was about to break down over the question of whether the demon's continued presence in the city was a theological violation, he turned to the senior clergyman and asked him a single question about the foundational texts of his order that the clergyman could not answer, and then answered it himself, accurately, from memory, which produced a silence that Seran used effectively.
+
+By the end there were terms. Provisional, fragile, burdened with conditions and caveats and an energy of mutual distrust that wasn't going away any time soon. But terms.
+
+The king did not look at Marcus when they were concluded.
+
+The military commander did. Brief, assessing. Marcus met the look and gave him nothing but presence, and the commander turned away with an expression that said the assessment was ongoing.
+
+When the room had emptied down to their group and a small guard contingent that had been assigned to escort them to quarters — which Marcus was not going to use but didn't see a reason to say so yet — Seran sat back down heavily and put his face in his hands.
+
+Mira put her free hand on his back.
+
+"You did that well," Marcus said.
+
+Seran looked up. "We have three weeks before someone changes their mind."
+
+"Then we'll use three weeks." Marcus stood. The small invisible thing beside his chair was done — he held it up and looked at it. It was nothing significant, just a small self-sustaining mana structure in the shape of a problem he'd been thinking about, something to return to. He pocketed it. "There are things I want to look at in this city. People I want to find. I'll start tonight."
+
+"The dungeons," Deren said.
+
+A pause.
+
+"The dungeons first," Marcus said. "That's not a variable I'll hold constant."
+
+No one argued with this.
+
+He walked toward the wall, and then through it in the sense that the wall rearranged its opinion about whether he was on one side or the other, and outside the castle the city was heading toward evening, full of its ten thousand lives, and Marcus began to move through it like a current, quiet and purposeful and leaving no mark on the surface.
+
+Underneath the surface was a different matter.
+
+He was already making notes.
+
+Without looking, Marcus moves them all into orbs, time-frozen. A problem to be solved by experts in mind and body... Which is not his wheel house.
+
+Marcus explains to the party that what changed his world almost overnight was two things.
+
+Production being uncapped by machines and factories.
+Knowledge being shared easily through the internet. 
+
+He has the solution for both. He holds up the mote. The mote splits into two motes. The magic members of the party feels mana flowing into both motes. 
+
+Where will our new city be, he asks, as a map unrolls itself in front of the party. He says to not be concerned about resources, land... Matter is matter. Within even a clump of dirt, limitless potential can be found. What we should be concerned about is how the factions of the world will react. How will others reach the city if they want.
+
+Marcus says that defense isn't a concern too. Walls aren't even needed. If the party wants, he don't think they do, he could build the new city right above this current city. It'll probably cause a lot of problems, but it's not impossible. He's the problem solver.
+4:48 AM
+Part Nine: Two Motes
+
+He came back through the wall the same way he'd left.
+
+The party looked at him. He looked at them. Something in his expression said that what he'd seen in the dungeons had gone where the castle had gone — filed, contained, not forgotten, not being processed in any visible way because visible processing was a luxury and there was work to do.
+
+"They're in orbs," he said. "All of them. Time-frozen." He sat back in his chair. "The physical damage needs experts in physical restoration. The other kind needs experts in minds." He paused. "Neither of those is my domain. We'll find the right people."
+
+Deren started to say something.
+
+"They're not suffering," Marcus said. "Time isn't moving for them. There's nothing to address until someone who knows what they're doing is there to address it." He looked at Deren steadily. "That's the right order of operations."
+
+Deren closed their mouth. Nodded once.
+
+Senna was watching Marcus with the expression she'd been developing since the throne room — not pity, not sympathy exactly, something more like the recognition of someone who has learned to spot the shape of a weight being carried by its outline rather than its declaration.
+
+She said nothing.
+
+Marcus leaned back.
+
+"What changed my world," he said, to the ceiling, "happened twice."
+
+He wasn't looking at anything in the room. The lenses weren't up. He was just talking, which was unusual enough that the room went attentive in a specific way.
+
+"The first time, someone figured out how to make machines do the physical work. Not better than a person — differently. Continuously. Without rest, without hunger, without variance once the process was set. A machine that made things could run while the people who built it slept. Then while their children slept. The output compounded." He paused. "Before that, the limit on what a civilization could produce was the number of human hours available. After that, the limit was something else entirely. Resources. Logistics. Imagination." He turned his hand over on the armrest. "The material constraint on human life had been scarcity for all of recorded history. Suddenly it wasn't. Not overnight — gradually, then all at once. The problems that replaced scarcity were new problems and they were bad in new ways. But they weren't that problem anymore."
+
+The fire was burning in its precise recursive loops. Nobody spoke.
+
+"The second change," Marcus said, "was faster. Information — everything anyone had ever figured out, every question ever asked and answered, every mistake documented, every solution found — became instantly accessible to anyone. The isolation problem I described. The person like Cael asking questions into silence." He looked at Cael briefly. "That ended. You could find the other people asking the same question. You could build on what they'd built. The compound rate of knowledge went—" He made a gesture that didn't quite translate. "Vertical, approximately."
+
+"Two changes," Seran said. "Production and knowledge."
+
+"Production and knowledge," Marcus agreed.
+
+He reached into the space beside his chair.
+
+He held up a mote.
+
+The magic users in the room felt it before they saw it properly — mana moving toward the point in his hand with the particular pull of something being fed, something growing, a structure of significant complexity taking on mass and intention. Aldric sat forward. Senna's eyes sharpened. Deren's head tilted slightly.
+
+Marcus held the mote up between two fingers, looked at it, and then did something small with his other hand.
+
+The mote split.
+
+Two points of light, each distinct, each pulling mana with its own specific appetite, each radiating a structure that felt completely different from the other. One had the dense recursive quality of the spell-entity from the corridor — self-modifying, environmental, something that would grow in directions not entirely predictable. The other was different. Ordered. Indexed. It felt, to Aldric, like standing next to a library that didn't have walls yet.
+
+"Production," Marcus said, indicating the first. "And knowledge." The second. He held them both, one in each hand, looking at them with the expression of a craftsman checking work. "The first one knows how to make things. Given material and instruction, it manufactures. Scales with available mass and mana. The second one knows how to store and share information at a rate and fidelity that doesn't exist here yet." He paused. "Both are seeds. They need somewhere to grow."
+
+He looked at the party.
+
+"Where," he said, "do we want a city."
+
+The map unrolled itself across the table without being asked to — or rather it was asked to, in the sense that Marcus had decided it should exist and the mana in the room had updated accordingly. It wasn't a flat rendering. It was topographical, shaded, with elevation and water and what appeared to be population density indicated in a system of markings that the party needed a moment to read.
+
+"Don't think about resources," Marcus said. "Don't think about land access, existing claim, building materials. Matter is matter. Within a clump of dirt there is—" he paused, selecting the right simplified version, "—everything you'd need to build anything, if you know how to ask for it in the right order. I know how to ask."
+
+Seran was studying the map with the expression of a strategist. "Defense."
+
+"Not a concern."
+
+"You can't guarantee—"
+
+"I can," Marcus said. Not immodest. Just accurate. "Walls are theater. The defense of this city will be what I put into those two motes, and that will be sufficient. If the party wants conventional walls I'll build conventional walls. I don't recommend spending the thought on it."
+
+Seran looked at him for a moment, doing the internal recalibration that was becoming a familiar sight. He'd fought Marcus three times and lost in seconds each time and he still occasionally needed to re-update.
+
+"Then what do we think about," Mira said. She had the map angled toward her, reading it with quick practical eyes.
+
+"Factions," Marcus said. "The political structure of this world — where power sits, where it's fragile, where it's been sitting long enough to believe it's permanent. Whatever we build will be read as a threat by some of them and an opportunity by others." He touched the map at several points without quite marking it. "How people reach it. Whether it's a place you come to or a place that reaches out. Whether access is—" he paused, "—a gate or an open field."
+
+"You want it to be a field," Deren said.
+
+"I want to not make that decision alone," Marcus said. "That's a values question, not a technical one."
+
+Aldric said: "The church will—"
+
+"The church will do what institutions do when they encounter something they can't absorb or destroy," Marcus said. "That's a later problem. I'm asking about the map."
+
+He looked around at them. The map waited.
+
+"I could build it here," he said, with the neutral tone he used for things that were technically true and practically inadvisable. "Directly above this city." He looked at the ceiling and therefore through the castle and the sky above it. "Structurally trivial. Politically—" He seemed to briefly consider the cascade. "It would generate a significant number of simultaneous problems. I find problems interesting but I try to not generate them for entertainment." A pause. "Usually."
+
+Cael let out a short sound that was almost a laugh and immediately suppressed it.
+
+"Not here," Seran said firmly.
+
+"Not here," Marcus agreed. "I'm the problem solver. I'm not recommending it. I'm noting it's possible because—" He stopped. "Because I've found that when people understand the full option space they make better decisions about which part of it to use."
+
+"Where do you think," Mira said, looking at him directly. "You've looked at this map, you've been scanning the world since before we got here, you have information none of us have. Where do you think."
+
+Marcus looked at the map for a moment.
+
+He touched a point. Coastal, but not on any existing major trade route — adjacent to them, close enough to connect, far enough to not be already claimed by any of the major powers visible in the population markings. Elevated slightly. Good water. And something else, something he'd noticed from the motes — a low background mana density in the surrounding region, which in his current understanding of this world's magical ecology meant it was either ignored or actively avoided, and he had a theory about why that he wanted to test.
+
+"Here," he said. "Provisionally. The isolation isn't permanent — the whole point is that it won't be — but it gives us time to build without being managed. And there's something in the mana structure of the region I want to look at up close."
+
+"What something," Aldric said.
+
+"Something that might be relevant to the knowledge mote," Marcus said. "Or might be nothing. I don't have enough data yet." He looked at Aldric. "Which is the normal starting condition for anything worth doing."
+
+He held up both motes again. They turned slowly in the air between his fingers, pulling gently at the ambient mana, patient and complex and full of something that wasn't quite intention but was adjacent to it.
+
+"The city will take the shape of what we decide it's for," he said. "Not the buildings — those are trivial. The shape. What it's trying to do. Who it's trying to reach." He looked at each of them in turn. "You've been in the world I'm building on top of. I haven't. Not really. I've been in a demon castle for a year watching people be simple at each other." He paused. "What does someone like Cael actually need to not have to figure everything out alone. What does someone like Deren need to do their work at the scale the work actually requires. What does a child—" He stopped. Looked at Seran's daughter, still asleep. "What does she need the world to be, when she's old enough to ask what it is."
+
+Seran looked at his daughter.
+
+Mira said, quietly: "That's the question, isn't it."
+
+"That's the question," Marcus said.
+
+The two motes turned in the air. The map waited. Outside the barrier the castle was processing its new and uncomfortable terms, and outside the castle the city was becoming evening, and beyond the city the world was doing what worlds do — continuing, complicated, unaware of the conversation happening in the throne room of a minor kingdom on a coast that nobody particularly important had thought about in a hundred years.
+
+Marcus looked at the spot on the map he'd touched.
+
+"I haven't named it," he said. "I don't think I should be the one to name it."
+
+He looked at them.
+
+Nobody said anything immediately, which was the right response. This was not a question to answer quickly.
+
+He was fine with that. He'd been patient before. He could be patient again.
+
+He put one mote in each palm and closed his eyes and waited for the party to tell him what they were building toward, so he could start figuring out how to build it.
+
+The party chooses a location.
+
+They watch with wide eyes as space folds around the party. The far becomes close. The horizon becomes the floor under their feet.
+
+And there, they're at the location. 
+
+Is this teleportation? Marcus, for the first time, sucks in air through his teeth and says, Teleportation is killing yourself, then rebuilding yourself at a new location. He deeply dislike this. It's sound, but... What he did instead was to just...
+
+He holds up a paper with marks on the left repressing the party. He folds the paper, the marks moves over to the other side. He unfolds the paper, the marks are now on the right side.
+
+He says that it's slower than teleportation, but it's more energy efficient since matter isn't being destroyed then remade.
+
+Meanwhile, the party notices that they're now standing in a modern city. 
+
+Eventually, the party notices that there's a pipeline sucking in water from the ocean. They're stunned by the elegance of the recycler system when they see how matters is being filtered and harvested from water. 
+
+Why did humans waste all of this time mining when all of this was just... Everywhere? 
+
+Marcus quickly figures out the abnormality in the background.
+
+The time-sealed orbs are placed into a hospital, with instruments for the eventual doctors to unseal the orbs when they are able. 
+
+Marcus explains that he has no interest in becoming the mayor of this city. He'll be living on the edge of the city instead, at the bottom of the ocean. It's beautiful gazing up and seeing sunlight being filtered through the rippling surface of the waters, through the kelp forests. 
+
+Write on about how society eventually evolves and changes, starting from the party.
+4:58 AM
+Part Ten: The Fold
+
+"Choose," Marcus said.
+
+They looked at the map. They argued — not badly, productively, the kind of argument where people are testing ideas rather than defending positions. Seran thought about approach routes and how refugees or travelers would reach it. Mira thought about what the surrounding land could sustain in the long term. Deren thought about the populations nearest to it and what they lacked. Aldric thought about distance from the centers of religious authority. Senna said very little and then said one precise thing that settled it.
+
+The point Marcus had touched.
+
+He didn't announce it. He didn't ask them to prepare or brace or close their eyes. He just decided it was time and the world reorganized its opinion about distances.
+
+The throne room was present, and then the quality of the light changed, and the stone floor became something else under their feet — not stone, packed earth, coastal grass, the smell of salt arriving all at once.
+
+Yara's hand went to her bow. Seran's to his sword. Both hands stopped without drawing anything because there was nothing to draw against, just a hillside, just the ocean below them, just evening light at a different angle than it had been three seconds ago.
+
+Mira made a sound.
+
+Senna sat down on the grass without ceremony, looked at the horizon, and appeared to be doing internal accounting.
+
+"Is that—" Aldric started. "That was teleportation."
+
+Marcus sucked air through his teeth.
+
+It was a small sound. The party would later agree that in all the time they'd spent with him — watching him fold armies into spheres, watching him reach through stone walls, watching him rewrite the foundations of magical theory between bites of food — that small involuntary sound was somehow the most human thing they'd seen him do.
+
+"No," he said, with the tone of someone correcting a categorization error that bothered them more than it should. "Teleportation is killing yourself and rebuilding yourself somewhere else. The pattern might be perfect. The matter might be identical." He paused. "It's still killing yourself. I have a deep objection to that approach."
+
+He reached into his coat — an internal pocket that existed in a fold of space adjacent to the coat rather than within it — and produced a piece of paper. He held it up. On the left side, a cluster of small marks.
+
+He folded the paper once, deliberately, and opened it.
+
+The marks were on the right side.
+
+"The marks didn't travel," he said. "The space between the two positions became zero momentarily. We were always where we are." He looked at the paper. "It's slower than conventional teleportation by approximately a factor of three. It uses less mana than destroying and reconstituting equivalent matter." He put the paper away. "I find it more correct."
+
+Deren looked at him. "You built this because teleportation bothered you philosophically."
+
+"I built this because teleportation is a lazy solution to a geometry problem," Marcus said. Then, after a beat: "And because it bothered me philosophically."
+
+The city arrived the way everything Marcus built arrived.
+
+Not with spectacle. Not with a sequence of dramatic moments. He stood on the hillside and the two motes left his hands and the world began to participate in a conversation he was having with matter about what it could become.
+
+The ground didn't shake. There was a low hum that Aldric would later describe as the sound of a very large system initializing, which was accurate. The motes moved outward and downward and the processes they carried began operating at scales that made watching them directly counterproductive — what you saw was not the work, the work was underneath, in the substrate, in the molecular negotiation between what things were and what they contained the potential to be.
+
+The party sat on the hillside and watched the horizon.
+
+By morning, there were foundations.
+
+By the end of the week, there were buildings, and the buildings were wrong in the way that things from outside the reference frame are wrong — not incorrect, just unfamiliar, their proportions and materials and the implicit logic of their arrangement saying something about purpose that the party could feel but not yet read.
+
+They spent a lot of time walking around with their necks craned.
+
+The pipeline appeared on the fourth day and Deren found it first.
+
+A wide structure running from the lower district down to the coastline, into the water, with a rhythmic low-pulse that you felt in your feet before you heard it. Deren followed it to the facility at the water's edge — a building that smelled like the ocean but clean, like the ocean's best intentions — and went inside and stood in front of the first stage of the filtration system and tried to understand what they were looking at.
+
+Marcus was there, or had been recently. The work had his quality — economical, recursive, nothing present that wasn't doing something.
+
+Seawater came in. The system read it the way Marcus read everything — thoroughly, down to the constituent parts — and separated them with a patience that wasn't patience because patience implied waiting and this didn't wait, it just sorted, continuously, in parallel, pulling fresh water one direction and everything else into other streams, each stream processed further, each material emerging somewhere in the facility as itself, isolated, available.
+
+Magnesium. Calcium. Sodium. Trace elements that the party had no names for.
+
+Deren stood in front of the output streams for a long time.
+
+Why did humans waste all of this time mining, they thought, with a clarity that felt like something restructuring inside them. When all of this was just. Everywhere. In the water. In the dirt. In the air.
+
+The answer, Deren slowly understood, was that you had to know what you were looking for before you could find it, and you had to know it was there before you looked, and you had to have the tools to separate it once you found it, and building those three things in sequence was what the previous centuries had actually been for, whether they'd known it or not.
+
+They went to find Senna and tell her what they'd seen.
+
+Marcus found the anomaly on the second day.
+
+He'd been aware of the low background irregularity in the local mana since the map, and up close it resolved into something more specific — a node, old, not artificial, not quite natural in the way naturally occurring mana formations were natural. Something in between. Something that had been here long enough to become part of the landscape without anyone building it intentionally.
+
+He spent three days sitting next to it before he touched it.
+
+When he touched it he sat back and thought for a long time.
+
+Then he went and built his house at the bottom of the ocean, and thought some more, and decided the anomaly was the most interesting thing he'd found in this world so far, which was saying something.
+
+He had not told the party about the house. He'd mentioned it once, practically, before they left — I'll be at the ocean floor, the city is yours to run, I have no interest in administering anything — and they had accepted this with the equanimity of people who had stopped being surprised by him and had not yet finished the process of deciding what to feel about that.
+
+The house was at the base of the kelp forest, where the light came down filtered green and slow and the surface was a shimmering ceiling forty meters up. The kelp moved in the current like long slow thoughts. Small fish moved through it with the specific purposefulness of things that had never considered whether their existence had a point.
+
+Marcus sat in the house and looked up through the water at the sunlight.
+
+He thought about the anomaly. He thought about the two motes and what they'd grow into. He thought about Cael's face when he'd watched Marcus build a small structure in the air beside the chair, and what it would look like in ten years when Cael had words for what he was seeing.
+
+He thought about the people in the orbs, time-frozen, waiting for someone to know how to help them. He thought about what kind of institution would produce the people who knew how to do that, and what it would take to build that institution, and how long.
+
+He thought about the woman with two children pulling them into a doorway when the party walked through the city.
+
+He thought about Seran's daughter sleeping through the entire fall of a kingdom's assumptions.
+
+He put those thoughts in a row and looked at them.
+
+Then he started working, which was what he always did when the thinking had gone as far as thinking could go and it was time for the next part.
+Part Eleven: Compound Interest
+
+The first people arrived within a month.
+
+Not summoned, not invited by any official mechanism — there was no official mechanism, the city had no announcements, no ambassadors, no delegation sent to the surrounding regions with pamphlets. But word moved the way word moves, which is faster than anyone intends and in directions nobody fully controls, and the word was strange enough that the people who came to investigate self-selected sharply.
+
+You heard: a city appeared on the northern coast. No one built it. It's full of things nobody has names for.
+
+Most people who heard this nodded and went back to their lives. Institutions heard it and began their slow machinery of threat assessment. A specific kind of person heard it, the kind who had been lying awake asking questions into silence, and was on the road within the week.
+
+Deren received them.
+
+This had not been planned. It had emerged from the first month of the city's existence, during which the party had been collectively figuring out what they were for in a place that mostly ran itself — the production mote handled manufacture, the knowledge mote was building its index, the infrastructure maintained without maintenance — and Deren had simply been the person standing near the entrance when the first arrivals came through, and had been good at it, and had kept doing it.
+
+The receiving wasn't passive. Deren talked to everyone who arrived. Long conversations, detailed, structured around a set of questions that evolved over the first weeks as Deren learned what information was actually useful versus what seemed useful. Where they'd come from. What they'd been doing. What questions they'd been asking that no one could answer.
+
+The last question produced everything.
+
+A wool dyer from a coastal town who had been trying for fifteen years to understand why certain mineral combinations produced colors that shouldn't have been possible under his model of how dyes worked, and had filled twelve notebooks with observations nobody had ever asked to see.
+
+A woman who had been a healer's assistant for twenty years and had kept meticulous records of which treatments worked and which didn't and had noticed patterns that contradicted her order's official doctrine and had told no one because the last person who'd contradicted official doctrine had lost their license to practice.
+
+A former soldier with a missing hand who had taught himself to read late in life and had subsequently read everything available to him and arrived carrying a list of contradictions between the historical texts he'd found, needing someone to tell him whether the contradictions were errors or evidence.
+
+A child, eleven years old, alone, who had walked for two weeks and when asked why had said: I heard there was a place where they answer questions.
+
+Deren sent word to Marcus about the child.
+
+Marcus sent back a brief reply: find out what questions.
+
+The questions, it turned out, were about plants — specifically about why plants grew differently in different soils, which was a question with a long and complex and beautiful answer that the child had independently begun to construct from observation without knowing it was a question that had occupied serious minds for centuries in another world.
+
+The child was installed in a room with a window and a view of the kelp forest and access to the knowledge mote's interface, which Aldric had been developing with Marcus's input into something that could be queried in natural language rather than formal structure.
+
+She became, eight years later, the city's first original research contribution to botanical theory.
+
+Her name was Pell.
+
+Aldric and Senna rebuilt the magic curriculum from scratch.
+
+This took two years and several significant arguments, not between them but within each of them individually, the arguments a person has when they're dismantling the architecture of their own expertise to rebuild it on better foundations. Senna was faster at this than Aldric, which surprised him until she explained: I've known something was wrong for twenty years. I just didn't have the vocabulary to say what.
+
+The vocabulary came from Marcus, mostly indirectly — he sent up written materials from the ocean floor with a regularity that suggested he'd been preparing them for a long time, covering the foundational principles of how mana actually functioned at the substrate level, stripped of the institutional language that had accumulated over centuries on top of the actual mechanics. No Fourfold Roots, no invocations, no ceremonial framework. Just: here is what is happening. Here is why it works.
+
+The arguments that produced the curriculum were about sequence — what you taught first, how you built the scaffold, which intuitions you wanted students to have before they encountered the formalisms. Senna wanted to start with observation. Aldric wanted to start with principles. They eventually landed on a spiral: observation, then the principle that explained the observation, then a wider observation that the principle couldn't explain, then a better principle.
+
+The first cohort of students was twelve people ranging in age from fourteen to sixty.
+
+The sixty-year-old had been a court mage for thirty years and arrived expecting to find his existing knowledge confirmed. He left the first month's curriculum shaken in a way he'd need several more months to fully process. He came back for the second month.
+
+He became one of the better teachers they produced.
+
+Cael did not become a mage.
+
+This became a point of some confusion among people who'd watched Marcus spend hours teaching him things in the throne room, who expected him to end up somewhere in the magical education system. Instead Cael disappeared into the production facility for six months and emerged with a working theory of materials that had no precedent in the world's existing knowledge base — not because he'd invented it, but because Marcus had left certain texts in the knowledge mote's index and Cael had found them and had, critically, already had the intuitions to understand them because he'd been building those intuitions by hand for years over a metal stall.
+
+He started teaching what he knew to anyone who wanted to learn.
+
+Not in a formal setting. In the production facility, working, with people standing around watching and asking questions, which was how he'd always wanted to learn and so was how he taught. The formalization came later, when there were too many people for one room, and the formalization was done by his students rather than by him because Cael found administration viscerally unpleasant and Marcus had told him once, in the ocean house, that the people who wanted to organize things should organize them and the people who wanted to discover things should discover them and the error was forcing the same person to do both.
+
+The error, Cael came to understand, was one the previous world had made continuously and at significant cost.
+
+Seran spent the first year solving problems.
+
+Someone had to. The city ran itself in the sense that Marcus had built the infrastructure to run without administration, but a city was not only infrastructure. A city was the people in it and the disputes between them and the questions of how things were shared and who decided when the rules needed to change.
+
+Seran was not a politician. He thought of himself as a soldier, and he was right, but he was a specific kind of soldier — the kind who had spent years making decisions under uncertainty with incomplete information and caring a great deal about outcomes for people he was responsible for. This turned out to be most of the skill set required.
+
+Mira did the other half.
+
+She had a mind for systems, specifically for the places where systems failed — where the theory of how something should work diverged from how it actually ran, where the gap between intention and outcome was quietly producing harm that nobody was looking at directly. She found these gaps the way a tongue finds a sore tooth, persistently, without being asked to.
+
+Between them they built something that was not quite a government and not quite a council — a framework of deliberation that tried to make its own assumptions visible, to build in the capacity for revision, to resist the tendency Marcus had described in the throne room: pattern recognition past its useful range, categories that became walls.
+
+They made it visible in the architecture. The central meeting space had no permanent seat of authority — the room could be reconfigured, the focal point moved, the implication of hierarchy redistributed depending on what the meeting was for. This was Mira's idea. Seran had thought it was too subtle. Eighteen months later he admitted it had been right.
+
+Yara's brother became very important in ways nobody had predicted.
+
+Cael understood materials and production. He did not understand trade — not because he was incapable but because trade had never interested him the way the inside of a metal joint interested him. Yara understood threat assessment and the movement of people through space. Neither of them understood the specific problem of how you introduced a city that shouldn't exist into a world of existing economic and political relationships without triggering the response that ended new things before they found their footing.
+
+Cael's brother turned out to understand this intuitively.
+
+He'd run a market stall for twelve years. A market stall was, stripped to fundamentals, a daily exercise in reading what people needed, what they were afraid of, what they'd accept and what they'd refuse, and how to offer something new in the language of something familiar. He understood that the world outside the city was not going to become the city quickly, and that the gap between the two was not a problem to be solved but a relationship to be managed, and that managing it badly was how the city became a target.
+
+He became, without the title being formally given, the person who handled the outside.
+
+He did this with a patience and a warmth that Marcus had noted once, briefly, in the ocean house, as something he himself did not have and recognized was necessary. He traveled to the surrounding regions. He sat in taverns and at markets and in the antechambers of minor lords. He listened more than he talked. He brought things back — not goods, mostly, but information, specifically the information about what people were afraid of, because fear was the thing that made new things dangerous and you could not address fear you didn't understand.
+
+His name was Cael, too, which caused confusion, so people started calling them by their last names, which caused its own confusion because neither of them had last names the way the city's growing population did, and this eventually resolved itself into the city's first informal naming convention, which was a small thing that somehow felt significant to everyone who watched it happen.
+
+Marcus came up from the ocean floor approximately once a month.
+
+Sometimes less. The party learned to read the difference between absence-that-was-fine and absence-that-meant-something-had-captured-his-attention-so-completely-that-the-external-world-had-temporarily-ceased-to-exist-as-a-relevant-variable. The second kind produced texts left at the shore for Aldric to collect — dense, not always intelligible on first reading, occasionally containing a breakthrough that restructured three months of curriculum work and required Aldric to sit down and not move for an hour.
+
+When he did come up, he walked through the city the way he'd walked through the city that first night — not invisibly, not hidden, but with a quality of attention that made him easy to miss if you weren't looking for him. Watching things. Checking on the motes, which had grown far beyond their seed state and now ramified through the city's infrastructure in ways that would take a dedicated researcher years to map fully.
+
+He stopped at the facility where Deren worked.
+
+This had become a significant facility. The expertise the city needed for the orbs hadn't existed when Marcus placed them there, but the knowledge mote's index had contained the foundational texts, and Deren had spent two years building a practice around those foundations, and the three other practitioners they'd trained had built further, and the work had reached the point where the first orb had been carefully, slowly, successfully opened.
+
+The person inside had spent three days not speaking. Then they had spoken, haltingly, to Deren, who had been there every day.
+
+That was seven months ago. There were now two others who had been brought out. It was slow. It was supposed to be slow.
+
+Marcus stood in the doorway of the facility and looked at what Deren had built and did not say anything for a while.
+
+"The orbs are holding," Deren said, without looking up from what they were working on.
+
+"I know. I can feel them." He looked at the room. The instruments, the records on the walls, the careful documentation of every step. "This is good work."
+
+"It's slow."
+
+"It's right," Marcus said, which was different.
+
+Deren looked up. "The one we opened last month — she asked me a question yesterday. Asked why someone had saved her." They paused. "I didn't know what to say."
+
+Marcus considered this. "What did you say?"
+
+"That it wasn't about her specifically. That someone had decided it was more trouble than it was worth not to."
+
+A pause.
+
+"That's accurate," Marcus said.
+
+"I know. I'm not sure it was what she needed to hear."
+
+"What did she say?"
+
+Deren was quiet for a moment. "She laughed. I think it was actually what she needed to hear." They looked at the wall of records. "She's been helping with the documentation. She has very precise handwriting."
+
+Marcus looked at the documentation.
+
+"Good," he said.
+
+He left. Deren listened to his footsteps go quiet and then went back to work.
+
+The city grew.
+
+Not explosively — it had no announcement, no conquest, no authority compelling anyone toward it. It grew the way things grow when the conditions are right and the thing being grown is what the surrounding environment was quietly waiting to produce. People arrived. Some stayed. Some left and came back later. Some left and told people and those people came.
+
+The word changed over time. First: a strange city on the coast, appeared from nowhere. Then: a city where they answer questions. Then, gradually, inaccurately but meaningfully: a city where you can go if you want to learn something.
+
+The child Pell, now a young adult, was teaching three students of her own. Her research on soil composition and plant chemistry had been incorporated into the knowledge mote's index — she had been the first person to add original content rather than query existing content, which Marcus noted with what the party had learned to recognize as satisfaction, and which he expressed by sending up a text the following day that contained seventeen pages of related material she'd find useful.
+
+She read it in one sitting and then immediately wrote back with four questions.
+
+He answered all four at length.
+
+Their correspondence, over the years, became one of the founding documents of what the city eventually called natural philosophy, which was the city's language for the thing Marcus's world had called science, the difference in naming reflecting a difference in relationship — not humanity against nature, extracting its secrets, but humanity in nature, noticing things and thinking about what they meant.
+
+The king sent an envoy in the second year.
+
+Seran received them. Mira sat in. The envoy had been given a mandate that was mostly about threat assessment — the city was too unusual to ignore and too useful to attack, and the surrounding powers had spent two years arguing about which concern was larger.
+
+The envoy was a carefully chosen woman who had spent thirty years navigating exactly this kind of situation — neither hostile nor credulous, observant, with the specific patience of someone who has learned to let new things become intelligible before responding to them.
+
+She spent three weeks in the city.
+
+She sent back a report that Cael-the-trader obtained a copy of through methods he didn't specify and shared with Seran, who read it and then read it again.
+
+The report said, among other things: I cannot adequately describe what I observed. The material infrastructure appears self-sustaining by means I do not understand. The population is small but growing and is composed primarily of individuals who appear to have been selected by their own inclinations rather than by external authority. What I can say with confidence is that this is not a military threat in any conventional sense. It is something else. I find myself unable to determine whether it is more or less concerning than a military threat, because I have no category for it yet.
+
+She came back the following year on her own.
+
+She stayed.
+
+At the bottom of the ocean, Marcus read.
+
+He read what the knowledge mote was collecting — not just the foundational texts he'd seeded it with, but the new things being generated by the city's growing population of people asking questions. He read Pell's soil papers and Aldric's revised curriculum and Deren's clinical documentation and a series of observations by a metalworker who'd been working with Cael for eighteen months and had begun to develop a theory about why certain alloys behaved the way they did under mana infusion.
+
+He read Cael-the-trader's notes on the political situation in the surrounding regions, which were written in a plain style that concealed considerable sophistication, and which contained an observation in the most recent installment that made Marcus pause.
+
+The fear is decreasing, Cael had written. Not gone. I don't think it goes away, exactly. But the shape of it is changing. Two years ago people were afraid of what the city was. Now some of them are afraid of what it means — which is different, because you can argue with a meaning.
+
+Marcus read that twice.
+
+The kelp moved in the current above him. The surface light rippled and shifted with the movement of the water. A fish investigated his window with the incurious investigation of something that had decided he was not food and therefore not particularly interesting.
+
+He thought about Cael-the-trader, who had run a market stall and taught himself to read the room and was now reading an entire geopolitical situation and writing about it with the matter-of-fact clarity of someone who had found their actual scale.
+
+He thought about what it took to find your actual scale — to discover that the thing you'd been doing in a small context was in fact a significant capability that a larger context could use, and to make that transition without losing the thing that had made the capability real in the first place.
+
+He thought about how the city was already doing this, quietly, for more people than he was directly tracking.
+
+He turned back to the metalworker's paper on mana-infused alloys.
+
+The core observation was correct. The interpretation was a first draft. He wrote back three pages of notes — not corrections, redirections, here is a question to ask next, here is what the answer to that question will tell you, here is why that matters.
+
+He had, he realized, been doing this for eighteen months without quite acknowledging it as a pattern. The notes going up from the ocean floor. The curriculum material. Pell's correspondence. The slow, continuous, low-bandwidth work of helping people build the scaffold underneath what they already knew.
+
+Teaching, he thought, with the slight internal resistance of someone identifying a word that was correct but personally uncomfortable.
+
+He was, apparently, teaching.
+
+He thought about what Grak would have made of this and found that Grak was now so far background that he couldn't even construct the imagined reaction.
+
+He started writing the next set of curriculum materials for Aldric.
+
+Outside, the kelp forest moved in its slow enormous way. The light came down from the surface in long angled shafts, green and shifting and ancient, illuminating nothing in particular and everything in it.
+
+The city hummed, forty meters above, and continued to become what it was going to become.
+
+Marcus kept writing.
+
+War.
+
+Kingdoms have branded together.
+
+Marcus is unbothered. He offers options when the party visits him under the ocean. The party is stunned by what has been happening on the ocean floor, they thought the city above was a miracle... What they're seeing down here is the true miracle. Marcus is oddly cheerful. 
+
+The options he offers are as follows:
+
+Let the army approach, and he can just seal them all away into orbs for the city to deal with one by one under its justice system.
+
+Never let the army approach, the horizon always move away from them. They're eventually forced to return home.
+
+Let the army approach, and just ignore them. They won't be able to break the barriers, or harm anyone coming to or going from the city.
+
+Send a golem army to meet the army in field. The golems wouldn't kill or attack anyone... Instead, the golems would capture everyone one by one and just slowly walk them all back home before dumping them out onto the ground and leaving. The golems could even have tanks of water and a fridge filled with good foods in them, along with waste processing to ensure that the army is returned home in good health. Maybe fill them with books? It'd be easy to rise 90,000 golems almost overnight, a factory just have to be built, fed matter from the air and ocean then simply turned on and left running.
+
+It is clear to everyone that Marcus likes the golem idea the most. Marcus is just not sure if it'd be too... Embarrassing for the kingdoms? If it will escalate things further. But it will be funny if this is the solution! It's exactly what he have always wanted to do in his previous world... Golems outnumbering the native population infinite to one. Back in his world, they called those robots. 
+
+For the first time, Marcus slightly loses focus and start talking about a Howl's Moving castle, for a moment before refocusing on the subject.
+
+The party is very intrigued.
+5:42 AM
+Part Twelve: The Ocean Floor
+
+They took a boat to where he'd told them, a point half a mile offshore where the water was deep enough that the bottom wasn't visible, and Seran said the words Marcus had given them.
+
+The water opened.
+
+Not dramatically — no parting of waves, no theatre. A path simply became available that hadn't been before, a pressure adjustment that let the boat descend without the ocean noticing, and they went down.
+
+Yara was the first to stop pretending to be composed.
+
+She'd fought in campaigns. She'd seen the city Marcus built appear from nothing over the course of a week. She'd watched him fold space with a piece of paper and put an entire castle into a sphere the size of a melon. She thought she had a working model of what to expect from him.
+
+The ocean floor was not in her model.
+
+He had not built a house.
+
+He had, at some point in the past two years, built something that had started as a house and then kept going in the way his projects kept going — each solution revealing an adjacent problem, each structure suggesting the next one, the whole thing accreting into something that had its own internal logic and beauty and was answering questions she couldn't entirely formulate.
+
+The kelp forest was part of it, integrated rather than cleared. The structures moved between and around the great columns of kelp the way a city moves around its old trees — accommodating, incorporating, treating the existing life as infrastructure rather than obstacle. Light came from everywhere and nowhere, bioluminescent in quality, making the whole space feel like the inside of something that was alive and thinking.
+
+The mote-entities were everywhere.
+
+She recognized them from the city — the same quality of deliberate distributed attention, the same sense of things being managed that didn't need managing in ways that freed everything else from having to think about them. Down here they were more numerous and more complex and moved with a kind of expressiveness that the ones in the city didn't have. They passed through the water like slow fish. They gathered at certain points in configurations that shifted like long thoughts.
+
+"What are those doing," Aldric said. His voice had the specific quality it had in the curriculum sessions when he'd encountered something that required new vocabulary.
+
+"Thirteen different things," Marcus said, from somewhere to their left. "Presently."
+
+He was sitting in a space that was approximately a workshop and approximately a library and approximately neither — a room where the distinction between working and thinking had been dissolved by someone who didn't experience them as different activities. Papers everywhere, physical ones, covered in notation that wasn't any magical script Aldric recognized. Things in various stages of construction or deconstruction. A window — a large one, occupying an entire wall — looking out into the kelp at a depth where the light went very blue and very slow.
+
+He looked, to the party's slight collective surprise, good.
+
+Not transformed, not dramatically different. But there was something in how he was sitting — a looseness, an ease — that they hadn't seen before. Two years of living at the bottom of the ocean had apparently agreed with him in some specific way.
+
+"The kingdoms have combined," Seran said.
+
+"I know." He said it without looking up from what he was writing. "Eighty-seven thousand soldiers currently. They're arguing about supply chains at the moment. The march will start within the month."
+
+"You've been watching."
+
+"I've been watching." He finished a notation, set it aside. "I've also been thinking about it, which is more useful." He gestured at the seating — chairs appeared with the same ambient certainty as always. "Sit down. You look like you're delivering bad news and I'd like you to be comfortable when you realize you're not."
+
+They sat.
+
+Deren was the last one, because Deren was standing at the window looking at the kelp forest with the expression they got when encountering something that required extended processing.
+
+"This is the real one," Deren said, not quite to anyone.
+
+"What is," Yara asked.
+
+"The miracle." Deren turned from the window. "The city up there — I've been living in it two years, I've stopped seeing it properly. It's become— familiar. But this—" They looked at the workshop, the motes, the library-that-wasn't-a-library, the window looking into the oldest dark. "This is what's actually been happening."
+
+Marcus looked at Deren for a moment. "I've been busy," he said, which was, everyone in the room recognized, the complete and honest account of the past two years.
+
+"With what," Aldric said.
+
+"Later," Marcus said. "Army first."
+
+He was, Seran noticed, in a good mood. Not a performing-good-mood — a genuine ease, an undercurrent of something that was almost enthusiasm, which was new. Marcus's baseline was focused, not cheerful. Whatever the army problem was doing to his internal state, it was not what Seran had expected.
+
+"Options," Marcus said, and held up a hand and began to count.
+
+The first option he described flatly and efficiently: seal them all into orbs, let the city's justice system handle them one by one, problem contained indefinitely.
+
+The second he described with similar efficiency: the city does nothing, the approaching army finds the horizon receding as they march, travel time stretching without apparent cause, they eventually run out of road and go home.
+
+He described the third — the barriers, the impermeability, ignoring the army the way you ignore weather — with the tone of someone presenting a sound if uninspired solution.
+
+Then he got to the fourth.
+
+Something shifted in the way he was sitting.
+
+He still wasn't performing. But there was an energy in how he started describing it — a particular quality of focus that the party had learned to recognize as Marcus talking about something he'd already thought about in more detail than the current conversation required.
+
+Golems, he said. Ninety thousand of them, roughly, to match numbers. A factory running overnight, fed matter from the ocean and the air — and there is so much matter in air, people here still don't appreciate this — producing units that were large enough to be unarguable and gentle enough to be absurd.
+
+They wouldn't fight. Fighting implied a conflict on terms both parties recognized. These would simply — he paused here, choosing the word with the care of someone who wanted the exact right one — collect. One soldier at a time. Lift them carefully, carry them home, set them down on ground they recognized, leave.
+
+"The journey home would take some time," he said. "So naturally the units would be equipped to make it comfortable. Water, food — good food, not field rations — waste processing so no one is degraded by the experience." He paused again. "Books."
+
+"Books," Seran said.
+
+"In the relevant languages. A selection. History, natural philosophy, some fiction, practical texts. People have time on a long journey. Some of them will read." He looked at his hands. "Some of them won't. But it's there."
+
+The room was quiet for a moment.
+
+"You've already designed them," Yara said.
+
+Marcus did not confirm or deny this. He looked at the window.
+
+"It would be embarrassing for the kingdoms," he said. "That's the consideration. Ninety thousand soldiers collected and returned home by golems carrying packed lunches and reading material. The story that tells— it's difficult to recover from politically. The narrative is not we were defeated. The narrative is we were handled. Like a problem being tidied away." He paused. "I'm not certain if that escalates things further or ends them. I've been running the variables and I keep getting different answers depending on assumptions about human psychology I can't fully verify."
+
+"It would be humiliating," Seran said.
+
+"Yes."
+
+"Deeply, specifically humiliating in a way that a conventional defeat isn't."
+
+"Yes. A defeat can be explained. A defeat has dignity, even in loss. This—" He looked at the ceiling, the ocean above it, something further than that. "This would be a story people told for a hundred years. The golem army that carried the soldiers home. The commanders who got picked up and walked back like they'd wandered somewhere they shouldn't be."
+
+"You want to do it," Deren said.
+
+A pause.
+
+"I find it very funny," Marcus said, with the precise honesty of someone who has decided to stop pretending to be more dignified than they are about something. "In my previous world they called them robots. I spent my career working with systems that did work so humans didn't have to. What I always—" He stopped. A very slight change in his expression, the kind that meant something had surfaced that didn't usually surface. "In my world the problem was always that the people in charge decided what the machines did, and what the machines did was usually— more of the same things humans had been doing, just faster. Extraction. Production for accumulation. The same patterns, amplified." He looked at his hands again. "Ninety thousand units that do nothing but gently prevent harm and ensure comfort and carry soldiers home to their families. That's—"
+
+He stopped again.
+
+"That's what I always wanted to point the tools at," he said. "And nobody ever let me."
+
+The room was very quiet.
+
+Marcus appeared to notice that he'd said more than he'd intended. He looked at the window.
+
+"There's a castle," he said, and his tone shifted in a way the party had never heard before — lighter, slightly, almost reminiscent. "From a story in my world. A moving castle. Mechanical, magical, runs on a fire demon's contract, walks on legs across a landscape." He turned a pen in his hand. "I always thought there was something— the image of it. Something large and strange and self-contained, moving through a world that didn't fully understand it, belonging to no territory, beholden to no king." He was quiet for a moment. "The structural engineering would be interesting. Something that size, ambulatory, the joint load calculations alone—"
+
+He caught himself.
+
+The party watched him catch himself.
+
+It was, Aldric thought, like watching someone realize they'd started talking about something they loved before they'd decided whether they wanted to.
+
+"The golems," Marcus said, returning to the thread with deliberate precision. "That's the option I'd choose. But I want to be clear: it should be the city's choice. I have a bias here that I've just made somewhat visible."
+
+"Somewhat," Yara said.
+
+"The castle," Mira said. She had that look — the systems look, the finding-the-gap look. "You were designing it just now. In your head."
+
+"I was thinking about load calculations."
+
+"While explaining your army options to us."
+
+"I can think about more than one thing."
+
+"How long have you been thinking about the castle."
+
+A pause that was approximately one beat too long.
+
+"Intermittently," Marcus said.
+
+The party exchanged a look. The kind of look that passes between people who have been through enough together that it carries full sentences.
+
+Seran said: "What if the castle went to meet the army."
+
+Marcus looked at him.
+
+"Before the golems," Seran said. "A moving castle, on the horizon. Not threatening. Just— present. Something that doesn't fit any category they have." He leaned forward. "Let them look at it for a while."
+
+"And then," Yara said, with the particular tone of someone laying down a card, "let the golems come out of it."
+
+Marcus was very still.
+
+"With the books," Deren said.
+
+"And the food," Mira added.
+
+"And the waste processing," Cael-the-trader said, who had come along and had been quiet in the way he was quiet, taking everything in, until the right moment. "You want to send them home. Send them home well. Make the whole thing—" He thought about it. "Make it a story they tell that ends with and we were treated better by the machines than we were by our own commanders."
+
+Marcus looked at them all.
+
+The workshop was very quiet except for the ambient sound of the ocean, which was immense and constant and didn't care about any of this.
+
+"The structural load calculations for ambulatory architecture of that scale," Marcus said, "are not trivial."
+
+"No," Seran agreed.
+
+"It would take approximately—" He was already doing it, they could see him doing it, the slight defocus of someone running numbers behind their eyes. "Three weeks for something structurally sound. Two if I compromise on certain—" He paused. "I won't compromise. Three weeks."
+
+"We have four before they march," Seran said.
+
+"Then it's not a time constraint problem."
+
+"No," Seran said. "It's not."
+
+Marcus looked at the window. The kelp moved in its long slow way outside. A mote drifted past, doing one of its thirteen things.
+
+"The books," he said. "The selection matters. What they read on the way home matters."
+
+"I'll work on it," Aldric said immediately.
+
+"The food should be good," Marcus said. "Genuinely good. Not impressive, not performative. Good." He turned to Mira. "You understand the difference."
+
+"I do," Mira said.
+
+"And the golems—" He picked up a pen. "They shouldn't be frightening. They should be—" He paused, reaching for something. "They should look like they were built by something that thought very carefully about what a person needs and built that, without any interest in harm. The shape of genuine care expressed through engineering." He looked at the pen. "That's an aesthetic problem as well as a structural one."
+
+"Yes," Deren said.
+
+"I haven't done much aesthetic problem solving."
+
+"I think," Deren said carefully, "that you might be better at it than you think."
+
+Marcus looked at the workshop around him. The way the kelp forest had been incorporated rather than cleared. The bioluminescent light that fell like the ocean was thinking. The window that took up the whole wall because whoever had put it there had understood that the view was the point.
+
+He said nothing.
+
+He put pen to paper.
+
+In the upper left corner of a fresh sheet, he sketched a leg. The joint structure. Where the load transferred. The question of how something that size moved without shaking itself apart.
+
+The party watched him begin, and understood that the decision had been made, and that something was going to walk across the world's horizon in three weeks and change what the word castle meant for everyone who saw it.
+
+Somewhere above them, the city hummed.
+
+Marcus drew.
+
+The golems came. They went, taking all sense in the world with them.
+5:54 AM
+Part Thirteen: The Walk
+
+It came over the hill at dawn.
+
+The forward scouts saw it first.
+
+One of them rode back to camp at a speed that caused his commander to stand up from breakfast and put down the cup he was holding. The scout was a twelve-year veteran. He had the face of someone who had categorized most things the world could show him and had made peace with the remainder.
+
+He did not have that face anymore.
+
+The army had camped in the wide valley two days' march from the coast, eighty-nine thousand soldiers in the organized sprawl of a serious military operation — supply lines, command structure, the whole weight of six kingdoms' combined political will made physical and pointed in one direction. It had taken eight months to assemble. Commanders who had spent careers learning not to be impressed by things were, quietly, impressed by the logistics of it. This was real. This was the kind of force that ended things.
+
+The sun came up.
+
+The castle came over the hill.
+
+It was the legs first.
+
+That was what everyone would say afterward, when there was an afterward and people were trying to explain it to people who hadn't been there. Not the size, though the size was — the size was something you felt before you understood it, a change in the quality of the air. Not the sound, though there was a sound, a deep rhythmic percussion that you understood after a moment was footsteps, which was the point at which most soldiers' faces did the thing the scout's face had done. The legs first. Because legs meant walking, and walking meant it was going somewhere, and the somewhere it was going was here.
+
+It walked like it had always been walking and would always be walking. Not threatening — this was what the senior mage attached to the western coalition would report, with the frustrated precision of someone trying to describe something that kept escaping language. It didn't move like a weapon. A weapon moved toward something. This moved the way weather moved: with complete indifference to what was in its way, not hostile, just going.
+
+It stopped at the valley's edge.
+
+It looked at the army, if something that large could be said to look. There were no visible eyes. But the attention was palpable.
+
+Then the doors opened.
+
+They came out in rows.
+
+Not marching — they didn't march, which was one of the details that lived in soldiers' accounts for the rest of their lives. Marching was a human thing, a trained thing, the thing you did to show force through coordination. These moved with the unhurried individual purpose of something that had a specific task and no interest in performing readiness.
+
+They were taller than men. Not by enough to be monstrous — by enough to be unambiguous. The material was something between metal and stone and neither, a warm grey that caught the early light and didn't glare. The faces were — the faces were the part that the mage spent four pages trying to describe. Not human, not inhuman in the way of a mask. Somewhere else. Designed, clearly, with care, by something that had thought about what a face was for and built that without copying the specific human implementation.
+
+They looked, the mage eventually concluded, like something that was interested in you without wanting anything from you. He had never encountered that combination before. He didn't have a word for it.
+
+They spread into the valley in rows that were not military rows — not a formation, not a front. Something more like — he paused over this one for a long time — something more like the pattern of people moving through a market. Purposeful, distributed, each one going somewhere specific.
+
+Then each one arrived somewhere specific.
+
+The first soldier collected was a pikeman from the eastern coalition's third regiment.
+
+He was nineteen. He had enlisted because the pay was better than the farm. He had been thinking about the farm, actually, when the golem reached him — thinking about whether the barley would be up yet, whether his brother had managed the drainage problem in the low field.
+
+The golem stopped in front of him.
+
+He looked up at it.
+
+It looked at him, in its way.
+
+Then it bent down — smoothly, with an unhurried care that was somehow the most alarming thing it had done — and picked him up.
+
+Not roughly. Not the way you pick up something that doesn't matter. The way you pick up something fragile, with attention to the whole of it, making sure nothing was compressed wrong, nothing stressed. He was nineteen and large and it held him like he was made of something worth protecting.
+
+He didn't have time to do anything. He also found, he would tell people later, that he didn't want to. Which he couldn't explain. He tried for years and couldn't explain it. It hadn't felt like surrender. It had felt like — something else. Something that didn't have a word yet in this world's language.
+
+The golem straightened.
+
+It turned.
+
+It began to walk home.
+
+Around it, eighty-eight thousand, nine hundred and ninety-nine similar conversations were occurring simultaneously.
+
+The army did not go quietly — this is important, this is part of the record. Soldiers fought. The western coalition's cavalry charged. The senior mage deployed three separate area-suppression constructs that were, individually, the most powerful things he'd built in thirty years of practice.
+
+The golems did not respond to any of this.
+
+Not in the way of something that couldn't be harmed, though they couldn't be harmed. In the way of something that had been given a task and had assessed the other things happening as not the task. The cavalry charge moved around them the way water moves around something fixed. The area-suppression constructs washed over them and registered, apparently, as weather. A golem that was in the process of picking up a soldier got hit by a sword three times while completing the motion. It completed the motion.
+
+The soldier got picked up.
+
+The golem turned.
+
+The golem walked home.
+
+The soldier was still holding his sword. He kept holding it the whole way. He wasn't sure why.
+
+The chest opened on the third hour.
+
+Every golem had one — a compartment at the torso, the soldiers had noticed them but assumed weapons, assumed threat, and then the chest opened and inside was a container of water, sealed, clean, cold in a way that water left in metal shouldn't be. And wrapped things that turned out to be food. Real food. Not rations.
+
+Bread that was still warm.
+
+The pikeman from the eastern coalition, who had been trying to decide whether to be more angry or more frightened for three hours, unwrapped the bread and smelled it.
+
+He ate it.
+
+He was nineteen and he'd been marching for two weeks on field rations and it was good bread, warm, with something in it he couldn't identify that was either a spice or an herb or something that had no name in his vocabulary.
+
+He ate the whole thing.
+
+The golem walked.
+
+Later there was cheese. Later still, something hot in a sealed container that opened at a temperature that was exactly right for eating, which should have been impossible for something that had been walking for hours and was probably the detail that finally broke the senior mage's attempt to write a rational account of the day.
+
+The books appeared on the second day.
+
+Another chest, another compartment, and inside it a selection of texts in the soldier's native language — which meant the golems knew who each of them was, which was a thought that took a while to process and then became strangely less alarming than it should have been, because if they'd known who you were and they'd made you warm bread, maybe the knowing wasn't the threat you'd have assumed.
+
+Most soldiers didn't read them immediately.
+
+Some did.
+
+The pikeman from the eastern coalition read one on the third day because he'd run out of things to think about and the alternative was thinking about how he was being carried home by something he couldn't explain, which was not a productive thought loop.
+
+The book was a history. Not the history he'd been taught — not the history of kings and battles and the assertions of power that accumulated into what his world called the past. A history of questions. How people had figured things out. What they'd been wrong about first, and why they'd been wrong, and what had happened when someone asked whether the wrongness was necessary.
+
+He read it in two days.
+
+He asked the golem for another one.
+
+The chest opened.
+
+He wasn't sure, afterward, if the golem had understood the request or if the chest opened on a schedule. He decided it didn't matter. He read the second book.
+
+On the seventh day the western coalition commander was set down on a hillside two miles from the city his forces had marched from.
+
+He stood up.
+
+He looked at the golem.
+
+The golem looked at him, in its way.
+
+Then it turned, and walked back toward the coast, and joined the line of other golems returning to wherever golems went when they'd finished their task, and in twenty minutes they were specks on the horizon and in thirty they were gone.
+
+The commander stood on the hill.
+
+Around him, over the course of the next few hours, the rest of his forces were set down — on hills, in fields, on the roads they'd marched out on. Each one put down carefully, the same way they'd been picked up. Each one left standing on ground they recognized.
+
+Nobody was injured.
+
+The army that had taken eight months to assemble stood in the landscape of home and looked at each other and could not find the word for what had happened to them.
+
+The mage wrote his report in four drafts.
+
+The first draft was an attempt to describe what he'd seen accurately, which failed because the language didn't have the necessary concepts.
+
+The second draft was an attempt to explain it, which failed because he didn't know enough to explain it.
+
+The third draft was an attempt to assess the threat, which failed because the event had been, by any coherent measure, the opposite of a threat, and he couldn't work out how to frame the opposite of a threat from an entity of overwhelming power in terms that the council would receive as intelligence rather than philosophy.
+
+The fourth draft he wrote honestly, which was the one he sent, and which ended:
+
+I cannot tell you what this means for the war. I can tell you that of the twelve men in my immediate unit, ten read the books they were given. I read mine. I have been trying since to determine whether this was intentional on the part of whoever built those golems, and I find that it does not change anything whether it was or not. The question is the same question. I intend to find someone who can help me answer it. I believe I know where to look.
+
+He did not wait for a response.
+
+He was on the road north within the week.
+
+The castle walked back to the coast and into the ocean.
+
+Not dramatically. It stepped off the shoreline the way you step off a curb, with the same absolute ease it had moved across the valley, and the water rose to meet it and then it was gone, and the surface of the sea was undisturbed, and the morning was very quiet.
+
+A fisherman who had been watching from his boat sat for a long time with his net in his lap.
+
+Then he picked up the oars and rowed to shore and went home and told his wife.
+
+She had heard stranger things this past year, she said.
+
+She hadn't, actually. But she understood that he needed to say it out loud and she understood that some things you could only begin to hold by saying them, and she poured him something warm and sat down across from him and listened.
+
+At the bottom of the ocean, Marcus was already thinking about something else.
+
+Not dismissively — the golems had been filed under resolved, monitor for secondaries, the same category the castle was filed under now that the aesthetic problem was solved. He had a working model of the political cascade. Cael-the-trader was better placed to manage the immediate aftermath. The mage who was on the road north was going to be interesting to talk to.
+
+He was thinking about the anomaly.
+
+He'd been building around it for two years without quite building at it — circling, approaching, taking readings from different angles, the way you approach something sensitive when you know that how you approach it will determine what you're able to find. He'd been wrong about what it was twice. He'd been closer the second time.
+
+He picked up his pen.
+
+The kelp moved.
+
+The light came down from the surface in its long slow shafts, green and ancient and patient.
+
+He started writing.
+
+Outside, somewhere, the world was telling itself a story about golems and warm bread and a walking castle and the army that came home intact and confused and, in some cases, reading. In six months it would be told in taverns in eight languages. In a year it would have acquired details that hadn't happened. In a generation it would be the kind of story parents told children, the details shifting with each telling into whatever shape the teller needed it to have.
+
+The pikeman from the eastern coalition would eventually make his way to the city.
+
+He would arrive with the book he'd been given, which he'd read four times, and a list of questions it had generated, which he'd been adding to since the seventh day of being carried home.
+
+He would become, in a decade, one of the better teachers the city produced.
+
+He would specialize in history — specifically, in the history of questions. How people had figured things out. What they'd been wrong about first. What had happened when someone finally asked whether the wrongness was necessary.
+
+He would teach this to hundreds of students over forty years.
+
+He would always begin the first class the same way: by putting a book on the table and telling the story of where it had come from, and watching the students' faces while he told it, and letting the story do its first work before the curriculum did its work, because some things had to be true in the body before they could be true in the mind.
+
+He didn't know any of this yet.
+
+He was on a hillside, holding his sword, watching the golems walk away.
+
+Somewhere to the north, a city hummed.
+
+At the bottom of the ocean, something was being figured out.
+
+The world turned.
+
+
+Claude is AI and can make mistakes. Please double-check responses.
+
