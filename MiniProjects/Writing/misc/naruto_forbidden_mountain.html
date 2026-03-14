@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Site Alpha - Forbidden Mountain</title>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Cormorant+Garamond:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #d1d1d1;
+            --accent-color: #8b0000;
+            --glitch-speed: 0.2s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Special Elite', monospace;
+            line-height: 1.6;
+            overflow-x: hidden;
+            cursor: crosshair;
+        }
+
+        /* Scanline Effect */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 1000;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        /* Grainy Noise Overlay */
+        body::after {
+            content: "";
+            position: fixed;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); /* Subtle texture */
+            opacity: 0.05;
+            z-index: 999;
+            pointer-events: none;
+            animation: noise 0.2s infinite;
+        }
+
+        @keyframes noise {
+            0% { transform: translate(0,0) }
+            10% { transform: translate(-5%,-5%) }
+            20% { transform: translate(-10%,5%) }
+            30% { transform: translate(5%,-10%) }
+            40% { transform: translate(-5%,15%) }
+            50% { transform: translate(-10%,5%) }
+            60% { transform: translate(15%,0) }
+            70% { transform: translate(0,10%) }
+            80% { transform: translate(-15%,0) }
+            90% { transform: translate(10%,5%) }
+            100% { transform: translate(5%,0) }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 100px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 80px;
+            border-bottom: 1px solid var(--accent-color);
+            padding-bottom: 20px;
+            animation: flicker 4s infinite alternate;
+        }
+
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            position: relative;
+        }
+
+        h1::after {
+            content: 'RESTRICTED - LEVEL 5 ACCESS ONLY';
+            display: block;
+            font-size: 0.8rem;
+            color: #444;
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 150px rgba(0,0,0,1);
+            pointer-events: none;
+            z-index: 500;
+        }
+
+        .paragraph {
+            margin-bottom: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s ease-out;
+            filter: blur(5px);
+        }
+
+        .paragraph.reveal {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+        }
+
+        .paragraph:hover {
+            color: #fff;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+        }
+
+        .important {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .glitch {
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch:hover::before, .glitch:hover::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+        }
+
+        .glitch:hover::before {
+            left: 2px;
+            text-shadow: -2px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        .glitch:hover::after {
+            left: -2px;
+            text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
+            animation: glitch-anim2 1s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(10px, 9999px, 86px, 0); }
+            20% { clip: rect(41px, 9999px, 15px, 0); }
+            40% { clip: rect(66px, 9999px, 34px, 0); }
+            60% { clip: rect(24px, 9999px, 73px, 0); }
+            80% { clip: rect(12px, 9999px, 52px, 0); }
+            100% { clip: rect(96px, 9999px, 11px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(25px, 9999px, 86px, 0); }
+            50% { clip: rect(11px, 9999px, 34px, 0); }
+            100% { clip: rect(44px, 9999px, 11px, 0); }
+        }
+
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 24%, 55% { opacity: 0.4; }
+        }
+
+        .footer {
+            margin-top: 100px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #444;
+            padding-bottom: 50px;
+        }
+
+        .mountain-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            margin: 50px 0;
+        }
+
+        /* Strange script styling */
+        .script {
+            font-family: serif;
+            font-style: italic;
+            border-left: 2px solid var(--accent-color);
+            padding-left: 20px;
+            margin: 40px 0;
+            color: #aaa;
+        }
+
+        #scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent-color);
+            z-index: 2000;
+            transition: width 0.1s;
+        }
+
+        /* Red glow on cursor hover area */
+        .cursor-light {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 0, 0, 0.05) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 2;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="scroll-progress"></div>
+    <div class="vignette"></div>
+    <div class="cursor-light" id="cursor-light"></div>
+
+    <div class="container">
+        <header>
+            <h1 class="glitch" data-text="THE FORBIDDEN MOUNTAIN">The Forbidden Mountain</h1>
+        </header>
+
+        <div class="paragraph">
+            The Hokage's name for it, in official documents that would never be released, was <span class="important">Event Site Alpha</span>. His ANBU called it the <span class="important">Grave Walk</span>. The civilians who lived within sight of it called it the Pile.
+        </div>
+
+        <div class="paragraph">
+            Naruto called it nothing, because Naruto was dead, and was not dead, and was reading his strange writing in a corner of the living room of his apartment at three in the morning, and was eight feet tall and staring at the treeline from somewhere outside the village's perimeter, and was a sphere of approximate dimensions and clearly accelerating toward the mountain with a purpose that made three ANBU members retire on the same afternoon.
+        </div>
+
+        <div class="paragraph">
+            It had started so simply.
+        </div>
+
+        <div class="paragraph">
+            The scroll was sealed. Mizuki had made it seem so important. And Naruto, who had never once managed a single working clone, who produced only the white-faced prone embarrassments that had haunted him through the Academy, decided that tonight he would learn.
+        </div>
+
+        <div class="paragraph">
+            He sat with the scroll in the clearing. He read. He made the seal.
+        </div>
+
+        <div class="paragraph">
+            Something happened that Mizuki, watching from the shadows, would never successfully describe in any report. He used the words wrong twice. He crossed them out. He tried <span class="script">recursive</span> and crossed that out too. He eventually submitted a form that said the subject fell unconscious and left it there.
+        </div>
+
+        <div class="paragraph">
+            What Mizuki actually saw:
+        </div>
+
+        <div class="paragraph">
+            Naruto made the seal.
+        </div>
+
+        <div class="paragraph script">
+            The air around Naruto did not split in the usual way. It did not produce a copy. It produced a depth. Like looking into a mirror that showed not reflection but extension — more room behind the glass, more room behind that, corridors of Naruto-shaped possibility stacked back beyond any light source. For a fraction of a second, all of it was present and looking out. Then Naruto fell, and the clearing was just a clearing, and Mizuki stood very still for a very long time before he remembered he was supposed to be doing something with the scroll.
+        </div>
+
+        <div class="paragraph">
+            Naruto was in a coma for three hundred and forty-two days.
+        </div>
+
+        <div class="paragraph">
+            He woke up and nobody threw a party.
+        </div>
+
+        <div class="paragraph">
+            He woke up and looked at his hands for a long time. He looked at the orange suit hanging on the chair beside his hospital bed and something crossed his face — not disgust, not nostalgia. Something more like seeing a photograph of someone else's life that you've accidentally memorized.
+        </div>
+
+        <div class="paragraph">
+            He dressed in plain white. He went home. He started writing.
+        </div>
+
+        <div class="paragraph">
+            Iruka came to visit. Naruto was friendly enough. He made tea. He answered questions. He was not himself in any way that Iruka could locate except that he was unmistakably himself — the same face, the same laugh when he laughed, the same impish mouth. It was like a song played in the <span class="important">wrong key</span>. Recognizable. Wrong.
+        </div>
+
+        <div class="paragraph">
+            The writing was in no language. Codebreakers came from the intelligence division, four of them, legendary women who had broken Fire Country encryption in wartime. They left the apartment without speaking to each other and went separately to bars and were seen, on the same evening, staring at their drinks.
+        </div>
+
+        <div class="paragraph script">
+            One of them wrote in her personal journal: <span class="important">"it is not that it means nothing, it is that it means everything and the everything is too loud to hear."</span>
+        </div>
+
+        <div class="mountain-divider"></div>
+
+        <div class="paragraph">
+            Naruto started talking about the shadows.
+        </div>
+
+        <div class="paragraph">
+            Not shadows in any metaphorical sense. He would stop mid-sentence and look at a specific point in the middle distance and say, conversationally, "they're stacking up now, I think there's a new one coming from the eastern branch, he's curious, the ones from the shallower branches are always more curious." He said it the way someone might mention weather.
+        </div>
+
+        <div class="paragraph">
+            The Hokage called him in. Naruto sat across the desk and answered every question with complete clarity and cheerfulness. His chakra levels were off the charts, but stable. His medical exams were perfect. His psychological evaluation was, in the words of the evaluating physician, "<span class="glitch" data-text="superficially normal">superficially normal</span> in every measurable dimension, which is not the same as normal, and I want to register my objection to the framing of this entire inquiry."
+        </div>
+
+        <div class="paragraph">
+            Three weeks later, the first Naruto died.
+        </div>
+
+        <div class="paragraph">
+            He was found in his apartment. No violence. He looked peaceful. He was warm.
+        </div>
+
+        <div class="paragraph">
+            By the time the body had been moved to the morgue, a second Naruto was eating ramen at his usual stand, arguing cheerfully with the owner about the relative merits of extra chashu, and had to be physically restrained when two ANBU appeared with naked weapons. He was confused by the swords. He was genuinely baffled by their hostility. He ate his ramen at the station under supervision and passed every test they ran and had the right chakra signature and the right memories and explained patiently that he didn't understand what the fuss was about.
+        </div>
+
+        <div class="paragraph">
+            They checked the morgue.
+        </div>
+
+        <div class="paragraph">
+            The first Naruto was still there.
+        </div>
+
+        <div class="paragraph">
+            The Hokage looked at both reports for a long time.
+        </div>
+
+        <div class="mountain-divider"></div>
+
+        <div class="paragraph">
+            The mountain began on a Tuesday.
+        </div>
+
+        <div class="paragraph">
+            Nobody decided to build it. It simply became the place where the Narutos went. They would arrive — always from outside the village, always walking, never running, always with the same mild purposeful expression — spend an hour or a day or sometimes longer, and then walk to the same clearing and lie down and stop. They were always warm when they arrived. They were always warm when they were found. They did not decompose.
+        </div>
+
+        <div class="paragraph">
+            The ANBU responsible for monitoring developed, over the following weeks, a specific and reproducible sensation they described as a feeling of <span class="important">category error</span> — like watching someone file a living person under a subject heading. The bodies were not wrong. The process was wrong. The wrongness was not in the Narutos but in the act of thinking of them as bodies.
+        </div>
+
+        <div class="paragraph">
+            The clearing filled. The stack grew. By the third month it was a hill. By the fifth it had interrupted the horizon line as seen from the Hokage Tower.
+        </div>
+
+        <div class="paragraph">
+            The newer Narutos were different.
+        </div>
+
+        <div class="paragraph script">
+            The first hundred were almost indistinguishable from the original. A centimeter here. A slightly different memory of a mission's outcome. One of them had never met Sasuke; he found this surprising but not distressing. One of them had failed every exam at the Academy and become a fisherman and come here anyway, drawn by something he couldn't name, wearing calluses in the wrong places.
+        </div>
+
+        <div class="paragraph">
+            The fisherman Naruto sat with the Hokage for four hours and discussed the philosophy of recursive identity with an ease that made the Hokage feel he had never understood the subject at all.
+        </div>
+
+        <div class="paragraph">
+            The fisherman Naruto walked to the mountain and climbed it and lay down and was warm and stopped.
+        </div>
+
+        <div class="paragraph">
+            The shadow touched a chunin named Takeda Ryo on a Thursday afternoon when the sun moved.
+        </div>
+
+        <div class="paragraph">
+            He did not scream. That was what the witnesses remembered later. He made a sound like very fast breathing and then he sat down on the ground and looked at his hands. His superior crouched beside him and asked what was wrong. Takeda Ryo looked up and said, slowly, carefully, as though translating from a language he'd only just learned: <span class="glitch" data-text="there are so many of them">"there are so many of them, and they all wanted to be here, and they all made it, it's just that here keeps changing."</span>
+        </div>
+
+        <div class="paragraph">
+            He was evaluated. He was placed on leave. He recovered. He never discussed it further except once, to his wife, when he said: <span class="important">"I understood everything for about four seconds and the understanding was like being on fire."</span>
+        </div>
+
+        <div class="paragraph">
+            The order came down: no one walks through the mountain's shadow. Barriers were erected. The barrier-erectors were careful.
+        </div>
+
+        <div class="paragraph">
+            The mountain grew taller.
+        </div>
+
+        <div class="mountain-divider"></div>
+
+        <div class="paragraph">
+            The divergence accelerated.
+        </div>
+
+        <div class="paragraph">
+            Month seven: Narutos arrived who did not have the same eyes. Still blue. But something else in them, an extra layer of whatever it was, some depth that did not correspond to any depth Naruto should have had at sixteen.
+        </div>
+
+        <div class="paragraph">
+            Month eight: one arrived who was seven feet tall, proportioned correctly, moving with a fluency that made the ANBU feel their own bodies were approximate. This Naruto stopped at the perimeter and looked at the mountain with an expression that was the first expression that had not been some version of "pleased to be here, sorry for the inconvenience." This expression was something closer to completion. He bowed — to the mountain, to them, to something — and walked forward and added himself to the pile and was warm.
+        </div>
+
+        <div class="paragraph">
+            Month nine: three arrived simultaneously from different directions. They looked at each other. They laughed, all three, the same laugh at the same time, and the laugh was warm and real and the ANBU watching felt it as a kind of grief without knowing why.
+        </div>
+
+        <div class="paragraph">
+            The insect one came in winter.
+        </div>
+
+        <div class="paragraph script">
+            It moved wrong. Not broken-wrong, not predator-wrong. It moved with the comprehensive efficiency of something that had optimized every unnecessary motion out of existence, and what remained was pure purpose expressed through a form that had once been human and still was human in the way that a theorem is still human. It was thin in the manner of things that require very little from the world. It was long. It had what might have been eyes in the right place and also in several other places.
+        </div>
+
+        <div class="paragraph">
+            It was, unmistakably, Naruto.
+        </div>
+
+        <div class="paragraph">
+            It looked at the mountain the way the others looked at it: with recognition, with satisfaction, with that particular quality of arrival. It moved around the perimeter. It began, methodically, to eat.
+        </div>
+
+        <div class="paragraph">
+            The ANBU captain sent a report. He included the sentence: <span class="important">"approach would result in death, confidence high, basis uncertain, I would describe it as knowing."</span> He included the sentence: <span class="important">"it does not appear malicious. It appears necessary."</span>
+        </div>
+
+        <div class="paragraph">
+            The Hokage read the report and walked counterclockwise around his desk three times, which he did when he needed to think and didn't want anyone to know how much. He looked out the window at the mountain. He thought about what he knew about shadow clones, which was everything a Kage should know, and he thought about how none of it had prepared him for this.
+        </div>
+
+        <div class="paragraph">
+            He called in his two most trusted advisors and one old woman who was not officially an advisor but who had, over the course of a long career, outlived four Kage and seemed likely to outlive him as well, and they sat and looked at the mountain together.
+        </div>
+
+        <div class="paragraph script">
+            "The clones return to the original," the old woman said. "That's the technique. Dispersal. They form, they act, they return. The experience flows back."<br><br>
+            "There is no original," the Hokage said.<br><br>
+            "No," she agreed. "But the technique doesn't know that. The technique is running."<br><br>
+            "Where does it end?"<br><br>
+            She looked at the mountain for a long time. "When there are no more branches to return from," she said. "Or when the technique understands what it's doing. Whichever comes first."
+        </div>
+
+        <div class="mountain-divider"></div>
+
+        <div class="paragraph">
+            The mountain grew.
+        </div>
+
+        <div class="paragraph">
+            The Narutos grew stranger and more various and then stranger again and then, at some point that no one could identify precisely, they began arriving that were not stranger so much as larger — not in size but in some dimension that size was a crude approximation of. They arrived and the air was different when they walked through it and the ANBU, who were trained to be unmoved by remarkable things, found themselves taking steps backward without deciding to.
+        </div>
+
+        <div class="paragraph">
+            These Narutos looked at the mountain with something that was not the simple recognition of the others. They looked at it the way you might look at something you built from very far away and very long ago, with the feeling of having once been the person who started it, which is not quite the same as being that person now.
+        </div>
+
+        <div class="paragraph">
+            They were always warm.
+        </div>
+
+        <div class="paragraph">
+            They always stopped.
+        </div>
+
+        <div class="paragraph">
+            The mountain grew.
+        </div>
+
+        <div class="paragraph">
+            Spring came and the mountain was the highest point in the visible landscape and the insect Naruto had eaten down to something manageable and kept working and the new Narutos who arrived each found the place they belonged on it and the mountain's shadow moved with the sun and everyone kept very carefully out of the shadow, everyone, all day.
+        </div>
+
+        <div class="paragraph">
+            The writing in Naruto's apartment was still there. The original writing, in the original hand, in the original no-language. Three codebreakers had, at various points, retired rather than look at it again. The fourth — the one who had written in her journal — had instead memorized it and was still trying to understand it and had lately been writing things on the walls of her own apartment in what appeared to be a different script.
+        </div>
+
+        <div class="paragraph script">
+            Her supervisor came to check on her. She opened the door, perfectly calm, and said: <span class="glitch" data-text="I think I know what it says.">"I think I know what it says. I think it says, approximately: I went to find out how far I could go and I went very far and the distance was not a problem, the problem was that far kept having more far after it, and I'm all still coming home."</span>
+        </div>
+
+        <div class="mountain-divider"></div>
+
+        <div class="paragraph">
+            Late summer.
+        </div>
+
+        <div class="paragraph">
+            The insect Naruto had finished. The mountain was smaller now, considerably. It had not reduced in height — the mountain had a kind of structural integrity that persisted — but the outer mass was gone, and what remained was a geometry that seemed intentional, a form that had always been implicit in the pile and was now simply visible.
+        </div>
+
+        <div class="paragraph">
+            No one had dared to look at it directly for very long.
+        </div>
+
+        <div class="paragraph script">
+            The ANBU captain sent a final observational report. He included one note in a section he labeled personal, non-operational: <span class="important">"I have worked in service of this village for eleven years and I have seen many things that required me to revise my understanding of what was possible. This required me to revise my understanding of what was real, which is a different experience, and I want someone to know I tried my best with it."</span>
+        </div>
+
+        <div class="paragraph">
+            The mountain waited.
+        </div>
+
+        <div class="paragraph">
+            The shadow moved.
+        </div>
+
+        <div class="paragraph">
+            The last Naruto had not yet arrived, but everyone watching felt it coming — felt it the way you feel pressure change before a storm, felt it in the specific quality of the quiet that had settled over the site, a quiet that was not empty but full, a quiet that was the sound of something enormous drawing breath.
+        </div>
+
+        <div class="paragraph">
+            The village waited.
+        </div>
+
+        <div class="paragraph">
+            He arrived at dawn.
+        </div>
+
+        <div class="paragraph">
+            He was small. He was sixteen. He was wearing the orange suit.
+        </div>
+
+        <div class="paragraph">
+            He walked through the village the same way all the others had — from outside, through the gate, nodding to the guards who had learned not to stop them — but he walked differently. He walked like he'd been walking for a long time and had arrived somewhere recognizable. He looked at the village with the face of someone who has been away in a real way, in the way that changes the shape of the home you left, and who understands that the change is in them.
+        </div>
+
+        <div class="paragraph">
+            He stopped at the mountain.
+        </div>
+
+        <div class="paragraph">
+            He stood there.
+        </div>
+
+        <div class="paragraph">
+            He put his hand on the surface of it and the quality of light at that moment was, several witnesses would later say independently, different. Not brighter. More true.
+        </div>
+
+        <div class="paragraph script">
+            He looked at what had been assembled — all the things he had become and tried and failed and managed and discovered — and he nodded once, the nod you give to something that has been waiting patiently, and he said, in a voice that was exactly his voice: "<span class="glitch" data-text="okay">okay</span>."
+        </div>
+
+        <div class="paragraph">
+            The mountain exhaled.
+        </div>
+
+        <div class="paragraph">
+            The warmth came out of it all at once — the warmth of every returned Naruto, three hundred and forty-two days of accumulated return — and the village felt it like standing in the last hour of afternoon in autumn, like being told you did fine by someone who knows.
+        </div>
+
+        <div class="paragraph">
+            The mountain settled. It did not disappear. It was simply finished.
+        </div>
+
+        <div class="paragraph">
+            The insect thing was gone. The divergent visitors were gone. The clearing held one Naruto in one orange suit and a structure that would never fully erode and that no one would ever officially explain and that children would climb, quietly, when their parents weren't watching.
+        </div>
+
+        <div class="mountain-divider"></div>
+
+        <div class="paragraph">
+            The Hokage wrote a report.
+        </div>
+
+        <div class="paragraph script">
+            He wrote several pages and then deleted all of them and wrote only: <span class="important">"the shadow clone technique was tested beyond its intended parameters. The situation has resolved. Recommend: further study, extreme caution, mandatory psychological screening for any future use by Subject N. Note: Subject N does not appear to require the screening. Subject N appears to be fine. I am less certain about the rest of us."</span>
+        </div>
+
+        <div class="paragraph">
+            He signed it.
+        </div>
+
+        <div class="paragraph">
+            He looked at the mountain.
+        </div>
+
+        <div class="paragraph">
+            He thought about the old woman's words: <span class="important">"when the technique understands what it's doing."</span>
+        </div>
+
+        <div class="paragraph">
+            He thought about Naruto's voice saying <span class="glitch" data-text="okay">okay</span>, the specific weight of it, the particular acceptance in it — not resignation, not triumph, just the complete recognition of a person who has learned something enormous and is deciding, freely, to come back anyway.
+        </div>
+
+        <div class="paragraph">
+            He closed the report.
+        </div>
+
+        <div class="paragraph">
+            Outside, on the mountain, one of the Narutos' journals had been left at the base. It was open to the last page. A single line, in a hand identical to the original strange script, which the retired codebreaker — who had, that morning, finished her translation — confirmed meant simply:
+        </div>
+
+        <div class="paragraph script" style="text-align: center; border: none; font-size: 1.5rem;">
+            <span class="glitch" data-text="This is as far as I go.">This is as far as I go.</span><br>
+            <span class="glitch" data-text="This is far enough.">This is far enough.</span>
+        </div>
+
+        <div class="paragraph">
+            The technique had run.
+        </div>
+
+        <div class="paragraph">
+            The warmth lasted three days.
+        </div>
+
+        <div class="footer">
+            [DOCUMENT ENDS] - ARCHIVE REF: EA-7742-N
+        </div>
+    </div>
+
+    <script>
+        // Scroll reveal logic
+        const paragraphs = document.querySelectorAll('.paragraph');
+        
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal');
+                }
+            });
+        }, observerOptions);
+
+        paragraphs.forEach(p => observer.observe(p));
+
+        // Scroll progress bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("scroll-progress").style.width = scrolled + "%";
+        });
+
+        // Cursor light movement
+        const cursorLight = document.getElementById('cursor-light');
+        document.addEventListener('mousemove', (e) => {
+            cursorLight.style.left = e.clientX + 'px';
+            cursorLight.style.top = e.clientY + 'px';
+        });
+
+        // Random glitch triggers
+        setInterval(() => {
+            const glitches = document.querySelectorAll('.glitch');
+            const randomIdx = Math.floor(Math.random() * glitches.length);
+            const target = glitches[randomIdx];
+            
+            target.style.color = '#fff';
+            setTimeout(() => {
+                target.style.color = '';
+            }, 100);
+        }, 1000);
+    </script>
+</body>
+</html>
