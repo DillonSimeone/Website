@@ -10,10 +10,10 @@
       "id": "page_001_shrek",
       "pageNumber": 1,
       "label": "Shrek",
-      "trackingImage": "../trainingImages/shrek.webp",
+      "trackingImage": "../../trainingImages/shrek.webp",
       "physicalWidthM": 0.15,
       "model": {
-        "src": "../3dModel/shrek_pocket_shrek_and_animations.glb",
+        "src": "../../3dModel/shrek_pocket_shrek_and_animations.glb",
         "scale": 0.355,
         "offsetY": 0.0,
         "offsetX": 0.0,
@@ -26,11 +26,6 @@
         "autoplay": true,
         "clipIndex": 0,
         "loop": true
-      },
-      "peel": {
-        "enabled": true,
-        "duration": 1.5,
-        "curlRadius": 0.3
       }
     }
   ]

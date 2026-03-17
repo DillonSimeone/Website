@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name='viewport' content='width=device-width,initial-scale=1'>
+    <title>Haptic Control</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 15px; }
+        .card { background: rgba(255, 255, 255, 0.15); border-radius: 10px; padding: 15px; margin: 10px 0; }
+        h1 { text-align: center; font-size: 1.5em; margin-bottom: 20px; }
+        h2 { font-size: 1.1em; margin: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.3); padding-bottom: 5px; }
+        .mon { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;}
+        .mi { background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 8px; text-align: center; }
+        .mv { font-size: 1.5em; font-weight: bold; font-family: monospace; margin-top: 5px; }
+        .ml { font-size: 0.8em; opacity: 0.8; }
+        label { display: block; margin: 10px 0 5px; font-size: 0.9em; }
+        .vd { float: right; background: rgba(255, 255, 255, 0.2); padding: 2px 8px; border-radius: 5px; font-family: monospace; }
+        input[type=range] { width: 100%; height: 6px; border-radius: 5px; background: rgba(255, 255, 255, 0.2); }
+        select { width: 100%; padding: 8px; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.9); color: #333; margin-top: 5px; margin-bottom: 5px;}
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em; font-weight: bold; margin: 5px 0; cursor: pointer; }
+        .bs { background: #667eea; color: #fff; }
+        .br { background: #f5576c; color: #fff; }
+        .help { font-size: 0.8em; opacity: 0.7; margin-bottom: 10px; display: block; }
+    </style>
+</head>
+<body>
+    <h1>Wireless Haptic Hub</h1>
+    <h2 style="text-align: center; font-size: 0.9em; opacity: 0.8;">Leader Node</h2>
+    
+    <div class='card'>
+        <h2>Monitor Broadcast</h2>
+        <div id='monitor-data'>Loading...</div>
+    </div>
+    
+    <form action='/save' method='POST'>
+        <div class='card'>
+            <h2>Audio Envelope</h2>
+            <label>Mic Gain <span class='vd' id='mg-val'>1.0x</span></label>
+            <input type='range' id='mg' name='mg' min='0.1' max='5' step='0.1' oninput="document.getElementById('mg-val').innerText=this.value+'x'">
+            
+            <label>Noise Gate <span class='vd' id='gt-val'>650</span></label>
+            <input type='range' id='gt' name='gt' min='50' max='3000' step='10' oninput="document.getElementById('gt-val').innerText=this.value">
+            
+            <label>Max Intensity Bound <span class='vd' id='mi-val'>255</span></label>
+            <input type='range' id='mi' name='mi' min='100' max='255' step='5' oninput="document.getElementById('mi-val').innerText=this.value">
+            
+            <label>Smoothing <span class='vd' id='sm-val'>0.25</span></label>
+            <input type='range' id='sm' name='sm' min='0.05' max='1.0' step='0.05' oninput="document.getElementById('sm-val').innerText=this.value">
+            
+            <label>Power Curve <span class='vd' id='mc-val'>1.0</span></label>
+            <input type='range' id='mc' name='mc' min='0.25' max='2.0' step='0.05' oninput="document.getElementById('mc-val').innerText=this.value">
+            
+            <label>Haptic Logic Mode</label>
+            <select id='mlogic' name='mlogic'>
+                <option value='0'>Peak Frequency Tracking</option>
+                <option value='1'>Band Energy Tracking</option>
+            </select>
+        </div>
+        
+        <script>
+            function populateSelects(selectId) {
+                let s = document.getElementById(selectId);
+                s.innerHTML += `<option value="0">0: Empty (No Pattern)</option>`;
+                s.innerHTML += `<option value="1">1: Strong Click - 100%</option>`;
+                s.innerHTML += `<option value="4">4: Sharp Click - 100%</option>`;
+                s.innerHTML += `<option value="10">10: Double Click - 100%</option>`;
+                s.innerHTML += `<option value="12">12: Triple Click - 100%</option>`;
+                s.innerHTML += `<option value="14">14: Soft Bump - 100%</option>`;
+                s.innerHTML += `<option value="17">17: Double Bump - 100%</option>`;
+                s.innerHTML += `<option value="24">24: Transition Hum 1</option>`;
+                s.innerHTML += `<option value="47">47: Buzz 1</option>`;
+                s.innerHTML += `<option value="52">52: Pulsing Strong 1</option>`;
+                s.innerHTML += `<option value="58">58: Transition Click 1</option>`;
+                s.innerHTML += `<option value="64">64: Buzz 2</option>`;
+                s.innerHTML += `<option value="73">73: Transition Click 4</option>`;
+                s.innerHTML += `<option value="118">118: Long Buzz (Stopping)</option>`;
+            }
+        </script>
+        
+        <div class='card'>
+            <h2>CH 0: Bass Mode (&lt;250Hz)</h2>
+            <select id='bm' name='bm'>
+                <option value='0'>Off</option><option value='1'>Forward</option>
+                <option value='2'>Reverse</option><option value='3'>Alternating</option>
+            </select>
+            <label>DRV2605L Transient Pattern Trigger</label>
+            <select id='bp' name='bp'></select>
+        </div>
+
+        <div class='card'>
+            <h2>CH 1: Mid Mode (250-2000Hz)</h2>
+            <select id='mm' name='mm'>
+                <option value='0'>Off</option><option value='1'>Forward</option>
+                <option value='2'>Reverse</option><option value='3'>Alternating</option>
+            </select>
+            <label>DRV2605L Transient Pattern Trigger</label>
+            <select id='mp' name='mp'></select>
+        </div>
+
+        <div class='card'>
+            <h2>CH 2: Treble Mode (&gt;2000Hz)</h2>
+            <select id='tm' name='tm'>
+                <option value='0'>Off</option><option value='1'>Forward</option>
+                <option value='2'>Reverse</option><option value='3'>Alternating</option>
+            </select>
+            <label>DRV2605L Transient Pattern Trigger</label>
+            <select id='tp' name='tp'></select>
+        </div>
+
+        <div class='card'>
+            <h2>CH 3: Global Transients</h2>
+            <span class='help'>Sudden loud changes in overall audio volume.</span>
+            <label>Transient Multiplier Threshold <span class='vd' id='tt-val'>3.0x</span></label>
+            <input type='range' id='tt' name='tt' min='1.5' max='5' step='0.1' oninput="document.getElementById('tt-val').innerText=this.value+'x'">
+            
+            <label>Pattern Trigger Duration <span class='vd' id='td-val'>150ms</span></label>
+            <input type='range' id='td' name='td' min='50' max='500' step='10' oninput="document.getElementById('td-val').innerText=this.value+'ms'">
+            
+            <label>DRV2605L Transient Pattern</label>
+            <select id='trp' name='trp'></select>
+            
+            <label>Simple Transient Mode Override</label>
+            <select id='trm' name='trm'>
+                <option value='0'>Off</option><option value='1'>Forward</option>
+                <option value='2'>Reverse</option><option value='3'>Alternating</option>
+            </select>
+        </div>
+
+        <button type='submit' class='bs'>Save Configuration</button>
+    </form>
+
+    <div class='card' style='background: rgba(0,0,0,0.4);'>
+        <h2>System Control</h2>
+        <p class='help'>Performance Mode disables the Web UI and Wi-Fi AP to maximize FFT and ESP-NOW broadcast stability.</p>
+        <button onclick='goDark()' class='br'>Go Dark (Performance Mode)</button>
+    </div>
+
+    <script>
+        function goDark() {
+            if(confirm("This will disable the Web UI. You can turn it back on by pressing the BOOT button on the Leader module. Proceed?")) {
+                fetch('/kill').then(() => {
+                    alert("Leader is now in Performance Mode. Disconnecting...");
+                    window.location.href = "about:blank";
+                });
+            }
+        }
+        populateSelects('bp');
+        populateSelects('mp');
+        populateSelects('tp');
+        populateSelects('trp');
+
+        // Fetch initial config state
+        fetch('/config').then(r => r.json()).then(data => {
+            document.getElementById('mg').value = data.mg; document.getElementById('mg-val').innerText = data.mg + 'x';
+            document.getElementById('mi').value = data.mi; document.getElementById('mi-val').innerText = data.mi;
+            document.getElementById('gt').value = data.gt; document.getElementById('gt-val').innerText = data.gt;
+            document.getElementById('sm').value = data.sm; document.getElementById('sm-val').innerText = data.sm;
+            document.getElementById('mc').value = data.mc; document.getElementById('mc-val').innerText = data.mc;
+            document.getElementById('mlogic').value = data.mlogic;
+            document.getElementById('bm').value = data.bm; document.getElementById('bp').value = data.bp;
+            document.getElementById('mm').value = data.mm; document.getElementById('mp').value = data.mp;
+            document.getElementById('tm').value = data.tm; document.getElementById('tp').value = data.tp;
+            document.getElementById('tt').value = data.tt; document.getElementById('tt-val').innerText = data.tt + 'x';
+            document.getElementById('td').value = data.td; document.getElementById('td-val').innerText = data.td + 'ms';
+            document.getElementById('trp').value = data.trp; document.getElementById('trm').value = data.trm;
+        });
+
+        // AJAX Monitor
+        function updateData() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    document.getElementById('monitor-data').innerHTML = this.responseText;
+                }
+            };
+            xhttp.open('GET', '/data', true);
+            xhttp.send();
+        }
+        setInterval(updateData, 1000);
+        window.onload = updateData;
+    </script>
+</body>
+</html>

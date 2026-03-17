@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Augmented Reality Book — Modern V2 Experience with ESM and Superior Stability." />
+
+  <title>AR Book V2 (Modern)</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- GSAP for animations -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./js/v2/three.module.js",
+        "three/addons/": "./js/v2/",
+        "mind-ar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+      }
+    }
+  </script>
+
+  <!-- Modern V2 App Entry -->
+  <script type="module" src="js/v2/appV2.js"></script>
+</head>
+
+<body>
+  <!-- MindAR renders into this container -->
+  <div id="ar-container"></div>
+
+  <!-- ======== Loading Screen ======== -->
+  <div id="loading-screen">
+    <div class="loading-icon"></div>
+    <div class="loading-title">AR Book V2</div>
+    <div class="loading-subtitle">Modernizing augmented reality…</div>
+    <div class="loading-progress">
+      <div class="loading-progress-bar"></div>
+    </div>
+  </div>
+
+  <!-- ======== AR Overlay ======== -->
+  <div id="ar-overlay">
+    <button id="start-ar-btn" class="hidden">START AR V2</button>
+
+    <div id="status-ribbon">
+      <span class="status-dot"></span>
+      <span id="status-text">Scanning…</span>
+    </div>
+
+    <div id="debug-panel"></div>
+  </div>
+
+  <!-- Developer Console -->
+  <div id="dev-console"></div>
+  <button id="dev-toggle">⚙</button>
+
+  <!-- ======== Error Panel ======== -->
+  <div id="error-panel">
+    <div class="error-icon">⚠️</div>
+    <div class="error-title">AR Not Available</div>
+    <div class="error-message"></div>
+  </div>
+</body>
+
+</html>
