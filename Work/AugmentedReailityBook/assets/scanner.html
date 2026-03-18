@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anomalous Signal Scanner - Ref X-618</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&display=swap');
+
+        :root {
+            --parchment: #f4e4bc;
+            --ink: #2c1e16;
+            --warn: #d64045;
+            --glow: #00ff41;
+            --crt-bg: #0a0e0a;
+            --bezel: #3d2b1f;
+            --metal: #4a4a4a;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            background-color: var(--ink);
+            font-family: 'Special Elite', cursive;
+        }
+
+        #scanner-ui {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background:
+                radial-gradient(circle at center, transparent, rgba(0, 0, 0, 0.4)),
+                url('https://www.transparenttextures.com/patterns/old-map.png'),
+                var(--parchment);
+            border: 10px solid #4a3728;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 768px) {
+            #scanner-ui {
+                height: 100vh;
+                border-width: 15px;
+            }
+        }
+
+        .header-tray {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 10px;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        @media (min-width: 768px) {
+            .header-tray {
+                height: 60px;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-end;
+                padding: 0 40px 10px 40px;
+            }
+        }
+
+        .corner-stamp {
+            font-size: 0.75rem;
+            color: rgba(44, 30, 22, 0.75);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        .workspace {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+            overflow: visible;
+        }
+
+        @media (min-width: 768px) {
+            .workspace {
+                flex-direction: row;
+            }
+        }
+
+        .screen-assembly {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 768px) {
+            .screen-assembly {
+                width: 75%;
+                height: auto;
+            }
+        }
+
+        .crt-frame {
+            position: relative;
+            flex-grow: 1;
+            background: #1a1a1a;
+            border: 8px solid #222;
+            border-radius: 20px;
+            box-shadow:
+                0 0 0 3px #333,
+                inset 0 0 40px #000;
+            overflow: hidden;
+            z-index: 5;
+        }
+
+        @media (min-width: 768px) {
+            .crt-frame {
+                border-width: 12px;
+                border-radius: 24px;
+                box-shadow: 0 0 0 4px #333, inset 0 0 60px #000;
+            }
+        }
+
+        #main-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .tape-label {
+            position: absolute;
+            color: #eee;
+            padding: 4px 10px;
+            font-family: 'VT323', monospace;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            border-left: 2px solid rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        #fp-tag {
+            top: -10px;
+            left: 10px;
+            transform: rotate(-1.5deg);
+            background: #b91c1c;
+        }
+
+        #serial-tag {
+            top: -10px;
+            right: 10px;
+            transform: rotate(1.2deg);
+            background: #1e293b;
+        }
+
+        @media (min-width: 768px) {
+            #fp-tag {
+                left: 50px;
+            }
+
+            #serial-tag {
+                right: 50px;
+            }
+        }
+
+        .side-panel {
+            width: 100%;
+            background: #2c1e16;
+            border: 6px solid #3d2b1f;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+            padding: 15px 5px;
+            box-shadow: inset 0 0 20px #000;
+        }
+
+        @media (min-width: 768px) {
+            .side-panel {
+                width: 25%;
+                flex-direction: column;
+                border-width: 8px;
+                padding: 20px 0;
+                box-shadow: inset 0 0 30px #000;
+            }
+        }
+
+        .knob-assembly {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .knob-label {
+            font-family: 'VT323', monospace;
+            color: var(--parchment);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.75;
+            letter-spacing: 1px;
+        }
+
+        .knob {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 35% 35%, #777, #1a1a1a);
+            border: 4px solid #111;
+            border-radius: 50%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1);
+            box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        @media (min-width: 768px) {
+            .knob {
+                width: 68px;
+                height: 68px;
+                border-width: 5px;
+            }
+
+            .knob-label {
+                font-size: 0.95rem;
+            }
+        }
+
+        .knob::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            width: 3px;
+            height: 14px;
+            background: #ef4444;
+            transform: translateX(-50%);
+            border-radius: 2px;
+            box-shadow: 0 0 3px rgba(239, 68, 68, 0.5);
+        }
+
+        @media (min-width: 768px) {
+            .knob::after {
+                top: 10px;
+                width: 4px;
+                height: 18px;
+            }
+        }
+
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .flicker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: rgba(0, 255, 65, 0.02);
+            opacity: 0;
+            z-index: 11;
+            pointer-events: none;
+            animation: flicker 0.1s infinite;
+        }
+
+        @keyframes flicker {
+
+            0%,
+            100% {
+                opacity: 0.01;
+            }
+
+            50% {
+                opacity: 0.04;
+            }
+        }
+
+        .control-panel {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #3d2b1f;
+            padding: 20px;
+            gap: 20px;
+            border-top: 6px solid #2c1e16;
+            box-shadow: inset 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        @media (min-width: 768px) {
+            .control-panel {
+                height: 110px;
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 0 80px;
+                border-top-width: 8px;
+            }
+        }
+
+        .six-fingered-hand {
+            width: 50px;
+            height: 50px;
+            fill: #2c1e16;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(1px 1px 1px rgba(255, 255, 255, 0.1));
+        }
+
+        @media (min-width: 768px) {
+            .six-fingered-hand {
+                width: 58px;
+                height: 58px;
+            }
+        }
+
+        .six-fingered-hand.active {
+            fill: var(--glow);
+            filter: drop-shadow(0 0 15px var(--glow));
+            transform: scale(1.15);
+        }
+
+        .btn-gf {
+            background: #8b4513;
+            color: var(--parchment);
+            border: 4px solid #5d2e0c;
+            padding: 12px 10px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            box-shadow: 4px 4px 0px #2c1e16;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.1s;
+            width: 100%;
+            max-width: 260px;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .btn-gf {
+                padding: 14px 10px;
+                font-size: 1.1rem;
+                box-shadow: 6px 6px 0px #2c1e16;
+                min-width: 260px;
+            }
+        }
+
+        .btn-gf:active {
+            transform: translate(3px, 3px);
+            box-shadow: 1px 1px 0px #2c1e16;
+        }
+
+        .btn-gf.scanning {
+            background: var(--warn);
+            border-color: #991b1b;
+        }
+
+        #dev-overlay {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 30, 0, 0.95);
+            color: var(--glow);
+            font-family: 'VT323', monospace;
+            padding: 10px;
+            border: 1px solid var(--glow);
+            display: none;
+            z-index: 20;
+            pointer-events: none;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
+            font-size: 0.85rem;
+        }
+
+        @media (min-width: 768px) {
+            #dev-overlay {
+                top: 25px;
+                right: 25px;
+                padding: 18px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="scanner-ui">
+        <div class="header-tray">
+            <div class="corner-stamp">UNIT ID: X-618-B // REF: FORD P.</div>
+            <div class="corner-stamp">WARNING: SCANNER MAY ATTRACT UNWANTED ATTENTION</div>
+        </div>
+
+        <div class="workspace">
+            <div class="screen-assembly">
+                <div id="fp-tag" class="tape-label">PROPERTY OF F.P.</div>
+                <div id="serial-tag" class="tape-label">S/N: 06182012-G</div>
+
+                <div class="crt-frame">
+                    <canvas id="main-canvas"></canvas>
+                    <div class="scanline"></div>
+                    <div class="flicker"></div>
+
+                    <div id="dev-overlay">
+                        <div
+                            style="border-bottom: 1px solid var(--glow); margin-bottom: 8px; font-weight: bold; letter-spacing: 1px;">
+                            ANOMALY_MONITOR_V5.1</div>
+                        <div id="fps-counter">FPS: --</div>
+                        <div id="noise-floor">NOISE: -94.1dB</div>
+                        <div id="signal-strength">SIG: N/A</div>
+                        <div id="anom-detect">ANOMALY: FALSE</div>
+                        <div id="lerp-status" style="font-size: 0.8rem; margin-top: 5px; opacity: 0.6;">DAMPING: 0.06
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="knob-assembly">
+                    <div class="knob" id="knob-1"></div>
+                    <div class="knob-label">Gain</div>
+                </div>
+                <div class="knob-assembly">
+                    <div class="knob" id="knob-2"></div>
+                    <div class="knob-label">Freq</div>
+                </div>
+                <div class="knob-assembly">
+                    <div class="knob" id="knob-3"></div>
+                    <div class="knob-label">Phase</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <button id="toggle-scan" class="btn-gf">Engage Scanner</button>
+
+            <svg class="six-fingered-hand" id="dev-toggle" viewBox="0 0 100 100">
+                <path
+                    d="M50 95c-15 0-25-10-25-20V45c0-2 1-4 3-4s3 2 3 4v15c0 1 1 2 2 2s2-1 2-2V25c0-2 1-4 3-4s3 2 3 4v30c0 1 1 2 2 2s2-1 2-2V15c0-2 1-4 3-4s3 2 3 4v40c0 1 1 2 2 2s2-1 2-2V10c0-2 1-4 3-4s3 2 3 4v45c0 1 1 2 2 2s2-1 2-2V20c0-2 1-4 3-4s3 2 3 4v40c0 1 1 2 2 2s2-1 2-2V45c0-2 1-4 3-4s3 2 3 4v30c0 10-10 20-25 20z" />
+            </svg>
+
+            <button id="reset-buffer" class="btn-gf">Wipe Cache</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+        const devToggle = document.getElementById('dev-toggle');
+        const devOverlay = document.getElementById('dev-overlay');
+        const scanBtn = document.getElementById('toggle-scan');
+        const fpsDisplay = document.getElementById('fps-counter');
+        const sigDisplay = document.getElementById('signal-strength');
+        const anomDisplay = document.getElementById('anom-detect');
+
+        const knobs = [
+            { el: document.getElementById('knob-1'), rotation: 0 },
+            { el: document.getElementById('knob-2'), rotation: 0 },
+            { el: document.getElementById('knob-3'), rotation: 0 }
+        ];
+
+        let isScanning = false;
+        let isDevMode = false;
+        let frameCount = 0;
+        let lastTime = performance.now();
+        let xOffset = 0;
+
+        let smoothGain = 1.0;
+        let smoothFreq = 1.0;
+        let smoothPhaseOffset = 0.0;
+        const LERP_FACTOR = 0.06;
+
+        function resize() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        // Initial resize after a short delay to ensure DOM layout is settled on mobile
+        setTimeout(resize, 100);
+
+        setInterval(() => {
+            knobs.forEach(knob => {
+                const roll = Math.random();
+                if (roll < 0.33) {
+                    knob.rotation += (40 + Math.random() * 80);
+                } else if (roll < 0.66) {
+                    knob.rotation -= (40 + Math.random() * 80);
+                }
+                knob.el.style.transform = `rotate(${knob.rotation}deg)`;
+            });
+        }, 1200);
+
+        devToggle.addEventListener('click', () => {
+            isDevMode = !isDevMode;
+            devOverlay.style.display = isDevMode ? 'block' : 'none';
+            devToggle.classList.toggle('active');
+        });
+
+        scanBtn.addEventListener('click', () => {
+            isScanning = !isScanning;
+            scanBtn.textContent = isScanning ? 'Disengage' : 'Engage Scanner';
+            scanBtn.classList.toggle('scanning');
+        });
+
+        document.getElementById('reset-buffer').addEventListener('click', () => {
+            ctx.fillStyle = '#0a0e0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        });
+
+        function drawWaveform() {
+            if (!isScanning) {
+                ctx.fillStyle = 'rgba(10, 14, 10, 0.15)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+
+            ctx.fillStyle = 'rgba(10, 14, 10, 0.22)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const targetGain = 1 + (Math.sin(knobs[0].rotation * Math.PI / 180) * 0.45);
+            const targetFreq = 1 + (Math.cos(knobs[1].rotation * Math.PI / 180) * 0.3);
+            const targetPhase = Math.sin(knobs[2].rotation * Math.PI / 180) * 40;
+
+            smoothGain += (targetGain - smoothGain) * LERP_FACTOR;
+            smoothFreq += (targetFreq - smoothFreq) * LERP_FACTOR;
+            smoothPhaseOffset += (targetPhase - smoothPhaseOffset) * LERP_FACTOR;
+
+            ctx.beginPath();
+            ctx.strokeStyle = isDevMode ? '#00ff41' : '#10b981';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = ctx.strokeStyle;
+
+            const centerY = canvas.height / 2;
+            const width = canvas.width;
+
+            ctx.moveTo(0, centerY);
+
+            for (let x = 0; x < width; x += 3) {
+                const f1 = 0.01 * smoothFreq;
+                const amp = (canvas.height / 4) * smoothGain; // Adjusted amp for relative height
+
+                const interference = Math.sin((x + xOffset + smoothPhaseOffset) * 0.08) * (isDevMode ? 25 : 10);
+                const y1 = Math.sin((x + xOffset) * f1) * amp;
+
+                ctx.lineTo(x, centerY + y1 + interference);
+            }
+
+            ctx.stroke();
+            xOffset += 5;
+
+            if (isDevMode && Math.random() > 0.985) {
+                ctx.shadowBlur = 0;
+                ctx.font = '26px VT323';
+                ctx.fillStyle = 'rgba(0, 255, 65, 0.4)';
+                const cipher = ["△", "👁", "⬡", "ᚠ", "ᚢ", "ᚦ", "⍝", "⍙"];
+                ctx.fillText(cipher[Math.floor(Math.random() * cipher.length)], Math.random() * canvas.width, Math.random() * canvas.height);
+            }
+        }
+
+        function animate(time) {
+            frameCount++;
+            if (time - lastTime >= 1000) {
+                fpsDisplay.textContent = `FPS: ${frameCount}`;
+                if (isScanning) {
+                    const val = (Math.random() * 142.7 * smoothGain).toFixed(1);
+                    sigDisplay.textContent = `SIG: ${val} MHz`;
+                    anomDisplay.textContent = `ANOMALY: ${val > 110 ? 'DETECTED' : 'FALSE'}`;
+                    anomDisplay.style.color = val > 110 ? '#ef4444' : '#00ff41';
+                }
+                frameCount = 0;
+                lastTime = time;
+            }
+            drawWaveform();
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+    </script>
+
+</body>
+
+</html>
