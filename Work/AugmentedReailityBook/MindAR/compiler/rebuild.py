@@ -6,9 +6,9 @@ import threading
 import time
 from pathlib import Path
 
-PORT = 8086
-ROOT_DIR = Path(__file__).parent.parent
-TARGET_OUT = ROOT_DIR / "app" / "targets" / "book_targets.mind"
+PORT = 8087
+ROOT_DIR = Path(__file__).parent.parent.parent
+TARGET_OUT = ROOT_DIR / "MindAR" / "app" / "targets" / "book_targets.mind"
 IMAGES_DIR = ROOT_DIR / "trainingImages"
 
 class CompilerHandler(http.server.SimpleHTTPRequestHandler):
@@ -25,10 +25,29 @@ class CompilerHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             
             # Find all image files
-            valid_exts = ('.webp', '.jpg', '.jpeg', '.png')
-            images = [f"/trainingImages/{f}" for f in os.listdir(IMAGES_DIR) if f.lower().endswith(valid_exts)]
-            
             import json
+            pages_path = ROOT_DIR / "MindAR" / "app" / "pages.json"
+            images = []
+            
+            try:
+                with open(pages_path, "r") as f:
+                    pages_data = json.load(f)
+                    for page in pages_data.get("pages", []):
+                        img_path = page.get("trackingImage", "")
+                        # Handle relative paths in pages.json (../../trainingImages/...)
+                        if img_path.startswith("../../"):
+                            img_path = img_path.replace("../../", "/")
+                        elif img_path.startswith("../"):
+                            img_path = "/MindAR/" + img_path[3:]
+                        
+                        images.append(img_path)
+            except Exception as e:
+                print(f"Error reading pages.json: {e}")
+                # Fallback to alpha order if pages.json fails
+                valid_exts = ('.webp', '.jpg', '.jpeg', '.png')
+                images = [f"/trainingImages/{f}" for f in os.listdir(IMAGES_DIR) if f.lower().endswith(valid_exts)]
+            
+            print(f"Compiling images in order: {images}")
             self.wfile.write(json.dumps(images).encode())
             return
             
@@ -76,7 +95,7 @@ def run():
         print(f"Compiler server started at http://localhost:{PORT}")
         
         # Open browser to the compiler page
-        url = f"http://localhost:{PORT}/compiler/index.html"
+        url = f"http://localhost:{PORT}/MindAR/compiler/index.html"
         webbrowser.open(url)
         
         # Inject the image list after a short delay to ensure page is ready

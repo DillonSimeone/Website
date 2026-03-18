@@ -45,6 +45,7 @@ export class LightEstimator {
 
         this.hudText = document.createElement('div');
 
+        this.hud.style.display = 'none';
         this.hud.appendChild(this.hudCanvas);
         this.hud.appendChild(this.hudText);
         document.body.appendChild(this.hud);
@@ -52,12 +53,19 @@ export class LightEstimator {
     }
 
     _findVideo() {
-        if (this.video && this.video.readyState >= 2) return true;
-        const v = document.querySelector('video');
-        if (v && v.readyState >= 2) {
+        // If we have a video and it's valid, we're good
+        if (this.video && this.video.readyState >= 2 && this.video.videoWidth > 0 && this.video.isConnected) return true;
+        
+        // Otherwise, try to find a new one
+        const v = document.querySelector('#ar-container video') || document.querySelector('video');
+        if (v && v.readyState >= 2 && v.videoWidth > 0) {
             this.video = v;
+            console.log("LightEstimator: Video source linked.", v.videoWidth, "x", v.videoHeight);
             return true;
         }
+        
+        // If we found a video but it's not ready, reset cache to try again next frame
+        this.video = null; 
         return false;
     }
 

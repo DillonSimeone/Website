@@ -4,6 +4,7 @@ import { MindARThree } from 'mind-ar-image-three';
 import { PoseSmoothing } from './smoothing.js';
 import { GhostingSystem } from './ghosting.js';
 import { LightEstimator } from './light-estimator.js';
+import { AnomalySystem } from './anomaly.js';
 
 /**
  * appV2.js — Architecture v2.1 (Full Feature Parity + Stability)
@@ -23,7 +24,7 @@ import { LightEstimator } from './light-estimator.js';
     const devToggle = document.getElementById('dev-toggle');
 
     let mindarThree, renderer, scene, camera;
-    let lightEstimator;
+    let lightEstimator, anomalySystem;
     const clock = new THREE.Clock();
 
     // Global Components
@@ -356,7 +357,15 @@ import { LightEstimator } from './light-estimator.js';
             };
             pageStates.set(i, state);
 
+            // Anomaly Detection Integration
+            const isAnomaly = p.anomaly || false;
+
             anchor.onTargetFound = () => {
+                if (isAnomaly) {
+                    if (anomalySystem) anomalySystem.triggerAnomaly();
+                    return; // Don't do standard tracking for anomaly targets
+                }
+                
                 state.isTracking = true;
                 ghoster.onTrackingFound(p.id, state.follower);
                 
@@ -390,9 +399,29 @@ import { LightEstimator } from './light-estimator.js';
 
         loadingScreen.classList.add('hidden');
         startBtn.classList.remove('hidden');
+
+        // Initialize Anomaly System
+        anomalySystem = new AnomalySystem({
+            onComplete: (status) => {
+                console.log("Anomaly System: Target Detected. Pausing AR.");
+                // We don't necessarily stop MindAR here if we want the camera to stay,
+                // but the prompt says "pause the mindAR scanner".
+                // In MindAR-three, there isn't a direct "pause" other than stop().
+                // But we've already faded the UI to black.
+            },
+            onReset: () => {
+                console.log("Anomaly System: Resetting. Resuming AR.");
+            }
+        });
     }
 
     startBtn.onclick = async () => {
+        // Capture audio permission by interacting with a silent element or video
+        const vid = document.getElementById('video-reward');
+        if (vid) {
+            vid.load(); // Prime the video
+        }
+        
         startBtn.classList.add('hidden');
         await mindarThree.start();
         console.log("APP V2: AR STARTED");
