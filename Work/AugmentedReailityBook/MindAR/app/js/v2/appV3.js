@@ -21,6 +21,72 @@ const pageStates = new Map();
 let pages = [];
 let activePageIndex = 0;
 
+/* --- Sound System --- */
+class SoundManager {
+    constructor() {
+        this.ctx = null;
+        this.scannerBuffer = null;
+        this.detectedBuffer = null;
+        this.scannerNode = null;
+        this.gainNode = null;
+        this.isInitialized = false;
+        this.soundPath = '../../assets/shaders/sounds/';
+    }
+
+    async init() {
+        if (this.isInitialized) return;
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.gainNode = this.ctx.createGain();
+        this.gainNode.connect(this.ctx.destination);
+        this.isInitialized = true;
+
+        this.scannerBuffer = await this.loadBuffer('538214__oldestmillennial__scanner.wav');
+        this.detectedBuffer = await this.loadBuffer('263652__jobro__mgs-detected-lead.wav');
+
+        this.startScanner();
+    }
+
+    async loadBuffer(name) {
+        const resp = await fetch(this.soundPath + name);
+        const array = await resp.arrayBuffer();
+        return await this.ctx.decodeAudioData(array);
+    }
+
+    startScanner() {
+        if (!this.scannerBuffer) return;
+        this.scannerNode = this.ctx.createBufferSource();
+        this.scannerNode.buffer = this.scannerBuffer;
+        this.scannerNode.loop = true;
+        this.scannerNode.connect(this.gainNode);
+        this.scannerNode.start(0);
+
+        this.randomizeScanner();
+    }
+
+    randomizeScanner() {
+        if (!this.scannerNode || !this.isInitialized) return;
+        // Random pitch/volume modulation
+        const baseRate = 1.0;
+        const targetRate = baseRate + (Math.random() - 0.5) * 0.1;
+        const targetVolume = 0.5 + Math.random() * 0.3;
+
+        this.scannerNode.playbackRate.setTargetAtTime(targetRate, this.ctx.currentTime, 1.0);
+        this.gainNode.gain.setTargetAtTime(targetVolume, this.ctx.currentTime, 1.0);
+
+        setTimeout(() => this.randomizeScanner(), 500 + Math.random() * 1000);
+    }
+
+    playDetected() {
+        if (!this.detectedBuffer || !this.isInitialized) return;
+        const source = this.ctx.createBufferSource();
+        source.buffer = this.detectedBuffer;
+        source.connect(this.ctx.destination);
+        source.start(0);
+    }
+}
+
+const sm = new SoundManager();
+
 // UI Refs
 const arContainer = document.getElementById('ar-container');
 const waveCanvas = document.getElementById('wave-canvas');
@@ -51,7 +117,7 @@ const sl = {
 /* --- Config Helpers --- */
 function applyConfig(model, config) {
     if (!model) return;
-    const s = Math.pow(10, config.scale || -1.0);
+    const s = config.scale || 0.1;
     model.scale.set(s, s, s);
     model.position.set(config.offsetX || 0, config.offsetY || 0, config.offsetZ || 0);
     model.rotation.set(
@@ -74,7 +140,7 @@ function buildDev() {
         <select id="dsel" style="background:#000; color:#0f0; border:1px solid #111; padding:5px; margin-bottom:10px; width:100%"></select>
         <select id="danim" style="background:#000; color:#0f0; border:1px solid #111; padding:5px; margin-bottom:10px; width:100%"></select>
         
-        <div class="ctrl"><label>Scale</label><input type="range" id="ds" min="-4" max="1" step="0.01"><span class="v" id="dsv"></span></div>
+        <div class="ctrl"><label>Scale</label><input type="range" id="ds" min="-6" max="1" step="0.01"><span class="v" id="dsv"></span></div>
         <div class="ctrl"><label>Pos X</label><input type="range" id="dpx" min="-1" max="1" step="0.01"><span class="v" id="dpxv"></span></div>
         <div class="ctrl"><label>Pos Y</label><input type="range" id="dpy" min="-1" max="1" step="0.01"><span class="v" id="dpyv"></span></div>
         <div class="ctrl"><label>Pos Z</label><input type="range" id="dpz" min="-1" max="1" step="0.01"><span class="v" id="dpzv"></span></div>
@@ -250,6 +316,7 @@ async function init() {
         onComplete: (status) => { 
             if(status === 'detected') {
                 isScanning = false;
+                sm.playDetected();
                 document.getElementById('scanner-ui').classList.add('dimmed');
                 document.getElementById('anomaly-dimmer').classList.add('active');
                 gsap.fromTo('#anomaly-overlay', { x: -10, opacity: 0 }, { x: 10, opacity: 1, duration: 0.05, repeat: 15, yoyo: true });
@@ -389,6 +456,9 @@ const drawWaveform = () => {
 document.getElementById('toggle-scan-btn').onclick = async () => {
     const btn = document.getElementById('toggle-scan-btn');
     if (!isScanning) {
+        if (!sm.isInitialized) await sm.init();
+        else if (sm.ctx.state === 'suspended') sm.ctx.resume();
+        
         await mindarThree.start();
         isScanning = true;
         btn.innerText = "Disengage Scanner";

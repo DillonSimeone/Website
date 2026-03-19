@@ -107,29 +107,13 @@ export class AnomalySystem {
                     if (document.getElementById('ar-container').contains(e.target)) {
                         this.reset();
                     }
-                }
-            });
-        }
-
-        if (!document.getElementById('video-layer')) {
-            const layer = document.createElement('div');
-            layer.id = 'video-layer';
-            layer.innerHTML = `
-                <video id="video-reward" playsinline>
-                    <source src="assets/anomaly_reward.mp4" type="video/mp4">
-                </video>
-             `;
-            document.body.appendChild(layer);
-
-            const vid = document.getElementById('video-reward');
-            vid.onended = () => {
-                gsap.to('#video-layer', {
-                    opacity: 0, duration: 1, onComplete: () => {
-                        document.getElementById('video-layer').style.display = 'none';
+                } else if (this.isAnomalyActive) {
+                    const layer = document.getElementById('video-layer');
+                    if (layer && layer.style.display === 'block' && !layer.contains(e.target)) {
                         this.reset();
                     }
-                });
-            };
+                }
+            });
         }
     }
 
@@ -315,20 +299,6 @@ export class AnomalySystem {
                 const layer = document.getElementById('video-layer');
                 layer.style.display = 'block';
                 layer.style.opacity = 1;
-
-                const vid = document.getElementById('video-reward');
-                vid.play().catch(e => {
-                    console.warn("Autoplay failed, waiting for click", e);
-                    // Create a "Play" overlay if needed
-                    const overlay = document.createElement('div');
-                    overlay.style = "position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:white; background:rgba(0,0,0,0.5); cursor:pointer;";
-                    overlay.innerText = "CLICK TO VIEW ANOMALY RECORDING";
-                    layer.appendChild(overlay);
-                    overlay.onclick = () => {
-                        vid.play();
-                        overlay.remove();
-                    };
-                });
             }
         });
     }
@@ -338,9 +308,10 @@ export class AnomalySystem {
         clearInterval(this.hintTimer);
 
         gsap.timeline()
-            .to('#puzzle-module', {
+            .to(['#puzzle-module', '#video-layer'], {
                 opacity: 0, duration: 0.3, onComplete: () => {
                     document.getElementById('puzzle-module').style.visibility = 'hidden';
+                    document.getElementById('video-layer').style.display = 'none';
                 }
             })
             .to('#ar-container', { opacity: 1, duration: 1 })
