@@ -18,7 +18,10 @@ MindAR/
     ├── indexV1.html           ← Upgraded implementation entry
     ├── indexV2.html           ← ESM implementation (MindAR 1.2.5)
     ├── pages.json             ← Registry
+    ├── minify.js              ← (New) Minification script for production
+    ├── package.json           ← Minifier dependencies
     ├── css/
+
     └── js/
         ├── v2/                ← MODERN ESM CORE
         │   ├── appV2.js
@@ -74,3 +77,10 @@ npx serve app/ --ssl
 - Uses `cv2.ORB_create()` to check feature density
 - Outputs heatmap for artist feedback
 - Minimum 300 features = "GOOD", below 50/100px² = "POOR"
+
+## Post-Processing: Minification
+Minifies all HTML, CSS, and JS files recursively.
+1. `npm install` (first time)
+2. `npm run minify`
+- Builds a minified project structure in a `/dist` folder.
+- Copy `/dist/*` back to root for production/deployment.

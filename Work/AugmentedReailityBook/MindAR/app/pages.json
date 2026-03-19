@@ -14,7 +14,7 @@
       "physicalWidthM": 0.1,
       "model": {
         "src": "../../3dModel/shrek_pocket_shrek_and_animations.glb",
-        "scale": 0.001,
+        "scale": 0.5,
         "offsetY": 0.0,
         "offsetX": 0.0,
         "offsetZ": 0.0,
@@ -28,11 +28,11 @@
       "id": "page_001_shrek",
       "pageNumber": 1,
       "label": "Shrek",
-      "trackingImage": "../../trainingImages/shrek.webp",
+      "trackingImage": "../../trainingImages/shrek.png",
       "physicalWidthM": 0.15,
       "model": {
         "src": "../../3dModel/shrek_pocket_shrek_and_animations.glb",
-        "scale": 0.355,
+        "scale": 0.5,
         "offsetY": 0.0,
         "offsetX": 0.0,
         "offsetZ": 0.03,

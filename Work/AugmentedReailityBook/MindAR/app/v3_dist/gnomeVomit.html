@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gnome Puke</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        canvas { display: block; width: 100vw; height: 100vh; object-fit: contain; }
+    </style>
+</head>
+<body>
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "./js/three.module.js"
+          }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+
+        async function loadShader(path) {
+            const response = await fetch(path);
+            return await response.text();
+        }
+
+        async function init() {
+            // Paths relative to document root in dist
+            const shaderDir = 'assets/shaders/vomiting/';
+            const common = await loadShader(shaderDir + 'common.glsl');
+            const bufferA_src = await loadShader(shaderDir + 'bufferA.glsl');
+            const image_src = await loadShader(shaderDir + 'image.glsl');
+
+            // --- Sound System ---
+            class SoundManager {
+                constructor() {
+                    this.ctx = null;
+                    this.buffer = null;
+                    this.source = null;
+                    this.gainNode = null;
+                    this.isInitialized = false;
+                    this.isPlaying = false;
+                }
+
+                async init() {
+                    if (this.isInitialized) return;
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.gainNode = this.ctx.createGain();
+                    this.gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.gainNode.connect(this.ctx.destination);
+
+                    const resp = await fetch('assets/shaders/sounds/17752__krisboruff__rushing_water_no_traffic.wav');
+                    const array = await resp.arrayBuffer();
+                    this.buffer = await this.ctx.decodeAudioData(array);
+                    this.isInitialized = true;
+                }
+
+                start() {
+                    if (!this.buffer || this.isPlaying) return;
+                    this.source = this.ctx.createBufferSource();
+                    this.source.buffer = this.buffer;
+                    this.source.loop = true;
+                    this.source.connect(this.gainNode);
+                    this.source.start(0);
+                    this.isPlaying = true;
+                }
+
+                setVolume(v) {
+                    if (!this.isInitialized) return;
+                    this.gainNode.gain.setTargetAtTime(v * 0.4, this.ctx.currentTime, 0.1);
+                }
+            }
+
+            const sm = new SoundManager();
+            document.body.onclick = () => { if(sm.isInitialized) sm.ctx.resume(); sm.start(); };
+
+            const loader = new THREE.TextureLoader();
+            const pineTexture = loader.load(shaderDir + 'pine_tree.png');
+            pineTexture.minFilter = THREE.LinearFilter;
+            pineTexture.magFilter = THREE.LinearFilter;
+
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(width, height);
+            document.body.appendChild(renderer.domElement);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+            let rtA = new THREE.WebGLRenderTarget(width, height, {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType
+            });
+            let rtB = rtA.clone();
+
+            const commonHeader = `
+                uniform vec3 iResolution;
+                uniform float iTime;
+                uniform float iTimeDelta;
+                uniform int iFrame;
+                uniform vec4 iMouse;
+                uniform sampler2D iChannel0;
+                uniform sampler2D iChannel1;
+                ${common}
+            `;
+
+            const bufferA_Material = new THREE.ShaderMaterial({
+                uniforms: {
+                    iResolution: { value: new THREE.Vector3(width, height, 1) },
+                    iTime: { value: 0 },
+                    iTimeDelta: { value: 0 },
+                    iFrame: { value: 0 },
+                    iMouse: { value: new THREE.Vector4() },
+                    iChannel0: { value: null }
+                },
+                vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
+                fragmentShader: commonHeader + bufferA_src + `
+                    void main() {
+                        mainImage(gl_FragColor, gl_FragCoord.xy);
+                    }
+                `
+            });
+
+            const image_Material = new THREE.ShaderMaterial({
+                uniforms: {
+                    iResolution: { value: new THREE.Vector3(width, height, 1) },
+                    iTime: { value: 0 },
+                    iTimeDelta: { value: 0 },
+                    iFrame: { value: 0 },
+                    iMouse: { value: new THREE.Vector4() },
+                    iChannel0: { value: rtA.texture },
+                    iChannel1: { value: pineTexture }
+                },
+                vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
+                fragmentShader: commonHeader + image_src + `
+                    void main() {
+                        mainImage(gl_FragColor, gl_FragCoord.xy);
+                    }
+                `
+            });
+
+            const plane = new THREE.PlaneGeometry(2, 2);
+            const mesh = new THREE.Mesh(plane, bufferA_Material);
+            scene.add(mesh);
+
+            const clock = new THREE.Clock();
+            let frame = 0;
+
+            // --- JS Logic Sync ---
+            let facialStage = 0;
+            let pukeStartTime = 0;
+            let pukeEndTime = 0;
+            const hash = (n) => { return Math.abs(Math.sin(n) * 43758.5453123) % 1; };
+
+            async function animate() {
+                requestAnimationFrame(animate);
+                const time = clock.getElapsedTime();
+                const delta = clock.getDelta();
+
+                // Logic Mirror
+                const interval = 4.0;
+                const timeIdx = Math.floor(time / interval);
+                const target = hash(timeIdx) >= 0.5 ? 1 : 0;
+                const prevFacialStage = facialStage;
+                facialStage += (target - facialStage) * 0.05;
+
+                let pukeIntensity = 0;
+                const threshold = 0.5;
+                if (prevFacialStage <= threshold && facialStage > threshold) {
+                    pukeStartTime = time; pukeEndTime = 0;
+                } else if (prevFacialStage > threshold && facialStage <= threshold) {
+                    pukeEndTime = time; pukeStartTime = 0;
+                }
+
+                if (pukeEndTime > 0) {
+                    pukeIntensity = Math.max(0, 1.0 - (time - pukeEndTime) / 0.5);
+                } else if (pukeStartTime > 0) {
+                    pukeIntensity = 1.0;
+                }
+                
+                if (!sm.isInitialized) await sm.init();
+                sm.setVolume(pukeIntensity);
+
+                // Buffer A Pass
+                mesh.material = bufferA_Material;
+                bufferA_Material.uniforms.iTime.value = time;
+                bufferA_Material.uniforms.iTimeDelta.value = delta;
+                bufferA_Material.uniforms.iFrame.value = frame;
+                bufferA_Material.uniforms.iChannel0.value = rtB.texture;
+                renderer.setRenderTarget(rtA);
+                renderer.render(scene, camera);
+
+                // Image Pass
+                mesh.material = image_Material;
+                image_Material.uniforms.iTime.value = time;
+                image_Material.uniforms.iTimeDelta.value = delta;
+                image_Material.uniforms.iFrame.value = frame;
+                image_Material.uniforms.iChannel0.value = rtA.texture;
+                renderer.setRenderTarget(null);
+                renderer.render(scene, camera);
+
+                // Ping-pong
+                let temp = rtA;
+                rtA = rtB;
+                rtB = temp;
+                frame++;
+            }
+
+            animate();
+
+            window.addEventListener('resize', () => {
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                renderer.setSize(w, h);
+                rtA.setSize(w, h);
+                rtB.setSize(w, h);
+                bufferA_Material.uniforms.iResolution.value.set(w, h, 1);
+                image_Material.uniforms.iResolution.value.set(w, h, 1);
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

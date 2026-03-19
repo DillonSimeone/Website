@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gnome Shader Tester</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #111; 
+            font-family: 'VT323', monospace; 
+            color: #0f0; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #container {
+            position: relative;
+            width: 25vw;
+            height: 25vh;
+            border: 2px solid #0f0;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        canvas { 
+            max-width: 100%; 
+            max-height: 100%; 
+            object-fit: contain; 
+        }
+        #overlay {
+            margin-top: 15px;
+            pointer-events: none;
+            text-shadow: 2px 2px #000; font-size: 0.8rem;
+            background: rgba(0,0,0,0.7); padding: 5px; border: 1px solid #0f0;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="overlay">
+        GNOME TESTER (25%) | STATUS: RANDOMIZING...
+    </div>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+
+        async function loadShader(url) {
+            const resp = await fetch(url);
+            return await resp.text();
+        }
+
+        async function init() {
+            const common = await loadShader('vomiting/common.glsl');
+            const bufferA_src = await loadShader('vomiting/bufferA.glsl');
+            const image_src = await loadShader('vomiting/image.glsl');
+
+            // Load Tree Texture
+            const pineTexture = new THREE.TextureLoader().load('vomiting/pine_tree.png');
+            pineTexture.minFilter = THREE.LinearFilter;
+            pineTexture.magFilter = THREE.LinearFilter;
+
+            const container = document.getElementById('container');
+            let width = container.clientWidth;
+            let height = container.clientHeight;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+            // Buffer A Setup
+            const bufferA_RT = new THREE.WebGLRenderTarget(width, height, {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType
+            });
+            const bufferB_RT = bufferA_RT.clone();
+
+            const commonHeader = `
+                uniform vec3 iResolution;
+                uniform float iTime;
+                uniform float iTimeDelta;
+                uniform int iFrame;
+                uniform vec4 iMouse;
+                uniform sampler2D iChannel0;
+                uniform sampler2D iChannel1;
+                ${common}
+            `;
+
+            const bufferA_Material = new THREE.ShaderMaterial({
+                uniforms: {
+                    iResolution: { value: new THREE.Vector3(width, height, 1) },
+                    iTime: { value: 0 },
+                    iTimeDelta: { value: 0 },
+                    iFrame: { value: 0 },
+                    iMouse: { value: new THREE.Vector4() },
+                    iChannel0: { value: null }
+                },
+                vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
+                fragmentShader: commonHeader + bufferA_src + `
+                    void main() {
+                        mainImage(gl_FragColor, gl_FragCoord.xy);
+                    }
+                `
+            });
+
+            const image_Material = new THREE.ShaderMaterial({
+                uniforms: {
+                    iResolution: { value: new THREE.Vector3(width, height, 1) },
+                    iTime: { value: 0 },
+                    iTimeDelta: { value: 0 },
+                    iFrame: { value: 0 },
+                    iMouse: { value: new THREE.Vector4() },
+                    iChannel0: { value: bufferA_RT.texture },
+                    iChannel1: { value: pineTexture }
+                },
+                vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
+                fragmentShader: commonHeader + image_src + `
+                    void main() {
+                        mainImage(gl_FragColor, gl_FragCoord.xy);
+                    }
+                `
+            });
+
+            const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), bufferA_Material);
+            scene.add(quad);
+
+            let frame = 0;
+            const clock = new THREE.Clock();
+            let currentRT = bufferA_RT;
+            let prevRT = bufferB_RT;
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const dt = clock.getDelta();
+                const time = clock.elapsedTime;
+
+                // Pass 1: Buffer A
+                quad.material = bufferA_Material;
+                bufferA_Material.uniforms.iTime.value = time;
+                bufferA_Material.uniforms.iTimeDelta.value = dt;
+                bufferA_Material.uniforms.iFrame.value = frame;
+                bufferA_Material.uniforms.iChannel0.value = prevRT.texture;
+                
+                renderer.setRenderTarget(currentRT);
+                renderer.render(scene, camera);
+
+                // Pass 2: Image
+                quad.material = image_Material;
+                image_Material.uniforms.iTime.value = time;
+                image_Material.uniforms.iTimeDelta.value = dt;
+                image_Material.uniforms.iFrame.value = frame;
+                image_Material.uniforms.iChannel0.value = currentRT.texture;
+
+                renderer.setRenderTarget(null);
+                renderer.render(scene, camera);
+
+                // Swap RTs
+                [currentRT, prevRT] = [prevRT, currentRT];
+                frame++;
+            }
+
+            animate();
+
+            window.addEventListener('resize', () => {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                renderer.setSize(w, h);
+                bufferA_RT.setSize(w, h);
+                bufferB_RT.setSize(w, h);
+                bufferA_Material.uniforms.iResolution.value.set(w, h, 1);
+                image_Material.uniforms.iResolution.value.set(w, h, 1);
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = rect.height - (e.clientY - rect.top);
+                bufferA_Material.uniforms.iMouse.value.set(x, y, e.buttons > 0 ? 1 : 0, 0);
+                image_Material.uniforms.iMouse.value.set(x, y, e.buttons > 0 ? 1 : 0, 0);
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

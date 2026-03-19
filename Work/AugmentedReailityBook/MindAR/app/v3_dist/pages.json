@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "description": "AR Book Page Registry. Each entry maps a 2D tracking image to a 3D model.",
+    "trackingDescriptor": "assets/targets/book_targets.mind",
+    "notes": "To add a new page: 1) Drop image in /trainingImages, 2) Drop .glb in /3dModel, 3) Compile .mind file, 4) Add entry below."
+  },
+  "pages": [
+    {
+      "id": "anomaly_eye",
+      "pageNumber": 999,
+      "label": "Gravity Falls Eye",
+      "trackingImage": "eye.png",
+      "physicalWidthM": 0.1,
+      "model": {
+        "src": "assets/3dModel/shrek_pocket_shrek_and_animations.glb",
+        "scale": 0.5,
+        "offsetY": 0.0,
+        "offsetX": 0.0,
+        "offsetZ": 0.0,
+        "rotationX": 0,
+        "rotationY": 0,
+        "rotationZ": 0
+      },
+      "anomaly": true
+    },
+    {
+      "id": "page_001_shrek",
+      "pageNumber": 1,
+      "label": "Shrek",
+      "trackingImage": "shrek.png",
+      "physicalWidthM": 0.15,
+      "model": {
+        "src": "assets/3dModel/shrek_pocket_shrek_and_animations.glb",
+        "scale": 0.5,
+        "offsetY": 0.0,
+        "offsetX": 0.0,
+        "offsetZ": 0.03,
+        "rotationX": 12,
+        "rotationY": 180,
+        "rotationZ": 0
+      },
+      "animation": {
+        "autoplay": true,
+        "clipIndex": 0,
+        "loop": true
+      }
+    }
+  ]
+}
