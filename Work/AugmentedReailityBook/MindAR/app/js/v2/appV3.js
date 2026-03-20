@@ -30,7 +30,7 @@ class SoundManager {
         this.scannerNode = null;
         this.gainNode = null;
         this.isInitialized = false;
-        this.soundPath = '../../assets/shaders/sounds/';
+        this.soundPath = './assets/shaders/sounds/';
     }
 
     async init() {
@@ -459,11 +459,16 @@ document.getElementById('toggle-scan-btn').onclick = async () => {
         if (!sm.isInitialized) await sm.init();
         else if (sm.ctx.state === 'suspended') sm.ctx.resume();
         
-        await mindarThree.start();
-        isScanning = true;
-        btn.innerText = "Disengage Scanner";
-        btn.classList.add('engaged');
-        if(anomalySystem) anomalySystem.isScanning = true;
+        try {
+            await mindarThree.start();
+            isScanning = true;
+            btn.innerText = "Disengage Scanner";
+            btn.classList.add('engaged');
+            if(anomalySystem) anomalySystem.isScanning = true;
+        } catch (err) {
+            console.error("MindAR Start Failed:", err);
+            handleARFailure(err);
+        }
     } else {
         mindarThree.stop();
         isScanning = false;
@@ -502,6 +507,36 @@ document.querySelectorAll('.knob').forEach(k => {
         k.dataset.rot = current + 45; k.style.transform = `rotate(${current+45}deg)`;
     };
 });
+
+/* --- Error Handling & AR Failure Alert --- */
+function handleARFailure(error) {
+    const overlay = document.getElementById('failure-overlay');
+    const details = document.getElementById('error-details');
+    if (!overlay) return;
+
+    // Show details (limited to keep UI clean)
+    const errText = error ? (error.message || error.toString()) : "Unknown Anomaly";
+    if (details) details.innerText = `ERR_REF: ${errText.substring(0, 50)}...`;
+
+    overlay.classList.remove('hidden');
+    overlay.classList.add('active');
+
+    // Send telemetry
+    if (window.captureTelemetry) {
+        window.captureTelemetry(errText);
+    }
+}
+
+// Expose globally for developerDebug.js
+window.handleARFailure = handleARFailure;
+
+document.getElementById('close-failure-btn').onclick = () => {
+    const overlay = document.getElementById('failure-overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+    }
+};
 
 document.getElementById('anomaly-dimmer').onclick = () => { if(anomalySystem) anomalySystem.reset(); };
 
