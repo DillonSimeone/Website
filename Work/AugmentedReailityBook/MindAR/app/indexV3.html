@@ -93,6 +93,23 @@
         </div>
     </div>
 
+    <!-- Failure Alert Overlay -->
+    <div id="failure-overlay" class="hidden">
+        <div class="alert-box">
+            <div class="alert-header">⚠️ SYSTEM INTERFERENCE DETECTED</div>
+            <div class="alert-body">
+                <p>The scanner's AR modules have been blocked by this device or browser.</p>
+                <p id="error-details" class="glitch-text"></p>
+                <div class="alert-advice">
+                    <p><strong>REMEDY:</strong> Try using <strong>Chrome</strong> or ensure Camera permissions are granted.</p>
+                </div>
+            </div>
+            <button id="close-failure-btn" class="btn-gf">Acknowledge</button>
+        </div>
+    </div>
+
+    <script src="js/telemetry.js"></script>
+    <script src="js/v2/developerDebug.js"></script>
     <script type="module" src="js/v2/appV3.js"></script>
 </body>
 

@@ -27,7 +27,7 @@
 
         async function init() {
             // Paths relative to MindAR/app/ folder
-            const shaderDir = '../../assets/shaders/vomiting/';
+            const shaderDir = './assets/shaders/vomiting/';
             const common = await loadShader(shaderDir + 'common.glsl');
             const bufferA_src = await loadShader(shaderDir + 'bufferA.glsl');
             const image_src = await loadShader(shaderDir + 'image.glsl');
@@ -50,7 +50,7 @@
                     this.gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
                     this.gainNode.connect(this.ctx.destination);
 
-                    const resp = await fetch('../../assets/shaders/sounds/17752__krisboruff__rushing_water_no_traffic.wav');
+                    const resp = await fetch('./assets/shaders/sounds/17752__krisboruff__rushing_water_no_traffic.wav');
                     const array = await resp.arrayBuffer();
                     this.buffer = await this.ctx.decodeAudioData(array);
                     this.isInitialized = true;
