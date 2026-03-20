@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MindARThree } from 'mind-ar-image-three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { PoseSmoothing } from './smoothing.js';
 import { GhostingSystem } from './ghosting.js';
@@ -420,7 +421,12 @@ async function init() {
     gnomeReward = new GnomeReward(460, 460);
     await gnomeReward.load();
 
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
     const loader = new GLTFLoader();
+    loader.setDRACOLoader(dracoLoader);
+
     pages.forEach((p, i) => {
         const anchor = mindarThree.addAnchor(i);
         const follower = new THREE.Group();

@@ -42,14 +42,22 @@ async function minifyFile(filePath, relativePath) {
     if (ext === '.html' || ext === '.htm') {
         const content = fs.readFileSync(filePath, 'utf-8');
         try {
-            const minified = await minify(content, htmlOptions);
-            fs.writeFileSync(destPath, minified);
-            console.log(`Minified HTML: ${relativePath}`);
+            const isMainEntry = targetHtml && relativePath.toLowerCase() === targetHtml.toLowerCase();
+            const isVersionEntry = /^indexv[0-9]/i.test(relativePath);
             
-            // If this is our target HTML, also save it as index.html
-            if (targetHtml && relativePath.toLowerCase() === targetHtml.toLowerCase()) {
+            if (isVersionEntry && !isMainEntry) {
+                console.log(`Skipping versioned entry: ${relativePath}...`);
+                return;
+            }
+
+            const minified = await minify(content, htmlOptions);
+            
+            if (isMainEntry) {
                 fs.writeFileSync(path.join(outputDir, 'index.html'), minified);
                 console.log(`[PROD] Set ${relativePath} as index.html`);
+            } else {
+                fs.writeFileSync(destPath, minified);
+                console.log(`Minified HTML: ${relativePath}`);
             }
         } catch (err) {
             console.error(`Error minifying HTML ${relativePath}:`, err);
@@ -87,16 +95,9 @@ async function minifyFile(filePath, relativePath) {
             // Helper to clean paths (remove ../../ and point to production folder)
             const cleanPath = (p, isModel = false) => {
                 if (!p) return p;
-                // Get just the filename (e.g. shrek.png)
                 const filename = path.basename(p);
-                
-                if (isModel) {
-                    // Models go into assets/3dModel
-                    return 'assets/3dModel/' + filename;
-                } else {
-                    // Images go into the root folder (matches pages.json structure)
-                    return filename;
-                }
+                if (isModel) return 'assets/3dModel/' + filename;
+                return 'assets/trainingImages/' + filename;
             };
 
             if (data.pages) {
@@ -128,19 +129,30 @@ async function minifyFile(filePath, relativePath) {
 async function processDir(currentDir, relativeDir = '') {
     const files = fs.readdirSync(currentDir);
     for (const file of files) {
-        if (file === 'node_modules' || file === 'dist' || file === '.git' || file === 'package.json' || file === 'package-lock.json' || file === 'minify.js' || file === 'v3_dist' || file === 'assets') {
-            continue;
-        }
-
         const filePath = path.join(currentDir, file);
         const relPath = path.join(relativeDir, file);
         const stat = fs.statSync(filePath);
 
+        if (file === 'node_modules' || file === 'dist' || file === '.git' || file === 'package.json' || file === 'package-lock.json' || file === 'minify.js' || file === 'v3_dist' || file === 'assets' || file === 'targets' || file.endsWith('.bat')) {
+            continue;
+        }
+
         if (stat.isDirectory()) {
             await processDir(filePath, relPath);
-        } else {
-            await minifyFile(filePath, relPath);
+            continue;
         }
+
+        const isVersionFile = /([0-9]v|v[0-9])/i.test(file);
+        const targetVersion = targetHtml ? targetHtml.match(/[0-9]+/)?.[0] : null;
+        const fileVersion = file.match(/[0-9]+/)?.[0];
+        const matchesTarget = targetVersion && (fileVersion === targetVersion);
+
+        if (isVersionFile && !matchesTarget) {
+            console.log(`Skipping versioned file: ${file}...`);
+            continue;
+        }
+
+        await minifyFile(filePath, relPath);
     }
 }
 
