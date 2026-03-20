@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 :: PRODUCTION BUILD & DEPLOY SCRIPT
 :: ============================================================================
 :: Usage: ProduceProduction.bat [TargetHTML]
-:: Example: ProduceProduction.bat indexV3.html
+:: Example: ProduceProduction.bat indexV4.html
 ::
 :: This script minifies the app, gathers all "linkables" (images, models),
 :: and overwrites the production folder while preserving .git
@@ -19,11 +19,8 @@ set "SRC_ROOT=F:\Github\Website\Work\AugmentedReailityBook"
 :: --- ARGUMENT HANDLING ---
 set "TARGET_HTML=%~1"
 if "!TARGET_HTML!"=="" (
-    echo [ERROR] No target HTML specified.
-    echo Usage: ProduceProduction.bat [filename.html]
-    echo Example: ProduceProduction.bat indexV3.html
-    pause
-    exit /b 1
+    set "TARGET_HTML=indexV4.html"
+    echo [INFO] No target HTML specified. Defaulting to !TARGET_HTML!.
 )
 
 echo ============================================================================
@@ -42,9 +39,10 @@ echo.
 echo ============================================================================
 echo [2/5] SYNCING LINKABLES (From Local Assets)...
 echo ============================================================================
-:: 1. Copy local training images into the root of dist
+:: 1. Copy local training images into assets/trainingImages
 echo Copying training images...
-xcopy "!APP_DIR!assets\trainingImages\*" "!APP_DIR!dist\" /y /s /e /q
+if not exist "!APP_DIR!dist\assets\trainingImages" mkdir "!APP_DIR!dist\assets\trainingImages"
+xcopy "!APP_DIR!assets\trainingImages\*" "!APP_DIR!dist\assets\trainingImages\" /y /s /e /q
 
 :: 2. Copy local 3D models into assets/3dModel
 echo Copying 3D models...
@@ -59,8 +57,7 @@ xcopy "!APP_DIR!assets\shaders\*" "!APP_DIR!dist\assets\shaders\" /y /s /e /q
 echo Relocating tracking descriptors...
 if exist "!APP_DIR!targets\" (
     if not exist "!APP_DIR!dist\assets\targets" mkdir "!APP_DIR!dist\assets\targets"
-    move "!APP_DIR!dist\targets\*" "!APP_DIR!dist\assets\targets\" /y >nul
-    rmdir "!APP_DIR!dist\targets"
+    xcopy "!APP_DIR!targets\*" "!APP_DIR!dist\assets\targets\" /y /s /e /q
 ) else if exist "!APP_DIR!assets\targets\" (
     if not exist "!APP_DIR!dist\assets\targets" mkdir "!APP_DIR!dist\assets\targets"
     xcopy "!APP_DIR!assets\targets\*" "!APP_DIR!dist\assets\targets\" /y /s /e /q
