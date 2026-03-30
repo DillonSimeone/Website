@@ -1,86 +1,40 @@
-# Project: AR Book — "The Peeling Prototype" (MindAR)
-**Goal:** A WebXR-based AR experience where 2D book illustrations come to life in 3D using MindAR.
+# Ford Pines Scanner AR | Professionalized v8.1
 
-## Versions
-- **V0 (Basic)**: Uses internal smoothing and ghosting logic. Fast and reliable.
-- **V1 (Upgraded)**: Uses standalone `PoseSmoothing` (Deadzone/Slerp) and `GhostingSystem` (GSAP fades) for premium feel.
-- **V2 (ESM)**: **Current Production.** Uses MindAR 1.2.5 (ESM) and Three.js r147. Includes real-time `filterMinCF` tuning and a 10-target anchor-padding stability buffer to prevent worker crashes.
+This project is a high-performance AR scanner interface inspired by Ford Pines (Gravity Falls). It uses **MindAR** for camera/image tracking and **Three.js** for rendering.
 
-## Architecture
-The system is data-driven via `pages.json`.
+## 🛠️ Build Pipeline (Unified)
+The project has been migrated from a disjointed 11ty + legacy-minify system to a modern **unified build pipeline**:
 
-### File Structure
-```
-MindAR/
-├── gemini.md                  ← This file
-└── app/                       ← THE WEB APP
-    ├── indexV0.html           ← Basic implementation entry
-    ├── indexV1.html           ← Upgraded implementation entry
-    ├── indexV2.html           ← ESM implementation (MindAR 1.2.5)
-    ├── pages.json             ← Registry
-    ├── minify.js              ← (New) Minification script for production
-    ├── package.json           ← Minifier dependencies
-    ├── css/
+-   **Development**: `npx @11ty/eleventy --serve`
+-   **Production Build**: `npm run build`
+    -   **11ty**: Processes `.njk` and `.njk` templates, copies static assets to `dist/`.
+    -   **esbuild**: Bundles the modular JavaScript into a single `app.min.js`, applying **tree-shaking** for Three.js to reduce size (from 1.1MB to ~600KB).
+-   **Deployment**: Ready for static hosting from the `dist/` folder.
 
-    └── js/
-        ├── v2/                ← MODERN ESM CORE
-        │   ├── appV2.js
-        │   ├── smoothing.js
-        │   ├── ghosting.js
-        │   ├── three.module.js
-        │   └── loaders/       ← Three.js JSM Loaders
-        ├── appV0.js           ← Basic logic
-        ├── appV1.js           ← Upgraded logic
-        ├── smoothing.js       ← Legacy smoothing
-        └── ghosting.js        ← Legacy ghosting
+## 📂 Project Structure
 
-Assets (at project root):
-├── trainingImages/            ← 2D images to track
-└── 3dModel/                   ← 3D models (.glb)
-```
+-   `/.eleventy.js` — 11ty configuration (Static site generator).
+-   `/esbuild.config.js` — JavaScript bundler and Three.js tree-shaking rules.
+-   `/app/` — Source files.
+    -   `index.njk` — Main entry point (Nunjucks template).
+    -   `/style/styles.css` — Core scanner aesthetics.
+    -   `/javascript/` — Modular logic:
+        -   `app.js` — Main orchestrator.
+        -   `anomaly.js` — Puzzle and anomaly tracking system.
+        -   `WaveformRenderer.js` — CRT wave animation engine.
+        -   `DevUI.js` — Interactive transform tuner.
+        -   `CoreAR.js` — AR scene and renderer setup.
+        -   `AudioManager.js` — Sound effect management.
+        -   `smoothing.js` — High-precision pose filtering.
+    -   `/assets/` — Sounds, models, and UI textures.
+    -   `/milestones/` — Historical versions of the scanner (v0-v4).
 
-## Running Locally
-Requires HTTPS.
-```bash
-npx serve app/ --ssl
-```
+## 🚀 Key Improvements (Recent Audit)
+1.  **Tree-Shaking**: Optimized Three.js imports by replacing relative imports with bare specifiers and using esbuild aliases.
+2.  **Modularization**: Broke down the 1000+ line dual-pipeline code into focused, reusable ES modules.
+3.  **Cleanup**: Removed ~400 lines of dead code, orphaned hints, and redundant build scripts (`minify.js`, `ProduceProduction.bat`).
+4.  **Renaming**: Standardized filenames to clean basenames (`appV4.js` → `app.js`).
+5.  **Fixed Regressions**: Restored global access to `handleARFailure` for telemetry and debug scripts.
 
-## pages.json Schema
-```json
-{
-  "id": "page_001_shrek",        // Unique identifier
-  "pageNumber": 1,               // Book page number
-  "label": "Shrek",              // Human-readable name
-  "trackingImage": "../trainingImages/shrek.webp",
-  "physicalWidthM": 0.15,        // Real-world image width in meters
-  "model": {
-    "src": "../3dModel/shrek_pocket_shrek_and_animations.glb",
-    "scale": 0.005,
-    "offsetY": 0.0,              // Fine-tune position
-    "rotationY": 0               // Degrees
-  },
-  "animation": {
-    "autoplay": true,
-    "clipIndex": 0,
-    "loop": true
-  },
-  "peel": {
-    "enabled": true,
-    "duration": 1.5,
-    "curlRadius": 0.3
-  }
-}
-```
-
-## Training & Tooling (Local)
-- **Image Auditor:** Python/OpenCV tool in `/Imageauditor/`
-- Uses `cv2.ORB_create()` to check feature density
-- Outputs heatmap for artist feedback
-- Minimum 300 features = "GOOD", below 50/100px² = "POOR"
-
-## Post-Processing: Minification
-Minifies all HTML, CSS, and JS files recursively.
-1. `npm install` (first time)
-2. `npm run minify`
-- Builds a minified project structure in a `/dist` folder.
-- Copy `/dist/*` back to root for production/deployment.
+---
+*Scanner S/N: 06182012-G // Ref: F.P. // System Offline.*
