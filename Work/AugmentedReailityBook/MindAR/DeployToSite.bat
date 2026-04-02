@@ -32,10 +32,17 @@ powershell -Command "Get-ChildItem -Path '%DEST_DIR%' | Where-Object { \$_.Name 
 echo.
 echo ============================================================
 echo [3/3] COPYING NEW BUILD TO %DEST_DIR%
+echo Exclude: .map files
 echo ============================================================
 
-:: Use XCOPY to copy all files from dist to the destination.
-xcopy "%SOURCE_DIR%\*" "%DEST_DIR%\" /s /e /y /h >nul
+:: Create a temporary exclusion file
+echo .map > xcopy_exclude.txt
+
+:: Use XCOPY to copy all files from dist to the destination, excluding maps.
+xcopy "%SOURCE_DIR%\*" "%DEST_DIR%\" /s /e /y /h /exclude:xcopy_exclude.txt >nul
+
+:: Cleanup
+del xcopy_exclude.txt
 
 echo.
 echo ============================================================

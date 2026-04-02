@@ -16,6 +16,12 @@ export class AudioManager {
     async init() {
         if (this.isInitialized) return;
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // --- iOS CRITICAL: Resume Context on First Tap ---
+        if (this.ctx.state === 'suspended') {
+            await this.ctx.resume();
+        }
+
         this.gainNode = this.ctx.createGain();
         this.gainNode.connect(this.ctx.destination);
         this.isInitialized = true;

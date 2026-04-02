@@ -5,9 +5,9 @@
   "main": "app/index.html",
   "scripts": {
     "start": "npx @11ty/eleventy --serve --quiet",
-    "build:eleventy": "set ELEVENTY_ENV=production && npx @11ty/eleventy",
+    "build:eleventy": "set ELEVENTY_ENV=production&&npx @11ty/eleventy",
     "build:esbuild": "node esbuild.config.js",
-    "build": "npm run build:eleventy && npm run build:esbuild"
+    "build": "set ELEVENTY_ENV=production&&npm run build:eleventy && npm run build:esbuild"
   },
   "devDependencies": {
     "@11ty/eleventy": "^3.1.5",
