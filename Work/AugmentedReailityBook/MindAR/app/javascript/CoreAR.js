@@ -72,7 +72,26 @@ export class CoreAR {
     }
 
     async start() {
-        await this.mindarThree.start();
+        if (window.captureTelemetry) window.captureTelemetry("CAM_REQUEST");
+        
+        try {
+            await this.mindarThree.start();
+            
+            // --- iOS CRITICAL: Force playsinline on MindAR's video ---
+            const video = this.container.querySelector('video');
+            if (video) {
+                video.setAttribute('playsinline', '');
+                video.setAttribute('webkit-playsinline', '');
+                video.muted = true;
+                video.play().catch(e => console.warn("Video play error caught:", e));
+            }
+            
+        } catch (e) {
+            if (window.captureTelemetry) window.captureTelemetry("CAM_FAIL: " + e.message);
+            throw e;
+        }
+
+        if (window.captureTelemetry) window.captureTelemetry("CAM_ACTIVE");
         this.isScanning = true;
         this.cssRenderer.domElement.style.display = 'block';
         

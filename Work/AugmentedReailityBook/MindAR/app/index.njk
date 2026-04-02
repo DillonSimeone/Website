@@ -30,8 +30,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 
-    <link rel="stylesheet" href="style/styles.css">
+    <link rel="stylesheet" href="style/styles.min.css">
 
+    {% if not env.isProduction %}
     <script type="importmap">
         {
           "imports": {
@@ -41,6 +42,17 @@
           }
         }
     </script>
+    {% else %}
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/",
+            "mind-ar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+          }
+        }
+    </script>
+    {% endif %}
 </head>
 
 <body>
@@ -128,9 +140,6 @@
             <button id="close-failure-btn" class="btn-gf">Acknowledge</button>
         </div>
     </div>
-
-    <script src="javascript/telemetry.js"></script>
-    <script src="javascript/developerDebug.js"></script>
 
     {% if env.isProduction %}
     <script type="module" src="javascript/app.min.js"></script>

@@ -12,6 +12,8 @@ import { AnomalySystem } from './anomaly.js';
 import { GnomeReward } from './gnomeReward.js';
 import { WaveformRenderer } from './WaveformRenderer.js';
 import { DevUI } from './DevUI.js';
+import { initTelemetry, captureTelemetry } from './telemetry.js';
+import { initDeveloperDebug } from './developerDebug.js';
 
 /**
  * appV4.js - Ford Pines Scanner v8.0 (Modularized)
@@ -74,6 +76,10 @@ async function bootstrap() {
     devUI = new DevUI(stateCtx);
     devUI.build();
     setupControls();
+
+    // 7. Initialize Modules (Formerly separate script tags)
+    initTelemetry();
+    initDeveloperDebug(handleARFailure, captureTelemetry);
 
     // 6. Setup Failure Overlay Close
     const closeBtn = document.getElementById('close-failure-btn');
@@ -333,20 +339,35 @@ function setupControls() {
     document.getElementById('toggle-scan-btn').onclick = async () => {
         const btn = document.getElementById('toggle-scan-btn');
         if (!isScanning) {
-            await audioManager.init();
+            if (window.captureTelemetry) window.captureTelemetry("ENG_START");
+            
+            // --- iOS Stability: Immediate Watchdog ---
+            const watchdog = setTimeout(() => {
+                if (!isScanning) handleARFailure(new Error("TIME_OUT_STARTUP"));
+            }, 8000);
+
             try {
-                // Full re-init if this is a re-engage (not the first time)
+                await audioManager.init();
+                if (window.captureTelemetry) window.captureTelemetry("AUDIO_READY");
+
                 if (coreAR.mindarThree === null) {
                     await coreAR.init();
                     pageStates.clear();
                     setupPages();
                 }
+                
                 await coreAR.start();
+                
+                clearTimeout(watchdog);
                 isScanning = true;
                 btn.innerText = "Disengage Scanner";
                 document.getElementById('scanner-ui').classList.add('engaged');
                 anomalySystem.isScanning = true;
-            } catch (err) { handleARFailure(err); }
+                if (window.captureTelemetry) window.captureTelemetry("ENG_SUCCESS");
+            } catch (err) { 
+                clearTimeout(watchdog);
+                handleARFailure(err); 
+            }
         } else {
             // Full teardown — next engage will re-init from scratch
             coreAR.teardown();
