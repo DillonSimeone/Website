@@ -42,7 +42,19 @@
             background-size: 100% 4px, 3px 100%;
             pointer-events: none;
             z-index: 100;
-            opacity: 0.3;
+            opacity: 0.2;
+        }
+
+        /* Top Disclaimer */
+        .disclaimer-bar {
+            background: rgba(255, 0, 110, 0.15);
+            color: #ffb7d5;
+            padding: 10px 20px;
+            font-size: 0.75rem;
+            text-align: center;
+            border-bottom: 1px solid var(--pink);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
@@ -55,7 +67,7 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            background: linear-gradient(rgba(10, 10, 15, 0.7), rgba(10, 10, 15, 0.7)), url('hero.png');
+            background: linear-gradient(rgba(10, 10, 15, 0.8), rgba(10, 10, 15, 0.8)), url('hero.png');
             background-size: cover;
             background-position: center;
             position: relative;
@@ -74,7 +86,6 @@
             font-size: 1rem;
             color: var(--cyan);
             margin-top: 10px;
-            max-width: 600px;
             text-transform: uppercase;
             font-weight: 600;
         }
@@ -88,10 +99,7 @@
             padding: 30px;
             margin-bottom: 30px;
             box-shadow: var(--glow);
-            transition: transform 0.3s ease;
         }
-
-        .card:hover { transform: translateY(-5px); border-color: var(--cyan); }
 
         .card h2 { color: var(--cyan); margin-bottom: 20px; font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 
@@ -119,12 +127,11 @@
             cursor: pointer;
             border-radius: 4px;
             transition: 0.2s;
-            letter-spacing: 1px;
         }
 
-        .btn-demo:hover { background: #fff; box-shadow: 0 0 20px var(--cyan); transform: scale(1.02); }
+        .btn-demo:hover { background: #fff; box-shadow: 0 0 20px var(--cyan); }
 
-        /* Status LED & RMS Visualization */
+        /* Status & Meters */
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
         .node-info { padding: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; border-left: 4px solid var(--cyan); position: relative; }
         
@@ -136,69 +143,64 @@
             width: 30px; height: 30px; border-radius: 50%; margin-top: 20px;
             background: var(--cyan);
             box-shadow: inset 0 0 10px #000;
-            position: relative;
             opacity: 0.1;
         }
 
-        /* Follower Text Behavior */
-        #follower-status-text { font-size: 0.7rem; font-family: 'Orbitron'; height: 20px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        #follower-status-text { font-size: 0.7rem; font-family: 'Orbitron'; height: 20px; display: flex; align-items: center; justify-content: center; }
         .is-reacting { color: var(--pink); text-shadow: 0 0 10px var(--pink); animation: blinkText 0.2s infinite; }
         .is-listening { color: var(--text-dim); }
 
-        /* Tables */
+        /* Installation Guide */
+        .step { background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .step h3 { font-size: 0.9rem; color: var(--cyan); margin-bottom: 10px; }
+        .code-block { background: #000; padding: 10px; border-radius: 4px; font-family: monospace; color: #0f0; font-size: 0.85rem; border: 1px solid #333; margin: 5px 0; }
+
+        .install-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn-install { 
+            padding: 12px; background: transparent; border: 1px solid var(--cyan); color: var(--cyan); 
+            text-align: center; text-decoration: none; font-family: 'Orbitron'; font-size: 0.75rem; border-radius: 4px; transition: 0.2s;
+        }
+        .btn-install:hover { background: var(--cyan); color: #000; }
+
+        /* Settings Image */
+        .settings-img-wrap { margin: 30px auto; max-width: 400px; border: 2px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .settings-img { width: 100%; display: block; filter: brightness(0.9); }
+
+        /* Table & Lists */
         .table-wrap { overflow-x: auto; margin: 20px 0; }
         table { width: 100%; border-collapse: collapse; min-width: 400px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { color: var(--cyan); text-transform: uppercase; font-size: 0.8rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        th { color: var(--cyan); text-transform: uppercase; font-size: 0.75rem; }
 
-        /* BOM List */
         .bom-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 8px; }
-        .bom-item a { color: var(--pink); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
+        .bom-item a { color: var(--pink); text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: 0.2s; }
         .bom-item a:hover { color: #fff; text-shadow: 0 0 10px var(--pink); }
 
-        /* Settings Image - Resized and Centered */
-        .settings-img-wrap { 
-            margin: 30px auto; 
-            max-width: 400px; 
-            border: 2px solid var(--border); 
-            border-radius: 12px; 
-            overflow: hidden; 
-            box-shadow: 0 0 30px rgba(0,0,0,0.5); 
-        }
-        .settings-img { width: 100%; display: block; filter: brightness(0.9) contrast(1.1); }
+        /* Mission Footer */
+        .mission-box { border-left: 4px solid var(--cyan); padding-left: 20px; font-style: italic; color: var(--text-dim); margin-top: 10px; }
 
-        /* Animations */
         @media (max-width: 768px) {
-            .glitch { font-size: 1.8rem; }
-            .status-grid { grid-template-columns: 1fr; }
-            header { height: 25vh; }
+            .glitch { font-size: 1.83rem; }
+            .status-grid, .install-links { grid-template-columns: 1fr; }
         }
 
-        @keyframes blinkText {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+        @keyframes blinkText { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes glitch { 
+            0% { text-shadow: -2px 0 var(--cyan), 2px 0 var(--pink); } 
+            5% { text-shadow: 3px 0 var(--cyan), -3px 0 var(--pink); } 
         }
-
-        @keyframes glitch {
-            0% { text-shadow: -2px 0 var(--cyan), 2px 0 var(--pink); }
-            5% { text-shadow: 3px 0 var(--cyan), -3px 0 var(--pink); }
-            10% { text-shadow: -2px 0 var(--cyan), 2px 0 var(--pink); }
-            15% { transform: skewX(1deg); }
-            17% { transform: skewX(0); }
-        }
-
-        .tip { background: rgba(255, 235, 59, 0.1); border-left: 4px solid #ffeb3b; padding: 15px; margin: 20px 0; font-size: 0.9rem; }
-        .warning { background: rgba(255, 87, 34, 0.1); border-left: 4px solid #ff5722; padding: 15px; margin: 20px 0; font-size: 0.9rem; }
         
         b { color: var(--cyan); }
-        .external-link { color: var(--pink); text-decoration: none; border-bottom: 1px solid transparent; transition: 0.2s; }
-        .external-link:hover { border-bottom-color: var(--pink); text-shadow: 0 0 8px var(--pink); }
-        
+        .tip { background: rgba(255, 235, 59, 0.1); border-left: 4px solid #ffeb3b; padding: 15px; margin: 20px 0; font-size: 0.85rem; }
         .stl-link { display: block; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 4px; text-decoration: none; color: #fff; margin-bottom: 5px; font-size: 0.9rem; transition: 0.2s; }
         .stl-link:hover { background: var(--border); transform: translateX(5px); color: var(--cyan); }
     </style>
 </head>
 <body>
+
+    <div class="disclaimer-bar">
+        WARNING: Supplemental Device Only. Not a replacement for primary fire or medical safety systems.
+    </div>
 
     <header>
         <h1 class="glitch">DEAF RINGBELL DETECTOR</h1>
@@ -207,17 +209,16 @@
 
     <div class="container">
         
-        <!-- The System -->
+        <!-- The System Section -->
         <section class="card">
             <h2>The System</h2>
-            <p>Upgrade any home with a high-performance visual alert system. No complex wiring, no professional install. This plug-and-play solution uses wireless <a href="https://www.espressif.com/en/solutions/low-power-solutions/esp-now" target="_blank" class="external-link">ESP-NOW</a> protocols to bridge the gap between sound and sight.</p>
+            <p>Upgrade any home with a high-performance visual alert system. This plug-and-play solution uses wireless <b>ESP-NOW</b> protocols to bridge the gap between sound and sight.</p>
             
-            <p style="margin-top: 15px;"><b>Installation Strategy:</b> The Leader is placed directly next to the chime of your doorbell. Its volume trigger threshold is set high enough that it's only triggered by the specific chime and won't easily react to other household sounds like conversation or a TV.</p>
+            <p style="margin-top: 15px;"><b>Installation Strategy:</b> The Leader is placed directly next to the chime of your existing doorbell. Its volume trigger threshold is set high enough that it's only triggered by the specific chime and won't react to conversations or TV noise.</p>
 
-            <!-- Pulse Demo Section -->
             <div class="demo-bar" style="margin-top: 25px;">
                 <button class="btn-demo" id="demoBtn">Pulse System Demo</button>
-                <span style="font-size: 0.75rem; color: var(--cyan); font-family: 'Orbitron';">[ CLICK TO SIMULATE RINGBELL TRIGGER ]</span>
+                <span style="font-size: 0.75rem; color: var(--cyan); font-family: 'Orbitron';">[ SIMULATE RINGBELL TRIGGER ]</span>
             </div>
 
             <div class="status-grid">
@@ -238,70 +239,71 @@
                 </div>
             </div>
 
-            <p style="margin-top: 30px;"><b>Configuration & Tuning:</b> All settings are reached by connecting your smartphone or computer to the door ring detector's <b>WIFI Access Point</b>. The built-in captive portal takes you immediately to the live configuration page.</p>
+            <p style="margin-top: 30px;"><b>Configuration & Tuning:</b> Settings are reached by connecting to the device's <b>WIFI Access Point</b>. The built-in captive portal takes you right to the live dashboard.</p>
             
             <div class="settings-img-wrap">
-                <img src="Settings.jpg" alt="Captive Portal Interface" class="settings-img">
+                <img src="Settings.jpg" alt="Interface Screenshot" class="settings-img">
             </div>
-            
-            <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-dim); text-align: center;">From this dashboard, you can see the volume level reacting in real-time, fine-tune the trigger threshold, and adjust LED flash colors to your preference.</p>
         </section>
 
-        <!-- DIY Power -->
+        <!-- Firmware & Installation Section -->
+        <section class="card">
+            <h2>Firmware & Deployment</h2>
+            <p>Set up this project on any brand-new computer in three steps:</p>
+            
+            <div class="step">
+                <h3>1. Python Environment</h3>
+                <p>Install Python from <b>python.org</b>. Ensure you check the box <b>"Add Python to PATH"</b> during setup.</p>
+            </div>
+
+            <div class="step">
+                <h3>2. PlatformIO Core</h3>
+                <p>Open a terminal (PowerShell) and run the core installer:</p>
+                <div class="code-block">pip install -U platformio</div>
+            </div>
+
+            <div class="step">
+                <h3>3. One-Click Upload</h3>
+                <p>Download the firmware package for your device. Extract the <b>.zip</b>, connect your ESP32-C3, and run <b>upload.bat</b>.</p>
+                <div class="install-links">
+                    <a href="Leader_Firmware.zip" class="btn-install">Download Leader Firmware (.zip)</a>
+                    <a href="Follower_Firmware.zip" class="btn-install">Download Follower Firmware (.zip)</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- DIY Power Section -->
         <section class="card">
             <h2>Power & Assembly</h2>
-            <p>Reliability starts with power. While standard USB cables work, we recommend modifying them for permanent installs.</p>
-            
             <div class="tip">
-                <b>Voltage Drop Note:</b> A standard USB-A or USB-C cable can be modified into power lines roughly <b>30 to 50 feet</b> long. While 5V is standard for USB, long runs can cause voltage drop. For runs over 20 feet, use thicker gauge wire to maintain the required 5V 1A output.
+                <b>Voltage Drop Note:</b> A standard USB cable can be modified into power lines up to <b>50 feet</b> long. For runs over 20 feet, use thicker gauge wire to maintain 5V 1A output.
             </div>
-
-            <p><b>The Pro Way:</b> Any USB power source will output 5V by default. For the cleanest setup, strip a USB-C cable and solder the wires directly to the <b>5V</b> and <b>GND</b> pins on the ESP32-C3. This ensures maximum contact integrity and allows for stress-relieved wiring.</p>
-
-            <div class="warning">
-                <b>Stress Relief:</b> Use Hot Glue generously for insulation and cable stress relief. We recommend gluing the ESP32 directly to the 3D-printed mounts for a rigid, vibration-proof assembly. <b>The ESP32s are kept mostly out in the open for optimal cooling</b> and visible status monitoring.
-            </div>
+            <p><b>Assembly:</b> Solder wires directly to the <b>5V</b> and <b>GND</b> pins. Use <b>Hot Glue</b> generously for insulation and stress relief where cables meet the 3D-printed mounts.</p>
+            <p style="margin-top: 10px;">The ESP32s are kept mostly out in the open for optimal cooling and visible status monitoring.</p>
         </section>
 
         <!-- Technical Reference -->
         <section class="card">
             <h2>Hardware Pinouts</h2>
-            
-            <h3>Leader Node (ESP32-C3)</h3>
             <div class="table-wrap">
                 <table>
-                    <thead>
-                        <tr><th>Function</th><th>Pin</th><th>Function Detail</th></tr>
-                    </thead>
+                    <thead><tr><th>Device</th><th>Function</th><th>Pin</th><th>Function Detail</th></tr></thead>
                     <tbody>
-                        <tr><td>I2S Data (SD)</td><td>0</td><td>I2S Mic Input</td></tr>
-                        <tr><td>I2S Clock (SCK)</td><td>1</td><td>Mic Clock Output</td></tr>
-                        <tr><td>I2S L/R Select</td><td>2</td><td>GND Drive</td></tr>
-                        <tr><td>I2S Word Select (WS)</td><td>3</td><td>Sync Clock</td></tr>
-                        <tr><td>Status LED</td><td>8</td><td>Audio-Reactive PWM</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <h3>Follower Node (ESP32-C3)</h3>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr><th>Function</th><th>Pin</th><th>Function Detail</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>8x8 LED Matrix</td><td>4</td><td>WS2812B Data</td></tr>
-                        <tr><td>Heartbeat LED</td><td>8</td><td>Idle Pulse</td></tr>
+                        <tr><td>Leader</td><td>I2S Data (SD)</td><td>0</td><td>Mic Input</td></tr>
+                        <tr><td>Leader</td><td>I2S Clock (SCK)</td><td>1</td><td>Mic Clock</td></tr>
+                        <tr><td>Leader</td><td>Status LED</td><td>8</td><td>Volume Reactive PWM</td></tr>
+                        <tr><td>Follower</td><td>8x8 Matrix</td><td>4</td><td>WS2812B Data</td></tr>
+                        <tr><td>Follower</td><td>Heartbeat LED</td><td>8</td><td>Status LED</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Bill of Materials -->
+        <!-- Bill of Materials (RESTORING FULL LIST) -->
         <section class="card">
             <h2>Hardware (BOM)</h2>
             <div class="bom-item">
-                <span>ESP32-C3 SuperMini</span>
+                <span>ESP32-C3 SuperMini Development Board</span>
                 <a href="https://www.aliexpress.us/item/3256806413231030.html" target="_blank">View on AliExpress &rarr;</a>
             </div>
             <div class="bom-item">
@@ -309,20 +311,28 @@
                 <a href="https://www.aliexpress.us/item/3256805941272343.html" target="_blank">View on AliExpress &rarr;</a>
             </div>
             <div class="bom-item">
-                <span>Bulk USB-A to USB-C Cables</span>
+                <span>Bulk USB-A to USB-C Cables (High Reliability)</span>
                 <a href="https://www.amazon.com/dp/B0C622FVMX?th=1" target="_blank">View on Amazon &rarr;</a>
             </div>
         </section>
 
-        <!-- 3D Prints -->
+        <!-- 3D Fabrication -->
         <section class="card">
             <h2>3D Fabrication</h2>
-            <p>Print these files in PETG or PLA with 15% infill. Open designs ensure optimal cooling and LED visibility.</p>
+            <p>Download the STL files for assembly. Print in PETG or PLA with 15% infill.</p>
             <div style="margin-top: 20px;">
-                <a href="../3DPrints/MasterWallMountScrewIn.stl" class="stl-link">Leader Wall Mount (Screw-In) &darr;</a>
-                <a href="../3DPrints/MasterWallMountESP32C3Holder.stl" class="stl-link">Leader ESP32-C3 Snap-In &darr;</a>
-                <a href="../3DPrints/FollowerLedHolder.stl" class="stl-link">Follower Matrix Holder &darr;</a>
-                <a href="../3DPrints/FollowerLedCover.stl" class="stl-link">Follower Light Diffuser &darr;</a>
+                <a href="../3DPrints/LeaderWallMountScrewIn.stl" class="stl-link">Leader Wall Mount (Screw-In) &darr;</a>
+                <a href="../3DPrints/LeaderWallMountESP32C3Holder.stl" class="stl-link">Leader ESP32-C3 Holder (Snap-In) &darr;</a>
+                <a href="../3DPrints/FollowerLedHolder.stl" class="stl-link">Follower LED Matrix Holder &darr;</a>
+                <a href="../3DPrints/FollowerLedCover.stl" class="stl-link">Follower Diffusion Cover &darr;</a>
+            </div>
+        </section>
+
+        <!-- Mission Section -->
+        <section class="card">
+            <h2>The Mission</h2>
+            <div class="mission-box">
+                "The client was constantly missing the doorbell chime and needed a reliable, high-visibility bridge. This project was built to ensure no visitor or delivery goes unnoticed, using non-invasive technology to solve a daily accessibility hurdle."
             </div>
         </section>
 
@@ -341,14 +351,11 @@
 
         let isDemoRunning = false;
         let demoStartTime = 0;
-        let hasTriggered = false; // Track if threshold was crossed
-        
+        let hasTriggered = false;
         let leaderDisplayBrightness = 0.1;
         let followerDisplayBrightness = 0.1;
 
-        function lerp(start, end, amt) {
-            return (1 - amt) * start + amt * end;
-        }
+        function lerp(start, end, amt) { return (1 - amt) * start + amt * end; }
 
         function updateSimulation(time) {
             let targetLeaderBri = 0.1;
@@ -356,8 +363,8 @@
 
             if (isDemoRunning) {
                 const elapsed = time - demoStartTime;
-                const attack = 400; // Attack phase: 0 to 400ms
-                const alertHold = 1200; // Stay in alert for 1.2s after attack
+                const attack = 400;
+                const alertHold = 1200;
 
                 if (elapsed < attack) {
                     rmsPercent = (elapsed / attack) * 95 + Math.random() * 5;
@@ -372,7 +379,6 @@
                     followerText.className = "is-listening";
                 }
 
-                // Check for threshold cross (70%)
                 if (rmsPercent >= 70 && !hasTriggered) {
                     hasTriggered = true;
                     followerText.innerText = "REACTING...";
@@ -381,28 +387,22 @@
             } else {
                 rmsPercent = Math.random() * 12;
                 targetLeaderBri = 0.1 + (rmsPercent / 100);
-                hasTriggered = false; // Reset
             }
 
-            // Lerp Leader
             leaderDisplayBrightness = lerp(leaderDisplayBrightness, targetLeaderBri, 0.2);
             leaderLed.style.opacity = Math.max(0.1, leaderDisplayBrightness);
             leaderLed.style.boxShadow = leaderDisplayBrightness > 0.4 ? `0 0 ${leaderDisplayBrightness * 40}px #00f3ff` : 'none';
             rmsFill.style.width = rmsPercent + '%';
 
-            // Follower Behavior
             let targetFollowerBri = 0.1;
             if (!hasTriggered) {
-                // Pulse Heartbeat
                 const beat = (Math.sin(time / 500) + 1) / 2;
                 targetFollowerBri = 0.1 + beat * 0.4;
             } else {
-                // Fast Flash
                 const flash = (time % 200 < 100) ? 1.0 : 0.05;
                 targetFollowerBri = flash;
             }
 
-            // Lerp Follower
             followerDisplayBrightness = lerp(followerDisplayBrightness, targetFollowerBri, 0.2);
             followerLed.style.opacity = Math.max(0.1, followerDisplayBrightness);
             followerLed.style.boxShadow = followerDisplayBrightness > 0.6 ? `0 0 ${followerDisplayBrightness * 30}px #00f3ff` : 'none';
@@ -414,7 +414,6 @@
             if (isDemoRunning) return; 
             isDemoRunning = true;
             demoStartTime = performance.now();
-            hasTriggered = false;
         });
 
         requestAnimationFrame(updateSimulation);
