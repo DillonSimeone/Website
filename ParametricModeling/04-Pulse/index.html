@@ -70,16 +70,44 @@
         }
 
         @keyframes letter-pulse {
-            0%, 100% { transform: scale(1); filter: brightness(1); }
-            10% { transform: scale(1.15); filter: brightness(1.5); -webkit-text-fill-color: var(--accent); }
-            20% { transform: scale(1); filter: brightness(1); }
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            10% {
+                transform: scale(1.15);
+                filter: brightness(1.5);
+                -webkit-text-fill-color: var(--accent);
+            }
+
+            20% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
         }
 
-        h1 span:nth-child(1) { animation-delay: 0.0s; }
-        h1 span:nth-child(2) { animation-delay: 0.2s; }
-        h1 span:nth-child(3) { animation-delay: 0.4s; }
-        h1 span:nth-child(4) { animation-delay: 0.6s; }
-        h1 span:nth-child(5) { animation-delay: 0.8s; }
+        h1 span:nth-child(1) {
+            animation-delay: 0.0s;
+        }
+
+        h1 span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        h1 span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        h1 span:nth-child(4) {
+            animation-delay: 0.6s;
+        }
+
+        h1 span:nth-child(5) {
+            animation-delay: 0.8s;
+        }
 
         .subtitle {
             font-size: 1.1rem;
@@ -113,9 +141,17 @@
             min-height: 250px;
         }
 
-        .card.forge { --card-accent: #10b981; }
-        .card.manifold { --card-accent: #06b6d4; }
-        .card.jscad { --card-accent: #3b82f6; }
+        .card.forge {
+            --card-accent: #10b981;
+        }
+
+        .card.manifold {
+            --card-accent: #06b6d4;
+        }
+
+        .card.jscad {
+            --card-accent: #3b82f6;
+        }
 
         .card:hover {
             transform: translateY(-8px);
@@ -226,7 +262,10 @@
             gap: 40px;
         }
 
-        .media-section, .writeup, .infra-section, .comparison-grid {
+        .media-section,
+        .writeup,
+        .infra-section,
+        .comparison-grid {
             margin-top: 80px;
         }
 
@@ -273,20 +312,32 @@
             transform: translateY(40px);
         }
 
-        .infra-card.logic { --infra-accent: #3b82f6; }
-        .infra-card.silicon { --infra-accent: #e2e8f0; }
-        .infra-card.atomic { --infra-accent: #f59e0b; }
+        .infra-card.logic {
+            --infra-accent: #3b82f6;
+        }
+
+        .infra-card.silicon {
+            --infra-accent: #e2e8f0;
+        }
+
+        .infra-card.atomic {
+            --infra-accent: #f59e0b;
+        }
 
         .infra-card {
             background: #0f172a;
             border: 1px solid var(--border);
             padding: 24px;
             border-radius: 16px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
             transition: transform 0.2s;
             border-top: 3px solid var(--infra-accent);
         }
-        .infra-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px -10px var(--infra-accent); }
+
+        .infra-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px -10px var(--infra-accent);
+        }
 
         .infra-card h4 {
             color: var(--infra-accent);
@@ -305,10 +356,25 @@
         }
 
         @media (max-width: 768px) {
-            h1 { font-size: 2.5rem; }
-            .writeup, .infra-section, .todo-list { padding: 32px 24px; }
-            .infra-grid { transform: none; margin-top: 24px; padding-bottom: 32px; }
-            .todo-item { font-size: 1.1rem; }
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .writeup,
+            .infra-section,
+            .todo-list {
+                padding: 32px 24px;
+            }
+
+            .infra-grid {
+                transform: none;
+                margin-top: 24px;
+                padding-bottom: 32px;
+            }
+
+            .todo-item {
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
@@ -331,31 +397,40 @@
             <h2 style="font-size: 2rem; letter-spacing: -1px; margin-top: 0;">Standalone Infrastructure</h2>
             <p style="color: #cbd5e1; max-width: 800px; line-height: 1.6;">
                 PULSE leverages the <strong>ESP-NOW</strong> protocol to bypass traditional networking bottlenecks.
-                It is a completely autonomous ecosystem designed for industrial-scale deployment without external dependencies.
+                It is a completely autonomous ecosystem designed for industrial-scale deployment without external
+                dependencies.
             </p>
             <div class="infra-grid">
                 <div class="infra-card logic">
                     <h4>No Logic Layers</h4>
-                    <p>Entirely standalone. No computers, cloud servers, or local Wi-Fi bridges required for signal routing.</p>
+                    <p>Entirely standalone. No computers, cloud servers, or local Wi-Fi bridges required for signal
+                        routing.</p>
                 </div>
                 <div class="infra-card silicon">
                     <h4>On-Silicon FFT</h4>
-                    <p>High-speed Fast Fourier Transform analysis is performed directly on the ESP32-C3 Leader nodes in real-time.</p>
+                    <p>High-speed Fast Fourier Transform analysis is performed directly on the ESP32-C3 Leader nodes in
+                        real-time.</p>
                 </div>
                 <div class="infra-card atomic">
                     <h4>Atomic Broadast</h4>
-                    <p>True plug-and-play. Followers synchronize instantly to the broadcast frequency the millisecond they receive power.</p>
+                    <p>True plug-and-play. Followers synchronize instantly to the broadcast frequency the millisecond
+                        they receive power.</p>
                 </div>
             </div>
         </section>
 
         <section class="writeup">
-            <h2>Framework Architectural Review</h2>
+            <h2>Engineering Philosophy: Parametric Scaling</h2>
             <p>
-                Building the <strong>Haptic Broadcast Device</strong>, a complex assembly with internal rails, component
-                pockets, and structural clamps, reveals the core trade-offs of modern CAD architectures.
-                (Note: I got sidetracked checking around for the current best approach to real-time parametric modeling
-                in 2026—this multi-environment audit is the result).
+                The <strong>PULSE</strong> ecosystem is designed to be hardware-agnostic, supporting a vast array of
+                haptic motors with varying shapes, displacements, and voltages.
+                Instead of manually redesigning enclosures for every iteration, we use high-performance
+                <strong>Parametric Logic</strong> to instantly generate the precision <strong>Shell and Sled</strong>
+                assemblies for any component stack.
+            </p>
+            <p style="font-size: 0.9rem; color: #94a3b8; margin-top: -10px;">
+                (Note: I got sidetracked auditing the best real-time parametric modeling browser-based solutions for
+                2026, this multi-environment comparison below is the technical result).
             </p>
             <ul>
                 <li>
@@ -420,7 +495,8 @@
             <div class="todo-list">
                 <h2 style="font-size: 2.5rem; letter-spacing: -2px; margin-bottom: 40px; text-align: center;">Lifecycle
                     Roadmap</h2>
-                <div style="display: flex; flex-direction: column; align-items: flex-start; max-width: 600px; margin: 0 auto;">
+                <div
+                    style="display: flex; flex-direction: column; align-items: flex-start; max-width: 600px; margin: 0 auto;">
                     <div class="todo-item check">Print mechanical prototypes (Sled + Shell)</div>
                     <div class="todo-item check">Capture high-fidelity assembly photography</div>
                     <div class="todo-item check">Technical documentation for modular logic</div>
