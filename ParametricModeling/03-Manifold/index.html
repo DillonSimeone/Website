@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manifold JS - High Performance CAD</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-dark);
+            color: white;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        #viewer {
+            flex: 1;
+            height: 100%;
+        }
+
+        #controls {
+            width: 320px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin: 0;
+            background: linear-gradient(to right, var(--accent-green), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .category {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-green);
+        }
+
+        .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-green);
+            float: right;
+        }
+
+        .description {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.5;
+        }
+
+        .badge {
+            background: var(--accent-blue);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: bold;
+        }
+
+        /* Loading Spinner */
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h1>Manifold JS Kernel</h1>
+        <div class="category">Approach 03: Raw Performance</div>
+        
+        <div class="description">
+            Manifold is a WASM-based geometry kernel. It uses a custom representation for near-instant boolean operations.
+        </div>
+
+        <div class="control-group">
+            <label>Width <span class="value" id="widthVal">30</span></label>
+            <input type="range" id="width" min="10" max="60" step="1" value="30">
+        </div>
+
+        <div class="control-group">
+            <label>Depth <span class="value" id="depthVal">30</span></label>
+            <input type="range" id="depth" min="10" max="60" step="1" value="30">
+        </div>
+
+        <div class="control-group">
+            <label>Height <span class="value" id="heightVal">60</span></label>
+            <input type="range" id="height" min="10" max="100" step="1" value="60">
+        </div>
+
+        <div class="control-group">
+            <label>Fillet Radius <span class="value" id="filletVal">5</span></label>
+            <input type="range" id="fillet" min="0" max="10" step="0.5" value="5">
+        </div>
+
+        <div style="margin-top: auto;">
+            <div class="category">Powered by</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="badge">Manifold WASM</span>
+                <span style="font-size: 0.8rem; opacity: 0.5;">StableMesh™</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewer"></div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+        
+        // Manifold usually requires a bit more boilerplate for WASM loading
+        // We'll use the official UMD build for simplicity in this demo environment
+        // but here we simulation the ESM loading pattern
+        import Module from 'https://unpkg.com/manifold-3d/manifold.js';
+
+        let wasm;
+        let Manifold;
+        let Mesh;
+
+        // --- Viewport Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth - 320, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(100, 100, 100);
+        controls.update();
+
+        const lightMajor = new THREE.DirectionalLight(0xffffff, 1);
+        lightMajor.position.set(100, 100, 100);
+        scene.add(lightMajor);
+
+        const lightMinor = new THREE.DirectionalLight(0x00ff88, 0.5);
+        lightMinor.position.set(-100, 50, -50);
+        scene.add(lightMinor);
+
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        let currentMesh = null;
+
+        // --- Initialize Manifold ---
+        async function init() {
+            wasm = await Module();
+            wasm.setup();
+            
+            // Helpful shortcuts
+            Manifold = wasm.Manifold;
+            Mesh = wasm.Mesh;
+            
+            update();
+            animate();
+        }
+
+        function generateModel(params) {
+            const { w, d, h, f } = params;
+
+            // Create a cube
+            let base = Manifold.cube([w, d, h], true);
+            
+            // Create a hole
+            let hole = Manifold.cube([w * 0.8, d * 0.8, h * 1.2], true);
+            
+            // Subtract
+            let result = base.subtract(hole);
+
+            // In Manifold, we can apply transforms smoothly
+            // result = result.rotate([0, 0, 45]);
+            
+            return result;
+        }
+
+        // --- Bridge: Manifold to Three.js ---
+        function manifoldToThree(manifold) {
+            const mesh = manifold.getMesh();
+            const geometry = new THREE.BufferGeometry();
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(mesh.vertProperties, 3));
+            geometry.setIndex(new THREE.Uint32BufferAttribute(mesh.triVerts, 1));
+            geometry.computeVertexNormals();
+
+            const material = new THREE.MeshPhysicalMaterial({
+                color: 0x10b981,
+                metalness: 0.9,
+                roughness: 0.1,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1,
+                side: THREE.DoubleSide
+            });
+
+            return new THREE.Mesh(geometry, material);
+        }
+
+        function update() {
+            if (!Manifold) return;
+
+            const params = {
+                w: parseFloat(document.getElementById('width').value),
+                d: parseFloat(document.getElementById('depth').value),
+                h: parseFloat(document.getElementById('height').value),
+                f: parseFloat(document.getElementById('fillet').value)
+            };
+
+            // Update UI
+            ['width', 'depth', 'height', 'fillet'].forEach(id => {
+                document.getElementById(id + 'Val').innerText = document.getElementById(id).value;
+            });
+
+            if (currentMesh) scene.remove(currentMesh);
+
+            try {
+                const manifoldModel = generateModel(params);
+                currentMesh = manifoldToThree(manifoldModel);
+                scene.add(currentMesh);
+                
+                // Cleanup WASM memory
+                manifoldModel.delete();
+            } catch (e) {
+                console.error("Manifold error:", e);
+            }
+        }
+
+        // --- Event Listeners ---
+        ['width', 'depth', 'height', 'fillet'].forEach(id => {
+            document.getElementById(id).addEventListener('input', update);
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 320) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 320, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentMesh) currentMesh.rotation.y += 0.005;
+            renderer.render(scene, camera);
+        }
+
+        init();
+
+    </script>
+</body>
+</html>
