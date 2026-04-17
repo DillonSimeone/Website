@@ -1,474 +1,437 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parametric Vibration Device v9.0</title>
+    <title>04 - Vibration Device | Parametric Suite</title>
     <style>
         :root {
-            --bg: #030712;
-            --sidebar: #111827;
+            --bg: #020617;
             --accent: #10b981;
             --secondary: #3b82f6;
-            --border: rgba(255, 255, 255, 0.1);
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
         }
+
         body {
-            margin: 0; background: var(--bg); color: white;
-            font-family: 'Inter', sans-serif; display: flex;
-            height: 100vh; overflow: hidden;
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
-        #controls {
-            width: 420px; background: var(--sidebar);
-            border-right: 1px solid var(--border);
-            display: flex; flex-direction: column;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5); z-index: 10;
+
+        .container {
+            max-width: 1000px;
+            width: 90%;
+            padding: 80px 0;
+            animation: fadeIn 0.8s ease-out;
         }
-        .header {
-            padding: 20px 24px; border-bottom: 1px solid var(--border);
-            background: linear-gradient(to bottom right, #1f2937, #111827);
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        h1 { margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
-        .token { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-        .content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-        .section-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: #6b7280; font-weight: 700; margin-bottom: 6px; }
-        .param-group { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
-        .ph { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; margin-top: 6px; }
-        .ph:first-child { margin-top: 0; }
-        .val { color: var(--accent); font-family: monospace; font-weight: bold; }
-        input[type="range"] { width: 100%; accent-color: var(--accent); margin-bottom: 2px; }
-        #viewport { flex: 1; position: relative; }
-        .badge { position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 99px; font-size: 0.8rem; border: 1px solid var(--border); }
-        select { width: 100%; background: #1f2937; color: white; border: 1px solid var(--border); padding: 8px; border-radius: 4px; margin-bottom: 6px; }
-        .ebtn {
-            background: #1f2937; color: white; border: 1px solid var(--border);
-            padding: 7px 4px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
-            transition: all 0.15s;
+
+        header {
+            margin-bottom: 60px;
+            text-align: center;
         }
-        .ebtn:hover { background: #374151; }
-        .ebtn.active { background: #f472b6; color: #111; border-color: #f472b6; font-weight: bold; }
+
+        h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        h1 span {
+            display: inline-block;
+            background: linear-gradient(135deg, #fff 0%, #64748b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: letter-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes letter-pulse {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            10% { transform: scale(1.15); filter: brightness(1.5); -webkit-text-fill-color: var(--accent); }
+            20% { transform: scale(1); filter: brightness(1); }
+        }
+
+        h1 span:nth-child(1) { animation-delay: 0.0s; }
+        h1 span:nth-child(2) { animation-delay: 0.2s; }
+        h1 span:nth-child(3) { animation-delay: 0.4s; }
+        h1 span:nth-child(4) { animation-delay: 0.6s; }
+        h1 span:nth-child(5) { animation-delay: 0.8s; }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            margin-top: 10px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 80px;
+        }
+
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            min-height: 250px;
+        }
+
+        .card.forge { --card-accent: #10b981; }
+        .card.manifold { --card-accent: #06b6d4; }
+        .card.jscad { --card-accent: #3b82f6; }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--card-accent);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px -10px var(--card-accent);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--card-accent) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .card:hover::before {
+            opacity: 0.1;
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card p {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            flex-grow: 1;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--card-accent);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            background: var(--card-accent);
+            color: #020617;
+            text-align: center;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        .card:hover .btn {
+            box-shadow: 0 0 20px var(--card-accent);
+        }
+
+        .infra-section {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 48px;
+            padding-bottom: 0;
+            border-radius: 24px;
+            position: relative;
+        }
+
+        .writeup {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 48px;
+            border-radius: 24px;
+            line-height: 1.8;
+            color: #cbd5e1;
+        }
+
+        .writeup h2 {
+            color: #fff;
+            margin-top: 0;
+            font-size: 2rem;
+            letter-spacing: -1px;
+        }
+
+        .writeup strong {
+            color: var(--accent);
+        }
+
+        .winner-box {
+            margin-top: 32px;
+            padding: 24px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 12px 12px 0;
+        }
+
+        .media-section {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .media-section, .writeup, .infra-section, .comparison-grid {
+            margin-top: 80px;
+        }
+
+        .video-wrapper {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .todo-list {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 48px;
+            border-radius: 24px;
+        }
+
+        .todo-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: #94a3b8;
+            width: fit-content;
+            text-align: left;
+        }
+
+        .todo-item.check::before {
+            content: '□';
+            color: var(--accent);
+            font-size: 2rem;
+            font-family: var(--font-mono);
+        }
+
+        .infra-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            transform: translateY(40px);
+        }
+
+        .infra-card.logic { --infra-accent: #3b82f6; }
+        .infra-card.silicon { --infra-accent: #e2e8f0; }
+        .infra-card.atomic { --infra-accent: #f59e0b; }
+
+        .infra-card {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            transition: transform 0.2s;
+            border-top: 3px solid var(--infra-accent);
+        }
+        .infra-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px -10px var(--infra-accent); }
+
+        .infra-card h4 {
+            color: var(--infra-accent);
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.75rem;
+            font-weight: 900;
+        }
+
+        .infra-card p {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #94a3b8;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .writeup, .infra-section, .todo-list { padding: 32px 24px; }
+            .infra-grid { transform: none; margin-top: 24px; padding-bottom: 32px; }
+            .todo-item { font-size: 1.1rem; }
+        }
     </style>
 </head>
+
 <body>
-    <div id="controls">
-        <div class="header">
-            <h1><div class="token"></div> Haptic Device Housing</h1>
-            <div style="font-size: 0.8rem; opacity: 0.5; margin-top: 4px;">ESP-NOW Haptic Follower (FFT Triggered)</div>
-        </div>
-        <div class="content">
+    <div class="container">
+        <header>
+            <h1><span>P</span><span>U</span><span>L</span><span>S</span><span>E</span></h1>
+            <div
+                style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 4px; color: var(--accent); font-weight: 900; margin-top: -10px;">
+                Distributed Haptic Broadcast</div>
+            <p class="subtitle">
+                A massively scalable ESP-NOW follower prototype. Real-time FFT leader nodes broadcast stimulus patterns
+                to unlimited distributed nodes.
+                Optimized for rapid 2026-stack parametric manufacturing.
+            </p>
+        </header>
 
-            <div class="section-title">Assembly & Explosion</div>
-            <div class="param-group">
-                <div class="ph">Explosion <span class="val" id="v-exp">0</span>%</div>
-                <input type="range" id="exp" min="0" max="100" value="0">
-            </div>
-
-            <div class="section-title">Shell (Green Tube)</div>
-            <div class="param-group">
-                <div class="ph">Shell Wall Thickness <span class="val" id="v-wall">5</span>mm</div>
-                <input type="range" id="wall" min="1" max="10" step="0.5" value="5">
-                <div class="ph">Track Depth <span class="val" id="v-trkD">2</span>mm</div>
-                <input type="range" id="trkD" min="1" max="5" step="0.5" value="2">
-                <div class="ph">Track Height <span class="val" id="v-trkH">5</span>mm</div>
-                <input type="range" id="trkH" min="3" max="12" step="0.5" value="5">
-            </div>
-
-            <div class="section-title">Chassis (Blue Board)</div>
-            <div class="param-group">
-                <div class="ph">Board Thickness <span class="val" id="v-brdT">3</span>mm</div>
-                <input type="range" id="brdT" min="2" max="6" step="0.5" value="3">
-                <div class="ph">Internal Gap <span class="val" id="v-gap">1</span>mm</div>
-                <input type="range" id="gap" min="0.5" max="8" step="0.5" value="1">
-            </div>
-
-            <div class="section-title">Motor</div>
-            <div class="param-group">
-                <select id="mtype">
-                    <option value="type130">Type 130 (Standard)</option>
-                    <option value="round">Round (N20 Style)</option>
-                    <option value="square">Square High-Torque</option>
-                </select>
-                <div class="ph">Width <span class="val" id="v-mW">15</span>mm</div>
-                <input type="range" id="mW" min="5" max="35" value="15">
-                <div class="ph">Height <span class="val" id="v-mH">19</span>mm</div>
-                <input type="range" id="mH" min="5" max="35" value="19">
-                <div class="ph">Length <span class="val" id="v-mL">19</span>mm</div>
-                <input type="range" id="mL" min="10" max="50" value="19">
-                <div class="ph">Vibration Buffer <span class="val" id="v-buf">20</span>mm</div>
-                <input type="range" id="buf" min="5" max="40" value="20">
-            </div>
-
-            <div class="section-title">ESP32 & L298N Pockets</div>
-            <div class="param-group">
-                <div class="ph">ESP32 W/H/D <span class="val" id="v-espW">18</span>/<span class="val" id="v-espH">4.5</span>/<span class="val" id="v-espD">25</span></div>
-                <input type="range" id="espW" min="10" max="30" value="18" oninput="window.setHighlight('esp32')">
-                <input type="range" id="espH" min="2" max="10" step="0.5" value="4.5" oninput="window.setHighlight('esp32')">
-                <input type="range" id="espD" min="10" max="40" value="25" oninput="window.setHighlight('esp32')">
-                <div class="ph" style="margin-top:10px">L298N W/H/D <span class="val" id="v-l29w">24</span>/<span class="val" id="v-l29h">8</span>/<span class="val" id="v-l29d">22</span></div>
-                <input type="range" id="l29w" min="10" max="40" value="24" oninput="window.setHighlight('l298n')">
-                <input type="range" id="l29h" min="5" max="25" value="8" oninput="window.setHighlight('l298n')">
-                <input type="range" id="l29d" min="10" max="40" value="22" oninput="window.setHighlight('l298n')">
-            </div>
-
-            <div class="section-title">Pocket Cooling Holes</div>
-            <div class="param-group">
-                <div class="ph" style="align-items:center;">Enable Holes <input type="checkbox" id="useH" style="width:auto; margin:0;"></div>
-                <div class="ph">Grid X/Z <span class="val" id="v-hlX">3</span>/<span class="val" id="v-hlZ">3</span></div>
-                <input type="range" id="hlX" min="1" max="8" step="1" value="3">
-                <input type="range" id="hlZ" min="1" max="10" step="1" value="3">
-                <div class="ph">Hole Width <span class="val" id="v-hlS">3.6</span>mm</div>
-                <input type="range" id="hlS" min="1" max="6" step="0.2" value="3.6">
-            </div>
-
-            <div class="section-title">Power (Battery & Charger)</div>
-            <div class="param-group">
-                <div class="ph">Battery W/H/D <span class="val" id="v-batW">20</span>/<span class="val" id="v-batH">11</span>/<span class="val" id="v-batD">40</span></div>
-                <input type="range" id="batW" min="10" max="40" value="20" oninput="window.setHighlight('battery')">
-                <input type="range" id="batH" min="5" max="20" value="11" oninput="window.setHighlight('battery')">
-                <input type="range" id="batD" min="20" max="60" value="40" oninput="window.setHighlight('battery')">
-                <div class="ph" style="margin-top:10px">TP4056 Charger W/H/D <span class="val" id="v-chW">17</span>/<span class="val" id="v-chH">4</span>/<span class="val" id="v-chD">28</span></div>
-                <input type="range" id="chW" min="10" max="30" value="17" oninput="window.setHighlight('charger')">
-                <input type="range" id="chH" min="1" max="8" step="0.5" value="4" oninput="window.setHighlight('charger')">
-                <input type="range" id="chD" min="10" max="40" value="28" oninput="window.setHighlight('charger')">
-            </div>
-
-            <div class="section-title">Motor Clamp</div>
-            <div class="param-group">
-                <div class="ph">Clamp Length <span class="val" id="v-clL">15</span>mm</div>
-                <input type="range" id="clL" min="5" max="35" value="15">
-                <div class="ph">Screw Count <span class="val" id="v-scN">2</span></div>
-                <input type="range" id="scN" min="1" max="4" step="1" value="2">
-                <div class="ph">Screw Diameter <span class="val" id="v-scD">3.2</span>mm</div>
-                <input type="range" id="scD" min="2" max="6" step="0.2" value="3.2">
-            </div>
-
-            <div class="section-title">End Cap Settings</div>
-            <div class="param-group">
-                <div class="ph">Cap Thickness <span class="val" id="v-capT">4</span>mm</div>
-                <input type="range" id="capT" min="2" max="10" step="0.5" value="4">
-                <div class="ph">Lip Depth <span class="val" id="v-capL">5</span>mm</div>
-                <input type="range" id="capL" min="2" max="15" step="0.5" value="5">
-                <div class="ph" style="margin-top:10px">USB-C Pos X/Y <span class="val" id="v-usbX">0</span>/<span class="val" id="v-usbY">0</span></div>
-                <input type="range" id="usbX" min="-10" max="10" step="0.5" value="0">
-                <input type="range" id="usbY" min="-10" max="10" step="0.5" value="0">
-            </div>
-
-            <div class="section-title">Component Explorer</div>
-            <div class="param-group">
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
-                    <button class="ebtn" data-k="motor">Motor</button>
-                    <button class="ebtn" data-k="l298n">L298N</button>
-                    <button class="ebtn" data-k="esp32">ESP32</button>
-                    <button class="ebtn" data-k="battery">Battery</button>
-                    <button class="ebtn" data-k="charger">Charger</button>
-                    <button class="ebtn" data-k="">Clear</button>
+        <section class="infra-section">
+            <h2 style="font-size: 2rem; letter-spacing: -1px; margin-top: 0;">Standalone Infrastructure</h2>
+            <p style="color: #cbd5e1; max-width: 800px; line-height: 1.6;">
+                PULSE leverages the <strong>ESP-NOW</strong> protocol to bypass traditional networking bottlenecks.
+                It is a completely autonomous ecosystem designed for industrial-scale deployment without external dependencies.
+            </p>
+            <div class="infra-grid">
+                <div class="infra-card logic">
+                    <h4>No Logic Layers</h4>
+                    <p>Entirely standalone. No computers, cloud servers, or local Wi-Fi bridges required for signal routing.</p>
+                </div>
+                <div class="infra-card silicon">
+                    <h4>On-Silicon FFT</h4>
+                    <p>High-speed Fast Fourier Transform analysis is performed directly on the ESP32-C3 Leader nodes in real-time.</p>
+                </div>
+                <div class="infra-card atomic">
+                    <h4>Atomic Broadast</h4>
+                    <p>True plug-and-play. Followers synchronize instantly to the broadcast frequency the millisecond they receive power.</p>
                 </div>
             </div>
+        </section>
 
-            <div class="section-title">Manufacturing Export</div>
-            <div class="param-group" style="display:flex; flex-direction:column; gap:8px;">
-                <button class="ebtn" id="dl-shell" style="background:var(--accent); color:#111; font-weight:bold;">DOWNLOAD SHELL (.STL)</button>
-                <button class="ebtn" id="dl-sled" style="background:var(--secondary); font-weight:bold;">DOWNLOAD SLED (.STL)</button>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-                    <button class="ebtn" id="dl-fcap">FRONT CAP</button>
-                    <button class="ebtn" id="dl-bcap">BACK CAP</button>
+        <section class="writeup">
+            <h2>Framework Architectural Review</h2>
+            <p>
+                Building the <strong>Haptic Broadcast Device</strong>, a complex assembly with internal rails, component
+                pockets, and structural clamps, reveals the core trade-offs of modern CAD architectures.
+                (Note: I got sidetracked checking around for the current best approach to real-time parametric modeling
+                in 2026—this multi-environment audit is the result).
+            </p>
+            <ul>
+                <li>
+                    <strong>ForgeCAD (Declarative / AI-Friendly)</strong>: This approach is essentially "CAD as Code."
+                    It abstracts away the complex handle-management of WASM and the boiler-plate of UI creation. For AI
+                    agents, it is the most robust because its syntax mirrors high-level design descriptions.
+                </li>
+                <li>
+                    <strong>Manifold JS (Low-Level Kernel)</strong>: This is the powerhouse. It allows for advanced
+                    geometry operations (like tombstone intersections and dynamic lip subtractions) at near-instant
+                    speeds. It is the "Engine" that the other frameworks rely on for complex booleans.
+                </li>
+                <li>
+                    <strong>OpenJSCAD (Functional CSG)</strong>: This framework treats geometry as a pure function of
+                    its parameters. While slightly slower than Manifold for heavy boolean tasks, it is highly portable
+                    as it doesn't require a WASM binary for the core logic.
+                </li>
+            </ul>
+
+            <div class="winner-box">
+                <strong>Which is easiest to work with?</strong><br>
+                For both humans and AI, <strong>ForgeCAD</strong> is the superior workflow. By providing a "Studio"
+                abstraction layer, it allows the designer to focus on the mechanical assembly rather than the underlying
+                graphics plumbing, making it the fastest path from concept to STL export.
+            </div>
+        </section>
+
+        <section class="comparison-grid">
+            <a href="forgeCad/index.html" class="card forge">
+                <div class="tag">The Designer's Choice</div>
+                <h3>ForgeCAD</h3>
+                <p>High-level declarative studio. Uses the <code>param()</code> API for instant UI binding and rapid
+                    prototyping.</p>
+                <div class="btn">Launch Engine</div>
+            </a>
+
+            <a href="manifold/index.html" class="card manifold">
+                <div class="tag">High Performance</div>
+                <h3>Manifold Raw</h3>
+                <p>Bare-metal WASM kernel. The fastest boolean engine on the web, used for complex assembly mathematics.
+                </p>
+                <div class="btn">Launch Engine</div>
+            </a>
+
+            <a href="openJSCAD/index.html" class="card jscad">
+                <div class="tag">JS Ecosystem</div>
+                <h3>OpenJSCAD</h3>
+                <p>Pure functional JavaScript modeling. Modular, predictable, and deeply integrated with the JS
+                    ecosystem.</p>
+                <div class="btn">Launch Engine</div>
+            </a>
+        </section>
+
+        <section class="media-section">
+            <div class="video-wrapper" style="max-width: 450px; margin: 0 auto; aspect-ratio: 9/16;">
+                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/Zp6q29pBqWo" title="PULSE Demo"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+
+            <div class="todo-list">
+                <h2 style="font-size: 2.5rem; letter-spacing: -2px; margin-bottom: 40px; text-align: center;">Lifecycle
+                    Roadmap</h2>
+                <div style="display: flex; flex-direction: column; align-items: flex-start; max-width: 600px; margin: 0 auto;">
+                    <div class="todo-item check">Print mechanical prototypes (Sled + Shell)</div>
+                    <div class="todo-item check">Capture high-fidelity assembly photography</div>
+                    <div class="todo-item check">Technical documentation for modular logic</div>
+                    <div class="todo-item check">FFT Leader Node firmware implementation</div>
+                    <div class="todo-item check">Design modular charging dock (Magnetic pogo-pins)</div>
+                    <div class="todo-item check">Scale testing: 50+ Node node-to-node latency audit</div>
+                    <div class="todo-item check">Thermal stress test (Haptic duty cycle validation)</div>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
-
-    <div id="viewport">
-        <div class="badge" id="perf-badge">MANIFOLD WASM ENGINE</div>
-    </div>
-
-    <script type="module">
-        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
-        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
-        import Module from 'https://unpkg.com/manifold-3d/manifold.js';
-
-        let wasm, M, currentRes = null; 
-        const scene = new THREE.Scene();
-        const cam = new THREE.PerspectiveCamera(50, (innerWidth-420)/innerHeight, 0.1, 2000);
-        const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
-        renderer.setSize(innerWidth-420, innerHeight);
-        document.getElementById('viewport').appendChild(renderer.domElement);
-        const orb = new OrbitControls(cam, renderer.domElement);
-        cam.position.set(180, 180, 180); orb.update();
-
-        scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
-        const dl = new THREE.DirectionalLight(0xffffff, 0.9);
-        dl.position.set(100,200,100); scene.add(dl);
-
-        let meshes = {};
-        let HL = null;
-
-        function exportSTL(model, name) {
-            if (!model) return;
-            const mesh = model.getMesh();
-            let stl = `solid ${name}\n`;
-            for (let i = 0; i < mesh.triVerts.length; i += 3) {
-                const i1 = mesh.triVerts[i], i2 = mesh.triVerts[i+1], i3 = mesh.triVerts[i+2];
-                const v1 = [mesh.vertProperties[i1*3], mesh.vertProperties[i1*3+1], mesh.vertProperties[i1*3+2]];
-                const v2 = [mesh.vertProperties[i2*3], mesh.vertProperties[i2*3+1], mesh.vertProperties[i2*3+2]];
-                const v3 = [mesh.vertProperties[i3*3], mesh.vertProperties[i3*3+1], mesh.vertProperties[i3*3+2]];
-                stl += `facet normal 0 0 0\n  outer loop\n    vertex ${v1[0]} ${v1[1]} ${v1[2]}\n    vertex ${v2[0]} ${v2[1]} ${v2[2]}\n    vertex ${v3[0]} ${v3[1]} ${v3[2]}\n  endloop\nendfacet\n`;
-            }
-            stl += `endsolid ${name}`;
-            const blob = new Blob([stl], {type: 'text/plain'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `${name}.stl`; a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        const PRESETS = {
-            type130: {w:15, h:19, l:19},
-            round:   {w:20, h:20, l:32},
-            square:  {w:22, h:22, l:22}
-        };
-
-        window.setHighlight = (key) => {
-            HL = key;
-            document.querySelectorAll('.ebtn').forEach(b => {
-                if(b.dataset.k === key) b.classList.add('active');
-                else b.classList.remove('active');
-            });
-            update();
-        };
-
-        document.getElementById('mtype').addEventListener('change', e => {
-            const p = PRESETS[e.target.value];
-            document.getElementById('mW').value = p.w;
-            document.getElementById('mH').value = p.h;
-            document.getElementById('mL').value = p.l;
-            window.setHighlight('motor');
-        });
-
-        document.querySelectorAll('.ebtn').forEach(b => {
-            b.addEventListener('click', () => {
-                const k = b.dataset.k;
-                if (!k || HL === k) HL = null;
-                else HL = k;
-                document.querySelectorAll('.ebtn').forEach(x => x.classList.remove('active'));
-                if (HL) b.classList.add('active');
-                update();
-            });
-        });
-
-        async function init() {
-            wasm = await Module();
-            wasm.setup();
-            M = wasm.Manifold;
-            update();
-            (function loop(){ requestAnimationFrame(loop); renderer.render(scene, cam); })();
-        }
-
-        function box(w, h, l) { return M.cube([w, h, l], true); }
-
-        function generateModel() {
-            const t0 = performance.now();
-            const wallT    = +document.getElementById('wall').value;
-            const trkDepth = +document.getElementById('trkD').value;
-            const trkH     = +document.getElementById('trkH').value;
-            const motorW   = +document.getElementById('mW').value;
-            const motorH   = +document.getElementById('mH').value;
-            const motorL   = +document.getElementById('mL').value;
-            const motorType= document.getElementById('mtype').value;
-            const vibBuf   = +document.getElementById('buf').value;
-            const boardT   = +document.getElementById('brdT').value;
-            const gap      = +document.getElementById('gap').value;
-            const clampLen = +document.getElementById('clL').value;
-            const screwN   = +document.getElementById('scN').value;
-            const screwD   = +document.getElementById('scD').value;
-            const capT     = +document.getElementById('capT').value;
-            const capL     = +document.getElementById('capL').value;
-            const usbX     = +document.getElementById('usbX').value;
-            const usbY     = +document.getElementById('usbY').value;
-            const explode  = +document.getElementById('exp').value / 100;
-            
-            const useHoles = document.getElementById('useH').checked;
-            const hlX      = +document.getElementById('hlX').value;
-            const hlZ      = +document.getElementById('hlZ').value;
-            const hlS      = +document.getElementById('hlS').value;
-
-            const esp32 = { w: +document.getElementById('espW').value, h: +document.getElementById('espH').value, d: +document.getElementById('espD').value };
-            const l298n = { w: +document.getElementById('l29w').value, h: +document.getElementById('l29h').value, d: +document.getElementById('l29d').value };
-            const lipo  = { w: +document.getElementById('batW').value, h: +document.getElementById('batH').value, d: +document.getElementById('batD').value };
-            const hw373 = { w: +document.getElementById('chW').value, h: +document.getElementById('chH').value, d: +document.getElementById('chD').value };
-
-            // Internal clearance is fixed so wall thickness only expands outward
-            const innerR = 22.5; 
-            const radius = innerR + wallT;
-            const totalLen = motorL + vibBuf + l298n.d + gap + esp32.d + gap + lipo.d + gap + hw373.d + 30;
-
-            let sOuter = M.cylinder(totalLen, radius, radius, 80, true);
-            let sInner = M.cylinder(totalLen + 2, innerR, innerR, 80, true);
-            let shell = sOuter.subtract(sInner);
-            let gL = box(trkDepth, trkH, totalLen + 4).translate([-(innerR + trkDepth/2), 0, 0]);
-            let gR = box(trkDepth, trkH, totalLen + 4).translate([ (innerR + trkDepth/2), 0, 0]);
-            shell = shell.subtract(gL).subtract(gR);
-
-            let capOuterR = radius + wallT + 0.1;
-            let fCapOuter = M.cylinder(capT, capOuterR, capOuterR, 80, true);
-            let fCapLipO = M.cylinder(capL, capOuterR, capOuterR, 80, true);
-            let fCapLipI = M.cylinder(capL + 2, radius + 0.2, radius + 0.2, 80, true);
-            let fCapLip = fCapLipO.subtract(fCapLipI).translate([0, 0, capT/2 + capL/2 - 0.1]);
-            let frontCap = fCapOuter.add(fCapLip).translate([0, 0, -(totalLen/2 + capT/2)]);
-
-            let bCapOuter = M.cylinder(capT, capOuterR, capOuterR, 80, true);
-            let bCapLipO = M.cylinder(capL, capOuterR, capOuterR, 80, true);
-            let bCapLipI = M.cylinder(capL + 2, radius + 0.2, radius + 0.2, 80, true);
-            let bCapLip = bCapLipO.subtract(bCapLipI).translate([0, 0, -(capT/2 + capL/2 - 0.1)]);
-            let backCap = bCapOuter.add(bCapLip);
-            let usbCut = box(12, 6, 100).translate([usbX, usbY, 0]);
-            backCap = backCap.subtract(usbCut).translate([0, 0, (totalLen/2 + capT/2)]);
-
-            const sledBodyHalfW = innerR - 0.5;
-            const sledBodyW = sledBodyHalfW * 2;
-            const railW = trkDepth - 0.3;
-            const railH = trkH - 0.5;
-            let sledBody = box(sledBodyW, boardT, totalLen - 6);
-            let rL = box(railW, railH, totalLen - 6).translate([-(sledBodyHalfW + railW/2), 0, 0]);
-            let rR = box(railW, railH, totalLen - 6).translate([ (sledBodyHalfW + railW/2), 0, 0]);
-            let sled = sledBody.add(rL).add(rR);
-
-            let zCur = -totalLen/2 + 15;
-            let parts = {};
-            let motorPock;
-            if (motorType === 'type130') {
-                let cyl = M.cylinder(motorL + 1, motorH/2, motorH/2, 64, true);
-                let bx = box(motorW + 0.5, motorH + 1, motorL + 1);
-                motorPock = cyl.intersect(bx).translate([0, motorH/4, zCur + motorL/2]);
-            } else if (motorType === 'round') {
-                motorPock = M.cylinder(motorL + 1, Math.min(motorW, motorH)/2, Math.min(motorW, motorH)/2, 48, true).translate([0, motorH/4, zCur + motorL/2]);
-            } else {
-                motorPock = box(motorW + 0.5, motorH + 0.5, motorL + 0.5).translate([0, motorH/4, zCur + motorL/2]);
-            }
-            parts.motor = motorPock;
-
-            let clR = Math.max(motorW, motorH) / 2 + 1.5;
-            clR = Math.min(clR, innerR - 2.5);
-            let clOuter = M.cylinder(clampLen, clR + 4, clR + 4, 48, true);
-            let clInner = M.cylinder(clampLen + 2, clR, clR, 48, true);
-            let btmCut = box(200, 200, clampLen + 4).translate([0, -100, 0]);
-            let halfRing = clOuter.subtract(clInner).subtract(btmCut);
-            let tabW = 12, tabT = 4.5;
-            let tL = box(tabW, tabT, clampLen).translate([-(clR + tabW/2), tabT/2, 0]);
-            let tRt = box(tabW, tabT, clampLen).translate([ (clR + tabW/2), tabT/2, 0]);
-            let clampBody = halfRing.add(tL).add(tRt).translate([0, motorH/4, zCur + motorL/2]);
-            sled = sled.add(clampBody);
-
-            let screwHoles = [];
-            for (let i = 0; i < screwN; i++) {
-                let zOff = (i - (screwN-1)/2) * (clampLen / (screwN + 0.2));
-                let hL = M.cylinder(60, screwD/2, screwD/2, 16, true).rotate([90, 0, 0]).translate([-(clR + tabW/2), motorH/4, zCur + motorL/2 + zOff]);
-                let hR = M.cylinder(60, screwD/2, screwD/2, 16, true).rotate([90, 0, 0]).translate([ (clR + tabW/2), motorH/4, zCur + motorL/2 + zOff]);
-                screwHoles.push(hL, hR);
-            }
-
-            zCur += motorL + vibBuf;
-
-            const makePocket = (comp, zPos) => {
-                let p = box(comp.w + 0.5, comp.h + 0.5, comp.d + 0.5).translate([0, comp.h/2, zPos + comp.d/2]);
-                let holes = [];
-                if (useHoles) {
-                    const xStep = comp.w / (hlX + 1);
-                    const zStep = comp.d / (hlZ + 1);
-                    for (let xi = 1; xi <= hlX; xi++) {
-                        for (let zi = 1; zi <= hlZ; zi++) {
-                            const x = -comp.w/2 + xi * xStep;
-                            const z = zPos + zi * zStep;
-                            holes.push(M.cylinder(boardT + 20, hlS/2, hlS/2, 6, true).rotate([90,0,0]).translate([x, 0, z]));
-                        }
-                    }
-                }
-                return { p, holes };
-            };
-
-            let lRes = makePocket(l298n, zCur); parts.l298n = lRes.p; zCur += l298n.d + gap;
-            let eRes = makePocket(esp32, zCur); parts.esp32 = eRes.p; zCur += esp32.d + gap;
-            let bRes = makePocket(lipo, zCur);  parts.battery = bRes.p; zCur += lipo.d + gap;
-            let chargerZ = totalLen/2 - hw373.d;
-            let cRes = makePocket(hw373, chargerZ); parts.charger = cRes.p;
-
-            let chassis = sled;
-            chassis = chassis.subtract(parts.motor).subtract(parts.l298n).subtract(parts.esp32).subtract(parts.battery).subtract(parts.charger);
-            screwHoles.forEach(h => { chassis = chassis.subtract(h); h.delete(); });
-            [lRes, eRes, bRes, cRes].forEach(res => { res.holes.forEach(h => { chassis = chassis.subtract(h); h.delete(); }); });
-
-            const dt = (performance.now() - t0).toFixed(1);
-            document.getElementById('perf-badge').textContent = `MANIFOLD WASM • ${dt}ms`;
-            return { shell, frontCap, backCap, chassis, explode, parts };
-        }
-
-        function update() {
-            if (!M) return;
-            const ids = ['wall','trkD','trkH','mW','mH','mL','buf','brdT','gap','clL','scN','scD','exp',
-                         'espW','espH','espD','l29w','l29h','l29d','batW','batH','batD','chW','chH','chD',
-                         'capT','capL','usbX','usbY','hlX','hlZ','hlS'];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                const lbl = document.getElementById('v-' + id);
-                if (el && lbl) lbl.textContent = el.value;
-            });
-            Object.values(meshes).forEach(m => { if (m) scene.remove(m); });
-            meshes = {};
-            if (currentRes) {
-                currentRes.shell.delete(); currentRes.frontCap.delete(); 
-                currentRes.backCap.delete(); currentRes.chassis.delete();
-                Object.values(currentRes.parts).forEach(p => p.delete());
-            }
-            try {
-                const res = generateModel();
-                currentRes = res;
-                const exp = res.explode;
-                const toMesh = (model, color, opacity) => {
-                    const m = model.getMesh();
-                    const g = new THREE.BufferGeometry();
-                    g.setAttribute('position', new THREE.Float32BufferAttribute(m.vertProperties, 3));
-                    g.setIndex(new THREE.Uint32BufferAttribute(m.triVerts, 1));
-                    g.computeVertexNormals();
-                    return new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color, metalness:0.6, roughness:0.35, transparent:true, opacity, side:THREE.DoubleSide }));
-                };
-                meshes.shell = toMesh(res.shell, 0x10b981, 0.3);
-                scene.add(meshes.shell);
-                meshes.frontCap = toMesh(res.frontCap, 0x10b981, 0.6);
-                meshes.frontCap.position.set(0, exp * 80, -exp * 60);
-                scene.add(meshes.frontCap);
-                meshes.backCap = toMesh(res.backCap, 0x10b981, 0.6);
-                meshes.backCap.position.set(0, exp * 180, res.explode * 180);
-                scene.add(meshes.backCap);
-                meshes.chassis = toMesh(res.chassis, 0x3b82f6, 1.0);
-                meshes.chassis.position.z = exp * 180;
-                scene.add(meshes.chassis);
-                if (HL && res.parts[HL]) {
-                    meshes.hl = toMesh(res.parts[HL], 0xf472b6, 0.75);
-                    meshes.hl.position.z = exp * 180;
-                    meshes.hl.material.emissive = new THREE.Color(0xf472b6);
-                    meshes.hl.material.emissiveIntensity = 0.4;
-                    scene.add(meshes.hl);
-                }
-            } catch(e) { console.error(e); }
-        }
-
-        ['wall','trkD','trkH','mtype','mW','mH','mL','buf','brdT','gap','clL','scN','scD','exp',
-         'espW','espH','espD','l29w','l29h','l29d','batW','batH','batD','chW','chH','chD',
-         'capT','capL','usbX','usbY','hlX','hlZ','hlS'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', update);
-        });
-        document.getElementById('useH').addEventListener('change', update);
-        
-        document.getElementById('dl-shell').onclick = () => exportSTL(currentRes.shell, "Housing_Shell");
-        document.getElementById('dl-sled').onclick = () => exportSTL(currentRes.chassis, "Housing_Sled");
-        document.getElementById('dl-fcap').onclick = () => exportSTL(currentRes.frontCap, "Housing_FrontCap");
-        document.getElementById('dl-bcap').onclick = () => exportSTL(currentRes.backCap, "Housing_BackCap");
-
-        addEventListener('resize', () => {
-            cam.aspect = (innerWidth-420)/innerHeight;
-            cam.updateProjectionMatrix();
-            renderer.setSize(innerWidth-420, innerHeight);
-        });
-        init();
-    </script>
 </body>
+
 </html>
