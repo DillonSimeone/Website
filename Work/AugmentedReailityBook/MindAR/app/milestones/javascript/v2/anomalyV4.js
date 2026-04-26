@@ -59,16 +59,6 @@ export class AnomalySystem {
             this.parentContainer.appendChild(ret);
         }
 
-        /* Anomaly Overlay Disabled for V4 */
-        /*
-        if (!document.getElementById('anomaly-overlay')) {
-            const over = document.createElement('div');
-            over.id = 'anomaly-overlay';
-            over.innerHTML = `<div id="anomaly-text">ANOMALY DETECTED</div>`;
-            this.parentContainer.appendChild(over);
-        }
-        */
-
         if (!document.getElementById('puzzle-module')) {
             const sz = this.staticSize;
             const mod = document.createElement('div');
@@ -186,7 +176,6 @@ export class AnomalySystem {
         console.log("ANOMALY TRIGGERED!");
 
         if (this.isSolved) {
-            // Already solved — show reward in puzzle-module (gnome canvas is inside it)
             const mod = document.getElementById('puzzle-module');
             if (mod) { mod.style.visibility = 'visible'; mod.style.opacity = '1'; }
             if (this.onSolved) this.onSolved();
@@ -200,7 +189,7 @@ export class AnomalySystem {
     showPuzzle() {
         const mod = document.getElementById('puzzle-module');
         if (!mod) return;
-        
+
         mod.style.visibility = 'visible';
         gsap.fromTo(mod, { opacity: 0 }, { opacity: 1, duration: 0.5 });
 
@@ -214,7 +203,6 @@ export class AnomalySystem {
         }, 150);
     }
 
-    /** Gold noise static shader rendered on the terminal's upper canvas */
     startStaticShader() {
         const canvas = document.getElementById('static-canvas');
         if (!canvas) return;
@@ -234,7 +222,7 @@ export class AnomalySystem {
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     const i = (y * w + x) * 4;
-                    img.data[i]     = goldNoise(x, y, seed + 0.1) * 255;
+                    img.data[i] = goldNoise(x, y, seed + 0.1) * 255;
                     img.data[i + 1] = goldNoise(x, y, seed + 0.2) * 255;
                     img.data[i + 2] = goldNoise(x, y, seed + 0.3) * 255;
                     img.data[i + 3] = 255;
@@ -334,7 +322,6 @@ export class AnomalySystem {
         status.innerText = "ACCESS DENIED";
         status.style.color = "#ff3c3c";
 
-        // Shake the inner terminal boxes, not the CSS3DObject wrapper
         const boxes = mod.querySelectorAll('.terminal-box, .input-box');
         boxes.forEach(box => {
             gsap.fromTo(box, { x: -8 }, {
@@ -355,20 +342,16 @@ export class AnomalySystem {
         // Fade out input box only
         if (input) {
             gsap.to(input, {
-                opacity: 0, 
-                duration: 0.5, 
+                opacity: 0,
+                duration: 0.5,
                 onComplete: () => { input.style.display = 'none'; }
             });
         }
 
-        // Swap content immediately (gnome starts behind the fade or instantly)
         if (this.onSolved) this.onSolved();
     }
 
-    /**
-     * Called by appV4 when the ghost timer expires.
-     * Resets anomaly state so re-detection works.
-     */
+
     resetForGhost() {
         this.isAnomalyActive = false;
         clearInterval(this.hintTimer);
@@ -384,7 +367,6 @@ export class AnomalySystem {
         const mod = document.getElementById('puzzle-module');
         const layer = document.getElementById('video-layer');
 
-        // Immediately hide (no animation needed for reset)
         if (mod) { mod.style.visibility = 'hidden'; mod.style.opacity = '0'; }
         if (layer) { layer.style.display = 'none'; layer.style.opacity = '0'; }
 

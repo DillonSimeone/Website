@@ -108,7 +108,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
             </div>
             <div class="ctrl" style="margin-top:8px;"><label>Lerp</label><input type="range" id="dlerp" min="0.01" max="1" step="0.01" value="0.1"></div>
 
-            <!-- SHADOW TUNER SECTION (Clean) -->
+
             <div style="margin-top:20px; border-top: 1px solid #333; padding-top: 10px;">
                 <div style="color:#6ee7b7;font-size:10px;font-weight:800;letter-spacing:0.1em;margin-bottom:8px;">SHADOW TUNER</div>
                 
@@ -264,7 +264,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
             const follower = new THREE.Group();
             scene.add(follower);
 
-            // NOTE: LightRoot is separate from Follower to avoid Scale issues
+
             const lightRoot = new THREE.Group();
             scene.add(lightRoot);
 
@@ -285,7 +285,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
             const camHelper = new THREE.CameraHelper(dl.shadow.camera);
             scene.add(camHelper);
 
-            // Shadow Plane (Stays on follower)
+
             const shadowPlaneGroup = createShadowPlane();
             follower.add(shadowPlaneGroup);
 
@@ -386,7 +386,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
                 const model = state.model;
                 if (!model) return;
 
-                // Visibility Logic
+
                 if (state.camHelper) state.camHelper.visible = uiShowH;
                 if (state.isTracking && state.debugCube) state.debugCube.visible = uiShowH;
 
@@ -395,7 +395,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
                     if (c.name === 'Catcher') c.position.y = uiSO;
                 });
 
-                // Light Updates
+
                 if (state.dl) {
                     let intensity = uiInt;
                     if (lightEstimator && !uiManual) {
@@ -421,17 +421,17 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
                     const rawP = new THREE.Vector3(); const rawQ = new THREE.Quaternion(); const rawS = new THREE.Vector3();
                     state.anchor.group.matrixWorld.decompose(rawP, rawQ, rawS);
 
-                    // Lerp Visible Bounds
+
                     state.visiblePos.lerp(rawP, lerpAlpha);
                     state.visibleQuat.slerp(rawQ, lerpAlpha);
                     state.visibleScale.lerp(rawS, lerpAlpha);
 
-                    // Apply to Follower (Scaled)
+
                     state.follower.position.copy(state.visiblePos);
                     state.follower.quaternion.copy(state.visibleQuat);
                     state.follower.scale.copy(state.visibleScale);
 
-                    // Apply to LightRoot (Unscaled)
+
                     if (state.lightRoot) {
                         state.lightRoot.position.copy(state.visiblePos);
                         state.lightRoot.quaternion.copy(state.visibleQuat);

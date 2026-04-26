@@ -2,8 +2,8 @@ import * as THREE from 'three';
 
 /**
  * GnomeReward — Shared Renderer Version
- * Renders the gnome vomiting shader directly as a Three.js Mesh.
- * No secondary WebGL context.
+ * Renders the gnome vomiting shader as a Three.js Mesh in the main scene.
+ * Uses the shared CoreAR renderer — no secondary WebGL context.
  */
 export class GnomeReward extends THREE.Group {
     constructor(width = 500, height = 375) {
@@ -14,83 +14,55 @@ export class GnomeReward extends THREE.Group {
         this.frame = 0;
         this.frustumCulled = false;
         this._clock = new THREE.Clock(false);
-        
-        // Output canvas for "DIV Swap" mode
-        this.outputCanvas = null;
-        this.externalRenderer = null;
+        this._setupDone = false;
+        this._sharedRenderer = null;
 
-        // Ping-pong targets (MUST be ready for early load() calls)
-        const rtOpts = { format: THREE.RGBAFormat, type: THREE.FloatType };
-        this._rtA = new THREE.WebGLRenderTarget(this.width, this.height, rtOpts);
-        this._rtB = new THREE.WebGLRenderTarget(this.width, this.height, rtOpts);
+        // Render targets are lazy-allocated in setup()
+        this._rtA = null;
+        this._rtB = null;
+        this._rtImage = null;
     }
 
     /**
-     * "DIV SWAP" MODE:
-     * Injects a canvas into a target element and takes over rendering within that scope.
-     * This is the definitive fix for synchronization and drift.
+     * Shared Renderer Mode:
+     * Uses CoreAR's renderer for compute passes. The gnome displays as a
+     * Three.js mesh that renders naturally in the main scene.
      */
-    async setupInElement(element) {
-        if (!element) return;
-        
-        // If we already injected, just show it
-        if (this.outputCanvas && this.outputCanvas.parentElement === element) {
-            this.outputCanvas.style.display = 'block';
+    setup(sharedRenderer) {
+        if (this._setupDone) {
             this.start();
-            this._renderLoop();
             return;
         }
 
-        // 1. Prepare canvas BEFORE touching the DOM
-        this.outputCanvas = document.createElement('canvas');
-        this.outputCanvas.style.position = 'absolute';
-        this.outputCanvas.style.top = '0';
-        this.outputCanvas.style.left = '0';
-        this.outputCanvas.style.width = '100%';
-        this.outputCanvas.style.height = '100%';
-        this.outputCanvas.style.zIndex = '10'; // On top of static canvas
+        this._sharedRenderer = sharedRenderer;
 
-        // Setup local renderer
-        this.externalRenderer = new THREE.WebGLRenderer({ 
-            canvas: this.outputCanvas, 
-            alpha: true, 
-            antialias: true 
-        });
-        this.externalRenderer.setSize(this.width, this.height, false);
-        this.externalRenderer.setPixelRatio(window.devicePixelRatio);
+        // Lazy-allocate render targets (HalfFloat for mobile compatibility)
+        const rtOpts = { format: THREE.RGBAFormat, type: THREE.HalfFloatType };
+        this._rtA = new THREE.WebGLRenderTarget(this.width, this.height, rtOpts);
+        this._rtB = new THREE.WebGLRenderTarget(this.width, this.height, rtOpts);
+        this._rtImage = new THREE.WebGLRenderTarget(this.width, this.height, rtOpts);
 
-        // We already called load() in bootstrap, but just to be safe:
-        if (!this._imageMat) await this.load();
-        
-        // Internal scene setup
+        // Internal compute scene (buffer A pass)
         this._bufferAScene = new THREE.Scene();
         this._camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         this._quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
         this._bufferAScene.add(this._quad);
 
-        // Final Image Pass
-        this._finalScene = new THREE.Scene();
-        this._finalQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
-        this._finalScene.add(this._finalQuad);
+        // Image pass scene (also renders to RT)
+        this._imageScene = new THREE.Scene();
+        this._imageQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+        this._imageScene.add(this._imageQuad);
 
-        // 2. OVERLAY on top of existing content (no innerHTML wipe = no black flash)
-        element.style.position = 'relative'; // ensure child absolute positioning works
-        element.appendChild(this.outputCanvas);
+        // Display mesh — renders as part of the main Three.js scene
+        const aspect = this.width / this.height;
+        const displayGeo = new THREE.PlaneGeometry(aspect, 1);
+        this._displayMesh = new THREE.Mesh(displayGeo, this._displayMat);
+        this._displayMesh.frustumCulled = false;
+        this.add(this._displayMesh);
 
+        this._setupDone = true;
         this.start();
-        this._renderLoop();
-        console.log('GnomeReward (Seamless Overlay): Ready');
-    }
-
-    _renderLoop() {
-        if (!this.isRunning) return;
-        requestAnimationFrame(() => this._renderLoop());
-        this.onUpdate(this.externalRenderer);
-        
-        // Final draw to the injected canvas
-        this._finalQuad.material = this._imageMat;
-        this.externalRenderer.setRenderTarget(null);
-        this.externalRenderer.render(this._finalScene, this._camera);
+        console.log('GnomeReward (Shared Renderer): Ready');
     }
 
     async load() {
@@ -118,7 +90,7 @@ export class GnomeReward extends THREE.Group {
             ${common}
         `;
         
-        // Screen-space vertex shader for internal buffer passes
+        // Clip-space vertex shader for internal buffer/compute passes (renders to RT)
         const vs_quad = `
             varying vec2 vUv;
             void main() { 
@@ -126,9 +98,15 @@ export class GnomeReward extends THREE.Group {
                 gl_Position = vec4(position, 1.0); 
             }
         `;
-        
-        // In DIV Swap mode, the final pass also uses a fullscreen quad
-        const vs_mesh = vs_quad;
+
+        // Scene-space vertex shader for the visible display mesh (respects MVP transform)
+        const vs_scene = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
 
         this._bufferAMat = new THREE.ShaderMaterial({
             uniforms: {
@@ -141,29 +119,46 @@ export class GnomeReward extends THREE.Group {
             fragmentShader: header + bufA + `\nvoid main() { mainImage(gl_FragColor, vUv * iResolution.xy); }`,
         });
 
+        // Internal compute material (clip-space, used in onUpdate for the image pass RT)
         this._imageMat = new THREE.ShaderMaterial({
             uniforms: {
                 iResolution: { value: new THREE.Vector3(this.width, this.height, 1) },
                 iTime: { value: 0 }, iTimeDelta: { value: 0 },
                 iFrame: { value: 0 }, iMouse: { value: new THREE.Vector4() },
-                iChannel0: { value: this._rtA.texture }, iChannel1: { value: pine },
+                iChannel0: { value: null }, iChannel1: { value: pine },
+                opacity: { value: 1.0 }
+            },
+            vertexShader: vs_quad,
+            fragmentShader: header + img + `\nvoid main() { mainImage(gl_FragColor, vUv * iResolution.xy); }`,
+        });
+
+        // Display material (scene-space, used on the visible mesh)
+        this._displayMat = new THREE.ShaderMaterial({
+            uniforms: {
+                iChannel0: { value: null },
                 opacity: { value: 1.0 }
             },
             transparent: true,
             depthTest: false,
             depthWrite: false,
-            vertexShader: vs_mesh,
-            fragmentShader: header + img + `\nvoid main() { mainImage(gl_FragColor, vUv * iResolution.xy); gl_FragColor.a *= opacity; }`,
+            vertexShader: vs_scene,
+            fragmentShader: `
+                uniform sampler2D iChannel0;
+                uniform float opacity;
+                varying vec2 vUv;
+                void main() {
+                    gl_FragColor = texture2D(iChannel0, vUv);
+                    gl_FragColor.a *= opacity;
+                }
+            `,
         });
 
-        // In DIV Swap mode, _imageMat is applied to _finalQuad in _renderLoop()
         console.log('GnomeReward: Shaders loaded');
     }
 
     start() {
         this.isRunning = true;
         this.visible = true;
-        if (this.outputCanvas) this.outputCanvas.style.display = 'block';
         this._clock.start();
         console.log('🧙 GnomeReward: Started');
     }
@@ -171,16 +166,15 @@ export class GnomeReward extends THREE.Group {
     stop() {
         this.isRunning = false;
         this.visible = false;
-        if (this.outputCanvas) this.outputCanvas.style.display = 'none';
         this._clock.stop();
     }
 
     /**
-     * Called every frame from the main CoreAR loop.
-     * @param {THREE.WebGLRenderer} renderer - The shared renderer
+     * Called every frame from the main CoreAR update loop.
+     * @param {THREE.WebGLRenderer} renderer - The shared CoreAR renderer
      */
     onUpdate(renderer) {
-        if (!this.isRunning || !this._bufferAMat || !this._imageMat) return;
+        if (!this.isRunning || !this._bufferAMat || !this._imageMat || !this._rtA) return;
 
         const time = this._clock.getElapsedTime();
         const delta = this._clock.getDelta();
@@ -198,13 +192,18 @@ export class GnomeReward extends THREE.Group {
         renderer.setRenderTarget(this._rtA);
         renderer.render(this._bufferAScene, this._camera);
 
-        // 2. Final texture is now in _rtA.texture
-        // The mainMesh uses _imageMat which points to _rtA.texture.
-        // We just need to update the uniforms.
+        // 2. Image pass — render the gnome shader to _rtImage
+        this._imageQuad.material = this._imageMat;
         this._imageMat.uniforms.iTime.value = time;
         this._imageMat.uniforms.iTimeDelta.value = delta;
         this._imageMat.uniforms.iFrame.value = this.frame;
         this._imageMat.uniforms.iChannel0.value = this._rtA.texture;
+
+        renderer.setRenderTarget(this._rtImage);
+        renderer.render(this._imageScene, this._camera);
+
+        // 3. Feed the computed image to the display material
+        this._displayMat.uniforms.iChannel0.value = this._rtImage.texture;
 
         // Restore render target so the main scene renders to screen
         renderer.setRenderTarget(oldTarget);
@@ -218,9 +217,11 @@ export class GnomeReward extends THREE.Group {
 
     dispose() {
         this.stop();
-        this._rtA.dispose();
-        this._rtB.dispose();
+        if (this._rtA) this._rtA.dispose();
+        if (this._rtB) this._rtB.dispose();
+        if (this._rtImage) this._rtImage.dispose();
         if (this._bufferAMat) this._bufferAMat.dispose();
         if (this._imageMat) this._imageMat.dispose();
+        if (this._displayMat) this._displayMat.dispose();
     }
 }

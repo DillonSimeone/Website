@@ -7,7 +7,6 @@ import { CoreAR } from './CoreAR.js';
 import { AudioManager } from './AudioManager.js';
 import { PoseSmoothing } from './smoothing.js';
 import { GhostingSystem } from './ghosting.js';
-import { LightEstimator } from './light-estimator.js';
 import { AnomalySystem } from './anomaly.js';
 import { GnomeReward } from './gnomeReward.js';
 import { WaveformRenderer } from './WaveformRenderer.js';
@@ -20,8 +19,13 @@ import { initDeveloperDebug } from './developerDebug.js';
  * Optimized for older devices and maintainability.
  */
 
-let coreAR, audioManager, gnomeReward, lightEstimator, anomalySystem, waveform, devUI;
+let coreAR, audioManager, gnomeReward, anomalySystem, waveform, devUI;
 let isScanning = false;
+
+// Scratch objects — hoisted to avoid per-frame GC pressure
+const _rawP = new THREE.Vector3();
+const _rawQ = new THREE.Quaternion();
+const _rawS = new THREE.Vector3();
 let isDevMode = false;
 
 const ghoster = new GhostingSystem({ fadeDuration: 1.5, fadeInDuration: 0.5 });
@@ -56,7 +60,6 @@ async function bootstrap() {
     await coreAR.init();
 
     // 3. Setup Subsystems
-    lightEstimator = new LightEstimator(coreAR.renderer, coreAR.scene);
     gnomeReward = new GnomeReward(500, 375);
     await gnomeReward.load();
 
@@ -97,13 +100,7 @@ async function bootstrap() {
 function updateLoop(dt) {
     if (!isScanning) return;
 
-    // A. Lighting
-    if (lightEstimator) {
-        lightEstimator.update();
-        updateGlobalLighting();
-    }
-
-    // B. Tracking & Smoothing
+    // A. Tracking & Smoothing
     pageStates.forEach((state, i) => {
         if (state.mixer) state.mixer.update(dt);
         
@@ -111,19 +108,18 @@ function updateLoop(dt) {
             const anchorGroup = state.anchor.group;
             anchorGroup.updateMatrixWorld(true);
             
-            const rawP = new THREE.Vector3(), rawQ = new THREE.Quaternion(), rawS = new THREE.Vector3();
-            anchorGroup.matrixWorld.decompose(rawP, rawQ, rawS);
+            anchorGroup.matrixWorld.decompose(_rawP, _rawQ, _rawS);
             
             // Warm-up snapping for first 10 frames to ensure correct orientation
             if (state._warmupFrames < 10) {
-                state.smoother.update(rawP, rawQ, state.follower);
+                state.smoother.update(_rawP, _rawQ, state.follower);
                 state.smoother.reset(); // Continually snap during warm-up
                 state._warmupFrames++;
             } else {
-                state.smoother.update(rawP, rawQ, state.follower);
+                state.smoother.update(_rawP, _rawQ, state.follower);
             }
 
-            state.visibleScale.lerp(rawS, devUI.getVal('lerp', 0.75));
+            state.visibleScale.lerp(_rawS, devUI.getVal('lerp', 0.75));
             state.follower.scale.copy(state.visibleScale);
 
             // Sync CSS with WebGL
@@ -135,7 +131,12 @@ function updateLoop(dt) {
         }
     });
 
-    // D. Tracking Metadata (Dev Console)
+    // B. Gnome Reward Compute Pass (shared renderer)
+    if (gnomeReward && gnomeReward.isRunning && coreAR) {
+        gnomeReward.onUpdate(coreAR.renderer);
+    }
+
+    // C. Tracking Metadata (Dev Console)
     if (isDevMode && devUI && isScanning) {
         let isAnyDetected = false;
         pageStates.forEach(st => {
@@ -144,7 +145,7 @@ function updateLoop(dt) {
         devUI.updateStatus(isAnyDetected);
     }
 
-    // E. UI Decorations (Always update so we can clear/hide it)
+    // D. UI Decorations (Always update so we can clear/hide it)
     if (waveform) waveform.draw(isScanning);
 }
 
@@ -222,10 +223,10 @@ function handleTargetFound(index) {
         // Cancel any generic ghosting fade that may have started
         ghoster.onTrackingFound(p.id, state.follower);
         
-        // Kill any active gnome fade-out (DIV Swap: opacity is on _imageMat)
-        if (gnomeReward && gnomeReward._imageMat && gnomeReward._imageMat.uniforms.opacity) {
-            gsap.killTweensOf(gnomeReward._imageMat.uniforms.opacity);
-            gnomeReward._imageMat.uniforms.opacity.value = 1.0;
+        // Kill any active gnome fade-out
+        if (gnomeReward && gnomeReward._displayMat && gnomeReward._displayMat.uniforms.opacity) {
+            gsap.killTweensOf(gnomeReward._displayMat.uniforms.opacity);
+            gnomeReward._displayMat.uniforms.opacity.value = 1.0;
         }
         gsap.killTweensOf('#puzzle-module');
 
@@ -235,9 +236,8 @@ function handleTargetFound(index) {
         if (state.cssPuzzle) state.cssPuzzle.visible = true;
         
         // If the gnome was previously solved but got stopped by ghost timer, restart it
-        if (gnomeReward && !gnomeReward.isRunning && gnomeReward.outputCanvas) {
+        if (gnomeReward && !gnomeReward.isRunning && gnomeReward._setupDone) {
             gnomeReward.start();
-            gnomeReward._renderLoop();
         }
 
         // PERSISTENCE FIX: If the puzzle is ALREADY solved (e.g. scanner was toggled off/on)
@@ -268,9 +268,9 @@ function handleTargetLost(index) {
             // Fade only the puzzle module CSS overlay
             gsap.to('#puzzle-module', { opacity: 0, duration: 2.0 });
             
-            // Fade gnome reward shader via its opacity uniform (DIV Swap mode)
-            if (gnomeReward && gnomeReward.isRunning && gnomeReward._imageMat && gnomeReward._imageMat.uniforms.opacity) {
-                gsap.to(gnomeReward._imageMat.uniforms.opacity, { 
+            // Fade gnome reward via its display material opacity
+            if (gnomeReward && gnomeReward.isRunning && gnomeReward._displayMat && gnomeReward._displayMat.uniforms.opacity) {
+                gsap.to(gnomeReward._displayMat.uniforms.opacity, { 
                     value: 0, duration: 2.0, 
                     onComplete: () => {
                         state.follower.visible = false;
@@ -295,20 +295,25 @@ function handleTargetLost(index) {
 }
 
 function handlePuzzleSolved() {
-    const termBox = document.querySelector('#puzzle-module .terminal-box');
-    if (!termBox) return;
+    const state = pageStates.get(activePageIndex);
+    if (!state) return;
 
-    // SWAP: Inject content B (Gnome) into content A (Static Screen)
-    // This is the definitive fix for parity; they are now the same element.
-    gnomeReward.setupInElement(termBox);
+    // Setup gnome as a 3D mesh using the shared renderer
+    gnomeReward.setup(coreAR.renderer);
+
+    // Apply the same scale as the 3D model would get
+    const s = state.config.scale || 0.1;
+    gnomeReward.scale.set(s, s, s);
+
+    // Add gnome to the content pivot so it tracks with the AR target
+    if (!state.contentPivot.children.includes(gnomeReward)) {
+        state.contentPivot.add(gnomeReward);
+    }
     
-    // Hide standard puzzle elements (use visibility to preserve layout for the overlay)
-    const inputBox = document.querySelector('#puzzle-module .input-box');
-    if (inputBox) inputBox.style.display = 'none';
-    const staticCanvas = document.getElementById('static-canvas');
-    if (staticCanvas) staticCanvas.style.visibility = 'hidden'; // NOT display:none — keeps box height
+    // Hide the CSS3D puzzle overlay (gnome now renders in WebGL scene)
+    if (state.cssPuzzle) state.cssPuzzle.visible = false;
 
-    console.log('🧙 Gnome Reward Injected into Static Screen DIV');
+    console.log('🧙 Gnome Reward Rendered as Scene Mesh');
 }
 
 function handleAnomalyReset() {
@@ -363,6 +368,7 @@ function setupControls() {
                 btn.innerText = "Disengage Scanner";
                 document.getElementById('scanner-ui').classList.add('engaged');
                 anomalySystem.isScanning = true;
+                anomalySystem._ensureReticle();
                 if (window.captureTelemetry) window.captureTelemetry("ENG_SUCCESS");
             } catch (err) { 
                 clearTimeout(watchdog);
@@ -394,7 +400,7 @@ function setupControls() {
     };
 }
 
-function updateGlobalLighting() {}
+
 
 
 

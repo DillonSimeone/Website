@@ -67,7 +67,7 @@ export class AnomalySystem {
             mod.innerHTML = `
                 <div class="terminal-box" style="padding:0; border:none; border-radius:12px; overflow:hidden; display:flex; justify-content:center; align-items:center; background:#000;">
                     <div id="puzzle-close">×</div>
-                    <canvas id="static-canvas" width="${sz}" height="${sz}" style="width:${sz}px; height:${sz}px; display:block;"></canvas>
+                    <img id="static-canvas" src="./assets/static.gif" style="width:${sz}px; height:${sz}px; display:block; object-fit:cover;" alt="">
                 </div>
                 <div class="input-box">
                     <div class="puzzle-input-wrapper">
@@ -131,48 +131,60 @@ export class AnomalySystem {
     }
 
     startReticleAnimation() {
-        const update = () => {
+        this._reticleRunning = false;
+    }
+
+    _tickReticle() {
+        if (!this.isScanning || this.isAnomalyActive) {
             const el = document.getElementById('scanning-reticle');
-            if (this.isAnomalyActive || !this.isScanning || !el) {
-                if (el) el.style.display = 'none';
-                return requestAnimationFrame(update);
-            }
+            if (el) el.style.display = 'none';
+            this._reticleRunning = false;
+            return;
+        }
 
-            el.style.display = 'block';
-            const rect = this.parentContainer.getBoundingClientRect();
-            if (rect.width === 0) return requestAnimationFrame(update);
+        const el = document.getElementById('scanning-reticle');
+        if (!el) { this._reticleRunning = false; return; }
 
-            // Initial center if 0
-            if (this.reticle.x === 0) {
-                this.reticle.x = rect.width / 2;
-                this.reticle.y = rect.height / 2;
-            }
+        el.style.display = 'block';
+        const rect = this.parentContainer.getBoundingClientRect();
+        if (rect.width === 0) { requestAnimationFrame(() => this._tickReticle()); return; }
 
-            this.reticle.x += this.reticle.vx;
-            this.reticle.y += this.reticle.vy;
+        if (this.reticle.x === 0) {
+            this.reticle.x = rect.width / 2;
+            this.reticle.y = rect.height / 2;
+        }
 
-            const right = rect.width;
-            const bottom = rect.height;
+        this.reticle.x += this.reticle.vx;
+        this.reticle.y += this.reticle.vy;
 
-            if (this.reticle.x <= 40 || this.reticle.x >= right - 40) {
-                this.reticle.vx *= -1;
-                this.reticle.x = Math.max(40, Math.min(this.reticle.x, right - 40));
-            }
-            if (this.reticle.y <= 40 || this.reticle.y >= bottom - 40) {
-                this.reticle.vy *= -1;
-                this.reticle.y = Math.max(40, Math.min(this.reticle.y, bottom - 40));
-            }
+        const right = rect.width;
+        const bottom = rect.height;
 
-            el.style.left = `${this.reticle.x}px`;
-            el.style.top = `${this.reticle.y}px`;
-            requestAnimationFrame(update);
-        };
-        update();
+        if (this.reticle.x <= 40 || this.reticle.x >= right - 40) {
+            this.reticle.vx *= -1;
+            this.reticle.x = Math.max(40, Math.min(this.reticle.x, right - 40));
+        }
+        if (this.reticle.y <= 40 || this.reticle.y >= bottom - 40) {
+            this.reticle.vy *= -1;
+            this.reticle.y = Math.max(40, Math.min(this.reticle.y, bottom - 40));
+        }
+
+        el.style.left = `${this.reticle.x}px`;
+        el.style.top = `${this.reticle.y}px`;
+        requestAnimationFrame(() => this._tickReticle());
+    }
+
+    _ensureReticle() {
+        if (!this._reticleRunning && this.isScanning && !this.isAnomalyActive) {
+            this._reticleRunning = true;
+            this._tickReticle();
+        }
     }
 
     triggerAnomaly() {
         if (this.isAnomalyActive) return;
         this.isAnomalyActive = true;
+        this._reticleRunning = false;
 
         console.log("ANOMALY TRIGGERED!");
 
@@ -196,49 +208,12 @@ export class AnomalySystem {
         gsap.fromTo(mod, { opacity: 0 }, { opacity: 1, duration: 0.5 });
 
         this.handleInput("");
-        this.startStaticShader();
 
         // Delayed focus
         setTimeout(() => {
             const input = document.getElementById('puzzle-input');
             if (input) { input.focus(); input.select(); }
         }, 150);
-    }
-
-    /** Gold noise static shader rendered on the terminal's upper canvas */
-    startStaticShader() {
-        const canvas = document.getElementById('static-canvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        const w = canvas.width, h = canvas.height;
-        const PHI = 1.61803398874989484820459;
-        const goldNoise = (x, y, seed) => {
-            const dot = x * PHI + y;
-            return Math.abs(Math.tan(Math.sqrt(dot * dot + seed * seed) * seed) * x) % 1;
-        };
-        let t = 0;
-        const draw = () => {
-            const mod = document.getElementById('puzzle-module');
-            if (!mod || mod.style.visibility === 'hidden') return; // stop when hidden
-            const img = ctx.createImageData(w, h);
-            const seed = (t * 0.05) % 1;
-            for (let y = 0; y < h; y++) {
-                for (let x = 0; x < w; x++) {
-                    const i = (y * w + x) * 4;
-                    img.data[i]     = goldNoise(x, y, seed + 0.1) * 255;
-                    img.data[i + 1] = goldNoise(x, y, seed + 0.2) * 255;
-                    img.data[i + 2] = goldNoise(x, y, seed + 0.3) * 255;
-                    img.data[i + 3] = 255;
-                }
-            }
-            ctx.putImageData(img, 0, 0);
-            // Tint green
-            ctx.fillStyle = 'rgba(0, 255, 65, 0.15)';
-            ctx.fillRect(0, 0, w, h);
-            t++;
-            requestAnimationFrame(draw);
-        };
-        draw();
     }
 
 
@@ -327,12 +302,14 @@ export class AnomalySystem {
     resetForGhost() {
         this.isAnomalyActive = false;
         if (this.ghostTimer) { clearTimeout(this.ghostTimer); this.ghostTimer = null; }
+        this._ensureReticle();
         console.log('AnomalySystem: resetForGhost — ready for re-detection');
     }
 
     reset() {
         this.isAnomalyActive = false;
         if (this.ghostTimer) { clearTimeout(this.ghostTimer); this.ghostTimer = null; }
+        this._ensureReticle();
 
         const mod = document.getElementById('puzzle-module');
         const layer = document.getElementById('video-layer');

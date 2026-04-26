@@ -30,7 +30,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 
+    {% if env.isProduction %}
     <link rel="stylesheet" href="style/styles.min.css">
+    {% else %}
+    <link rel="stylesheet" href="style/styles.css">
+    {% endif %}
 
     {% if not env.isProduction %}
     <script type="importmap">
