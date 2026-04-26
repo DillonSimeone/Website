@@ -170,6 +170,46 @@ export class GnomeReward extends THREE.Group {
     }
 
     /**
+     * Full reset for scanner disengage — clears render targets and state
+     * so the gnome can be cleanly re-initialized on next engage.
+     */
+    reset(renderer) {
+        this.stop();
+        this.frame = 0;
+        this._clock = new THREE.Clock(false);
+
+        // Clear stale render target content
+        if (renderer && this._rtA) {
+            const oldTarget = renderer.getRenderTarget();
+            const clearColor = renderer.getClearColor(new THREE.Color());
+            const clearAlpha = renderer.getClearAlpha();
+
+            renderer.setClearColor(0x000000, 0);
+            [this._rtA, this._rtB, this._rtImage].forEach(rt => {
+                if (rt) {
+                    renderer.setRenderTarget(rt);
+                    renderer.clear();
+                }
+            });
+
+            renderer.setRenderTarget(oldTarget);
+            renderer.setClearColor(clearColor, clearAlpha);
+        }
+
+        // Reset display opacity
+        if (this._displayMat) {
+            this._displayMat.uniforms.opacity.value = 1.0;
+        }
+
+        // Remove display mesh from group so setup() can re-add cleanly
+        if (this._displayMesh) {
+            this.remove(this._displayMesh);
+        }
+
+        this._setupDone = false;
+    }
+
+    /**
      * Called every frame from the main CoreAR update loop.
      * @param {THREE.WebGLRenderer} renderer - The shared CoreAR renderer
      */
