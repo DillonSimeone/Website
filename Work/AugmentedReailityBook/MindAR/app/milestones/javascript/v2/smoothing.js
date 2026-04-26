@@ -20,12 +20,10 @@ export class PoseSmoothing {
     this.jumpThreshold = jumpThreshold;
     this.useJumpFilter = useJumpFilter;
 
-    // Smoothed state
     this._smoothedPosition = new THREE.Vector3();
     this._smoothedQuaternion = new THREE.Quaternion();
     this._initialized = false;
 
-    // Scratch objects to avoid GC
     this._tmpVec = new THREE.Vector3();
   }
 
@@ -73,7 +71,6 @@ export class PoseSmoothing {
       this._smoothedQuaternion.slerp(rawQuaternion, this.lerpAlpha);
     }
 
-    // Apply
     target.position.copy(this._smoothedPosition);
     target.quaternion.copy(this._smoothedQuaternion);
   }

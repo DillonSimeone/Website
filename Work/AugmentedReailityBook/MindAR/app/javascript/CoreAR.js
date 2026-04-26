@@ -37,9 +37,6 @@ export class CoreAR {
         this.scene = this.mindarThree.scene;
         this.camera = this.mindarThree.camera;
 
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
         // --- CSS3D Renderer ---
         this.cssScene = new THREE.Scene();
         this.cssRenderer = new CSS3DRenderer();

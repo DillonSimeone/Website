@@ -12,8 +12,7 @@ import { AnomalySystem } from './anomalyV4.js';
 import { GnomeReward } from './gnomeReward.js';
 
 /**
- * appV4.js - Ford Pines Scanner v8.0 (Modularized)
- * Optimized for older devices and maintainability.
+ * appV4.js - Ford Pines Scanner v8.0
  */
 
 let coreAR, audioManager, gnomeReward, lightEstimator, anomalySystem;
@@ -27,8 +26,8 @@ let activePageIndex = 0;
 
 // UI Ref Helpers
 const sl = {
-    s: null, px: null, py: null, pz: null, lerp: null, 
-    fmin: null, lmanual: null, lint: null, lbias: null, 
+    s: null, px: null, py: null, pz: null, lerp: null,
+    fmin: null, lmanual: null, lint: null, lbias: null,
     lso: null, lshowh: null, waveOp: null, sel: null, anim: null,
     cw: null, ch: null, dislerp: null, jump: null, disjump: null,
     ipx: null, ipy: null
@@ -40,7 +39,7 @@ let xOffset = 0;
 const LERP_FACTOR = 0.06;
 
 async function bootstrap() {
-    console.log("Scanner v8.0: Initializing Modular Core...");
+    console.log("Scanner: Initializing Modular Core...");
 
     const resp = await fetch('./pages.json');
     const data = await resp.json();
@@ -71,7 +70,7 @@ async function bootstrap() {
 
     // 4. Load Pages & Models
     setupPages();
-    
+
     // 5. Setup UI
     buildDevUI();
     setupControls();
@@ -89,14 +88,14 @@ function updateLoop(dt) {
     // B. Tracking & Smoothing
     pageStates.forEach((state, i) => {
         if (state.mixer) state.mixer.update(dt);
-        
+
         if (state.isTracking) {
             const anchorGroup = state.anchor.group;
             anchorGroup.updateMatrixWorld(true);
-            
+
             const rawP = new THREE.Vector3(), rawQ = new THREE.Quaternion(), rawS = new THREE.Vector3();
             anchorGroup.matrixWorld.decompose(rawP, rawQ, rawS);
-            
+
             state.smoother.update(rawP, rawQ, state.follower);
             state.visibleScale.lerp(rawS, getVal('lerp', 0.75));
             state.follower.scale.copy(state.visibleScale);
@@ -110,8 +109,7 @@ function updateLoop(dt) {
         }
     });
 
-    // C. Reward Shader (Shared Renderer) - DEPRECATED for DIV Swap mode
-    // if (gnomeReward) gnomeReward.onUpdate(coreAR.renderer);
+
 
     // D. UI Decorations
     drawWaveform();
@@ -131,8 +129,6 @@ function setupPages() {
         coreAR.scene.add(follower);
         follower.visible = false;
 
-        // NEW: Content Pivot handles user offsets (pages.json)
-        // Follower handles raw AR pose. They no longer fight.
         const contentPivot = new THREE.Group();
         follower.add(contentPivot);
 
@@ -180,16 +176,14 @@ function handleTargetFound(index) {
     const p = pages[index];
     const state = pageStates.get(index);
     state.isTracking = true;
-    // REMOVED: state.smoother.reset() 
-    // Allowing the smoother to glide from its current (ghost) position back to the target.
-    
+
     if (p.anomaly && isScanning) {
         resetGhostTimer();
         if (state._ghostTimer) { clearTimeout(state._ghostTimer); state._ghostTimer = null; }
-        
+
         // Cancel any generic ghosting fade that may have started
         ghoster.onTrackingFound(p.id, state.follower);
-        
+
         // Kill any active gnome fade-out (DIV Swap: opacity is on _imageMat)
         if (gnomeReward && gnomeReward._imageMat && gnomeReward._imageMat.uniforms.opacity) {
             gsap.killTweensOf(gnomeReward._imageMat.uniforms.opacity);
@@ -197,23 +191,23 @@ function handleTargetFound(index) {
         }
         gsap.killTweensOf('#puzzle-module');
 
-        state.follower.visible = true; 
+        state.follower.visible = true;
         if (document.getElementById('puzzle-module')) gsap.set('#puzzle-module', { opacity: 1 });
         if (state.cssMirror) state.cssMirror.visible = true;
         if (state.cssPuzzle) state.cssPuzzle.visible = true;
-        
+
         // If the gnome was previously solved but got stopped by ghost timer, restart it
         if (gnomeReward && !gnomeReward.isRunning && gnomeReward.outputCanvas) {
             gnomeReward.start();
             gnomeReward._renderLoop();
         }
-        
+
         anomalySystem.triggerAnomaly();
     } else {
         state.follower.visible = true;
         ghoster.onTrackingFound(p.id, state.follower);
     }
-    
+
     activePageIndex = index;
     if (sl.sel) sl.sel.value = index;
     loadCfg();
@@ -223,18 +217,18 @@ function handleTargetLost(index) {
     const p = pages[index];
     const state = pageStates.get(index);
     state.isTracking = false;
-    
+
     if (p.anomaly) {
         // Anomaly pages use their OWN ghost timer, NOT the generic ghosting system.
         // The generic ghoster would fade the entire follower group, killing the gnome.
         state._ghostTimer = setTimeout(() => {
             // Fade only the puzzle module CSS overlay
             gsap.to('#puzzle-module', { opacity: 0, duration: 2.0 });
-            
+
             // Fade gnome reward shader via its opacity uniform (DIV Swap mode)
             if (gnomeReward && gnomeReward.isRunning && gnomeReward._imageMat && gnomeReward._imageMat.uniforms.opacity) {
-                gsap.to(gnomeReward._imageMat.uniforms.opacity, { 
-                    value: 0, duration: 2.0, 
+                gsap.to(gnomeReward._imageMat.uniforms.opacity, {
+                    value: 0, duration: 2.0,
                     onComplete: () => {
                         state.follower.visible = false;
                         state.cssMirror.visible = false;
@@ -244,14 +238,15 @@ function handleTargetLost(index) {
                 });
             } else {
                 // Puzzle wasn't solved yet, just fade the CSS stuff
-                gsap.to('#puzzle-module', { opacity: 0, duration: 2.0, onComplete: () => {
-                    state.follower.visible = false;
-                    state.cssMirror.visible = false;
-                    anomalySystem.resetForGhost();
-                }});
+                gsap.to('#puzzle-module', {
+                    opacity: 0, duration: 2.0, onComplete: () => {
+                        state.follower.visible = false;
+                        state.cssMirror.visible = false;
+                        anomalySystem.resetForGhost();
+                    }
+                });
             }
         }, 5000);
-        // DO NOT call ghoster.onTrackingLost for anomaly pages!
     } else {
         ghoster.onTrackingLost(p.id, state.follower);
     }
@@ -261,10 +256,8 @@ function handlePuzzleSolved() {
     const termBox = document.querySelector('#puzzle-module .terminal-box');
     if (!termBox) return;
 
-    // SWAP: Inject content B (Gnome) into content A (Static Screen)
-    // This is the definitive fix for parity; they are now the same element.
     gnomeReward.setupInElement(termBox);
-    
+
     // Hide standard puzzle elements
     const inputBox = document.querySelector('#puzzle-module .input-box');
     if (inputBox) inputBox.style.display = 'none';
@@ -300,7 +293,7 @@ function resetGhostTimer() {
 function buildDevUI() {
     const devConsole = document.getElementById('dev-console');
     if (!devConsole) return;
-    
+
     devConsole.innerHTML = `
         <div class="dev-title">TRANSFORM TUNER V8.0</div>
         <select id="dsel" style="background:#000; color:#0f0; border:1px solid #111; padding:5px; margin-bottom:10px; width:100%"></select>
@@ -402,12 +395,12 @@ function buildDevUI() {
 function loadCfg() {
     const st = pageStates.get(activePageIndex);
     const c = st.config;
-    
+
     sl.s.value = Math.log10(c.scale || 0.1).toFixed(2);
-    sl.px.value = c.offsetX || 0; 
-    sl.py.value = c.offsetY || 0; 
+    sl.px.value = c.offsetX || 0;
+    sl.py.value = c.offsetY || 0;
     sl.pz.value = c.offsetZ || 0;
-    
+
     if (sl.sel) sl.sel.value = activePageIndex;
 
     // Update labels
@@ -520,27 +513,23 @@ function applyConfig(state) {
         model.position.set(0, 0, 0);
         model.rotation.set(0, 0, 0);
     }
-    
+
     if (cssPuzzle) {
         const ipx = getVal('ipx', 0);
         const ipy = getVal('ipy', 0);
-        
-        // APPLY THE SAME CONFIG OFFSETS AS THE GNOME
-        // We add the user-defined calibration (-0.14, 0.12 etc) 
-        // PLUS the developer-console ipx/ipy adjustments.
+
         cssPuzzle.position.set(
-            (config.offsetX || 0) + (ipx * 0.001), 
-            (config.offsetY || 0) - (ipy * 0.001), 
+            (config.offsetX || 0) + (ipx * 0.001),
+            (config.offsetY || 0) - (ipy * 0.001),
             (config.offsetZ || 0)
         );
 
-        // MATCH THE GNOME'S ROTATION DATA AS WELL
         cssPuzzle.rotation.set(
             THREE.MathUtils.degToRad(config.rotationX || 0),
             THREE.MathUtils.degToRad(config.rotationY || 0),
             THREE.MathUtils.degToRad(config.rotationZ || 0)
         );
-        
+
         const cssS = s * 0.002;
         cssPuzzle.scale.set(cssS, cssS, cssS);
 
@@ -622,5 +611,4 @@ function handleARFailure(error) {
     if (window.captureTelemetry) window.captureTelemetry(error.message);
 }
 
-// Entry
 bootstrap();

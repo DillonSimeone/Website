@@ -8,7 +8,6 @@ export class GhostingSystem {
         this.fadeDuration = fadeDuration;
         this.fadeInDuration = fadeInDuration;
 
-        /** @type {Map<string, gsap.core.Tween>} */
         this._activeTweens = new Map();
     }
 
@@ -21,10 +20,8 @@ export class GhostingSystem {
      * @param {Function} onComplete - Called if the fade completes (model fully invisible)
      */
     onTrackingLost(pageId, group, onComplete) {
-        // Kill any existing tween for this page
         this._killTween(pageId);
 
-        // Start from current opacity (usually 1, but could be mid-fade-in)
         const state = { opacity: group._opacity || 1 };
 
         const tween = gsap.to(state, {
