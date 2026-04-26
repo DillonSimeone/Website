@@ -376,6 +376,12 @@ function setupControls() {
             }
         } else {
             // Full teardown — next engage will re-init from scratch
+            gnomeReward.reset(coreAR.renderer);
+            
+            // Clear the WebGL canvas so no frozen gnome frame persists
+            coreAR.renderer.setRenderTarget(null);
+            coreAR.renderer.clear();
+
             coreAR.teardown();
             isScanning = false;
             btn.innerText = "Engage Scanner";
@@ -383,7 +389,6 @@ function setupControls() {
             anomalySystem.isScanning = false;
             anomalySystem.isAnomalyActive = false;
             anomalySystem.hide();
-            gnomeReward.stop();
 
             // Clear the frozen waveform
             const waveCanvas = document.getElementById('wave-canvas');
