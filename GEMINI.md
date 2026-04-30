@@ -1,45 +1,51 @@
 # Portfolio Website Documentation
 
-## 1. Background Optimization System
+## 1. Modular Architecture (Vite)
+The website has been refactored from a monolithic `index.html` into a modular, production-ready system powered by **Vite**.
+
+### Project Structure
+*   **`src/`**: Contains the source code.
+    *   **`index.html`**: The main template.
+    *   **`partials/`**: Reusable HTML components (`nav.html`, `hero.html`).
+    *   **`content/`**: Individual project cards and section content organized by category (`laser/`, `3dprinting/`, `work/`, `esp32/`).
+    *   **`scripts/`**: Modularized logic (`indexScript.js`, `background.js`).
+*   **`public/`**: Static assets (Images, PDFs, Mini-Projects) that are copied as-is to the build output.
+*   **`dist/`**: The production build (ignored by Git).
+*   **`legacy/`**: Original root files preserved for reference.
+
+### Build Pipeline
+The site uses an "Extreme Minification" process:
+1.  **Modular Injection**: Handlebars partials and content cards are dynamically injected into the template.
+2.  **Inlining**: All CSS and JavaScript are inlined into a single `dist/index.html` using `vite-plugin-singlefile`.
+3.  **Compression**: `Terser` and `ViteMinifyPlugin` strip all whitespace, comments, and console logs.
+4.  **Cleanup**: A custom post-build script removes unwanted folders (`venv`, `.pio`, `node_modules`) from the sub-project directories in `dist`.
+
+---
+
+## 2. Background Optimization System
 The website uses a high-performance background system that combines the aesthetic of dynamic geometric patterns with the speed of static assets.
 
 ### How it works
 1.  **Static Skeletons:** Instead of generating thousands of triangles in real-time, the site loads pre-calculated SVG "skeletons" stored as strings in `background.js`.
-2.  **Dynamic Re-skinning:** Upon page load, the script picks a random color palette (via `randomColors.js`) and applies it to the static SVG paths. This provides a unique look on every visit with zero geometry-calculation overhead.
-3.  **Performance:** Switched from the `trianglify.min.js` library (44KB + CPU heavy) to a lightweight ~200-path static model. CPU usage for background rendering is effectively 0%.
+2.  **Dynamic Re-skinning:** Upon page load, the script picks a random color palette (via `randomColors.js`) and applies it to the static SVG paths.
+3.  **Performance:** Switched from `trianglify.min.js` to a lightweight static model. CPU usage for background rendering is ~0%.
 
-### Interactive Effects
-The background still supports premium interactive features:
-*   **Glow Trace:** Triangles light up as the cursor moves over them.
-*   **Shatter Effect:** Clicking the main name triggers a physics-based "shatter" animation (defined in `indexScript.js`).
-
----
-
-## 2. One-Click Background Regeneration
-To change the "seed" or layout of the background across all devices, a dedicated build tool is provided.
-
-### Files Involved
-*   **`RegenerateBackground.bat`**: The one-click entry point. Run this to start the process.
-*   **`rebuild.py`**: A Python script that orchestrates the workflow:
-    1.  Starts a temporary local server (Port 8085).
-    2.  Opens your default browser to `generator.html`.
-    3.  Receives the new SVG patterns back from the browser.
-    4.  Updates `background.js` with the fresh data.
-*   **`generator.html`**: The math engine. It uses the original `trianglify.min.js` in a headless context to generate new high-quality patterns.
-
-### Usage
-Double-click `RegenerateBackground.bat`. A browser tab will open briefly, generate new patterns, and close automatically. Refresh your portfolio to see the new layout!
+### Regeneration Tools (Moved to `legacy/`)
+To change the "seed" or layout of the background, use the tools now located in the `legacy/` folder:
+*   **`RegenerateBackground.bat`**: The one-click entry point.
+*   **`rebuild.py`**: Orchestrates the generator flow.
+*   **`generator.html`**: The math engine using `trianglify.min.js`.
 
 ---
 
-## 3. CSS Architecture & Performance
-The styling system has been refactored for maintainability and speed.
+## 3. CSS Architecture & Theming
+*   **Theming**: Uses CSS variables (`--bg-primary`, `--neon-cyan`, etc.) for seamless Light/Dark mode switching. State is persisted via `localStorage`.
+*   **Performance**: Implemented `content-visibility: auto` on heavy components like project cards to improve scroll performance.
+*   **Global Layout**: Redundant rules for sections and grids have been merged into core selectors for consistency across all categories.
 
-### Consolidations
-*   **Global Layout:** Redundant rules for `section`, `.grid`, and `.grid-item` have been merged into core selectors. All main pages (Work, Projects, Hobby, ESP32) now inherit a consistent base layout.
-*   **Theming:** Uses CSS variables (`--bg-primary`, `--neon-cyan`, etc.) for seamless Light/Dark mode switching.
-*   **Lazy Rendering:** Implemented `content-visibility: auto` on heavy components like project cards and artwork grids. This allows the browser to skip rendering off-screen content, significantly improving scroll performance on long pages.
+---
 
-### Maintenance
-*   **Root `style.css`**: The single source of truth for all styling.
-*   **Variables**: Modify variables in the `:root` and `body.dark-mode` blocks to update the site's accent colors globally.
+## 4. Maintenance & Deployment
+*   **Dev Mode**: Run `npm run dev` for local development with hot-reloading.
+*   **Build**: Run `npm run build` to generate the production `dist/index.html`.
+*   **Deployment**: Automated via GitHub Actions (see `GitHubActions.md` for setup instructions). Deployment targets the `gh-pages` branch, keeping the `main` repository clean.

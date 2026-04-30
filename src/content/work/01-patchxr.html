@@ -1,0 +1,132 @@
+<div>
+    <h2><a href="https://patchxr.com/">PatchXR</a> reactive toy</h2>
+    <figure>
+        <img loading="lazy" src="./Images/patchXRinteractive/giphy.webm" alt="Patchathon gif">
+        <figcaption>Todd's flyer for the PatchXR contest</figcaption>
+    </figure>
+    <p>
+        Todd Fadel launched a contest for PatchXR, with winners judged on best use of AR, AI, or physics,
+        plus a “kindest overall Ecategory.
+        PatchXR is an important tool for the Deaf community, providing accessible, modern music-making
+        environments and a quick way to collaborate remotely.
+        I designed and built custom award pieces for the winners.
+    </p>
+    <p>
+        Each award was based on the PatchXR logo, with the “XR Eportion mounted to a motor that spins when
+        it detects a loud enough sound.
+        I integrated <a href="https://www.adafruit.com/product/5509">n00ds</a> (flexible LED filaments) on
+        the motor to mimic PatchXR’s in-app glowing signal wires.
+        Under the “Patch Eletters, I installed addressable LED strips programmed to map brightness to
+        loudness level and color to frequency.
+        This mirrors the signal-mapping concept that’s core to PatchXR’s design.
+    </p>
+    <details>
+        <summary>Bill of Materials</summary>
+        <div class="spoiler-content">
+            <p><b>Note:</b> Amazon links are for reference only—pricing is <b>inflated</b>.</p>
+            <ul>
+                <li>
+                    <a href="./3Dprints/patchXRlogo.3mf">3D printed box and logo</a>
+                    <p> Eprinted with an Bambu A1 with PLA filaments</p>
+                </li>
+                <li>
+                    <a
+                        href="https://www.amazon.com/ESP32-C3-Development-Supermini-Bluetooth-Compatible-Arduino/dp/B0CP78NQJK">ESP32-C3
+                        Superminis</a>
+                    <p>, compact, reliable microcontroller at the core of the build.</p>
+                </li>
+                <li>
+                    <a
+                        href="https://www.amazon.com/AITRIP-Trigger-5V9V12V20V-Charger-Delivery/dp/B0D14D8PQZ/">PD
+                        decoys</a>
+                    <p> Eto handle current draw limitations on the ESP32’s 5 V pin.</p>
+                </li>
+                <li>
+                    <a
+                        href="https://www.amazon.com/MTDELE-High-Power-Trigger-0-20KHz-Control/dp/B0D9VWWLCB/">Motor
+                        Drivers</a>
+                    <p> E<a href="https://en.wikipedia.org/wiki/Pulse-width_modulation">PWM</a> control of
+                        motor and
+                        n00ds brightness. </p>
+
+                </li>
+                <li>
+                    <a
+                        href="https://www.amazon.com/LEDLOCLB-Flexible-Filament-Bendable-Accessories/dp/B0D2NMYMBY/">Flexiable
+                        Led Filament</a>
+                    <p> Eflexible single color lighting. (n00ds)</p>
+                </li>
+                <li>
+                    <a
+                        href="https://www.amazon.com/California-JOS-15000RPM-Electric-Experiments/dp/B0CJHT46M8/">3V
+                        motors</a>
+                    <p> Efast but lightweight rotation for the XR segment.</p>
+                </li>
+                <li>
+                    <a
+                        href="https://www.amazon.com/Zixtec-LM2596-Converter-Module-1-25V-30V/dp/B07VVXF7YX/">Buck
+                        Converter</a>
+                    <p> Estep-down from 5 V to 3 V for motor and n00ds.</p>
+                </li>
+                <li>
+                    <a
+                        href="https://www.amazon.com/16-4FT-WS2812B-Individual-Addressable-5050SMD/dp/B0CFTP3S41/">Led
+                        Strips</a>
+                    <p> Eprimary color/frequency mapping output.</p>
+                </li>
+                <li>
+                    <a
+                        href="https://www.amazon.com/Microphone-Amplifier-Adjustable-Preamplifier-Compatible/dp/B08TTM371D/">Max4466</a>
+                    <p> Esimple analog mic with full audible frequency range.</p>
+                </li>
+                <li>
+                    <a
+                        href="https://github.com/DillonSimeone/Website/blob/main/ESP32Codes/Max4466MicMotorControl/Max4466MicMotorControl.ino">Arduino
+                        C++ source code</a>
+                    <p> Efully commented for easy parameter changes.</p>
+                </li>
+                <li>
+                    <a
+                        href="https://www.amazon.com/Soldering-Adjustable-Temperature-Repairing-Multimeter/dp/B0BQG4RL99/">Misc.
+                        tools</a>
+                    <p> Ewiring, adhesives, soldering equipment.</p>
+                </li>
+            </ul>
+        </div>
+    </details>
+    <h3>Demo videos</h3>
+    <div class="videos">
+        <iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/pFeCpRr-6NM"
+            title="Video of the patchwork in action!" frameborder="0" allowfullscreen>
+        </iframe>
+        <iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/dVWHkyo8F-Y" title="Lights off!"
+            frameborder="0" allowfullscreen>
+        </iframe>
+        <iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/aLt04NDY9Gg" title="Lights off!"
+            frameborder="0" allowfullscreen>
+        </iframe>
+    </div>
+    <h3>Pictures</h3>
+    <div class="medias">
+        <img loading="lazy" data-src="./Images/patchXRinteractive/photo_1_2025-08-13_17-41-52.webp"
+            alt="PatchXR reactive award front view">
+        <img loading="lazy" data-src="./Images/patchXRinteractive/photo_2_2025-08-13_17-41-52.webp"
+            alt="PatchXR award internal wiring">
+        <img loading="lazy" data-src="./Images/patchXRinteractive/photo_3_2025-08-13_17-41-52.webp"
+            alt="PatchXR award LED strip detail">
+        <img loading="lazy" data-src="./Images/patchXRinteractive/photo_4_2025-08-13_17-41-52.webp"
+            alt="PatchXR award motor assembly">
+        <img loading="lazy" data-src="./Images/patchXRinteractive/photo_5_2025-08-13_17-41-52.webp"
+            alt="PatchXR award finished product">
+        <img loading="lazy" data-src="./Images/patchXRinteractive/photo_6_2025-08-13_17-41-52.webp"
+            alt="PatchXR award packaging">
+        <img loading="lazy" data-src="./Images/patchXRinteractive/photo_7_2025-08-13_17-41-52.webp"
+            alt="PatchXR awards ready for shipping">
+    </div>
+    <p>
+        The packages was wrapped up with duct tape after I added a little Shrek figure. <a
+            href="https://www.pirateship.com/">Pirateship</a> have made this extremely affordable for
+        everyone!
+    </p>
+</div>
+

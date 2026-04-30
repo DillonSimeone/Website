@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Dillon Simeone</title>
+    <link href="./styles/style.css" rel="stylesheet">
+    <style>
+        .swal2-popup {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.418);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border-radius: 16px;
+            color: black;
+            font-size: 1rem;
+        }
+
+        .swal2-title,
+        .swal2-html-container,
+        .swal2-footer {
+            color: black;
+        }
+    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+        content="Dillon Simeone - Multifaceted innovator, maker, developer, and designer specializing in accessibility, embedded tech, haptics, and creative hardware.">
+    <meta name="author" content="Dillon Simeone">
+    <meta name="keywords"
+        content="accessibility, embedded tech, laser cutting, 3D printing, web development, haptics, Deaf, creative coding">
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Dillon Simeone - Portfolio">
+    <meta property="og:description"
+        content="Multifaceted innovator driving accessibility in technology. Maker, developer, and designer specializing in embedded tech, haptics, and creative hardware.">
+    <meta property="og:url" content="https://dillonsimeone.github.io/Website/">
+    <meta property="og:image" content="./Images/HapticBracerDemoBunnie.webp">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    {{> nav }}
+
+    <!-- Global mobile toggle for section navigation -->
+    <div class="global-nav-toggle" id="globalNavToggle" onclick="toggleGlobalNav()">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+
+    <div class="items">
+        <div class="item" id="loading"></div>
+
+        {{> hero }}
+
+        <article class="item" id="hobby">
+            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <aside class="section-nav" data-target-container=".artwork" data-title-selector="h2">
+                <div class="sideNavContent">
+                    <h3>Hobby Directory</h3>
+                    <ul class="dynamic-links"></ul>
+                </div>
+            </aside>
+            <section>
+                <div class="headers">
+                    <h1>Dillon's hobbies</h1>
+                    <p>
+                        Like many nerds, I've picked up a bunch of high-tech hobbies such as laser cutting and 3D
+                        printing! I'm good at a lot of things, but taking pictures isn't one of them.
+                    </p>
+                    <p>
+                        You can find many of my other projects on <a
+                            href="https://www.youtube.com/@Dillonsimeone/shorts">YouTube</a>; most of my shorts are just me
+                        screaming until the neighbors call the police, but some are pretty neat!
+                    </p>
+                </div>
+
+                <h1>Lasered Artworks</h1>
+                <div class="images">
+                    <img loading="lazy" src="./Hobby/Lasering/LaserCutting.webp" alt="Laser Cutting">
+                    <img loading="lazy" src="./Hobby/Lasering/LaserCutting2.webp" alt="Laser Cutting2">
+                </div>
+
+                {{#each laserCards}}
+                    {{{ this }}}
+                {{/each}}
+
+                <h1>3D printed Artworks</h1>
+                {{#each printingCards}}
+                    {{{ this }}}
+                {{/each}}
+
+                <h1>Embedded Technology Madness</h1>
+                {{#each esp32Cards}}
+                    {{{ this }}}
+                {{/each}}
+            </section>
+        </article>
+
+        <article class="item" id="work">
+            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <aside class="section-nav" data-target-container="section > div" data-title-selector="h2">
+                <div class="sideNavContent">
+                    <h3>Projects Directory</h3>
+                    <ul class="dynamic-links"></ul>
+                </div>
+            </aside>
+            <section>
+                <h1>Past Works</h1>
+                {{#each workCards}}
+                    {{{ this }}}
+                {{/each}}
+            </section>
+        </article>
+
+        <article class="item" id="projects">
+            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <aside class="section-nav" data-target-container=".grid-item" data-title-selector="h2">
+                <div class="sideNavContent">
+                    <h3>Mini-Projects Directory</h3>
+                    <ul class="dynamic-links"></ul>
+                </div>
+            </aside>
+            <section>
+                <h1>MiniProjects / Projects</h1>
+                <h2>Personal projects, doodles, ideas and notes to self.</h2>
+                <div class="grid">
+                    {{#each miniProjectCards}}
+                        {{{ this }}}
+                    {{/each}}
+                </div>
+            </section>
+        </article>
+
+        <!-- ESP32 Section from index.html (renamed to embedded in nav but matches ID) -->
+        <article class="item" id="embedded">
+            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <aside class="section-nav" data-target-container=".grid-item" data-title-selector="h2">
+                <div class="sideNavContent">
+                    <h3>Embedded Directory</h3>
+                    <ul class="dynamic-links"></ul>
+                </div>
+            </aside>
+            <section>
+                <h1>ESP32 / Embedded Tech</h1>
+                <h2>
+                    Microcontrollers, IoT projects, and tiny computers doing big things. (Work in Process, there's a lot of
+                    projects to go through.)
+                </h2>
+                <div class="grid">
+                    {{#each esp32Cards}}
+                        {{{ this }}}
+                    {{/each}}
+                </div>
+            </section>
+        </article>
+
+    </div>
+
+    <!-- Gallery Modal -->
+    <div id="galleryModal" class="gallery-modal">
+        <div class="gallery-modal-content">
+            <div class="gallery-header">
+                <h2 id="galleryTitle">Project Gallery</h2>
+                <button class="gallery-close" onclick="closeGallery()">&times;</button>
+            </div>
+            <div id="galleryScrollContainer" class="gallery-scroll-container">
+                <!-- Images injected here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="trianglify">
+        <div class="circle"></div>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
+        <span class="icon-sun">☀️</span>
+        <span class="icon-moon">🌙</span>
+    </button>
+
+    <script type="module" src="./scripts/indexScript.js"></script>
+    <script type="module" src="./scripts/background.js"></script>
+</body>
+
+</html>
