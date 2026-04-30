@@ -1,0 +1,1496 @@
+/*=======================================================
+                CSS Custom Properties (Theming)
+=========================================================*/
+:root {
+    /* Light Mode (Default) */
+    --bg-primary: #ffffff;
+    --bg-secondary: rgba(255, 255, 255, 0.3);
+    --bg-glass: rgba(255, 255, 255, 0.4);
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --text-muted: #888888;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --link-color: blue;
+    --accent-gradient: linear-gradient(90deg, #ff0040, #ff8a00, #ffd400, #3cd500, #00c2ff, #7a00ff, #ff0040);
+
+    /* Transition for smooth theme switching */
+    --theme-transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease;
+}
+
+/* ==================== DARK MODE - BLACK ICE ==================== */
+body.dark-mode {
+    --neon-cyan: #00f0ff;
+    --neon-magenta: #ff00ff;
+    --neon-green: #00ff66;
+
+    --bg-primary: #050508;
+    --bg-secondary: rgba(15, 15, 25, 0.7);
+    --bg-glass: rgba(20, 20, 30, 0.8);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b0;
+    --text-muted: #62627a;
+    --border-color: rgba(0, 240, 255, 0.2);
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --link-color: var(--neon-cyan);
+    --accent-gradient: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    overflow: hidden;
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.7;
+    transition: var(--theme-transition);
+}
+
+body {
+    position: fixed;
+    margin: 0;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+}
+
+/* ==================== BACKGROUND EFFECTS ==================== */
+
+body.dark-mode .trianglify {
+    background-color: #000000;
+    opacity: 0.15;
+}
+
+body.dark-mode .trianglify path {
+    opacity: 1;
+    stroke-width: 0;
+    transition: opacity 0.3s, fill 0.3s, transform 1s;
+}
+
+body.dark-mode .trianglify .fade {
+    opacity: 0.2;
+}
+
+/* Rainbow Edges */
+body.dark-mode .trianglify path:nth-child(3n) {
+    fill: #00f0ff;
+    stroke: #00f0ff;
+}
+
+body.dark-mode .trianglify path:nth-child(3n+1) {
+    fill: #ff00ff;
+    stroke: #ff00ff;
+}
+
+body.dark-mode .trianglify path:nth-child(3n+2) {
+    fill: #00ff66;
+    stroke: #00ff66;
+}
+
+body.dark-mode .trianglify path:hover,
+body.dark-mode .trianglify path:not(.fade) {
+    opacity: 1;
+    stroke-width: 0;
+    fill: #ffffff;
+}
+
+/* ==================== NAVIGATION ==================== */
+
+body.dark-mode nav {
+    background: rgba(10, 10, 20, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 2px solid var(--neon-cyan);
+}
+
+body.dark-mode nav svg {
+    height: 35px;
+    width: 35px;
+    filter: drop-shadow(0 0 5px var(--neon-cyan));
+    transition: all 0.3s;
+}
+
+body.dark-mode nav svg path {
+    fill: #ffffff;
+    transition: all 0.3s;
+}
+
+body.dark-mode nav svg:hover path {
+    fill: var(--neon-cyan);
+}
+
+body.dark-mode nav svg:hover {
+    filter: drop-shadow(0 0 15px var(--neon-cyan));
+    opacity: 1;
+}
+
+/* Card styling in Black Ice Mode - Unified across all sections */
+body.dark-mode .grid-item,
+body.dark-mode .artwork,
+body.dark-mode #work section>div {
+    position: relative;
+    background: var(--bg-glass);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    backdrop-filter: blur(15px);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s, border-color 0.3s;
+}
+
+body.dark-mode .grid-item:hover,
+body.dark-mode .artwork:hover,
+body.dark-mode #work section>div:hover {
+    border-color: rgba(0, 240, 255, 0.3);
+}
+
+body.dark-mode .grid-item::before,
+body.dark-mode .artwork::before,
+body.dark-mode #work section>div::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent-gradient);
+    opacity: 0.5;
+}
+
+@keyframes rainbowSlide {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 300% 50%;
+    }
+}
+
+/* Headlines & Text visibility */
+body.dark-mode .item {
+    color: var(--text-primary);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+body.dark-mode .item h1,
+body.dark-mode .item h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--neon-cyan);
+    text-transform: uppercase;
+}
+
+body.dark-mode .item h1 {
+    font-size: 3rem;
+    text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+}
+
+body.dark-mode .item h2 {
+    font-size: 1.6rem;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+body.dark-mode .item h1::before,
+body.dark-mode .item h2::before {
+    content: '// ';
+    color: var(--neon-magenta);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+body.dark-mode .item h3,
+body.dark-mode .item h4,
+body.dark-mode .item strong,
+body.dark-mode .item b {
+    color: var(--neon-green);
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.1em;
+}
+
+body.dark-mode .item h3 {
+    font-size: 1.1rem;
+}
+
+body.dark-mode .item h4 {
+    font-size: 0.9rem;
+}
+
+body.dark-mode .item p,
+body.dark-mode .item li,
+body.dark-mode .item span {
+    color: #e0e0e8;
+    font-weight: 400;
+}
+
+body.dark-mode code {
+    background: rgba(0, 255, 102, 0.1);
+    color: var(--neon-green);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 102, 0.2);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+body.dark-mode blockquote {
+    background: rgba(255, 255, 255, 0.05);
+    border-left-color: var(--neon-magenta);
+    color: #ffffff;
+}
+
+@keyframes glitchFlicker {
+
+    0%,
+    94%,
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    95% {
+        opacity: 0.9;
+        transform: translateX(-2px);
+    }
+
+    96% {
+        opacity: 0.95;
+        transform: translateX(2px);
+    }
+
+    97% {
+        opacity: 0.85;
+        transform: translateX(-1px);
+    }
+}
+
+/* Neon links in dark mode */
+body.dark-mode .item a {
+    color: var(--neon-green);
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s;
+}
+
+body.dark-mode .item a:hover {
+    color: #ffffff;
+    text-shadow: 0 0 10px var(--neon-green);
+}
+
+body.dark-mode .item a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--neon-magenta);
+    transition: width 0.3s;
+}
+
+body.dark-mode .item a:hover::after {
+    width: 100%;
+}
+
+/* Dark mode section-nav */
+body.dark-mode .section-nav {
+    background: rgba(15, 15, 25, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+}
+
+body.dark-mode .section-nav:hover {
+    background: rgba(15, 15, 35, 0.95);
+    box-shadow: -8px 8px 40px rgba(0, 240, 255, 0.2);
+}
+
+body.dark-mode .section-nav h3 {
+    color: var(--neon-cyan);
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 2px solid var(--neon-magenta);
+}
+
+body.dark-mode .section-nav ul li a {
+    color: var(--text-secondary);
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+body.dark-mode .section-nav ul li a:hover {
+    color: var(--neon-green);
+    text-shadow: 0 0 8px var(--neon-green);
+}
+
+/* Dark mode images */
+body.dark-mode img {
+    border-color: var(--border-color) !important;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+}
+
+body.dark-mode img:hover {
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
+}
+
+/* Dark mode footer */
+body.dark-mode .site-footer {
+    background: rgba(10, 10, 25, 0.5);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+body.dark-mode .site-footer a {
+    color: var(--neon-cyan);
+}
+
+/* Dark mode hire button - Punk Style */
+body.dark-mode #hire {
+    background: transparent !important;
+    color: var(--neon-cyan) !important;
+    border: 2px solid var(--neon-cyan) !important;
+    font-family: 'Orbitron', sans-serif !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 10px 20px !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    border-radius: 4px;
+    transition: all 0.3s !important;
+}
+
+body.dark-mode #hire:hover {
+    background: var(--neon-cyan) !important;
+    color: #000 !important;
+    box-shadow: 0 0 30px var(--neon-cyan);
+    transform: translateY(-2px);
+}
+
+/* ==================== THEME TOGGLE BUTTON ==================== */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid var(--text-secondary);
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 4px 15px var(--shadow-color);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 6px 25px var(--shadow-color);
+}
+
+.theme-toggle .icon-sun,
+.theme-toggle .icon-moon {
+    position: absolute;
+    transition: all 0.4s;
+}
+
+.theme-toggle .icon-sun {
+    opacity: 1;
+    transform: rotate(0deg);
+}
+
+.theme-toggle .icon-moon {
+    opacity: 0;
+    transform: rotate(-90deg);
+}
+
+body.dark-mode .theme-toggle {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 15px var(--neon-cyan), 0 0 30px rgba(0, 240, 255, 0.2);
+}
+
+body.dark-mode .theme-toggle:hover {
+    box-shadow: 0 0 25px var(--neon-cyan), 0 0 50px var(--neon-magenta);
+}
+
+body.dark-mode .theme-toggle .icon-sun {
+    opacity: 0;
+    transform: rotate(90deg);
+}
+
+body.dark-mode .theme-toggle .icon-moon {
+    opacity: 1;
+    transform: rotate(0deg);
+    filter: drop-shadow(0 0 5px var(--neon-cyan));
+}
+
+/*=======================================================
+                Trianglify Witchery
+=========================================================*/
+.circle {
+    width: 40vw;
+    height: 40vh;
+}
+
+path {
+    transform-origin: center bottom;
+    transition: all 1s;
+    opacity: 0.1;
+    will-change: opacity, transform, filter;
+}
+
+.fade {
+    opacity: 0.3;
+}
+
+.trianglify {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -9999;
+    overflow: hidden;
+    background-color: white;
+}
+
+/*animations for the shatter function in indexScript.js*/
+.flyUp {
+    transition: all 3s !important;
+    transform: translate(0px, -200vh) !important;
+    opacity: 1 !important;
+}
+
+.flyDown {
+    transition: all 3s !important;
+    transform: translate(0px, 200vh) !important;
+    opacity: 1 !important;
+}
+
+.flyRight {
+    transition: all 3s !important;
+    transform: translate(200vw, 0px) !important;
+    opacity: 1 !important;
+}
+
+.flyLeft {
+    transition: all 3s !important;
+    transform: translate(-200vw, 0px) !important;
+    opacity: 1 !important;
+}
+
+/*=======================================================
+                Defaults
+=========================================================*/
+
+article {
+    padding-bottom: 100px;
+}
+
+nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 100vw;
+    height: 60px;
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+    box-sizing: border-box;
+    border-bottom: 2px solid transparent;
+    /* Keeps layout parity with dark mode */
+    transition: var(--theme-transition);
+}
+
+blockquote {
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-left: 5px solid #ccc;
+    /* Subtle light mode border */
+    transition: var(--theme-transition);
+}
+
+nav svg {
+    display: block;
+    height: 35px;
+    /* Fixed px size for consistency across modes */
+    width: 35px;
+    cursor: pointer;
+    transition: all 0.3s;
+    filter: none !important;
+    /* Force reset of any JS-injected filters in light mode */
+}
+
+nav path {
+    opacity: 1;
+}
+
+nav svg:hover {
+    opacity: 0.3;
+}
+
+.item {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    /* Fill entire viewport */
+    color: black;
+    transition: all 0.5s;
+    overflow-y: auto;
+    /* Allow vertical scrolling */
+    overflow-x: hidden;
+    /* Prevent horizontal jitter */
+    scrollbar-color: black white;
+    scrollbar-width: thin;
+    padding-top: 0;
+    /* Fixed padding to prevent shift relative to 60px nav */
+    z-index: 10;
+    /* Positive z-index for content */
+}
+
+/* ==================== CUSTOM SCROLLBARS ==================== */
+
+body.dark-mode .item {
+    scrollbar-color: var(--neon-cyan) #050508;
+}
+
+.item::-webkit-scrollbar {
+    width: 12px;
+}
+
+body.dark-mode .item::-webkit-scrollbar-track {
+    background: #050508;
+}
+
+body.dark-mode .item::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--neon-cyan), var(--neon-magenta));
+    border-radius: 6px;
+    border: 3px solid #050508;
+}
+
+body.dark-mode .item::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--neon-magenta), var(--neon-cyan));
+}
+
+.item h1 {
+    font-size: 5rem;
+    margin: 0;
+}
+
+.item h2 {
+    font-size: 2rem;
+}
+
+.item p,
+.item li,
+.item span {
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+@media only screen and (max-width: 600px) {
+    .item h1 {
+        font-size: 3rem;
+    }
+
+    .item h2 {
+        font-size: 1.5rem;
+    }
+
+    .item p {
+        font-size: 1rem;
+    }
+}
+
+.item a {
+    color: var(--link-color);
+}
+
+/* Generic Grid & Card System */
+.grid {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* ==================== CONTENT SECTIONS ==================== */
+
+section {
+    padding-top: 100px;
+    padding-bottom: 10vh;
+    margin: auto 15vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Generic Card Component */
+.grid-item,
+.artwork,
+#work section>div {
+    margin: 1rem auto;
+    width: 100%;
+    box-shadow: 0 4px 10px 0 hsla(0, 0%, 0%, 0.2);
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 500px;
+    transition: transform 0.3s, border-color 0.3s;
+}
+
+.grid-item ul,
+.artwork ul,
+#work section>div ul,
+.grid-item li,
+.artwork li,
+#work section>div li {
+    list-style: none;
+    padding: 0;
+}
+
+.grid-item li,
+.artwork li,
+#work section>div li {
+    margin: 1rem;
+}
+
+/*=======================================================
+                Loading Screen
+=========================================================*/
+
+#loading {
+    background-color: white;
+    z-index: 100;
+}
+
+/*=======================================================
+                Elevator pitch
+=========================================================*/
+#elevatorPitch section {
+    margin: 0 15%;
+}
+
+#elevatorPitch #jobs {
+    margin-top: 5%;
+}
+
+#jobs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+#elevatorPitch a {
+    font-weight: 700;
+    color: #666;
+    border-radius: 80px;
+    font-size: 1.5rem;
+    margin: 0 1rem 1rem 1rem;
+}
+
+#elevatorPitch a#hire {
+    padding: 14px 64px;
+    text-decoration: none;
+    color: white;
+}
+
+@media only screen and (max-width: 1000px) {
+    #elevatorPitch a {
+        margin: auto;
+    }
+}
+
+@media only screen and (max-width: 600px) {
+    #jobs {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #elevatorPitch section {
+        margin: auto;
+    }
+}
+
+/*=======================================================
+                hobby page
+=========================================================*/
+#hobby h1 {
+    font-size: 4em;
+    text-align: center;
+    padding: 35px;
+    background: linear-gradient(90deg,
+            #ff0040,
+            #ff8a00,
+            #ffd400,
+            #3cd500,
+            #00c2ff,
+            #7a00ff,
+            #ff0040);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow-shift 3s alternate infinite;
+    filter: drop-shadow(3px 3px 1px black) drop-shadow(-3px 3px 1px black) drop-shadow(3px -3px 1px black) drop-shadow(-3px -3px 1px black);
+}
+
+@keyframes rainbow-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    #hobby h1 {
+        animation: none;
+    }
+}
+
+#hobby .headers {
+    margin-bottom: 1em;
+}
+
+#hobby .artworks {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#hobby .artwork {
+    margin-top: 20px;
+}
+
+#hobby .artwork h2 {
+    margin: 0;
+}
+
+#hobby .medias {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#hobby .medias .videos {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#hobby .medias .videos iframe {
+    aspect-ratio: 1/2;
+    width: 30%;
+    min-width: 200px;
+    border-radius: 20px;
+    border: 3px solid black;
+}
+
+#hobby .images {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    /* Center thumbnails and images */
+    width: 100%;
+    margin: auto;
+}
+
+/* ==================== SPOILER (DETAILS/SUMMARY) ==================== */
+details {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin: 20px 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+body.dark-mode details {
+    background: rgba(0, 240, 255, 0.03);
+    border-color: rgba(0, 240, 255, 0.2);
+}
+
+details summary {
+    padding: 15px 20px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    color: var(--neon-cyan);
+    list-style: none;
+    position: relative;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+details summary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+details summary::-webkit-details-marker {
+    display: none;
+}
+
+details summary::after {
+    content: '▼';
+    position: absolute;
+    right: 20px;
+    transition: transform 0.3s;
+}
+
+details[open] summary::after {
+    transform: rotate(180deg);
+}
+
+.spoiler-content {
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#hobby img,
+#work .medias img,
+#embedded .medias img {
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+    margin-top: 5px;
+    border-radius: 20px;
+    border: 3px solid var(--text-primary);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gallery-thumbnail img {
+    width: 100% !important;
+    max-width: 300px !important;
+    margin: auto;
+    border-radius: 20px;
+    border: 3px solid var(--text-primary);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Dark mode overrides for border - more subtle neon */
+body.dark-mode #hobby img,
+body.dark-mode #work .medias img,
+body.dark-mode #embedded .medias img,
+body.dark-mode .gallery-thumbnail img {
+    border-color: var(--border-color);
+}
+
+/* Unified Smartphone Layout (portrait and landscape) */
+@media only screen and (max-width: 600px) {
+    section {
+        margin: auto;
+        padding-top: 80px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .grid-item,
+    .artwork,
+    #work section>div,
+    .item section h1,
+    .item section h2,
+    .item section p,
+    .item section ul,
+    .item section blockquote {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .grid-item,
+    .artwork,
+    #work section>div {
+        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+        margin-top: 15px;
+        padding: 15px;
+    }
+
+    iframe,
+    #hobby .medias .videos iframe,
+    #hobby img,
+    #work .medias img {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 10px;
+    }
+
+    /* 🎨 Hobby Header Mobile Optimization */
+    #hobby h1 {
+        font-size: 2.2rem !important;
+        padding: 10px !important;
+        line-height: 1.2;
+        margin-top: 20px;
+    }
+
+    #hobby h2 {
+        font-size: 1.4rem !important;
+    }
+}
+
+/* Tablets (portrait and landscape) */
+@media only screen and (min-width: 601px) and (max-width: 1024px) {
+    section {
+        margin: auto 5vw;
+    }
+
+    .grid-item,
+    .artwork,
+    #work section>div {
+        width: 90vw;
+        box-shadow: 8px 8px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #hobby img {
+        width: 45vw;
+        border-radius: 15px;
+    }
+}
+
+/* Full-width generic sections */
+#projects,
+#work,
+#embedded {
+    width: 100%;
+}
+
+#work {
+    margin: auto;
+}
+
+#work section {
+    margin-bottom: 5%;
+}
+
+#work figure {
+    width: 50%;
+    margin: auto;
+}
+
+#work figure img {
+    width: 100%;
+}
+
+#work figure figcaption {
+    text-align: center;
+}
+
+#work .medias {
+    margin: auto;
+    width: 80%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+/* #work .medias img inherited from global block */
+
+#work .videos {
+    text-align: center;
+}
+
+#work iframe {
+    height: 500px;
+}
+
+#work ul p {
+    margin: 5px;
+}
+
+/* ==================== VIEWPORT ANIMATIONS ==================== */
+.reveal {
+    top: 0;
+    left: 0;
+    transform: none !important;
+    /* Critical: allows fixed children to stay truly fixed */
+    z-index: 20;
+}
+
+.hide {
+    left: -200vw !important;
+    content-visibility: hidden;
+    contain-intrinsic-size: 100vw 100vh;
+}
+
+/* Performance optimization: lazy render handled by global .grid-item/.artwork blocks */
+
+.spin {
+    transform: rotate(90deg);
+}
+
+/*
+@keyframes revealy{
+    from{
+        left: -100vw;
+        transform: rotate(90deg);
+    }
+
+    to{
+        top: 6vh;
+        left: 0;
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes hidey{
+    from{
+        top: 6vh;
+        left: 0;
+        transform: rotate(0deg);
+    }
+
+    to{
+        top: 0;
+        left: -100vw;
+        transform: rotate(90deg);
+    }
+}
+*/
+
+@media all and (max-width: 800px) {
+
+    .masonry,
+    .item {
+        width: 100%;
+    }
+
+    .circle {
+        width: 50%;
+        height: 50%;
+    }
+}
+
+/* =======================================================
+                Section Navigation (TOC)
+========================================================= */
+
+.section-nav {
+    position: fixed;
+    top: 15%;
+    right: 0;
+    width: 200px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 20px 0 0 20px;
+    box-shadow: -8px 8px 32px 0 rgba(0, 0, 0, 0.1);
+    z-index: 2000;
+    /* Ensure it stays above navigation bar and content */
+    padding: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    text-align: center;
+
+    /* Hidden state - only 20% visible */
+    transform: translateX(80%);
+    /* Pure CSS transition for smooth slide */
+    transition: transform 0.6s ease-in-out, background 0.4s ease;
+}
+
+.section-nav:hover {
+    transform: translateX(0);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Nudge class for periodic peek - toggled by JS */
+.section-nav.nudge {
+    transform: translateX(70%);
+}
+
+.section-nav .sideNavContent h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    color: #000;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.section-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.section-nav ul li {
+    margin-bottom: 12px;
+}
+
+.section-nav ul li a {
+    color: #000;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    display: block;
+    opacity: 0.7;
+}
+
+.section-nav ul li a:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Toggle Button for Mobile */
+.section-nav-toggle {
+    display: none;
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    z-index: 1001;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Unified Toggle Bars */
+.section-nav-toggle .bar,
+.global-nav-toggle .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #000;
+    margin: 5px 0;
+    transition: 0.4s;
+}
+
+/* Global mobile toggle - outside scroll containers */
+.global-nav-toggle {
+    display: none;
+    position: fixed;
+    top: 70px;
+    right: 15px;
+    z-index: 9999;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.global-nav-toggle .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #000;
+    margin: 5px 0;
+    transition: 0.4s;
+}
+
+.global-nav-toggle.active .bar:nth-child(1) {
+    transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.global-nav-toggle.active .bar:nth-child(2) {
+    opacity: 0;
+}
+
+.global-nav-toggle.active .bar:nth-child(3) {
+    transform: rotate(45deg) translate(-5px, -6px);
+}
+
+@media only screen and (max-width: 1024px) {
+    .section-nav {
+        position: fixed;
+        right: 0;
+        top: 0;
+        height: 100vh;
+        max-height: 100vh;
+        width: 220px;
+        border-radius: 0;
+        background: rgba(255, 255, 255, 0.95);
+        border: none;
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        float: none;
+        margin-right: 0;
+    }
+
+    .section-nav:hover {
+        transform: translateX(100%) !important;
+    }
+
+    .section-nav.active {
+        transform: translateX(0) !important;
+    }
+
+    .section-nav.nudge {
+        transform: translateX(100%);
+        /* No nudge on mobile */
+    }
+
+    .section-nav-toggle {
+        display: none !important;
+        /* Hide section toggles on mobile */
+    }
+
+    .global-nav-toggle {
+        display: block;
+        /* Show global toggle on mobile */
+    }
+}
+
+/* Smooth scrolling for anchor links within sections */
+.item {
+    scroll-behavior: smooth;
+}
+
+/*=======================================================
+                Embedded / ESP32 Section
+=========================================================*/
+#embedded {
+    width: 100%;
+}
+
+
+
+/*=======================================================
+                Footer Styles
+=========================================================*/
+.site-footer {
+    text-align: center;
+    padding: 30px 20px;
+    margin-top: 40px;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.site-footer a {
+    color: rgba(0, 0, 0, 0.6);
+    text-decoration: underline;
+}
+
+.site-footer a:hover {
+    color: rgba(0, 0, 0, 0.9);
+}
+
+/*=======================================================
+                Gallery Modal System
+=========================================================*/
+.gallery-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 99999;
+    display: none;
+    /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.gallery-modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+.gallery-modal-content {
+    position: relative;
+    width: 90%;
+    max-width: 1000px;
+    height: 90%;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gallery-modal.active .gallery-modal-content {
+    transform: translateY(0);
+}
+
+.gallery-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.gallery-header h2 {
+    margin: 0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+.gallery-close {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: transform 0.3s;
+}
+
+.gallery-close:hover {
+    transform: scale(1.2);
+    color: var(--neon-magenta);
+}
+
+.gallery-scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    scrollbar-width: thin;
+    scrollbar-color: black white;
+}
+
+/* Custom Scrollbar for Gallery Modal (Webkit) */
+.gallery-scroll-container::-webkit-scrollbar {
+    width: 12px;
+}
+
+body.dark-mode .gallery-scroll-container {
+    scrollbar-color: var(--neon-cyan) #050508;
+}
+
+body.dark-mode .gallery-scroll-container::-webkit-scrollbar-track {
+    background: #050508;
+}
+
+body.dark-mode .gallery-scroll-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--neon-cyan), var(--neon-magenta));
+    border-radius: 6px;
+    border: 3px solid #050508;
+}
+
+body.dark-mode .gallery-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--neon-magenta), var(--neon-cyan));
+}
+
+.gallery-scroll-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--border-color);
+    /* Load only when visible in the modal */
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.6s, transform 0.6s;
+}
+
+.gallery-scroll-container img.loaded {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Button to trigger gallery */
+.view-gallery-btn {
+    display: block;
+    margin: 15px auto;
+    padding: 10px 25px;
+    background: var(--accent-gradient);
+    background-size: 200% auto;
+    border: none;
+    border-radius: 30px;
+    color: white;
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.view-gallery-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    background-position: right center;
+}
+
+body.dark-mode .view-gallery-btn {
+    box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+/* Thumbnail interaction */
+.gallery-thumbnail {
+    cursor: pointer;
+    transition: transform 0.3s, filter 0.3s;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 20px;
+    /* Match image rounding */
+}
+
+.gallery-thumbnail:hover {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+}
+
+.gallery-thumbnail::after {
+    content: '🔍 View Gallery';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.gallery-thumbnail:hover::after {
+    opacity: 1;
+}

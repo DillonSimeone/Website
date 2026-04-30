@@ -1,0 +1,32 @@
+{
+  "name": "website",
+  "version": "1.0.0",
+  "description": "",
+  "main": "background.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DillonSimeone/Website.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DillonSimeone/Website/issues"
+  },
+  "homepage": "https://github.com/DillonSimeone/Website#readme",
+  "devDependencies": {
+    "glob": "^13.0.6",
+    "terser": "^5.46.2",
+    "vite": "^8.0.10",
+    "vite-plugin-handlebars": "^2.0.3",
+    "vite-plugin-minify": "^2.1.0",
+    "vite-plugin-singlefile": "^2.3.3",
+    "vite-plugin-static-copy": "^4.1.0"
+  }
+}
