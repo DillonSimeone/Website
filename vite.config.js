@@ -19,7 +19,7 @@ function getCards(category) {
 export default defineConfig({
     root: 'src',
     publicDir: resolve(__dirname, 'public'),
-    base: './',
+    base: '/',
     build: {
         outDir: '../dist',
         emptyOutDir: true,
