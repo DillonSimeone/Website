@@ -1,6 +1,6 @@
 // script.js
 const calendarId = '114c605c4a403e08817034e51cb607ffc972723336e77143e8878c52da2a5bf4@group.calendar.google.com';
-const apiKey = 'AIzaSyC4TJudtEnaR4RILiwAjMFOdpgg6UeJvos';
+const apiKey = 'AIzaSyC4TJudtEnaR4RILiwAjMFOdpgg6UeJvos'; // NOTE: Restricted to woodstock.cafe and dillonsimeone.github.io
 
 async function fetchEvents() {
     try {

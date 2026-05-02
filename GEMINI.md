@@ -48,4 +48,5 @@ To change the "seed" or layout of the background, use the tools now located in t
 ## 4. Maintenance & Deployment
 *   **Dev Mode**: Run `npm run dev` for local development with hot-reloading.
 *   **Build**: Run `npm run build` to generate the production `dist/index.html`.
+*   **Content Generation**: Use `CreateEntry.bat` in the root folder to quickly generate a new modular content card in the correct `src/content/` subfolder.
 *   **Deployment**: Automated via GitHub Actions (see `GitHubActions.md` for setup instructions). Deployment targets the `gh-pages` branch, keeping the `main` repository clean.
