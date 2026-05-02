@@ -609,6 +609,13 @@ body.dark-mode .item::-webkit-scrollbar-thumb:hover {
     color: var(--link-color);
 }
 
+.gif-video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
 /* Generic Grid & Card System */
 .grid {
     width: 100%;
