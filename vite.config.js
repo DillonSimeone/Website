@@ -6,14 +6,17 @@ import { resolve } from 'path';
 import fs from 'fs';
 
 // Helper to read all html files in a directory and return their contents
-function getCards(category) {
+function getCards(category, reverse = false) {
     const dir = resolve(__dirname, `src/content/${category}`);
     if (!fs.existsSync(dir)) return [];
     
-    return fs.readdirSync(dir)
+    let files = fs.readdirSync(dir)
         .filter(file => file.endsWith('.html'))
-        .sort() // Ensure consistent order
-        .map(file => fs.readFileSync(resolve(dir, file), 'utf-8'));
+        .sort(); // Ensure consistent order
+        
+    if (reverse) files.reverse();
+    
+    return files.map(file => fs.readFileSync(resolve(dir, file), 'utf-8'));
 }
 
 export default defineConfig({
@@ -38,14 +41,19 @@ export default defineConfig({
     plugins: [
         handlebars({
             partialDirectory: resolve(__dirname, 'src/partials'),
-            context: {
-                laserCards: getCards('laser'),
-                printingCards: getCards('3dprinting'),
-                workCards: getCards('work'),
-                miniProjectCards: getCards('mini-projects'),
-                esp32Cards: getCards('esp32'),
+            context() {
+                return {
+                    laserCards: getCards('laser'),
+                    printingCards: getCards('3dprinting'),
+                    workCards: getCards('work'),
+                    miniProjectCards: getCards('mini-projects'),
+                    esp32Cards: getCards('esp32'),
+                    shopCards: getCards('shop', true),
+                };
             },
         }),
+
+
         ViteMinifyPlugin({
             collapseWhitespace: true,
             removeComments: true,

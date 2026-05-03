@@ -175,6 +175,31 @@
             </section>
         </article>
 
+        <article class="item" id="shop">
+            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <aside class="section-nav" data-target-container=".grid-item" data-title-selector="h2">
+                <div class="sideNavContent">
+                    <h3>Shop Directory</h3>
+                    <ul class="dynamic-links"></ul>
+                </div>
+            </aside>
+            <section>
+                <h1>Dillon's Shop</h1>
+                <h2>Hand-crafted tech, art, and experiments.</h2>
+                <div class="grid">
+                    {{#each shopCards}}
+                        {{{ this }}}
+                    {{/each}}
+                </div>
+            </section>
+        </article>
+
+
+
     </div>
 
     <!-- Gallery Modal -->

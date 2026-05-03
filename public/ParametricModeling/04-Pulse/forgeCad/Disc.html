@@ -434,22 +434,23 @@
 
                 // ===== COMPONENT POCKETS =====
                 let pock = {};
-                                const pZ = splitLine + sledH/2; // top of sled
+                const pZ = splitLine + sledH/2; // top of sled
+                const pZb = splitLine - sledH/2; // bottom of sled
 
-                // Motor pocket (center, horizontal)
-                                pock.motor = cyl(motorH / 2 + 0.5, motorL + 1, 32).rotate([90, 0, 0]).translate([0, 0, splitLine + sledH/2 + motorH / 2]);
+                // Motor pocket (center, horizontal — on top)
+                pock.motor = cyl(motorH / 2 + 0.5, motorL + 1, 32).rotate([90, 0, 0]).translate([0, 0, splitLine + sledH/2 + motorH / 2]);
 
-                // MX1508 driver (flat on sled, offset from center)
+                // MX1508 driver (flat on TOP of sled, offset from center)
                 const drvDist = clR + tabW + drvW / 2 + 2;
                 pock.driver = box(drvW + 0.5, drvD + 0.5, drvH + 0.5).translate([drvDist, 0, pZ + drvH / 2]);
 
-                // ESP32-C3 SuperMini (flat on sled, opposite side)
-                pock.esp32 = box(espW + 0.5, espD + 0.5, espH + 0.5).translate([-drvDist, 0, pZ + espH / 2]);
+                // ESP32-C3 SuperMini (flat on BOTTOM of sled)
+                pock.esp32 = box(espW + 0.5, espD + 0.5, espH + 0.5).translate([-drvDist, 0, pZb - espH / 2]);
 
-                // Battery (flat on sled, perpendicular axis)
-                pock.battery = box(batW + 0.5, batD + 0.5, batH + 0.5).translate([0, -(clR + batD / 2 + 3), pZ + batH / 2]);
+                // Battery (flat on BOTTOM of sled)
+                pock.battery = box(batW + 0.5, batD + 0.5, batH + 0.5).translate([0, -(clR + batD / 2 + 3), pZb - batH / 2]);
 
-                // TP4056 charger (flat on sled, USB facing edge)
+                // TP4056 charger (flat on TOP of sled, USB facing edge)
                 const chDist = rimR - wall - chW / 2 - 2;
                 pock.charger = box(chW + 0.5, chD + 0.5, chH + 0.5).translate([chDist, 0, pZ + chH / 2]);
 
