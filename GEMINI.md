@@ -1,52 +1,64 @@
 # Portfolio Website Documentation
 
 ## 1. Modular Architecture (Vite)
-The website has been refactored from a monolithic `index.html` into a modular, production-ready system powered by **Vite**.
+The website is a modular SPA powered by **Vite** and **Handlebars**. Content is decoupled from the main template for ease of maintenance.
 
 ### Project Structure
-*   **`src/`**: Contains the source code.
-    *   **`index.html`**: The main template.
-    *   **`partials/`**: Reusable HTML components (`nav.html`, `hero.html`).
-    *   **`content/`**: Individual project cards and section content organized by category (`laser/`, `3dprinting/`, `work/`, `esp32/`).
-    *   **`scripts/`**: Modularized logic (`indexScript.js`, `background.js`).
-*   **`public/`**: Static assets (Images, PDFs, Mini-Projects) that are copied as-is to the build output.
-*   **`dist/`**: The production build (ignored by Git).
-*   **`legacy/`**: Original root files preserved for reference.
+*   **`src/`**: Source code.
+    *   **`index.html`**: The main Handlebars template.
+    *   **`partials/`**: Reusable components (`nav.html`, `hero.html`).
+    *   **`content/`**: Categorized HTML fragments injected via `vite.config.js`.
+    *   **`scripts/`**: Business logic (`indexScript.js`, `background.js`).
+*   **`public/`**: Static assets (Images, PDFs, Mini-Projects) served as-is.
+*   **`dist/`**: Single-file production build (generated via `npm run build`).
 
-### Build Pipeline
-The site uses an "Extreme Minification" process:
-1.  **Modular Injection**: Handlebars partials and content cards are dynamically injected into the template.
-2.  **Inlining**: All CSS and JavaScript are inlined into a single `dist/index.html` using `vite-plugin-singlefile`.
-3.  **Compression**: `Terser` and `ViteMinifyPlugin` strip all whitespace, comments, and console logs.
-4.  **Cleanup**: A custom post-build script removes unwanted folders (`venv`, `.pio`, `node_modules`) from the sub-project directories in `dist`.
-
----
-
-## 2. Background Optimization System
-The website uses a high-performance background system that combines the aesthetic of dynamic geometric patterns with the speed of static assets.
-
-### How it works
-1.  **Static Skeletons:** Instead of generating thousands of triangles in real-time, the site loads pre-calculated SVG "skeletons" stored as strings in `background.js`.
-2.  **Dynamic Re-skinning:** Upon page load, the script picks a random color palette (via `randomColors.js`) and applies it to the static SVG paths.
-3.  **Performance:** Switched from `trianglify.min.js` to a lightweight static model. CPU usage for background rendering is ~0%.
-
-### Regeneration Tools (Moved to `legacy/`)
-To change the "seed" or layout of the background, use the tools now located in the `legacy/` folder:
-*   **`RegenerateBackground.bat`**: The one-click entry point.
-*   **`rebuild.py`**: Orchestrates the generator flow.
-*   **`generator.html`**: The math engine using `trianglify.min.js`.
+### Content Injection Mapping
+The `getCards` helper in `vite.config.js` maps folders to Handlebars variables:
+| Folder | Handlebars Variable | Usage |
+| :--- | :--- | :--- |
+| `src/content/laser/` | `{{laserCards}}` | Laser Cutting section |
+| `src/content/3dprinting/` | `{{printingCards}}` | 3D Printing section |
+| `src/content/work/` | `{{workCards}}` | Professional works |
+| `src/content/mini-projects/`| `{{miniProjectCards}}`| Grid-based mini projects |
+| `src/content/esp32/` | `{{esp32Cards}}` | Embedded tech (sorted ASC) |
+| `src/content/shop/` | `{{shopCards}}` | Stripe products (sorted DESC) |
 
 ---
 
-## 3. CSS Architecture & Theming
-*   **Theming**: Uses CSS variables (`--bg-primary`, `--neon-cyan`, etc.) for seamless Light/Dark mode switching. State is persisted via `localStorage`.
-*   **Performance**: Implemented `content-visibility: auto` on heavy components like project cards to improve scroll performance.
-*   **Global Layout**: Redundant rules for sections and grids have been merged into core selectors for consistency across all categories.
+## 2. Media & Gallery System
+Images are handled dynamically in `indexScript.js` via the `initSectionGalleries` function.
+
+### How it works:
+1.  **Detection**: The script looks for `.images` or `.medias` containers within project cards.
+2.  **Conversion**: If multiple images are found, the script hides the list and generates a **Gallery Thumbnail**.
+3.  **Modal**: Clicking the thumbnail opens a high-performance modal gallery (`openGallery`) that supports lazy-loading and staggered entrance animations.
 
 ---
 
-## 4. Maintenance & Deployment
-*   **Dev Mode**: Run `npm run dev` for local development with hot-reloading.
-*   **Build**: Run `npm run build` to generate the production `dist/index.html`.
-*   **Content Generation**: Use `CreateEntry.bat` in the root folder to quickly generate a new modular content card in the correct `src/content/` subfolder.
-*   **Deployment**: Automated via GitHub Actions (see `GitHubActions.md` for setup instructions). Deployment targets the `gh-pages` branch, keeping the `main` repository clean.
+## 3. Background Optimization
+The background uses high-performance SVG "skeletons" to avoid the heavy math overhead of `trianglify.js` on every load.
+1.  **Static Paths**: Stored as strings in `background.js`.
+2.  **Thematic Re-skinning**: A random palette is applied to the paths on load.
+3.  **Zero Overhead**: CPU usage is ~0% after initial paint.
+
+---
+
+## 4. Shop & Stripe Integration
+The shop section uses a modular product system.
+- **Product Files**: Located in `src/content/shop/`.
+- **Naming**: Use `01-`, `02-` prefixes to control order (Sorted in reverse in `vite.config.js`).
+- **Payments**: Uses direct Stripe Checkout links (`buy.stripe.com`).
+
+---
+
+## 5. Development & Build Pipeline
+*   **Dev Mode (`npm run dev`)**: The Handlebars `context` is a **function** that re-reads content files on every request, allowing for Hot Module Replacement (HMR) of content fragments.
+*   **Single-File Build**: `vite-plugin-singlefile` inlines all CSS, JS, and small assets into a single `dist/index.html` for extreme portability and speed.
+*   **Post-Build Cleanup**: Automatically removes `node_modules`, `.pio`, and other build artifacts from sub-project directories in `dist`.
+
+---
+
+## 6. Maintenance Tools
+*   **`CreateEntry.bat`**: The recommended way to add new projects. Supports Laser, 3D Print, Work, Mini-Projects, ESP32, and Shop categories.
+*   **`RegenerateBackground.bat`**: Located in `legacy/`, used to generate new SVG skeletons if the background layout needs to change.
+

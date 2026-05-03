@@ -1441,7 +1441,7 @@ body.dark-mode .gallery-scroll-container::-webkit-scrollbar-thumb:hover {
     padding: 10px 25px;
     background: var(--accent-gradient);
     background-size: 200% auto;
-    border: none;
+    border: 2px solid rgba(0, 0, 0, 0.1); /* Added subtle border for light mode */
     border-radius: 30px;
     color: white;
     font-family: 'Share Tech Mono', monospace;
@@ -1450,14 +1450,16 @@ body.dark-mode .gallery-scroll-container::-webkit-scrollbar-thumb:hover {
     letter-spacing: 1px;
     cursor: pointer;
     transition: all 0.3s;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); /* Slightly softer shadow */
 }
 
 .view-gallery-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    transform: translateY(-3px); /* More pronounced hover lift */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
     background-position: right center;
+    border-color: rgba(0, 0, 0, 0.2);
 }
+
 
 body.dark-mode .view-gallery-btn {
     box-shadow: 0 0 15px var(--neon-cyan);

@@ -248,6 +248,7 @@ function setUp() {
     initHobbyGalleries();
     initProjectGalleries();
     initSectionGalleries('embedded', '.grid-item', 0);
+    initSectionGalleries('shop', '.grid-item', 0);
 }
 
 /**
@@ -341,7 +342,7 @@ document.addEventListener('click', (e) => {
  * Injects commit-driven footers into main articles.
  */
 function injectFooters() {
-    const sectionsWithFooter = ['hobby', 'work', 'projects', 'embedded'];
+    const sectionsWithFooter = ['hobby', 'work', 'projects', 'embedded', 'shop'];
 
     sectionsWithFooter.forEach(sectionId => {
         const article = document.getElementById(sectionId);
