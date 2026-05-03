@@ -355,6 +355,368 @@
             margin: 0;
         }
 
+        .bom-section {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 48px;
+            border-radius: 24px;
+            margin-top: 80px;
+        }
+
+        .bom-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+        }
+
+        .category-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            font-weight: 900;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .bom-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .bom-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            padding: 16px 20px;
+            border-radius: 14px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+
+        .bom-link:hover {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: var(--accent);
+            color: #fff;
+            transform: translateX(8px);
+            box-shadow: -10px 0 30px -15px var(--accent);
+        }
+
+        .bom-link::after {
+            content: 'VIEW';
+            font-size: 0.65rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            padding: 4px 8px;
+            background: var(--border);
+            border-radius: 4px;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .bom-link:hover::after {
+            background: var(--accent);
+            color: #020617;
+            opacity: 1;
+        }
+
+        .bom-hero {
+            width: 100%;
+            margin-bottom: 60px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .bom-category.centered {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .bom-category.centered .category-title {
+            justify-content: center;
+        }
+
+        .category-desc {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 32px;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .bom-category.centered .bom-items {
+            margin: 0 auto;
+        }
+
+        .video-link {
+            color: #a855f7;
+            text-decoration: underline;
+            text-shadow: 0 0 10px #a855f7;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .video-link:hover {
+            text-shadow: 0 0 20px #a855f7;
+            filter: brightness(1.2);
+        }
+
+        .bom-wide {
+            width: 100%;
+            margin-top: 48px;
+            border-top: 1px solid var(--border);
+            padding-top: 48px;
+        }
+
+        .bom-wide .bom-items {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        .future-snippet {
+            margin-top: 32px;
+            padding: 20px;
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .future-snippet strong {
+            color: #3b82f6;
+        }
+
+        .infra-section {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(2, 6, 23, 0) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 48px;
+            border-radius: 24px;
+            margin-top: 80px;
+        }
+
+        .infra-section h2 {
+            color: #3b82f6 !important;
+        }
+
+        .software-section {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, rgba(2, 6, 23, 0) 100%);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            padding: 48px;
+            border-radius: 24px;
+            margin-top: 80px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .software-section h2 {
+            color: #a855f7 !important;
+        }
+
+        .philosophy-section {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(2, 6, 23, 0) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 48px;
+            border-radius: 24px;
+            margin-top: 80px;
+        }
+
+        .philosophy-section h2 {
+            color: #6366f1 !important;
+        }
+
+        .bom-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(2, 6, 23, 0) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            padding: 48px;
+            border-radius: 24px;
+            margin-top: 80px;
+        }
+
+        .bom-section h2 {
+            color: #f59e0b !important;
+        }
+
+        .saucer-section {
+            background: linear-gradient(135deg, rgba(244, 114, 182, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
+            border: 1px solid rgba(244, 114, 182, 0.2);
+            padding: 48px;
+            border-radius: 24px;
+            margin-top: 80px;
+            display: flex;
+            align-items: center;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .saucer-content {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .saucer-badge {
+            background: #f472b6;
+            color: #020617;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+
+        .portal-demo {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            width: 100%;
+            max-width: 300px;
+            margin: 40px auto;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            font-family: 'Inter', sans-serif;
+            border-top: 4px solid var(--accent);
+        }
+
+        .portal-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        .portal-body {
+            padding: 24px;
+        }
+
+        .mon {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .mi {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .ml {
+            font-size: 0.6rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .mv {
+            font-size: 0.9rem;
+            color: #fff;
+            font-weight: 800;
+            font-family: monospace;
+        }
+
+        .slider-group {
+            margin-bottom: 16px;
+        }
+
+        .slider-group label {
+            display: block;
+            font-size: 0.65rem;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .slider-track {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .slider-thumb {
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .portal-btn {
+            width: 100%;
+            background: var(--accent);
+            color: #020617;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 2.5rem;
@@ -387,18 +749,18 @@
                 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 4px; color: var(--accent); font-weight: 900; margin-top: -10px;">
                 Distributed Haptic Broadcast</div>
             <p class="subtitle">
-                A massively scalable ESP-NOW follower prototype. Real-time FFT leader nodes broadcast stimulus patterns
-                to unlimited distributed nodes.
-                Optimized for rapid 2026-stack parametric manufacturing.
+                I built this as a prototype for a massively scalable haptic broadcast system. I'm using ESP-NOW to send
+                real-time FFT patterns from a single leader node to as many followers as I want: it's designed to be
+                fast, cheap, and ready for 2026-stack parametric manufacturing.
             </p>
         </header>
 
         <section class="infra-section">
             <h2 style="font-size: 2rem; letter-spacing: -1px; margin-top: 0;">Standalone Infrastructure</h2>
             <p style="color: #cbd5e1; max-width: 800px; line-height: 1.6;">
-                PULSE leverages the <strong>ESP-NOW</strong> protocol to bypass traditional networking bottlenecks.
-                It is a completely autonomous ecosystem designed for industrial-scale deployment without external
-                dependencies.
+                I chose the <strong>ESP-NOW</strong> protocol for PULSE so I could bypass all the usual Wi-Fi and
+                networking headaches. It’s a completely autonomous ecosystem; I wanted something that could scale to an
+                industrial level without needing any external dependencies like routers or cloud servers.
             </p>
             <div class="infra-grid">
                 <div class="infra-card logic">
@@ -419,29 +781,218 @@
             </div>
         </section>
 
-        <section class="writeup">
-            <h2>Engineering Philosophy: Parametric Scaling</h2>
+        <section class="software-section">
+            <div style="flex: 1; min-width: 300px;">
+                <h2 style="font-size: 2rem; letter-spacing: -1px; margin-top: 0;">The Software Engine: Broadcast &
+                    Synchronization</h2>
+                <p>
+                    I built the software engine for PULSE to be as responsive as possible. For the Leader node, I'm
+                    using <strong>arduinoFFT</strong> to slice incoming audio into discrete frequency bands: I'm not
+                    just sending raw volume, I'm analyzing the sound in real-time on the ESP32-C3, splitting it into
+                    Bass, Mids, Treble, and Transients. This data is then packed into a tight struct and broadcasted
+                    over <strong>ESP-NOW</strong> at roughly 100Hz.
+                </p>
+                <p>
+                    The Followers are designed to be as lightweight as possible. Each node listens for the broadcast and
+                    filters for its assigned channel. I implemented an <strong>Asymmetric Envelope</strong> (Instant
+                    Attack, Slow Decay) on the followers; this ensures that even if a frame is dropped over the air, the
+                    haptic motor feels responsive and doesn't stutter during fast transients.
+                </p>
+                <p>
+                    I also built a mobile-friendly <strong>Captive Portal</strong> for the Leader. It lets me tune the
+                    mic gain, motor gates, and frequency splits from my phone without having to re-flash the code: it’s
+                    the ultimate way to calibrate the haptics in real-time.
+                </p>
+                <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/Communications/WirelessHaptic"
+                    target="_blank" class="bom-link" style="max-width: 100%; margin-top: 24px;">
+                    View Source on GitHub
+                </a>
+            </div>
+
+            <div class="portal-demo">
+                <div class="portal-header">
+                    <div class="status-dot"></div>
+                    DillonSimeoneHaptics
+                </div>
+                <div class="portal-body">
+                    <div class="mon">
+                        <div class="mi">
+                            <div class="ml">Audio (MAD)</div>
+                            <div class="mv">1242</div>
+                        </div>
+                        <div class="mi">
+                            <div class="ml">Peak Freq (Hz)</div>
+                            <div class="mv">62</div>
+                        </div>
+                        <div class="mi">
+                            <div class="ml">Bass Energy</div>
+                            <div class="mv">842</div>
+                        </div>
+                    </div>
+                    <div class="portal-controls">
+                        <div class="slider-group">
+                            <label>Mic Gain</label>
+                            <div class="slider-track">
+                                <div class="slider-thumb" style="left: 60%;"></div>
+                            </div>
+                        </div>
+                        <div class="slider-group">
+                            <label>Motor Gate</label>
+                            <div class="slider-track">
+                                <div class="slider-thumb" style="left: 30%;"></div>
+                            </div>
+                        </div>
+                        <button class="portal-btn">Save Configuration</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bom-section">
+            <h2 style="font-size: 2rem; letter-spacing: -1px; margin-top: 0;">Bill of Materials</h2>
+            <p style="color: #cbd5e1; max-width: 800px; line-height: 1.6; margin-bottom: 40px;">
+                I've centered the hardware around standard, modular components that are easy to find. My parametric
+                scripts are tuned specifically to these parts, so every time I print a new shell or sled, everything
+                snaps together with a perfect friction-fit.
+            </p>
+
+            <div class="bom-hero">
+                <div class="bom-category centered">
+                    <div class="category-title">Intelligence: ESP32-C3 SuperMini</div>
+                    <p class="category-desc">
+                        The <strong>SuperMini</strong> is basically the brain of everything I build here. I love these
+                        boards because they're dirt cheap; I usually grab them for <strong>under $2.00</strong> during
+                        big sales. More importantly, they're fully <strong>Open-Source Hardware</strong>. Right down to
+                        the RISC-V CPU architecture, everything is open, which keeps the whole infrastructure
+                        transparent and easy to verify.
+                    </p>
+                    <div class="bom-items">
+                        <a href="https://www.aliexpress.us/item/3256808061811691.html" target="_blank"
+                            class="bom-link">ESP32-C3 SuperMini MCU (Core Node)</a>
+                        <a href="https://www.espboards.dev/esp32/esp32-c3-super-mini/" target="_blank"
+                            class="bom-link">Pinout & Technical Datasheet</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bom-grid">
+                <div class="bom-category">
+                    <div class="category-title">Sensors</div>
+                    <div class="bom-items">
+                        <a href="https://www.aliexpress.us/item/3256806674485209.html" target="_blank"
+                            class="bom-link">INMP441 I2S Digital Microphone (FFT Input)</a>
+                    </div>
+                </div>
+
+                <div class="bom-category">
+                    <div class="category-title">Motor Control</div>
+                    <div class="bom-items">
+                        <a href="https://www.aliexpress.us/item/3256806596704831.html" target="_blank"
+                            class="bom-link">MX1508 / L298N Mini H-Bridge</a>
+                        <a href="https://www.aliexpress.us/item/3256807408424404.html" target="_blank"
+                            class="bom-link">DRV8833 / TB6612FNG Driver</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bom-wide">
+                <div class="bom-category">
+                    <div class="category-title">Actuators & Haptic Elements</div>
+                    <p class="category-desc" style="text-align: left; margin-left: 0;">
+                        I designed this architecture to be as versatile as possible. My parametric generators can handle
+                        virtually any haptic motor I throw at them; whether it's a precision coreless unit, a motor I've
+                        harvested from old electronics, or even a simple handmade coil I wound myself. Haptics should be
+                        cheap and accessible, and this setup makes that a reality.
+                        <br><br>
+                        <a href="https://www.youtube.com/watch?v=1AaUK6pT_cE" target="_blank" class="video-link">
+                            → Understanding DC Brushed Motors (Concept Video)
+                        </a>
+                    </p>
+                    <div class="bom-items">
+                        <a href="https://www.aliexpress.us/item/3256806226547404.html" target="_blank"
+                            class="bom-link">Flat Vibration Motors (1020-1034)</a>
+                        <a href="https://www.aliexpress.us/item/3256807993961260.html" target="_blank"
+                            class="bom-link">Coreless Motor Series (610-720)</a>
+                        <a href="https://www.aliexpress.us/item/3256805150337427.html" target="_blank"
+                            class="bom-link">Micro Vibration Motors (4.4-10mm)</a>
+                        <a href="https://www.aliexpress.us/item/3256806449691991.html" target="_blank"
+                            class="bom-link">Powerful Haptic Motors (130-370)</a>
+                        <a href="https://www.aliexpress.us/item/3256805312745171.html" target="_blank"
+                            class="bom-link">Micro Coreless Actuators</a>
+                    </div>
+
+                    <div class="future-snippet">
+                        <strong>The Future: Brushless & PCB Stators</strong><br>
+                        While I'm using brushed motors right now to keep costs down, the real future of PULSE lies in
+                        <strong>Brushless (BLDC)</strong> precision and <strong>PCB Stators</strong>. I'm looking into
+                        PCB-based motors because they'd allow for ultra-thin, flat haptic arrays that I could integrate
+                        directly into the device's circuitry.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="saucer-section">
+            <div class="saucer-content">
+                <div class="saucer-badge">Form Factor: Saucer</div>
+                <h2 style="font-size: 2.5rem; letter-spacing: -2px; margin-top: 0; color: #f472b6;">The Haptic Saucer
+                    (Parametric Model)</h2>
+                <p style="line-height: 1.8; color: #cbd5e1;">
+                    I’ve always been fascinated by those vibrating disc pagers you see at restaurants; the ones they
+                    hand you while you wait for a table. They’re simple, rugged, and remarkably effective. I wanted to
+                    capture that same industrial form factor for PULSE, so I designed the <strong>Haptic Saucer</strong>.
+                </p>
+                <p style="line-height: 1.8; color: #cbd5e1;">
+                    While it looks like a restaurant pager, its function is completely different: these discs are
+                    designed to slide into wearables or pockets to give people a tactile, visceral experience during
+                    live music. I’ve envisioned two main ways to use them. First, there's the <strong>General
+                        Saucer</strong>, which captures the full spectrum of audio; low, middle, and high, into a single
+                    tactile unit.
+                </p>
+                <p style="line-height: 1.8; color: #cbd5e1;">
+                    Then there are <strong>Specialized Saucers</strong> tuned for specific frequencies. I can build a
+                    Saucer with a massive, heavy haptic motor dedicated solely to low-end bass bins, while others use
+                    smaller, high-RPM motors to replicate the sharp energy of the treble. By mixing and matching these
+                    specialized discs across different parts of the body, I can create a distributed haptic array that
+                    maps perfectly to the music.
+                </p>
+                <a href="forgeCad/Disc.html" class="bom-link"
+                    style="max-width: 300px; border-color: #f472b6; color: #f472b6; margin-top: 32px;">
+                    Explore the Haptic Saucer →
+                </a>
+            </div>
+        </section>
+
+        <section class="philosophy-section writeup">
+            <h2>Engineering Philosophy: The Parametric Shift</h2>
             <p>
-                The <strong>PULSE</strong> ecosystem is designed to be hardware-agnostic, supporting a vast array of
-                haptic motors with varying shapes, displacements, and voltages.
-                Instead of manually redesigning enclosures for every iteration, we use high-performance
-                <strong>Parametric Logic</strong> to instantly generate the precision <strong>Shell and Sled</strong>
-                assemblies for any component stack.
+                I used to use browser-based SketchUp for rapid modeling, but lately, the experience has been going
+                downhill. It feels like they're stripping away core features, cluttering the interface with tools I
+                didn't ask for, and constantly pushing for premium upgrades. It's enshittification in real-time, as Cory
+                Doctorow would put it.
+            </p>
+            <p>
+                I considered switching back to Fusion360 or Blender, but I realized those tools all have a built-in
+                speed ceiling. I only have one set of hands, and manual modeling can only go so fast. Moving completely
+                over to parametric modeling was the obvious solution. Now, I can zap up tight form factors with
+                dedicated slots for hardware and wiring, then subtract those negative shapes from my models in seconds:
+                it completely removes the design ceiling while helping me build a massive personal library of reusable
+                parts.
             </p>
             <p style="font-size: 0.9rem; color: #94a3b8; margin-top: -10px;">
-                (Note: I got sidetracked auditing the best real-time parametric modeling browser-based solutions for
-                2026, this multi-environment comparison below is the technical result).
+                (Full disclosure: I got a bit sidetracked auditing the best real-time parametric modeling tools for the
+                2026 stack; the multi-environment comparison you see below is the result of that deep dive).
             </p>
             <ul>
                 <li>
-                    <strong>ForgeCAD (Declarative / AI-Friendly)</strong>: This approach is essentially "CAD as Code."
-                    It abstracts away the complex handle-management of WASM and the boiler-plate of UI creation. For AI
-                    agents, it is the most robust because its syntax mirrors high-level design descriptions.
+                    <strong>ForgeCAD (Declarative Studio)</strong>: This approach is essentially CAD as Code. It
+                    abstracts away the complex handle-management of WASM and the boiler-plate of UI creation. For rapid
+                    development, it is the most robust because its syntax mirrors high-level design descriptions.
                 </li>
                 <li>
                     <strong>Manifold JS (Low-Level Kernel)</strong>: This is the powerhouse. It allows for advanced
                     geometry operations (like tombstone intersections and dynamic lip subtractions) at near-instant
-                    speeds. It is the "Engine" that the other frameworks rely on for complex booleans.
+                    speeds. It is the engine that the other frameworks rely on for complex booleans.
                 </li>
                 <li>
                     <strong>OpenJSCAD (Functional CSG)</strong>: This framework treats geometry as a pure function of
@@ -451,35 +1002,34 @@
             </ul>
 
             <div class="winner-box">
-                <strong>Which is easiest to work with?</strong><br>
-                For both humans and AI, <strong>ForgeCAD</strong> is the superior workflow. By providing a "Studio"
-                abstraction layer, it allows the designer to focus on the mechanical assembly rather than the underlying
-                graphics plumbing, making it the fastest path from concept to STL export.
+                <strong>If you're asking me which is easiest to work with?</strong><br>
+                ForgeCAD wins every time. It gives me a Studio abstraction layer that lets me focus on the actual
+                mechanical assembly instead of the messy graphics plumbing. It's definitely the fastest way I've found
+                to go from a concept to an STL export.
             </div>
         </section>
 
         <section class="comparison-grid">
-            <a href="forgeCad/index.html" class="card forge">
+            <a href="forgeCad/Tube.html" class="card forge">
                 <div class="tag">The Designer's Choice</div>
-                <h3>ForgeCAD</h3>
-                <p>High-level declarative studio. Uses the <code>param()</code> API for instant UI binding and rapid
-                    prototyping.</p>
+                <h3>ForgeCAD (Tube)</h3>
+                <p>High-performance cylindrical housing for haptic assemblies. Uses a sled-in-shell architecture with modular tracks.</p>
                 <div class="btn">Launch Engine</div>
             </a>
 
             <a href="manifold/index.html" class="card manifold">
                 <div class="tag">High Performance</div>
                 <h3>Manifold Raw</h3>
-                <p>Bare-metal WASM kernel. The fastest boolean engine on the web, used for complex assembly mathematics.
-                </p>
+                <p>When I need serious speed for complex math, I go straight to the raw WASM kernel. It's the fastest
+                    boolean engine I've found for the web.</p>
                 <div class="btn">Launch Engine</div>
             </a>
 
             <a href="openJSCAD/index.html" class="card jscad">
                 <div class="tag">JS Ecosystem</div>
                 <h3>OpenJSCAD</h3>
-                <p>Pure functional JavaScript modeling. Modular, predictable, and deeply integrated with the JS
-                    ecosystem.</p>
+                <p>I use this when I want a purely functional approach. It’s predictable, modular, and fits perfectly
+                    into my existing JavaScript workflow.</p>
                 <div class="btn">Launch Engine</div>
             </a>
         </section>
