@@ -1,0 +1,149 @@
+{
+    "id": "expressions",
+    "title": "Facial Expressions",
+    "tags": [
+        {
+            "id": "smile",
+            "label": "smile",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "grin",
+            "label": "grin",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "laughing",
+            "label": "laughing",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "smug",
+            "label": "smug",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "blush",
+            "label": "blush",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "open_mouth",
+            "label": "open mouth",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "tongue_out",
+            "label": "tongue out",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "pout",
+            "label": "pout",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "angry",
+            "label": "angry",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "crying",
+            "label": "crying",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "heart-shaped_pupils",
+            "label": "heart-shaped pupils",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "wink",
+            "label": "wink",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "closed_eyes",
+            "label": "closed eyes",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "half-closed_eyes",
+            "label": "half-closed eyes",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "bored",
+            "label": "bored",
+            "classes": []
+        },
+        {
+            "id": "determined",
+            "label": "determined",
+            "classes": []
+        },
+        {
+            "id": "depressed",
+            "label": "depressed",
+            "classes": []
+        },
+        {
+            "id": "disgust",
+            "label": "disgust",
+            "classes": []
+        },
+        {
+            "id": "surprised",
+            "label": "surprised",
+            "classes": []
+        },
+        {
+            "id": "expressionless",
+            "label": "expressionless",
+            "classes": []
+        },
+        {
+            "id": "raised_eyebrows",
+            "label": "raised eyebrows",
+            "classes": []
+        },
+        {
+            "id": "biting_own_lip",
+            "label": "biting own lip",
+            "classes": []
+        },
+        {
+            "id": "smirk",
+            "label": "smirk",
+            "classes": []
+        }
+    ]
+}

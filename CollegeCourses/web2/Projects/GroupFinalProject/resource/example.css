@@ -1,0 +1,24 @@
+﻿html 
+{
+    height: 100%;
+    width: 100%;
+    background-color: black;
+    padding:0px;
+}
+body 
+{
+    height: 100%;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+.console-section 
+{
+    margin:0px;
+    background: rgb(0,0,0);
+}
+
+
+
+
+

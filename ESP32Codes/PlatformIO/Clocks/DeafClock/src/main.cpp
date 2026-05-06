@@ -1,0 +1,96 @@
+#include <Arduino.h>
+//Code taken from https://github.com/atomic14/esp32-i2s-mic-test/blob/main/i2s_mic_test/i2s_mic_test.ino
+
+#include <driver/i2s.h>
+#include <Arduino.h>
+
+#define SAMPLE_BUFFER_SIZE 512
+#define SAMPLE_RATE 8000
+// most microphones will probably default to left channel but you may need to tie the L/R pin low
+#define I2S_MIC_CHANNEL I2S_CHANNEL_FMT_ONLY_LEFT
+
+#define I2S_MIC_SERIAL_CLOCK GPIO_NUM_14 //sck
+#define I2S_MIC_LEFT_RIGHT_CLOCK GPIO_NUM_15 //ws
+#define I2S_MIC_SERIAL_DATA GPIO_NUM_32 //sd
+
+#define led1 11
+#define led2 12
+#define led3 13
+#define led4 43
+#define led5 44
+#define led6 18
+#define led7 17
+#define led8 21
+#define led9_to_12 16
+const int ledPins[] = {led1, led2, led3, led4, led5, led6, led7, led8, led9_to_12};
+
+// don't mess around with this
+i2s_config_t i2s_config = {
+    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
+    .sample_rate = SAMPLE_RATE,
+    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
+    .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+    .communication_format = I2S_COMM_FORMAT_I2S,
+    .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+    .dma_buf_count = 4,
+    .dma_buf_len = 1024,
+    .use_apll = false,
+    .tx_desc_auto_clear = false,
+    .fixed_mclk = 0};
+
+// and don't mess around with this
+i2s_pin_config_t i2s_mic_pins = {
+    .bck_io_num = I2S_MIC_SERIAL_CLOCK,
+    .ws_io_num = I2S_MIC_LEFT_RIGHT_CLOCK,
+    .data_out_num = I2S_PIN_NO_CHANGE,
+    .data_in_num = I2S_MIC_SERIAL_DATA};
+
+int32_t raw_samples[SAMPLE_BUFFER_SIZE];
+
+void setup() {
+  // Set pin 2 as an output
+  pinMode(1, OUTPUT);
+  // we need serial output for the plotter
+  Serial.begin(115200);
+  // start up the I2S peripheral
+  i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
+  i2s_set_pin(I2S_NUM_0, &i2s_mic_pins);
+
+  for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++) {
+    pinMode(ledPins[i], OUTPUT);  // Set each pin in the array to output mode
+  }
+}
+
+
+void loop() {
+  /*
+  //Sanity Test
+  for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++) {
+    digitalWrite(ledPins[i], HIGH);
+  }
+  */
+
+  // read from the I2S device
+  size_t bytes_read = 0;
+  i2s_read(I2S_NUM_0, raw_samples, sizeof(int32_t) * SAMPLE_BUFFER_SIZE, &bytes_read, portMAX_DELAY);
+  int samples_read = bytes_read / sizeof(int32_t);
+  // dump the samples out to the serial channel.
+  for (int i = 0; i < samples_read; i++)
+  {
+    if(raw_samples[i] > 350000000){
+      int randomIndex = random(0, sizeof(ledPins) / sizeof(ledPins[0]));
+
+      digitalWrite(1, HIGH);
+      digitalWrite(ledPins[randomIndex], HIGH);
+      delay(40); 
+
+      digitalWrite(1, LOW);
+      digitalWrite(ledPins[randomIndex], LOW);
+      delay(12);
+
+      Serial.printf("%ld\n", raw_samples[i]);
+    }
+    
+  }
+  delay(100);
+}

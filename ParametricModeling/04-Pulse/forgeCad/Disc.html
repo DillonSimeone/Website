@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCAD Studio - Haptic Saucer</title>
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --accent-brand: #f472b6;
+            --secondary: #a855f7;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+        }
+        body {
+            margin: 0; padding: 0; background: var(--bg-dark); color: #f8fafc;
+            font-family: 'Inter', system-ui, sans-serif; overflow: hidden;
+            display: flex; height: 100vh;
+        }
+        #studio-panel {
+            width: 420px; background: #0f172a; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; z-index: 100;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        }
+        .panel-header {
+            padding: 24px; border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+        .logo {
+            font-size: 1.4rem; font-weight: 900; letter-spacing: -1px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .logo-box {
+            width: 32px; height: 32px;
+            background: linear-gradient(to bottom right, var(--accent-brand), var(--secondary));
+            border-radius: 8px; display: grid; place-items: center; font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(244, 114, 182, 0.4);
+        }
+        .panel-content {
+            flex: 1; overflow-y: auto; padding: 18px 24px;
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        .section-title {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+            color: #64748b; margin-top: 10px; margin-bottom: 6px; font-weight: 700;
+        }
+        .ph { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 600; color: #94a3b8; margin-bottom: 4px; }
+        .val { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-brand); background: #1e293b; padding: 1px 6px; border-radius: 4px; }
+        input[type="range"] { width: 100%; height: 3px; background: #334155; border-radius: 2px; appearance: none; outline: none; margin: 6px 0; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; background: var(--accent-brand); border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 8px var(--accent-brand); }
+        #viewport-container { flex: 1; position: relative; background: #020617; }
+        #viewer { width: 100%; height: 100%; }
+        .viewport-badge {
+            position: absolute; top: 24px; right: 24px;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
+            padding: 8px 16px; border-radius: 99px; border: 1px solid var(--border);
+            font-size: 0.8rem; display: flex; align-items: center; gap: 8px; z-index: 1000;
+        }
+        .status-dot { width: 8px; height: 8px; background: var(--accent-brand); border-radius: 50%; box-shadow: 0 0 8px var(--accent-brand); }
+        button.dl-btn {
+            background: #1e293b; color: white; border: 1px solid var(--border);
+            padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            width: 100%; margin-top: 5px; font-size: 0.75rem; transition: all 0.2s;
+        }
+        button.dl-btn:hover { background: #334155; border-color: var(--accent-brand); }
+        .dl-main { background: var(--accent-brand); color: #111; border: none; }
+        .dl-main:hover { background: #db2777; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .ebtn {
+            background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid var(--border);
+            padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 0.7rem;
+            transition: all 0.15s; font-weight: 600;
+        }
+        .ebtn:hover { background: rgba(255,255,255,0.1); color: white; border-color: #64748b; }
+        .ebtn.active { background: var(--accent-brand); color: #111; border-color: var(--accent-brand); box-shadow: 0 0 15px rgba(244, 114, 182, 0.4); }
+    </style>
+</head>
+<body>
+    <div id="studio-panel">
+        <div class="panel-header">
+            <div class="logo">
+                <div class="logo-box">S</div>
+                ForgeCAD <span style="font-weight: 300; opacity: 0.5;">Haptic Saucer</span>
+            </div>
+        </div>
+        <div class="panel-content">
+            <div class="section-title">Assembly Control</div>
+            <div id="params-assembly"></div>
+
+            <div class="section-title">Saucer Housing</div>
+            <div id="params-housing"></div>
+
+            <div class="section-title">Motor & Clamp</div>
+            <div id="params-motor"></div>
+
+            <div class="section-title">Motor Driver (MX1508)</div>
+            <div id="params-driver"></div>
+
+            <div class="section-title">ESP32-C3 SuperMini</div>
+            <div id="params-digital"></div>
+
+            <div class="section-title">Power System</div>
+            <div id="params-power"></div>
+
+            <div class="section-title">Edge Screws (M3)</div>
+            <div id="params-screws"></div>
+
+            <div class="section-title">Component Explorer</div>
+            <div class="param-group">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+                    <button class="ebtn" data-k="motor">Motor</button>
+                    <button class="ebtn" data-k="driver">MX1508</button>
+                    <button class="ebtn" data-k="esp32">ESP32</button>
+                    <button class="ebtn" data-k="battery">Battery</button>
+                    <button class="ebtn" data-k="charger">TP4056</button>
+                    <button class="ebtn" data-k="clamp">Clamp</button>
+                    <button class="ebtn" data-k="all">All</button>
+                    <button class="ebtn" data-k="">Clear</button>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:20px">Manufacturing Export</div>
+            <button class="dl-btn dl-main" id="dl-top">EXPORT TOP SHELL (.STL)</button>
+            <button class="dl-btn" id="dl-btm">EXPORT BOTTOM SHELL (.STL)</button>
+            <button class="dl-btn" id="dl-sled">EXPORT SLED (.STL)</button>
+        </div>
+    </div>
+
+    <div id="viewport-container">
+        <div id="viewer"></div>
+        <div class="viewport-badge">
+            <div class="status-dot"></div>
+            SAUCER DESIGN MODE
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+        import Module from 'https://unpkg.com/manifold-3d/manifold.js';
+
+        let wasm, Manifold;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 420) / window.innerHeight, 0.1, 2500);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(150, 120, 150);
+        controls.update();
+
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x111827, 0.8));
+        const p1 = new THREE.PointLight(0xf472b6, 1.5, 1000); p1.position.set(200, 200, 200); scene.add(p1);
+        const p2 = new THREE.PointLight(0xa855f7, 1, 1000); p2.position.set(-200, 100, -200); scene.add(p2);
+        const grid = new THREE.GridHelper(600, 60, 0x1e293b, 0x0f172a);
+        grid.position.y = -60; scene.add(grid);
+
+        let currentMeshes = {};
+        let currentModels = {};
+        let HL = null;
+
+        window.setHighlight = (key) => {
+            HL = key || null;
+            document.querySelectorAll('.ebtn').forEach(b => {
+                b.classList.toggle('active', b.dataset.k === key && key !== "");
+            });
+            requestUpdate();
+        };
+        document.querySelectorAll('.ebtn').forEach(b => {
+            b.addEventListener('click', () => window.setHighlight(b.dataset.k));
+        });
+
+        // --- ForgeCAD Param API ---
+        const PARAMS = {};
+        const param = (name, defaultValue, options = {}, category = 'housing') => {
+            const id = name.replace(/\s+/g, '-').toLowerCase();
+            if (!PARAMS[id]) {
+                const type = options.type ?? 'range';
+                const min = options.min ?? 0;
+                const max = options.max ?? (defaultValue * 3);
+                const step = options.step ?? (max - min > 50 ? 1 : 0.1);
+                PARAMS[id] = { value: defaultValue, min, max, step, name, category, type };
+                createParamUI(id, category);
+            }
+            return PARAMS[id].value;
+        };
+
+        function createParamUI(id, cat) {
+            const p = PARAMS[id];
+            let container = document.getElementById('params-' + cat) || document.getElementById('params-housing');
+            if (!container.querySelector('.param-group')) {
+                const g = document.createElement('div'); g.className = 'param-group';
+                container.appendChild(g);
+            }
+            const group = container.querySelector('.param-group');
+            const row = document.createElement('div');
+            row.innerHTML = `<div class="ph">${p.name} <span class="val" id="val-${id}">${p.value}</span></div>
+                <input type="range" id="input-${id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">`;
+            group.appendChild(row);
+            row.querySelector('input').addEventListener('input', (e) => {
+                PARAMS[id].value = parseFloat(e.target.value);
+                document.getElementById(`val-${id}`).innerText = PARAMS[id].value;
+                requestUpdate();
+            });
+        }
+
+        // --- Primitives (Manifold API: cylinder(height, r1, r2, segments, center)) ---
+        const box = (w, h, d) => Manifold.cube([w, h, d], true);
+        const cyl = (r, h, s=64) => Manifold.cylinder(h, r, r, s, true);
+        const cone = (r1, r2, h, s=80) => Manifold.cylinder(h, r1, r2, s, true);
+
+        function exportSTL(model, name) {
+            if (!model) return;
+            const mesh = model.getMesh();
+            let stl = `solid ${name}\n`;
+            for (let i = 0; i < mesh.triVerts.length; i += 3) {
+                const i1 = mesh.triVerts[i], i2 = mesh.triVerts[i+1], i3 = mesh.triVerts[i+2];
+                const v1 = [mesh.vertProperties[i1*3], mesh.vertProperties[i1*3+1], mesh.vertProperties[i1*3+2]];
+                const v2 = [mesh.vertProperties[i2*3], mesh.vertProperties[i2*3+1], mesh.vertProperties[i2*3+2]];
+                const v3 = [mesh.vertProperties[i3*3], mesh.vertProperties[i3*3+1], mesh.vertProperties[i3*3+2]];
+                stl += `facet normal 0 0 0\n  outer loop\n    vertex ${v1[0]} ${v1[1]} ${v1[2]}\n    vertex ${v2[0]} ${v2[1]} ${v2[2]}\n    vertex ${v3[0]} ${v3[1]} ${v3[2]}\n  endloop\nendfacet\n`;
+            }
+            stl += `endsolid ${name}`;
+            const blob = new Blob([stl], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `${name}.stl`; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function init() {
+            wasm = await Module(); wasm.setup(); Manifold = wasm.Manifold;
+            requestUpdate(); animate();
+        }
+
+        function requestUpdate() {
+            if (!Manifold) return;
+            Object.values(currentMeshes).forEach(m => scene.remove(m));
+            if (currentModels.topShell) {
+                try { currentModels.topShell.delete(); } catch(e){}
+                try { currentModels.btmShell.delete(); } catch(e){}
+                try { currentModels.sled.delete(); } catch(e){}
+                if(currentModels.pock) Object.values(currentModels.pock).forEach(p => { try{p.delete();}catch(e){} });
+            }
+            currentMeshes = {};
+
+            try {
+                // ===== PARAMETERS =====
+                const expl = param("Explosion", 0, { min:0, max:100 }, "assembly") / 100;
+
+                const saucerR = param("Saucer Radius", 65, { min:40, max:120 }, "housing");
+                const saucerH = param("Total Height", 30, { min:15, max:60 }, "housing");
+                const wall    = param("Wall Thick", 2.5, { min:1.5, max:6 }, "housing");
+                const flare   = param("Edge Flare", 0.55, { min:0.15, max:0.85 }, "housing");
+                const rimW    = param("Rim Reinforce", 5, { min:1, max:15 }, "housing");
+                const splitZ  = param("Split Height", 0.35, { min:0.15, max:0.65 }, "housing");
+
+                // Motor: Type 130 DC
+                const motorW = param("Motor Width", 15, { min:5, max:35 }, "motor");
+                const motorH = param("Motor Height", 19, { min:5, max:35 }, "motor");
+                const motorL = param("Motor Length", 19, { min:10, max:50 }, "motor");
+                const clampL = param("Clamp Length", 15, { min:5, max:30 }, "motor");
+                const clampScN = param("Clamp Screws", 2, { min:1, max:4, step:1 }, "motor");
+                const clampScD = param("Clamp Screw D", 3.2, { min:2, max:6 }, "motor");
+                const clGap    = param("Clamp Tension", 2, { min:0, max:6 }, "motor");
+
+                // MX1508 driver: ~25x21x5mm
+                const drvW = param("Driver Width", 25, { min:15, max:35 }, "driver");
+                const drvD = param("Driver Depth", 21, { min:12, max:30 }, "driver");
+                const drvH = param("Driver Height", 5, { min:3, max:12 }, "driver");
+
+                // ESP32-C3 SuperMini: 22.5x18x3.2mm (lying flat on sled)
+                const espW = param("ESP Width", 22.5, { min:15, max:30 }, "digital");
+                const espD = param("ESP Depth", 18, { min:10, max:25 }, "digital");
+                const espH = param("ESP Height", 3.2, { min:2, max:8 }, "digital");
+
+                // Battery
+                const batW = param("Battery Width", 20, { min:10, max:40 }, "power");
+                const batD = param("Battery Depth", 30, { min:15, max:50 }, "power");
+                const batH = param("Battery Height", 8, { min:3, max:18 }, "power");
+
+                // TP4056: ~25x19x4mm (lying flat, USB port at saucer edge)
+                const chW = param("Charger Width", 25, { min:15, max:35 }, "power");
+                const chD = param("Charger Depth", 19, { min:10, max:25 }, "power");
+                const chH = param("Charger Height", 4, { min:2, max:10 }, "power");
+
+                // Edge screws
+                const screwD = param("Screw Size", 1.5, { min:1, max:5 }, "screws");
+                const screwN = param("Screw Count", 3, { min:0, max:12, step:1 }, "screws");
+                const screwRing = param("Screw Ring %", 0.85, { min:0.5, max:0.95 }, "screws");
+                const screwRot = param("Screw Rotation", 0, { min:0, max:360 }, "screws") * (Math.PI / 180);
+                const headD = param("Screw Head D", 5.5, { min:2, max:10 }, "screws");
+                const bossD = param("Screw Boss D", 8, { min:3, max:15 }, "screws");
+                const wireD = param("Wire Hole D", 5, { min:0, max:12 }, "housing");
+
+                // Constants for internal layout
+                const sledH = 3;
+
+                // ===== DERIVED GEOMETRY =====
+                const rimR = saucerR;
+                const topR = rimR * (1 - flare);
+                const btmR = rimR * (1 - flare * 0.6);
+                const halfH = saucerH / 2;
+                const splitLine = -halfH + saucerH * splitZ; // Z where top/bottom shells meet
+
+                // Full outer saucer
+                let outerTop = cone(rimR, topR, halfH, 80).translate([0, 0, halfH / 2]);
+                let outerBtm = cone(btmR, rimR, halfH, 80).translate([0, 0, -halfH / 2]);
+                let outerFull = outerTop.add(outerBtm);
+
+                // Inner cavity (with safety checks for negative dimensions)
+                const iR1 = Math.max(0.1, rimR - wall);
+                const iT1 = Math.max(0.1, topR - wall);
+                const iB1 = Math.max(0.1, btmR - wall);
+                const iH  = Math.max(0.1, halfH - wall);
+
+                let innerTop = cone(iR1, iT1, iH, 80).translate([0, 0, iH / 2]);
+                let innerBtm = cone(iB1, iR1, iH, 80).translate([0, 0, -iH / 2]);
+                let innerFull = innerTop.add(innerBtm);
+
+                // USB-C Precision Cutout and Flat Face
+                const usbFlatDist = rimR - 2;
+                let usbFlat = box(10, 20, saucerH).translate([usbFlatDist + 5, 0, 0]);
+                let usbHole = box(10, 9, 3.5).translate([rimR, 0, splitLine + sledH/2 + chH / 2]); // Precise 9x3.5mm cutout
+                
+                let fullShell = outerFull.subtract(innerFull).subtract(usbFlat).subtract(usbHole);
+
+                // 4. SCREW HOLES & BOSSES
+                let screwHoles = null;
+                let bosses = null;
+                let headCuts = null;
+                
+                for (let i = 0; i < screwN; i++) {
+                    const ang = (i / screwN) * Math.PI * 2 + screwRot;
+                    const sx = Math.cos(ang) * (rimR * screwRing);
+                    const sy = Math.sin(ang) * (rimR * screwRing);
+                    
+                    // The main screw shaft hole
+                    let h = cyl(screwD / 2, saucerH + 20, 16).translate([sx, sy, 0]);
+                    
+                    // The structural boss (extra material around the hole)
+                    let b = cyl(bossD / 2, saucerH, 32).translate([sx, sy, 0]);
+                    
+                    // Calculate the actual outer surface Z at this screw radius
+                    // Top cone: rimR at Z=0 -> topR at Z=halfH  
+                    // Surface Z = halfH * (rimR - r) / (rimR - topR)
+                    const screwR = rimR * screwRing;
+                    const topSurfZ = halfH * (rimR - screwR) / Math.max(0.1, rimR - topR);
+                    // Bottom cone: btmR at Z=-halfH -> rimR at Z=0
+                    // Surface Z = -halfH * (rimR - r) / (rimR - btmR)
+                    const btmSurfZ = -halfH * (rimR - screwR) / Math.max(0.1, rimR - btmR);
+                    
+                    // Counterbore: cut only 3mm inward from each surface
+                    const cbDepth = 3;
+                    // Top: cylinder sits above the surface, reaching cbDepth mm below it
+                    let cTop = cyl(headD / 2, 20).translate([sx, sy, topSurfZ + 10 - cbDepth]);
+                    // Bottom: cylinder sits below the surface, reaching cbDepth mm above it
+                    let cBtm = cyl(headD / 2, 20).translate([sx, sy, btmSurfZ - 10 + cbDepth]);
+                    
+                    if (!screwHoles) { 
+                        screwHoles = h; 
+                        bosses = b;
+                        headCuts = cTop.add(cBtm); 
+                    } else { 
+                        let nh = screwHoles.add(h); screwHoles.delete(); h.delete(); screwHoles = nh;
+                        let nb = bosses.add(b); bosses.delete(); b.delete(); bosses = nb;
+                        let nc = headCuts.add(cTop).add(cBtm); headCuts.delete(); cTop.delete(); cBtm.delete(); headCuts = nc;
+                    }
+                }
+                
+                // Add bosses to the shell before subtracting holes
+                // We intersect bosses with outerFull so they don't protrude
+                if (bosses) {
+                    let cappedBosses = bosses.intersect(outerFull);
+                    fullShell = fullShell.add(cappedBosses);
+                    cappedBosses.delete();
+                }
+                
+                // Subtract everything
+                if (screwHoles) fullShell = fullShell.subtract(screwHoles);
+                if (headCuts) fullShell = fullShell.subtract(headCuts);
+
+                // Split into top and bottom halves
+                // Split into top and bottom halves with a gap for the sled
+                let topCutter = box(saucerR * 3, saucerR * 3, saucerH).translate([0, 0, splitLine + sledH/2 - saucerH / 2]);
+                let btmCutter = box(saucerR * 3, saucerR * 3, saucerH).translate([0, 0, splitLine - sledH/2 - saucerH / 2]);
+                
+                let topShell = fullShell.subtract(topCutter);
+                let btmShell = fullShell.intersect(btmCutter);
+
+                // ===== SLED (Middle layer disc) =====
+                const sledR = rimR;
+                let sled = cyl(sledR, sledH, 80).translate([0, 0, splitLine]);
+                if (screwHoles) sled = sled.subtract(screwHoles);
+
+                // Motor clamp (center, horizontal motor bracket)
+                let clR = Math.max(motorW, motorH) / 2 + 0.5;
+                // Clamp body (Inverted U-shape bracket)
+                let clOuter = cyl(clR + 3.5, clampL, 64).rotate([90, 0, 0]).translate([0, 0, splitLine + sledH/2 + clR]);
+                let clInner = cyl(clR, clampL + 2, 64).rotate([90, 0, 0]).translate([0, 0, splitLine + sledH/2 + clR]);
+                let clamp = clOuter.subtract(clInner);
+                
+                // Cut bottom half but leave legs for tightening gap
+                let btmCutClamp = box(200, 200, 200).translate([0, 0, splitLine + sledH/2 + clGap - 100]);
+                clamp = clamp.subtract(btmCutClamp);
+                
+                // Add horizontal tabs floating above the sled for tension
+                let tabW = 10, tabT = 4;
+                let legH = Math.max(0.1, clR - clGap);
+                let legL = box(3.5, clampL, legH).translate([-(clR + 1.75), 0, splitLine + sledH/2 + clGap + legH/2]);
+                let legR = box(3.5, clampL, legH).translate([ (clR + 1.75), 0, splitLine + sledH/2 + clGap + legH/2]);
+                
+                let tL = box(tabW, clampL, tabT).translate([-(clR + tabW/2), 0, splitLine + sledH/2 + clGap + tabT/2]);
+                let tR = box(tabW, clampL, tabT).translate([ (clR + tabW/2), 0, splitLine + sledH/2 + clGap + tabT/2]);
+                clamp = clamp.add(legL).add(legR).add(tL).add(tR);
+                
+                // Sled Cradle (to hold motor on sled)
+                let cradleOuter = cyl(clR + 2, clampL, 64).rotate([90, 0, 0]).translate([0, 0, splitLine + sledH/2 + clR]);
+                let cradleInner = cyl(clR, clampL + 2, 64).rotate([90, 0, 0]).translate([0, 0, splitLine + sledH/2 + clR]);
+                let cradle = cradleOuter.subtract(cradleInner);
+                let topCutCradle = box(200, 200, 200).translate([0, 0, splitLine + sledH/2 + clR + 100]);
+                cradle = cradle.subtract(topCutCradle);
+                sled = sled.add(cradle);
+
+                // Clamp screw holes (Vertical through tabs and sled)
+                for (let i = 0; i < clampScN; i++) {
+                    const yOff = (i - (clampScN - 1) / 2) * (clampL / (clampScN + 0.5));
+                    let hL = cyl(clampScD/2, 60, 16).translate([-(clR + tabW/2), yOff, splitLine + sledH/2]);
+                    let hR = cyl(clampScD/2, 60, 16).translate([ (clR + tabW/2), yOff, splitLine + sledH/2]);
+                    sled = sled.subtract(hL).subtract(hR);
+                    clamp = clamp.subtract(hL).subtract(hR);
+                    hL.delete(); hR.delete();
+                }
+
+                // ===== COMPONENT POCKETS =====
+                let pock = {};
+                const pZ = splitLine + sledH/2; // top of sled
+                const pZb = splitLine - sledH/2; // bottom of sled
+
+                // Motor pocket (center, horizontal — on top)
+                pock.motor = cyl(motorH / 2 + 0.5, motorL + 1, 32).rotate([90, 0, 0]).translate([0, 0, splitLine + sledH/2 + motorH / 2]);
+
+                // MX1508 driver (flat on TOP of sled, offset from center)
+                const drvDist = clR + tabW + drvW / 2 + 2;
+                pock.driver = box(drvW + 0.5, drvD + 0.5, drvH + 0.5).translate([drvDist, 0, pZ + drvH / 2]);
+
+                // ESP32-C3 SuperMini (flat on BOTTOM of sled)
+                pock.esp32 = box(espW + 0.5, espD + 0.5, espH + 0.5).translate([-drvDist, 0, pZb - espH / 2]);
+
+                // Battery (flat on BOTTOM of sled)
+                pock.battery = box(batW + 0.5, batD + 0.5, batH + 0.5).translate([0, -(clR + batD / 2 + 3), pZb - batH / 2]);
+
+                // TP4056 charger (flat on TOP of sled, USB facing edge)
+                const chDist = rimR - wall - chW / 2 - 2;
+                pock.charger = box(chW + 0.5, chD + 0.5, chH + 0.5).translate([chDist, 0, pZ + chH / 2]);
+
+                // Subtract pockets from sled
+                Object.values(pock).forEach(p => sled = sled.subtract(p));
+
+                // Wire routing hole
+                if (wireD > 0) {
+                    let wHole = cyl(wireD/2, 20).translate([rimR * 0.3, rimR * 0.3, splitLine]);
+                    sled = sled.subtract(wHole);
+                    wHole.delete();
+                }
+
+                currentModels = { topShell, btmShell, sled, clamp, pock, expl };
+
+                // ===== RENDER =====
+                const toMesh = (model, color, op, offset = [0, 0, 0]) => {
+                    const m = model.getMesh();
+                    const g = new THREE.BufferGeometry();
+                    g.setAttribute('position', new THREE.Float32BufferAttribute(m.vertProperties, 3));
+                    g.setIndex(new THREE.Uint32BufferAttribute(m.triVerts, 1));
+                    g.computeVertexNormals();
+                    const mat = new THREE.MeshPhysicalMaterial({ color, transparent: true, opacity: op, metalness: 0.4, roughness: 0.2, side: THREE.DoubleSide });
+                    const mesh = new THREE.Mesh(g, mat);
+                    mesh.position.set(...offset);
+                    mesh.rotateX(Math.PI / 2);
+                    scene.add(mesh);
+                    return mesh;
+                };
+
+                currentMeshes.top  = toMesh(topShell, 0xf472b6, 0.35, [0, -expl * 120, 0]);
+                currentMeshes.btm  = toMesh(btmShell, 0xf472b6, 0.35, [0,  expl * 120, 0]);
+                currentMeshes.sled = toMesh(sled, 0xa855f7, 0.9, [0, 0, 0]);
+                currentMeshes.clamp = toMesh(clamp, 0x64748b, 1.0, [0, -expl * 60, 0]);
+
+                const colors = { motor: 0xff4488, driver: 0x4488ff, esp32: 0xffcc00, battery: 0x44ff88, charger: 0x8844ff, clamp: 0x64748b };
+                if (HL === "all") {
+                    Object.keys(pock).forEach((k) => {
+                        const m = toMesh(pock[k], colors[k] || 0xffffff, 0.8, [0, 0, 0]);
+                        m.material.emissive = new THREE.Color(colors[k] || 0xffffff);
+                        m.material.emissiveIntensity = 0.5;
+                        currentMeshes[`hl_${k}`] = m;
+                    });
+                    const mc = toMesh(clamp, colors.clamp, 0.8, [0, -expl * 60, 0]);
+                    mc.material.emissive = new THREE.Color(colors.clamp);
+                    mc.material.emissiveIntensity = 0.3;
+                    currentMeshes.hl_clamp = mc;
+                } else if (HL === "clamp") {
+                    const m = toMesh(clamp, colors.clamp, 0.9, [0, -expl * 60, 0]);
+                    m.material.emissive = new THREE.Color(colors.clamp);
+                    m.material.emissiveIntensity = 0.5;
+                    currentMeshes.hl = m;
+                } else if (HL && pock[HL]) {
+                    const m = toMesh(pock[HL], colors[HL] || 0x10b981, 0.85, [0, 0, 0]);
+                    m.material.emissive = new THREE.Color(colors[HL] || 0x10b981);
+                    m.material.emissiveIntensity = 0.5;
+                    currentMeshes.hl = m;
+                }
+
+                // Cleanup WASM
+                outerTop.delete(); outerBtm.delete(); outerFull.delete();
+                innerTop.delete(); innerBtm.delete(); innerFull.delete();
+                fullShell.delete(); topCutter.delete(); btmCutter.delete(); usbFlat.delete(); usbHole.delete();
+                clOuter.delete(); clInner.delete(); btmCutClamp.delete();
+                cradleOuter.delete(); cradleInner.delete(); topCutCradle.delete(); cradle.delete();
+                tL.delete(); tR.delete(); legL.delete(); legR.delete();
+                if (screwHoles) screwHoles.delete();
+                if (bosses) bosses.delete();
+                if (headCuts) headCuts.delete();
+
+            } catch (e) {
+                console.error("Modeling Error:", e);
+            }
+        }
+
+        function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 420) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        });
+
+        document.getElementById('dl-top').onclick  = () => exportSTL(currentModels.topShell, "Saucer_TopShell");
+        document.getElementById('dl-btm').onclick  = () => exportSTL(currentModels.btmShell, "Saucer_BottomShell");
+        document.getElementById('dl-sled').onclick  = () => exportSTL(currentModels.sled, "Saucer_Sled");
+
+        init();
+    </script>
+</body>
+</html>

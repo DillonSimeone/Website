@@ -1,0 +1,343 @@
+{
+    "id": "scenes",
+    "title": "Scenes & Locations",
+    "tags": [
+        {
+            "id": "outdoors",
+            "label": "outdoors",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "indoors",
+            "label": "indoors",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "sky",
+            "label": "sky",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "starry_sky",
+            "label": "starry sky",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "night",
+            "label": "night",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "sunset",
+            "label": "sunset",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "rain",
+            "label": "rain",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "snow",
+            "label": "snow",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "ocean",
+            "label": "ocean",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "beach",
+            "label": "beach",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "forest",
+            "label": "forest",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "city",
+            "label": "city",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "classroom",
+            "label": "classroom",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "bedroom",
+            "label": "bedroom",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "bathroom",
+            "label": "bathroom",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "castle",
+            "label": "castle",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "ruins",
+            "label": "ruins",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "underwater",
+            "label": "underwater",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "outer_space",
+            "label": "outer space",
+            "classes": []
+        },
+        {
+            "id": "cyberpunk",
+            "label": "cyberpunk",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "field",
+            "label": "field",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "nature",
+            "label": "nature",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "tree",
+            "label": "tree",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "flower",
+            "label": "flower",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "cloud",
+            "label": "cloud",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "water",
+            "label": "water",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "sun",
+            "label": "sun",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "moon",
+            "label": "moon",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "grass",
+            "label": "grass",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "bed",
+            "label": "bed",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "chair",
+            "label": "chair",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "window",
+            "label": "window",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "garden",
+            "label": "garden",
+            "classes": []
+        },
+        {
+            "id": "alleyway",
+            "label": "alleyway",
+            "classes": []
+        },
+        {
+            "id": "village_background",
+            "label": "village background",
+            "classes": []
+        },
+        {
+            "id": "on_roof",
+            "label": "on roof",
+            "classes": []
+        },
+        {
+            "id": "arcade",
+            "label": "arcade",
+            "classes": []
+        },
+        {
+            "id": "store",
+            "label": "store",
+            "classes": []
+        },
+        {
+            "id": "club",
+            "label": "club",
+            "classes": []
+        },
+        {
+            "id": "bar_(place)",
+            "label": "bar (place)",
+            "classes": []
+        },
+        {
+            "id": "stage_lighting",
+            "label": "stage",
+            "classes": []
+        },
+        {
+            "id": "hallway",
+            "label": "hallway",
+            "classes": []
+        },
+        {
+            "id": "Japanese_architecture",
+            "label": "Japanese architecture",
+            "classes": []
+        },
+        {
+            "id": "park",
+            "label": "park",
+            "classes": []
+        },
+        {
+            "id": "indoor_playground",
+            "label": "indoor playground",
+            "classes": []
+        },
+        {
+            "id": "indoor_pool",
+            "label": "indoor pool",
+            "classes": []
+        },
+        {
+            "id": "airplane_interior",
+            "label": "airplane",
+            "classes": []
+        },
+        {
+            "id": "school_hallway",
+            "label": "school hallway",
+            "classes": []
+        },
+        {
+            "id": "locker_room",
+            "label": "locker room",
+            "classes": []
+        },
+        {
+            "id": "hotel_room",
+            "label": "hotel room",
+            "classes": []
+        },
+        {
+            "id": "hospital",
+            "label": "hospital",
+            "classes": []
+        },
+        {
+            "id": "prison_cell",
+            "label": "prison cell",
+            "classes": []
+        },
+        {
+            "id": "subway",
+            "label": "subway",
+            "classes": []
+        },
+        {
+            "id": "restaurant",
+            "label": "restaurant",
+            "classes": []
+        },
+        {
+            "id": "library",
+            "label": "library",
+            "classes": []
+        }
+    ]
+}

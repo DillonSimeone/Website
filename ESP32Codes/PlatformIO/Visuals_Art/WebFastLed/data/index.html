@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebFastLed</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="glass-container">
+        <header>
+            <h1>WebFastLed <span class="tag" id="status-tag">Connecting...</span></h1>
+            <nav>
+                <button class="nav-btn active" data-tab="library">Library</button>
+                <button class="nav-btn" data-tab="editor">Editor</button>
+                <button class="nav-btn" data-tab="picker">Color</button>
+                <button class="nav-btn" data-tab="settings">Settings</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Library Tab -->
+            <section id="library" class="tab-content active">
+                <div class="section-header">
+                    <h2>Pattern Library</h2>
+                    <button class="btn-primary" onclick="newPattern()">+ New</button>
+                </div>
+                <div id="pattern-list" class="grid-list">
+                    <div class="pattern-card empty">
+                        <p>No patterns saved yet</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Editor Tab -->
+            <section id="editor" class="tab-content">
+                <div class="editor-header">
+                    <input type="text" id="pattern-name" placeholder="Pattern Name" value="Untitled">
+                    <div class="editor-actions">
+                        <button class="btn-secondary" onclick="savePattern()">💾 Save</button>
+                        <span id="compile-status" class="status-indicator"></span>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <textarea id="code-editor" spellcheck="false" placeholder="// Write your pattern here...
+// Available variables: index (i), pixelCount (n), time (t)
+// Available functions: hsv(h,s,v), rgb(r,g,b), sin(), cos(), wave(), triangle()
+
+h = index / pixelCount + time * 0.2;
+hsv(h, 1, 1);"></textarea>
+                    <div class="line-numbers" id="line-numbers"></div>
+                </div>
+                <div class="editor-help">
+                    <strong>Quick Reference:</strong>
+                    <code>hsv(h, s, v)</code> - Set color (0-1 range) |
+                    <code>rgb(r, g, b)</code> - Set RGB (0-1 range) |
+                    <code>sin(x)</code>, <code>cos(x)</code> - Trig (0-1 = full cycle) |
+                    <code>wave(x)</code> - Sine wave (0-1 output) |
+                    <code>triangle(x)</code> - Triangle wave
+                </div>
+            </section>
+
+            <!-- Color Picker Tab -->
+            <section id="picker" class="tab-content">
+                <h2>Quick Color</h2>
+                <p class="subtitle">Pick a solid color to display instantly</p>
+
+                <div class="color-picker-container">
+                    <div class="color-wheel-wrapper">
+                        <canvas id="color-wheel" width="280" height="280"></canvas>
+                        <div id="color-cursor" class="color-cursor"></div>
+                    </div>
+
+                    <div class="color-controls">
+                        <div class="control-group">
+                            <label>Hue</label>
+                            <input type="range" id="hue-slider" min="0" max="1" step="0.01" value="0">
+                            <span id="hue-value">0°</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Saturation</label>
+                            <input type="range" id="sat-slider" min="0" max="1" step="0.01" value="1">
+                            <span id="sat-value">100%</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Brightness</label>
+                            <input type="range" id="val-slider" min="0" max="1" step="0.01" value="1">
+                            <span id="val-value">100%</span>
+                        </div>
+
+                        <div class="color-preview">
+                            <div id="color-swatch"></div>
+                            <button class="btn-primary" onclick="applyPickedColor()">Apply to LEDs</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="brightness-control">
+                    <label>Global LED Brightness</label>
+                    <input type="range" id="global-brightness" min="0" max="255" value="128">
+                    <span id="brightness-value">50%</span>
+                </div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section id="settings" class="tab-content">
+                <h2>Device Settings</h2>
+                <form id="settings-form" class="settings-grid">
+                    <div class="control-group">
+                        <label>WiFi SSID</label>
+                        <input type="text" name="ssid" id="setting-ssid" placeholder="Your WiFi network">
+                    </div>
+                    <div class="control-group">
+                        <label>WiFi Password</label>
+                        <input type="password" name="pass" id="setting-pass" placeholder="WiFi password">
+                    </div>
+                    <div class="control-group">
+                        <label>Hostname (mDNS)</label>
+                        <input type="text" name="hostname" id="setting-hostname" placeholder="WFL">
+                    </div>
+                    <div class="control-group">
+                        <label>LED Count</label>
+                        <input type="number" name="count" id="setting-count" min="1" max="1000">
+                    </div>
+                    <div class="control-group">
+                        <label>Data Pin (GPIO)</label>
+                        <input type="number" name="pin" id="setting-pin" min="0" max="21">
+                    </div>
+                    <div class="control-group full-width">
+                        <button type="submit" class="btn-primary">Save & Reboot</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Pile</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,700;1,700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* Palette for the transition */
+            --paper: #fdfaf6;
+            --ink: #1a1a1a;
+            --midnight: #0a0c10;
+            --parchment: #eee4d5;
+            --autumn-orange: #b5651d;
+            --autumn-red: #8b0000;
+
+            /* Dynamic variables updated via JS */
+            --bg-current: var(--paper);
+            --text-current: var(--ink);
+            --accent-current: var(--autumn-orange);
+            --border-current: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-current);
+            color: var(--text-current);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.35rem;
+            line-height: 1.9;
+            transition: background-color 0.8s ease, color 0.8s ease;
+            overflow-x: hidden;
+            text-rendering: optimizeLegibility;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15vh 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Falling Leaf Particles */
+        .leaf {
+            position: fixed;
+            width: 14px;
+            height: 14px;
+            pointer-events: none;
+            z-index: 1;
+            animation: fall linear infinite;
+            filter: blur(0.5px);
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.4;
+            }
+
+            90% {
+                opacity: 0.4;
+            }
+
+            100% {
+                transform: translateY(110vh) translateX(120px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 150px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 700;
+            font-style: italic;
+            margin-bottom: 15px;
+            letter-spacing: -2px;
+        }
+
+        .subtitle {
+            font-style: italic;
+            opacity: 0.6;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .paragraph {
+            margin-bottom: 70px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1.5s ease, transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .paragraph.reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-break {
+            height: 1px;
+            width: 150px;
+            background: var(--text-current);
+            margin: 120px auto;
+            opacity: 0.15;
+            transition: background 0.8s ease;
+        }
+
+        .italicized {
+            font-style: italic;
+            padding: 0 40px;
+            position: relative;
+            margin: 60px 0;
+            font-size: 1.25rem;
+            border-left: 2px solid var(--accent-current);
+        }
+
+        .accent {
+            color: var(--accent-current);
+            font-weight: 600;
+            transition: color 0.8s ease;
+        }
+
+        #progress-bar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 0%;
+            height: 3px;
+            background: var(--accent-current);
+            z-index: 1000;
+            transition: width 0.1s linear, background 0.8s ease;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.05) 100%);
+            transition: opacity 2s ease;
+        }
+
+        footer {
+            margin-top: 200px;
+            text-align: center;
+            opacity: 0.5;
+            font-size: 1rem;
+            padding-bottom: 120px;
+            border-top: 1px solid var(--border-current);
+            padding-top: 50px;
+        }
+
+        /* Highlight special names */
+        .name {
+            letter-spacing: 1px;
+            font-variant: small-caps;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="progress-bar"></div>
+    <div class="vignette" id="vignette"></div>
+
+    <div class="container">
+        <header>
+            <h1>The Pile</h1>
+        </header>
+
+        <div class="paragraph">
+            The Hokage's name for it (recorded in files that would be burned before they were ever filed) was <span
+                class="accent">Event Site Alpha</span>. The ANBU who patrolled the perimeter called it the <span
+                class="name">Grave Walk</span>. The civilians, those who still dared to live within sight of the
+            shifting horizon, simply called it <span class="accent">The Pile</span>.
+        </div>
+
+        <div class="paragraph">
+            Naruto called it nothing, because Naruto was at once a multitude and a void. He was dead, yet he was vibrant
+            with a life that defied the morgue. He was in his apartment, hunched over scripts that writhed like black
+            worms under his lamp, and he was ten feet tall, a silhouette of impossible geometry standing at the edge of
+            the world. He was a sphere of interference that made the birds go blind, and he was a child playing in the
+            dirt with a smile that never reached his eyes.
+        </div>
+
+        <div class="paragraph">
+            It had started so simply.
+        </div>
+
+        <div class="paragraph italicized">
+            The scroll was heavy, smelling of old, wet stone. Mizuki's voice had been a wet tremor of false importance.
+            Naruto (who had never managed a single working clone, who had produced only the white-faced, prone
+            embarrassments that had haunted his dreams) sat in the clearing and decided that tonight, he would finally
+            be real.
+        </div>
+
+        <div class="paragraph">
+            He read. He made the seal. The air around him did not split; it <span class="accent">deepened</span>.
+        </div>
+
+        <div class="paragraph">
+            Mizuki, watching from the dark, would never successfully describe the sound of a zipper opening in the
+            world. In his reports, he crossed out "copy" and "duplicate." He tried "unfolding" and crossed that out too.
+            What he saw was a mirror that showed not reflection, but an invasive extension: a corridor of Naruto-shaped
+            possibilities, meat-puppets of potential stacked into the infinite dark beyond the reach of light. For a
+            fraction of a second, all of them were looking back.
+        </div>
+
+        <div class="paragraph">
+            Then Naruto fell, and the clearing was just a clearing. Naruto remained in a coma for three hundred and
+            forty-two days.
+        </div>
+
+        <div class="paragraph">
+            He woke up on an autumn morning, when the leaves were turning the color of a fresh bruise. He lay still in
+            the clinical silence of the recovery ward, tracing the lines of his palms as if checking to see if they were
+            still his or if they had been drawn on by an amateur hand.
+        </div>
+
+        <div class="paragraph italicized" style="text-align: center; border: none; padding: 0; margin: 40px 0;">
+            No one threw a party.
+        </div>
+
+        <div class="paragraph">
+            He dressed in a shroud-white tunic and walked home through a village that felt like an ill-fitting mask. His
+            apartment was worse; it was a museum of a stranger's life, a collection of objects that he recognized but
+            could no longer feel.
+        </div>
+
+        <div class="paragraph">
+            Iruka came to visit. He didn't wait for an invitation; he burst into the room, his face a map of exhaustion
+            and frantic relief. He found Naruto sitting in the center of the kitchen floor, staring at a single,
+            unwashed bowl as if it were an ancient artifact from a dead civilization. Iruka collapsed to his knees,
+            reaching out to clasp Naruto's hand with a desperation that made his own knuckles white. He wept as he
+            apologized for being away at the Academy when the news of the awakening finally reached the classrooms; he
+            confessed, between ragged breaths, that he had already visited the cemetery to pick out a stone for a boy
+            he thought was lost to the dark. Naruto did not pull his hand away, but he didn't squeeze back, either.
+            He simply watched the way Iruka's tears soaked into the floorboards, his head tilting at an angle that
+            suggested his neck had too many joints, and whispered: "<span class="accent">I woke up?</span>"
+        </div>
+
+        <div class="paragraph">
+            The question wasn't one of relief. It was the sound of a traveler who had found themselves at the wrong
+            destination, realizing with a slow, cold horror that they were expected to stay.
+        </div>
+
+        <div class="section-break"></div>
+
+        <div class="paragraph">
+            The writing began that night. It was in no language the intelligence division could recognize. Four
+            legendary codebreakers came; they left separately and, within seventy-two hours, each had become a hive for
+            the ink. One was found in a locked room, her skin a map of jagged, black incisions where she had tried to
+            read the script written on the underside of her own veins; another had simply dissolved into a pile of wet,
+            indigo ink in his garden, his body losing its human shape the moment his mind finished the final sentence.
+            Naruto was the only one who didn't fall into pieces; he was a vessel that simply refused to break, even as
+            the ink turned his bones to heavy glass.
+        </div>
+
+        <div class="paragraph">
+            Then the infestation began to escalate. It was no longer confined to the scrolls; it started to bleed onto
+            the floorboards, the window panes, creeping across the very fabric of his clothes like a frantic, black
+            parasite. The symbols were not static. To look at them for more than a few seconds was to feel a rhythmic
+            suction at the base of the skull, a pressure that the intelligence division's specialists described as a
+            gnawing hunger in the mind. The human eye was not designed to track the geometry of his ink. One young
+            chunin, tasked with documenting the apartment, spent ten minutes inside and had to be carried out; he spent
+            the next month clawing at his own chest, trying to "unzip the noise" from his ribs.
+        </div>
+
+        <div class="paragraph">
+            When the Hokage asked him why, Naruto opened his mouth as if to answer, but the words seemed to snag in his
+            throat. His eyes went flat, losing the room entirely, and without a word he reached across the desk. He took
+            the Hokage’s own ceremonial brush and began to pull a single, jagged geometry across the pristine white of
+            the Kage's personal stationery. The Hokage, seeing the first impossible curve begin to form, reached out and
+            caught Naruto's wrist, physically stopping the stroke.
+        </div>
+
+        <div class="paragraph">
+            The reaction was instantaneous. Naruto didn't pull away; he simply opened his mouth and began to scream. It
+            wasn't a scream of pain, but the sound of bone grinding against the infinite: the wet, horrible noise of
+            meat trying to contain a god. The glass in the isolation ward didn't shatter; it turned to sand, unable to
+            hold its form against the vibration of his throat. For twenty-one days, the hospital staff worked behind
+            three layers of sound-dampening seals, watching a boy who never drew breath yet never stopped making that
+            unnatural, hollow roar.
+        </div>
+
+        <div class="paragraph">
+            The chief physician’s final note was a single, frantic line: "We have checked the throat, the lungs, and the
+            spirit. There is no reason for this sound to exist, yet it is outlasting his body."
+        </div>
+
+        <div class="paragraph">
+            At the dawn of the twenty-second day, the scream simply stopped. The first Naruto died in the center of that
+            silence, his body finally cooling as the pressure left him.
+        </div>
+
+        <div class="paragraph">
+            By the time the nurses had finished wrapping the body for the morgue, a second Naruto was at the ramen
+            stand, arguing cheerfully with the owner about the relative merits of extra chashu. He was confused by the
+            ANBU who surrounded him with naked weapons. He passed every test. He had the right memories, the right
+            chakra signature, and a appetite that felt genuine.
+        </div>
+
+        <div class="paragraph">
+            They checked the morgue. The first body was still there. It did not decompose, but it didn't look dead,
+            either. It was vibrant, radiant, indecent in its lack of decay. It remained as warm as a living person,
+            waiting for a command that had already been given.
+        </div>
+
+        <div class="section-break"></div>
+
+        <div class="paragraph">
+            The mountain began on a Tuesday. It simply became the place where they went. They would arrive from outside
+            the village, walking with a mild, vacant expression. They would spend an hour or a day among the people, and
+            then they would walk to the clearing and fold themselves into the meat of the structure.
+        </div>
+
+        <div class="paragraph">
+            The mountain grew not with violence, but with a rhythmic, quiet <span class="accent">accumulation</span>.
+        </div>
+
+        <div class="paragraph">
+            There was a Naruto who arrived carrying a wooden flute. He spent his afternoon in the park, playing a melody
+            that made the elderly remember their first loves. He didn't say a word. When the sun dipped below the trees,
+            he walked to the western edge of the mountain, found a narrow ledge, and settled there with a sigh of
+            profound relief, his eyes closing before his head even touched the earth.
+        </div>
+
+        <div class="paragraph">
+            There was a Naruto who was a scholar of forbidden arts. He spent three days in the library correcting minor
+            errors in geography texts from a century ago. His hands were stained with blue ink; his eyes were soft with
+            the exhaustion of a man who had finally finished a book he had been writing for a thousand years. He climbed
+            halfway up the northern slope and tucked himself into a shaded fold, as if finding a comfortable chair.
+        </div>
+
+        <div class="paragraph italicized">
+            They did not just lie down. They searched. They walked the slopes of themselves, looking for the specific
+            hollow where their particular tragedy or their specific joy fit the curve of the whole.
+        </div>
+
+        <div class="paragraph">
+            A Naruto arrived who had clearly been a fisherman. He had the salt-skin and the callouses of a life spent on
+            a rough sea. He brought a single, perfect koi and left it in the village fountain, then climbed to the very
+            top and laid down, his hands behind his head as if watching a sky only he could see.
+        </div>
+
+        <div class="paragraph">
+            One arrived who had been a father in a branch that had never known war. He had the gentle thumbs of someone
+            who spent years tying small boots. He stood at the edge of the clearing for a long time, looking back at the
+            village gates with a smile that was both heartbreaking and triumphant. He did not climb high. He chose a
+            spot near the ground, where the children of the village played, and settled there so that his warmth would
+            seep into the soil they stepped on.
+        </div>
+
+        <div class="paragraph">
+            A Naruto whose only notable quality was his ability to whistle found his place between a Naruto who had been
+            a Kage and one who had been a criminal. When he settled, the wind through the mountain began to sing.
+        </div>
+
+        <div class="section-break"></div>
+
+        <div class="paragraph">
+            By the fifth month, the mountain was a tumor on the horizon, shifting the very skyline as seen from the
+            Hokage Tower. It was a hill of skin and orange fabric, a landscape made of the same face repeated until
+            features lost all meaning. The ANBU responsible for monitoring it described a feeling of total sensory
+            collapse, like watching a man file his own soul under a subject heading.
+        </div>
+
+        <div class="paragraph">
+            But the wrongness was fading. The village began to treat the mountain not as a graveyard, but as a landmark.
+            Lovers met in its shadow. Old men sat near its base to feel the warmth that radiated from the thousands of
+            Narutos who had found their rest.
+        </div>
+
+        <div class="paragraph">
+            The divergence accelerated. Narutos arrived who did not have the same eyes. Still blue, but with an extra
+            layer of depth, a clarity that felt like looking into a deep well.
+        </div>
+
+        <div class="paragraph italicized">
+            One arrived who was seven feet tall, moving with a jointless fluency that made the ANBU feel their own
+            bodies were crude approximations of the human form. This Naruto stopped at the perimeter and looked at the
+            pile with an expression of total, terrifying completion. He bowed (to the mountain, to the village, to the
+            sky) and walked forward, sliding into a gap in the center that had seemed too small until he liquified
+            into it.
+        </div>
+
+        <div class="paragraph">
+            The Council met in secret. "The clones return to the original," the old woman said, her voice like grinding
+            stones. "That is the technique. Dispersal. They form, they act, they return. The experience flows back."
+        </div>
+
+        <div class="paragraph">
+            "There is no original," the Hokage said, his face shadowed.
+        </div>
+
+        <div class="paragraph">
+            "No," she agreed. "But the technique does not know that. The technique is running. It is searching for the
+            center of a circle that has no circumference. Every Naruto that comes is a branch returning to a trunk that
+            isn't there. So they build the trunk themselves. They are not building a pile. They are building a <span
+                class="accent">heart</span>."
+        </div>
+
+        <div class="paragraph">
+            "Where does it end?"
+        </div>
+
+        <div class="paragraph">
+            She looked at the mountain for a long time. "When there are no more branches to return from. Or when the
+            technique finally understands what it has done. Whichever comes first."
+        </div>
+
+        <div class="section-break"></div>
+
+        <div class="paragraph">
+            Spring came, but the mountain did not melt. The warmth grew deeper. A Naruto arrived who was made entirely
+            of a soft, glowing glass; he shattered into a thousand warm shards upon touching the mountain, each shard
+            finding a crevice to fill. A Naruto arrived who was a bird, and another who was a forest, and they all, in
+            their own time, became Naruto again as they touched the slope.
+        </div>
+
+        <div class="paragraph">
+            The refinement began in the late summer. New Narutos arrived who did not lie down. They were the <span
+                class="accent">Gardeners</span>, and they did not blink.
+        </div>
+
+        <div class="paragraph">
+            They moved with a terrifying, jointless grace, sliding over the surface of the others like oil. They shifted
+            a limb here, tucked a cloak there, stitching the mountain together with needles made of their own finger-bones.
+            They whispered words that made the air turn cold, ensuring that the Naruto who had died in fear was fused
+            perfectly to the Naruto who had died in triumph, until the mountain was no longer a collection of bodies,
+            but a single, pulsing mass.
+        </div>
+
+        <div class="paragraph">
+            The village waited in a fever dream of acceptance. A quiet settled over the site: a quiet that was not
+            empty, but pressurized, like the sound of an enormous set of lungs drawing in a breath that would never be
+            released.
+        </div>
+
+        <div class="paragraph">
+            He arrived at dawn.
+        </div>
+
+        <div class="paragraph">
+            He was small. He was sixteen. He was wearing the orange suit.
+        </div>
+
+        <div class="paragraph">
+            He walked through the village the same way all the others had, through the gate, nodding to the guards, but
+            he walked as if he'd been walking for a thousand years and had finally seen a door that didn't lead to
+            another hallway. He looked at the village with the face of someone who has been away in a real way, and who
+            understands that the home he left is now something he carries inside him, finished and hollowed out.
+        </div>
+
+        <div class="paragraph">
+            He stopped at the mountain. He put his hand on the surface of it. The light at that moment was not brighter,
+            but more <span class="accent">true</span>.
+        </div>
+
+        <div class="paragraph">
+            He looked at what had been assembled: the flute-player, the scholar, the glass-man, the giant, the father. He
+            nodded once. It was the nod you give to a masterpiece you begun in your youth and finished only after you
+            had forgotten how to be human.
+        </div>
+
+        <div class="paragraph italicized" style="text-align: center; border: none; font-size: 2.5rem;">
+            "<span class="accent">Okay.</span>"
+        </div>
+
+        <div class="paragraph">
+            When he spoke, the word didn't come from his throat; it came from the mountain behind him, a synchronous
+            vibration of sixty thousand sets of lungs finding the same frequency at once.
+        </div>
+
+        <div class="paragraph">
+            The mountain exhaled, a massive expulsion of ozone and heat that vibrated the teeth of every living thing in
+            the village.
+        </div>
+
+        <div class="paragraph">
+            The warmth came out of it all at once; the radiance of every returned life, three hundred and forty-two days
+            of accumulated memory. The village felt it like standing in the last hour of an autumn afternoon, like being
+            told by a voice from a dream that you did fine. You were enough for a world that was already over.
+        </div>
+
+        <div class="paragraph">
+            The mountain settled into its final shape. It did not disappear. It became a permanent scar on the earth, a
+            structure that would never fully erode: a geometry that children would climb, quietly, when their parents
+            weren't watching, unaware of the thousands of eyes that watched them back from beneath the orange fabric.
+        </div>
+
+        <div class="paragraph">
+            The Hokage closed his report. He thought about Naruto's voice saying 'okay,' the specific weight of it. Not
+            triumph. Not resignation. Just the complete recognition of a person who has learned something enormous and
+            is deciding, freely, to come back anyway.
+        </div>
+
+        <div class="paragraph" style="text-align: center; border: none; font-size: 1.5rem; margin-top: 100px;">
+            This is as far as I go; the ink is dry.<br>
+            <span class="accent">This is far enough.</span>
+        </div>
+
+        <footer>
+            The warmth lasted three days.<br>
+            [ ARCHIVE REF: EA-7742-N / REVISION: ACCUMULATED ]
+        </footer>
+    </div>
+
+    <script>
+        // Scroll reveal logic
+        const paragraphs = document.querySelectorAll('.paragraph');
+
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal');
+                }
+            });
+        }, observerOptions);
+
+        paragraphs.forEach(p => observer.observe(p));
+
+        // Background and Text color shifting based on scroll
+        // Helper to get perceived brightness from HSL
+        function getLuminance(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return color;
+            };
+            // Perceived brightness coefficients
+            return 0.2126 * f(0) + 0.7152 * f(8) + 0.0722 * f(4);
+        }
+
+        window.addEventListener('scroll', () => {
+            const winScroll = window.scrollY;
+            const height = document.documentElement.scrollHeight - window.innerHeight;
+            const scrolled = Math.min(Math.max(winScroll / height, 0), 1);
+
+            document.getElementById("progress-bar").style.width = (scrolled * 100) + "%";
+
+            // BACKGROUND TRANSITION (Same logic, better colors)
+            let h, s, l;
+            if (scrolled < 0.5) {
+                const t = scrolled * 2;
+                h = 40 - (15 * t); // Shift toward deeper autumn/green
+                s = 30 + (30 * t);
+                l = 96 - (56 * t); // Down to 40
+            } else {
+                const t = (scrolled - 0.5) * 2;
+                h = 25 + (185 * t); // To Midnight 210
+                s = 60 - (20 * t);
+                l = 40 - (34 * t); // Down to 6
+            }
+
+            const bgColor = `hsl(${h}, ${s}%, ${l}%)`;
+            document.body.style.setProperty('--bg-current', bgColor);
+
+            // CONTRAST LOGIC: Luminance-based Binary Flip
+            const luminance = getLuminance(h, s, l);
+
+            // If luminance is > 0.5, bg is perceived as light -> use dark text
+            // If luminance is <= 0.5, bg is perceived as dark -> use light text
+            const textL = luminance > 0.5 ? 10 : 90;
+            const textColor = `hsl(${h}, 10%, ${textL}%)`;
+            document.body.style.setProperty('--text-current', textColor);
+
+            // ACCENT LOGIC: High saturation contrast
+            const accentL = luminance > 0.5 ? 35 : 70;
+            const accentColor = `hsl(${25 + (20 * scrolled)}, 80%, ${accentL}%)`;
+            document.body.style.setProperty('--accent-current', accentColor);
+
+            document.body.style.setProperty('--border-current', luminance > 0.5 ? `rgba(0,0,0,0.1)` : `rgba(255,255,255,0.2)`);
+            document.getElementById('vignette').style.opacity = scrolled * 0.9;
+        });
+
+        // Add falling leaves with varying colors
+        function createLeaf() {
+            const leaf = document.createElement('div');
+            leaf.classList.add('leaf');
+            leaf.style.left = Math.random() * 100 + 'vw';
+            leaf.style.animationDuration = (Math.random() * 6 + 6) + 's';
+
+            // Autumn leaf colors
+            const colors = ['#b5651d', '#8b4513', '#6b8e23', '#d2691e', '#a0522d'];
+            leaf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            leaf.style.borderRadius = '2px 10px';
+
+            document.body.appendChild(leaf);
+
+            setTimeout(() => {
+                leaf.remove();
+            }, 12000);
+        }
+
+        setInterval(createLeaf, 700);
+    </script>
+</body>
+
+</html>

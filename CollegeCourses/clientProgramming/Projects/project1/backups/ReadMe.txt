@@ -1,0 +1,3 @@
+My Notepad++ is set up to auto create back-ups each few minutes, in case I accidentally explode something somehow, which seems to happen pretty often...
+
+This back-up folder have saved my sanity many times during the six weeks of pulling this whole thing together!
