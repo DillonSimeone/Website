@@ -6,21 +6,20 @@ A high-performance, modular portfolio showcasing innovation at the intersection 
 
 ---
 
-## 🚀 Overview
+## Overview
 This repository contains the source code for my portfolio website. More than just a static page, this project is a testbed for extreme performance optimization and modular content management. 
 
 I am a **Deaf engineer, maker, and designer** specializing in haptic feedback systems and accessibility technology. This site reflects that multidisciplinary approach, combining sleek aesthetics with rigorous technical foundations.
 
 ### Key Features:
 - **Modular Content Architecture**: Projects are managed as standalone HTML fragments in `src/content/`, dynamically injected via Handlebars.
-- **"Black Ice" Design System**: A high-contrast dark mode with neon accents, optimized for visual clarity and aesthetic impact.
-- **Extreme Minification**: Powered by Vite and `vite-plugin-singlefile`, the entire production site is bundled into a single, highly-compressed `index.html`.
-- **Haptic Shop**: A direct-to-maker storefront integrated with Stripe for hardware prototypes and art pieces.
+- **Minification**: Powered by Vite and `vite-plugin-singlefile`, the entire production site is bundled into a single, highly-compressed `index.html`.
+- **Shop**: A direct-to-maker storefront integrated with Stripe for hardware prototypes and art pieces.
 - **Performance-First Background**: Uses static SVG "skeletons" with real-time color re-skinning to achieve 60FPS animations with ~0% CPU overhead.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 - **Core**: HTML5, Vanilla JavaScript, CSS3
 - **Build Engine**: [Vite](https://vitejs.dev/)
 - **Templating**: Handlebars
@@ -32,7 +31,7 @@ I am a **Deaf engineer, maker, and designer** specializing in haptic feedback sy
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 - **`src/`**: Source files.
   - **`content/`**: Categorized project cards (`laser/`, `3dprinting/`, `esp32/`, `shop/`).
   - **`partials/`**: Reusable UI components like navigation and the hero section.
@@ -44,7 +43,7 @@ I am a **Deaf engineer, maker, and designer** specializing in haptic feedback sy
 
 ---
 
-## 👨‍💻 Development
+## Development
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (Latest LTS)
@@ -71,12 +70,12 @@ Follow the prompts to select a category, and the script will generate a correctl
 
 ---
 
-## 🔬 Research & Accessibility
+## Research & Accessibility
 A core pillar of this portfolio is my work on the **GeLu (GestoLumina) Bracers** and the **PULSE Haptic Ecosystem**. These projects focus on universal music design and environmental awareness for the Deaf community. 
 
 For more details, see the documentation in the **Work** and **Embedded** sections of the site.
 
 ---
 
-## 📜 License
+## License
 © Dillon Simeone. All rights reserved.
