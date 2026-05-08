@@ -15,7 +15,5 @@ print("Serving Parametric Modeling Explorations...")
 
 # Start the server and open the browser
 with socketserver.TCPServer(("", PORT), Handler) as httpd:
-    webbrowser.open(f"http://localhost:{PORT}/01-ForgeCAD/")
-    webbrowser.open(f"http://localhost:{PORT}/02-OpenJSCAD/")
-    webbrowser.open(f"http://localhost:{PORT}/03-Manifold/")
+    webbrowser.open(f"http://localhost:{PORT}/")
     httpd.serve_forever()
