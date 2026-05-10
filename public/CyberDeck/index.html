@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apocalypse CyberDeck</title>
+    <meta name="description" content="A rugged, versatile portable computer designed for extreme field operations and power flexibility.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><polygon points='16,2 30,10 30,22 16,30 2,22 2,10' fill='%23050505' stroke='%2333ff33' stroke-width='2'/><polygon points='16,6 26,12 16,18 6,12' fill='%23004400'/><polygon points='6,12 16,18 16,26 6,20' fill='%23003300'/><polygon points='16,18 26,12 26,20 16,26' fill='%2333ff33' opacity='0.5'/></svg>" type="image/svg+xml">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="canvas-mount"></div>
+
+    <div class="ui-overlay">
+        <div class="header">
+            <div class="header-left">
+                <h1>APOCALYPSE_OS_v1.0</h1>
+                <div class="status-badge">
+                    <span class="blink">●</span> <span id="pose-label">SCANNING_ENERGY...</span> <span id="fps-counter" style="margin-left:1rem; opacity:0.5;">0 FPS</span>
+                </div>
+            </div>
+            <div class="telemetry">
+                <div class="tel-item">
+                    <label>INPUT_V</label>
+                    <span id="tel-volts">0.0V</span>
+                </div>
+                <div class="tel-item">
+                    <label>LOAD_W</label>
+                    <span id="tel-watts">0.0W</span>
+                </div>
+                <div class="tel-item">
+                    <label>EFFICIENCY</label>
+                    <span id="tel-eff">0%</span>
+                </div>
+                <div class="tel-item" id="tel-mesh-wrap" style="display:none;">
+                    <label>MESH_BW</label>
+                    <span id="tel-mesh-bw">0 pkt/s</span>
+                </div>
+                <div class="tel-item" id="tel-fract-wrap" style="display:none;">
+                    <label>FRACT_D</label>
+                    <span id="tel-fract-depth">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div class="panel-header">POWER_SOURCE</div>
+            <div class="source-grid">
+                <button class="source-btn active" data-source="solar">SOLAR</button>
+                <button class="source-btn" data-source="wind">WIND</button>
+                <div class="source-row grid-row">
+                    <button class="source-btn" data-source="grid" style="flex:1;">GRID</button>
+                    <div class="toggle-container compact">
+                        <button class="toggle-btn active" data-type="dc">DC</button>
+                        <button class="toggle-btn" data-type="ac">AC</button>
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer">AUTO_SELECT: ON</div>
+        </div>
+
+        <nav class="menu">
+            <button class="menu-btn" data-pose="0">
+                <span class="number">00</span>
+                <span class="label">Manifesto</span>
+            </button>
+            <button class="menu-btn" data-pose="1">
+                <span class="number">01</span>
+                <span class="label">The Omnivore</span>
+            </button>
+            <button class="menu-btn" data-pose="2">
+                <span class="number">02</span>
+                <span class="label">Neural Mesh</span>
+            </button>
+            <button class="menu-btn" data-pose="3">
+                <span class="number">03</span>
+                <span class="label">Repairability</span>
+            </button>
+            <button class="menu-btn" data-pose="4">
+                <span class="number">04</span>
+                <span class="label">Adaptive Compute</span>
+            </button>
+        </nav>
+        <!-- DEVMODE -->
+        <div class="dev-container">
+            <button id="dev-toggle">DIAGNOSTICS</button>
+            <div id="dev-menu" class="hidden">
+                <h3>OVERRIDE_CONTROLS</h3>
+                <div id="dev-controls"></div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="scene-canvas"></canvas>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>

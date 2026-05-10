@@ -149,8 +149,20 @@
         let currentMeshes = [];
         let currentModels = {};
 
-        // --- ForgeCAD Param API ---
+        // --- ForgeCAD Param API with localStorage ---
+        const STORAGE_KEY = 'fanDuctWorks_params';
         const PARAMS = {};
+
+        function loadSavedParams() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+        }
+        function saveParams() {
+            const data = {};
+            for (const [id, p] of Object.entries(PARAMS)) data[id] = p.value;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        const savedParams = loadSavedParams();
+
         const param = (name, defaultValue, options = {}, category = 'global') => {
             const id = name.replace(/\s+/g, '-').toLowerCase();
             if (!PARAMS[id]) {
@@ -158,7 +170,9 @@
                 const min = options.min ?? 0;
                 const max = options.max ?? (defaultValue * 3);
                 const step = options.step ?? 1;
-                PARAMS[id] = { value: defaultValue, min, max, step, name, category, type };
+                const saved = savedParams[id];
+                const value = saved !== undefined ? saved : defaultValue;
+                PARAMS[id] = { value, min, max, step, name, category, type };
                 createParamUI(id, category);
             }
             return PARAMS[id].value;
@@ -181,6 +195,7 @@
                 container.appendChild(row);
                 row.querySelector('input').addEventListener('change', (e) => {
                     PARAMS[id].value = e.target.checked ? 1 : 0;
+                    saveParams();
                     requestUpdate();
                 });
             } else {
@@ -193,6 +208,7 @@
                     const val = parseFloat(e.target.value);
                     PARAMS[id].value = val;
                     document.getElementById(`val-${id}`).innerText = val;
+                    saveParams();
                     requestUpdate();
                 });
             }
@@ -237,44 +253,46 @@
 
             const innerOff = rings * pp;
 
-            // Outer surface quads
+            // Outer surface quads — normals point OUTWARD (away from axis)
             for (let i = 0; i < segs; i++) {
                 for (let j = 0; j < pp; j++) {
                     const jn = (j + 1) % pp;
                     const a = i * pp + j, b = i * pp + jn;
                     const c = (i + 1) * pp + j, d = (i + 1) * pp + jn;
-                    indices.push(a, c, b, b, c, d);
+                    indices.push(a, b, c, b, d, c);
                 }
             }
 
-            // Inner surface quads (reversed winding)
+            // Inner surface quads — normals point INWARD (toward axis)
             for (let i = 0; i < segs; i++) {
                 for (let j = 0; j < pp; j++) {
                     const jn = (j + 1) % pp;
                     const a = innerOff + i * pp + j, b = innerOff + i * pp + jn;
                     const c = innerOff + (i + 1) * pp + j, d = innerOff + (i + 1) * pp + jn;
-                    indices.push(a, b, c, b, d, c);
+                    indices.push(a, c, b, b, c, d);
                 }
             }
 
-            // End cap at ring 0 (duct end)
+            // End cap at ring 0 (duct end) — normal points -Z
             for (let j = 0; j < pp; j++) {
                 const jn = (j + 1) % pp;
-                indices.push(j, jn, innerOff + j, jn, innerOff + jn, innerOff + j);
+                indices.push(j, innerOff + j, jn, jn, innerOff + j, innerOff + jn);
             }
 
-            // End cap at last ring (fan end)
+            // End cap at last ring (fan end) — normal points +Z
             for (let j = 0; j < pp; j++) {
                 const jn = (j + 1) % pp;
                 const oA = segs * pp + j, oB = segs * pp + jn;
                 const iA = innerOff + segs * pp + j, iB = innerOff + segs * pp + jn;
-                indices.push(oA, iA, oB, oB, iA, iB);
+                indices.push(oA, oB, iA, oB, iB, iA);
             }
 
-            return {
-                vertices: new Float32Array(verts),
-                indices: new Uint32Array(indices)
-            };
+            const mesh = new wasm.Mesh({
+                numProp: 3,
+                vertProperties: new Float32Array(verts),
+                triVerts: new Uint32Array(indices)
+            });
+            return new Manifold(mesh);
         }
 
         function geoToThreeMesh(geo, color, opacity) {
@@ -308,22 +326,27 @@
             currentMeshes.push(mesh);
         }
 
-        // --- STL Export from Three.js meshes ---
+        // --- STL Export: pieces laid out on print bed ---
         function exportAllSTL(name) {
             let stl = `solid ${name}\n`;
             for (const mesh of currentMeshes) {
+                if (mesh.userData.isGhost) continue;
+                
                 const pos = mesh.geometry.attributes.position;
                 const idx = mesh.geometry.index;
-                const off = mesh.position;
                 if (!idx) continue;
+
+                // Use bedOffset for print layout (ignores scene split-view position)
+                const bed = mesh.userData.bedOffset || [0, 0, 0];
+                
                 for (let i = 0; i < idx.count; i += 3) {
                     const verts = [];
                     for (let k = 0; k < 3; k++) {
                         const vi = idx.getX(i + k);
                         verts.push([
-                            pos.getX(vi) + off.x,
-                            pos.getY(vi) + off.y,
-                            pos.getZ(vi) + off.z
+                            pos.getX(vi) + bed[0],
+                            pos.getY(vi) + bed[1],
+                            pos.getZ(vi) + bed[2]
                         ]);
                     }
                     stl += `facet normal 0 0 0\n  outer loop\n`;
@@ -386,15 +409,22 @@
                 const d2TransLen = sepDuct2 ? d2_Tr : d1TransLen;
                 const d2Bell = sepDuct2 ? d2_Be : d1Bell;
 
-                // Dynamic UI visibility
+
+                const tolerance = param("Tolerance", 0.4, { min: 0.1, max: 2, step: 0.1 }, "slot");
+                const slotLip = param("Slot Lip", 3, { min: 1, max: 10, step: 0.5 }, "slot");
+                const splitForPrint = param("Split for Print", 0, { type: 'checkbox' }, "slot");
+                const splitView = param("Split View", 0, { min: 0, max: 100 }, "slot") / 100;
+
+                // Hide Split View when not splitting
+                const svEl = document.getElementById("input-split-view");
+                if (svEl) svEl.closest('.param-row').style.display = splitForPrint ? 'block' : 'none';
+
+                // Dynamic UI visibility for D2
                 const d2Rows = ["d2-inner-d", "d2-extension", "d2-transition", "d2-bell-curve"];
                 d2Rows.forEach(id => {
                     const el = document.getElementById("input-" + id);
                     if (el) el.closest('.param-row').style.display = sepDuct2 ? 'block' : 'none';
                 });
-
-                const tolerance = param("Tolerance", 0.4, { min: 0.1, max: 2, step: 0.1 }, "slot");
-                const slotLip = param("Slot Lip", 3, { min: 1, max: 10, step: 0.5 }, "slot");
 
                 // --- Derived ---
                 const fanActual = fanSide + tolerance * 2;
@@ -402,64 +432,122 @@
                 const fanHalfInner = fanSide / 2;
                 const housingT = fanActualT + wall * 2;
                 const halfHousing = housingT / 2;
-
-                // ======= 1. CURVED TRANSITIONS =======
-                
-                // Transition IN
-                const d1InnerR = d1InnerD / 2;
-                const transGeo1 = buildTransitionGeometry(d1InnerR, fanHalfInner, d1TransLen, d1Bell, 16, 48, wall);
-                const transInMesh = geoToThreeMesh(transGeo1, 0x3b82f6, 0.75);
-                addMesh(transInMesh, [0, 0, -halfHousing - d1TransLen]);
-
-                // Transition OUT
-                const d2InnerR = d2InnerD / 2;
-                const transGeo2 = buildTransitionGeometry(d2InnerR, fanHalfInner, d2TransLen, d2Bell, 16, 48, wall);
-                const transOutMesh = geoToThreeMesh(transGeo2, 0x3b82f6, 0.75);
-                transOutMesh.rotation.x = Math.PI;
-                addMesh(transOutMesh, [0, 0, halfHousing + d2TransLen]);
-
-                // ======= 2. STRAIGHT DUCT EXTENSIONS =======
-                
-                // Duct 1 Extension
-                if (d1Ext > 0.1) {
-                    let extO = cylinder(d1InnerR + wall, d1Ext);
-                    let extI = cylinder(d1InnerR, d1Ext + 0.2);
-                    let ext = extO.subtract(extI);
-                    extO.delete(); extI.delete();
-                    const mesh = manifoldToThreeMesh(ext, 0x3b82f6, 0.75);
-                    addMesh(mesh, [0, 0, -halfHousing - d1TransLen - d1Ext / 2]);
-                    ext.delete();
-                }
-
-                // Duct 2 Extension
-                if (d2Ext > 0.1) {
-                    let extO = cylinder(d2InnerR + wall, d2Ext);
-                    let extI = cylinder(d2InnerR, d2Ext + 0.2);
-                    let ext = extO.subtract(extI);
-                    extO.delete(); extI.delete();
-                    const mesh = manifoldToThreeMesh(ext, 0x3b82f6, 0.75);
-                    addMesh(mesh, [0, 0, halfHousing + d2TransLen + d2Ext / 2]);
-                    ext.delete();
-                }
-
-                // ======= 3. FAN HOUSING =======
                 const housingW = fanActual + slotLip * 2;
                 const housingH = fanActual + slotLip * 2;
 
+                // ======= 1. BUILD FULL ASSEMBLY =======
+                
+                // --- Transition IN (Side 1) ---
+                const d1InnerR = d1InnerD / 2;
+                const overlap = 1;
+                let trans1 = buildTransitionGeometry(d1InnerR, fanHalfInner, d1TransLen + overlap, d1Bell, 16, 48, wall);
+                trans1 = trans1.translate([0, 0, -halfHousing - d1TransLen]);
+
+                // --- Transition OUT (Side 2) ---
+                const d2InnerR = d2InnerD / 2;
+                let trans2 = buildTransitionGeometry(d2InnerR, fanHalfInner, d2TransLen + overlap, d2Bell, 16, 48, wall);
+                trans2 = trans2.rotate([180, 0, 0]).translate([0, 0, halfHousing + d2TransLen]);
+
+                // --- Duct Extensions ---
+                let fullModel = Manifold.union(trans1, trans2);
+                trans1.delete(); trans2.delete();
+
+                if (d1Ext > 0.1) {
+                    let extO = cylinder(d1InnerR + wall, d1Ext);
+                    let extI = cylinder(d1InnerR, d1Ext + 0.2);
+                    let ext = extO.subtract(extI).translate([0, 0, -halfHousing - d1TransLen - d1Ext / 2]);
+                    extO.delete(); extI.delete();
+                    let old = fullModel; fullModel = Manifold.union(fullModel, ext); old.delete(); ext.delete();
+                }
+
+                if (d2Ext > 0.1) {
+                    let extO = cylinder(d2InnerR + wall, d2Ext);
+                    let extI = cylinder(d2InnerR, d2Ext + 0.2);
+                    let ext = extO.subtract(extI).translate([0, 0, halfHousing + d2TransLen + d2Ext / 2]);
+                    extO.delete(); extI.delete();
+                    let old = fullModel; fullModel = Manifold.union(fullModel, ext); old.delete(); ext.delete();
+                }
+
+                // --- Housing ---
                 let housing = cube(housingW, housingH, housingT);
                 let slot = cube(fanActual, fanActual + housingH, fanActualT).translate([0, housingH / 2, 0]);
                 let airHole = cube(fanSide, fanSide, housingT + 2);
-
                 housing = housing.subtract(slot).subtract(airHole);
                 slot.delete(); airHole.delete();
 
-                currentModels.housing = housing;
-                const housingMesh = manifoldToThreeMesh(housing, 0x3b82f6, 0.85);
-                addMesh(housingMesh);
+                let old = fullModel; fullModel = Manifold.union(fullModel, housing); old.delete(); housing.delete();
 
-                // ======= 4. GHOST FAN =======
+                if (splitForPrint) {
+                    // ======= 2. SPLIT AT Y=0 (clamshell halves) =======
+                    const bigBox = 500;
+                    let topHalf = fullModel.intersect(cube(bigBox, bigBox, bigBox).translate([0, bigBox / 2, 0]));
+                    let botHalf = fullModel.intersect(cube(bigBox, bigBox, bigBox).translate([0, -bigBox / 2, 0]));
+                    fullModel.delete();
+
+                    // ======= 3. DOWEL HOLES in both halves =======
+                    const dowelR = Math.min(slotLip, wall) * 0.35;
+                    const dowelDepth = Math.min(5, fanHalfInner * 0.4);
+                    const holeR = dowelR + 0.15;
+                    const dxOff = housingW / 2 - slotLip / 2;
+                    const dzPositions = [housingT / 4, -housingT / 4];
+
+                    let topHoles = null;
+                    let botHoles = null;
+
+                    for (const dz of dzPositions) {
+                        for (const dx of [dxOff, -dxOff]) {
+                            let ht = cylinder(holeR, dowelDepth + 0.5, 16).rotate([90, 0, 0]).translate([dx, dowelDepth / 2, dz]);
+                            topHoles = topHoles ? (() => { let o = topHoles; let r = Manifold.union(topHoles, ht); o.delete(); ht.delete(); return r; })() : ht;
+
+                            let hb = cylinder(holeR, dowelDepth + 0.5, 16).rotate([90, 0, 0]).translate([dx, -dowelDepth / 2, dz]);
+                            botHoles = botHoles ? (() => { let o = botHoles; let r = Manifold.union(botHoles, hb); o.delete(); hb.delete(); return r; })() : hb;
+                        }
+                    }
+
+                    let finalTop = topHalf.subtract(topHoles);
+                    topHalf.delete(); topHoles.delete();
+                    let finalBot = botHalf.subtract(botHoles);
+                    botHalf.delete(); botHoles.delete();
+
+                    // ======= 4. SEPARATE DOWEL PINS =======
+                    const dowelPinLen = dowelDepth * 2 - 0.5;
+                    let allPins = null;
+                    for (const dz of dzPositions) {
+                        for (const dx of [dxOff, -dxOff]) {
+                            let pin = cylinder(dowelR, dowelPinLen, 16).rotate([90, 0, 0]).translate([dx, 0, dz]);
+                            allPins = allPins ? (() => { let o = allPins; let r = Manifold.union(allPins, pin); o.delete(); pin.delete(); return r; })() : pin;
+                        }
+                    }
+
+                    // ======= 5. DISPLAY (SPLIT) =======
+                    const splitOff = splitView * 60;
+                    const bedSpacing = Math.max(housingW, housingH) + 15;
+                    
+                    const mTop = manifoldToThreeMesh(finalTop, 0x3b82f6, 0.8);
+                    mTop.userData.bedOffset = [-bedSpacing, 0, 0];
+                    addMesh(mTop, [0, splitOff, 0]);
+                    
+                    const mBot = manifoldToThreeMesh(finalBot, 0x10b981, 0.8);
+                    mBot.userData.bedOffset = [0, 0, 0];
+                    addMesh(mBot, [0, -splitOff, 0]);
+
+                    const mPins = manifoldToThreeMesh(allPins, 0xf59e0b, 1.0);
+                    mPins.userData.bedOffset = [bedSpacing, 0, 0];
+                    addMesh(mPins, [splitOff > 0 ? housingW + 20 : 0, 0, 0]);
+
+                    finalTop.delete(); finalBot.delete(); allPins.delete();
+                } else {
+                    // ======= DISPLAY (WHOLE) =======
+                    const mFull = manifoldToThreeMesh(fullModel, 0x3b82f6, 0.8);
+                    mFull.userData.bedOffset = [0, 0, 0];
+                    addMesh(mFull);
+                    fullModel.delete();
+                }
+
+                // ======= GHOST FAN =======
                 let fanGhost = cube(fanSide, fanSide, fanThick);
                 const fanMesh = manifoldToThreeMesh(fanGhost, 0x8b5cf6, 0.35);
+                fanMesh.userData.isGhost = true;
                 addMesh(fanMesh, [0, explosion * 120, 0]);
                 fanGhost.delete();
 
