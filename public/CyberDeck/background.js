@@ -38,6 +38,7 @@ export class ShaderBackground {
         };
 
         this.targetMoodColor = MOOD_COLORS.calm.clone();
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
         const geo = new THREE.PlaneGeometry(2, 2);
         this.material = new THREE.ShaderMaterial({
@@ -58,8 +59,9 @@ export class ShaderBackground {
         this.mesh.frustumCulled = false;
         this.mesh.renderOrder = -1000;
 
-        // Load the external default immediately
-        this.loadShader('./shaders/flow.glsl');
+        // Load the appropriate shader
+        const shaderPath = this.isMobile ? './shaders/mobileShader.glsl' : './shaders/flow.glsl';
+        this.loadShader(shaderPath);
     }
 
     setGeometry(type) {
