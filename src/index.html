@@ -20,6 +20,97 @@
         .swal2-footer {
             color: black;
         }
+
+        /* WIP Warning Component */
+        .wip-warning {
+            display: flex;
+            align-items: center;
+            background: var(--bg-glass);
+            border: 2px solid #ffcc00;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px auto;
+            width: 100%;
+            max-width: 800px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px 0 rgba(255, 204, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            animation: warningPulse 2s infinite alternate;
+            transition: transform 0.3s ease;
+        }
+
+        .wip-warning:hover {
+            transform: scale(1.02);
+        }
+
+        .warning-icon {
+            font-size: 2.5rem;
+            margin-right: 25px;
+            filter: drop-shadow(0 0 10px #ffcc00);
+            animation: iconShake 0.5s infinite step-end;
+        }
+
+        .warning-content h3 {
+            margin: 0;
+            color: #ad2f7d !important;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1.4rem;
+        }
+
+        .warning-content p {
+            margin: 8px 0 0 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+            color: var(--text-primary);
+        }
+
+        @keyframes warningPulse {
+            from {
+                box-shadow: 0 0 15px rgba(255, 204, 0, 0.1);
+                border-color: rgba(255, 204, 0, 0.5);
+            }
+
+            to {
+                box-shadow: 0 0 30px rgba(255, 204, 0, 0.3);
+                border-color: rgba(255, 204, 0, 1);
+            }
+        }
+
+        @keyframes iconShake {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            25% {
+                transform: translate(1px, -1px) rotate(1deg);
+            }
+
+            50% {
+                transform: translate(-1px, 1px) rotate(-1deg);
+            }
+
+            75% {
+                transform: translate(1px, 1px) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+        }
+
+        body.dark-mode .wip-warning {
+            background: rgba(255, 204, 0, 0.05);
+            border-color: #ffcc00;
+        }
+
+        body.dark-mode .warning-content h3::before {
+            content: '!! ';
+            color: #ff0040;
+            font-family: 'Share Tech Mono', monospace;
+        }
     </style>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -78,7 +169,8 @@
                     </p>
                     <p>
                         You can find many of my other projects on <a
-                            href="https://www.youtube.com/@Dillonsimeone/shorts">YouTube</a>; most of my shorts are just me
+                            href="https://www.youtube.com/@Dillonsimeone/shorts">YouTube</a>; most of my shorts are just
+                        me
                         screaming until the neighbors call the police, but some are pretty neat!
                     </p>
                 </div>
@@ -90,17 +182,17 @@
                 </div>
 
                 {{#each laserCards}}
-                    {{{ this }}}
+                {{{ this }}}
                 {{/each}}
 
                 <h1>3D printed Artworks</h1>
                 {{#each printingCards}}
-                    {{{ this }}}
+                {{{ this }}}
                 {{/each}}
 
                 <h1>Embedded Technology Madness</h1>
                 {{#each esp32Cards}}
-                    {{{ this }}}
+                {{{ this }}}
                 {{/each}}
             </section>
         </article>
@@ -120,7 +212,7 @@
             <section>
                 <h1>Past Works</h1>
                 {{#each workCards}}
-                    {{{ this }}}
+                {{{ this }}}
                 {{/each}}
             </section>
         </article>
@@ -142,7 +234,7 @@
                 <h2>Personal projects, doodles, ideas and notes to self.</h2>
                 <div class="grid">
                     {{#each miniProjectCards}}
-                        {{{ this }}}
+                    {{{ this }}}
                     {{/each}}
                 </div>
             </section>
@@ -164,12 +256,13 @@
             <section>
                 <h1>ESP32 / Embedded Tech</h1>
                 <h2>
-                    Microcontrollers, IoT projects, and tiny computers doing big things. (Work in Process, there's a lot of
+                    Microcontrollers, IoT projects, and tiny computers doing big things. (Work in Process, there's a lot
+                    of
                     projects to go through.)
                 </h2>
                 <div class="grid">
                     {{#each esp32Cards}}
-                        {{{ this }}}
+                    {{{ this }}}
                     {{/each}}
                 </div>
             </section>
@@ -190,9 +283,19 @@
             <section>
                 <h1>Dillon's Shop</h1>
                 <h2>Hand-crafted tech, art, and experiments.</h2>
+
+                <!-- WIP Warning -->
+                <div class="wip-warning">
+                    <span class="warning-icon">⚠️</span>
+                    <div class="warning-content">
+                        <h3>System Status: Work in Progress</h3>
+                        <p>This shop is currently under construction. Please note that there is nothing to be bought
+                            here yet!</p>
+                    </div>
+                </div>
                 <div class="grid">
                     {{#each shopCards}}
-                        {{{ this }}}
+                    {{{ this }}}
                     {{/each}}
                 </div>
             </section>
