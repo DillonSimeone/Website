@@ -27,12 +27,22 @@ export const poses = [
         content: {
             title: "LEAVING THE THRONE",
             items: [
-                { label: "00 — MY FIELD WORKSTATION", details: "As an embedded developer, I'm breaking away from my throne of power; my desktop, my monitors, and my stable grid. The deck is built to program hardware in the dirt, the forest, and the field." },
+                { 
+                    label: "00 — THE DEAF ENGINEER", 
+                    details: "I am a deaf embedded developer who builds haptic systems for DHH communities and deploys them at music festivals. I'm breaking away from the studio to program hardware directly in the field." 
+                },
                 { label: "Dependency is a Flaw", details: "If a deck only runs on a USB-C wall outlet, creative agency stops when the grid fails. This machine assumes nothing and adapts to everything." },
-                { label: "Demystifying the Build", details: "This isn't just for me. I'm documenting every schematic and failure so that anyone can build their own dream deck and reclaim their agency over technology." },
-                "Open Source Hardware Logic",
-                "Built for Total Autonomy"
+                { 
+                    label: "Accessible Documentation", 
+                    details: "Drawing from leading CymaSpace workshops and publishing NIME research with ITU Copenhagen collaborators, I am designing this deck as a beginner-friendly tutorial to demystify hardware." 
+                },
+                { label: "A Safe Haven", details: "In a world of black-boxed technologies, this deck reclaims agency through fully transparent, offline-first hardware design." }
             ],
+            footerLinks: [
+                { label: "Personal Website", url: "https://dillonsimeone.com" },
+                { label: "GestoLumina Paper", url: "https://www.researchgate.net/profile/Doga-Cavdir/publication/382625935_GestoLumina_Gesture_interpreted_Light_Sound_and_Haptics_Towards_a_Framework_for_Universal_Music_Design/links/66a62efcc6e41359a844004c/GestoLumina-Gesture-interpreted-Light-Sound-and-Haptics-Towards-a-Framework-for-Universal-Music-Design.pdf" },
+                { label: "Haptic Research Paper", url: "https://dl.acm.org/doi/10.1145/3663547.3746396" }
+            ]
         },
     },
     {
@@ -54,7 +64,7 @@ export const poses = [
                 { label: "High-Efficiency GaN Stage", details: "Gallium Nitride (GaN) transistors drive the power front-end, offering superior thermal performance and extreme power density in a rugged, portable footprint." },
                 { label: "5V - 120V Universal Input", details: "The power stage accepts virtually anything: AA cells, eBike batteries, salvaged solar panels, or AC mains. It adapts to the environment rather than demanding infrastructure." },
                 { label: "Hardware Scavenging", details: "The deck utilizes common discrete components harvested from discarded hardware. It's designed to be assembled from the city's electronic recycling bins." },
-                { label: "The AI Field Guide", details: "A local LLM—fine-tuned on the deck's schematics—helps adapt the power bus to unexpected scavenged parts. It bypasses documentation hell, but I always cross-reference the spec sheets to avoid hallucinated logic." },
+                { label: "Offline Datasheet Library", details: "Rather than relying on black-boxed cloud AI, the deck stores a comprehensive, offline repository of component datasheets. It acts as an autonomous reference tool for safely integrating scavenged parts." },
             ],
         },
     },
@@ -76,8 +86,7 @@ export const poses = [
                 { label: "Programming in the Field", details: "Native integration of an ESP32 co-processor allows for testing, flashing, and debugging microcontrollers directly from the chassis without external dongles." },
                 { label: "Over-The-Air Swarm Flashing", details: "The deck creates a local ad-hoc network for wireless Over-The-Air (OTA) firmware updates. I can flash my entire swarm of field-deployed ESP32s without touching a single cable." },
                 { label: "LoRa Long Range", details: "A dedicated LoRa radio pulls low-bandwidth telemetry and location beacons from sensor nodes kilometers apart, maintaining connection across vast distances." },
-                "SDR Radio Array Ready",
-                "Encrypted P2P Comms"
+                { label: "Software Defined Radio", details: "An integrated SDR module allows the deck to scan the local RF environment and analyze interference patterns from nearby hardware." }
             ],
         },
     },
@@ -118,12 +127,10 @@ export const poses = [
         content: {
             title: "PORTABLE IDE",
             items: [
-                { label: "Headless AR Interface", details: "The deck streams a massive, private workspace directly to my augmented reality glasses. The chassis is a ruggedized compute core and unfolding keyboard with zero screen dependencies." },
+                { label: "Display Agnostic", details: "The chassis has zero screen dependencies, eliminating a fragile failure point. It can drive a salvaged monitor in the workshop, or pair with swappable peripherals like AR glasses in the field." },
                 { label: "Right-Sized Processing", details: "The swappable carrier board (CM4) provides a full Linux workstation capable of compiling C++ and pushing wireless OTA updates in any environment." },
-                { label: "Energy Breathing", details: "The system dynamically scales based on workload. It pulls full power for compilation and throttles down to sip energy while monitoring serial output through my glasses." },
-                "Operating Efficiency: 92%",
-                "Nominal: Full IDE Performance",
-                "Deep Sleep: 0.5W Scavenge"
+                { label: "Energy Breathing", details: "The system dynamically scales based on workload. It pulls full power for compilation and throttles down to sip energy while monitoring serial output." },
+                { label: "Zero-Trust Peripherals", details: "By decoupling displays and inputs from the compute core, the deck treats all peripherals as untrusted, swappable modules that can be replaced as they fail." }
             ],
         },
     },

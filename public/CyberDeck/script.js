@@ -245,6 +245,10 @@ function init() {
     scene.add(bg.mesh);
     content = new ContentProjector(scene, camera, renderer);
     
+    // Mobile optimization: Bring content closer on vertical screens
+    const isMobile = window.innerWidth < window.innerHeight;
+    content.maximizedPosition.z = isMobile ? 12 : 8; 
+    
     content.onNavigate = (dir) => {
         let nextIndex;
         if (dir === 'next') {

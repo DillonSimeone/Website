@@ -13,6 +13,9 @@ export class ContentProjector {
         this.canvas.height = 1024;
         this.ctx = this.canvas.getContext('2d');
 
+        this.footerHitAreas = []; // For link buttons
+        this.hoveredFooter = -1;
+
         // Display plane
         this.texture = new THREE.CanvasTexture(this.canvas);
         this.texture.minFilter = THREE.LinearFilter;
@@ -47,6 +50,7 @@ export class ContentProjector {
         this.itemBounds = []; // Store actual rects for perfect hit detection
         this.hoveredItem = -1;
         this.hoveredNav = null; // 'prev' or 'next'
+        this.hoveredFooter = -1;
         this.onNavigate = null; // Callback for nav
         this.isMaximized = false;
         this.expansionProgress = 0;
@@ -242,7 +246,22 @@ export class ContentProjector {
                 }
 
                 ctx.font = '34px monospace';
-                ctx.fillText(`[ ${label} ]`, 100, currentY);
+                const labelText = `[ ${label} ]`;
+                ctx.fillText(labelText, 100, currentY);
+                
+                // Visual hint for links: persistent underline for the whole label
+                if (item.url || (item.links && item.links.length > 0)) {
+                    const metrics = ctx.measureText(labelText);
+                    ctx.save();
+                    ctx.strokeStyle = this.themeColor;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(100, currentY + 6);
+                    ctx.lineTo(100 + metrics.width, currentY + 6);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
                 ctx.shadowBlur = 0;
 
                 if (isObject && item.details) {
@@ -250,11 +269,9 @@ export class ContentProjector {
                     ctx.font = '22px monospace';
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
                     
-                    // Replace exact newline splits with proper text wrapping across full width
-                    // Canvas width is 1024, padding left is 140, padding right is ~60, so max width ~820
                     const detailsCleaned = item.details.replace(/\n/g, ' '); 
                     currentY = this._wrapText(ctx, `// ${detailsCleaned}`, 140, currentY, 820, 32);
-                    currentY += 35; // Add extra padding after paragraph
+                    currentY += 35;
                 } else {
                     currentY += 75;
                 }
@@ -302,6 +319,51 @@ export class ContentProjector {
             ctx.shadowColor = this.themeColor;
             ctx.fillRect(w - 38, barY, 10, barH);
             ctx.shadowBlur = 0;
+        }
+
+        // 7. Footer Links (Rugged Bottom Dock)
+        this.footerHitAreas = [];
+        if (this.currentContent.footerLinks) {
+            const links = this.currentContent.footerLinks;
+            const linkW = 280;
+            const linkH = 50;
+            const gap = 20;
+            const totalW = links.length * linkW + (links.length - 1) * gap;
+            let startX = (w - totalW) / 2;
+            const dockY = h - 230; // Above nav buttons
+
+            for (let i = 0; i < links.length; i++) {
+                const link = links[i];
+                const isHovered = this.hoveredFooter === i;
+                
+                ctx.save();
+                ctx.translate(startX, dockY);
+                
+                // Button Plate
+                ctx.fillStyle = isHovered ? this.themeColor : 'rgba(255, 255, 255, 0.05)';
+                ctx.globalAlpha = isHovered ? 0.2 : 1.0;
+                ctx.fillRect(0, 0, linkW, linkH);
+                
+                ctx.strokeStyle = isHovered ? this.themeColor : 'rgba(51, 255, 51, 0.4)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(0, 0, linkW, linkH);
+                
+                // Text
+                ctx.fillStyle = isHovered ? this.themeColor : '#ffffff';
+                ctx.globalAlpha = 1.0;
+                ctx.font = 'bold 18px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`[ ${link.label.toUpperCase()} ]`, linkW / 2, 32);
+                
+                // Icon hint
+                ctx.font = '10px monospace';
+                ctx.fillText("EXTERNAL_LINK", linkW / 2, 12);
+                
+                ctx.restore();
+
+                this.footerHitAreas.push({ x: startX, y: dockY, w: linkW, h: linkH, url: link.url });
+                startX += linkW + gap;
+            }
         }
 
         this.texture.needsUpdate = true;
@@ -416,6 +478,22 @@ export class ContentProjector {
                     }
                 }
 
+                // Footer link check
+                let newFooter = -1;
+                for (let i = 0; i < this.footerHitAreas.length; i++) {
+                    const area = this.footerHitAreas[i];
+                    if (canvasX >= area.x && canvasX <= area.x + area.w &&
+                        canvasY >= area.y && canvasY <= area.y + area.h) {
+                        newFooter = i;
+                        break;
+                    }
+                }
+
+                if (newFooter !== this.hoveredFooter) {
+                    this.hoveredFooter = newFooter;
+                    this._renderCanvas();
+                }
+
                 if (newNav !== this.hoveredNav) {
                     this.hoveredNav = newNav;
                     this._renderCanvas();
@@ -463,15 +541,56 @@ export class ContentProjector {
     _onClick(e) {
         if (!this.plane.visible) return;
 
-        if (this.hoveredNav && this.onNavigate) {
-            this.onNavigate(this.hoveredNav);
-            return;
+        // Force a raycast update on click to ensure accurate UV mapping for mobile taps
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        const hits = this.raycaster.intersectObject(this.plane);
+        if (hits.length === 0) return;
+
+        const uv = hits[0].uv;
+        const canvasX = uv.x * this.canvas.width;
+        const canvasY = (1.0 - uv.y) * this.canvas.height;
+        const scrollAdjustedY = canvasY + this.scrollY;
+
+        // 1. Navigation Button Detection
+        const btnY = this.canvas.height - 140;
+        const btnH = 80;
+        const btnW = 320;
+        const btnMargin = 60;
+        const hasPrev = window.activePoseIndex > 0;
+        const hasNext = window.activePoseIndex < 4;
+
+        if (canvasY >= btnY && canvasY <= btnY + btnH && this.onNavigate) {
+            if (hasPrev && hasNext) {
+                if (canvasX >= btnMargin && canvasX <= btnMargin + btnW) return this.onNavigate('prev');
+                if (canvasX >= this.canvas.width - btnW - btnMargin && canvasX <= this.canvas.width - btnMargin) return this.onNavigate('next');
+            } else {
+                const centerX = (this.canvas.width - btnW) / 2;
+                if (canvasX >= centerX && canvasX <= centerX + btnW) return this.onNavigate(hasPrev ? 'prev' : 'next');
+            }
         }
 
-        if (this.hoveredItem === -1) return;
-        
-        const item = this.items[this.hoveredItem];
-        console.log('Interacted with:', item.label || item);
+        // 2. Footer Link Detection
+        if (this.footerHitAreas) {
+            for (const area of this.footerHitAreas) {
+                if (canvasX >= area.x && canvasX <= area.x + area.w &&
+                    canvasY >= area.y && canvasY <= area.y + area.h) {
+                    window.open(area.url, '_blank');
+                    return;
+                }
+            }
+        }
+
+        // 3. Item Selection Detection
+        if (this.itemBounds) {
+            for (let i = 0; i < this.itemBounds.length; i++) {
+                const b = this.itemBounds[i];
+                if (!b.isHeader && scrollAdjustedY >= b.top && scrollAdjustedY <= b.bottom) {
+                    const item = this.items[i];
+                    console.log('Interacted with:', item.label || item);
+                    return;
+                }
+            }
+        }
     }
 
     dispose() {
