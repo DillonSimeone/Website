@@ -247,7 +247,7 @@ function init() {
     
     // Mobile optimization: Bring content closer on vertical screens
     const isMobile = window.innerWidth < window.innerHeight;
-    content.maximizedPosition.z = isMobile ? 12 : 8; 
+    content.maximizedPosition.z = isMobile ? 14 : 8; 
     
     content.onNavigate = (dir) => {
         let nextIndex;
