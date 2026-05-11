@@ -27,14 +27,14 @@ export const poses = [
         content: {
             title: "LEAVING THE THRONE",
             items: [
-                { 
-                    label: "00 — THE DEAF ENGINEER", 
-                    details: "I am a deaf embedded developer who builds haptic systems for DHH communities and deploys them at music festivals. I'm breaking away from the studio to program hardware directly in the field." 
+                {
+                    label: "00 — THE DEAF ENGINEER",
+                    details: "I am a deaf embedded developer who builds haptic systems for DHH communities and deploys them at music festivals. I'm breaking away from the studio to program hardware directly in the field."
                 },
                 { label: "Dependency is a Flaw", details: "If a deck only runs on a USB-C wall outlet, creative agency stops when the grid fails. This machine assumes nothing and adapts to everything." },
-                { 
-                    label: "Accessible Documentation", 
-                    details: "Drawing from leading CymaSpace workshops and publishing NIME research with ITU Copenhagen collaborators, I am designing this deck as a beginner-friendly tutorial to demystify hardware." 
+                {
+                    label: "Accessible Documentation",
+                    details: "Drawing from leading CymaSpace workshops and publishing NIME research with ITU Copenhagen collaborators, I am designing this deck as a beginner-friendly tutorial to demystify hardware."
                 },
                 { label: "A Safe Haven", details: "In a world of black-boxed technologies, this deck reclaims agency through fully transparent, offline-first hardware design." }
             ],
@@ -64,7 +64,7 @@ export const poses = [
                 { label: "High-Efficiency GaN Stage", details: "Gallium Nitride (GaN) transistors drive the power front-end, offering superior thermal performance and extreme power density in a rugged, portable footprint." },
                 { label: "5V - 120V Universal Input", details: "The power stage accepts virtually anything: AA cells, eBike batteries, salvaged solar panels, or AC mains. It adapts to the environment rather than demanding infrastructure." },
                 { label: "Hardware Scavenging", details: "The deck utilizes common discrete components harvested from discarded hardware. It's designed to be assembled from the city's electronic recycling bins." },
-                { label: "Offline Datasheet Library", details: "Rather than relying on black-boxed cloud AI, the deck stores a comprehensive, offline repository of component datasheets. It acts as an autonomous reference tool for safely integrating scavenged parts." },
+                { label: "Offline Datasheet Library", details: "Rather than relying on internet access, the deck stores a comprehensive, offline repository of component datasheets. It acts as an autonomous reference tool for safely integrating scavenged parts." },
             ],
         },
     },

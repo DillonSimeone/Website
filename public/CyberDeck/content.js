@@ -190,7 +190,8 @@ export class ContentProjector {
         // Title Shadow Glow
         ctx.shadowBlur = 15;
         ctx.shadowColor = this.themeColor;
-        ctx.font = 'bold 58px monospace';
+        const titleSize = this.isMobile ? 92 : 58;
+        ctx.font = `bold ${titleSize}px monospace`;
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.fillText(this.currentContent.title, w / 2, 90);
@@ -245,12 +246,12 @@ export class ContentProjector {
                     ctx.shadowBlur = 0;
                 }
 
-                ctx.font = '34px monospace';
+                ctx.font = this.isMobile ? 'bold 54px monospace' : '34px monospace';
                 const labelText = `[ ${label} ]`;
                 ctx.fillText(labelText, 100, currentY);
                 
                 // Visual hint for links: persistent underline for the whole label
-                if (item.url || (item.links && item.links.length > 0)) {
+                if (item.url || (item.links && item.links.length > 0) || (this.currentContent.footerLinks && i === 0)) {
                     const metrics = ctx.measureText(labelText);
                     ctx.save();
                     ctx.strokeStyle = this.themeColor;
@@ -265,15 +266,17 @@ export class ContentProjector {
                 ctx.shadowBlur = 0;
 
                 if (isObject && item.details) {
-                    currentY += 40;
-                    ctx.font = '22px monospace';
+                    currentY += this.isMobile ? 65 : 40;
+                    const detailSize = this.isMobile ? 38 : 22;
+                    const detailSpacing = this.isMobile ? 50 : 32;
+                    ctx.font = `${detailSize}px monospace`;
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
                     
                     const detailsCleaned = item.details.replace(/\n/g, ' '); 
-                    currentY = this._wrapText(ctx, `// ${detailsCleaned}`, 140, currentY, 820, 32);
-                    currentY += 35;
+                    currentY = this._wrapText(ctx, `// ${detailsCleaned}`, 140, currentY, 820, detailSpacing);
+                    currentY += this.isMobile ? 60 : 35;
                 } else {
-                    currentY += 75;
+                    currentY += this.isMobile ? 120 : 75;
                 }
             }
 
@@ -281,24 +284,20 @@ export class ContentProjector {
         }
 
         // 6. Navigation Buttons
-        const btnW = 320;
-        const btnH = 80;
+        const btnW = this.isMobile ? 400 : 320;
+        const btnH = this.isMobile ? 100 : 80;
         const btnY = h - 140;
         const btnMargin = 60;
         
         const hasPrev = window.activePoseIndex > 0;
-        // Access poses length from global window or assume 5 since there are 5 poses
         const hasNext = window.activePoseIndex < 4; 
 
         if (hasPrev && hasNext) {
-            // Both buttons
             this._drawNavButton(ctx, `[ PREV_SECTOR ]`, btnMargin, btnY, btnW, btnH, this.hoveredNav === 'prev');
             this._drawNavButton(ctx, `[ NEXT_SECTOR ]`, w - btnW - btnMargin, btnY, btnW, btnH, this.hoveredNav === 'next');
         } else if (hasPrev) {
-            // Only Prev, center it
             this._drawNavButton(ctx, `[ PREV_SECTOR ]`, (w - btnW) / 2, btnY, btnW, btnH, this.hoveredNav === 'prev');
         } else if (hasNext) {
-            // Only Next, center it
             this._drawNavButton(ctx, `[ NEXT_SECTOR ]`, (w - btnW) / 2, btnY, btnW, btnH, this.hoveredNav === 'next');
         }
 
@@ -325,12 +324,12 @@ export class ContentProjector {
         this.footerHitAreas = [];
         if (this.currentContent.footerLinks) {
             const links = this.currentContent.footerLinks;
-            const linkW = 280;
-            const linkH = 50;
+            const linkW = this.isMobile ? 320 : 280;
+            const linkH = this.isMobile ? 70 : 50;
             const gap = 20;
             const totalW = links.length * linkW + (links.length - 1) * gap;
             let startX = (w - totalW) / 2;
-            const dockY = h - 230; // Above nav buttons
+            const dockY = h - (this.isMobile ? 260 : 230); // Above nav buttons
 
             for (let i = 0; i < links.length; i++) {
                 const link = links[i];
@@ -426,7 +425,8 @@ export class ContentProjector {
             const visibleHeight = 2 * Math.tan(vFov / 2) * dist;
             const visibleWidth = visibleHeight * this.camera.aspect;
             
-            const targetSize = Math.min(visibleHeight * 0.9, visibleWidth * 0.9);
+            const margin = this.isMobile ? 1.0 : 0.9;
+            const targetSize = Math.min(visibleHeight * margin, visibleWidth * margin);
             const dynamicMaxScale = targetSize / 3.0; // 3.0 is plane base geometry size
 
             const currentScale = THREE.MathUtils.lerp(this.baseScale, dynamicMaxScale, this.expansionProgress);
