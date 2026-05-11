@@ -243,8 +243,18 @@ function init() {
     bg = new ShaderBackground();
     bg.loadShader('./shaders/flow.glsl'); // Our custom power shader
     scene.add(bg.mesh);
-    content = new ContentProjector(scene, camera);
+    content = new ContentProjector(scene, camera, renderer);
     
+    content.onNavigate = (dir) => {
+        let nextIndex;
+        if (dir === 'next') {
+            nextIndex = (activePoseIndex + 1) % poses.length;
+        } else {
+            nextIndex = (activePoseIndex - 1 + poses.length) % poses.length;
+        }
+        setPose(nextIndex);
+    };
+
     mandelbulb = new MandelbulbOverlay(scene);
 
     rail.onPoseReady = (index) => {
@@ -252,6 +262,7 @@ function init() {
         updateUIRects();
         voxels.setFormation(pose.formation, pose, camera, uiRects);
         content.hide();
+        document.querySelector('.ui-overlay').classList.remove('content-active');
     };
 
     rail.onSequenceComplete = (index) => {
@@ -260,8 +271,9 @@ function init() {
         const camDir = new THREE.Vector3();
         camera.getWorldDirection(camDir);
         const contentPos = camera.position.clone().add(camDir.multiplyScalar(4));
-        content.show(pose.content, contentPos, camDir.negate());
+        content.show(pose.content, contentPos, camDir.negate(), pose.emissiveColor);
         document.getElementById('pose-label').textContent = pose.label;
+        document.querySelector('.ui-overlay').classList.add('content-active');
     };
 
     // Post-Processing
@@ -384,6 +396,11 @@ function setPose(index) {
     });
     // Dynamic page title
     document.title = `APOCALYPSE_DECK | ${poses[index].label}`;
+
+    // Randomize power source on sector change
+    const modes = Object.keys(POWER_MODES);
+    const randomMode = modes[Math.floor(Math.random() * modes.length)];
+    setPowerMode(randomMode);
 }
 
 // Telemetry display values (for smooth count-up)
@@ -482,6 +499,9 @@ function animate() {
     if (mandelbulbAlpha > 0.001) {
         mandelbulb.mesh.visible = true;
         mandelbulb.update(clock.elapsedTime, window.adaptiveIntensity || 0.5, mandelbulbAlpha, POWER_MODES[currentMode].type, rail.mouseX, rail.mouseY);
+        
+        // Ensure mandelbulb is behind content plane during takeover
+        mandelbulb.mesh.renderOrder = 10;
     } else {
         mandelbulb.mesh.visible = false;
     }
@@ -516,6 +536,10 @@ function onResize() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     composer.setSize(window.innerWidth, window.innerHeight);
+    
+    if (bg) {
+        bg.setUniform('uResolution', new THREE.Vector2(window.innerWidth, window.innerHeight));
+    }
     if (mandelbulb) {
         mandelbulb.mesh.material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
     }
