@@ -127,6 +127,97 @@ class Universe {
             const key = e.key.toLowerCase();
             // Hotkeys cleared
         });
+
+        // Mobile UI Controls
+        const moveMap = {
+            'btn-w': 'forward', 'btn-a': 'left', 'btn-s': 'back', 'btn-d': 'right',
+            'btn-r': 'up', 'btn-f': 'down', 'btn-q': 'rollLeft', 'btn-e': 'rollRight'
+        };
+
+        Object.keys(moveMap).forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                const stateKey = moveMap[id];
+                const press = (e) => { 
+                    e.preventDefault(); 
+                    e.stopPropagation();
+                    this.controls.moveState[stateKey] = 1; 
+                    if (typeof this.controls.updateMovementVector === 'function') this.controls.updateMovementVector(); 
+                    if (typeof this.controls.updateRotationVector === 'function') this.controls.updateRotationVector(); 
+                };
+                const release = (e) => { 
+                    e.preventDefault(); 
+                    e.stopPropagation();
+                    this.controls.moveState[stateKey] = 0; 
+                    if (typeof this.controls.updateMovementVector === 'function') this.controls.updateMovementVector(); 
+                    if (typeof this.controls.updateRotationVector === 'function') this.controls.updateRotationVector(); 
+                };
+                
+                btn.addEventListener('touchstart', press, {passive: false});
+                btn.addEventListener('touchend', release, {passive: false});
+                btn.addEventListener('mousedown', press);
+                btn.addEventListener('mouseup', release);
+                btn.addEventListener('mouseleave', release);
+            }
+        });
+
+        // Touch look-around simulation for FlyControls
+        let touchDoubleTapTimer = null;
+        this.renderer.domElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                e.preventDefault(); // Prevent native mouse events from firing
+                
+                const touch = e.touches[0];
+                this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+                
+                // Simulate mousedown for FlyControls dragToLook
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                    button: 0,
+                    bubbles: true
+                });
+                this.renderer.domElement.dispatchEvent(mouseEvent);
+
+                // Handle tap vs double tap
+                if (!touchDoubleTapTimer) {
+                    touchDoubleTapTimer = setTimeout(() => {
+                        touchDoubleTapTimer = null;
+                        this.onClick(e);
+                    }, 300);
+                } else {
+                    clearTimeout(touchDoubleTapTimer);
+                    touchDoubleTapTimer = null;
+                    this.onDoubleClick(e);
+                }
+            }
+        }, {passive: false});
+
+        this.renderer.domElement.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                e.preventDefault(); // Prevent scrolling
+                const touch = e.touches[0];
+                this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+                
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                    button: 0,
+                    bubbles: true
+                });
+                this.renderer.domElement.dispatchEvent(mouseEvent);
+            }
+        }, {passive: false});
+
+        this.renderer.domElement.addEventListener('touchend', (e) => {
+            const mouseEvent = new MouseEvent('mouseup', {
+                button: 0,
+                bubbles: true
+            });
+            this.renderer.domElement.dispatchEvent(mouseEvent);
+        }, {passive: false});
     }
 
     async bootstrap() {
