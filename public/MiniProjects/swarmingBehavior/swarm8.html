@@ -7,15 +7,16 @@
 
     <title>Particle Swarm 8</title>
 
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
 
-    <script src="libraries/p5.min.js"></script>
-    <script src="libraries/p5.sound.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 </head>
 
 <body>
-    <script src="sketch.js"></script>
-    <script src="psoFunk.js"></script>
+
     <script>
         class Buzz {
             constructor(x, y, a, b, red, green, blue) {
@@ -68,7 +69,7 @@
         let globalBest;
 
         function setup() {
-            createCanvas(1000, 1000);
+            createCanvas(windowWidth, windowHeight);
             for (let i = 0; i < buzzezMany; i++) {
                 let randCol = int(random(5));
                 let randX = random(0, width);
@@ -80,12 +81,17 @@
             globalBest = createVector(buzzez[0].loc.x, buzzez[0].loc.y);
         }
 
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
         function draw() {
             background(220, 200, 100);
             updateObjective();
             updateParticles();
             drawParticles();
         }
+
 
         function updateParticles() {
             for (let i = 0; i < buzzezMany; i++) {
