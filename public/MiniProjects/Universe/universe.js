@@ -10,9 +10,7 @@ const EXT_MAP = {
     '.mp4': 'video', '.webm': 'video', '.mov': 'video'
 };
 
-const SETTINGS = {
-    useFog: localStorage.getItem('useFog') !== 'false'
-};
+const SETTINGS = {};
 
 class InstancedBuilding {
     constructor(source, materialOrMax, maxInstances) {
@@ -83,9 +81,6 @@ class Universe {
 
     initScene() {
         this.scene = new THREE.Scene();
-        if (SETTINGS.useFog) {
-            this.scene.fog = new THREE.FogExp2(0x000000, 0.05);
-        }
         this.scene.background = new THREE.Color(0x000000);
 
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
@@ -130,11 +125,7 @@ class Universe {
 
         window.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
-            if (key === 'i') {
-                SETTINGS.useFog = !SETTINGS.useFog;
-                localStorage.setItem('useFog', SETTINGS.useFog.toString());
-                this.scene.fog = SETTINGS.useFog ? new THREE.FogExp2(0x000000, 0.05) : null;
-            }
+            // Hotkeys cleared
         });
     }
 
