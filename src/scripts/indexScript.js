@@ -249,6 +249,38 @@ function setUp() {
     initProjectGalleries();
     initSectionGalleries('embedded', '.grid-item', 0);
     initSectionGalleries('shop', '.grid-item', 0);
+    
+    // Start dynamic favicon cycle
+    if (document.getElementById('dynamic-favicon')) {
+        setInterval(updateDynamicFavicon, 1000);
+        updateDynamicFavicon();
+    }
+}
+
+/**
+ * Generates and updates a dynamic SVG favicon.
+ */
+function updateDynamicFavicon() {
+    const favicon = document.getElementById('dynamic-favicon');
+    if (!favicon) return;
+
+    const shapes = [
+        // Square
+        (color) => `<rect x="15" y="15" width="70" height="70" fill="${color}" />`,
+        // Triangle
+        (color) => `<polygon points="50,15 85,85 15,85" fill="${color}" />`,
+        // Circle
+        (color) => `<circle cx="50" cy="50" r="35" fill="${color}" />`,
+        // Cross
+        (color) => `<rect x="42" y="15" width="16" height="70" fill="${color}" /><rect x="15" y="42" width="70" height="16" fill="${color}" />`
+    ];
+
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const color = isDarkMode ? randomNeonColor() : randomPaletteColor();
+    const randomShape = shapes[Math.floor(Math.random() * shapes.length)];
+    
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${randomShape(color)}</svg>`;
+    favicon.href = `data:image/svg+xml;base64,${btoa(svg)}`;
 }
 
 /**
