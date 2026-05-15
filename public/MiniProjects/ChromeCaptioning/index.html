@@ -7,103 +7,213 @@
     <title>Chrome Live Caption Trigger</title>
     <style>
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
             --text-color: #ffffff;
             --accent-color: #00d2ff;
+            --secondary-accent: #3a7bd5;
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
         }
 
         body {
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f3460);
-            overflow: hidden;
+            background: #0a0a12;
             color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            padding: 40px 20px;
         }
 
         /* Abstract background elements */
+        .background-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
         .blob {
             position: absolute;
-            width: 500px;
-            height: 500px;
-            background: linear-gradient(135deg, var(--accent-color), #3a7bd5);
-            filter: blur(80px);
+            width: 600px;
+            height: 600px;
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+            filter: blur(100px);
             border-radius: 50%;
-            z-index: -1;
-            opacity: 0.4;
-            animation: move 20s infinite alternate;
+            opacity: 0.15;
+            animation: move 25s infinite alternate ease-in-out;
+        }
+
+        .blob:nth-child(2) {
+            bottom: -100px;
+            right: -100px;
+            background: linear-gradient(135deg, #ff0080, #7928ca);
+            animation-delay: -5s;
         }
 
         @keyframes move {
-            from {
-                transform: translate(-20%, -20%);
-            }
-
-            to {
-                transform: translate(20%, 20%);
-            }
+            from { transform: translate(-10%, -10%) rotate(0deg); }
+            to { transform: translate(10%, 10%) rotate(360deg); }
         }
 
         .container {
-            width: 90%;
-            max-width: 800px;
-            padding: 40px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            text-align: center;
-            animation: fadeIn 1s ease-out;
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease-out;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        header {
+            text-align: center;
+            margin-bottom: 50px;
         }
 
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            letter-spacing: -1px;
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            letter-spacing: -2px;
             background: linear-gradient(to right, #fff, var(--accent-color));
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        p {
-            margin-bottom: 30px;
-            opacity: 0.8;
-            font-size: 1.1rem;
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.7;
+            max-width: 600px;
+            margin: 0 auto;
         }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        .main-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .info-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 25px;
+            transition: transform 0.3s ease;
+        }
+
+        .info-section:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .info-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--accent-color);
+        }
+
+        .info-section p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .info-section ul {
+            list-style: none;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        .info-section li {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .info-section li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+        }
+
+        .info-section a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0, 210, 255, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .info-section a:hover {
+            border-bottom-color: var(--accent-color);
+            background: rgba(0, 210, 255, 0.1);
+        }
+
+        .or-divider {
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            opacity: 0.4;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .or-divider::before, .or-divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background: var(--glass-border);
+        }
+
+        .or-divider::before { left: 0; }
+        .or-divider::after { right: 0; }
 
         .video-wrapper {
             position: relative;
             width: 100%;
             aspect-ratio: 16/9;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
+            background: #000;
+            border-radius: 20px;
             overflow: hidden;
             border: 1px solid var(--glass-border);
             margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         video {
@@ -111,140 +221,216 @@
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1);
-            /* Mirror effect */
+        }
+
+        .visualizer-container {
+            width: 100%;
+            height: 60px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.2);
+        }
+
+        #visualizer {
+            width: 100%;
+            height: 100%;
         }
 
         .controls-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-            text-align: left;
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
 
         label {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            margin-left: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        select,
-        input[type="range"] {
+        select, input[type="range"] {
             width: 100%;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.07);
             border: 1px solid var(--glass-border);
-            border-radius: 8px;
+            border-radius: 12px;
             color: white;
             outline: none;
+            transition: all 0.2s ease;
         }
 
-        option {
-            background: #16213e;
-            color: white;
+        select:focus {
+            border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.12);
         }
 
-        .controls {
+        .action-buttons {
             display: flex;
             gap: 15px;
-            justify-content: center;
         }
 
         button {
-            padding: 12px 28px;
+            flex: 1;
+            padding: 16px;
             font-size: 1rem;
-            font-weight: 600;
-            background: var(--accent-color);
-            border: none;
-            border-radius: 12px;
-            color: #1a1a2e;
+            font-weight: 700;
+            border-radius: 16px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+        }
+
+        #startBtn {
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+            color: #0a0a12;
             box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
         }
 
-        button:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+        #startBtn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.5);
         }
 
-        button:active {
-            transform: translateY(0) scale(0.98);
-        }
-
-        button.secondary {
-            background: rgba(255, 255, 255, 0.1);
+        #stopBtn {
+            background: rgba(255, 255, 255, 0.05);
             color: white;
             border: 1px solid var(--glass-border);
         }
 
+        #stopBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
         #status {
-            margin-top: 20px;
+            margin-top: 25px;
+            text-align: center;
             font-size: 0.9rem;
+            font-weight: 500;
             color: var(--accent-color);
-            min-height: 1.2em;
+            min-height: 1.4em;
+        }
+
+        .step-badge {
+            background: var(--accent-color);
+            color: #0a0a12;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 800;
+            margin-right: 8px;
         }
 
         /* Responsive */
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
+        @media (max-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
             }
-
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            .controls {
-                flex-direction: column;
-            }
+            h1 { font-size: 2.5rem; }
         }
+    
     </style>
 </head>
 
 <body>
-    <div class="blob"></div>
+    <div class="background-blobs">
+        <div class="blob"></div>
+        <div class="blob"></div>
+    </div>
 
     <div class="container">
-        <h1>Caption Trigger</h1>
-        <p>Select your OBS sources and click Start.</p>
+        <header>
+            <h1>Live Caption Pro</h1>
+            <p class="subtitle">Bypass hardware limits. Reroute any audio and video into Chrome's native machine learning captions.</p>
+        </header>
 
-        <div class="video-wrapper">
-            <video id="webcam" autoplay playsinline muted></video>
-        </div>
+        <div class="grid-layout">
+            <div class="main-card">
+                <div class="video-wrapper">
+                    <video id="webcam" autoplay playsinline muted></video>
+                </div>
 
-        <div class="visualizer-container">
-            <canvas id="visualizer"></canvas>
-        </div>
+                <div class="visualizer-container">
+                    <canvas id="visualizer"></canvas>
+                </div>
 
-        <div class="controls-grid">
-            <div class="control-group">
-                <label for="videoSource">Video Source</label>
-                <select id="videoSource"></select>
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label for="videoSource">Video Device</label>
+                        <select id="videoSource"></select>
+                    </div>
+                    <div class="control-group">
+                        <label for="audioSource">Audio Input</label>
+                        <select id="audioSource"></select>
+                    </div>
+                    <div class="control-group" style="grid-column: span 2;">
+                        <label for="monitorVolume">Monitor Volume (Gain for Chrome)</label>
+                        <input type="range" id="monitorVolume" min="0" max="2" step="0.01" value="0.1">
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="startBtn">Initialize Stream</button>
+                    <button id="stopBtn">Stop</button>
+                </div>
+
+                <div id="status">Ready to initialize.</div>
             </div>
-            <div class="control-group">
-                <label for="audioSource">Audio Source</label>
-                <select id="audioSource"></select>
-            </div>
-            <div class="control-group" style="grid-column: span 2;">
-                <label for="monitorVolume">Monitor Volume (for Chrome to "hear")</label>
-                <input type="range" id="monitorVolume" min="0" max="1" step="0.01" value="0.1">
+
+            <div class="info-sidebar">
+                <div class="info-section">
+                    <h2><span class="step-badge">1</span> Chrome Config</h2>
+                    <p>Enable the "secret" accessibility feature to see captions on ANY media.</p>
+                    <ul>
+                        <li>Open <b>Settings</b> &rarr; <b>Accessibility</b></li>
+                        <li>Toggle <b>Live Caption</b> to ON</li>
+                        <li>Chrome will now subtitle any audio playing in this tab.</li>
+                    </ul>
+                </div>
+
+                <div class="or-divider">Choose your route</div>
+
+                <div class="info-section">
+                    <h2>Option A: OBS Link</h2>
+                    <p>Route your entire <a href="https://obsproject.com/" target="_blank">OBS Studio</a> scene (and audio) directly into this page.</p>
+                    <ul>
+                        <li>In OBS: Click <b>Start Virtual Camera</b></li>
+                        <li>Use <a href="https://vb-audio.com/Cable/" target="_blank">VB-Cable</a> to route OBS Audio to a virtual input.</li>
+                        <li>Select "OBS Virtual Camera" & "CABLE Output" here.</li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <h2>Option B: Loopback Audio</h2>
+                    <p>Standard computers can't "hear" themselves. You need a <b>Virtual Loopback</b> driver to route your desktop sound into this app.</p>
+                    <ul>
+                        <li><b>1. Install:</b> Download <a href="https://vb-audio.com/Cable/" target="_blank">VB-Cable</a> or <a href="https://audiorelay.net/" target="_blank">AudioRelay</a>.</li>
+                        <li><b>2. Configure:</b> Set the tool to capture "Desktop Audio" and output it as a "Virtual Microphone".</li>
+                        <li><b>3. Select:</b> Choose that new device in the <b>Audio Input</b> list here.</li>
+                    </ul>
+                </div>
+
+                <div class="info-section" style="border-color: rgba(255, 215, 0, 0.2);">
+                    <p style="font-size: 0.75rem; color: #ffd700; margin-bottom: 5px;"><b>The Diagnostic Trick:</b></p>
+                    <p style="font-size: 0.8rem; opacity: 0.8;">Play a video or music, then cycle through your <b>Audio Input</b> list. When the visualizer bars below start "wiggling," you've found an active loopback! (Common names: <i>CABLE Output, Virtual Mic, Stereo Mix</i>).</p>
+                </div>
             </div>
         </div>
-
-        <div class="controls">
-            <button id="startBtn">Start Stream</button>
-            <button id="stopBtn" class="secondary">Stop</button>
-        </div>
-
-        <div id="status"></div>
     </div>
+    
 
     <script>
         const video = document.getElementById('webcam');
