@@ -61,8 +61,13 @@
         }
 
         @keyframes move {
-            from { transform: translate(-10%, -10%) rotate(0deg); }
-            to { transform: translate(10%, 10%) rotate(360deg); }
+            from {
+                transform: translate(-10%, -10%) rotate(0deg);
+            }
+
+            to {
+                transform: translate(10%, 10%) rotate(360deg);
+            }
         }
 
         .container {
@@ -72,8 +77,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         header {
@@ -192,7 +204,8 @@
             position: relative;
         }
 
-        .or-divider::before, .or-divider::after {
+        .or-divider::before,
+        .or-divider::after {
             content: "";
             position: absolute;
             top: 50%;
@@ -201,8 +214,78 @@
             background: var(--glass-border);
         }
 
-        .or-divider::before { left: 0; }
-        .or-divider::after { right: 0; }
+        .or-divider::before {
+            left: 0;
+        }
+
+        .or-divider::after {
+            right: 0;
+        }
+
+        /* Browser Warning Modal */
+        #browserWarning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .warning-card {
+            background: #1a1a2e;
+            border: 2px solid #ff4d4d;
+            border-radius: 32px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(255, 77, 77, 0.2);
+            animation: modalScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalScale {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .warning-card h2 {
+            color: #ff4d4d;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .warning-card p {
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .warning-card .chrome-btn {
+            display: inline-block;
+            background: white;
+            color: #000;
+            padding: 12px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.2s ease;
+        }
+
+        .warning-card .chrome-btn:hover {
+            transform: scale(1.05);
+        }
 
         .video-wrapper {
             position: relative;
@@ -213,7 +296,7 @@
             overflow: hidden;
             border: 1px solid var(--glass-border);
             margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
         video {
@@ -229,7 +312,7 @@
             margin-bottom: 20px;
             border-radius: 12px;
             overflow: hidden;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0, 0, 0, 0.2);
         }
 
         #visualizer {
@@ -258,7 +341,8 @@
             letter-spacing: 1px;
         }
 
-        select, input[type="range"] {
+        select,
+        input[type="range"] {
             width: 100%;
             padding: 12px;
             background: rgba(255, 255, 255, 0.07);
@@ -339,9 +423,11 @@
             .grid-layout {
                 grid-template-columns: 1fr;
             }
-            h1 { font-size: 2.5rem; }
+
+            h1 {
+                font-size: 2.5rem;
+            }
         }
-    
     </style>
 </head>
 
@@ -354,7 +440,8 @@
     <div class="container">
         <header>
             <h1>Live Caption Pro</h1>
-            <p class="subtitle">Bypass hardware limits. Reroute any audio and video into Chrome's native machine learning captions.</p>
+            <p class="subtitle">Bypass hardware limits. Reroute any audio and video into Chrome's native machine
+                learning captions.</p>
         </header>
 
         <div class="grid-layout">
@@ -393,46 +480,72 @@
             <div class="info-sidebar">
                 <div class="info-section">
                     <h2><span class="step-badge">1</span> Chrome Config</h2>
-                    <p>Enable the "secret" accessibility feature to see captions on ANY media.</p>
+                    <p>Enable the secret accessibility feature to see captions on ANY media.</p>
                     <ul>
                         <li>Open <b>Settings</b> &rarr; <b>Accessibility</b></li>
                         <li>Toggle <b>Live Caption</b> to ON</li>
-                        <li>Chrome will now subtitle any audio playing in this tab.</li>
+                        <li><a href="https://support.google.com/chrome/answer/10538231" target="_blank">Official
+                                Documentation &rarr;</a></li>
                     </ul>
                 </div>
 
                 <div class="or-divider">Choose your route</div>
 
                 <div class="info-section">
-                    <h2>Option A: OBS Link</h2>
-                    <p>Route your entire <a href="https://obsproject.com/" target="_blank">OBS Studio</a> scene (and audio) directly into this page.</p>
+                    <h2>Option A: OBS Production</h2>
+                    <p>The all-in-one route. Use <a href="https://obsproject.com/" target="_blank">OBS Studio</a> to
+                        route your entire scene (Video + Audio) directly into this page.</p>
                     <ul>
-                        <li>In OBS: Click <b>Start Virtual Camera</b></li>
-                        <li>Use <a href="https://vb-audio.com/Cable/" target="_blank">VB-Cable</a> to route OBS Audio to a virtual input.</li>
-                        <li>Select "OBS Virtual Camera" & "CABLE Output" here.</li>
+                        <li><b>Setup:</b> Build your scene with Camera and Mic sources in OBS.</li>
+                        <li><b>Link:</b> Click <b>Start Virtual Camera</b> in the OBS controls.</li>
+                        <li><b>Select:</b> Choose the <b>OBS Virtual Camera</b> in the dropdowns below.</li>
                     </ul>
                 </div>
 
                 <div class="info-section">
-                    <h2>Option B: Loopback Audio</h2>
-                    <p>Standard computers can't "hear" themselves. You need a <b>Virtual Loopback</b> driver to route your desktop sound into this app.</p>
+                    <h2>Option B: Virtual Loopback</h2>
+                    <p>Ideal for Discord, Zoom, or (non-chrome) Browser audio. Uses a virtual bridge to send system
+                        sound into a microphone.</p>
                     <ul>
-                        <li><b>1. Install:</b> Download <a href="https://vb-audio.com/Cable/" target="_blank">VB-Cable</a> or <a href="https://audiorelay.net/" target="_blank">AudioRelay</a>.</li>
-                        <li><b>2. Configure:</b> Set the tool to capture "Desktop Audio" and output it as a "Virtual Microphone".</li>
-                        <li><b>3. Select:</b> Choose that new device in the <b>Audio Input</b> list here.</li>
+                        <li><b>Tools:</b> Use <a href="https://vb-audio.com/Cable/" target="_blank">VB-Cable</a> or your
+                            existing <b>Virtual Desktop Audio</b>.</li>
+                        <li><b>Workflow:</b> In Windows Sound Settings, use <b>Listen to this device</b> to route your
+                            source into the Cable Input.</li>
+                        <li><b>Benefit:</b> Chrome can now subtitle your meetings or system audio in real-time.</li>
                     </ul>
                 </div>
 
                 <div class="info-section" style="border-color: rgba(255, 215, 0, 0.2);">
                     <p style="font-size: 0.75rem; color: #ffd700; margin-bottom: 5px;"><b>The Diagnostic Trick:</b></p>
-                    <p style="font-size: 0.8rem; opacity: 0.8;">Play a video or music, then cycle through your <b>Audio Input</b> list. When the visualizer bars below start "wiggling," you've found an active loopback! (Common names: <i>CABLE Output, Virtual Mic, Stereo Mix</i>).</p>
+                    <p style="font-size: 0.8rem; opacity: 0.8;">Play audio and cycle through your <b>Audio Input</b>
+                        list. When the bars below start wiggling, you've found the active source!</p>
                 </div>
             </div>
         </div>
     </div>
-    
+
+
+    <div id="browserWarning">
+        <div class="warning-card">
+            <h2>Chrome Required</h2>
+            <p>This tool relies on Google Chrome's exclusive on-device machine learning for live captioning. It will not
+                function in other browsers.</p>
+            <a href="https://www.google.com/chrome/" target="_blank" class="chrome-btn">Get Google Chrome</a>
+            <button onclick="document.getElementById('browserWarning').style.display='none'"
+                style="background:transparent; color:rgba(255,255,255,0.4); border:none; margin-top:15px; font-size:0.8rem; cursor:pointer; width:auto; flex:none;">Dismiss</button>
+        </div>
+    </div>
 
     <script>
+        // Browser Check
+        function checkBrowser() {
+            const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+            if (!isChrome) {
+                document.getElementById('browserWarning').style.display = 'flex';
+            }
+        }
+        checkBrowser();
+
         const video = document.getElementById('webcam');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
