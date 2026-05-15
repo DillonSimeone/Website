@@ -802,12 +802,16 @@ section {
     border: 3px solid black;
 }
 
-#hobby .images {
+#hobby .images,
+#work .images,
+#embedded .images,
+#shop .images {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     /* Center thumbnails and images */
     width: 100%;
+    gap: 20px;
     margin: auto;
 }
 
