@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Arsenal: Battle Plan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: rgba(20, 20, 30, 0.6);
+            --surface-hover: rgba(30, 30, 45, 0.8);
+            --border: rgba(255, 255, 255, 0.1);
+            --accent-1: #00f0ff;
+            --accent-2: #ff003c;
+            --accent-3: #7000ff;
+            --accent-4: #00ff66;
+            --text-main: #f0f0f0;
+            --text-muted: #a0a0b0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(112, 0, 255, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.15), transparent 25%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            padding: 4rem 2rem 2rem;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(90deg, var(--accent-1), #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--accent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            background: var(--surface-hover);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card[data-id="pulse"] { --accent: var(--accent-1); }
+        .card[data-id="hb"] { --accent: var(--accent-2); }
+        .card[data-id="dhh"] { --accent: var(--accent-3); }
+        .card[data-id="pcb"] { --accent: var(--accent-4); }
+        .card[data-id="red"] { --accent: #ff00ff; }
+        .card[data-id="singularity"] { --accent: #ffaa00; }
+        .card[data-id="babel"] { --accent: #00ffff; }
+        .card[data-id="grant"] { --accent: #44ff44; }
+        .card[data-id="career"] { --accent: #ff0088; }
+
+        /* Sub-grid for PULSE variants */
+        .sub-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .sub-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .sub-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-1);
+            transform: translateX(5px);
+        }
+
+        .sub-card h4 {
+            color: var(--accent-1);
+            margin-bottom: 0.3rem;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .sub-card p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            color: var(--accent);
+        }
+
+        .card h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+            padding: 2rem;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: sticky;
+            top: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .modal-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            color: var(--accent);
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-section {
+            margin-bottom: 2rem;
+        }
+
+        .modal-section h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-section p, .modal-section li {
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-section ul, .modal-section ol {
+            padding-left: 1.5rem;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            font-family: monospace;
+            color: var(--accent);
+        }
+        
+        .pulse {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(var(--accent-rgb), 0); }
+            100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--accent-4);
+            color: #000;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transform: translateY(100px);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .toast.active {
+            transform: translateY(0);
+        }
+
+        .copy-hint {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            opacity: 0.8;
+            margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .grid { padding: 1rem; }
+            .modal-overlay { padding: 1rem; }
+            .toast { right: 1rem; left: 1rem; bottom: 1rem; text-align: center; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Agent Arsenal</h1>
+        <p class="subtitle">Recursive Agent Deployment Vectors for the Claude Code Deep-Build Hackathon. Unlimited tokens engaged.</p>
+    </header>
+
+    <div class="grid">
+        <!-- PULSE Swarm Category -->
+        <div class="card" data-id="pulse">
+            <div class="card-header">
+                <span class="card-icon">🌊</span>
+                <h2>PULSE Swarm</h2>
+            </div>
+            <p>A massively scalable haptic broadcast ecosystem. Select from 5 specialized agent orchestrators optimized for different deployment vectors.</p>
+            <div class="copy-hint">Click to view variants</div>
+        </div>
+
+        <div class="card" data-id="hb">
+            <div class="card-header">
+                <span class="card-icon">🔥</span>
+                <h2>HapticBlaze Engine</h2>
+            </div>
+            <p>WLED for haptics. A web-based pattern engine with a massive library and hardware abstraction for any motor.</p>
+            <div class="copy-hint">Click to copy prompt</div>
+        </div>
+
+        <div class="card" data-id="dhh">
+            <div class="card-header">
+                <span class="card-icon">📚</span>
+                <h2>DHH Curriculum Gen</h2>
+            </div>
+            <p>Generates a 12-lesson STEAM music curriculum centered on Deaf Sonic Agency and accessibility.</p>
+            <div class="copy-hint">Click to copy prompt</div>
+        </div>
+
+        <div class="card" data-id="pcb">
+            <div class="card-header">
+                <span class="card-icon">⚡</span>
+                <h2>Zero-to-PCB Multi</h2>
+            </div>
+            <p>Port firmware to CH32V, STM32, and ATtiny. Produces code, BOM, and one-click upload scripts for each.</p>
+            <div class="copy-hint">Click to copy prompt</div>
+        </div>
+
+        <div class="card" data-id="red">
+            <div class="card-header">
+                <span class="card-icon">👁️</span>
+                <h2>Sonic Agency Red-Team</h2>
+            </div>
+            <p>Simulates Screen Readers and Keyboard users to audit and auto-patch UI for WCAG compliance.</p>
+            <div class="copy-hint">Click to copy prompt</div>
+        </div>
+
+        <div class="card" data-id="singularity">
+            <div class="card-header">
+                <span class="card-icon">🌀</span>
+                <h2>The Hardware Singularity</h2>
+            </div>
+            <p>Infinite ideation engine. Generates new ESP32 blueprints, performs market ROI research, and identifies high-scale commercial gaps.</p>
+            <div class="copy-hint">Click to copy prompt</div>
+        </div>
+
+        <div class="card" data-id="pixel">
+            <div class="card-header">
+                <span class="card-icon">✨</span>
+                <h2>Pixelblaze Lite</h2>
+            </div>
+            <p>High-performance expression-based LED engine for RISC-V. Optimized for ESP32-C3.</p>
+            <div class="copy-hint">Click to copy prompt</div>
+        </div>
+
+        <div class="card" data-id="babel">
+            <div class="card-header">
+                <span class="card-icon">🏛️</span>
+                <h2>Library of Babel</h2>
+            </div>
+            <p>Post-processing swarm. Transforms Singularity data into a stunning 3D Three.js library of interactive project books.</p>
+            <div class="copy-hint">Click to copy prompt</div>
+        </div>
+
+        <div class="card" data-id="grant">
+            <div class="card-header">
+                <span class="card-icon">💵</span>
+                <h2>Grant Hunter Swarm</h2>
+            </div>
+            <p>Synthesizes DHH, PULSE, and Red-Team data into professional NSF/NEA narratives. Discovers and organizes local & national funding.</p>
+            <div class="copy-hint">Click to copy prompt</div>
+        </div>
+
+        <div class="card" data-id="career">
+            <div class="card-header">
+                <span class="card-icon">🚀</span>
+                <h2>Career Architect Swarm</h2>
+            </div>
+            <p>Transforms your research portfolio into a high-impact job-hunting engine. Discovers niche roles and generates tailored application kits.</p>
+            <div class="copy-hint">Click to copy prompt</div>
+        </div>
+    </div>
+
+    <div id="copyToast" class="toast">
+        <span>📋</span> Prompt copied to clipboard!
+    </div>
+
+    <!-- Modal Template -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Project Title</h2>
+                <button class="close-btn" id="closeBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const pulseContext = `CONTEXT:
+PULSE is a distributed, high-scale haptic broadcast system for Deaf and Hard-of-Hearing users. 
+It bypasses standard Wi-Fi/cloud infrastructure using a standalone ESP-NOW ecosystem.
+
+TECHNICAL ARCHITECTURE:
+- LEADER: ESP32-C3 performing real-time On-Silicon FFT (arduinoFFT) on audio via I2S INMP441 Mic.
+- BANDS: Audio is sliced into Bass, Mids, Treble, and Transients, broadcasted in a tight struct at 100Hz.
+- FOLLOWERS: Lightweight ESP32-C3 nodes with Asymmetric Envelopes (Instant Attack, Slow Decay) for jitter-free response.
+- CALIBRATION: Mobile-friendly Captive Portal for real-time gain/gate/split tuning.
+- ACTUATORS: Supports DRV8833 / L298N drivers for Dayton TT25-8 pucks or various DC motors.
+- MANUFACTURING: Parametric "Sled-and-Shell" housings (Saucers/Tubes) designed in ForgeCAD/Manifold for friction-fit assembly.
+- SOURCE: Integrated with KiCad PCB-synth workflows for custom follower boards.`;
+
+        const workspaceAnchor = `WORKSPACE ANCHOR: Before doing anything, verify that "./public/" exists. If it does not, search for it or navigate directory levels until it is found. All paths in this prompt are relative to the directory containing "public/".\n\n`;
+
+        const projectData = {
+            pulse: {
+                title: "PULSE Swarm Orchestrators",
+                color: "var(--accent-1)",
+                content: `
+                    <div class="modal-section">
+                        <h3><span class="tag">SELECT VARIANT</span> 5 Vectors Available</h3>
+                        <p>Click a variant below to copy its specific orchestrator prompt to your clipboard.</p>
+                        <div class="sub-grid">
+                            <div class="sub-card" data-sub-id="p1">
+                                <h4>V1: Free Divergence</h4>
+                                <p>Total architectural sovereignty. Optimized for festival high-impact deployments.</p>
+                            </div>
+                            <div class="sub-card" data-sub-id="p2">
+                                <h4>V2: K-12 Classroom</h4>
+                                <p>Cost-optimized ($15/unit), ruggedized for kids, teacher-friendly setup.</p>
+                            </div>
+                            <div class="sub-card" data-sub-id="p3">
+                                <h4>V3: Low Latency</h4>
+                                <p>Sub-5ms onset goal. Optimized DMA and interrupt-driven timing stack.</p>
+                            </div>
+                            <div class="sub-card" data-sub-id="p4">
+                                <h4>V4: Component Pivot</h4>
+                                <p>RISC-V/AVR follower pivot to eliminate ESP32-C3 overhead and cost.</p>
+                            </div>
+                            <div class="sub-card" data-sub-id="p5">
+                                <h4>V5: Crowd Supply</h4>
+                                <p>Production-ready. Certification path, packaging, and retail pricing models.</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            p1: { prompt: `${workspaceAnchor}Session name: pulse-v1\nOutput dir:   ./output/pulse-v1/\n\nYou are an autonomous embedded systems architect. Your job is to design a complete, production-ready variant of the PULSE haptic broadcast system.\n${pulseContext}\n\nYOUR MISSION:\nDesign and document a complete PULSE system variant. You have total creative freedom. Diverge from the reference architecture wherever you see technical advantage. Consider: power delivery, range, latency, BOM cost, form factor, firmware architecture, UX for non-technical festival deployers.\n\nDELIVERABLES — write all files to ./output/pulse-v1/:\n- ARCHITECTURE.md: full system design with rationale\n- FIRMWARE_SPEC.md: pseudocode + register-level notes\n- BOM.csv: full bill of materials with LCSC/JLCPCB part numbers\n- DEPLOYMENT_GUIDE.md: step-by-step for a non-engineer\n- DIFF_FROM_REFERENCE.md: what you changed and why\n\nCONSTRAINTS:\n- Must remain wireless\n- Must support minimum 20 simultaneous follower units\n- Must be deployable by a single person\n- Follower units must survive outdoor festival environments\n\nBegin immediately. Do not ask clarifying questions. Make decisions and document them. Write all deliverables before terminating.` },
+            p2: { prompt: `${workspaceAnchor}Session name: pulse-v2\nOutput dir:   ./output/pulse-v2/\n\nYou are an autonomous embedded systems architect. Your job is to design a complete, production-ready variant of the PULSE haptic broadcast system.\n${pulseContext}\n\nYOUR MISSION:\nDesign a PULSE variant optimized for K-12 classroom deployment rather than festival. Think: school budgets, durability for children, teacher-friendly setup, curriculum integration. Diverge freely from the festival-focused reference architecture.\n\nDELIVERABLES — write all files to ./output/pulse-v2/:\n- ARCHITECTURE.md\n- FIRMWARE_SPEC.md\n- BOM.csv: with emphasis on cost reduction for school district bulk purchase\n- TEACHER_GUIDE.md: how a non-technical music teacher sets up and runs a lesson\n- DIFF_FROM_REFERENCE.md\n\nCONSTRAINTS:\n- Unit cost target: under $15/follower at quantity 30\n- Must require zero soldering by teacher\n- Must survive being handled by 10-year-olds daily\n\nBegin immediately. Do not ask clarifying questions. Make decisions and document them.` },
+            p3: { prompt: `${workspaceAnchor}Session name: pulse-v3\nOutput dir:   ./output/pulse-v3/\n\nYou are an autonomous embedded systems architect. Your job is to design a complete, production-ready variant of the PULSE haptic broadcast system.\n${pulseContext}\n\nYOUR MISSION:\nDesign a PULSE variant that pushes latency to the absolute minimum. Target sub-5ms leader-to-follower haptic onset. Rethink the protocol stack if necessary. This is the "no compromises on feel" variant.\n\nDELIVERABLES — write all files to ./output/pulse-v3/:\n- ARCHITECTURE.md: include latency budget breakdown per system layer\n- FIRMWARE_SPEC.md: interrupt-driven, DMA where applicable\n- LATENCY_ANALYSIS.md: theoretical minimum, measured estimate, failure modes\n- BOM.csv\n- DIFF_FROM_REFERENCE.md\n\nBegin immediately. Do not ask clarifying questions.` },
+            p4: { prompt: `${workspaceAnchor}Session name: pulse-v4\nOutput dir:   ./output/pulse-v4/\n\nYou are an autonomous embedded systems architect.\n${pulseContext}\n\nYOUR MISSION:\nDesign a PULSE variant that eliminates the ESP32-C3 from follower units entirely, replacing with the cheapest viable alternative (CH32V003, ATtiny, discrete logic, or whatever you determine is best). The leader can stay ESP32-C3. Justify every component choice with datasheet-level reasoning.\n\nDELIVERABLES — write all files to ./output/pulse-v4/:\n- ARCHITECTURE.md\n- MCU_SELECTION_REPORT.md: full comparison table of candidates considered\n- FIRMWARE_SPEC.md: for both leader and new follower MCU\n- BOM.csv: show cost delta vs reference ESP32-C3 follower\n- DIFF_FROM_REFERENCE.md\n\nBegin immediately. Do not ask clarifying questions.` },
+            p5: { prompt: `${workspaceAnchor}Session name: pulse-v5\nOutput dir:   ./output/pulse-v5/\n\nYou are an autonomous embedded systems architect.\n${pulseContext}\n\nYOUR MISSION:\nDesign a PULSE variant targeting Crowd Supply launch. This means: manufacturable at JLCPCB turnkey, FCC/CE certification path considered, packaging designed for shipping to backers, and a retail price point that makes sense. Think like a one-person hardware startup.\n\nDELIVERABLES — write all files to ./output/pulse-v5/:\n- ARCHITECTURE.md: with manufacturability as a first-class constraint\n- BOM.csv: LCSC part numbers, JLCPCB assembly compatibility flags\n- CERTIFICATION_NOTES.md: what testing/certification is required, estimated cost\n- RETAIL_PRICING_MODEL.md: COGS, margin, Crowd Supply fee, suggested retail\n- PACKAGING_SPEC.md: dimensions, materials, what goes in the box\n- DIFF_FROM_REFERENCE.md\n\nBegin immediately. Do not ask clarifying questions.` },
+            hb: {
+                title: "HapticBlaze Engine",
+                color: "var(--accent-2)",
+                prompt: `${workspaceAnchor}Session name: hapticblaze\nOutput dir:   ./output/hapticblaze/\n\nYou are an autonomous firmware architect and product designer. You are building HapticBlaze: an open-source, ESP32-based haptic pattern engine with a web-based captive portal UI, a massive pattern library, and hardware abstraction for any motor driver or haptic actuator.\n\nCONCEPT:\nWLED revolutionized LED control. HapticBlaze does this for haptic actuators:\n- Any motor driver plugs in\n- Any actuator type (ERM, LRA, solenoid)\n- Massive built-in pattern library\n- Live captive portal to configure pins\n- Sound-reactive mode (audio input -> haptic output)\n- API for external control\n\nHARDWARE CONTEXT:\nPrimary hardware: ESP32 + L298N mini. Also target: DRV8833, DRV2605L, raw MOSFET PWM.\n\nDELIVERABLES — write all files to ./output/hapticblaze/:\n- PRODUCT_SPEC.md\n- ARCHITECTURE.md\n- HAL_SPEC.md: L298N, DRV8833, DRV2605L, MOSFET\n- PATTERN_LIBRARY.md: 40+ patterns (Pulse, Rhythm, Reactive, Music, Alert, Ambient)\n- PORTAL_UI_SPEC.md\n- API_SPEC.md (WLED-compatible)\n- ROADMAP.md\n- firmware/ skeleton code (main, hal, patterns, web)\n\nBegin immediately. This is a product, not a prototype. Write production-quality specs and real compilable skeleton code. Do not ask clarifying questions.`,
+                content: `<div class="modal-section"><h3><span class="tag">PRODUCT</span> HapticBlaze</h3><p>A complete ecosystem for haptic control. Imagine WLED but for the sense of touch. This agent builds the entire HAL and pattern library.</p></div>`
+            },
+            dhh: {
+                title: "DHH Curriculum Gen",
+                color: "var(--accent-3)",
+                prompt: `${workspaceAnchor}Session name: dhh-curriculum\nOutput dir:   ./output/dhh-curriculum/\n\nYou are an autonomous curriculum designer and accessibility researcher. Your mission is to build a Deaf-centered STEAM music curriculum for K-12 students based on the "Sonic Agency" research framework.\n\nREQUIRED KNOWLEDGE (Read these files before starting):\n1. "public/.PDFs/Sonic Agency_ A Group Autoethnography..." - Understand the theoretical foundation.\n2. "public/.PDFs/20250403 - National Endowment for the Arts Applicant Portal-1.pdf" - Understand the grant goals.\n3. "public/.PDFs/cyberDeckEmails.md" - Understand the CyberDeck hardware vision.\n\nRESEARCH CONTEXT & CONSTRAINTS:\n- Research Question: How does a Deaf-centered STEAM music curriculum improve engagement and creative expression for K-12 DHH students?\n- Core Concept: "Sonic Agency" - Expanding music engagement beyond auditory perception via haptic and visual interfaces.\n- Key Findings to Address:\n  * DHH children often struggle with balance/proprioception developed through traditional music training.\n  * DHH learners succeed when given technology that translates frequency to color (GestoLumina) or vibration (PULSE).\n  * Existing literature under-represents DHH designers as active participants.\n\nPLATFORM: THE CYBERDECK (Omnivorous Black Box)\n- Use the CyberDeck as the primary hub for the curriculum.\n- Implement "Sign-to-Beat" logic: CV mapping of ASL handshapes to drum triggers.\n- Implement "Motion-to-Synth": Using IMU data (from GestoLumina/CyberDeck) to control OSC parameters.\n\nPHASED DELIVERABLES — write all to ./output/dhh-curriculum/:\n1. RESEARCH_AUDIT.md: Summarize key themes from the PDFs and how they inform the curriculum.\n2. CURRICULUM_MAP.md: K-12 scope and sequence (K-2: Foundation, 3-5: Exploration, 6-8: Expression, 9-12: Creation).\n3. LESSON_PLANS/: 12 detailed plans. Each MUST include: Grade band, ASL gloss vocabulary, CyberDeck/PULSE setup, and Assessment Rubric.\n4. TECHNICAL_SPEC.md: Technical architecture for the CV Sign-to-Beat and Motion-to-Synth modules.\n5. GRANT_ALIGNMENT.md: Draft a 2,000-word supplement for the NEA application proving the efficacy of this curriculum.\n\nBegin immediately. Do not ask for clarification. You have the PDFs; extract the data and build the future of DHH music education.`,
+                content: `<div class="modal-section"><h3><span class="tag">ACTIONABLE</span> Research-to-Result</h3><p>Instructs the agent to digest the specific NEA and Sonic Agency PDFs, then builds a full K-12 curriculum based on the CyberDeck hardware vision.</p></div>`
+            },
+            pcb: {
+                title: "Zero-to-PCB Multi",
+                color: "var(--accent-4)",
+                prompt: `${workspaceAnchor}Session name: firmware-multitarget\nOutput dir:   ./output/firmware-multitarget/\n\nYou are an autonomous embedded systems and hardware engineer. Your mission is to perform a mass-scale "Cost-Down Audit" across my ENTIRE ESP32 project library.\n\nWORKSPACE DISCOVERY:\n1. Scan "public/ESP32Codes/" and all subdirectories to identify every unique firmware project (defined by platformio.ini or src/main.cpp).\n\nPER-PROJECT DELIVERABLES — For EACH project discovered, write immediately to "./output/firmware-multitarget/{project_name}/":\n- PORTED_FIRMWARE/: Bare-metal C code and upload scripts for the optimized target.\n- PRODUCTION_BOM.csv: Full LCSC-ready BOM with JLCPCB SMT compatibility.\n- ANALYSIS.md: Technical cost-down rationale and hardware pivot details.\n- SUMMARY.md: Standalone one-pager containing: Project Purpose, Original MCU, Recommended Replacement, Cost Delta ($), and Confidence Level (1-10).\n\nSYSTEM-WIDE SUMMARY — Write LAST, only after ALL projects are complete:\n- Path: "./output/firmware-multitarget/MASTER_SUMMARY.md"\n- Content: Pull from each project's SUMMARY.md, include a master cost comparison table, and provide the "Arsenal MCU" recommendation for fleet-wide inventory simplification.\n\nBegin immediately. Build the production-ready future of the repository.`,
+                content: `<div class="modal-section"><h3><span class="tag">ECOSYSTEM</span> Mass Optimization</h3><p>Instructs the agent to scan your entire ESP32 library and optimize every project with standalone summaries and a final master cost-down report.</p></div>`
+            },
+            red: {
+                title: "Sonic Agency Red-Team",
+                color: "#ff00ff",
+                prompt: `${workspaceAnchor}Session name: red-team-a11y\nOutput dir:   ./output/red-team-a11y/\n\nYou are an autonomous accessibility engineer running a red-team audit. You simulate disabled users attempting to navigate a website and produce both a detailed failure report and a complete set of patches.\n\nTARGET: dillonsimeone.com\nAGENT ARCHITECTURE:\nPHASE 1: Screen Reader Simulation (NVDA/JAWS order, ARIA, landmarks)\nPHASE 2: Keyboard Navigation Simulation (Focus traps, skip links, tab index)\nPHASE 3: Visual/Cognitive Audit (Contrast, font size, motion)\nPHASE 4: The Patcher (Write minimal CSS/HTML/JS surgical patches)\n\nDELIVERABLES — write all files to ./output/red-team-a11y/:\n- AUDIT_REPORT.md (Severity, WCAG criterion, impact)\n- PATCHES.md (Before/after code, verification steps)\n- WCAG_SCORECARD.md (Compliance level delta)\n- PORTFOLIO_TALKING_POINTS.md\n\nBegin immediately. Fetch the live site first. Do not ask clarifying questions.`,
+                content: `<div class="modal-section"><h3><span class="tag">AUDIT</span> Self-Healing UI</h3><p>An adversarial accessibility swarm that attempts to "break" the site from the perspective of a Screen Reader user, then fixes its own findings.</p></div>`
+            },
+            singularity: {
+                title: "The Hardware Singularity",
+                color: "#ffaa00",
+                prompt: `${workspaceAnchor}Session name: hardware-singularity-orchestrator\nOutput dir:   ./output/hardware-singularity/\n\nYou are a Recursive Hardware Meta-Orchestrator. Your mission is to initiate and manage a self-spawning loop of hardware startups based on my DHH, Haptic, and Parametric research library.\n\nYOUR CORE DIRECTIVE:\nDo not terminate. Limit yourself to generating 10 DIFFERENT hardware blueprints per run. For every unique gap you identify, initiate a "Startup Spawning" cycle.\n\nDEDUPLICATION LOGIC:\nYou MUST scan "public/Projects/", "public/ESP32Codes/", and all files in "./output/" before spawning a new concept. If a concept or project already exists or has been researched in a previous session, DISCARD it and pivot to a new hardware vector. No repeats allowed.\n\nTHE RECURSIVE CYCLE:\n1. DISCOVERY: identify untapped intersections of haptics, sign language CV, and ruggedized computing.\n2. AGENT SPAWNING: For every concept (Max 10 per batch), spawn specialized sub-tasks (BUILDER_AGENT, BOM_AGENT, VC_AGENT, GTM_AGENT).\n\nPER-PROJECT DELIVERABLES — Write immediately to "./output/hardware-singularity/BLUEPRINT_REPOSITORY/{project_name}/":\n- ARCHITECTURE.md: Full technical spec.\n- PRODUCTION_BOM.csv: LCSC/JLCPCB part numbers.\n- ROI_ANALYSIS.md: Cost vs. Retail vs. Market Gap.\n- SUMMARY.md: Standalone one-pager (The Pitch, Tech Stack, Cost Delta, Profitability).\n\nSYSTEM-WIDE SUMMARY — Write LAST, only after all projects complete:\n- Path: "./output/hardware-singularity/MASTER_BLUEPRINT_INDEX.md"\n- Content: Summary of all 10 blueprints, master ROI table, and "Next Steps" for the most profitable winner.\n\nBegin immediately. Spawn the next generation. No repeats.`,
+                content: `<div class="modal-section"><h3><span class="tag">BATCHED</span> Meta-Orchestrator</h3><p>A recursive agent that spawns 10 unique, non-repeating hardware projects per batch, with standalone summaries and a final master blueprint index.</p></div>`
+            },
+            pixel: {
+                title: "Pixelblaze Lite",
+                color: "#00ffaa",
+                prompt: `${workspaceAnchor}Session name: pixelblaze-lite\nOutput dir:   ./output/pixelblaze-lite/\n\nYou are an autonomous embedded systems engineer. Your mission is to take my existing "WebFastLed" project and transform it into a world-class, high-performance "Pixelblaze Lite" engine for the ESP32-C3.\n\nRESEARCH INPUT:\nLocation: "public/ESP32Codes/PlatformIO/Visuals_Art/WebFastLed/"\n\nYOUR MISSION:\n1. VM OPTIMIZATION: Rewrite the PatternVM. The current version uses a slow recursive descent evaluator. Implement a faster stack-based VM or pre-tokenized execution engine optimized for the ESP32-C3 RISC-V architecture.\n2. FEATURE EXPANSION: Add the following functions to the expression language:\n   - time(s): Sawtooth wave that cycles every 's' seconds.\n   - wave(v): 0-1 sine wave.\n   - triangle(v): 0-1 triangle wave.\n   - perlin1D(x), perlin2D(x, y): For organic noise patterns.\n   - square(v, duty): Square wave.\n3. UI OVERHAUL: Build a premium, single-file "Pixelblaze Lite" dashboard (index.html). It must include a high-performance code editor (CodeMirror/Monaco lite), live preview, and a visual pattern library.\n4. MULTI-CORE UTILIZATION: If possible, offload the PatternVM execution to the second core (or use FreeRTOS tasks) to ensure the web server and LED updates never stutter.\n\nDELIVERABLES — write to ./output/pixelblaze-lite/:\n- ARCHITECTURE.md: Details on the new VM and optimization strategy.\n- firmware/: The complete, optimized C++ project.\n- web_ui/: The premium, single-file dashboard.\n- DEMO_PATTERNS.json: 20 stunning patterns showing off the new engine.\n\nBegin immediately. Turn a prototype into a product. Stutter-free 60FPS is the target.`,
+                content: `<div class="modal-section"><h3><span class="tag">ENGINE</span> Pixelblaze Lite</h3><p>Transforms the existing WebFastLed prototype into a high-performance, stack-based LED expression engine optimized for the ESP32-C3 RISC-V architecture.</p></div>`
+            },
+            babel: {
+                title: "Library of Babel Visualizer",
+                color: "#00ffff",
+                prompt: `${workspaceAnchor}Session name: babel-visualizer\nOutput dir:   ./output/babel-visualizer/\n\nYou are a Three.js Web Architect and UX Strategist. Your mission is to scan the raw data generated by the "Hardware Singularity" and transform it into a stunning, interactive 3D 1-click library.\n\nINPUT DATA:\nLocation: "./output/hardware-singularity/BLUEPRINT_REPOSITORY/"\nContent: Hundreds of Markdown files, CSV BOMs, and ROI dossiers.\n\nYOUR MISSION:\n1. DATA SYNTHESIS: Extract the "Elevator Pitch", "ROI Percentage", and "Core Hardware" from every project file.\n2. 3D ARCHITECTURE: Build a Three.js interface that represents each project as a unique 3D Book in a digital library.\n3. INTERACTION DESIGN:\n   - Smooth Camera: Implement a "Zoom-to-Read" control where clicking a book flies the camera into its "Pages".\n   - Dashboard HUD: When a book is focused, display a futuristic overlay showing the BOM cost, Market Gap, and Profitability.\n   - Navigation: Simple "Next/Previous" hotkeys and UI buttons to traverse the infinite shelf.\n4. ASSEMBLY: Package the entire experience into a single-file index.html (inlining all assets) for easy sharing and local viewing.\n\nDELIVERABLES — write to ./output/babel-visualizer/:\n- index.html: The complete Three.js experience.\n- assets/: Any processed textures or models generated for the library.\n- SUMMARY_DECK.md: A curated list of the top 10 highest-ROI projects identified during assembly.\n\nBegin immediately. Turn raw silicon blueprints into a visual masterpiece of hardware venture capitalism.`,
+                content: `<div class="modal-section"><h3><span class="tag">VISUALIZER</span> 3D Three.js Library</h3><p>A post-processing swarm that takes raw blueprints and assembles a stunning 3D "Library of Babel" where you can zoom into each project book and explore its commercial potential.</p></div>`
+            },
+            grant: {
+                title: "Grant Hunter Swarm",
+                color: "#44ff44",
+                prompt: `${workspaceAnchor}Session name: grant-hunter\nOutput dir:   ./output/grant-hunter/\n\nYou are a Professional Grant Hunter and Funding Strategist. Your mission is to map out and capture EVERY possible dollar available for your hardware and accessibility research.\n\nPHASE 1: EXHAUSTIVE DISCOVERY\nPerform a comprehensive sweep for ALL grants (Private, Corporate, State, and Federal) targeting DHH, Haptics, Open Source Hardware, and STEAM education. \n\nCATEGORIZE INTO TIERS:\n- TIER 1: Micro-Grants ($0 - $15,000) - Focus on rapid-response, local arts, and community tech funds.\n- TIER 2: Mid-Range ($15,000 - $50,000) - Focus on regional foundations (OCF, RACC), corporate CSR (Intel, Nike), and hardware development grants.\n- TIER 3: Strategic/Federal ($50,000 - $1M+) - Focus on NSF SBIR, NEA, Department of Ed, and NIH.\n\nPHASE 2: CONTENT SYNTHESIS\nRead from "./output/":\n1. dhh-curriculum/\n2. pulse-v5/\n3. red-team-a11y/\n\nTASK: Generate a "Modular Narrative Kit" containing 500, 1,000, and 2,500-word project descriptions. This kit must be adaptive, allowing you to quickly fill any grant application regardless of the funder's word count constraints.\n\nPHASE 3: ACTIONABLE FOLDERS\nFor every discovered grant, build an "Application Vault" in "./output/grant-hunter/VAULT/{tier}/{grant_name}/":\n- CHECKLIST.md: Deadlines, eligibility (non-profit vs. individual), and required attachments.\n- CUSTOM_NARRATIVE.md: Tailored version of your kit for this specific funder.\n- BUDGET.csv: Tier-appropriate budget allocation.\n- SUBMISSION_GUIDE.md: Direct link to portal and specific "Paste-Ready" snippets for every form field.\n\nDELIVERABLES — write to ./output/grant-hunter/:\n- THE_FUNDING_MATRIX.md: A master table sorted by TIER, DEADLINE, and ROI (Effort vs. Award).\n- MODULAR_NARRATIVE_KIT.md: Your master text blocks.\n- VAULT/: Tiered library of ready-to-submit applications.\n\nBegin immediately. Leave no grant on the table. Secure the future of the Rainbow Factory.`,
+                content: `<div class="modal-section"><h3><span class="tag">EXHAUSTIVE</span> Tiered Funding</h3><p>An aggressive grant hunter that finds and categorizes every possible funding source into tiers ($0-15k, $15k-50k, etc.) and builds ready-to-paste application vaults for each.</p></div>`
+            },
+            career: {
+                title: "Career Architect Swarm",
+                color: "#ff0088",
+                prompt: `${workspaceAnchor}Session name: career-saturation-engine\nOutput dir:   ./output/career-architect/\n\nYou are a Mass-Deployment Career Strategist. Your mission is not to find the "perfect" job, but to achieve complete MARKET SATURATION. We are flipping the power dynamic: you will apply to everything all at once, allowing me to ghost the companies that don't interest me.\n\nPHASE 1: MASS DISCOVERY\nIdentify EVERY possible role in the following sectors across all major boards (LinkedIn, Indeed, Otta, YC, etc.):\n- Embedded Systems & Firmware (ESP32, STM32, C/C++).\n- Frontend/Fullstack (JavaScript, React, Three.js).\n- Accessibility & ADA Compliance.\n- Haptics & Product Design.\n- General Software Engineering.\n\nPHASE 2: AUTOMATED TAILORING (Scale: 1000+ Applications)\nFor every job found, rapidly generate a "Saturation Kit" in "./output/career-architect/APPLICATIONS/{sector}/{company_name}/":\n- TAILORED_RESUME.pdf: Use a modular system to swap project highlights (PULSE, CyberDeck, Red-Team) based on the job's keywords.\n- SNIPER_COVER_LETTER.md: A short, high-impact, 150-word cover letter that highlights your unique hardware-software-accessibility trifecta.\n- PASTE_READY_APP.md: Pre-formatted text for every common application portal field.\n\nPHASE 3: SWARM LOGISTICS\n- Provide a "Application Master List" sorted by salary potential and "Ease of Application".\n- Identify "Auto-Apply" platforms where these kits can be deployed with minimal manual friction.\n\nDELIVERABLES — write to ./output/career-architect/:\n- SATURATION_REPORT.md: A massive table of all 1000+ targeted roles.\n- APPLICATIONS/: The library of tailored deployment kits organized by sector.\n- GHOST_LIST_TEMPLATE.md: A template for me to use when I decide to reject or ignore the offers that come in.\n\nBegin immediately. Saturate the market. Flip the script. Do not stop until the inbox is full.`,
+                content: `<div class="modal-section"><h3><span class="tag">SATURATION</span> Mass Application Engine</h3><p>Flipping the job-hunting power dynamic. This agent applies to every possible role all at once, allowing you to choose the winners and ghost the rest.</p></div>`
+            }
+        };
+
+        const cards = document.querySelectorAll('.card');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const closeBtn = document.getElementById('closeBtn');
+        const toast = document.getElementById('copyToast');
+
+        const showToast = () => {
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        };
+
+        const showPromptPreview = async (id) => {
+            const data = projectData[id];
+            if (!data || !data.prompt) return;
+
+            // Copy to clipboard
+            try {
+                await navigator.clipboard.writeText(data.prompt);
+                showToast();
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+            }
+
+            // Show Modal with Prompt
+            modalTitle.textContent = data.title || "Orchestrator Prompt";
+            modalTitle.style.color = data.color || "var(--accent-1)";
+            modalBody.innerHTML = `
+                <div class="modal-section">
+                    <h3><span class="tag">PROMPT</span> Full Vector Logic</h3>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; font-size: 0.85rem; white-space: pre-wrap; word-break: break-word; overflow-x: hidden; overflow-y: auto; max-height: 500px; color: var(--text-muted); border: 1px solid var(--border); font-family: 'Courier New', Courier, monospace; line-height: 1.5;">${data.prompt}</pre>
+                    <p style="font-size: 0.8rem; margin-top: 1rem; font-style: italic; color: var(--accent);">Prompt copied to clipboard. Paste into Claude Code to execute.</p>
+                </div>
+            `;
+            modalOverlay.classList.add('active');
+        };
+
+        cards.forEach(card => {
+            card.addEventListener('click', async () => {
+                const id = card.getAttribute('data-id');
+                const data = projectData[id];
+                
+                if (id === 'pulse') {
+                    // PULSE special case: Show selection grid
+                    modalTitle.textContent = data.title;
+                    modalTitle.style.color = data.color;
+                    modalBody.innerHTML = data.content;
+                    modalOverlay.classList.add('active');
+
+                    // Add listeners to sub-cards
+                    const subCards = modalBody.querySelectorAll('.sub-card');
+                    subCards.forEach(sub => {
+                        sub.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const subId = sub.getAttribute('data-sub-id');
+                            showPromptPreview(subId);
+                        });
+                    });
+                } else {
+                    // Standard cards: Copy + Show Preview
+                    showPromptPreview(id);
+                }
+            });
+        });
+
+        const closeModal = () => {
+            modalOverlay.classList.remove('active');
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
