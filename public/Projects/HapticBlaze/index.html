@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>HapticBlaze — Open-Source Haptic Engine & Captive Portal</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="page-container">
+        <!-- HERO SECTION -->
+        <header class="hero">
+            <div class="hero-content">
+                <div class="badge">ESP32 Haptic Telemetry</div>
+                <h1>HAPTICBLAZE</h1>
+                <p class="subtitle">A unified Hardware Abstraction Layer, declarative pattern engine, and real-time audio-reactive portal for LRAs, ERMs, and solenoid actuators.</p>
+                <div class="hero-actions">
+                    <a href="#simulator" class="btn primary">Launch Simulator</a>
+                    <a href="#architecture" class="btn secondary">Read Specifications</a>
+                    <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/Haptic/HapticBlaze"
+                        target="_blank" class="btn">View Source</a>
+                </div>
+            </div>
+            <div class="hero-graphic">
+                <div class="actuator-glow"></div>
+                <div class="actuator-preview" id="hero-actuator">
+                    <canvas id="hero-canvas" width="600" height="80"></canvas>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT WRAPPER: DOCS & SIMULATOR -->
+        <div class="summary-sim-row">
+
+            <!-- LEFT: EXECUTIVE SUMMARY -->
+            <div class="summary-column">
+                <section class="doc-card" style="margin-bottom: 0;">
+                    <h2>1. Executive Summary</h2>
+                    <p>
+                        <strong>HapticBlaze</strong> is to tactile haptics what WLED is to addressable LEDs: a high-performance, 
+                        open-source firmware that turns any ESP32 board and standard motor driver (L298N, DRV8833, DRV2605L, or discrete MOSFETs) 
+                        into an instantly programmable, web-controlled haptic engine.
+                    </p>
+                    <p>
+                        Historically, implementing high-fidelity haptic feedback has been highly fragmented. Developers were forced to hack low-level I2C registers 
+                        by hand, write blocking delay loops in custom firmware, or build bespoke analog filter circuits. 
+                        <strong>HapticBlaze</strong> solves this by introducing a unified **Hardware Abstraction Layer (HAL)**. 
+                        One declarative pattern works flawlessly across LRAs, ERMs, solenoids, or high-amplitude voice coils without editing a single line of C++.
+                    </p>
+                    <p>
+                        <strong>Made Possible by the Claude Code Hackathon:</strong> This project was brought to life during the 
+                        <a href="https://luma.com/bf9gpp2z" target="_blank"
+                            style="color:var(--accent-1); text-decoration:underline;">State of Oregon | Claude Code
+                            Hackathon</a> (sponsored by Anthropic and Vibes DIY at the PSU Business Accelerator). To prep for the build, 
+                        I compiled my recursive command-center suite, <a href="../AgentArsenal/index.html"
+                            style="color:var(--accent-1); text-decoration:underline;">Agent Arsenal</a>. Once the hackathon key was active, 
+                        my local agent swarm autonomously chewed through the hardware abstraction templates and synthesized 20 accessory hardware blueprints, leaving me to 
+                        strictly fine-tune the calibration controls and polish this interactive captive portal simulation.
+                    </p>
+
+                    <div class="tech-table-wrapper" style="margin-top: auto;">
+                        <table class="tech-table">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Legacy Haptic Control</th>
+                                    <th>HapticBlaze (HAL)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Driver Integration</strong></td>
+                                    <td>Bespoke register hacking (DRV2605L, DRV8833 specific)</td>
+                                    <td><strong>Unified Hardware Abstraction Layer</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pattern Generation</strong></td>
+                                    <td>Hardcoded non-blocking loops</td>
+                                    <td><strong>Declarative pattern library runtime</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Control Interface</strong></td>
+                                    <td>Serial monitor & manual uploads</td>
+                                    <td><strong>Mobile-first captive portal web UI</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Audio Reactivity</strong></td>
+                                    <td>Custom DSP / external hardware filters</td>
+                                    <td><strong>Built-in 32-band FFT & envelope follower</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Actuator Support</strong></td>
+                                    <td>Single actuator style per compile</td>
+                                    <td><strong>Dynamic LRA, ERM, Solenoid mapping</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- RIGHT: INTERACTIVE CAPTIVE PORTAL SIMULATOR -->
+            <section class="simulator-column" id="simulator">
+                <div class="simulator-sticky">
+
+                    <div class="sim-header">
+                        <div class="sim-title">
+                            <span class="dot live blinking"></span>
+                            <h2>Live Portal Simulator</h2>
+                        </div>
+                        <div class="audio-mic-btn-wrap">
+                            <button class="btn btn-audio-mic" id="audio-mic-toggle">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <path d="M12 1v11m-6-6a6 6 0 0012 0" />
+                                    <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                                </svg>
+                                <span>Enable Live Mic</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- VIRTUAL ACTUATOR / TELEMETRY CHASSIS -->
+                    <div class="virtual-actuator-chassis">
+                        <div class="strip-header">
+                            <span>Tactile Actuator Telemetry</span>
+                            <span class="sim-fps" id="sim-fps">60 FPS</span>
+                        </div>
+                        <div class="telemetry-viewport">
+                            <canvas id="prev" width="400" height="180"></canvas>
+                        </div>
+                        <div class="strip-footer">
+                            <span>Driver: <b id="currentDriver">DRV2605L</b></span> | <span>Actuator: <b id="currentActuator">LRA</b></span>
+                        </div>
+                    </div>
+
+                    <!-- PORTAL CONTAINER -->
+                    <div class="portal-container">
+                        <div class="portal-header">
+                            <div class="portal-logo">HAPTICBLAZE</div>
+                            <div class="portal-crumb">Active: <b id="patternName">Pulse Wave</b></div>
+                            <div class="portal-status">
+                                <span class="portal-dot" id="dot"></span>
+                                <span id="connText">connected</span>
+                            </div>
+                        </div>
+
+                        <div class="portal-body">
+                            <!-- PANEL TABS & CONTROLS -->
+                            <div class="portal-tabs">
+                                <div class="tabbar">
+                                    <button class="tab active" data-tab="play">Play</button>
+                                    <button class="tab" data-tab="lib">Library</button>
+                                    <button class="tab" data-tab="audio">Audio</button>
+                                    <button class="tab" data-tab="device">Device</button>
+                                </div>
+
+                                <!-- PLAY TAB -->
+                                <div class="tab-content" id="tab-play">
+                                    <h3>Quick Control Panel</h3>
+                                    
+                                    <div class="row">
+                                        <label>Master Intensity</label>
+                                        <input type="range" id="bright" min="0" max="255" value="180">
+                                        <span class="val" id="brightVal">70%</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Frequency Shift</label>
+                                        <input type="range" id="freqShift" min="50" max="250" value="150">
+                                        <span class="val" id="freqVal">150 Hz</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Playback Speed</label>
+                                        <input type="range" id="speed" min="5" max="30" value="10">
+                                        <span class="val" id="speedVal">1.0x</span>
+                                    </div>
+
+                                    <div class="control-actions">
+                                        <button class="btn primary" id="playBtn">Play Pattern</button>
+                                        <button class="btn danger" id="stopBtn">Stop</button>
+                                    </div>
+                                </div>
+
+                                <!-- LIBRARY TAB -->
+                                <div class="tab-content" id="tab-lib" style="display:none">
+                                    <h3>Pattern Library</h3>
+                                    <div class="tag-chips">
+                                        <span class="chip active" data-tag="all">All</span>
+                                        <span class="chip" data-tag="pulse">Pulse</span>
+                                        <span class="chip" data-tag="rhythm">Rhythm</span>
+                                        <span class="chip" data-tag="alert">Alert</span>
+                                        <span class="chip" data-tag="music">Audio</span>
+                                    </div>
+                                    <div class="cards" id="libCards"></div>
+                                </div>
+
+                                <!-- AUDIO TAB -->
+                                <div class="tab-content" id="tab-audio" style="display:none">
+                                    <h3>Audio-Reactive Telemetry</h3>
+                                    <div class="row">
+                                        <label>Telemetry Source</label>
+                                        <select id="micSrc">
+                                            <option value="0">Simulated Synthesizer</option>
+                                            <option value="1">I2S Microphone (INMP441)</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <label>Reactive Gain</label>
+                                        <input type="range" id="audioGain" min="1" max="10" value="4">
+                                        <span class="val" id="gainVal">4.0x</span>
+                                    </div>
+                                    <div class="spectrum-visualizer">
+                                        <canvas id="spectrum-canvas" width="400" height="80"></canvas>
+                                    </div>
+                                    <p class="hint">Maps acoustic audio frequencies into physical mechanical pulses for sensory substitution.</p>
+                                </div>
+
+                                <!-- DEVICE TAB -->
+                                <div class="tab-content" id="tab-device" style="display:none">
+                                    <h3>Hardware Calibration</h3>
+                                    <div class="row">
+                                        <label>Driver IC</label>
+                                        <select id="drvChip">
+                                            <option value="DRV2605L" selected>DRV2605L (I2C Low-Latency)</option>
+                                            <option value="DRV8833">DRV8833 (Dual PWM H-Bridge)</option>
+                                            <option value="MOSFET">Raw MOSFET (Direct PWM Output)</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <label>Actuator Type</label>
+                                        <select id="actuatorType">
+                                            <option value="LRA" selected>Linear Resonant Actuator (LRA)</option>
+                                            <option value="ERM">Eccentric Rotating Mass (ERM)</option>
+                                            <option value="Solenoid">High-Amplitude Solenoid</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="diag-specs">
+                                        <div class="diag-line"><span>Firmware Version</span> <span>v1.0.0-blaze</span></div>
+                                        <div class="diag-line"><span>FreeRTOS Core Jitter</span> <span>&lt; 1.4 ms</span></div>
+                                        <div class="diag-line"><span>ESP32-C3 Uptime</span> <span id="uptime">132s</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- SPECIFICATIONS & ARCHITECTURE SECTION -->
+        <div class="bottom-docs-column" id="architecture">
+            <section class="doc-card">
+                <h2>2. Hardware Abstraction Layer (HAL) Core Architecture</h2>
+                <p>
+                    Traditional haptic programming requires hardware-specific codebases. An LRA requires AC frequency resonance tracking, 
+                    while an ERM motor requires DC voltage thresholds. HapticBlaze solves this through a high-performance **HAL pipeline** 
+                    implemented inside a FreeRTOS task running on CPU Core 1:
+                </p>
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <h3>Dynamic Resonance Tracking</h3>
+                        <p>LRAs operate optimally only at their precise physical resonant frequency (typically 170–235 Hz). HapticBlaze continuously reads back-EMF voltage signals from the DRV2605L, adjusting the driver frequency dynamically in real-time.</p>
+                    </div>
+                    <div class="spec-item">
+                        <h3>Telemetry Waveform Synthesis</h3>
+                        <p>Declarative patterns are processed inside our flat-bytecode interpreter. The interpreter outputs normalized intensity maps [0.0–1.0], which are converted by the active HAL driver into precise voltage ramps or high-speed PWM cycles.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="doc-card">
+                <h2>3. Acoustic Sensory Substitution</h2>
+                <p>
+                    HapticBlaze features a high-performance 256-point Fast Fourier Transform (FFT) routing module that samples audio inputs 
+                    (via an analog auxiliary port or I2S digital microphones). The output frequency spectrum is mapped directly into 
+                    dynamic vibration envelopes. This represents a huge leap forward in open-source accessibility haptics, enabling the 
+                    Deaf and Hard-of-Hearing (D/HoH) community to experience musical beats, environment cues, or alarm sirens in real-time.
+                </p>
+            </section>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="main-footer">
+            <p>HapticBlaze &copy; 2026. Made Possible by Dillon Simeone and the Claude Code Agent Swarms.</p>
+        </footer>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="scripts.js"></script>
+</body>
+
+</html>

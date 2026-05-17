@@ -1,7 +1,0 @@
-cmake_minimum_required(VERSION 3.13)
-include(pico_sdk_import.cmake)
-project(max4466_mc C CXX ASM)
-pico_sdk_init()
-add_executable(max4466_mc main.c)
-target_link_libraries(max4466_mc pico_stdlib hardware_adc hardware_pwm)
-pico_add_extra_outputs(max4466_mc)

@@ -1,8 +1,0 @@
-cmake_minimum_required(VERSION 3.13)
-include(pico_sdk_import.cmake)
-project(inmp441_hc C CXX ASM)
-pico_sdk_init()
-add_executable(inmp441_hc main.c)
-pico_generate_pio_header(inmp441_hc ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
-target_link_libraries(inmp441_hc pico_stdlib hardware_pio)
-pico_add_extra_outputs(inmp441_hc)
