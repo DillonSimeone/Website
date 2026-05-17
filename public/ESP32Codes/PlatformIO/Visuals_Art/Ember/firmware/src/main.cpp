@@ -1,4 +1,4 @@
-// Pixelblaze Lite — ESP32-C3 firmware
+// Ember — ESP32-C3 firmware
 // Stack-based bytecode VM, atomic program swap, FreeRTOS task isolation.
 // See ARCHITECTURE.md for the design rationale.
 
@@ -28,7 +28,7 @@ struct Settings {
     int   pixelPin    = 4;
     int   pixelCount  = 30;
     int   brightness  = 128;
-    char  hostname[32] = "pblite";
+    char  hostname[32] = "ember";
     char  wifiSSID[64] = "";
     char  wifiPass[64] = "";
 
@@ -1343,7 +1343,7 @@ static void setupWiFi() {
         }
     }
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(settings.hostname, "pixelblaze");
+    WiFi.softAP(settings.hostname, "ember");
     Serial.print("AP "); Serial.println(WiFi.softAPIP());
 }
 
@@ -1406,7 +1406,7 @@ void setup() {
     // Audio: starts only if a mic source is configured.
     audio::start();
 
-    Serial.println("Pixelblaze Lite ready");
+    Serial.println("Ember ready");
 }
 
 // Broadcast an audio snapshot to all WS clients at ~20Hz when audio is active.
