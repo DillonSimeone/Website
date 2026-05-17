@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Command *)",
+      "PowerShell(py *)",
+      "PowerShell(Get-ChildItem output/dhh-curriculum -Recurse -File | Where-Object { $_.Name -ne \"_extract_pdfs.py\" -and $_.Directory.Name -ne \"_extracted\" } | Select-Object FullName, Length | Sort-Object FullName | Format-Table -AutoSize)",
+      "Bash(where pio *)",
+      "Bash(where platformio *)",
+      "Bash(where esptool *)",
+      "Bash(where esptool.py)",
+      "Bash(where arduino-cli *)",
+      "Bash(pip show *)",
+      "Bash(python -m platformio --version)",
+      "Bash(python -m platformio device list)",
+      "Read(//c/Users/Dillo/.platformio/platforms/**)",
+      "Read(//c/Users/Dillo/.platformio/packages/**)",
+      "Bash(python -m platformio run -e esp32-c3)",
+      "Bash(python -m platformio run -e esp32-c3 -t upload)",
+      "Bash(python -m platformio run -e esp32-c3 -t uploadfs)",
+      "Bash(timeout 8 python -m platformio device monitor -p COM4 -b 115200 --quiet)"
+    ]
+  }
+}

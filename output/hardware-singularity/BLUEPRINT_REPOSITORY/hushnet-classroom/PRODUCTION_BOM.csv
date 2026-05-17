@@ -1,0 +1,44 @@
+ref_des,part_description,manufacturer,mfg_part_number,lcsc_part_number,jlcpcb_part_number,qty_per_unit,unit_price_usd_qty1k,source_notes
+CEILING UNIT (per tile — 8 tiles per classroom kit),,,,,,,,,
+U1,SoC ESP32-S3 dual-core 240MHz Xtensa LX7 WiFi/BLE,Espressif Systems,ESP32-S3-WROOM-1-N8R8,C2913202,C2913202,1,3.80,training-data reference (verify)
+U2,AI MCU Alif Ensemble E7 Cortex-M55 + Ethos-U55 NPU,Alif Semiconductor,AE722F80F55D5LS,N/A — direct from distributor,N/A,1,12.50,best-guess (verify) — not stocked on LCSC at time of training; check Mouser/Arrow
+U3,Monochrome camera HM01B0 QVGA 320x320 2mW,Himax,HM01B0-MCA,C2678669,C2678669,1,2.20,training-data reference (verify)
+U4,PoE PD controller IEEE 802.3af Class 1,Silvertel,AG9900M,C399066,C399066,1,3.50,training-data reference (verify)
+U5,5V/3.3V LDO regulator 1A,Diodes Inc,AP2114H-3.3TRG1,C31568,C31568,2,0.08,training-data reference (verify)
+U6,1.8V LDO for camera and NPU rail,Torex,XC6220A181MR-G,C86534,C86534,1,0.12,training-data reference (verify)
+U7,I2C GPIO expander for LED drive control,NXP,PCA9555PW,C128392,C128392,1,0.55,training-data reference (verify)
+U8,Dual MOSFET N-channel SOT-363 for NIR LED switching,Vishay,SI1539EDL-T1-GE3,C458026,C458026,2,0.18,training-data reference (verify)
+LED1-LED4,850nm NIR LED 200mW 25-degree half-angle,Osram,SFH4715S,C460441,C460441,4,0.45,training-data reference (verify)
+C1-C4,100nF 0402 X7R 16V bypass,YAGEO,CC0402KRX7R7BB104,C14858,C14858,20,0.002,training-data reference (verify)
+C5-C8,10uF 0805 X5R 10V bulk decoupling,Samsung,CL21A106KAYNNNE,C15850,C15850,8,0.012,training-data reference (verify)
+C9-C10,100uF 6.3V electrolytic PoE input bulk,Panasonic,EEE-FC0J101P,C176112,C176112,2,0.18,training-data reference (verify)
+R1-R8,10k 0402 1% resistor array pull-up,YAGEO,RC0402FR-0710KL,C98220,C98220,10,0.001,training-data reference (verify)
+R9-R12,1R 0402 5% current-sense NIR LED,YAGEO,RC0402JR-071RL,C135418,C135418,4,0.002,training-data reference (verify)
+L1,4.7uH 1210 power inductor PoE buck,TDK,CLF12577T-4R7N-D,C408336,C408336,1,0.35,training-data reference (verify)
+L2,10uH 0805 inductor 3.3V rail filter,Wurth,744043100,C408240,C408240,1,0.22,training-data reference (verify)
+D1,Schottky diode 1A 40V SOD-123 PoE protection,YAGEO,RB060LAM-40TR,C181070,C181070,1,0.04,training-data reference (verify)
+J1,RJ45 PoE jack with magnetics,Bel Fuse,0826-1X1T-43-F,C381890,C381890,1,1.85,training-data reference (verify)
+J2,Camera FPC 24-pin 0.5mm pitch ZIF connector,Amphenol,FCI 10118194-0001LF,C145997,C145997,1,0.22,training-data reference (verify)
+J3,USB-C 2.0 debug/flash port,Korean Hroparts,TYPE-C-31-M-12,C165948,C165948,1,0.18,training-data reference (verify)
+SW1,Tactile switch 3x4mm SPST for config,C&K,PTS645SL50SMTR92,C221881,C221881,1,0.06,training-data reference (verify)
+PCB1,4-layer 100x100mm PCB FR4 1.6mm ENIG ceiling unit,JLC,CUSTOM,N/A,N/A,1,4.50,best-guess (verify) — JLC4PCB 4-layer price at qty 800 pcs
+ENCL1,Steel backing plate 610x610mm 16ga galv + ABS face panel,Custom,CUSTOM-HNET-01,N/A,N/A,1,8.00,best-guess (verify) — fabricated part
+MECH1,NIR LED diffuser ring PETG laser-cut,Custom,CUSTOM-HNET-02,N/A,N/A,1,0.80,best-guess (verify)
+LENS1,M12 wide-angle 110deg FOV 850nm pass IR lens,Computar,M1218MP2,N/A — direct Computar,N/A,1,9.50,best-guess (verify) — check Edmund Optics / Computar distribution
+CABLE1,Cat6 CMP plenum-rated 10ft pigtail,Belden,7913A,N/A,N/A,1,3.20,best-guess (verify) — field-install consumable per tile
+,,,,,,,,
+TEACHER BRACELET (1 per classroom kit),,,,,,,,,
+U10,SoC ESP32-S3-MINI-1 for bracelet,Espressif Systems,ESP32-S3-MINI-1-N4,C2913204,C2913204,1,2.90,training-data reference (verify)
+U11,Haptic driver DRV2605L I2C LRA/ERM,Texas Instruments,DRV2605LDGSR,C134844,C134844,1,1.25,training-data reference (verify)
+U12,LRA linear resonant actuator 2.5mm profile,Nidec,NFP-CP07107,C2684267,C2684267,1,2.20,training-data reference (verify)
+U13,128x32 OLED module SSD1306 I2C,Solomon Systech,SSD1306,C098246,C098246,1,1.40,training-data reference (verify)
+U14,LiPo fuel gauge MAX17048,Maxim/Analog,MAX17048G+T10,C209050,C209050,1,1.10,training-data reference (verify)
+U15,LiPo charger 1-cell USB-C MCP73831,Microchip,MCP73831T-2ACI/OT,C14879,C14879,1,0.28,training-data reference (verify)
+BAT1,LiPo 400mAh 3.7V 502540,Generic,LP502540,C585768,C585768,1,1.80,training-data reference (verify)
+C20-C22,100nF 0402 X7R bypass bracelet,YAGEO,CC0402KRX7R7BB104,C14858,C14858,6,0.002,training-data reference (verify)
+C23-C24,10uF 0805 X5R bulk bracelet,Samsung,CL21A106KAYNNNE,C15850,C15850,2,0.012,training-data reference (verify)
+R20-R22,10k 0402 pull-up bracelet,YAGEO,RC0402FR-0710KL,C98220,C98220,4,0.001,training-data reference (verify)
+SW10,Side button 4mm tactile acknowledge,C&K,PTS645SL43SMTR92,C92584,C92584,1,0.06,training-data reference (verify)
+PCB2,2-layer 50x30mm PCB FR4 1.0mm ENIG bracelet,JLC,CUSTOM-BR,N/A,N/A,1,1.20,best-guess (verify) — JLC 2-layer price qty 100
+ENCL2,Silicone overmold wristband + ABS PCB shell,Custom,CUSTOM-HNET-BR-01,N/A,N/A,1,6.50,best-guess (verify) — injection molded silicone; NRE not included
+J10,USB-C 2.0 charge port bracelet,Korean Hroparts,TYPE-C-31-M-12,C165948,C165948,1,0.18,training-data reference (verify)

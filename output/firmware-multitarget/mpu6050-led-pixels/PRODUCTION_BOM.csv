@@ -1,0 +1,13 @@
+Designator,Qty,Value,LCSC_Part_No,Manufacturer_PN,Package,JLCPCB_Lib,Unit_Cost_100qty,Notes
+U1,1,ESP32-C3-MINI-1-N4,C2902509,ESP32-C3-MINI-1-N4,SMD-Module,Extended,1.45,Alternative: RP2040 (C2040) +flash $1.07
+U2,1,MPU6050,C419260,MPU-6050,QFN-24,Basic,1.45,
+U3,1,AMS1117-3.3,C6186,AMS1117-3.3,SOT-223,Basic,0.04,
+J1,1,USB-C 6P,C2765186,TYPE-C-31-M-12,SMD,Basic,0.10,
+J2,1,WS2812 strip header,n/a,3-pin,Through-hole,n/a,0.05,
+LED_STRIP,144,WS2812B (external),C114586,WS2812B,SMD,Basic,5.76,Customer-supplied typically
+C1-C8,8,100nF 0603,C14663,CC0603KRX7R9BB104,0603,Basic,0.008,
+C9,1,470uF 6.3V,C13585,n/a,SMD,Basic,0.08,Strip bulk
+R1-R4,4,10K 0603,C25804,0603WAF1002T5E,0603,Basic,0.004,
+PCB,1,2-layer,JLCPCB,JLCPCB,2-layer,n/a,0.40,
+,,,,,,,,
+TOTAL,,,,,,,$3.69,Excludes strip if supplied externally; with strip $9.45

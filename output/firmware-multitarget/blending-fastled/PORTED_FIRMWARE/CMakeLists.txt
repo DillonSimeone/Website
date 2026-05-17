@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.13)
+include(pico_sdk_import.cmake)
+project(blending_fastled C CXX ASM)
+pico_sdk_init()
+add_executable(blending_fastled main.c)
+pico_generate_pio_header(blending_fastled ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio)
+target_link_libraries(blending_fastled pico_stdlib hardware_pio)
+pico_add_extra_outputs(blending_fastled)

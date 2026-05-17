@@ -1,0 +1,12 @@
+Designator,Qty,Value,LCSC_Part_No,Manufacturer_PN,Package,JLCPCB_Lib,Unit_Cost_100qty,Notes
+U1,1,ESP32-C3-MINI-1-N4,C2902509,ESP32-C3-MINI-1-N4,SMD-Module,Extended,1.45,
+U2,1,INMP441,C2884796,INMP441,LGA-6,n/a,1.20,
+U3,1,74AHCT125,C5446,74AHCT125PW,TSSOP-14,Extended,0.20,3V3→5V level shifter for LED data
+U4,1,AMS1117-3.3,C6186,AMS1117-3.3,SOT-223,Basic,0.04,
+J1,1,USB-C,C2765186,TYPE-C-31-M-12,SMD,Basic,0.10,
+J2,1,5V/10A barrel jack,C72665,DC-005-2.0,Through-hole,Extended,0.15,Strip power
+LED_STRIP,300,WS2812B external,n/a,n/a,n/a,n/a,12.00,$0.04 ea
+C/R passives,1,assorted,n/a,n/a,0603,Basic,0.05,
+PCB,1,2-layer,JLCPCB,JLCPCB,2-layer,n/a,0.50,
+,,,,,,,,
+TOTAL,,,,,,,$15.69,
