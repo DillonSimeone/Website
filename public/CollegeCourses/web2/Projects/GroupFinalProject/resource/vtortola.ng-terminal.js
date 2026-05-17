@@ -1,4 +1,4 @@
-﻿angular.module('vtortola.ng-terminal', [])
+angular.module('vtortola.ng-terminal', [])
 
 .provider('terminalConfiguration', function () {
     

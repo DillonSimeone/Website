@@ -19,7 +19,7 @@ RESTRICTED USE IN ALPHABET-RELATED PRODUCTS
 You may not create alphabet or letterform products for resale where the product consists of individual letterforms, including rubber stamps, die-cut products, stencil products, or adhesive sticker alphabet products where the likeness of the licensed fonts can be reproduced and the end-user of said products can create their own typesetting.
 
 RESTRICTIONS ON  FONT EMBEDDING 
-Web-embedding requires a commercial license, and is not permitted under this, the current license. The commercial license permits using any of the following methods and technologies: sIFR, @ font-face, Adobe Flash files, Microsoft Silverlight files, fLIR, Cufón and Typeface.js. A commercial license is obtained with a PayPal donation. Email Lauren Thompson at nymphont@yahoo.com.
+Web-embedding requires a commercial license, and is not permitted under this, the current license. The commercial license permits using any of the following methods and technologies: sIFR, @ font-face, Adobe Flash files, Microsoft Silverlight files, fLIR, Cufï¿½n and Typeface.js. A commercial license is obtained with a PayPal donation. Email Lauren Thompson at nymphont@yahoo.com.
 
 BROADCAST, FILM, AND GAMES
 When using a font or fonts in cinemas, motion pictures, video games, on television, cable television, or as a part of any works broadcast,contact Lauren Thompson (nymphont@yahoo.com) as the the commercial license is typically required. A commercial license is obtained with a PayPal donation. 

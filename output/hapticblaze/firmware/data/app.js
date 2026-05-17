@@ -1,0 +1,283 @@
+// HapticBlaze portal — vanilla JS SPA, served from LittleFS.
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+const State = { patterns: [], state: null, cfg: null, diag: null };
+
+async function api(url, opts = {}) {
+  const r = await fetch(url, { headers: { 'content-type': 'application/json' }, ...opts });
+  if (!r.ok) throw new Error(`${url}: ${r.status}`);
+  return r.json();
+}
+const patchState  = (p)   => api('/json/state',  { method: 'POST', body: JSON.stringify(p) }).then(s => { State.state = s; renderAll(); });
+const saveConfig  = (p)   => api('/json/config', { method: 'POST', body: JSON.stringify(p) });
+
+// ---------- routing ----------
+function route() {
+  const tab = (location.hash.replace('#/', '') || 'play');
+  $$('[data-view]').forEach(el => el.hidden = el.dataset.view !== tab);
+  $$('.tabbar a').forEach(a => a.setAttribute('aria-selected', a.dataset.tab === tab ? 'true' : 'false'));
+  if (tab === 'device')  refreshDiag();
+  if (tab === 'setup')   renderSetup();
+  if (tab === 'library') renderLibrary();
+}
+window.addEventListener('hashchange', route);
+
+// ---------- play ----------
+function renderPlayGrid() {
+  const grid = $('#pattern-grid');
+  grid.innerHTML = '';
+  const current = State.state && State.state.pattern;
+  for (const p of State.patterns) {
+    const el = document.createElement('button');
+    el.className = 'tile' + (p.id === current ? ' active' : '');
+    el.innerHTML = `<h3>${p.id}</h3><p>${p.category}</p>`;
+    el.onclick = () => patchState({ pattern: p.id, on: true });
+    grid.appendChild(el);
+  }
+  renderParamsPanel();
+}
+
+function renderParamsPanel() {
+  const wrap = $('#paramsPanel');
+  const current = State.state && State.state.pattern;
+  const meta = State.patterns.find(p => p.id === current);
+  if (!meta || !meta.params || !meta.params.length) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  wrap.innerHTML = `<h3>${meta.id} params</h3>` + meta.params.map(pm => `
+    <label>${pm.label}
+      <input type="range" min="${pm.min}" max="${pm.max}" step="${(pm.max - pm.min) / 100}"
+             value="${pm.default}" data-pid="${pm.id}" />
+      <output>${pm.default}</output>
+    </label>
+  `).join('');
+  $$('input[data-pid]', wrap).forEach(inp => {
+    inp.oninput = () => {
+      inp.nextElementSibling.textContent = inp.value;
+      patchState({ params: { [inp.dataset.pid]: parseFloat(inp.value) } });
+    };
+  });
+}
+
+function applyStatePill() {
+  const pill = $('#status');
+  const s = State.state || {};
+  if (!s.on) { pill.textContent = 'Idle'; pill.dataset.state = 'idle'; return; }
+  const usesAudio = (State.patterns.find(p => p.id === s.pattern) || {}).usesAudio;
+  pill.textContent = usesAudio ? 'Audio-reactive' : 'Playing';
+  pill.dataset.state = usesAudio ? 'audio' : 'playing';
+}
+
+// ---------- library ----------
+function renderLibrary() {
+  const q = ($('#librarySearch').value || '').toLowerCase();
+  const grid = $('#library-grid');
+  grid.innerHTML = '';
+  for (const p of State.patterns) {
+    const hay = (p.id + ' ' + p.category + ' ' + (p.tags || '') + ' ' + (p.description || '')).toLowerCase();
+    if (!hay.includes(q)) continue;
+    const el = document.createElement('button');
+    el.className = 'tile';
+    el.innerHTML = `<h3>${p.id}</h3><p>${p.category}</p><small>${p.description || ''}</small>`;
+    el.onclick = () => { patchState({ pattern: p.id, on: true }); location.hash = '#/play'; };
+    grid.appendChild(el);
+  }
+}
+
+// ---------- setup ----------
+// Each driver has a "slot map" — how a motor's (speed, forward, backward) maps
+// into the firmware's flat 8-slot pins[] array. Motor N uses three slots.
+// For mini-style drivers the speed slot is -1 (no separate PWM pin).
+const DRIVER_SLOTS = {
+  1: { name: 'L298N',        maxMotors: 2, slots: [[0,1,2],[3,4,5]],   labels: { speed:'Speed (ENA, optional)', fwd:'Forward (IN1)',  rev:'Backward (IN2)' } },
+  2: { name: 'DRV8833',      maxMotors: 2, slots: [[-1,0,1],[-1,2,3]], labels: { speed:null, fwd:'Forward (AIN1)', rev:'Backward (AIN2)' } },
+  3: { name: 'DRV2605L',     maxMotors: 1, slots: [[-1,0,-1]],         labels: { speed:null, fwd:'EN pin', rev:null } },
+  4: { name: 'MOSFET',       maxMotors: 4, slots: [[-1,0,-1],[-1,1,-1],[-1,2,-1],[-1,3,-1]], labels: { speed:null, fwd:'Gate pin', rev:null } },
+  5: { name: 'Mini H-Bridge',maxMotors: 2, slots: [[-1,0,1],[-1,2,3]], labels: { speed:null, fwd:'Forward (IN1 / AIN1)', rev:'Backward (IN2 / AIN2)' } },
+};
+
+const FALLBACK_GPIOS = [0,1,3,4,5,6,7,10,20,21];
+let GPIO_LIST = FALLBACK_GPIOS.slice();   // populated immediately, refreshed from /json/gpios
+
+async function loadGpios() {
+  try {
+    const r = await api('/json/gpios');
+    if (Array.isArray(r.available) && r.available.length) GPIO_LIST = r.available;
+  } catch (e) {
+    // keep fallback
+    console.warn('gpios endpoint unavailable, using fallback', e.message);
+  }
+  return GPIO_LIST;
+}
+
+function gpioOptions(selected, includeNone) {
+  const none = includeNone
+    ? `<option value="-1"${selected < 0 ? ' selected' : ''}>— jumper / +5V —</option>`
+    : `<option value="-1"${selected < 0 ? ' selected' : ''}>— none —</option>`;
+  return none + GPIO_LIST.map(p =>
+    `<option value="${p}"${p === selected ? ' selected' : ''}>GPIO ${p}</option>`).join('');
+}
+
+function renderMotorList(driverKind, pins) {
+  const def = DRIVER_SLOTS[driverKind];
+  const wrap = $('#motorList'); wrap.innerHTML = '';
+  // Decide how many motors are currently populated (any non-(-1) pin in its slot range).
+  let motorCount = 0;
+  for (let m = 0; m < def.maxMotors; m++) {
+    const [s, f, b] = def.slots[m];
+    const inUse =
+      (s >= 0 && pins[s] >= 0) ||
+      (f >= 0 && pins[f] >= 0) ||
+      (b >= 0 && pins[b] >= 0);
+    if (inUse) motorCount = m + 1;
+  }
+  if (motorCount === 0) motorCount = 1;
+  for (let m = 0; m < motorCount; m++) addMotorCard(driverKind, m, pins);
+  // Toggle "Add motor" button visibility.
+  $('#btnAddMotor').style.display = motorCount < def.maxMotors ? '' : 'none';
+}
+
+function addMotorCard(driverKind, motorIdx, pins) {
+  const def = DRIVER_SLOTS[driverKind];
+  const [sSlot, fSlot, bSlot] = def.slots[motorIdx];
+  const L = def.labels;
+
+  const card = document.createElement('div');
+  card.className = 'motor-card';
+  card.dataset.motor = motorIdx;
+  card.innerHTML = `
+    <div class="motor-head">
+      <strong>Motor ${motorIdx + 1}</strong>
+      <button type="button" class="x" aria-label="Remove">×</button>
+    </div>
+    ${(fSlot >= 0 && L.fwd) ? `<label>${L.fwd}
+      <select data-slot="${fSlot}">${gpioOptions(pins[fSlot] ?? -1, false)}</select></label>` : ''}
+    ${(bSlot >= 0 && L.rev) ? `<label>${L.rev}
+      <select data-slot="${bSlot}">${gpioOptions(pins[bSlot] ?? -1, false)}</select></label>` : ''}
+    ${(sSlot >= 0 && L.speed) ? `<label>${L.speed}
+      <select data-slot="${sSlot}">${gpioOptions(pins[sSlot] ?? -1, true)}</select></label>` : ''}
+  `;
+  card.querySelector('.x').onclick = () => {
+    [sSlot, fSlot, bSlot].forEach(slot => { if (slot >= 0) currentPins[slot] = -1; });
+    renderMotorList(parseInt($('#cfgDriver').value), currentPins);
+  };
+  card.querySelectorAll('select[data-slot]').forEach(sel => {
+    sel.addEventListener('change', () => {
+      currentPins[parseInt(sel.dataset.slot)] = parseInt(sel.value);
+    });
+  });
+  $('#motorList').appendChild(card);
+}
+
+let currentPins = [-1,-1,-1,-1,-1,-1,-1,-1];
+
+async function renderSetup() {
+  await loadGpios();
+  try { State.cfg = await api('/json/config'); } catch {}
+  const cfg = State.cfg || { driver: { kind: 5, pins: [-1,-1,-1,-1,-1,-1,-1,-1], pwmHz: 20000 } };
+  currentPins = (cfg.driver.pins && cfg.driver.pins.length === 8)
+    ? cfg.driver.pins.slice()
+    : [-1,-1,-1,-1,-1,-1,-1,-1];
+  $('#cfgDriver').value = String(cfg.driver.kind);
+  $('#cfgPwmHz').value  = cfg.driver.pwmHz || 20000;
+  // Standby pin lives in pins[6].
+  const stby = $('#cfgStandby');
+  if (stby) stby.innerHTML = gpioOptions(currentPins[6] ?? -1, true);
+  renderMotorList(cfg.driver.kind, currentPins);
+}
+
+$('#cfgDriver')?.addEventListener('change', () => {
+  currentPins = [-1,-1,-1,-1,-1,-1,-1,-1];
+  renderMotorList(parseInt($('#cfgDriver').value), currentPins);
+});
+
+$('#btnAddMotor')?.addEventListener('click', () => {
+  const driverKind = parseInt($('#cfgDriver').value);
+  const def = DRIVER_SLOTS[driverKind];
+  const existing = $$('#motorList .motor-card').length;
+  if (existing >= def.maxMotors) return;
+  addMotorCard(driverKind, existing, currentPins);
+  if (existing + 1 >= def.maxMotors) $('#btnAddMotor').style.display = 'none';
+});
+
+$('#btnSaveCfg')?.addEventListener('click', async () => {
+  // Pick up the Standby pin from its dropdown.
+  const stby = $('#cfgStandby');
+  if (stby) currentPins[6] = parseInt(stby.value);
+  const body = {
+    driver: {
+      kind:  parseInt($('#cfgDriver').value),
+      pins:  currentPins.slice(),
+      pwmHz: parseInt($('#cfgPwmHz').value),
+    },
+  };
+  $('#cfgStatus').textContent = 'Saving + rebooting…';
+  try { await saveConfig(body); }
+  catch (e) { $('#cfgStatus').textContent = 'Failed: ' + e.message; return; }
+  $('#cfgStatus').textContent = 'Saved. The device is rebooting — reconnect to Wi-Fi and refresh in ~6 seconds.';
+});
+
+$('#btnTestBuzz')?.addEventListener('click', async () => {
+  $('#cfgStatus').textContent = 'Buzzing for 1.5s…';
+  try {
+    // Query-param style — no body, sidesteps content-type quirks.
+    const r = await fetch('/json/buzz?ms=200&intensity=0.8', { method: 'POST' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    setTimeout(() => patchState({ on: false }).catch(()=>{}), 1500);
+    $('#cfgStatus').textContent = 'Sent. If you felt nothing: check that the driver is powered, GND is shared with the ESP32, and Save + Reboot was done after wiring changed.';
+  } catch (e) {
+    $('#cfgStatus').textContent = 'Buzz failed: ' + e.message;
+  }
+});
+
+// ---------- device ----------
+async function refreshDiag() {
+  try {
+    State.diag = await api('/json/diag');
+    $('#diag').textContent = JSON.stringify(State.diag, null, 2);
+  } catch (e) { $('#diag').textContent = 'diag unreachable: ' + e.message; }
+}
+$('#btnReboot')?.addEventListener('click', () => patchState({ reboot: true }));
+
+// ---------- buttons ----------
+$('#btnOn')   .addEventListener('click', () => patchState({ on: true }));
+$('#btnOff')  .addEventListener('click', () => patchState({ on: false }));
+$('#btnMute') .addEventListener('click', () => patchState({ mute: !(State.state && State.state.mute) }));
+$('#intensity').addEventListener('input', e => patchState({ intensity: parseFloat(e.target.value) }));
+$('#speed')    .addEventListener('input', e => patchState({ speed: parseFloat(e.target.value) }));
+$('#librarySearch')?.addEventListener('input', renderLibrary);
+
+// ---------- websocket ----------
+function openWebSocket() {
+  let ws;
+  try { ws = new WebSocket(`ws://${location.host}/ws`, 'hapticblaze.v1'); }
+  catch { setTimeout(openWebSocket, 2000); return; }
+  ws.addEventListener('open',  () => ws.send(JSON.stringify({ type: 'subscribe', topics: ['state'] })));
+  ws.addEventListener('close', () => setTimeout(openWebSocket, 1500));
+  ws.addEventListener('message', ev => {
+    try {
+      const m = JSON.parse(ev.data);
+      if (m.type === 'state') { State.state = m.data; renderAll(); }
+    } catch {}
+  });
+}
+
+function renderAll() {
+  applyStatePill();
+  if (!$('[data-view="play"]').hidden)    renderPlayGrid();
+  if (!$('[data-view="library"]').hidden) renderLibrary();
+}
+
+(async function init() {
+  try {
+    const bundle = await api('/json');
+    State.patterns = bundle.patterns || [];
+    State.state    = bundle.state;
+  } catch (e) {
+    $('#status').textContent = 'Offline';
+  }
+  route();
+  renderAll();
+  openWebSocket();
+})();
