@@ -1,4 +1,4 @@
-# Pixelblaze Lite — Architecture
+# Ember — Architecture
 
 A high-performance pattern engine for the ESP32-C3, derived from WebFastLed. The
 core idea: **compile patterns to bytecode once, execute the bytecode per pixel
@@ -30,7 +30,7 @@ the async web server during edits.
 
 ## 2. New VM: stack-based bytecode
 
-Pixelblaze Lite compiles the pattern source **once** (when the user edits or
+Ember compiles the pattern source **once** (when the user edits or
 loads it) into a flat byte array. The render loop then runs that array
 directly through a tight `switch`-dispatched interpreter, threading floats
 through a fixed-size stack.
@@ -196,7 +196,7 @@ list.
 ## 5. File layout
 
 ```
-output/pixelblaze-lite/
+public/ESP32Codes/PlatformIO/Visuals_Art/Ember/
 ├── ARCHITECTURE.md          (this file)
 ├── DEMO_PATTERNS.json       20 patterns showcasing the new builtins
 ├── firmware/
@@ -225,7 +225,7 @@ a separate build step.
   fit a generous program in 4 KB of bytecode while keeping operand encoding
   to one byte.
 - Recursion / user-defined functions / arrays are **not** supported. That is
-  the explicit scope boundary that separates "Pixelblaze Lite" from
+  the explicit scope boundary that separates "Ember" from
   Pixelblaze proper.
 - ESP32-C3 has no FPU SIMD; the per-pixel cost is dominated by the dispatch
   switch and one or two transcendental calls. Replacing `sinf` with the

@@ -1,4 +1,4 @@
-# Pixelblaze Lite
+# Ember
 
 A high-performance pattern engine for the ESP32-C3, evolved from WebFastLed.
 
@@ -26,7 +26,7 @@ pio run -t upload      # flash the program
 pio run -t uploadfs    # flash the LittleFS image (UI + demo patterns)
 ```
 
-The device defaults to a `pblite` AP (password `pixelblaze`) until you set Wi-Fi via the settings tab.
+The device defaults to an `ember` AP (password `ember`) until you set Wi-Fi via the settings tab.
 
 ## Pattern language quick reference
 
