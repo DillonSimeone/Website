@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Haptics</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- PeerJS for serverless P2P communication -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="glass-container">
+        <div class="info-header">
+            <p><strong>Remote Haptics Controller</strong></p>
+            <p class="note">
+                One device acts as Host, others as Clients.
+            </p>
+        </div>
+
+        <h1>Remote Haptics</h1>
+
+        <div class="status-indicator">
+            Connection: <span id="connectionStatus" class="text-primary">Disconnected</span>
+            <div id="peerIdDisplay" class="peer-id-display">ID: <span id="myPeerId">...</span></div>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="control-group boxed">
+            <div class="switch-container">
+                <label for="hostToggle" class="switch-label">Enable Host Mode</label>
+                <label class="switch">
+                    <input type="checkbox" id="hostToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <p id="modeDescription" class="mode-description">
+                Client Mode: Receiving haptics...
+            </p>
+        </div>
+
+        <!-- Controls (Hidden for Clients by default) -->
+        <div id="hostControls" class="faded-controls">
+            <div class="main-controls">
+                <button id="triggerBtn" class="glass-btn primary">BROADCAST VIBRATE</button>
+                <button id="stopBtn" class="glass-btn danger">STOP ALL</button>
+            </div>
+
+            <div class="control-panel">
+                <div class="control-group">
+                    <label>Presets</label>
+                    <div class="preset-buttons">
+                        <button class="glass-btn small" data-pattern="200">Single</button>
+                        <button class="glass-btn small" data-pattern="200,100,200">Double</button>
+                        <button class="glass-btn small" data-pattern="100,50,100,50,100">Pulse</button>
+                        <button class="glass-btn small"
+                            data-pattern="500,110,500,110,450,110,200,110,170,40,450,110,200,110,170,40,500">Mario</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="customPattern">Custom Pattern</label>
+                    <input type="text" id="customPattern" class="glass-input" placeholder="e.g. 100, 50, 100">
+                </div>
+            </div>
+        </div>
+
+        <div class="status-indicator status-indicator--footer">
+            Haptic Status: <span id="statusText">Ready</span>
+        </div>
+
+    </div>
+
+    <script src="../js/logger.js"></script>
+    <script src="../js/websocketScript.js"></script>
+</body>
+
+</html>

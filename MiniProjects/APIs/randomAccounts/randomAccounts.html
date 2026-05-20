@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Random Account Generator</title>
+    <meta name="description" content="Generates random accounts using the Fetch API">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+    <nav>
+        <h2>Random Account Generator</h2>
+        <div class="controls">
+            <button>Controls</button>
+        </div>
+        <div class="pagination">
+            <button onclick="previous()">Previous</button>
+            <h2>Page 1</h2>
+            <button onclick="next()">Next</button>
+            <div class="tooltip">
+                <h2>Fancy Tool Tip - Pagination</h2>
+                <p>The page number. Push one of the buttons here to change pages! Amazing! FYI, you can't go into
+                    negative pages, because reasons! <strong>REASONS</strong></p>
+            </div>
+        </div>
+        
+        <h2>Seed</h2>
+        <div class="seed">
+            <div>
+                <label>Seed</label>
+                <input value="seed" id="seed">
+            </div>
+
+            <div class="tooltip">
+                <h2>Fancy Tool Tip - Seed</h2>
+                <p>All of the accounts here are generated from a random seed! You can make it less random by setting the
+                    seed.</p>
+            </div>
+        </div>
+        <h2>Picture Settings</h2>
+        <div class="pictureSetting">
+            <div>
+                <label>Size</label>
+                <input type="number" min="1" id="pictureSize" value = "100">
+            </div>
+            <div>
+                <label>Quality</label>
+                <select id="quality">
+                    <option>Small</option>
+                    <option>Medium</option>
+                    <option>Large</option>
+                </select>
+            </div>
+            <div class="tooltip">
+                <h2>Fancy Tool Tip - Picture Settings</h2>
+                <p>Affects the pictures for each accounts.</p>
+                <ul>
+                    <li>Size: The size of the pictures, what else?</li>
+                    <li>Quality: The resolution of the pictures.</li>
+                </ul>
+            </div>
+        </div>
+        <h2>Splatter Setting</h2>
+        <div class="splatterSetting">
+            <div>
+                <label>Color</label>
+                <select id="colorSplatter">
+                    <option>Red</option>
+                    <option>Blue</option>
+                    <option>Green</option>
+                </select>
+            </div>
+            <div>
+                <label>Shades</label>
+                <input type="number" id="shades" max=255 min=0>
+            </div>
+            <div>
+                <label>Amount</label>
+                <input type="number" id="amount" min=1>
+            </div>
+            <div>
+                <label>Angle</label>
+                <input type="number" id="angle" min=1>
+            </div>
+            <div>
+                <label>AngleXdelta</label>
+                <input type="number" id="angleXdelta" min=1>
+            </div>
+            <div>
+                <label>Angleydelta</label>
+                <input type="number" id="angleYdelta" min=1>
+            </div>
+            <div>
+                <label>Randomness</label>
+                <input type="number" id="randomness" min=1>
+            </div>
+            <div>
+                <label>Size</label>
+                <input type="number" id="size" min=1>
+            </div>
+            <div>
+                <label>SizeDelta</label>
+                <input type="number" id="sizeDelta" min=1>
+            </div>
+            <div>
+                <label>Life</label>
+                <input type="number" id="life" min=1>
+            </div>
+
+            <div class="tooltip">
+                <h2>Fancy Tool Tip - Splatter Setting</h2>
+                <p>Setting for the silly canvas onclick events for all of the account pictures.</p>
+                <ul>
+                    <li>Color: The colors for the splatters.</li>
+                    <li>Shades: Possible shades of colors. (255 > && < 0)</li> <li>Amount: How much splatter particles to generate on click. ( > 1 )</li>
+                    <li>Angle: Spacing between particles. ( > 1 )</li>
+                    <li>AngleXdelta: Affects the distance of particles on the x-axis. ( > 1 )</li>
+                    <li>AngleYdelta: Affects the distance of particles on the y-axis. ( > 1 )</li>
+                    <li>Randomness: Affects the distance particles travels on either axises. ( > 1 )</li>
+                    <li>Size: Affects the size of particles. ( > 1 )</li>
+                    <li>SizeDelta: Affects how big the particles will be ( > 1)</li>
+                    <li>Life: Affects the size and render time for particles. ( > 1)</li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="accounts">
+    </div>
+    <script src="./script.js">
+    </script>
+</body>
+
+</html>

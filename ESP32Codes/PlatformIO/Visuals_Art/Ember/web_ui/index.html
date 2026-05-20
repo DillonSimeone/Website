@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ember</title>
+<style>
+:root {
+    --bg: #0b0d12;
+    --panel: #141821;
+    --panel-2: #1a1f2b;
+    --border: #232938;
+    --text: #e6e9f2;
+    --muted: #8893a8;
+    --accent: #7c9cff;
+    --accent-2: #ff6d9c;
+    --ok: #46d39a;
+    --err: #ff6b6b;
+    --warn: #ffce4a;
+    --mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif;
+    overflow: hidden;
+}
+.app {
+    display: grid;
+    grid-template-rows: 52px 1fr;
+    grid-template-columns: 1fr 340px;
+    grid-template-areas: "header header" "main side";
+    height: 100vh;
+}
+@media (max-width: 800px) {
+    .app {
+        grid-template-columns: 1fr;
+        grid-template-areas: "header" "main" "side";
+        grid-template-rows: 52px 1fr auto;
+        overflow: auto;
+    }
+}
+
+/* — Header — */
+header {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+}
+.logo {
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.crumb { color: var(--muted); font-size: 13px; }
+.crumb b { color: var(--text); font-weight: 500; }
+.spacer { flex: 1; }
+.status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--muted);
+}
+.dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--err);
+    box-shadow: 0 0 8px currentColor;
+    transition: background .2s;
+}
+.dot.ok { background: var(--ok); }
+.fps { font-family: var(--mono); }
+
+/* — Main — */
+main {
+    grid-area: main;
+    display: flex; flex-direction: column;
+    min-height: 0;
+}
+.editor-wrap {
+    position: relative;
+    flex: 1;
+    margin: 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--panel);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25) inset;
+}
+.editor-wrap .gutter {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 44px;
+    border-right: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-align: right;
+    padding: 12px 8px 12px 0;
+    line-height: 1.55;
+    user-select: none;
+    overflow: hidden;
+    pointer-events: none;
+}
+.editor-wrap .layer {
+    position: absolute; left: 44px; top: 0; right: 0; bottom: 0;
+    margin: 0;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+    white-space: pre;
+    overflow: auto;
+    border: 0;
+    color: var(--text);
+    background: transparent;
+    tab-size: 4;
+    -moz-tab-size: 4;
+}
+.editor-wrap .hl {
+    pointer-events: none;
+    color: transparent;
+}
+.editor-wrap .hl .kw  { color: #c792ea; }
+.editor-wrap .hl .fn  { color: #82aaff; }
+.editor-wrap .hl .num { color: #f78c6c; }
+.editor-wrap .hl .var { color: #ffcb6b; }
+.editor-wrap .hl .cmt { color: #5c6370; font-style: italic; }
+.editor-wrap .hl .op  { color: #89ddff; }
+.editor-wrap textarea {
+    color: transparent;
+    caret-color: var(--text);
+    background: transparent;
+    resize: none;
+    outline: none;
+}
+.editor-wrap textarea::selection { background: rgba(124,156,255,0.3); }
+
+/* — LED preview — */
+.preview {
+    margin: 0 14px 14px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+}
+.preview .label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+}
+.preview canvas {
+    width: 100%;
+    height: 32px;
+    image-rendering: pixelated;
+    background: #000;
+    border-radius: 4px;
+}
+.toolbar {
+    margin: 0 14px 14px;
+    display: flex; gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.btn {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+    color: white;
+    font-weight: 500;
+}
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.danger:hover { border-color: var(--err); color: var(--err); }
+input[type=text], input[type=number], input[type=password] {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 13px;
+}
+input[type=text]:focus, input[type=number]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+.err {
+    color: var(--err);
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 0 14px 8px;
+    min-height: 16px;
+    line-height: 1.4;
+}
+.err.ok { color: var(--ok); }
+
+/* — Side — */
+aside {
+    grid-area: side;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+.section {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.section h3 {
+    margin: 0 0 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    font-weight: 600;
+}
+.tabbar {
+    display: flex; gap: 4px;
+    padding: 8px 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+.tab {
+    background: none; border: none; color: var(--muted);
+    padding: 8px 10px;
+    font: inherit; font-size: 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+.cards {
+    display: grid;
+    gap: 8px;
+}
+.card {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex; flex-direction: column; gap: 6px;
+}
+.card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.card .name { font-weight: 500; font-size: 13px; }
+.card .strip {
+    height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+}
+.card .tags {
+    display: flex; gap: 4px; flex-wrap: wrap;
+}
+.card .tag {
+    font-size: 10px;
+    background: var(--bg);
+    color: var(--muted);
+    padding: 1px 6px;
+    border-radius: 10px;
+}
+.row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+}
+.row label {
+    flex: 1; color: var(--muted); font-size: 12px;
+}
+.row input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+}
+.row .val {
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 40px;
+    text-align: right;
+    color: var(--text);
+}
+.saved {
+    display: flex; gap: 6px;
+    flex-wrap: wrap;
+}
+.chip {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.chip:hover { border-color: var(--accent); }
+.chip .x {
+    color: var(--muted); cursor: pointer;
+    width: 14px; height: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+}
+.chip .x:hover { background: var(--err); color: white; }
+
+.hint { color: var(--muted); font-size: 11px; line-height: 1.5; }
+code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app">
+    <header>
+        <div class="logo">EMBER</div>
+        <div class="crumb">Pattern: <b id="patternName">Untitled</b></div>
+        <div class="spacer"></div>
+        <div class="status">
+            <span class="dot" id="dot"></span>
+            <span id="connText">connecting…</span>
+            <span class="fps" id="fps"></span>
+        </div>
+    </header>
+
+    <main>
+        <div class="editor-wrap" id="editorWrap">
+            <div class="gutter" id="gutter">1</div>
+            <pre class="layer hl" id="hl"></pre>
+            <textarea class="layer" id="ta" spellcheck="false" autocomplete="off"
+                      autocorrect="off" autocapitalize="off"></textarea>
+        </div>
+        <div class="err ok" id="err">ready</div>
+        <div class="toolbar">
+            <input type="text" id="saveName" placeholder="Pattern name" style="flex:1;min-width:140px">
+            <button class="btn primary" id="saveBtn">Save</button>
+            <button class="btn" id="newBtn">New</button>
+        </div>
+        <div class="preview">
+            <div class="label">Live preview · <span id="prevCount">30</span> pixels</div>
+            <canvas id="prev" width="300" height="32"></canvas>
+        </div>
+    </main>
+
+    <aside>
+        <div class="tabbar">
+            <button class="tab active" data-tab="lib">Library</button>
+            <button class="tab" data-tab="saved">Saved</button>
+            <button class="tab" data-tab="set">Settings</button>
+            <button class="tab" data-tab="help">Help</button>
+        </div>
+
+        <div class="section" id="tab-lib">
+            <h3>Demo Patterns</h3>
+            <div class="cards" id="libCards"></div>
+        </div>
+
+        <div class="section" id="tab-saved" style="display:none">
+            <h3>Saved on Device</h3>
+            <div class="saved" id="savedChips"></div>
+            <p class="hint" style="margin-top:12px">Patterns are stored in <code>/patterns/</code> on LittleFS. Save with the toolbar at the bottom of the editor.</p>
+        </div>
+
+        <div class="section" id="tab-set" style="display:none">
+            <h3>Strip</h3>
+            <div class="row">
+                <label>Brightness</label>
+                <input type="range" id="bright" min="0" max="255" value="128">
+                <span class="val" id="brightVal">128</span>
+            </div>
+            <div class="row">
+                <label>Data pin</label>
+                <select id="pin" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font:inherit;font-size:13px">
+                    <option value="0">GPIO 0</option>
+                    <option value="1">GPIO 1</option>
+                    <option value="2">GPIO 2</option>
+                    <option value="3">GPIO 3</option>
+                    <option value="4" selected>GPIO 4</option>
+                    <option value="5">GPIO 5</option>
+                    <option value="6">GPIO 6</option>
+                    <option value="7">GPIO 7</option>
+                    <option value="8">GPIO 8 (strap)</option>
+                    <option value="9">GPIO 9 (strap)</option>
+                    <option value="10">GPIO 10</option>
+                </select>
+                <button class="btn" id="pinApply">Apply</button>
+            </div>
+            <div class="row">
+                <label>Pixel count</label>
+                <input type="number" id="count" min="1" max="600" value="30" style="width:80px">
+                <button class="btn" id="countApply">Apply</button>
+            </div>
+            <p class="hint">Changing the data pin or pixel count reboots the device — FastLED's pin is compiled in, so a clean rebuild of its controller list is required.</p>
+
+            <h3 style="margin-top:16px">Audio</h3>
+            <div class="row">
+                <label>Mic source</label>
+                <select id="micSrc" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font:inherit;font-size:13px">
+                    <option value="0">Off</option>
+                    <option value="1">INMP441 (I2S MEMS)</option>
+                    <option value="2">MAX4466 (analog)</option>
+                </select>
+                <button class="btn" id="micSrcApply">Apply</button>
+            </div>
+            <div id="i2sPins" style="display:none">
+                <div class="row">
+                    <label>BCLK (SCK)</label>
+                    <input type="number" id="micBCLK" min="0" max="10" style="width:80px">
+                </div>
+                <div class="row">
+                    <label>WS (LRCK)</label>
+                    <input type="number" id="micWS" min="0" max="10" style="width:80px">
+                </div>
+                <div class="row">
+                    <label>DATA (SD)</label>
+                    <input type="number" id="micData" min="0" max="10" style="width:80px">
+                </div>
+            </div>
+            <div id="adcPins" style="display:none">
+                <div class="row">
+                    <label>ADC pin</label>
+                    <select id="micADC" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font:inherit;font-size:13px">
+                        <option value="0">GPIO 0 (ADC1_0)</option>
+                        <option value="1">GPIO 1 (ADC1_1)</option>
+                        <option value="2">GPIO 2 (ADC1_2)</option>
+                        <option value="3">GPIO 3 (ADC1_3)</option>
+                        <option value="4">GPIO 4 (ADC1_4)</option>
+                    </select>
+                </div>
+                <p class="hint">MAX4466 OUT must connect to one of GPIO 0–4 (only these route to ADC1). Avoid the pin already used for the LED data line.</p>
+            </div>
+            <div id="micPinsApplyWrap" style="display:none;margin-top:8px">
+                <button class="btn" id="micPinsApply">Apply pins &amp; reboot</button>
+            </div>
+            <div class="row" id="micGainRow" style="display:none">
+                <label>Sensitivity</label>
+                <input type="range" id="micGain" min="0" max="500" value="100">
+                <span class="val" id="micGainVal">1.0×</span>
+            </div>
+            <div class="row" id="micSmoothRow" style="display:none">
+                <label>Smoothing</label>
+                <input type="range" id="micSmooth" min="0" max="95" value="60">
+                <span class="val" id="micSmoothVal">0.60</span>
+            </div>
+            <div id="audioViz" style="display:none;margin-top:10px">
+                <div style="display:flex;align-items:flex-end;gap:3px;height:60px;background:var(--bg);border-radius:6px;padding:6px">
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #ff5050, #ff8c50);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #ff8c50, #ffce4a);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #ffce4a, #d3ff5e);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #d3ff5e, #5eff8e);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #5eff8e, #5eecff);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #5eecff, #5e9cff);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #5e9cff, #b15eff);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #b15eff, #ff5ee0);height:0%;border-radius:2px;transition:height 80ms"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted)">
+                    <span>62Hz</span><span>VU <span id="vuVal">0.00</span></span><span>8kHz</span>
+                </div>
+            </div>
+
+            <h3 style="margin-top:16px">System</h3>
+            <button class="btn danger" id="reboot">Reboot Device</button>
+        </div>
+
+        <div class="section" id="tab-help" style="display:none">
+            <h3>Language Reference</h3>
+            <p class="hint">Ember patterns run once per pixel per frame. Set the output with <code>hsv(h,s,v)</code> or <code>rgb(r,g,b)</code> at the end.</p>
+            <h3 style="margin-top:14px">Built-in variables</h3>
+            <p class="hint">
+                <code>i</code> / <code>index</code> — pixel index<br>
+                <code>n</code> / <code>pixelCount</code> — strip length<br>
+                <code>t</code> / <code>time</code> — seconds since boot<br>
+                <code>PI</code>, <code>TAU</code>
+            </p>
+            <h3 style="margin-top:14px">Functions</h3>
+            <p class="hint">
+                <code>time(s)</code> — sawtooth 0→1 every <i>s</i> seconds<br>
+                <code>wave(v)</code> — 0→1 sine of <i>v</i> cycles<br>
+                <code>triangle(v)</code> — 0→1→0 triangle<br>
+                <code>square(v, duty)</code> — square wave, duty defaults to 0.5<br>
+                <code>perlin1D(x)</code>, <code>perlin2D(x,y)</code> — organic noise<br>
+                <code>hash(x)</code> — stable per-pixel random<br>
+                <code>sin cos abs sqrt pow floor ceil round frac</code><br>
+                <code>min max clamp mix step smoothstep</code>
+            </p>
+            <h3 style="margin-top:14px">Audio (when a mic is configured)</h3>
+            <p class="hint">
+                <code>vu()</code> — overall level 0→1<br>
+                <code>peak()</code> — slow-decay peak<br>
+                <code>pitch()</code> — dominant frequency, 0=low … 1=high<br>
+                <code>beat()</code> — 1 on attack, decays fast<br>
+                <code>band(n)</code> — band n (0..7), low→high<br>
+                <code>bass()</code>, <code>mid()</code>, <code>treble()</code> — band shortcuts
+            </p>
+        </div>
+    </aside>
+</div>
+
+<script>
+// ─── Tab switching ──────────────────────────────────────────────────────────
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    ["lib","saved","set","help"].forEach(id => {
+        document.getElementById("tab-" + id).style.display = (id === t.dataset.tab) ? "" : "none";
+    });
+}));
+
+// ─── Syntax highlighter ─────────────────────────────────────────────────────
+const KW   = ["if","else","return"];
+const FNS  = ["sin","cos","tan","abs","sqrt","pow","floor","ceil","round","frac",
+              "min","max","clamp","mix","lerp","step","smoothstep",
+              "wave","triangle","square","time","perlin1D","perlin1d",
+              "perlin2D","perlin2d","noise","noise2","random","hash","hsv","rgb",
+              "vu","peak","pitch","beat","band","bass","mid","treble"];
+const KWS  = new Set(KW), FNS_S = new Set(FNS);
+
+function highlight(src) {
+    let out = "";
+    let i = 0;
+    while (i < src.length) {
+        const c = src[i];
+        // Comment
+        if (c === "/" && src[i+1] === "/") {
+            let j = i; while (j < src.length && src[j] !== "\n") j++;
+            out += '<span class="cmt">' + esc(src.slice(i, j)) + "</span>";
+            i = j; continue;
+        }
+        if (c === "/" && src[i+1] === "*") {
+            let j = i + 2;
+            while (j + 1 < src.length && !(src[j] === "*" && src[j+1] === "/")) j++;
+            j = Math.min(j + 2, src.length);
+            out += '<span class="cmt">' + esc(src.slice(i, j)) + "</span>";
+            i = j; continue;
+        }
+        // Number
+        if (/[0-9]/.test(c) || (c === "." && /[0-9]/.test(src[i+1]))) {
+            let j = i; while (j < src.length && /[0-9.]/.test(src[j])) j++;
+            out += '<span class="num">' + esc(src.slice(i, j)) + "</span>";
+            i = j; continue;
+        }
+        // Identifier
+        if (/[A-Za-z_]/.test(c)) {
+            let j = i; while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+            const word = src.slice(i, j);
+            let cls;
+            if (KWS.has(word)) cls = "kw";
+            else if (FNS_S.has(word)) cls = "fn";
+            else cls = "var";
+            out += `<span class="${cls}">${esc(word)}</span>`;
+            i = j; continue;
+        }
+        // Operators
+        if ("+-*/%<>=?:!".indexOf(c) >= 0) {
+            out += '<span class="op">' + esc(c) + "</span>";
+            i++; continue;
+        }
+        out += esc(c);
+        i++;
+    }
+    return out + "\n"; // trailing line so last line renders
+}
+function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ─── Editor wiring ──────────────────────────────────────────────────────────
+const ta     = document.getElementById("ta");
+const hl     = document.getElementById("hl");
+const gutter = document.getElementById("gutter");
+
+function syncHL() {
+    const v = ta.value;
+    hl.innerHTML = highlight(v);
+    const lines = v.split("\n").length;
+    let g = ""; for (let i = 1; i <= lines; i++) g += i + "\n";
+    gutter.textContent = g;
+    hl.scrollTop  = ta.scrollTop;
+    hl.scrollLeft = ta.scrollLeft;
+}
+ta.addEventListener("input", () => { syncHL(); scheduleCompile(); });
+ta.addEventListener("scroll", () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; });
+ta.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") {
+        e.preventDefault();
+        const s = ta.selectionStart, en = ta.selectionEnd;
+        ta.value = ta.value.slice(0, s) + "    " + ta.value.slice(en);
+        ta.selectionStart = ta.selectionEnd = s + 4;
+        syncHL(); scheduleCompile();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        document.getElementById("saveBtn").click();
+    }
+});
+
+// ─── JS-side VM (matches firmware/src/main.cpp semantics) ───────────────────
+// Simple tree-walker; only the device runs the fast bytecode path.
+
+function tokenize(src) {
+    const tks = [];
+    let i = 0;
+    while (i < src.length) {
+        const c = src[i];
+        if (" \t\r\n".indexOf(c) >= 0) { i++; continue; }
+        if (c === "/" && src[i+1] === "/") { while (i < src.length && src[i] !== "\n") i++; continue; }
+        if (c === "/" && src[i+1] === "*") {
+            i += 2;
+            while (i+1 < src.length && !(src[i] === "*" && src[i+1] === "/")) i++;
+            i = Math.min(i+2, src.length); continue;
+        }
+        if (/[0-9]/.test(c) || (c === "." && /[0-9]/.test(src[i+1]||""))) {
+            let j = i; while (j < src.length && /[0-9.]/.test(src[j])) j++;
+            tks.push({t:"num", v:parseFloat(src.slice(i,j))}); i = j; continue;
+        }
+        if (/[A-Za-z_]/.test(c)) {
+            let j = i; while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+            tks.push({t:"id", v:src.slice(i,j)}); i = j; continue;
+        }
+        const two = src.slice(i, i+2);
+        if (two === "<=" || two === ">=" || two === "==" || two === "!=") { tks.push({t:two}); i += 2; continue; }
+        if ("+-*/%<>=?:(),;{}".indexOf(c) >= 0) { tks.push({t:c}); i++; continue; }
+        i++;
+    }
+    tks.push({t:"eof"});
+    return tks;
+}
+
+class Parser {
+    constructor(tks) { this.tks = tks; this.p = 0; }
+    peek(o = 0) { return this.tks[this.p + o]; }
+    eat() { return this.tks[this.p++]; }
+    parseProgram() {
+        const stmts = [];
+        while (this.peek().t !== "eof") {
+            while (this.peek().t === ";") this.eat();
+            if (this.peek().t === "eof") break;
+            stmts.push(this.parseStmt());
+            while (this.peek().t === ";") this.eat();
+        }
+        return {kind:"prog", stmts};
+    }
+    parseStmt() {
+        if (this.peek().t === "id" && this.peek(1).t === "=") {
+            const name = this.eat().v; this.eat();
+            const val = this.parseTern();
+            return {kind:"asn", name, val};
+        }
+        return {kind:"exp", e:this.parseTern()};
+    }
+    parseTern() {
+        const c = this.parseCmp();
+        if (this.peek().t === "?") {
+            this.eat();
+            const a = this.parseTern();
+            if (this.peek().t !== ":") throw new Error("expected ':'");
+            this.eat();
+            const b = this.parseTern();
+            return {kind:"tern", c, a, b};
+        }
+        return c;
+    }
+    parseCmp() {
+        let l = this.parseAdd();
+        while (["<",">","<=",">=","==","!="].includes(this.peek().t)) {
+            const op = this.eat().t;
+            const r = this.parseAdd();
+            l = {kind:"bin", op, l, r};
+        }
+        return l;
+    }
+    parseAdd() {
+        let l = this.parseMul();
+        while (this.peek().t === "+" || this.peek().t === "-") {
+            const op = this.eat().t;
+            const r = this.parseMul();
+            l = {kind:"bin", op, l, r};
+        }
+        return l;
+    }
+    parseMul() {
+        let l = this.parseUn();
+        while ("*/%".indexOf(this.peek().t) >= 0) {
+            const op = this.eat().t;
+            const r = this.parseUn();
+            l = {kind:"bin", op, l, r};
+        }
+        return l;
+    }
+    parseUn() {
+        if (this.peek().t === "-") { this.eat(); return {kind:"neg", e:this.parseUn()}; }
+        if (this.peek().t === "+") { this.eat(); return this.parseUn(); }
+        return this.parsePri();
+    }
+    parsePri() {
+        const t = this.peek();
+        if (t.t === "num") { this.eat(); return {kind:"num", v:t.v}; }
+        if (t.t === "(") {
+            this.eat();
+            const e = this.parseTern();
+            if (this.peek().t !== ")") throw new Error("expected ')'");
+            this.eat();
+            return e;
+        }
+        if (t.t === "id") {
+            this.eat();
+            if (this.peek().t === "(") {
+                this.eat();
+                const args = [];
+                if (this.peek().t !== ")") {
+                    args.push(this.parseTern());
+                    while (this.peek().t === ",") { this.eat(); args.push(this.parseTern()); }
+                }
+                if (this.peek().t !== ")") throw new Error("expected ')'");
+                this.eat();
+                return {kind:"call", name:t.v, args};
+            }
+            return {kind:"var", name:t.v};
+        }
+        throw new Error("unexpected " + t.t);
+    }
+}
+
+// ── Cheap Perlin in JS (deterministic, smooth — good enough for preview). ──
+const PRM = (() => {
+    const p = new Uint8Array(512);
+    for (let i = 0; i < 256; i++) p[i] = i;
+    let seed = 2654435769;
+    for (let i = 255; i > 0; i--) {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        const j = seed % (i + 1);
+        [p[i], p[j]] = [p[j], p[i]];
+    }
+    for (let i = 0; i < 256; i++) p[i + 256] = p[i];
+    return p;
+})();
+const fade = t => t*t*t*(t*(t*6 - 15) + 10);
+const lerp = (a,b,t) => a + (b-a)*t;
+const grad1 = (h, x) => (h & 1) ? -x : x;
+const grad2 = (h, x, y) => {
+    const u = (h & 1) ? x : -x;
+    const v = (h & 2) ? y : -y;
+    return u + v;
+};
+function pnoise1(x) {
+    const X = Math.floor(x) & 255;
+    x -= Math.floor(x);
+    const u = fade(x);
+    const a = PRM[X], b = PRM[X + 1];
+    return (lerp(grad1(a, x), grad1(b, x - 1), u) + 1) * 0.5;
+}
+function pnoise2(x, y) {
+    const X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
+    x -= Math.floor(x); y -= Math.floor(y);
+    const u = fade(x), v = fade(y);
+    const A = PRM[X] + Y, B = PRM[X + 1] + Y;
+    const r = lerp(
+        lerp(grad2(PRM[A], x, y),       grad2(PRM[B], x - 1, y), u),
+        lerp(grad2(PRM[A + 1], x, y - 1), grad2(PRM[B + 1], x - 1, y - 1), u),
+        v);
+    return (r + 1) * 0.5;
+}
+function ihash(x) {
+    let u = (Math.floor(x * 1000)) | 0;
+    u ^= u >>> 16; u = Math.imul(u, 0x7feb352d);
+    u ^= u >>> 15; u = Math.imul(u, 0x846ca68b);
+    u ^= u >>> 16;
+    return (u & 0xFFFFFF) / 0x1000000;
+}
+
+const FNS_IMPL = {
+    sin:   a => Math.sin(a[0]),
+    cos:   a => Math.cos(a[0]),
+    tan:   a => Math.tan(a[0]),
+    abs:   a => Math.abs(a[0]),
+    sqrt:  a => Math.sqrt(Math.abs(a[0])),
+    pow:   a => Math.pow(a[0], a[1]),
+    floor: a => Math.floor(a[0]),
+    ceil:  a => Math.ceil(a[0]),
+    round: a => Math.round(a[0]),
+    frac:  a => a[0] - Math.floor(a[0]),
+    min:   a => Math.min(a[0], a[1]),
+    max:   a => Math.max(a[0], a[1]),
+    clamp: a => Math.max(a[1], Math.min(a[2], a[0])),
+    mix:   a => a[0] + (a[1] - a[0]) * a[2],
+    lerp:  a => a[0] + (a[1] - a[0]) * a[2],
+    step:  a => a[1] < a[0] ? 0 : 1,
+    smoothstep: a => { let t = (a[2] - a[0]) / (a[1] - a[0]); t = Math.max(0, Math.min(1, t)); return t*t*(3-2*t); },
+    wave:     a => (Math.sin(a[0] * 2 * Math.PI) + 1) * 0.5,
+    triangle: a => { const f = a[0] - Math.floor(a[0]); return f < 0.5 ? f*2 : 2 - f*2; },
+    square:   a => { const f = a[0] - Math.floor(a[0]); return f < (a[1] !== undefined ? a[1] : 0.5) ? 1 : 0; },
+    time:     a => a[0] > 0 ? (RUN_T / a[0]) - Math.floor(RUN_T / a[0]) : 0,
+    perlin1D: a => pnoise1(a[0]),
+    perlin1d: a => pnoise1(a[0]),
+    perlin2D: a => pnoise2(a[0], a[1]),
+    perlin2d: a => pnoise2(a[0], a[1]),
+    noise:    a => pnoise1(a[0]),
+    noise2:   a => pnoise2(a[0], a[1]),
+    random:   () => Math.random(),
+    hash:     a => ihash(a[0]),
+    // Audio — values are mirrored from the device's "audio" WS push so the
+    // preview canvas reflects the same VU/bands the strip is reacting to.
+    vu:     () => LIVE_AUDIO.vu,
+    peak:   () => LIVE_AUDIO.peak,
+    pitch:  () => LIVE_AUDIO.pitch,
+    beat:   () => LIVE_AUDIO.beat,
+    band:   a => {
+        let n = Math.max(0, Math.min(7, Math.floor(a[0])));
+        return LIVE_AUDIO.bands[n] || 0;
+    },
+    bass:   () => (LIVE_AUDIO.bands[0] + LIVE_AUDIO.bands[1]) * 0.5,
+    mid:    () => (LIVE_AUDIO.bands[3] + LIVE_AUDIO.bands[4]) * 0.5,
+    treble: () => (LIVE_AUDIO.bands[6] + LIVE_AUDIO.bands[7]) * 0.5,
+};
+let RUN_T = 0;
+const LIVE_AUDIO = { vu: 0, peak: 0, pitch: 0, beat: 0, bands: [0,0,0,0,0,0,0,0] };
+
+class Evaluator {
+    constructor(ast) { this.ast = ast; this.reset(); }
+    reset() {
+        this.vars = {PI: Math.PI, TAU: Math.PI * 2};
+        this.out = {useRGB: false, h: 0, s: 1, v: 1, r: 0, g: 0, b: 0};
+    }
+    run(i, n, t) {
+        this.reset();
+        this.vars.i = i; this.vars.index = i;
+        this.vars.n = n; this.vars.pixelCount = n;
+        this.vars.t = t; this.vars.time = t;
+        RUN_T = t;
+        for (const s of this.ast.stmts) this.evalStmt(s);
+        return this.out;
+    }
+    evalStmt(s) {
+        if (s.kind === "asn") this.vars[s.name] = this.evalExpr(s.val);
+        else this.evalExpr(s.e);
+    }
+    evalExpr(e) {
+        switch (e.kind) {
+            case "num": return e.v;
+            case "var": return this.vars[e.name] ?? 0;
+            case "neg": return -this.evalExpr(e.e);
+            case "bin": {
+                const l = this.evalExpr(e.l), r = this.evalExpr(e.r);
+                switch (e.op) {
+                    case "+": return l + r;
+                    case "-": return l - r;
+                    case "*": return l * r;
+                    case "/": return r !== 0 ? l / r : 0;
+                    case "%": return r !== 0 ? l - Math.floor(l/r)*r : 0;
+                    case "<": return l < r ? 1 : 0;
+                    case ">": return l > r ? 1 : 0;
+                    case "<=": return l <= r ? 1 : 0;
+                    case ">=": return l >= r ? 1 : 0;
+                    case "==": return Math.abs(l - r) < 1e-5 ? 1 : 0;
+                    case "!=": return Math.abs(l - r) >= 1e-5 ? 1 : 0;
+                }
+                return 0;
+            }
+            case "tern": return this.evalExpr(e.c) !== 0 ? this.evalExpr(e.a) : this.evalExpr(e.b);
+            case "call": {
+                const a = e.args.map(x => this.evalExpr(x));
+                if (e.name === "hsv") { this.out.useRGB = false; this.out.h = a[0]; this.out.s = a[1]; this.out.v = a[2]; return 0; }
+                if (e.name === "rgb") { this.out.useRGB = true;  this.out.r = a[0]; this.out.g = a[1]; this.out.b = a[2]; return 0; }
+                const fn = FNS_IMPL[e.name];
+                if (!fn) throw new Error("unknown function: " + e.name);
+                return fn(a);
+            }
+        }
+        return 0;
+    }
+}
+
+function hsv2rgb(h, s, v) {
+    h = ((h % 1) + 1) % 1;
+    s = Math.max(0, Math.min(1, s));
+    v = Math.max(0, Math.min(1, v));
+    const i = Math.floor(h * 6);
+    const f = h * 6 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
+    let r, g, b;
+    switch (i % 6) {
+        case 0: r=v; g=t; b=p; break;
+        case 1: r=q; g=v; b=p; break;
+        case 2: r=p; g=v; b=t; break;
+        case 3: r=p; g=q; b=v; break;
+        case 4: r=t; g=p; b=v; break;
+        case 5: r=v; g=p; b=q; break;
+    }
+    return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+}
+
+// ─── Preview loop ───────────────────────────────────────────────────────────
+const prev   = document.getElementById("prev");
+const pctx   = prev.getContext("2d");
+let   evalr  = null;
+let   compileError = "";
+let   pixelCount = 30;
+
+function recompileLocal() {
+    const src = ta.value;
+    try {
+        const ast = new Parser(tokenize(src)).parseProgram();
+        evalr = new Evaluator(ast);
+        showError("", true);
+    } catch (e) {
+        compileError = e.message;
+        showError("local: " + e.message, false);
+        evalr = null;
+    }
+}
+
+function showError(msg, ok) {
+    const el = document.getElementById("err");
+    if (!msg) {
+        el.textContent = "ready";
+        el.classList.add("ok");
+    } else {
+        el.textContent = msg;
+        el.classList.toggle("ok", !!ok);
+    }
+}
+
+function tick(ts) {
+    const t = ts * 0.001;
+    if (evalr) {
+        const n = pixelCount;
+        prev.width = n;          // 1px per pixel; CSS scales to fit
+        const img = pctx.createImageData(n, 1);
+        for (let i = 0; i < n; i++) {
+            let r, g, b;
+            try {
+                const o = evalr.run(i, n, t);
+                if (o.useRGB) {
+                    r = Math.max(0, Math.min(255, Math.round(o.r*255)));
+                    g = Math.max(0, Math.min(255, Math.round(o.g*255)));
+                    b = Math.max(0, Math.min(255, Math.round(o.b*255)));
+                } else {
+                    [r, g, b] = hsv2rgb(o.h, o.s, o.v);
+                }
+            } catch { r = g = b = 0; }
+            img.data[i*4]     = r;
+            img.data[i*4 + 1] = g;
+            img.data[i*4 + 2] = b;
+            img.data[i*4 + 3] = 255;
+        }
+        // Draw the 1-row image, then scale vertically.
+        pctx.putImageData(img, 0, 0);
+    }
+    requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// ─── WebSocket — talks to firmware ──────────────────────────────────────────
+let ws;
+let compileTimer = 0;
+function scheduleCompile() {
+    recompileLocal();
+    clearTimeout(compileTimer);
+    compileTimer = setTimeout(() => {
+        if (ws && ws.readyState === 1) {
+            ws.send(JSON.stringify({action: "live", code: ta.value}));
+        }
+    }, 140);
+}
+
+function connect() {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    const host  = location.host || "pblite.local";
+    ws = new WebSocket(`${proto}//${host}/ws`);
+    ws.addEventListener("open",  () => setConn(true));
+    ws.addEventListener("close", () => { setConn(false); setTimeout(connect, 1500); });
+    ws.addEventListener("error", () => ws.close());
+    ws.addEventListener("message", ev => {
+        let m; try { m = JSON.parse(ev.data); } catch { return; }
+        if (m.type === "status") {
+            document.getElementById("fps").textContent = (m.fps || 0).toFixed(0) + " fps";
+            document.getElementById("patternName").textContent = m.name || "Untitled";
+            pixelCount = m.count || 30;
+            document.getElementById("prevCount").textContent = pixelCount;
+            document.getElementById("count").value = pixelCount;
+            document.getElementById("bright").value = m.bright;
+            document.getElementById("brightVal").textContent = m.bright;
+            if (m.pin !== undefined) document.getElementById("pin").value = m.pin;
+            if (m.micSrc !== undefined) {
+                document.getElementById("micSrc").value = m.micSrc;
+                applyMicSrcVisibility(+m.micSrc);
+            }
+            if (m.micBCLK !== undefined) document.getElementById("micBCLK").value = m.micBCLK;
+            if (m.micWS   !== undefined) document.getElementById("micWS").value   = m.micWS;
+            if (m.micData !== undefined) document.getElementById("micData").value = m.micData;
+            if (m.micADC  !== undefined) document.getElementById("micADC").value  = m.micADC;
+            if (m.micGain !== undefined) {
+                document.getElementById("micGain").value = Math.round(m.micGain * 100);
+                document.getElementById("micGainVal").textContent = (+m.micGain).toFixed(2) + "×";
+            }
+            if (m.micSmooth !== undefined) {
+                document.getElementById("micSmooth").value = Math.round(m.micSmooth * 100);
+                document.getElementById("micSmoothVal").textContent = (+m.micSmooth).toFixed(2);
+            }
+            if (m.error) showError("device: " + m.error, false);
+        }
+        else if (m.type === "compile") {
+            if (m.success) showError("compiled ✓", true);
+            else showError("device: " + (m.error || "compile failed"), false);
+        }
+        else if (m.type === "loaded") {
+            ta.value = m.code || "";
+            document.getElementById("patternName").textContent = m.name;
+            document.getElementById("saveName").value = m.name;
+            syncHL();
+            recompileLocal();
+        }
+        else if (m.type === "patterns") {
+            renderSaved(m.list || []);
+        }
+        else if (m.type === "reboot") {
+            showError("device rebooting…", true);
+        }
+        else if (m.type === "audio") {
+            updateAudioViz(m);
+        }
+    });
+}
+function setConn(on) {
+    document.getElementById("dot").classList.toggle("ok", on);
+    document.getElementById("connText").textContent = on ? "connected" : "offline";
+}
+connect();
+
+// ─── Pattern library ────────────────────────────────────────────────────────
+async function loadLibrary() {
+    try {
+        const r = await fetch("/demo.json");
+        if (!r.ok) throw new Error();
+        renderLib(await r.json());
+    } catch {
+        // Local fallback so the UI is functional even when served standalone.
+        renderLib(FALLBACK_LIB);
+    }
+}
+function renderLib(patterns) {
+    const root = document.getElementById("libCards");
+    root.innerHTML = "";
+    patterns.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <div class="name">${esc(p.name)}</div>
+            <canvas width="60" height="6" style="width:100%;height:6px;border-radius:3px"></canvas>
+            <div class="tags">${(p.tags||[]).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`;
+        renderCardPreview(card.querySelector("canvas"), p.code);
+        card.addEventListener("click", () => {
+            ta.value = p.code;
+            document.getElementById("saveName").value = p.name;
+            syncHL();
+            scheduleCompile();
+        });
+        root.appendChild(card);
+    });
+}
+function renderCardPreview(canvas, code) {
+    // Render a single still frame so cards have a real preview.
+    try {
+        const ast = new Parser(tokenize(code)).parseProgram();
+        const ev = new Evaluator(ast);
+        const ctx = canvas.getContext("2d");
+        const n = canvas.width;
+        const img = ctx.createImageData(n, 1);
+        for (let i = 0; i < n; i++) {
+            const o = ev.run(i, n, 0.7);
+            let r, g, b;
+            if (o.useRGB) { r = Math.round(o.r*255); g = Math.round(o.g*255); b = Math.round(o.b*255); }
+            else          { [r,g,b] = hsv2rgb(o.h, o.s, o.v); }
+            img.data[i*4]   = Math.max(0, Math.min(255, r));
+            img.data[i*4+1] = Math.max(0, Math.min(255, g));
+            img.data[i*4+2] = Math.max(0, Math.min(255, b));
+            img.data[i*4+3] = 255;
+        }
+        ctx.putImageData(img, 0, 0);
+    } catch {}
+}
+loadLibrary();
+
+// ─── Saved chips ────────────────────────────────────────────────────────────
+function renderSaved(list) {
+    const root = document.getElementById("savedChips");
+    root.innerHTML = "";
+    if (list.length === 0) {
+        root.innerHTML = '<span class="hint">No saved patterns yet.</span>';
+        return;
+    }
+    list.forEach(name => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML = `<span>${esc(name)}</span><span class="x" title="Delete">×</span>`;
+        chip.firstChild.addEventListener("click", () => {
+            ws.send(JSON.stringify({action:"load", name}));
+        });
+        chip.lastChild.addEventListener("click", e => {
+            e.stopPropagation();
+            if (!confirm(`Delete "${name}"?`)) return;
+            ws.send(JSON.stringify({action:"delete", name}));
+        });
+        root.appendChild(chip);
+    });
+}
+fetch("/api/patterns").then(r => r.json()).then(renderSaved).catch(() => renderSaved([]));
+
+// ─── Toolbar wiring ─────────────────────────────────────────────────────────
+document.getElementById("saveBtn").addEventListener("click", () => {
+    const name = document.getElementById("saveName").value.trim() || "Untitled";
+    ws.send(JSON.stringify({action:"save", name, code: ta.value}));
+});
+document.getElementById("newBtn").addEventListener("click", () => {
+    ta.value = "// new pattern\nh = i/n;\nhsv(h, 1, 1);\n";
+    document.getElementById("saveName").value = "";
+    syncHL();
+    scheduleCompile();
+});
+const bright = document.getElementById("bright");
+bright.addEventListener("input", () => {
+    document.getElementById("brightVal").textContent = bright.value;
+});
+bright.addEventListener("change", () => {
+    ws.send(JSON.stringify({action:"brightness", value: +bright.value}));
+});
+document.getElementById("countApply").addEventListener("click", () => {
+    const n = +document.getElementById("count").value;
+    if (!confirm(`Apply pixel count = ${n}? Device will reboot.`)) return;
+    ws.send(JSON.stringify({action:"count", value: n}));
+});
+document.getElementById("pinApply").addEventListener("click", () => {
+    const p = +document.getElementById("pin").value;
+    if (!confirm(`Apply data pin = GPIO ${p}? Device will reboot.`)) return;
+    ws.send(JSON.stringify({action:"pin", value: p}));
+});
+
+// ─── Audio settings wiring ──────────────────────────────────────────────────
+function applyMicSrcVisibility(src) {
+    document.getElementById("i2sPins").style.display          = src === 1 ? "" : "none";
+    document.getElementById("adcPins").style.display          = src === 2 ? "" : "none";
+    document.getElementById("micPinsApplyWrap").style.display = src === 0 ? "none" : "";
+    document.getElementById("micGainRow").style.display       = src === 0 ? "none" : "flex";
+    document.getElementById("micSmoothRow").style.display     = src === 0 ? "none" : "flex";
+    document.getElementById("audioViz").style.display         = src === 0 ? "none" : "";
+}
+document.getElementById("micSrc").addEventListener("change", e => {
+    applyMicSrcVisibility(+e.target.value);
+});
+document.getElementById("micSrcApply").addEventListener("click", () => {
+    const v = +document.getElementById("micSrc").value;
+    if (!confirm(`Apply mic source = ${["off","INMP441","MAX4466"][v]}? Device will reboot.`)) return;
+    ws.send(JSON.stringify({action:"micSrc", value: v}));
+});
+document.getElementById("micPinsApply").addEventListener("click", () => {
+    const src = +document.getElementById("micSrc").value;
+    const payload = {action:"micPins"};
+    if (src === 1) {
+        payload.bclk = +document.getElementById("micBCLK").value;
+        payload.ws   = +document.getElementById("micWS").value;
+        payload.data = +document.getElementById("micData").value;
+    } else if (src === 2) {
+        payload.adc  = +document.getElementById("micADC").value;
+        // Warn if ADC pin collides with LED data pin.
+        const ledPin = +document.getElementById("pin").value;
+        if (payload.adc === ledPin) {
+            if (!confirm(`GPIO ${payload.adc} is the LED data pin. Continue anyway?`)) return;
+        }
+    }
+    if (!confirm("Apply pins? Device will reboot.")) return;
+    ws.send(JSON.stringify(payload));
+});
+const micGainSlider = document.getElementById("micGain");
+micGainSlider.addEventListener("input", () => {
+    document.getElementById("micGainVal").textContent = (micGainSlider.value/100).toFixed(2) + "×";
+});
+micGainSlider.addEventListener("change", () => {
+    ws.send(JSON.stringify({action:"micGain", value: micGainSlider.value/100}));
+});
+const micSmoothSlider = document.getElementById("micSmooth");
+micSmoothSlider.addEventListener("input", () => {
+    document.getElementById("micSmoothVal").textContent = (micSmoothSlider.value/100).toFixed(2);
+});
+micSmoothSlider.addEventListener("change", () => {
+    ws.send(JSON.stringify({action:"micSmooth", value: micSmoothSlider.value/100}));
+});
+
+function updateAudioViz(m) {
+    // Mirror the device's audio snapshot into the preview VM's globals.
+    LIVE_AUDIO.vu    = m.vu    || 0;
+    LIVE_AUDIO.peak  = m.peak  || 0;
+    LIVE_AUDIO.pitch = m.pitch || 0;
+    LIVE_AUDIO.beat  = m.beat  || 0;
+    if (m.bands) for (let i = 0; i < 8; i++) LIVE_AUDIO.bands[i] = m.bands[i] || 0;
+
+    const bars = document.querySelectorAll("#audioViz .bar");
+    if (m.bands && bars.length === m.bands.length) {
+        for (let i = 0; i < bars.length; i++) {
+            bars[i].style.height = Math.round(Math.max(2, m.bands[i] * 100)) + "%";
+        }
+    }
+    document.getElementById("vuVal").textContent = (m.vu || 0).toFixed(2);
+}
+document.getElementById("reboot").addEventListener("click", () => {
+    if (!confirm("Reboot the device?")) return;
+    fetch("/api/reboot", {method:"POST"});
+});
+
+// ─── Initial pattern ────────────────────────────────────────────────────────
+ta.value = "// Tweak me. Live-recompiles on the device.\nh = i/n + time(8);\nhsv(h, 1, 1);\n";
+syncHL();
+recompileLocal();
+
+// ─── Fallback library (mirrors DEMO_PATTERNS.json) ──────────────────────────
+const FALLBACK_LIB = [
+    {name:"Rainbow Drift", tags:["classic"], code:"h = i/n + time(8);\nhsv(h, 1, 1);"},
+    {name:"Plasma Field",  tags:["plasma"],  code:"x=i/n;p=perlin2D(x*4+t*0.3,t*0.2);hsv(p+time(20),1,1);"},
+    {name:"Comet Trail",   tags:["motion"],  code:"head=time(4)*n;d=abs(i-head);d=min(d,abs(i-head-n));v=clamp(1-d/8,0,1);hsv(0.6,0.4,v*v);"},
+    {name:"Heartbeat",     tags:["pulse"],   code:"p=frac(time(1.2));b=pow(wave(p*2),8)+pow(wave(p*2+0.3),8)*0.7;hsv(0,1,clamp(b,0,1));"},
+];
+</script>
+</body>
+</html>

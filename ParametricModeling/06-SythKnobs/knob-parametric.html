@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACCESS KNOB — Parametric Suite</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --border: #1e1e1e;
+    --border-lit: #2a2a2a;
+    --accent: #c8ff00;
+    --accent-dim: #8fb500;
+    --accent-muted: #2a3300;
+    --text: #e0e0e0;
+    --text-dim: #666;
+    --text-faint: #333;
+    --danger: #ff4444;
+    --panel: #0d0d0d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border-lit);
+    padding: 18px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .site-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    border: 1px solid var(--border-lit);
+    padding: 2px 6px;
+    text-transform: uppercase;
+  }
+  .tag.green { border-color: var(--accent-dim); color: var(--accent); }
+
+  /* LAYOUT */
+  .layout {
+    display: flex;
+    height: calc(100vh - 57px);
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 340px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-lit);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    background: var(--panel);
+    transition: margin-left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    position: relative;
+    z-index: 20;
+  }
+
+  .section {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* SHAPE SELECTOR */
+  .shape-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+  .shape-btn {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1px solid var(--border-lit);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.15s;
+    padding: 6px 2px;
+  }
+  .shape-btn:hover { border-color: var(--accent-dim); }
+  .shape-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-muted);
+  }
+  .shape-btn svg { width: 22px; height: 22px; }
+  .shape-btn span {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 7px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .shape-btn.active span { color: var(--accent); }
+
+  /* PARAM ROWS */
+  .param {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .param label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .param .val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-align: right;
+    min-width: 38px;
+  }
+  .param .unit {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text-faint);
+    min-width: 20px;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--border-lit);
+    outline: none;
+    grid-column: 1 / -1;
+    margin-top: -4px;
+    margin-bottom: 4px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    cursor: pointer;
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  }
+
+  /* MUTATION PANEL */
+  .mutation-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .mut-param {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+  }
+  .mut-param label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .mut-param input {
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border-lit);
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    padding: 2px 0;
+  }
+
+  /* BUTTONS */
+  .btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    background: none;
+    margin-bottom: 6px;
+  }
+  .btn-primary {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-primary:hover {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-ghost {
+    border-color: var(--border-lit);
+    color: var(--text-dim);
+  }
+  .btn-ghost:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+  .btn-danger {
+    border-color: #331111;
+    color: #663333;
+  }
+  .btn-danger:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  /* MAIN CANVAS AREA */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+  }
+
+  .toolbar {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--panel);
+    flex-wrap: wrap;
+  }
+  .toolbar-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .count-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-muted);
+    border: 1px solid var(--accent-dim);
+    padding: 2px 8px;
+  }
+  .export-row {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .btn-sm {
+    padding: 5px 12px;
+    border: 1px solid var(--border-lit);
+    background: none;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .btn-sm:hover { border-color: var(--accent-dim); color: var(--accent); }
+  .btn-sm.active { border-color: var(--accent); color: var(--accent); background: var(--accent-muted); }
+
+  /* KNOB GRID */
+  .knob-grid {
+    overflow-y: auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    align-content: start;
+    transition: padding-right 0.2s;
+  }
+  
+  .main.detail-open .knob-grid {
+    padding-right: 300px;
+  }
+
+  .knob-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .knob-card:hover {
+    border-color: var(--accent-dim);
+    transform: translateY(-2px);
+  }
+  .knob-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .knob-card .preview {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0c0c0c;
+    height: 130px;
+  }
+  .knob-card .card-info {
+    padding: 10px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .knob-card .card-id {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .knob-card .card-dims {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .knob-card .card-pin {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    display: none;
+  }
+  .knob-card.selected .card-pin { display: block; }
+  .delete-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    background: rgba(255, 0, 0, 0.1);
+    color: var(--danger);
+    font-family: sans-serif;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    opacity: 0;
+    transition: all 0.2s;
+    border-radius: 50%;
+  }
+  .knob-card:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { background: var(--danger); color: #fff; }
+
+  /* DETAIL PANEL */
+  .detail-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    background: var(--panel);
+    border-left: 1px solid var(--border-lit);
+    transform: translateX(100%);
+    transition: transform 0.2s;
+    z-index: 50;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .detail-panel.open { transform: translateX(0); }
+
+  .detail-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .detail-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+  }
+  .detail-row .dk { color: var(--text-dim); }
+  .detail-row .dv { color: var(--accent); }
+
+  .stl-note {
+    margin-top: 16px;
+    background: var(--accent-muted);
+    border: 1px solid var(--accent-dim);
+    padding: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    line-height: 1.6;
+    letter-spacing: 0.05em;
+  }
+
+  .toggle-container {
+    position: relative; display: flex;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border-lit);
+    padding: 2px; margin-bottom: 16px; cursor: pointer;
+  }
+  .toggle-pill {
+    position: absolute; top: 2px; bottom: 2px; left: 2px;
+    width: calc(50% - 2px);
+    background: rgba(200, 255, 0, 0.15); backdrop-filter: blur(4px);
+    border: 1px solid var(--accent);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); z-index: 1;
+  }
+  .toggle-container[data-mode="swap"] .toggle-pill {
+    transform: translateX(100%);
+  }
+  .toggle-opt {
+    flex: 1; text-align: center;
+    font-family: 'Share Tech Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; padding: 8px 0; color: var(--text-dim);
+    z-index: 2; transition: color 0.3s;
+  }
+  .toggle-opt.active { color: var(--accent); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    gap: 12px;
+    color: var(--text-faint);
+  }
+  .empty-state .big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 0.1em; }
+  .empty-state .sub { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; }
+
+  body.view-mode .sidebar { margin-left: -340px; }
+  .header-right { margin-left:auto; display:flex; align-items:center; gap:6px; }
+  body.view-mode .header-right { display: none; }
+  body.view-mode #closeViewerBtn { display: block !important; }
+
+  #pullOutMenuBtn {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--panel);
+    border: 1px solid var(--border-lit);
+    border-left: none;
+    padding: 20px 8px;
+    cursor: pointer;
+    z-index: 100;
+    color: var(--text-dim);
+    display: none;
+    font-size: 12px;
+    border-radius: 0 6px 6px 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    transition: all 0.2s;
+  }
+  #pullOutMenuBtn:hover { color: var(--accent); border-color: var(--accent-dim); padding-left: 12px; }
+  body.view-mode #pullOutMenuBtn { display: block; }
+
+  @media (max-width: 768px) {
+    .layout {
+      flex-direction: column;
+      height: 100vh;
+    }
+    .sidebar { width: 100%; margin-left: 0 !important; overflow-y: auto; flex: 1; }
+    .main { display: none; }
+    body.view-mode .sidebar { display: none; }
+    body.view-mode .main { display: grid; width: 100%; }
+    body.view-mode .layout { height: calc(100vh - 57px); }
+    .detail-panel { width: 100%; border-left: none; }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-lit); }
+
+  /* INDICATOR DOT */
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    display: inline-block;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .groove-vis {
+    position: absolute;
+    bottom: 6px; left: 6px;
+    right: 6px;
+    height: 3px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--accent-dim) 0px,
+      var(--accent-dim) 2px,
+      transparent 2px,
+      transparent 5px
+    );
+    opacity: 0.5;
+  }
+
+  .slot-indicator {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  select {
+    background: var(--surface);
+    border: 1px solid var(--border-lit);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 4px 8px;
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  select:focus { border-color: var(--accent-dim); }
+
+  .seed-display {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text-faint);
+    text-align: right;
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="site-label">Parametric Suite</div>
+    <h1>ACCESS KNOB</h1>
+  </div>
+  <span class="tag green">ACCESSIBILITY</span>
+  <span class="tag">HAPTIC GRIP</span>
+  <span class="tag">MUTATION ENGINE</span>
+  <span class="header-right">
+    <span class="live-dot"></span>
+    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);">PARAMETRIC LIVE</span>
+  </span>
+  <button id="closeViewerBtn" class="btn btn-danger" style="display:none !important; margin-left:auto; width:auto; margin-bottom:0; padding:6px 16px;" onclick="closeViewer()">✕ RETURN TO MENUS</button>
+</header>
+
+<div class="layout" style="position: relative;">
+  <div id="pullOutMenuBtn" onclick="closeViewer()" title="Open Menu">▶</div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- PROFILE SHAPE -->
+    <div class="section">
+      <div class="section-label">Profile Shape</div>
+      <div class="shape-grid" id="shapeGrid">
+        <!-- shapes injected by JS -->
+      </div>
+    </div>
+
+    <!-- BODY DIMENSIONS -->
+    <div class="section">
+      <div class="section-label">Body Dimensions</div>
+
+      <div class="param">
+        <label>Outer Diameter</label>
+        <span class="val" id="v_outerD">30</span>
+        <span class="unit">mm</span>
+      </div>
+      <input type="range" id="outerD" min="14" max="60" value="30" step="1">
+
+      <div class="param">
+        <label>Height</label>
+        <span class="val" id="v_height">22</span>
+        <span class="unit">mm</span>
+      </div>
+      <input type="range" id="height" min="10" max="50" value="22" step="1">
+
+      <div class="param">
+        <label>Taper Ratio</label>
+        <span class="val" id="v_taper">0.85</span>
+        <span class="unit"></span>
+      </div>
+      <input type="range" id="taper" min="60" max="100" value="85" step="1">
+    </div>
+
+    <!-- GROOVE SYSTEM -->
+    <div class="section">
+      <div class="section-label">Groove System</div>
+
+      <div class="param">
+        <label>Groove Depth</label>
+        <span class="val" id="v_grooveD">3.2</span>
+        <span class="unit">mm</span>
+      </div>
+      <input type="range" id="grooveD" min="5" max="50" value="32" step="1">
+
+      <div class="param">
+        <label>Groove Width</label>
+        <span class="val" id="v_grooveW">2.5</span>
+        <span class="unit">mm</span>
+      </div>
+      <input type="range" id="grooveW" min="5" max="40" value="25" step="1">
+
+      <div class="param">
+        <label>Groove Count</label>
+        <span class="val" id="v_grooveN">8</span>
+        <span class="unit">×</span>
+      </div>
+      <input type="range" id="grooveN" min="2" max="24" value="8" step="1">
+
+      <div class="param">
+        <label>Groove Profile</label>
+      </div>
+      <select id="grooveProfile">
+        <option value="vee">V-Cut (sharpest grip)</option>
+        <option value="round" selected>Round (skin-friendly)</option>
+        <option value="square">Square (maximum contact)</option>
+        <option value="wedge">Wedge (directional)</option>
+      </select>
+    </div>
+
+    <!-- MOUNTING INTERFACE -->
+    <div class="section">
+      <div class="section-label">Mounting Interface</div>
+
+      <div class="toggle-container" data-mode="slide" onclick="toggleMountMode()">
+        <div class="toggle-pill" id="mountPill"></div>
+        <div class="toggle-opt active" id="optSlide">SLIDE OVER</div>
+        <div class="toggle-opt" id="optSwap">SWAP IN</div>
+      </div>
+
+      <div class="param">
+        <label>Target Size</label>
+      </div>
+      <select id="targetSize">
+        <option value="small">Small (19mm)</option>
+        <option value="medium" selected>Medium (25mm)</option>
+        <option value="large">Large (32mm)</option>
+      </select>
+
+      <div id="slideOverControls">
+        <div class="param" style="margin-top:12px;">
+          <label>Inner Bore Ø</label>
+          <span class="val" id="v_boreD">18</span>
+          <span class="unit">mm</span>
+        </div>
+        <input type="range" id="boreD" min="6" max="50" value="18" step="0.5">
+
+        <div class="param">
+          <label>Slot Depth</label>
+          <span class="val" id="v_slotH">12</span>
+          <span class="unit">mm</span>
+        </div>
+        <input type="range" id="slotH" min="4" max="40" value="12" step="1">
+
+        <div class="param">
+          <label>Clearance</label>
+          <span class="val" id="v_clearance">0.3</span>
+          <span class="unit">mm</span>
+        </div>
+        <input type="range" id="clearance" min="1" max="10" value="3" step="1">
+
+        <div class="param">
+          <label>Set-Screw</label>
+        </div>
+        <select id="setScrew">
+          <option value="none">None — friction fit</option>
+          <option value="m2">M2 radial set screw</option>
+          <option value="m3" selected>M3 radial set screw</option>
+          <option value="m4">M4 radial set screw</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- MUTATION ENGINE -->
+    <div class="section">
+      <div class="section-label">Mutation Engine</div>
+      <div class="mutation-controls">
+        <div class="mut-param">
+          <label>Variants</label>
+          <input type="number" id="mutCount" value="12" min="1" max="64">
+        </div>
+        <div class="mut-param">
+          <label>Spread %</label>
+          <input type="number" id="mutSpread" value="30" min="5" max="80">
+        </div>
+      </div>
+      <div class="seed-display" id="seedDisplay">SEED: —</div>
+      <button class="btn btn-primary" onclick="runMutation()">⬡ GENERATE MUTATIONS</button>
+      <button class="btn btn-ghost" onclick="addSingle()">+ ADD CURRENT CONFIG</button>
+      <button class="btn btn-danger" onclick="clearAll()">✕ CLEAR ALL</button>
+    </div>
+
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="main" style="position:relative;">
+
+    <div class="toolbar">
+      <span class="toolbar-label">Batch</span>
+      <span class="count-badge" id="countBadge">0 KNOBS</span>
+      <span class="toolbar-label" style="margin-left:8px;">Sort:</span>
+      <button class="btn-sm active" id="sortNone" onclick="sortBy('none')">ADDED</button>
+      <button class="btn-sm" id="sortDia" onclick="sortBy('dia')">DIA ↓</button>
+      <button class="btn-sm" id="sortGroove" onclick="sortBy('groove')">GROOVE ↓</button>
+      <div class="export-row">
+        <button class="btn-sm" id="purgeAllBtn" style="color:var(--danger); border-color:#331111;" onclick="confirmPurgeAll()">✕ PURGE ALL</button>
+        <button class="btn-sm" id="exportBatchStlBtn" onclick="exportBatchSTL()">↓ STL (ALL)</button>
+        <button class="btn-sm" onclick="exportJSON()">↓ JSON</button>
+        <button class="btn-sm" onclick="exportCSV()">↓ CSV</button>
+        <button class="btn-sm" onclick="exportOpenSCAD()">↓ SCAD</button>
+      </div>
+    </div>
+
+    <div class="knob-grid" id="knobGrid">
+      <div class="empty-state">
+        <div class="big">0 KNOBS</div>
+        <div class="sub">Generate mutations or add current config</div>
+      </div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div class="detail-panel" id="detailPanel">
+      <div id="detailPreview" class="preview" style="height: 200px; background: transparent; margin-bottom: 16px; border: 1px solid var(--border);"></div>
+      <div class="detail-title" id="dpTitle">—</div>
+      <div class="detail-sub" id="dpSub">—</div>
+      <div id="dpRows"></div>
+      <div class="stl-note" id="dpNote"></div>
+      <div style="display:flex; gap: 8px; margin-top: 16px;">
+        <button class="btn" id="btnPrev" style="margin-bottom:0; border-color: #ff4444; color: #ff4444; text-shadow: 0 0 8px rgba(255,68,68,0.5); box-shadow: 0 0 10px rgba(255,68,68,0.2) inset;" onclick="prevKnob()">◀ PREV</button>
+        <button class="btn" id="btnNext" style="margin-bottom:0; border-color: #44aaff; color: #44aaff; text-shadow: 0 0 8px rgba(68,170,255,0.5); box-shadow: 0 0 10px rgba(68,170,255,0.2) inset;" onclick="nextKnob()">NEXT ▶</button>
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px; width:100%;" id="exportSingleStlBtn" onclick="exportSingleSTL()">↓ DOWNLOAD THIS STL</button>
+      <button class="btn btn-ghost" style="margin-top:12px;" onclick="closeDetail()">✕ CLOSE DETAIL</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── SHAPE DEFINITIONS ───────────────────────────────────────────
+const SHAPES = [
+  { id: 'tri',  label: 'TRI',  sides: 3 },
+  { id: 'quad', label: 'QUAD', sides: 4 },
+  { id: 'pent', label: 'PENT', sides: 5 },
+  { id: 'hex',  label: 'HEX',  sides: 6 },
+  { id: 'oct',  label: 'OCT',  sides: 8 },
+  { id: 'dod',  label: '12',   sides: 12 },
+  { id: 'cyl',  label: 'CYL',  sides: 32 },
+  { id: 'dstar',label: 'D-STR',sides: 5, star: true },
+  { id: 'hstar',label: 'H-STR',sides: 6, star: true },
+  { id: 'wave', label: 'WAVE', sides: 0, wave: true },
+];
+
+let activeShape = 'hex';
+let knobs = [];
+let selectedId = null;
+let sortMode = 'none';
+let mountMode = 'slide';
+
+window.toggleMountMode = function() {
+  mountMode = mountMode === 'slide' ? 'swap' : 'slide';
+  document.querySelector('.toggle-container').setAttribute('data-mode', mountMode);
+  document.getElementById('optSlide').classList.toggle('active', mountMode === 'slide');
+  document.getElementById('optSwap').classList.toggle('active', mountMode === 'swap');
+  
+  document.getElementById('slideOverControls').style.display = mountMode === 'swap' ? 'none' : 'block';
+};
+
+// ─── INIT ─────────────────────────────────────────────────────────
+async function init() {
+  await initThree();
+  // Build shape buttons
+  const grid = document.getElementById('shapeGrid');
+  SHAPES.forEach(s => {
+    const btn = document.createElement('div');
+    btn.className = 'shape-btn' + (s.id === activeShape ? ' active' : '');
+    btn.innerHTML = `${svgForShape(s)}<span>${s.label}</span>`;
+    btn.onclick = () => selectShape(s.id);
+    btn.id = 'sbtn_' + s.id;
+    grid.appendChild(btn);
+  });
+
+  // Wire sliders
+  document.querySelectorAll('input[type=range]').forEach(r => {
+    r.addEventListener('input', () => updateParamDisplay(r));
+  });
+  updateAllDisplays();
+}
+
+function selectShape(id) {
+  activeShape = id;
+  document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sbtn_' + id)?.classList.add('active');
+}
+
+function updateParamDisplay(r) {
+  const map = {
+    outerD: v => v + '',
+    height: v => v + '',
+    taper: v => (v/100).toFixed(2),
+    grooveD: v => (v/10).toFixed(1),
+    grooveW: v => (v/10).toFixed(1),
+    grooveN: v => v + '',
+    boreD: v => (v/2).toFixed(1),
+    slotH: v => v + '',
+    clearance: v => (v/10).toFixed(1),
+  };
+  const fn = map[r.id];
+  if (fn) document.getElementById('v_' + r.id).textContent = fn(r.value);
+}
+
+function updateAllDisplays() {
+  document.querySelectorAll('input[type=range]').forEach(r => updateParamDisplay(r));
+}
+
+// ─── GET CURRENT PARAMS ───────────────────────────────────────────
+function getParams() {
+  return {
+    shape: activeShape,
+    sides: SHAPES.find(s => s.id === activeShape)?.sides ?? 6,
+    star: SHAPES.find(s => s.id === activeShape)?.star ?? false,
+    wave: SHAPES.find(s => s.id === activeShape)?.wave ?? false,
+    outerD: +document.getElementById('outerD').value,
+    height: +document.getElementById('height').value,
+    taper: +document.getElementById('taper').value / 100,
+    grooveDepth: +document.getElementById('grooveD').value / 10,
+    grooveWidth: +document.getElementById('grooveW').value / 10,
+    grooveCount: +document.getElementById('grooveN').value,
+    grooveProfile: document.getElementById('grooveProfile').value,
+    boreD: +document.getElementById('boreD').value / 2,
+    slotH: +document.getElementById('slotH').value,
+    clearance: +document.getElementById('clearance').value / 10,
+    setScrew: document.getElementById('setScrew').value,
+  };
+}
+
+// ─── MUTATION ENGINE ──────────────────────────────────────────────
+async function runMutation() {
+  const base = getParams();
+  const count = Math.min(64, Math.max(1, +document.getElementById('mutCount').value));
+  const spread = Math.max(5, Math.min(80, +document.getElementById('mutSpread').value)) / 100;
+  const seed = Date.now();
+  document.getElementById('seedDisplay').textContent = 'SEED: ' + seed.toString(16).toUpperCase();
+
+  // seeded random
+  let s = seed;
+  function rng() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; }
+  function mutate(val, min, max, step) {
+    const delta = (rng() * 2 - 1) * spread * (max - min);
+    return Math.round(Math.min(max, Math.max(min, val + delta)) / step) * step;
+  }
+
+  const shapePool = SHAPES.map(s => s.id);
+  const targetSizeStr = document.getElementById('targetSize').value;
+  const presets = { small: 19, medium: 25, large: 32 };
+  const targetD = presets[targetSizeStr];
+
+  const startIndex = knobs.length;
+
+  for (let i = 0; i < count; i++) {
+    const p = { ...base };
+    p.height = mutate(base.height, 10, 50, 1);
+    p.taper = Math.round(mutate(base.taper * 100, 60, 100, 1)) / 100;
+    
+    // Accessibility overrides
+    p.grooveDepth = Math.round((4.0 + rng() * 1.0) * 10) / 10;
+    p.grooveWidth = Math.round(mutate(base.grooveWidth * 10, 5, 40, 1)) / 10;
+    p.grooveCount = Math.floor(6 + rng() * 3);
+    p.grooveProfile = rng() < 0.5 ? 'square' : 'vee';
+    
+    // Mount Logic
+    if (mountMode === 'swap') {
+      p.boreD = rng() < 0.5 ? 6.35 : 6.0;
+      p.setScrew = 'm3';
+      p.outerD = Math.round(mutate(targetD, targetD * 0.8, targetD * 1.2, 1));
+      p.slotH = mutate(base.slotH, 4, 40, 1);
+      p.clearance = 0;
+    } else {
+      p.boreD = targetD;
+      p.clearance = base.clearance;
+      p.setScrew = base.setScrew;
+      p.slotH = mutate(base.slotH, 4, 40, 1);
+      const minOuter = targetD + p.clearance * 2 + 4;
+      p.outerD = Math.round(mutate(Math.max(base.outerD, minOuter + 2), minOuter, minOuter + 20, 1));
+    }
+
+    if (rng() < 0.4) {
+      const si = Math.floor(rng() * shapePool.length);
+      p.shape = shapePool[si];
+      const sd = SHAPES.find(x => x.id === p.shape);
+      p.sides = sd?.sides ?? 6;
+      p.star = sd?.star ?? false;
+      p.wave = sd?.wave ?? false;
+    }
+    p.id = 'K' + (seed % 10000).toString(16).toUpperCase() + '-' + String(i+1).padStart(3,'0');
+    knobs.push(p);
+  }
+
+  document.getElementById('countBadge').textContent = "GENERATING 3D...";
+  await new Promise(r => setTimeout(r, 50));
+  
+  // Build meshes asynchronously for new knobs only
+  for (let i = startIndex; i < knobs.length; i++) {
+     let k = knobs[i];
+     let model = await generateKnobManifold(k);
+     k.mesh = manifoldToThreeMesh(model, 0xc8ff00);
+     k.mesh.rotation.x = -Math.PI / 2; // Face up
+     model.delete();
+  }
+
+  renderGrid();
+  openViewer();
+}
+
+function openViewer() {
+  document.body.classList.add('view-mode');
+  if (knobs.length > 0) selectKnob(getSortedKnobs()[0].id);
+}
+
+function closeViewer() {
+  document.body.classList.remove('view-mode');
+}
+
+async function addSingle() {
+  const p = getParams();
+  p.id = 'K' + Date.now().toString(16).slice(-4).toUpperCase() + '-MANUAL';
+  p.shape = activeShape;
+  const sd = SHAPES.find(x => x.id === p.shape);
+  p.sides = sd?.sides ?? 6;
+  p.star = sd?.star ?? false;
+  p.wave = sd?.wave ?? false;
+  
+  document.getElementById('countBadge').textContent = "GENERATING 3D...";
+  
+  let model = await generateKnobManifold(p);
+  p.mesh = manifoldToThreeMesh(model, 0xc8ff00);
+  p.mesh.rotation.x = -Math.PI / 2;
+  model.delete();
+
+  knobs.push(p);
+  selectedId = p.id;
+  renderGrid();
+}
+
+function clearAll() {
+  knobs.forEach(k => { if (k.mesh) { k.mesh.geometry.dispose(); k.mesh.material.dispose(); } });
+  knobs = [];
+  selectedId = null;
+  closeDetail();
+  renderGrid();
+  document.body.classList.remove('view-mode');
+}
+
+window.confirmPurgeAll = function() {
+  if (knobs.length === 0) return;
+  const btn = document.getElementById('purgeAllBtn');
+  if (btn.textContent.includes('✕')) {
+      btn.textContent = '? PURGE ALL';
+      btn.style.color = 'yellow';
+      btn.style.borderColor = 'yellow';
+      setTimeout(() => {
+          if (btn && btn.textContent.includes('?')) {
+              btn.textContent = '✕ PURGE ALL';
+              btn.style.color = 'var(--danger)';
+              btn.style.borderColor = '#331111';
+          }
+      }, 3000);
+      return;
+  }
+  
+  clearAll();
+  btn.textContent = '✕ PURGE ALL';
+  btn.style.color = 'var(--danger)';
+  btn.style.borderColor = '#331111';
+};
+
+window.deleteKnob = function(e, id) {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  if (btn.textContent === '✕') {
+      btn.textContent = '?';
+      btn.style.background = 'rgba(255, 255, 0, 0.2)';
+      btn.style.color = 'yellow';
+      setTimeout(() => {
+          if (btn && btn.textContent === '?') {
+              btn.textContent = '✕';
+              btn.style.background = 'rgba(255, 0, 0, 0.1)';
+              btn.style.color = 'var(--danger)';
+          }
+      }, 3000);
+      return;
+  }
+
+  const idx = knobs.findIndex(x => x.id === id);
+  if (idx !== -1) {
+    let k = knobs[idx];
+    if (k.mesh) {
+        k.mesh.geometry.dispose();
+        k.mesh.material.dispose();
+    }
+    knobs.splice(idx, 1);
+    if (selectedId === id) closeDetail();
+    renderGrid();
+    if (knobs.length === 0) closeViewer();
+  }
+};
+
+// ─── RENDER GRID ──────────────────────────────────────────────────
+function getSortedKnobs() {
+  let list = [...knobs];
+  if (sortMode === 'dia') list.sort((a,b) => b.outerD - a.outerD);
+  if (sortMode === 'groove') list.sort((a,b) => b.grooveDepth - a.grooveDepth);
+  return list;
+}
+
+function prevKnob() {
+  if (!selectedId) return;
+  let list = getSortedKnobs();
+  let idx = list.findIndex(k => k.id === selectedId);
+  if (idx > 0) selectKnob(list[idx - 1].id);
+}
+
+function nextKnob() {
+  if (!selectedId) return;
+  let list = getSortedKnobs();
+  let idx = list.findIndex(k => k.id === selectedId);
+  if (idx !== -1 && idx < list.length - 1) selectKnob(list[idx + 1].id);
+}
+
+function renderGrid() {
+  let list = getSortedKnobs();
+
+  const grid = document.getElementById('knobGrid');
+  document.getElementById('countBadge').textContent = knobs.length + ' KNOB' + (knobs.length !== 1 ? 'S' : '');
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><div class="big">0 KNOBS</div><div class="sub">Generate mutations or add current config</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  list.forEach(k => {
+    const card = document.createElement('div');
+    card.className = 'knob-card' + (k.id === selectedId ? ' selected' : '');
+    card.onclick = () => selectKnob(k.id);
+    k.cardEl = card;
+
+    const shp = SHAPES.find(s => s.id === k.shape) || SHAPES[4];
+
+    card.innerHTML = `
+      <div class="delete-btn" onclick="deleteKnob(event, '${k.id}')">✕</div>
+      <div class="preview" style="background: transparent;">
+        <!-- 3D rendered over this via WebGL scissor -->
+      </div>
+      <div class="slot-indicator">⌀${k.boreD.toFixed(1)}</div>
+      <div class="card-pin"></div>
+      <div class="groove-vis"></div>
+      <div class="card-info">
+        <div class="card-id">${k.id}</div>
+        <div class="card-dims">
+          ${shp.label} · ⌀${k.outerD}mm · H${k.height}mm<br>
+          GROOVE ${k.grooveDepth}d × ${k.grooveCount}n · ${k.grooveProfile.toUpperCase()}
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ─── DETAIL PANEL ─────────────────────────────────────────────────
+function selectKnob(id) {
+  const k = knobs.find(x => x.id === id);
+  if (!k) return;
+  selectedId = id;
+  renderGrid();
+
+  const panel = document.getElementById('detailPanel');
+  const shp = SHAPES.find(s => s.id === k.shape);
+  document.getElementById('dpTitle').textContent = k.id;
+  document.getElementById('dpSub').textContent = shp?.label + ' — ' + k.grooveProfile.toUpperCase() + ' GROOVE';
+
+  const rows = [
+    ['Shape', shp?.label + (k.star ? ' STAR' : k.wave ? ' WAVE' : '')],
+    ['Outer Ø', k.outerD + ' mm'],
+    ['Height', k.height + ' mm'],
+    ['Taper', (k.taper * 100).toFixed(0) + '%'],
+    ['Groove Depth', k.grooveDepth + ' mm'],
+    ['Groove Width', k.grooveWidth + ' mm'],
+    ['Groove Count', k.grooveCount + '×'],
+    ['Groove Profile', k.grooveProfile.toUpperCase()],
+    ['Bore Ø', (k.boreD * 2).toFixed(1) + ' mm'],
+    ['Slot Depth', k.slotH + ' mm'],
+    ['Clearance', k.clearance + ' mm'],
+    ['Set Screw', k.setScrew === 'none' ? 'NONE' : k.setScrew.toUpperCase()],
+  ];
+
+  document.getElementById('dpRows').innerHTML = rows.map(([k2,v]) =>
+    `<div class="detail-row"><span class="dk">${k2}</span><span class="dv">${v}</span></div>`
+  ).join('');
+
+  document.getElementById('dpNote').innerHTML =
+    `OpenSCAD export preserves all parameters.<br>Print flat-side down — no supports needed for CYL/HEX profiles.<br>Groove profile "${k.grooveProfile.toUpperCase()}" optimized for low-sensation grip.`;
+
+  panel.classList.add('open');
+  document.querySelector('.main').classList.add('detail-open');
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+  document.querySelector('.main').classList.remove('detail-open');
+  selectedId = null;
+  renderGrid();
+}
+
+// ─── SORT ─────────────────────────────────────────────────────────
+function sortBy(mode) {
+  sortMode = mode;
+  document.querySelectorAll('.btn-sm').forEach(b => b.classList.remove('active'));
+  document.getElementById('sort' + mode.charAt(0).toUpperCase() + mode.slice(1))?.classList.add('active');
+  renderGrid();
+}
+
+// ─── SHAPE SVGs ───────────────────────────────────────────────────
+function svgForShape(s) {
+  const cx = 11, cy = 11, r = 9;
+  let path = '';
+  if (s.wave) {
+    const pts = [];
+    for (let a = 0; a < 360; a += 10) {
+      const rad = a * Math.PI / 180;
+      const rr = r - 2 + Math.sin(a * 0.15) * 3;
+      pts.push([cx + rr * Math.cos(rad), cy + rr * Math.sin(rad)]);
+    }
+    path = `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="currentColor" stroke-width="1.2"/>`;
+  } else if (s.star) {
+    const pts = [];
+    for (let i = 0; i < s.sides * 2; i++) {
+      const ang = i * Math.PI / s.sides - Math.PI / 2;
+      const rr = i % 2 === 0 ? r : r * 0.5;
+      pts.push([cx + rr * Math.cos(ang), cy + rr * Math.sin(ang)]);
+    }
+    path = `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="currentColor" stroke-width="1.2"/>`;
+  } else {
+    const pts = [];
+    for (let i = 0; i < s.sides; i++) {
+      const ang = i * 2 * Math.PI / s.sides - Math.PI / 2;
+      pts.push([cx + r * Math.cos(ang), cy + r * Math.sin(ang)]);
+    }
+    path = `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="currentColor" stroke-width="1.2"/>`;
+  }
+  return `<svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">${path}</svg>`;
+}
+
+// ─── EXPORTS ──────────────────────────────────────────────────────
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(knobs, null, 2)], { type: 'application/json' });
+  dl(blob, 'access-knobs.json');
+  closeViewer();
+}
+
+function exportCSV() {
+  const keys = ['id','shape','outerD','height','taper','grooveDepth','grooveWidth','grooveCount','grooveProfile','boreD','slotH','clearance','setScrew'];
+  const rows = [keys.join(','), ...knobs.map(k => keys.map(key => k[key]).join(','))];
+  dl(new Blob([rows.join('\n')], {type:'text/csv'}), 'access-knobs.csv');
+  closeViewer();
+}
+
+function exportOpenSCAD() {
+  let out = `// ACCESS KNOB — Parametric Suite\n// Generated ${new Date().toISOString()}\n\n`;
+  out += `module access_knob(outer_d, height, taper, groove_depth, groove_width, groove_count, groove_profile, bore_d, slot_h, clearance, sides, set_screw) {\n`;
+  out += `  // Body\n  difference() {\n`;
+  out += `    cylinder(h=height, d1=outer_d, d2=outer_d*taper, $fn=sides);\n`;
+  out += `    // Bore\n    translate([0,0,-0.1]) cylinder(h=slot_h+0.2, d=bore_d + clearance*2, $fn=64);\n`;
+  out += `    // Grooves\n    for(i=[0:groove_count-1]) {\n`;
+  out += `      rotate([0,0,i*(360/groove_count)])\n`;
+  out += `        translate([outer_d/2-groove_depth/2,0,height/2])\n`;
+  out += `          cylinder(h=height*1.1, d=groove_width, center=true, $fn=16);\n    }\n`;
+  out += `  }\n}\n\n`;
+  out += `// Variants:\n`;
+  knobs.forEach((k, i) => {
+    out += `// ${k.id}\naccess_knob(${k.outerD}, ${k.height}, ${k.taper}, ${k.grooveDepth}, ${k.grooveWidth}, ${k.grooveCount}, "${k.grooveProfile}", ${(k.boreD*2).toFixed(1)}, ${k.slotH}, ${k.clearance}, ${k.sides}, "${k.setScrew}"); // translate([${i*65},0,0])\n`;
+  });
+  dl(new Blob([out], {type:'text/plain'}), 'access-knobs.scad');
+  closeViewer();
+}
+
+function dl(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+}
+
+// ─── STL MANIFOLD EXPORT ──────────────────────────────────────────
+
+let THREE = null, renderer = null, scene = null, camera = null;
+
+async function initThree() {
+  THREE = await import('https://cdn.skypack.dev/three@0.136.0');
+  
+  const canvas = document.createElement('canvas');
+  canvas.id = 'webgl-canvas';
+  canvas.style.position = 'fixed';
+  canvas.style.top = '0'; canvas.style.left = '0';
+  canvas.style.width = '100vw'; canvas.style.height = '100vh';
+  canvas.style.pointerEvents = 'none';
+  canvas.style.zIndex = '60';
+  document.body.appendChild(canvas);
+
+  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, premultipliedAlpha: false });
+  renderer.setClearColor(0x000000, 0); // Transparent background
+  renderer.setClearAlpha(0);
+  canvas.style.backgroundColor = 'transparent';
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setScissorTest(true);
+  
+  scene = new THREE.Scene();
+  scene.add(new THREE.AmbientLight(0x404040, 2.0));
+  const dirLight = new THREE.DirectionalLight(0xc8ff00, 1.5);
+  dirLight.position.set(20, 50, 20);
+  scene.add(dirLight);
+
+  const fillLight = new THREE.DirectionalLight(0x0088ff, 1.0);
+  fillLight.position.set(-20, 0, -20);
+  scene.add(fillLight);
+  
+  camera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
+  
+  window.addEventListener('resize', () => {
+    if (renderer) renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+  
+  requestAnimationFrame(animateThree);
+}
+
+let lastTime = 0;
+function animateThree(time) {
+  requestAnimationFrame(animateThree);
+  
+  if (time && time - lastTime < 100) return; // ~10 fps
+  if (time) lastTime = time;
+
+  // Always clear the entire screen manually before scissor rendering
+  if (renderer) {
+      renderer.setClearColor(0x000000, 0);
+      renderer.setClearAlpha(0);
+      renderer.setScissorTest(false);
+      renderer.clear();
+      renderer.setScissorTest(true);
+  }
+
+  if (!renderer || knobs.length === 0) {
+      return;
+  }
+  
+  // We don't set clearColor here anymore, it's transparent.
+  const headerH = document.querySelector('header').offsetHeight;
+  
+  knobs.forEach(k => {
+    if (!k.mesh) return;
+    
+    // Rotate model (large delta to emphasize 10fps stutter)
+    k.mesh.rotation.z += 0.06;
+    
+    if (!k.cardEl) return;
+    const previewEl = k.cardEl.querySelector('.preview');
+    if (!previewEl) return;
+    
+    const rect = previewEl.getBoundingClientRect();
+    
+    let rTop = Math.max(rect.top, headerH);
+    let rBottom = Math.min(rect.bottom, window.innerHeight);
+    let rHeight = rBottom - rTop;
+    
+    // Clip right edge if detail panel is open
+    let rightLimit = window.innerWidth;
+    const panel = document.getElementById('detailPanel');
+    if (panel && panel.classList.contains('open')) {
+        const pRect = panel.getBoundingClientRect();
+        rightLimit = pRect.left;
+    }
+    let rRight = Math.min(rect.right, rightLimit);
+    let rWidth = rRight - rect.left;
+    
+    if (rHeight <= 0 || rWidth <= 0) return;
+    
+    let canvasBottom = window.innerHeight - rBottom;
+    renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
+    renderer.setScissor(rect.left, canvasBottom, rWidth, rHeight);
+    
+    const dist = Math.max(40, k.outerD * 2.0);
+    camera.position.set(0, dist, dist * 0.8);
+    camera.lookAt(0, 0, 0);
+    camera.aspect = rect.width / rect.height;
+    camera.updateProjectionMatrix();
+
+    scene.add(k.mesh);
+    renderer.render(scene, camera);
+    scene.remove(k.mesh);
+  });
+
+  // Render detail preview if active
+  if (selectedId) {
+    const detailPreview = document.getElementById('detailPreview');
+    const panel = document.getElementById('detailPanel');
+    if (panel && panel.classList.contains('open') && detailPreview) {
+      const k = knobs.find(x => x.id === selectedId);
+      if (k && k.mesh) {
+        const rect = detailPreview.getBoundingClientRect();
+        if (rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth) {
+          let rTop = Math.max(rect.top, headerH);
+          let rBottom = Math.min(rect.bottom, window.innerHeight);
+          let rHeight = rBottom - rTop;
+          if (rHeight > 0) {
+            let canvasBottom = window.innerHeight - rBottom;
+            renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
+            renderer.setScissor(rect.left, canvasBottom, rect.width, rHeight);
+            
+            const dist = Math.max(40, k.outerD * 2.0);
+            camera.position.set(0, dist, dist * 0.8);
+            camera.lookAt(0, 0, 0);
+            camera.aspect = rect.width / rect.height;
+            camera.updateProjectionMatrix();
+            
+            scene.add(k.mesh);
+            renderer.render(scene, camera);
+            scene.remove(k.mesh);
+          }
+        }
+      }
+    }
+  }
+}
+
+function manifoldToThreeMesh(model, colorHex) {
+  if (!THREE) return null;
+  const meshData = model.getMesh();
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.vertProperties, 3));
+  geometry.setIndex(new THREE.Uint32BufferAttribute(meshData.triVerts, 1));
+  geometry.computeVertexNormals();
+  
+  const material = new THREE.MeshStandardMaterial({
+      color: colorHex,
+      roughness: 0.2,
+      metalness: 0.8,
+      side: THREE.DoubleSide
+  });
+  
+  const mesh = new THREE.Mesh(geometry, material);
+  return mesh;
+}
+
+let Manifold = null;
+async function getManifold() {
+  if (Manifold) return Manifold;
+  const module = await import('https://unpkg.com/manifold-3d/manifold.js');
+  const wasm = await module.default();
+  wasm.setup();
+  Manifold = wasm.Manifold;
+  return Manifold;
+}
+
+async function generateKnobManifold(k) {
+  const M = await getManifold();
+  
+  const rimR = k.outerD / 2;
+  const taperR = (k.outerD * k.taper) / 2;
+  const discH = k.height;
+  
+  let body = M.cylinder(discH, rimR, taperR, k.sides, true);
+  
+  let boreR = (k.boreD / 2) + k.clearance;
+  let bore = M.cylinder(k.slotH + 0.2, boreR, boreR, 64, true)
+              .translate([0, 0, -discH/2 + (k.slotH+0.2)/2 - 0.1]);
+              
+  let grooves = null;
+  const grooveW = k.grooveWidth;
+  const grooveD = k.grooveDepth;
+  
+  for (let i = 0; i < k.grooveCount; i++) {
+    const angle = i * 360 / k.grooveCount;
+    const cx = rimR - grooveD / 2;
+    
+    let g;
+    if (k.grooveProfile === 'square') {
+      g = M.cube([grooveD * 2, grooveW, discH * 1.2], true)
+          .translate([rimR, 0, 0]);
+    } else if (k.grooveProfile === 'vee') {
+      g = M.cube([grooveW, grooveW, discH * 1.2], true)
+          .rotate([0, 0, 45])
+          .translate([rimR, 0, 0]);
+    } else {
+      g = M.cylinder(discH * 1.2, grooveW/2, grooveW/2, 16, true)
+          .translate([cx, 0, 0]);
+    }
+    
+    g = g.rotate([0, 0, angle]);
+    if (!grooves) grooves = g;
+    else {
+        let n = grooves.add(g);
+        grooves.delete(); g.delete();
+        grooves = n;
+    }
+  }
+
+  let finalShape = body.subtract(bore);
+  body.delete(); bore.delete();
+  
+  if (grooves) {
+      let n = finalShape.subtract(grooves);
+      finalShape.delete(); grooves.delete();
+      finalShape = n;
+  }
+
+  if (k.setScrew !== 'none') {
+    let screwR = k.setScrew === 'm2' ? 1.0 : (k.setScrew === 'm3' ? 1.5 : 2.0);
+    let ssHole = M.cylinder(rimR * 2, screwR, screwR, 16, true)
+                .rotate([0, 90, 0])
+                .translate([rimR/2, 0, -discH/2 + k.slotH/2]);
+    
+    let offsetAngle = (360 / k.grooveCount) / 2;
+    ssHole = ssHole.rotate([0, 0, offsetAngle]);
+    
+    let n = finalShape.subtract(ssHole);
+    finalShape.delete(); ssHole.delete();
+    finalShape = n;
+  }
+  
+  return finalShape;
+}
+
+function modelToSTL(model, name) {
+    if (!model) return "";
+    const mesh = model.getMesh();
+    let stl = `solid ${name}\n`;
+    for (let i = 0; i < mesh.triVerts.length; i += 3) {
+        const i1 = mesh.triVerts[i], i2 = mesh.triVerts[i+1], i3 = mesh.triVerts[i+2];
+        const v1 = [mesh.vertProperties[i1*3], mesh.vertProperties[i1*3+1], mesh.vertProperties[i1*3+2]];
+        const v2 = [mesh.vertProperties[i2*3], mesh.vertProperties[i2*3+1], mesh.vertProperties[i2*3+2]];
+        const v3 = [mesh.vertProperties[i3*3], mesh.vertProperties[i3*3+1], mesh.vertProperties[i3*3+2]];
+        stl += `facet normal 0 0 0\n  outer loop\n    vertex ${v1[0]} ${v1[1]} ${v1[2]}\n    vertex ${v2[0]} ${v2[1]} ${v2[2]}\n    vertex ${v3[0]} ${v3[1]} ${v3[2]}\n  endloop\nendfacet\n`;
+    }
+    stl += `endsolid ${name}`;
+    return stl;
+}
+
+async function exportSingleSTL() {
+  const k = knobs.find(x => x.id === selectedId);
+  if (!k) return;
+  const btn = document.getElementById('exportSingleStlBtn');
+  btn.textContent = "GENERATING...";
+  
+  await new Promise(r => setTimeout(r, 50));
+  
+  try {
+    const kModel = await generateKnobManifold(k);
+    const stlString = modelToSTL(kModel, k.id);
+    kModel.delete();
+    
+    const blob = new Blob([stlString], {type: 'text/plain'});
+    dl(blob, `${k.id}.stl`);
+  } catch (e) {
+    alert("Export failed: " + e.message);
+  }
+  
+  btn.textContent = "↓ DOWNLOAD THIS STL";
+}
+
+async function exportBatchSTL() {
+  if (knobs.length === 0) return;
+  const btn = document.getElementById('exportBatchStlBtn');
+  btn.textContent = "GENERATING...";
+  
+  await new Promise(r => setTimeout(r, 50));
+  
+  try {
+    let combined = null;
+    for (let i = 0; i < knobs.length; i++) {
+      let kModel = await generateKnobManifold(knobs[i]);
+      
+      const cols = Math.ceil(Math.sqrt(knobs.length));
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const spacing = 50; 
+      
+      let offsetZ = knobs[i].height / 2;
+      kModel = kModel.translate([col * spacing, row * spacing, offsetZ]);
+      
+      if (!combined) combined = kModel;
+      else {
+          let n = combined.add(kModel);
+          combined.delete(); kModel.delete();
+          combined = n;
+      }
+    }
+    
+    const stlString = modelToSTL(combined, "AccessKnobs_Batch");
+    combined.delete();
+    
+    const blob = new Blob([stlString], {type: 'text/plain'});
+    dl(blob, "access-knobs-batch.stl");
+    
+    // Export finished; DO NOT closeViewer() or wipe models!
+    btn.textContent = "↓ STL (ALL)";
+  } catch (e) {
+    alert("Export failed: " + e.message);
+    btn.textContent = "↓ STL (ALL)";
+  }
+}
+
+init();
+</script>
+</body>
+</html>

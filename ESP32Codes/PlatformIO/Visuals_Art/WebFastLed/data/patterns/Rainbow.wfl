@@ -1,0 +1,3 @@
+// Classic rainbow sweep
+h = index / pixelCount + time * 0.2;
+hsv(h, 1, 1);
