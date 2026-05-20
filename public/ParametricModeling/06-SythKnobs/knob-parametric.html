@@ -71,17 +71,23 @@
 
   /* LAYOUT */
   .layout {
-    display: grid;
-    grid-template-columns: 340px 1fr;
+    display: flex;
     height: calc(100vh - 57px);
+    overflow: hidden;
   }
 
   /* SIDEBAR */
   .sidebar {
+    width: 340px;
+    flex-shrink: 0;
     border-right: 1px solid var(--border-lit);
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 0;
     background: var(--panel);
+    transition: margin-left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    position: relative;
+    z-index: 20;
   }
 
   .section {
@@ -261,6 +267,7 @@
 
   /* MAIN CANVAS AREA */
   .main {
+    flex: 1;
     display: grid;
     grid-template-rows: auto 1fr;
     overflow: hidden;
@@ -319,6 +326,11 @@
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 16px;
     align-content: start;
+    transition: padding-right 0.2s;
+  }
+  
+  .main.detail-open .knob-grid {
+    padding-right: 300px;
   }
 
   .knob-card {
@@ -372,6 +384,27 @@
     display: none;
   }
   .knob-card.selected .card-pin { display: block; }
+  .delete-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    background: rgba(255, 0, 0, 0.1);
+    color: var(--danger);
+    font-family: sans-serif;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    opacity: 0;
+    transition: all 0.2s;
+    border-radius: 50%;
+  }
+  .knob-card:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { background: var(--danger); color: #fff; }
 
   /* DETAIL PANEL */
   .detail-panel {
@@ -465,22 +498,42 @@
   .empty-state .big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 0.1em; }
   .empty-state .sub { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; }
 
-  body.view-mode .sidebar { display: none; }
-  body.view-mode .layout { grid-template-columns: 1fr; }
+  body.view-mode .sidebar { margin-left: -340px; }
   .header-right { margin-left:auto; display:flex; align-items:center; gap:6px; }
   body.view-mode .header-right { display: none; }
   body.view-mode #closeViewerBtn { display: block !important; }
 
+  #pullOutMenuBtn {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--panel);
+    border: 1px solid var(--border-lit);
+    border-left: none;
+    padding: 20px 8px;
+    cursor: pointer;
+    z-index: 100;
+    color: var(--text-dim);
+    display: none;
+    font-size: 12px;
+    border-radius: 0 6px 6px 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    transition: all 0.2s;
+  }
+  #pullOutMenuBtn:hover { color: var(--accent); border-color: var(--accent-dim); padding-left: 12px; }
+  body.view-mode #pullOutMenuBtn { display: block; }
+
   @media (max-width: 768px) {
     .layout {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto 1fr;
-      height: auto;
+      flex-direction: column;
+      height: 100vh;
     }
-    .sidebar { max-height: 50vh; overflow-y: auto; }
-    .main { height: 100vh; }
+    .sidebar { width: 100%; margin-left: 0 !important; overflow-y: auto; flex: 1; }
+    .main { display: none; }
     body.view-mode .sidebar { display: none; }
-    body.view-mode .layout { grid-template-rows: 1fr; height: calc(100vh - 57px); }
+    body.view-mode .main { display: grid; width: 100%; }
+    body.view-mode .layout { height: calc(100vh - 57px); }
     .detail-panel { width: 100%; border-left: none; }
   }
 
@@ -554,7 +607,7 @@
 
 <header>
   <div>
-    <div class="site-label">Parametric Suite — 05</div>
+    <div class="site-label">Parametric Suite</div>
     <h1>ACCESS KNOB</h1>
   </div>
   <span class="tag green">ACCESSIBILITY</span>
@@ -567,7 +620,8 @@
   <button id="closeViewerBtn" class="btn btn-danger" style="display:none !important; margin-left:auto; width:auto; margin-bottom:0; padding:6px 16px;" onclick="closeViewer()">✕ RETURN TO MENUS</button>
 </header>
 
-<div class="layout">
+<div class="layout" style="position: relative;">
+  <div id="pullOutMenuBtn" onclick="closeViewer()" title="Open Menu">▶</div>
 
   <!-- SIDEBAR -->
   <div class="sidebar">
@@ -727,6 +781,7 @@
       <button class="btn-sm" id="sortDia" onclick="sortBy('dia')">DIA ↓</button>
       <button class="btn-sm" id="sortGroove" onclick="sortBy('groove')">GROOVE ↓</button>
       <div class="export-row">
+        <button class="btn-sm" id="purgeAllBtn" style="color:var(--danger); border-color:#331111;" onclick="confirmPurgeAll()">✕ PURGE ALL</button>
         <button class="btn-sm" id="exportBatchStlBtn" onclick="exportBatchSTL()">↓ STL (ALL)</button>
         <button class="btn-sm" onclick="exportJSON()">↓ JSON</button>
         <button class="btn-sm" onclick="exportCSV()">↓ CSV</button>
@@ -743,13 +798,14 @@
 
     <!-- DETAIL PANEL -->
     <div class="detail-panel" id="detailPanel">
+      <div id="detailPreview" class="preview" style="height: 200px; background: transparent; margin-bottom: 16px; border: 1px solid var(--border);"></div>
       <div class="detail-title" id="dpTitle">—</div>
       <div class="detail-sub" id="dpSub">—</div>
       <div id="dpRows"></div>
       <div class="stl-note" id="dpNote"></div>
       <div style="display:flex; gap: 8px; margin-top: 16px;">
-        <button class="btn btn-ghost" style="margin-bottom:0;" onclick="prevKnob()">◀ PREV</button>
-        <button class="btn btn-ghost" style="margin-bottom:0;" onclick="nextKnob()">NEXT ▶</button>
+        <button class="btn" id="btnPrev" style="margin-bottom:0; border-color: #ff4444; color: #ff4444; text-shadow: 0 0 8px rgba(255,68,68,0.5); box-shadow: 0 0 10px rgba(255,68,68,0.2) inset;" onclick="prevKnob()">◀ PREV</button>
+        <button class="btn" id="btnNext" style="margin-bottom:0; border-color: #44aaff; color: #44aaff; text-shadow: 0 0 8px rgba(68,170,255,0.5); box-shadow: 0 0 10px rgba(68,170,255,0.2) inset;" onclick="nextKnob()">NEXT ▶</button>
       </div>
       <button class="btn btn-primary" style="margin-top:12px; width:100%;" id="exportSingleStlBtn" onclick="exportSingleSTL()">↓ DOWNLOAD THIS STL</button>
       <button class="btn btn-ghost" style="margin-top:12px;" onclick="closeDetail()">✕ CLOSE DETAIL</button>
@@ -877,6 +933,8 @@ async function runMutation() {
   const presets = { small: 19, medium: 25, large: 32 };
   const targetD = presets[targetSizeStr];
 
+  const startIndex = knobs.length;
+
   for (let i = 0; i < count; i++) {
     const p = { ...base };
     p.height = mutate(base.height, 10, 50, 1);
@@ -916,13 +974,11 @@ async function runMutation() {
     knobs.push(p);
   }
 
-  // Free old meshes
-  knobs.forEach(k => { if (k.mesh) { k.mesh.geometry.dispose(); k.mesh.material.dispose(); } });
   document.getElementById('countBadge').textContent = "GENERATING 3D...";
   await new Promise(r => setTimeout(r, 50));
   
-  // Build meshes asynchronously
-  for (let i = 0; i < knobs.length; i++) {
+  // Build meshes asynchronously for new knobs only
+  for (let i = startIndex; i < knobs.length; i++) {
      let k = knobs[i];
      let model = await generateKnobManifold(k);
      k.mesh = manifoldToThreeMesh(model, 0xc8ff00);
@@ -941,13 +997,26 @@ function openViewer() {
 
 function closeViewer() {
   document.body.classList.remove('view-mode');
-  clearAll();
 }
 
-function addSingle() {
+async function addSingle() {
   const p = getParams();
   p.id = 'K' + Date.now().toString(16).slice(-4).toUpperCase() + '-MANUAL';
+  p.shape = activeShape;
+  const sd = SHAPES.find(x => x.id === p.shape);
+  p.sides = sd?.sides ?? 6;
+  p.star = sd?.star ?? false;
+  p.wave = sd?.wave ?? false;
+  
+  document.getElementById('countBadge').textContent = "GENERATING 3D...";
+  
+  let model = await generateKnobManifold(p);
+  p.mesh = manifoldToThreeMesh(model, 0xc8ff00);
+  p.mesh.rotation.x = -Math.PI / 2;
+  model.delete();
+
   knobs.push(p);
+  selectedId = p.id;
   renderGrid();
 }
 
@@ -957,7 +1026,62 @@ function clearAll() {
   selectedId = null;
   closeDetail();
   renderGrid();
+  document.body.classList.remove('view-mode');
 }
+
+window.confirmPurgeAll = function() {
+  if (knobs.length === 0) return;
+  const btn = document.getElementById('purgeAllBtn');
+  if (btn.textContent.includes('✕')) {
+      btn.textContent = '? PURGE ALL';
+      btn.style.color = 'yellow';
+      btn.style.borderColor = 'yellow';
+      setTimeout(() => {
+          if (btn && btn.textContent.includes('?')) {
+              btn.textContent = '✕ PURGE ALL';
+              btn.style.color = 'var(--danger)';
+              btn.style.borderColor = '#331111';
+          }
+      }, 3000);
+      return;
+  }
+  
+  clearAll();
+  btn.textContent = '✕ PURGE ALL';
+  btn.style.color = 'var(--danger)';
+  btn.style.borderColor = '#331111';
+};
+
+window.deleteKnob = function(e, id) {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  if (btn.textContent === '✕') {
+      btn.textContent = '?';
+      btn.style.background = 'rgba(255, 255, 0, 0.2)';
+      btn.style.color = 'yellow';
+      setTimeout(() => {
+          if (btn && btn.textContent === '?') {
+              btn.textContent = '✕';
+              btn.style.background = 'rgba(255, 0, 0, 0.1)';
+              btn.style.color = 'var(--danger)';
+          }
+      }, 3000);
+      return;
+  }
+
+  const idx = knobs.findIndex(x => x.id === id);
+  if (idx !== -1) {
+    let k = knobs[idx];
+    if (k.mesh) {
+        k.mesh.geometry.dispose();
+        k.mesh.material.dispose();
+    }
+    knobs.splice(idx, 1);
+    if (selectedId === id) closeDetail();
+    renderGrid();
+    if (knobs.length === 0) closeViewer();
+  }
+};
 
 // ─── RENDER GRID ──────────────────────────────────────────────────
 function getSortedKnobs() {
@@ -1002,6 +1126,7 @@ function renderGrid() {
     const shp = SHAPES.find(s => s.id === k.shape) || SHAPES[4];
 
     card.innerHTML = `
+      <div class="delete-btn" onclick="deleteKnob(event, '${k.id}')">✕</div>
       <div class="preview" style="background: transparent;">
         <!-- 3D rendered over this via WebGL scissor -->
       </div>
@@ -1021,9 +1146,9 @@ function renderGrid() {
 
 // ─── DETAIL PANEL ─────────────────────────────────────────────────
 function selectKnob(id) {
-  selectedId = id;
   const k = knobs.find(x => x.id === id);
   if (!k) return;
+  selectedId = id;
   renderGrid();
 
   const panel = document.getElementById('detailPanel');
@@ -1054,10 +1179,12 @@ function selectKnob(id) {
     `OpenSCAD export preserves all parameters.<br>Print flat-side down — no supports needed for CYL/HEX profiles.<br>Groove profile "${k.grooveProfile.toUpperCase()}" optimized for low-sensation grip.`;
 
   panel.classList.add('open');
+  document.querySelector('.main').classList.add('detail-open');
 }
 
 function closeDetail() {
   document.getElementById('detailPanel').classList.remove('open');
+  document.querySelector('.main').classList.remove('detail-open');
   selectedId = null;
   renderGrid();
 }
@@ -1154,10 +1281,13 @@ async function initThree() {
   canvas.style.top = '0'; canvas.style.left = '0';
   canvas.style.width = '100vw'; canvas.style.height = '100vh';
   canvas.style.pointerEvents = 'none';
-  canvas.style.zIndex = '10';
+  canvas.style.zIndex = '60';
   document.body.appendChild(canvas);
 
-  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, premultipliedAlpha: false });
+  renderer.setClearColor(0x000000, 0); // Transparent background
+  renderer.setClearAlpha(0);
+  canvas.style.backgroundColor = 'transparent';
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setScissorTest(true);
@@ -1174,21 +1304,43 @@ async function initThree() {
   
   camera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
   
+  window.addEventListener('resize', () => {
+    if (renderer) renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+  
   requestAnimationFrame(animateThree);
 }
 
-function animateThree() {
+let lastTime = 0;
+function animateThree(time) {
   requestAnimationFrame(animateThree);
-  if (!renderer || knobs.length === 0 || !document.body.classList.contains('view-mode')) {
-      if (renderer) renderer.clear();
+  
+  if (time && time - lastTime < 100) return; // ~10 fps
+  if (time) lastTime = time;
+
+  // Always clear the entire screen manually before scissor rendering
+  if (renderer) {
+      renderer.setClearColor(0x000000, 0);
+      renderer.setClearAlpha(0);
+      renderer.setScissorTest(false);
+      renderer.clear();
+      renderer.setScissorTest(true);
+  }
+
+  if (!renderer || knobs.length === 0) {
       return;
   }
   
-  renderer.setClearColor(0x000000, 0);
+  // We don't set clearColor here anymore, it's transparent.
   const headerH = document.querySelector('header').offsetHeight;
   
   knobs.forEach(k => {
-    if (!k.cardEl || !k.mesh) return;
+    if (!k.mesh) return;
+    
+    // Rotate model (large delta to emphasize 10fps stutter)
+    k.mesh.rotation.z += 0.06;
+    
+    if (!k.cardEl) return;
     const previewEl = k.cardEl.querySelector('.preview');
     if (!previewEl) return;
     
@@ -1197,14 +1349,22 @@ function animateThree() {
     let rTop = Math.max(rect.top, headerH);
     let rBottom = Math.min(rect.bottom, window.innerHeight);
     let rHeight = rBottom - rTop;
-    if (rHeight <= 0) return;
     
-    // Rotate model
-    k.mesh.rotation.z += 0.01;
+    // Clip right edge if detail panel is open
+    let rightLimit = window.innerWidth;
+    const panel = document.getElementById('detailPanel');
+    if (panel && panel.classList.contains('open')) {
+        const pRect = panel.getBoundingClientRect();
+        rightLimit = pRect.left;
+    }
+    let rRight = Math.min(rect.right, rightLimit);
+    let rWidth = rRight - rect.left;
+    
+    if (rHeight <= 0 || rWidth <= 0) return;
     
     let canvasBottom = window.innerHeight - rBottom;
     renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
-    renderer.setScissor(rect.left, canvasBottom, rect.width, rHeight);
+    renderer.setScissor(rect.left, canvasBottom, rWidth, rHeight);
     
     const dist = Math.max(40, k.outerD * 2.0);
     camera.position.set(0, dist, dist * 0.8);
@@ -1216,6 +1376,38 @@ function animateThree() {
     renderer.render(scene, camera);
     scene.remove(k.mesh);
   });
+
+  // Render detail preview if active
+  if (selectedId) {
+    const detailPreview = document.getElementById('detailPreview');
+    const panel = document.getElementById('detailPanel');
+    if (panel && panel.classList.contains('open') && detailPreview) {
+      const k = knobs.find(x => x.id === selectedId);
+      if (k && k.mesh) {
+        const rect = detailPreview.getBoundingClientRect();
+        if (rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth) {
+          let rTop = Math.max(rect.top, headerH);
+          let rBottom = Math.min(rect.bottom, window.innerHeight);
+          let rHeight = rBottom - rTop;
+          if (rHeight > 0) {
+            let canvasBottom = window.innerHeight - rBottom;
+            renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
+            renderer.setScissor(rect.left, canvasBottom, rect.width, rHeight);
+            
+            const dist = Math.max(40, k.outerD * 2.0);
+            camera.position.set(0, dist, dist * 0.8);
+            camera.lookAt(0, 0, 0);
+            camera.aspect = rect.width / rect.height;
+            camera.updateProjectionMatrix();
+            
+            scene.add(k.mesh);
+            renderer.render(scene, camera);
+            scene.remove(k.mesh);
+          }
+        }
+      }
+    }
+  }
 }
 
 function manifoldToThreeMesh(model, colorHex) {
@@ -1387,12 +1579,12 @@ async function exportBatchSTL() {
     const blob = new Blob([stlString], {type: 'text/plain'});
     dl(blob, "access-knobs-batch.stl");
     
-    closeViewer();
+    // Export finished; DO NOT closeViewer() or wipe models!
+    btn.textContent = "↓ STL (ALL)";
   } catch (e) {
     alert("Export failed: " + e.message);
+    btn.textContent = "↓ STL (ALL)";
   }
-  
-  btn.textContent = "↓ STL (ALL)";
 }
 
 init();

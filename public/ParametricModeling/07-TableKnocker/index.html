@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCAD - Table Knocker v1</title>
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --accent-brand: #10b981;
+            --secondary: #3b82f6;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+        }
+
+        body {
+            margin: 0; padding: 0; background: var(--bg-dark); color: #f8fafc;
+            font-family: 'Inter', system-ui, sans-serif; overflow: hidden;
+            display: flex; height: 100vh;
+        }
+
+        #studio-panel {
+            width: 420px; background: #0f172a; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; z-index: 100;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        }
+
+        .panel-header {
+            padding: 24px; border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        .logo {
+            font-size: 1.4rem; font-weight: 900; letter-spacing: -1px;
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .logo-box {
+            width: 32px; height: 32px;
+            background: linear-gradient(to bottom right, var(--accent-brand), var(--secondary));
+            border-radius: 8px; display: grid; place-items: center; font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .panel-content {
+            flex: 1; overflow-y: auto; padding: 18px 24px;
+            display: flex; flex-direction: column; gap: 16px;
+        }
+
+        .section-title {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+            color: #64748b; margin-top: 10px; margin-bottom: 6px; font-weight: 700;
+        }
+
+        .param-group {
+            display: flex; flex-direction: column; gap: 4px;
+        }
+
+        .param-row {
+            padding: 10px 12px; background: var(--glass); border: 1px solid var(--border);
+            border-radius: 10px; transition: all 0.2s ease; margin-bottom: 4px;
+        }
+
+        .param-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .param-label { font-size: 0.8rem; font-weight: 600; color: #94a3b8; }
+        .param-value { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-brand); background: #1e293b; padding: 1px 6px; border-radius: 4px; }
+
+        input[type="range"] { width: 100%; height: 3px; background: #334155; border-radius: 2px; appearance: none; outline: none; margin: 6px 0; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; background: var(--accent-brand); border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 8px var(--accent-brand); }
+
+        #viewport-container { flex: 1; position: relative; background: #020617; }
+        #viewer { width: 100%; height: 100%; }
+
+        .viewport-badge {
+            position: absolute; top: 24px; right: 24px;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
+            padding: 8px 16px; border-radius: 99px; border: 1px solid var(--border);
+            font-size: 0.8rem; display: flex; align-items: center; gap: 8px; z-index: 1000;
+        }
+
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; }
+        
+        button.dl-btn {
+            background: #1e293b; color: white; border: 1px solid var(--border);
+            padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            width: 100%; margin-top: 5px; font-size: 0.75rem; transition: all 0.2s;
+        }
+        button.dl-btn:hover { background: #334155; border-color: var(--accent-brand); }
+        .dl-main { background: var(--accent-brand); color: #111; border: none; }
+        .dl-main:hover { background: #059669; }
+    </style>
+</head>
+<body>
+    <div id="studio-panel">
+        <div class="panel-header">
+            <div class="logo">
+                <div class="logo-box">F</div>
+                ForgeCAD <span style="font-weight: 300; opacity: 0.5;">Table Knocker</span>
+            </div>
+        </div>
+
+        <div class="panel-content">
+            <div class="section-title">Assembly Control</div>
+            <div id="params-assembly"></div>
+
+            <div class="section-title">Housing Shell</div>
+            <div id="params-housing"></div>
+
+            <div class="section-title">Sled Tracks</div>
+            <div id="params-tracks"></div>
+
+            <div class="section-title">Solenoid Actuator</div>
+            <div id="params-solenoid"></div>
+
+            <div class="section-title">Power (18650 Battery & TP4056)</div>
+            <div id="params-power"></div>
+
+            <div class="section-title">Digital Core (ESP32 & L298N)</div>
+            <div id="params-digital"></div>
+
+            <div class="section-title">Manufacturing Export</div>
+            <button class="dl-btn dl-main" id="dl-shell">EXPORT SHELL (.STL)</button>
+            <button class="dl-btn" id="dl-sled">EXPORT SLED (.STL)</button>
+            <button class="dl-btn" id="dl-cap">EXPORT TOP CAP (.STL)</button>
+        </div>
+    </div>
+
+    <div id="viewport-container">
+        <div id="viewer"></div>
+        <div class="viewport-badge">
+            <div class="status-dot"></div>
+            MANIFOLD WASM ENGINE
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+        import Module from 'https://unpkg.com/manifold-3d/manifold.js';
+
+        let wasm, Manifold;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 420) / window.innerHeight, 0.1, 2500);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(220, 220, 220);
+        controls.update();
+
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x111827, 0.8));
+        const p1 = new THREE.PointLight(0x3b82f6, 1.5, 1000); p1.position.set(200, 200, 200); scene.add(p1);
+        const p2 = new THREE.PointLight(0x10b981, 1, 1000); p2.position.set(-200, 100, -200); scene.add(p2);
+        
+        const grid = new THREE.GridHelper(600, 60, 0x1e293b, 0x0f172a);
+        scene.add(grid);
+
+        let currentMeshes = {};
+        let currentModels = {};
+
+        // --- ForgeCAD Param API ---
+        const PARAMS = {};
+        const param = (name, defaultValue, options = {}, category = 'housing') => {
+            const id = name.replace(/\s+/g, '-').toLowerCase();
+            if (!PARAMS[id]) {
+                const type = options.type || 'range';
+                const min = options.min !== undefined ? options.min : 0;
+                const max = options.max !== undefined ? options.max : (defaultValue * 3);
+                const step = options.step !== undefined ? options.step : 1;
+                PARAMS[id] = { value: defaultValue, min, max, step, name, category, type };
+                createParamUI(id, category);
+            }
+            return PARAMS[id].value;
+        };
+
+        function createParamUI(id, cat) {
+            const p = PARAMS[id];
+            let container = document.getElementById('params-' + cat) || document.getElementById('params-housing');
+            
+            if (!container.children.length || container.tagName !== 'DIV') {
+                const group = document.createElement('div');
+                group.className = 'param-group';
+                container.appendChild(group);
+                container = group;
+            } else {
+                container = container.querySelector('.param-group') || container;
+            }
+
+            const row = document.createElement('div');
+            row.className = 'param-row';
+            
+            if (p.type === 'checkbox') {
+                row.innerHTML = `
+                    <div class="param-info" style="align-items:center;">
+                        <span class="param-label">${p.name}</span>
+                        <input type="checkbox" id="input-${id}" ${p.value ? 'checked' : ''}>
+                    </div>
+                `;
+            } else {
+                row.innerHTML = `
+                    <div class="param-info">
+                        <span class="param-label">${p.name}</span>
+                        <span class="param-value" id="val-${id}">${p.value}</span>
+                    </div>
+                    <input type="range" id="input-${id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">
+                `;
+            }
+            container.appendChild(row);
+
+            row.querySelector('input').addEventListener(p.type === 'checkbox' ? 'change' : 'input', (e) => {
+                const val = p.type === 'checkbox' ? (e.target.checked ? 1 : 0) : parseFloat(e.target.value);
+                PARAMS[id].value = val;
+                if (p.type !== 'checkbox') document.getElementById(`val-${id}`).innerText = val;
+                requestUpdate();
+            });
+        }
+
+        // --- Modeling Primitive Ops ---
+        const box = (w, d, h) => Manifold.cube([w, d, h], true);
+        const cyl = (r, h, s=64) => Manifold.cylinder(h, r, r, s, true);
+        const cone = (r1, r2, h, s=64) => Manifold.cylinder(h, r1, r2, s, true);
+
+        function exportSTL(model, name) {
+            if (!model) return;
+            const mesh = model.getMesh();
+            let stl = `solid ${name}\n`;
+            for (let i = 0; i < mesh.triVerts.length; i += 3) {
+                const i1 = mesh.triVerts[i], i2 = mesh.triVerts[i+1], i3 = mesh.triVerts[i+2];
+                const v1 = [mesh.vertProperties[i1*3], mesh.vertProperties[i1*3+1], mesh.vertProperties[i1*3+2]];
+                const v2 = [mesh.vertProperties[i2*3], mesh.vertProperties[i2*3+1], mesh.vertProperties[i2*3+2]];
+                const v3 = [mesh.vertProperties[i3*3], mesh.vertProperties[i3*3+1], mesh.vertProperties[i3*3+2]];
+                stl += `facet normal 0 0 0\n  outer loop\n    vertex ${v1[0]} ${v1[1]} ${v1[2]}\n    vertex ${v2[0]} ${v2[1]} ${v2[2]}\n    vertex ${v3[0]} ${v3[1]} ${v3[2]}\n  endloop\nendfacet\n`;
+            }
+            stl += `endsolid ${name}`;
+            const blob = new Blob([stl], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `${name}.stl`; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function init() {
+            wasm = await Module();
+            wasm.setup();
+            Manifold = wasm.Manifold;
+            requestUpdate();
+            animate();
+        }
+
+        function requestUpdate() {
+            if (!Manifold) return;
+            
+            Object.values(currentMeshes).forEach(m => scene.remove(m));
+            if (currentModels.shell) {
+                currentModels.shell.delete(); currentModels.sled.delete();
+                currentModels.topCap.delete();
+            }
+
+            try {
+                // PARAMETERS
+                const expl = param("Explosion", 0, { min:0, max:100 }, "assembly") / 100;
+                
+                const shellLen = param("Shell Length", 150, { min:100, max:200 }, "housing");
+                const innerR   = param("Inner Radius", 28, { min:20, max:40 }, "housing");
+                const wall     = param("Wall Thick", 4, { min:2, max:10 }, "housing");
+                const flare    = param("Base Flare", 15, { min:0, max:30 }, "housing");
+                const outerR   = innerR + wall;
+
+                const boardX   = param("Board Pos X", -2, { min:-10, max:5, step:0.5 }, "tracks");
+                const boardT   = param("Board Thick", 3, { min:2, max:6, step:0.5 }, "tracks");
+                const boardW   = param("Board Width", 50, { min:30, max:60 }, "tracks");
+                const clr      = param("Track Clearance", 0.6, { min:0.2, max:2, step:0.1 }, "tracks");
+
+                const solW     = param("Solenoid X", 27, { min:15, max:40 }, "solenoid");
+                const solD     = param("Solenoid Y", 40, { min:15, max:60 }, "solenoid");
+                const solH     = param("Solenoid Z", 40, { min:20, max:80 }, "solenoid");
+                const solLip   = param("Bottom Lip", 1, { min:0, max:5, step:0.5 }, "solenoid");
+                const stroke   = param("Axle Stroke", 30, { min:10, max:50 }, "solenoid");
+
+                const batDia   = param("Battery Dia", 18.5, { min:10, max:30, step:0.5 }, "power");
+                const batLen   = param("Battery Len", 65.5, { min:40, max:80, step:0.5 }, "power");
+                const chW      = param("Charger Width", 17, { min:10, max:30 }, "power");
+                const chD      = param("Charger Depth", 28, { min:10, max:40 }, "power");
+                const chH      = param("Charger Height", 4, { min:2, max:10 }, "power");
+
+                const l29w     = param("L298N Width", 24, { min:10, max:40 }, "digital");
+                const l29h     = param("L298N Height", 8, { min:5, max:25 }, "digital");
+                const l29d     = param("L298N Depth", 22, { min:10, max:40 }, "digital");
+                const espW     = param("ESP32 Width", 18, { min:10, max:30 }, "digital");
+                const espH     = param("ESP32 Height", 4.5, { min:2, max:10, step:0.5 }, "digital");
+                const espD     = param("ESP32 Depth", 25, { min:10, max:40 }, "digital");
+
+                // 1. HOUSING SHELL
+                // The cavity starts at Z=5, meaning there is a 5mm solid floor.
+                let baseFlare = cone(outerR + flare, outerR, 15).translate([0, 0, 7.5]);
+                let sOuter = cyl(outerR, shellLen).translate([0, 0, shellLen/2]);
+                let shell = sOuter.add(baseFlare);
+
+                let sInner = cyl(innerR, shellLen).translate([0, 0, shellLen/2 + 5]);
+                shell = shell.subtract(sInner);
+
+                // Solenoid pocket sits at Z=5. X-position is midway in the right half.
+                const solX = innerR / 2 + 1; // e.g. 15
+                // Cut a hole through the floor (Z from 0 to 5) for the tapping rod, leaving a lip.
+                let solHole = box(solW - solLip*2, solD - solLip*2, 10).translate([solX, 0, 2.5]);
+                shell = shell.subtract(solHole);
+
+                // Tracks for the sled board
+                // Cut a slot into the shell walls at boardX.
+                let trackCut = box(boardT + clr, boardW + clr*2, shellLen).translate([boardX, 0, shellLen/2]);
+                shell = shell.subtract(trackCut);
+
+                // 2. SLED ASSEMBLY (Vertical insertion)
+                let sled = box(boardT, boardW, shellLen - 8).translate([boardX, 0, shellLen/2 + 1]);
+
+                let pockets = [];
+                let cutouts = [];
+
+                const addPocket = (w, d, h, zPos) => {
+                    // Place component on the LEFT side of the board (X < boardX - boardT/2)
+                    const blockX = boardX - boardT/2 - w/2;
+                    let block = box(w + 4, d + 4, h + 4).translate([blockX, 0, zPos]);
+                    let cutout = box(w, d, h).translate([blockX + 1, 0, zPos]); 
+                    // +1 pushes cutout away from the board to leave a solid back wall
+                    pockets.push(block);
+                    cutouts.push(cutout);
+                    return cutout;
+                };
+
+                // Battery Pocket (18650) - Placed at the very bottom of the sled for weight
+                const batZ = 5 + batLen/2 + 2;
+                const batBlockX = boardX - boardT/2 - (batDia/2 + 2);
+                let batBlock = box(batDia + 4, batDia + 6, batLen + 4).translate([batBlockX, 0, batZ]);
+                let batCut = cyl(batDia/2, batLen).translate([batBlockX + 1, 0, batZ]);
+                pockets.push(batBlock);
+                cutouts.push(batCut);
+
+                // Stacking components upwards along Z
+                let zCur = 5 + batLen + 4 + 2; 
+                addPocket(l29h, l29w, l29d, zCur + l29d/2); // Swapped axes to fit flat against board
+                zCur += l29d + 4 + 2;
+                addPocket(espH, espW, espD, zCur + espD/2);
+                zCur += espD + 4 + 2;
+                addPocket(chH, chW, chD, zCur + chD/2);
+
+                for (let p of pockets) sled = sled.add(p);
+                for (let c of cutouts) sled = sled.subtract(c);
+
+                // 3. TOP CAP
+                let tCapOuter = cyl(outerR, 4).translate([0, 0, 2]);
+                let tCapInner = cyl(innerR - 0.2, 4).translate([0, 0, -2]);
+                let topCap = tCapOuter.add(tCapInner).translate([0, 0, shellLen + 2]);
+
+                // 4. SOLENOID DUMMY (For Visualization only)
+                let solVis = box(solW, solD, solH).translate([solX, 0, 5 + solH/2]);
+                let axleVis = cyl(3, stroke + solH).translate([solX, 0, 5 + (stroke + solH)/2]);
+                let solenoidAssembly = solVis.add(axleVis);
+
+                currentModels = { shell, sled, topCap };
+
+                // RENDER
+                const toMesh = (model, color, op, offset=[0,0,0]) => {
+                    const m = model.getMesh();
+                    const g = new THREE.BufferGeometry();
+                    g.setAttribute('position', new THREE.Float32BufferAttribute(m.vertProperties, 3));
+                    g.setIndex(new THREE.Uint32BufferAttribute(m.triVerts, 1));
+                    g.computeVertexNormals();
+                    const mat = new THREE.MeshPhysicalMaterial({ color, transparent:true, opacity:op, metalness:0.4, roughness:0.2, side:THREE.DoubleSide });
+                    const mesh = new THREE.Mesh(g, mat);
+                    mesh.position.set(...offset); scene.add(mesh);
+                    return mesh;
+                };
+
+                currentMeshes.shell = toMesh(shell, 0x10b981, 0.25);
+                currentMeshes.sled  = toMesh(sled,  0x3b82f6, 1.0, [0, 0, expl*120]);
+                currentMeshes.topCap = toMesh(topCap, 0x10b981, 0.8, [0, 0, expl*180]);
+                
+                // Visualization dummy
+                currentMeshes.solenoid = toMesh(solenoidAssembly, 0xf472b6, 0.6, [expl*40, 0, 0]);
+                currentMeshes.solenoid.material.emissive = new THREE.Color(0xf472b6);
+                currentMeshes.solenoid.material.emissiveIntensity = 0.3;
+
+                // Cleanup wasm handles
+                sOuter.delete(); sInner.delete(); baseFlare.delete(); trackCut.delete(); solHole.delete();
+                tCapOuter.delete(); tCapInner.delete(); solVis.delete(); axleVis.delete(); solenoidAssembly.delete();
+                for (let p of pockets) p.delete();
+                for (let c of cutouts) c.delete();
+            } catch (e) {
+                console.error("Modeling Error:", e);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 420) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        });
+
+        document.getElementById('dl-shell').onclick = () => exportSTL(currentModels.shell, "TableKnocker_Shell");
+        document.getElementById('dl-sled').onclick  = () => exportSTL(currentModels.sled, "TableKnocker_Sled");
+        document.getElementById('dl-cap').onclick  = () => exportSTL(currentModels.topCap, "TableKnocker_TopCap");
+
+        init();
+    </script>
+</body>
+</html>
