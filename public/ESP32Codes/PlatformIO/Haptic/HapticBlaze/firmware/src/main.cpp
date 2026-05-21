@@ -14,6 +14,7 @@
 #include "core/Config.h"
 #include "core/AudioAnalyzer.h"
 #include "core/PatternRegistry.h"
+#include "core/StatusLed.h"
 #include "hal/DriverFactory.h"
 #include "patterns/Patterns.h"
 #include "web/WebServer.h"
@@ -34,6 +35,7 @@ namespace {
 Config           gConfig;
 core::Engine     gEngine;
 core::AudioAnalyzer gAudio;
+StatusLed        gStatusLed;
 web::WebServer   gWeb;
 web::CaptivePortal gPortal;
 hal::IHapticDriver* gDriver = nullptr;
@@ -61,13 +63,21 @@ void audioTask(void*) {
 void housekeepingTask(void*) {
     const TickType_t period = pdMS_TO_TICKS(100);
     TickType_t last = xTaskGetTickCount();
+    uint8_t broadcastDiv = 0;
     for (;;) {
+        gStatusLed.tick();
         gConfig.flushIfDirty();
         gPortal.pump();
         if (WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
             // STA dropped — raise AP fallback alongside.
             WiFi.mode(WIFI_AP_STA);
             WiFi.softAP(gConfig.apSsid().c_str());
+            gStatusLed.apMode();
+        }
+        // Broadcast engine state to WebSocket clients every ~200ms (every 2nd tick).
+        if (++broadcastDiv >= 2) {
+            broadcastDiv = 0;
+            gWeb.broadcastState();
         }
         vTaskDelayUntil(&last, period);
     }
@@ -77,20 +87,25 @@ bool bringUpWifi() {
     WiFi.persistent(false);
     WiFi.setHostname(gConfig.hostname().c_str());
     if (!gConfig.staSsid().isEmpty()) {
+        gStatusLed.breathing();
         WiFi.mode(WIFI_STA);
+        WiFi.setTxPower(WIFI_POWER_8_5dBm);
+        Serial.printf("\n\n>>> Connecting to WiFi SSID: '%s', Password: '%s' <<<\n\n", gConfig.staSsid().c_str(), gConfig.staPass().c_str());
         WiFi.begin(gConfig.staSsid().c_str(), gConfig.staPass().c_str());
-        uint32_t until = millis() + 3000;
+        uint32_t until = millis() + 3000; // Give it 3 seconds to connect initially
         while (WiFi.status() != WL_CONNECTED && millis() < until) {
             delay(50);
         }
         if (WiFi.status() == WL_CONNECTED) {
-            log_i("STA connected, IP=%s", WiFi.localIP().toString().c_str());
+            Serial.printf("\n\n>>> WiFi CONNECTED! Local IP: %s <<<\n\n", WiFi.localIP().toString().c_str());
+            gStatusLed.connected();
             return true;
         }
     }
     WiFi.mode(WIFI_AP);
     WiFi.softAP(gConfig.apSsid().c_str());
-    log_i("AP up, IP=%s", WiFi.softAPIP().toString().c_str());
+    Serial.printf("\n\n>>> WiFi connection FAILED. Running in AP Mode. softAP IP: %s <<<\n\n", WiFi.softAPIP().toString().c_str());
+    gStatusLed.apMode();
     return false;
 }
 
@@ -105,6 +120,7 @@ void setup() {
     }
 
     gConfig.load();
+    Serial.printf("\n[DEBUG] Loaded Config SSID: '%s', Password: '%s'\n\n", gConfig.staSsid().c_str(), gConfig.staPass().c_str());
 
     gDriver = hal::DriverFactory::create(gConfig.driverKind());
     if (gDriver && gDriver->begin(gConfig.driverConfig())) {
@@ -123,6 +139,11 @@ void setup() {
         gAudio.begin(gConfig.audioConfig());
         gEngine.attachAudio(&gAudio);
     }
+
+    // Initialize status LED on GPIO 8 (ESP32-C3 onboard LED), LEDC channel 5.
+    #ifdef HAPTICBLAZE_TARGET_C3
+    gStatusLed.begin(8, 5);
+    #endif
 
     bool staConnected = bringUpWifi();
     gWeb.begin(&gEngine, &gConfig, &gAudio);

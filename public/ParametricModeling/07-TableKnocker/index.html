@@ -70,6 +70,9 @@
         input[type="range"]::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; background: var(--accent-brand); border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 8px var(--accent-brand); }
 
         #viewport-container { flex: 1; position: relative; background: #020617; }
+        #view-holster { border-left: 5px solid #f97316; }
+        #view-pb { border-left: 5px solid #ec4899; }
+        #view-pad { border-left: 5px solid #22d3ee; }
         #viewer { width: 100%; height: 100%; }
 
         .viewport-badge {
@@ -89,6 +92,15 @@
         button.dl-btn:hover { background: #334155; border-color: var(--accent-brand); }
         .dl-main { background: var(--accent-brand); color: #111; border: none; }
         .dl-main:hover { background: #059669; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .ebtn {
+            background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid var(--border);
+            padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 0.7rem;
+            transition: all 0.15s; font-weight: 600;
+        }
+        .ebtn:hover { background: rgba(255,255,255,0.1); color: white; border-color: #64748b; }
+        .ebtn.active { background: #1e293b; color: white; border-color: currentColor; box-shadow: 0 0 10px currentColor; }
     </style>
 </head>
 <body>
@@ -107,6 +119,9 @@
             <div class="section-title">Housing Shell</div>
             <div id="params-housing"></div>
 
+            <div class="section-title">Power Bank Holster</div>
+            <div id="params-holster"></div>
+
             <div class="section-title">Sled Tracks</div>
             <div id="params-tracks"></div>
 
@@ -119,10 +134,29 @@
             <div class="section-title">Digital Core (ESP32 & L298N)</div>
             <div id="params-digital"></div>
 
+            <div class="section-title">Component View</div>
+            <div class="param-group" style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom: 10px;">
+                <button class="ebtn active" data-v="all">Show All</button>
+                <button class="ebtn" data-v="shell" style="color:#10b981;">Shell</button>
+                <button class="ebtn" data-v="sled" style="color:#3b82f6;">Sled</button>
+                <button class="ebtn" data-v="topCap" style="color:#10b981;">Top Cap</button>
+                <button class="ebtn" data-v="solenoid" style="color:#f472b6;">Solenoid</button>
+                <button class="ebtn" data-v="battery" style="color:#fbbf24;">Battery</button>
+                <button class="ebtn" data-v="l298n" style="color:#ef4444;">L298N</button>
+                <button class="dl-btn" id="view-esp32">Toggle ESP32</button>
+                <button class="dl-btn" id="view-tp4056">Toggle TP4056</button>
+                <button class="dl-btn" id="view-holster">Toggle Holster</button>
+                <button class="dl-btn" id="view-pb">Toggle Power Bank</button>
+                <button class="dl-btn" id="view-pad">Toggle Pad</button>
+            </div>
+
             <div class="section-title">Manufacturing Export</div>
-            <button class="dl-btn dl-main" id="dl-shell">EXPORT SHELL (.STL)</button>
+            <button class="dl-btn dl-main" id="dl-all" style="background:#fbbf24; color:#000;">EXPORT ALL PARTS (.STL)</button>
+            <button class="dl-btn" id="dl-shell">EXPORT SHELL (.STL)</button>
             <button class="dl-btn" id="dl-sled">EXPORT SLED (.STL)</button>
             <button class="dl-btn" id="dl-cap">EXPORT TOP CAP (.STL)</button>
+            <button class="dl-btn" id="dl-holster">EXPORT HOLSTER (.STL)</button>
+            <button class="dl-btn" id="dl-pad">EXPORT PAD (.STL)</button>
         </div>
     </div>
 
@@ -157,8 +191,55 @@
         const grid = new THREE.GridHelper(600, 60, 0x1e293b, 0x0f172a);
         scene.add(grid);
 
+        let mainGroup = new THREE.Group();
+        mainGroup.rotation.x = -Math.PI / 2;
+        scene.add(mainGroup);
+
         let currentMeshes = {};
         let currentModels = {};
+        let activeViews = new Set(['shell', 'sled', 'topCap', 'solenoid', 'battery', 'l298n', 'esp32', 'tp4056']);
+        let viewESP32 = true;
+        let viewTP4056 = true;
+        let viewHolster = true;
+        let viewPB = true;
+        let viewPad = true;
+
+        function updateVisibility() {
+            Object.keys(currentMeshes).forEach(k => {
+                if (!currentMeshes[k]) return;
+                let visible = activeViews.has(k);
+                if (k === 'esp32') visible = viewESP32;
+                if (k === 'tp4056') visible = viewTP4056;
+                if (k === 'holster') visible = viewHolster;
+                if (k === 'pb') visible = viewPB;
+                if (k === 'pad') visible = viewPad;
+                currentMeshes[k].visible = visible;
+            });
+        }
+
+        document.querySelectorAll('.ebtn').forEach(btn => {
+            if (btn.dataset.v !== 'all') {
+                btn.classList.add('active'); // set all on by default
+            }
+            btn.addEventListener('click', () => {
+                const v = btn.dataset.v;
+                if (v === 'all') {
+                    document.querySelectorAll('.ebtn').forEach(b => {
+                        if (b.dataset.v !== 'all') b.classList.add('active');
+                    });
+                    activeViews = new Set(['shell', 'sled', 'topCap', 'solenoid', 'battery', 'l298n', 'esp32', 'tp4056']);
+                } else {
+                    if (activeViews.has(v)) {
+                        activeViews.delete(v);
+                        btn.classList.remove('active');
+                    } else {
+                        activeViews.add(v);
+                        btn.classList.add('active');
+                    }
+                }
+                updateVisibility();
+            });
+        });
 
         // --- ForgeCAD Param API ---
         const PARAMS = {};
@@ -252,35 +333,37 @@
         function requestUpdate() {
             if (!Manifold) return;
             
-            Object.values(currentMeshes).forEach(m => scene.remove(m));
+            Object.values(currentMeshes).forEach(m => mainGroup.remove(m));
+            currentMeshes = {};
             if (currentModels.shell) {
-                currentModels.shell.delete(); currentModels.sled.delete();
-                currentModels.topCap.delete();
+                Object.values(currentModels).forEach(m => { if (m) m.delete(); });
+                currentModels = {};
             }
 
             try {
-                // PARAMETERS
                 const expl = param("Explosion", 0, { min:0, max:100 }, "assembly") / 100;
-                
-                const shellLen = param("Shell Length", 150, { min:100, max:200 }, "housing");
-                const innerR   = param("Inner Radius", 28, { min:20, max:40 }, "housing");
-                const wall     = param("Wall Thick", 4, { min:2, max:10 }, "housing");
-                const flare    = param("Base Flare", 15, { min:0, max:30 }, "housing");
+                const shellLen = param("Shell Length", 116, { min:80, max:200 }, "housing");
+                const innerR   = param("Inner Radius", 30, { min:20, max:40 }, "housing");
+                const wall     = param("Wall Thick", 3, { min:2, max:10 }, "housing");
+                const flare    = param("Base Flare", 26, { min:0, max:100 }, "housing");
                 const outerR   = innerR + wall;
-
                 const boardX   = param("Board Pos X", -2, { min:-10, max:5, step:0.5 }, "tracks");
                 const boardT   = param("Board Thick", 3, { min:2, max:6, step:0.5 }, "tracks");
                 const boardW   = param("Board Width", 50, { min:30, max:60 }, "tracks");
-                const clr      = param("Track Clearance", 0.6, { min:0.2, max:2, step:0.1 }, "tracks");
-
-                const solW     = param("Solenoid X", 27, { min:15, max:40 }, "solenoid");
-                const solD     = param("Solenoid Y", 40, { min:15, max:60 }, "solenoid");
-                const solH     = param("Solenoid Z", 40, { min:20, max:80 }, "solenoid");
+                const trackGrip = param("Track Grip", 4, { min:1, max:15, step:0.5 }, "tracks");
+                const solW     = param("Solenoid X", 20, { min:10, max:40 }, "solenoid");
+                const solD     = param("Solenoid Y", 26, { min:15, max:50 }, "solenoid");
+                const solH     = param("Solenoid Z", 37, { min:20, max:60 }, "solenoid");
                 const solLip   = param("Bottom Lip", 1, { min:0, max:5, step:0.5 }, "solenoid");
                 const stroke   = param("Axle Stroke", 30, { min:10, max:50 }, "solenoid");
-
-                const batDia   = param("Battery Dia", 18.5, { min:10, max:30, step:0.5 }, "power");
-                const batLen   = param("Battery Len", 65.5, { min:40, max:80, step:0.5 }, "power");
+                const solHeight = param("Solenoid Height", 20, { min:10, max:40 }, "solenoid");
+                const padD     = param("Pad Dia", 15, { min:10, max:30 }, "solenoid");
+                const padH     = param("Pad Height", 8, { min:4, max:15 }, "solenoid");
+                const nutD     = param("Nut Flat-to-Flat", 8.2, { min:6, max:15, step:0.1 }, "solenoid");
+                const nutH     = param("Nut Depth", 5, { min:2, max:10 }, "solenoid");
+                const batW     = param("Battery Width", 23, { min:10, max:40 }, "power");
+                const batD     = param("Battery Depth", 22, { min:10, max:40 }, "power");
+                const batH     = param("Battery Height", 76, { min:40, max:100 }, "power");
                 const chW      = param("Charger Width", 17, { min:10, max:30 }, "power");
                 const chD      = param("Charger Depth", 28, { min:10, max:40 }, "power");
                 const chH      = param("Charger Height", 4, { min:2, max:10 }, "power");
@@ -292,110 +375,233 @@
                 const espH     = param("ESP32 Height", 4.5, { min:2, max:10, step:0.5 }, "digital");
                 const espD     = param("ESP32 Depth", 25, { min:10, max:40 }, "digital");
 
-                // 1. HOUSING SHELL
-                // The cavity starts at Z=5, meaning there is a 5mm solid floor.
+                const hasHolster = param("Has Holster", 1, { type: 'checkbox' }, "holster");
+                const pbW      = param("PB Width", 70, { min:40, max:120 }, "holster");
+                const pbD      = param("PB Depth", 16, { min:5, max:50 }, "holster");
+                const pbH      = param("PB Height", 105, { min:50, max:200 }, "holster");
+                const pbClear  = param("PB Clearance", 1, { min:0, max:5, step:0.1 }, "holster");
+                const ringThick = param("Ring Thickness", 4.0, { min:1.5, max:10, step:0.5 }, "holster");
+                // Holster dimensions
+                const inX = pbD + pbClear * 2;
+                const inY = pbW + pbClear * 2;
+                const outX = inX + 6;
+                const outY = inY + 6;
+                const outZ = shellLen - 6;
+                const inZ = outZ - 3;
+                const boxY = (outerR + 1.4) + outX/2;
+
+                // 1. HOUSING WITH TRACKS & BATTERY POCKET
+                const trackX = boardX;
+                const trackW_X = boardT + 6;
+                // Track outer face pinned at outerR (tube wall); inner face extends trackGrip past the board edge
+                const trackOuterY     = outerR;
+                const trackInnerY     = boardW/2 - trackGrip; // inner lip extends trackGrip inward past board edge
+                const trackW_Y_actual = trackOuterY - trackInnerY;
+                const leftTrackCenterY  = -(trackInnerY + trackW_Y_actual / 2);
+                const rightTrackCenterY =  (trackInnerY + trackW_Y_actual / 2);
+                // Keep trackW_Y for legacy ring clearance code below
+                const trackW_Y = trackW_Y_actual;
+
+                const batPocketW_X = batD + 4;
+                const batPocketW_Y = batW + 4;
+                const batPocketH   = batH + 4;
+                const batPocketX   = -outerR - batPocketW_X/2 + 1;
+                let batPocketOuter = box(batPocketW_X, batPocketW_Y, batPocketH).translate([batPocketX, 0, batPocketH/2]);
+                let batPocketInner = box(batD + 0.6, batW + 0.6, shellLen).translate([batPocketX, 0, shellLen/2 + 3]);
+
                 let baseFlare = cone(outerR + flare, outerR, 15).translate([0, 0, 7.5]);
                 let sOuter = cyl(outerR, shellLen).translate([0, 0, shellLen/2]);
-                let shell = sOuter.add(baseFlare);
+                const solX = innerR / 2 + 1;
+                let solBulge = box(solW + 6, solD + 6, shellLen).translate([solX, 0, shellLen/2]);
+                
+                let shell = sOuter.add(baseFlare).add(solBulge);
+                shell = shell.subtract(cyl(innerR, shellLen).translate([0, 0, shellLen/2 + 5]));
+                // NOTE: tracks added AFTER all inner cavity subtractions below, so they aren't wiped out
+                shell = shell.add(batPocketOuter);
 
-                let sInner = cyl(innerR, shellLen).translate([0, 0, shellLen/2 + 5]);
-                shell = shell.subtract(sInner);
+                // Base flare cutout for the holster pocket
+                if (hasHolster) {
+                    let pocketCutout = box(outY + 1.2, outX + 1.2, 16).translate([0, boxY, 8]);
+                    shell = shell.subtract(pocketCutout);
+                    pocketCutout.delete();
+                }
 
-                // Solenoid pocket sits at Z=5. X-position is midway in the right half.
-                const solX = innerR / 2 + 1; // e.g. 15
-                // Cut a hole through the floor (Z from 0 to 5) for the tapping rod, leaving a lip.
-                let solHole = box(solW - solLip*2, solD - solLip*2, 10).translate([solX, 0, 2.5]);
-                shell = shell.subtract(solHole);
+                // Solenoid cavity cutout all the way to the bottom (Z = 0)
+                let solCavity = box(solW + 1, solD + 1, shellLen + 10).translate([solX, 0, shellLen/2]);
+                shell = shell.subtract(solCavity);
+                solCavity.delete();
 
-                // Tracks for the sled board
-                // Cut a slot into the shell walls at boardX.
-                let trackCut = box(boardT + clr, boardW + clr*2, shellLen).translate([boardX, 0, shellLen/2]);
-                shell = shell.subtract(trackCut);
+                // NOTE: Sleeve added AFTER innerClean below, so it isn't erased by the inner cavity re-cut.
 
-                // 2. SLED ASSEMBLY (Vertical insertion)
+                // Rocker switch housing next to the battery pocket (negative Y side, flush against the tube)
+                const swD = 21; // Switch diameter
+                const swBlockX = -20; // Centered at -20, so a width of 38 goes from -39 to -1, extending inside the tube
+                const swBlockY = -(batPocketW_Y / 2 + 13); // Place on the other side of battery pocket (negative Y)
+                const swBlockH = 26;
+
+                // Flatten the wide base flare in this area so it does not stick out past the block's back face at X = -39
+                let flareCut = box(30, 32, 18).translate([-54, swBlockY, 9]);
+                shell = shell.subtract(flareCut);
+                flareCut.delete();
+
+                let swBlock = box(38, 26, swBlockH).translate([swBlockX, swBlockY, swBlockH/2]);
+                shell = shell.add(swBlock);
+                swBlock.delete();
+
+                // Clean the inner cavity again to remove any switch block material protruding inside the tube
+                // (Starts at Z = 5, preserving the 5mm solid bottom plate of the shell)
+                let innerClean = cyl(innerR, shellLen).translate([0, 0, shellLen/2 + 5]);
+                shell = shell.subtract(innerClean);
+                innerClean.delete();
+
+                // Re-add the solenoid sleeve AFTER innerClean so it survives the inner cavity re-cut
+                let sleeveOuter2 = box(solW + 1, solD + 1, solHeight).translate([solX, 0, solHeight/2]);
+                let sleeveInner2 = box(solW - solLip*2, solD - solLip*2, solHeight + 2).translate([solX, 0, solHeight/2]);
+                let sleeve2 = sleeveOuter2.subtract(sleeveInner2);
+                shell = shell.add(sleeve2);
+                sleeveOuter2.delete();
+                sleeveInner2.delete();
+                sleeve2.delete();
+
+                // Cut the hole out of the entire merged shell (including block, cylinder wall, and base flare)
+                // Length is 35 centered at X = -27.5, so it spans X from -45 to -10, leaving the front wall untouched.
+                let swCylHole = cyl(swD/2, 35).rotate([0, 90, 0]).translate([-27.5, swBlockY, swBlockH/2]);
+                shell = shell.subtract(swCylHole);
+                swCylHole.delete();
+
+                // Wire holes from battery pocket into the tube
+                let batWireHoleBottom = cyl(3, 40).rotate([0, 90, 0]).translate([batPocketX + 10, 0, 10]);
+                let batWireHoleTop = cyl(3, 40).rotate([0, 90, 0]).translate([batPocketX + 10, 0, 70]);
+                shell = shell.subtract(batWireHoleBottom).subtract(batWireHoleTop);
+                batWireHoleBottom.delete();
+                batWireHoleTop.delete();
+
+                shell = shell.subtract(batPocketInner);
+
+                // 2x2mm wire groove through the battery pocket inner wall into the tube interior
+                // Runs in X direction at Y=0, at mid height of the pocket (Z ~batH/2)
+                let batWireGroove = box(20, 2, 2).translate([batPocketX + 10, 0, batH/2]);
+                shell = shell.subtract(batWireGroove);
+                batWireGroove.delete();
+
+                // Re-add tracks AFTER all inner cavity subtractions so they survive.
+                let leftTrack  = box(trackW_X, trackW_Y_actual, shellLen).translate([trackX, leftTrackCenterY,  shellLen/2]);
+                let rightTrack = box(trackW_X, trackW_Y_actual, shellLen).translate([trackX, rightTrackCenterY, shellLen/2]);
+                shell = shell.add(leftTrack).add(rightTrack);
+                leftTrack.delete();
+                rightTrack.delete();
+
+                // Cut the board slot AFTER adding tracks so it carves the groove into them
+                shell = shell.subtract(box(boardT + 0.6, boardW + 1.2, shellLen + 10).translate([boardX, 0, shellLen/2]));
+
+                // 2. SLED & COMPONENTS
+                const lipW_X = (solX - solW/2 + 3) - (boardX + boardT/2);
+                const lipX = (boardX + boardT/2) + lipW_X / 2;
+                const lipW_Y = solD;
+                let sledLip = box(lipW_X, lipW_Y, 4).translate([lipX, 0, solHeight + solH + 2]);
+
                 let sled = box(boardT, boardW, shellLen - 8).translate([boardX, 0, shellLen/2 + 1]);
+                sled = sled.add(sledLip);
+                sledLip.delete();
 
-                let pockets = [];
-                let cutouts = [];
+                // Wire holes through the sled next to the L298N for wiring to the solenoid
+                let wireHole1 = cyl(3, boardT + 4).rotate([0, 90, 0]).translate([boardX, -20, 32]);
+                let wireHole2 = cyl(3, boardT + 4).rotate([0, 90, 0]).translate([boardX, 20, 32]);
+                sled = sled.subtract(wireHole1).subtract(wireHole2);
+                wireHole1.delete();
+                wireHole2.delete();
 
-                const addPocket = (w, d, h, zPos) => {
-                    // Place component on the LEFT side of the board (X < boardX - boardT/2)
-                    const blockX = boardX - boardT/2 - w/2;
-                    let block = box(w + 4, d + 4, h + 4).translate([blockX, 0, zPos]);
-                    let cutout = box(w, d, h).translate([blockX + 1, 0, zPos]); 
-                    // +1 pushes cutout away from the board to leave a solid back wall
-                    pockets.push(block);
-                    cutouts.push(cutout);
-                    return cutout;
-                };
+                let l298nCut = box(l29h, l29w, l29d).translate([boardX - boardT/2 - l29h/2, 0, 5 + l29d/2]);
+                let esp32Cut = box(espH, espW, espD).translate([boardX - boardT/2 - espH/2, 0, 5 + l29d + 6 + espD/2]);
+                let tp4056Cut = box(chH, chW, chD).translate([boardX - boardT/2 - chH/2, 0, 5 + l29d + 6 + espD + 6 + chD/2]);
+                let batVis = box(batD, batW, batH).translate([batPocketX, 0, 40]);
 
-                // Battery Pocket (18650) - Placed at the very bottom of the sled for weight
-                const batZ = 5 + batLen/2 + 2;
-                const batBlockX = boardX - boardT/2 - (batDia/2 + 2);
-                let batBlock = box(batDia + 4, batDia + 6, batLen + 4).translate([batBlockX, 0, batZ]);
-                let batCut = cyl(batDia/2, batLen).translate([batBlockX + 1, 0, batZ]);
-                pockets.push(batBlock);
-                cutouts.push(batCut);
+                // 3. TOP CAP (Grips only on the outside edge)
+                let tBodyCyl = cyl(outerR + 2, 1);
+                let tBodyBox = box(solW + 10, solD + 10, 1).translate([solX, 0, 0]);
+                let tCapBody = tBodyCyl.add(tBodyBox).translate([0, 0, 0.5]);
 
-                // Stacking components upwards along Z
-                let zCur = 5 + batLen + 4 + 2; 
-                addPocket(l29h, l29w, l29d, zCur + l29d/2); // Swapped axes to fit flat against board
-                zCur += l29d + 4 + 2;
-                addPocket(espH, espW, espD, zCur + espD/2);
-                zCur += espD + 4 + 2;
-                addPocket(chH, chW, chD, zCur + chD/2);
+                let shellOuterShape = cyl(outerR, 5).add(box(solW + 6, solD + 6, 5).translate([solX, 0, 0]));
+                let shellOuterExpanded = cyl(outerR + 2, 5).add(box(solW + 10, solD + 10, 5).translate([solX, 0, 0]));
+                let tCapOuterLip = shellOuterExpanded.subtract(shellOuterShape).translate([0, 0, -2.5]);
+                
+                let topCap = tCapBody.add(tCapOuterLip).translate([0, 0, shellLen]);
 
-                for (let p of pockets) sled = sled.add(p);
-                for (let c of cutouts) sled = sled.subtract(c);
+                // 4. SOLENOID & PAD
+                let solenoidAssembly = box(solW, solD, solH).translate([solX, 0, solHeight + solH/2]).add(cyl(3, stroke).translate([solX, 0, solHeight - (stroke/2) * (1-expl)]));
+                
+                let padBody = cyl(padD/2, padH);
+                // Create a true hexagon pocket by intersecting three rotated boxes
+                let hex1 = box(nutD, padD + 5, nutH);
+                let hex2 = box(nutD, padD + 5, nutH).rotate([0, 0, 60]);
+                let hex3 = box(nutD, padD + 5, nutH).rotate([0, 0, 120]);
+                let padHole = hex1.intersect(hex2).intersect(hex3).translate([0, 0, (padH - nutH)/2 + 0.1]); 
+                let pad = padBody.subtract(padHole);
+                let padVis = pad.translate([solX, 0, solHeight - stroke * (1-expl) + nutH - padH/2]);
 
-                // 3. TOP CAP
-                let tCapOuter = cyl(outerR, 4).translate([0, 0, 2]);
-                let tCapInner = cyl(innerR - 0.2, 4).translate([0, 0, -2]);
-                let topCap = tCapOuter.add(tCapInner).translate([0, 0, shellLen + 2]);
+                // 5. HOLSTER (Pocket at bottom Z = 0, ring at top dynamically placed)
+                let holster = null;
+                let pbVis = null;
+                if (hasHolster) {
+                    let rOuterCyl = cyl(outerR + 0.4 + ringThick, 30);
+                    let rOuterBulge = box(solW + 6.8 + ringThick * 2, solD + 6.8 + ringThick * 2, 30).translate([solX, 0, 0]);
 
-                // 4. SOLENOID DUMMY (For Visualization only)
-                let solVis = box(solW, solD, solH).translate([solX, 0, 5 + solH/2]);
-                let axleVis = cyl(3, stroke + solH).translate([solX, 0, 5 + (stroke + solH)/2]);
-                let solenoidAssembly = solVis.add(axleVis);
+                    // Bonding block on positive Y side
+                    let rOuterBond = box(outY, 25, 30).translate([0, 25, 0]);
+                    let rOuterProfile = rOuterCyl.add(rOuterBulge).add(rOuterBond);
 
-                currentModels = { shell, sled, topCap };
+                    let rInnerCyl = cyl(outerR + 0.4, 32);
+                    let rInnerBulge = box(solW + 6.8, solD + 6.8, 32).translate([solX, 0, 0]);
+                    let leftTrackCut  = box(trackW_X + 0.8, trackW_Y_actual + 0.8, 32).translate([trackX, leftTrackCenterY,  0]);
+                    let rightTrackCut = box(trackW_X + 0.8, trackW_Y_actual + 0.8, 32).translate([trackX, rightTrackCenterY, 0]);
+                    let rInnerProfile = rInnerCyl.add(rInnerBulge).add(leftTrackCut).add(rightTrackCut);
 
-                // RENDER
+                    // Translate ring to shellLen - 21 (so it sits exactly 1mm under the lid outer lip which goes down to Z = shellLen - 5)
+                    let ring = rOuterProfile.subtract(rInnerProfile).translate([0, 0, shellLen - 21]);
+                    
+                    // Holster pocket starts at Z = 0
+                    let holsterPocketZ = 0;
+                    holster = ring.add(box(outY, outX, outZ).translate([0, boxY, holsterPocketZ + outZ/2]).subtract(box(inY, inX, inZ).translate([0, boxY, holsterPocketZ + 3 + inZ/2])));
+                    
+                    // Power Bank mesh (aligned with the pocket on positive Y, Z = 0)
+                    pbVis = box(pbW, pbD, pbH).translate([0, boxY, holsterPocketZ + 3 + pbH/2]);
+
+                    [rOuterCyl, rOuterBulge, rOuterBond, rOuterProfile, rInnerCyl, rInnerBulge, rInnerProfile, leftTrackCut, rightTrackCut].forEach(m => m.delete());
+                }
+
+                currentModels = { shell, sled, topCap, solenoid: solenoidAssembly, pad, battery: batVis, l298n: l298nCut, esp32: esp32Cut, tp4056: tp4056Cut, holster, pb: pbVis };
+
                 const toMesh = (model, color, op, offset=[0,0,0]) => {
                     const m = model.getMesh();
                     const g = new THREE.BufferGeometry();
                     g.setAttribute('position', new THREE.Float32BufferAttribute(m.vertProperties, 3));
                     g.setIndex(new THREE.Uint32BufferAttribute(m.triVerts, 1));
                     g.computeVertexNormals();
-                    const mat = new THREE.MeshPhysicalMaterial({ color, transparent:true, opacity:op, metalness:0.4, roughness:0.2, side:THREE.DoubleSide });
-                    const mesh = new THREE.Mesh(g, mat);
-                    mesh.position.set(...offset); scene.add(mesh);
+                    const mesh = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color, transparent:true, opacity:op, metalness:0.4, roughness:0.2, side:THREE.DoubleSide }));
+                    mesh.position.set(...offset); mainGroup.add(mesh);
                     return mesh;
                 };
 
-                currentMeshes.shell = toMesh(shell, 0x10b981, 0.25);
-                currentMeshes.sled  = toMesh(sled,  0x3b82f6, 1.0, [0, 0, expl*120]);
-                currentMeshes.topCap = toMesh(topCap, 0x10b981, 0.8, [0, 0, expl*180]);
-                
-                // Visualization dummy
-                currentMeshes.solenoid = toMesh(solenoidAssembly, 0xf472b6, 0.6, [expl*40, 0, 0]);
-                currentMeshes.solenoid.material.emissive = new THREE.Color(0xf472b6);
-                currentMeshes.solenoid.material.emissiveIntensity = 0.3;
+                currentMeshes.shell = toMesh(shell, 0x10b981, 0.4);
+                currentMeshes.sled = toMesh(sled, 0x3b82f6, 1.0, [0, 0, expl*120]);
+                currentMeshes.topCap = toMesh(topCap, 0xf43f5e, 1.0, [0, 0, expl*240]);
+                currentMeshes.solenoid = toMesh(solenoidAssembly, 0xef4444, 1.0, [0, 0, expl*120]);
+                currentMeshes.battery = toMesh(batVis, 0xfbbf24, 1.0, [-expl*80, 0, 0]);
+                currentMeshes.l298n = toMesh(l298nCut, 0x3b82f6, 1.0, [0, 0, expl*120]);
+                currentMeshes.esp32 = toMesh(esp32Cut, 0xa855f7, 1.0, [0, 0, expl*120]);
+                currentMeshes.tp4056 = toMesh(tp4056Cut, 0x14b8a6, 1.0, [0, 0, expl*120]);
+                if (hasHolster) {
+                    currentMeshes.holster = toMesh(holster, 0xf97316, 0.9, [0, expl*80, 0]);
+                    currentMeshes.pb = toMesh(pbVis, 0xec4899, 1.0, [0, expl*80, 0]);
+                }
+                currentMeshes.pad = toMesh(padVis, 0x22d3ee, 1.0, [0, 0, -expl*60]);
 
-                // Cleanup wasm handles
-                sOuter.delete(); sInner.delete(); baseFlare.delete(); trackCut.delete(); solHole.delete();
-                tCapOuter.delete(); tCapInner.delete(); solVis.delete(); axleVis.delete(); solenoidAssembly.delete();
-                for (let p of pockets) p.delete();
-                for (let c of cutouts) c.delete();
-            } catch (e) {
-                console.error("Modeling Error:", e);
-            }
+                updateVisibility();
+                [baseFlare, sOuter, solBulge, tBodyCyl, tBodyBox, shellOuterShape, shellOuterExpanded, tCapBody, tCapOuterLip, padBody, hex1, hex2, hex3, padHole, leftTrack, rightTrack, batPocketOuter, batPocketInner].forEach(m => m.delete());
+            } catch (e) { console.error("Modeling Error:", e); }
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
+        function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); }
 
         window.addEventListener('resize', () => {
             camera.aspect = (window.innerWidth - 420) / window.innerHeight;
@@ -404,8 +610,36 @@
         });
 
         document.getElementById('dl-shell').onclick = () => exportSTL(currentModels.shell, "TableKnocker_Shell");
-        document.getElementById('dl-sled').onclick  = () => exportSTL(currentModels.sled, "TableKnocker_Sled");
-        document.getElementById('dl-cap').onclick  = () => exportSTL(currentModels.topCap, "TableKnocker_TopCap");
+        document.getElementById('dl-sled').onclick = () => exportSTL(currentModels.sled, "TableKnocker_Sled");
+        document.getElementById('dl-cap').onclick = () => exportSTL(currentModels.topCap, "TableKnocker_TopCap");
+        document.getElementById('dl-holster').onclick = () => {
+            if (currentModels.holster) exportSTL(currentModels.holster, "TableKnocker_Holster");
+        };
+        document.getElementById('dl-pad').onclick = () => exportSTL(currentModels.pad, "TableKnocker_Pad");
+        document.getElementById('view-esp32').onclick = () => { viewESP32 = !viewESP32; updateVisibility(); };
+        document.getElementById('view-tp4056').onclick = () => { viewTP4056 = !viewTP4056; updateVisibility(); };
+        document.getElementById('view-holster').onclick = () => { viewHolster = !viewHolster; updateVisibility(); };
+        document.getElementById('view-pb').onclick = () => { viewPB = !viewPB; updateVisibility(); };
+        document.getElementById('view-pad').onclick = () => { viewPad = !viewPad; updateVisibility(); };
+        
+        document.getElementById('dl-all').onclick = () => {
+            if (!currentModels.shell) return;
+            let sledMoved = currentModels.sled.translate([80, 0, 0]);
+            let capMoved = currentModels.topCap.translate([-80, 0, 0]);
+            let holsterMoved = currentModels.holster ? currentModels.holster.translate([0, 100, 0]) : null;
+            let padMoved = currentModels.pad.translate([0, -90, 0]);
+            
+            let allParts = currentModels.shell.add(sledMoved).add(capMoved);
+            if (holsterMoved) allParts = allParts.add(holsterMoved);
+            allParts = allParts.add(padMoved);
+
+            exportSTL(allParts, "TableKnocker_FullAssembly");
+            sledMoved.delete();
+            capMoved.delete();
+            if (holsterMoved) holsterMoved.delete();
+            padMoved.delete();
+            allParts.delete();
+        };
 
         init();
     </script>

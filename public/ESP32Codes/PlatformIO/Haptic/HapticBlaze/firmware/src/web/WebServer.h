@@ -13,6 +13,7 @@ class WebServer {
 public:
     bool begin(core::Engine* engine, Config* config, core::AudioAnalyzer* audio);
     void stop();
+    void broadcastState();  // push current engine state to all WS clients
 
 private:
     void mountStatic_();

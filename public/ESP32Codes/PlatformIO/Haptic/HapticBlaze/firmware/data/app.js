@@ -10,37 +10,100 @@ async function api(url, opts = {}) {
   if (!r.ok) throw new Error(`${url}: ${r.status}`);
   return r.json();
 }
-const patchState  = (p)   => api('/json/state',  { method: 'POST', body: JSON.stringify(p) }).then(s => { State.state = s; renderAll(); });
-const saveConfig  = (p)   => api('/json/config', { method: 'POST', body: JSON.stringify(p) });
+
+// Optimistic: update local state immediately, then send to device.
+function optimisticPatch(patch) {
+  // Merge into local state instantly for snappy UI.
+  if (State.state) {
+    if ('on' in patch) State.state.on = patch.on;
+    if ('mute' in patch) State.state.mute = patch.mute;
+    if ('intensity' in patch) State.state.intensity = patch.intensity;
+    if ('speed' in patch) State.state.speed = patch.speed;
+    if ('pattern' in patch) State.state.pattern = patch.pattern;
+  }
+  renderAll();
+  // Fire-and-forget to device. WS broadcast will confirm/correct.
+  api('/json/state', { method: 'POST', body: JSON.stringify(patch) }).catch(() => {});
+}
+const saveConfig = (p) => api('/json/config', { method: 'POST', body: JSON.stringify(p) });
+
+// ---------- Throttle utility ----------
+function throttle(fn, ms) {
+  let last = 0, timer = null;
+  return function(...args) {
+    const now = Date.now();
+    if (now - last >= ms) {
+      last = now;
+      fn.apply(this, args);
+    } else {
+      clearTimeout(timer);
+      timer = setTimeout(() => { last = Date.now(); fn.apply(this, args); }, ms - (now - last));
+    }
+  };
+}
 
 // ---------- routing ----------
 function route() {
-  const tab = (location.hash.replace('#/', '') || 'play');
+  let tab = (location.hash.replace('#/', '') || 'play');
+  // Redirect old library hash to play.
+  if (tab === 'library') { location.hash = '#/play'; return; }
   $$('[data-view]').forEach(el => el.hidden = el.dataset.view !== tab);
   $$('.tabbar a').forEach(a => a.setAttribute('aria-selected', a.dataset.tab === tab ? 'true' : 'false'));
   if (tab === 'device')  refreshDiag();
   if (tab === 'setup')   renderSetup();
-  if (tab === 'library') renderLibrary();
+  if (tab === 'play')    renderPlayGrid();
 }
 window.addEventListener('hashchange', route);
 
-// ---------- play ----------
+// ---------- play (merged with library) ----------
 function renderPlayGrid() {
+  const q = ($('#patternSearch')?.value || '').toLowerCase();
   const grid = $('#pattern-grid');
   grid.innerHTML = '';
   const current = State.state && State.state.pattern;
+
+  // Split into standard and audio-reactive.
+  const standard = [];
+  const reactive = [];
   for (const p of State.patterns) {
-    const el = document.createElement('button');
-    el.className = 'tile' + (p.id === current ? ' active' : '');
-    el.innerHTML = `<h3>${p.id}</h3><p>${p.category}</p>`;
-    el.onclick = () => patchState({ pattern: p.id, on: true });
-    grid.appendChild(el);
+    const hay = (p.id + ' ' + p.category + ' ' + (p.tags || '') + ' ' + (p.description || '')).toLowerCase();
+    if (q && !hay.includes(q)) continue;
+    if (p.usesAudio) reactive.push(p);
+    else standard.push(p);
   }
+
+  // Render standard patterns.
+  for (const p of standard) {
+    grid.appendChild(makeTile(p, current, false));
+  }
+
+  // Reactive divider.
+  if (reactive.length > 0) {
+    const divider = document.createElement('div');
+    divider.className = 'reactive-divider';
+    divider.innerHTML = '<span>🎵 Music Reactive</span>';
+    grid.appendChild(divider);
+    for (const p of reactive) {
+      grid.appendChild(makeTile(p, current, true));
+    }
+  }
+
   renderParamsPanel();
+}
+
+function makeTile(p, current, isAudio) {
+  const el = document.createElement('button');
+  el.className = 'tile'
+    + (p.id === current ? ' active' : '')
+    + (isAudio ? ' audio-tile' : '');
+  el.innerHTML = `<div class="playing-dot"></div><h3>${p.id}</h3><p>${p.category}</p>${p.description ? `<small>${p.description}</small>` : ''}`;
+  el.onclick = () => optimisticPatch({ pattern: p.id, on: true });
+  return el;
 }
 
 function renderParamsPanel() {
   const wrap = $('#paramsPanel');
+  if (!wrap) return;
   const current = State.state && State.state.pattern;
   const meta = State.patterns.find(p => p.id === current);
   if (!meta || !meta.params || !meta.params.length) { wrap.hidden = true; return; }
@@ -53,9 +116,12 @@ function renderParamsPanel() {
     </label>
   `).join('');
   $$('input[data-pid]', wrap).forEach(inp => {
+    const throttledSend = throttle((val) => {
+      optimisticPatch({ params: { [inp.dataset.pid]: val } });
+    }, 100);
     inp.oninput = () => {
       inp.nextElementSibling.textContent = inp.value;
-      patchState({ params: { [inp.dataset.pid]: parseFloat(inp.value) } });
+      throttledSend(parseFloat(inp.value));
     };
   });
 }
@@ -69,26 +135,7 @@ function applyStatePill() {
   pill.dataset.state = usesAudio ? 'audio' : 'playing';
 }
 
-// ---------- library ----------
-function renderLibrary() {
-  const q = ($('#librarySearch').value || '').toLowerCase();
-  const grid = $('#library-grid');
-  grid.innerHTML = '';
-  for (const p of State.patterns) {
-    const hay = (p.id + ' ' + p.category + ' ' + (p.tags || '') + ' ' + (p.description || '')).toLowerCase();
-    if (!hay.includes(q)) continue;
-    const el = document.createElement('button');
-    el.className = 'tile';
-    el.innerHTML = `<h3>${p.id}</h3><p>${p.category}</p><small>${p.description || ''}</small>`;
-    el.onclick = () => { patchState({ pattern: p.id, on: true }); location.hash = '#/play'; };
-    grid.appendChild(el);
-  }
-}
-
 // ---------- setup ----------
-// Each driver has a "slot map" — how a motor's (speed, forward, backward) maps
-// into the firmware's flat 8-slot pins[] array. Motor N uses three slots.
-// For mini-style drivers the speed slot is -1 (no separate PWM pin).
 const DRIVER_SLOTS = {
   1: { name: 'L298N',        maxMotors: 2, slots: [[0,1,2],[3,4,5]],   labels: { speed:'Speed (ENA, optional)', fwd:'Forward (IN1)',  rev:'Backward (IN2)' } },
   2: { name: 'DRV8833',      maxMotors: 2, slots: [[-1,0,1],[-1,2,3]], labels: { speed:null, fwd:'Forward (AIN1)', rev:'Backward (AIN2)' } },
@@ -98,14 +145,13 @@ const DRIVER_SLOTS = {
 };
 
 const FALLBACK_GPIOS = [0,1,3,4,5,6,7,10,20,21];
-let GPIO_LIST = FALLBACK_GPIOS.slice();   // populated immediately, refreshed from /json/gpios
+let GPIO_LIST = FALLBACK_GPIOS.slice();
 
 async function loadGpios() {
   try {
     const r = await api('/json/gpios');
     if (Array.isArray(r.available) && r.available.length) GPIO_LIST = r.available;
   } catch (e) {
-    // keep fallback
     console.warn('gpios endpoint unavailable, using fallback', e.message);
   }
   return GPIO_LIST;
@@ -122,7 +168,6 @@ function gpioOptions(selected, includeNone) {
 function renderMotorList(driverKind, pins) {
   const def = DRIVER_SLOTS[driverKind];
   const wrap = $('#motorList'); wrap.innerHTML = '';
-  // Decide how many motors are currently populated (any non-(-1) pin in its slot range).
   let motorCount = 0;
   for (let m = 0; m < def.maxMotors; m++) {
     const [s, f, b] = def.slots[m];
@@ -134,7 +179,6 @@ function renderMotorList(driverKind, pins) {
   }
   if (motorCount === 0) motorCount = 1;
   for (let m = 0; m < motorCount; m++) addMotorCard(driverKind, m, pins);
-  // Toggle "Add motor" button visibility.
   $('#btnAddMotor').style.display = motorCount < def.maxMotors ? '' : 'none';
 }
 
@@ -181,7 +225,6 @@ async function renderSetup() {
     : [-1,-1,-1,-1,-1,-1,-1,-1];
   $('#cfgDriver').value = String(cfg.driver.kind);
   $('#cfgPwmHz').value  = cfg.driver.pwmHz || 20000;
-  // Standby pin lives in pins[6].
   const stby = $('#cfgStandby');
   if (stby) stby.innerHTML = gpioOptions(currentPins[6] ?? -1, true);
   renderMotorList(cfg.driver.kind, currentPins);
@@ -202,7 +245,6 @@ $('#btnAddMotor')?.addEventListener('click', () => {
 });
 
 $('#btnSaveCfg')?.addEventListener('click', async () => {
-  // Pick up the Standby pin from its dropdown.
   const stby = $('#cfgStandby');
   if (stby) currentPins[6] = parseInt(stby.value);
   const body = {
@@ -221,10 +263,9 @@ $('#btnSaveCfg')?.addEventListener('click', async () => {
 $('#btnTestBuzz')?.addEventListener('click', async () => {
   $('#cfgStatus').textContent = 'Buzzing for 1.5s…';
   try {
-    // Query-param style — no body, sidesteps content-type quirks.
     const r = await fetch('/json/buzz?ms=200&intensity=0.8', { method: 'POST' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    setTimeout(() => patchState({ on: false }).catch(()=>{}), 1500);
+    setTimeout(() => optimisticPatch({ on: false }), 1500);
     $('#cfgStatus').textContent = 'Sent. If you felt nothing: check that the driver is powered, GND is shared with the ESP32, and Save + Reboot was done after wiring changed.';
   } catch (e) {
     $('#cfgStatus').textContent = 'Buzz failed: ' + e.message;
@@ -238,35 +279,53 @@ async function refreshDiag() {
     $('#diag').textContent = JSON.stringify(State.diag, null, 2);
   } catch (e) { $('#diag').textContent = 'diag unreachable: ' + e.message; }
 }
-$('#btnReboot')?.addEventListener('click', () => patchState({ reboot: true }));
+$('#btnReboot')?.addEventListener('click', () => optimisticPatch({ reboot: true }));
 
 // ---------- buttons ----------
-$('#btnOn')   .addEventListener('click', () => patchState({ on: true }));
-$('#btnOff')  .addEventListener('click', () => patchState({ on: false }));
-$('#btnMute') .addEventListener('click', () => patchState({ mute: !(State.state && State.state.mute) }));
-$('#intensity').addEventListener('input', e => patchState({ intensity: parseFloat(e.target.value) }));
-$('#speed')    .addEventListener('input', e => patchState({ speed: parseFloat(e.target.value) }));
-$('#librarySearch')?.addEventListener('input', renderLibrary);
+$('#btnOn')   .addEventListener('click', () => optimisticPatch({ on: true }));
+$('#btnOff')  .addEventListener('click', () => optimisticPatch({ on: false }));
+$('#btnMute') .addEventListener('click', () => optimisticPatch({ mute: !(State.state && State.state.mute) }));
+
+// Throttled sliders — send at most every 100ms.
+const throttledIntensity = throttle(v => optimisticPatch({ intensity: v }), 100);
+const throttledSpeed     = throttle(v => optimisticPatch({ speed: v }), 100);
+$('#intensity').addEventListener('input', e => throttledIntensity(parseFloat(e.target.value)));
+$('#speed')    .addEventListener('input', e => throttledSpeed(parseFloat(e.target.value)));
+
+$('#patternSearch')?.addEventListener('input', renderPlayGrid);
 
 // ---------- websocket ----------
 function openWebSocket() {
+  const wsInd = $('#ws-indicator');
   let ws;
   try { ws = new WebSocket(`ws://${location.host}/ws`, 'hapticblaze.v1'); }
-  catch { setTimeout(openWebSocket, 2000); return; }
-  ws.addEventListener('open',  () => ws.send(JSON.stringify({ type: 'subscribe', topics: ['state'] })));
-  ws.addEventListener('close', () => setTimeout(openWebSocket, 1500));
+  catch { if (wsInd) wsInd.className = 'disconnected'; setTimeout(openWebSocket, 2000); return; }
+
+  ws.addEventListener('open', () => {
+    if (wsInd) wsInd.className = 'connected';
+    ws.send(JSON.stringify({ type: 'subscribe', topics: ['state'] }));
+  });
+  ws.addEventListener('close', () => {
+    if (wsInd) wsInd.className = 'disconnected';
+    setTimeout(openWebSocket, 1500);
+  });
+  ws.addEventListener('error', () => {
+    if (wsInd) wsInd.className = 'disconnected';
+  });
   ws.addEventListener('message', ev => {
     try {
       const m = JSON.parse(ev.data);
-      if (m.type === 'state') { State.state = m.data; renderAll(); }
+      if (m.type === 'state' && m.data) {
+        State.state = m.data;
+        renderAll();
+      }
     } catch {}
   });
 }
 
 function renderAll() {
   applyStatePill();
-  if (!$('[data-view="play"]').hidden)    renderPlayGrid();
-  if (!$('[data-view="library"]').hidden) renderLibrary();
+  if (!$('[data-view="play"]').hidden) renderPlayGrid();
 }
 
 (async function init() {

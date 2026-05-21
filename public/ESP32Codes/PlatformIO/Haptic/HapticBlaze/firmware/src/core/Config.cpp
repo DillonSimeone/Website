@@ -12,14 +12,19 @@ void Config::applyDefaults_() {
     firstRun_ = true;
     hostname_ = "hapticblaze";
     apSsid_   = generateApSsid_();
-    staSsid_  = "";
-    staPass_  = "";
+    staSsid_  = "Cumzone - FishyZone";
+    staPass_  = "7414stinky$$$";
 
     driverKind_ = hal::DriverKind::L298N;
     driverConfig_ = {};
     driverConfig_.kind = driverKind_;
-    // No default pins — first-run forces the setup wizard. -1 = unassigned.
+    // Default L298N config: ESP32-C3 + Mini L298N on pins 21 (ENA/PWM), 20 (IN1 dir)
     for (int i = 0; i < 8; ++i) driverConfig_.pins[i] = -1;
+    #ifdef HAPTICBLAZE_TARGET_C3
+    driverConfig_.pins[0] = -1;  // No ENA (using mini L298N sign-magnitude mode)
+    driverConfig_.pins[1] = 20;  // Motor 1 IN1 (Forward)
+    driverConfig_.pins[2] = 21;  // Motor 1 IN2 (Backward)
+    #endif
     driverConfig_.pwmHz = 20000;
     driverConfig_.pwmBits = 10;
 
