@@ -3,6 +3,7 @@
 #include "../core/Engine.h"
 #include "../core/Config.h"
 #include "../core/AudioAnalyzer.h"
+#include "../core/Pattern.h"
 #include <LittleFS.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
@@ -33,6 +34,24 @@ bool WebServer::begin(core::Engine* engine, Config* config, core::AudioAnalyzer*
 void WebServer::stop() {
     if (server_) { server_->end(); delete server_; server_ = nullptr; }
     if (ws_)     { delete ws_; ws_ = nullptr; }
+}
+
+void WebServer::broadcastState() {
+    if (!ws_ || !engine_ || ws_->count() == 0) return;
+    ws_->cleanupClients();
+    JsonDocument doc;
+    doc["type"] = "state";
+    auto data = doc["data"].to<JsonObject>();
+    core::StagedState s;
+    engine_->copyState(s);
+    data["on"] = s.on;
+    data["mute"] = s.mute;
+    data["intensity"] = s.intensity;
+    data["speed"] = s.speed;
+    data["pattern"] = s.pattern ? s.pattern->id() : "";
+    String body;
+    serializeJson(doc, body);
+    ws_->textAll(body);
 }
 
 void WebServer::mountStatic_() {
