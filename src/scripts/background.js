@@ -45,8 +45,13 @@ function draw() {
     container.appendChild(circleElement);
 
     const circle = document.querySelector('.circle');
-    const polyPoints = paths.map(poly => {
+    const radius = circle ? circle.clientWidth / 2 : 50;
+
+    paths.forEach(poly => {
         poly.classList.add('poly', 'fade');
+    });
+
+    const polyPoints = paths.map(poly => {
         const rect = poly.getBoundingClientRect();
         return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     });
@@ -61,11 +66,9 @@ function draw() {
             window.requestAnimationFrame(() => {
                 frameCount++;
                 if (frameCount % 2 !== 0) { ticking = false; return; }
-                const currentCircle = document.querySelector('.circle');
-                if (!currentCircle) { ticking = false; return; }
-                const radius = currentCircle.clientWidth / 2;
+                if (!circle) { ticking = false; return; }
                 const center = { x: e.clientX, y: e.clientY };
-                currentCircle.style.transform = `translate(${center.x - radius}px, ${center.y - radius}px)`;
+                circle.style.transform = `translate(${center.x - radius}px, ${center.y - radius}px)`;
                 for (let i = 0; i < polyPoints.length; i++) {
                     const isInCircle = detectPointInCircle(polyPoints[i], radius, center);
                     if (isInCircle && !polyActiveStates[i]) {

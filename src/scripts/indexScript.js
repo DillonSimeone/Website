@@ -393,18 +393,26 @@ function injectFooters() {
         section.appendChild(footer);
     });
 
-    fetch('https://api.github.com/repos/DillonSimeone/Website/commits?per_page=1')
-        .then(res => res.json())
-        .then(data => {
-            if (data?.[0]?.commit?.committer?.date) {
-                const date = new Date(data[0].commit.committer.date);
-                const formattedDate = date.toLocaleDateString('en-US', {
-                    year: 'numeric', month: 'long', day: 'numeric'
-                });
-                document.querySelectorAll('.last-updated').forEach(el => el.textContent = formattedDate);
-            }
-        })
-        .catch(() => document.querySelectorAll('.last-updated').forEach(el => el.textContent = 'Recently'));
+    const fetchLastCommit = () => {
+        fetch('https://api.github.com/repos/DillonSimeone/Website/commits?per_page=1')
+            .then(res => res.json())
+            .then(data => {
+                if (data?.[0]?.commit?.committer?.date) {
+                    const date = new Date(data[0].commit.committer.date);
+                    const formattedDate = date.toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
+                    document.querySelectorAll('.last-updated').forEach(el => el.textContent = formattedDate);
+                }
+            })
+            .catch(() => document.querySelectorAll('.last-updated').forEach(el => el.textContent = 'Recently'));
+    };
+
+    if (document.readyState === 'complete') {
+        setTimeout(fetchLastCommit, 2000);
+    } else {
+        window.addEventListener('load', () => setTimeout(fetchLastCommit, 2000));
+    }
 }
 
 /*=======================================================
