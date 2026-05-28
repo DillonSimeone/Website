@@ -1,5 +1,3 @@
-window.initialInnerWidth = window.innerWidth;
-
 /*=======================================================
                 Theme Management
 =========================================================*/
@@ -222,12 +220,10 @@ function getUrlVars() {
 
 function setUp() {
     const page = getUrlVars().page;
-    reveal('loading', '', 30);
-
     // Handle resize in JS instead of HTML
     window.addEventListener('resize', () => {
         if (typeof window.redraw === 'function') {
-            window.redraw(true);
+            window.redraw();
         }
     });
 
@@ -242,7 +238,7 @@ function setUp() {
         const targetBtn = document.querySelector(`#${page}`);
         if (targetBtn) targetBtn.click();
     } else {
-        reveal('elevatorPitch', 'LandingPage');
+        reveal('elevatorPitch', 'LandingPage', 0);
     }
 
     generateDynamicNavs();
