@@ -71,8 +71,11 @@ void housekeepingTask(void*) {
         if (WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
             // STA dropped — raise AP fallback alongside.
             WiFi.mode(WIFI_AP_STA);
+            IPAddress apIP(192, 168, 4, 1);
+            WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
             WiFi.softAP(gConfig.apSsid().c_str());
             gStatusLed.apMode();
+            gPortal.begin(WiFi.softAPIP());
         }
         // Broadcast engine state to WebSocket clients every ~200ms (every 2nd tick).
         if (++broadcastDiv >= 2) {
@@ -86,13 +89,13 @@ void housekeepingTask(void*) {
 bool bringUpWifi() {
     WiFi.persistent(false);
     WiFi.setHostname(gConfig.hostname().c_str());
-    if (!gConfig.staSsid().isEmpty()) {
+    if (gConfig.staEnabled() && !gConfig.staSsid().isEmpty()) {
         gStatusLed.breathing();
         WiFi.mode(WIFI_STA);
         WiFi.setTxPower(WIFI_POWER_8_5dBm);
         Serial.printf("\n\n>>> Connecting to WiFi SSID: '%s', Password: '%s' <<<\n\n", gConfig.staSsid().c_str(), gConfig.staPass().c_str());
         WiFi.begin(gConfig.staSsid().c_str(), gConfig.staPass().c_str());
-        uint32_t until = millis() + 3000; // Give it 3 seconds to connect initially
+        uint32_t until = millis() + 8000; // 8 seconds connection timeout
         while (WiFi.status() != WL_CONNECTED && millis() < until) {
             delay(50);
         }
@@ -102,9 +105,15 @@ bool bringUpWifi() {
             return true;
         }
     }
+    WiFi.disconnect(true, true);
+    WiFi.mode(WIFI_OFF);
+    delay(100);
     WiFi.mode(WIFI_AP);
+    WiFi.setTxPower(WIFI_POWER_19_5dBm); // Restoring standard Tx Power so the AP signal is strong/visible
+    IPAddress apIP(192, 168, 4, 1);
+    WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
     WiFi.softAP(gConfig.apSsid().c_str());
-    Serial.printf("\n\n>>> WiFi connection FAILED. Running in AP Mode. softAP IP: %s <<<\n\n", WiFi.softAPIP().toString().c_str());
+    Serial.printf("\n\n>>> Running in AP Mode. SSID: '%s', softAP IP: %s <<<\n\n", gConfig.apSsid().c_str(), WiFi.softAPIP().toString().c_str());
     gStatusLed.apMode();
     return false;
 }

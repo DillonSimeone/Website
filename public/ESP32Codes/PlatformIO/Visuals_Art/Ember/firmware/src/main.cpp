@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncWebSocket.h>
 #include <ESPmDNS.h>
@@ -25,10 +26,10 @@
 //   2 = MAX4466 (analog, ADC1 channel, GPIO 0–4 only on ESP32-C3)
 //
 struct Settings {
-    int   pixelPin    = 4;
+    int   pixelPin    = 5;
     int   pixelCount  = 30;
     int   brightness  = 128;
-    char  hostname[32] = "ember";
+    char  hostname[32] = "ember4";
     char  wifiSSID[64] = "";
     char  wifiPass[64] = "";
 
@@ -45,6 +46,7 @@ struct Settings {
 // ─── Globals ─────────────────────────────────────────────────────────────────
 AsyncWebServer  server(80);
 AsyncWebSocket  ws("/ws");
+static DNSServer       dnsServer;
 CRGB*           leds = nullptr;
 volatile float  g_fps = 0.0f;
 String          g_currentName = "Untitled";
@@ -1343,9 +1345,40 @@ static void setupWiFi() {
         }
     }
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(settings.hostname, "ember");
+    IPAddress apIP(192, 168, 4, 1);
+    WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+    WiFi.softAP(settings.hostname, "ember123");
+    delay(100); // Give AP interface time to settle
+    dnsServer.start(53, "*", apIP);
     Serial.print("AP "); Serial.println(WiFi.softAPIP());
 }
+
+class CaptiveRequestHandler : public AsyncWebHandler {
+public:
+    CaptiveRequestHandler() {}
+    virtual ~CaptiveRequestHandler() {}
+
+    bool canHandle(AsyncWebServerRequest *request) override {
+        String host = request->host();
+        int colonIndex = host.indexOf(':');
+        if (colonIndex != -1) {
+            host = host.substring(0, colonIndex);
+        }
+        if (host != "192.168.4.1" && host != "emberwearable1.local" && host != String(settings.hostname) + ".local") {
+            return true;
+        }
+        return false;
+    }
+
+    void handleRequest(AsyncWebServerRequest *request) override {
+        AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
+        response->addHeader("Location", "http://192.168.4.1/");
+        response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response->addHeader("Pragma", "no-cache");
+        response->addHeader("Expires", "-1");
+        request->send(response);
+    }
+};
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 void setup() {
@@ -1377,6 +1410,7 @@ void setup() {
 
     ws.onEvent(onWsEvent);
     server.addHandler(&ws);
+    server.addHandler(new CaptiveRequestHandler()); // Redirect external requests to 192.168.4.1
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* r) {
         r->send(LittleFS, "/index.html", "text/html");
@@ -1395,7 +1429,7 @@ void setup() {
         delay(200);
         ESP.restart();
     });
-    server.onNotFound([](AsyncWebServerRequest* r) { r->send(404); });
+    server.onNotFound([](AsyncWebServerRequest* r) { r->redirect("/"); });
     server.begin();
 
     // Render task: priority 2, pinned to the only core (0 on C3).
@@ -1437,6 +1471,7 @@ static void pushAudio() {
 }
 
 void loop() {
+    dnsServer.processNextRequest();
     ws.cleanupClients();
     pushAudio();
     delay(20);

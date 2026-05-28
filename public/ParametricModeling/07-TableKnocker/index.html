@@ -143,6 +143,7 @@
                 <button class="ebtn" data-v="solenoid" style="color:#f472b6;">Solenoid</button>
                 <button class="ebtn" data-v="battery" style="color:#fbbf24;">Battery</button>
                 <button class="ebtn" data-v="l298n" style="color:#ef4444;">L298N</button>
+                <button class="ebtn" data-v="funnel" style="color:#a855f7;">Funnel</button>
                 <button class="dl-btn" id="view-esp32">Toggle ESP32</button>
                 <button class="dl-btn" id="view-tp4056">Toggle TP4056</button>
                 <button class="dl-btn" id="view-holster">Toggle Holster</button>
@@ -157,6 +158,7 @@
             <button class="dl-btn" id="dl-cap">EXPORT TOP CAP (.STL)</button>
             <button class="dl-btn" id="dl-holster">EXPORT HOLSTER (.STL)</button>
             <button class="dl-btn" id="dl-pad">EXPORT PAD (.STL)</button>
+            <button class="dl-btn" id="dl-funnel">EXPORT FUNNEL (.STL)</button>
         </div>
     </div>
 
@@ -197,7 +199,7 @@
 
         let currentMeshes = {};
         let currentModels = {};
-        let activeViews = new Set(['shell', 'sled', 'topCap', 'solenoid', 'battery', 'l298n', 'esp32', 'tp4056']);
+        let activeViews = new Set(['shell', 'sled', 'topCap', 'solenoid', 'battery', 'l298n', 'esp32', 'tp4056', 'funnel']);
         let viewESP32 = true;
         let viewTP4056 = true;
         let viewHolster = true;
@@ -227,7 +229,7 @@
                     document.querySelectorAll('.ebtn').forEach(b => {
                         if (b.dataset.v !== 'all') b.classList.add('active');
                     });
-                    activeViews = new Set(['shell', 'sled', 'topCap', 'solenoid', 'battery', 'l298n', 'esp32', 'tp4056']);
+                    activeViews = new Set(['shell', 'sled', 'topCap', 'solenoid', 'battery', 'l298n', 'esp32', 'tp4056', 'funnel']);
                 } else {
                     if (activeViews.has(v)) {
                         activeViews.delete(v);
@@ -539,6 +541,32 @@
                 let pad = padBody.subtract(padHole);
                 let padVis = pad.translate([solX, 0, solHeight - stroke * (1-expl) + nutH - padH/2]);
 
+                // 4.5 FUNNEL (Separate PVC-style adapter that sleeves over the standoff and receives the solenoid from the top)
+                const socketH = 20;
+                const totalH = solHeight + socketH;
+
+                // Outer body: Box of size (solW + 6) by (solD + 6) by totalH
+                let aOuterBox = box(solW + 6, solD + 6, totalH).translate([solX, 0, totalH/2]);
+                // Intersect with a cylinder of radius (innerR - 0.4) to fit perfectly inside the shell tube
+                let aLimitCyl = cyl(innerR - 0.4, totalH + 2).translate([0, 0, totalH/2]);
+                let adapterBody = aOuterBox.intersect(aLimitCyl);
+                aOuterBox.delete();
+                aLimitCyl.delete();
+
+                // Lower socket cutout to slide OVER the standoff (size solW + 1.4 by solD + 1.4, goes from Z=0 to Z=solHeight)
+                let aPedCut = box(solW + 1.4, solD + 1.4, solHeight + 0.1).translate([solX, 0, solHeight/2]);
+
+                // Upper socket cutout for the solenoid body (size solW + 0.4 by solD + 0.4, goes from Z=solHeight to Z=solHeight+20)
+                let aSolCut = box(solW + 0.4, solD + 0.4, socketH + 2).translate([solX, 0, solHeight + socketH/2]);
+
+                // Flare/funnel entrance at the top of the upper hole for easy insertion
+                let aFlare = cone(solW/2 + 0.2, solW/2 + 2.2, 4.1).translate([solX, 0, solHeight + socketH - 2]);
+
+                let funnel = adapterBody.subtract(aPedCut).subtract(aSolCut).subtract(aFlare);
+                aPedCut.delete();
+                aSolCut.delete();
+                aFlare.delete();
+
                 // 5. HOLSTER (Pocket at bottom Z = 0, ring at top dynamically placed)
                 let holster = null;
                 let pbVis = null;
@@ -569,7 +597,7 @@
                     [rOuterCyl, rOuterBulge, rOuterBond, rOuterProfile, rInnerCyl, rInnerBulge, rInnerProfile, leftTrackCut, rightTrackCut].forEach(m => m.delete());
                 }
 
-                currentModels = { shell, sled, topCap, solenoid: solenoidAssembly, pad, battery: batVis, l298n: l298nCut, esp32: esp32Cut, tp4056: tp4056Cut, holster, pb: pbVis };
+                currentModels = { shell, sled, topCap, solenoid: solenoidAssembly, pad, battery: batVis, l298n: l298nCut, esp32: esp32Cut, tp4056: tp4056Cut, holster, pb: pbVis, funnel };
 
                 const toMesh = (model, color, op, offset=[0,0,0]) => {
                     const m = model.getMesh();
@@ -595,6 +623,7 @@
                     currentMeshes.pb = toMesh(pbVis, 0xec4899, 1.0, [0, expl*80, 0]);
                 }
                 currentMeshes.pad = toMesh(padVis, 0x22d3ee, 1.0, [0, 0, -expl*60]);
+                currentMeshes.funnel = toMesh(funnel, 0xa855f7, 1.0, [0, 0, expl*120]);
 
                 updateVisibility();
                 [baseFlare, sOuter, solBulge, tBodyCyl, tBodyBox, shellOuterShape, shellOuterExpanded, tCapBody, tCapOuterLip, padBody, hex1, hex2, hex3, padHole, leftTrack, rightTrack, batPocketOuter, batPocketInner].forEach(m => m.delete());
@@ -616,6 +645,9 @@
             if (currentModels.holster) exportSTL(currentModels.holster, "TableKnocker_Holster");
         };
         document.getElementById('dl-pad').onclick = () => exportSTL(currentModels.pad, "TableKnocker_Pad");
+        document.getElementById('dl-funnel').onclick = () => {
+            if (currentModels.funnel) exportSTL(currentModels.funnel, "TableKnocker_Funnel");
+        };
         document.getElementById('view-esp32').onclick = () => { viewESP32 = !viewESP32; updateVisibility(); };
         document.getElementById('view-tp4056').onclick = () => { viewTP4056 = !viewTP4056; updateVisibility(); };
         document.getElementById('view-holster').onclick = () => { viewHolster = !viewHolster; updateVisibility(); };
@@ -628,16 +660,19 @@
             let capMoved = currentModels.topCap.translate([-80, 0, 0]);
             let holsterMoved = currentModels.holster ? currentModels.holster.translate([0, 100, 0]) : null;
             let padMoved = currentModels.pad.translate([0, -90, 0]);
+            let funnelMoved = currentModels.funnel ? currentModels.funnel.translate([0, -140, 0]) : null;
             
             let allParts = currentModels.shell.add(sledMoved).add(capMoved);
             if (holsterMoved) allParts = allParts.add(holsterMoved);
             allParts = allParts.add(padMoved);
+            if (funnelMoved) allParts = allParts.add(funnelMoved);
 
             exportSTL(allParts, "TableKnocker_FullAssembly");
             sledMoved.delete();
             capMoved.delete();
             if (holsterMoved) holsterMoved.delete();
             padMoved.delete();
+            if (funnelMoved) funnelMoved.delete();
             allParts.delete();
         };
 
