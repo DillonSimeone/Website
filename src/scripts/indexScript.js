@@ -249,6 +249,7 @@ function setUp() {
     initProjectGalleries();
     initSectionGalleries('embedded', '.grid-item', 0);
     initSectionGalleries('shop', '.grid-item', 0);
+    initYouTubeFacades();
     
     // Start dynamic favicon cycle
     if (document.getElementById('dynamic-favicon')) {
@@ -537,5 +538,63 @@ function closeGallery() {
     }, 400);
 }
 window.closeGallery = closeGallery;
+
+/**
+ * Initializes lazy-loaded YouTube facades to improve boot performance.
+ */
+function initYouTubeFacades() {
+    document.querySelectorAll('.youtube-facade').forEach(facade => {
+        const videoId = facade.getAttribute('data-video-id');
+        const playlistId = facade.getAttribute('data-playlist-id');
+        const title = facade.getAttribute('data-title') || 'YouTube Video';
+
+        if (!videoId && !playlistId) return;
+
+        facade.innerHTML = '';
+        facade.setAttribute('role', 'button');
+        facade.setAttribute('aria-label', `Play video: ${title}`);
+        facade.setAttribute('tabindex', '0');
+
+        // Create preview image
+        const img = document.createElement('img');
+        img.alt = `${title} Preview`;
+        img.loading = 'lazy';
+        img.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+        facade.appendChild(img);
+
+        const loadIframe = () => {
+            const iframe = document.createElement('iframe');
+            iframe.title = title;
+            iframe.frameBorder = '0';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+            iframe.allowFullscreen = true;
+
+            let src = '';
+            if (playlistId) {
+                src = `https://www.youtube-nocookie.com/embed/videoseries?list=${playlistId}&autoplay=1`;
+            } else {
+                src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`;
+            }
+            iframe.src = src;
+
+            // Maintain the same styling/dimensions
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.aspectRatio = facade.style.getPropertyValue('--aspect-ratio') || '4/3';
+            iframe.style.borderRadius = '20px';
+
+            facade.replaceWith(iframe);
+        };
+
+        facade.addEventListener('click', loadIframe);
+        facade.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                loadIframe();
+            }
+        });
+    });
+}
+window.initYouTubeFacades = initYouTubeFacades;
 
 setUp();
