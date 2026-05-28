@@ -1,3 +1,5 @@
+window.initialInnerWidth = window.innerWidth;
+
 /*=======================================================
                 Theme Management
 =========================================================*/
@@ -225,7 +227,7 @@ function setUp() {
     // Handle resize in JS instead of HTML
     window.addEventListener('resize', () => {
         if (typeof window.redraw === 'function') {
-            window.redraw();
+            window.redraw(true);
         }
     });
 
@@ -301,7 +303,7 @@ function generateDynamicNavs() {
             const titleEl = target.querySelector(titleSelector);
             if (!titleEl) return;
 
-            const titleText = titleEl.innerText || titleEl.textContent;
+            const titleText = titleEl.textContent;
             if (!titleText.trim()) return;
 
             if (!titleEl.id) {
@@ -408,11 +410,16 @@ function injectFooters() {
             .catch(() => document.querySelectorAll('.last-updated').forEach(el => el.textContent = 'Recently'));
     };
 
-    if (document.readyState === 'complete') {
-        setTimeout(fetchLastCommit, 2000);
-    } else {
-        window.addEventListener('load', () => setTimeout(fetchLastCommit, 2000));
-    }
+    const triggerFetch = () => {
+        ['mousemove', 'mousedown', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
+            window.removeEventListener(evt, triggerFetch);
+        });
+        fetchLastCommit();
+    };
+
+    ['mousemove', 'mousedown', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
+        window.addEventListener(evt, triggerFetch, { passive: true });
+    });
 }
 
 /*=======================================================
