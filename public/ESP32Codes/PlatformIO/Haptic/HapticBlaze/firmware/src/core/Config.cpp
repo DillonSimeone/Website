@@ -10,6 +10,7 @@ static constexpr const char* kTmpPath = "/config.json.tmp";
 
 void Config::applyDefaults_() {
     firstRun_ = true;
+    staEnabled_ = false;
     hostname_ = "hapticblaze";
     apSsid_   = generateApSsid_();
     staSsid_  = "Cumzone - FishyZone";
@@ -53,6 +54,7 @@ bool Config::load() {
     }
 
     firstRun_ = doc["firstRun"] | true;
+    staEnabled_ = doc["staEnabled"] | false;
     hostname_ = (const char*)(doc["hostname"] | "hapticblaze");
     apSsid_   = (const char*)(doc["apSsid"]   | generateApSsid_().c_str());
     staSsid_  = (const char*)(doc["staSsid"]  | "");
@@ -83,6 +85,7 @@ bool Config::load() {
 bool Config::save() {
     JsonDocument doc;
     doc["firstRun"] = firstRun_;
+    doc["staEnabled"] = staEnabled_;
     doc["hostname"] = hostname_;
     doc["apSsid"]   = apSsid_;
     doc["staSsid"]  = staSsid_;

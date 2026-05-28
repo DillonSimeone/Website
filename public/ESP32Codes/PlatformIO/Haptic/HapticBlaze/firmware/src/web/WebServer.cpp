@@ -10,12 +10,44 @@
 
 namespace hapticblaze::web {
 
+class CaptiveRequestHandler : public AsyncWebHandler {
+public:
+    CaptiveRequestHandler(Config* config) : config_(config) {}
+    virtual ~CaptiveRequestHandler() {}
+
+    bool canHandle(AsyncWebServerRequest *request) const override {
+        String host = request->host();
+        int colonIndex = host.indexOf(':');
+        if (colonIndex != -1) {
+            host = host.substring(0, colonIndex);
+        }
+        if (host != "192.168.4.1" && host != "hapticblaze.local" && host != config_->hostname() + ".local") {
+            return true;
+        }
+        return false;
+    }
+
+    void handleRequest(AsyncWebServerRequest *request) override {
+        AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
+        response->addHeader("Location", "http://192.168.4.1/");
+        response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response->addHeader("Pragma", "no-cache");
+        response->addHeader("Expires", "-1");
+        request->send(response);
+    }
+private:
+    Config* config_;
+};
+
 bool WebServer::begin(core::Engine* engine, Config* config, core::AudioAnalyzer* audio) {
     engine_ = engine;
     config_ = config;
     audio_  = audio;
     server_ = new AsyncWebServer(80);
     ws_     = new AsyncWebSocket("/ws");
+
+    // Wildcard DNS redirect handler registered FIRST
+    server_->addHandler(new CaptiveRequestHandler(config_));
 
     // Order matters: AsyncWebServer iterates handlers in registration order.
     // API + WebSocket + captive probes register FIRST so they match before the

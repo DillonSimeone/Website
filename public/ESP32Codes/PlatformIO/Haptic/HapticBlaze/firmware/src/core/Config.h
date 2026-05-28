@@ -21,6 +21,7 @@ public:
     void markDirty() { dirty_ = true; }
 
     bool firstRun() const { return firstRun_; }
+    bool staEnabled() const { return staEnabled_; }
     String hostname() const { return hostname_; }
     String apSsid()  const { return apSsid_; }
     String staSsid() const { return staSsid_; }
@@ -34,6 +35,7 @@ public:
 
     void setDriverKind(hal::DriverKind k) { driverKind_ = k; markDirty(); }
     void setDriverConfig(const hal::DriverConfig& c) { driverConfig_ = c; markDirty(); }
+    void setStaEnabled(bool e) { staEnabled_ = e; markDirty(); }
     void setStaCredentials(const String& ssid, const String& pass) {
         staSsid_ = ssid; staPass_ = pass; markDirty();
     }
@@ -43,6 +45,7 @@ public:
 
 private:
     bool firstRun_ = true;
+    bool staEnabled_ = false;
     String hostname_ = "hapticblaze";
     String apSsid_;
     String staSsid_;

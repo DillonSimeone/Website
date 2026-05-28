@@ -55,10 +55,20 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 
+let lastQuery = null;
+let lastActivePattern = null;
+
 // ---------- play (merged with library) ----------
-function renderPlayGrid() {
+function renderPlayGrid(forceRedraw = false) {
   const q = ($('#patternSearch')?.value || '').toLowerCase();
   const grid = $('#pattern-grid');
+  
+  if (!forceRedraw && lastQuery === q && grid.children.length > 0) {
+    updateActiveStates();
+    return;
+  }
+  
+  lastQuery = q;
   grid.innerHTML = '';
   const current = State.state && State.state.pattern;
 
@@ -88,7 +98,40 @@ function renderPlayGrid() {
     }
   }
 
-  renderParamsPanel();
+  updateActiveStates();
+}
+
+function updateActiveStates() {
+  const current = State.state && State.state.pattern;
+  
+  // 1. Update pattern button active states in-place.
+  const grid = $('#pattern-grid');
+  const buttons = $$('.tile', grid);
+  buttons.forEach(btn => {
+    const pId = btn.dataset.pid;
+    if (pId === current) {
+      if (!btn.classList.contains('active')) btn.classList.add('active');
+    } else {
+      if (btn.classList.contains('active')) btn.classList.remove('active');
+    }
+  });
+
+  // 2. Update params panel only if pattern changed.
+  if (current !== lastActivePattern) {
+    lastActivePattern = current;
+    renderParamsPanel();
+  }
+
+  // 3. Update main sliders without triggering input events or interrupting drag.
+  const s = State.state || {};
+  const intensityInput = $('#intensity');
+  if (intensityInput && s.intensity !== undefined && !intensityInput.matches(':active')) {
+    intensityInput.value = s.intensity;
+  }
+  const speedInput = $('#speed');
+  if (speedInput && s.speed !== undefined && !speedInput.matches(':active')) {
+    speedInput.value = s.speed;
+  }
 }
 
 function makeTile(p, current, isAudio) {
@@ -96,6 +139,7 @@ function makeTile(p, current, isAudio) {
   el.className = 'tile'
     + (p.id === current ? ' active' : '')
     + (isAudio ? ' audio-tile' : '');
+  el.dataset.pid = p.id;
   el.innerHTML = `<div class="playing-dot"></div><h3>${p.id}</h3><p>${p.category}</p>${p.description ? `<small>${p.description}</small>` : ''}`;
   el.onclick = () => optimisticPatch({ pattern: p.id, on: true });
   return el;
