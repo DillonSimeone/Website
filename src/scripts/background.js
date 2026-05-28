@@ -13,11 +13,12 @@ window.mobilecheck = function () {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
-function draw() {
+function draw(isResize = false) {
     const container = document.querySelector('.trianglify');
     if (!container) return;
 
-    const isMobile = window.innerWidth < 800;
+    const width = isResize ? window.innerWidth : (window.initialInnerWidth || window.innerWidth);
+    const isMobile = width < 800;
     const svgData = isMobile ? mobileSVGData : desktopSVGData;
 
     const tempDiv = document.createElement('div');
@@ -91,9 +92,11 @@ function detectPointInCircle(point, radius, center) {
 }
 
 if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', draw);
+    window.addEventListener('DOMContentLoaded', () => {
+        requestAnimationFrame(() => draw(false));
+    });
 } else {
-    draw();
+    requestAnimationFrame(() => draw(false));
 }
 
 window.redraw = draw;
