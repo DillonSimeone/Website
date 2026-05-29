@@ -55,25 +55,15 @@
                     <p>
                         The name comes from the unit. A <em>haxel</em> is one discrete unit of vibration: tactile
                         intensity and frequency
-                        collapsed into a single addressable value, the same way a pixel is one unit of light. The idea
-                        is borrowed from the
-                        LED world, specifically from <a href="https://www.electromage.com/" target="_blank"
-                            style="color:var(--accent-1); text-decoration:underline;">ElectroMage's Pixelblaze</a>,
-                        which is the gold
-                        standard for scriptable LEDs. It's more expensive hardware, but it drives thousands of pixels,
-                        has a mature compiler,
-                        and is completely battle-tested.
+                        collapsed into a single addressable value, the same way a pixel is one unit of light.
                     </p>
                     <p>
-                        Haxel is the WLED equivalent for the tactile side. The big problem it's solving: haptic
-                        development has always
-                        been a mess of one-off solutions. Every actuator type needed its own firmware—dedicated I2C
-                        register sequences for one driver IC, completely different blocking delay loops for a motor
-                        controller, a new analog circuit every time the hardware changed.
-                        Haxel introduces a
-                        unified Hardware Abstraction Layer so one declarative pattern runs on an LRA, ERM, solenoid, or
-                        voice coil without
-                        touching a single line of C++.
+                        The concept is borrowed from the LED world, specifically from <a
+                            href="https://electromage.com/pixelblaze">ElectroMage's Pixelblaze</a>, which
+                        is the clearest demonstration I've seen of what happens when you stop hardcoding behavior and
+                        build a proper pattern runtime instead. Pixelblaze drives thousands of pixels through a
+                        scriptable compiler running on an ESP32, and the result is an instrument, not a firmware blob.
+                        That's the model Haxel is trying to bring to haptics.
                     </p>
                     <p>
                         <strong>Built at a hackathon.</strong> This came together at the
@@ -84,9 +74,23 @@
                         in my <a href="../AgentArsenal/index.html"
                             style="color:var(--accent-1); text-decoration:underline;">Agent Arsenal</a>, dropped the API
                         key in when the
-                        hackathon started, and let the agent swarm run. They chewed through my past projects, and merged
-                        them all into Haxel. I was expecting a lot of AI slop, but what came out was very useable after
-                        a bit of human polish!
+                        hackathon started, and let the agent swarm run.
+                    </p>
+                    <p>
+                        The swarm had a decade of embedded hardware and firmware work to draw on from my codebase, and
+                        got it to a point where I could finish by hand. Most of it came
+                        from
+                        <a href="https://www.researchgate.net/publication/382625935_GestoLumina_Gesture_interpreted_Light_Sound_and_Haptics_Towards_a_Framework_for_Universal_Music_Design "
+                            style="color:var(--accent-1); text-decoration:underline;">GestoLumina (GeLu)</a>, a
+                        gesture-sensing haptic and LED bracer presented at NIME 2024 and documented in a <a
+                            href="https://dl.acm.org/doi/10.1145/3663547.3746396">group
+                            autoethnography</a> submitted to ACM SIGACCESS, both produced with the Universal Music
+                        Design team
+                        at CymaSpace. That work sits inside a broader practice of Deaf-led assistive music technology:
+                        a guest lecture at <a
+                            href="https://www.pcc.edu/harts/2025/04/21/sonic-interface-designer-dillon-simeone-visits-muc-262/">PCC's
+                            Interface Design</a> course, and ongoing NEA-funded work connecting
+                        haptic and audio-reactive systems to Deaf and Hard-of-Hearing K-12 music education.
                     </p>
 
                     <div class="tech-table-wrapper" style="margin-top: auto;">
@@ -317,7 +321,7 @@
             <section class="doc-card">
                 <h2>3. Audio-Reactive Haptics</h2>
                 <p>
-                    One of the things I'm most excited about here is the audio pipeline. Haxel runs a 256-point FFT on
+                    One of the things I'm most excited about here is the audio pipeline! Haxel runs a 256-point FFT on
                     audio input from
                     either an analog aux port or an I2S microphone, then maps the frequency spectrum directly into
                     vibration envelopes.
