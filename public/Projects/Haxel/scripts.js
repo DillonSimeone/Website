@@ -6,6 +6,9 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
         const el = document.getElementById("tab-" + id);
         if (el) el.style.display = (id === t.dataset.tab) ? "" : "none";
     });
+    if (t.dataset.tab === "audio") {
+        setupMicrophone();
+    }
 }));
 
 // ─── HAPTIC PATTERN ENGINE & DATA ───────────────────────────────────────────
@@ -32,6 +35,40 @@ let frequencyShift = 150; // Hz
 let playbackSpeed = 1.0;
 let isPlaying = true;
 let isMuted = false;
+let smoothedAmp = 0;
+
+// ─── SMARTPHONE HAPTICS API ──────────────────────────────────────────────────
+const phoneHapticsToggle = document.getElementById("phoneHapticsToggle");
+const hapticsStatusText = document.getElementById("hapticsStatusText");
+let isPhoneHapticsEnabled = "vibrate" in navigator;
+let lastPhoneVibrateTime = 0;
+let phoneVibrateActive = false;
+
+if (!("vibrate" in navigator)) {
+    if (phoneHapticsToggle) {
+        phoneHapticsToggle.checked = false;
+        phoneHapticsToggle.disabled = true;
+    }
+    if (hapticsStatusText) {
+        hapticsStatusText.textContent = "Not Supported";
+        hapticsStatusText.style.color = "#ef4444";
+    }
+    isPhoneHapticsEnabled = false;
+} else {
+    if (phoneHapticsToggle) {
+        phoneHapticsToggle.addEventListener("change", (e) => {
+            isPhoneHapticsEnabled = e.target.checked;
+            if (hapticsStatusText) {
+                hapticsStatusText.textContent = isPhoneHapticsEnabled ? "Enabled" : "Disabled";
+                hapticsStatusText.style.color = isPhoneHapticsEnabled ? "#94a3b8" : "#64748b";
+            }
+            if (!isPhoneHapticsEnabled) {
+                navigator.vibrate(0);
+                phoneVibrateActive = false;
+            }
+        });
+    }
+}
 
 // ─── CONTROL BINDINGS ───────────────────────────────────────────────────────
 const brightInput = document.getElementById("bright");
@@ -80,8 +117,29 @@ drvSelect.addEventListener("change", (e) => {
 });
 
 actSelect.addEventListener("change", (e) => {
-    currentActuatorText.textContent = e.target.value;
+    const act = e.target.value;
+    currentActuatorText.textContent = act;
+    
+    // Link actuator type to driver IC
+    if (act === "LRA" || act === "ERM") {
+        drvSelect.value = "DRV2605L";
+    } else if (act === "Solenoid") {
+        drvSelect.value = "DRV8833";
+    }
+    currentDriverText.textContent = drvSelect.value;
 });
+
+// Initialize telemetry values
+if (actSelect && drvSelect) {
+    const act = actSelect.value;
+    if (act === "LRA" || act === "ERM") {
+        drvSelect.value = "DRV2605L";
+    } else if (act === "Solenoid") {
+        drvSelect.value = "DRV8833";
+    }
+    currentDriverText.textContent = drvSelect.value;
+    currentActuatorText.textContent = actSelect.value;
+}
 
 // ─── PATTERN LIBRARY CARD RENDER ─────────────────────────────────────────────
 const libCards = document.getElementById("libCards");
@@ -136,12 +194,15 @@ function drawVirtualActuator(ctx, cx, cy, radius, activeAmp) {
     const isLRA = actSelect.value === "LRA";
     const isSolenoid = actSelect.value === "Solenoid";
     
-    // Draw kinetic haptic waves radiating outward
-    if (activeAmp > 0.05) {
-        ctx.strokeStyle = `rgba(14, 165, 233, ${0.4 * activeAmp})`;
+    // Ripple waves radiating outward
+    if (activeAmp > 0.02) {
         ctx.lineWidth = 2;
-        for (let r = 1.2; r <= 3.2; r += 0.8) {
-            const currentR = radius * (1.0 + r * activeAmp * (1.0 + Math.sin(timeSec * 35) * 0.1));
+        const numWaves = 3;
+        for (let i = 0; i < numWaves; i++) {
+            const phase = (timeSec * 5 + i / numWaves) % 1.0;
+            const currentR = radius + phase * 60;
+            const alpha = (1.0 - phase) * 0.45 * activeAmp;
+            ctx.strokeStyle = `rgba(14, 165, 233, ${alpha})`;
             ctx.beginPath();
             ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
             ctx.stroke();
@@ -241,10 +302,10 @@ let analyser = null;
 let micStream = null;
 let micSource = null;
 let dataArray = null;
-const audioToggle = document.getElementById("audio-mic-toggle");
 let useLiveMic = false;
 
 async function setupMicrophone() {
+    if (useLiveMic) return;
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -259,33 +320,34 @@ async function setupMicrophone() {
         dataArray = new Uint8Array(bufferLength);
         
         useLiveMic = true;
-        document.getElementById("micSrc").value = "1";
-        audioToggle.classList.add("primary");
-        audioToggle.querySelector("span").textContent = "Mic Enabled";
+        const micSrc = document.getElementById("micSrc");
+        if (micSrc) micSrc.value = "1";
     } catch (err) {
         console.warn("Microphone access denied:", err);
-        alert("Unable to access microphone. Check browser permissions.");
+        const micSrc = document.getElementById("micSrc");
+        if (micSrc) micSrc.value = "0";
     }
 }
 
-audioToggle.addEventListener("click", () => {
-    if (!useLiveMic) {
-        setupMicrophone();
-    } else {
-        if (micStream) micStream.getTracks().forEach(t => t.stop());
-        if (audioCtx) audioCtx.close();
-        useLiveMic = false;
-        document.getElementById("micSrc").value = "0";
-        audioToggle.classList.remove("primary");
-        audioToggle.querySelector("span").textContent = "Enable Live Mic";
+function stopMicrophone() {
+    if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+        micStream = null;
     }
-});
+    if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+    }
+    useLiveMic = false;
+    const micSrc = document.getElementById("micSrc");
+    if (micSrc) micSrc.value = "0";
+}
 
 document.getElementById("micSrc").addEventListener("change", (e) => {
     if (e.target.value === "1" && !useLiveMic) {
         setupMicrophone();
     } else if (e.target.value === "0" && useLiveMic) {
-        audioToggle.click();
+        stopMicrophone();
     }
 });
 
@@ -363,16 +425,49 @@ function animate() {
             activeAmp = activePattern.func(timeSec) * (masterIntensity / 255);
         }
     }
+
+    // Smooth the amplitude for actuator rendering and telemetry
+    smoothedAmp += (activeAmp - smoothedAmp) * 0.15;
+    
+    // Trigger browser smartphone haptics
+    if (isPhoneHapticsEnabled && isPlaying) {
+        const now = Date.now();
+        const hapticThreshold = 0.15;
+        if (activeAmp > hapticThreshold) {
+            if (now - lastPhoneVibrateTime > 60) {
+                navigator.vibrate(50);
+                lastPhoneVibrateTime = now;
+                phoneVibrateActive = true;
+            }
+        } else {
+            if (phoneVibrateActive) {
+                navigator.vibrate(0);
+                phoneVibrateActive = false;
+            }
+        }
+    } else {
+        if (phoneVibrateActive) {
+            navigator.vibrate(0);
+            phoneVibrateActive = false;
+        }
+    }
     
     // Push haptic value to scroll buffer
-    waveHistory.push(activeAmp);
+    waveHistory.push(smoothedAmp);
     if (waveHistory.length > historyLen) waveHistory.shift();
     
     // ── 1. Draw Virtual Actuator & Wave Telemetry on prevCanvas ──
     prevCtx.fillStyle = "#090d16";
     prevCtx.fillRect(0, 0, prevCanvas.width, prevCanvas.height);
     
-    // Grid lines
+    // Draw the Actuator Schematic (which allows ripples to go under the graph area)
+    drawVirtualActuator(prevCtx, 60, prevCanvas.height / 2, 36, smoothedAmp);
+    
+    // Draw a solid background over the graph area to hide ripples going under it
+    prevCtx.fillStyle = "#090d16";
+    prevCtx.fillRect(120, 0, prevCanvas.width - 120, prevCanvas.height);
+    
+    // Grid lines (only drawn inside the graph area)
     prevCtx.strokeStyle = "rgba(30, 41, 59, 0.5)";
     prevCtx.lineWidth = 1;
     for (let x = 120; x < prevCanvas.width; x += 40) {
@@ -387,9 +482,6 @@ function animate() {
         prevCtx.lineTo(prevCanvas.width, y);
         prevCtx.stroke();
     }
-    
-    // Draw the Actuator Schematic
-    drawVirtualActuator(prevCtx, 60, prevCanvas.height / 2, 36, activeAmp);
     
     // Draw the Scrolling Telemetry Wave
     if (waveHistory.length > 1) {

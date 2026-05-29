@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>HapticBlaze — Open-Source Haptic Engine & Captive Portal</title>
+    <title>Haxel — Open-Source Haptic Engine & Captive Portal</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,12 +21,13 @@
         <header class="hero">
             <div class="hero-content">
                 <div class="badge">ESP32 Haptic Telemetry</div>
-                <h1>HAPTICBLAZE</h1>
-                <p class="subtitle">A unified Hardware Abstraction Layer, declarative pattern engine, and real-time audio-reactive portal for LRAs, ERMs, and solenoid actuators.</p>
+                <h1>HAXEL</h1>
+                <p class="subtitle">A unified Hardware Abstraction Layer, declarative pattern engine, and real-time
+                    audio-reactive portal for LRAs, ERMs, and solenoid actuators.</p>
                 <div class="hero-actions">
                     <a href="#simulator" class="btn primary">Launch Simulator</a>
                     <a href="#architecture" class="btn secondary">Read Specifications</a>
-                    <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/Haptic/HapticBlaze"
+                    <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/Haptic/Haxel"
                         target="_blank" class="btn">View Source</a>
                 </div>
             </div>
@@ -44,27 +45,48 @@
             <!-- LEFT: EXECUTIVE SUMMARY -->
             <div class="summary-column">
                 <section class="doc-card" style="margin-bottom: 0;">
-                    <h2>1. Executive Summary</h2>
+                    <h2>1. What Is Haxel?</h2>
                     <p>
-                        <strong>HapticBlaze</strong> is to tactile haptics what WLED is to addressable LEDs: a high-performance, 
-                        open-source firmware that turns any ESP32 board and standard motor driver (L298N, DRV8833, DRV2605L, or discrete MOSFETs) 
-                        into an instantly programmable, web-controlled haptic engine.
+                        <strong>Haxel</strong> is what happens when you ask "why doesn't <a
+                            href="https://kno.wled.ge/">WLED</a> exist for haptics?". It's open-source firmware that
+                        turns any ESP32 board and a motor driver into a web-controlled haptic engine you can tune from
+                        any wireless device with a browser.
                     </p>
                     <p>
-                        Historically, implementing high-fidelity haptic feedback has been highly fragmented. Developers were forced to hack low-level I2C registers 
-                        by hand, write blocking delay loops in custom firmware, or build bespoke analog filter circuits. 
-                        <strong>HapticBlaze</strong> solves this by introducing a unified **Hardware Abstraction Layer (HAL)**. 
-                        One declarative pattern works flawlessly across LRAs, ERMs, solenoids, or high-amplitude voice coils without editing a single line of C++.
+                        The name comes from the unit. A <em>haxel</em> is one discrete unit of vibration: tactile
+                        intensity and frequency
+                        collapsed into a single addressable value, the same way a pixel is one unit of light. The idea
+                        is borrowed from the
+                        LED world, specifically from <a href="https://www.electromage.com/" target="_blank"
+                            style="color:var(--accent-1); text-decoration:underline;">ElectroMage's Pixelblaze</a>,
+                        which is the gold
+                        standard for scriptable LEDs. It's more expensive hardware, but it drives thousands of pixels,
+                        has a mature compiler,
+                        and is completely battle-tested.
                     </p>
                     <p>
-                        <strong>Made Possible by the Claude Code Hackathon:</strong> This project was brought to life during the 
+                        Haxel is the WLED equivalent for the tactile side. The big problem it's solving: haptic
+                        development has always
+                        been a mess of one-off solutions. Every actuator type needed its own firmware—dedicated I2C
+                        register sequences for one driver IC, completely different blocking delay loops for a motor
+                        controller, a new analog circuit every time the hardware changed.
+                        Haxel introduces a
+                        unified Hardware Abstraction Layer so one declarative pattern runs on an LRA, ERM, solenoid, or
+                        voice coil without
+                        touching a single line of C++.
+                    </p>
+                    <p>
+                        <strong>Built at a hackathon.</strong> This came together at the
                         <a href="https://luma.com/bf9gpp2z" target="_blank"
                             style="color:var(--accent-1); text-decoration:underline;">State of Oregon | Claude Code
-                            Hackathon</a> (sponsored by Anthropic and Vibes DIY at the PSU Business Accelerator). To prep for the build, 
-                        I compiled my recursive command-center suite, <a href="../AgentArsenal/index.html"
-                            style="color:var(--accent-1); text-decoration:underline;">Agent Arsenal</a>. Once the hackathon key was active, 
-                        my local agent swarm autonomously chewed through the hardware abstraction templates and synthesized 20 accessory hardware blueprints, leaving me to 
-                        strictly fine-tune the calibration controls and polish this interactive captive portal simulation.
+                            Hackathon</a> (Anthropic + Vibes DIY at the PSU Business Accelerator). I prepped a toolkit
+                        of prompts beforehand
+                        in my <a href="../AgentArsenal/index.html"
+                            style="color:var(--accent-1); text-decoration:underline;">Agent Arsenal</a>, dropped the API
+                        key in when the
+                        hackathon started, and let the agent swarm run. They chewed through my past projects, and merged
+                        them all into Haxel. I was expecting a lot of AI slop, but what came out was very useable after
+                        a bit of human polish!
                     </p>
 
                     <div class="tech-table-wrapper" style="margin-top: auto;">
@@ -73,13 +95,13 @@
                                 <tr>
                                     <th>Feature</th>
                                     <th>Legacy Haptic Control</th>
-                                    <th>HapticBlaze (HAL)</th>
+                                    <th>Haxel (HAL)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td><strong>Driver Integration</strong></td>
-                                    <td>Bespoke register hacking (DRV2605L, DRV8833 specific)</td>
+                                    <td>Hardware-specific register hacking per driver IC</td>
                                     <td><strong>Unified Hardware Abstraction Layer</strong></td>
                                 </tr>
                                 <tr>
@@ -117,16 +139,6 @@
                             <span class="dot live blinking"></span>
                             <h2>Live Portal Simulator</h2>
                         </div>
-                        <div class="audio-mic-btn-wrap">
-                            <button class="btn btn-audio-mic" id="audio-mic-toggle">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
-                                    stroke-width="2.5">
-                                    <path d="M12 1v11m-6-6a6 6 0 0012 0" />
-                                    <path d="M19 10v2a7 7 0 01-14 0v-2" />
-                                </svg>
-                                <span>Enable Live Mic</span>
-                            </button>
-                        </div>
                     </div>
 
                     <!-- VIRTUAL ACTUATOR / TELEMETRY CHASSIS -->
@@ -139,14 +151,15 @@
                             <canvas id="prev" width="400" height="180"></canvas>
                         </div>
                         <div class="strip-footer">
-                            <span>Driver: <b id="currentDriver">DRV2605L</b></span> | <span>Actuator: <b id="currentActuator">LRA</b></span>
+                            <span>Driver: <b id="currentDriver">DRV2605L</b></span> | <span>Actuator: <b
+                                    id="currentActuator">LRA</b></span>
                         </div>
                     </div>
 
                     <!-- PORTAL CONTAINER -->
                     <div class="portal-container">
                         <div class="portal-header">
-                            <div class="portal-logo">HAPTICBLAZE</div>
+                            <div class="portal-logo">HAXEL</div>
                             <div class="portal-crumb">Active: <b id="patternName">Pulse Wave</b></div>
                             <div class="portal-status">
                                 <span class="portal-dot" id="dot"></span>
@@ -160,14 +173,14 @@
                                 <div class="tabbar">
                                     <button class="tab active" data-tab="play">Play</button>
                                     <button class="tab" data-tab="lib">Library</button>
-                                    <button class="tab" data-tab="audio">Audio</button>
+                                    <button class="tab" data-tab="audio">Audio-Reactive</button>
                                     <button class="tab" data-tab="device">Device</button>
                                 </div>
 
                                 <!-- PLAY TAB -->
                                 <div class="tab-content" id="tab-play">
                                     <h3>Quick Control Panel</h3>
-                                    
+
                                     <div class="row">
                                         <label>Master Intensity</label>
                                         <input type="range" id="bright" min="0" max="255" value="180">
@@ -221,7 +234,8 @@
                                     <div class="spectrum-visualizer">
                                         <canvas id="spectrum-canvas" width="400" height="80"></canvas>
                                     </div>
-                                    <p class="hint">Maps acoustic audio frequencies into physical mechanical pulses for sensory substitution.</p>
+                                    <p class="hint">Maps acoustic audio frequencies into physical mechanical pulses for
+                                        sensory substitution.</p>
                                 </div>
 
                                 <!-- DEVICE TAB -->
@@ -243,11 +257,23 @@
                                             <option value="Solenoid">High-Amplitude Solenoid</option>
                                         </select>
                                     </div>
-                                    
+                                    <div class="row">
+                                        <label>Phone Haptics</label>
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                            <input type="checkbox" id="phoneHapticsToggle" checked
+                                                style="width: auto; margin: 0;">
+                                            <span style="font-size: 0.85rem; color: #94a3b8;"
+                                                id="hapticsStatusText">Enabled</span>
+                                        </label>
+                                    </div>
+
                                     <div class="diag-specs">
-                                        <div class="diag-line"><span>Firmware Version</span> <span>v1.0.0-blaze</span></div>
-                                        <div class="diag-line"><span>FreeRTOS Core Jitter</span> <span>&lt; 1.4 ms</span></div>
-                                        <div class="diag-line"><span>ESP32-C3 Uptime</span> <span id="uptime">132s</span></div>
+                                        <div class="diag-line"><span>Firmware Version</span> <span>v1.0.0-haxel</span>
+                                        </div>
+                                        <div class="diag-line"><span>FreeRTOS Core Jitter</span> <span>&lt; 1.4
+                                                ms</span></div>
+                                        <div class="diag-line"><span>ESP32-C3 Uptime</span> <span
+                                                id="uptime">132s</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -260,38 +286,53 @@
         <!-- SPECIFICATIONS & ARCHITECTURE SECTION -->
         <div class="bottom-docs-column" id="architecture">
             <section class="doc-card">
-                <h2>2. Hardware Abstraction Layer (HAL) Core Architecture</h2>
+                <h2>2. How the HAL Works</h2>
                 <p>
-                    Traditional haptic programming requires hardware-specific codebases. An LRA requires AC frequency resonance tracking, 
-                    while an ERM motor requires DC voltage thresholds. HapticBlaze solves this through a high-performance **HAL pipeline** 
-                    implemented inside a FreeRTOS task running on CPU Core 1:
+                    The core problem with haptic hardware is that every actuator type is fundamentally different. An LRA
+                    needs AC resonance
+                    tracking at its physical resonant frequency. An ERM just wants a DC voltage threshold. A solenoid is
+                    a different beast
+                    entirely. Normally that means a separate codebase for each one. Haxel's HAL pipeline, running inside
+                    a FreeRTOS task hides all of those headaches.
                 </p>
                 <div class="spec-grid">
                     <div class="spec-item">
                         <h3>Dynamic Resonance Tracking</h3>
-                        <p>LRAs operate optimally only at their precise physical resonant frequency (typically 170–235 Hz). HapticBlaze continuously reads back-EMF voltage signals from the DRV2605L, adjusting the driver frequency dynamically in real-time.</p>
+                        <p>LRAs only feel right at their physical resonant frequency, usually somewhere between 170 and
+                            235 Hz. Haxel reads back-EMF signals from the active driver continuously and nudges the
+                            output frequency to stay locked on, so you don't have to measure it yourself or recompile
+                            when you swap actuators.</p>
                     </div>
                     <div class="spec-item">
-                        <h3>Telemetry Waveform Synthesis</h3>
-                        <p>Declarative patterns are processed inside our flat-bytecode interpreter. The interpreter outputs normalized intensity maps [0.0–1.0], which are converted by the active HAL driver into precise voltage ramps or high-speed PWM cycles.</p>
+                        <h3>Waveform Synthesis</h3>
+                        <p>Patterns run through a flat-bytecode interpreter that outputs normalized intensity values
+                            between 0.0 and 1.0.
+                            The active HAL driver then translates those into whatever the hardware actually
+                            needs—voltage ramps for an LRA,
+                            PWM duty cycles for an ERM, or timed pulses for a solenoid.</p>
                     </div>
                 </div>
             </section>
 
             <section class="doc-card">
-                <h2>3. Acoustic Sensory Substitution</h2>
+                <h2>3. Audio-Reactive Haptics</h2>
                 <p>
-                    HapticBlaze features a high-performance 256-point Fast Fourier Transform (FFT) routing module that samples audio inputs 
-                    (via an analog auxiliary port or I2S digital microphones). The output frequency spectrum is mapped directly into 
-                    dynamic vibration envelopes. This represents a huge leap forward in open-source accessibility haptics, enabling the 
-                    Deaf and Hard-of-Hearing (D/HoH) community to experience musical beats, environment cues, or alarm sirens in real-time.
+                    One of the things I'm most excited about here is the audio pipeline. Haxel runs a 256-point FFT on
+                    audio input from
+                    either an analog aux port or an I2S microphone, then maps the frequency spectrum directly into
+                    vibration envelopes.
+                    In practice that means music, speech, or ambient sound becomes something you can physically feel
+                    rather than just hear.
+                    The accessibility angle, giving the Deaf and Hard-of-Hearing community a real-time tactile window
+                    into audio, is exactly
+                    the kind of use case this was built for.
                 </p>
             </section>
         </div>
 
         <!-- FOOTER -->
         <footer class="main-footer">
-            <p>HapticBlaze &copy; 2026. Made Possible by Dillon Simeone and the Claude Code Agent Swarms.</p>
+            <p>Haxel &copy; 2026. Made Possible by Dillon Simeone and the Claude Code Agent Swarms.</p>
         </footer>
     </div>
 
