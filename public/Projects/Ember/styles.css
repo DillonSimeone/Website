@@ -249,19 +249,88 @@ body {
     margin-top: 40px;
 }
 
+/* Ember glow — animated gradient border via pseudo-element */
 .doc-card {
+    position: relative;
     background: var(--panel);
-    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 30px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    /* hide native border; the glow pseudo-element handles it */
+    border: 1px solid transparent;
+    z-index: 0;
+}
+
+.doc-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 17px; /* 1px larger than card */
+    background: conic-gradient(
+        from var(--_angle, 0deg),
+        var(--accent-2),
+        var(--accent-1),
+        #4fd9ff,
+        var(--accent-1),
+        var(--accent-2)
+    );
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: ember-spin 6s linear infinite paused;
+}
+
+.doc-card:hover::before {
+    opacity: 1;
+    animation-play-state: running;
+}
+
+/* After: a slightly inset fill so the card background shows through */
+.doc-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 15px;
+    background: var(--panel);
+    z-index: -1;
+}
+
+/* Ensure content sits above the ::after fill */
+.doc-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+@property --_angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes ember-spin {
+    to { --_angle: 360deg; }
+}
+
+/* Summary column card always shows a subtle static border glow */
+.summary-column .doc-card::before {
+    opacity: 0.35;
+    animation-play-state: running;
+    animation-duration: 10s;
+}
+
+.summary-column .doc-card:hover::before {
+    opacity: 0.75;
+    animation-duration: 4s;
 }
 
 .doc-card h2 {
     font-size: 24px;
     font-weight: 700;
     margin-bottom: 20px;
-    color: #fff;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
     border-bottom: 1px solid var(--border);
     padding-bottom: 10px;
 }
@@ -301,6 +370,8 @@ body {
     margin-top: 20px;
     border: 1px solid var(--border);
     border-radius: 8px;
+    position: relative;
+    z-index: 1; /* ensure it stays above the ::after fill */
 }
 
 .tech-table {
@@ -315,6 +386,20 @@ body {
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
 }
+
+/* Ember (last) column highlight */
+.tech-table thead th:last-child {
+    background: rgba(124, 156, 255, 0.08);
+    color: var(--accent-1);
+    border-left: 2px solid rgba(124, 156, 255, 0.3);
+}
+
+.tech-table tbody td:last-child {
+    background: rgba(124, 156, 255, 0.04);
+    border-left: 2px solid rgba(124, 156, 255, 0.15);
+    color: var(--text);
+}
+
 
 .tech-table th {
     background: var(--panel);
