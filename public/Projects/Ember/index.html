@@ -45,42 +45,46 @@
             <!-- LEFT: EXECUTIVE SUMMARY -->
             <div class="summary-column">
                 <section class="doc-card" style="margin-bottom: 0;">
-                    <h2>1. Executive Summary</h2>
+                    <h2>1. What Is Ember?</h2>
                     <p>
-                        <strong>Ember</strong> represents an order-of-magnitude architectural leap over traditional
-                        interpreted LED controllers on cheap microcontrollers. Evolved from WebFastLed, it delivers
-                        stable, lag-free <strong>60 FPS rendering</strong> for complex patterns by running a stack-based
-                        virtual machine directly inside an isolated FreeRTOS thread.
+                        <strong>Ember</strong> grew out of <a
+                            href="https://github.com/DillonSimeone/Website/tree/main/ESP32Codes/PlatformIO/Visuals_Art/WebFastLed/"
+                            target="_blank" style="color:var(--accent-1); text-decoration:underline;">WebFastLed</a>, an
+                        earlier project that ran patterns by parsing
+                        JavaScript-like expressions on every pixel, every frame. It worked, but it was slow and
+                        brittle. Ember replaces that interpreter with a proper bytecode compiler and
+                        a stack-based virtual machine running inside its own FreeRTOS task—which is how it manages a
+                        stable, smooth framerate on a $2 chip.
                     </p>
                     <p>
-                        It is important to note the landscape: if you seek the absolute gold standard in scriptable LED
-                        systems, we highly recommend checking out <a href="https://www.electromage.com/" target="_blank"
+                        <strong>Caveat first:</strong> if you want the gold standard in scriptable LED systems,
+                        go look at <a href="https://www.electromage.com/" target="_blank"
                             style="color:var(--accent-1); text-decoration:underline;">ElectroMage's Pixelblaze</a>.
-                        While ElectroMage's hardware costs more, it is a highly proven, rock-solid ecosystem capable of
-                        driving thousands of pixels with custom expansion boards and an exceptionally mature compiler.
-                        It is the ultimate premium option with the absolute least friction.
+                        It's more expensive hardware, but it's a battle-tested ecosystem that can drive thousands
+                        of pixels with expansion boards and a mature compiler. Zero friction, rock-solid. It's
+                        worth every dollar if that's what you need!
                     </p>
                     <p>
-                        <strong>Ember is brand new!</strong> It is a lightweight, open-source DIY compiler still early
-                        in its maturity. But for developers and makers looking to push cheap $2 ESP32-C3 modules to
-                        their absolute limits, Ember offers an exceptionally elegant, single-chip captive portal sandbox
-                        that does far more than raw FastLED with FFT.
+                        Ember is the scrappy DIY alternative. It's new, it's open-source, and it runs entirely on
+                        a bare ESP32-C3 module. No companion app, no proprietary cloud, just a captive portal you
+                        connect to over Wi-Fi, write a pattern, hit save, and watch it render live. The idea is that
+                        this would be perfect as a cheap solution for wearable lights, since if the controller got lost,
+                        destroyed, etc, it's just two or three dollars to replace.
                     </p>
                     <p>
-                        <strong>Made Possible by the Claude Code Hackathon:</strong> This project was accelerated into
-                        reality during the <a href="https://luma.com/bf9gpp2z" target="_blank"
+                        <strong>Forged at a hackathon.</strong> This project got its legs during the
+                        <a href="https://luma.com/bf9gpp2z" target="_blank"
                             style="color:var(--accent-1); text-decoration:underline;">State of Oregon | Claude Code
-                            Hackathon</a> (sponsored by Anthropic and Vibes DIY at the PSU Business Accelerator). To
-                        prepare for the event, I built my recursive command-center suite, <a
-                            href="../AgentArsenal/index.html"
-                            style="color:var(--accent-1); text-decoration:underline;">Agent Arsenal</a>, beforehand.
-                        Once I arrived and received the hackathon key, I dropped it in, opened Claude Code directly in
-                        my downloaded GitHub folder (without my credentials, on a freshly wiped laptop), copied prompts
-                        over from my arsenals, and gave the agents total freedom to run around with zero permissions or
-                        approvals. While I fully expected a mountain of AI slop, the massive power of this setup allowed
-                        me to completely break through the final interpreter and FreeRTOS concurrency
-                        bottlenecks—transforming a raw, unstable firmware prototype into a highly polished,
-                        production-grade 60 FPS platform!
+                            Hackathon</a> (Anthropic + Vibes DIY at the PSU Business Accelerator). I came in with a
+                        shaky prototype and a folder of prompts I'd prepped in my
+                        <a href="../AgentArsenal/index.html"
+                            style="color:var(--accent-1); text-decoration:underline;">Agent Arsenal</a> beforehand.
+                        I dropped the hackathon API key in, opened Claude Code directly in my GitHub folder. I used a
+                        freshly
+                        wiped laptop, no saved credentials, copied prompts over, and let the agents run completely
+                        unsupervised. I was bracing for AI slop. Instead, they punched clean through the
+                        two hardest problems I'd been wrestling with: the interpreter bottleneck and the FreeRTOS
+                        concurrency bugs. By the end of the day it was rendering at a steady 60 FPS!
                     </p>
 
                     <div class="tech-table-wrapper" style="margin-top: auto;">
@@ -92,34 +96,39 @@
                                             target="_blank"
                                             style="color:var(--accent-1); text-decoration:underline;">WebFastLed
                                             (Legacy)</a></th>
-                                    <th>Ember (New)</th>
+                                    <th>Ember</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td><strong>Execution Model</strong></td>
-                                    <td>AST Tree-Walking Parser</td>
-                                    <td>Stack-Based Bytecode VM</td>
+                                    <td>AST tree-walking interpreter</td>
+                                    <td>Stack-based bytecode VM</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Hot-Loop Allocations</strong></td>
-                                    <td>High heap churn (Strings/Vectors)</td>
-                                    <td><strong>Strictly Zero Heap Churn</strong></td>
+                                    <td>Heavy heap churn (strings, vectors)</td>
+                                    <td><strong>Zero heap allocations</strong></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Performance (60 LEDs)</strong></td>
-                                    <td>~28 FPS (~190µs/pixel)</td>
-                                    <td><strong>60+ FPS (~14µs/pixel)</strong></td>
+                                    <td>Roughly 28 FPS (~190 µs/pixel)</td>
+                                    <td><strong>Up to 60 FPS (~14 µs/pixel)</strong></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Audio Reactivity</strong></td>
                                     <td>None</td>
-                                    <td>256-point FFT (I2S & Analog)</td>
+                                    <td>256-point FFT (I2S &amp; Analog)</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Concurrence Strategy</strong></td>
-                                    <td>Single-Threaded Arduino Loop</td>
-                                    <td>Isolated Tasks (FreeRTOS)</td>
+                                    <td><strong>Threading</strong></td>
+                                    <td>Single-threaded Arduino loop</td>
+                                    <td>Isolated FreeRTOS tasks</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>UI</strong></td>
+                                    <td>Basic web sliders</td>
+                                    <td>Live captive portal + pattern editor</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -317,31 +326,22 @@
         <!-- BOTTOM: DEEPER ARCHITECTURAL REPORT -->
         <article class="bottom-docs-column" id="architecture">
             <section class="doc-card">
-                <h2>2. Core Architectural Shifts (Compiler & VM)</h2>
-                <h3>The Bottleneck: Legacy Parser Evaluation</h3>
+                <h2>2. Compiler &amp; VM</h2>
+                <h3>Why the old approach was slow</h3>
                 <p>
-                    In traditional script-based LED systems, executing a pattern requires parsing the expression
-                    character-by-character on <em>every single pixel of every single frame</em>. If you have 60 LEDs at
-                    30 FPS, the processor scans, parses, and evaluates your formulas 1,800 times a second!
+                    WebFastLed parsed your pattern expression character-by-character on <em>every pixel of every
+                        frame</em>. At 60 LEDs and 30 FPS, that's roughly 1,800 parse-eval cycles per second. Each one
+                    dragged in heap allocations for temporary token strings and <code>std::map</code> lookups. On a
+                    microcontroller, that adds up: memory fragments, the allocator stalls, frames drop.
                 </p>
+                <h3>How Ember fixes it</h3>
                 <p>
-                    This is exacerbated by heap allocations for temporary token strings, std::map variables, and
-                    parameter lists—leading to severe memory fragmentation and immediate thread blockages.
+                    Ember ships a <strong>single-pass Pratt-style compiler</strong> baked directly into the firmware.
+                    When you save a pattern it compiles <em>once</em> into a flat bytecode array, stashes numeric
+                    literals in a de-duplicated float pool, and resolves variable names to
+                    <code>uint8_t</code> register indices. After that the render loop just executes
+                    opcodes against pre-allocated stack buffers, no malloc, no free, no surprises.
                 </p>
-                <h3>The Solution: Compact Stack Bytecode</h3>
-                <p>
-                    <strong>Ember</strong> features a robust <strong>single-pass Pratt-like compiler</strong> built
-                    directly into the firmware. When a pattern is edited:
-                </p>
-                <ol>
-                    <li>It compiles the JS-like formula <strong>once</strong> into a compact flat array of bytecode
-                        instructions.</li>
-                    <li>Numbers are extracted into a de-duplicated float constant pool.</li>
-                    <li>Variables are resolved to static <code>uint8_t</code> register indices, eliminating string
-                        lookups.</li>
-                    <li>The runtime is a hyper-streamlined stack-based virtual machine executing lightweight opcodes on
-                        pre-allocated buffers.</li>
-                </ol>
                 <div class="diagram-container">
                     <div class="bytecode-flow">
                         <span class="box">Source Code</span> ──►
@@ -353,36 +353,41 @@
             </section>
 
             <section class="doc-card">
-                <h2>3. Task Isolation & Concurrency (RTOS)</h2>
+                <h2>3. Concurrency on a Single Core</h2>
                 <p>
-                    The ESP32-C3 is a single-core RISC-V processor. Standard multitasking libraries cannot run on
-                    separate cores. <strong>Ember</strong> solves this by building a dedicated **FreeRTOS task
-                    schedule** that guarantees flawless output:
+                    The ESP32-C3 is a single-core chip, so we have to share nicely. Ember uses a small FreeRTOS task
+                    schedule to make sure everything stays responsive:
                 </p>
                 <ul>
-                    <li><strong><code>RenderTask</code> (Priority 2)</strong>: Runs locked to a stable 60Hz loop using
-                        hardware-timed delays.</li>
-                    <li><strong><code>AsyncTCP Worker</code> (Priority 3)</strong>: Set higher than the renderer.
-                        Network updates or compiler requests preempt the renderer for microseconds, keeping the web
-                        dashboard snappy without causing a single frame to stutter.</li>
-                    <li><strong>Atomic Lock-Free Exchange</strong>: When a pattern is compiled, it is pushed to a
-                        <code>std::atomic&lt;Program*&gt;</code> pointer swap. The renderer captures it atomically at
-                        the top of the next frame, avoiding data corruption.</li>
+                    <li><strong><code>RenderTask</code> (Priority 2)</strong> — This is the heart of the show. It stays
+                        locked to 60Hz and doesn't get interrupted by the networking layer.</li>
+                    <li><strong><code>AsyncTCP Worker</code> (Priority 3)</strong> — This runs slightly above the
+                        renderer. It handles web requests, meaning the dashboard feels snappy, and it only steals a few
+                        microseconds to do its job.</li>
+                    <li><strong>Atomic pointer swap</strong> — When you update a pattern, it doesn't break the current
+                        frame. It just atomically replaces a <code>std::atomic&lt;Program*&gt;</code> pointer that the
+                        renderer grabs at the top of the next cycle.</li>
                 </ul>
             </section>
 
             <section class="doc-card">
-                <h2>4. Real-Time FFT Spectral Analyzer</h2>
+                <h2>4. Audio &amp; FFT</h2>
                 <p>
-                    The audio reactivity module handles floating-point math seamlessly:
+                    Ember has two mic options depending on your build: a digital
+                    <strong>INMP441</strong> MEMS mic over I2S (cleaner signal, better for music), or an analog
+                    <strong>MAX4466</strong> electret mic through ADC1 (cheaper, easier to wire up). Either way,
+                    the processing pipeline is the same:
                 </p>
                 <ul>
-                    <li>Reads digital <strong>INMP441</strong> MEMS mics via I2S, or analog <strong>MAX4466</strong>
-                        mics via ADC1.</li>
-                    <li>Computes a 256-point Hamming-windowed Forward FFT via <code>arduinoFFT</code>.</li>
-                    <li>Compresses frequency bins into <strong>8 logarithmic bands</strong>.</li>
-                    <li>Provides built-in functions: <code>vu()</code>, <code>peak()</code>, <code>pitch()</code>,
-                        <code>beat()</code>, and <code>band(n)</code>.</li>
+                    <li>A 256-point Hamming-windowed FFT runs via <code>arduinoFFT</code> in a background task.</li>
+                    <li>Raw frequency bins get compressed into 8 logarithmic bands that map well to human
+                        hearing: bass, mids, and treble don't all fight for the same bucket.</li>
+                    <li>The results feed into pattern builtins you can call directly:
+                        <code>vu()</code>, <code>beat()</code>, <code>bass()</code>, <code>mid()</code>,
+                        <code>treble()</code>, and <code>band(n)</code> for per-band access.
+                    </li>
+                    <li>The simulator above supports both a sequencer simulation and your actual browser microphone,
+                        so you can prototype audio-reactive patterns without touching hardware.</li>
                 </ul>
             </section>
         </article>
