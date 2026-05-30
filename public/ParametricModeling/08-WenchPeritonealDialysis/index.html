@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCAD - Peritoneal Dialysis Cable Connections</title>
+    <style>
+        :root {
+            --bg-dark: #030712;
+            --accent-cyan: #06b6d4;
+            --accent-pink: #d946ef;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+        }
+
+        body {
+            margin: 0; padding: 0; background: var(--bg-dark); color: #f9fafb;
+            font-family: 'Inter', system-ui, sans-serif; overflow: hidden;
+            display: flex; height: 100vh;
+        }
+
+        #studio-panel {
+            width: 420px; background: #0b0f19; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; z-index: 100;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.6);
+        }
+
+        .panel-header {
+            padding: 24px; border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, #111827 0%, #030712 100%);
+        }
+
+        .logo {
+            font-size: 1.3rem; font-weight: 900; letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .logo-box {
+            width: 32px; height: 32px;
+            background: linear-gradient(to bottom right, var(--accent-cyan), var(--accent-pink));
+            border-radius: 8px; display: grid; place-items: center; font-size: 1rem;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .panel-content {
+            flex: 1; overflow-y: auto; padding: 18px 24px;
+            display: flex; flex-direction: column; gap: 16px;
+        }
+
+        .section-title {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
+            color: #6b7280; margin-top: 10px; margin-bottom: 6px; font-weight: 700;
+        }
+
+        .param-row {
+            padding: 10px 12px; background: var(--glass); border: 1px solid var(--border);
+            border-radius: 10px; transition: all 0.2s ease; margin-bottom: 4px;
+        }
+
+        .param-row:hover {
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600; color: #9ca3af; }
+        .val { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan); background: #1f2937; padding: 1px 6px; border-radius: 4px; }
+
+        input[type="range"] { width: 100%; height: 3px; background: #374151; border-radius: 2px; appearance: none; outline: none; margin: 6px 0; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; background: var(--accent-cyan); border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 8px var(--accent-cyan); }
+        
+        #input-explosion::-webkit-slider-thumb {
+            background: var(--accent-pink);
+            box-shadow: 0 0 8px var(--accent-pink);
+        }
+
+        #viewport-container { flex: 1; position: relative; background: #030712; }
+        #viewer { width: 100%; height: 100%; }
+
+        .viewport-badge {
+            position: absolute; top: 24px; right: 24px;
+            background: rgba(11, 15, 25, 0.8); backdrop-filter: blur(8px);
+            padding: 8px 16px; border-radius: 99px; border: 1px solid var(--border);
+            font-size: 0.8rem; display: flex; align-items: center; gap: 8px; z-index: 1000;
+        }
+
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; }
+        
+        .btn-group {
+            display: flex; gap: 10px; margin-top: 5px;
+        }
+
+        button.dl-btn {
+            background: #1f2937; color: white; border: 1px solid var(--border);
+            padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            flex: 1; font-size: 0.75rem; transition: all 0.2s;
+        }
+        button.dl-btn:hover { background: #374151; border-color: var(--accent-cyan); }
+        .dl-main { background: var(--accent-cyan); color: #111; border: none; }
+        .dl-main:hover { background: #0891b2; }
+
+        /* Code View */
+        .code-snippet {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: #030712;
+            padding: 12px;
+            border-radius: 8px;
+            color: #9ca3af;
+            border-left: 3px solid var(--accent-pink);
+            overflow-x: auto;
+            white-space: pre;
+            margin-top: 10px;
+        }
+        .keyword { color: #f472b6; }
+        .func { color: #22d3ee; }
+        .string { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div id="studio-panel">
+        <div class="panel-header">
+            <div class="logo">
+                Dialysis Cable Wrenches
+            </div>
+        </div>
+
+        <div class="panel-content">
+            <div class="section-title">Kinematics</div>
+            <div id="params-kinematics"></div>
+
+            <div class="section-title">Top Connector (Cyan)</div>
+            <div id="params-top"></div>
+
+            <div class="section-title">Bottom Connector (Pink)</div>
+            <div id="params-bottom"></div>
+
+            <div class="section-title">Tolerance & Quality</div>
+            <div id="params-meta"></div>
+
+            <div class="section-title" style="margin-top:20px">Manufacturing Export</div>
+            <div class="btn-group" style="flex-direction: column; gap: 8px;">
+                <div style="display: flex; gap: 8px;">
+                    <button class="dl-btn" id="dl-top">EXPORT TOP CABLE (.STL)</button>
+                    <button class="dl-btn" id="dl-bottom">EXPORT BOTTOM CABLE (.STL)</button>
+                </div>
+                <button class="dl-btn dl-main" id="dl-wrench-top">EXPORT TOP WRENCH (.STL)</button>
+                <button class="dl-btn dl-main" id="dl-wrench-bottom">EXPORT BOTTOM WRENCH (.STL)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewport-container">
+        <div id="viewer"></div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+        import Module from 'https://unpkg.com/manifold-3d/manifold.js';
+
+        let wasm, Manifold;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 420) / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(70, 70, 70);
+        controls.update();
+
+        // Lighting System
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x111827, 0.6));
+        
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        keyLight.position.set(100, 150, 50);
+        scene.add(keyLight);
+
+        const cyanFill = new THREE.PointLight(0x06b6d4, 2.5, 300);
+        cyanFill.position.set(-50, 50, 50);
+        scene.add(cyanFill);
+
+        const pinkFill = new THREE.PointLight(0xd946ef, 2.5, 300);
+        pinkFill.position.set(50, -50, -50);
+        scene.add(pinkFill);
+
+        // Ground Grid
+        const grid = new THREE.GridHelper(200, 30, 0x1f2937, 0x111827);
+        grid.position.y = -35;
+        scene.add(grid);
+
+        let currentMeshes = [];
+        let topPartModel = null;
+        let bottomPartModel = null;
+        let topWrenchModel = null;
+        let bottomWrenchModel = null;
+
+        // --- Parametric Setup ---
+        const PARAMS = {};
+
+        const param = (name, defaultValue, options = {}, category = 'top') => {
+            const id = name.replace(/\s+/g, '-').toLowerCase();
+            if (!PARAMS[id]) {
+                const type = options.type ?? 'range';
+                const min = options.min ?? 0;
+                const max = options.max ?? (defaultValue * 3);
+                const step = options.step ?? 1;
+                PARAMS[id] = { value: defaultValue, min, max, step, name, category, type };
+                createParamUI(id, category);
+            }
+            return PARAMS[id].value;
+        };
+
+        function createParamUI(id, cat) {
+            const p = PARAMS[id];
+            const container = document.getElementById('params-' + cat);
+            if (!container) return;
+
+            const row = document.createElement('div');
+            row.className = 'param-row';
+            
+            if (p.type === 'checkbox') {
+                row.innerHTML = `
+                    <div class="ph" style="display:flex; justify-content:space-between; align-items:center;">
+                        ${p.name} 
+                        <input type="checkbox" id="input-${id}" ${p.value ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer;">
+                    </div>
+                `;
+                container.appendChild(row);
+                row.querySelector('input').addEventListener('change', (e) => {
+                    PARAMS[id].value = e.target.checked ? 1 : 0;
+                    requestUpdate();
+                });
+            } else {
+                row.innerHTML = `
+                    <div class="ph">${p.name} <span class="val" id="val-${id}">${p.value}</span></div>
+                    <input type="range" id="input-${id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">
+                `;
+                container.appendChild(row);
+                row.querySelector('input').addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value);
+                    PARAMS[id].value = val;
+                    document.getElementById(`val-${id}`).innerText = val;
+                    requestUpdate();
+                });
+            }
+        }
+
+        // --- CAD Math Helpers ---
+        const cube = (w, h, d) => Manifold.cube([w, h, d], true);
+        const cylinder = (r, h, s = 64) => Manifold.cylinder(h, r, r, s, true);
+
+        function manifoldToThreeMesh(model, color, opacity) {
+            const m = model.getMesh();
+            const g = new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.Float32BufferAttribute(m.vertProperties, 3));
+            g.setIndex(new THREE.Uint32BufferAttribute(m.triVerts, 1));
+            g.computeVertexNormals();
+            const mat = new THREE.MeshPhysicalMaterial({
+                color, transparent: opacity < 1, opacity,
+                metalness: 0.1, roughness: 0.3, side: THREE.DoubleSide,
+                transmission: opacity < 1 ? 0.6 : 0, thickness: 1.2
+            });
+            return new THREE.Mesh(g, mat);
+        }
+
+        function createFin(w, depth, h, radius, angleDeg) {
+            let fin = cube(w, depth, h);
+            // Translate outwards along Y-axis from center
+            let shiftY = radius + depth / 2;
+            let moved = fin.translate([0, shiftY, 0]);
+            fin.delete();
+            if (angleDeg !== 0) {
+                let rotated = moved.rotate([0, 0, angleDeg]);
+                moved.delete();
+                return rotated;
+            }
+            return moved;
+        }
+
+        function generateModels() {
+            // Read parameters
+            const explosion = param("Explosion", 40, { min: 0, max: 100 }, "kinematics") / 100;
+            const showWrenches = param("Show Wrenches", 1, { type: 'checkbox' }, "kinematics");
+            const wrenchHandleLen = param("Wrench Handle Length", 80, { min: 45, max: 140 }, "kinematics");
+            const wrenchHandleW = param("Wrench Handle Width", 14, { min: 8, max: 22 }, "kinematics");
+
+            // Top Part parameters
+            const topSqW = param("Square Width", 14, { min: 10, max: 25 }, "top");
+            const topSqD = param("Square Depth", 6, { min: 4, max: 15 }, "top");
+            const topSqH = param("Square Height", 16, { min: 10, max: 30 }, "top");
+            const topTubeD = param("Top Tube Diam", 8, { min: 5, max: 15 }, "top");
+            const topCylW = param("Collar Diam", 15.5, { min: 10, max: 25, step: 0.5 }, "top");
+
+            // Bottom Part parameters
+            const plugD = param("Plug Cylinder Diam", 10, { min: 6, max: 18 }, "bottom");
+            const plugH = param("Plug Cylinder Depth", 9, { min: 5, max: 15 }, "bottom");
+            const baseCylW = param("Base Collar Diam", 20, { min: 12, max: 30 }, "bottom");
+            const baseCylD = param("Base Collar Thick", 2, { min: 1, max: 8 }, "bottom");
+            const botCoreD = param("Fins Core Diam", 8, { min: 5, max: 15 }, "bottom");
+            const finW = param("Fin Width", 1.5, { min: 0.8, max: 4, step: 0.1 }, "bottom");
+            const finD = param("Fin Depth", 1.5, { min: 0.8, max: 4, step: 0.1 }, "bottom");
+            const finH = param("Fin Height", 10, { min: 5, max: 20 }, "bottom");
+            const botTubeD = param("Bottom Tube Diam", 8, { min: 5, max: 15 }, "bottom");
+
+            const tolerance = param("Connector Tolerance", 0.25, { min: 0.1, max: 0.8, step: 0.05 }, "meta");
+            const quality = param("Mesh Smoothness", 64, { min: 32, max: 128, step: 16 }, "meta");
+
+            // Cleanup old models if they exist
+            if (topPartModel) { topPartModel.delete(); topPartModel = null; }
+            if (bottomPartModel) { bottomPartModel.delete(); bottomPartModel = null; }
+            if (topWrenchModel) { topWrenchModel.delete(); topWrenchModel = null; }
+            if (bottomWrenchModel) { bottomWrenchModel.delete(); bottomWrenchModel = null; }
+
+            // =================================================================
+            // BUILD BOTTOM MALE CONNECTOR
+            // =================================================================
+            // 1. Plug Cylinder (inserted into cavity at Z range [0, plugH])
+            let plugCyl = cylinder(plugD / 2, plugH, quality);
+            let plugCylMoved = plugCyl.translate([0, 0, plugH / 2]);
+            plugCyl.delete();
+
+            // 2. Base Collar Cylinder (behind plug, Z range [-baseCylD, 0])
+            let baseCollar = cylinder(baseCylW / 2, baseCylD, quality);
+            let baseCollarMoved = baseCollar.translate([0, 0, -baseCylD / 2]);
+            baseCollar.delete();
+
+            // 3. Fins Section (behind base collar, Z range [-baseCylD - finH, -baseCylD])
+            const rCore = botCoreD / 2;
+            let finCoreCyl = cylinder(rCore, finH, quality);
+            let finCoreMoved = finCoreCyl.translate([0, 0, -baseCylD - finH / 2]);
+            finCoreCyl.delete();
+
+            let finN = createFin(finW, finD, finH, rCore, 0).translate([0, 0, -baseCylD - finH / 2]);
+            let finS = createFin(finW, finD, finH, rCore, 180).translate([0, 0, -baseCylD - finH / 2]);
+            let finE = createFin(finW, finD, finH, rCore, 90).translate([0, 0, -baseCylD - finH / 2]);
+            let finW_ = createFin(finW, finD, finH, rCore, -90).translate([0, 0, -baseCylD - finH / 2]);
+
+            let finsUnion = Manifold.union(finCoreMoved, finN);
+            let temp = finsUnion; finsUnion = Manifold.union(finsUnion, finS); temp.delete(); finN.delete(); finS.delete();
+            temp = finsUnion; finsUnion = Manifold.union(finsUnion, finE); temp.delete(); finE.delete();
+            temp = finsUnion; finsUnion = Manifold.union(finsUnion, finW_); temp.delete(); finW_.delete();
+            finCoreMoved.delete();
+
+            // Assemble Bottom Part Model (without long tubes)
+            let u1 = Manifold.union(plugCylMoved, baseCollarMoved);
+            bottomPartModel = Manifold.union(u1, finsUnion);
+            u1.delete();
+            plugCylMoved.delete();
+            baseCollarMoved.delete();
+            finsUnion.delete();
+
+            // =================================================================
+            // BUILD TOP FEMALE CONNECTOR
+            // =================================================================
+            // 1. Base Cylinder Collar
+            const collarH = plugH + 3; // Make top collar slightly taller than plug depth
+            let topCollar = cylinder(topCylW / 2, collarH, quality);
+            let topCollarMoved = topCollar.translate([0, 0, collarH / 2]);
+            topCollar.delete();
+
+            // 2. Flat square block
+            let sqBlock = cube(topSqW, topSqD, topSqH);
+            let sqBlockMoved = sqBlock.translate([0, 0, collarH + topSqH / 2]);
+            sqBlock.delete();
+
+            // Assemble solid Top Part
+            let topSolid = Manifold.union(topCollarMoved, sqBlockMoved);
+            topCollarMoved.delete();
+            sqBlockMoved.delete();
+
+            // 3. Female Socket Cavity (Plug Cylinder scaled up by tolerance)
+            const cavD = plugD + tolerance * 2;
+            const cavH = plugH + 0.2; // Slightly deeper socket
+            let femaleCavity = cylinder(cavD / 2, cavH, quality).translate([0, 0, cavH / 2]);
+
+            // Subtract Cavity from solid Top Part
+            topPartModel = topSolid.subtract(femaleCavity);
+            topSolid.delete();
+            femaleCavity.delete();
+
+            // =================================================================
+            // BUILD LONG WORKSPACE-EDGE TUBES (8mm White Semi-Transparent)
+            // =================================================================
+            const edgeTubeLen = 130;
+            const whiteMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.45,
+                transmission: 0.85,
+                roughness: 0.15,
+                thickness: 1.0,
+                side: THREE.DoubleSide
+            });
+
+            // Top Workspace Tube
+            let topEdgeTube = cylinder(topTubeD / 2, edgeTubeLen, quality);
+            let topEdgeTubeMoved = topEdgeTube.translate([0, 0, collarH + topSqH + edgeTubeLen / 2]);
+            topEdgeTube.delete();
+
+            // Bottom Workspace Tube (Z range starts at bottom of fins)
+            let botEdgeTube = cylinder(botTubeD / 2, edgeTubeLen, quality);
+            let botEdgeTubeMoved = botEdgeTube.translate([0, 0, -baseCylD - finH - edgeTubeLen / 2]);
+            botEdgeTube.delete();
+
+            // =================================================================
+            // =================================================================
+            // BUILD TWIST-ASSISTANCE WRENCHES (Neon Orange)
+            // =================================================================
+            // 1. Top Square Wrench: Circular head with U-slot (Z-range centered around collarH + topSqH/2)
+            const topWrenchZ = collarH + topSqH / 2;
+            let topWHead = cylinder(15, 10, quality).translate([0, 0, topWrenchZ]); // Round head (30mm diameter)
+            
+            // Funnel entrance chamfers for top wrench at the outer mouth (around Y = 15)
+            const tSqHalfW = topSqW / 2 + tolerance;
+            let lChamfer = cube(8, 8, 12).rotate([0, 0, 45]).translate([-tSqHalfW, 14, topWrenchZ]);
+            let rChamfer = cube(8, 8, 12).rotate([0, 0, -45]).translate([tSqHalfW, 14, topWrenchZ]);
+            let topWSlot = cube(topSqW + tolerance * 2, 40, 12).translate([0, 20 - (topSqD / 2 + tolerance), topWrenchZ]);
+            
+            let topWrenchSocket = topWHead.subtract(topWSlot).subtract(lChamfer).subtract(rChamfer);
+            topWHead.delete();
+            topWSlot.delete();
+            lChamfer.delete();
+            rChamfer.delete();
+
+            // Handle, rounding end, and lanyard hole
+            const topWHandleEnd = -15 - wrenchHandleLen;
+            let topWHandle = cube(wrenchHandleLen, wrenchHandleW, 8).translate([-15 - wrenchHandleLen / 2, 0, topWrenchZ]);
+            let topBlend = cylinder(wrenchHandleW / 2 + 4, 10, quality).translate([-14, 0, topWrenchZ]); // smooth circular fillet transition
+            let topWRound = cylinder(wrenchHandleW / 2, 8, quality).translate([topWHandleEnd, 0, topWrenchZ]); // rounded handle end
+            let topWole = cylinder(2.5, 12, quality).translate([topWHandleEnd, 0, topWrenchZ]); // 5mm lanyard hole
+            
+            let tempW1 = Manifold.union(topWrenchSocket, topWHandle);
+            let tempW2 = Manifold.union(tempW1, topBlend);
+            let tempW3 = Manifold.union(tempW2, topWRound);
+            topWrenchModel = tempW3.subtract(topWole);
+            
+            tempW1.delete();
+            tempW2.delete();
+            tempW3.delete();
+            topWrenchSocket.delete();
+            topWHandle.delete();
+            topBlend.delete();
+            topWRound.delete();
+            topWole.delete();
+
+            // 2. Bottom Crescent Wrench: C-shaped slide-on with 3 fin slot keyways (Z-range matching the fins)
+            const botWrenchZ = -baseCylD - finH / 2;
+            let botWHead = cylinder(13, 10, quality).translate([0, 0, botWrenchZ]);
+            
+            // Cutouts: C-opening along +X, keyways on North, South, West
+            let cSlot = cube(40, botCoreD + tolerance * 2, 12).translate([20, 0, botWrenchZ]);
+            let nSlot = cube(finW + tolerance * 2, 5, 12).translate([0, rCore + 2.5, botWrenchZ]);
+            let sSlot = cube(finW + tolerance * 2, 5, 12).translate([0, -rCore - 2.5, botWrenchZ]);
+            let wSlot = cube(5, finW + tolerance * 2, 12).translate([-rCore - 2.5, 0, botWrenchZ]);
+            
+            // Funnel entrance chamfers for crescent opening
+            let tChamfer = cube(8, 8, 12).rotate([0, 0, 30]).translate([12, botCoreD/2 + tolerance, botWrenchZ]);
+            let bChamfer = cube(8, 8, 12).rotate([0, 0, -30]).translate([12, -botCoreD/2 - tolerance, botWrenchZ]);
+
+            // V-catches for the 3 fin slots to allow easy fin alignment
+            const finHalfW = finW / 2 + tolerance;
+            let nV1 = cube(2.5, 2.5, 12).rotate([0, 0, 45]).translate([-finHalfW, rCore, botWrenchZ]);
+            let nV2 = cube(2.5, 2.5, 12).rotate([0, 0, -45]).translate([finHalfW, rCore, botWrenchZ]);
+
+            let sV1 = cube(2.5, 2.5, 12).rotate([0, 0, -45]).translate([-finHalfW, -rCore, botWrenchZ]);
+            let sV2 = cube(2.5, 2.5, 12).rotate([0, 0, 45]).translate([finHalfW, -rCore, botWrenchZ]);
+
+            let wV1 = cube(2.5, 2.5, 12).rotate([0, 0, 45]).translate([-rCore, finHalfW, botWrenchZ]);
+            let wV2 = cube(2.5, 2.5, 12).rotate([0, 0, -45]).translate([-rCore, -finHalfW, botWrenchZ]);
+
+            // Union all cuts
+            let cuts = Manifold.union(cSlot, nSlot);
+            let temp2 = cuts; cuts = Manifold.union(cuts, sSlot); temp2.delete(); cSlot.delete(); nSlot.delete(); sSlot.delete();
+            temp2 = cuts; cuts = Manifold.union(cuts, wSlot); temp2.delete(); wSlot.delete();
+            temp2 = cuts; cuts = Manifold.union(cuts, tChamfer); temp2.delete(); tChamfer.delete();
+            temp2 = cuts; cuts = Manifold.union(cuts, bChamfer); temp2.delete(); bChamfer.delete();
+            
+            // Add V-catches to cuts
+            temp2 = cuts; cuts = Manifold.union(cuts, nV1); temp2.delete(); nV1.delete();
+            temp2 = cuts; cuts = Manifold.union(cuts, nV2); temp2.delete(); nV2.delete();
+            temp2 = cuts; cuts = Manifold.union(cuts, sV1); temp2.delete(); sV1.delete();
+            temp2 = cuts; cuts = Manifold.union(cuts, sV2); temp2.delete(); sV2.delete();
+            temp2 = cuts; cuts = Manifold.union(cuts, wV1); temp2.delete(); wV1.delete();
+            temp2 = cuts; cuts = Manifold.union(cuts, wV2); temp2.delete(); wV2.delete();
+
+            let botWrenchSocket = botWHead.subtract(cuts);
+            botWHead.delete();
+            cuts.delete();
+
+            // Handle, rounding end, and lanyard hole
+            const botWHandleEnd = -13 - wrenchHandleLen;
+            let botWHandle = cube(wrenchHandleLen, wrenchHandleW, 8).translate([-13 - wrenchHandleLen / 2, 0, botWrenchZ]);
+            let botBlend = cylinder(wrenchHandleW / 2 + 4, 10, quality).translate([-12, 0, botWrenchZ]); // smooth circular fillet transition
+            let botWRound = cylinder(wrenchHandleW / 2, 8, quality).translate([botWHandleEnd, 0, botWrenchZ]); // rounded handle end
+            let botWole = cylinder(2.5, 12, quality).translate([botWHandleEnd, 0, botWrenchZ]); // 5mm lanyard hole
+            
+            let tempW1_ = Manifold.union(botWrenchSocket, botWHandle);
+            let tempW2_ = Manifold.union(tempW1_, botBlend);
+            let tempW3_ = Manifold.union(tempW2_, botWRound);
+            bottomWrenchModel = tempW3_.subtract(botWole);
+            
+            tempW1_.delete();
+            tempW2_.delete();
+            tempW3_.delete();
+            botWrenchSocket.delete();
+            botWHandle.delete();
+            botBlend.delete();
+            botWRound.delete();
+            botWole.delete();
+
+            // =================================================================
+            // APPLY EXPLOSION ANIMATION
+            // =================================================================
+            const maxTopShift = 50;
+            const maxBotShift = 15;
+            
+            const topShift = explosion * maxTopShift;
+            const botShift = -explosion * maxBotShift;
+            const topRotation = explosion * 180; // twist degrees
+
+            // Transform parts for visualization
+            let topRender = topPartModel.rotate([0, 0, topRotation]).translate([0, 0, topShift]);
+            let botRender = bottomPartModel.translate([0, 0, botShift]);
+
+            let topTubeRender = topEdgeTubeMoved.rotate([0, 0, topRotation]).translate([0, 0, topShift]);
+            let botTubeRender = botEdgeTubeMoved.translate([0, 0, botShift]);
+
+            // Render meshes
+            const threeTop = manifoldToThreeMesh(topRender, 0x06b6d4, 0.8);
+            const threeBot = manifoldToThreeMesh(botRender, 0xd946ef, 0.8);
+            
+            const threeTopTube = new THREE.Mesh(
+                new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(topTubeRender.getMesh().vertProperties, 3))
+                    .setIndex(new THREE.Uint32BufferAttribute(topTubeRender.getMesh().triVerts, 1)),
+                whiteMat
+            );
+            threeTopTube.geometry.computeVertexNormals();
+
+            const threeBotTube = new THREE.Mesh(
+                new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(botTubeRender.getMesh().vertProperties, 3))
+                    .setIndex(new THREE.Uint32BufferAttribute(botTubeRender.getMesh().triVerts, 1)),
+                whiteMat
+            );
+            threeBotTube.geometry.computeVertexNormals();
+
+            scene.add(threeTop);
+            scene.add(threeBot);
+            scene.add(threeTopTube);
+            scene.add(threeBotTube);
+            
+            currentMeshes.push(threeTop, threeBot, threeTopTube, threeBotTube);
+
+            // Render Wrenches if enabled
+            if (showWrenches) {
+                let topWrenchRender = topWrenchModel.rotate([0, 0, topRotation]).translate([0, 0, topShift]);
+                let botWrenchRender = bottomWrenchModel.translate([0, 0, botShift]);
+                
+                const threeTopWrench = manifoldToThreeMesh(topWrenchRender, 0xf97316, 0.9);
+                const threeBotWrench = manifoldToThreeMesh(botWrenchRender, 0xf97316, 0.9);
+                
+                scene.add(threeTopWrench);
+                scene.add(threeBotWrench);
+                currentMeshes.push(threeTopWrench, threeBotWrench);
+                
+                topWrenchRender.delete();
+                botWrenchRender.delete();
+            }
+
+            topRender.delete();
+            botRender.delete();
+            topTubeRender.delete();
+            botTubeRender.delete();
+            topEdgeTubeMoved.delete();
+            botEdgeTubeMoved.delete();
+        }
+
+        function requestUpdate() {
+            if (!Manifold) return;
+
+            // Remove old meshes
+            currentMeshes.forEach(m => scene.remove(m));
+            currentMeshes = [];
+
+            try {
+                generateModels();
+            } catch (e) {
+                console.error("CAD modeling engine error:", e);
+            }
+        }
+
+        function exportSTL(model, filename) {
+            if (!model) return;
+            let stl = `solid ${filename}\n`;
+            const mesh = model.getMesh();
+            const pos = mesh.vertProperties;
+            const idx = mesh.triVerts;
+            
+            for (let i = 0; i < idx.length; i += 3) {
+                const i0 = idx[i] * 3;
+                const i1 = idx[i+1] * 3;
+                const i2 = idx[i+2] * 3;
+                
+                stl += `facet normal 0 0 0\n  outer loop\n`;
+                stl += `    vertex ${pos[i0]} ${pos[i0+1]} ${pos[i0+2]}\n`;
+                stl += `    vertex ${pos[i1]} ${pos[i1+1]} ${pos[i1+2]}\n`;
+                stl += `    vertex ${pos[i2]} ${pos[i2+1]} ${pos[i2+2]}\n`;
+                stl += `  endloop\nendfacet\n`;
+            }
+            stl += `endsolid ${filename}`;
+            const blob = new Blob([stl], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `${filename}.stl`; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function init() {
+            wasm = await Module();
+            wasm.setup();
+            Manifold = wasm.Manifold;
+            requestUpdate();
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            // Slowly rotate scene globally for active visualization
+            scene.rotation.y += 0.0025;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 420) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        });
+
+        document.getElementById('dl-top').onclick = () => exportSTL(topPartModel, "DialysisCable_TopConnector");
+        document.getElementById('dl-bottom').onclick = () => exportSTL(bottomPartModel, "DialysisCable_BottomConnector");
+        document.getElementById('dl-wrench-top').onclick = () => exportSTL(topWrenchModel, "DialysisCable_TopWrench");
+        document.getElementById('dl-wrench-bottom').onclick = () => exportSTL(bottomWrenchModel, "DialysisCable_BottomWrench");
+
+        init();
+    </script>
+</body>
+</html>
