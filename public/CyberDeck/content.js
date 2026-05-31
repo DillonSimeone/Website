@@ -290,7 +290,7 @@ export class ContentProjector {
         const btnMargin = 60;
         
         const hasPrev = window.activePoseIndex > 0;
-        const hasNext = window.activePoseIndex < 4; 
+        const hasNext = window.activePoseIndex < 5; 
 
         if (hasPrev && hasNext) {
             this._drawNavButton(ctx, `[ PREV_SECTOR ]`, btnMargin, btnY, btnW, btnH, this.hoveredNav === 'prev');
@@ -320,48 +320,76 @@ export class ContentProjector {
             ctx.shadowBlur = 0;
         }
 
-        // 7. Footer Links (Rugged Bottom Dock)
+        // 7. Footer Links (Rugged Bottom Dock with flex-wrap logic)
         this.footerHitAreas = [];
         if (this.currentContent.footerLinks) {
             const links = this.currentContent.footerLinks;
-            const linkW = this.isMobile ? 320 : 280;
-            const linkH = this.isMobile ? 70 : 50;
-            const gap = 20;
-            const totalW = links.length * linkW + (links.length - 1) * gap;
-            let startX = (w - totalW) / 2;
-            const dockY = h - (this.isMobile ? 260 : 230); // Above nav buttons
+            const linkW = this.isMobile ? 320 : 260;
+            const linkH = this.isMobile ? 65 : 45;
+            const gap = 15;
+            const maxRowW = w - 100;
 
+            const rows = [];
+            let currentRow = [];
+            let currentRowW = 0;
             for (let i = 0; i < links.length; i++) {
-                const link = links[i];
-                const isHovered = this.hoveredFooter === i;
-                
-                ctx.save();
-                ctx.translate(startX, dockY);
-                
-                // Button Plate
-                ctx.fillStyle = isHovered ? this.themeColor : 'rgba(255, 255, 255, 0.05)';
-                ctx.globalAlpha = isHovered ? 0.2 : 1.0;
-                ctx.fillRect(0, 0, linkW, linkH);
-                
-                ctx.strokeStyle = isHovered ? this.themeColor : 'rgba(51, 255, 51, 0.4)';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(0, 0, linkW, linkH);
-                
-                // Text
-                ctx.fillStyle = isHovered ? this.themeColor : '#ffffff';
-                ctx.globalAlpha = 1.0;
-                ctx.font = 'bold 18px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText(`[ ${link.label.toUpperCase()} ]`, linkW / 2, 32);
-                
-                // Icon hint
-                ctx.font = '10px monospace';
-                ctx.fillText("EXTERNAL_LINK", linkW / 2, 12);
-                
-                ctx.restore();
+                const itemW = linkW;
+                if (currentRow.length > 0 && currentRowW + gap + itemW > maxRowW) {
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentRowW = 0;
+                }
+                currentRow.push({ link: links[i], originalIndex: i });
+                currentRowW += (currentRow.length === 1 ? 0 : gap) + itemW;
+            }
+            if (currentRow.length > 0) {
+                rows.push(currentRow);
+            }
 
-                this.footerHitAreas.push({ x: startX, y: dockY, w: linkW, h: linkH, url: link.url });
-                startX += linkW + gap;
+            const rowHeight = linkH + gap;
+            const totalFooterH = rows.length * rowHeight - gap;
+            const dockStartY = h - (this.isMobile ? 260 : 200) - totalFooterH;
+
+            for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+                const row = rows[rowIndex];
+                const rowW = row.length * linkW + (row.length - 1) * gap;
+                let startX = (w - rowW) / 2;
+                const rowY = dockStartY + rowIndex * rowHeight;
+
+                for (let i = 0; i < row.length; i++) {
+                    const item = row[i];
+                    const link = item.link;
+                    const originalIndex = item.originalIndex;
+                    const isHovered = this.hoveredFooter === originalIndex;
+
+                    ctx.save();
+                    ctx.translate(startX, rowY);
+                    
+                    // Button Plate
+                    ctx.fillStyle = isHovered ? this.themeColor : 'rgba(255, 255, 255, 0.05)';
+                    ctx.globalAlpha = isHovered ? 0.2 : 1.0;
+                    ctx.fillRect(0, 0, linkW, linkH);
+                    
+                    ctx.strokeStyle = isHovered ? this.themeColor : 'rgba(51, 255, 51, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(0, 0, linkW, linkH);
+                    
+                    // Text
+                    ctx.fillStyle = isHovered ? this.themeColor : '#ffffff';
+                    ctx.globalAlpha = 1.0;
+                    ctx.font = 'bold 15px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`[ ${link.label.toUpperCase()} ]`, linkW / 2, linkH / 2 + 5);
+                    
+                    // Icon hint
+                    ctx.font = '8px monospace';
+                    ctx.fillText("EXTERNAL_LINK", linkW / 2, 10);
+                    
+                    ctx.restore();
+
+                    this.footerHitAreas.push({ x: startX, y: rowY, w: linkW, h: linkH, url: link.url });
+                    startX += linkW + gap;
+                }
             }
         }
 
@@ -463,7 +491,7 @@ export class ContentProjector {
                 const btnMargin = 60;
                 
                 const hasPrev = window.activePoseIndex > 0;
-                const hasNext = window.activePoseIndex < 4;
+                const hasNext = window.activePoseIndex < 5;
 
                 if (canvasY >= btnY && canvasY <= btnY + btnH) {
                     if (hasPrev && hasNext) {
@@ -557,7 +585,7 @@ export class ContentProjector {
         const btnW = 320;
         const btnMargin = 60;
         const hasPrev = window.activePoseIndex > 0;
-        const hasNext = window.activePoseIndex < 4;
+        const hasNext = window.activePoseIndex < 5;
 
         if (canvasY >= btnY && canvasY <= btnY + btnH && this.onNavigate) {
             if (hasPrev && hasNext) {

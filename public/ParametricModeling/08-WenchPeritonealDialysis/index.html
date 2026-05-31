@@ -145,8 +145,7 @@
                     <button class="dl-btn" id="dl-top">EXPORT TOP CABLE (.STL)</button>
                     <button class="dl-btn" id="dl-bottom">EXPORT BOTTOM CABLE (.STL)</button>
                 </div>
-                <button class="dl-btn dl-main" id="dl-wrench-top">EXPORT TOP WRENCH (.STL)</button>
-                <button class="dl-btn dl-main" id="dl-wrench-bottom">EXPORT BOTTOM WRENCH (.STL)</button>
+                <button class="dl-btn dl-main" id="dl-wrench-universal" style="width: 100%;">EXPORT UNIVERSAL WRENCH (.STL)</button>
             </div>
         </div>
     </div>
@@ -361,9 +360,9 @@
             let topCollarMoved = topCollar.translate([0, 0, collarH / 2]);
             topCollar.delete();
 
-            // 2. Flat square block
+            // 2. Flat square block (rotated 180 degrees)
             let sqBlock = cube(topSqW, topSqD, topSqH);
-            let sqBlockMoved = sqBlock.translate([0, 0, collarH + topSqH / 2]);
+            let sqBlockMoved = sqBlock.rotate([0, 0, 180]).translate([0, 0, collarH + topSqH / 2]);
             sqBlock.delete();
 
             // Assemble solid Top Part
@@ -409,108 +408,88 @@
             // =================================================================
             // BUILD TWIST-ASSISTANCE WRENCHES (Neon Orange)
             // =================================================================
-            // 1. Top Square Wrench: Circular head with U-slot (Z-range centered around collarH + topSqH/2)
-            const topWrenchZ = collarH + topSqH / 2;
-            let topWHead = cylinder(15, 10, quality).translate([0, 0, topWrenchZ]); // Round head (30mm diameter)
+            // UNIVERSAL WRENCH — Grips both top square block and bottom fins
+            // =================================================================
+            // Build order: assemble the ENTIRE solid body (rounded head + handle + blend +
+            // round end), THEN subtract the socket features.
             
-            // Funnel entrance chamfers for top wrench at the outer mouth (around Y = 15)
-            const tSqHalfW = topSqW / 2 + tolerance;
-            let lChamfer = cube(8, 8, 12).rotate([0, 0, 45]).translate([-tSqHalfW, 14, topWrenchZ]);
-            let rChamfer = cube(8, 8, 12).rotate([0, 0, -45]).translate([tSqHalfW, 14, topWrenchZ]);
-            let topWSlot = cube(topSqW + tolerance * 2, 40, 12).translate([0, 20 - (topSqD / 2 + tolerance), topWrenchZ]);
+            const magnetD = param("Magnet Slot Diameter", 8, { min: 4, max: 20 }, "kinematics");
+            const magnetH = param("Magnet Slot Depth", 3, { min: 1, max: 8 }, "kinematics");
             
-            let topWrenchSocket = topWHead.subtract(topWSlot).subtract(lChamfer).subtract(rChamfer);
-            topWHead.delete();
-            topWSlot.delete();
-            lChamfer.delete();
-            rChamfer.delete();
-
-            // Handle, rounding end, and lanyard hole
-            const topWHandleEnd = -15 - wrenchHandleLen;
-            let topWHandle = cube(wrenchHandleLen, wrenchHandleW, 8).translate([-15 - wrenchHandleLen / 2, 0, topWrenchZ]);
-            let topBlend = cylinder(wrenchHandleW / 2 + 4, 10, quality).translate([-14, 0, topWrenchZ]); // smooth circular fillet transition
-            let topWRound = cylinder(wrenchHandleW / 2, 8, quality).translate([topWHandleEnd, 0, topWrenchZ]); // rounded handle end
-            let topWole = cylinder(2.5, 12, quality).translate([topWHandleEnd, 0, topWrenchZ]); // 5mm lanyard hole
+            const uwHeadR = 15; // Cylinder head radius for rounded look
+            const uwHeadH = 10;
+            const fullCutH = uwHeadH + 4;
+            const socketOffsetX = -2;
             
-            let tempW1 = Manifold.union(topWrenchSocket, topWHandle);
-            let tempW2 = Manifold.union(tempW1, topBlend);
-            let tempW3 = Manifold.union(tempW2, topWRound);
-            topWrenchModel = tempW3.subtract(topWole);
+            // --- STEP 1: BUILD SOLID BODY ---
+            let uwHead = cylinder(uwHeadR, uwHeadH, quality);
             
-            tempW1.delete();
-            tempW2.delete();
-            tempW3.delete();
-            topWrenchSocket.delete();
-            topWHandle.delete();
-            topBlend.delete();
-            topWRound.delete();
-            topWole.delete();
-
-            // 2. Bottom Crescent Wrench: C-shaped slide-on with 3 fin slot keyways (Z-range matching the fins)
-            const botWrenchZ = -baseCylD - finH / 2;
-            let botWHead = cylinder(13, 10, quality).translate([0, 0, botWrenchZ]);
+            const uwHandleEnd = -uwHeadR - wrenchHandleLen;
+            const uwMidX = -uwHeadR - wrenchHandleLen / 2;
             
-            // Cutouts: C-opening along +X, keyways on North, South, West
-            let cSlot = cube(40, botCoreD + tolerance * 2, 12).translate([20, 0, botWrenchZ]);
-            let nSlot = cube(finW + tolerance * 2, 5, 12).translate([0, rCore + 2.5, botWrenchZ]);
-            let sSlot = cube(finW + tolerance * 2, 5, 12).translate([0, -rCore - 2.5, botWrenchZ]);
-            let wSlot = cube(5, finW + tolerance * 2, 12).translate([-rCore - 2.5, 0, botWrenchZ]);
+            let uwHandle = cube(wrenchHandleLen, wrenchHandleW, 8)
+                .translate([-uwHeadR - wrenchHandleLen / 2, 0, -uwHeadH / 2 + 4]);
+            let uwBlend = cylinder(wrenchHandleW / 2 + 4, 10, quality)
+                .translate([-uwHeadR + 1, 0, -uwHeadH / 2 + 5]);
+            let uwRoundEnd = cylinder(20, 8, quality)
+                .translate([uwHandleEnd, 0, -uwHeadH / 2 + 4]);
+                
+            let uwS1 = Manifold.union(uwHead, uwHandle);
+            let uwS2 = Manifold.union(uwS1, uwBlend);
+            let uwSolid = Manifold.union(uwS2, uwRoundEnd);
             
-            // Funnel entrance chamfers for crescent opening
-            let tChamfer = cube(8, 8, 12).rotate([0, 0, 30]).translate([12, botCoreD/2 + tolerance, botWrenchZ]);
-            let bChamfer = cube(8, 8, 12).rotate([0, 0, -30]).translate([12, -botCoreD/2 - tolerance, botWrenchZ]);
-
-            // V-catches for the 3 fin slots to allow easy fin alignment
-            const finHalfW = finW / 2 + tolerance;
-            let nV1 = cube(2.5, 2.5, 12).rotate([0, 0, 45]).translate([-finHalfW, rCore, botWrenchZ]);
-            let nV2 = cube(2.5, 2.5, 12).rotate([0, 0, -45]).translate([finHalfW, rCore, botWrenchZ]);
-
-            let sV1 = cube(2.5, 2.5, 12).rotate([0, 0, -45]).translate([-finHalfW, -rCore, botWrenchZ]);
-            let sV2 = cube(2.5, 2.5, 12).rotate([0, 0, 45]).translate([finHalfW, -rCore, botWrenchZ]);
-
-            let wV1 = cube(2.5, 2.5, 12).rotate([0, 0, 45]).translate([-rCore, finHalfW, botWrenchZ]);
-            let wV2 = cube(2.5, 2.5, 12).rotate([0, 0, -45]).translate([-rCore, -finHalfW, botWrenchZ]);
-
-            // Union all cuts
-            let cuts = Manifold.union(cSlot, nSlot);
-            let temp2 = cuts; cuts = Manifold.union(cuts, sSlot); temp2.delete(); cSlot.delete(); nSlot.delete(); sSlot.delete();
-            temp2 = cuts; cuts = Manifold.union(cuts, wSlot); temp2.delete(); wSlot.delete();
-            temp2 = cuts; cuts = Manifold.union(cuts, tChamfer); temp2.delete(); tChamfer.delete();
-            temp2 = cuts; cuts = Manifold.union(cuts, bChamfer); temp2.delete(); bChamfer.delete();
+            uwHead.delete(); uwHandle.delete(); uwBlend.delete(); uwRoundEnd.delete();
+            uwS1.delete(); uwS2.delete();
             
-            // Add V-catches to cuts
-            temp2 = cuts; cuts = Manifold.union(cuts, nV1); temp2.delete(); nV1.delete();
-            temp2 = cuts; cuts = Manifold.union(cuts, nV2); temp2.delete(); nV2.delete();
-            temp2 = cuts; cuts = Manifold.union(cuts, sV1); temp2.delete(); sV1.delete();
-            temp2 = cuts; cuts = Manifold.union(cuts, sV2); temp2.delete(); sV2.delete();
-            temp2 = cuts; cuts = Manifold.union(cuts, wV1); temp2.delete(); wV1.delete();
-            temp2 = cuts; cuts = Manifold.union(cuts, wV2); temp2.delete(); wV2.delete();
-
-            let botWrenchSocket = botWHead.subtract(cuts);
-            botWHead.delete();
-            cuts.delete();
-
-            // Handle, rounding end, and lanyard hole
-            const botWHandleEnd = -13 - wrenchHandleLen;
-            let botWHandle = cube(wrenchHandleLen, wrenchHandleW, 8).translate([-13 - wrenchHandleLen / 2, 0, botWrenchZ]);
-            let botBlend = cylinder(wrenchHandleW / 2 + 4, 10, quality).translate([-12, 0, botWrenchZ]); // smooth circular fillet transition
-            let botWRound = cylinder(wrenchHandleW / 2, 8, quality).translate([botWHandleEnd, 0, botWrenchZ]); // rounded handle end
-            let botWole = cylinder(2.5, 12, quality).translate([botWHandleEnd, 0, botWrenchZ]); // 5mm lanyard hole
+            // --- STEP 2: CREATE CUTTERS (Centered at origin first) ---
+            const tol = tolerance;
+            const bwCoreR = botCoreD / 2 + tol;
+            const sqCutW = topSqW + tol * 2;
+            const sqCutD = topSqD + tol * 2;
             
-            let tempW1_ = Manifold.union(botWrenchSocket, botWHandle);
-            let tempW2_ = Manifold.union(tempW1_, botBlend);
-            let tempW3_ = Manifold.union(tempW2_, botWRound);
-            bottomWrenchModel = tempW3_.subtract(botWole);
+            // A) Square slot for top connector (acts as both socket and opening to +X)
+            const sqLength = (uwHeadR + 5) + (sqCutW / 2);
+            const sqCenterX = ((uwHeadR + 5) - (sqCutW / 2)) / 2;
+            let uwSqSlot = cube(sqLength, sqCutD, fullCutH)
+                .translate([sqCenterX, 0, 0]);
             
-            tempW1_.delete();
-            tempW2_.delete();
-            tempW3_.delete();
-            botWrenchSocket.delete();
-            botWHandle.delete();
-            botBlend.delete();
-            botWRound.delete();
-            botWole.delete();
-
+            // B) Center hole for core/tube
+            let uwCenterHole = cylinder(bwCoreR, fullCutH, quality);
+            
+            // C) 3 fin slots for bottom connector (+Y, -Y, -X). +X is the opening.
+            let cutFinN = createFin(finW + tol*2, finD + tol*2, fullCutH, rCore, 0);   // +Y
+            let cutFinS = createFin(finW + tol*2, finD + tol*2, fullCutH, rCore, 180); // -Y
+            let cutFinW_ = createFin(finW + tol*2, finD + tol*2, fullCutH, rCore, 90); // -X
+            
+            // Group all cutters
+            let c1 = Manifold.union(uwSqSlot, uwCenterHole);
+            let c2 = Manifold.union(c1, cutFinN);
+            let c3 = Manifold.union(c2, cutFinS);
+            let cutters = Manifold.union(c3, cutFinW_);
+            c1.delete(); c2.delete(); c3.delete();
+            
+            // Translate all cutters to the socket center
+            let cuttersMoved = cutters.translate([socketOffsetX, 0, 0]);
+            
+            // --- STEP 3: SUBTRACT FEATURES ---
+            let uws1 = uwSolid.subtract(cuttersMoved);
+            
+            // Thumb hole & magnet pocket
+            let uwThumbHole = cylinder(15, 14, quality).translate([uwHandleEnd, 0, 0]);
+            let uwMagnet = cylinder(magnetD / 2, magnetH + 0.1, quality)
+                .translate([uwMidX, 0, uwHeadH / 2 - magnetH / 2 + 0.05]);
+                
+            let uws2 = uws1.subtract(uwThumbHole);
+            topWrenchModel = uws2.subtract(uwMagnet);
+            
+            // Since top and bottom wrenches are now identical, we copy the universal wrench model
+            bottomWrenchModel = topWrenchModel.translate([0, 0, 0]); // Create copy
+            
+            // Cleanup
+            uwSolid.delete(); cutters.delete(); cuttersMoved.delete();
+            uwSqSlot.delete(); uwCenterHole.delete(); cutFinN.delete(); cutFinS.delete(); cutFinW_.delete();
+            uwThumbHole.delete(); uwMagnet.delete(); uws1.delete(); uws2.delete();
+ 
             // =================================================================
             // APPLY EXPLOSION ANIMATION
             // =================================================================
@@ -520,14 +499,14 @@
             const topShift = explosion * maxTopShift;
             const botShift = -explosion * maxBotShift;
             const topRotation = explosion * 180; // twist degrees
-
+ 
             // Transform parts for visualization
             let topRender = topPartModel.rotate([0, 0, topRotation]).translate([0, 0, topShift]);
             let botRender = bottomPartModel.translate([0, 0, botShift]);
-
+ 
             let topTubeRender = topEdgeTubeMoved.rotate([0, 0, topRotation]).translate([0, 0, topShift]);
             let botTubeRender = botEdgeTubeMoved.translate([0, 0, botShift]);
-
+ 
             // Render meshes
             const threeTop = manifoldToThreeMesh(topRender, 0x06b6d4, 0.8);
             const threeBot = manifoldToThreeMesh(botRender, 0xd946ef, 0.8);
@@ -538,37 +517,44 @@
                 whiteMat
             );
             threeTopTube.geometry.computeVertexNormals();
-
+ 
             const threeBotTube = new THREE.Mesh(
                 new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(botTubeRender.getMesh().vertProperties, 3))
                     .setIndex(new THREE.Uint32BufferAttribute(botTubeRender.getMesh().triVerts, 1)),
                 whiteMat
             );
             threeBotTube.geometry.computeVertexNormals();
-
+ 
             scene.add(threeTop);
             scene.add(threeBot);
             scene.add(threeTopTube);
             scene.add(threeBotTube);
             
             currentMeshes.push(threeTop, threeBot, threeTopTube, threeBotTube);
-
-            // Render Wrenches if enabled
+ 
+            // Render Wrenches if enabled (translated to their respective connector heights)
             if (showWrenches) {
-                let topWrenchRender = topWrenchModel.rotate([0, 0, topRotation]).translate([0, 0, topShift]);
-                let botWrenchRender = bottomWrenchModel.translate([0, 0, botShift]);
+                // Top position: collarH + 7 (approximate placement based on previous design)
+                const topWrenchZCenter = collarH + 7;
+                let twVisual = topWrenchModel.translate([-socketOffsetX, 0, topWrenchZCenter])
+                    .rotate([0, 0, topRotation]).translate([0, 0, topShift]);
+                    
+                // Bottom position: -baseCylD - finH / 2
+                const botWrenchZCenter = -baseCylD - finH / 2;
+                let bwVisual = bottomWrenchModel.translate([-socketOffsetX, 0, botWrenchZCenter])
+                    .translate([0, 0, botShift]);
                 
-                const threeTopWrench = manifoldToThreeMesh(topWrenchRender, 0xf97316, 0.9);
-                const threeBotWrench = manifoldToThreeMesh(botWrenchRender, 0xf97316, 0.9);
+                const threeTopWrench = manifoldToThreeMesh(twVisual, 0xf97316, 0.9);
+                const threeBotWrench = manifoldToThreeMesh(bwVisual, 0xf97316, 0.9);
                 
                 scene.add(threeTopWrench);
                 scene.add(threeBotWrench);
                 currentMeshes.push(threeTopWrench, threeBotWrench);
                 
-                topWrenchRender.delete();
-                botWrenchRender.delete();
+                twVisual.delete();
+                bwVisual.delete();
             }
-
+ 
             topRender.delete();
             botRender.delete();
             topTubeRender.delete();
@@ -639,8 +625,7 @@
 
         document.getElementById('dl-top').onclick = () => exportSTL(topPartModel, "DialysisCable_TopConnector");
         document.getElementById('dl-bottom').onclick = () => exportSTL(bottomPartModel, "DialysisCable_BottomConnector");
-        document.getElementById('dl-wrench-top').onclick = () => exportSTL(topWrenchModel, "DialysisCable_TopWrench");
-        document.getElementById('dl-wrench-bottom').onclick = () => exportSTL(bottomWrenchModel, "DialysisCable_BottomWrench");
+        document.getElementById('dl-wrench-universal').onclick = () => exportSTL(topWrenchModel, "DialysisCable_UniversalWrench");
 
         init();
     </script>
