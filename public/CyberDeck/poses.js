@@ -174,4 +174,26 @@ export const REPULSION_STRENGTH = 8.0;export const poses = [
             ],
         },
     },
+    {
+        id: "mooddeck",
+        label: "MOOD DECK",
+        formation: "mooddeck",
+        geometry: "box",
+        colorPalette: ["#ffffff", "#888888", "#33ff33"],
+        emissiveColor: "#33ff33",
+        cameraSequence: [
+            { pos: [0, 0, 16], lookAt: [0, 0, 0], duration: 1.5 },
+        ],
+        shaderMood: "calm",
+        content: {
+            title: "MOOD DECK",
+            items: [
+                {
+                    label: "Visual Inspirations",
+                    details: "A curated collection of photos, schematics, and design elements showing the engineering, project aesthetics, and physical mockups for the Apocalypse Cyberdeck residency."
+                }
+            ],
+            footerLinks: []
+        }
+    }
 ];

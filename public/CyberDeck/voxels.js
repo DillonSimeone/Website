@@ -52,6 +52,10 @@ export class VoxelFormation {
         this.derezParticles = [];
         this.derezGeo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
 
+        // Mooddeck state
+        this.mooddeckTimer = 0;
+        this.mooddeckShapeIndex = 0;
+
         this._initVoxels();
     }
 
@@ -141,6 +145,11 @@ export class VoxelFormation {
                     r * Math.sin(angle),
                     0
                 ));
+            }
+        } else if (name === "mooddeck") {
+            const initialTargets = this._getMooddeckTargets(0);
+            for (let i = 0; i < VOXEL_COUNT; i++) {
+                targets.push(initialTargets[i]);
             }
         }
         return targets;
@@ -263,6 +272,18 @@ export class VoxelFormation {
                 const y = target.y;
                 target.x = x * cos - y * sin;
                 target.y = x * sin + y * cos;
+            }
+        }
+
+        if (this.activePoseIndex === 6) {
+            this.mooddeckTimer += dt;
+            if (this.mooddeckTimer >= 3.0) {
+                this.mooddeckTimer = 0;
+                this.mooddeckShapeIndex = (this.mooddeckShapeIndex + 1) % 3;
+                const newTargets = this._getMooddeckTargets(this.mooddeckShapeIndex);
+                for (let i = 0; i < VOXEL_COUNT; i++) {
+                    this.targets[i].copy(newTargets[i] || new THREE.Vector3(0,0,0));
+                }
             }
         }
 
@@ -546,5 +567,57 @@ export class VoxelFormation {
     }
 
     getRandomVoxelPosition() { return this.meshes[Math.floor(Math.random() * VOXEL_COUNT)].position.clone(); }
+
+    _getMooddeckTargets(shapeIndex) {
+        const targets = [];
+        if (shapeIndex === 0) {
+            // Triangle
+            const size = 12.0;
+            const halfSize = size / 2;
+            const h = size * Math.sqrt(3) / 2;
+            const v0 = new THREE.Vector3(0, h * 2 / 3 - 1.5, 0);
+            const v1 = new THREE.Vector3(-halfSize, -h / 3 - 1.5, 0);
+            const v2 = new THREE.Vector3(halfSize, -h / 3 - 1.5, 0);
+            for (let i = 0; i < VOXEL_COUNT; i++) {
+                const t = (i / VOXEL_COUNT) * 3;
+                const p = new THREE.Vector3();
+                if (t < 1) p.lerpVectors(v0, v1, t);
+                else if (t < 2) p.lerpVectors(v1, v2, t - 1);
+                else p.lerpVectors(v2, v0, t - 2);
+                p.x += (Math.random() - 0.5) * 0.4;
+                p.y += (Math.random() - 0.5) * 0.4;
+                p.z += (Math.random() - 0.5) * 0.4;
+                targets.push(p);
+            }
+        } else if (shapeIndex === 1) {
+            // Square
+            const size = 9.0;
+            const half = size / 2;
+            for (let i = 0; i < VOXEL_COUNT; i++) {
+                const t = (i / VOXEL_COUNT) * 4;
+                const p = new THREE.Vector3();
+                if (t < 1) p.set(-half + t * size, half - 1.5, 0);
+                else if (t < 2) p.set(half, half - (t - 1) * size - 1.5, 0);
+                else if (t < 3) p.set(half - (t - 2) * size, -half - 1.5, 0);
+                else p.set(-half, -half + (t - 3) * size - 1.5, 0);
+                p.x += (Math.random() - 0.5) * 0.4;
+                p.y += (Math.random() - 0.5) * 0.4;
+                p.z += (Math.random() - 0.5) * 0.4;
+                targets.push(p);
+            }
+        } else {
+            // Circle
+            for (let i = 0; i < VOXEL_COUNT; i++) {
+                const angle = (i / VOXEL_COUNT) * Math.PI * 2;
+                const r = 6.0;
+                targets.push(new THREE.Vector3(
+                    r * Math.cos(angle) + (Math.random() - 0.5) * 0.4,
+                    r * Math.sin(angle) - 1.5 + (Math.random() - 0.5) * 0.4,
+                    (Math.random() - 0.5) * 0.4
+                ));
+            }
+        }
+        return targets;
+    }
 }
 

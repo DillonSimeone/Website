@@ -322,7 +322,7 @@ function init() {
         if (e.key === '1') bg.loadShader('./shaders/flow.glsl');
         if (e.key === '2') bg.loadShader('./shaders/rainbow.glsl');
         // Keyboard shortcuts: 1-5 for poses, s/w/g for power
-        const poseKeys = {'!':0,'@':1,'#':2,'$':3,'%':4,'^':5};
+        const poseKeys = {'!':0,'@':1,'#':2,'$':3,'%':4,'^':5,'&':6};
         if (poseKeys[e.key] !== undefined && !isIntroActive) setPose(poseKeys[e.key]);
         if (e.key === 's' && !isIntroActive) setPowerMode('solar');
         if (e.key === 'w' && !isIntroActive) setPowerMode('wind');

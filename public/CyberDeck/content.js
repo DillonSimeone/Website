@@ -68,6 +68,27 @@ export class ContentProjector {
         target.addEventListener('mousemove', this._onMouseMove);
         target.addEventListener('wheel', this._onMouseWheel, { passive: false });
         target.addEventListener('click', this._onClick);
+
+        // Load images for mooddeck
+        this.moodImages = [];
+        const imgPaths = [
+            './images/554009293-df5e4cd6-41c9-4f8a-bc78-de39ea63718a_16_k6AqXiNwtY.webp',
+            './images/a698cc5251c24dbb3bb2c91a7cfd73d8.webp',
+            './images/cyberdeck.webp',
+            './images/pi-projector-featured.webp',
+            './images/Screenshot-from-2023-08-25-13-20-00.webp'
+        ];
+        imgPaths.forEach(src => {
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+                this.moodImages.push(img);
+            };
+        });
+        this.currentMoodImage = null;
+        this.moodImageOpacity = 0;
+        this.moodImageState = 'fadein';
+        this.moodImageTimer = 0;
     }
 
     show(content, position, lookDir, themeColor) {
@@ -290,7 +311,7 @@ export class ContentProjector {
         const btnMargin = 60;
         
         const hasPrev = window.activePoseIndex > 0;
-        const hasNext = window.activePoseIndex < 5; 
+        const hasNext = window.activePoseIndex < 6; 
 
         if (hasPrev && hasNext) {
             this._drawNavButton(ctx, `[ PREV_SECTOR ]`, btnMargin, btnY, btnW, btnH, this.hoveredNav === 'prev');
@@ -318,6 +339,22 @@ export class ContentProjector {
             ctx.shadowColor = this.themeColor;
             ctx.fillRect(w - 38, barY, 10, barH);
             ctx.shadowBlur = 0;
+        }
+
+        // 8. Mooddeck Image Overlay
+        if (window.activePoseIndex === 6 && this.currentMoodImage && this.moodImageOpacity > 0) {
+            ctx.save();
+            ctx.globalAlpha = this.moodImageOpacity * 0.9;
+            const imgW = 440;
+            const imgH = 290;
+            const imgX = (w - imgW) / 2;
+            const imgY = 400 + offsetY;
+            
+            ctx.strokeStyle = this.themeColor;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(imgX - 5, imgY - 5, imgW + 10, imgH + 10);
+            ctx.drawImage(this.currentMoodImage, imgX, imgY, imgW, imgH);
+            ctx.restore();
         }
 
         // 7. Footer Links (Rugged Bottom Dock with flex-wrap logic)
@@ -422,6 +459,50 @@ export class ContentProjector {
     }
 
     update(dt) {
+        // Handle mooddeck image cycling
+        if (window.activePoseIndex === 6 && this.moodImages.length > 0) {
+            this.moodImageTimer += dt;
+            if (!this.currentMoodImage) {
+                this.currentMoodImage = this.moodImages[Math.floor(Math.random() * this.moodImages.length)];
+                this.moodImageOpacity = 0;
+                this.moodImageState = 'fadein';
+                this.moodImageTimer = 0;
+            }
+
+            if (this.moodImageState === 'fadein') {
+                this.moodImageOpacity += dt * 1.5;
+                if (this.moodImageOpacity >= 1.0) {
+                    this.moodImageOpacity = 1.0;
+                    this.moodImageState = 'visible';
+                    this.moodImageTimer = 0;
+                }
+                this._renderCanvas();
+            } else if (this.moodImageState === 'visible') {
+                if (this.moodImageTimer > 3.0) {
+                    this.moodImageState = 'fadeout';
+                    this.moodImageTimer = 0;
+                }
+            } else if (this.moodImageState === 'fadeout') {
+                this.moodImageOpacity -= dt * 1.5;
+                if (this.moodImageOpacity <= 0) {
+                    this.moodImageOpacity = 0;
+                    this.moodImageState = 'waiting';
+                    this.currentMoodImage = null;
+                    this.moodImageTimer = 0;
+                }
+                this._renderCanvas();
+            } else if (this.moodImageState === 'waiting') {
+                if (this.moodImageTimer > 0.5) {
+                    this.moodImageState = 'fadein';
+                    this.currentMoodImage = this.moodImages[Math.floor(Math.random() * this.moodImages.length)];
+                    this.moodImageTimer = 0;
+                }
+            }
+        } else {
+            this.currentMoodImage = null;
+            this.moodImageOpacity = 0;
+        }
+
         // Fade in/out — faster for Adaptive Compute
         const fadeSpeed = (window.activePoseIndex === 4) ? 12 : 4;
         const mat = this.plane.material;
@@ -491,7 +572,7 @@ export class ContentProjector {
                 const btnMargin = 60;
                 
                 const hasPrev = window.activePoseIndex > 0;
-                const hasNext = window.activePoseIndex < 5;
+                const hasNext = window.activePoseIndex < 6;
 
                 if (canvasY >= btnY && canvasY <= btnY + btnH) {
                     if (hasPrev && hasNext) {
@@ -585,7 +666,7 @@ export class ContentProjector {
         const btnW = 320;
         const btnMargin = 60;
         const hasPrev = window.activePoseIndex > 0;
-        const hasNext = window.activePoseIndex < 5;
+        const hasNext = window.activePoseIndex < 6;
 
         if (canvasY >= btnY && canvasY <= btnY + btnH && this.onNavigate) {
             if (hasPrev && hasNext) {
