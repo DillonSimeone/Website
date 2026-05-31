@@ -132,6 +132,16 @@ export class VoxelFormation {
                     r * Math.cos(phi)
                 ));
             }
+        } else if (name === "circle") {
+            for (let i = 0; i < VOXEL_COUNT; i++) {
+                const angle = (i / VOXEL_COUNT) * Math.PI * 2;
+                const r = 7.0; // Radius around the center/UI
+                targets.push(new THREE.Vector3(
+                    r * Math.cos(angle),
+                    r * Math.sin(angle),
+                    0
+                ));
+            }
         }
         return targets;
     }
@@ -230,7 +240,7 @@ export class VoxelFormation {
             line.geometry.dispose();
             this.networkLines.remove(line);
         }
-        if (this.activePoseIndex !== 2) return;
+        if (this.activePoseIndex !== 3) return;
         for (let i = 0; i < VOXEL_COUNT; i += 4) {
             const start = this.targets[i];
             const neighbors = [...Array(VOXEL_COUNT).keys()].filter(idx => idx !== i).sort((a, b) => start.distanceToSquared(this.targets[a]) - start.distanceToSquared(this.targets[b])).slice(0, 2);
@@ -243,6 +253,19 @@ export class VoxelFormation {
     }
 
     update(dt, cameraPosition) {
+        if (this.activePoseIndex === 0) {
+            const angle = dt * 0.15; // Slow rotation speed
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            for (let i = 0; i < VOXEL_COUNT; i++) {
+                const target = this.targets[i];
+                const x = target.x;
+                const y = target.y;
+                target.x = x * cos - y * sin;
+                target.y = x * sin + y * cos;
+            }
+        }
+
         if (this.morphing) {
             this.morphProgress += dt * 5.0; 
             if (this.morphProgress < 1.0) {
@@ -324,7 +347,7 @@ export class VoxelFormation {
             } else if (window.uSourceType === 0.0) {
                 const time = performance.now() * 0.001;
                 mesh.lookAt(new THREE.Vector3(Math.sin(time * 0.1) * 1.5, 0.8 + Math.cos(time * 0.2) * 0.4, 4.0));
-            } else if (window.activePoseIndex === 4) {
+            } else if (window.activePoseIndex === 5) {
                 // Adaptive: face center
                 mesh.lookAt(0,0,0);
             } else {
@@ -354,7 +377,7 @@ export class VoxelFormation {
     }
 
     _updateAdaptiveCompute(dt) {
-        if (window.activePoseIndex !== 4) return;
+        if (window.activePoseIndex !== 5) return;
         
         // Pull all voxels inside and hide them (shrink)
         for (let i = 0; i < VOXEL_COUNT; i++) {
@@ -379,7 +402,7 @@ export class VoxelFormation {
             }
         }
 
-        if (window.activePoseIndex !== 3) {
+        if (window.activePoseIndex !== 4) {
             if (this.swappedVoxels.size > 0) {
                 const gridTargets = this._getFormationTargets("grid");
                 this.meshes.forEach((m, i) => { 
@@ -445,7 +468,7 @@ export class VoxelFormation {
     }
 
     _updateNeuralMesh(dt) {
-        if (window.activePoseIndex !== 2) {
+        if (window.activePoseIndex !== 3) {
             this.packets.forEach(p => { this.scene.remove(p.mesh); p.mesh.material.dispose(); });
             this.packets = []; return;
         }

@@ -9,9 +9,43 @@ export const VOXEL_COUNT = 128;
 export const FORCE_FIELD_RADIUS = 3.0;
 export const SPRING_K = 12.0;
 export const DAMPING = 5.0;
-export const REPULSION_STRENGTH = 8.0;
-
-export const poses = [
+export const REPULSION_STRENGTH = 8.0;export const poses = [
+    {
+        id: "about",
+        label: "ABOUT US",
+        formation: "circle",
+        geometry: "box",
+        colorPalette: ["#00ffaa", "#005522", "#ffffff"],
+        emissiveColor: "#00ffaa",
+        cameraSequence: [
+            { pos: [0, 0, 18], lookAt: [0, 0, 0], duration: 1.5 },
+        ],
+        shaderMood: "calm",
+        content: {
+            title: "WHO WE ARE",
+            items: [
+                {
+                    label: "Dillon Simeone",
+                    details: "Deaf hardware designer, developer, and accessibility researcher. Dillon co-authored papers on DHH music interfaces (NIME, ACM) and acts as Lead Design Engineer for UMD."
+                },
+                {
+                    label: "Tracy Held",
+                    details: "Writer, filmmaker, and CMU Tartans on the Rise honoree. Tracy co-founded Erosion, serves on the WGAW committee, and co-created the Conservation Starters web series."
+                },
+                {
+                    label: "Sonic Agency Project",
+                    details: "A collaboration focused on power-independent cyberdecks for haptic music translation (Dillon) and cinema projection in alternative public spaces (Tracy) to make sound and tech universally accessible."
+                }
+            ],
+            footerLinks: [
+                { label: "Dillon's Website", url: "https://dillonsimeone.com" },
+                { label: "Dillon's Resume", url: "./CyberdeckResources/Dillon%20Simeone%20-%20Resume.pdf" },
+                { label: "Tracy's Resume", url: "./CyberdeckResources/Tracy%20Held%20-%20Resume%20-%20SOFTER%20-%202026.pdf" },
+                { label: "Conservation Starters Video", url: "https://www.youtube.com/watch?v=y5dOFAt3xUE" },
+                { label: "Climate Thoughts Shorts", url: "https://www.youtube.com/shorts/gQIdgBd8_1A" }
+            ]
+        }
+    },
     {
         id: "manifesto",
         label: "THE MANIFESTO",
@@ -25,25 +59,31 @@ export const poses = [
         ],
         shaderMood: "calm",
         content: {
-            title: "LEAVING THE THRONE",
+            title: "THE SONIC AGENCY",
             items: [
                 {
                     label: "00 — THE DEAF ENGINEER",
-                    details: "I am a deaf embedded developer who builds haptic systems for DHH communities and deploys them at music festivals. I'm breaking away from the studio to program hardware directly in the field."
+                    details: "I am a Deaf sonic artist seeking to make sound and music more resonant through haptic vibration, breaking away from the studio to program hardware directly in the field."
                 },
-                { label: "Dependency is a Flaw", details: "If a deck only runs on a USB-C wall outlet, creative agency stops when the grid fails. This machine assumes nothing and adapts to everything." },
                 {
-                    label: "Accessible Documentation",
-                    details: "Drawing from leading CymaSpace workshops and publishing NIME research with ITU Copenhagen collaborators, I am designing this deck as a beginner-friendly tutorial to demystify hardware."
+                    label: "Feel the World Differently",
+                    details: "Sound travels as pressure waves. This deck translates auditory signals in real-time: a deep bass note becomes a slow rolling pulse against your palm, a sharp snare hit becomes a quick tap at your wrist."
                 },
-                { label: "A Safe Haven", details: "In a world of black-boxed technologies, this deck reclaims agency through fully transparent, offline-first hardware design." }
+                {
+                    label: "Accessible Technology",
+                    details: "We are eager to make sound accessible to people of all hearing abilities while also making technology accessible to people of all technology backgrounds, demystifying hardware for everyone."
+                },
+                { 
+                    label: "A Safe Haven", 
+                    details: "In a world of black-boxed technologies, this deck reclaims agency through fully transparent, offline-first hardware design and illustrated open-source guides." 
+                }
             ],
             footerLinks: [
                 { label: "Personal Website", url: "https://dillonsimeone.com" },
                 { label: "GestoLumina Paper", url: "https://www.researchgate.net/profile/Doga-Cavdir/publication/382625935_GestoLumina_Gesture_interpreted_Light_Sound_and_Haptics_Towards_a_Framework_for_Universal_Music_Design/links/66a62efcc6e41359a844004c/GestoLumina-Gesture-interpreted-Light-Sound-and-Haptics-Towards-a-Framework-for-Universal-Music-Design.pdf" },
                 { label: "Haptic Research Paper", url: "https://dl.acm.org/doi/10.1145/3663547.3746396" }
             ]
-        },
+        }
     },
     {
         id: "omnivore",
@@ -62,7 +102,7 @@ export const poses = [
             title: "COMPONENT HARVESTING",
             items: [
                 { label: "High-Efficiency GaN Stage", details: "Gallium Nitride (GaN) transistors drive the power front-end, offering superior thermal performance and extreme power density in a rugged, portable footprint." },
-                { label: "5V - 120V Universal Input", details: "The power stage accepts virtually anything: AA cells, eBike batteries, salvaged solar panels, or AC mains. It adapts to the environment rather than demanding infrastructure." },
+                { label: "Universal Power Harvester", details: "The power stage accepts virtually anything: AA cells, eBike batteries, salvaged solar panels, handcranks, thermoelectric plates, or AC mains. It finds power where power exists." },
                 { label: "Hardware Scavenging", details: "The deck utilizes common discrete components harvested from discarded hardware. It's designed to be assembled from the city's electronic recycling bins." },
                 { label: "Offline Datasheet Library", details: "Rather than relying on internet access, the deck stores a comprehensive, offline repository of component datasheets. It acts as an autonomous reference tool for safely integrating scavenged parts." },
             ],

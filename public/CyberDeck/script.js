@@ -322,7 +322,7 @@ function init() {
         if (e.key === '1') bg.loadShader('./shaders/flow.glsl');
         if (e.key === '2') bg.loadShader('./shaders/rainbow.glsl');
         // Keyboard shortcuts: 1-5 for poses, s/w/g for power
-        const poseKeys = {'!':0,'@':1,'#':2,'$':3,'%':4};
+        const poseKeys = {'!':0,'@':1,'#':2,'$':3,'%':4,'^':5};
         if (poseKeys[e.key] !== undefined && !isIntroActive) setPose(poseKeys[e.key]);
         if (e.key === 's' && !isIntroActive) setPowerMode('solar');
         if (e.key === 'w' && !isIntroActive) setPowerMode('wind');
@@ -432,14 +432,14 @@ function updatePowerTelemetry(dt) {
     // Context-sensitive telemetry
     const meshWrap = document.getElementById('tel-mesh-wrap');
     const fractWrap = document.getElementById('tel-fract-wrap');
-    if (meshWrap) meshWrap.style.display = (activePoseIndex === 2) ? '' : 'none';
-    if (fractWrap) fractWrap.style.display = (activePoseIndex === 4) ? '' : 'none';
+    if (meshWrap) meshWrap.style.display = (activePoseIndex === 3) ? '' : 'none';
+    if (fractWrap) fractWrap.style.display = (activePoseIndex === 5) ? '' : 'none';
     
-    if (activePoseIndex === 2) {
+    if (activePoseIndex === 3) {
         const packetCount = voxels ? voxels.packets.length : 0;
         document.getElementById('tel-mesh-bw').textContent = `${packetCount} pkt/s`;
     }
-    if (activePoseIndex === 4) {
+    if (activePoseIndex === 5) {
         const depth = Math.floor(8 + Math.sin(clock.elapsedTime * 0.3) * 4);
         document.getElementById('tel-fract-depth').textContent = `L${depth} / 24`;
     }
@@ -494,7 +494,7 @@ function animate() {
 
     // Update Mandelbulb Overlay
     const tIdx = window.targetPoseIndex !== undefined ? window.targetPoseIndex : activePoseIndex;
-    const targetAlpha = (tIdx === 4) ? 1.0 : 0.0;
+    const targetAlpha = (tIdx === 5) ? 1.0 : 0.0;
     
     // Lerp speed: 1.0 / lerpTime gives 1.0 progress per N seconds
     const lerpSpeed = 1.0 / (window.globalLerpTime || 1.0);
