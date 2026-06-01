@@ -151,6 +151,17 @@ export class VoxelFormation {
             for (let i = 0; i < VOXEL_COUNT; i++) {
                 targets.push(initialTargets[i]);
             }
+        } else if (name === "cone") {
+            for (let i = 0; i < VOXEL_COUNT; i++) {
+                const z = -5.0 + (i / VOXEL_COUNT) * 10.0;
+                const r = 0.2 + (z + 5.0) * 0.4;
+                const angle = i * 2.39996;
+                targets.push(new THREE.Vector3(
+                    r * Math.cos(angle),
+                    r * Math.sin(angle) - 0.5,
+                    z
+                ));
+            }
         }
         return targets;
     }
@@ -275,7 +286,7 @@ export class VoxelFormation {
             }
         }
 
-        if (this.activePoseIndex === 6) {
+        if (this.activePoseIndex === 7) {
             this.mooddeckTimer += dt;
             if (this.mooddeckTimer >= 3.0) {
                 this.mooddeckTimer = 0;
