@@ -9,7 +9,7 @@ export const VOXEL_COUNT = 128;
 export const FORCE_FIELD_RADIUS = 3.0;
 export const SPRING_K = 12.0;
 export const DAMPING = 5.0;
-export const REPULSION_STRENGTH = 8.0;export const poses = [
+export const REPULSION_STRENGTH = 8.0; export const poses = [
     {
         id: "about",
         label: "ABOUT US",
@@ -34,7 +34,7 @@ export const REPULSION_STRENGTH = 8.0;export const poses = [
                 },
                 {
                     label: "Sonic Agency Project",
-                    details: "A collaboration focused on power-independent cyberdecks for haptic music translation (Dillon) and cinema projection in alternative public spaces (Tracy) to make sound and tech universally accessible."
+                    details: "A collaboration focused on power-independent cyberdecks for haptic music translation (Dillon) and cinema projection in alternative public spaces (Tracy). During the residency, we will draft illustrated, beginner-friendly guides and host a show-and-tell workshop to demystify DIY tech."
                 }
             ],
             footerLinks: [
@@ -73,9 +73,9 @@ export const REPULSION_STRENGTH = 8.0;export const poses = [
                     label: "Accessible Technology",
                     details: "We are eager to make sound accessible to people of all hearing abilities while also making technology accessible to people of all technology backgrounds, demystifying hardware for everyone."
                 },
-                { 
-                    label: "A Safe Haven", 
-                    details: "In a world of black-boxed technologies, this deck reclaims agency through fully transparent, offline-first hardware design and illustrated open-source guides." 
+                {
+                    label: "A Safe Haven",
+                    details: "In a world of black-boxed technologies, this deck reclaims agency through fully transparent, offline-first hardware design and illustrated open-source guides."
                 }
             ],
             footerLinks: [
@@ -175,6 +175,40 @@ export const REPULSION_STRENGTH = 8.0;export const poses = [
         },
     },
     {
+        id: "cinema",
+        label: "CINEMA NODE",
+        formation: "cone",
+        geometry: "icosahedron",
+        colorPalette: ["#ffffff", "#ffff88", "#ffff33"],
+        emissiveColor: "#ffff88",
+        cameraSequence: [
+            { pos: [0, -2, 16], lookAt: [0, 0, 0], duration: 1.5 },
+        ],
+        shaderMood: "calm",
+        content: {
+            title: "PROJECTOR DECK",
+            items: [
+                {
+                    label: "Outdoor Film Screenings",
+                    details: "A custom cyberdeck built with a battery-backed portable projector. Its purpose is to screen environmental and conservation-centric films in public parks and community spaces."
+                },
+                {
+                    label: "Demystifying DIY Tech",
+                    details: "Inspired by Subir Bhaduri's open projecting Pi, Tracy documents her first-ever cyberdeck build through video tutorials to invite non-technical creators into hardware design."
+                },
+                {
+                    label: "Beginner-Friendly Guides",
+                    details: "To reflect the soft ethos of SOFTER, Tracy will author illustrated documentation and a guide to Dillon's custom battery power module, turning hardware specs into a story of energy independence."
+                }
+            ],
+            footerLinks: [
+                { label: "Tracy's Resume", url: "./CyberdeckResources/Tracy%20Held%20-%20Resume%20-%20SOFTER%20-%202026.pdf" },
+                { label: "Tracy's Bio & Statement", url: "./CyberdeckResources/Tracy%20Held%20Bio%20&%20Artist%20Statement.docx" },
+                { label: "Projector Reference", url: "https://hackaday.com/2022/02/02/a-portable-projecting-pi-for-education/" }
+            ]
+        }
+    },
+    {
         id: "mooddeck",
         label: "MOOD DECK",
         formation: "mooddeck",
@@ -190,7 +224,7 @@ export const REPULSION_STRENGTH = 8.0;export const poses = [
             items: [
                 {
                     label: "Visual Inspirations",
-                    details: "A curated collection of photos, schematics, and design elements showing the engineering, project aesthetics, and physical mockups for the Apocalypse Cyberdeck residency."
+                    details: "A  collection of photos of functional decks that we feel inspired by."
                 }
             ],
             footerLinks: []

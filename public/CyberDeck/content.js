@@ -1,6 +1,29 @@
 // content.js — Off-screen canvas renderer with texture projection and mouse/scroll interaction.
 import * as THREE from 'three';
 
+const MOOD_DECK_GALLERY = [
+    {
+        url: './images/554009293-df5e4cd6-41c9-4f8a-bc78-de39ea63718a_16_k6AqXiNwtY.webp',
+        caption: "A rugged Cyberdeck built by Jankbu meant for hacking on the go."
+    },
+    {
+        url: './images/a698cc5251c24dbb3bb2c91a7cfd73d8.webp',
+        caption: "Cyberdeck in a waterproof enclosure for programming when you're camping!"
+    },
+    {
+        url: './images/cyberdeck.webp',
+        caption: "Pocket form, useable as a shield if all goes wrong!"
+    },
+    {
+        url: './images/pi-projector-featured.webp',
+        caption: "Cinema on the go! This is Subir Bhaduri's deck. We'll be able to go smaller with ours!"
+    },
+    {
+        url: './images/Screenshot-from-2023-08-25-13-20-00.webp',
+        caption: "A pipboy cyberdeck?"
+    }
+];
+
 export class ContentProjector {
     constructor(scene, camera, renderer) {
         this.scene = scene;
@@ -63,7 +86,7 @@ export class ContentProjector {
         this._onMouseMove = this._onMouseMove.bind(this);
         this._onMouseWheel = this._onMouseWheel.bind(this);
         this._onClick = this._onClick.bind(this);
-        
+
         const target = this.renderer.domElement; // Only listen on the 3D canvas
         target.addEventListener('mousemove', this._onMouseMove);
         target.addEventListener('wheel', this._onMouseWheel, { passive: false });
@@ -71,21 +94,15 @@ export class ContentProjector {
 
         // Load images for mooddeck
         this.moodImages = [];
-        const imgPaths = [
-            './images/554009293-df5e4cd6-41c9-4f8a-bc78-de39ea63718a_16_k6AqXiNwtY.webp',
-            './images/a698cc5251c24dbb3bb2c91a7cfd73d8.webp',
-            './images/cyberdeck.webp',
-            './images/pi-projector-featured.webp',
-            './images/Screenshot-from-2023-08-25-13-20-00.webp'
-        ];
-        imgPaths.forEach(src => {
+        MOOD_DECK_GALLERY.forEach((entry, idx) => {
             const img = new Image();
-            img.src = src;
+            img.src = entry.url;
             img.onload = () => {
-                this.moodImages.push(img);
+                this.moodImages[idx] = img;
             };
         });
         this.currentMoodImage = null;
+        this.currentMoodImageIndex = -1;
         this.moodImageOpacity = 0;
         this.moodImageState = 'fadein';
         this.moodImageTimer = 0;
@@ -131,7 +148,7 @@ export class ContentProjector {
             const testLine = line + words[n] + ' ';
             const metrics = ctx.measureText(testLine);
             const testWidth = metrics.width;
-            
+
             if (testWidth > maxWidth && n > 0) {
                 ctx.fillText(line, x, currentY);
                 line = words[n] + ' ';
@@ -179,10 +196,10 @@ export class ContentProjector {
         ctx.fillStyle = this.themeColor;
         ctx.fillRect(20, 40, 4, 100);
         ctx.fillRect(w - 24, h - 140, 4, 100);
-        
+
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.font = '14px monospace';
-        ctx.fillText(`SYS_MEM: ${Math.floor(Math.abs(Math.sin(time))*999)}TB`, 40, 45);
+        ctx.fillText(`SYS_MEM: ${Math.floor(Math.abs(Math.sin(time)) * 999)}TB`, 40, 45);
         ctx.textAlign = 'right';
         ctx.fillText(`UPLINK_SEC: ACTIVE`, w - 40, h - 30);
 
@@ -207,7 +224,7 @@ export class ContentProjector {
         // 4. Header Section
         ctx.save();
         ctx.translate(0, offsetY);
-        
+
         // Title Shadow Glow
         ctx.shadowBlur = 15;
         ctx.shadowColor = this.themeColor;
@@ -216,15 +233,15 @@ export class ContentProjector {
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.fillText(this.currentContent.title, w / 2, 90);
-        
+
         // Animated Divider
         const divW = 600 + Math.sin(time * 3) * 50;
         const divX = (w - divW) / 2;
-        
+
         ctx.fillStyle = this.themeColor;
         ctx.globalAlpha = 0.6;
         ctx.fillRect(divX, 115, divW, 2);
-        
+
         // Audio wave decorative elements under title
         for (let i = 0; i < 20; i++) {
             const barH = 5 + Math.random() * 15 * Math.abs(Math.sin(time * 5 + i));
@@ -270,7 +287,7 @@ export class ContentProjector {
                 ctx.font = this.isMobile ? 'bold 54px monospace' : '34px monospace';
                 const labelText = `[ ${label} ]`;
                 ctx.fillText(labelText, 100, currentY);
-                
+
                 // Visual hint for links: persistent underline for the whole label
                 if (item.url || (item.links && item.links.length > 0) || (this.currentContent.footerLinks && i === 0)) {
                     const metrics = ctx.measureText(labelText);
@@ -292,8 +309,8 @@ export class ContentProjector {
                     const detailSpacing = this.isMobile ? 50 : 32;
                     ctx.font = `${detailSize}px monospace`;
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-                    
-                    const detailsCleaned = item.details.replace(/\n/g, ' '); 
+
+                    const detailsCleaned = item.details.replace(/\n/g, ' ');
                     currentY = this._wrapText(ctx, `// ${detailsCleaned}`, 140, currentY, 820, detailSpacing);
                     currentY += this.isMobile ? 60 : 35;
                 } else {
@@ -309,9 +326,9 @@ export class ContentProjector {
         const btnH = this.isMobile ? 100 : 80;
         const btnY = h - 140;
         const btnMargin = 60;
-        
+
         const hasPrev = window.activePoseIndex > 0;
-        const hasNext = window.activePoseIndex < 6; 
+        const hasNext = window.activePoseIndex < 7;
 
         if (hasPrev && hasNext) {
             this._drawNavButton(ctx, `[ PREV_SECTOR ]`, btnMargin, btnY, btnW, btnH, this.hoveredNav === 'prev');
@@ -328,11 +345,11 @@ export class ContentProjector {
             const barAreaH = h - 120;
             const barH = Math.max(40, (h / (h + this.maxScroll)) * barAreaH);
             const barY = (this.scrollY / this.maxScroll) * (barAreaH - barH) + 60;
-            
+
             // Track
             ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.fillRect(w - 35, 60, 4, barAreaH);
-            
+
             // Thumb
             ctx.fillStyle = this.themeColor;
             ctx.shadowBlur = 8;
@@ -342,18 +359,26 @@ export class ContentProjector {
         }
 
         // 8. Mooddeck Image Overlay
-        if (window.activePoseIndex === 6 && this.currentMoodImage && this.moodImageOpacity > 0) {
+        if (window.activePoseIndex === 7 && this.currentMoodImage && this.moodImageOpacity > 0) {
             ctx.save();
             ctx.globalAlpha = this.moodImageOpacity * 0.9;
             const imgW = 440;
             const imgH = 290;
             const imgX = (w - imgW) / 2;
             const imgY = 400 + offsetY;
-            
+
             ctx.strokeStyle = this.themeColor;
             ctx.lineWidth = 2;
             ctx.strokeRect(imgX - 5, imgY - 5, imgW + 10, imgH + 10);
             ctx.drawImage(this.currentMoodImage, imgX, imgY, imgW, imgH);
+
+            // Draw Caption
+            const captionText = MOOD_DECK_GALLERY[this.currentMoodImageIndex]?.caption || "";
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.font = "italic 16px monospace";
+            ctx.textAlign = "center";
+            this._wrapText(ctx, captionText, w / 2, imgY + imgH + 30, 480, 22);
+
             ctx.restore();
         }
 
@@ -401,27 +426,27 @@ export class ContentProjector {
 
                     ctx.save();
                     ctx.translate(startX, rowY);
-                    
+
                     // Button Plate
                     ctx.fillStyle = isHovered ? this.themeColor : 'rgba(255, 255, 255, 0.05)';
                     ctx.globalAlpha = isHovered ? 0.2 : 1.0;
                     ctx.fillRect(0, 0, linkW, linkH);
-                    
+
                     ctx.strokeStyle = isHovered ? this.themeColor : 'rgba(51, 255, 51, 0.4)';
                     ctx.lineWidth = 1;
                     ctx.strokeRect(0, 0, linkW, linkH);
-                    
+
                     // Text
                     ctx.fillStyle = isHovered ? this.themeColor : '#ffffff';
                     ctx.globalAlpha = 1.0;
                     ctx.font = 'bold 15px monospace';
                     ctx.textAlign = 'center';
                     ctx.fillText(`[ ${link.label.toUpperCase()} ]`, linkW / 2, linkH / 2 + 5);
-                    
+
                     // Icon hint
                     ctx.font = '8px monospace';
                     ctx.fillText("EXTERNAL_LINK", linkW / 2, 10);
-                    
+
                     ctx.restore();
 
                     this.footerHitAreas.push({ x: startX, y: rowY, w: linkW, h: linkH, url: link.url });
@@ -460,10 +485,11 @@ export class ContentProjector {
 
     update(dt) {
         // Handle mooddeck image cycling
-        if (window.activePoseIndex === 6 && this.moodImages.length > 0) {
+        if (window.activePoseIndex === 7 && this.moodImages.length > 0) {
             this.moodImageTimer += dt;
             if (!this.currentMoodImage) {
-                this.currentMoodImage = this.moodImages[Math.floor(Math.random() * this.moodImages.length)];
+                this.currentMoodImageIndex = (this.currentMoodImageIndex + 1) % this.moodImages.length;
+                this.currentMoodImage = this.moodImages[this.currentMoodImageIndex];
                 this.moodImageOpacity = 0;
                 this.moodImageState = 'fadein';
                 this.moodImageTimer = 0;
@@ -494,7 +520,8 @@ export class ContentProjector {
             } else if (this.moodImageState === 'waiting') {
                 if (this.moodImageTimer > 0.5) {
                     this.moodImageState = 'fadein';
-                    this.currentMoodImage = this.moodImages[Math.floor(Math.random() * this.moodImages.length)];
+                    this.currentMoodImageIndex = (this.currentMoodImageIndex + 1) % this.moodImages.length;
+                    this.currentMoodImage = this.moodImages[this.currentMoodImageIndex];
                     this.moodImageTimer = 0;
                 }
             }
@@ -518,10 +545,10 @@ export class ContentProjector {
             const dist = this.maximizedPosition.z; // 8
             const targetPos = this.camera.position.clone()
                 .add(camDir.multiplyScalar(dist))
-                .add(new THREE.Vector3(this.maximizedPosition.x, this.maximizedPosition.y, 0).applyQuaternion(this.camera.quaternion)); 
-            
+                .add(new THREE.Vector3(this.maximizedPosition.x, this.maximizedPosition.y, 0).applyQuaternion(this.camera.quaternion));
+
             this.plane.position.lerpVectors(this.floatingPosition, targetPos, this.expansionProgress);
-            
+
             // Lerp rotation to face camera perfectly
             this.plane.quaternion.slerpQuaternions(
                 new THREE.Quaternion().setFromEuler(this.floatingRotation),
@@ -533,7 +560,7 @@ export class ContentProjector {
             const vFov = this.camera.fov * Math.PI / 180;
             const visibleHeight = 2 * Math.tan(vFov / 2) * dist;
             const visibleWidth = visibleHeight * this.camera.aspect;
-            
+
             const margin = this.isMobile ? 1.0 : 0.9;
             const targetSize = Math.min(visibleHeight * margin, visibleWidth * margin);
             const dynamicMaxScale = targetSize / 3.0; // 3.0 is plane base geometry size
@@ -563,14 +590,14 @@ export class ContentProjector {
                 const canvasY = (1.0 - uv.y) * this.canvas.height;
                 const canvasX = uv.x * this.canvas.width;
                 const scrollAdjustedY = canvasY + this.scrollY;
-                
+
                 // Nav check
                 let newNav = null;
                 const btnY = this.canvas.height - 140;
                 const btnH = 80;
                 const btnW = 320;
                 const btnMargin = 60;
-                
+
                 const hasPrev = window.activePoseIndex > 0;
                 const hasNext = window.activePoseIndex < 6;
 
@@ -660,13 +687,27 @@ export class ContentProjector {
         const canvasY = (1.0 - uv.y) * this.canvas.height;
         const scrollAdjustedY = canvasY + this.scrollY;
 
+        // 0. Mood Deck Image Click Detection (Skip to next image)
+        if (window.activePoseIndex === 7 && this.currentMoodImage) {
+            const imgW = 440;
+            const imgH = 290;
+            const imgX = (this.canvas.width - imgW) / 2;
+            const drawnY = 400 - this.scrollY;
+            if (canvasX >= imgX && canvasX <= imgX + imgW &&
+                canvasY >= drawnY && canvasY <= drawnY + imgH) {
+                this.moodImageState = 'fadeout';
+                this.moodImageTimer = 3.5;
+                return;
+            }
+        }
+
         // 1. Navigation Button Detection
         const btnY = this.canvas.height - 140;
         const btnH = 80;
         const btnW = 320;
         const btnMargin = 60;
         const hasPrev = window.activePoseIndex > 0;
-        const hasNext = window.activePoseIndex < 6;
+        const hasNext = window.activePoseIndex < 7;
 
         if (canvasY >= btnY && canvasY <= btnY + btnH && this.onNavigate) {
             if (hasPrev && hasNext) {
