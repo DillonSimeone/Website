@@ -285,22 +285,23 @@
             const showWrenches = param("Show Wrenches", 1, { type: 'checkbox' }, "kinematics");
             const wrenchHandleLen = param("Wrench Handle Length", 80, { min: 45, max: 140 }, "kinematics");
             const wrenchHandleW = param("Wrench Handle Width", 14, { min: 8, max: 22 }, "kinematics");
+            const entryAngle = param("Entry Ramp Angle", 15, { min: 0, max: 45, step: 1 }, "kinematics");
 
             // Top Part parameters
             const topSqW = param("Square Width", 14, { min: 10, max: 25 }, "top");
-            const topSqD = param("Square Depth", 6, { min: 4, max: 15 }, "top");
+            const topSqD = param("Square Depth", 8, { min: 4, max: 15 }, "top");
             const topSqH = param("Square Height", 16, { min: 10, max: 30 }, "top");
             const topTubeD = param("Top Tube Diam", 8, { min: 5, max: 15 }, "top");
             const topCylW = param("Collar Diam", 15.5, { min: 10, max: 25, step: 0.5 }, "top");
-
+ 
             // Bottom Part parameters
             const plugD = param("Plug Cylinder Diam", 10, { min: 6, max: 18 }, "bottom");
             const plugH = param("Plug Cylinder Depth", 9, { min: 5, max: 15 }, "bottom");
             const baseCylW = param("Base Collar Diam", 20, { min: 12, max: 30 }, "bottom");
             const baseCylD = param("Base Collar Thick", 2, { min: 1, max: 8 }, "bottom");
             const botCoreD = param("Fins Core Diam", 8, { min: 5, max: 15 }, "bottom");
-            const finW = param("Fin Width", 1.5, { min: 0.8, max: 4, step: 0.1 }, "bottom");
-            const finD = param("Fin Depth", 1.5, { min: 0.8, max: 4, step: 0.1 }, "bottom");
+            const finW = param("Fin Width", 2.0, { min: 0.8, max: 4, step: 0.1 }, "bottom");
+            const finD = param("Fin Depth", 2.0, { min: 0.8, max: 4, step: 0.1 }, "bottom");
             const finH = param("Fin Height", 10, { min: 5, max: 20 }, "bottom");
             const botTubeD = param("Bottom Tube Diam", 8, { min: 5, max: 15 }, "bottom");
 
@@ -413,7 +414,7 @@
             // Build order: assemble the ENTIRE solid body (rounded head + handle + blend +
             // round end), THEN subtract the socket features.
             
-            const magnetD = param("Magnet Slot Diameter", 8, { min: 4, max: 20 }, "kinematics");
+            const magnetD = param("Magnet Slot Diameter", 20, { min: 4, max: 30 }, "kinematics");
             const magnetH = param("Magnet Slot Depth", 3, { min: 1, max: 8 }, "kinematics");
             
             const uwHeadR = 15; // Cylinder head radius for rounded look
@@ -441,11 +442,13 @@
             uwHead.delete(); uwHandle.delete(); uwBlend.delete(); uwRoundEnd.delete();
             uwS1.delete(); uwS2.delete();
             
-            // --- STEP 2: CREATE CUTTERS (Centered at origin first) ---
+            // Define slot dimensions early
             const tol = tolerance;
+            const sqCutD = topSqD + tol * 2;
+            
+            // --- STEP 2: CREATE CUTTERS (Centered at origin first) ---
             const bwCoreR = botCoreD / 2 + tol;
             const sqCutW = topSqW + tol * 2;
-            const sqCutD = topSqD + tol * 2;
             
             // A) Square slot for top connector (acts as both socket and opening to +X)
             const sqLength = (uwHeadR + 5) + (sqCutW / 2);
@@ -467,6 +470,47 @@
             let c3 = Manifold.union(c2, cutFinS);
             let cutters = Manifold.union(c3, cutFinW_);
             c1.delete(); c2.delete(); c3.delete();
+            // Add lead-in ramps (V-shaped flared channel) at the entry of the slot
+            if (entryAngle > 0) {
+                const X_outer = uwHeadR - socketOffsetX; // Outer boundary of the wrench head in cutters space (17)
+                const X_start = bwCoreR; // Start the flare exactly at the center hole boundary to prevent center fins
+                const dx = X_outer - X_start;
+                
+                const theta = entryAngle;
+                
+                // Top wedge (extends below the sloped line)
+                let topWedge = cube(30, 30, fullCutH)
+                    .translate([15, -15, 0])
+                    .rotate([0, 0, theta])
+                    .translate([X_start, sqCutD / 2, 0]);
+                let topBox = cube(dx + 5, 30, fullCutH)
+                    .translate([X_start + (dx + 5) / 2, sqCutD / 2 + 15, 0]);
+                let fullRampTop = topWedge.intersect(topBox);
+                topWedge.delete();
+                topBox.delete();
+                
+                // Bottom wedge (extends above the sloped line)
+                let botWedge = cube(30, 30, fullCutH)
+                    .translate([15, 15, 0])
+                    .rotate([0, 0, -theta])
+                    .translate([X_start, -sqCutD / 2, 0]);
+                let botBox = cube(dx + 5, 30, fullCutH)
+                    .translate([X_start + (dx + 5) / 2, -sqCutD / 2 - 15, 0]);
+                let fullRampBot = botWedge.intersect(botBox);
+                botWedge.delete();
+                botBox.delete();
+                
+                let tempR = cutters;
+                cutters = Manifold.union(cutters, fullRampTop);
+                tempR.delete();
+                
+                tempR = cutters;
+                cutters = Manifold.union(cutters, fullRampBot);
+                tempR.delete();
+                
+                fullRampTop.delete();
+                fullRampBot.delete();
+            }
             
             // Translate all cutters to the socket center
             let cuttersMoved = cutters.translate([socketOffsetX, 0, 0]);
