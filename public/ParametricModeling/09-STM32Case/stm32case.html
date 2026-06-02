@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STM32 Parametric Enclosure Configurator</title>
+    <!-- Browser Import Map for resolving 'three' bare specifiers -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+      }
+    </script>
+    <!-- Google Fonts for Blueprint/Engineering Aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="blueprint-border"></div>
+
+    <!-- Drawing Title Block -->
+    <header>
+        <div class="title-block">
+            <div class="drawing-number">DWG-2026-STM32</div>
+            <h1>STM32 CASE PARAMETRIC ENCLOSURE</h1>
+        </div>
+        <div style="font-size: 0.75rem; text-align: right; line-height: 1.4;">
+            <div>SCALE: <span style="color: var(--bp-line);">1.00 : 1</span></div>
+            <div>UNIT: <span style="color: var(--bp-line);">METRIC (MM)</span></div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+        <!-- Left Panel: Combined Parametric Configurator -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">1. Component Parameters</span>
+            </div>
+            <div class="panel-content">
+                <!-- Global Mode Toggle: Movement vs Sizes -->
+                <div class="sub-toggle" style="margin-bottom: 15px;">
+                    <button id="mode-toggle-movement" class="sub-toggle-btn" onclick="switchParamMode('movement')">MOVEMENT / POSITIONS</button>
+                    <button id="mode-toggle-sizes" class="sub-toggle-btn active" onclick="switchParamMode('sizes')">SIZES / DIMENSIONS</button>
+                </div>
+
+                <!-- Piece Navigation Tabs -->
+                <div class="tab-container">
+                    <button class="tab-btn active" id="tab-btn-shell" onclick="switchPiece('shell')">SHELL</button>
+                    <button class="tab-btn" id="tab-btn-db9" onclick="switchPiece('db9')">DB9</button>
+                    <button class="tab-btn" id="tab-btn-bnc" onclick="switchPiece('bnc')">BNC</button>
+                    <button class="tab-btn" id="tab-btn-rj45" onclick="switchPiece('rj45')">RJ45</button>
+                    <button class="tab-btn" id="tab-btn-usb" onclick="switchPiece('usb')">USB</button>
+                </div>
+
+                <!-- SHELL MOVEMENT (notice) -->
+                <div id="content-shell-movement" class="tab-content-panel">
+                    <div style="font-size: 0.75rem; color: var(--bp-line-dim); text-align: center; padding: 20px 10px; border: 1px dashed rgba(0, 242, 255, 0.15); line-height: 1.5;">
+                        SHELL POSITION IS THE FIXED ORIGIN ANCHOR.<br><br>SELECT "SIZES / DIMENSIONS" TO CONFIG ENCLOSURE WALLS.
+                    </div>
+                </div>
+
+                <!-- SHELL SIZES -->
+                <div id="content-shell-sizes" class="tab-content-panel active">
+                    <div class="control-group">
+                        <div class="control-group-title">Shell Size Config</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Wall Thickness</span><span class="param-value"><span id="val-wallThick">1.5</span> mm</span></div>
+                            <input type="range" id="input-wallThick" min="1.5" max="8" step="0.5" value="1.5">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Battery Space Depth</span><span class="param-value"><span id="val-batteryHeight">0.0</span> mm</span></div>
+                            <input type="range" id="input-batteryHeight" min="0" max="40" step="1" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Corner Radius</span><span class="param-value"><span id="val-cornerRad">3.0</span> mm</span></div>
+                            <input type="range" id="input-cornerRad" min="1" max="15" step="0.5" value="3.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DB9 MOVEMENT -->
+                <div id="content-db9-movement" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">DB9 Position Shift</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">X Shift (Offset)</span><span class="param-value"><span id="val-db9X">0.0</span> mm</span></div>
+                            <input type="range" id="input-db9X" min="-15" max="15" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Y Shift (Along Edge)</span><span class="param-value"><span id="val-db9Y">0.0</span> mm</span></div>
+                            <input type="range" id="input-db9Y" min="-15" max="15" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><span id="val-db9Z">0.0</span> mm</span></div>
+                            <input type="range" id="input-db9Z" min="-10" max="10" step="0.5" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DB9 SIZES -->
+                <div id="content-db9-sizes" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">DB9 Dimensions</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Width (Y-axis)</span><span class="param-value"><span id="val-db9W">35.0</span> mm</span></div>
+                            <input type="range" id="input-db9W" min="15" max="50" step="1" value="35">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><span id="val-db9H">15.0</span> mm</span></div>
+                            <input type="range" id="input-db9H" min="10" max="25" step="1" value="15">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Depth (X-axis)</span><span class="param-value"><span id="val-db9D">50.0</span> mm</span></div>
+                            <input type="range" id="input-db9D" min="20" max="80" step="2" value="50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BNC MOVEMENT -->
+                <div id="content-bnc-movement" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">BNC Position Shift</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">X Shift (Offset)</span><span class="param-value"><span id="val-bncX">0.0</span> mm</span></div>
+                            <input type="range" id="input-bncX" min="-15" max="15" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Y Shift (Along Edge)</span><span class="param-value"><span id="val-bncY">0.0</span> mm</span></div>
+                            <input type="range" id="input-bncY" min="-15" max="15" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><span id="val-bncZ">0.0</span> mm</span></div>
+                            <input type="range" id="input-bncZ" min="-10" max="10" step="0.5" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BNC SIZES -->
+                <div id="content-bnc-sizes" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">BNC Dimensions</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Width (Y-axis)</span><span class="param-value"><span id="val-bncW">14.0</span> mm</span></div>
+                            <input type="range" id="input-bncW" min="8" max="25" step="1" value="14">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><span id="val-bncH">14.0</span> mm</span></div>
+                            <input type="range" id="input-bncH" min="8" max="25" step="1" value="14">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Depth (X-axis)</span><span class="param-value"><span id="val-bncD">50.0</span> mm</span></div>
+                            <input type="range" id="input-bncD" min="20" max="80" step="2" value="50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RJ45 MOVEMENT -->
+                <div id="content-rj45-movement" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">RJ45 Position Shift</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">X Shift (Along Edge)</span><span class="param-value"><span id="val-rj45X">0.0</span> mm</span></div>
+                            <input type="range" id="input-rj45X" min="-15" max="15" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Y Shift (Offset)</span><span class="param-value"><span id="val-rj45Y">0.0</span> mm</span></div>
+                            <input type="range" id="input-rj45Y" min="-10" max="10" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><span id="val-rj45Z">0.0</span> mm</span></div>
+                            <input type="range" id="input-rj45Z" min="-10" max="10" step="0.5" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RJ45 SIZES -->
+                <div id="content-rj45-sizes" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">RJ45 Dimensions</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Width (X-axis)</span><span class="param-value"><span id="val-rj45W">16.0</span> mm</span></div>
+                            <input type="range" id="input-rj45W" min="10" max="30" step="1" value="16">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><span id="val-rj45H">17.0</span> mm</span></div>
+                            <input type="range" id="input-rj45H" min="10" max="25" step="1" value="17">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Depth (Y-axis)</span><span class="param-value"><span id="val-rj45D">40.0</span> mm</span></div>
+                            <input type="range" id="input-rj45D" min="20" max="80" step="2" value="40">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- USB MOVEMENT -->
+                <div id="content-usb-movement" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">USB Position Shift</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">X Shift (Along Edge)</span><span class="param-value"><span id="val-usbX">0.0</span> mm</span></div>
+                            <input type="range" id="input-usbX" min="-15" max="15" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Y Shift (Offset)</span><span class="param-value"><span id="val-usbY">0.0</span> mm</span></div>
+                            <input type="range" id="input-usbY" min="-10" max="10" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><span id="val-usbZ">0.0</span> mm</span></div>
+                            <input type="range" id="input-usbZ" min="-10" max="10" step="0.5" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- USB SIZES -->
+                <div id="content-usb-sizes" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">USB Dimensions</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Width (X-axis)</span><span class="param-value"><span id="val-usbW">15.0</span> mm</span></div>
+                            <input type="range" id="input-usbW" min="8" max="25" step="1" value="15">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><span id="val-usbH">3.0</span> mm</span></div>
+                            <input type="range" id="input-usbH" min="1.5" max="10" step="0.5" value="3.0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Depth (Y-axis)</span><span class="param-value"><span id="val-usbD">40.0</span> mm</span></div>
+                            <input type="range" id="input-usbD" min="20" max="80" step="2" value="40">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Middle Panel: Viewport -->
+        <div id="viewport-container">
+            <div id="canvas3d"></div>
+            <svg id="dimensions-overlay"></svg>
+        </div>
+
+        <!-- Right Panel: Diagnostics, Visibility & Export -->
+        <div class="panel panel-right">
+            <div class="panel-header">
+                <span class="panel-title">2. Draw & Spec Sheet</span>
+            </div>
+            <div class="panel-content">
+                <!-- Visibilities -->
+                <div class="control-group">
+                    <div class="control-group-title">Assembly Elements</div>
+                    <div class="toggle-row">
+                        <span>Case Enclosure</span>
+                        <input type="checkbox" id="show-case" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>STM32 Screen Assembly</span>
+                        <input type="checkbox" id="show-screen" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Daughterboard Stack</span>
+                        <input type="checkbox" id="show-stack" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Cutout Volumes (Amber)</span>
+                        <input type="checkbox" id="show-cutouts">
+                    </div>
+                </div>
+
+                <!-- Display settings -->
+                <div class="control-group">
+                    <div class="control-group-title">Display Settings</div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Explode Assembly</span><span class="param-value"><span id="val-explode">0.0</span> mm</span></div>
+                        <input type="range" id="input-explode" min="0" max="60" step="1" value="0">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Shell Opacity</span><span class="param-value"><span id="val-opacity">80</span>%</span></div>
+                        <input type="range" id="input-opacity" min="10" max="100" step="5" value="80">
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Render Mode</span>
+                        <div class="btn-group">
+                            <button class="btn active" id="btn-render-mode">Rendered</button>
+                            <button class="btn" id="btn-blueprint-mode">Blueprint</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specs -->
+                <div class="control-group">
+                    <div class="control-group-title">Calculated Dimensions</div>
+                    <div class="spec-item">
+                        <span class="spec-label">Screen Cavity:</span>
+                        <span class="spec-val">76.2 x 120.2 x 16.2 mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Stack Cavity:</span>
+                        <span class="spec-val">53.7 x 80.2 x 33.2 mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Outer Bounds:</span>
+                        <span class="spec-val" id="spec-bounds">82 x 126 x 55 mm</span>
+                    </div>
+                    
+                    <button class="btn btn-accent" id="btn-export-stl">Export Shell STL</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Status -->
+    <footer>
+        <div class="status-left">
+            <div class="status-dot"></div>
+            <span>CAD SYSTEM ENGAGED</span>
+            <span>|</span>
+            <span>MANIFOLD KERNEL LOADED</span>
+        </div>
+        <div style="text-align: center; color: var(--bp-line);">AUTODESK/DRAFTING LAYOUT v2026.1</div>
+        <div style="text-align: right;">COORDINATES: LOCAL GRID</div>
+    </footer>
+
+    <!-- Inline tabs navigation functions -->
+    <script>
+        let currentPiece = 'shell';
+        let currentMode = 'sizes';
+
+        function switchPiece(pieceId) {
+            currentPiece = pieceId;
+            updateTabVisibility();
+        }
+
+        function switchParamMode(modeId) {
+            currentMode = modeId;
+            updateTabVisibility();
+        }
+
+        function updateTabVisibility() {
+            // Update piece tab buttons active states
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                const btnId = btn.id.replace('tab-btn-', '');
+                if (btnId === currentPiece) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Update mode toggle buttons active states
+            const btnMovement = document.getElementById('mode-toggle-movement');
+            const btnSizes = document.getElementById('mode-toggle-sizes');
+            if (currentMode === 'movement') {
+                btnMovement.classList.add('active');
+                btnSizes.classList.remove('active');
+            } else {
+                btnSizes.classList.add('active');
+                btnMovement.classList.remove('active');
+            }
+
+            // Hide all content panels
+            document.querySelectorAll('.tab-content-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            // Show current content panel
+            const activePanel = document.getElementById(`content-${currentPiece}-${currentMode}`);
+            if (activePanel) {
+                activePanel.classList.add('active');
+            }
+        }
+
+        // Initialize visibility
+        updateTabVisibility();
+    </script>
+
+    <!-- JavaScript Module -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
