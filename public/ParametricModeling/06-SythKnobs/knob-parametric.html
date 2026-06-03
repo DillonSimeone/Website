@@ -24,12 +24,16 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
+  html, body {
     background: var(--bg);
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
     font-weight: 300;
-    min-height: 100vh;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   /* HEADER */
@@ -72,7 +76,7 @@
   /* LAYOUT */
   .layout {
     display: flex;
-    height: calc(100vh - 57px);
+    flex: 1;
     overflow: hidden;
   }
 
@@ -558,13 +562,14 @@
   @media (max-width: 768px) {
     .layout {
       flex-direction: column;
-      height: 100vh;
+      height: auto;
+      flex: 1;
     }
     .sidebar { width: 100%; margin-left: 0 !important; overflow-y: auto; flex: 1; }
     .main { display: none; }
     body.view-mode .sidebar { display: none; }
     body.view-mode .main { display: grid; width: 100%; }
-    body.view-mode .layout { height: calc(100vh - 57px); }
+    body.view-mode .layout { height: auto; flex: 1; }
     .detail-panel { width: 100%; border-left: none; }
   }
 
@@ -949,7 +954,6 @@
       <div class="detail-title" id="dpTitle">—</div>
       <div class="detail-sub" id="dpSub">—</div>
       <div id="dpRows"></div>
-      <div class="stl-note" id="dpNote"></div>
       <div style="display:flex; gap: 8px; margin-top: 16px;">
         <button class="btn" id="btnPrev" style="margin-bottom:0; border-color: #ff4444; color: #ff4444; text-shadow: 0 0 8px rgba(255,68,68,0.5); box-shadow: 0 0 10px rgba(255,68,68,0.2) inset;" onclick="prevKnob()">◀ PREV</button>
         <button class="btn" id="btnNext" style="margin-bottom:0; border-color: #44aaff; color: #44aaff; text-shadow: 0 0 8px rgba(68,170,255,0.5); box-shadow: 0 0 10px rgba(68,170,255,0.2) inset;" onclick="nextKnob()">NEXT ▶</button>
@@ -1358,9 +1362,6 @@ function selectKnob(id) {
     `<div class="detail-row"><span class="dk">${k2}</span><span class="dv">${v}</span></div>`
   ).join('');
 
-  document.getElementById('dpNote').innerHTML =
-    `OpenSCAD export preserves all parameters.<br>Print flat-side down — no supports needed for CYL/HEX profiles.<br>Texture mode "${(k.texMode || 'flutes').toUpperCase()}" optimized for tactile grip.`;
-
   panel.classList.add('open');
   document.querySelector('.main').classList.add('detail-open');
 }
@@ -1664,7 +1665,7 @@ async function initThree() {
   canvas.style.width = '100vw'; canvas.style.height = '100vh';
   canvas.style.pointerEvents = 'none';
   canvas.style.zIndex = '210';
-  document.querySelector('.layout').appendChild(canvas);
+  document.body.appendChild(canvas);
 
   renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, premultipliedAlpha: false });
   renderer.setClearColor(0x000000, 0); // Transparent background
@@ -1693,6 +1694,42 @@ async function initThree() {
   requestAnimationFrame(animateThree);
 }
 
+function getClippedRect(el, container) {
+  const rect = el.getBoundingClientRect();
+  const headerH = document.querySelector('header')?.offsetHeight || 0;
+  
+  let clipLeft = 0;
+  let clipTop = headerH;
+  let clipRight = window.innerWidth;
+  let clipBottom = window.innerHeight;
+  
+  if (container) {
+    const cRect = container.getBoundingClientRect();
+    clipLeft = Math.max(clipLeft, cRect.left);
+    clipTop = Math.max(clipTop, cRect.top);
+    clipRight = Math.min(clipRight, cRect.right);
+    clipBottom = Math.min(clipBottom, cRect.bottom);
+  }
+  
+  const panel = document.getElementById('detailPanel');
+  if (panel && panel.classList.contains('open') && container?.id === 'knobGrid') {
+    const pRect = panel.getBoundingClientRect();
+    clipRight = Math.min(clipRight, pRect.left);
+  }
+  
+  const rLeft = Math.max(rect.left, clipLeft);
+  const rTop = Math.max(rect.top, clipTop);
+  const rRight = Math.min(rect.right, clipRight);
+  const rBottom = Math.min(rect.bottom, clipBottom);
+  
+  return {
+    left: rLeft,
+    top: rTop,
+    width: Math.max(0, rRight - rLeft),
+    height: Math.max(0, rBottom - rTop)
+  };
+}
+
 let lastTime = 0;
 function animateThree(time) {
   requestAnimationFrame(animateThree);
@@ -1713,9 +1750,6 @@ function animateThree(time) {
       return;
   }
   
-  // We don't set clearColor here anymore, it's transparent.
-  const headerH = document.querySelector('header').offsetHeight;
-  
   knobs.forEach(k => {
     if (!k.mesh) return;
     
@@ -1727,26 +1761,13 @@ function animateThree(time) {
     if (!previewEl) return;
     
     const rect = previewEl.getBoundingClientRect();
+    const clip = getClippedRect(previewEl, document.getElementById('knobGrid'));
     
-    let rTop = Math.max(rect.top, headerH);
-    let rBottom = Math.min(rect.bottom, window.innerHeight);
-    let rHeight = rBottom - rTop;
+    if (clip.height <= 0 || clip.width <= 0) return;
     
-    // Clip right edge if detail panel is open
-    let rightLimit = window.innerWidth;
-    const panel = document.getElementById('detailPanel');
-    if (panel && panel.classList.contains('open')) {
-        const pRect = panel.getBoundingClientRect();
-        rightLimit = pRect.left;
-    }
-    let rRight = Math.min(rect.right, rightLimit);
-    let rWidth = rRight - rect.left;
-    
-    if (rHeight <= 0 || rWidth <= 0) return;
-    
-    let canvasBottom = window.innerHeight - rBottom;
+    let canvasBottom = window.innerHeight - (clip.top + clip.height);
     renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
-    renderer.setScissor(rect.left, canvasBottom, rWidth, rHeight);
+    renderer.setScissor(clip.left, canvasBottom, clip.width, clip.height);
     
     const dist = Math.max(40, k.outerD * 2.0);
     camera.position.set(0, dist, dist * 0.8);
@@ -1767,25 +1788,21 @@ function animateThree(time) {
       const k = knobs.find(x => x.id === selectedId);
       if (k && k.mesh) {
         const rect = detailPreview.getBoundingClientRect();
-        if (rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth) {
-          let rTop = Math.max(rect.top, headerH);
-          let rBottom = Math.min(rect.bottom, window.innerHeight);
-          let rHeight = rBottom - rTop;
-          if (rHeight > 0) {
-            let canvasBottom = window.innerHeight - rBottom;
-            renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
-            renderer.setScissor(rect.left, canvasBottom, rect.width, rHeight);
-            
-            const dist = Math.max(40, k.outerD * 2.0);
-            camera.position.set(0, dist, dist * 0.8);
-            camera.lookAt(0, 0, 0);
-            camera.aspect = rect.width / rect.height;
-            camera.updateProjectionMatrix();
-            
-            scene.add(k.mesh);
-            renderer.render(scene, camera);
-            scene.remove(k.mesh);
-          }
+        const clip = getClippedRect(detailPreview, panel);
+        if (clip.height > 0 && clip.width > 0) {
+          let canvasBottom = window.innerHeight - (clip.top + clip.height);
+          renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
+          renderer.setScissor(clip.left, canvasBottom, clip.width, clip.height);
+          
+          const dist = Math.max(40, k.outerD * 2.0);
+          camera.position.set(0, dist, dist * 0.8);
+          camera.lookAt(0, 0, 0);
+          camera.aspect = rect.width / rect.height;
+          camera.updateProjectionMatrix();
+          
+          scene.add(k.mesh);
+          renderer.render(scene, camera);
+          scene.remove(k.mesh);
         }
       }
     }
