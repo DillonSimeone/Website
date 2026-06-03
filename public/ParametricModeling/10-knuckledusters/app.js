@@ -15,10 +15,13 @@ const params = {
     handWidth: 105.0,
     dusterHeight: 16.0,
     guardThick: 10.0,
-    engravingText: "MCAFEE SECURE",
+    engravingText: "MCAFEE\nSECURE",
     textSize: 8.0,
     textDepth: 1.5,
     engraveMode: 'emboss', // 'emboss' or 'cutout'
+    mirrorText: false,
+    textKerning: 1.0,
+    fontName: 'helvetiker_regular',
     spikeHeight: 0.0,
     usbSlot: false,
     sdSlot: false,
@@ -130,18 +133,44 @@ function loadFontAndInit() {
     const engravingInput = document.getElementById('input-engravingText');
     if (engravingInput) engravingInput.disabled = true;
     
-    loader.load(FONT_URL, (font) => {
+    let url;
+    if (params.fontName.startsWith('google_')) {
+        const fontNameClean = params.fontName.replace('google_', '');
+        url = `https://cdn.jsdelivr.net/npm/@compai/font-${fontNameClean}/data/typefaces/normal-400.json`;
+    } else {
+        url = `https://cdn.jsdelivr.net/npm/three@0.147.0/examples/fonts/${params.fontName}.typeface.json`;
+    }
+    
+    loader.load(url, (font) => {
         loadedFont = font;
-        console.log("Cyberpunk Typography loaded successfully");
+        console.log(`Typography ${params.fontName} loaded successfully`);
         if (engravingInput) {
             engravingInput.disabled = false;
             engravingInput.placeholder = "ENTER ENGRAVING";
         }
-        initManifold();
+        if (!Manifold) {
+            initManifold();
+        } else {
+            rebuild();
+        }
     }, undefined, (err) => {
-        console.error("Failed to load 3D font: ", err);
-        // Continue without font (engraving fallback)
-        initManifold();
+        console.error(`Failed to load font ${params.fontName} from ${url}. Falling back to helvetiker_regular.`, err);
+        // Fallback to helvetiker_regular
+        if (params.fontName !== 'helvetiker_regular') {
+            params.fontName = 'helvetiker_regular';
+            const selectFont = document.getElementById('select-font');
+            if (selectFont) selectFont.value = 'helvetiker_regular';
+            const customFontInput = document.getElementById('input-custom-font');
+            if (customFontInput) customFontInput.value = ""; // clear failed custom input
+            loadFontAndInit();
+        } else {
+            if (engravingInput) engravingInput.disabled = false;
+            if (!Manifold) {
+                initManifold();
+            } else {
+                rebuild();
+            }
+        }
     });
 }
 
@@ -184,6 +213,39 @@ function setupUIListeners() {
     // Cybernetics
     bindSlider('input-textSize', 'textSize');
     bindSlider('input-textDepth', 'textDepth');
+    bindSlider('input-textKerning', 'textKerning');
+
+    // Font Selection Preset Dropdown
+    document.getElementById('select-font').addEventListener('change', (e) => {
+        if (e.target.value) {
+            params.fontName = e.target.value;
+            const customFontInput = document.getElementById('input-custom-font');
+            if (customFontInput) customFontInput.value = ""; // clear custom input
+            loadFontAndInit();
+        }
+    });
+
+    // Custom Google Font Text Input
+    const customFontInput = document.getElementById('input-custom-font');
+    if (customFontInput) {
+        customFontInput.addEventListener('change', (e) => {
+            const fontName = e.target.value.trim();
+            if (fontName.length > 0) {
+                // Convert to kebab-case: lowercase, remove characters except letters/numbers/spaces/dashes, replace spaces with single dash
+                const kebab = fontName.toLowerCase()
+                                      .replace(/[^a-z0-9\s-]/g, '')
+                                      .replace(/[\s_]+/g, '-');
+                params.fontName = 'google_' + kebab;
+                loadFontAndInit();
+            }
+        });
+    }
+
+    // Mirror Text
+    document.getElementById('show-mirrorText').addEventListener('change', (e) => {
+        params.mirrorText = e.target.checked;
+        rebuild();
+    });
 
     // Text input
     const engravingInput = document.getElementById('input-engravingText');
@@ -258,7 +320,7 @@ function setupUIListeners() {
 
 // --- CSG Helpers: Bridges Three.js mathematical placements into Manifold WASM ---
 
-function threeToManifold(geom) {
+function threeToManifold(geom, reverseWinding = false) {
     const posAttr = geom.getAttribute('position');
     if (!posAttr) return null;
     
@@ -293,13 +355,30 @@ function threeToManifold(geom) {
     let triVerts;
     if (indexAttr) {
         triVerts = new Uint32Array(indexAttr.count);
-        for (let i = 0; i < indexAttr.count; i++) {
-            triVerts[i] = oldToNewIndex[indexAttr.array[i]];
+        for (let i = 0; i < indexAttr.count; i += 3) {
+            if (reverseWinding) {
+                // Swap the 2nd and 3rd vertices of each triangle to flip the winding direction
+                triVerts[i] = oldToNewIndex[indexAttr.array[i]];
+                triVerts[i+1] = oldToNewIndex[indexAttr.array[i+2]];
+                triVerts[i+2] = oldToNewIndex[indexAttr.array[i+1]];
+            } else {
+                triVerts[i] = oldToNewIndex[indexAttr.array[i]];
+                triVerts[i+1] = oldToNewIndex[indexAttr.array[i+1]];
+                triVerts[i+2] = oldToNewIndex[indexAttr.array[i+2]];
+            }
         }
     } else {
         triVerts = new Uint32Array(numVerts);
-        for (let i = 0; i < numVerts; i++) {
-            triVerts[i] = oldToNewIndex[i];
+        for (let i = 0; i < numVerts; i += 3) {
+            if (reverseWinding) {
+                triVerts[i] = oldToNewIndex[i];
+                triVerts[i+1] = oldToNewIndex[i+2];
+                triVerts[i+2] = oldToNewIndex[i+1];
+            } else {
+                triVerts[i] = oldToNewIndex[i];
+                triVerts[i+1] = oldToNewIndex[i+1];
+                triVerts[i+2] = oldToNewIndex[i+2];
+            }
         }
     }
     
@@ -416,6 +495,59 @@ function makeCSGTaperedBox(wStart, wEnd, length, thickness, x, y, z, rx=0, ry=0,
     return shield;
 }
 
+function makeCSGDoubleTaperedBox(wStart, wEnd, tStart, tEnd, length, x, y, z, rx=0, ry=0, rz=0) {
+    const L = length;
+    const vertices = new Float32Array([
+        // Front face (Y = 0)
+        -wStart/2, 0, -tStart/2, // 0
+         wStart/2, 0, -tStart/2, // 1
+         wStart/2, 0,  tStart/2, // 2
+        -wStart/2, 0,  tStart/2, // 3
+        // Back face (Y = -L)
+        -wEnd/2, -L, -tEnd/2,  // 4
+         wEnd/2, -L, -tEnd/2,  // 5
+         wEnd/2, -L,  tEnd/2,  // 6
+         wEnd/2, -L,  tEnd/2   // 7
+    ]);
+    const indices = new Uint32Array([
+        // Front face (Y = 0) -> Normal +Y
+        0, 2, 1,  0, 3, 2,
+        // Back face (Y = -L) -> Normal -Y
+        5, 7, 4,  5, 6, 7,
+        // Left face (X = -W/2) -> Normal -X
+        4, 3, 0,  4, 7, 3,
+        // Right face (X = +W/2) -> Normal +X
+        1, 6, 5,  1, 2, 6,
+        // Top face (Z = +T/2) -> Normal +Z
+        3, 6, 2,  3, 7, 6,
+        // Bottom face (Z = -T/2) -> Normal -Z
+        0, 5, 4,  0, 1, 5
+    ]);
+    
+    let box = Manifold.ofMesh({
+        numProp: 3,
+        triVerts: indices,
+        vertProperties: vertices
+    });
+    
+    if (rx !== 0 || ry !== 0 || rz !== 0) {
+        const degX = rx * (180 / Math.PI);
+        const degY = ry * (180 / Math.PI);
+        const degZ = rz * (180 / Math.PI);
+        let rotated = box.rotate([degX, degY, degZ]);
+        box.delete();
+        box = rotated;
+    }
+    
+    if (x !== 0 || y !== 0 || z !== 0) {
+        let translated = box.translate([x, y, z]);
+        box.delete();
+        box = translated;
+    }
+    
+    return box;
+}
+
 function makeCSGCone(r, h, x, y, z, rx=0, ry=0, rz=0) {
     // Create native Manifold cylinder with top radius 0 to make a cone
     let cone = Manifold.cylinder(h, r, 0, 16, false);
@@ -487,10 +619,41 @@ function generateKnucklesCore() {
     const spacing = Math.max(params.fingerDiam + 4, (params.handWidth - params.fingerDiam - 12) / 3);
     const x_coords = [-1.5 * spacing, -0.5 * spacing, 0.5 * spacing, 1.5 * spacing];
     const y_coords = [0, 4, 4, 0];
+    const r_ring = r_finger + 4;
+    const r_guard = r_finger + t_guard;
+
+    // Parse engraving text for dynamic guard sizing
+    const linesOfText = params.engravingText.split('\n');
+    const M = linesOfText.length;
+    
+    let maxLineWidth = x_coords[3] - x_coords[0];
+    for (let l = 0; l < M; l++) {
+        const textStr = linesOfText[l].trim();
+        const N_l = textStr.length;
+        if (N_l > 0) {
+            const baseSpacing = params.textSize * 0.85 * params.textKerning;
+            const textWidth_l = (N_l - 1) * baseSpacing;
+            if (textWidth_l > maxLineWidth) {
+                maxLineWidth = textWidth_l;
+            }
+        }
+    }
+    
+    // Front face width (extend outwardly if text is big)
+    const W_front = Math.max(x_coords[3] - x_coords[0], maxLineWidth + params.textSize + 12.0);
+    const W_back = x_coords[3] - x_coords[0] + r_ring * 2;
+    
+    // Front face thickness (extend downward/upward to fit multiline text)
+    const lineSpacing = params.textSize * 0.4;
+    const totalTextHeight = M * params.textSize + (M - 1) * lineSpacing;
+    const h_guard_face = Math.max(h_core, totalTextHeight + 10.0); // 5mm top/bottom padding
+    
+    // Height for clearance cuts (must cut through taller guard)
+    const h_cut = Math.max(h_core, h_guard_face) + 10.0;
 
     // 2. Build the basic finger rings (solid) and connect them
     const rings = [];
-    const r_ring = r_finger + 4; // Wall thickness of 4mm at the back/sides
+    
     
     for (let i = 0; i < 4; i++) {
         rings.push(makeCSGCylinder(r_ring, h_core, x_coords[i], y_coords[i], 0));
@@ -520,7 +683,6 @@ function generateKnucklesCore() {
 
     // 4. Add Knuckle Guard Armor (thickened front portion)
     const guards = [];
-    const r_guard = r_finger + t_guard;
     for (let i = 0; i < 4; i++) {
         guards.push(makeCSGCylinder(r_guard, h_core, x_coords[i], y_coords[i], 0));
     }
@@ -545,6 +707,13 @@ function generateKnucklesCore() {
         bridge.delete();
         guardBody = temp;
     }
+
+    // Flatten the front of the guard body with a 3D double-tapered ramp block
+    const flatBlock = makeCSGDoubleTaperedBox(W_front, W_back, h_guard_face, h_core, r_guard + 4.0, 0, 4.0 + r_guard, 0);
+    let flattenedGuard = guardBody.add(flatBlock);
+    guardBody.delete();
+    flatBlock.delete();
+    guardBody = flattenedGuard;
 
     // Merge rings and guard armor
     let mergedTemp = knucklesBody.add(guardBody);
@@ -585,7 +754,7 @@ function generateKnucklesCore() {
     const fingerHoles = [];
     for (let i = 0; i < 4; i++) {
         // Slightly taller to ensure clean boolean cuts
-        fingerHoles.push(makeCSGCylinder(r_finger, h_core + 4, x_coords[i], y_coords[i], 0));
+        fingerHoles.push(makeCSGCylinder(r_finger, h_cut, x_coords[i], y_coords[i], 0));
     }
     for (let i = 0; i < 4; i++) {
         let temp = knucklesBody.subtract(fingerHoles[i]);
@@ -596,9 +765,9 @@ function generateKnucklesCore() {
 
     // 9. SUBTRACT Palm Cutout (The inner loop handle)
     const cutoutWidth = x_coords[3] - x_coords[0] - r_ring * 2 + 10;
-    const palmCutout = makeCSGBox(cutoutWidth, 20, h_core + 4, 0, -25, 0);
-    const lCutEnd = makeCSGCylinder(10, h_core + 4, -cutoutWidth/2, -25, 0);
-    const rCutEnd = makeCSGCylinder(10, h_core + 4, cutoutWidth/2, -25, 0);
+    const palmCutout = makeCSGBox(cutoutWidth, 20, h_cut, 0, -25, 0);
+    const lCutEnd = makeCSGCylinder(10, h_cut, -cutoutWidth/2, -25, 0);
+    const rCutEnd = makeCSGCylinder(10, h_cut, cutoutWidth/2, -25, 0);
     
     let mergedCutout = palmCutout.add(lCutEnd).add(rCutEnd);
     palmCutout.delete();
@@ -617,17 +786,11 @@ function generateKnucklesCore() {
         const h_spike = params.spikeHeight;
         const r_spike = h_spike * 0.4;
         const r_guard = r_finger + t_guard;
-        const ang = [
-            Math.PI / 2 + 0.2,
-            Math.PI / 2 + 0.05,
-            Math.PI / 2 - 0.05,
-            Math.PI / 2 - 0.2
-        ];
         for (let i = 0; i < 4; i++) {
             const r_offset = r_guard - 1.0;
-            const px = x_coords[i] + r_offset * Math.cos(ang[i]);
-            const py = y_coords[i] + r_offset * Math.sin(ang[i]);
-            const cone = makeCSGCone(r_spike, h_spike + 1.0, px, py, 0, -Math.PI / 2, 0, ang[i] - Math.PI / 2);
+            const px = x_coords[i];
+            const py = 4.0 + r_offset;
+            const cone = makeCSGCone(r_spike, h_spike + 1.0, px, py, 0, -Math.PI / 2, 0, 0);
             let temp = knucklesBody.add(cone);
             knucklesBody.delete();
             cone.delete();
@@ -675,18 +838,8 @@ function generateKnucklesCore() {
     // 10. APPLY Tactical Typography (Engraving or Embossing)
     if (loadedFont && params.engravingText.trim().length > 0) {
         try {
-            const textStr = params.engravingText.trim();
-            const N = textStr.length;
-            
-            // Calculate character spacing and total span
-            const spacing = Math.max(params.fingerDiam + 4, (params.handWidth - params.fingerDiam - 12) / 3);
-            const x_coords = [-1.5 * spacing, -0.5 * spacing, 0.5 * spacing, 1.5 * spacing];
-            
-            // Text width bounds (inset slightly from outer knuckles)
-            const maxTextWidth = x_coords[3] - x_coords[0];
-            const charSpacing = Math.min(maxTextWidth / (N - 1 || 1), params.textSize * 0.85);
-            const textWidth = (N - 1) * charSpacing;
-            const startX = -textWidth / 2;
+            const linesOfText = params.engravingText.split('\n');
+            const M = linesOfText.length;
             
             const r_guard = params.fingerDiam / 2 + params.guardThick;
             
@@ -701,88 +854,86 @@ function generateKnucklesCore() {
                 r_offset = r_guard + 1.0; // start 1mm outside surface for a clean boolean cut
                 z1_factor = -1.0;
             } else if (params.engraveMode === 'cutout') {
-                geomHeight = 55.0; // cut completely through the 16mm core and 10mm guard
+                geomHeight = 55.0; // cut completely through
                 r_offset = r_guard + 5.0; // start 5mm outside the front face
                 z1_factor = -1.0;
             }
             
-            // We will collect each character manifold and union/subtract them
             const charManifolds = [];
             
-            for (let j = 0; j < N; j++) {
-                const c = textStr[j];
-                if (c === " ") continue; // skip spaces
+            // Calculate vertical bounds
+            const lineSpacing = params.textSize * 0.4;
+            const totalTextHeight = M * params.textSize + (M - 1) * lineSpacing;
+            const startZ = totalTextHeight / 2 - params.textSize / 2;
+            
+            for (let l = 0; l < M; l++) {
+                let textStr = linesOfText[l].trim();
+                if (params.mirrorText) {
+                    textStr = [...textStr].reverse().join('');
+                }
+                const N_l = textStr.length;
+                if (N_l === 0) continue;
                 
-                const charGeom = new TextGeometry(c, {
-                    font: loadedFont,
-                    size: params.textSize,
-                    height: geomHeight,
-                    curveSegments: 3,
-                    bevelEnabled: false
-                });
+                // Vertical position for this line
+                const z_line = startZ - l * (params.textSize + lineSpacing);
                 
-                charGeom.computeBoundingBox();
-                const charWidth = charGeom.boundingBox.max.x - charGeom.boundingBox.min.x;
-                const charHeight = charGeom.boundingBox.max.y - charGeom.boundingBox.min.y;
+                // Character spacing for this line (aligned within W_front minus padding)
+                const maxTextWidth = W_front - params.textSize - 12.0;
+                const baseSpacing = params.textSize * 0.85 * params.textKerning;
+                const charSpacing = Math.min(maxTextWidth / (N_l - 1 || 1), baseSpacing);
+                const textWidth = (N_l - 1) * charSpacing;
+                const startX = -textWidth / 2;
                 
-                // Get wrapped position and segment angle at this letter's X position
-                const x_j = startX + j * charSpacing;
-                
-                // Segment interpolation
-                let seg = 0;
-                if (x_j <= x_coords[0]) seg = 0;
-                else if (x_j >= x_coords[3]) seg = 2;
-                else {
-                    for (let k = 0; k < 3; k++) {
-                        if (x_j >= x_coords[k] && x_j <= x_coords[k+1]) {
-                            seg = k;
-                            break;
+                for (let j = 0; j < N_l; j++) {
+                    const c = textStr[j];
+                    if (c === " ") continue;
+                    
+                    const charGeom = new TextGeometry(c, {
+                        font: loadedFont,
+                        size: params.textSize,
+                        height: geomHeight,
+                        curveSegments: 3,
+                        bevelEnabled: false
+                    });
+                    
+                    charGeom.computeBoundingBox();
+                    const charWidth = charGeom.boundingBox.max.x - charGeom.boundingBox.min.x;
+                    const charHeight = charGeom.boundingBox.max.y - charGeom.boundingBox.min.y;
+                    
+                    const x_j = startX + j * charSpacing;
+                    const phi = 0;
+                    const posX = x_j;
+                    const posY = 4.0 + r_offset;
+                    
+                    const posAttr = charGeom.getAttribute('position');
+                    for (let i = 0; i < posAttr.count; i++) {
+                        const x = posAttr.getX(i);
+                        const y = posAttr.getY(i);
+                        const z = posAttr.getZ(i);
+                        
+                        let x1 = x - charGeom.boundingBox.min.x - charWidth / 2;
+                        const y1 = y - charGeom.boundingBox.min.y - charHeight / 2 + z_line;
+                        const z1 = z * z1_factor;
+                        
+                        if (params.mirrorText) {
+                            x1 = -x1;
                         }
+                        
+                        const posX_cad = posX + x1;
+                        const posY_cad = posY + z1;
+                        const posZ_cad = y1;
+                        
+                        posAttr.setXYZ(i, posX_cad, posY_cad, posZ_cad);
                     }
-                }
-                
-                const x_coords_y = [0, 4, 4, 0]; // y coords of finger centers
-                const xA = x_coords[seg];
-                const yA = x_coords_y[seg];
-                const xB = x_coords[seg+1];
-                const yB = x_coords_y[seg+1];
-                
-                const u = Math.max(0, Math.min(1, (x_j - xA) / (xB - xA)));
-                const y_center = (1 - u) * yA + u * yB;
-                const phi = Math.atan2(yB - yA, xB - xA);
-                
-                // Surface position (using normal offset)
-                const nx = -Math.sin(phi);
-                const ny = Math.cos(phi);
-                const posX = x_j + r_offset * nx;
-                const posY = y_center + r_offset * ny;
-                
-                // Transform vertices directly to CAD space
-                const posAttr = charGeom.getAttribute('position');
-                for (let i = 0; i < posAttr.count; i++) {
-                    const x = posAttr.getX(i);
-                    const y = posAttr.getY(i);
-                    const z = posAttr.getZ(i);
+                    posAttr.needsUpdate = true;
                     
-                    const x1 = x - charGeom.boundingBox.min.x - charWidth / 2;
-                    const y1 = y - charGeom.boundingBox.min.y - charHeight / 2;
+                    const reverseWinding = params.mirrorText !== (z1_factor < 0);
+                    const charManifold = threeToManifold(charGeom, reverseWinding);
+                    charGeom.dispose();
                     
-                    const z1 = z * z1_factor;
-                    
-                    // Direct matrix rotation around Z by phi, plus translation to posX, posY
-                    const posX_cad = posX + x1 * Math.cos(phi) - z1 * Math.sin(phi);
-                    const posY_cad = posY + x1 * Math.sin(phi) + z1 * Math.cos(phi);
-                    const posZ_cad = y1;
-                    
-                    posAttr.setXYZ(i, posX_cad, posY_cad, posZ_cad);
-                }
-                posAttr.needsUpdate = true;
-                
-                const charManifold = threeToManifold(charGeom);
-                charGeom.dispose();
-                
-                if (charManifold) {
-                    charManifolds.push(charManifold);
+                    if (charManifold) {
+                        charManifolds.push(charManifold);
+                    }
                 }
             }
             
@@ -944,9 +1095,17 @@ function rebuild() {
         const x_coords = [-1.5 * spacing, -0.5 * spacing, 0.5 * spacing, 1.5 * spacing];
         const y_coords = [0, 4, 4, 0];
 
+        // Parse engraving text for dynamic visualizer height
+        const linesOfText = params.engravingText.split('\n');
+        const M = linesOfText.length;
+        const lineSpacing = params.textSize * 0.4;
+        const totalTextHeight = M * params.textSize + (M - 1) * lineSpacing;
+        const h_guard_face = Math.max(params.dusterHeight, totalTextHeight + 10.0);
+        const h_cut = h_guard_face + 10.0;
+
         // Finger cutout boxes
         for (let i = 0; i < 4; i++) {
-            const geom = new THREE.CylinderGeometry(r_finger, r_finger, params.dusterHeight + 4, 24);
+            const geom = new THREE.CylinderGeometry(r_finger, r_finger, h_cut, 24);
             geom.rotateX(Math.PI / 2);
             const m = new THREE.Mesh(geom, cutoutMat);
             m.position.set(x_coords[i], y_coords[i], 0);
@@ -955,13 +1114,13 @@ function rebuild() {
 
         // Palm cutout box
         const cutoutWidth = x_coords[3] - x_coords[0] - (r_finger + 4) * 2 + 10;
-        const pCutGeom = new THREE.BoxGeometry(cutoutWidth, 20, params.dusterHeight + 4);
+        const pCutGeom = new THREE.BoxGeometry(cutoutWidth, 20, h_cut);
         const pCut = new THREE.Mesh(pCutGeom, cutoutMat);
         pCut.position.set(0, -25, 0);
         cutoutsGroup.add(pCut);
 
         // Cylindrical caps for palm cutout
-        const capL = new THREE.CylinderGeometry(10, 10, params.dusterHeight + 4, 24);
+        const capL = new THREE.CylinderGeometry(10, 10, h_cut, 24);
         capL.rotateX(Math.PI / 2);
         const capLMesh = new THREE.Mesh(capL, cutoutMat);
         capLMesh.position.set(-cutoutWidth/2, -25, 0);
@@ -989,16 +1148,45 @@ function rebuild() {
     }
 
     // 7. Update Spec Sheet Statistics
-    const totalVolCc = (knucklesVol / 1000).toFixed(1); // mm³ to cm³
-    const estimatedWeightG = (totalVolCc * 1.24).toFixed(0); // Density of PLA is ~1.24 g/cm³
+    let totalVolCc = "0.0";
+    let estimatedWeightG = "0";
+    if (!isNaN(knucklesVol) && knucklesVol > 0) {
+        totalVolCc = (knucklesVol / 1000).toFixed(1);
+        estimatedWeightG = (totalVolCc * 1.24).toFixed(0);
+    }
     
     document.getElementById('spec-volume').innerText = `${totalVolCc} cm³`;
     document.getElementById('spec-weight').innerText = `${estimatedWeightG} g`;
     
-    // Bounds: width is handWidth, length is knuckles core depth (60mm), height is dusterHeight
-    const boundsWidth = (params.handWidth).toFixed(0);
-    const boundsLength = 60; // Knuckles depth
-    const boundsHeight = (params.dusterHeight).toFixed(0);
+    // Bounds: calculate actual dynamic bounds
+    const r_ring_bounds = params.fingerDiam / 2 + 4;
+    const spacing_bounds = Math.max(params.fingerDiam + 4, (params.handWidth - params.fingerDiam - 12) / 3);
+    const width_base = spacing_bounds * 3;
+    
+    const linesOfText_bounds = params.engravingText.split('\n');
+    const M_bounds = linesOfText_bounds.length;
+    let maxLineWidth_bounds = width_base;
+    for (let l = 0; l < M_bounds; l++) {
+        const textStr = linesOfText_bounds[l].trim();
+        const N_l = textStr.length;
+        if (N_l > 0) {
+            const baseSpacing = params.textSize * 0.85 * params.textKerning;
+            const textWidth_l = (N_l - 1) * baseSpacing;
+            if (textWidth_l > maxLineWidth_bounds) {
+                maxLineWidth_bounds = textWidth_l;
+            }
+        }
+    }
+    const W_front_bounds = Math.max(width_base, maxLineWidth_bounds + params.textSize + 12.0);
+    const W_back_bounds = width_base + r_ring_bounds * 2;
+    const boundsWidth = Math.max(W_back_bounds, W_front_bounds).toFixed(0);
+    
+    const lineSpacing_bounds = params.textSize * 0.4;
+    const totalTextHeight_bounds = M_bounds * params.textSize + (M_bounds - 1) * lineSpacing_bounds;
+    const h_guard_face_bounds = Math.max(params.dusterHeight, totalTextHeight_bounds + 10.0);
+    const boundsHeight = Math.max(params.dusterHeight, h_guard_face_bounds).toFixed(0);
+    
+    const boundsLength = (60 + params.spikeHeight).toFixed(0); // Knuckles depth + spikes
     document.getElementById('spec-bounds').innerText = `${boundsWidth} x ${boundsLength} x ${boundsHeight} mm`;
 
     updateLeaderLines();
@@ -1152,9 +1340,10 @@ function updateLeaderLines() {
             1, -1, '#ff00b3'
         );
 
-        // Guard thickness line (Index finger front)
+        // Guard thickness line (Index finger front flat face)
+        const r_guard = params.fingerDiam / 2 + params.guardThick;
         drawDimension(
-            new THREE.Vector3(-1.5 * spacing, params.guardThick + r_finger, 0),
+            new THREE.Vector3(-1.5 * spacing, 4.0 + r_guard, 0),
             `Guard: ${params.guardThick.toFixed(1)}mm`,
             -1, -1, '#ff003c'
         );
@@ -1168,12 +1357,8 @@ function updateLeaderLines() {
 
         // Cyber-Spikes leader line
         if (params.spikeHeight > 0) {
-            const r_guard = params.fingerDiam / 2 + params.guardThick;
-            const ang3 = Math.PI / 2 - 0.2;
-            const px = 1.5 * spacing + (r_guard + params.spikeHeight) * Math.cos(ang3);
-            const py = 0 + (r_guard + params.spikeHeight) * Math.sin(ang3);
             drawDimension(
-                new THREE.Vector3(px, py, 0),
+                new THREE.Vector3(1.5 * spacing, 4.0 + r_guard + params.spikeHeight, 0),
                 `Spikes: ${params.spikeHeight.toFixed(1)}mm`,
                 1, -1, '#ff003c'
             );
