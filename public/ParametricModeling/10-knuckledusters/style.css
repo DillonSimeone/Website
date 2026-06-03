@@ -262,6 +262,7 @@ input[type="range"]::-webkit-slider-thumb {
     font-size: 0.8rem;
     outline: none;
     margin-bottom: 10px;
+    border-radius: 0;
     transition: all 0.3s;
 }
 
@@ -483,4 +484,24 @@ footer {
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--bp-line) rgba(10, 1, 2, 0.95);
+}
+
+/* Styled Font Dropdown Select Menu */
+select.cyber-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23ff003c' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 8px 10px;
+    padding-right: 30px;
+    cursor: pointer;
+}
+
+select.cyber-input option {
+    background: #0a0102;
+    color: var(--bp-text);
+    font-family: 'Space Mono', monospace;
+    border: 1px solid var(--bp-line);
 }

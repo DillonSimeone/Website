@@ -85,7 +85,25 @@
                     <div class="control-group" style="margin-bottom: 15px;">
                         <div class="control-group-title">Tactical Engraving</div>
                         <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Engraving text:</span>
-                        <input type="text" id="input-engravingText" class="cyber-input" value="MCAFEE SECURE" maxlength="20">
+                        <textarea id="input-engravingText" class="cyber-input" rows="2" style="resize: none; height: 50px; width: 100%;" maxlength="80">MCAFEE&#10;SECURE</textarea>
+                        
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Font Type:</span>
+                        <select id="select-font" class="cyber-input">
+                            <option value="helvetiker_regular" selected>Helvetiker Sans (Local)</option>
+                            <option value="helvetiker_bold">Helvetiker Bold (Local)</option>
+                            <option value="optimer_regular">Optimer Technical (Local)</option>
+                            <option value="gentilis_regular">Gentilis Modern (Local)</option>
+                            <option value="google_orbitron">Orbitron (Cyber)</option>
+                            <option value="google_share-tech-mono">Share Tech Mono</option>
+                            <option value="google_space-mono">Space Mono (Terminal)</option>
+                            <option value="google_vt323">VT323 (Retro Pixel)</option>
+                            <option value="google_syncopate">Syncopate (Wide)</option>
+                        </select>
+                        
+                        <div style="margin-top: 8px; margin-bottom: 12px;">
+                            <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Or Custom Google Font:</span>
+                            <input type="text" id="input-custom-font" class="cyber-input" placeholder="Type font name (e.g. Montserrat, Inter)">
+                        </div>
                         
                         <div class="param-row">
                             <div class="param-info"><span class="param-label">Text Size</span><span class="param-value"><span id="val-textSize">8.0</span> mm</span></div>
@@ -97,12 +115,22 @@
                             <input type="range" id="input-textDepth" min="0.5" max="4.0" step="0.1" value="1.5">
                         </div>
 
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Character Kerning</span><span class="param-value"><span id="val-textKerning">1.0</span>x</span></div>
+                            <input type="range" id="input-textKerning" min="0.6" max="1.5" step="0.05" value="1.0">
+                        </div>
+
                         <div style="margin-top: 12px;">
                             <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Engraving Style:</span>
                             <div class="btn-group" style="grid-template-columns: 1fr 1fr;">
                                 <button class="btn active" id="btn-style-emboss">Emboss</button>
                                 <button class="btn" id="btn-style-cutout">Cutout</button>
                             </div>
+                        </div>
+
+                        <div class="toggle-row" style="margin-top: 12px;">
+                            <span>Mirror / Stamp Text</span>
+                            <input type="checkbox" id="show-mirrorText">
                         </div>
                     </div>
 
