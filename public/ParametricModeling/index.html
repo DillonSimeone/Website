@@ -5,256 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parametric Modeling Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --neon-blue: #00f3ff;
-            --neon-pink: #ff00ff;
-            --bg-black: #050505;
-            --card-bg: rgba(20, 20, 25, 0.8);
-            --border-glow: rgba(0, 243, 255, 0.3);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background-color: var(--bg-black);
-            color: #fff;
-            font-family: 'Rajdhani', sans-serif;
-            overflow-x: hidden;
-            min-height: 100vh;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.05) 0%, transparent 70%),
-                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 100%, 100% 2px, 3px 100%;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 60px 20px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 80px;
-            position: relative;
-        }
-
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 4rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 10px;
-            color: var(--neon-blue);
-            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5), 0 0 40px rgba(0, 243, 255, 0.2);
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.6);
-            letter-spacing: 4px;
-            text-transform: uppercase;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 40px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-glow);
-            border-radius: 15px;
-            padding: 40px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 350px;
-            backdrop-filter: blur(10px);
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
-            transform: translateX(-100%);
-            transition: 0.5s;
-        }
-
-        .card:hover {
-            transform: translateY(-10px) scale(1.02);
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
-        }
-
-        .card:hover::before {
-            transform: translateX(100%);
-        }
-
-        .card-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            margin-bottom: 20px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .card-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--neon-blue);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 15px var(--neon-blue);
-        }
-
-        .card-desc {
-            font-size: 1.1rem;
-            color: rgba(255, 255, 255, 0.7);
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .tag {
-            background: rgba(0, 243, 255, 0.1);
-            color: var(--neon-blue);
-            padding: 5px 15px;
-            border-radius: 99px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            border: 1px solid var(--neon-blue);
-        }
-
-        .btn-launch {
-            color: var(--neon-blue);
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-launch svg {
-            width: 20px;
-            height: 20px;
-            transition: transform 0.3s;
-        }
-
-        .card:hover .btn-launch svg {
-            transform: translateX(5px);
-        }
-
-        /* Ambient animation */
-        .scanline {
-            width: 100%;
-            height: 100px;
-            z-index: 9999;
-            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 243, 255, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
-            opacity: 0.1;
-            position: fixed;
-            bottom: 100%;
-            pointer-events: none;
-            animation: scanline 10s linear infinite;
-        }
-
-        @keyframes scanline {
-            0% { top: -100px; }
-            100% { top: 100%; }
-        }
-
-        /* Smaller cards section */
-        .secondary-section {
-            margin-top: 100px;
-        }
-
-        .secondary-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            margin-bottom: 30px;
-            color: var(--neon-pink);
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .secondary-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, var(--neon-pink), transparent);
-        }
-
-        .secondary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .s-card {
-            background: rgba(20, 20, 25, 0.4);
-            border: 1px solid rgba(255, 0, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            text-decoration: none;
-            color: inherit;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .s-card:hover {
-            border-color: var(--neon-pink);
-            background: rgba(255, 0, 255, 0.05);
-            transform: translateX(10px);
-        }
-
-        .s-card-title {
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .s-card-tag {
-            font-size: 0.7rem;
-            color: var(--neon-pink);
-            border: 1px solid var(--neon-pink);
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-    </style>
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
     <div class="scanline"></div>
@@ -266,6 +17,25 @@
         </header>
 
         <div class="grid">
+            <a href="./00-CommonParts/" class="card" style="border-color: rgba(0, 255, 170, 0.3); --neon-blue: #00ffaa;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00ffaa; box-shadow: 0 0 15px #00ffaa;">📦</div>
+                        Common Parts Library
+                    </div>
+                    <p class="card-desc">
+                        A repository of reusable ForgeCAD parametric parts. Includes battery holders, ESP32 cradles, TP4056 slots, and motor clamps. Customize dimensions in real-time and export production-ready STL models.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #00ffaa; border-color: #00ffaa; background: rgba(0, 255, 170, 0.1);">Reusable</div>
+                    <div class="btn-launch" style="color: #00ffaa;">
+                        Open Library
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
             <a href="./05-FanDuctWorks/" class="card">
                 <div>
                     <div class="card-title">
@@ -317,6 +87,44 @@
                 <div class="card-footer">
                     <div class="tag" style="color: var(--neon-blue); border-color: var(--neon-blue); background: rgba(0, 243, 255, 0.1);">Medical Assist</div>
                     <div class="btn-launch" style="color: var(--neon-blue);">
+                        Launch Engine
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./06-SythKnobs/knob-parametric.html" class="card" style="border-color: rgba(200, 255, 0, 0.3); --neon-blue: #c8ff00;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #c8ff00; box-shadow: 0 0 15px #c8ff00; color: #000;">🎛️</div>
+                        Synth Knobs
+                    </div>
+                    <p class="card-desc">
+                        Precision parametric synthesizer and accessibility control knobs. Customize outer diameter, height, flutes, diamond knurling, and shaft clearance with real-time WASM CSG rendering.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #c8ff00; border-color: #c8ff00; background: rgba(200, 255, 0, 0.1);">Interface Design</div>
+                    <div class="btn-launch" style="color: #c8ff00;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./07-TableKnocker/" class="card" style="border-color: rgba(251, 191, 36, 0.3); --neon-blue: #fbbf24;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #fbbf24; box-shadow: 0 0 15px #fbbf24; color: #000;">🔨</div>
+                        Table Knocker
+                    </div>
+                    <p class="card-desc">
+                        A solenoid-actuated tactile feedback haptic module. Features a parametric casing, slide-in sled rails, rocker switch mounts, solenoid sleeves, and 18650 power bank retention channels.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #fbbf24; border-color: #fbbf24; background: rgba(251, 191, 36, 0.1);">Tactile Haptics</div>
+                    <div class="btn-launch" style="color: #fbbf24;">
                         Launch Engine
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </div>

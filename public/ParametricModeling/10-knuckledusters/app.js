@@ -19,15 +19,18 @@ const params = {
     textSize: 8.0,
     textDepth: 1.5,
     engraveMode: 'emboss', // 'emboss' or 'cutout'
-    mirrorText: false,
+    mirrorText: true,
     textKerning: 1.0,
     fontName: 'helvetiker_regular',
     spikeHeight: 0.0,
     usbSlot: false,
     sdSlot: false,
     hexStuds: false,
+    batteryHolder: false,
+    batterySide: 'right',
+    hapticSystem: false,
     opacity: 90,
-    mode: 'rendered' // 'rendered' or 'blueprint'
+    mode: 'blueprint' // 'rendered' or 'blueprint'
 };
 
 const visibilities = {
@@ -285,6 +288,30 @@ function setupUIListeners() {
         params.hexStuds = e.target.checked;
         rebuild();
     });
+
+    document.getElementById('show-haptic-system').addEventListener('change', (e) => {
+        params.hapticSystem = e.target.checked;
+        params.batteryHolder = e.target.checked; // Toggled automatically by Haptic System
+        const hapticRow = document.getElementById('haptic-options-row');
+        if (hapticRow) {
+            hapticRow.style.display = e.target.checked ? 'block' : 'none';
+        }
+        rebuild();
+    });
+
+    const sideBtn = document.getElementById('btn-battery-side');
+    if (sideBtn) {
+        sideBtn.addEventListener('click', () => {
+            if (params.batterySide === 'right') {
+                params.batterySide = 'left';
+                sideBtn.textContent = 'LEFT SIDE';
+            } else {
+                params.batterySide = 'right';
+                sideBtn.textContent = 'RIGHT SIDE';
+            }
+            rebuild();
+        });
+    }
 
     // Display
     bindSlider('input-opacity', 'opacity', false);
@@ -835,6 +862,279 @@ function generateKnucklesCore() {
         knucklesBody = temp;
     }
 
+    // 9.6 ADD 18650 Battery Holder and Haptic System components
+    let batX, batY, batZ, outerW, outerL, outerH, batD, batL, wall;
+    if (params.batteryHolder) {
+        const sideS = params.batterySide === 'left' ? -1 : 1;
+        batX = sideS * (x_coords[3] + r_ring + 14.0 - 2.0);
+        batY = -20;
+        batZ = 0;
+
+        // Build battery holder outer shape (TableKnocker measurements: 15.0 depth battery)
+        const batW = 23.0;
+        const batDepthVal = 15.0;
+        batL = 76.0;
+        wall = 3.0;
+        outerW = batDepthVal + 2 * wall; // 21.0
+        outerH = batW + 2 * wall; // 29.0
+        outerL = batL + 2 * wall; // 82.0
+
+        let outer = makeCSGBox(outerW, outerL, outerH, batX, batY, batZ);
+        let temp = knucklesBody.add(outer);
+        knucklesBody.delete();
+        outer.delete();
+        knucklesBody = temp;
+
+        // If Haptic System is enabled, build ESP32 holder on top of 18650 holder
+        if (params.hapticSystem) {
+            const espX = batX;
+            const espY = batY;
+            const espZ = batZ + outerH / 2 + 1.25; // 2.5/2 = 1.25 is half baseH
+
+            const boardW = 28.5;
+            const boardL = 52.5;
+            const wallH = 7.5;
+            const espWall = 3.0;
+            const baseH = 2.5;
+            const grip = 1.2;
+            const outerW_esp = boardW + 2 * espWall;
+            const outerL_esp = boardL + 2 * espWall;
+
+            let base = makeCSGBox(outerW_esp, outerL_esp, baseH, espX, espY, espZ);
+            let wallLeft = makeCSGBox(espWall, outerL_esp, wallH, espX - (boardW/2 + espWall/2), espY, espZ + wallH/2 - baseH/2);
+            let wallRight = makeCSGBox(espWall, outerL_esp, wallH, espX + (boardW/2 + espWall/2), espY, espZ + wallH/2 - baseH/2);
+            let wallBack = makeCSGBox(outerW_esp, espWall, wallH, espX, espY - (boardL/2 + espWall/2), espZ + wallH/2 - baseH/2);
+
+            let gripLeft = makeCSGBox(grip, outerL_esp, 1.2, espX - (boardW/2 - grip/2), espY, espZ + wallH - baseH/2 - 0.6);
+            let gripRight = makeCSGBox(grip, outerL_esp, 1.2, espX + (boardW/2 - grip/2), espY, espZ + wallH - baseH/2 - 0.6);
+
+            let espModel = base.add(wallLeft).add(wallRight).add(wallBack).add(gripLeft).add(gripRight);
+
+            let tempH = knucklesBody.add(espModel);
+            knucklesBody.delete();
+            espModel.delete();
+            knucklesBody = tempH;
+
+            [base, wallLeft, wallRight, wallBack, gripLeft, gripRight].forEach(m => {
+                try { m.delete(); } catch(e) {}
+            });
+        }
+    }
+
+    // Calculate haptic positioning offsets early
+    const sideS = params.batterySide === 'left' ? -1 : 1;
+    batX = sideS * (x_coords[3] + r_ring + 14.0 - 2.0);
+    batY = -20;
+    batZ = 0;
+
+    const oppX = -sideS * (x_coords[3] + r_ring + 14.0 - 2.0);
+    const oppY = -20;
+    const oppZ = 0;
+
+    const outerH_m = 20.5;
+    const Z_top = Math.max(h_core, h_guard_face) / 2;
+
+    // A. PERFORM HAPTIC INSERTS AND CHANNEL CUTS FIRST (so they only cut through the knuckles)
+    if (params.hapticSystem) {
+        const y_vib1 = y_coords[1] + r_finger + t_guard / 2;
+        const y_vib2 = y_coords[2] + r_finger + t_guard / 2;
+        
+        const holeH = 50.0;
+        const z_center = Z_top - 4.0 + holeH / 2;
+
+        let vibInsert1 = makeCSGCylinder(5.0, holeH, x_coords[1], y_vib1, z_center);
+        let vibInsert2 = makeCSGCylinder(5.0, holeH, x_coords[2], y_vib2, z_center);
+
+        let tempV1 = knucklesBody.subtract(vibInsert1);
+        knucklesBody.delete();
+        vibInsert1.delete();
+        knucklesBody = tempV1;
+
+        let tempV2 = knucklesBody.subtract(vibInsert2);
+        knucklesBody.delete();
+        vibInsert2.delete();
+        knucklesBody = tempV2;
+
+        // Haptic wire channels: depth and width doubled (5.0mm x 5.0mm)
+        const channelY = (y_vib1 + y_vib2) / 2;
+        const channelZ = h_core / 2 - 5.0 + 30.0; // center of a 60mm tall box starting at knuckle surface - 5.0
+
+        let transChannel = makeCSGBox(Math.abs(batX - oppX) + 4.0, 5.0, 60.0, 0, channelY, channelZ);
+
+        let tempCh1 = knucklesBody.subtract(transChannel);
+        knucklesBody.delete();
+        transChannel.delete();
+        knucklesBody = tempCh1;
+
+        // Sloped haptic side ramps (from back pockets/cradle at Y = -20 to front knuckles haptic groove at Y = 12)
+        const hRampLenL = Math.sqrt(32.0*32.0 + (h_core/2 - (-4.45))*(h_core/2 - (-4.45)));
+        const hRampAngleL = Math.atan2(h_core/2 - (-4.45), 32.0);
+        let leftHapticRamp = makeCSGBox(5.0, hRampLenL, 5.0, oppX, -4.0, (-4.45 + h_core/2)/2, hRampAngleL, 0, 0);
+
+        const hRampLenR = Math.sqrt(32.0*32.0 + (h_core/2 - 0.0)*(h_core/2 - 0.0));
+        const hRampAngleR = Math.atan2(h_core/2 - 0.0, 32.0);
+        let rightHapticRamp = makeCSGBox(5.0, hRampLenR, 5.0, batX, -4.0, (0.0 + h_core/2)/2, hRampAngleR, 0, 0);
+
+        let tempHCh1 = knucklesBody.subtract(leftHapticRamp);
+        knucklesBody.delete();
+        leftHapticRamp.delete();
+        knucklesBody = tempHCh1;
+
+        let tempHCh2 = knucklesBody.subtract(rightHapticRamp);
+        knucklesBody.delete();
+        rightHapticRamp.delete();
+        knucklesBody = tempHCh2;
+    }
+
+    // B. ADD 18650 Battery Holder and ESP32 Cradle outer blocks (reuse variables)
+    if (params.batteryHolder) {
+        // Build battery holder outer shape (TableKnocker measurements: 15.0 depth battery)
+        const batW = 23.0;
+        const batDepthVal = 15.0;
+        batL = 76.0;
+        wall = 3.0;
+        outerW = batDepthVal + 2 * wall; // 21.0
+        outerH = batW + 2 * wall; // 29.0
+        outerL = batL + 2 * wall; // 82.0
+
+        let outer = makeCSGBox(outerW, outerL, outerH, batX, batY, batZ);
+        let temp = knucklesBody.add(outer);
+        knucklesBody.delete();
+        outer.delete();
+        knucklesBody = temp;
+
+        // If Haptic System is enabled, build ESP32 holder on top of 18650 holder
+        if (params.hapticSystem) {
+            const espX = batX;
+            const espY = batY;
+            const espZ = batZ + outerH / 2 + 1.25; // 2.5/2 = 1.25 is half baseH
+
+            const boardW = 28.5;
+            const boardL = 52.5;
+            const wallH = 7.5;
+            const espWall = 3.0;
+            const baseH = 2.5;
+            const grip = 1.2;
+            const outerW_esp = boardW + 2 * espWall;
+            const outerL_esp = boardL + 2 * espWall;
+
+            let base = makeCSGBox(outerW_esp, outerL_esp, baseH, espX, espY, espZ);
+            let wallLeft = makeCSGBox(espWall, outerL_esp, wallH, espX - (boardW/2 + espWall/2), espY, espZ + wallH/2 - baseH/2);
+            let wallRight = makeCSGBox(espWall, outerL_esp, wallH, espX + (boardW/2 + espWall/2), espY, espZ + wallH/2 - baseH/2);
+            let wallBack = makeCSGBox(outerW_esp, espWall, wallH, espX, espY - (boardL/2 + espWall/2), espZ + wallH/2 - baseH/2);
+
+            let gripLeft = makeCSGBox(grip, outerL_esp, 1.2, espX - (boardW/2 - grip/2), espY, espZ + wallH - baseH/2 - 0.6);
+            let gripRight = makeCSGBox(grip, outerL_esp, 1.2, espX + (boardW/2 - grip/2), espY, espZ + wallH - baseH/2 - 0.6);
+
+            let espModel = base.add(wallLeft).add(wallRight).add(wallBack).add(gripLeft).add(gripRight);
+
+            let tempH = knucklesBody.add(espModel);
+            knucklesBody.delete();
+            espModel.delete();
+            knucklesBody = tempH;
+
+            [base, wallLeft, wallRight, wallBack, gripLeft, gripRight].forEach(m => {
+                try { m.delete(); } catch(e) {}
+            });
+        }
+    }
+
+    // C. ADD Motor + Switch housing block on the opposite side
+    if (params.hapticSystem) {
+        const outerW_m = 22.0;
+        const outerL_m = 54.0;
+
+        let block = makeCSGBox(outerW_m, outerL_m, outerH_m, oppX, oppY, oppZ);
+        let tempM = knucklesBody.add(block);
+        knucklesBody.delete();
+        block.delete();
+        knucklesBody = tempM;
+    }
+
+    // D. PERFORM ALL SUBTRACTIONS (CUTS) AT THE END
+    if (params.batteryHolder) {
+        // Battery cuts carved out of the entire merged assembly (ensures open ends and no overlapping solid material)
+        // Using TableKnocker's exact square pocket clearance cuts (+0.6mm)
+        const innerCutW = 15.0 + 0.6; // X
+        const innerCutH = 23.0 + 0.6; // Z
+        const innerCutL = 76.0 + 2.0; // Y (open-ended)
+        
+        let batCut = makeCSGBox(innerCutW, innerCutL, innerCutH, batX, batY, batZ);
+        // Top slot opening cut to make it a snap-in U-groove
+        let topCut = makeCSGBox(innerCutW - 1.0, innerCutL, innerCutH + wall*2 + 2.0, batX, batY, batZ + innerCutH/2 + wall);
+
+        let tempC1 = knucklesBody.subtract(batCut);
+        knucklesBody.delete();
+        batCut.delete();
+        knucklesBody = tempC1;
+
+        let tempC2 = knucklesBody.subtract(topCut);
+        knucklesBody.delete();
+        topCut.delete();
+        knucklesBody = tempC2;
+    }
+
+    if (params.hapticSystem) {
+        // Cut pockets and wiring holes out of opposite side housing
+        const motorPocketY = oppY + 7.75; // Close to haptics (positive Y)
+        const motorPocketZ = oppZ + outerH_m/2 - 14.5/2 + 0.1;
+        let motorPocket = makeCSGBox(17.0, 33.5, 14.7, oppX, motorPocketY, motorPocketZ);
+
+        const switchPocketY = oppY - 18.0; // Near grip (negative Y)
+        const switchPocketZ = oppZ + outerH_m/2 - 14.7/2 + 0.1;
+        // Rotated switch pocket: long side (18.7) along X axis (lengthwise along with knuckles), short side (13.0) along Y axis, depth (14.7) along Z axis to match motor depth
+        let switchPocket = makeCSGBox(18.7, 13.0, 14.7, oppX, switchPocketY, switchPocketZ);
+
+        let tempS1 = knucklesBody.subtract(motorPocket);
+        knucklesBody.delete();
+        motorPocket.delete();
+        knucklesBody = tempS1;
+
+        let tempS2 = knucklesBody.subtract(switchPocket);
+        knucklesBody.delete();
+        switchPocket.delete();
+        knucklesBody = tempS2;
+
+        // E. 4mm Power channels: sloped Y-ramps for optimized 3D printing
+        // 1. Motor pocket to Switch pocket channel (flat/horizontal bottom at Z = -4.45)
+        let motorToSwitch = makeCSGBox(4.0, 25.75, 4.0, oppX, (motorPocketY + switchPocketY)/2, -4.45 + 2.0);
+
+        // 2. Switch pocket to Back grip surface ramp (slopes from -4.45 to h_core/2 = 8.0 along Y)
+        const s2bLen = Math.sqrt(7.0*7.0 + (h_core/2 - (-4.45))*(h_core/2 - (-4.45)));
+        const s2bAngle = Math.atan2(h_core/2 - (-4.45), -7.0);
+        let switchToBack = makeCSGBox(4.0, s2bLen, 4.0, oppX, (-45 + switchPocketY)/2, (-4.45 + h_core/2)/2, s2bAngle, 0, 0);
+
+        // 3. Back Transverse Groove (flat 4mm groove along palm grip surface at Z = h_core/2)
+        const pChannelZ = h_core / 2 - 4.0 + 30.0;
+        let backTrans = makeCSGBox(Math.abs(batX - oppX) + 4.0, 4.0, 60.0, 0, -45, pChannelZ);
+
+        // 4. Battery pocket to Back grip surface ramp (slopes from 0.0 to h_core/2 = 8.0 along Y)
+        const b2bLen = Math.sqrt(25.0*25.0 + (h_core/2)*(h_core/2));
+        const b2bAngleCorrected = Math.atan2(-h_core/2, 25.0);
+        let backToBat = makeCSGBox(4.0, b2bLen, 4.0, batX, (-45 + batY)/2, (0 + h_core/2)/2, b2bAngleCorrected, 0, 0);
+
+        let tempP1 = knucklesBody.subtract(motorToSwitch);
+        knucklesBody.delete();
+        motorToSwitch.delete();
+        knucklesBody = tempP1;
+
+        let tempP2 = knucklesBody.subtract(switchToBack);
+        knucklesBody.delete();
+        switchToBack.delete();
+        knucklesBody = tempP2;
+
+        let tempP3 = knucklesBody.subtract(backTrans);
+        knucklesBody.delete();
+        backTrans.delete();
+        knucklesBody = tempP3;
+
+        let tempP4 = knucklesBody.subtract(backToBat);
+        knucklesBody.delete();
+        backToBat.delete();
+        knucklesBody = tempP4;
+
+    }
+
     // 10. APPLY Tactical Typography (Engraving or Embossing)
     if (loadedFont && params.engravingText.trim().length > 0) {
         try {
@@ -1145,6 +1445,125 @@ function rebuild() {
             sdSlotMesh.position.set(x_coords[0], -33.0, 0);
             cutoutsGroup.add(sdSlotMesh);
         }
+
+        // Amber cutout volume visualization for haptic battery slot, motor/switch pockets, inserts, and wire channels
+        if (params.batteryHolder) {
+            const sideS = params.batterySide === 'left' ? -1 : 1;
+            const batX = sideS * (spacing * 1.5 + r_ring + 14.0 - 2.0);
+            const batY = -20;
+            const batZ = 0;
+            const innerCutW = 15.0 + 0.6;
+            const innerCutH = 23.0 + 0.6;
+            const innerCutL = 76.0 + 2.0;
+
+            const batCutGeom = new THREE.BoxGeometry(innerCutW, innerCutL, innerCutH);
+            const batCutMesh = new THREE.Mesh(batCutGeom, cutoutMat);
+            batCutMesh.position.set(batX, batY, batZ);
+            cutoutsGroup.add(batCutMesh);
+
+            const topCutGeom = new THREE.BoxGeometry(innerCutW - 1.0, innerCutL, innerCutH + 6.0);
+            const topCutMesh = new THREE.Mesh(topCutGeom, cutoutMat);
+            topCutMesh.position.set(batX, batY, batZ + innerCutH/2 + 3.0);
+            cutoutsGroup.add(topCutMesh);
+        }
+
+        if (params.hapticSystem) {
+            const sideS = params.batterySide === 'left' ? -1 : 1;
+            const oppX = -sideS * (spacing * 1.5 + r_ring + 14.0 - 2.0);
+            const oppY = -20;
+            const oppZ = 0;
+            const outerH_m = 20.5;
+
+            // Motor pocket closest to haptics (Y lengthwise)
+            const motorPocketY = oppY + 7.75;
+            const motorPocketZ = oppZ + outerH_m/2 - 14.5/2 + 0.1;
+            const motorGeom = new THREE.BoxGeometry(17.0, 33.5, 14.7);
+            const motorMesh = new THREE.Mesh(motorGeom, cutoutMat);
+            motorMesh.position.set(oppX, motorPocketY, motorPocketZ);
+            cutoutsGroup.add(motorMesh);
+
+            // Switch pocket (vertical bezel top surface)
+            const switchPocketY = oppY - 18.0;
+            const switchPocketZ = oppZ + outerH_m/2 - 14.7/2 + 0.1;
+            const switchGeom = new THREE.BoxGeometry(18.7, 13.0, 14.7);
+            const switchMesh = new THREE.Mesh(switchGeom, cutoutMat);
+            switchMesh.position.set(oppX, switchPocketY, switchPocketZ);
+            cutoutsGroup.add(switchMesh);
+
+            // Haptic cylinder inserts
+            const t_guard = params.guardThick;
+            const y_vib1 = y_coords[1] + r_finger + t_guard / 2;
+            const y_vib2 = y_coords[2] + r_finger + t_guard / 2;
+            const Z_top = params.dusterHeight / 2;
+            const z_center = Z_top - 4.0 + 25.0; // center of a 50mm tall cylinder starting at Z_top - 4.0
+            
+            const insertGeom = new THREE.CylinderGeometry(5.0, 5.0, 50.0, 16);
+            insertGeom.rotateX(Math.PI/2);
+            
+            const ins1Mesh = new THREE.Mesh(insertGeom, cutoutMat);
+            ins1Mesh.position.set(x_coords[1], y_vib1, z_center);
+            cutoutsGroup.add(ins1Mesh);
+
+            const ins2Mesh = new THREE.Mesh(insertGeom, cutoutMat);
+            ins2Mesh.position.set(x_coords[2], y_vib2, z_center);
+            cutoutsGroup.add(ins2Mesh);
+
+            // Wire channels (depth 5.0mm, width 5.0mm)
+            const channelY = (y_vib1 + y_vib2) / 2;
+            const channelZ = Z_top - 5.0 + 15.0;
+            const batX = sideS * (spacing * 1.5 + r_ring + 14.0 - 2.0);
+
+            const transGeom = new THREE.BoxGeometry(Math.abs(batX - oppX) + 4.0, 5.0, 30.0);
+            const transMesh = new THREE.Mesh(transGeom, cutoutMat);
+            transMesh.position.set(0, channelY, channelZ);
+            cutoutsGroup.add(transMesh);
+
+            // Left and Right Haptic Side Ramps
+            const hRampLenL = Math.sqrt(32.0*32.0 + (Z_top - (-4.45))*(Z_top - (-4.45)));
+            const hRampAngleL = Math.atan2(Z_top - (-4.45), 32.0);
+            const lHapticGeom = new THREE.BoxGeometry(5.0, hRampLenL, 5.0);
+            lHapticGeom.rotateX(hRampAngleL);
+            const lHapticMesh = new THREE.Mesh(lHapticGeom, cutoutMat);
+            lHapticMesh.position.set(oppX, -4.0, (-4.45 + Z_top)/2);
+            cutoutsGroup.add(lHapticMesh);
+
+            const hRampLenR = Math.sqrt(32.0*32.0 + Z_top*Z_top);
+            const hRampAngleR = Math.atan2(Z_top, 32.0);
+            const rHapticGeom = new THREE.BoxGeometry(5.0, hRampLenR, 5.0);
+            rHapticGeom.rotateX(hRampAngleR);
+            const rHapticMesh = new THREE.Mesh(rHapticGeom, cutoutMat);
+            rHapticMesh.position.set(batX, -4.0, Z_top/2);
+            cutoutsGroup.add(rHapticMesh);
+
+            // 4mm Power wire grooves (cutouts) Y-ramps
+            const pChannelZ = Z_top - 4.0 + 15.0;
+            
+            const m2sGeom = new THREE.BoxGeometry(4.0, 25.75, 4.0);
+            const m2sMesh = new THREE.Mesh(m2sGeom, cutoutMat);
+            m2sMesh.position.set(oppX, (motorPocketY + switchPocketY)/2, -4.45 + 2.0);
+            cutoutsGroup.add(m2sMesh);
+
+            const s2bLen = Math.sqrt(7.0*7.0 + (Z_top - (-4.45))*(Z_top - (-4.45)));
+            const s2bAngle = Math.atan2(Z_top - (-4.45), -7.0);
+            const s2bGeom = new THREE.BoxGeometry(4.0, s2bLen, 4.0);
+            s2bGeom.rotateX(s2bAngle);
+            const s2bMesh = new THREE.Mesh(s2bGeom, cutoutMat);
+            s2bMesh.position.set(oppX, (-45 + switchPocketY)/2, (-4.45 + Z_top)/2);
+            cutoutsGroup.add(s2bMesh);
+
+            const backTransGeom = new THREE.BoxGeometry(Math.abs(batX - oppX) + 4.0, 4.0, 30.0);
+            const btMesh = new THREE.Mesh(backTransGeom, cutoutMat);
+            btMesh.position.set(0, -45, pChannelZ);
+            cutoutsGroup.add(btMesh);
+
+            const b2bLen = Math.sqrt(25.0*25.0 + Z_top*Z_top);
+            const b2bAngleCorrected = Math.atan2(-Z_top, 25.0);
+            const b2bGeom = new THREE.BoxGeometry(4.0, b2bLen, 4.0);
+            b2bGeom.rotateX(b2bAngleCorrected);
+            const b2bMesh = new THREE.Mesh(b2bGeom, cutoutMat);
+            b2bMesh.position.set(batX, (-45 + batY)/2, Z_top/2);
+            cutoutsGroup.add(b2bMesh);
+        }
     }
 
     // 7. Update Spec Sheet Statistics
@@ -1179,15 +1598,60 @@ function rebuild() {
     }
     const W_front_bounds = Math.max(width_base, maxLineWidth_bounds + params.textSize + 12.0);
     const W_back_bounds = width_base + r_ring_bounds * 2;
-    const boundsWidth = Math.max(W_back_bounds, W_front_bounds).toFixed(0);
+    
+    let maxX = W_back_bounds / 2;
+    let minX = -W_back_bounds / 2;
+    if (params.batteryHolder) {
+        const sideS = params.batterySide === 'left' ? -1 : 1;
+        const batX = sideS * (spacing_bounds * 1.5 + r_ring_bounds + 14.0 - 2.0);
+        const w_bat = 28.0;
+        if (sideS > 0) maxX = Math.max(maxX, batX + w_bat/2);
+        else minX = Math.min(minX, batX - w_bat/2);
+        
+        if (params.hapticSystem) {
+            const espW = 34.5;
+            if (sideS > 0) maxX = Math.max(maxX, batX + espW/2);
+            else minX = Math.min(minX, batX - espW/2);
+        }
+    }
+    if (params.hapticSystem) {
+        const sideS = params.batterySide === 'left' ? -1 : 1;
+        const oppX = -sideS * (spacing_bounds * 1.5 + r_ring_bounds + 14.0 - 2.0);
+        const w_mot = 22.0;
+        if (-sideS > 0) maxX = Math.max(maxX, oppX + w_mot/2);
+        else minX = Math.min(minX, oppX - w_mot/2);
+    }
+    const boundsWidth = (maxX - minX).toFixed(0);
     
     const lineSpacing_bounds = params.textSize * 0.4;
     const totalTextHeight_bounds = M_bounds * params.textSize + (M_bounds - 1) * lineSpacing_bounds;
     const h_guard_face_bounds = Math.max(params.dusterHeight, totalTextHeight_bounds + 10.0);
-    const boundsHeight = Math.max(params.dusterHeight, h_guard_face_bounds).toFixed(0);
+    const baseBoundsHeight = Math.max(params.dusterHeight, h_guard_face_bounds);
+ 
+    let maxZ = baseBoundsHeight / 2;
+    let minZ = -baseBoundsHeight / 2;
+    if (params.batteryHolder) {
+        maxZ = Math.max(maxZ, 14.5);
+        minZ = Math.min(minZ, -14.5);
+        if (params.hapticSystem) {
+            maxZ = Math.max(maxZ, 14.5 + 2.5/2 + 7.5);
+        }
+    }
+    if (params.hapticSystem) {
+        maxZ = Math.max(maxZ, 20.5/2);
+        minZ = Math.min(minZ, -20.5/2);
+    }
+    const finalBoundsHeight = (maxZ - minZ).toFixed(0);
     
-    const boundsLength = (60 + params.spikeHeight).toFixed(0); // Knuckles depth + spikes
-    document.getElementById('spec-bounds').innerText = `${boundsWidth} x ${boundsLength} x ${boundsHeight} mm`;
+    let maxY = 15;
+    let minY = -52.5;
+    if (params.batteryHolder) {
+        minY = Math.min(minY, -20 - 82.0/2);
+        maxY = Math.max(maxY, -20 + 72.0/2);
+    }
+    const finalBoundsLength = (maxY - minY + params.spikeHeight).toFixed(0);
+    
+    document.getElementById('spec-bounds').innerText = `${boundsWidth} x ${finalBoundsLength} x ${finalBoundsHeight} mm`;
 
     updateLeaderLines();
 }
@@ -1389,6 +1853,46 @@ function updateLeaderLines() {
                 new THREE.Vector3(-1.5 * spacing, -33.0, 0),
                 `SD Slot: 25x3mm`,
                 -1, 1, '#ffaa00'
+            );
+        }
+
+        // 18650 Battery Holder leader line
+        if (params.batteryHolder) {
+            const sideS = params.batterySide === 'left' ? -1 : 1;
+            const batX = sideS * (1.5 * spacing + r_finger + 4 + 14.0 - 2.0);
+            drawDimension(
+                new THREE.Vector3(batX, -20, 0),
+                `18650 Cell Slot`,
+                sideS, -1, '#00ffaa'
+            );
+        }
+
+        // ESP32 cradle leader line
+        if (params.batteryHolder && params.hapticSystem) {
+            const sideS = params.batterySide === 'left' ? -1 : 1;
+            const batX = sideS * (1.5 * spacing + r_finger + 4 + 14.0 - 2.0);
+            drawDimension(
+                new THREE.Vector3(batX, -20, 16.5),
+                `ESP32 Cradle`,
+                sideS, 1, '#00f3ff'
+            );
+        }
+
+        // Haptic system opposite components (Motor & Switch)
+        if (params.hapticSystem) {
+            const sideS = params.batterySide === 'left' ? -1 : 1;
+            const oppX = -sideS * (1.5 * spacing + r_finger + 4 + 14.0 - 2.0);
+            drawDimension(
+                new THREE.Vector3(oppX, -20, 0),
+                `Motor & Switch`,
+                -sideS, -1, '#f97316'
+            );
+            
+            // Vibrators inserts
+            drawDimension(
+                new THREE.Vector3(spacing * 0.5, 20.5, params.dusterHeight/2),
+                `Haptic Insert: Ø10x4mm`,
+                1, -1, '#ff00b3'
             );
         }
     }
