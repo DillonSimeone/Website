@@ -451,3 +451,31 @@ footer {
     display: block;
 }
 
+/* Numeric Input styling */
+.param-num-input {
+    background: transparent;
+    border: 1px dashed rgba(0, 242, 255, 0.3);
+    color: var(--bp-line);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: bold;
+    width: 55px;
+    text-align: right;
+    padding: 1px 4px;
+    outline: none;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+.param-num-input:focus {
+    border: 1px solid var(--bp-line);
+    background: rgba(0, 242, 255, 0.05);
+}
+.param-num-input::-webkit-outer-spin-button,
+.param-num-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.param-num-input[type=number] {
+    -moz-appearance: textfield;
+}
+

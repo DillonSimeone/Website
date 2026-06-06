@@ -18,10 +18,18 @@ const STACK_H = 33;
 
 // Current parameters state (includes coordinates, sizes, shell options, visual settings)
 const params = {
-    wallThick: 1.5,
+    wallThick: 2.0,
     batteryHeight: 0.0,
     cornerRad: 3.0,
     
+    // SD Cutout
+    sdX: 0.0,
+    sdY: 0.0,
+    sdZ: 0.0,
+    sdW: 16.0,
+    sdH: 2.0,
+    sdD: 60.0,
+
     // DB9 Cutout
     db9X: 0.0,
     db9Y: 0.0,
@@ -54,6 +62,20 @@ const params = {
     usbH: 3.0,
     usbD: 40.0,
 
+    // Top Frame Config
+    topThick: 3.0,
+    topBezel: 4.0,
+    screwDepth: 18.0,
+    topOuterLipThick: 2.0,
+    topOuterLipHeight: 4.0,
+    topInnerLipThick: 1.5,
+    topInnerLipHeight: 0.0,
+
+    // Bottom Lid Config
+    bottomThick: 1.0,
+    bottomLipHeight: 1.0,
+    stackExtension: 1.0,
+
     explode: 0.0,
     opacity: 80,
     mode: 'rendered' // 'rendered' or 'blueprint'
@@ -61,6 +83,8 @@ const params = {
 
 const visibilities = {
     case: true,
+    top: true,
+    bottom: true,
     screen: true,
     stack: true,
     cutouts: false
@@ -68,6 +92,8 @@ const visibilities = {
 
 // Meshes references
 let caseMesh = null;
+let topMesh = null;
+let bottomMesh = null;
 let designGroup = new THREE.Group(); // Holds screen, stack, cutouts for visuals
 
 // Colors (Neon Blueprint Style)
@@ -93,8 +119,7 @@ function init() {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.enabled = false;
     container.appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
@@ -115,9 +140,6 @@ function init() {
 
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
     keyLight.position.set(100, 150, 200);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 1024;
-    keyLight.shadow.mapSize.height = 1024;
     scene.add(keyLight);
 
     const fillLight = new THREE.PointLight(0x00f2ff, 1.0, 300);
@@ -145,21 +167,55 @@ function onWindowResize() {
 // Setup sliders and toggle behaviors
 function setupUIListeners() {
     const bindSlider = (id, paramKey, isFloat = true) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener('input', (e) => {
+        const slider = document.getElementById(id);
+        const numInput = document.getElementById('val-' + paramKey);
+        if (!slider) return;
+
+        // When slider moves, update param value and text input value
+        slider.addEventListener('input', (e) => {
             const val = isFloat ? parseFloat(e.target.value) : parseInt(e.target.value);
             params[paramKey] = val;
-            const displayVal = document.getElementById('val-' + paramKey);
-            if (displayVal) displayVal.innerText = isFloat ? val.toFixed(1) : val;
+            if (numInput) numInput.value = isFloat ? val.toFixed(1) : val;
             rebuild();
         });
+
+        // When text input value changes, update param and slider position
+        if (numInput) {
+            numInput.addEventListener('input', (e) => {
+                let val = isFloat ? parseFloat(e.target.value) : parseInt(e.target.value);
+                if (isNaN(val)) return;
+
+                // Clamp value to the slider's min/max bounds
+                const minVal = parseFloat(slider.min) || 0;
+                const maxVal = parseFloat(slider.max) || 1000;
+                if (val < minVal) val = minVal;
+                if (val > maxVal) val = maxVal;
+
+                params[paramKey] = val;
+                slider.value = val;
+                rebuild();
+            });
+
+            // Smooth format output on input focus lost (blur)
+            numInput.addEventListener('blur', () => {
+                const val = params[paramKey];
+                numInput.value = isFloat ? val.toFixed(1) : val;
+            });
+        }
     };
 
     // Shell
     bindSlider('input-wallThick', 'wallThick');
     bindSlider('input-batteryHeight', 'batteryHeight');
     bindSlider('input-cornerRad', 'cornerRad');
+
+    // SD
+    bindSlider('input-sdX', 'sdX');
+    bindSlider('input-sdY', 'sdY');
+    bindSlider('input-sdZ', 'sdZ');
+    bindSlider('input-sdW', 'sdW');
+    bindSlider('input-sdH', 'sdH');
+    bindSlider('input-sdD', 'sdD');
 
     // DB9
     bindSlider('input-db9X', 'db9X');
@@ -193,6 +249,20 @@ function setupUIListeners() {
     bindSlider('input-usbH', 'usbH');
     bindSlider('input-usbD', 'usbD');
 
+    // Top Frame
+    bindSlider('input-topThick', 'topThick');
+    bindSlider('input-topBezel', 'topBezel');
+    bindSlider('input-screwDepth', 'screwDepth');
+    bindSlider('input-topOuterLipThick', 'topOuterLipThick');
+    bindSlider('input-topOuterLipHeight', 'topOuterLipHeight');
+    bindSlider('input-topInnerLipThick', 'topInnerLipThick');
+    bindSlider('input-topInnerLipHeight', 'topInnerLipHeight');
+
+    // Bottom Lid
+    bindSlider('input-bottomThick', 'bottomThick');
+    bindSlider('input-bottomLipHeight', 'bottomLipHeight');
+    bindSlider('input-stackExtension', 'stackExtension');
+
     // Display
     bindSlider('input-explode', 'explode');
     bindSlider('input-opacity', 'opacity', false);
@@ -220,12 +290,16 @@ function setupUIListeners() {
         });
     };
     bindVisibility('show-case', 'case');
+    bindVisibility('show-top', 'top');
+    bindVisibility('show-bottom', 'bottom');
     bindVisibility('show-screen', 'screen');
     bindVisibility('show-stack', 'stack');
     bindVisibility('show-cutouts', 'cutouts');
 
     // Export STL
     document.getElementById('btn-export-stl').addEventListener('click', exportSTL);
+    document.getElementById('btn-export-top-stl').addEventListener('click', exportTopSTL);
+    document.getElementById('btn-export-bottom-stl').addEventListener('click', exportBottomSTL);
 }
 
 // Initialize Manifold WASM
@@ -244,60 +318,278 @@ async function initManifold() {
 }
 
 // --- Core Geometric Modeling Logic ---
+
+// Helper for rounded box (made global so both shell and top frame can use it):
+const makeRoundedBox = (dx, dy, dz, r) => {
+    if (!Manifold) return null;
+    r = Math.min(r, dx/2 - 1, dy/2 - 1);
+    if (r < 0.1) return Manifold.cube([dx, dy, dz], true);
+    
+    const c = Manifold.cylinder(dz, r, r, 32, true);
+    const xOff = dx/2 - r;
+    const yOff = dy/2 - r;
+
+    const c1 = c.translate([xOff, yOff, 0]);
+    const c2 = c.translate([-xOff, yOff, 0]);
+    const c3 = c.translate([-xOff, -yOff, 0]);
+    const c4 = c.translate([xOff, -yOff, 0]);
+
+    const hull2d = Manifold.union([c1, c2]).add(c3).add(c4);
+    const b1 = Manifold.cube([dx, dy - 2*r, dz], true);
+    const b2 = Manifold.cube([dx - 2*r, dy, dz], true);
+    
+    return hull2d.add(b1).add(b2);
+};
+
+// Helper for transition frustum (made global):
+const makeFrustum = (w1, l1, w2, l2, h) => {
+    if (!Manifold) return null;
+    const pts = new Float32Array([
+        -w2/2, -l2/2, 0,
+         w2/2, -l2/2, 0,
+         w2/2,  l2/2, 0,
+        -w2/2,  l2/2, 0,
+        -w1/2, -l1/2, h,
+         w1/2, -l1/2, h,
+         w1/2,  l1/2, h,
+        -w1/2,  l1/2, h
+    ]);
+    const tris = new Uint32Array([
+        0, 2, 1,  0, 3, 2,
+        4, 5, 6,  4, 6, 7,
+        0, 1, 5,  0, 5, 4,
+        1, 2, 6,  1, 6, 5,
+        2, 3, 7,  2, 7, 6,
+        3, 0, 4,  3, 4, 7
+    ]);
+    return Manifold.ofMesh({
+        numProp: 3,
+        triVerts: tris,
+        vertProperties: pts
+    });
+};
+
+function generateTopFrame() {
+    if (!Manifold) return null;
+
+    const clearance = 0.4;
+    const w = params.wallThick;
+    const r_out = params.cornerRad;
+
+    // Outer boundary of the top frame matches the outer shell wall
+    const outerW = SCREEN_W + 2*clearance + 2*w;
+    const outerL = SCREEN_L + 2*clearance + 2*w;
+    const outerH = params.topThick;
+
+    // Lip (skirt) parameters wrapping around the top edges of the shell
+    const lipThick = params.topOuterLipThick;
+    const lipHeight = params.topOuterLipHeight;
+
+    // Base frame structure (outer rounded box expanded to cover the lip width)
+    let frame = makeRoundedBox(outerW + 2*lipThick, outerL + 2*lipThick, outerH, r_out + lipThick);
+
+    // Inner window cavity (opening for the screen)
+    const innerW = SCREEN_W - 2*params.topBezel;
+    const innerL = SCREEN_L - 2*params.topBezel;
+    const opening = makeRoundedBox(innerW, innerL, outerH + 2, Math.max(1.0, r_out - params.topBezel));
+
+    frame = frame.subtract(opening);
+
+    // Position of the frame: Z starts at the top of the case shell (SCREEN_H + clearance + w)
+    const baseZ = SCREEN_H + clearance + w;
+    frame = frame.translate([0, 0, baseZ + outerH/2]);
+
+    // Create the outer lip (skirt) going down around the shell walls
+    if (lipHeight > 0 && lipThick > 0) {
+        const skirtOuter = makeRoundedBox(outerW + 2*lipThick, outerL + 2*lipThick, lipHeight, r_out + lipThick)
+            .translate([0, 0, baseZ - lipHeight/2]);
+        const skirtInner = makeRoundedBox(outerW, outerL, lipHeight + 2, r_out)
+            .translate([0, 0, baseZ - lipHeight/2]);
+        const skirt = skirtOuter.subtract(skirtInner);
+        frame = frame.add(skirt);
+    }
+
+    // Create the inner locating lip/flange sliding inside the screen cavity
+    const innerLipH = params.topInnerLipHeight;
+    const innerLipW = params.topInnerLipThick;
+    if (innerLipH > 0 && innerLipW > 0) {
+        const r_in = Math.max(0.5, r_out - w);
+        const innerLipOuter = makeRoundedBox(SCREEN_W + 2*clearance, SCREEN_L + 2*clearance, innerLipH, r_in)
+            .translate([0, 0, baseZ - innerLipH/2]);
+        const innerLipInner = makeRoundedBox(SCREEN_W + 2*clearance - 2*innerLipW, SCREEN_L + 2*clearance - 2*innerLipW, innerLipH + 2, Math.max(0.2, r_in - innerLipW))
+            .translate([0, 0, baseZ - innerLipH/2]);
+        const innerLip = innerLipOuter.subtract(innerLipInner);
+        frame = frame.add(innerLip);
+    }
+
+    // Leg parameters: positioned along the OUTSIDE of the shell wall (as screw bosses flush with lip)
+    const legWidth = 3.5;
+    const legLength = 12;
+    const legHeight = 22; // extends down 22mm from under the frame
+
+    // Center of leg is offset outwards from the outer shell width
+    const legX = outerW/2 + legWidth/2;
+    const legY = SCREEN_L/2 - 10; // aligned with horizontal screw location (10mm from edge)
+
+    // A single leg block that starts at the top of the frame and goes down 22mm
+    const singleLeg = Manifold.cube([legWidth, legLength, legHeight + outerH], true)
+        .translate([0, 0, baseZ - legHeight/2 + outerH/2]);
+
+    // Apply bottom rounding tool to singleLegPlus (for positive X legs)
+    const R = 8.0; // sweeping corner radius to smoothly match transition ramp
+    let toolPlus = Manifold.cube([R, legLength + 4, R], true).translate([R/2, 0, R/2]);
+    let cylPlus = Manifold.cylinder(legLength + 6, R, R, 16, true).rotate([90, 0, 0]).translate([0, 0, R]);
+    let cutPlus = toolPlus.subtract(cylPlus);
+    let transCutPlus = cutPlus.translate([legWidth/2 - R, 0, baseZ - legHeight]);
+    let singleLegPlus = singleLeg.subtract(transCutPlus);
+
+    // Clean up Plus tools
+    toolPlus.delete();
+    cylPlus.delete();
+    cutPlus.delete();
+    transCutPlus.delete();
+
+    // Apply bottom rounding tool to singleLegMinus (for negative X legs)
+    let toolMinus = Manifold.cube([R, legLength + 4, R], true).translate([R/2, 0, R/2]);
+    let cylMinus = Manifold.cylinder(legLength + 6, R, R, 16, true).rotate([90, 0, 0]).translate([R, 0, R]);
+    let cutMinus = toolMinus.subtract(cylMinus);
+    let transCutMinus = cutMinus.translate([-legWidth/2, 0, baseZ - legHeight]);
+    let singleLegMinus = singleLeg.subtract(transCutMinus);
+
+    // Clean up Minus tools
+    toolMinus.delete();
+    cylMinus.delete();
+    cutMinus.delete();
+    transCutMinus.delete();
+
+    // Translate the rounded legs to their corners
+    const leg1 = singleLegPlus.translate([legX, legY, 0]);
+    const leg2 = singleLegMinus.translate([-legX, legY, 0]);
+    const leg3 = singleLegPlus.translate([legX, -legY, 0]);
+    const leg4 = singleLegMinus.translate([-legX, -legY, 0]);
+
+    frame = frame.add(leg1).add(leg2).add(leg3).add(leg4);
+
+    // Clean up templates
+    singleLeg.delete();
+    singleLegPlus.delete();
+    singleLegMinus.delete();
+    leg1.delete();
+    leg2.delete();
+    leg3.delete();
+    leg4.delete();
+
+    // Subtract screw clearance holes from the legs
+    const screwZ = baseZ - params.screwDepth;
+    const screwY1 = SCREEN_L/2 - 10;
+    const screwY2 = -SCREEN_L/2 + 10;
+    const screwRadius = 1.6; // M3 screw clearance hole radius (3.2mm diameter)
+
+    const sh1 = Manifold.cylinder(40, screwRadius, screwRadius, 16, true).rotate([0, 90, 0]).translate([legX, screwY1, screwZ]);
+    const sh2 = Manifold.cylinder(40, screwRadius, screwRadius, 16, true).rotate([0, 90, 0]).translate([-legX, screwY1, screwZ]);
+    const sh3 = Manifold.cylinder(40, screwRadius, screwRadius, 16, true).rotate([0, 90, 0]).translate([legX, screwY2, screwZ]);
+    const sh4 = Manifold.cylinder(40, screwRadius, screwRadius, 16, true).rotate([0, 90, 0]).translate([-legX, screwY2, screwZ]);
+
+    const finalFrame = frame.subtract(sh1).subtract(sh2).subtract(sh3).subtract(sh4);
+
+    // WASM memory clean up
+    sh1.delete();
+    sh2.delete();
+    sh3.delete();
+    sh4.delete();
+    frame.delete();
+
+    return finalFrame;
+}
+
+function generateBottomLid() {
+    if (!Manifold) return null;
+
+    const clearance = 0.4;
+    const w = params.wallThick;
+    const r_out = params.cornerRad;
+
+    // Stack bottom coordinates
+    const bottomZ = -(STACK_H + params.batteryHeight + w + params.stackExtension);
+    const stackOuterL = STACK_L + 2*clearance + 2*w;
+    const stackOuterW = STACK_W + 2*clearance + 2*w;
+
+    const lipThick = 2.0; // matching top outer lip thick
+    const lipHeight = params.bottomLipHeight;
+    const baseThick = params.bottomThick;
+
+    // 1. Base plate of the bottom lid
+    let lid = makeRoundedBox(stackOuterW + 2*lipThick, stackOuterL + 2*lipThick, baseThick, r_out + lipThick)
+        .translate([0, 0, bottomZ - baseThick/2]);
+
+    // 2. Add the outer lip wrapping upwards around the outside of the shell bottom edge
+    if (lipHeight > 0 && lipThick > 0) {
+        const skirtOuter = makeRoundedBox(stackOuterW + 2*lipThick, stackOuterL + 2*lipThick, lipHeight, r_out + lipThick)
+            .translate([0, 0, bottomZ + lipHeight/2]);
+        const skirtInner = makeRoundedBox(stackOuterW, stackOuterL, lipHeight + 2, r_out)
+            .translate([0, 0, bottomZ + lipHeight/2]);
+        const skirt = skirtOuter.subtract(skirtInner);
+        
+        lid = lid.add(skirt);
+        
+        skirtOuter.delete();
+        skirtInner.delete();
+        skirt.delete();
+    }
+
+    // 3. Subtract vertical screw clearance holes (3.2mm diameter / 1.6mm radius)
+    const bossY = STACK_L/2 + clearance - 3.5;
+    const holeRadius = 1.6;
+    const holeHeight = baseThick + 4;
+    const holeZ = bottomZ - baseThick/2;
+
+    const h1 = Manifold.cylinder(holeHeight, holeRadius, holeRadius, 16, true).translate([0, bossY, holeZ]);
+    const h2 = Manifold.cylinder(holeHeight, holeRadius, holeRadius, 16, true).translate([0, -bossY, holeZ]);
+
+    let finalLid = lid.subtract(h1).subtract(h2);
+
+    h1.delete();
+    h2.delete();
+    lid.delete();
+
+    return finalLid;
+}
+
+// Helper for sloped wedge/ramp
+const makeWedge = (w_x, Y_wall, Z_bot, Z_top, d_bot, d_top, isPositiveY) => {
+    if (!Manifold) return null;
+    const sign = isPositiveY ? -1 : 1;
+    const pts = new Float32Array([
+        -w_x/2, Y_wall + sign * d_bot, Z_bot,
+         w_x/2, Y_wall + sign * d_bot, Z_bot,
+         w_x/2, Y_wall, Z_bot,
+        -w_x/2, Y_wall, Z_bot,
+        -w_x/2, Y_wall + sign * d_top, Z_top,
+         w_x/2, Y_wall + sign * d_top, Z_top,
+         w_x/2, Y_wall, Z_top,
+        -w_x/2, Y_wall, Z_top
+    ]);
+    const tris = new Uint32Array([
+        0, 2, 1,  0, 3, 2,
+        4, 5, 6,  4, 6, 7,
+        0, 1, 5,  0, 5, 4,
+        1, 2, 6,  1, 6, 5,
+        2, 3, 7,  2, 7, 6,
+        3, 0, 4,  3, 4, 7
+    ]);
+    return Manifold.ofMesh({
+        numProp: 3,
+        triVerts: tris,
+        vertProperties: pts
+    });
+};
+
 function generateCaseShell() {
     if (!Manifold) return null;
 
     // Clearance gaps
     const clearance = 0.4;
     const w = params.wallThick;
-
-    // Helper for rounded box:
-    const makeRoundedBox = (dx, dy, dz, r) => {
-        r = Math.min(r, dx/2 - 1, dy/2 - 1);
-        if (r < 0.1) return Manifold.cube([dx, dy, dz], true);
-        
-        const c = Manifold.cylinder(dz, r, r, 32, true);
-        const xOff = dx/2 - r;
-        const yOff = dy/2 - r;
-
-        const c1 = c.translate([xOff, yOff, 0]);
-        const c2 = c.translate([-xOff, yOff, 0]);
-        const c3 = c.translate([-xOff, -yOff, 0]);
-        const c4 = c.translate([xOff, -yOff, 0]);
-
-        const hull2d = Manifold.union([c1, c2]).add(c3).add(c4);
-        const b1 = Manifold.cube([dx, dy - 2*r, dz], true);
-        const b2 = Manifold.cube([dx - 2*r, dy, dz], true);
-        
-        return hull2d.add(b1).add(b2);
-    };
-
-    // Helper for transition frustum:
-    const makeFrustum = (w1, l1, w2, l2, h) => {
-        const pts = new Float32Array([
-            -w2/2, -l2/2, 0,
-             w2/2, -l2/2, 0,
-             w2/2,  l2/2, 0,
-            -w2/2,  l2/2, 0,
-            -w1/2, -l1/2, h,
-             w1/2, -l1/2, h,
-             w1/2,  l1/2, h,
-            -w1/2,  l1/2, h
-        ]);
-        const tris = new Uint32Array([
-            0, 2, 1,  0, 3, 2,
-            4, 5, 6,  4, 6, 7,
-            0, 1, 5,  0, 5, 4,
-            1, 2, 6,  1, 6, 5,
-            2, 3, 7,  2, 7, 6,
-            3, 0, 4,  3, 4, 7
-        ]);
-        return Manifold.ofMesh({
-            numProp: 3,
-            triVerts: tris,
-            vertProperties: pts
-        });
-    };
 
     const r_out = params.cornerRad;
 
@@ -311,10 +603,10 @@ function generateCaseShell() {
         r_out
     ).translate([0, 0, (SCREEN_H + clearance + 2*w)/2 - w]);
 
-    // Outer stack body: Z goes from -(STACK_H + batteryHeight + w) to -15
+    // Outer stack body: Z goes from -(STACK_H + batteryHeight + w + stackExtension) to -15
     const stackOuterL = STACK_L + 2*clearance + 2*w;
     const stackOuterW = STACK_W + 2*clearance + 2*w;
-    const stackOuterHeight = STACK_H + params.batteryHeight + w - 15;
+    const stackOuterHeight = STACK_H + params.batteryHeight + w - 15 + params.stackExtension;
     const stackOuter = makeRoundedBox(
         stackOuterW, 
         stackOuterL, 
@@ -340,27 +632,73 @@ function generateCaseShell() {
     let shellSolid = screenOuter.add(transition).add(stackOuter);
 
     // Inside Cavities to carve out
-    const screenInner = Manifold.cube([SCREEN_W + 2*clearance + 0.8, SCREEN_L + 2*clearance + 0.8, SCREEN_H + 10], true)
-        .translate([0, 0, (SCREEN_H + 10)/2]);
+    const screenInner = makeRoundedBox(
+        SCREEN_W + 2*clearance + 0.8, 
+        SCREEN_L + 2*clearance + 0.8, 
+        SCREEN_H + 10, 
+        Math.max(0.5, r_out - w)
+    ).translate([0, 0, (SCREEN_H + 10)/2]);
     
-    // Stack Cavity
+    // Stack Cavity (Open at the bottom by extending it downwards)
+    const stackInnerHeight = STACK_H + params.batteryHeight + params.stackExtension + 20;
     const stackInner = Manifold.cube([
         STACK_W + 2*clearance, 
         STACK_L + 2*clearance, 
-        STACK_H + params.batteryHeight + 2
+        stackInnerHeight
     ], true).translate([
         0, 
         0, 
-        -(STACK_H + params.batteryHeight)/2
+        -15 - stackInnerHeight/2
     ]);
 
-    // Subtract screen and stack cavities
-    shellSolid = shellSolid.subtract(screenInner).subtract(stackInner);
+    // Subtract screen, transition, and stack cavities to keep the enclosure hollow
+    const innerTransition = makeFrustum(
+        SCREEN_W + 2*clearance + 0.8,
+        SCREEN_L + 2*clearance + 0.8,
+        STACK_W + 2*clearance,
+        STACK_L + 2*clearance,
+        15
+    ).translate([0, 0, -15]);
+
+    shellSolid = shellSolid.subtract(screenInner).subtract(stackInner).subtract(innerTransition);
+
+    innerTransition.delete();
+
+    // Add internal vertical screw pillars (bosses) inside the narrow ends for bottom lid screws
+    // They must only go up from the bottom edge to the bottom of the ports (Z = -STACK_H = -33)
+    const bottomZ = -(STACK_H + params.batteryHeight + w + params.stackExtension);
+    const bossHeight = -STACK_H - bottomZ; // distance between bottom edge and bottom of ports
+    const bossY = STACK_L/2 + clearance - 3.5;
+    const boss1 = makeWedge(8.0, STACK_L/2 + clearance, bottomZ, -STACK_H, 8.5, 4.8, true);
+    const boss2 = makeWedge(8.0, -(STACK_L/2 + clearance), bottomZ, -STACK_H, 8.5, 4.8, false);
+    shellSolid = shellSolid.add(boss1).add(boss2);
+
+    boss1.delete();
+    boss2.delete();
+
+    // Subtract vertical screw pilot holes (radius 1.25mm for M3 threads) from the bosses
+    // The holes go completely through the ramps
+    const holeHeight = bossHeight + 10;
+    const holeZ = bottomZ + bossHeight/2;
+    const hole1 = Manifold.cylinder(holeHeight, 1.25, 1.25, 16, true).translate([0, bossY, holeZ]);
+    const hole2 = Manifold.cylinder(holeHeight, 1.25, 1.25, 16, true).translate([0, -bossY, holeZ]);
+    shellSolid = shellSolid.subtract(hole1).subtract(hole2);
+
+    hole1.delete();
+    hole2.delete();
 
     // 1. SD Card Slot (On the 53.5mm side Y = -40, Z = -7)
     // Extend the cutouts all the way through the outer shell and transition ramp down to the top of stack (Z = -15)
-    const sdSlot = Manifold.cube([16, 60, 2], true).translate([0, -60, -7]);
-    const sdChannel = Manifold.cube([20, 60, 9], true).translate([0, -60, -10.5]);
+    const sdSlot = Manifold.cube([params.sdW, params.sdD, params.sdH], true).translate([
+        params.sdX, 
+        -40 - params.sdD/2 + 10 + params.sdY, 
+        -7 + params.sdZ
+    ]);
+    const sdChannel = Manifold.cube([params.sdW + 4, params.sdD, params.sdH + 7], true).translate([
+        params.sdX, 
+        -40 - params.sdD/2 + 10 + params.sdY, 
+        -10.5 + params.sdZ
+    ]);
     shellSolid = shellSolid.subtract(sdSlot).subtract(sdChannel);
 
     // 2. DB9 Port Cutout (On the +X edge, corner Y = -22 baseline)
@@ -396,6 +734,19 @@ function generateCaseShell() {
     ]);
     shellSolid = shellSolid.subtract(usbCutout);
 
+    // 6. Horizontal screw holes for securing the top frame
+    const screwZ = SCREEN_H + clearance + w - params.screwDepth;
+    const screwY1 = SCREEN_L/2 - 10;
+    const screwY2 = -SCREEN_L/2 + 10;
+    const screwRadius = 1.25; // M3 screw pilot hole radius (2.5mm diameter) for threading directly into plastic
+
+    const sh1 = Manifold.cylinder(40, screwRadius, screwRadius, 16, true).rotate([0, 90, 0]).translate([SCREEN_W/2 + clearance, screwY1, screwZ]);
+    const sh2 = Manifold.cylinder(40, screwRadius, screwRadius, 16, true).rotate([0, 90, 0]).translate([-SCREEN_W/2 - clearance, screwY1, screwZ]);
+    const sh3 = Manifold.cylinder(40, screwRadius, screwRadius, 16, true).rotate([0, 90, 0]).translate([SCREEN_W/2 + clearance, screwY2, screwZ]);
+    const sh4 = Manifold.cylinder(40, screwRadius, screwRadius, 16, true).rotate([0, 90, 0]).translate([-SCREEN_W/2 - clearance, screwY2, screwZ]);
+
+    shellSolid = shellSolid.subtract(sh1).subtract(sh2).subtract(sh3).subtract(sh4);
+
     return shellSolid;
 }
 
@@ -415,6 +766,16 @@ function rebuild() {
         mainGroup.remove(caseMesh);
         caseMesh.geometry.dispose();
         caseMesh = null;
+    }
+    if (topMesh) {
+        mainGroup.remove(topMesh);
+        topMesh.geometry.dispose();
+        topMesh = null;
+    }
+    if (bottomMesh) {
+        mainGroup.remove(bottomMesh);
+        bottomMesh.geometry.dispose();
+        bottomMesh = null;
     }
     while(designGroup.children.length > 0) {
         const child = designGroup.children[0];
@@ -493,14 +854,14 @@ function rebuild() {
         designGroup.add(usbMesh);
 
         // SD slot & channel cutouts
-        const sdSlotGeom = new THREE.BoxGeometry(16, 60, 2);
+        const sdSlotGeom = new THREE.BoxGeometry(params.sdW, params.sdD, params.sdH);
         const sdSlotMesh = new THREE.Mesh(sdSlotGeom, materials.cutoutTool);
-        sdSlotMesh.position.set(0, -60, -7);
+        sdSlotMesh.position.set(params.sdX, -40 - params.sdD/2 + 10 + params.sdY, -7 + params.sdZ);
         designGroup.add(sdSlotMesh);
 
-        const sdChannelGeom = new THREE.BoxGeometry(20, 60, 9);
+        const sdChannelGeom = new THREE.BoxGeometry(params.sdW + 4, params.sdD, params.sdH + 7);
         const sdChannelMesh = new THREE.Mesh(sdChannelGeom, materials.cutoutTool);
-        sdChannelMesh.position.set(0, -60, -10.5);
+        sdChannelMesh.position.set(params.sdX, -40 - params.sdD/2 + 10 + params.sdY, -10.5 + params.sdZ);
         designGroup.add(sdChannelMesh);
     }
 
@@ -545,6 +906,94 @@ function rebuild() {
 
             caseMesh.position.z -= params.explode;
             mainGroup.add(caseMesh);
+        }
+    }
+
+    // --- 3. Generate Top Frame ---
+    if (visibilities.top) {
+        const topSolid = generateTopFrame();
+        if (topSolid) {
+            const tMesh = topSolid.getMesh();
+            const topGeom = manifoldToThree(tMesh);
+            topSolid.delete();
+
+            let topMat;
+            if (params.mode === 'rendered') {
+                topMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffaa00, // Amber/Orange contrast frame
+                    roughness: 0.2,
+                    metalness: 0.8,
+                    transmission: 0.1,
+                    transparent: true,
+                    opacity: params.opacity / 100,
+                    side: THREE.DoubleSide
+                });
+            } else {
+                topMat = new THREE.MeshBasicMaterial({
+                    color: 0x4d2e07,
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.DoubleSide
+                });
+            }
+
+            topMesh = new THREE.Mesh(topGeom, topMat);
+            topMesh.castShadow = true;
+            topMesh.receiveShadow = true;
+
+            if (params.mode === 'blueprint') {
+                const edges = new THREE.EdgesGeometry(topGeom);
+                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffaa00, linewidth: 2 }));
+                topMesh.add(line);
+            }
+
+            // Top frame explodes upwards (positive Z)
+            topMesh.position.z += params.explode;
+            mainGroup.add(topMesh);
+        }
+    }
+
+    // --- 4. Generate Bottom Lid ---
+    if (visibilities.bottom) {
+        const bottomSolid = generateBottomLid();
+        if (bottomSolid) {
+            const bMesh = bottomSolid.getMesh();
+            const bottomGeom = manifoldToThree(bMesh);
+            bottomSolid.delete();
+
+            let bottomMat;
+            if (params.mode === 'rendered') {
+                bottomMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffaa00, // Matching the top frame color (Amber/Orange contrast)
+                    roughness: 0.2,
+                    metalness: 0.8,
+                    transmission: 0.1,
+                    transparent: true,
+                    opacity: params.opacity / 100,
+                    side: THREE.DoubleSide
+                });
+            } else {
+                bottomMat = new THREE.MeshBasicMaterial({
+                    color: 0x4d2e07,
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.DoubleSide
+                });
+            }
+
+            bottomMesh = new THREE.Mesh(bottomGeom, bottomMat);
+            bottomMesh.castShadow = true;
+            bottomMesh.receiveShadow = true;
+
+            if (params.mode === 'blueprint') {
+                const edges = new THREE.EdgesGeometry(bottomGeom);
+                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffaa00, linewidth: 2 }));
+                bottomMesh.add(line);
+            }
+
+            // Bottom lid explodes downwards (negative Z, double distance for spacing)
+            bottomMesh.position.z -= params.explode * 1.8;
+            mainGroup.add(bottomMesh);
         }
     }
 
@@ -619,6 +1068,134 @@ function exportSTL() {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `stm32_enclosure_wall_${params.wallThick}mm_batt_${params.batteryHeight}mm.stl`;
+    link.click();
+}
+
+function exportTopSTL() {
+    if (!Manifold) return;
+    const topSolid = generateTopFrame();
+    if (!topSolid) return;
+
+    const mesh = topSolid.getMesh();
+    topSolid.delete();
+
+    const totalTriangles = mesh.triVerts.length / 3;
+    const buffer = new ArrayBuffer(84 + totalTriangles * 50);
+    const view = new DataView(buffer);
+
+    const headerStr = "STM32 Parametric Case Top Frame Export - Generated via Antigravity CAD (2026)";
+    for (let i = 0; i < Math.min(80, headerStr.length); i++) {
+        view.setUint8(i, headerStr.charCodeAt(i));
+    }
+
+    view.setUint32(80, totalTriangles, true);
+
+    let offset = 84;
+    const getVert = (idx) => {
+        return [
+            mesh.vertProperties[idx * 3],
+            mesh.vertProperties[idx * 3 + 1],
+            mesh.vertProperties[idx * 3 + 2]
+        ];
+    };
+
+    for (let i = 0; i < totalTriangles; i++) {
+        const i0 = mesh.triVerts[i * 3];
+        const i1 = mesh.triVerts[i * 3 + 1];
+        const i2 = mesh.triVerts[i * 3 + 2];
+
+        const v0 = getVert(i0);
+        const v1 = getVert(i1);
+        const v2 = getVert(i2);
+
+        view.setFloat32(offset, 0, true);
+        view.setFloat32(offset + 4, 0, true);
+        view.setFloat32(offset + 8, 0, true);
+
+        view.setFloat32(offset + 12, v0[0], true);
+        view.setFloat32(offset + 16, v0[1], true);
+        view.setFloat32(offset + 20, v0[2], true);
+
+        view.setFloat32(offset + 24, v1[0], true);
+        view.setFloat32(offset + 28, v1[1], true);
+        view.setFloat32(offset + 32, v1[2], true);
+
+        view.setFloat32(offset + 36, v2[0], true);
+        view.setFloat32(offset + 40, v2[1], true);
+        view.setFloat32(offset + 44, v2[2], true);
+
+        view.setUint16(offset + 48, 0, true);
+        offset += 50;
+    }
+
+    const blob = new Blob([buffer], { type: 'application/octet-stream' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `stm32_top_frame_thick_${params.topThick}mm_bezel_${params.topBezel}mm.stl`;
+    link.click();
+}
+
+function exportBottomSTL() {
+    if (!Manifold) return;
+    const bottomSolid = generateBottomLid();
+    if (!bottomSolid) return;
+
+    const mesh = bottomSolid.getMesh();
+    bottomSolid.delete();
+
+    const totalTriangles = mesh.triVerts.length / 3;
+    const buffer = new ArrayBuffer(84 + totalTriangles * 50);
+    const view = new DataView(buffer);
+
+    const headerStr = "STM32 Parametric Case Bottom Lid Export - Generated via Antigravity CAD (2026)";
+    for (let i = 0; i < Math.min(80, headerStr.length); i++) {
+        view.setUint8(i, headerStr.charCodeAt(i));
+    }
+
+    view.setUint32(80, totalTriangles, true);
+
+    let offset = 84;
+    const getVert = (idx) => {
+        return [
+            mesh.vertProperties[idx * 3],
+            mesh.vertProperties[idx * 3 + 1],
+            mesh.vertProperties[idx * 3 + 2]
+        ];
+    };
+
+    for (let i = 0; i < totalTriangles; i++) {
+        const i0 = mesh.triVerts[i * 3];
+        const i1 = mesh.triVerts[i * 3 + 1];
+        const i2 = mesh.triVerts[i * 3 + 2];
+
+        const v0 = getVert(i0);
+        const v1 = getVert(i1);
+        const v2 = getVert(i2);
+
+        view.setFloat32(offset, 0, true);
+        view.setFloat32(offset + 4, 0, true);
+        view.setFloat32(offset + 8, 0, true);
+
+        view.setFloat32(offset + 12, v0[0], true);
+        view.setFloat32(offset + 16, v0[1], true);
+        view.setFloat32(offset + 20, v0[2], true);
+
+        view.setFloat32(offset + 24, v1[0], true);
+        view.setFloat32(offset + 28, v1[1], true);
+        view.setFloat32(offset + 32, v1[2], true);
+
+        view.setFloat32(offset + 36, v2[0], true);
+        view.setFloat32(offset + 40, v2[1], true);
+        view.setFloat32(offset + 44, v2[2], true);
+
+        view.setUint16(offset + 48, 0, true);
+        offset += 50;
+    }
+
+    const blob = new Blob([buffer], { type: 'application/octet-stream' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `stm32_bottom_lid_thick_${params.bottomThick}mm_lip_${params.bottomLipHeight}mm.stl`;
     link.click();
 }
 
@@ -708,7 +1285,7 @@ function updateLeaderLines() {
 
         // SD Card Slot Anchor (Bottom narrow Y=-40, Z=-7)
         drawDimension(
-            new THREE.Vector3(0, -40, -7),
+            new THREE.Vector3(params.sdX, -40 + params.sdY, -7 + params.sdZ),
             "SD Card Slot",
             -1, -1
         );

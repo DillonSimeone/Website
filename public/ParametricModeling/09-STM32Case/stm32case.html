@@ -52,6 +52,9 @@
                 <!-- Piece Navigation Tabs -->
                 <div class="tab-container">
                     <button class="tab-btn active" id="tab-btn-shell" onclick="switchPiece('shell')">SHELL</button>
+                    <button class="tab-btn" id="tab-btn-top" onclick="switchPiece('top')">TOP</button>
+                    <button class="tab-btn" id="tab-btn-bottom" onclick="switchPiece('bottom')">BOTTOM</button>
+                    <button class="tab-btn" id="tab-btn-sd" onclick="switchPiece('sd')">SD</button>
                     <button class="tab-btn" id="tab-btn-db9" onclick="switchPiece('db9')">DB9</button>
                     <button class="tab-btn" id="tab-btn-bnc" onclick="switchPiece('bnc')">BNC</button>
                     <button class="tab-btn" id="tab-btn-rj45" onclick="switchPiece('rj45')">RJ45</button>
@@ -61,7 +64,75 @@
                 <!-- SHELL MOVEMENT (notice) -->
                 <div id="content-shell-movement" class="tab-content-panel">
                     <div style="font-size: 0.75rem; color: var(--bp-line-dim); text-align: center; padding: 20px 10px; border: 1px dashed rgba(0, 242, 255, 0.15); line-height: 1.5;">
-                        SHELL POSITION IS THE FIXED ORIGIN ANCHOR.<br><br>SELECT "SIZES / DIMENSIONS" TO CONFIG ENCLOSURE WALLS.
+                         SHELL POSITION IS THE FIXED ORIGIN ANCHOR.<br><br>SELECT "SIZES / DIMENSIONS" TO CONFIG ENCLOSURE WALLS.
+                    </div>
+                </div>
+
+                <!-- TOP MOVEMENT (notice) -->
+                <div id="content-top-movement" class="tab-content-panel">
+                    <div style="font-size: 0.75rem; color: var(--bp-line-dim); text-align: center; padding: 20px 10px; border: 1px dashed rgba(0, 242, 255, 0.15); line-height: 1.5;">
+                         TOP FRAME IS ANCHORED TO THE SHELL RIM.<br><br>Screws are positioned 18mm below the rim.
+                    </div>
+                </div>
+
+                <!-- BOTTOM MOVEMENT (notice) -->
+                <div id="content-bottom-movement" class="tab-content-panel">
+                    <div style="font-size: 0.75rem; color: var(--bp-line-dim); text-align: center; padding: 20px 10px; border: 1px dashed rgba(0, 242, 255, 0.15); line-height: 1.5;">
+                         BOTTOM LID IS ANCHORED TO THE BASE OF THE SHELL.<br><br>Screws enter vertically through the lid narrow ends.
+                    </div>
+                </div>
+
+                <!-- BOTTOM SIZES -->
+                <div id="content-bottom-sizes" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">Bottom Lid Config</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Bottom Thickness</span><span class="param-value"><input type="number" id="val-bottomThick" class="param-num-input" step="any" value="1.0"> mm</span></div>
+                            <input type="range" id="input-bottomThick" min="0.5" max="6.0" step="0.5" value="1.0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Bottom Lip Height</span><span class="param-value"><input type="number" id="val-bottomLipHeight" class="param-num-input" step="any" value="1.0"> mm</span></div>
+                            <input type="range" id="input-bottomLipHeight" min="0.0" max="10.0" step="0.5" value="1.0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Stack Extension</span><span class="param-value"><input type="number" id="val-stackExtension" class="param-num-input" step="any" value="1.0"> mm</span></div>
+                            <input type="range" id="input-stackExtension" min="0.0" max="25.0" step="0.5" value="1.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOP SIZES -->
+                <div id="content-top-sizes" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">Top Frame Config</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Frame Thickness</span><span class="param-value"><input type="number" id="val-topThick" class="param-num-input" step="any" value="3.0"> mm</span></div>
+                            <input type="range" id="input-topThick" min="2.0" max="6" step="0.5" value="3.0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Bezel Width</span><span class="param-value"><input type="number" id="val-topBezel" class="param-num-input" step="any" value="4.0"> mm</span></div>
+                            <input type="range" id="input-topBezel" min="2.0" max="10" step="0.5" value="4.0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Screw Depth (Z)</span><span class="param-value"><input type="number" id="val-screwDepth" class="param-num-input" step="any" value="18.0"> mm</span></div>
+                            <input type="range" id="input-screwDepth" min="10" max="25" step="0.5" value="18.0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Outer Lip Thickness</span><span class="param-value"><input type="number" id="val-topOuterLipThick" class="param-num-input" step="any" value="2.0"> mm</span></div>
+                            <input type="range" id="input-topOuterLipThick" min="0.0" max="5.0" step="0.5" value="2.0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Outer Lip Height</span><span class="param-value"><input type="number" id="val-topOuterLipHeight" class="param-num-input" step="any" value="4.0"> mm</span></div>
+                            <input type="range" id="input-topOuterLipHeight" min="0.0" max="10.0" step="0.5" value="4.0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Inner Lip Thickness</span><span class="param-value"><input type="number" id="val-topInnerLipThick" class="param-num-input" step="any" value="1.5"> mm</span></div>
+                            <input type="range" id="input-topInnerLipThick" min="0.5" max="4.0" step="0.5" value="1.5">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Inner Lip Height</span><span class="param-value"><input type="number" id="val-topInnerLipHeight" class="param-num-input" step="any" value="0.0"> mm</span></div>
+                            <input type="range" id="input-topInnerLipHeight" min="0.0" max="10.0" step="0.5" value="0.0">
+                        </div>
                     </div>
                 </div>
 
@@ -70,16 +141,54 @@
                     <div class="control-group">
                         <div class="control-group-title">Shell Size Config</div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Wall Thickness</span><span class="param-value"><span id="val-wallThick">1.5</span> mm</span></div>
-                            <input type="range" id="input-wallThick" min="1.5" max="8" step="0.5" value="1.5">
+                            <div class="param-info"><span class="param-label">Wall Thickness</span><span class="param-value"><input type="number" id="val-wallThick" class="param-num-input" step="any" value="2.0"> mm</span></div>
+                            <input type="range" id="input-wallThick" min="1.5" max="8" step="0.5" value="2.0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Battery Space Depth</span><span class="param-value"><span id="val-batteryHeight">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Battery Space Depth</span><span class="param-value"><input type="number" id="val-batteryHeight" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-batteryHeight" min="0" max="40" step="1" value="0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Corner Radius</span><span class="param-value"><span id="val-cornerRad">3.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Corner Radius</span><span class="param-value"><input type="number" id="val-cornerRad" class="param-num-input" step="any" value="3.0"> mm</span></div>
                             <input type="range" id="input-cornerRad" min="1" max="15" step="0.5" value="3.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SD MOVEMENT -->
+                <div id="content-sd-movement" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">SD Position Shift</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">X Shift (Along Edge)</span><span class="param-value"><input type="number" id="val-sdX" class="param-num-input" step="any" value="0.0"> mm</span></div>
+                            <input type="range" id="input-sdX" min="-15" max="15" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Y Shift (Offset)</span><span class="param-value"><input type="number" id="val-sdY" class="param-num-input" step="any" value="0.0"> mm</span></div>
+                            <input type="range" id="input-sdY" min="-10" max="10" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><input type="number" id="val-sdZ" class="param-num-input" step="any" value="0.0"> mm</span></div>
+                            <input type="range" id="input-sdZ" min="-10" max="10" step="0.5" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SD SIZES -->
+                <div id="content-sd-sizes" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">SD Dimensions</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Width (X-axis)</span><span class="param-value"><input type="number" id="val-sdW" class="param-num-input" step="any" value="16.0"> mm</span></div>
+                            <input type="range" id="input-sdW" min="10" max="30" step="1" value="16">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><input type="number" id="val-sdH" class="param-num-input" step="any" value="2.0"> mm</span></div>
+                            <input type="range" id="input-sdH" min="1" max="10" step="0.5" value="2.0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Depth (Y-axis)</span><span class="param-value"><input type="number" id="val-sdD" class="param-num-input" step="any" value="60.0"> mm</span></div>
+                            <input type="range" id="input-sdD" min="20" max="80" step="2" value="60">
                         </div>
                     </div>
                 </div>
@@ -89,15 +198,15 @@
                     <div class="control-group">
                         <div class="control-group-title">DB9 Position Shift</div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">X Shift (Offset)</span><span class="param-value"><span id="val-db9X">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">X Shift (Offset)</span><span class="param-value"><input type="number" id="val-db9X" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-db9X" min="-15" max="15" step="0.5" value="0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Y Shift (Along Edge)</span><span class="param-value"><span id="val-db9Y">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Y Shift (Along Edge)</span><span class="param-value"><input type="number" id="val-db9Y" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-db9Y" min="-15" max="15" step="0.5" value="0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><span id="val-db9Z">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><input type="number" id="val-db9Z" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-db9Z" min="-10" max="10" step="0.5" value="0">
                         </div>
                     </div>
@@ -108,15 +217,15 @@
                     <div class="control-group">
                         <div class="control-group-title">DB9 Dimensions</div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Width (Y-axis)</span><span class="param-value"><span id="val-db9W">35.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Width (Y-axis)</span><span class="param-value"><input type="number" id="val-db9W" class="param-num-input" step="any" value="35.0"> mm</span></div>
                             <input type="range" id="input-db9W" min="15" max="50" step="1" value="35">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><span id="val-db9H">15.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><input type="number" id="val-db9H" class="param-num-input" step="any" value="15.0"> mm</span></div>
                             <input type="range" id="input-db9H" min="10" max="25" step="1" value="15">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Depth (X-axis)</span><span class="param-value"><span id="val-db9D">50.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Depth (X-axis)</span><span class="param-value"><input type="number" id="val-db9D" class="param-num-input" step="any" value="50.0"> mm</span></div>
                             <input type="range" id="input-db9D" min="20" max="80" step="2" value="50">
                         </div>
                     </div>
@@ -127,15 +236,15 @@
                     <div class="control-group">
                         <div class="control-group-title">BNC Position Shift</div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">X Shift (Offset)</span><span class="param-value"><span id="val-bncX">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">X Shift (Offset)</span><span class="param-value"><input type="number" id="val-bncX" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-bncX" min="-15" max="15" step="0.5" value="0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Y Shift (Along Edge)</span><span class="param-value"><span id="val-bncY">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Y Shift (Along Edge)</span><span class="param-value"><input type="number" id="val-bncY" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-bncY" min="-15" max="15" step="0.5" value="0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><span id="val-bncZ">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><input type="number" id="val-bncZ" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-bncZ" min="-10" max="10" step="0.5" value="0">
                         </div>
                     </div>
@@ -146,15 +255,15 @@
                     <div class="control-group">
                         <div class="control-group-title">BNC Dimensions</div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Width (Y-axis)</span><span class="param-value"><span id="val-bncW">14.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Width (Y-axis)</span><span class="param-value"><input type="number" id="val-bncW" class="param-num-input" step="any" value="14.0"> mm</span></div>
                             <input type="range" id="input-bncW" min="8" max="25" step="1" value="14">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><span id="val-bncH">14.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><input type="number" id="val-bncH" class="param-num-input" step="any" value="14.0"> mm</span></div>
                             <input type="range" id="input-bncH" min="8" max="25" step="1" value="14">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Depth (X-axis)</span><span class="param-value"><span id="val-bncD">50.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Depth (X-axis)</span><span class="param-value"><input type="number" id="val-bncD" class="param-num-input" step="any" value="50.0"> mm</span></div>
                             <input type="range" id="input-bncD" min="20" max="80" step="2" value="50">
                         </div>
                     </div>
@@ -165,15 +274,15 @@
                     <div class="control-group">
                         <div class="control-group-title">RJ45 Position Shift</div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">X Shift (Along Edge)</span><span class="param-value"><span id="val-rj45X">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">X Shift (Along Edge)</span><span class="param-value"><input type="number" id="val-rj45X" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-rj45X" min="-15" max="15" step="0.5" value="0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Y Shift (Offset)</span><span class="param-value"><span id="val-rj45Y">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Y Shift (Offset)</span><span class="param-value"><input type="number" id="val-rj45Y" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-rj45Y" min="-10" max="10" step="0.5" value="0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><span id="val-rj45Z">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><input type="number" id="val-rj45Z" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-rj45Z" min="-10" max="10" step="0.5" value="0">
                         </div>
                     </div>
@@ -184,15 +293,15 @@
                     <div class="control-group">
                         <div class="control-group-title">RJ45 Dimensions</div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Width (X-axis)</span><span class="param-value"><span id="val-rj45W">16.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Width (X-axis)</span><span class="param-value"><input type="number" id="val-rj45W" class="param-num-input" step="any" value="16.0"> mm</span></div>
                             <input type="range" id="input-rj45W" min="10" max="30" step="1" value="16">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><span id="val-rj45H">17.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><input type="number" id="val-rj45H" class="param-num-input" step="any" value="17.0"> mm</span></div>
                             <input type="range" id="input-rj45H" min="10" max="25" step="1" value="17">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Depth (Y-axis)</span><span class="param-value"><span id="val-rj45D">40.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Depth (Y-axis)</span><span class="param-value"><input type="number" id="val-rj45D" class="param-num-input" step="any" value="40.0"> mm</span></div>
                             <input type="range" id="input-rj45D" min="20" max="80" step="2" value="40">
                         </div>
                     </div>
@@ -203,15 +312,15 @@
                     <div class="control-group">
                         <div class="control-group-title">USB Position Shift</div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">X Shift (Along Edge)</span><span class="param-value"><span id="val-usbX">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">X Shift (Along Edge)</span><span class="param-value"><input type="number" id="val-usbX" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-usbX" min="-15" max="15" step="0.5" value="0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Y Shift (Offset)</span><span class="param-value"><span id="val-usbY">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Y Shift (Offset)</span><span class="param-value"><input type="number" id="val-usbY" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-usbY" min="-10" max="10" step="0.5" value="0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><span id="val-usbZ">0.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><input type="number" id="val-usbZ" class="param-num-input" step="any" value="0.0"> mm</span></div>
                             <input type="range" id="input-usbZ" min="-10" max="10" step="0.5" value="0">
                         </div>
                     </div>
@@ -222,15 +331,15 @@
                     <div class="control-group">
                         <div class="control-group-title">USB Dimensions</div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Width (X-axis)</span><span class="param-value"><span id="val-usbW">15.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Width (X-axis)</span><span class="param-value"><input type="number" id="val-usbW" class="param-num-input" step="any" value="15.0"> mm</span></div>
                             <input type="range" id="input-usbW" min="8" max="25" step="1" value="15">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><span id="val-usbH">3.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><input type="number" id="val-usbH" class="param-num-input" step="any" value="3.0"> mm</span></div>
                             <input type="range" id="input-usbH" min="1.5" max="10" step="0.5" value="3.0">
                         </div>
                         <div class="param-row">
-                            <div class="param-info"><span class="param-label">Depth (Y-axis)</span><span class="param-value"><span id="val-usbD">40.0</span> mm</span></div>
+                            <div class="param-info"><span class="param-label">Depth (Y-axis)</span><span class="param-value"><input type="number" id="val-usbD" class="param-num-input" step="any" value="40.0"> mm</span></div>
                             <input type="range" id="input-usbD" min="20" max="80" step="2" value="40">
                         </div>
                     </div>
@@ -259,6 +368,14 @@
                         <input type="checkbox" id="show-case" checked>
                     </div>
                     <div class="toggle-row">
+                        <span>Case Top Frame</span>
+                        <input type="checkbox" id="show-top" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Case Bottom Lid</span>
+                        <input type="checkbox" id="show-bottom" checked>
+                    </div>
+                    <div class="toggle-row">
                         <span>STM32 Screen Assembly</span>
                         <input type="checkbox" id="show-screen" checked>
                     </div>
@@ -276,11 +393,11 @@
                 <div class="control-group">
                     <div class="control-group-title">Display Settings</div>
                     <div class="param-row">
-                        <div class="param-info"><span class="param-label">Explode Assembly</span><span class="param-value"><span id="val-explode">0.0</span> mm</span></div>
+                        <div class="param-info"><span class="param-label">Explode Assembly</span><span class="param-value"><input type="number" id="val-explode" class="param-num-input" step="any" value="0.0"> mm</span></div>
                         <input type="range" id="input-explode" min="0" max="60" step="1" value="0">
                     </div>
                     <div class="param-row">
-                        <div class="param-info"><span class="param-label">Shell Opacity</span><span class="param-value"><span id="val-opacity">80</span>%</span></div>
+                        <div class="param-info"><span class="param-label">Shell Opacity</span><span class="param-value"><input type="number" id="val-opacity" class="param-num-input" step="any" value="80">%</span></div>
                         <input type="range" id="input-opacity" min="10" max="100" step="5" value="80">
                     </div>
 
@@ -309,7 +426,9 @@
                         <span class="spec-val" id="spec-bounds">82 x 126 x 55 mm</span>
                     </div>
                     
-                    <button class="btn btn-accent" id="btn-export-stl">Export Shell STL</button>
+                    <button class="btn btn-accent" id="btn-export-stl" style="margin-bottom: 8px;">Export Shell STL</button>
+                    <button class="btn btn-accent" id="btn-export-top-stl" style="margin-bottom: 8px; margin-top: 0;">Export Top STL</button>
+                    <button class="btn btn-accent" id="btn-export-bottom-stl" style="margin-top: 0;">Export Bottom STL</button>
                 </div>
             </div>
         </div>

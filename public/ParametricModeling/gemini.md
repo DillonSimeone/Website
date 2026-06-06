@@ -37,15 +37,16 @@ We have implemented three parallel environments, each with a live Three.js viewp
 
 ## 💡 AI-Assisted Modeling Patterns
 For AI agents generating models in this project:
-1.  **Prefer Manifold/ForgeCAD** for complex assemblies where boolean speed is critical.
-2.  **Use JSCAD** for simple, functional parts where purely functional JS logic is required.
-3.  **Aesthetics**: Always use vibrant, neon-themed materials to differentiate parametric segments.
+1.  **Standardize on ForgeCAD**: ForgeCAD is our chosen standard framework for all projects. It wraps the WASM-based Manifold engine for near-instant boolean calculations and provides the `param()` pattern for real-time adjustable sliders.
+2.  **Legacy Engines**: OpenJSCAD and raw Manifold JS are maintained for reference, but new projects and components should be built using the ForgeCAD paradigm.
+3.  **Aesthetics**: Always use vibrant, neon-themed materials (e.g. `MeshPhysicalMaterial` with glowing neon glassmorphic aesthetics) to differentiate parametric segments.
 
 ---
 
 ## 📂 Project Structure
 ```text
 /
+├── 00-CommonParts/      # Reusable parametric components (ForgeCAD)
 ├── 01-ForgeCAD/        # The high-level studio approach
 ├── 02-OpenJSCAD/       # The functional CSG approach
 ├── 03-Manifold/        # The raw WASM-kernel approach

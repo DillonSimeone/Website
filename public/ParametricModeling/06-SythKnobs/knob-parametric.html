@@ -560,6 +560,8 @@
   body.view-mode #pullOutMenuBtn { display: block; }
 
   @media (max-width: 768px) {
+    header .tag { display: none; }
+    header .header-right { display: none; }
     .layout {
       flex-direction: column;
       height: auto;
@@ -1170,9 +1172,9 @@ async function runMutation() {
   openViewer();
 }
 
-function openViewer() {
+function openViewer(selectId) {
   document.body.classList.add('view-mode');
-  if (knobs.length > 0) selectKnob(getSortedKnobs()[0].id);
+  if (knobs.length > 0) selectKnob(selectId || getSortedKnobs()[0].id);
 }
 
 function closeViewer() {
@@ -1196,8 +1198,8 @@ async function addSingle() {
   model.delete();
 
   knobs.push(p);
-  selectedId = p.id;
   renderGrid();
+  openViewer(p.id);
 }
 
 function clearAll() {
@@ -1769,7 +1771,8 @@ function animateThree(time) {
     renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
     renderer.setScissor(clip.left, canvasBottom, clip.width, clip.height);
     
-    const dist = Math.max(40, k.outerD * 2.0);
+    const maxDim = Math.max(k.outerD, k.height);
+    const dist = Math.max(50, maxDim * 2.8);
     camera.position.set(0, dist, dist * 0.8);
     camera.lookAt(0, 0, 0);
     camera.aspect = rect.width / rect.height;
@@ -1794,7 +1797,8 @@ function animateThree(time) {
           renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
           renderer.setScissor(clip.left, canvasBottom, clip.width, clip.height);
           
-          const dist = Math.max(40, k.outerD * 2.0);
+          const maxDim = Math.max(k.outerD, k.height);
+          const dist = Math.max(50, maxDim * 2.2);
           camera.position.set(0, dist, dist * 0.8);
           camera.lookAt(0, 0, 0);
           camera.aspect = rect.width / rect.height;
