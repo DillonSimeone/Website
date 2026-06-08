@@ -12,8 +12,8 @@ const SCREEN_W = 76;
 const SCREEN_L = 120;
 const SCREEN_H = 16;
 
-const STACK_W = 53.5;
-const STACK_L = 80;
+const STACK_W = 55;
+const STACK_L = 75;
 const STACK_H = 33;
 
 // Current parameters state (includes coordinates, sizes, shell options, visual settings)
@@ -687,16 +687,16 @@ function generateCaseShell() {
     hole1.delete();
     hole2.delete();
 
-    // 1. SD Card Slot (On the 53.5mm side Y = -40, Z = -7)
+    // 1. SD Card Slot (On the side Y = -STACK_L/2, Z = -7)
     // Extend the cutouts all the way through the outer shell and transition ramp down to the top of stack (Z = -15)
     const sdSlot = Manifold.cube([params.sdW, params.sdD, params.sdH], true).translate([
         params.sdX, 
-        -40 - params.sdD/2 + 10 + params.sdY, 
+        -STACK_L/2 - params.sdD/2 + 10 + params.sdY, 
         -7 + params.sdZ
     ]);
     const sdChannel = Manifold.cube([params.sdW + 4, params.sdD, params.sdH + 7], true).translate([
         params.sdX, 
-        -40 - params.sdD/2 + 10 + params.sdY, 
+        -STACK_L/2 - params.sdD/2 + 10 + params.sdY, 
         -10.5 + params.sdZ
     ]);
     shellSolid = shellSolid.subtract(sdSlot).subtract(sdChannel);
@@ -704,7 +704,7 @@ function generateCaseShell() {
     // 2. DB9 Port Cutout (On the +X edge, corner Y = -22 baseline)
     // Parametric width, height, depth. Cutout translated outwards to clear the shell wall.
     const db9Cutout = Manifold.cube([params.db9D, params.db9W, params.db9H], true).translate([
-        26.75 + params.db9D/2 - 10 + params.db9X, 
+        STACK_W/2 + params.db9D/2 - 10 + params.db9X, 
         -22 + params.db9Y, 
         -33 + params.db9H/2 + params.db9Z
     ]);
@@ -712,24 +712,24 @@ function generateCaseShell() {
 
     // 3. BNC Port Cutout (On the +X edge, corner Y = 30 baseline)
     const bncCutout = Manifold.cube([params.bncD, params.bncW, params.bncH], true).translate([
-        26.75 + params.bncD/2 - 10 + params.bncX, 
+        STACK_W/2 + params.bncD/2 - 10 + params.bncX, 
         30 + params.bncY, 
         -33 + params.bncH/2 + params.bncZ
     ]);
     shellSolid = shellSolid.subtract(bncCutout);
 
-    // 4. RJ45 Slot (On the -Y narrow side, Y = -40, under the SD slot)
+    // 4. RJ45 Slot (On the -Y narrow side, Y = -STACK_L/2, under the SD slot)
     const rj45Cutout = Manifold.cube([params.rj45W, params.rj45D, params.rj45H], true).translate([
         params.rj45X, 
-        -40 - params.rj45D/2 + 10 + params.rj45Y, 
+        -STACK_L/2 - params.rj45D/2 + 10 + params.rj45Y, 
         -33 + params.rj45H/2 + params.rj45Z
     ]);
     shellSolid = shellSolid.subtract(rj45Cutout);
 
-    // 5. USB Charging Slot (On the +Y narrow side, Y = 40, X = -12)
+    // 5. USB Charging Slot (On the +Y narrow side, Y = STACK_L/2, X = -12)
     const usbCutout = Manifold.cube([params.usbW, params.usbD, params.usbH], true).translate([
         -12 + params.usbX, 
-        40 + params.usbD/2 - 10 + params.usbY, 
+        STACK_L/2 + params.usbD/2 - 10 + params.usbY, 
         -33 + params.usbH/2 + params.usbZ
     ]);
     shellSolid = shellSolid.subtract(usbCutout);
@@ -832,36 +832,37 @@ function rebuild() {
         // DB9
         const db9Geom = new THREE.BoxGeometry(params.db9D, params.db9W, params.db9H);
         const db9Mesh = new THREE.Mesh(db9Geom, materials.cutoutTool);
-        db9Mesh.position.set(26.75 + params.db9D/2 - 10 + params.db9X, -22 + params.db9Y, -33 + params.db9H/2 + params.db9Z);
+        db9Mesh.position.set(STACK_W/2 + params.db9D/2 - 10 + params.db9X, -22 + params.db9Y, -33 + params.db9H/2 + params.db9Z);
         designGroup.add(db9Mesh);
 
         // BNC
         const bncGeom = new THREE.BoxGeometry(params.bncD, params.bncW, params.bncH);
         const bncMesh = new THREE.Mesh(bncGeom, materials.cutoutTool);
-        bncMesh.position.set(26.75 + params.bncD/2 - 10 + params.bncX, 30 + params.bncY, -33 + params.bncH/2 + params.bncZ);
+        bncMesh.position.set(STACK_W/2 + params.bncD/2 - 10 + params.bncX, 30 + params.bncY, -33 + params.bncH/2 + params.bncZ);
         designGroup.add(bncMesh);
 
         // RJ45
         const rj45Geom = new THREE.BoxGeometry(params.rj45W, params.rj45D, params.rj45H);
         const rj45Mesh = new THREE.Mesh(rj45Geom, materials.cutoutTool);
-        rj45Mesh.position.set(params.rj45X, -40 - params.rj45D/2 + 10 + params.rj45Y, -33 + params.rj45H/2 + params.rj45Z);
+        rj45Mesh.position.set(params.rj45X, -STACK_L/2 - params.rj45D/2 + 10 + params.rj45Y, -33 + params.rj45H/2 + params.rj45Z);
         designGroup.add(rj45Mesh);
 
         // USB Charger
         const usbGeom = new THREE.BoxGeometry(params.usbW, params.usbD, params.usbH);
         const usbMesh = new THREE.Mesh(usbGeom, materials.cutoutTool);
-        usbMesh.position.set(-12 + params.usbX, 40 + params.usbD/2 - 10 + params.usbY, -33 + params.usbH/2 + params.usbZ);
+        usbMesh.position.set(-12 + params.usbX, STACK_L/2 + params.usbD/2 - 10 + params.usbY, -33 + params.usbH/2 + params.usbZ);
         designGroup.add(usbMesh);
 
         // SD slot & channel cutouts
         const sdSlotGeom = new THREE.BoxGeometry(params.sdW, params.sdD, params.sdH);
         const sdSlotMesh = new THREE.Mesh(sdSlotGeom, materials.cutoutTool);
-        sdSlotMesh.position.set(params.sdX, -40 - params.sdD/2 + 10 + params.sdY, -7 + params.sdZ);
+        sdSlotMesh.position.set(params.sdX, -STACK_L/2 - params.sdD/2 + 10 + params.sdY, -7 + params.sdZ);
         designGroup.add(sdSlotMesh);
 
+        // sdChannel
         const sdChannelGeom = new THREE.BoxGeometry(params.sdW + 4, params.sdD, params.sdH + 7);
         const sdChannelMesh = new THREE.Mesh(sdChannelGeom, materials.cutoutTool);
-        sdChannelMesh.position.set(params.sdX, -40 - params.sdD/2 + 10 + params.sdY, -10.5 + params.sdZ);
+        sdChannelMesh.position.set(params.sdX, -STACK_L/2 - params.sdD/2 + 10 + params.sdY, -10.5 + params.sdZ);
         designGroup.add(sdChannelMesh);
     }
 
@@ -998,6 +999,19 @@ function rebuild() {
     }
 
     // Update bounds spec sheet
+    const clearanceVal = 0.4;
+    const screenCavityW = (SCREEN_W + 2 * clearanceVal + 0.8).toFixed(1);
+    const screenCavityL = (SCREEN_L + 2 * clearanceVal + 0.8).toFixed(1);
+    const screenCavityH = (SCREEN_H + clearanceVal).toFixed(1);
+    const elScreen = document.getElementById('spec-screen-cavity');
+    if (elScreen) elScreen.innerText = `${screenCavityW} x ${screenCavityL} x ${screenCavityH} mm`;
+
+    const stackCavityW = (STACK_W + 2 * clearanceVal).toFixed(1);
+    const stackCavityL = (STACK_L + 2 * clearanceVal).toFixed(1);
+    const stackCavityH = (STACK_H + params.batteryHeight + params.stackExtension).toFixed(1);
+    const elStack = document.getElementById('spec-stack-cavity');
+    if (elStack) elStack.innerText = `${stackCavityW} x ${stackCavityL} x ${stackCavityH} mm`;
+
     const boundsWidth = (SCREEN_W + 2*params.wallThick).toFixed(0);
     const boundsLength = (SCREEN_L + 2*params.wallThick).toFixed(0);
     const boundsHeight = (SCREEN_H + STACK_H + params.batteryHeight + params.wallThick*2).toFixed(0);
@@ -1257,35 +1271,35 @@ function updateLeaderLines() {
     if (visibilities.cutouts || visibilities.case) {
         // DB9 Anchor (Same side +X, bottom corner)
         drawDimension(
-            new THREE.Vector3(26.75 + params.db9X, -22 + params.db9Y, -33 + params.db9H/2 + params.db9Z),
+            new THREE.Vector3(STACK_W/2 + params.db9X, -22 + params.db9Y, -33 + params.db9H/2 + params.db9Z),
             "DB9 Port",
             1, -1
         );
 
         // BNC Anchor (Same side +X, top corner)
         drawDimension(
-            new THREE.Vector3(26.75 + params.bncX, 30 + params.bncY, -33 + params.bncH/2 + params.bncZ),
+            new THREE.Vector3(STACK_W/2 + params.bncX, 30 + params.bncY, -33 + params.bncH/2 + params.bncZ),
             "BNC Port",
             1, -1
         );
 
-        // RJ45 Anchor (Same side Y=-40, under SD slot)
+        // RJ45 Anchor (Same side Y=-STACK_L/2, under SD slot)
         drawDimension(
-            new THREE.Vector3(params.rj45X, -40 + params.rj45Y, -33 + params.rj45H/2 + params.rj45Z),
+            new THREE.Vector3(params.rj45X, -STACK_L/2 + params.rj45Y, -33 + params.rj45H/2 + params.rj45Z),
             "RJ45 Port",
             1, 1
         );
 
-        // USB Charging Slot (Opposite Y=40, left side X=-12)
+        // USB Charging Slot (Opposite Y=STACK_L/2, left side X=-12)
         drawDimension(
-            new THREE.Vector3(-12 + params.usbX, 40 + params.usbY, -33 + params.usbH/2 + params.usbZ),
+            new THREE.Vector3(-12 + params.usbX, STACK_L/2 + params.usbY, -33 + params.usbH/2 + params.usbZ),
             "USB Port",
             1, -1
         );
 
-        // SD Card Slot Anchor (Bottom narrow Y=-40, Z=-7)
+        // SD Card Slot Anchor (Bottom narrow Y=-STACK_L/2, Z=-7)
         drawDimension(
-            new THREE.Vector3(params.sdX, -40 + params.sdY, -7 + params.sdZ),
+            new THREE.Vector3(params.sdX, -STACK_L/2 + params.sdY, -7 + params.sdZ),
             "SD Card Slot",
             -1, -1
         );
