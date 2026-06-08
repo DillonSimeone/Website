@@ -35,13 +35,15 @@
   function drawHero() {
     ctx.clearRect(0, 0, W, H);
     const midY = H / 2;
+    const scale = W ? (1200 / W) : 1;
 
     waveLayers.forEach(layer => {
       ctx.beginPath();
+      const currentFreq = layer.freq * scale;
       for (let x = 0; x <= W; x += 2) {
         const y = midY
-          + Math.sin(x * layer.freq + t * layer.speed + layer.phaseOff) * layer.amp
-          + Math.cos(x * layer.freq * 0.62 + t * layer.speed * 0.55)   * layer.amp * 0.32;
+          + Math.sin(x * currentFreq + t * layer.speed + layer.phaseOff) * layer.amp
+          + Math.cos(x * currentFreq * 0.62 + t * layer.speed * 0.55)   * layer.amp * 0.32;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       const { r, g, b, a } = layer;
@@ -79,13 +81,11 @@
 
   function draw() {
     const DPR = window.devicePixelRatio || 1;
-    const CSSw = canvas.offsetWidth;
+    const CSSw = canvas.getBoundingClientRect().width || canvas.offsetWidth || 300;
     const CSSh = 140;
 
     canvas.width  = CSSw * DPR;
     canvas.height = CSSh * DPR;
-    canvas.style.width  = CSSw + 'px';
-    canvas.style.height = CSSh + 'px';
 
     const ctx = canvas.getContext('2d');
     ctx.scale(DPR, DPR);
@@ -121,6 +121,7 @@
     });
 
     /* Build waveform points */
+    const scale = W ? (1000 / W) : 1;
     const pts = [];
     for (let x = 0; x <= W; x++) {
       let y;
@@ -128,20 +129,20 @@
         /* Part 1: nearly flat — constrained, suppressed */
         const lp  = x / t1;
         const amp = 3 + lp * 5;
-        y = mid + Math.sin(x * 0.055) * amp * 0.55
-                + Math.sin(x * 0.13)  * amp * 0.25;
+        y = mid + Math.sin(x * 0.055 * scale) * amp * 0.55
+                + Math.sin(x * 0.13 * scale)  * amp * 0.25;
       } else if (x <= t2) {
         /* Part 2: interference, escalating amplitude */
         const lp  = (x - t1) / t1;
         const amp = 10 + lp * 26;
-        y = mid + Math.sin(x * 0.038 + 1.1)  * amp * 0.55
-                + Math.sin(x * 0.085 - 0.6)  * amp * 0.28
-                + Math.sin(x * 0.022 + 2.3)  * amp * 0.38;
+        y = mid + Math.sin(x * 0.038 * scale + 1.1)  * amp * 0.55
+                + Math.sin(x * 0.085 * scale - 0.6)  * amp * 0.28
+                + Math.sin(x * 0.022 * scale + 2.3)  * amp * 0.38;
       } else {
         /* Part 3: single, clean, deep — a wave that knows itself */
         const lp  = (x - t2) / (W - t2);
         const amp = 30 - lp * 6; /* gentle settle */
-        y = mid + Math.sin((x - t2) * 0.023 + 0.5) * amp;
+        y = mid + Math.sin((x - t2) * 0.023 * scale + 0.5) * amp;
       }
       pts.push({ x, y });
     }
@@ -226,14 +227,6 @@
       const h = targetCard.querySelector('.chapter-card__header');
       if (d)  d.hidden = false;
       if (h)  h.setAttribute('aria-expanded', 'true');
-
-      /* Scroll the card into view if it's below the fold */
-      requestAnimationFrame(() => {
-        const rect = targetCard.getBoundingClientRect();
-        if (rect.bottom > window.innerHeight * 0.85) {
-          targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      });
     }
   }
 })();

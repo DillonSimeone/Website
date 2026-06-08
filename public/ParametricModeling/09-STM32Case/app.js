@@ -62,6 +62,14 @@ const params = {
     usbH: 3.0,
     usbD: 40.0,
 
+    // Switch Cutout
+    switchX: 0.0,
+    switchY: 0.0,
+    switchZ: 0.0,
+    switchW: 9.0,
+    switchH: 13.5,
+    switchD: 18.0,
+
     // Top Frame Config
     topThick: 3.0,
     topBezel: 4.0,
@@ -248,6 +256,14 @@ function setupUIListeners() {
     bindSlider('input-usbW', 'usbW');
     bindSlider('input-usbH', 'usbH');
     bindSlider('input-usbD', 'usbD');
+
+    // Switch
+    bindSlider('input-switchX', 'switchX');
+    bindSlider('input-switchY', 'switchY');
+    bindSlider('input-switchZ', 'switchZ');
+    bindSlider('input-switchW', 'switchW');
+    bindSlider('input-switchH', 'switchH');
+    bindSlider('input-switchD', 'switchD');
 
     // Top Frame
     bindSlider('input-topThick', 'topThick');
@@ -734,7 +750,16 @@ function generateCaseShell() {
     ]);
     shellSolid = shellSolid.subtract(usbCutout);
 
-    // 6. Horizontal screw holes for securing the top frame
+    // 6. Switch Cutout (On the side opposite to the ports: -X edge, centered at Y = 0 baseline)
+    const switchCutout = Manifold.cube([params.switchD, params.switchW, params.switchH], true).translate([
+        -STACK_W/2 - params.switchD/2 + 10 + params.switchX,
+        params.switchY,
+        -33 + params.switchH/2 + params.switchZ
+    ]);
+    shellSolid = shellSolid.subtract(switchCutout);
+    switchCutout.delete();
+
+    // 7. Horizontal screw holes for securing the top frame
     const screwZ = SCREEN_H + clearance + w - params.screwDepth;
     const screwY1 = SCREEN_L/2 - 10;
     const screwY2 = -SCREEN_L/2 + 10;
@@ -852,6 +877,12 @@ function rebuild() {
         const usbMesh = new THREE.Mesh(usbGeom, materials.cutoutTool);
         usbMesh.position.set(-12 + params.usbX, STACK_L/2 + params.usbD/2 - 10 + params.usbY, -33 + params.usbH/2 + params.usbZ);
         designGroup.add(usbMesh);
+
+        // Switch
+        const switchGeom = new THREE.BoxGeometry(params.switchD, params.switchW, params.switchH);
+        const switchMesh = new THREE.Mesh(switchGeom, materials.cutoutTool);
+        switchMesh.position.set(-STACK_W/2 - params.switchD/2 + 10 + params.switchX, params.switchY, -33 + params.switchH/2 + params.switchZ);
+        designGroup.add(switchMesh);
 
         // SD slot & channel cutouts
         const sdSlotGeom = new THREE.BoxGeometry(params.sdW, params.sdD, params.sdH);
@@ -1295,6 +1326,13 @@ function updateLeaderLines() {
             new THREE.Vector3(-12 + params.usbX, STACK_L/2 + params.usbY, -33 + params.usbH/2 + params.usbZ),
             "USB Port",
             1, -1
+        );
+
+        // Switch Anchor (Opposite side -X, Y = 0)
+        drawDimension(
+            new THREE.Vector3(-STACK_W/2 + params.switchX, params.switchY, -33 + params.switchH/2 + params.switchZ),
+            "Switch",
+            -1, 1
         );
 
         // SD Card Slot Anchor (Bottom narrow Y=-STACK_L/2, Z=-7)

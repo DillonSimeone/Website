@@ -59,6 +59,7 @@
                     <button class="tab-btn" id="tab-btn-bnc" onclick="switchPiece('bnc')">BNC</button>
                     <button class="tab-btn" id="tab-btn-rj45" onclick="switchPiece('rj45')">RJ45</button>
                     <button class="tab-btn" id="tab-btn-usb" onclick="switchPiece('usb')">USB</button>
+                    <button class="tab-btn" id="tab-btn-switch" onclick="switchPiece('switch')">SWITCH</button>
                 </div>
 
                 <!-- SHELL MOVEMENT (notice) -->
@@ -341,6 +342,44 @@
                         <div class="param-row">
                             <div class="param-info"><span class="param-label">Depth (Y-axis)</span><span class="param-value"><input type="number" id="val-usbD" class="param-num-input" step="any" value="40.0"> mm</span></div>
                             <input type="range" id="input-usbD" min="20" max="80" step="2" value="40">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SWITCH MOVEMENT -->
+                <div id="content-switch-movement" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">Switch Position Shift</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">X Shift (Offset)</span><span class="param-value"><input type="number" id="val-switchX" class="param-num-input" step="any" value="0.0"> mm</span></div>
+                            <input type="range" id="input-switchX" min="-15" max="15" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Y Shift (Along Edge)</span><span class="param-value"><input type="number" id="val-switchY" class="param-num-input" step="any" value="0.0"> mm</span></div>
+                            <input type="range" id="input-switchY" min="-15" max="15" step="0.5" value="0">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Z Shift (Vertical)</span><span class="param-value"><input type="number" id="val-switchZ" class="param-num-input" step="any" value="0.0"> mm</span></div>
+                            <input type="range" id="input-switchZ" min="-10" max="10" step="0.5" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SWITCH SIZES -->
+                <div id="content-switch-sizes" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">Switch Dimensions</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Width (Y-axis)</span><span class="param-value"><input type="number" id="val-switchW" class="param-num-input" step="any" value="9.0"> mm</span></div>
+                            <input type="range" id="input-switchW" min="5" max="25" step="0.5" value="9">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Height (Z-axis)</span><span class="param-value"><input type="number" id="val-switchH" class="param-num-input" step="any" value="13.5"> mm</span></div>
+                            <input type="range" id="input-switchH" min="5" max="25" step="0.5" value="13.5">
+                        </div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Depth (X-axis)</span><span class="param-value"><input type="number" id="val-switchD" class="param-num-input" step="any" value="18.0"> mm</span></div>
+                            <input type="range" id="input-switchD" min="5" max="40" step="0.5" value="18">
                         </div>
                     </div>
                 </div>
