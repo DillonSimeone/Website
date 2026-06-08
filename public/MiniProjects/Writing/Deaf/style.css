@@ -133,7 +133,7 @@ body {
 
 .hero__title {
   font-family: var(--font-display);
-  font-size: clamp(3.5rem, 11vw, 7.5rem);
+  font-size: clamp(2.15rem, 9vw, 7rem);
   font-weight: 700;
   line-height: 1.04;
   letter-spacing: -0.025em;
@@ -726,12 +726,65 @@ body {
 
 @media (max-width: 640px) {
   .container { padding: 0 1.25rem; }
+  
+  /* Sections & Spacing */
+  .themes-section,
+  .characters-section { padding: 3.5rem 0; }
+  .arc-section { padding: 3rem 0; }
+  .part { padding-bottom: 3.5rem; }
+  .part__header { padding: 3rem 0 2rem; margin-bottom: 2rem; }
+  .site-footer { padding: 3rem 0; }
+
+  /* Hero */
+  .hero__title { margin-bottom: 1.25rem; }
+  .hero__tagline { font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem; }
+  .hero__meta { flex-direction: column; gap: 0.9rem; }
   .hero__meta-divider { display: none; }
-  .hero__meta { gap: 1.25rem; }
-  .themes-grid, .characters-grid { grid-template-columns: 1fr; }
-  .chapter-card__header { gap: 1rem; padding: 1.25rem; }
+  .hero__meta-item { gap: 0.15rem; }
+
+  /* Cards Padding */
+  .theme-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.75rem;
+    row-gap: 0.5rem;
+    padding: 1.5rem 1.25rem;
+  }
+  .theme-icon {
+    grid-column: 1;
+    grid-row: 1;
+    margin-bottom: 0;
+    align-self: center;
+    font-size: 1.1rem;
+  }
+  .theme-card h3 {
+    grid-column: 2;
+    grid-row: 1;
+    margin-bottom: 0;
+    align-self: center;
+    font-size: 1.1rem;
+  }
+  .theme-card p {
+    grid-column: 1 / span 2;
+    grid-row: 2;
+  }
+  .character-card__inner { padding: 1.5rem 1.25rem; }
+  .chapter-card__header { gap: 1rem; padding: 1.1rem 1.25rem; }
   .chapter-synopsis,
   .chapter-detail { padding: 1.25rem; }
+
+  /* Chapter Card Header elements */
+  .chapter-number { font-size: 1.35rem; min-width: 2.2rem; }
+  .chapter-title { font-size: 1.05rem; }
+  .chapter-motif { font-size: 0.55rem; letter-spacing: 0.08em; margin-top: 0.2rem; }
+  .chapter-expand { width: 34px; height: 34px; font-size: 1.2rem; }
+
+  /* Read Button Touch Target */
+  .chapter-read-wrapper { margin-top: 1.25rem; }
+  .read-chapter-btn { display: flex; justify-content: center; width: 100%; padding: 0.75rem 1.25rem; font-size: 0.75rem; text-align: center; }
+
+  /* Arc labels */
+  .arc-label { font-size: 0.55rem; letter-spacing: 0.05em; }
   .arc-label--1 { text-align: center; }
   .arc-label--3 { text-align: center; }
 }
