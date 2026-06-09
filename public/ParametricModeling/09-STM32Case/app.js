@@ -12,15 +12,17 @@ const SCREEN_W = 76;
 const SCREEN_L = 120;
 const SCREEN_H = 16;
 
-const STACK_W = 55;
-const STACK_L = 75;
-const STACK_H = 33;
+let STACK_W = 55;
+let STACK_L = 80;
+const STACK_H = 35;
 
 // Current parameters state (includes coordinates, sizes, shell options, visual settings)
 const params = {
     wallThick: 2.0,
     batteryHeight: 0.0,
     cornerRad: 3.0,
+    stackW: 55.0,
+    stackL: 80.0,
     
     // SD Cutout
     sdX: 0.0,
@@ -86,7 +88,7 @@ const params = {
 
     explode: 0.0,
     opacity: 80,
-    mode: 'rendered' // 'rendered' or 'blueprint'
+    mode: 'blueprint' // 'rendered' or 'blueprint'
 };
 
 const visibilities = {
@@ -216,6 +218,8 @@ function setupUIListeners() {
     bindSlider('input-wallThick', 'wallThick');
     bindSlider('input-batteryHeight', 'batteryHeight');
     bindSlider('input-cornerRad', 'cornerRad');
+    bindSlider('input-stackW', 'stackW');
+    bindSlider('input-stackL', 'stackL');
 
     // SD
     bindSlider('input-sdX', 'sdX');
@@ -316,6 +320,7 @@ function setupUIListeners() {
     document.getElementById('btn-export-stl').addEventListener('click', exportSTL);
     document.getElementById('btn-export-top-stl').addEventListener('click', exportTopSTL);
     document.getElementById('btn-export-bottom-stl').addEventListener('click', exportBottomSTL);
+    setupTooltipListeners();
 }
 
 // Initialize Manifold WASM
@@ -358,13 +363,13 @@ const makeRoundedBox = (dx, dy, dz, r) => {
 };
 
 // Helper for transition frustum (made global):
-const makeFrustum = (w1, l1, w2, l2, h) => {
+const makeFrustum = (w1, l1, w2, l2, h, shiftX = 0, shiftY = 0) => {
     if (!Manifold) return null;
     const pts = new Float32Array([
-        -w2/2, -l2/2, 0,
-         w2/2, -l2/2, 0,
-         w2/2,  l2/2, 0,
-        -w2/2,  l2/2, 0,
+        -w2/2 + shiftX, -l2/2 + shiftY, 0,
+         w2/2 + shiftX, -l2/2 + shiftY, 0,
+         w2/2 + shiftX,  l2/2 + shiftY, 0,
+        -w2/2 + shiftX,  l2/2 + shiftY, 0,
         -w1/2, -l1/2, h,
          w1/2, -l1/2, h,
          w1/2,  l1/2, h,
@@ -525,10 +530,16 @@ function generateBottomLid() {
     const w = params.wallThick;
     const r_out = params.cornerRad;
 
+    // Recalculate stack outer bounds and shift to match the case shell bottom (flat ports side right edge, w thickness, switch side left edge with 4mm space + w thickness, plus 1mm extra Y space)
+    const screenOuterW = SCREEN_W + 2*clearance + 2*w;
+    const screenOuterL = SCREEN_L + 2*clearance + 2*w;
+    const stackOuterL = STACK_L + 2*clearance + 2*w + 1.0;
+    const stackOuterW = screenOuterW / 2 + STACK_W / 2 + clearance + 4.0 + w;
+    const shiftX = (screenOuterW / 2 - (STACK_W / 2 + clearance + 4.0 + w)) / 2;
+    const shiftY = 0.5;
+
     // Stack bottom coordinates
     const bottomZ = -(STACK_H + params.batteryHeight + w + params.stackExtension);
-    const stackOuterL = STACK_L + 2*clearance + 2*w;
-    const stackOuterW = STACK_W + 2*clearance + 2*w;
 
     const lipThick = 2.0; // matching top outer lip thick
     const lipHeight = params.bottomLipHeight;
@@ -536,14 +547,14 @@ function generateBottomLid() {
 
     // 1. Base plate of the bottom lid
     let lid = makeRoundedBox(stackOuterW + 2*lipThick, stackOuterL + 2*lipThick, baseThick, r_out + lipThick)
-        .translate([0, 0, bottomZ - baseThick/2]);
+        .translate([shiftX, shiftY, bottomZ - baseThick/2]);
 
     // 2. Add the outer lip wrapping upwards around the outside of the shell bottom edge
     if (lipHeight > 0 && lipThick > 0) {
         const skirtOuter = makeRoundedBox(stackOuterW + 2*lipThick, stackOuterL + 2*lipThick, lipHeight, r_out + lipThick)
-            .translate([0, 0, bottomZ + lipHeight/2]);
+            .translate([shiftX, shiftY, bottomZ + lipHeight/2]);
         const skirtInner = makeRoundedBox(stackOuterW, stackOuterL, lipHeight + 2, r_out)
-            .translate([0, 0, bottomZ + lipHeight/2]);
+            .translate([shiftX, shiftY, bottomZ + lipHeight/2]);
         const skirt = skirtOuter.subtract(skirtInner);
         
         lid = lid.add(skirt);
@@ -554,13 +565,14 @@ function generateBottomLid() {
     }
 
     // 3. Subtract vertical screw clearance holes (3.2mm diameter / 1.6mm radius)
-    const bossY = STACK_L/2 + clearance - 3.5;
+    const bossY1 = STACK_L/2 + clearance + 1.0 - 3.5;
+    const bossY2 = -(STACK_L/2 + clearance - 3.5);
     const holeRadius = 1.6;
     const holeHeight = baseThick + 4;
     const holeZ = bottomZ - baseThick/2;
 
-    const h1 = Manifold.cylinder(holeHeight, holeRadius, holeRadius, 16, true).translate([0, bossY, holeZ]);
-    const h2 = Manifold.cylinder(holeHeight, holeRadius, holeRadius, 16, true).translate([0, -bossY, holeZ]);
+    const h1 = Manifold.cylinder(holeHeight, holeRadius, holeRadius, 16, true).translate([-8.0, bossY1, holeZ]);
+    const h2 = Manifold.cylinder(holeHeight, holeRadius, holeRadius, 16, true).translate([-8.0, bossY2, holeZ]);
 
     let finalLid = lid.subtract(h1).subtract(h2);
 
@@ -619,9 +631,11 @@ function generateCaseShell() {
         r_out
     ).translate([0, 0, (SCREEN_H + clearance + 2*w)/2 - w]);
 
-    // Outer stack body: Z goes from -(STACK_H + batteryHeight + w + stackExtension) to -15
-    const stackOuterL = STACK_L + 2*clearance + 2*w;
-    const stackOuterW = STACK_W + 2*clearance + 2*w;
+    // Outer stack body: flat ports side right edge (screenOuterW / 2), w thickness, switch side left edge with 4mm space + w thickness, plus 1mm extra Y space
+    const stackOuterL = STACK_L + 2*clearance + 2*w + 1.0;
+    const stackOuterW = screenOuterW / 2 + STACK_W / 2 + clearance + 4.0 + w;
+    const shiftX = (screenOuterW / 2 - (STACK_W / 2 + clearance + 4.0 + w)) / 2;
+    const shiftY = 0.5;
     const stackOuterHeight = STACK_H + params.batteryHeight + w - 15 + params.stackExtension;
     const stackOuter = makeRoundedBox(
         stackOuterW, 
@@ -629,8 +643,8 @@ function generateCaseShell() {
         stackOuterHeight, 
         r_out
     ).translate([
-        0, 
-        0, // Centered
+        shiftX, 
+        shiftY, 
         -15 - stackOuterHeight/2
     ]);
 
@@ -641,7 +655,9 @@ function generateCaseShell() {
         screenOuterL, 
         stackOuterW, 
         stackOuterL, 
-        transitionHeight
+        transitionHeight,
+        shiftX,
+        shiftY
     ).translate([0, 0, -15]);
 
     // Combine outer shells
@@ -654,26 +670,35 @@ function generateCaseShell() {
         SCREEN_H + 10, 
         Math.max(0.5, r_out - w)
     ).translate([0, 0, (SCREEN_H + 10)/2]);
-    
-    // Stack Cavity (Open at the bottom by extending it downwards)
+
+    // Asymmetric stack cavity: thinned right wall to w, switch side left wall has 4mm extra space, plus 1mm extra Y space on +Y side
+    const stackInnerRight = screenOuterW / 2 - w;
+    const stackInnerLeft = -(STACK_W / 2 + clearance + 4.0);
+    const stackInnerW = stackInnerRight - stackInnerLeft;
+    const stackInnerCenterX = (stackInnerRight + stackInnerLeft) / 2;
+    const stackInnerL = STACK_L + 2*clearance + 1.0;
+    const stackInnerCenterY = 0.5;
     const stackInnerHeight = STACK_H + params.batteryHeight + params.stackExtension + 20;
     const stackInner = Manifold.cube([
-        STACK_W + 2*clearance, 
-        STACK_L + 2*clearance, 
+        stackInnerW, 
+        stackInnerL, 
         stackInnerHeight
     ], true).translate([
-        0, 
-        0, 
+        stackInnerCenterX, 
+        stackInnerCenterY, 
         -15 - stackInnerHeight/2
     ]);
 
-    // Subtract screen, transition, and stack cavities to keep the enclosure hollow
+    // Inner transition: right edge aligns with stack cavity's right edge, left edge with stack cavity's left edge
+    const innerW1 = SCREEN_W + 2*clearance + 0.8;
     const innerTransition = makeFrustum(
-        SCREEN_W + 2*clearance + 0.8,
+        innerW1,
         SCREEN_L + 2*clearance + 0.8,
-        STACK_W + 2*clearance,
-        STACK_L + 2*clearance,
-        15
+        stackInnerW,
+        stackInnerL,
+        15,
+        stackInnerCenterX,
+        stackInnerCenterY
     ).translate([0, 0, -15]);
 
     shellSolid = shellSolid.subtract(screenInner).subtract(stackInner).subtract(innerTransition);
@@ -684,9 +709,10 @@ function generateCaseShell() {
     // They must only go up from the bottom edge to the bottom of the ports (Z = -STACK_H = -33)
     const bottomZ = -(STACK_H + params.batteryHeight + w + params.stackExtension);
     const bossHeight = -STACK_H - bottomZ; // distance between bottom edge and bottom of ports
-    const bossY = STACK_L/2 + clearance - 3.5;
-    const boss1 = makeWedge(8.0, STACK_L/2 + clearance, bottomZ, -STACK_H, 8.5, 4.8, true);
-    const boss2 = makeWedge(8.0, -(STACK_L/2 + clearance), bottomZ, -STACK_H, 8.5, 4.8, false);
+    const bossY1 = STACK_L/2 + clearance + 1.0;
+    const bossY2 = -(STACK_L/2 + clearance);
+    const boss1 = makeWedge(8.0, bossY1, bottomZ, -STACK_H, 8.5, 4.8, true).translate([-8.0, 0, 0]);
+    const boss2 = makeWedge(8.0, bossY2, bottomZ, -STACK_H, 8.5, 4.8, false).translate([-8.0, 0, 0]);
     shellSolid = shellSolid.add(boss1).add(boss2);
 
     boss1.delete();
@@ -696,8 +722,10 @@ function generateCaseShell() {
     // The holes go completely through the ramps
     const holeHeight = bossHeight + 10;
     const holeZ = bottomZ + bossHeight/2;
-    const hole1 = Manifold.cylinder(holeHeight, 1.25, 1.25, 16, true).translate([0, bossY, holeZ]);
-    const hole2 = Manifold.cylinder(holeHeight, 1.25, 1.25, 16, true).translate([0, -bossY, holeZ]);
+    const hole1Y = STACK_L/2 + clearance + 1.0 - 3.5;
+    const hole2Y = -(STACK_L/2 + clearance - 3.5);
+    const hole1 = Manifold.cylinder(holeHeight, 1.25, 1.25, 16, true).translate([-8.0, hole1Y, holeZ]);
+    const hole2 = Manifold.cylinder(holeHeight, 1.25, 1.25, 16, true).translate([-8.0, hole2Y, holeZ]);
     shellSolid = shellSolid.subtract(hole1).subtract(hole2);
 
     hole1.delete();
@@ -717,36 +745,36 @@ function generateCaseShell() {
     ]);
     shellSolid = shellSolid.subtract(sdSlot).subtract(sdChannel);
 
-    // 2. DB9 Port Cutout (On the +X edge, corner Y = -22 baseline)
+    // 2. DB9 Port Cutout (On the +X edge, corner Y = 20.5 baseline)
     // Parametric width, height, depth. Cutout translated outwards to clear the shell wall.
     const db9Cutout = Manifold.cube([params.db9D, params.db9W, params.db9H], true).translate([
         STACK_W/2 + params.db9D/2 - 10 + params.db9X, 
-        -22 + params.db9Y, 
+        20.5 + params.db9Y, 
         -33 + params.db9H/2 + params.db9Z
     ]);
     shellSolid = shellSolid.subtract(db9Cutout);
 
-    // 3. BNC Port Cutout (On the +X edge, corner Y = 30 baseline)
+    // 3. BNC Port Cutout (On the +X edge, corner Y = -30.5 baseline)
     const bncCutout = Manifold.cube([params.bncD, params.bncW, params.bncH], true).translate([
         STACK_W/2 + params.bncD/2 - 10 + params.bncX, 
-        30 + params.bncY, 
-        -33 + params.bncH/2 + params.bncZ
+        -30.5 + params.bncY, 
+        -32 + params.bncH/2 + params.bncZ
     ]);
     shellSolid = shellSolid.subtract(bncCutout);
 
     // 4. RJ45 Slot (On the -Y narrow side, Y = -STACK_L/2, under the SD slot)
     const rj45Cutout = Manifold.cube([params.rj45W, params.rj45D, params.rj45H], true).translate([
-        params.rj45X, 
+        4.0 + params.rj45X, 
         -STACK_L/2 - params.rj45D/2 + 10 + params.rj45Y, 
-        -33 + params.rj45H/2 + params.rj45Z
+        -35 + params.rj45H/2 + params.rj45Z
     ]);
     shellSolid = shellSolid.subtract(rj45Cutout);
 
-    // 5. USB Charging Slot (On the +Y narrow side, Y = STACK_L/2, X = -12)
+    // 5. USB Charging Slot (On the +Y narrow side, Y = STACK_L/2, X = 0)
     const usbCutout = Manifold.cube([params.usbW, params.usbD, params.usbH], true).translate([
-        -12 + params.usbX, 
+        params.usbX, 
         STACK_L/2 + params.usbD/2 - 10 + params.usbY, 
-        -33 + params.usbH/2 + params.usbZ
+        -28 + params.usbH/2 + params.usbZ
     ]);
     shellSolid = shellSolid.subtract(usbCutout);
 
@@ -784,8 +812,136 @@ function manifoldToThree(manifoldMesh) {
     return geometry;
 }
 
+let hoveredParam = null;
+
+const paramInfo = {
+    wallThick: {
+        text: "Wall Thickness",
+        desc: "Thickness of the enclosure shell walls. Dictates structural strength.",
+        getPos: () => new THREE.Vector3(SCREEN_W/2 + params.wallThick, 0, SCREEN_H/2),
+        dir: [1, 1]
+    },
+    batteryHeight: {
+        text: "Battery Space Depth",
+        desc: "Additional space height at the bottom of the stack for battery clearance.",
+        getPos: () => new THREE.Vector3(0, 0, -(STACK_H + params.batteryHeight + params.stackExtension)),
+        dir: [-1, -1]
+    },
+    cornerRad: {
+        text: "Corner Radius",
+        desc: "Outer fillet radius of the case corners. Controls roundness.",
+        getPos: () => new THREE.Vector3(SCREEN_W/2, SCREEN_L/2, SCREEN_H/2),
+        dir: [1, 1]
+    },
+    stackW: {
+        text: "Stack Width",
+        desc: "Daughterboard stack width constraint.",
+        getPos: () => new THREE.Vector3(-STACK_W/2, 0, -STACK_H/2),
+        dir: [-1, 1]
+    },
+    stackL: {
+        text: "Stack Length",
+        desc: "Daughterboard stack length constraint.",
+        getPos: () => new THREE.Vector3(0, -STACK_L/2, -STACK_H/2),
+        dir: [1, -1]
+    },
+    sdX: { text: "SD X Position", desc: "SD card slot horizontal position shift along X-axis.", getPos: () => new THREE.Vector3(params.sdX, -STACK_L/2, -7 + params.sdZ), dir: [-1, -1] },
+    sdY: { text: "SD Y Position", desc: "SD card slot offset clearance depth shift.", getPos: () => new THREE.Vector3(params.sdX, -STACK_L/2 + params.sdY, -7 + params.sdZ), dir: [-1, -1] },
+    sdZ: { text: "SD Z Position", desc: "SD card slot vertical position shift.", getPos: () => new THREE.Vector3(params.sdX, -STACK_L/2, -7 + params.sdZ), dir: [-1, -1] },
+    sdW: { text: "SD Width", desc: "Width of the SD card cutout slot (X-axis).", getPos: () => new THREE.Vector3(params.sdX, -STACK_L/2, -7 + params.sdZ), dir: [-1, -1] },
+    sdH: { text: "SD Height", desc: "Height of the SD card cutout slot (Z-axis).", getPos: () => new THREE.Vector3(params.sdX, -STACK_L/2, -7 + params.sdZ), dir: [-1, -1] },
+    sdD: { text: "SD Depth", desc: "Depth of the SD card cutout slot (Y-axis).", getPos: () => new THREE.Vector3(params.sdX, -STACK_L/2, -7 + params.sdZ), dir: [-1, -1] },
+    db9X: { text: "DB9 X Position", desc: "DB9 port displacement offset from the right wall.", getPos: () => new THREE.Vector3(STACK_W/2 + params.db9X, 20.5 + params.db9Y, -33 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9Y: { text: "DB9 Y Position", desc: "DB9 port position shift along the right edge.", getPos: () => new THREE.Vector3(STACK_W/2, 20.5 + params.db9Y, -33 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9Z: { text: "DB9 Z Position", desc: "DB9 port vertical position shift.", getPos: () => new THREE.Vector3(STACK_W/2, 20.5 + params.db9Y, -33 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9W: { text: "DB9 Width", desc: "Width of the DB9 connector cutout (Y-axis).", getPos: () => new THREE.Vector3(STACK_W/2, 20.5 + params.db9Y, -33 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9H: { text: "DB9 Height", desc: "Height of the DB9 connector cutout (Z-axis).", getPos: () => new THREE.Vector3(STACK_W/2, 20.5 + params.db9Y, -33 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9D: { text: "DB9 Depth", desc: "Depth of the DB9 connector cutout (X-axis).", getPos: () => new THREE.Vector3(STACK_W/2, 20.5 + params.db9Y, -33 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    bncX: { text: "BNC X Position", desc: "BNC port displacement offset from the right wall.", getPos: () => new THREE.Vector3(STACK_W/2 + params.bncX, -30.5 + params.bncY, -32 + params.bncH/2 + params.bncZ), dir: [1, -1] },
+    bncY: { text: "BNC Y Position", desc: "BNC port position shift along the right edge.", getPos: () => new THREE.Vector3(STACK_W/2, -30.5 + params.bncY, -32 + params.bncH/2 + params.bncZ), dir: [1, -1] },
+    bncZ: { text: "BNC Z Position", desc: "BNC port vertical position shift.", getPos: () => new THREE.Vector3(STACK_W/2, -30.5 + params.bncY, -32 + params.bncH/2 + params.bncZ), dir: [1, -1] },
+    bncW: { text: "BNC Width", desc: "Width of the BNC connector cutout (Y-axis).", getPos: () => new THREE.Vector3(STACK_W/2, -30.5 + params.bncY, -32 + params.bncH/2 + params.bncZ), dir: [1, -1] },
+    bncH: { text: "BNC Height", desc: "Height of the BNC connector cutout (Z-axis).", getPos: () => new THREE.Vector3(STACK_W/2, -30.5 + params.bncY, -32 + params.bncH/2 + params.bncZ), dir: [1, -1] },
+    bncD: { text: "BNC Depth", desc: "Depth of the BNC connector cutout (X-axis).", getPos: () => new THREE.Vector3(STACK_W/2, -30.5 + params.bncY, -32 + params.bncH/2 + params.bncZ), dir: [1, -1] },
+    rj45X: { text: "RJ45 X Position", desc: "RJ45 port horizontal position shift along the narrow edge.", getPos: () => new THREE.Vector3(4.0 + params.rj45X, -STACK_L/2, -35 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45Y: { text: "RJ45 Y Position", desc: "RJ45 port offset clearance depth shift.", getPos: () => new THREE.Vector3(4.0 + params.rj45X, -STACK_L/2, -35 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45Z: { text: "RJ45 Z Position", desc: "RJ45 port vertical position shift.", getPos: () => new THREE.Vector3(4.0 + params.rj45X, -STACK_L/2, -35 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45W: { text: "RJ45 Width", desc: "Width of the RJ45 connector cutout (X-axis).", getPos: () => new THREE.Vector3(4.0 + params.rj45X, -STACK_L/2, -35 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45H: { text: "RJ45 Height", desc: "Height of the RJ45 connector cutout (Z-axis).", getPos: () => new THREE.Vector3(4.0 + params.rj45X, -STACK_L/2, -35 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45D: { text: "RJ45 Depth", desc: "Depth of the RJ45 connector cutout (Y-axis).", getPos: () => new THREE.Vector3(4.0 + params.rj45X, -STACK_L/2, -35 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    usbX: { text: "USB X Position", desc: "USB port horizontal position shift along the narrow edge.", getPos: () => new THREE.Vector3(params.usbX, STACK_L/2, -28 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbY: { text: "USB Y Position", desc: "USB port offset clearance depth shift.", getPos: () => new THREE.Vector3(params.usbX, STACK_L/2, -28 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbZ: { text: "USB Z Position", desc: "USB port vertical position shift.", getPos: () => new THREE.Vector3(params.usbX, STACK_L/2, -28 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbW: { text: "USB Width", desc: "Width of the USB connector cutout (X-axis).", getPos: () => new THREE.Vector3(params.usbX, STACK_L/2, -28 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbH: { text: "USB Height", desc: "Height of the USB connector cutout (Z-axis).", getPos: () => new THREE.Vector3(params.usbX, STACK_L/2, -28 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbD: { text: "USB Depth", desc: "Depth of the USB connector cutout (Y-axis).", getPos: () => new THREE.Vector3(params.usbX, STACK_L/2, -28 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    switchX: { text: "Switch X Position", desc: "Switch horizontal displacement offset from the left wall.", getPos: () => new THREE.Vector3(-STACK_W/2 + params.switchX, params.switchY, -33 + params.switchH/2 + params.switchZ), dir: [-1, 1] },
+    switchY: { text: "Switch Y Position", desc: "Switch position shift along the left edge.", getPos: () => new THREE.Vector3(-STACK_W/2, params.switchY, -33 + params.switchH/2 + params.switchZ), dir: [-1, 1] },
+    switchZ: { text: "Switch Z Position", desc: "Switch vertical position shift.", getPos: () => new THREE.Vector3(-STACK_W/2, params.switchY, -33 + params.switchH/2 + params.switchZ), dir: [-1, 1] },
+    switchW: { text: "Switch Width", desc: "Width of the switch cutout (Y-axis).", getPos: () => new THREE.Vector3(-STACK_W/2, params.switchY, -33 + params.switchH/2 + params.switchZ), dir: [-1, 1] },
+    switchH: { text: "Switch Height", desc: "Height of the switch cutout (Z-axis).", getPos: () => new THREE.Vector3(-STACK_W/2, params.switchY, -33 + params.switchH/2 + params.switchZ), dir: [-1, 1] },
+    switchD: { text: "Switch Depth", desc: "Depth of the switch cutout (X-axis).", getPos: () => new THREE.Vector3(-STACK_W/2, params.switchY, -33 + params.switchH/2 + params.switchZ), dir: [-1, 1] },
+    topThick: { text: "Frame Thickness", desc: "Thickness of the top frame lid.", getPos: () => new THREE.Vector3(0, 0, SCREEN_H + 0.4 + params.wallThick), dir: [1, 1] },
+    topBezel: { text: "Bezel Width", desc: "Width of the top bezel frame covering the screen edge.", getPos: () => new THREE.Vector3(SCREEN_W/2 - params.topBezel, SCREEN_L/2 - params.topBezel, SCREEN_H + 0.4 + params.wallThick), dir: [1, 1] },
+    screwDepth: { text: "Screw Depth", desc: "Vertical depth of the mounting screw holes from the rim.", getPos: () => new THREE.Vector3(SCREEN_W/2 + 3.5/2, SCREEN_L/2 - 10, SCREEN_H + 0.4 + params.wallThick - params.screwDepth), dir: [1, 1] },
+    topOuterLipThick: { text: "Outer Lip Thickness", desc: "Thickness of the top frame outer lip wrapping around the case.", getPos: () => new THREE.Vector3(SCREEN_W/2 + 2.0, 0, SCREEN_H + 0.4 + params.wallThick), dir: [1, 1] },
+    topOuterLipHeight: { text: "Outer Lip Height", desc: "Height of the top frame outer lip wrapping around the case.", getPos: () => new THREE.Vector3(SCREEN_W/2 + 2.0, 0, SCREEN_H + 0.4 + params.wallThick - params.topOuterLipHeight/2), dir: [1, 1] },
+    topInnerLipThick: { text: "Inner Lip Thickness", desc: "Thickness of the top frame inner locating lip.", getPos: () => new THREE.Vector3(SCREEN_W/2, 0, SCREEN_H + 0.4 + params.wallThick - 1), dir: [1, 1] },
+    topInnerLipHeight: { text: "Inner Lip Height", desc: "Height of the top frame inner locating lip.", getPos: () => new THREE.Vector3(SCREEN_W/2, 0, SCREEN_H + 0.4 + params.wallThick - params.topInnerLipHeight/2), dir: [1, 1] },
+    bottomThick: { text: "Bottom Thickness", desc: "Thickness of the bottom lid.", getPos: () => new THREE.Vector3(0, 0, -(STACK_H + params.batteryHeight + params.wallThick + params.stackExtension)), dir: [1, -1] },
+    bottomLipHeight: { text: "Bottom Lip Height", desc: "Height of the bottom lid lip wrapping around the bottom edge.", getPos: () => new THREE.Vector3(STACK_W/2 + 2.0, 0, -(STACK_H + params.batteryHeight + params.wallThick + params.stackExtension)), dir: [1, -1] },
+    stackExtension: { text: "Stack Extension", desc: "Additional extension length of the lower stack body.", getPos: () => new THREE.Vector3(0, 0, -(STACK_H + params.batteryHeight + params.wallThick + params.stackExtension/2)), dir: [1, -1] },
+    explode: { text: "Explode Assembly", desc: "Explode assembly components along the Z-axis.", getPos: () => new THREE.Vector3(0, 0, params.explode), dir: [1, 1] },
+    opacity: { text: "Shell Opacity", desc: "Visual transparency of the main enclosure shell.", getPos: () => new THREE.Vector3(0, 0, 0), dir: [1, 1] }
+};
+
+function setupTooltipListeners() {
+    let tooltipEl = document.getElementById('slider-tooltip');
+    if (!tooltipEl) {
+        tooltipEl = document.createElement('div');
+        tooltipEl.id = 'slider-tooltip';
+        tooltipEl.className = 'slider-tooltip';
+        document.body.appendChild(tooltipEl);
+    }
+
+    const paramRows = document.querySelectorAll('.param-row[data-param]');
+    paramRows.forEach(row => {
+        const paramKey = row.getAttribute('data-param');
+        if (!paramKey) return;
+
+        row.addEventListener('mouseenter', (e) => {
+            hoveredParam = paramKey;
+            const info = paramInfo[paramKey];
+            if (info) {
+                tooltipEl.innerHTML = `<div class="tooltip-title">${info.text}</div><div class="tooltip-desc">${info.desc}</div>`;
+                tooltipEl.style.opacity = '1';
+                
+                const rect = row.getBoundingClientRect();
+                if (rect.right + 250 > window.innerWidth) {
+                    tooltipEl.style.left = `${rect.left - 250}px`;
+                } else {
+                    tooltipEl.style.left = `${rect.right + 15}px`;
+                }
+                tooltipEl.style.top = `${rect.top}px`;
+                tooltipEl.style.display = 'block';
+            }
+            updateLeaderLines();
+        });
+
+        row.addEventListener('mouseleave', () => {
+            hoveredParam = null;
+            tooltipEl.style.opacity = '0';
+            tooltipEl.style.display = 'none';
+            updateLeaderLines();
+        });
+    });
+}
+
 // Rebuild the 3D representation
 function rebuild() {
+    STACK_W = params.stackW;
+    STACK_L = params.stackL;
+
     // Clear previous representations
     if (caseMesh) {
         mainGroup.remove(caseMesh);
@@ -832,6 +988,9 @@ function rebuild() {
         })
     };
 
+    const clearanceVal = 0.4;
+    const explodeDistance = params.explode * 0.6;
+
     // Draw STM32 Screen Box
     if (visibilities.screen) {
         const screenGeom = new THREE.BoxGeometry(SCREEN_W, SCREEN_L, SCREEN_H);
@@ -857,25 +1016,25 @@ function rebuild() {
         // DB9
         const db9Geom = new THREE.BoxGeometry(params.db9D, params.db9W, params.db9H);
         const db9Mesh = new THREE.Mesh(db9Geom, materials.cutoutTool);
-        db9Mesh.position.set(STACK_W/2 + params.db9D/2 - 10 + params.db9X, -22 + params.db9Y, -33 + params.db9H/2 + params.db9Z);
+        db9Mesh.position.set(STACK_W/2 + params.db9D/2 - 10 + params.db9X, 20.5 + params.db9Y, -33 + params.db9H/2 + params.db9Z);
         designGroup.add(db9Mesh);
 
         // BNC
         const bncGeom = new THREE.BoxGeometry(params.bncD, params.bncW, params.bncH);
         const bncMesh = new THREE.Mesh(bncGeom, materials.cutoutTool);
-        bncMesh.position.set(STACK_W/2 + params.bncD/2 - 10 + params.bncX, 30 + params.bncY, -33 + params.bncH/2 + params.bncZ);
+        bncMesh.position.set(STACK_W/2 + params.bncD/2 - 10 + params.bncX, -30.5 + params.bncY, -32 + params.bncH/2 + params.bncZ);
         designGroup.add(bncMesh);
 
         // RJ45
         const rj45Geom = new THREE.BoxGeometry(params.rj45W, params.rj45D, params.rj45H);
         const rj45Mesh = new THREE.Mesh(rj45Geom, materials.cutoutTool);
-        rj45Mesh.position.set(params.rj45X, -STACK_L/2 - params.rj45D/2 + 10 + params.rj45Y, -33 + params.rj45H/2 + params.rj45Z);
+        rj45Mesh.position.set(4.0 + params.rj45X, -STACK_L/2 - params.rj45D/2 + 10 + params.rj45Y, -35 + params.rj45H/2 + params.rj45Z);
         designGroup.add(rj45Mesh);
 
         // USB Charger
         const usbGeom = new THREE.BoxGeometry(params.usbW, params.usbD, params.usbH);
         const usbMesh = new THREE.Mesh(usbGeom, materials.cutoutTool);
-        usbMesh.position.set(-12 + params.usbX, STACK_L/2 + params.usbD/2 - 10 + params.usbY, -33 + params.usbH/2 + params.usbZ);
+        usbMesh.position.set(params.usbX, STACK_L/2 + params.usbD/2 - 10 + params.usbY, -28 + params.usbH/2 + params.usbZ);
         designGroup.add(usbMesh);
 
         // Switch
@@ -936,7 +1095,7 @@ function rebuild() {
                 caseMesh.add(line);
             }
 
-            caseMesh.position.z -= params.explode;
+            caseMesh.position.z -= explodeDistance;
             mainGroup.add(caseMesh);
         }
     }
@@ -980,7 +1139,7 @@ function rebuild() {
             }
 
             // Top frame explodes upwards (positive Z)
-            topMesh.position.z += params.explode;
+            topMesh.position.z += explodeDistance;
             mainGroup.add(topMesh);
         }
     }
@@ -1024,21 +1183,20 @@ function rebuild() {
             }
 
             // Bottom lid explodes downwards (negative Z, double distance for spacing)
-            bottomMesh.position.z -= params.explode * 1.8;
+            bottomMesh.position.z -= explodeDistance * 1.8;
             mainGroup.add(bottomMesh);
         }
     }
 
     // Update bounds spec sheet
-    const clearanceVal = 0.4;
     const screenCavityW = (SCREEN_W + 2 * clearanceVal + 0.8).toFixed(1);
     const screenCavityL = (SCREEN_L + 2 * clearanceVal + 0.8).toFixed(1);
     const screenCavityH = (SCREEN_H + clearanceVal).toFixed(1);
     const elScreen = document.getElementById('spec-screen-cavity');
     if (elScreen) elScreen.innerText = `${screenCavityW} x ${screenCavityL} x ${screenCavityH} mm`;
 
-    const stackCavityW = (STACK_W + 2 * clearanceVal).toFixed(1);
-    const stackCavityL = (STACK_L + 2 * clearanceVal).toFixed(1);
+    const stackCavityW = (SCREEN_W / 2 + STACK_W / 2 + 2 * clearanceVal + 4.0).toFixed(1);
+    const stackCavityL = (STACK_L + 2 * clearanceVal + 1.0).toFixed(1);
     const stackCavityH = (STACK_H + params.batteryHeight + params.stackExtension).toFixed(1);
     const elStack = document.getElementById('spec-stack-cavity');
     if (elStack) elStack.innerText = `${stackCavityW} x ${stackCavityL} x ${stackCavityH} mm`;
@@ -1252,7 +1410,7 @@ function updateLeaderLines() {
     const width = container.clientWidth;
     const height = container.clientHeight;
 
-    const drawDimension = (point3d, textLabel, dirX = 1, dirY = -1) => {
+    const drawDimension = (point3d, textLabel, dirX = 1, dirY = -1, isHighlighted = false, descTextVal = null) => {
         const vector = new THREE.Vector3(point3d.x, point3d.y, point3d.z);
         
         designGroup.updateMatrixWorld();
@@ -1269,8 +1427,14 @@ function updateLeaderLines() {
             const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             dot.setAttribute('cx', x);
             dot.setAttribute('cy', y);
-            dot.setAttribute('r', '3');
-            dot.setAttribute('fill', '#ffaa00');
+            if (isHighlighted) {
+                dot.setAttribute('r', '6');
+                dot.setAttribute('fill', '#39ff14');
+                dot.style.filter = 'drop-shadow(0px 0px 4px #39ff14)';
+            } else {
+                dot.setAttribute('r', '3');
+                dot.setAttribute('fill', '#ffaa00');
+            }
             group.appendChild(dot);
 
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
@@ -1278,16 +1442,27 @@ function updateLeaderLines() {
             const targetY = y + 25 * dirY;
             const endX = targetX + 30 * dirX;
             line.setAttribute('points', `${x},${y} ${targetX},${targetY} ${endX},${targetY}`);
-            line.setAttribute('stroke', '#00f2ff');
-            line.setAttribute('stroke-width', '1');
+            if (isHighlighted) {
+                line.setAttribute('stroke', '#39ff14');
+                line.setAttribute('stroke-width', '2');
+            } else {
+                line.setAttribute('stroke', '#00f2ff');
+                line.setAttribute('stroke-width', '1');
+            }
             line.setAttribute('fill', 'none');
             group.appendChild(line);
 
             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             text.setAttribute('x', targetX);
             text.setAttribute('y', targetY - 5);
-            text.setAttribute('fill', '#ffffff');
-            text.setAttribute('font-size', '10px');
+            if (isHighlighted) {
+                text.setAttribute('fill', '#39ff14');
+                text.setAttribute('font-size', '12px');
+                text.setAttribute('font-weight', 'bold');
+            } else {
+                text.setAttribute('fill', '#ffffff');
+                text.setAttribute('font-size', '10px');
+            }
             text.setAttribute('font-family', 'Space Mono');
             if (dirX < 0) {
                 text.setAttribute('text-anchor', 'end');
@@ -1295,35 +1470,50 @@ function updateLeaderLines() {
             text.textContent = textLabel;
             group.appendChild(text);
 
+            if (isHighlighted && descTextVal) {
+                const descText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                descText.setAttribute('x', targetX);
+                descText.setAttribute('y', targetY + 12);
+                descText.setAttribute('fill', 'rgba(255, 255, 255, 0.9)');
+                descText.setAttribute('font-size', '9px');
+                descText.setAttribute('font-family', 'Space Mono');
+                if (dirX < 0) {
+                    descText.setAttribute('text-anchor', 'end');
+                }
+                descText.textContent = descTextVal;
+                group.appendChild(descText);
+            }
+
             overlaySvg.appendChild(group);
         }
     };
 
     if (visibilities.cutouts || visibilities.case) {
         // DB9 Anchor (Same side +X, bottom corner)
+        // DB9 Anchor (Same side +X, top corner)
         drawDimension(
-            new THREE.Vector3(STACK_W/2 + params.db9X, -22 + params.db9Y, -33 + params.db9H/2 + params.db9Z),
+            new THREE.Vector3(STACK_W/2 + params.db9X, 20.5 + params.db9Y, -33 + params.db9H/2 + params.db9Z),
             "DB9 Port",
             1, -1
         );
 
-        // BNC Anchor (Same side +X, top corner)
+        // BNC Anchor (Same side +X, bottom corner)
         drawDimension(
-            new THREE.Vector3(STACK_W/2 + params.bncX, 30 + params.bncY, -33 + params.bncH/2 + params.bncZ),
+            new THREE.Vector3(STACK_W/2 + params.bncX, -30.5 + params.bncY, -32 + params.bncH/2 + params.bncZ),
             "BNC Port",
             1, -1
         );
 
         // RJ45 Anchor (Same side Y=-STACK_L/2, under SD slot)
         drawDimension(
-            new THREE.Vector3(params.rj45X, -STACK_L/2 + params.rj45Y, -33 + params.rj45H/2 + params.rj45Z),
+            new THREE.Vector3(4.0 + params.rj45X, -STACK_L/2 + params.rj45Y, -35 + params.rj45H/2 + params.rj45Z),
             "RJ45 Port",
             1, 1
         );
 
-        // USB Charging Slot (Opposite Y=STACK_L/2, left side X=-12)
+        // USB Charging Slot (Opposite Y=STACK_L/2, X=0)
         drawDimension(
-            new THREE.Vector3(-12 + params.usbX, STACK_L/2 + params.usbY, -33 + params.usbH/2 + params.usbZ),
+            new THREE.Vector3(params.usbX, STACK_L/2 + params.usbY, -28 + params.usbH/2 + params.usbZ),
             "USB Port",
             1, -1
         );
@@ -1341,6 +1531,20 @@ function updateLeaderLines() {
             "SD Card Slot",
             -1, -1
         );
+    }
+
+    if (hoveredParam && paramInfo[hoveredParam]) {
+        const info = paramInfo[hoveredParam];
+        const val = params[hoveredParam];
+        let labelText = `${info.text}: `;
+        if (hoveredParam === 'opacity' || hoveredParam === 'explode') {
+            labelText += `${val.toFixed(0)}%`;
+        } else if (typeof val === 'number') {
+            labelText += `${val.toFixed(1)} mm`;
+        } else {
+            labelText += `${val}`;
+        }
+        drawDimension(info.getPos(), labelText, info.dir[0], info.dir[1], true, info.desc);
     }
 }
 
