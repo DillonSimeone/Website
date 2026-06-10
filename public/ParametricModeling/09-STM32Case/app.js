@@ -36,8 +36,8 @@ const params = {
     db9X: 0.0,
     db9Y: 0.0,
     db9Z: 0.0,
-    db9W: 27.0,
-    db9H: 15.0,
+    db9W: 29.0,
+    db9H: 17.0,
     db9D: 50.0,
 
     // BNC Cutout
@@ -45,23 +45,23 @@ const params = {
     bncY: 0.0,
     bncZ: 0.0,
     bncW: 17.0,
-    bncH: 14.0,
+    bncH: 16.0,
     bncD: 50.0,
 
     // RJ45 Cutout
     rj45X: 0.0,
     rj45Y: 0.0,
     rj45Z: 0.0,
-    rj45W: 18.0,
-    rj45H: 17.0,
+    rj45W: 17.0,
+    rj45H: 19.0,
     rj45D: 40.0,
 
     // USB Cutout
     usbX: 0.0,
     usbY: 0.0,
     usbZ: 0.0,
-    usbW: 15.0,
-    usbH: 8.0,
+    usbW: 17.0,
+    usbH: 10.0,
     usbD: 40.0,
 
     // Switch Cutout
@@ -745,11 +745,11 @@ function generateCaseShell() {
     ]);
     shellSolid = shellSolid.subtract(sdSlot).subtract(sdChannel);
 
-    // 2. DB9 Port Cutout (On the +X edge, corner Y = 24.5 baseline)
+    // 2. DB9 Port Cutout (On the +X edge, corner Y = 23.5 baseline)
     // Parametric width, height, depth. Cutout translated outwards to clear the shell wall.
     const db9Cutout = Manifold.cube([params.db9D, params.db9W, params.db9H], true).translate([
         STACK_W/2 + params.db9D/2 - 10 + params.db9X, 
-        24.5 + params.db9Y, 
+        23.5 + params.db9Y, 
         -38 + params.db9H/2 + params.db9Z
     ]);
     shellSolid = shellSolid.subtract(db9Cutout);
@@ -764,7 +764,7 @@ function generateCaseShell() {
 
     // 4. RJ45 Slot (On the -Y narrow side, Y = -STACK_L/2, under the SD slot)
     const rj45Cutout = Manifold.cube([params.rj45W, params.rj45D, params.rj45H], true).translate([
-        2.5 + params.rj45X, 
+        2.0 + params.rj45X, 
         -STACK_L/2 - params.rj45D/2 + 10 + params.rj45Y, 
         -40 + params.rj45H/2 + params.rj45Z
     ]);
@@ -772,7 +772,7 @@ function generateCaseShell() {
 
     // 5. USB Charging Slot (On the +Y narrow side, Y = STACK_L/2, X = -1)
     const usbCutout = Manifold.cube([params.usbW, params.usbD, params.usbH], true).translate([
-        -1.0 + params.usbX, 
+        -2.0 + params.usbX, 
         STACK_L/2 + params.usbD/2 - 10 + params.usbY, 
         -31 + params.usbH/2 + params.usbZ
     ]);
@@ -851,30 +851,30 @@ const paramInfo = {
     sdW: { text: "SD Width", desc: "Width of the SD card cutout slot (X-axis).", getPos: () => new THREE.Vector3(params.sdX, -STACK_L/2, -7 + params.sdZ), dir: [-1, -1] },
     sdH: { text: "SD Height", desc: "Height of the SD card cutout slot (Z-axis).", getPos: () => new THREE.Vector3(params.sdX, -STACK_L/2, -7 + params.sdZ), dir: [-1, -1] },
     sdD: { text: "SD Depth", desc: "Depth of the SD card cutout slot (Y-axis).", getPos: () => new THREE.Vector3(params.sdX, -STACK_L/2, -7 + params.sdZ), dir: [-1, -1] },
-    db9X: { text: "DB9 X Position", desc: "DB9 port displacement offset from the right wall.", getPos: () => new THREE.Vector3(STACK_W/2 + params.db9X, 24.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
-    db9Y: { text: "DB9 Y Position", desc: "DB9 port position shift along the right edge.", getPos: () => new THREE.Vector3(STACK_W/2, 24.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
-    db9Z: { text: "DB9 Z Position", desc: "DB9 port vertical position shift.", getPos: () => new THREE.Vector3(STACK_W/2, 24.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
-    db9W: { text: "DB9 Width", desc: "Width of the DB9 connector cutout (Y-axis).", getPos: () => new THREE.Vector3(STACK_W/2, 24.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
-    db9H: { text: "DB9 Height", desc: "Height of the DB9 connector cutout (Z-axis).", getPos: () => new THREE.Vector3(STACK_W/2, 24.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
-    db9D: { text: "DB9 Depth", desc: "Depth of the DB9 connector cutout (X-axis).", getPos: () => new THREE.Vector3(STACK_W/2, 24.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9X: { text: "DB9 X Position", desc: "DB9 port displacement offset from the right wall.", getPos: () => new THREE.Vector3(STACK_W/2 + params.db9X, 23.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9Y: { text: "DB9 Y Position", desc: "DB9 port position shift along the right edge.", getPos: () => new THREE.Vector3(STACK_W/2, 23.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9Z: { text: "DB9 Z Position", desc: "DB9 port vertical position shift.", getPos: () => new THREE.Vector3(STACK_W/2, 23.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9W: { text: "DB9 Width", desc: "Width of the DB9 connector cutout (Y-axis).", getPos: () => new THREE.Vector3(STACK_W/2, 23.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9H: { text: "DB9 Height", desc: "Height of the DB9 connector cutout (Z-axis).", getPos: () => new THREE.Vector3(STACK_W/2, 23.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
+    db9D: { text: "DB9 Depth", desc: "Depth of the DB9 connector cutout (X-axis).", getPos: () => new THREE.Vector3(STACK_W/2, 23.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z), dir: [1, -1] },
     bncX: { text: "BNC X Position", desc: "BNC port displacement offset from the right wall.", getPos: () => new THREE.Vector3(STACK_W/2 + params.bncX, -29.0 + params.bncY, -37 + params.bncH/2 + params.bncZ), dir: [1, -1] },
     bncY: { text: "BNC Y Position", desc: "BNC port position shift along the right edge.", getPos: () => new THREE.Vector3(STACK_W/2, -29.0 + params.bncY, -37 + params.bncH/2 + params.bncZ), dir: [1, -1] },
     bncZ: { text: "BNC Z Position", desc: "BNC port vertical position shift.", getPos: () => new THREE.Vector3(STACK_W/2, -29.0 + params.bncY, -37 + params.bncH/2 + params.bncZ), dir: [1, -1] },
     bncW: { text: "BNC Width", desc: "Width of the BNC connector cutout (Y-axis).", getPos: () => new THREE.Vector3(STACK_W/2, -29.0 + params.bncY, -37 + params.bncH/2 + params.bncZ), dir: [1, -1] },
     bncH: { text: "BNC Height", desc: "Height of the BNC connector cutout (Z-axis).", getPos: () => new THREE.Vector3(STACK_W/2, -29.0 + params.bncY, -37 + params.bncH/2 + params.bncZ), dir: [1, -1] },
     bncD: { text: "BNC Depth", desc: "Depth of the BNC connector cutout (X-axis).", getPos: () => new THREE.Vector3(STACK_W/2, -29.0 + params.bncY, -37 + params.bncH/2 + params.bncZ), dir: [1, -1] },
-    rj45X: { text: "RJ45 X Position", desc: "RJ45 port horizontal position shift along the narrow edge.", getPos: () => new THREE.Vector3(2.5 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
-    rj45Y: { text: "RJ45 Y Position", desc: "RJ45 port offset clearance depth shift.", getPos: () => new THREE.Vector3(2.5 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
-    rj45Z: { text: "RJ45 Z Position", desc: "RJ45 port vertical position shift.", getPos: () => new THREE.Vector3(2.5 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
-    rj45W: { text: "RJ45 Width", desc: "Width of the RJ45 connector cutout (X-axis).", getPos: () => new THREE.Vector3(2.5 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
-    rj45H: { text: "RJ45 Height", desc: "Height of the RJ45 connector cutout (Z-axis).", getPos: () => new THREE.Vector3(2.5 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
-    rj45D: { text: "RJ45 Depth", desc: "Depth of the RJ45 connector cutout (Y-axis).", getPos: () => new THREE.Vector3(2.5 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
-    usbX: { text: "USB X Position", desc: "USB port horizontal position shift along the narrow edge.", getPos: () => new THREE.Vector3(-1.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
-    usbY: { text: "USB Y Position", desc: "USB port offset clearance depth shift.", getPos: () => new THREE.Vector3(-1.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
-    usbZ: { text: "USB Z Position", desc: "USB port vertical position shift.", getPos: () => new THREE.Vector3(-1.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
-    usbW: { text: "USB Width", desc: "Width of the USB connector cutout (X-axis).", getPos: () => new THREE.Vector3(-1.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
-    usbH: { text: "USB Height", desc: "Height of the USB connector cutout (Z-axis).", getPos: () => new THREE.Vector3(-1.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
-    usbD: { text: "USB Depth", desc: "Depth of the USB connector cutout (Y-axis).", getPos: () => new THREE.Vector3(-1.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    rj45X: { text: "RJ45 X Position", desc: "RJ45 port horizontal position shift along the narrow edge.", getPos: () => new THREE.Vector3(2.0 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45Y: { text: "RJ45 Y Position", desc: "RJ45 port offset clearance depth shift.", getPos: () => new THREE.Vector3(2.0 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45Z: { text: "RJ45 Z Position", desc: "RJ45 port vertical position shift.", getPos: () => new THREE.Vector3(2.0 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45W: { text: "RJ45 Width", desc: "Width of the RJ45 connector cutout (X-axis).", getPos: () => new THREE.Vector3(2.0 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45H: { text: "RJ45 Height", desc: "Height of the RJ45 connector cutout (Z-axis).", getPos: () => new THREE.Vector3(2.0 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    rj45D: { text: "RJ45 Depth", desc: "Depth of the RJ45 connector cutout (Y-axis).", getPos: () => new THREE.Vector3(2.0 + params.rj45X, -STACK_L/2, -40 + params.rj45H/2 + params.rj45Z), dir: [1, 1] },
+    usbX: { text: "USB X Position", desc: "USB port horizontal position shift along the narrow edge.", getPos: () => new THREE.Vector3(-2.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbY: { text: "USB Y Position", desc: "USB port offset clearance depth shift.", getPos: () => new THREE.Vector3(-2.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbZ: { text: "USB Z Position", desc: "USB port vertical position shift.", getPos: () => new THREE.Vector3(-2.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbW: { text: "USB Width", desc: "Width of the USB connector cutout (X-axis).", getPos: () => new THREE.Vector3(-2.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbH: { text: "USB Height", desc: "Height of the USB connector cutout (Z-axis).", getPos: () => new THREE.Vector3(-2.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
+    usbD: { text: "USB Depth", desc: "Depth of the USB connector cutout (Y-axis).", getPos: () => new THREE.Vector3(-2.0 + params.usbX, STACK_L/2, -31 + params.usbH/2 + params.usbZ), dir: [1, -1] },
     switchX: { text: "Switch X Position", desc: "Switch horizontal displacement offset from the left wall.", getPos: () => new THREE.Vector3(-STACK_W/2 + params.switchX, params.switchY, -38 + params.switchH/2 + params.switchZ), dir: [-1, 1] },
     switchY: { text: "Switch Y Position", desc: "Switch position shift along the left edge.", getPos: () => new THREE.Vector3(-STACK_W/2, params.switchY, -38 + params.switchH/2 + params.switchZ), dir: [-1, 1] },
     switchZ: { text: "Switch Z Position", desc: "Switch vertical position shift.", getPos: () => new THREE.Vector3(-STACK_W/2, params.switchY, -38 + params.switchH/2 + params.switchZ), dir: [-1, 1] },
@@ -1016,7 +1016,7 @@ function rebuild() {
         // DB9
         const db9Geom = new THREE.BoxGeometry(params.db9D, params.db9W, params.db9H);
         const db9Mesh = new THREE.Mesh(db9Geom, materials.cutoutTool);
-        db9Mesh.position.set(STACK_W/2 + params.db9D/2 - 10 + params.db9X, 24.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z);
+        db9Mesh.position.set(STACK_W/2 + params.db9D/2 - 10 + params.db9X, 23.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z);
         designGroup.add(db9Mesh);
 
         // BNC
@@ -1028,13 +1028,13 @@ function rebuild() {
         // RJ45
         const rj45Geom = new THREE.BoxGeometry(params.rj45W, params.rj45D, params.rj45H);
         const rj45Mesh = new THREE.Mesh(rj45Geom, materials.cutoutTool);
-        rj45Mesh.position.set(2.5 + params.rj45X, -STACK_L/2 - params.rj45D/2 + 10 + params.rj45Y, -40 + params.rj45H/2 + params.rj45Z);
+        rj45Mesh.position.set(2.0 + params.rj45X, -STACK_L/2 - params.rj45D/2 + 10 + params.rj45Y, -40 + params.rj45H/2 + params.rj45Z);
         designGroup.add(rj45Mesh);
 
         // USB Charger
         const usbGeom = new THREE.BoxGeometry(params.usbW, params.usbD, params.usbH);
         const usbMesh = new THREE.Mesh(usbGeom, materials.cutoutTool);
-        usbMesh.position.set(-1.0 + params.usbX, STACK_L/2 + params.usbD/2 - 10 + params.usbY, -31 + params.usbH/2 + params.usbZ);
+        usbMesh.position.set(-2.0 + params.usbX, STACK_L/2 + params.usbD/2 - 10 + params.usbY, -31 + params.usbH/2 + params.usbZ);
         designGroup.add(usbMesh);
 
         // Switch
@@ -1492,7 +1492,7 @@ function updateLeaderLines() {
         // DB9 Anchor (Same side +X, bottom corner)
         // DB9 Anchor (Same side +X, top corner)
         drawDimension(
-            new THREE.Vector3(STACK_W/2 + params.db9X, 24.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z),
+            new THREE.Vector3(STACK_W/2 + params.db9X, 23.5 + params.db9Y, -38 + params.db9H/2 + params.db9Z),
             "DB9 Port",
             1, -1
         );
@@ -1506,14 +1506,14 @@ function updateLeaderLines() {
 
         // RJ45 Anchor (Same side Y=-STACK_L/2, under SD slot)
         drawDimension(
-            new THREE.Vector3(2.5 + params.rj45X, -STACK_L/2 + params.rj45Y, -40 + params.rj45H/2 + params.rj45Z),
+            new THREE.Vector3(2.0 + params.rj45X, -STACK_L/2 + params.rj45Y, -40 + params.rj45H/2 + params.rj45Z),
             "RJ45 Port",
             1, 1
         );
 
         // USB Charging Slot (Opposite Y=STACK_L/2, X=-1)
         drawDimension(
-            new THREE.Vector3(-1.0 + params.usbX, STACK_L/2 + params.usbY, -31 + params.usbH/2 + params.usbZ),
+            new THREE.Vector3(-2.0 + params.usbX, STACK_L/2 + params.usbY, -31 + params.usbH/2 + params.usbZ),
             "USB Port",
             1, -1
         );
