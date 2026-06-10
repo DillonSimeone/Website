@@ -54,6 +54,7 @@ The shop section uses a modular product system.
 ## 5. Development & Build Pipeline
 *   **Dev Mode (`npm run dev`)**: The Handlebars `context` is a **function** that re-reads content files on every request, allowing for Hot Module Replacement (HMR) of content fragments.
 *   **Single-File Build**: `vite-plugin-singlefile` inlines all CSS, JS, and small assets into a single `dist/index.html` for extreme portability and speed.
+*   **Build Warning for Agents**: Do NOT run `npm run build` or build commands on this repository. Production builds are managed solely by the user.
 *   **Post-Build Cleanup**: Automatically removes `node_modules`, `.pio`, and other build artifacts from sub-project directories in `dist`.
 
 ---
