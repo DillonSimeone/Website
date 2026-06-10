@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Content Manager</title>
+    <!-- Outfit Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0d10;
+            --panel-bg: #11141a;
+            --card-bg: #181d26;
+            --card-hover: #212836;
+            --border-color: #263142;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff007f;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --font-main: 'Outfit', sans-serif;
+            --font-retro: 'Orbitron', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--panel-bg) 0%, #0d0f13 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        header h1 {
+            font-family: var(--font-retro);
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            color: var(--text-primary);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        header h1 span {
+            color: var(--neon-cyan);
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 30px;
+            gap: 30px;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: fit-content;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar h2 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            padding-left: 10px;
+        }
+
+        .category-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-btn:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .category-btn.active {
+            color: var(--neon-cyan);
+            background-color: rgba(0, 243, 255, 0.05);
+            border-color: rgba(0, 243, 255, 0.2);
+            box-shadow: inset 0 0 12px rgba(0, 243, 255, 0.05);
+        }
+
+        .category-btn .badge {
+            font-size: 0.75rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: var(--text-secondary);
+        }
+
+        .category-btn.active .badge {
+            background-color: rgba(0, 243, 255, 0.2);
+            color: var(--neon-cyan);
+        }
+
+        /* Main Workspace Styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .workspace-header {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .workspace-header h2 {
+            font-family: var(--font-retro);
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            text-transform: uppercase;
+        }
+
+        .workspace-header h2 span {
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            text-transform: none;
+            margin-left: 10px;
+        }
+
+        .btn {
+            background-color: var(--neon-cyan);
+            color: #0b0d10;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-family: var(--font-main);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-secondary);
+            box-shadow: none;
+        }
+
+        .btn-danger {
+            background-color: var(--accent-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+
+        /* Sortable List Styles */
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 200px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: grab;
+            transition: transform 0.2s, background-color 0.2s, border-color 0.2s;
+            position: relative;
+            user-select: none;
+        }
+
+        .card:hover {
+            background-color: var(--card-hover);
+            border-color: rgba(0, 243, 255, 0.3);
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            border: 1px dashed var(--neon-cyan);
+        }
+
+        .drag-handle {
+            color: var(--text-secondary);
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .index-badge {
+            font-family: var(--font-retro);
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            color: var(--neon-cyan);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .card-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-slug {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .action-btn.edit-btn:hover {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+        }
+
+        .action-btn.delete-btn:hover {
+            color: var(--accent-red);
+            border-color: var(--accent-red);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-family: var(--font-retro);
+            font-size: 1.2rem;
+            color: var(--neon-cyan);
+        }
+
+        .close-modal {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--neon-cyan);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* Empty state styling */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background-color: var(--panel-bg);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state p {
+            margin-top: 10px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><span>//</span> PORTFOLIO CONTENT MANAGER</h1>
+        <div style="font-size: 0.9rem; color: var(--text-secondary);">Local Development Server</div>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar Categories -->
+        <div class="sidebar">
+            <h2>Categories</h2>
+            <div id="categories-container">
+                <!-- Loaded dynamically -->
+            </div>
+        </div>
+
+        <!-- Main workspace -->
+        <div class="main-content">
+            <div class="workspace-header">
+                <div>
+                    <h2 id="current-category-title">LOADING...</h2>
+                </div>
+                <button class="btn" id="btn-new-entry">+ Create Entry</button>
+            </div>
+
+            <div class="items-list" id="items-list">
+                <!-- Items loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Entry Modal -->
+    <div class="modal-overlay" id="create-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Create New Entry</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="create-title">Project Title</label>
+                <input type="text" id="create-title" placeholder="e.g. My Awesome Project">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary close-modal">Cancel</button>
+                <button class="btn" id="btn-submit-create">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Entry Modal -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Edit Entry Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="edit-title">Title (Inside H2)</label>
+                <input type="text" id="edit-title">
+            </div>
+            <div class="form-group">
+                <label for="edit-slug">Slug (Filename without extension)</label>
+                <input type="text" id="edit-slug" style="font-family: monospace;">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary close-modal">Cancel</button>
+                <button class="btn" id="btn-submit-edit">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = ''; // Same origin
+        let currentCategory = '';
+        let currentItems = [];
+        let editItemIndex = -1;
+
+        // Dom Elements
+        const categoriesContainer = document.getElementById('categories-container');
+        const currentCategoryTitle = document.getElementById('current-category-title');
+        const itemsList = document.getElementById('items-list');
+        const createModal = document.getElementById('create-modal');
+        const editModal = document.getElementById('edit-modal');
+        const btnNewEntry = document.getElementById('btn-new-entry');
+        const btnSubmitCreate = document.getElementById('btn-submit-create');
+        const btnSubmitEdit = document.getElementById('btn-submit-edit');
+
+        const createTitleInput = document.getElementById('create-title');
+        const editTitleInput = document.getElementById('edit-title');
+        const editSlugInput = document.getElementById('edit-slug');
+
+        // Init App
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadCategories();
+            setupEventListeners();
+        });
+
+        async function loadCategories() {
+            try {
+                const res = await fetch(`${API_URL}/api/categories`);
+                const data = await res.json();
+                
+                categoriesContainer.innerHTML = '';
+                
+                if (data.categories && data.categories.length > 0) {
+                    data.categories.forEach((cat, index) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'category-btn';
+                        btn.innerHTML = `${formatCategoryName(cat)} <span class="badge">${cat}</span>`;
+                        btn.dataset.category = cat;
+                        btn.addEventListener('click', () => selectCategory(cat));
+                        categoriesContainer.appendChild(btn);
+                        
+                        // Select first category by default
+                        if (index === 0) {
+                            selectCategory(cat);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading categories:', err);
+            }
+        }
+
+        function formatCategoryName(name) {
+            return name.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+
+        async function selectCategory(category) {
+            currentCategory = category;
+            
+            // Update UI Active Tab
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                if (btn.dataset.category === category) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            currentCategoryTitle.textContent = `${formatCategoryName(category)} Cards`;
+            await loadContent(category);
+        }
+
+        async function loadContent(category) {
+            itemsList.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">Loading cards...</div>';
+            try {
+                const res = await fetch(`${API_URL}/api/content/${category}`);
+                const data = await res.json();
+                
+                currentItems = data.items || [];
+                renderItems();
+            } catch (err) {
+                console.error('Error loading content:', err);
+                itemsList.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--accent-red);">Failed to load files</div>';
+            }
+        }
+
+        function renderItems() {
+            itemsList.innerHTML = '';
+            
+            if (currentItems.length === 0) {
+                itemsList.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No projects found in this category</h3>
+                        <p>Click "Create Entry" at the top to add a new HTML fragment.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            currentItems.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.draggable = true;
+                card.dataset.index = index;
+
+                card.innerHTML = `
+                    <div class="drag-handle">☰</div>
+                    <div class="index-badge">${item.prefix || String(index).padStart(2, '0')}</div>
+                    <div class="card-details">
+                        <div class="card-title">${escapeHtml(item.title || '(No Title)')}</div>
+                        <div class="card-slug">${item.filename}</div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-btn edit-btn" onclick="openEditModal(${index})" title="Edit Name & Title">✎</button>
+                        <button class="action-btn delete-btn" onclick="deleteItem(${index})" title="Delete Entry">🗑</button>
+                    </div>
+                `;
+
+                // Drag and drop event listeners
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragover', handleDragOver);
+                card.addEventListener('drop', handleDrop);
+                card.addEventListener('dragend', handleDragEnd);
+
+                itemsList.appendChild(card);
+            });
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --- Drag and Drop Handling ---
+        let dragSourceEl = null;
+
+        function handleDragStart(e) {
+            dragSourceEl = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.index);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (dragSourceEl !== this) {
+                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                const toIndex = parseInt(this.dataset.index, 10);
+
+                // Reorder array
+                const movedItem = currentItems.splice(fromIndex, 1)[0];
+                currentItems.splice(toIndex, 0, movedItem);
+
+                renderItems();
+                saveNewOrder();
+            }
+            return false;
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+        }
+
+        async function saveNewOrder() {
+            try {
+                const fileOrder = currentItems.map(item => item.filename);
+                const res = await fetch(`${API_URL}/api/reorder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        category: currentCategory,
+                        files: fileOrder
+                    })
+                });
+
+                if (res.ok) {
+                    // Refresh data to show official prefixes updated from server
+                    await loadContent(currentCategory);
+                } else {
+                    alert('Failed to save new order!');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server error saving order');
+            }
+        }
+
+        // --- Modal & Action Handlers ---
+        function setupEventListeners() {
+            btnNewEntry.addEventListener('click', () => {
+                createTitleInput.value = '';
+                createModal.classList.add('active');
+                createTitleInput.focus();
+            });
+
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    createModal.classList.remove('active');
+                    editModal.classList.remove('active');
+                });
+            });
+
+            btnSubmitCreate.addEventListener('click', submitCreate);
+            btnSubmitEdit.addEventListener('click', submitEdit);
+        }
+
+        async function submitCreate() {
+            const title = createTitleInput.value.trim();
+            if (!title) {
+                alert('Title cannot be empty!');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: currentCategory, title })
+                });
+
+                if (res.ok) {
+                    createModal.classList.remove('active');
+                    await loadContent(currentCategory);
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to create entry');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server error creating entry');
+            }
+        }
+
+        window.openEditModal = function(index) {
+            editItemIndex = index;
+            const item = currentItems[index];
+
+            editTitleInput.value = item.title;
+            editSlugInput.value = item.slug;
+
+            editModal.classList.add('active');
+            editTitleInput.focus();
+        };
+
+        async function submitEdit() {
+            const newTitle = editTitleInput.value.trim();
+            const newSlug = editSlugInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+
+            if (!newTitle || !newSlug) {
+                alert('Title and Slug cannot be empty!');
+                return;
+            }
+
+            const item = currentItems[editItemIndex];
+
+            try {
+                const res = await fetch(`${API_URL}/api/rename`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        category: currentCategory,
+                        filename: item.filename,
+                        newSlug: newSlug,
+                        newTitle: newTitle
+                    })
+                });
+
+                if (res.ok) {
+                    editModal.classList.remove('active');
+                    await loadContent(currentCategory);
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to edit entry');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server error editing entry');
+            }
+        }
+
+        window.deleteItem = async function(index) {
+            const item = currentItems[index];
+            const confirmMsg = `Are you sure you want to delete "${item.title || item.filename}"?\nThis will permanently delete the file in your project.`;
+            
+            if (confirm(confirmMsg)) {
+                try {
+                    const res = await fetch(`${API_URL}/api/delete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            category: currentCategory,
+                            filename: item.filename
+                        })
+                    });
+
+                    if (res.ok) {
+                        await loadContent(currentCategory);
+                    } else {
+                        alert('Failed to delete file');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Server error deleting file');
+                }
+            }
+        };
+    </script>
+</body>
+</html>
