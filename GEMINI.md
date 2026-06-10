@@ -59,6 +59,20 @@ The shop section uses a modular product system.
 ---
 
 ## 6. Maintenance Tools
-*   **`CreateEntry.bat`**: The recommended way to add new projects. Supports Laser, 3D Print, Work, Mini-Projects, ESP32, and Shop categories.
+*   **`ManageContent.bat`**: The recommended visual tool to manage content. It starts a local zero-dependency Node.js server and launches a web GUI to reorder cards, edit names, delete entries, and add new projects.
+*   **`CreateEntry.bat`**: The legacy command-line tool to add new projects. Supports Laser, 3D Print, Work, Mini-Projects, ESP32, and Shop categories.
 *   **`RegenerateBackground.bat`**: Located in `legacy/`, used to generate new SVG skeletons if the background layout needs to change.
+
+---
+
+## 7. Portfolio Content Manager
+A visual content editor and organizer built directly into the repository.
+
+### Architecture:
+*   **Startup**: `ManageContent.bat` in the root launches a local server on `http://localhost:3456`.
+*   **Backend Server** (`tools/content-manager/server.js`): Uses only native Node.js core modules (`http`, `fs`, `path`) to eliminate dependency overhead.
+*   **Frontend UI** (`tools/content-manager/public/index.html`): A custom-tailored dark UI that fetches category metadata and supports:
+    *   **Drag-and-Drop Reordering**: Dragging items automatically re-sequences their filename prefixes (e.g. `00-name.html`, `01-name.html`, etc.) in the file system to update the order.
+    *   **Live Renaming/Editing**: Parses and writes back updated project titles (stored in the first `<h2>` tag of the HTML fragments) and filename slugs.
+    *   **Automated Index Cleanup**: Deleting entries dynamically shifts the indices of remaining files down to prevent gaps in sequence numbers.
 
