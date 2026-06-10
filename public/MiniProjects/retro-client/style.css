@@ -1,0 +1,807 @@
+/* -------------------------------------------------------------
+ * Windows 95/98 Retro UI Design System
+ * ------------------------------------------------------------- */
+
+/* Reset and Core Variables */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --w-bg: #c0c0c0;
+  --w-light: #ffffff;
+  --w-shadow-dark: #404040;
+  --w-shadow-light: #808080;
+  
+  --w-blue-start: #000080;
+  --w-blue-end: #1084d0;
+  --w-blue-text: #ffffff;
+  
+  --w-gray-text: #000000;
+  --w-disabled-text: #808080;
+
+  --desktop-bg: #008080; /* Classic Win95 Teal */
+  
+  --font-ui: "MS Sans Serif", -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Geneva, sans-serif;
+  --font-title: 'Share Tech Mono', monospace;
+  --font-terminal: 'Courier New', Courier, monospace;
+}
+
+body {
+  background-color: var(--desktop-bg);
+  color: var(--w-gray-text);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+  position: relative;
+}
+
+/* -------------------------------------------------------------
+ * 3D Bevel Utilities (The core of 95 styling)
+ * ------------------------------------------------------------- */
+.outset-bevel {
+  border: 2px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+  box-shadow: inset 1px 1px 0px var(--w-light), inset -1px -1px 0px rgba(0,0,0,0.1);
+  background-color: var(--w-bg);
+}
+
+.inset-field {
+  border: 2px solid;
+  border-color: var(--w-shadow-light) var(--w-light) var(--w-light) var(--w-shadow-light);
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* -------------------------------------------------------------
+ * Desktop Environment & Icons
+ * ------------------------------------------------------------- */
+.desktop {
+  width: 100%;
+  height: calc(100vh - 30px);
+  position: relative;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 20px;
+}
+
+.desktop-icon {
+  width: 75px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.desktop-icon:hover .icon-wrapper {
+  filter: brightness(1.2);
+}
+
+.desktop-icon:active .icon-label {
+  background-color: var(--w-blue-start);
+  color: white;
+  outline: 1px dotted white;
+}
+
+.icon-wrapper {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  filter: drop-shadow(1px 1px 0 #000);
+  margin-bottom: 5px;
+}
+
+.icon-wrapper i {
+  width: 30px;
+  height: 30px;
+  stroke-width: 1.5px;
+}
+
+#icon-contacts .icon-wrapper i { color: #5bc0be; }
+#icon-analyzer .icon-wrapper i { color: #f4d35e; }
+#icon-notepad .icon-wrapper i { color: #8a63e5; }
+#icon-about .icon-wrapper i { color: #ee964b; }
+
+.icon-label {
+  color: white;
+  font-size: 10px;
+  text-shadow: 1px 1px 1px #000000;
+  padding: 2px 4px;
+  word-wrap: break-word;
+  max-width: 75px;
+}
+
+/* -------------------------------------------------------------
+ * Retro Window Styling
+ * ------------------------------------------------------------- */
+.window {
+  position: absolute;
+  background-color: var(--w-bg);
+  border: 2px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+  box-shadow: inset 1px 1px 0px var(--w-light);
+  display: flex;
+  flex-direction: column;
+  padding: 2px;
+  min-width: 250px;
+}
+
+.window.minimized {
+  display: none !important;
+}
+
+.title-bar {
+  background: linear-gradient(90deg, var(--w-blue-start), var(--w-blue-end));
+  color: var(--w-blue-text);
+  padding: 3px 5px 3px 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  font-size: 11px;
+  cursor: move;
+}
+
+.window.inactive .title-bar {
+  background: linear-gradient(90deg, #808080, #c0c0c0);
+  color: #d8d8d8;
+}
+
+.title-bar-text {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.window-mini-icon {
+  width: 13px !important;
+  height: 13px !important;
+  stroke-width: 2px;
+}
+
+.title-bar-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.title-bar-controls button {
+  width: 14px;
+  height: 12px;
+  background-color: var(--w-bg);
+  border: 1px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+  position: relative;
+  cursor: pointer;
+}
+
+.title-bar-controls button:active {
+  border-color: var(--w-shadow-light) var(--w-light) var(--w-light) var(--w-shadow-light);
+}
+
+.title-bar-controls button[aria-label="Close"]::after {
+  content: "✕";
+  font-size: 8px;
+  font-weight: bold;
+  color: #000;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.title-bar-controls button[aria-label="Minimize"]::after {
+  content: "";
+  width: 6px;
+  height: 2px;
+  background-color: #000;
+  position: absolute;
+  bottom: 2px;
+  left: 3px;
+}
+
+.title-bar-controls button[aria-label="Maximize"]::after {
+  content: "";
+  width: 6px;
+  height: 5px;
+  border: 1px solid #000;
+  border-top-width: 2px;
+  position: absolute;
+  top: 2px;
+  left: 3px;
+}
+
+.title-bar-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Menu Bar */
+.menu-bar {
+  display: flex;
+  background-color: var(--w-bg);
+  border-bottom: 1px solid var(--w-shadow-light);
+  padding: 2px 0;
+}
+
+.menu-item {
+  position: relative;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background-color: var(--w-blue-start);
+  color: white;
+}
+
+.menu-item span {
+  font-size: 11px;
+}
+
+/* Dropdown Menus */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: var(--w-bg);
+  border: 2px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+  z-index: 999;
+  min-width: 140px;
+  padding: 2px;
+}
+
+.menu-item:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 4px 10px;
+  color: #000000;
+  font-size: 11px;
+  display: block;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  background-color: var(--w-blue-start);
+  color: #ffffff;
+}
+
+.dropdown-divider {
+  height: 1px;
+  border-bottom: 1px solid var(--w-light);
+  background-color: var(--w-shadow-light);
+  margin: 3px 2px;
+}
+
+.window-body {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* -------------------------------------------------------------
+ * Form elements & Inputs
+ * ------------------------------------------------------------- */
+.retro-btn {
+  background-color: var(--w-bg);
+  border: 2px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+  box-shadow: inset 1px 1px 0px var(--w-light);
+  padding: 4px 12px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.retro-btn:active:not(:disabled) {
+  border-color: var(--w-shadow-light) var(--w-light) var(--w-light) var(--w-shadow-light);
+  box-shadow: none;
+  padding: 5px 11px 3px 13px; /* Shift text slightly down-right */
+}
+
+.retro-btn:disabled {
+  color: var(--w-disabled-text);
+  cursor: not-allowed;
+}
+
+.retro-btn i {
+  width: 12px;
+  height: 12px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.small-btn {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.retro-input {
+  border: 2px solid;
+  border-color: var(--w-shadow-light) var(--w-light) var(--w-light) var(--w-shadow-light);
+  padding: 4px 6px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  outline: none;
+}
+
+.retro-input:focus {
+  background-color: #ffffd0; /* subtle yellow focus tint */
+}
+
+/* -------------------------------------------------------------
+ * Inset Panels & Lists
+ * ------------------------------------------------------------- */
+.status-panel {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.status-row .label {
+  font-weight: bold;
+}
+
+.scrollable-list {
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.retro-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.list-item {
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.list-item:hover {
+  background-color: #f0f0f0;
+}
+
+.list-item.active {
+  background-color: var(--w-blue-start) !important;
+  color: white !important;
+}
+
+.list-item.active .list-subtext {
+  color: #d8d8d8;
+}
+
+.list-subtext {
+  font-size: 9px;
+  color: #666;
+}
+
+.list-placeholder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: var(--w-disabled-text);
+  font-style: italic;
+  padding: 20px;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------
+ * Windows Scrollbar Customization
+ * ------------------------------------------------------------- */
+.scrollable-list::-webkit-scrollbar,
+.messages-scroll-pane::-webkit-scrollbar {
+  width: 16px;
+  background-color: #dfdfdf;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb,
+.messages-scroll-pane::-webkit-scrollbar-thumb {
+  background-color: var(--w-bg);
+  border: 1px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+  box-shadow: inset 1px 1px 0px var(--w-light);
+}
+
+.scrollable-list::-webkit-scrollbar-button,
+.messages-scroll-pane::-webkit-scrollbar-button {
+  background-color: var(--w-bg);
+  display: block;
+  height: 16px;
+  width: 16px;
+  border: 1px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+}
+
+/* -------------------------------------------------------------
+ * Analyzer specific modules
+ * ------------------------------------------------------------- */
+.parser-setup-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--w-bg);
+  padding: 4px;
+}
+
+.parser-setup-bar input {
+  flex: 1;
+}
+
+.pane-header {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.active-convo-header {
+  background-color: var(--w-bg);
+  border: 1px solid var(--w-shadow-light);
+  padding: 5px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.active-title {
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.active-phone {
+  color: #333;
+  margin-left: 8px;
+  font-size: 10px;
+}
+
+.search-filter-bar {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 6px;
+  margin: 4px 0;
+  background: white;
+}
+
+.filter-search-icon {
+  width: 12px !important;
+  height: 12px !important;
+  color: var(--w-shadow-light);
+}
+
+.search-filter-bar input {
+  border: none;
+  flex: 1;
+  font-size: 11px;
+  outline: none;
+}
+
+.matches-badge {
+  background: #f4d35e;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.chat-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* Retro Log Viewer Text Layout (Highly readable to humans & AI) */
+.transcript-line {
+  line-height: 1.5;
+  margin-bottom: 4px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  border-bottom: 1px dashed #f0f0f0;
+  padding-bottom: 3px;
+}
+
+.transcript-line .time {
+  color: #0000ff;
+  font-weight: bold;
+}
+
+.transcript-line .sender {
+  color: #a00000;
+  font-weight: bold;
+}
+
+.transcript-line.me-sender .sender {
+  color: #008000;
+}
+
+.transcript-line .text-body {
+  color: #000000;
+}
+
+/* Highlights for search */
+.highlight {
+  background-color: #ff00ff;
+  color: white;
+  font-weight: bold;
+}
+
+/* -------------------------------------------------------------
+ * Windows 95/98 Taskbar
+ * ------------------------------------------------------------- */
+.taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 30px;
+  background-color: var(--w-bg);
+  border-top: 2px solid var(--w-light);
+  box-shadow: 0 -1px 0 var(--w-shadow-light);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  gap: 6px;
+}
+
+.start-button {
+  height: 22px;
+  background-color: var(--w-bg);
+  border: 2px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+  box-shadow: inset 1px 1px 0px var(--w-light);
+  padding: 0 6px;
+  cursor: pointer;
+}
+
+.start-button:active {
+  border-color: var(--w-shadow-light) var(--w-light) var(--w-light) var(--w-shadow-light);
+  box-shadow: none;
+}
+
+.start-btn-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.start-icon {
+  width: 14px !important;
+  height: 14px !important;
+  color: #a00;
+}
+
+.start-button span {
+  font-weight: bold;
+  font-size: 11px;
+}
+
+/* Taskbar lists */
+.task-buttons {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.task-button {
+  height: 22px;
+  min-width: 100px;
+  max-width: 150px;
+  background-color: var(--w-bg);
+  border: 2px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+  box-shadow: inset 1px 1px 0px var(--w-light);
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  gap: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.task-button span {
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-button i {
+  width: 12px !important;
+  height: 12px !important;
+  flex-shrink: 0;
+}
+
+.task-button.active {
+  background-color: #e0e0e0;
+  border-color: var(--w-shadow-light) var(--w-light) var(--w-light) var(--w-shadow-light);
+  box-shadow: none;
+  font-weight: bold;
+}
+
+/* System Tray */
+.system-tray {
+  border: 2px solid;
+  border-color: var(--w-shadow-light) var(--w-light) var(--w-light) var(--w-shadow-light);
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  gap: 8px;
+  background-color: var(--w-bg);
+}
+
+.tray-icons {
+  display: flex;
+  gap: 4px;
+}
+
+.tray-clock {
+  font-size: 10px;
+}
+
+/* Start Menu Popup */
+.start-menu {
+  position: absolute;
+  bottom: 28px;
+  left: 4px;
+  width: 180px;
+  background-color: var(--w-bg);
+  border: 2px solid;
+  border-color: var(--w-light) var(--w-shadow-light) var(--w-shadow-light) var(--w-light);
+  display: flex;
+  z-index: 10000;
+}
+
+.start-menu-sidebar {
+  width: 24px;
+  background: linear-gradient(180deg, var(--w-blue-start), var(--w-blue-end));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+}
+
+.sidebar-text {
+  color: white;
+  font-family: var(--font-title);
+  font-weight: bold;
+  font-size: 14px;
+  transform: rotate(-90deg);
+  transform-origin: bottom center;
+  white-space: nowrap;
+}
+
+.start-menu-items {
+  flex: 1;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+}
+
+.start-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  text-decoration: none;
+  color: black;
+  cursor: pointer;
+}
+
+.start-menu-item:hover {
+  background-color: var(--w-blue-start);
+  color: white;
+}
+
+.start-menu-item i {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.menu-divider {
+  height: 1px;
+  border-bottom: 1px solid var(--w-light);
+  background-color: var(--w-shadow-light);
+  margin: 4px 2px;
+}
+
+/* Status Bar */
+.status-bar {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.status-bar-field {
+  border: 1px solid;
+  border-color: var(--w-shadow-light) var(--w-light) var(--w-light) var(--w-shadow-light);
+  padding: 2px 4px;
+  font-size: 10px;
+  flex: 1;
+  background-color: var(--w-bg);
+}
+
+/* Spinner Retro blocks */
+.spinner-retro {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--w-shadow-light);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.8s infinite linear;
+  margin-bottom: 5px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.hidden {
+  display: none !important;
+}
+
+.description-text {
+  font-size: 10px;
+  color: #404040;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+/* Notepad & Drag-drop Custom styles */
+.notepad-textarea {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: 6px;
+  font-family: var(--font-terminal);
+  font-size: 12px;
+  line-height: 1.4;
+  resize: none;
+  outline: none;
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.drag-drop-zone.hover {
+  background-color: #e0f0ff !important;
+  border-color: #000080 !important;
+  color: #000080 !important;
+}
