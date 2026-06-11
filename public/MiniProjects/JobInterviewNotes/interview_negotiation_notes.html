@@ -55,7 +55,8 @@
       <div class="item">
         <div>
           <div class="item-label">Down payment assistance</div>
-          <div class="item-note">Optional. Preserves investment capital if mortgage rate beats portfolio yield. First-time buyer, also exploring Kentucky programs independently.</div>
+          <div class="item-note">Optional. Preserves investment capital if mortgage rate beats portfolio yield.
+            First-time buyer, also exploring Kentucky programs independently.</div>
         </div>
         <div class="item-value">$10k–$15k</div>
       </div>
@@ -133,21 +134,24 @@
       <div class="item">
         <div>
           <div class="item-label">Open source & side projects</div>
-          <div class="item-note">Explicit IP exclusion for personal projects built outside of work hours on my own hardware.</div>
+          <div class="item-note">Explicit IP exclusion for personal projects built outside of work hours on my own
+            hardware.</div>
         </div>
         <div class="item-value">IP exclusion</div>
       </div>
       <div class="item">
         <div>
           <div class="item-label">Conference/travel budget</div>
-          <div class="item-note">Teardown, NIME, ASSETS. Keeps my professional presence active, which highlights company talent.</div>
+          <div class="item-note">Teardown, NIME, ASSETS. Keeps my professional presence active, which highlights company
+            talent.</div>
         </div>
         <div class="item-value">$2k–$3k/yr</div>
       </div>
     </div>
 
     <div class="card">
-      <div class="section-header">Dispute resolution clause <span class="badge badge-flex">propose proactively</span></div>
+      <div class="section-header">Dispute resolution clause <span class="badge badge-flex">propose proactively</span>
+      </div>
       <div class="clause">
         "In the event of any employment dispute, both parties agree to attempt resolution in good faith through the
         following steps before pursuing legal action: (1) direct written communication between employee and direct
@@ -165,6 +169,112 @@
       </div>
     </div>
   </div>
+
+  <!-- Reverse Interviewing Easter-Egg Panel (Triggered by typing 'shrek') -->
+  <div id="shrek-panel" class="shrek-panel">
+    <div class="shrek-panel-header">
+      <h2 class="shrek-panel-title">Reverse Interviewing</h2>
+      <button class="shrek-panel-close" aria-label="Close panel" onclick="closeShrekPanel()">&times;</button>
+    </div>
+    <div class="shrek-panel-content">
+      <div class="shrek-intro">
+        "Interviews are a two-way street. What should I be asking them?"
+      </div>
+
+      <div class="shrek-section">
+        <div class="shrek-section-title">Core Instincts</div>
+        <ul class="shrek-list">
+          <li>
+            <div class="shrek-item-q">How is cashflow looking, and how far in the green are we? (A rough estimate is
+              fine.)</div>
+            <div class="shrek-item-note">Pointed but professional. Signals you're actively evaluating their stability.
+            </div>
+          </li>
+          <li>
+            <div class="shrek-item-q">If the team got together to complain, what would the loudest complaint be?</div>
+            <div class="shrek-item-note">Reveals actual cultural friction points without being aggressive.</div>
+          </li>
+          <li>
+            <div class="shrek-item-q">What's caused people to not work out here in the past?</div>
+            <div class="shrek-item-note">Discussion topic. Provides direct insight into expectations and management
+              styles.</div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="shrek-section">
+        <div class="shrek-section-title">On the work itself</div>
+        <ul class="shrek-list">
+          <li>
+            <div class="shrek-item-q">What does the current test setup look like? What would I be replacing or building
+              on top of?</div>
+          </li>
+          <li>
+            <div class="shrek-item-q">What is the biggest unsolved problem on the bench right now?</div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="shrek-section">
+        <div class="shrek-section-title">On the team</div>
+        <ul class="shrek-list">
+          <li>
+            <div class="shrek-item-q">How does Darin prefer to communicate day-to-day (Slack, tickets, or something
+              else)?</div>
+          </li>
+          <li>
+            <div class="shrek-item-q">How long has the core team been together?</div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="shrek-section">
+        <div class="shrek-section-title">On growth</div>
+        <ul class="shrek-list">
+          <li>
+            <div class="shrek-item-q">Is there a path toward owning a subsystem or product direction, or is this
+              primarily execution work?</div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="shrek-section">
+        <div class="shrek-section-title">On the CEO situation</div>
+        <ul class="shrek-list">
+          <li>
+            <div class="shrek-item-q">"How stable is the team structure right now?"</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div id="shrek-overlay" class="shrek-overlay" onclick="closeShrekPanel()"></div>
+
+  <script>
+    function openShrekPanel() {
+      document.getElementById('shrek-panel').classList.add('active');
+      document.getElementById('shrek-overlay').classList.add('active');
+    }
+
+    function closeShrekPanel() {
+      document.getElementById('shrek-panel').classList.remove('active');
+      document.getElementById('shrek-overlay').classList.remove('active');
+    }
+
+    let typed = '';
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      typed += e.key.toLowerCase();
+      if (typed.endsWith('shrek')) {
+        openShrekPanel();
+        typed = '';
+      }
+      if (typed.length > 10) {
+        typed = typed.substring(typed.length - 5);
+      }
+    });
+  </script>
 </body>
 
 </html>
