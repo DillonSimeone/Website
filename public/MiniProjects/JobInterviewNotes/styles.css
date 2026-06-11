@@ -340,6 +340,152 @@ body {
   
   .item-value {
     align-self: flex-start;
-    margin-top: 2px;
+    }
+}
+
+/* Shrek Pop-out Panel */
+.shrek-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 14, 23, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.shrek-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.shrek-panel {
+  position: fixed;
+  top: 0;
+  right: -450px;
+  width: 100%;
+  max-width: 450px;
+  height: 100vh;
+  background: rgba(18, 24, 38, 0.95);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shrek-panel.active {
+  right: 0;
+}
+
+.shrek-panel-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border-tertiary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shrek-panel-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-success);
+  margin: 0;
+}
+
+.shrek-panel-close {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.shrek-panel-close:hover {
+  color: var(--color-text-primary);
+}
+
+.shrek-panel-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.shrek-intro {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  border-left: 3px solid var(--color-text-success);
+  padding-left: 10px;
+  font-style: italic;
+}
+
+.shrek-section {
+  margin-bottom: 1.5rem;
+}
+
+.shrek-section-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.shrek-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.shrek-list li {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: 12px;
+  margin-bottom: 10px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.shrek-list li:hover {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.shrek-item-q {
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.shrek-item-note {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--color-border-tertiary);
+}
+
+@media (max-width: 480px) {
+  .shrek-panel {
+    max-width: 100%;
+    right: -100%;
   }
 }
