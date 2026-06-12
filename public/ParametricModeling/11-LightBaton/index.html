@@ -75,11 +75,11 @@
                                         step="any" value="3.0"> mm</span></div>
                             <input type="range" id="input-rodWall" min="1.0" max="5.0" step="0.5" value="3.0">
                         </div>
-                        <div class="param-row" data-param="rodLength">
-                            <div class="param-info"><span class="param-label">Rod Total Length</span><span
-                                    class="param-value"><input type="number" id="val-rodLength" class="param-num-input"
-                                        step="any" value="533.4"> mm</span></div>
-                            <input type="range" id="input-rodLength" min="400" max="700" step="1" value="533.4">
+                        <div class="param-row" data-param="handleLength">
+                            <div class="param-info"><span class="param-label">Handle Length</span><span
+                                    class="param-value"><input type="number" id="val-handleLength" class="param-num-input"
+                                        step="any" value="110.0"> mm</span></div>
+                            <input type="range" id="input-handleLength" min="110" max="300" step="5" value="110.0">
                         </div>
                     </div>
                 </div>
@@ -127,7 +127,7 @@
                 <!-- CYLINDER TAB -->
                 <div id="tab-cylinder" class="tab-content-panel">
                     <div class="control-group">
-                        <div class="control-group-title">Transparent Cylinders (×3)</div>
+                        <div class="control-group-title">Transparent Cylinders</div>
                         <div class="param-row" data-param="cylOD">
                             <div class="param-info"><span class="param-label">Cylinder Outer Diameter</span><span
                                     class="param-value"><input type="number" id="val-cylOD" class="param-num-input"
@@ -141,10 +141,17 @@
                             <input type="range" id="input-cylWall" min="1.0" max="4.0" step="0.5" value="2.0">
                         </div>
                         <div class="param-row" data-param="ledSectionLen">
-                            <div class="param-info"><span class="param-label">LED Section Length</span><span
+                            <div class="param-info"><span class="param-label">Max LED Strip Length</span><span
                                     class="param-value"><input type="number" id="val-ledSectionLen"
-                                        class="param-num-input" step="any" value="304.8"> mm</span></div>
-                            <input type="range" id="input-ledSectionLen" min="200" max="500" step="1" value="304.8">
+                                        class="param-num-input" step="any" min="300" value="304.8"> mm</span></div>
+                        </div>
+                        <div class="param-row" data-param="maxCylLen">
+                            <div class="param-info"><span class="param-label">Max Cylinder Section Length</span><span
+                                    class="param-value" style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="val-maxCylLen" class="param-num-input"
+                                        step="any" min="10" value="60.0"> mm
+                                    <button class="btn btn-accent" id="btn-update-cylinder" style="padding: 2px 8px; font-size: 0.65rem; margin: 0; height: 20px; line-height: 14px;">UPDATE</button>
+                                </span></div>
                         </div>
                     </div>
                 </div>
@@ -359,7 +366,7 @@
                     </div>
                     <div class="spec-item">
                         <span class="spec-label">Total Screws:</span>
-                        <span class="spec-val"
+                        <span class="spec-val" id="spec-total-screws"
                             style="color: var(--bp-accent); text-shadow: 0 0 5px var(--bp-accent);">28× M3</span>
                     </div>
 

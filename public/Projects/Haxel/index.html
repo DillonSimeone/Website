@@ -45,7 +45,7 @@
             <!-- LEFT: EXECUTIVE SUMMARY -->
             <div class="summary-column">
                 <section class="doc-card" style="margin-bottom: 0;">
-                    <h2>1. What Is Haxel?</h2>
+                    <h2>What Is Haxel?</h2>
                     <p>
                         <strong>Haxel</strong> is what happens when you ask "why doesn't <a
                             href="https://kno.wled.ge/">WLED</a> exist for haptics?". It's open-source firmware that
@@ -64,33 +64,6 @@
                         build a proper pattern runtime instead. Pixelblaze drives thousands of pixels through a
                         scriptable compiler running on an ESP32, and the result is an instrument, not a firmware blob.
                         That's the model Haxel is trying to bring to haptics.
-                    </p>
-                    <p>
-                        <strong>Built at a hackathon.</strong> This came together at the
-                        <a href="https://luma.com/bf9gpp2z" target="_blank"
-                            style="color:var(--accent-1); text-decoration:underline;">State of Oregon | Claude Code
-                            Hackathon</a> (Anthropic + Vibes DIY at the PSU Business Accelerator). I prepped a toolkit
-                        of prompts beforehand
-                        in my <a href="../AgentArsenal/index.html"
-                            style="color:var(--accent-1); text-decoration:underline;">Agent Arsenal</a>, dropped the API
-                        key in when the
-                        hackathon started, and let the agent swarm run.
-                    </p>
-                    <p>
-                        The swarm had a decade of embedded hardware and firmware work to draw on from my codebase, and
-                        got it to a point where I could finish by hand. Most of it came
-                        from
-                        <a href="https://www.researchgate.net/publication/382625935_GestoLumina_Gesture_interpreted_Light_Sound_and_Haptics_Towards_a_Framework_for_Universal_Music_Design "
-                            style="color:var(--accent-1); text-decoration:underline;">GestoLumina (GeLu)</a>, a
-                        gesture-sensing haptic and LED bracer presented at NIME 2024 and documented in a <a
-                            href="https://dl.acm.org/doi/10.1145/3663547.3746396">group
-                            autoethnography</a> submitted to ACM SIGACCESS, both produced with the Universal Music
-                        Design team
-                        at CymaSpace. That work sits inside a broader practice of Deaf-led assistive music technology:
-                        a guest lecture at <a
-                            href="https://www.pcc.edu/harts/2025/04/21/sonic-interface-designer-dillon-simeone-visits-muc-262/">PCC's
-                            Interface Design</a> course, and ongoing NEA-funded work connecting
-                        haptic and audio-reactive systems to Deaf and Hard-of-Hearing K-12 music education.
                     </p>
 
                     <div class="tech-table-wrapper" style="margin-top: auto;">
@@ -290,7 +263,7 @@
         <!-- SPECIFICATIONS & ARCHITECTURE SECTION -->
         <div class="bottom-docs-column" id="architecture">
             <section class="doc-card">
-                <h2>2. How the HAL Works</h2>
+                <h2>How the HAL Works</h2>
                 <p>
                     The core problem with haptic hardware is that every actuator type is fundamentally different. An LRA
                     needs AC resonance
@@ -319,7 +292,7 @@
             </section>
 
             <section class="doc-card">
-                <h2>3. Audio-Reactive Haptics</h2>
+                <h2>Audio-Reactive Haptics</h2>
                 <p>
                     One of the things I'm most excited about here is the audio pipeline! Haxel runs a 256-point FFT on
                     audio input from
@@ -338,6 +311,26 @@
         <footer class="main-footer">
             <p>Haxel &copy; 2026. Made Possible by Dillon Simeone and the Claude Code Agent Swarms.</p>
         </footer>
+    </div>
+
+    <!-- Haptics Warning Modal -->
+    <div id="haptics-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+            <div class="modal-icon-container">
+                <svg class="modal-warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                    </path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <h4>Haptic Feedback Support</h4>
+            <p>This simulator features real-time haptics, confirmed working on <strong>Chrome for Android</strong>. Note
+                that Apple does not allow iOS browsers to control device haptics.</p>
+            <button class="btn primary modal-dismiss-btn" id="modal-dismiss-btn">Dismiss</button>
+        </div>
     </div>
 
     <!-- SCRIPTS -->

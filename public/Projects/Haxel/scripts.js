@@ -70,6 +70,52 @@ if (!("vibrate" in navigator)) {
     }
 }
 
+// ─── HAPTICS WARNING MODAL LOGIC ─────────────────────────────────────────────
+const hapticsModal = document.getElementById("haptics-modal");
+
+function showHapticsModal() {
+    if (hapticsModal) {
+        hapticsModal.classList.add("active");
+    }
+}
+
+function closeHapticsModal() {
+    if (hapticsModal) {
+        hapticsModal.classList.remove("active");
+    }
+}
+
+// Check if mobile and device haptics cannot be controlled
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const canControlHaptics = "vibrate" in navigator;
+
+if (isMobile && !canControlHaptics) {
+    // Show modal if haptics cannot be controlled on mobile
+    showHapticsModal();
+}
+
+// Dismiss easily by clicking on anything
+if (hapticsModal) {
+    hapticsModal.addEventListener("click", () => {
+        closeHapticsModal();
+    });
+}
+
+// Keyboard listener: typing 'shrek' triggers the modal
+let shrekBuffer = "";
+window.addEventListener("keydown", (e) => {
+    if (e.key && e.key.length === 1) {
+        shrekBuffer += e.key.toLowerCase();
+        if (shrekBuffer.endsWith("shrek")) {
+            showHapticsModal();
+            shrekBuffer = ""; // Reset buffer after triggering
+        }
+        if (shrekBuffer.length > 10) {
+            shrekBuffer = shrekBuffer.slice(-5);
+        }
+    }
+});
+
 // ─── CONTROL BINDINGS ───────────────────────────────────────────────────────
 const brightInput = document.getElementById("bright");
 const brightVal = document.getElementById("brightVal");
