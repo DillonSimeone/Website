@@ -12,7 +12,8 @@ const params = {
     // Rod
     rodOD: 21.5,
     rodWall: 3.0,
-    rodLength: 533.4,   // 21 inches in mm
+    rodLength: 587.8,   // Calculated dynamically as capThick + handleLength + guardLength + ledSectionLen
+    handleLength: 110.0, // default grip size in mm
 
     // Guard / Sled Housing
     guardWall: 3.0,
@@ -27,6 +28,7 @@ const params = {
     cylOD: 38.0,
     cylWall: 2.0,
     ledSectionLen: 304.8, // 1 foot in mm
+    maxCylLen: 60.0,
 
     // Connector Rings
     ringHeight: 17.0,
@@ -194,15 +196,34 @@ function manifoldToThree(manifoldMesh) {
 //   Rod ends at Z = rodLength
 
 function getLayoutZones() {
+    // Determine the rodLength dynamically based on other components
+    params.rodLength = params.capThick + params.handleLength + params.guardLength + params.ledSectionLen;
+
     const capTop = params.capThick;
-    const guardStart = params.rodLength - params.guardLength - params.ledSectionLen;
+    const handleLength = params.handleLength;
+    const guardStart = capTop + handleLength;
     const guardEnd = guardStart + params.guardLength;
     const ledStart = guardEnd;
     const ledEnd = guardEnd + params.ledSectionLen;
-    const cylLen = params.ledSectionLen / 3;
+    const actualLedLen = params.ledSectionLen;
 
-    // Handle is the exposed rod between endcap top and guard start
-    const handleLength = guardStart - capTop;
+    // Solve iteratively for N (number of cylinders) and cylLen (cylinder length)
+    const H_center = params.ringHeight * 0.5;
+    let N = 1;
+    let cylLen = 0;
+    while (true) {
+        cylLen = (actualLedLen - (N - 0.5) * H_center) / N;
+        if (cylLen <= params.maxCylLen) {
+            break;
+        }
+        const nextCylLen = (actualLedLen - (N + 0.5) * H_center) / (N + 1);
+        if (nextCylLen < 10.0) {
+            break;
+        }
+        N++;
+    }
+    if (N < 1) N = 1;
+    if (cylLen < 5.0) cylLen = 5.0;
 
     return {
         capTop,
@@ -212,7 +233,9 @@ function getLayoutZones() {
         ledEnd,
         cylLen,
         handleLength,
-        rodCenter: params.rodLength / 2
+        rodCenter: params.rodLength / 2,
+        N,
+        actualLedLen
     };
 }
 
@@ -271,7 +294,7 @@ function generateGuard() {
     // Subtract 4 radial screw holes at the top of the guard
     const screwR = params.m3Diam / 2;
     const holeLen = guardR * 2 + 10; // long enough to punch through
-    const guardScrewZ = h - 6.0; // 6mm from the top edge, aligning with Ring 0 bottom flange
+    const guardScrewZ = h - params.ringHeight * 0.375; // aligning with Ring 0 bottom flange hole
 
     for (let s = 0; s < 4; s++) {
         const angle = (Math.PI / 4) + s * (Math.PI / 2);
@@ -372,9 +395,9 @@ function generateTransparentCylinder(index) {
     // Positioned at 45°, 135°, 225°, 315° to avoid LED strip positions at 0/90/180/270
     const screwR = params.m3Diam / 2;
     const holeLen = cylOuterR * 2 + 10; // long enough to punch clean through the wall and ridges
-    // Z positions for bottom and top screw rings (inset from edges)
-    const botScrewZ = 6.0;
-    const topScrewZ = h - 6.0;
+    // Z positions for bottom and top screw rings (inset from edges, centered in flanges)
+    const botScrewZ = params.ringHeight * 0.125;
+    const topScrewZ = h - params.ringHeight * 0.125;
 
     for (let s = 0; s < 4; s++) {
         const angle = (Math.PI / 4) + s * (Math.PI / 2); // 45°, 135°, 225°, 315°
@@ -407,8 +430,8 @@ function generateTransparentCylinder(index) {
         cyl = temp;
     }
 
-    // Position the cylinder in the LED section
-    const cylZ = z.ledStart + index * z.cylLen;
+    // Position the cylinder in the LED section (preventing overlap with ring center body)
+    const cylZ = z.ledStart + index * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
     let positioned = cyl.translate([0, 0, cylZ]);
     cyl.delete();
 
@@ -464,8 +487,8 @@ function generateConnectorRing(index) {
     const screwR = params.m3Diam / 2;
     const holeLen = centerR * 2 + 10; // long enough to punch through all components
 
-    const botHoleZ = h / 2 - 6.0;
-    const topHoleZ = h / 2 + 6.0;
+    const botHoleZ = h * 0.125;
+    const topHoleZ = h * 0.875;
 
     for (let s = 0; s < 4; s++) {
         const angle = (Math.PI / 4) + s * (Math.PI / 2);
@@ -499,15 +522,7 @@ function generateConnectorRing(index) {
     }
 
     // Position: ring sits between cylinders
-    // Ring 0 (first connector): between guard top and cylinder #0 bottom
-    // Ring 1: between cylinder #0 top and cylinder #1 bottom
-    // Ring 2: between cylinder #1 top and cylinder #2 bottom
-    let ringZ;
-    if (index === 0) {
-        ringZ = z.ledStart - h / 2; // straddles the guard/LED boundary
-    } else {
-        ringZ = z.ledStart + index * z.cylLen - h / 2;
-    }
+    const ringZ = z.ledStart + index * (z.cylLen + h * 0.5) - h / 2;
 
     let positioned = ring.translate([0, 0, ringZ]);
     ring.delete();
@@ -547,6 +562,9 @@ function generateDecorativeRidges(cylinderIndex) {
 
     const parts = [];
 
+    // Calculate cylZ dynamically (preventing overlap with ring center body)
+    const cylZ = z.ledStart + cylinderIndex * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+
     // ─── 4 Ridge Spines ──────────────────────────────────────────────
     for (let s = 0; s < 4; s++) {
         const angle = (Math.PI / 4) + s * (Math.PI / 2); // 45°, 135°, 225°, 315°
@@ -583,7 +601,6 @@ function generateDecorativeRidges(cylinderIndex) {
         translated.delete();
 
         // Position along Z (starts at cylZ)
-        const cylZ = z.ledStart + cylinderIndex * cylLen;
         let positioned = rotated.translate([0, 0, cylZ]);
         rotated.delete();
 
@@ -597,7 +614,6 @@ function generateDecorativeRidges(cylinderIndex) {
     botRingOuter.delete();
     botRingInner.delete();
 
-    const cylZ = z.ledStart + cylinderIndex * cylLen;
     let botPos = botRing.translate([0, 0, cylZ + ringThick / 2]);
     botRing.delete();
     parts.push(botPos);
@@ -625,8 +641,8 @@ function generateDecorativeRidges(cylinderIndex) {
     // ─── Subtract Screw Holes from the Merged Ridges ──────────────────
     const screwR = params.m3Diam / 2;
     const screwHoleLen = cylOuterR * 2 + 40; // very long to punch through cleanly
-    const botScrewZ = cylZ + 6.0;
-    const topScrewZ = cylZ + cylLen - 6.0;
+    const botScrewZ = cylZ + params.ringHeight * 0.125;
+    const topScrewZ = cylZ + cylLen - params.ringHeight * 0.125;
 
     for (let s = 0; s < 4; s++) {
         const angle = (Math.PI / 4) + s * (Math.PI / 2);
@@ -708,10 +724,33 @@ function setupUIListeners() {
         }
     };
 
+    const bindNumberInput = (id, paramKey, isFloat = true, minVal = 0, maxVal = Infinity, autoRebuild = true) => {
+        const numInput = document.getElementById(id);
+        if (!numInput) return;
+
+        numInput.addEventListener('input', (e) => {
+            let val = isFloat ? parseFloat(e.target.value) : parseInt(e.target.value);
+            if (isNaN(val)) return;
+            if (val < minVal) val = minVal;
+            if (val > maxVal) val = maxVal;
+            params[paramKey] = val;
+            if (autoRebuild) rebuild();
+        });
+
+        numInput.addEventListener('blur', () => {
+            let val = params[paramKey];
+            if (val < minVal) val = minVal;
+            if (val > maxVal) val = maxVal;
+            params[paramKey] = val;
+            numInput.value = isFloat ? val.toFixed(1) : val;
+            if (autoRebuild) rebuild();
+        });
+    };
+
     // Rod
     bindSlider('input-rodOD', 'rodOD');
     bindSlider('input-rodWall', 'rodWall');
-    bindSlider('input-rodLength', 'rodLength');
+    bindSlider('input-handleLength', 'handleLength');
 
     // Guard
     bindSlider('input-guardWall', 'guardWall');
@@ -725,7 +764,22 @@ function setupUIListeners() {
     // Cylinder
     bindSlider('input-cylOD', 'cylOD');
     bindSlider('input-cylWall', 'cylWall');
-    bindSlider('input-ledSectionLen', 'ledSectionLen');
+    bindNumberInput('val-ledSectionLen', 'ledSectionLen', true, 300.0, Infinity, false);
+    bindNumberInput('val-maxCylLen', 'maxCylLen', true, 10.0, Infinity, false);
+
+    // Update button listener
+    const updateBtn = document.getElementById('btn-update-cylinder');
+    if (updateBtn) {
+        updateBtn.addEventListener('click', () => {
+            const valLed = parseFloat(document.getElementById('val-ledSectionLen').value);
+            if (!isNaN(valLed) && valLed >= 300.0) params.ledSectionLen = valLed;
+
+            const valMax = parseFloat(document.getElementById('val-maxCylLen').value);
+            if (!isNaN(valMax) && valMax >= 10.0) params.maxCylLen = valMax;
+
+            rebuild();
+        });
+    }
 
     // Rings
     bindSlider('input-ringHeight', 'ringHeight');
@@ -810,11 +864,11 @@ const paramInfo = {
         getPos: () => new THREE.Vector3(params.rodOD / 2, 0, params.rodLength * 0.3),
         dir: [1, -1]
     },
-    rodLength: {
-        text: "Rod Total Length",
-        desc: "Full length of the central rod. Default 533.4mm (21 inches).",
-        getPos: () => new THREE.Vector3(0, 0, params.rodLength),
-        dir: [1, 1]
+    handleLength: {
+        text: "Handle Length",
+        desc: "Exposed rod grip section length. Measured between bottom cap and guard housing.",
+        getPos: () => new THREE.Vector3(params.rodOD / 2, 0, params.capThick + params.handleLength / 2),
+        dir: [1, -1]
     },
     guardWall: {
         text: "Guard Wall Thickness",
@@ -849,79 +903,85 @@ const paramInfo = {
     cylOD: {
         text: "Cylinder Outer Diameter",
         desc: "Outside diameter of the transparent cylinders covering the LED strips. Measured 34mm.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + z.cylLen / 2); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen / 2); },
         dir: [1, 1]
     },
     cylWall: {
         text: "Cylinder Wall Thickness",
         desc: "Wall thickness of the transparent cylinders. Single wall for light diffusion.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + z.cylLen * 1.5); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen * 0.5); },
         dir: [1, -1]
     },
     ledSectionLen: {
-        text: "LED Section Length",
-        desc: "Total length of the LED section covered by the 3 transparent cylinders. Default 1 foot (304.8mm).",
+        text: "Max LED Strip Length",
+        desc: "Total length of the LED section covered by the transparent cylinders.",
         getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(0, 0, z.ledEnd); },
         dir: [1, 1]
+    },
+    maxCylLen: {
+        text: "Max Cylinder Section Length",
+        desc: "Maximum length of a single transparent cylinder before a new section is added.",
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen * 0.5); },
+        dir: [1, -1]
     },
     ringHeight: {
         text: "Ring Height",
         desc: "Height of connector rings between transparent cylinder sections.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringCenterOD / 2, 0, z.ledStart + z.cylLen); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringCenterOD / 2, 0, z.ledStart + z.cylLen + params.ringHeight * 0.5); },
         dir: [1, 1]
     },
     ringCenterOD: {
         text: "Ring Center Flange OD",
         desc: "Outer diameter of the ring's center section. Wider for structural strength.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringCenterOD / 2, 0, z.ledStart + z.cylLen); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringCenterOD / 2, 0, z.ledStart + z.cylLen + params.ringHeight * 0.5); },
         dir: [1, -1]
     },
     ringEndOD: {
         text: "Ring End Flange OD",
         desc: "Outer diameter of the ring's top/bottom flanges. Matches or is slightly smaller than cylinder OD.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringEndOD / 2, 0, z.ledStart + z.cylLen * 2); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringEndOD / 2, 0, z.ledStart + z.cylLen + params.ringHeight * 0.5 + params.ringHeight * 0.25); },
         dir: [1, 1]
     },
     ridgeWidth: {
         text: "Ridge Width",
         desc: "Width of the decorative ridges running between LED strips.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight, params.cylOD / 2 + params.ridgeHeight, z.ledStart + z.cylLen / 2); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight, params.cylOD / 2 + params.ridgeHeight, z.ledStart + params.ringHeight * 0.25 + z.cylLen / 2); },
         dir: [1, -1]
     },
     ridgeHeight: {
         text: "Ridge Protrusion",
         desc: "Height the ridges protrude above the cylinder surface. Hides screw heads underneath.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight, 0, z.ledStart + z.cylLen * 1.5); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen * 0.5); },
         dir: [1, 1]
     },
     ridgeRamp: {
         text: "Ridge Ramp",
         desc: "Additional height protrusion at the bottom of the ridges to create a ramped profile.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight + params.ridgeRamp, 0, z.ledStart + z.cylLen * 0.5); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight + params.ridgeRamp, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen * 0.2); },
         dir: [1, 1]
     },
     ledWidth: {
         text: "LED Strip Width",
         desc: "Width of each LED strip (12mm default). 4 strips at 0°, 90°, 180°, 270°.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.rodOD / 2 + params.ledHeight, 0, z.ledStart + z.cylLen * 1.5); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.rodOD / 2 + params.ledHeight, 0, z.ledStart + z.actualLedLen * 0.5); },
         dir: [1, -1]
     },
     ledHeight: {
         text: "LED Strip Height",
         desc: "Thickness of each LED strip (4mm default). Glued directly onto the rod surface.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.rodOD / 2 + params.ledHeight / 2, 0, z.ledStart + z.cylLen); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.rodOD / 2 + params.ledHeight / 2, 0, z.ledStart + z.actualLedLen * 0.2); },
         dir: [1, 1]
     },
     m3Diam: {
         text: "M3 Hole Diameter",
         desc: "Clearance hole diameter for M3 screws connecting cylinder sections.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, params.cylOD / 2, z.ledStart + z.cylLen); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, params.cylOD / 2, z.ledStart + params.ringHeight * 0.375); },
         dir: [1, -1]
     },
     screwDepth: {
         text: "Screw Thread Depth",
         desc: "Depth of screw engagement into the cylinder wall. 5mm default.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + 2); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + params.ringHeight * 0.375); },
         dir: [1, -1]
     },
     capThick: {
@@ -996,6 +1056,10 @@ function setupTooltipListeners() {
 function rebuild() {
     if (!Manifold) return;
 
+    const tStart = performance.now();
+    let totalTriangles = 0;
+    const stats = {};
+
     const explodeDist = params.explode * 1.5;
     const z = getLayoutZones();
 
@@ -1062,6 +1126,9 @@ function rebuild() {
         if (rodSolid) {
             const rMesh = rodSolid.getMesh();
             const rodGeom = manifoldToThree(rMesh);
+            const tris = rMesh.triVerts.length / 3;
+            stats['Central Rod'] = tris;
+            totalTriangles += tris;
             rodSolid.delete();
 
             rodMesh = new THREE.Mesh(rodGeom, makeMat(colors.rod, 0.9));
@@ -1076,6 +1143,9 @@ function rebuild() {
         if (guardSolid) {
             const gMesh = guardSolid.getMesh();
             const guardGeom = manifoldToThree(gMesh);
+            const tris = gMesh.triVerts.length / 3;
+            stats['Guard Housing'] = tris;
+            totalTriangles += tris;
             guardSolid.delete();
 
             guardMesh = new THREE.Mesh(guardGeom, makeMat(colors.guard, params.opacity / 100));
@@ -1091,6 +1161,9 @@ function rebuild() {
         if (sledSolid) {
             const sMesh = sledSolid.getMesh();
             const sledGeom = manifoldToThree(sMesh);
+            const tris = sMesh.triVerts.length / 3;
+            stats['Electronics Sled'] = tris;
+            totalTriangles += tris;
             sledSolid.delete();
 
             sledMesh = new THREE.Mesh(sledGeom, makeMat(colors.sled, 0.7));
@@ -1100,12 +1173,14 @@ function rebuild() {
         }
     }
 
-    // ─── 4. Transparent Cylinders (×3) ───────────────────────────────────
+    // ─── 4. Transparent Cylinders ───────────────────────────────────
     if (visibilities.cylinders) {
-        for (let i = 0; i < 3; i++) {
+        let cylTris = 0;
+        for (let i = 0; i < z.N; i++) {
             const cylSolid = generateTransparentCylinder(i);
             if (cylSolid) {
                 const cMesh = cylSolid.getMesh();
+                cylTris += cMesh.triVerts.length / 3;
                 const cylGeom = manifoldToThree(cMesh);
                 cylSolid.delete();
 
@@ -1138,14 +1213,18 @@ function rebuild() {
                 cylinderMeshes.push(mesh);
             }
         }
+        stats[`Cylinders (x${z.N})`] = cylTris;
+        totalTriangles += cylTris;
     }
 
-    // ─── 5. Connector Rings (×3) ─────────────────────────────────────────
+    // ─── 5. Connector Rings ─────────────────────────────────────────
     if (visibilities.rings) {
-        for (let i = 0; i < 3; i++) {
+        let ringTris = 0;
+        for (let i = 0; i < z.N; i++) {
             const ringSolid = generateConnectorRing(i);
             if (ringSolid) {
                 const rMesh = ringSolid.getMesh();
+                ringTris += rMesh.triVerts.length / 3;
                 const ringGeom = manifoldToThree(rMesh);
                 ringSolid.delete();
 
@@ -1156,14 +1235,18 @@ function rebuild() {
                 ringMeshes.push(mesh);
             }
         }
+        stats[`Connector Rings (x${z.N})`] = ringTris;
+        totalTriangles += ringTris;
     }
 
     // ─── 6. Decorative Ridges ────────────────────────────────────────────
     if (visibilities.ridges) {
-        for (let i = 0; i < 3; i++) {
+        let ridgeTris = 0;
+        for (let i = 0; i < z.N; i++) {
             const ridgeSolid = generateDecorativeRidges(i);
             if (ridgeSolid) {
                 const rMesh = ridgeSolid.getMesh();
+                ridgeTris += rMesh.triVerts.length / 3;
                 const ridgeGeom = manifoldToThree(rMesh);
                 ridgeSolid.delete();
 
@@ -1174,10 +1257,14 @@ function rebuild() {
                 ridgeMeshes.push(mesh);
             }
         }
+        stats[`Decorative Ridges (x${z.N})`] = ridgeTris;
+        totalTriangles += ridgeTris;
     }
 
     // ─── 7. LED Strips (Visual-only, 4 strips at 0°/90°/180°/270°) ──────
     if (visibilities.leds) {
+        stats['LED Strips (Visual-only)'] = 48;
+        totalTriangles += 48;
         const rodR = params.rodOD / 2;
         const ledLen = params.ledSectionLen;
 
@@ -1226,6 +1313,9 @@ function rebuild() {
         if (capSolid) {
             const cMesh = capSolid.getMesh();
             const capGeom = manifoldToThree(cMesh);
+            const tris = cMesh.triVerts.length / 3;
+            stats['Bottom Endcap'] = tris;
+            totalTriangles += tris;
             capSolid.delete();
 
             endcapMesh = new THREE.Mesh(capGeom, makeMat(colors.endcap, 0.9));
@@ -1237,6 +1327,9 @@ function rebuild() {
 
     // ─── 9. Screw Hole Indicators ────────────────────────────────────────
     if (visibilities.screwholes) {
+        const holeTris = (8 * z.N + 4) * 32;
+        stats['Screw Indicators (Visual-only)'] = holeTris;
+        totalTriangles += holeTris;
         const screwMat = new THREE.MeshBasicMaterial({
             color: colors.screwHoles,
             wireframe: true,
@@ -1253,8 +1346,8 @@ function rebuild() {
         const screwR = params.m3Diam / 2;
 
         // Cylinders screw indicators
-        for (let ci = 0; ci < 3; ci++) {
-            const cylZ = z.ledStart + ci * z.cylLen;
+        for (let ci = 0; ci < z.N; ci++) {
+            const cylZ = z.ledStart + ci * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
 
             for (let s = 0; s < 4; s++) {
                 const angle = (Math.PI / 4) + s * (Math.PI / 2);
@@ -1262,14 +1355,14 @@ function rebuild() {
                 // Bottom radial screw indicator (points toward rod center)
                 const botGeom = new THREE.CylinderGeometry(screwR, screwR, cylOuterR * 2, 8);
                 const botMesh = new THREE.Mesh(botGeom, screwMat);
-                botMesh.position.set(0, 0, cylZ + 6.0); // 6mm from bottom edge
+                botMesh.position.set(0, 0, cylZ + params.ringHeight * 0.125); // centered in flange
                 botMesh.rotation.z = angle + Math.PI / 2; // orient radially
                 screwHoleGroup.add(botMesh);
 
                 // Top radial screw indicator
                 const topGeom = new THREE.CylinderGeometry(screwR, screwR, cylOuterR * 2, 8);
                 const topMesh = new THREE.Mesh(topGeom, screwMat);
-                topMesh.position.set(0, 0, cylZ + z.cylLen - 6.0); // 6mm from top edge
+                topMesh.position.set(0, 0, cylZ + z.cylLen - params.ringHeight * 0.125); // centered in flange
                 topMesh.rotation.z = angle + Math.PI / 2;
                 screwHoleGroup.add(topMesh);
             }
@@ -1292,7 +1385,7 @@ function rebuild() {
     if (elTotal) elTotal.innerText = `${params.rodLength.toFixed(1)} mm`;
 
     const elLed = document.getElementById('spec-led-section');
-    if (elLed) elLed.innerText = `${params.ledSectionLen.toFixed(1)} mm (3× ${z.cylLen.toFixed(1)})`;
+    if (elLed) elLed.innerText = `${params.ledSectionLen.toFixed(1)} mm (${z.N}× ${z.cylLen.toFixed(1)} mm)`;
 
     const elHandle = document.getElementById('spec-handle-length');
     if (elHandle) elHandle.innerText = `${z.handleLength.toFixed(1)} mm`;
@@ -1308,6 +1401,21 @@ function rebuild() {
 
     const elCylSection = document.getElementById('spec-cyl-section');
     if (elCylSection) elCylSection.innerText = `${z.cylLen.toFixed(1)} mm each`;
+
+    const elScrews = document.getElementById('spec-total-screws');
+    if (elScrews) {
+        const totalScrews = 8 * z.N + 4;
+        elScrews.innerText = `${totalScrews}× M3`;
+    }
+
+    const tEnd = performance.now();
+    const duration = tEnd - tStart;
+    
+    console.log(`%c=== CAD GEOMETRY DIAGNOSTICS ===`, "color: #00f2ff; font-weight: bold;");
+    console.log(`Generation Time: ${duration.toFixed(1)} ms`);
+    console.log(`Total Polygon Count: ${totalTriangles} triangles`);
+    console.table(stats);
+    console.log(`%c================================`, "color: #00f2ff; font-weight: bold;");
 
     updateLeaderLines();
 }
@@ -1397,6 +1505,91 @@ function updateLeaderLines() {
     // Static labels for key components
     const zz = getLayoutZones();
 
+    // ─── Draw Overall Length Bracket ───
+    const drawOverallLength = () => {
+        const offset3D = -params.cylOD / 2 - 25; // 25mm to the left of the cylinder outer face
+        const botPoint = new THREE.Vector3(offset3D, 0, 0);
+        const topPoint = new THREE.Vector3(offset3D, 0, params.rodLength);
+
+        // Project actual baton center points for extension lines
+        const botCenter = new THREE.Vector3(0, 0, 0);
+        const topCenter = new THREE.Vector3(0, 0, params.rodLength);
+
+        mainGroup.updateMatrixWorld();
+        
+        const bp = botPoint.clone().applyMatrix4(mainGroup.matrixWorld).project(camera);
+        const tp = topPoint.clone().applyMatrix4(mainGroup.matrixWorld).project(camera);
+        const bcp = botCenter.clone().applyMatrix4(mainGroup.matrixWorld).project(camera);
+        const tcp = topCenter.clone().applyMatrix4(mainGroup.matrixWorld).project(camera);
+
+        if (bp.z > 1 || tp.z > 1) return; // behind camera
+
+        const xB = (bp.x * 0.5 + 0.5) * width;
+        const yB = (-(bp.y * 0.5) + 0.5) * height;
+        const xT = (tp.x * 0.5 + 0.5) * width;
+        const yT = (-(tp.y * 0.5) + 0.5) * height;
+
+        const xBC = (bcp.x * 0.5 + 0.5) * width;
+        const yBC = (-(bcp.y * 0.5) + 0.5) * height;
+        const xTC = (tcp.x * 0.5 + 0.5) * width;
+        const yTC = (-(tcp.y * 0.5) + 0.5) * height;
+
+        const drawLine = (x1, y1, x2, y2, color, lineWidthVal, dash = null) => {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', lineWidthVal);
+            if (dash) line.setAttribute('stroke-dasharray', dash);
+            overlaySvg.appendChild(line);
+        };
+
+        // Dashed lines going from baton ends to the bracket ends
+        drawLine(xBC, yBC, xB, yB, 'rgba(0, 242, 255, 0.4)', '1', '3,3');
+        drawLine(xTC, yTC, xT, yT, 'rgba(0, 242, 255, 0.4)', '1', '3,3');
+
+        // Draw bracket line from bottom to top
+        const dx = xT - xB;
+        const dy = yT - yB;
+        const dlen = Math.sqrt(dx*dx + dy*dy);
+        if (dlen < 5) return;
+        const nx = -dy / dlen; // perpendicular vector
+        const ny = dx / dlen;
+        const tick = 6;
+
+        const bracket = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = `
+            M ${xB - nx * tick},${yB - ny * tick} L ${xB + nx * tick},${yB + ny * tick}
+            M ${xB},${yB} L ${xT},${yT}
+            M ${xT - nx * tick},${yT - ny * tick} L ${xT + nx * tick},${yT + ny * tick}
+        `;
+        bracket.setAttribute('d', d);
+        bracket.setAttribute('stroke', '#00f2ff');
+        bracket.setAttribute('stroke-width', '1.5');
+        bracket.setAttribute('fill', 'none');
+        overlaySvg.appendChild(bracket);
+
+        // Draw overall length label next to the vertical line
+        const mx = (xB + xT) / 2;
+        const my = (yB + yT) / 2;
+        const textOffset = 12;
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', mx - nx * textOffset);
+        text.setAttribute('y', my - ny * textOffset + 4);
+        text.setAttribute('fill', '#00f2ff');
+        text.setAttribute('font-size', '11px');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('font-family', 'Space Mono');
+        text.setAttribute('text-anchor', 'end');
+        text.textContent = `OVERALL: ${params.rodLength.toFixed(1)} mm`;
+        overlaySvg.appendChild(text);
+    };
+
+    drawOverallLength();
+
     if (visibilities.guard) {
         drawDimension(
             new THREE.Vector3(params.rodOD / 2 + params.guardWall + 2, 0, zz.guardStart + params.guardLength / 2),
@@ -1405,12 +1598,22 @@ function updateLeaderLines() {
     }
 
     if (visibilities.cylinders) {
-        for (let i = 0; i < 3; i++) {
+        const indicesToLabel = [];
+        if (zz.N <= 4) {
+            for (let i = 0; i < zz.N; i++) indicesToLabel.push(i);
+        } else {
+            indicesToLabel.push(0);
+            indicesToLabel.push(Math.floor(zz.N / 2));
+            indicesToLabel.push(zz.N - 1);
+        }
+
+        indicesToLabel.forEach(i => {
+            const cylZ = zz.ledStart + i * (zz.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
             drawDimension(
-                new THREE.Vector3(params.cylOD / 2 + 3, 0, zz.ledStart + zz.cylLen * (i + 0.5)),
+                new THREE.Vector3(params.cylOD / 2 + 3, 0, cylZ + zz.cylLen * 0.5),
                 `Cylinder #${i + 1}`, 1, (i % 2 === 0 ? -1 : 1)
             );
-        }
+        });
     }
 
     if (visibilities.endcap) {
