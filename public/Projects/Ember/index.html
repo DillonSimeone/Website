@@ -45,7 +45,7 @@
             <!-- LEFT: EXECUTIVE SUMMARY -->
             <div class="summary-column">
                 <section class="doc-card" style="margin-bottom: 0;">
-                    <h2>1. What Is Ember?</h2>
+                    <h2>What Is Ember?</h2>
                     <p>
                         <strong>Ember</strong> grew out of <a
                             href="https://github.com/DillonSimeone/Website/tree/main/ESP32Codes/PlatformIO/Visuals_Art/WebFastLed/"
@@ -311,7 +311,7 @@
         <!-- BOTTOM: DEEPER ARCHITECTURAL REPORT -->
         <article class="bottom-docs-column" id="architecture">
             <section class="doc-card">
-                <h2>2. Compiler &amp; VM</h2>
+                <h2>Compiler &amp; VM</h2>
                 <h3>Why the old approach was slow</h3>
                 <p>
                     WebFastLed parsed your pattern expression character-by-character on <em>every pixel of every
@@ -338,7 +338,7 @@
             </section>
 
             <section class="doc-card">
-                <h2>3. Concurrency on a Single Core</h2>
+                <h2>Concurrency on a Single Core</h2>
                 <p>
                     The ESP32-C3 is a single-core chip, so we have to share nicely. Ember uses a small FreeRTOS task
                     schedule to make sure everything stays responsive:
@@ -356,7 +356,7 @@
             </section>
 
             <section class="doc-card">
-                <h2>4. Audio &amp; FFT</h2>
+                <h2>Audio &amp; FFT</h2>
                 <p>
                     Ember has two mic options depending on your build: a digital
                     <strong>INMP441</strong> MEMS mic over I2S (cleaner signal, better for music), or an analog
