@@ -17,7 +17,7 @@ const params = {
 
     // Guard / Sled Housing
     guardWall: 3.0,
-    guardLength: 170.0,
+    guardLength: 115.0,
 
     // Electronics Sled (solid block)
     sledWidth: 20.0,
@@ -25,10 +25,11 @@ const params = {
     sledDepth: 22.0,
 
     // Transparent Cylinders
-    cylOD: 38.0,
+    cylOD: 38.0, // Calculated dynamically in getLayoutZones
+    cylLedGap: 2.0,
     cylWall: 2.0,
     ledSectionLen: 304.8, // 1 foot in mm
-    maxCylLen: 60.0,
+    maxCylLen: 120.0,
 
     // Connector Rings
     ringHeight: 17.0,
@@ -196,6 +197,12 @@ function manifoldToThree(manifoldMesh) {
 //   Rod ends at Z = rodLength
 
 function getLayoutZones() {
+    // Determine the cylinder outer diameter dynamically from gap and wall thickness
+    const rodR = params.rodOD / 2;
+    const boreR = rodR + params.ledHeight + 0.3; // clear LEDs
+    const cylInnerR = boreR + params.cylLedGap;
+    params.cylOD = (cylInnerR + params.cylWall) * 2;
+
     // Determine the rodLength dynamically based on other components
     params.rodLength = params.capThick + params.handleLength + params.guardLength + params.ledSectionLen;
 
@@ -245,7 +252,7 @@ function generateRod() {
     if (!Manifold) return null;
     const outerR = params.rodOD / 2;
     const innerR = outerR - params.rodWall;
-    const h = params.rodLength;
+    const h = params.rodLength - 3.0; // Shorten rod to clear the top cap of the last cylinder
 
     let outer = Manifold.cylinder(h, outerR, outerR, 32, false);
     let inner = Manifold.cylinder(h + 2, innerR, innerR, 32, false);
@@ -268,11 +275,36 @@ function generateGuard() {
     const cylInnerR = Math.max(params.cylOD / 2 - params.cylWall, boreR + 1.5);
     const guardR = Math.max(rodR + params.guardWall, cylInnerR + 1.5);
     const h = params.guardLength;
+    const flangeH = params.ringHeight * 0.25;
+    const h_trimmed = h - flangeH; // Trim guard top by flangeH (4.25mm) to fit Ring 0 center body without collision
 
-    // Outer cylinder
-    let outer = Manifold.cylinder(h, guardR, guardR, 32, false);
-    // Inner bore for rod
-    let bore = Manifold.cylinder(h + 2, rodR + 0.3, rodR + 0.3, 32, false);
+    // ─── 1. Solid Housing with Outer Casings ──────────────────────────────
+    // Main cylinder (height is h_trimmed)
+    let mainCyl = Manifold.cylinder(h_trimmed, guardR, guardR, 32, false);
+
+    // Battery side bulge (+Y): encloses the battery holder and switch (stops at Z=90.0, shifted 6mm down)
+    const batBulgeW = 28.0;
+    const batBulgeD = rodR + 28.0; // height from center to outer +Y face
+    let batBulge = Manifold.cube([batBulgeW, batBulgeD, 90.0], false);
+    let batBulgeMoved = batBulge.translate([-batBulgeW / 2, 0, 0]);
+    batBulge.delete();
+
+    // Electronics side bulge (-Y): encloses the components (stops at Z=103.0, added 5mm of material to rise the floor)
+    const elBulgeW = 28.0;
+    const elBulgeD = rodR + 20.0; // height from center to outer -Y face (shifted by 5mm)
+    let elBulge = Manifold.cube([elBulgeW, elBulgeD, 103.0], false);
+    let elBulgeMoved = elBulge.translate([-elBulgeW / 2, -elBulgeD, 0]);
+    elBulge.delete();
+
+    // Merge bulges into solid housing body
+    let outer = mainCyl.add(batBulgeMoved).add(elBulgeMoved);
+    mainCyl.delete();
+    batBulgeMoved.delete();
+    elBulgeMoved.delete();
+
+    // ─── 2. Inner Bore & Counterbores ─────────────────────────────────────
+    // Inner bore for rod (height is h_trimmed)
+    let bore = Manifold.cylinder(h_trimmed + 2, rodR + 0.3, rodR + 0.3, 32, false);
     let boreMoved = bore.translate([0, 0, -1]);
     bore.delete();
 
@@ -281,10 +313,9 @@ function generateGuard() {
     boreMoved.delete();
 
     // Counterbore at the top of the guard to receive Ring 0 bottom flange
-    const flangeH = params.ringHeight * 0.25;
     const cbR = cylInnerR;
     let cb = Manifold.cylinder(flangeH + 1, cbR, cbR, 32, false);
-    let cbMoved = cb.translate([0, 0, h - flangeH]);
+    let cbMoved = cb.translate([0, 0, h_trimmed - flangeH]);
     cb.delete();
     let tempGuard = guard.subtract(cbMoved);
     guard.delete();
@@ -293,7 +324,7 @@ function generateGuard() {
 
     // Subtract 4 radial screw holes at the top of the guard
     const screwR = params.m3Diam / 2;
-    const holeLen = guardR * 2 + 10; // long enough to punch through
+    const holeLen = guardR * 2 + 30; // long enough to punch through the outer casing too
     const guardScrewZ = h - params.ringHeight * 0.375; // aligning with Ring 0 bottom flange hole
 
     for (let s = 0; s < 4; s++) {
@@ -313,24 +344,282 @@ function generateGuard() {
         guard = temp;
     }
 
-    // Sled cavity — carved from one side
-    // The sled is a rectangular channel, offset to one side of the guard
-    // Positioned so it can slide in from the bottom
-    const sledW = params.sledWidth;
-    const sledD = params.sledDepth;
-    const sledL = params.sledLength;
+    // ─── 3. Battery Bay with Sliding Cover Slot (+Y side) ─────────────────
+    const batW = 22.4;
+    const batL = 76.0;
+    const batD = 24.4;
 
-    let sledCavity = Manifold.cube([sledW + 0.5, sledD + 0.5, sledL + 2], false);
-    // Center the sled on X, offset on Y so it's accessible from one side
-    let sledMoved = sledCavity.translate([
-        -sledW / 2 - 0.25,
-        rodR - sledD * 0.3,
-        -1
-    ]);
-    sledCavity.delete();
+    // Internal pocket cavity (starts at Z = 4.0 so there is a 4mm solid bottom stop!)
+    let batBox = Manifold.cube([batW, batD, batL], false);
+    let batMoved = batBox.translate([-batW / 2, rodR + 0.2, 4.0]);
+    batBox.delete();
 
-    guard = guard.subtract(sledMoved);
-    sledMoved.delete();
+    // Cutout to +Y outer face (starts at Z=4.0 so the battery sits on the solid bottom stop)
+    const bayTopZ = 80.0; // 4.0 bottom stop + 76.0 length
+    let batCutout = Manifold.cube([22.4, 28.0, bayTopZ - 4.0], false);
+    let batCutoutMoved = batCutout.translate([-22.4 / 2, rodR + 0.2, 4.0]);
+    batCutout.delete();
+
+    // Combine all battery bay cutouts and subtract (walls are left constant thickness, uncut)
+    let batCombined = batMoved.add(batCutoutMoved);
+    batMoved.delete();
+    batCutoutMoved.delete();
+
+    let tempGuard1 = guard.subtract(batCombined);
+    guard.delete();
+    batCombined.delete();
+    guard = tempGuard1;
+
+    // ─── 4. Power Switch Pocket (Rotated: 15mm width, 9mm Z-length, shifted 6mm down)
+    const swW = 15.4;
+    const swL = 9.4;
+    const swD = 20.4;
+    // Switch pocket carved out and extending to the outer +Y face
+    let swBox = Manifold.cube([swW, swD + 10.0, swL], false);
+    let swMoved = swBox.translate([-swW / 2, rodR + 0.2, 80.0]);
+    swBox.delete();
+    let tempGuardSw = guard.subtract(swMoved);
+    guard.delete();
+    swMoved.delete();
+    guard = tempGuardSw;
+
+    // ─── 5. Electronics Bay with Sliding Cover Slot (-Y side) ─────────────
+    const elBayW = 25.4; // width is 25.4, removing the extra side wall material
+    const elBayL = 100.0;
+    const elBayD = 8.4; // pocket depth is 8.4 (keeping outer wall thick)
+    const elTopZ = 102.0; // 2.0 bottom stop + 100.0 length
+    // Unified rectangular pocket (starts at Y = -(rodR + 9.2 + elBayD) to leave a 9.2mm thick floor)
+    let elBox = Manifold.cube([elBayW, elBayD, elBayL], false);
+    let elMoved = elBox.translate([-elBayW / 2, -(rodR + 9.2 + elBayD), 2.0]);
+    elBox.delete();
+
+    // Cutout to -Y outer face (extends from Z=0 to top of electronics bay, width 22.4 to leave guide shoulders)
+    let elCutout = Manifold.cube([22.4, 13.0, elTopZ], false);
+    let elCutoutMoved = elCutout.translate([-22.4 / 2, -(rodR + 20.0), 0]);
+    elCutout.delete();
+
+    // PCB sliding slots (stepped width vertical channels carved into the 9.2mm floor)
+    // 1. LIPO Charger PCB Groove (Z = 2.0 to 30.0, width 17.0mm -> groove 17.4mm)
+    let lipoPcb = Manifold.cube([17.4, 1.8, 28.0], false);
+    let lipoPcbMoved = lipoPcb.translate([-17.4 / 2, -(rodR + 7.7), 2.0]);
+    lipoPcb.delete();
+
+    // 2. MPU 6500 PCB Groove (Z = 30.0 to 57.0, width 16.0mm -> groove 16.4mm)
+    let mpuPcb = Manifold.cube([16.4, 1.8, 27.0], false);
+    let mpuPcbMoved = mpuPcb.translate([-16.4 / 2, -(rodR + 7.7), 30.0]);
+    mpuPcb.delete();
+
+    // 3. ESP32 C3 PCB Groove (Z = 57.0 to 80.0, width 19.0mm -> groove 19.4mm)
+    let espPcb = Manifold.cube([19.4, 1.8, 23.0], false);
+    let espPcbMoved = espPcb.translate([-19.4 / 2, -(rodR + 7.7), 57.0]);
+    espPcb.delete();
+
+    // 4. Motor Driver PCB Groove (Z = 80.0 to 102.0, width 25.0mm -> groove 25.4mm)
+    let drvPcb = Manifold.cube([25.4, 1.8, 22.0], false);
+    let drvPcbMoved = drvPcb.translate([-25.4 / 2, -(rodR + 7.7), 80.0]);
+    drvPcb.delete();
+
+    // Union all PCB grooves
+    let pcbGrooves = lipoPcbMoved.add(mpuPcbMoved).add(espPcbMoved).add(drvPcbMoved);
+    lipoPcbMoved.delete();
+    mpuPcbMoved.delete();
+    espPcbMoved.delete();
+    drvPcbMoved.delete();
+
+    // Combine all electronics bay cutouts and subtract (walls are left constant thickness, uncut)
+    let elCombined = elMoved.add(elCutoutMoved).add(pcbGrooves);
+    elMoved.delete();
+    elCutoutMoved.delete();
+    pcbGrooves.delete();
+
+    let tempGuard2 = guard.subtract(elCombined);
+    guard.delete();
+    elCombined.delete();
+    guard = tempGuard2;
+
+    // Add bridge across the top of the electronics tray pocket (Z = 96.0 to 102.0)
+    let elBridge = Manifold.cube([elBayW, 5.0, 6.0], false);
+    let elBridgeMoved = elBridge.translate([-elBayW / 2, -(rodR + 18.0), 96.0]);
+    elBridge.delete();
+    let tempGuardBridge = guard.add(elBridgeMoved);
+    guard.delete();
+    elBridgeMoved.delete();
+    guard = tempGuardBridge;
+
+    // Add bridge across the bottom of the electronics tray pocket (Z = 2.0 to 8.0)
+    let elBotBridge = Manifold.cube([elBayW, 5.0, 6.0], false);
+    let elBotBridgeMoved = elBotBridge.translate([-elBayW / 2, -(rodR + 18.0), 2.0]);
+    elBotBridge.delete();
+    let tempGuardBotBridge = guard.add(elBotBridgeMoved);
+    guard.delete();
+    elBotBridgeMoved.delete();
+    guard = tempGuardBotBridge;
+
+    // ─── 6. LIPO Charger USB-C Port Hole (at bottom Z=0 to 3.0) ───────────
+    let usbBox = Manifold.cube([9.5, 12.0, 4.0], false);
+    let usbMoved = usbBox.translate([-9.5 / 2, -(rodR + 15.0), -1.0]);
+    usbBox.delete();
+    let tempGuardUsb = guard.subtract(usbMoved);
+    guard.delete();
+    usbMoved.delete();
+    guard = tempGuardUsb;
+
+    // ─── 7. Motor Slots (Sideways cylindrical pocket) ───────────────────
+    // The coin cells are sideways cylinders. We cut a sideways cylindrical hole (cylinder along X)
+    const coinR = 5.6;
+    const coinT = 3.2;
+
+    // Right motor slot (+X)
+    let cy1 = Manifold.cylinder(30.0, coinR, coinR, 32, false);
+    let cy1Rot = cy1.rotate([0, 90, 0]); // orient along X
+    cy1.delete();
+    let cy1Moved = cy1Rot.translate([rodR + 0.2, 0, 57.5]);
+    cy1Rot.delete();
+
+    let tempGuardM1 = guard.subtract(cy1Moved);
+    guard.delete();
+    cy1Moved.delete();
+    guard = tempGuardM1;
+
+    // Left motor slot (-X)
+    let cy2 = Manifold.cylinder(30.0, coinR, coinR, 32, false);
+    let cy2Rot = cy2.rotate([0, 90, 0]); // orient along X
+    cy2.delete();
+    let cy2Moved = cy2Rot.translate([-(rodR + 0.2 + 30.0), 0, 57.5]);
+    cy2Rot.delete();
+
+    let tempGuardM2 = guard.subtract(cy2Moved);
+    guard.delete();
+    cy2Moved.delete();
+    guard = tempGuardM2;
+
+    // ─── 8. Wire Paths / Passages ─────────────────────────────────────────
+    // Helper to generate a 5mm square bypass channel around the right side of the central rod
+    const generateBypass = (zVal, includeBatterySide = true) => {
+        const w = 5.0; // channel size
+        const centerX = rodR + 0.3 + w / 2;
+
+        const crossNY = -(rodR + 9.2 + w / 2);
+        const crossPY = rodR + 0.2 + w / 2;
+
+        const yMin = crossNY - w / 2;
+        const yMax = crossPY + w / 2;
+
+        // Right side channel running along Y
+        let right = Manifold.cube([w, yMax - yMin, w], false);
+        let rightMoved = right.translate([centerX - w / 2, yMin, zVal - w / 2]);
+        right.delete();
+
+        // -Y cross channel connecting pockets to the right side channel
+        const crossXLength = (centerX + w) - (-5.0);
+        let crossN = Manifold.cube([crossXLength, w, w], false);
+        let crossNMoved = crossN.translate([-5.0, crossNY - w / 2, zVal - w / 2]);
+        crossN.delete();
+
+        let combined;
+        if (includeBatterySide) {
+            // +Y cross channel connecting pockets to the right side channel
+            let crossP = Manifold.cube([crossXLength, w, w], false);
+            let crossPMoved = crossP.translate([-5.0, crossPY - w / 2, zVal - w / 2]);
+            crossP.delete();
+
+            combined = rightMoved.add(crossPMoved).add(crossNMoved);
+            crossPMoved.delete();
+        } else {
+            combined = rightMoved.add(crossNMoved);
+        }
+        rightMoved.delete();
+        crossNMoved.delete();
+
+        return combined;
+    };
+
+    // Battery wire passage bottom: bypass around the central rod at Z = 4.0 (now goes all the way through into the battery area)
+    let batWireBot = generateBypass(4.0, true);
+    let tempGuardW1 = guard.subtract(batWireBot);
+    guard.delete();
+    batWireBot.delete();
+    guard = tempGuardW1;
+
+    // Switch to electronics bay wire passage: bypass around the central rod at Z = 84.7 (shifted 6mm down)
+    let swWire = generateBypass(84.7);
+    let tempGuardWSw = guard.subtract(swWire);
+    guard.delete();
+    swWire.delete();
+    guard = tempGuardWSw;
+
+    // Switch to battery bay vertical wire passage: Z = 74.0 to 86.0 (5mm x 5mm square channel connecting switch pocket and top of battery bay)
+    let swBatWire = Manifold.cube([5.0, 5.0, 12.0], false);
+    let swBatWireMoved = swBatWire.translate([-2.5, rodR + 2.0, 74.0]);
+    swBatWire.delete();
+    let tempGuardWBat = guard.subtract(swBatWireMoved);
+    guard.delete();
+    swBatWireMoved.delete();
+    guard = tempGuardWBat;
+
+    // Electronics bay to central rod wire hole (for LED strips routing): Z = 95.0
+    const wireHoleLen = rodR + 15.0;
+    let elRodWire = Manifold.cylinder(wireHoleLen, 2.0, 2.0, 16, true);
+    let elRodWireRot = elRodWire.rotate([0, 90, 0]).rotate([0, 0, 90]);
+    elRodWire.delete();
+    let elRodWireMoved = elRodWireRot.translate([0, -(rodR + 9.2) / 2, 95.0]);
+    elRodWireRot.delete();
+    let tempGuardWRod = guard.subtract(elRodWireMoved);
+    guard.delete();
+    elRodWireMoved.delete();
+    guard = tempGuardWRod;
+
+    // Motor cells wire channels to electronics bay (horizontal squares of width 5.0mm, height 5.0mm, centered with motors at Z = 57.5)
+    // Left channel (5mm x 5mm square cutout, aligned to center with motor at Z=57.5, X=-(rodR+1.7), and extending to Y=0 to cut halfway into motor pocket)
+    const motorChanLen = rodR + 15.0;
+    let leftChan = Manifold.cube([5.0, motorChanLen, 5.0], false);
+    let leftChanMoved = leftChan.translate([-(rodR + 1.7) - 2.5, -motorChanLen, 55.0]);
+    leftChan.delete();
+    let tempGuardW3 = guard.subtract(leftChanMoved);
+    guard.delete();
+    leftChanMoved.delete();
+    guard = tempGuardW3;
+
+    // Right channel (5mm x 5mm square cutout, aligned to center with motor at Z=57.5, X=rodR+1.7, and extending to Y=0 to cut halfway into motor pocket)
+    let rightChan = Manifold.cube([5.0, motorChanLen, 5.0], false);
+    let rightChanMoved = rightChan.translate([rodR + 1.7 - 2.5, -motorChanLen, 55.0]);
+    rightChan.delete();
+    let tempGuardW4 = guard.subtract(rightChanMoved);
+    guard.delete();
+    rightChanMoved.delete();
+    guard = tempGuardW4;
+
+    // ─── 9. M3 Cover Locking Screws (at Z = 3.5mm from bottom) ────────────
+    // Battery cover locking screw hole (lengthened to 20mm, translated Y to rodR + 28.0 to cut through, and Z to 2.0 to clear battery shelf)
+    let batLockHole = Manifold.cylinder(20, screwR, screwR, 16, true);
+    let batLockHoleRot = batLockHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
+    batLockHole.delete();
+    let batLockHoleMoved = batLockHoleRot.translate([0, rodR + 28.0, 2.0]);
+    batLockHoleRot.delete();
+    let tempGuard5 = guard.subtract(batLockHoleMoved);
+    guard.delete();
+    batLockHoleMoved.delete();
+    guard = tempGuard5;
+
+    // Electronics cover locking screw hole (shifted to Y = -(rodR + 24.0) to match new bulge depth)
+    let elLockHole = Manifold.cylinder(30, screwR, screwR, 16, true);
+    let elLockHoleRot = elLockHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
+    elLockHole.delete();
+    
+    let elLockHoleMoved = elLockHoleRot.translate([0, -(rodR + 24.0), 3.5]);
+    let tempGuard6 = guard.subtract(elLockHoleMoved);
+    guard.delete();
+    elLockHoleMoved.delete();
+    guard = tempGuard6;
+
+    // Top electronics cover locking screw hole through the bridge (at Z = 99.0)
+    let elTopLockHoleMoved = elLockHoleRot.translate([0, -(rodR + 24.0), 99.0]);
+    let tempGuard7 = guard.subtract(elTopLockHoleMoved);
+    guard.delete();
+    elTopLockHoleMoved.delete();
+    guard = tempGuard7;
+
+    elLockHoleRot.delete();
 
     // Position guard at its Z location
     let positioned = guard.translate([0, 0, z.guardStart]);
@@ -339,36 +628,176 @@ function generateGuard() {
     return positioned;
 }
 
-// ─── SLED GENERATOR ──────────────────────────────────────────────────────
-// TODO: This is a placeholder solid block representing the electronics sled.
-// Future work: Add internal compartments for:
-//   - Battery holder
-//   - Microcontroller mount (ESP32/similar)
-//   - IMU/accelerometer mount (motion detection)
-//   - Haptic motor mount
-//   - Wiring channels
-// The sled slides into the guard housing from the bottom.
-// Ensure the sled does not protrude past the guard OD so fingers
-// can still wrap around the handle area.
 function generateSled() {
-    if (!Manifold) return null;
-
+    const group = new THREE.Group();
     const z = getLayoutZones();
     const rodR = params.rodOD / 2;
-    const sledW = params.sledWidth;
-    const sledD = params.sledDepth;
-    const sledL = params.sledLength;
+    const h = params.guardLength;
 
-    // Simple solid block representing the electronics sled
-    let sled = Manifold.cube([sledW, sledD, sledL], false);
-    let positioned = sled.translate([
-        -sledW / 2,
-        rodR - sledD * 0.3,
-        z.guardStart
-    ]);
-    sled.delete();
+    // Materials - Neon Cyberpunk aesthetics
+    const matPCBBlue = new THREE.MeshPhysicalMaterial({ color: 0x0055ff, roughness: 0.5, metalness: 0.1 });
+    const matPCBRed = new THREE.MeshPhysicalMaterial({ color: 0xff1133, roughness: 0.5, metalness: 0.1 });
+    const matPCBGreen = new THREE.MeshPhysicalMaterial({ color: 0x008833, roughness: 0.5, metalness: 0.1 });
+    const matPCBTurquoise = new THREE.MeshPhysicalMaterial({ color: 0x00a8a8, roughness: 0.5, metalness: 0.1 });
+    const matSilver = new THREE.MeshPhysicalMaterial({ color: 0xcccccc, roughness: 0.2, metalness: 0.9 });
+    const matBlack = new THREE.MeshPhysicalMaterial({ color: 0x1a1a1a, roughness: 0.8, metalness: 0.1 });
+    const matGreenBat = new THREE.MeshPhysicalMaterial({ color: 0x39ff14, roughness: 0.3, metalness: 0.2, emissive: 0x39ff14, emissiveIntensity: 0.2 });
+    
+    // Translucent neon violet covers (glassmorphism look)
+    const matCover = new THREE.MeshPhysicalMaterial({
+        color: 0xbf00ff,
+        roughness: 0.1,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.55,
+        transmission: 0.4,
+        side: THREE.DoubleSide
+    });
 
-    return positioned;
+    // ─── 1. Battery & Switch Side (+Y) ────────────────────────────────────
+    // Battery Holder (starts at Z = 4.0, Z-center = 41.5, shifted 6mm down)
+    const holderGeom = new THREE.BoxGeometry(22, 24, 75);
+    const holder = new THREE.Mesh(holderGeom, matBlack);
+    holder.position.set(0, rodR + 12.2, 41.5);
+    group.add(holder);
+
+    // Battery inside holder
+    const batGeom = new THREE.CylinderGeometry(9, 9, 65, 16);
+    const bat = new THREE.Mesh(batGeom, matGreenBat);
+    bat.rotation.x = Math.PI / 2;
+    bat.position.set(0, rodR + 12.2, 41.5);
+    group.add(bat);
+
+    // Power Switch (above battery, Z = 80.0 to 89.0, Z-center = 84.5, shifted 6mm down)
+    const swGeom = new THREE.BoxGeometry(15, 20, 9);
+    const sw = new THREE.Mesh(swGeom, matBlack);
+    sw.position.set(0, rodR + 10.2, 84.5);
+    group.add(sw);
+
+    // Red rocker button
+    const toggleGeom = new THREE.BoxGeometry(10, 4, 5);
+    const toggle = new THREE.Mesh(toggleGeom, new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+    toggle.position.set(0, rodR + 21.0, 84.5);
+    group.add(toggle);
+
+    // ─── 2. Electronics Side (-Y) ─────────────────────────────────────────
+    // LIPO USB-C Charger (Z = 2.0 to 30.0, Z-center = 16.0)
+    const lipoGeom = new THREE.BoxGeometry(17, 1.6, 28);
+    const lipo = new THREE.Mesh(lipoGeom, matPCBTurquoise);
+    lipo.position.set(0, -(rodR + 6.8), 16.0);
+    group.add(lipo);
+
+    // USB-C Connector port
+    const usbGeom = new THREE.BoxGeometry(9, 3.2, 6);
+    const usb = new THREE.Mesh(usbGeom, matSilver);
+    usb.position.set(0, -(rodR + 8.4), 1.0);
+    group.add(usb);
+
+    // MPU 6500 (Z = 30.0 to 57.0, Z-center = 43.5)
+    const mpuGeom = new THREE.BoxGeometry(16, 1.6, 27);
+    const mpu = new THREE.Mesh(mpuGeom, matPCBGreen);
+    mpu.position.set(0, -(rodR + 6.8), 43.5);
+    group.add(mpu);
+
+    const mpuChipGeom = new THREE.BoxGeometry(4, 1.0, 4);
+    const mpuChip = new THREE.Mesh(mpuChipGeom, matBlack);
+    mpuChip.position.set(0, -(rodR + 6.8 + 1.3), 43.5);
+    group.add(mpuChip);
+
+    // ESP32 C3 Supermini (Z = 57.0 to 80.0, Z-center = 68.5)
+    const espGeom = new THREE.BoxGeometry(19, 1.6, 23);
+    const esp = new THREE.Mesh(espGeom, matPCBBlue);
+    esp.position.set(0, -(rodR + 6.8), 68.5);
+    group.add(esp);
+
+    const espChipGeom = new THREE.BoxGeometry(6, 1.0, 6);
+    const espChip = new THREE.Mesh(espChipGeom, matSilver);
+    espChip.position.set(0, -(rodR + 6.8 + 1.3), 68.5);
+    group.add(espChip);
+
+    // Motor Driver (Z = 80.0 to 102.0, Z-center = 91.0)
+    const drvGeom = new THREE.BoxGeometry(25, 1.6, 22);
+    const drv = new THREE.Mesh(drvGeom, matPCBRed);
+    drv.position.set(0, -(rodR + 6.8), 91.0);
+    group.add(drv);
+
+    const drvChipGeom = new THREE.BoxGeometry(8, 3.0, 8);
+    const drvChip = new THREE.Mesh(drvChipGeom, matBlack);
+    drvChip.position.set(0, -(rodR + 6.8 + 2.3), 91.0);
+    group.add(drvChip);
+
+    // ─── 3. Coin Vibration Cells (+/- X sides, centered at Z = 57.5) ──────
+    const coinGeom = new THREE.CylinderGeometry(5.5, 5.5, 3, 16);
+    coinGeom.rotateZ(Math.PI / 2);
+
+    const coin1 = new THREE.Mesh(coinGeom, matSilver);
+    coin1.position.set(rodR + 1.7, 0, 57.5);
+    group.add(coin1);
+
+    const coin2 = new THREE.Mesh(coinGeom, matSilver);
+    coin2.position.set(-(rodR + 1.7), 0, 57.5);
+    group.add(coin2);
+
+    // ─── 4. Slide-on Covers (Extended lengths, with physical locking screw holes) ───
+    const screwR = params.m3Diam / 2;
+
+    // Battery Cover (Side A, length = 80.0, starting at Z = 0.0, wrapping halfway over the uncut bulge walls)
+    let batCoverBase = Manifold.cube([32.0, 16.0, 80.0], false).translate([-16.0, rodR + 14.0, 0.0]);
+    let batCoverCutout = Manifold.cube([28.0, 14.0, 82.0], false).translate([-14.0, rodR + 14.0, -1.0]);
+    let batCoverSolidMoved = batCoverBase.subtract(batCoverCutout);
+    batCoverBase.delete();
+    batCoverCutout.delete();
+
+    let batHole = Manifold.cylinder(20, screwR, screwR, 16, true);
+    let batHoleRot = batHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
+    batHole.delete();
+    let batHoleMoved = batHoleRot.translate([0, rodR + 28.0, 2.0]);
+    batHoleRot.delete();
+
+    let finalBatCoverSolid = batCoverSolidMoved.subtract(batHoleMoved);
+    batCoverSolidMoved.delete();
+    batHoleMoved.delete();
+
+    const batCoverMeshProps = finalBatCoverSolid.getMesh();
+    const batCoverGeom = manifoldToThree(batCoverMeshProps);
+    finalBatCoverSolid.delete();
+
+    const batCover = new THREE.Mesh(batCoverGeom, matCover);
+    batCover.name = "batteryCover";
+    group.add(batCover);
+
+    // Electronics Cover (Side B, length = 102.0, wrapping halfway over the uncut bulge walls)
+    let elCoverBase = Manifold.cube([32.0, 8.5, 102.0], false).translate([-16.0, -(rodR + 22.0), 0.0]);
+    let elCoverCutout = Manifold.cube([28.0, 6.5, 104.0], false).translate([-14.0, -(rodR + 20.0), -1.0]);
+    let elCoverSolidMoved = elCoverBase.subtract(elCoverCutout);
+    elCoverBase.delete();
+    elCoverCutout.delete();
+
+    let elHole = Manifold.cylinder(30, screwR, screwR, 16, true);
+    let elHoleRot = elHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
+    elHole.delete();
+    
+    let elHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 3.5]);
+    let elTopHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 99.0]);
+    elHoleRot.delete();
+
+    let finalElCoverSolid = elCoverSolidMoved.subtract(elHoleMoved).subtract(elTopHoleMoved);
+    elCoverSolidMoved.delete();
+    elHoleMoved.delete();
+    elTopHoleMoved.delete();
+
+    const elCoverMeshProps = finalElCoverSolid.getMesh();
+    const elCoverGeom = manifoldToThree(elCoverMeshProps);
+    finalElCoverSolid.delete();
+
+    const elCover = new THREE.Mesh(elCoverGeom, matCover);
+    elCover.name = "electronicsCover";
+    group.add(elCover);
+
+    // Position the entire group at z.guardStart
+    group.position.z = z.guardStart;
+
+    return group;
 }
 
 function generateTransparentCylinder(index) {
@@ -382,13 +811,26 @@ function generateTransparentCylinder(index) {
     const h = z.cylLen;
 
     let outer = Manifold.cylinder(h, cylOuterR, cylOuterR, 32, false);
-    let inner = Manifold.cylinder(h + 2, cylInnerR, cylInnerR, 32, false);
-    let innerMoved = inner.translate([0, 0, -1]);
-    inner.delete();
+    let cyl;
+    if (index === z.N - 1) {
+        // Last cylinder gets a flat cap on top. Cap thickness is 3.0 mm.
+        const capThick = 3.0;
+        let inner = Manifold.cylinder(h - capThick + 1, cylInnerR, cylInnerR, 32, false);
+        let innerMoved = inner.translate([0, 0, -1]);
+        inner.delete();
 
-    let cyl = outer.subtract(innerMoved);
-    outer.delete();
-    innerMoved.delete();
+        cyl = outer.subtract(innerMoved);
+        outer.delete();
+        innerMoved.delete();
+    } else {
+        let inner = Manifold.cylinder(h + 2, cylInnerR, cylInnerR, 32, false);
+        let innerMoved = inner.translate([0, 0, -1]);
+        inner.delete();
+
+        cyl = outer.subtract(innerMoved);
+        outer.delete();
+        innerMoved.delete();
+    }
 
     // Subtract 4 RADIAL screw holes at bottom and top
     // Screws go through the cylinder wall toward the rod (radially, not axially)
@@ -448,7 +890,7 @@ function generateConnectorRing(index) {
     const cylInnerR = Math.max(params.cylOD / 2 - params.cylWall, boreR + 1.5);
     const cylOuterR = cylInnerR + params.cylWall;
 
-    const endR = cylInnerR;
+    const endR = cylInnerR - 0.15; // 0.15mm clearance for slip fit inside cylinder
     const centerR = Math.max(params.ringCenterOD / 2, cylOuterR + 1.0);
 
     // The ring is built as a stack of 3 short cylinders:
@@ -558,7 +1000,7 @@ function generateDecorativeRidges(cylinderIndex) {
     const ringThick = 12.0; // axial thickness of the mounting ring - thicker for durability
     const botRingOuterR = cylOuterR + rh + ramp;
     const topRingOuterR = cylOuterR + rh;
-    const ringInnerR = cylOuterR - 0.5; // slight overlap onto cylinder surface
+    const ringInnerR = cylOuterR + 0.15; // 0.15mm clearance gap to slide over cylinder surface
 
     const parts = [];
 
@@ -591,8 +1033,8 @@ function generateDecorativeRidges(cylinderIndex) {
         baseMoved.delete();
         cutterPos.delete();
 
-        // Translate outward to sit on cylinder surface (inner surface at cylOuterR)
-        let translated = ridge.translate([0, cylOuterR, 0]);
+        // Translate outward to sit on cylinder surface (inner surface at cylOuterR + 0.15)
+        let translated = ridge.translate([0, cylOuterR + 0.15, 0]);
         ridge.delete();
 
         // Rotate to correct angle around Z axis
@@ -762,7 +1204,7 @@ function setupUIListeners() {
     bindSlider('input-sledDepth', 'sledDepth');
 
     // Cylinder
-    bindSlider('input-cylOD', 'cylOD');
+    bindSlider('input-cylLedGap', 'cylLedGap');
     bindSlider('input-cylWall', 'cylWall');
     bindNumberInput('val-ledSectionLen', 'ledSectionLen', true, 300.0, Infinity, false);
     bindNumberInput('val-maxCylLen', 'maxCylLen', true, 10.0, Infinity, false);
@@ -841,9 +1283,15 @@ function setupUIListeners() {
     bindVis('show-screwholes', 'screwholes');
 
     // Export STL
+    document.getElementById('btn-export-all').addEventListener('click', () => {
+        exportComponentSTL('all');
+    });
     document.getElementById('btn-export-guard').addEventListener('click', () => exportComponentSTL('guard'));
+    document.getElementById('btn-export-covers').addEventListener('click', () => exportComponentSTL('covers'));
     document.getElementById('btn-export-cylinder').addEventListener('click', () => exportComponentSTL('cylinder'));
     document.getElementById('btn-export-ring').addEventListener('click', () => exportComponentSTL('ring'));
+    document.getElementById('btn-export-ridges').addEventListener('click', () => exportComponentSTL('ridges'));
+    document.getElementById('btn-export-endcap').addEventListener('click', () => exportComponentSTL('endcap'));
 
     setupTooltipListeners();
 }
@@ -900,10 +1348,10 @@ const paramInfo = {
         getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(0, params.rodOD / 2 + params.sledDepth, z.guardStart + params.sledLength / 2); },
         dir: [-1, 1]
     },
-    cylOD: {
-        text: "Cylinder Outer Diameter",
-        desc: "Outside diameter of the transparent cylinders covering the LED strips. Measured 34mm.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen / 2); },
+    cylLedGap: {
+        text: "Cylinder-LED Radial Gap",
+        desc: "Clearance gap between the LED strips and the inner wall of the transparent cylinders.",
+        getPos: () => { const z = getLayoutZones(); const rodR = params.rodOD / 2; return new THREE.Vector3(rodR + params.ledHeight + params.cylLedGap / 2, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen / 2); },
         dir: [1, 1]
     },
     cylWall: {
@@ -1067,7 +1515,16 @@ function rebuild() {
     const clearMesh = (mesh) => {
         if (mesh) {
             mainGroup.remove(mesh);
-            if (mesh.geometry) mesh.geometry.dispose();
+            mesh.traverse(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach(m => m.dispose());
+                    } else {
+                        child.material.dispose();
+                    }
+                }
+            });
         }
         return null;
     };
@@ -1155,21 +1612,36 @@ function rebuild() {
         }
     }
 
-    // ─── 3. Electronics Sled (Commented placeholder) ─────────────────────
+    // ─── 3. Packaged Electronics ─────────────────────────────────────────
     if (visibilities.sled) {
-        const sledSolid = generateSled();
-        if (sledSolid) {
-            const sMesh = sledSolid.getMesh();
-            const sledGeom = manifoldToThree(sMesh);
-            const tris = sMesh.triVerts.length / 3;
-            stats['Electronics Sled'] = tris;
-            totalTriangles += tris;
-            sledSolid.delete();
-
-            sledMesh = new THREE.Mesh(sledGeom, makeMat(colors.sled, 0.7));
-            addBlueprintEdges(sledMesh, sledGeom, 0xffaa00);
+        sledMesh = generateSled();
+        if (sledMesh) {
+            if (params.mode === 'blueprint') {
+                sledMesh.traverse(child => {
+                    if (child.isMesh && child.geometry) {
+                        child.material = new THREE.MeshBasicMaterial({
+                            color: 0x071830,
+                            transparent: true,
+                            opacity: 0.4,
+                            side: THREE.DoubleSide
+                        });
+                        addBlueprintEdges(child, child.geometry, 0xffaa00);
+                    }
+                });
+            }
+            // Move components out of the guard in explode view
             sledMesh.position.z -= explodeDist * 0.5;
+
+            // Animate covers sliding further out of their grooves!
+            const batCover = sledMesh.getObjectByName("batteryCover");
+            const elCover = sledMesh.getObjectByName("electronicsCover");
+            if (batCover) batCover.position.z -= explodeDist * 1.5;
+            if (elCover) elCover.position.z -= explodeDist * 1.5;
+
             mainGroup.add(sledMesh);
+
+            stats['Electronics Sled'] = 820;
+            totalTriangles += 820;
         }
     }
 
@@ -1369,7 +1841,7 @@ function rebuild() {
         }
 
         // Guard screw indicators
-        const guardScrewZ = z.guardEnd - 6.0; // 6mm below top of guard
+        const guardScrewZ = z.guardEnd - params.ringHeight * 0.375; // aligned with Ring 0 bottom flange hole
         for (let s = 0; s < 4; s++) {
             const angle = (Math.PI / 4) + s * (Math.PI / 2);
             const geom = new THREE.CylinderGeometry(screwR, screwR, guardR * 2, 8);
@@ -1647,17 +2119,294 @@ function exportComponentSTL(componentType) {
     let filename = '';
 
     switch (componentType) {
+        case 'all':
+            {
+                const z = getLayoutZones();
+                const rodR = params.rodOD / 2;
+                const screwR = params.m3Diam / 2;
+                const h = params.ringHeight;
+                const spacing = params.cylOD + (params.ridgeHeight + params.ridgeRamp) * 2 + 10.0;
+                
+                let partsToUnion = [];
+
+                // 1. Guard
+                let guardSolid = generateGuard();
+                if (guardSolid) {
+                    let bedGuard = guardSolid.translate([0, 0, -z.guardStart]);
+                    guardSolid.delete();
+                    partsToUnion.push(bedGuard);
+                }
+
+                // 2. Battery Cover
+                let batCoverBase = Manifold.cube([32.0, 16.0, 80.0], false).translate([-16.0, rodR + 14.0, 0.0]);
+                let batCoverCutout = Manifold.cube([28.0, 14.0, 82.0], false).translate([-14.0, rodR + 14.0, -1.0]);
+                let batCoverSolid = batCoverBase.subtract(batCoverCutout);
+                batCoverBase.delete();
+                batCoverCutout.delete();
+
+                let batHole = Manifold.cylinder(20, screwR, screwR, 16, true);
+                let batHoleRot = batHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
+                batHole.delete();
+                let batHoleMoved = batHoleRot.translate([0, rodR + 28.0, 2.0]);
+                batHoleRot.delete();
+
+                let finalBatCover = batCoverSolid.subtract(batHoleMoved);
+                batCoverSolid.delete();
+                batHoleMoved.delete();
+
+                let batFlat = finalBatCover.translate([0, -(rodR + 30.0), 0.0]);
+                let batFlatRot = batFlat.rotate([-90, 0, 0]);
+                let batReady = batFlatRot.translate([-45.0, -40.0, 0.0]);
+                batFlat.delete();
+                batFlatRot.delete();
+                finalBatCover.delete();
+                partsToUnion.push(batReady);
+
+                // 3. Electronics Cover
+                let elCoverBase = Manifold.cube([32.0, 8.5, 102.0], false).translate([-16.0, -(rodR + 22.0), 0.0]);
+                let elCoverCutout = Manifold.cube([28.0, 6.5, 104.0], false).translate([-14.0, -(rodR + 20.0), -1.0]);
+                let elCoverSolid = elCoverBase.subtract(elCoverCutout);
+                elCoverBase.delete();
+                elCoverCutout.delete();
+
+                let elHole = Manifold.cylinder(30, screwR, screwR, 16, true);
+                let elHoleRot = elHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
+                elHole.delete();
+                
+                let elHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 3.5]);
+                let elTopHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 99.0]);
+                elHoleRot.delete();
+
+                let finalElCover = elCoverSolid.subtract(elHoleMoved).subtract(elTopHoleMoved);
+                elCoverSolid.delete();
+                elHoleMoved.delete();
+                elTopHoleMoved.delete();
+
+                let elFlat = finalElCover.translate([0, rodR + 22.0, 0.0]);
+                let elFlatRot = elFlat.rotate([90, 0, 0]);
+                let elReady = elFlatRot.translate([45.0, 51.0, 0.0]);
+                elFlat.delete();
+                elFlatRot.delete();
+                finalElCover.delete();
+                partsToUnion.push(elReady);
+
+                // 4. Cylinders (N)
+                for (let i = 0; i < z.N; i++) {
+                    let cyl = generateTransparentCylinder(i);
+                    if (cyl) {
+                        const cylZ = z.ledStart + i * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+                        const xOffset = (i - (z.N - 1) / 2) * (params.cylOD + 10.0);
+                        let bedCyl = cyl.translate([xOffset, 60.0, -cylZ]);
+                        cyl.delete();
+                        partsToUnion.push(bedCyl);
+                    }
+                }
+
+                // 5. Connector Rings (N)
+                for (let i = 0; i < z.N; i++) {
+                    let ring = generateConnectorRing(i);
+                    if (ring) {
+                        const ringZ = z.ledStart + i * (z.cylLen + h * 0.5) - h / 2;
+                        const xOffset = (i - (z.N - 1) / 2) * (params.ringCenterOD + 10.0);
+                        let bedRing = ring.translate([xOffset, -60.0, -ringZ]);
+                        ring.delete();
+                        partsToUnion.push(bedRing);
+                    }
+                }
+
+                // 6. Decorative Ridges (N)
+                for (let i = 0; i < z.N; i++) {
+                    let ridges = generateDecorativeRidges(i);
+                    if (ridges) {
+                        const cylZ = z.ledStart + i * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+                        const xOffset = (i - (z.N - 1) / 2) * spacing;
+                        let bedRidges = ridges.translate([xOffset, 110.0, -cylZ]);
+                        ridges.delete();
+                        partsToUnion.push(bedRidges);
+                    }
+                }
+
+                // 7. Bottom Endcap
+                let endcap = generateBottomEndcap();
+                if (endcap) {
+                    let bedEndcap = endcap.translate([0, -100.0, 0]);
+                    endcap.delete();
+                    partsToUnion.push(bedEndcap);
+                }
+
+                // Merge all into solid
+                if (partsToUnion.length > 0) {
+                    let merged = partsToUnion[0];
+                    for (let i = 1; i < partsToUnion.length; i++) {
+                        let temp = merged.add(partsToUnion[i]);
+                        merged.delete();
+                        partsToUnion[i].delete();
+                        merged = temp;
+                    }
+                    solid = merged;
+                }
+                filename = `lightbaton_all_parts_plate.stl`;
+            }
+            break;
         case 'guard':
-            solid = generateGuard();
-            filename = `lightbaton_guard_wall${params.guardWall}mm.stl`;
+            {
+                let guardSolid = generateGuard();
+                if (!guardSolid) return;
+                
+                const z = getLayoutZones();
+                // Translate down to Z = 0 so it stands upright on the print bed
+                solid = guardSolid.translate([0, 0, -z.guardStart]);
+                guardSolid.delete();
+                filename = `lightbaton_guard_wall${params.guardWall}mm.stl`;
+            }
+            break;
+        case 'covers':
+            {
+                const z = getLayoutZones();
+                const rodR = params.rodOD / 2;
+                const screwR = params.m3Diam / 2;
+                
+                // Battery Cover Solid
+                let batCoverBase = Manifold.cube([32.0, 16.0, 80.0], false).translate([-16.0, rodR + 14.0, 0.0]);
+                let batCoverCutout = Manifold.cube([28.0, 14.0, 82.0], false).translate([-14.0, rodR + 14.0, -1.0]);
+                let batCoverSolid = batCoverBase.subtract(batCoverCutout);
+                batCoverBase.delete();
+                batCoverCutout.delete();
+
+                let batHole = Manifold.cylinder(20, screwR, screwR, 16, true);
+                let batHoleRot = batHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
+                batHole.delete();
+                let batHoleMoved = batHoleRot.translate([0, rodR + 28.0, 2.0]);
+                batHoleRot.delete();
+
+                let finalBatCover = batCoverSolid.subtract(batHoleMoved);
+                batCoverSolid.delete();
+                batHoleMoved.delete();
+                
+                // Electronics Cover Solid
+                let elCoverBase = Manifold.cube([32.0, 8.5, 102.0], false).translate([-16.0, -(rodR + 22.0), 0.0]);
+                let elCoverCutout = Manifold.cube([28.0, 6.5, 104.0], false).translate([-14.0, -(rodR + 20.0), -1.0]);
+                let elCoverSolid = elCoverBase.subtract(elCoverCutout);
+                elCoverBase.delete();
+                elCoverCutout.delete();
+
+                let elHole = Manifold.cylinder(30, screwR, screwR, 16, true);
+                let elHoleRot = elHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
+                elHole.delete();
+                
+                let elHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 3.5]);
+                let elTopHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 99.0]);
+                elHoleRot.delete();
+
+                let finalElCover = elCoverSolid.subtract(elHoleMoved).subtract(elTopHoleMoved);
+                elCoverSolid.delete();
+                elHoleMoved.delete();
+                elTopHoleMoved.delete();
+                
+                // Lay both covers flat on the print bed side-by-side at Z = 0
+                let batFlat = finalBatCover.translate([0, -(rodR + 30.0), 0.0]);
+                let batFlatRot = batFlat.rotate([-90, 0, 0]);
+                let batReady = batFlatRot.translate([-20.0, -40.0, 0.0]);
+                batFlat.delete();
+                batFlatRot.delete();
+                finalBatCover.delete();
+
+                let elFlat = finalElCover.translate([0, rodR + 22.0, 0.0]);
+                let elFlatRot = elFlat.rotate([90, 0, 0]);
+                let elReady = elFlatRot.translate([20.0, 51.0, 0.0]);
+                elFlat.delete();
+                elFlatRot.delete();
+                finalElCover.delete();
+                
+                solid = batReady.add(elReady);
+                batReady.delete();
+                elReady.delete();
+                
+                filename = `lightbaton_covers.stl`;
+            }
             break;
         case 'cylinder':
-            solid = generateTransparentCylinder(0);
-            filename = `lightbaton_cylinder_OD${params.cylOD}mm_wall${params.cylWall}mm.stl`;
+            {
+                const z = getLayoutZones();
+                let mergedCyl = null;
+                for (let i = 0; i < z.N; i++) {
+                    let cyl = generateTransparentCylinder(i);
+                    if (cyl) {
+                        const cylZ = z.ledStart + i * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+                        // Stand upright on print bed, arranged side-by-side along X
+                        let bedCyl = cyl.translate([i * (params.cylOD + 10.0), 0, -cylZ]);
+                        cyl.delete();
+                        if (!mergedCyl) {
+                            mergedCyl = bedCyl;
+                        } else {
+                            let temp = mergedCyl.add(bedCyl);
+                            mergedCyl.delete();
+                            bedCyl.delete();
+                            mergedCyl = temp;
+                        }
+                    }
+                }
+                solid = mergedCyl;
+                filename = `lightbaton_cylinders_OD${params.cylOD}mm.stl`;
+            }
             break;
         case 'ring':
-            solid = generateConnectorRing(1);
-            filename = `lightbaton_ring_center${params.ringCenterOD}mm.stl`;
+            {
+                const z = getLayoutZones();
+                const h = params.ringHeight;
+                let mergedRing = null;
+                for (let i = 0; i < z.N; i++) {
+                    let ring = generateConnectorRing(i);
+                    if (ring) {
+                        const ringZ = z.ledStart + i * (z.cylLen + h * 0.5) - h / 2;
+                        // Stand upright on print bed, arranged side-by-side along X
+                        let bedRing = ring.translate([i * (params.ringCenterOD + 10.0), 0, -ringZ]);
+                        ring.delete();
+                        if (!mergedRing) {
+                            mergedRing = bedRing;
+                        } else {
+                            let temp = mergedRing.add(bedRing);
+                            mergedRing.delete();
+                            bedRing.delete();
+                            mergedRing = temp;
+                        }
+                    }
+                }
+                solid = mergedRing;
+                filename = `lightbaton_rings_center${params.ringCenterOD}mm.stl`;
+            }
+            break;
+        case 'endcap':
+            {
+                solid = generateBottomEndcap();
+                filename = `lightbaton_bottom_endcap_OD${params.capOD}mm.stl`;
+            }
+            break;
+        case 'ridges':
+            {
+                const z = getLayoutZones();
+                let mergedRidges = null;
+                const spacing = params.cylOD + (params.ridgeHeight + params.ridgeRamp) * 2 + 10.0;
+                for (let i = 0; i < z.N; i++) {
+                    let ridges = generateDecorativeRidges(i);
+                    if (ridges) {
+                        const cylZ = z.ledStart + i * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+                        // Stand upright on print bed, arranged side-by-side along X
+                        let bedRidges = ridges.translate([i * spacing, 0, -cylZ]);
+                        ridges.delete();
+                        if (!mergedRidges) {
+                            mergedRidges = bedRidges;
+                        } else {
+                            let temp = mergedRidges.add(bedRidges);
+                            mergedRidges.delete();
+                            bedRidges.delete();
+                            mergedRidges = temp;
+                        }
+                    }
+                }
+                solid = mergedRidges;
+                filename = `lightbaton_decorative_ridges_width${params.ridgeWidth}mm.stl`;
+            }
             break;
         default:
             return;

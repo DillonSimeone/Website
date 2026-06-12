@@ -91,35 +91,26 @@
                         <div class="param-row" data-param="guardWall">
                             <div class="param-info"><span class="param-label">Guard Wall Thickness</span><span
                                     class="param-value"><input type="number" id="val-guardWall" class="param-num-input"
-                                        step="any" value="3.0"> mm</span></div>
+                                         step="any" value="3.0"> mm</span></div>
                             <input type="range" id="input-guardWall" min="2.0" max="6.0" step="0.5" value="3.0">
                         </div>
                         <div class="param-row" data-param="guardLength">
                             <div class="param-info"><span class="param-label">Guard Length</span><span
                                     class="param-value"><input type="number" id="val-guardLength"
-                                        class="param-num-input" step="any" value="170.0"> mm</span></div>
-                            <input type="range" id="input-guardLength" min="120" max="220" step="1" value="170">
+                                         class="param-num-input" step="any" value="115.0"> mm</span></div>
+                            <input type="range" id="input-guardLength" min="90" max="180" step="1" value="115">
                         </div>
                     </div>
                     <div class="control-group" style="margin-top: 15px;">
-                        <div class="control-group-title">Electronics Sled</div>
-                        <div class="param-row" data-param="sledWidth">
-                            <div class="param-info"><span class="param-label">Sled Width</span><span
-                                    class="param-value"><input type="number" id="val-sledWidth" class="param-num-input"
-                                        step="any" value="20.0"> mm</span></div>
-                            <input type="range" id="input-sledWidth" min="15" max="30" step="0.5" value="20.0">
-                        </div>
-                        <div class="param-row" data-param="sledLength">
-                            <div class="param-info"><span class="param-label">Sled Length</span><span
-                                    class="param-value"><input type="number" id="val-sledLength" class="param-num-input"
-                                        step="any" value="160.0"> mm</span></div>
-                            <input type="range" id="input-sledLength" min="100" max="200" step="1" value="160">
-                        </div>
-                        <div class="param-row" data-param="sledDepth">
-                            <div class="param-info"><span class="param-label">Sled Depth</span><span
-                                    class="param-value"><input type="number" id="val-sledDepth" class="param-num-input"
-                                        step="any" value="22.0"> mm</span></div>
-                            <input type="range" id="input-sledDepth" min="15" max="30" step="0.5" value="22.0">
+                        <div class="control-group-title">Packaged Electronics (Fixed Size)</div>
+                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); line-height: 1.5; padding: 5px;">
+                            <div style="margin-bottom: 4px;">• <strong>18650 Battery Holder</strong>: 22 &times; 75 &times; 24 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>LIPO USB-C Charger</strong>: 17 &times; 28 &times; 4 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>ESP32 C3 Supermini</strong>: 19 &times; 23 &times; 4 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>Motor Driver Board</strong>: 25 &times; 22 &times; 8 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>MPU 6500 IMU</strong>: 16 &times; 27 &times; 4 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>Coin Vibration Cells (x2)</strong>: 11 mm &Oslash; &times; 3 mm</div>
+                            <div>• <strong>Power Switch</strong>: 9 &times; 15 &times; 20 mm</div>
                         </div>
                     </div>
                 </div>
@@ -128,11 +119,11 @@
                 <div id="tab-cylinder" class="tab-content-panel">
                     <div class="control-group">
                         <div class="control-group-title">Transparent Cylinders</div>
-                        <div class="param-row" data-param="cylOD">
-                            <div class="param-info"><span class="param-label">Cylinder Outer Diameter</span><span
-                                    class="param-value"><input type="number" id="val-cylOD" class="param-num-input"
-                                        step="any" value="38.0"> mm</span></div>
-                            <input type="range" id="input-cylOD" min="30" max="50" step="0.5" value="38.0">
+                        <div class="param-row" data-param="cylLedGap">
+                            <div class="param-info"><span class="param-label">Cylinder-LED Radial Gap</span><span
+                                    class="param-value"><input type="number" id="val-cylLedGap" class="param-num-input"
+                                        step="any" value="2.0"> mm</span></div>
+                            <input type="range" id="input-cylLedGap" min="1.5" max="5.0" step="0.1" value="2.0">
                         </div>
                         <div class="param-row" data-param="cylWall">
                             <div class="param-info"><span class="param-label">Cylinder Wall Thickness</span><span
@@ -370,11 +361,19 @@
                             style="color: var(--bp-accent); text-shadow: 0 0 5px var(--bp-accent);">28× M3</span>
                     </div>
 
-                    <button class="btn btn-accent" id="btn-export-guard" style="margin-bottom: 8px;">Export Guard
-                        STL</button>
+                    <button class="btn btn-accent" id="btn-export-all"
+                        style="margin-bottom: 12px; font-weight: bold; background: linear-gradient(135deg, var(--bp-accent), #00f2ff); color: #000; border: none; box-shadow: 0 0 10px rgba(191, 0, 255, 0.4);">Download All (Bed Layout)</button>
+                    <button class="btn btn-accent" id="btn-export-guard"
+                        style="margin-bottom: 8px; margin-top: 0;">Export Guard STL</button>
+                    <button class="btn btn-accent" id="btn-export-covers"
+                        style="margin-bottom: 8px; margin-top: 0;">Export Covers STL</button>
                     <button class="btn btn-accent" id="btn-export-cylinder"
                         style="margin-bottom: 8px; margin-top: 0;">Export Cylinder STL</button>
-                    <button class="btn btn-accent" id="btn-export-ring" style="margin-top: 0;">Export Ring STL</button>
+                    <button class="btn btn-accent" id="btn-export-ring"
+                        style="margin-bottom: 8px; margin-top: 0;">Export Ring STL</button>
+                    <button class="btn btn-accent" id="btn-export-ridges"
+                        style="margin-bottom: 8px; margin-top: 0;">Export Ridges STL</button>
+                    <button class="btn btn-accent" id="btn-export-endcap" style="margin-top: 0;">Export Endcap STL</button>
                 </div>
             </div>
         </div>
