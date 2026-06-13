@@ -133,6 +133,9 @@
         <h2>System Control</h2>
         <p class='help'>Performance Mode disables the Web UI and Wi-Fi AP to maximize FFT and ESP-NOW broadcast stability.</p>
         <button onclick='goDark()' class='br'>Go Dark (Performance Mode)</button>
+        <form action='/defaults' method='POST' style='margin-top: 10px;' onsubmit='return confirm("Are you sure you want to reset all configuration to defaults?")'>
+            <button type='submit' style='background: #e67e22; color: #fff; margin: 0;'>Reset To Defaults</button>
+        </form>
     </div>
 
     <script>

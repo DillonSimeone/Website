@@ -3,6 +3,8 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 #include <FastLED.h>
+#include <WiFi.h>
+#include <esp_now.h>
 
 //--- Pin Definitions ---
 #define SDA_PIN 2
@@ -26,6 +28,9 @@ float decayRate = 0.6;     // Energy lost per second
 unsigned long lastUpdate = 0;
 unsigned long lastMotionTime = 0;
 uint8_t hue = 0;
+
+// ESP-NOW Broadcast Setup
+uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 // Motor Pattern Variables
 unsigned long motorTimer = 0;
@@ -85,6 +90,30 @@ void setup() {
     FastLED.clear();
     FastLED.show();
 
+    // Initialize WiFi in STA mode for ESP-NOW
+    Serial.println("Initializing WiFi for ESP-NOW...");
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+
+    // Initialize ESP-NOW
+    Serial.println("Initializing ESP-NOW...");
+    if (esp_now_init() != ESP_OK) {
+        Serial.println("Error initializing ESP-NOW!");
+    } else {
+        // Register peer
+        esp_now_peer_info_t peerInfo;
+        memset(&peerInfo, 0, sizeof(peerInfo));
+        memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+        peerInfo.channel = 0; // Same channel
+        peerInfo.encrypt = false;
+        
+        if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+            Serial.println("Failed to add peer!");
+        } else {
+            Serial.println("ESP-NOW Broadcast Peer Added Successfully!");
+        }
+    }
+
     lastUpdate = millis();
     lastMotionTime = millis();
     Serial.println("--- Setup Complete ---\n");
@@ -121,6 +150,10 @@ void loop() {
     // Update Visuals and Haptics
     updateLEDs();
     updateMotor(dt);
+
+    EVERY_N_MILLISECONDS(30) {
+        esp_now_send(broadcastAddress, (uint8_t *) &energyLevel, sizeof(energyLevel));
+    }
 
     EVERY_N_MILLISECONDS(20) {
         hue++;

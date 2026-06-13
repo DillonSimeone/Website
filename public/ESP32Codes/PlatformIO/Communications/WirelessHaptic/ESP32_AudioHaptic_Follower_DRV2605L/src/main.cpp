@@ -77,7 +77,7 @@ void loop() {
     if (target > smoothIntensity) {
         smoothIntensity = target; // Snap up
     } else {
-        smoothIntensity *= 0.85f; // Bleed down
+        smoothIntensity *= 0.97f; // Bleed down
     }
     
     uint8_t finalDuty = (uint8_t)smoothIntensity;

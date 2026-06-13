@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireless Kinetic Light Baton | ESP-NOW &amp; Motion Tracking</title>
+    <meta name="description" content="A motion-reactive light baton system built on ESP32-C3, integrating MPU6050 motion tracking, custom haptic feedback, and real-time ESP-NOW LED strip synchronization.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="glass-bg-glow"></div>
+
+    <header>
+        <div class="header-container">
+            <span class="badge">ESP32-C3 &amp; ESP-NOW</span>
+            <h1>Wireless Kinetic Light Baton</h1>
+            <p class="subtitle">A real-time motion-to-light synchronizer utilizing MPU6050 IMU tracking and sub-millisecond broadcast latency.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <!-- Interactive Simulator Section -->
+        <section class="simulator-card glass-panel">
+            <h2 class="section-title">Live ESP-NOW &amp; Delta Math Simulator</h2>
+            <p class="card-desc">Shake or swipe your mouse/touch quickly inside the <strong>Kinetic Charge Pad</strong> to build up energy. Watch the real-time ESP-NOW signal transmit the charge state (0.0 to 1.0) to the follower, which interpolates smoothly using delta math.</p>
+            
+            <div class="sim-grid">
+                <!-- Handle / Sender -->
+                <div class="sim-node handle-node glass-subpanel">
+                    <h3>Handle (Sender)</h3>
+                    <div class="energy-display">
+                        <svg class="progress-ring" width="120" height="120">
+                            <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
+                            <circle class="progress-ring-circle" id="handle-ring" stroke="url(#cyan-grad)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60" stroke-dasharray="314.16" stroke-dashoffset="314.16"/>
+                            <defs>
+                                <linearGradient id="cyan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#00f2fe" />
+                                    <stop offset="100%" stop-color="#4facfe" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="energy-text"><span id="energy-val">0</span>%</div>
+                    </div>
+                    
+                    <div id="charge-pad" class="charge-pad">
+                        <span>SWIPE RAPIDLY HERE TO CHARGE</span>
+                    </div>
+                    
+                    <div class="status-indicator">
+                        <span class="status-label">Haptic Motor:</span>
+                        <span id="motor-status" class="status-value motor-off">OFF</span>
+                    </div>
+                </div>
+
+                <!-- Signal Bridge -->
+                <div class="sim-bridge">
+                    <div class="esp-now-signals">
+                        <div class="wave wave-1"></div>
+                        <div class="wave wave-2"></div>
+                        <div class="wave wave-3"></div>
+                    </div>
+                    <div class="protocol-badge">ESP-NOW (30ms rate)</div>
+                </div>
+
+                <!-- Follower / Receiver -->
+                <div class="sim-node follower-node glass-subpanel">
+                    <h3>Follower (Receiver)</h3>
+                    <div class="follower-strip-container">
+                        <div id="led-strip" class="led-strip">
+                            <!-- 24 virtual pixels generated via JS -->
+                        </div>
+                    </div>
+                    <div class="status-indicator-list">
+                        <div class="status-indicator">
+                            <span class="status-label">Target Charge:</span>
+                            <span id="follower-target-val" class="status-value font-mono">0.00</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-label">Current Charge:</span>
+                            <span id="follower-current-val" class="status-value font-mono">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Specification Layout -->
+        <div class="info-grid">
+            
+            <!-- Left Info Block: Description & Math -->
+            <div class="info-column">
+                <section class="glass-panel text-block">
+                    <h2>Project Overview</h2>
+                    <p>The Wireless Kinetic Light Baton decomposes motion-reactive graphics into a distributed hardware topology. Instead of running sensors and high-density LED strips off a single micro-controller, this project splits the responsibility: one device senses and generates haptic feedback inside the handle, while a separate follower handles the high-power visual rendering.</p>
+                    
+                    <h3>Why ESP-NOW?</h3>
+                    <p>ESP-NOW is a connectionless protocol developed by Espressif that bypasses traditional Wi-Fi handshakes and overhead. This allows the handle to broadcast 4-byte floating-point energy updates every 30 milliseconds with a transmission latency under <strong>1.5 milliseconds</strong>, making it feel completely instantaneous to the human eye.</p>
+                </section>
+
+                <section class="glass-panel text-block">
+                    <h2>The Delta Math Easing</h2>
+                    <p>When the handle broadcasts the target charge (e.g., jumping from 0.0 to 0.7 immediately during a fast swing), displaying it directly on the LEDs causes visual stepping. To make the animation fluid, the follower implements a <strong>dt-based exponential easing function</strong>:</p>
+                    <div class="code-math">
+                        <code>currentCharge += (targetCharge - currentCharge) * easingFactor * dt;</code>
+                    </div>
+                    <p>This guarantees smooth visual convergence towards the target charge regardless of packet drop or timing jitter. We use a snap window of <code>&lt; 0.001</code> to prevent floating-point micro-oscillations once the target is reached.</p>
+                </section>
+            </div>
+
+            <!-- Right Info Block: Hardware & Pinouts -->
+            <div class="info-column">
+                <section class="glass-panel table-panel">
+                    <h2>Hardware Pinout Configuration</h2>
+                    <p class="subtitle">Configured on ESP32-C3-DevKitM-1 Development Boards.</p>
+
+                    <h3>1. Handle Device (Sender)</h3>
+                    <div class="table-responsive">
+                        <table class="pinout-table">
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>GPIO</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="pin-badge pin-sda">I2C SDA</span></td>
+                                    <td><code>2</code></td>
+                                    <td>Data line for MPU6050 accelerometer</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-scl">I2C SCL</span></td>
+                                    <td><code>3</code></td>
+                                    <td>Clock line for MPU6050 accelerometer</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-gnd">Soft GND</span></td>
+                                    <td><code>4</code></td>
+                                    <td>Asserted LOW in setup to ground MPU6050</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-int">INT Pin</span></td>
+                                    <td><code>5</code></td>
+                                    <td>MPU6050 motion interrupt; wakes device from deep sleep</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-led">FastLED</span></td>
+                                    <td><code>6</code></td>
+                                    <td>Signal line for local WS2812B strip</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-motor">Motor PWM</span></td>
+                                    <td><code>7</code></td>
+                                    <td>PWM driver control for haptic vibration motor</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="table-spacing">2. Follower Device (Receiver)</h3>
+                    <div class="table-responsive">
+                        <table class="pinout-table">
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>GPIO</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="pin-badge pin-led">FastLED</span></td>
+                                    <td><code>6</code></td>
+                                    <td>Data output to WS2812B strip (74 LEDs)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-vcc">Power</span></td>
+                                    <td><code>5V / USB</code></td>
+                                    <td>External power source for high current draw</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-gnd">GND</span></td>
+                                    <td><code>GND</code></td>
+                                    <td>Common ground return line</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Built with vanilla CSS, HTML, and JS. Designed for high performance and visual excellence.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

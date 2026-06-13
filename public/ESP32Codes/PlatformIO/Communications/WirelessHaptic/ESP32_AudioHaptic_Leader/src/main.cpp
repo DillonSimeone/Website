@@ -56,19 +56,19 @@ uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 // Configuration
 struct Config {
-  float micGain = 1.0f;
-  float motorLevelGate = 200.0f; // Lowered significantly to catch quiet humming
-  float motorLevelHigh = 2500.0f;
-  int motorDutyStart = 40; // Lowered for better quiet-sound sensitivity
-  int motorDutyMax = 255;
-  float motorSmooth = 0.25f;
+  float micGain = 1.5f;
+  float motorLevelGate = 830.0f; // Adjusted noise gate per user request
+  float motorLevelHigh = 1500.0f; 
+  int motorDutyStart = 40; 
+  int motorDutyMax = 220;
+  float motorSmooth = 0.4f; 
   float motorCurve = 1.0f;
   bool useBandSplitter = false;
   
   float bassFreqMax = 250.0f;
   float trebleFreqMin = 2000.0f;
 
-  float transientThreshold = 3.0f;
+  float transientThreshold = 2.5f; // Slightly more sensitive
   int patternDurationMs = 150;
   
   uint8_t bassMode = 1;
@@ -82,7 +82,7 @@ struct Config {
   
   uint8_t transientMode = 3;
   uint8_t transientPattern = 1;
-  bool forceForward = true; // NEW: Force all haptics to Forward mode for testing
+  bool forceForward = true; // Force all haptics to Forward mode for testing
 } config;
 
 // State Variables
@@ -93,6 +93,7 @@ unsigned long transientEndTime = 0;
 float currentMAD = 0;
 float currentFreq = 0;
 float bassEnergy = 0, midEnergy = 0, trebleEnergy = 0;
+float rawSamples[SAMPLES] = {0.0f};
 
 void loadConfig() {
   preferences.begin("hp", true);
@@ -110,6 +111,8 @@ void loadConfig() {
   config.treblePattern = preferences.getUChar("tp", config.treblePattern);
   config.transientMode = preferences.getUChar("trm", config.transientMode);
   config.transientPattern = preferences.getUChar("trp", config.transientPattern);
+  config.transientThreshold = preferences.getFloat("tth", config.transientThreshold);
+  config.patternDurationMs = preferences.getInt("pdm", config.patternDurationMs);
   config.forceForward = preferences.getBool("ffwd", config.forceForward);
   preferences.end();
 }
@@ -130,6 +133,8 @@ void saveConfig() {
   preferences.putUChar("tp", config.treblePattern);
   preferences.putUChar("trm", config.transientMode);
   preferences.putUChar("trp", config.transientPattern);
+  preferences.putFloat("tth", config.transientThreshold);
+  preferences.putInt("pdm", config.patternDurationMs);
   preferences.putBool("ffwd", config.forceForward);
   preferences.end();
 }
@@ -175,6 +180,7 @@ void setupWebUI() {
     json += "\"mm\":" + String(config.midMode) + ",\"mp\":" + String(config.midPattern) + ",";
     json += "\"tm\":" + String(config.trebleMode) + ",\"tp\":" + String(config.treblePattern) + ",";
     json += "\"tt\":" + String(config.transientThreshold) + ",";
+    json += "\"td\":" + String(config.patternDurationMs) + ",";
     json += "\"trp\":" + String(config.transientPattern) + ",";
     json += "\"trm\":" + String(config.transientMode) + ",";
     json += "\"ffwd\":" + String(config.forceForward ? 1 : 0);
@@ -196,11 +202,18 @@ void setupWebUI() {
     if (server.hasArg("tm")) config.trebleMode = server.arg("tm").toInt();
     if (server.hasArg("tp")) config.treblePattern = server.arg("tp").toInt();
     if (server.hasArg("tt")) config.transientThreshold = server.arg("tt").toFloat();
+    if (server.hasArg("td")) config.patternDurationMs = server.arg("td").toInt();
     if (server.hasArg("trp")) config.transientPattern = server.arg("trp").toInt();
     if (server.hasArg("trm")) config.transientMode = server.arg("trm").toInt();
     if (server.hasArg("ffwd")) config.forceForward = server.arg("ffwd").toInt() == 1;
     saveConfig();
     server.send(200, "text/html", "<html><body><h1>Saved! Haptics Updated.</h1><script>setTimeout(function(){location.href='/'},1500)</script></body></html>");
+  });
+
+  server.on("/defaults", HTTP_POST, []() {
+    config = Config();
+    saveConfig();
+    server.send(200, "text/html", "<html><body><h1>Reset to Defaults Successful!</h1><script>setTimeout(function(){location.href='/'},1500)</script></body></html>");
   });
 
   server.on("/generate_204", []() { server.send(204); });
@@ -327,27 +340,35 @@ void loop() {
   }
 #endif
 
-  int32_t samples[SAMPLES]; 
+  int32_t samples[64]; // Read 64 samples (4ms window at 16kHz)
   size_t bytesRead = 0;
   
-  // Read exactly 'SAMPLES' (128) - this takes exactly 8ms and keeps the hum continuous
   i2s_read(I2S_NUM_0, samples, sizeof(samples), &bytesRead, portMAX_DELAY);
 
   if (bytesRead > 0) {
-      int32_t sum = 0;
-      for (int i = 0; i < SAMPLES; i++) {
-          int32_t val = samples[i] >> 14;
-          sum += val;
-          vReal[i] = (float)val;
-          vImag[i] = 0;
+      // Shift raw history buffer left by 64
+      for (int i = 0; i < SAMPLES - 64; i++) {
+          rawSamples[i] = rawSamples[i + 64];
+      }
+      // Put new samples at the end of the history buffer
+      for (int i = 0; i < 64; i++) {
+          rawSamples[SAMPLES - 64 + i] = (float)(samples[i] >> 14);
       }
       
-      float dc = (float)sum / (float)SAMPLES;
+      // Calculate DC offset from the entire 128-sample buffer
+      float dcSum = 0;
+      for (int i = 0; i < SAMPLES; i++) {
+          dcSum += rawSamples[i];
+      }
+      float dc = dcSum / SAMPLES;
+
+      // Copy to vReal, apply DC correction, and compute MAD
       float mad = 0;
       for (int i = 0; i < SAMPLES; i++) {
-          float centered = vReal[i] - dc;
-          mad += fabsf(centered);
+          float centered = rawSamples[i] - dc;
           vReal[i] = centered;
+          vImag[i] = 0;
+          mad += fabsf(centered);
       }
       mad /= SAMPLES;
       mad *= config.micGain;
@@ -390,6 +411,11 @@ void loop() {
     levelLP += config.motorSmooth * (float(mad) - levelLP);
     float activeLevel = levelLP;
     if (activeLevel < config.motorLevelGate) activeLevel = 0;
+
+    // Transient Detection: check if current amplitude exceeds running average by threshold multiplier
+    if (levelLP > 0 && currentMAD > levelLP * config.transientThreshold) {
+      transientEndTime = millis() + config.patternDurationMs;
+    }
 
     // Default Haptic Command clear
     for (int i = 0; i < MAX_CHANNELS; i++) {
@@ -450,5 +476,14 @@ void loop() {
 
     // 6. Visual Feedback
     ledcWrite(LED_CHANNEL, 255 - finalDuty);
+
+    // 7. Console Diagnostic Logging (Gated to ~5Hz)
+    static uint32_t lastLogTime = 0;
+    if (millis() - lastLogTime > 200) {
+      Serial.printf("MAD: %.1f | LP: %.1f | Duty: %d | Freq: %.1f Hz | Transient: %s\n",
+                    currentMAD, levelLP, finalDuty, currentFreq,
+                    (millis() < transientEndTime) ? "YES" : "NO");
+      lastLogTime = millis();
+    }
   }
 }
