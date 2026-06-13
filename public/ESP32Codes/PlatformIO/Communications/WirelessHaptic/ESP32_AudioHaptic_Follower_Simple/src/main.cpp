@@ -106,7 +106,7 @@ void loop() {
     if (target > smoothIntensity) {
         smoothIntensity = target; // Instant snap up (sync)
     } else {
-        smoothIntensity *= 0.85f; // Slow bleed down (bridges gaps/missed frames)
+        smoothIntensity *= 0.97f; // Slow bleed down (bridges gaps/missed frames)
     }
     
     uint8_t finalDuty = (uint8_t)smoothIntensity;
