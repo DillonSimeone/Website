@@ -49,9 +49,9 @@ const params = {
     m3Diam: 3.2,
     screwDepth: 5.0,
 
-    // Endcap
+    // Handle & Pommel
     capThick: 3.0,
-    capOD: 25.0,
+    lanyardHoleDiam: 5.0,
 
     // Display
     explode: 0,
@@ -67,7 +67,7 @@ const visibilities = {
     rings: true,
     ridges: true,
     leds: true,
-    endcap: true,
+    handle: true,
     screwholes: false
 };
 
@@ -79,7 +79,7 @@ let cylinderMeshes = [];
 let ringMeshes = [];
 let ridgeMeshes = [];
 let ledMeshes = [];
-let endcapMesh = null;
+let handleMesh = null;
 let screwHoleGroup = new THREE.Group();
 
 // Neon Violet + Cyan Color Palette
@@ -91,7 +91,7 @@ const colors = {
     ring: 0xbf00ff,
     ridge: 0x9933ff,
     led: 0x39ff14,
-    endcap: 0x888899,
+    handle: 0x1a1a1a,
     screwHoles: 0xff8800,
     blueprintLine: 0xbf00ff,
     blueprintLineCyan: 0x00f2ff
@@ -621,6 +621,47 @@ function generateGuard() {
 
     elLockHoleRot.delete();
 
+    // ─── 10. Vertical JST Wire Routing Channel (Z = 101.0 to h_trimmed + 2.0) ───
+    const jstChanRadius = 3.0; // 6.0mm diameter
+    const jstChanHeight = h_trimmed - 101.0 + 2.0;
+    
+    // Main vertical cylinder
+    let jstChan = Manifold.cylinder(jstChanHeight, jstChanRadius, jstChanRadius, 16, false);
+    let jstChanMoved = jstChan.translate([0, -(rodR + 4.5), 101.0]);
+    jstChan.delete();
+
+    // Box to make the channel oblong (slot shape) towards the central rod
+    let jstSlot = Manifold.cube([6.0, 5.0, jstChanHeight], false);
+    let jstSlotMoved = jstSlot.translate([-3.0, -(rodR + 4.5), 101.0]);
+    jstSlot.delete();
+
+    let combinedChan = jstChanMoved.add(jstSlotMoved);
+    jstChanMoved.delete();
+    jstSlotMoved.delete();
+
+    // 45-degree exit ramp down into the device tray (bounded to Z <= 0 in local space to prevent cutting into ceiling)
+    let rampBox = Manifold.cube([6.0, 12.0, 12.0], false).translate([-3.0, -6.0, -6.0]);
+    let rampRot = rampBox.rotate([45, 0, 0]);
+    rampBox.delete();
+
+    // Bounding box to clip anything above Z = 0
+    let rampLimit = Manifold.cube([10.0, 20.0, 20.0], false).translate([-5.0, -10.0, -20.0]);
+    let boundedRamp = rampRot.intersect(rampLimit);
+    rampRot.delete();
+    rampLimit.delete();
+
+    let rampMoved = boundedRamp.translate([0, -(rodR + 4.5) - 3.0, 102.0]);
+    boundedRamp.delete();
+
+    let combinedChanAndRamp = combinedChan.add(rampMoved);
+    combinedChan.delete();
+    rampMoved.delete();
+
+    let tempGuard8 = guard.subtract(combinedChanAndRamp);
+    guard.delete();
+    combinedChanAndRamp.delete();
+    guard = tempGuard8;
+
     // Position guard at its Z location
     let positioned = guard.translate([0, 0, z.guardStart]);
     guard.delete();
@@ -1120,16 +1161,66 @@ function generateDecorativeRidges(cylinderIndex) {
     return merged;
 }
 
-function generateBottomEndcap() {
+function generateHandle() {
     if (!Manifold) return null;
 
-    const capR = params.capOD / 2;
-    const h = params.capThick;
+    const rodR = params.rodOD / 2;
+    const innerR = rodR + 0.15; // 0.15mm clearance slip fit
+    const wallThick = 3.0; // add 3mm thickness
+    const outerR = rodR + wallThick;
 
-    // Solid disc (no bore — caps the bottom)
-    let cap = Manifold.cylinder(h, capR, capR, 32, false);
+    const socketL = params.handleLength;
+    const handleL = Math.max(100.0, socketL);
 
-    return cap;
+    // 1. Solid sleeve cylinder (Z = 0 to handleL)
+    let sleeve = Manifold.cylinder(handleL, outerR, outerR, 32, false);
+
+    // 2. Solid pommel flared shape (cone + cylinder + sphere)
+    const pommelR = outerR + 4.0;
+    let pCone = Manifold.cylinder(5.0, pommelR, outerR, 32, false).translate([0, 0, -5.0]);
+    let pCyl = Manifold.cylinder(7.0, pommelR, pommelR, 32, false).translate([0, 0, -12.0]);
+    let pSphere = Manifold.sphere(pommelR, 32).translate([0, 0, -12.0]);
+    
+    let solidPommel = pCone.add(pCyl).add(pSphere);
+    pCone.delete();
+    pCyl.delete();
+    pSphere.delete();
+
+    // Union solid sleeve and solid pommel to form a single solid handle body
+    let solidHandle = sleeve.add(solidPommel);
+    sleeve.delete();
+    solidPommel.delete();
+
+    // 3. Support-free internal socket cavity:
+    // A. Main cylindrical socket of radius innerR from Z = handleL - socketL to Z = handleL
+    let socket = Manifold.cylinder(socketL + 0.1, innerR, innerR, 32, false).translate([0, 0, handleL - socketL]);
+    
+    // B. A 1.0mm transition cylinder of same radius innerR just below the rod seat
+    let transition = Manifold.cylinder(1.0 + 0.1, innerR, innerR, 32, false).translate([0, 0, handleL - socketL - 1.0]);
+    
+    // C. A 45-degree cone tapering from innerR to 0 starting from the wall (Z = handleL - socketL - 1.0 - innerR to Z = handleL - socketL - 1.0)
+    let cone = Manifold.cylinder(innerR, 0, innerR, 32, false).translate([0, 0, handleL - socketL - 1.0 - innerR]);
+    
+    // Union all socket cutouts
+    let socketCombined = socket.add(transition).add(cone);
+    socket.delete();
+    transition.delete();
+    cone.delete();
+
+    // Now subtract the socket cavity from the solid handle body
+    let handleWithSocket = solidHandle.subtract(socketCombined);
+    solidHandle.delete();
+    socketCombined.delete();
+
+    // Lanyard hole drilled horizontally (along X axis)
+    const holeR = params.lanyardHoleDiam / 2;
+    let hole = Manifold.cylinder(pommelR * 2 + 10.0, holeR, holeR, 16, true).rotate([0, 90, 0]).translate([0, 0, -9.0]);
+    
+    let handle = handleWithSocket.subtract(hole);
+    handleWithSocket.delete();
+    hole.delete();
+
+    return handle;
 }
 
 // ─── UI Binding ──────────────────────────────────────────────────────────
@@ -1241,9 +1332,8 @@ function setupUIListeners() {
     bindSlider('input-m3Diam', 'm3Diam');
     bindSlider('input-screwDepth', 'screwDepth');
 
-    // Endcap
-    bindSlider('input-capThick', 'capThick');
-    bindSlider('input-capOD', 'capOD');
+    // Handle
+    bindSlider('input-lanyardHoleDiam', 'lanyardHoleDiam');
 
     // Display
     bindSlider('input-explode', 'explode', false);
@@ -1279,7 +1369,7 @@ function setupUIListeners() {
     bindVis('show-rings', 'rings');
     bindVis('show-ridges', 'ridges');
     bindVis('show-leds', 'leds');
-    bindVis('show-endcap', 'endcap');
+    bindVis('show-handle', 'handle');
     bindVis('show-screwholes', 'screwholes');
 
     // Export STL
@@ -1291,7 +1381,7 @@ function setupUIListeners() {
     document.getElementById('btn-export-cylinder').addEventListener('click', () => exportComponentSTL('cylinder'));
     document.getElementById('btn-export-ring').addEventListener('click', () => exportComponentSTL('ring'));
     document.getElementById('btn-export-ridges').addEventListener('click', () => exportComponentSTL('ridges'));
-    document.getElementById('btn-export-endcap').addEventListener('click', () => exportComponentSTL('endcap'));
+    document.getElementById('btn-export-handle').addEventListener('click', () => exportComponentSTL('handle'));
 
     setupTooltipListeners();
 }
@@ -1432,16 +1522,16 @@ const paramInfo = {
         getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + params.ringHeight * 0.375); },
         dir: [1, -1]
     },
-    capThick: {
-        text: "Endcap Thickness",
-        desc: "Thickness of the flat bottom endcap.",
-        getPos: () => new THREE.Vector3(params.capOD / 2, 0, params.capThick / 2),
-        dir: [1, -1]
-    },
-    capOD: {
-        text: "Endcap Diameter",
-        desc: "Outer diameter of the bottom endcap disc.",
-        getPos: () => new THREE.Vector3(params.capOD / 2, 0, 0),
+    lanyardHoleDiam: {
+        text: "Lanyard Hole Diameter",
+        desc: "Diameter of the horizontal hole in the pommel for lanyard or keychain cord.",
+        getPos: () => {
+            const outerR = params.rodOD / 2 + 3.0;
+            const socketL = params.handleLength;
+            const handleL = Math.max(100.0, socketL);
+            const handleBottomZ = Math.min(3.0, 3.0 + params.handleLength - handleL);
+            return new THREE.Vector3(0, 0, handleBottomZ - 9.0);
+        },
         dir: [1, -1]
     },
     explode: {
@@ -1532,7 +1622,7 @@ function rebuild() {
     rodMesh = clearMesh(rodMesh);
     guardMesh = clearMesh(guardMesh);
     sledMesh = clearMesh(sledMesh);
-    endcapMesh = clearMesh(endcapMesh);
+    handleMesh = clearMesh(handleMesh);
     cylinderMeshes.forEach(m => clearMesh(m));
     cylinderMeshes = [];
     ringMeshes.forEach(m => clearMesh(m));
@@ -1779,21 +1869,27 @@ function rebuild() {
         }
     }
 
-    // ─── 8. Bottom Endcap ────────────────────────────────────────────────
-    if (visibilities.endcap) {
-        const capSolid = generateBottomEndcap();
-        if (capSolid) {
-            const cMesh = capSolid.getMesh();
-            const capGeom = manifoldToThree(cMesh);
-            const tris = cMesh.triVerts.length / 3;
-            stats['Bottom Endcap'] = tris;
+    // ─── 8. Handle & Pommel ──────────────────────────────────────────────
+    if (visibilities.handle) {
+        const handleSolid = generateHandle();
+        if (handleSolid) {
+            const hMesh = handleSolid.getMesh();
+            const handleGeom = manifoldToThree(hMesh);
+            const tris = hMesh.triVerts.length / 3;
+            stats['Handle & Pommel'] = tris;
             totalTriangles += tris;
-            capSolid.delete();
+            handleSolid.delete();
 
-            endcapMesh = new THREE.Mesh(capGeom, makeMat(colors.endcap, 0.9));
-            addBlueprintEdges(endcapMesh, capGeom, colors.blueprintLineCyan);
-            endcapMesh.position.z -= explodeDist;
-            mainGroup.add(endcapMesh);
+            handleMesh = new THREE.Mesh(handleGeom, makeMat(colors.handle, 0.95));
+            addBlueprintEdges(handleMesh, handleGeom, colors.blueprintLineCyan);
+
+            // Position it in assembly space: Z-axis translation
+            const socketL = params.handleLength;
+            const handleL = Math.max(100.0, socketL);
+            const assemblyZ = (3.0 + socketL) - handleL;
+            handleMesh.position.z += assemblyZ - explodeDist * 0.8;
+
+            mainGroup.add(handleMesh);
         }
     }
 
@@ -2088,10 +2184,14 @@ function updateLeaderLines() {
         });
     }
 
-    if (visibilities.endcap) {
+    if (visibilities.handle) {
+        const outerR = params.rodOD / 2 + 3.0;
+        const socketL = params.handleLength;
+        const handleL = Math.max(100.0, socketL);
+        const handleBottomZ = Math.min(3.0, 3.0 + params.handleLength - handleL);
         drawDimension(
-            new THREE.Vector3(params.capOD / 2 + 2, 0, params.capThick / 2),
-            "Bottom Endcap", 1, 1
+            new THREE.Vector3(outerR + 2, 0, handleBottomZ + handleL / 2),
+            "Handle Sleeve", 1, 1
         );
     }
 
@@ -2226,12 +2326,16 @@ function exportComponentSTL(componentType) {
                     }
                 }
 
-                // 7. Bottom Endcap
-                let endcap = generateBottomEndcap();
-                if (endcap) {
-                    let bedEndcap = endcap.translate([0, -100.0, 0]);
-                    endcap.delete();
-                    partsToUnion.push(bedEndcap);
+                // 7. Handle & Pommel
+                let handleSolid = generateHandle();
+                if (handleSolid) {
+                    const outerR = params.rodOD / 2 + 3.0;
+                    // Rotate by 90 degrees around X axis to lay it flat, and offset Z to sit flat at Z=0
+                    let flatHandle = handleSolid.rotate([90, 0, 0]);
+                    let bedHandle = flatHandle.translate([0, -100.0, outerR]);
+                    handleSolid.delete();
+                    flatHandle.delete();
+                    partsToUnion.push(bedHandle);
                 }
 
                 // Merge all into solid
@@ -2376,10 +2480,10 @@ function exportComponentSTL(componentType) {
                 filename = `lightbaton_rings_center${params.ringCenterOD}mm.stl`;
             }
             break;
-        case 'endcap':
+        case 'handle':
             {
-                solid = generateBottomEndcap();
-                filename = `lightbaton_bottom_endcap_OD${params.capOD}mm.stl`;
+                solid = generateHandle();
+                filename = `lightbaton_handle_pommel.stl`;
             }
             break;
         case 'ridges':
