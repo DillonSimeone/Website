@@ -10,7 +10,7 @@ let overlaySvg = document.getElementById('dimensions-overlay');
 // ─── Parametric State ────────────────────────────────────────────────────
 const params = {
     // Rod
-    rodOD: 21.5,
+    rodOD: 27.0,
     rodWall: 3.0,
     rodLength: 587.8,   // Calculated dynamically as capThick + handleLength + guardLength + ledSectionLen
     handleLength: 110.0, // default grip size in mm
@@ -27,12 +27,12 @@ const params = {
     // Transparent Cylinders
     cylOD: 38.0, // Calculated dynamically in getLayoutZones
     cylLedGap: 2.0,
-    cylWall: 2.0,
+    cylWall: 1.0,
     ledSectionLen: 304.8, // 1 foot in mm
     maxCylLen: 120.0,
 
     // Connector Rings
-    ringHeight: 17.0,
+    ringHeight: 28.0,
     ringCenterOD: 42.0,
     ringEndOD: 34.0,
 
@@ -46,7 +46,7 @@ const params = {
     ledHeight: 4.0,
 
     // Screws
-    m3Diam: 3.2,
+    m3Diam: 3.0,
     screwDepth: 5.0,
 
     // Handle & Pommel
@@ -214,16 +214,19 @@ function getLayoutZones() {
     const ledEnd = guardEnd + params.ledSectionLen;
     const actualLedLen = params.ledSectionLen;
 
+    // Fixed flange height for joints
+    const flangeH = 10.0;
+    const centerH = Math.max(2.0, params.ringHeight - 2 * flangeH);
+
     // Solve iteratively for N (number of cylinders) and cylLen (cylinder length)
-    const H_center = params.ringHeight * 0.5;
     let N = 1;
     let cylLen = 0;
     while (true) {
-        cylLen = (actualLedLen - (N - 0.5) * H_center) / N;
+        cylLen = (actualLedLen - (N - 0.5) * centerH) / N;
         if (cylLen <= params.maxCylLen) {
             break;
         }
-        const nextCylLen = (actualLedLen - (N + 0.5) * H_center) / (N + 1);
+        const nextCylLen = (actualLedLen - (N + 0.5) * centerH) / (N + 1);
         if (nextCylLen < 10.0) {
             break;
         }
@@ -242,7 +245,9 @@ function getLayoutZones() {
         handleLength,
         rodCenter: params.rodLength / 2,
         N,
-        actualLedLen
+        actualLedLen,
+        flangeH,
+        centerH
     };
 }
 
@@ -275,8 +280,9 @@ function generateGuard() {
     const cylInnerR = Math.max(params.cylOD / 2 - params.cylWall, boreR + 1.5);
     const guardR = Math.max(rodR + params.guardWall, cylInnerR + 1.5);
     const h = params.guardLength;
-    const flangeH = params.ringHeight * 0.25;
-    const h_trimmed = h - flangeH; // Trim guard top by flangeH (4.25mm) to fit Ring 0 center body without collision
+    const flangeH = z.flangeH; // 10.0mm
+    const h_ring = params.ringHeight;
+    const h_trimmed = h - (h_ring / 2 - flangeH); // Trim guard top to fit Ring 0 center body
 
     // ─── 1. Solid Housing with Outer Casings ──────────────────────────────
     // Main cylinder (height is h_trimmed)
@@ -302,7 +308,7 @@ function generateGuard() {
     batBulgeMoved.delete();
     elBulgeMoved.delete();
 
-    // ─── 2. Inner Bore & Counterbores ─────────────────────────────────────
+    // ─── 2. Inner Bore & Joints ───────────────────────────────────────────
     // Inner bore for rod (height is h_trimmed)
     let bore = Manifold.cylinder(h_trimmed + 2, rodR + 0.3, rodR + 0.3, 32, false);
     let boreMoved = bore.translate([0, 0, -1]);
@@ -312,20 +318,40 @@ function generateGuard() {
     outer.delete();
     boreMoved.delete();
 
-    // Counterbore at the top of the guard to receive Ring 0 bottom flange
+    // A. Conical Countersink at the top of the guard to receive Ring 0 bottom flange
     const cbR = cylInnerR;
-    let cb = Manifold.cylinder(flangeH + 1, cbR, cbR, 32, false);
-    let cbMoved = cb.translate([0, 0, h_trimmed - flangeH]);
-    cb.delete();
-    let tempGuard = guard.subtract(cbMoved);
+    const chamferH = cbR - boreR;
+    let cbCyl = Manifold.cylinder(flangeH - chamferH, cbR, cbR, 32, false).translate([0, 0, h_trimmed - flangeH + chamferH]);
+    let cbCone = Manifold.cylinder(chamferH, boreR, cbR, 32, false).translate([0, 0, h_trimmed - flangeH]);
+    let cbCombined = cbCyl.add(cbCone);
+    cbCyl.delete();
+    cbCone.delete();
+    
+    let tempGuardTop = guard.subtract(cbCombined);
     guard.delete();
-    cbMoved.delete();
-    guard = tempGuard;
+    cbCombined.delete();
+    guard = tempGuardTop;
 
-    // Subtract 4 radial screw holes at the top of the guard
+    // B. Conical Countersink at the bottom of the guard to receive the Handle top sleeve
+    const botCbR = rodR + 3.15;
+    const botBoreR = rodR + 0.3;
+    const botChamferH = 2.85; // (rodR + 3.15) - (rodR + 0.3)
+    let botCyl = Manifold.cylinder(flangeH - botChamferH, botCbR, botCbR, 32, false);
+    let botCone = Manifold.cylinder(botChamferH, botCbR, botBoreR, 32, false).translate([0, 0, flangeH - botChamferH]);
+    let botCbCombined = botCyl.add(botCone);
+    botCyl.delete();
+    botCone.delete();
+
+    let tempGuardBot = guard.subtract(botCbCombined);
+    guard.delete();
+    botCbCombined.delete();
+    guard = tempGuardBot;
+
+    // Subtract 4 radial screw holes at the top of the guard (connecting to Ring 0)
     const screwR = params.m3Diam / 2;
     const holeLen = guardR * 2 + 30; // long enough to punch through the outer casing too
-    const guardScrewZ = h - params.ringHeight * 0.375; // aligning with Ring 0 bottom flange hole
+    const screwDist = 3.0 + params.m3Diam / 2; // e.g. 4.5mm
+    const guardScrewZ = params.guardLength - h_ring / 2 + screwDist;
 
     for (let s = 0; s < 4; s++) {
         const angle = (Math.PI / 4) + s * (Math.PI / 2);
@@ -343,6 +369,41 @@ function generateGuard() {
         positioned.delete();
         guard = temp;
     }
+
+    // Subtract 4 radial screw holes at the bottom of the guard (connecting to Handle)
+    const botScrewZ = screwDist;
+    const botHoleLen = guardR * 2 + 10;
+
+    for (let s = 0; s < 4; s++) {
+        const angle = (Math.PI / 4) + s * (Math.PI / 2);
+        const angleDeg = angle * (180 / Math.PI);
+
+        let hole = Manifold.cylinder(botHoleLen, screwR, screwR, 16, true);
+        let rotY = hole.rotate([0, 90, 0]);
+        hole.delete();
+        let rotZ = rotY.rotate([0, 0, angleDeg]);
+        rotY.delete();
+        let positioned = rotZ.translate([0, 0, botScrewZ]);
+        rotZ.delete();
+        let temp = guard.subtract(positioned);
+        guard.delete();
+        positioned.delete();
+        guard = temp;
+    }
+
+    // Subtract 4 radial rod-securing screw holes along the X-axis (Y = 0)
+    // 2 at Z = 15.0 and 2 at Z = h_trimmed - 15.0
+    let rodHole1 = Manifold.cylinder(guardR * 2 + 20.0, screwR, screwR, 16, true).rotate([0, 90, 0]).translate([0, 0, 15.0]);
+    let tempRodG1 = guard.subtract(rodHole1);
+    guard.delete();
+    rodHole1.delete();
+    guard = tempRodG1;
+
+    let rodHole2 = Manifold.cylinder(guardR * 2 + 20.0, screwR, screwR, 16, true).rotate([0, 90, 0]).translate([0, 0, h_trimmed - 15.0]);
+    let tempRodG2 = guard.subtract(rodHole2);
+    guard.delete();
+    rodHole2.delete();
+    guard = tempRodG2;
 
     // ─── 3. Battery Bay with Sliding Cover Slot (+Y side) ─────────────────
     const batW = 22.4;
@@ -446,9 +507,9 @@ function generateGuard() {
     elBridgeMoved.delete();
     guard = tempGuardBridge;
 
-    // Add bridge across the bottom of the electronics tray pocket (Z = 2.0 to 8.0)
+    // Add bridge across the bottom of the electronics tray pocket (Z = 0.0 to 6.0)
     let elBotBridge = Manifold.cube([elBayW, 5.0, 6.0], false);
-    let elBotBridgeMoved = elBotBridge.translate([-elBayW / 2, -(rodR + 18.0), 2.0]);
+    let elBotBridgeMoved = elBotBridge.translate([-elBayW / 2, -(rodR + 18.0), 0.0]);
     elBotBridge.delete();
     let tempGuardBotBridge = guard.add(elBotBridgeMoved);
     guard.delete();
@@ -464,17 +525,36 @@ function generateGuard() {
     usbMoved.delete();
     guard = tempGuardUsb;
 
-    // ─── 7. Motor Slots (Sideways cylindrical pocket) ───────────────────
-    // The coin cells are sideways cylinders. We cut a sideways cylindrical hole (cylinder along X)
+    // ─── 7. Motor Slots (Sideways cylindrical pocket with support-free diamond roof at Z>=0) ───────────
     const coinR = 5.6;
     const coinT = 3.2;
+    const d_roof = coinR * Math.SQRT2;
 
     // Right motor slot (+X)
     let cy1 = Manifold.cylinder(30.0, coinR, coinR, 32, false);
     let cy1Rot = cy1.rotate([0, 90, 0]); // orient along X
     cy1.delete();
-    let cy1Moved = cy1Rot.translate([rodR + 0.2, 0, 57.5]);
+
+    // Create a 45-degree diamond roof at Z >= 0
+    let baseRoof = Manifold.cube([30.0, d_roof, d_roof], true).rotate([45, 0, 0]);
+    let limitBox = Manifold.cube([32.0, 15.0, 10.0], false).translate([-16.0, -7.5, 0.0]);
+    let clippedRoof = baseRoof.intersect(limitBox);
+    baseRoof.delete();
+    limitBox.delete();
+
+    // Scale vertically to apex Z = 8.6 (3mm above cylinder top)
+    let scaledRoof = clippedRoof.scale([1.0, 1.0, 8.6 / coinR]);
+    clippedRoof.delete();
+
+    let roofMoved = scaledRoof.translate([15.0, 0, 0]);
+    scaledRoof.delete();
+
+    let combined1 = cy1Rot.add(roofMoved);
     cy1Rot.delete();
+    roofMoved.delete();
+
+    let cy1Moved = combined1.translate([rodR + 0.2, 0, 57.5]);
+    combined1.delete();
 
     let tempGuardM1 = guard.subtract(cy1Moved);
     guard.delete();
@@ -485,16 +565,50 @@ function generateGuard() {
     let cy2 = Manifold.cylinder(30.0, coinR, coinR, 32, false);
     let cy2Rot = cy2.rotate([0, 90, 0]); // orient along X
     cy2.delete();
-    let cy2Moved = cy2Rot.translate([-(rodR + 0.2 + 30.0), 0, 57.5]);
+
+    let baseRoof2 = Manifold.cube([30.0, d_roof, d_roof], true).rotate([45, 0, 0]);
+    let limitBox2 = Manifold.cube([32.0, 15.0, 10.0], false).translate([-16.0, -7.5, 0.0]);
+    let clippedRoof2 = baseRoof2.intersect(limitBox2);
+    baseRoof2.delete();
+    limitBox2.delete();
+
+    let scaledRoof2 = clippedRoof2.scale([1.0, 1.0, 8.6 / coinR]);
+    clippedRoof2.delete();
+
+    let roofMoved2 = scaledRoof2.translate([15.0, 0, 0]);
+    scaledRoof2.delete();
+
+    let combined2 = cy2Rot.add(roofMoved2);
     cy2Rot.delete();
+    roofMoved2.delete();
+
+    let cy2Moved = combined2.translate([-(rodR + 0.2 + 30.0), 0, 57.5]);
+    combined2.delete();
 
     let tempGuardM2 = guard.subtract(cy2Moved);
     guard.delete();
     cy2Moved.delete();
     guard = tempGuardM2;
 
+    // Helper functions for support-free V-channels
+    const createVChannelY = (w, L, centerX, yMin, zVal) => {
+        const d = w * Math.SQRT1_2;
+        let diamond = Manifold.cube([d, L, d], true).rotate([0, 45, 0]);
+        let moved = diamond.translate([centerX, yMin + L / 2, zVal]);
+        diamond.delete();
+        return moved;
+    };
+
+    const createVChannelX = (w, L, xMin, centerY, zVal) => {
+        const d = w * Math.SQRT1_2;
+        let diamond = Manifold.cube([L, d, d], true).rotate([45, 0, 0]);
+        let moved = diamond.translate([xMin + L / 2, centerY, zVal]);
+        diamond.delete();
+        return moved;
+    };
+
     // ─── 8. Wire Paths / Passages ─────────────────────────────────────────
-    // Helper to generate a 5mm square bypass channel around the right side of the central rod
+    // Helper to generate a 5mm V-channel bypass channel around the right side of the central rod
     const generateBypass = (zVal, includeBatterySide = true) => {
         const w = 5.0; // channel size
         const centerX = rodR + 0.3 + w / 2;
@@ -506,22 +620,16 @@ function generateGuard() {
         const yMax = crossPY + w / 2;
 
         // Right side channel running along Y
-        let right = Manifold.cube([w, yMax - yMin, w], false);
-        let rightMoved = right.translate([centerX - w / 2, yMin, zVal - w / 2]);
-        right.delete();
+        let rightMoved = createVChannelY(w, yMax - yMin, centerX, yMin, zVal);
 
         // -Y cross channel connecting pockets to the right side channel
         const crossXLength = (centerX + w) - (-5.0);
-        let crossN = Manifold.cube([crossXLength, w, w], false);
-        let crossNMoved = crossN.translate([-5.0, crossNY - w / 2, zVal - w / 2]);
-        crossN.delete();
+        let crossNMoved = createVChannelX(w, crossXLength, -5.0, crossNY, zVal);
 
         let combined;
         if (includeBatterySide) {
             // +Y cross channel connecting pockets to the right side channel
-            let crossP = Manifold.cube([crossXLength, w, w], false);
-            let crossPMoved = crossP.translate([-5.0, crossPY - w / 2, zVal - w / 2]);
-            crossP.delete();
+            let crossPMoved = createVChannelX(w, crossXLength, -5.0, crossPY, zVal);
 
             combined = rightMoved.add(crossPMoved).add(crossNMoved);
             crossPMoved.delete();
@@ -557,33 +665,25 @@ function generateGuard() {
     swBatWireMoved.delete();
     guard = tempGuardWBat;
 
-    // Electronics bay to central rod wire hole (for LED strips routing): Z = 95.0
+    // Electronics bay to central rod wire hole (for LED strips routing): Z = 95.0 (4.0mm V-channel)
     const wireHoleLen = rodR + 15.0;
-    let elRodWire = Manifold.cylinder(wireHoleLen, 2.0, 2.0, 16, true);
-    let elRodWireRot = elRodWire.rotate([0, 90, 0]).rotate([0, 0, 90]);
-    elRodWire.delete();
-    let elRodWireMoved = elRodWireRot.translate([0, -(rodR + 9.2) / 2, 95.0]);
-    elRodWireRot.delete();
+    let elRodWireMoved = createVChannelY(4.0, wireHoleLen, 0, -(rodR + 9.2) / 2 - wireHoleLen / 2, 95.0);
     let tempGuardWRod = guard.subtract(elRodWireMoved);
     guard.delete();
     elRodWireMoved.delete();
     guard = tempGuardWRod;
 
-    // Motor cells wire channels to electronics bay (horizontal squares of width 5.0mm, height 5.0mm, centered with motors at Z = 57.5)
-    // Left channel (5mm x 5mm square cutout, aligned to center with motor at Z=57.5, X=-(rodR+1.7), and extending to Y=0 to cut halfway into motor pocket)
+    // Motor cells wire channels to electronics bay (5mm V-channels, centered with motors at Z = 57.5)
+    // Left channel
     const motorChanLen = rodR + 15.0;
-    let leftChan = Manifold.cube([5.0, motorChanLen, 5.0], false);
-    let leftChanMoved = leftChan.translate([-(rodR + 1.7) - 2.5, -motorChanLen, 55.0]);
-    leftChan.delete();
+    let leftChanMoved = createVChannelY(5.0, motorChanLen, -(rodR + 1.7), -motorChanLen, 57.5);
     let tempGuardW3 = guard.subtract(leftChanMoved);
     guard.delete();
     leftChanMoved.delete();
     guard = tempGuardW3;
 
-    // Right channel (5mm x 5mm square cutout, aligned to center with motor at Z=57.5, X=rodR+1.7, and extending to Y=0 to cut halfway into motor pocket)
-    let rightChan = Manifold.cube([5.0, motorChanLen, 5.0], false);
-    let rightChanMoved = rightChan.translate([rodR + 1.7 - 2.5, -motorChanLen, 55.0]);
-    rightChan.delete();
+    // Right channel
+    let rightChanMoved = createVChannelY(5.0, motorChanLen, rodR + 1.7, -motorChanLen, 57.5);
     let tempGuardW4 = guard.subtract(rightChanMoved);
     guard.delete();
     rightChanMoved.delete();
@@ -606,7 +706,7 @@ function generateGuard() {
     let elLockHoleRot = elLockHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
     elLockHole.delete();
     
-    let elLockHoleMoved = elLockHoleRot.translate([0, -(rodR + 24.0), 3.5]);
+    let elLockHoleMoved = elLockHoleRot.translate([0, -(rodR + 24.0), 3.0]);
     let tempGuard6 = guard.subtract(elLockHoleMoved);
     guard.delete();
     elLockHoleMoved.delete();
@@ -818,7 +918,7 @@ function generateSled() {
     let elHoleRot = elHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
     elHole.delete();
     
-    let elHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 3.5]);
+    let elHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 3.0]);
     let elTopHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 99.0]);
     elHoleRot.delete();
 
@@ -850,27 +950,50 @@ function generateTransparentCylinder(index) {
     const cylInnerR = Math.max(params.cylOD / 2 - params.cylWall, boreR + 1.5);
     const cylOuterR = cylInnerR + params.cylWall;
     const h = z.cylLen;
+    const flangeH = z.flangeH; // 10.0mm
+    const cbR = cylInnerR;
+    const chamferH = cbR - boreR;
 
     let outer = Manifold.cylinder(h, cylOuterR, cylOuterR, 32, false);
     let cyl;
     if (index === z.N - 1) {
         // Last cylinder gets a flat cap on top. Cap thickness is 3.0 mm.
         const capThick = 3.0;
-        let inner = Manifold.cylinder(h - capThick + 1, cylInnerR, cylInnerR, 32, false);
-        let innerMoved = inner.translate([0, 0, -1]);
-        inner.delete();
-
-        cyl = outer.subtract(innerMoved);
+        let inner = Manifold.cylinder(h - capThick, boreR, boreR, 32, false);
+        cyl = outer.subtract(inner);
         outer.delete();
-        innerMoved.delete();
+        inner.delete();
     } else {
-        let inner = Manifold.cylinder(h + 2, cylInnerR, cylInnerR, 32, false);
-        let innerMoved = inner.translate([0, 0, -1]);
-        inner.delete();
-
-        cyl = outer.subtract(innerMoved);
+        let inner = Manifold.cylinder(h + 2, boreR, boreR, 32, false).translate([0, 0, -1]);
+        cyl = outer.subtract(inner);
         outer.delete();
-        innerMoved.delete();
+        inner.delete();
+    }
+
+    // A. Subtract bottom conical pocket (for Ring index top flange)
+    let cbCyl = Manifold.cylinder(flangeH - chamferH, cbR, cbR, 32, false);
+    let cbCone = Manifold.cylinder(chamferH, cbR, boreR, 32, false).translate([0, 0, flangeH - chamferH]);
+    let cbCombined = cbCyl.add(cbCone);
+    cbCyl.delete();
+    cbCone.delete();
+    
+    let tempCyl = cyl.subtract(cbCombined);
+    cyl.delete();
+    cbCombined.delete();
+    cyl = tempCyl;
+
+    // B. Subtract top conical pocket (for Ring index + 1 bottom flange) - only if not the last cylinder
+    if (index < z.N - 1) {
+        let cbCyl2 = Manifold.cylinder(flangeH - chamferH, cbR, cbR, 32, false).translate([0, 0, h - flangeH + chamferH]);
+        let cbCone2 = Manifold.cylinder(chamferH, boreR, cbR, 32, false).translate([0, 0, h - flangeH]);
+        let cbCombined2 = cbCyl2.add(cbCone2);
+        cbCyl2.delete();
+        cbCone2.delete();
+        
+        let tempCyl2 = cyl.subtract(cbCombined2);
+        cyl.delete();
+        cbCombined2.delete();
+        cyl = tempCyl2;
     }
 
     // Subtract 4 RADIAL screw holes at bottom and top
@@ -878,15 +1001,17 @@ function generateTransparentCylinder(index) {
     // Positioned at 45°, 135°, 225°, 315° to avoid LED strip positions at 0/90/180/270
     const screwR = params.m3Diam / 2;
     const holeLen = cylOuterR * 2 + 10; // long enough to punch clean through the wall and ridges
-    // Z positions for bottom and top screw rings (inset from edges, centered in flanges)
-    const botScrewZ = params.ringHeight * 0.125;
-    const topScrewZ = h - params.ringHeight * 0.125;
+    
+    // Updated Z positions with screwDist (4.5mm from edges)
+    const screwDist = 3.0 + params.m3Diam / 2;
+    const botScrewZ = screwDist;
+    const topScrewZ = h - screwDist;
 
     for (let s = 0; s < 4; s++) {
         const angle = (Math.PI / 4) + s * (Math.PI / 2); // 45°, 135°, 225°, 315°
         const angleDeg = angle * (180 / Math.PI);
 
-        // Bottom radial screw hole — cylinder along Z, rotate to radial
+        // Bottom radial screw hole
         let hole = Manifold.cylinder(holeLen, screwR, screwR, 16, true);
         let rotY = hole.rotate([0, 90, 0]); // Z-axis → X-axis (radial at angle 0)
         hole.delete();
@@ -899,22 +1024,24 @@ function generateTransparentCylinder(index) {
         positioned.delete();
         cyl = temp;
 
-        // Top radial screw hole
-        let hole2 = Manifold.cylinder(holeLen, screwR, screwR, 16, true);
-        let rot2Y = hole2.rotate([0, 90, 0]);
-        hole2.delete();
-        let rot2Z = rot2Y.rotate([0, 0, angleDeg]);
-        rot2Y.delete();
-        let pos2 = rot2Z.translate([0, 0, topScrewZ]);
-        rot2Z.delete();
-        temp = cyl.subtract(pos2);
-        cyl.delete();
-        pos2.delete();
-        cyl = temp;
+        // Top radial screw hole (only if not the last cylinder)
+        if (index < z.N - 1) {
+            let hole2 = Manifold.cylinder(holeLen, screwR, screwR, 16, true);
+            let rot2Y = hole2.rotate([0, 90, 0]);
+            hole2.delete();
+            let rot2Z = rot2Y.rotate([0, 0, angleDeg]);
+            rot2Y.delete();
+            let pos2 = rot2Z.translate([0, 0, topScrewZ]);
+            rot2Z.delete();
+            temp = cyl.subtract(pos2);
+            cyl.delete();
+            pos2.delete();
+            cyl = temp;
+        }
     }
 
-    // Position the cylinder in the LED section (preventing overlap with ring center body)
-    const cylZ = z.ledStart + index * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+    // Position the cylinder in the LED section
+    const cylZ = z.ledStart + index * (z.cylLen + z.centerH) + z.centerH / 2;
     let positioned = cyl.translate([0, 0, cylZ]);
     cyl.delete();
 
@@ -934,28 +1061,66 @@ function generateConnectorRing(index) {
     const endR = cylInnerR - 0.15; // 0.15mm clearance for slip fit inside cylinder
     const centerR = Math.max(params.ringCenterOD / 2, cylOuterR + 1.0);
 
-    // The ring is built as a stack of 3 short cylinders:
-    // bottom flange (endR), center body (centerR), top flange (endR)
-    const flangeH = h * 0.25;
-    const centerH = h * 0.5;
+    const flangeH = z.flangeH; // 10.0mm
+    const centerH = z.centerH;
     const boreR2 = boreR; // keep clearance bore
+    const chamferH = endR - boreR2;
 
-    // Bottom flange
-    let botOuter = Manifold.cylinder(flangeH, endR, endR, 32, false);
+    // Bottom flange (Z = 0 to flangeH) with 45-degree chamfer at tip (0 to chamferH)
+    let botCone = Manifold.cylinder(chamferH, boreR2, endR, 32, false);
+    let botCyl = Manifold.cylinder(flangeH - chamferH, endR, endR, 32, false).translate([0, 0, chamferH]);
+    let botOuter = botCone.add(botCyl);
+    botCone.delete();
+    botCyl.delete();
     let botBore = Manifold.cylinder(flangeH + 2, boreR2, boreR2, 32, false).translate([0, 0, -1]);
     let bot = botOuter.subtract(botBore);
     botOuter.delete();
     botBore.delete();
 
-    // Center body (wider)
-    let cenOuter = Manifold.cylinder(centerH, centerR, centerR, 32, false).translate([0, 0, flangeH]);
+    // Center body (Z = flangeH to flangeH + centerH) with support-free 45-degree slopes
+    const slopeH = Math.min(centerR - endR, centerH / 2);
+    let cenParts = [];
+    
+    if (slopeH > 0.01) {
+        // Bottom slope: cone from endR to (endR + slopeH)
+        let botSlope = Manifold.cylinder(slopeH, endR, endR + slopeH, 32, false).translate([0, 0, flangeH]);
+        cenParts.push(botSlope);
+        
+        // Middle flat cylinder
+        const midH = centerH - 2 * slopeH;
+        if (midH > 0.01) {
+            let midCyl = Manifold.cylinder(midH, endR + slopeH, endR + slopeH, 32, false).translate([0, 0, flangeH + slopeH]);
+            cenParts.push(midCyl);
+        }
+        
+        // Top slope: cone from (endR + slopeH) to endR
+        let topSlope = Manifold.cylinder(slopeH, endR + slopeH, endR, 32, false).translate([0, 0, flangeH + centerH - slopeH]);
+        cenParts.push(topSlope);
+    } else {
+        // Fallback if no slope is needed
+        let fallback = Manifold.cylinder(centerH, endR, endR, 32, false).translate([0, 0, flangeH]);
+        cenParts.push(fallback);
+    }
+    
+    let cenOuter = cenParts[0];
+    for (let i = 1; i < cenParts.length; i++) {
+        let temp = cenOuter.add(cenParts[i]);
+        cenOuter.delete();
+        cenParts[i].delete();
+        cenOuter = temp;
+    }
+
     let cenBore = Manifold.cylinder(centerH + 2, boreR2, boreR2, 32, false).translate([0, 0, flangeH - 1]);
     let cen = cenOuter.subtract(cenBore);
     cenOuter.delete();
     cenBore.delete();
 
-    // Top flange
-    let topOuter = Manifold.cylinder(flangeH, endR, endR, 32, false).translate([0, 0, flangeH + centerH]);
+    // Top flange (Z = flangeH + centerH to h) with 45-degree chamfer at tip (h - chamferH to h)
+    let topCyl = Manifold.cylinder(flangeH - chamferH, endR, endR, 32, false).translate([0, 0, flangeH + centerH]);
+    let topCone = Manifold.cylinder(chamferH, endR, boreR2, 32, false).translate([0, 0, h - chamferH]);
+    let topOuter = topCyl.add(topCone);
+    topCyl.delete();
+    topCone.delete();
     let topBore = Manifold.cylinder(flangeH + 2, boreR2, boreR2, 32, false).translate([0, 0, flangeH + centerH - 1]);
     let top = topOuter.subtract(topBore);
     topOuter.delete();
@@ -966,12 +1131,12 @@ function generateConnectorRing(index) {
     cen.delete();
     top.delete();
 
-    // RADIAL through-holes for M3 screws in bottom flange (Z = h/2 - 6.0) and top flange (Z = h/2 + 6.0)
+    // RADIAL through-holes for M3 screws at bottom flange and top flange
     const screwR = params.m3Diam / 2;
     const holeLen = centerR * 2 + 10; // long enough to punch through all components
-
-    const botHoleZ = h * 0.125;
-    const topHoleZ = h * 0.875;
+    const screwDist = 3.0 + params.m3Diam / 2;
+    const botHoleZ = screwDist;
+    const topHoleZ = h - screwDist;
 
     for (let s = 0; s < 4; s++) {
         const angle = (Math.PI / 4) + s * (Math.PI / 2);
@@ -1004,8 +1169,23 @@ function generateConnectorRing(index) {
         ring = temp;
     }
 
+    // If it is the first connector ring (index === 0), subtract the JST wire channel notch
+    if (index === 0) {
+        const jstR = 3.0;
+        let jstHole = Manifold.cylinder(h + 2, jstR, jstR, 16, false).translate([0, -(rodR + 4.5), -1]);
+        let jstSlot = Manifold.cube([6.0, 5.0, h + 2], false).translate([-3.0, -(rodR + 4.5), -1]);
+        let jstCombined = jstHole.add(jstSlot);
+        jstHole.delete();
+        jstSlot.delete();
+        
+        let temp = ring.subtract(jstCombined);
+        ring.delete();
+        jstCombined.delete();
+        ring = temp;
+    }
+
     // Position: ring sits between cylinders
-    const ringZ = z.ledStart + index * (z.cylLen + h * 0.5) - h / 2;
+    const ringZ = z.ledStart + index * (z.cylLen + z.centerH) - params.ringHeight / 2;
 
     let positioned = ring.translate([0, 0, ringZ]);
     ring.delete();
@@ -1046,7 +1226,7 @@ function generateDecorativeRidges(cylinderIndex) {
     const parts = [];
 
     // Calculate cylZ dynamically (preventing overlap with ring center body)
-    const cylZ = z.ledStart + cylinderIndex * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+    const cylZ = z.ledStart + cylinderIndex * (z.cylLen + z.centerH) + z.centerH / 2;
 
     // ─── 4 Ridge Spines ──────────────────────────────────────────────
     for (let s = 0; s < 4; s++) {
@@ -1124,8 +1304,9 @@ function generateDecorativeRidges(cylinderIndex) {
     // ─── Subtract Screw Holes from the Merged Ridges ──────────────────
     const screwR = params.m3Diam / 2;
     const screwHoleLen = cylOuterR * 2 + 40; // very long to punch through cleanly
-    const botScrewZ = cylZ + params.ringHeight * 0.125;
-    const topScrewZ = cylZ + cylLen - params.ringHeight * 0.125;
+    const screwDist = 3.0 + params.m3Diam / 2;
+    const botScrewZ = cylZ + screwDist;
+    const topScrewZ = cylZ + cylLen - screwDist;
 
     for (let s = 0; s < 4; s++) {
         const angle = (Math.PI / 4) + s * (Math.PI / 2);
@@ -1144,18 +1325,20 @@ function generateDecorativeRidges(cylinderIndex) {
         pos1.delete();
         merged = temp1;
 
-        // Top radial hole
-        let hole2 = Manifold.cylinder(screwHoleLen, screwR, screwR, 16, true);
-        let rot2Y = hole2.rotate([0, 90, 0]);
-        hole2.delete();
-        let rot2Z = rot2Y.rotate([0, 0, angleDeg]);
-        rot2Y.delete();
-        let pos2 = rot2Z.translate([0, 0, topScrewZ]);
-        rot2Z.delete();
-        let temp2 = merged.subtract(pos2);
-        merged.delete();
-        pos2.delete();
-        merged = temp2;
+        // Top radial hole (only if not the last cylinder)
+        if (cylinderIndex < z.N - 1) {
+            let hole2 = Manifold.cylinder(screwHoleLen, screwR, screwR, 16, true);
+            let rot2Y = hole2.rotate([0, 90, 0]);
+            hole2.delete();
+            let rot2Z = rot2Y.rotate([0, 0, angleDeg]);
+            rot2Y.delete();
+            let pos2 = rot2Z.translate([0, 0, topScrewZ]);
+            rot2Z.delete();
+            let temp2 = merged.subtract(pos2);
+            merged.delete();
+            pos2.delete();
+            merged = temp2;
+        }
     }
 
     return merged;
@@ -1172,8 +1355,12 @@ function generateHandle() {
     const socketL = params.handleLength;
     const handleL = Math.max(100.0, socketL);
 
-    // 1. Solid sleeve cylinder (Z = 0 to handleL)
-    let sleeve = Manifold.cylinder(handleL, outerR, outerR, 32, false);
+    // 1. Solid sleeve cylinder (Z = 0 to handleL) with top 45-degree chamfer (handleL - 2.85 to handleL)
+    let sleeveCyl = Manifold.cylinder(handleL - 2.85, outerR, outerR, 32, false);
+    let sleeveCone = Manifold.cylinder(2.85, outerR, innerR, 32, false).translate([0, 0, handleL - 2.85]);
+    let sleeve = sleeveCyl.add(sleeveCone);
+    sleeveCyl.delete();
+    sleeveCone.delete();
 
     // 2. Solid pommel flared shape (cone + cylinder + sphere)
     const pommelR = outerR + 4.0;
@@ -1219,6 +1406,29 @@ function generateHandle() {
     let handle = handleWithSocket.subtract(hole);
     handleWithSocket.delete();
     hole.delete();
+
+    // Subtract 4 radial screw holes at the top of the handle (connecting to the guard bottom)
+    const screwR = params.m3Diam / 2;
+    const screwDist = 3.0 + params.m3Diam / 2;
+    const topScrewZ = handleL - screwDist;
+    const holeLen = outerR * 2 + 10;
+    
+    for (let s = 0; s < 4; s++) {
+        const angle = (Math.PI / 4) + s * (Math.PI / 2);
+        const angleDeg = angle * (180 / Math.PI);
+
+        let hole = Manifold.cylinder(holeLen, screwR, screwR, 16, true);
+        let rotY = hole.rotate([0, 90, 0]);
+        hole.delete();
+        let rotZ = rotY.rotate([0, 0, angleDeg]);
+        rotY.delete();
+        let positioned = rotZ.translate([0, 0, topScrewZ]);
+        rotZ.delete();
+        let temp = handle.subtract(positioned);
+        handle.delete();
+        positioned.delete();
+        handle = temp;
+    }
 
     return handle;
 }
@@ -1441,13 +1651,13 @@ const paramInfo = {
     cylLedGap: {
         text: "Cylinder-LED Radial Gap",
         desc: "Clearance gap between the LED strips and the inner wall of the transparent cylinders.",
-        getPos: () => { const z = getLayoutZones(); const rodR = params.rodOD / 2; return new THREE.Vector3(rodR + params.ledHeight + params.cylLedGap / 2, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen / 2); },
+        getPos: () => { const z = getLayoutZones(); const rodR = params.rodOD / 2; return new THREE.Vector3(rodR + params.ledHeight + params.cylLedGap / 2, 0, z.ledStart + z.centerH / 2 + z.cylLen / 2); },
         dir: [1, 1]
     },
     cylWall: {
         text: "Cylinder Wall Thickness",
         desc: "Wall thickness of the transparent cylinders. Single wall for light diffusion.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen * 0.5); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + z.centerH / 2 + z.cylLen * 0.5); },
         dir: [1, -1]
     },
     ledSectionLen: {
@@ -1459,43 +1669,43 @@ const paramInfo = {
     maxCylLen: {
         text: "Max Cylinder Section Length",
         desc: "Maximum length of a single transparent cylinder before a new section is added.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen * 0.5); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + z.centerH / 2 + z.cylLen * 0.5); },
         dir: [1, -1]
     },
     ringHeight: {
         text: "Ring Height",
         desc: "Height of connector rings between transparent cylinder sections.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringCenterOD / 2, 0, z.ledStart + z.cylLen + params.ringHeight * 0.5); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringCenterOD / 2, 0, z.ledStart + z.cylLen + z.centerH); },
         dir: [1, 1]
     },
     ringCenterOD: {
         text: "Ring Center Flange OD",
         desc: "Outer diameter of the ring's center section. Wider for structural strength.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringCenterOD / 2, 0, z.ledStart + z.cylLen + params.ringHeight * 0.5); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringCenterOD / 2, 0, z.ledStart + z.cylLen + z.centerH); },
         dir: [1, -1]
     },
     ringEndOD: {
         text: "Ring End Flange OD",
         desc: "Outer diameter of the ring's top/bottom flanges. Matches or is slightly smaller than cylinder OD.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringEndOD / 2, 0, z.ledStart + z.cylLen + params.ringHeight * 0.5 + params.ringHeight * 0.25); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.ringEndOD / 2, 0, z.ledStart + z.cylLen + z.centerH + z.centerH / 2 + z.flangeH / 2); },
         dir: [1, 1]
     },
     ridgeWidth: {
         text: "Ridge Width",
         desc: "Width of the decorative ridges running between LED strips.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight, params.cylOD / 2 + params.ridgeHeight, z.ledStart + params.ringHeight * 0.25 + z.cylLen / 2); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight, params.cylOD / 2 + params.ridgeHeight, z.ledStart + z.centerH / 2 + z.cylLen / 2); },
         dir: [1, -1]
     },
     ridgeHeight: {
         text: "Ridge Protrusion",
         desc: "Height the ridges protrude above the cylinder surface. Hides screw heads underneath.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen * 0.5); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight, 0, z.ledStart + z.centerH / 2 + z.cylLen * 0.5); },
         dir: [1, 1]
     },
     ridgeRamp: {
         text: "Ridge Ramp",
         desc: "Additional height protrusion at the bottom of the ridges to create a ramped profile.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight + params.ridgeRamp, 0, z.ledStart + params.ringHeight * 0.25 + z.cylLen * 0.2); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2 + params.ridgeHeight + params.ridgeRamp, 0, z.ledStart + z.centerH / 2 + z.cylLen * 0.2); },
         dir: [1, 1]
     },
     ledWidth: {
@@ -1513,13 +1723,13 @@ const paramInfo = {
     m3Diam: {
         text: "M3 Hole Diameter",
         desc: "Clearance hole diameter for M3 screws connecting cylinder sections.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, params.cylOD / 2, z.ledStart + params.ringHeight * 0.375); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, params.cylOD / 2, z.ledStart + z.centerH / 2 + (3.0 + params.m3Diam / 2)); },
         dir: [1, -1]
     },
     screwDepth: {
         text: "Screw Thread Depth",
         desc: "Depth of screw engagement into the cylinder wall. 5mm default.",
-        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + params.ringHeight * 0.375); },
+        getPos: () => { const z = getLayoutZones(); return new THREE.Vector3(params.cylOD / 2, 0, z.ledStart + z.centerH / 2 + (3.0 + params.m3Diam / 2)); },
         dir: [1, -1]
     },
     lanyardHoleDiam: {
@@ -1883,10 +2093,10 @@ function rebuild() {
             handleMesh = new THREE.Mesh(handleGeom, makeMat(colors.handle, 0.95));
             addBlueprintEdges(handleMesh, handleGeom, colors.blueprintLineCyan);
 
-            // Position it in assembly space: Z-axis translation
+            // Position it in assembly space: Z-axis translation (with 10mm overlap into the guard bottom)
             const socketL = params.handleLength;
             const handleL = Math.max(100.0, socketL);
-            const assemblyZ = (3.0 + socketL) - handleL;
+            const assemblyZ = (3.0 + socketL) - handleL + 10.0;
             handleMesh.position.z += assemblyZ - explodeDist * 0.8;
 
             mainGroup.add(handleMesh);
@@ -1912,32 +2122,36 @@ function rebuild() {
         const guardR = Math.max(rodR + params.guardWall, cylInnerR + 1.5);
 
         const screwR = params.m3Diam / 2;
+        const screwDist = 3.0 + params.m3Diam / 2;
 
         // Cylinders screw indicators
         for (let ci = 0; ci < z.N; ci++) {
-            const cylZ = z.ledStart + ci * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+            const cylZ = z.ledStart + ci * (z.cylLen + z.centerH) + z.centerH / 2;
 
             for (let s = 0; s < 4; s++) {
                 const angle = (Math.PI / 4) + s * (Math.PI / 2);
 
-                // Bottom radial screw indicator (points toward rod center)
+                // Bottom radial screw indicator
                 const botGeom = new THREE.CylinderGeometry(screwR, screwR, cylOuterR * 2, 8);
                 const botMesh = new THREE.Mesh(botGeom, screwMat);
-                botMesh.position.set(0, 0, cylZ + params.ringHeight * 0.125); // centered in flange
+                botMesh.position.set(0, 0, cylZ + screwDist);
                 botMesh.rotation.z = angle + Math.PI / 2; // orient radially
                 screwHoleGroup.add(botMesh);
 
-                // Top radial screw indicator
-                const topGeom = new THREE.CylinderGeometry(screwR, screwR, cylOuterR * 2, 8);
-                const topMesh = new THREE.Mesh(topGeom, screwMat);
-                topMesh.position.set(0, 0, cylZ + z.cylLen - params.ringHeight * 0.125); // centered in flange
-                topMesh.rotation.z = angle + Math.PI / 2;
-                screwHoleGroup.add(topMesh);
+                // Top radial screw indicator (only if not the last cylinder)
+                if (ci < z.N - 1) {
+                    const topGeom = new THREE.CylinderGeometry(screwR, screwR, cylOuterR * 2, 8);
+                    const topMesh = new THREE.Mesh(topGeom, screwMat);
+                    topMesh.position.set(0, 0, cylZ + z.cylLen - screwDist);
+                    topMesh.rotation.z = angle + Math.PI / 2;
+                    screwHoleGroup.add(topMesh);
+                }
             }
         }
 
-        // Guard screw indicators
-        const guardScrewZ = z.guardEnd - params.ringHeight * 0.375; // aligned with Ring 0 bottom flange hole
+        // Guard top screw indicators (connecting to Ring 0)
+        const h_ring = params.ringHeight;
+        const guardScrewZ = z.guardEnd - h_ring / 2 + screwDist;
         for (let s = 0; s < 4; s++) {
             const angle = (Math.PI / 4) + s * (Math.PI / 2);
             const geom = new THREE.CylinderGeometry(screwR, screwR, guardR * 2, 8);
@@ -1946,6 +2160,30 @@ function rebuild() {
             mesh.rotation.z = angle + Math.PI / 2;
             screwHoleGroup.add(mesh);
         }
+
+        // Guard bottom screw indicators (connecting to Handle top)
+        const jointScrewZ = z.guardStart + 5.0;
+        for (let s = 0; s < 4; s++) {
+            const angle = (Math.PI / 4) + s * (Math.PI / 2);
+            const geom = new THREE.CylinderGeometry(screwR, screwR, guardR * 2, 8);
+            const mesh = new THREE.Mesh(geom, screwMat);
+            mesh.position.set(0, 0, jointScrewZ);
+            mesh.rotation.z = angle + Math.PI / 2;
+            screwHoleGroup.add(mesh);
+        }
+
+        // Rod-securing screw indicators (along X-axis)
+        const h_trimmed = params.guardLength - (h_ring / 2 - 10.0);
+        
+        const rodMesh1 = new THREE.Mesh(new THREE.CylinderGeometry(screwR, screwR, guardR * 2 + 10, 8), screwMat);
+        rodMesh1.position.set(0, 0, z.guardStart + 15.0);
+        rodMesh1.rotation.y = Math.PI / 2;
+        screwHoleGroup.add(rodMesh1);
+
+        const rodMesh2 = new THREE.Mesh(new THREE.CylinderGeometry(screwR, screwR, guardR * 2 + 10, 8), screwMat);
+        rodMesh2.position.set(0, 0, z.guardStart + h_trimmed - 15.0);
+        rodMesh2.rotation.y = Math.PI / 2;
+        screwHoleGroup.add(rodMesh2);
     }
 
     // ─── Update Spec Sheet ───────────────────────────────────────────────
@@ -2176,7 +2414,7 @@ function updateLeaderLines() {
         }
 
         indicesToLabel.forEach(i => {
-            const cylZ = zz.ledStart + i * (zz.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+            const cylZ = zz.ledStart + i * (zz.cylLen + zz.centerH) + zz.centerH / 2;
             drawDimension(
                 new THREE.Vector3(params.cylOD / 2 + 3, 0, cylZ + zz.cylLen * 0.5),
                 `Cylinder #${i + 1}`, 1, (i % 2 === 0 ? -1 : 1)
@@ -2226,18 +2464,17 @@ function exportComponentSTL(componentType) {
                 const screwR = params.m3Diam / 2;
                 const h = params.ringHeight;
                 const spacing = params.cylOD + (params.ridgeHeight + params.ridgeRamp) * 2 + 10.0;
-                
                 let partsToUnion = [];
 
-                // 1. Guard
+                // 1. Guard (stands upright, isolated at X = -60.0, Y = 0.0)
                 let guardSolid = generateGuard();
                 if (guardSolid) {
-                    let bedGuard = guardSolid.translate([0, 0, -z.guardStart]);
+                    let bedGuard = guardSolid.translate([-60.0, 0.0, -z.guardStart]);
                     guardSolid.delete();
                     partsToUnion.push(bedGuard);
                 }
 
-                // 2. Battery Cover
+                // 2. Battery Cover (translated to X=135.0, Y=-60.0)
                 let batCoverBase = Manifold.cube([32.0, 16.0, 80.0], false).translate([-16.0, rodR + 14.0, 0.0]);
                 let batCoverCutout = Manifold.cube([28.0, 14.0, 82.0], false).translate([-14.0, rodR + 14.0, -1.0]);
                 let batCoverSolid = batCoverBase.subtract(batCoverCutout);
@@ -2256,13 +2493,13 @@ function exportComponentSTL(componentType) {
 
                 let batFlat = finalBatCover.translate([0, -(rodR + 30.0), 0.0]);
                 let batFlatRot = batFlat.rotate([-90, 0, 0]);
-                let batReady = batFlatRot.translate([-45.0, -40.0, 0.0]);
+                let batReady = batFlatRot.translate([125.0, -60.0, 0.0]);
                 batFlat.delete();
                 batFlatRot.delete();
                 finalBatCover.delete();
                 partsToUnion.push(batReady);
 
-                // 3. Electronics Cover
+                // 3. Electronics Cover (translated to X=175.0, Y=0.0)
                 let elCoverBase = Manifold.cube([32.0, 8.5, 102.0], false).translate([-16.0, -(rodR + 22.0), 0.0]);
                 let elCoverCutout = Manifold.cube([28.0, 6.5, 104.0], false).translate([-14.0, -(rodR + 20.0), -1.0]);
                 let elCoverSolid = elCoverBase.subtract(elCoverCutout);
@@ -2273,7 +2510,7 @@ function exportComponentSTL(componentType) {
                 let elHoleRot = elHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
                 elHole.delete();
                 
-                let elHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 3.5]);
+                let elHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 3.0]);
                 let elTopHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 99.0]);
                 elHoleRot.delete();
 
@@ -2284,55 +2521,55 @@ function exportComponentSTL(componentType) {
 
                 let elFlat = finalElCover.translate([0, rodR + 22.0, 0.0]);
                 let elFlatRot = elFlat.rotate([90, 0, 0]);
-                let elReady = elFlatRot.translate([45.0, 51.0, 0.0]);
+                let elReady = elFlatRot.translate([175.0, 0.0, 0.0]);
                 elFlat.delete();
                 elFlatRot.delete();
                 finalElCover.delete();
                 partsToUnion.push(elReady);
 
-                // 4. Cylinders (N)
+                // 4. Cylinders (N) (spaced along X=-130.0)
                 for (let i = 0; i < z.N; i++) {
                     let cyl = generateTransparentCylinder(i);
                     if (cyl) {
-                        const cylZ = z.ledStart + i * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
-                        const xOffset = (i - (z.N - 1) / 2) * (params.cylOD + 10.0);
-                        let bedCyl = cyl.translate([xOffset, 60.0, -cylZ]);
+                        const cylZ = z.ledStart + i * (z.cylLen + z.centerH) + z.centerH / 2;
+                        const yOffset = (i - (z.N - 1) / 2) * (params.cylOD + 25.0);
+                        let bedCyl = cyl.translate([-130.0, yOffset, -cylZ]);
                         cyl.delete();
                         partsToUnion.push(bedCyl);
                     }
                 }
 
-                // 5. Connector Rings (N)
+                // 5. Connector Rings (N) (spaced along X=5.0)
                 for (let i = 0; i < z.N; i++) {
                     let ring = generateConnectorRing(i);
                     if (ring) {
-                        const ringZ = z.ledStart + i * (z.cylLen + h * 0.5) - h / 2;
-                        const xOffset = (i - (z.N - 1) / 2) * (params.ringCenterOD + 10.0);
-                        let bedRing = ring.translate([xOffset, -60.0, -ringZ]);
+                        const ringZ = z.ledStart + i * (z.cylLen + z.centerH) - params.ringHeight / 2;
+                        const yOffset = (i - (z.N - 1) / 2) * (params.ringCenterOD + 25.0);
+                        let bedRing = ring.translate([5.0, yOffset, -ringZ]);
                         ring.delete();
                         partsToUnion.push(bedRing);
                     }
                 }
 
-                // 6. Decorative Ridges (N)
+                // 6. Decorative Ridges (N) (spaced along X=70.0)
                 for (let i = 0; i < z.N; i++) {
                     let ridges = generateDecorativeRidges(i);
                     if (ridges) {
-                        const cylZ = z.ledStart + i * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
-                        const xOffset = (i - (z.N - 1) / 2) * spacing;
-                        let bedRidges = ridges.translate([xOffset, 110.0, -cylZ]);
+                        const cylZ = z.ledStart + i * (z.cylLen + z.centerH) + z.centerH / 2;
+                        const yOffset = (i - (z.N - 1) / 2) * (spacing + 15.0);
+                        let bedRidges = ridges.translate([70.0, yOffset, -cylZ]);
                         ridges.delete();
                         partsToUnion.push(bedRidges);
                     }
                 }
 
-                // 7. Handle & Pommel
+                // 7. Handle & Pommel (translated to X=-200.0, Y=0.0)
                 let handleSolid = generateHandle();
                 if (handleSolid) {
                     const outerR = params.rodOD / 2 + 3.0;
                     // Rotate by 90 degrees around X axis to lay it flat, and offset Z to sit flat at Z=0
                     let flatHandle = handleSolid.rotate([90, 0, 0]);
-                    let bedHandle = flatHandle.translate([0, -100.0, outerR]);
+                    let bedHandle = flatHandle.translate([-200.0, 0.0, outerR]);
                     handleSolid.delete();
                     flatHandle.delete();
                     partsToUnion.push(bedHandle);
@@ -2387,7 +2624,7 @@ function exportComponentSTL(componentType) {
                 batCoverSolid.delete();
                 batHoleMoved.delete();
                 
-                // Electronics Cover Solid
+                // Electronics Cover Solid (screw hole at Z=5.0)
                 let elCoverBase = Manifold.cube([32.0, 8.5, 102.0], false).translate([-16.0, -(rodR + 22.0), 0.0]);
                 let elCoverCutout = Manifold.cube([28.0, 6.5, 104.0], false).translate([-14.0, -(rodR + 20.0), -1.0]);
                 let elCoverSolid = elCoverBase.subtract(elCoverCutout);
@@ -2398,7 +2635,7 @@ function exportComponentSTL(componentType) {
                 let elHoleRot = elHole.rotate([0, 90, 0]).rotate([0, 0, 90]);
                 elHole.delete();
                 
-                let elHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 3.5]);
+                let elHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 3.0]);
                 let elTopHoleMoved = elHoleRot.translate([0, -(rodR + 24.0), 99.0]);
                 elHoleRot.delete();
 
@@ -2410,14 +2647,14 @@ function exportComponentSTL(componentType) {
                 // Lay both covers flat on the print bed side-by-side at Z = 0
                 let batFlat = finalBatCover.translate([0, -(rodR + 30.0), 0.0]);
                 let batFlatRot = batFlat.rotate([-90, 0, 0]);
-                let batReady = batFlatRot.translate([-20.0, -40.0, 0.0]);
+                let batReady = batFlatRot.translate([-35.0, -40.0, 0.0]);
                 batFlat.delete();
                 batFlatRot.delete();
                 finalBatCover.delete();
 
                 let elFlat = finalElCover.translate([0, rodR + 22.0, 0.0]);
                 let elFlatRot = elFlat.rotate([90, 0, 0]);
-                let elReady = elFlatRot.translate([20.0, 51.0, 0.0]);
+                let elReady = elFlatRot.translate([35.0, 50.0, 0.0]);
                 elFlat.delete();
                 elFlatRot.delete();
                 finalElCover.delete();
@@ -2436,9 +2673,9 @@ function exportComponentSTL(componentType) {
                 for (let i = 0; i < z.N; i++) {
                     let cyl = generateTransparentCylinder(i);
                     if (cyl) {
-                        const cylZ = z.ledStart + i * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+                        const cylZ = z.ledStart + i * (z.cylLen + z.centerH) + z.centerH / 2;
                         // Stand upright on print bed, arranged side-by-side along X
-                        let bedCyl = cyl.translate([i * (params.cylOD + 10.0), 0, -cylZ]);
+                        let bedCyl = cyl.translate([i * (params.cylOD + 15.0), 0, -cylZ]);
                         cyl.delete();
                         if (!mergedCyl) {
                             mergedCyl = bedCyl;
@@ -2457,14 +2694,13 @@ function exportComponentSTL(componentType) {
         case 'ring':
             {
                 const z = getLayoutZones();
-                const h = params.ringHeight;
                 let mergedRing = null;
                 for (let i = 0; i < z.N; i++) {
                     let ring = generateConnectorRing(i);
                     if (ring) {
-                        const ringZ = z.ledStart + i * (z.cylLen + h * 0.5) - h / 2;
+                        const ringZ = z.ledStart + i * (z.cylLen + z.centerH) - params.ringHeight / 2;
                         // Stand upright on print bed, arranged side-by-side along X
-                        let bedRing = ring.translate([i * (params.ringCenterOD + 10.0), 0, -ringZ]);
+                        let bedRing = ring.translate([i * (params.ringCenterOD + 15.0), 0, -ringZ]);
                         ring.delete();
                         if (!mergedRing) {
                             mergedRing = bedRing;
@@ -2490,11 +2726,11 @@ function exportComponentSTL(componentType) {
             {
                 const z = getLayoutZones();
                 let mergedRidges = null;
-                const spacing = params.cylOD + (params.ridgeHeight + params.ridgeRamp) * 2 + 10.0;
+                const spacing = params.cylOD + (params.ridgeHeight + params.ridgeRamp) * 2 + 15.0;
                 for (let i = 0; i < z.N; i++) {
                     let ridges = generateDecorativeRidges(i);
                     if (ridges) {
-                        const cylZ = z.ledStart + i * (z.cylLen + params.ringHeight * 0.5) + params.ringHeight * 0.25;
+                        const cylZ = z.ledStart + i * (z.cylLen + z.centerH) + z.centerH / 2;
                         // Stand upright on print bed, arranged side-by-side along X
                         let bedRidges = ridges.translate([i * spacing, 0, -cylZ]);
                         ridges.delete();
