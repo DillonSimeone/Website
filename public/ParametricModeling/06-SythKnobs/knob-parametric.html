@@ -170,7 +170,24 @@
     font-size: 11px;
     color: var(--accent);
     text-align: right;
-    min-width: 38px;
+    width: 45px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--border-lit);
+    outline: none;
+    padding: 0;
+    margin: 0;
+  }
+  .param .val:focus {
+    border-bottom: 1px solid var(--accent);
+  }
+  .param input[type=number].val::-webkit-inner-spin-button,
+  .param input[type=number].val::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .param input[type=number].val {
+    -moz-appearance: textfield;
   }
   .param .unit {
     font-family: 'Share Tech Mono', monospace;
@@ -352,6 +369,24 @@
   }
   .btn-sm:hover { border-color: var(--accent-dim); color: var(--accent); }
   .btn-sm.active { border-color: var(--accent); color: var(--accent); background: var(--accent-muted); }
+
+  /* Blueprint render mode buttons style */
+  #btn-render-mode.btn-sm, #btn-blueprint-mode.btn-sm {
+    border-color: rgba(0, 242, 255, 0.4);
+    color: rgba(0, 242, 255, 0.8);
+    transition: all 0.2s;
+  }
+  #btn-render-mode.btn-sm:hover, #btn-blueprint-mode.btn-sm:hover {
+    background: rgba(0, 242, 255, 0.1);
+    border-color: #00f2ff;
+    color: #00f2ff;
+  }
+  #btn-render-mode.btn-sm.active, #btn-blueprint-mode.btn-sm.active {
+    background: rgba(0, 242, 255, 0.2);
+    border-color: #00f2ff;
+    color: #fff;
+    box-shadow: 0 0 8px rgba(0, 242, 255, 0.3);
+  }
 
   /* KNOB GRID */
   .knob-grid {
@@ -743,9 +778,16 @@
   [data-tooltip-pos="right"]:hover::before {
     transform: translate(0, 0);
   }
+
+  /* HIGH-CONTRAST FOCUS STATES FOR KEYBOARD & SWITCH CONTROL ACCESSIBILITY */
+  input:focus, select:focus, button:focus, .shape-btn:focus {
+    outline: 2px solid #00f2ff !important;
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.6) !important;
+  }
 </style>
 </head>
 <body>
+<div id="srAnnouncer" class="sr-only" aria-live="polite" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;"></div>
 
 <header>
   <div>
@@ -780,9 +822,20 @@
     <div class="section">
       <div class="section-label" data-tooltip="Adjust overall diameter, height, and top-to-bottom taper">Body Dimensions</div>
 
+      <!-- PRESET SYSTEM -->
+      <div class="param">
+        <label>Synth Preset</label>
+      </div>
+      <select id="synthPreset" style="margin-bottom: 12px;" aria-label="Synthesizer Preset Profile">
+        <option value="custom" selected>Custom — Manual Settings</option>
+        <option value="eurorack">Moog / Eurorack (Small, Dense)</option>
+        <option value="prophet">Sequential Prophet (Standard D-Shaft)</option>
+        <option value="microfreak">Arturia MicroFreak (Slide-Over sleeve)</option>
+      </select>
+
       <div class="param">
         <label>Outer Diameter</label>
-        <span class="val" id="v_outerD">25</span>
+        <input type="number" class="val" id="v_outerD" value="25" min="10" max="80" step="1" aria-label="Outer Diameter Value">
         <span class="unit">mm</span>
       </div>
       <select id="outerDSelect" style="margin-bottom: 8px;">
@@ -797,14 +850,14 @@
 
       <div class="param">
         <label>Height</label>
-        <span class="val" id="v_height">22</span>
+        <input type="number" class="val" id="v_height" value="22" min="10" max="50" step="1" aria-label="Height Value">
         <span class="unit">mm</span>
       </div>
       <input type="range" id="height" min="10" max="50" value="22" step="1">
 
       <div class="param">
         <label>Taper Ratio</label>
-        <span class="val" id="v_taper">0.85</span>
+        <input type="number" class="val" id="v_taper" value="0.85" min="0.60" max="1.00" step="0.01" aria-label="Taper Ratio Value">
         <span class="unit"></span>
       </div>
       <input type="range" id="taper" min="60" max="100" value="85" step="1">
@@ -827,21 +880,21 @@
 
       <div class="param">
         <label>Texture Depth</label>
-        <span class="val" id="v_texDepth">3.0</span>
+        <input type="number" class="val" id="v_texDepth" value="3.0" min="1.0" max="8.0" step="0.1" aria-label="Texture Depth Value">
         <span class="unit">mm</span>
       </div>
       <input type="range" id="texDepth" min="10" max="80" value="30" step="1">
 
       <div class="param">
         <label>Texture Scale</label>
-        <span class="val" id="v_texScale">3.0</span>
+        <input type="number" class="val" id="v_texScale" value="3.0" min="1.0" max="6.0" step="0.1" aria-label="Texture Scale Value">
         <span class="unit">mm</span>
       </div>
       <input type="range" id="texScale" min="10" max="60" value="30" step="1">
 
       <div class="param">
         <label>Texture Count</label>
-        <span class="val" id="v_texCount">8</span>
+        <input type="number" class="val" id="v_texCount" value="8" min="3" max="36" step="1" aria-label="Texture Count Value">
         <span class="unit">×</span>
       </div>
       <input type="range" id="texCount" min="3" max="36" value="8" step="1">
@@ -857,26 +910,35 @@
         <div class="toggle-opt active" id="optSwap">SWAP IN</div>
       </div>
 
+      <div class="param" style="margin-top:12px;">
+        <label>Shaft Type</label>
+      </div>
+      <select id="shaftType" onchange="updateShaftType()" aria-label="Shaft Mounting Profile Type">
+        <option value="dshaft" selected>D-Shaft (flat edge)</option>
+        <option value="round">Solid Round (circular)</option>
+        <option value="knurled">Knurled / Splined (split shaft)</option>
+      </select>
+
 
 
       <div id="slideOverControls" style="display: none;">
         <div class="param" style="margin-top:12px;">
           <label>Inner Bore Ø</label>
-          <span class="val" id="v_boreD">18</span>
+          <input type="number" class="val" id="v_boreD" value="18.0" min="6.0" max="50.0" step="0.5" aria-label="Inner Bore Diameter Value">
           <span class="unit">mm</span>
         </div>
         <input type="range" id="boreD" min="6" max="50" value="18" step="0.5">
 
         <div class="param">
           <label>Slot Depth</label>
-          <span class="val" id="v_slotH">12</span>
+          <input type="number" class="val" id="v_slotH" value="12" min="4" max="40" step="1" aria-label="Slot Depth Value">
           <span class="unit">mm</span>
         </div>
         <input type="range" id="slotH" min="4" max="40" value="12" step="1">
 
         <div class="param">
           <label>Clearance</label>
-          <span class="val" id="v_clearance">0.3</span>
+          <input type="number" class="val" id="v_clearance" value="0.3" min="0.1" max="1.0" step="0.1" aria-label="Clearance Value">
           <span class="unit">mm</span>
         </div>
         <input type="range" id="clearance" min="1" max="10" value="3" step="1">
@@ -932,6 +994,10 @@
       <button class="btn-sm active" id="sortNone" onclick="sortBy('none')" data-tooltip="Sort: default" data-tooltip-pos="left">ADDED</button>
       <button class="btn-sm" id="sortDia" onclick="sortBy('dia')" data-tooltip="Sort: outer diameter">DIA ↓</button>
       <button class="btn-sm" id="sortGroove" onclick="sortBy('groove')" data-tooltip="Sort: texture depth">DEPTH ↓</button>
+      
+      <span class="toolbar-label" style="margin-left:8px;">View:</span>
+      <button class="btn-sm" id="btn-render-mode" onclick="setRenderMode('rendered')" data-tooltip="Style: standard material">RENDERED</button>
+      <button class="btn-sm active" id="btn-blueprint-mode" onclick="setRenderMode('blueprint')" data-tooltip="Style: technical blueprint">BLUEPRINT</button>
       <div class="export-row">
         <button class="btn-sm" id="purgeAllBtn" style="color:var(--danger); border-color:#331111;" onclick="confirmPurgeAll()" data-tooltip="Delete all knobs">✕ PURGE ALL</button>
         <button class="btn-sm" onclick="triggerStlImport()" style="color:var(--accent); border-color:var(--accent-dim);" data-tooltip="Import parameters from STL">+ IMPORT STL</button>
@@ -961,9 +1027,39 @@
         <button class="btn" id="btnNext" style="margin-bottom:0; border-color: #44aaff; color: #44aaff; text-shadow: 0 0 8px rgba(68,170,255,0.5); box-shadow: 0 0 10px rgba(68,170,255,0.2) inset;" onclick="nextKnob()">NEXT ▶</button>
       </div>
       <button class="btn btn-primary" style="margin-top:12px; width:100%;" id="exportSingleStlBtn" onclick="exportSingleSTL()">↓ DOWNLOAD THIS STL</button>
-      <button class="btn btn-ghost" style="margin-top:12px;" onclick="closeDetail()">✕ CLOSE DETAIL</button>
+      <button class="btn btn-primary" style="margin-top:8px; width:100%; border-color: #00f2ff; color: #00f2ff; text-shadow: 0 0 8px rgba(0,242,255,0.5);" id="exportSvgBtn" onclick="openLaserModal()">↓ EXPORT SVG (LASER)</button>
+      <button class="btn btn-ghost" style="margin-top:8px; width:100%;" id="copyShareBtn" onclick="copyShareLink()">🔗 COPY SHARE LINK</button>
+      <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeDetail()">✕ CLOSE DETAIL</button>
+  </div>
+</div>
+
+<!-- LASER CUTTING SVG EXPORT MODAL -->
+<div id="laserModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; font-family: 'Share Tech Mono', monospace;">
+  <div style="background: #0d0d0d; border: 1px solid rgba(0, 242, 255, 0.4); padding: 24px; width: 340px; box-shadow: 0 0 25px rgba(0, 242, 255, 0.25);">
+    <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #00f2ff; letter-spacing: 0.05em; margin-bottom: 16px; text-shadow: 0 0 8px rgba(0, 242, 255, 0.3);">LASER CUTTING SVG EXPORTER</h2>
+    <p style="font-size: 10px; color: var(--text-dim); line-height: 1.5; margin-bottom: 16px;">This generates a layered 2D SVG file. Stacking and gluing these layers builds the 3D tapered knob profile. It includes alignment rods for easy assembly.</p>
+    
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 10px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase;">Material Thickness</label>
+      <select id="laserMaterialThick" style="margin-bottom: 4px; border-color: rgba(0,242,255,0.4); color: var(--text);">
+        <option value="3">3.0 mm (standard acrylic/plywood)</option>
+        <option value="3.175">3.175 mm (1/8 inch)</option>
+        <option value="4">4.0 mm</option>
+        <option value="6">6.0 mm (thick target)</option>
+        <option value="6.35">6.35 mm (1/4 inch)</option>
+      </select>
+      <input type="number" id="v_laserMaterialThick" class="val" value="3.0" min="0.5" max="20" step="0.1" style="width: 100%; background: var(--surface); border: 1px solid rgba(0,242,255,0.3); color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 6px; outline: none; border-radius: 2px;" placeholder="Or type custom thickness (mm)">
     </div>
 
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 10px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase;">Laser Kerf (Width of cut)</label>
+      <input type="number" id="laserKerf" style="width: 100%; background: var(--surface); border: 1px solid rgba(0,242,255,0.3); color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 6px; outline: none; border-radius: 2px;" value="0.1" step="0.01" min="0" max="1">
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-ghost" style="margin-bottom:0; flex: 1;" onclick="closeLaserModal()">✕ CANCEL</button>
+      <button class="btn btn-primary" style="margin-bottom:0; flex: 1; border-color: #00f2ff; color: #00f2ff; text-shadow: 0 0 8px rgba(0,242,255,0.5);" onclick="generateLaserSVG()">↓ EXPORT SVG</button>
+    </div>
   </div>
 </div>
 
@@ -987,6 +1083,14 @@ let knobs = [];
 let selectedId = null;
 let sortMode = 'none';
 let mountMode = 'swap';
+let renderMode = 'blueprint';
+
+window.updateShaftType = function() {
+  triggerHapticFeedback();
+  playToneForParam('outerD', 30);
+  const p = getParams();
+  announceChange(`Shaft type changed to ${p.shaftType === 'dshaft' ? 'D-shaft' : p.shaftType === 'knurled' ? 'knurled' : 'round'}`);
+};
 
 function setMountMode(mode) {
   mountMode = mode;
@@ -1005,6 +1109,59 @@ window.toggleMountMode = function() {
   setMountMode(mountMode === 'slide' ? 'swap' : 'slide');
 };
 
+// ─── ACCESSIBILITY ANNOUNCER, AUDIO & HAPTICS ─────────────────────
+function announceChange(text) {
+  const announcer = document.getElementById('srAnnouncer');
+  if (announcer) {
+    announcer.textContent = text;
+  }
+}
+
+let audioCtx = null;
+function playToneForParam(paramId, value) {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    let freq = 220; // Default baseline (A3)
+    if (paramId === 'outerD') freq = 200 + value * 5; 
+    else if (paramId === 'height') freq = 300 + value * 8;
+    else if (paramId === 'taper') freq = 100 + value * 4;
+    else if (paramId === 'texDepth') freq = 150 + value * 10;
+    else if (paramId === 'texScale') freq = 250 + value * 12;
+    else if (paramId === 'texCount') freq = 180 + value * 15;
+    else freq = 440;
+    
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    
+    const now = audioCtx.currentTime;
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.08, now + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+    
+    osc.start(now);
+    osc.stop(now + 0.16);
+  } catch (e) {
+    console.warn("Audio Context error or not initialized yet", e);
+  }
+}
+
+function triggerHapticFeedback() {
+  if (navigator.vibrate) {
+    navigator.vibrate(15);
+  }
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────
 async function init() {
   await initThree();
@@ -1016,15 +1173,89 @@ async function init() {
     btn.innerHTML = `${svgForShape(s)}<span>${s.label}</span>`;
     btn.onclick = () => selectShape(s.id);
     btn.id = 'sbtn_' + s.id;
+    btn.setAttribute('tabindex', '0');
+    btn.setAttribute('role', 'button');
+    btn.setAttribute('aria-label', s.label + ' shape profile');
+    
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectShape(s.id);
+      }
+    });
+    
     grid.appendChild(btn);
   });
 
   // Wire sliders
   document.querySelectorAll('input[type=range]').forEach(r => {
-    r.addEventListener('input', () => updateParamDisplay(r));
+    r.addEventListener('input', () => {
+      updateParamDisplay(r);
+      playToneForParam(r.id, +r.value);
+      triggerHapticFeedback();
+    });
   });
 
+  // Wire numeric inputs to mirror slider changes and allow direct typing
+  document.querySelectorAll('.param input[type=number].val').forEach(numEl => {
+    numEl.addEventListener('input', () => {
+      const rId = numEl.id.replace('v_', '');
+      const r = document.getElementById(rId);
+      if (!r) return;
+      
+      let val = parseFloat(numEl.value);
+      if (isNaN(val)) return;
+      
+      // Map display value back to slider value
+      const mapBack = {
+        outerD: v => v,
+        height: v => v,
+        taper: v => Math.round(v * 100),
+        texDepth: v => Math.round(v * 10),
+        texScale: v => Math.round(v * 10),
+        texCount: v => v,
+        boreD: v => v,
+        slotH: v => v,
+        clearance: v => Math.round(v * 10),
+      };
+      
+      const fn = mapBack[rId];
+      if (fn) {
+        let sliderVal = fn(val);
+        const min = parseFloat(r.min);
+        const max = parseFloat(r.max);
+        sliderVal = Math.max(min, Math.min(max, sliderVal));
+        r.value = sliderVal;
+        
+        // Custom outer diameter dropdown logic synchronization
+        if (rId === 'outerD') {
+          const select = document.getElementById('outerDSelect');
+          if (select) {
+            if (['19', '25', '32'].includes(String(sliderVal))) {
+              select.value = String(sliderVal);
+              document.getElementById('outerDSliderContainer').style.display = 'none';
+            } else {
+              select.value = 'custom';
+              document.getElementById('outerDSliderContainer').style.display = 'block';
+            }
+          }
+        }
+        
+        // Triggers haptics and audio feedback
+        playToneForParam(rId, sliderVal);
+        triggerHapticFeedback();
+      }
+    });
 
+    // Format value on blur
+    numEl.addEventListener('blur', () => {
+      const rId = numEl.id.replace('v_', '');
+      const r = document.getElementById(rId);
+      if (r) {
+        updateParamDisplay(r);
+      }
+    });
+  });
 
   // Wire outer diameter select
   document.getElementById('outerDSelect')?.addEventListener('change', (e) => {
@@ -1038,18 +1269,117 @@ async function init() {
       if (input) {
         input.value = val;
         updateParamDisplay(input);
+        playToneForParam('outerD', +val);
+        triggerHapticFeedback();
       }
     }
   });
 
+  // Wire synth preset select
+  document.getElementById('synthPreset')?.addEventListener('change', (e) => {
+    const preset = e.target.value;
+    if (preset === 'custom') return;
+    
+    if (preset === 'eurorack') {
+      setMountMode('swap');
+      activeShape = 'hex';
+      selectShape('hex');
+      document.getElementById('outerDSelect').value = 'custom';
+      document.getElementById('outerDSliderContainer').style.display = 'block';
+      document.getElementById('outerD').value = 18;
+      document.getElementById('height').value = 16;
+      document.getElementById('taper').value = 90;
+      document.getElementById('textureMode').value = 'flutes';
+      document.getElementById('texDepth').value = 20;
+      document.getElementById('texScale').value = 20;
+      document.getElementById('texCount').value = 10;
+    } else if (preset === 'prophet') {
+      setMountMode('swap');
+      activeShape = 'cyl';
+      selectShape('cyl');
+      document.getElementById('outerDSelect').value = 'custom';
+      document.getElementById('outerDSliderContainer').style.display = 'block';
+      document.getElementById('outerD').value = 24;
+      document.getElementById('height').value = 18;
+      document.getElementById('taper').value = 85;
+      document.getElementById('textureMode').value = 'flutes';
+      document.getElementById('texDepth').value = 25;
+      document.getElementById('texScale').value = 25;
+      document.getElementById('texCount').value = 8;
+    } else if (preset === 'microfreak') {
+      setMountMode('slide');
+      activeShape = 'hex';
+      selectShape('hex');
+      document.getElementById('outerDSelect').value = 'custom';
+      document.getElementById('outerDSliderContainer').style.display = 'block';
+      document.getElementById('outerD').value = 35;
+      document.getElementById('height').value = 25;
+      document.getElementById('taper').value = 85;
+      document.getElementById('textureMode').value = 'scallops';
+      document.getElementById('texDepth').value = 30;
+      document.getElementById('texScale').value = 30;
+      document.getElementById('texCount').value = 6;
+      document.getElementById('boreD').value = 21.0;
+      document.getElementById('slotH').value = 16;
+      document.getElementById('clearance').value = 3;
+      document.getElementById('setScrew').value = 'm3';
+    }
+    
+    updateAllDisplays();
+    announceChange(`Preset ${preset} loaded. Parameters updated.`);
+    triggerHapticFeedback();
+    playToneForParam('outerD', +document.getElementById('outerD').value);
+  });
+
   updateAllDisplays();
   initDragAndDrop();
+
+  // Load configuration from URL if present
+  const urlParams = new URLSearchParams(window.location.search);
+  const cfg = urlParams.get('cfg');
+  if (cfg) {
+    const decoded = decodeParams(cfg);
+    if (decoded) {
+      applyParamsToSliders(decoded);
+      if (decoded.mountMode) {
+        setMountMode(decoded.mountMode);
+      }
+      
+      // Auto generate and add this shared knob config
+      decoded.id = 'K' + Date.now().toString(16).slice(-4).toUpperCase() + '-SHARED';
+      const sd = SHAPES.find(x => x.id === decoded.shape);
+      decoded.sides = sd?.sides ?? 6;
+      decoded.star = sd?.star ?? false;
+      decoded.wave = sd?.wave ?? false;
+      
+      document.getElementById('countBadge').textContent = "GENERATING 3D...";
+      try {
+        let model = await generateKnobManifold(decoded);
+        decoded.mesh = manifoldToThreeMesh(model, 0xc8ff00, decoded);
+        decoded.mesh.rotation.x = -Math.PI / 2;
+        model.delete();
+        
+        knobs.push(decoded);
+        selectedId = decoded.id;
+        renderGrid();
+        openViewer(decoded.id);
+      } catch (e) {
+        console.error("Failed to load query params model:", e);
+      }
+    }
+  }
 }
 
 function selectShape(id) {
   activeShape = id;
   document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('sbtn_' + id)?.classList.add('active');
+  const shp = SHAPES.find(x => x.id === id);
+  if (shp) {
+    announceChange(`Shape profile selected: ${shp.label}`);
+    triggerHapticFeedback();
+    playToneForParam('outerD', 30);
+  }
 }
 
 function updateParamDisplay(r) {
@@ -1064,8 +1394,33 @@ function updateParamDisplay(r) {
     slotH: v => v + '',
     clearance: v => (v/10).toFixed(1),
   };
+  const friendlyNames = {
+    outerD: 'Outer Diameter',
+    height: 'Height',
+    taper: 'Taper Ratio',
+    texDepth: 'Texture Depth',
+    texScale: 'Texture Scale',
+    texCount: 'Texture Count',
+    boreD: 'Inner Bore Diameter',
+    slotH: 'Slot Depth',
+    clearance: 'Clearance'
+  };
   const fn = map[r.id];
-  if (fn) document.getElementById('v_' + r.id).textContent = fn(r.value);
+  if (fn) {
+    const el = document.getElementById('v_' + r.id);
+    if (el) {
+      const displayVal = fn(r.value);
+      if (el.tagName === 'INPUT') {
+        el.value = displayVal;
+      } else {
+        el.textContent = displayVal;
+      }
+      
+      const friendlyName = friendlyNames[r.id] || r.id;
+      const unit = r.id === 'taper' ? '' : (r.id === 'texCount' ? ' count' : ' millimeters');
+      announceChange(`${friendlyName} is now ${displayVal}${unit}`);
+    }
+  }
 }
 
 function updateAllDisplays() {
@@ -1091,7 +1446,8 @@ function getParams() {
     slotH: +document.getElementById('slotH').value,
     clearance: isSwap ? 0.0 : +document.getElementById('clearance').value / 10,
     setScrew: isSwap ? 'm3' : document.getElementById('setScrew').value,
-    mountMode: mountMode
+    mountMode: mountMode,
+    shaftType: document.getElementById('shaftType')?.value || 'dshaft'
   };
 }
 
@@ -1163,7 +1519,7 @@ async function runMutation() {
   for (let i = startIndex; i < knobs.length; i++) {
      let k = knobs[i];
      let model = await generateKnobManifold(k);
-     k.mesh = manifoldToThreeMesh(model, 0xc8ff00);
+     k.mesh = manifoldToThreeMesh(model, 0xc8ff00, k);
      k.mesh.rotation.x = -Math.PI / 2; // Face up
      model.delete();
   }
@@ -1193,7 +1549,7 @@ async function addSingle() {
   document.getElementById('countBadge').textContent = "GENERATING 3D...";
   
   let model = await generateKnobManifold(p);
-  p.mesh = manifoldToThreeMesh(model, 0xc8ff00);
+  p.mesh = manifoldToThreeMesh(model, 0xc8ff00, p);
   p.mesh.rotation.x = -Math.PI / 2;
   model.delete();
 
@@ -1470,7 +1826,8 @@ function encodeParams(k) {
     sh: k.slotH,
     c: k.clearance,
     ss: k.setScrew,
-    mm: k.mountMode || (k.boreD > 10 ? 'slide' : 'swap')
+    mm: k.mountMode || (k.boreD > 10 ? 'slide' : 'swap'),
+    st: k.shaftType || 'dshaft'
   };
   const json = JSON.stringify(data);
   let b64 = btoa(json);
@@ -1505,7 +1862,8 @@ function decodeParams(b64) {
       slotH: data.sh,
       clearance: data.c,
       setScrew: data.ss,
-      mountMode: data.mm
+      mountMode: data.mm,
+      shaftType: data.st || 'dshaft'
     };
   } catch (e) {
     console.error("Failed to decode parameters", e);
@@ -1546,6 +1904,9 @@ function applyParamsToSliders(p) {
   document.getElementById('slotH').value = p.slotH;
   document.getElementById('clearance').value = Math.round(p.clearance * 10);
   document.getElementById('setScrew').value = p.setScrew;
+  if (p.shaftType && document.getElementById('shaftType')) {
+    document.getElementById('shaftType').value = p.shaftType;
+  }
   
   // Update display values
   updateAllDisplays();
@@ -1600,7 +1961,7 @@ async function importStlFile(file) {
   
   try {
     let model = await generateKnobManifold(p);
-    p.mesh = manifoldToThreeMesh(model, 0xc8ff00);
+    p.mesh = manifoldToThreeMesh(model, 0xc8ff00, p);
     p.mesh.rotation.x = -Math.PI / 2;
     model.delete();
     
@@ -1813,7 +2174,7 @@ function animateThree(time) {
   }
 }
 
-function manifoldToThreeMesh(model, colorHex) {
+function manifoldToThreeMesh(model, colorHex, k) {
   if (!THREE) return null;
   const meshData = model.getMesh();
   const geometry = new THREE.BufferGeometry();
@@ -1821,16 +2182,95 @@ function manifoldToThreeMesh(model, colorHex) {
   geometry.setIndex(new THREE.Uint32BufferAttribute(meshData.triVerts, 1));
   geometry.computeVertexNormals();
   
-  const material = new THREE.MeshStandardMaterial({
-      color: colorHex,
-      roughness: 0.2,
-      metalness: 0.8,
-      side: THREE.DoubleSide
-  });
+  let material;
+  if (renderMode === 'rendered') {
+    material = new THREE.MeshStandardMaterial({
+        color: colorHex,
+        roughness: 0.2,
+        metalness: 0.8,
+        side: THREE.DoubleSide
+    });
+  } else {
+    material = new THREE.MeshBasicMaterial({
+        color: 0x07294d,
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide
+    });
+  }
   
   const mesh = new THREE.Mesh(geometry, material);
+  
+  if (renderMode === 'blueprint') {
+    const edges = new THREE.EdgesGeometry(geometry);
+    const lineColor = (k && k.mountMode === 'slide') ? 0xffaa00 : 0x00f2ff;
+    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: lineColor, linewidth: 2 }));
+    mesh.add(line);
+  }
+  
   return mesh;
 }
+
+window.setRenderMode = function(mode) {
+  renderMode = mode;
+  
+  // Update button active classes
+  const btnRender = document.getElementById('btn-render-mode');
+  const btnBlueprint = document.getElementById('btn-blueprint-mode');
+  if (btnRender && btnBlueprint) {
+    if (mode === 'rendered') {
+      btnRender.classList.add('active');
+      btnBlueprint.classList.remove('active');
+    } else {
+      btnBlueprint.classList.add('active');
+      btnRender.classList.remove('active');
+    }
+  }
+  
+  // Update all existing knobs' meshes in-place
+  knobs.forEach(k => {
+    if (!k.mesh) return;
+    
+    // Remove existing wireframe lines
+    const toRemove = [];
+    k.mesh.children.forEach(child => {
+      if (child instanceof THREE.LineSegments) {
+        toRemove.push(child);
+      }
+    });
+    toRemove.forEach(child => {
+      k.mesh.remove(child);
+      child.geometry.dispose();
+      child.material.dispose();
+    });
+    
+    // Dispose old material
+    k.mesh.material.dispose();
+    
+    // Assign new material
+    if (renderMode === 'rendered') {
+      k.mesh.material = new THREE.MeshStandardMaterial({
+          color: 0xc8ff00,
+          roughness: 0.2,
+          metalness: 0.8,
+          side: THREE.DoubleSide
+      });
+    } else {
+      k.mesh.material = new THREE.MeshBasicMaterial({
+          color: 0x07294d,
+          transparent: true,
+          opacity: 0.6,
+          side: THREE.DoubleSide
+      });
+      
+      // Add blueprint edges outline
+      const edges = new THREE.EdgesGeometry(k.mesh.geometry);
+      const lineColor = (k.mountMode === 'slide') ? 0xffaa00 : 0x00f2ff;
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: lineColor, linewidth: 2 }));
+      k.mesh.add(line);
+    }
+  });
+};
 
 let Manifold = null;
 async function getManifold() {
@@ -1852,12 +2292,49 @@ async function generateKnobManifold(k) {
   const texDepth = k.texDepth || 3.0;
   const texScale = k.texScale || 3.0;
   const texCount = k.texCount || 8;
+  const shaftType = k.shaftType || 'dshaft';
   
   let body = M.cylinder(discH, rimR, taperR, k.sides, true);
   
   let boreR = (k.boreD / 2) + k.clearance;
-  let bore = M.cylinder(k.slotH + 0.2, boreR, boreR, 64, true)
-              .translate([0, 0, -discH/2 + (k.slotH+0.2)/2 - 0.1]);
+  let bore = M.cylinder(k.slotH + 0.2, boreR, boreR, 64, true);
+  
+  if (shaftType === 'dshaft') {
+    const flatDepth = 1.0;
+    const flatBoxW = boreR * 2.5;
+    const flatBoxH = boreR * 2.5;
+    const flatBoxD = k.slotH + 0.5;
+    let flatBox = M.cube([flatBoxW, flatBoxH, flatBoxD], true)
+                   .translate([0, boreR - flatDepth + flatBoxH/2, 0]);
+    let newBore = bore.subtract(flatBox);
+    bore.delete(); flatBox.delete();
+    bore = newBore;
+  } else if (shaftType === 'knurled') {
+    const numSplines = 18;
+    const splineW = 0.5;
+    const splineH = 0.4;
+    const splineLength = k.slotH + 0.4;
+    let splineUnion = null;
+    for (let i = 0; i < numSplines; i++) {
+      const angle = i * 360 / numSplines;
+      let tooth = M.cube([splineW, splineH, splineLength], true)
+                   .translate([0, boreR - splineH/3, 0])
+                   .rotate([0, 0, angle]);
+      if (!splineUnion) splineUnion = tooth;
+      else {
+        let temp = splineUnion.add(tooth);
+        splineUnion.delete(); tooth.delete();
+        splineUnion = temp;
+      }
+    }
+    if (splineUnion) {
+      let newBore = bore.add(splineUnion);
+      bore.delete(); splineUnion.delete();
+      bore = newBore;
+    }
+  }
+  
+  bore = bore.translate([0, 0, -discH/2 + (k.slotH+0.2)/2 - 0.1]);
 
   let finalShape = body.subtract(bore);
   body.delete(); bore.delete();
@@ -2051,6 +2528,171 @@ async function exportBatchSTL() {
     btn.textContent = "↓ STL (ALL)";
   }
 }
+
+// ─── LASER SVG EXPORT & SHARING UTILITIES ────────────────────────
+window.openLaserModal = function() {
+  document.getElementById('laserModal').style.display = 'flex';
+};
+
+window.closeLaserModal = function() {
+  document.getElementById('laserModal').style.display = 'none';
+};
+
+// Sync select option to the manual thickness input box
+document.getElementById('laserMaterialThick')?.addEventListener('change', (e) => {
+  document.getElementById('v_laserMaterialThick').value = e.target.value;
+});
+
+window.generateLaserSVG = function() {
+  const k = knobs.find(x => x.id === selectedId);
+  if (!k) return;
+  
+  const t = parseFloat(document.getElementById('v_laserMaterialThick').value) || 3.0;
+  const k_f = parseFloat(document.getElementById('laserKerf').value) || 0.1;
+  
+  const H = k.height;
+  const N = Math.ceil(H / t);
+  
+  const R_outer = k.outerD / 2;
+  const R_top = R_outer * k.taper;
+  const R_bore = k.boreD / 2;
+  
+  const R_slot = (R_bore + R_top) / 2;
+  const slotSize = t - k_f;
+  
+  const rodW = t + k_f;
+  const rodL = H + k_f;
+  
+  const spacing = k.outerD + 15;
+  const margin = 20;
+  const cols = Math.min(6, N + 2);
+  const rows = Math.ceil((N + 2) / cols);
+  
+  const svgW = cols * spacing + margin * 2;
+  const svgH = rows * spacing + margin * 2;
+  
+  let svg = `<?xml version="1.0" encoding="utf-8"?>\n`;
+  svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}mm" height="${svgH}mm" viewBox="0 0 ${svgW} ${svgH}">\n`;
+  svg += `  <style>\n    .cut { fill: none; stroke: #ff0000; stroke-width: 0.1; }\n    .engrave { fill: none; stroke: #0000ff; stroke-width: 0.1; }\n    .text { font-family: monospace; font-size: 3px; fill: #0000ff; }\n  </style>\n`;
+  svg += `  <!-- Created by ACCESS KNOB Laser Exporter -->\n`;
+  
+  for (let r = 0; r < 2; r++) {
+    const cx = margin + r * 15 + rodW/2;
+    const cy = margin + rodL/2;
+    svg += `  <rect class="cut" x="${cx - rodW/2}" y="${cy - rodL/2}" width="${rodW}" height="${rodL}" />\n`;
+    svg += `  <text class="text" x="${cx - 5}" y="${cy + rodL/2 + 4}">ROD ${r+1}</text>\n`;
+  }
+  
+  for (let i = 0; i < N; i++) {
+    const idx = i + 2;
+    const col = idx % cols;
+    const row = Math.floor(idx / cols);
+    const cx = margin + col * spacing + spacing/2;
+    const cy = margin + row * spacing + spacing/2;
+    
+    const Z_i = (i + 0.5) * t;
+    const f = Math.min(1.0, Math.max(0.0, Z_i / H));
+    const R_i = R_outer - (R_outer - R_top) * f;
+    
+    svg += `  <!-- Layer ${i+1} (Z = ${Z_i.toFixed(2)}mm, R = ${R_i.toFixed(2)}mm) -->\n`;
+    svg += `  <g id="layer-${i+1}">\n`;
+    
+    if (k.shape === 'cyl') {
+      svg += `    <circle class="cut" cx="${cx}" cy="${cy}" r="${R_i}" />\n`;
+    } else if (k.wave) {
+      const pts = [];
+      for (let a = 0; a < 360; a += 10) {
+        const rad = a * Math.PI / 180;
+        const rr = R_i - 2 + Math.sin(a * 0.15) * 3;
+        pts.push(`${(cx + rr * Math.cos(rad)).toFixed(3)},${(cy + rr * Math.sin(rad)).toFixed(3)}`);
+      }
+      svg += `    <polygon class="cut" points="${pts.join(' ')}" />\n`;
+    } else {
+      const sides = k.sides;
+      const star = k.star;
+      const pts = [];
+      const numPts = star ? sides * 2 : sides;
+      for (let pIdx = 0; pIdx < numPts; pIdx++) {
+        const angle = pIdx * 2 * Math.PI / numPts - Math.PI / 2;
+        const rr = (star && pIdx % 2 === 1) ? R_i * 0.5 : R_i;
+        pts.push(`${(cx + rr * Math.cos(angle)).toFixed(3)},${(cy + rr * Math.sin(angle)).toFixed(3)}`);
+      }
+      svg += `    <polygon class="cut" points="${pts.join(' ')}" />\n`;
+    }
+    
+    if (k.texMode === 'flutes') {
+      const fluteR = k.texScale / 2;
+      const fluteDist = R_i - k.texDepth + fluteR;
+      for (let fIdx = 0; fIdx < k.texCount; fIdx++) {
+        const angle = fIdx * 2 * Math.PI / k.texCount;
+        const fcx = cx + fluteDist * Math.cos(angle);
+        const fcy = cy + fluteDist * Math.sin(angle);
+        svg += `    <circle class="cut" cx="${fcx.toFixed(3)}" cy="${fcy.toFixed(3)}" r="${fluteR.toFixed(3)}" />\n`;
+      }
+    }
+    
+    const d_bore = k.boreD;
+    const r_bore = d_bore / 2;
+    if (k.shaftType === 'dshaft') {
+      const flatDepth = 1.0;
+      const yFlat = r_bore - flatDepth;
+      const angleFlat = Math.acos(yFlat / r_bore);
+      const x1 = -r_bore * Math.sin(angleFlat);
+      const x2 = r_bore * Math.sin(angleFlat);
+      
+      const p1x = (cx + x1).toFixed(3);
+      const p1y = (cy - yFlat).toFixed(3);
+      const p2x = (cx + x2).toFixed(3);
+      const p2y = (cy - yFlat).toFixed(3);
+      
+      svg += `    <path class="cut" d="M ${p1x} ${p1y} L ${p2x} ${p2y} A ${r_bore.toFixed(3)} ${r_bore.toFixed(3)} 0 1 1 ${p1x} ${p1y}" />\n`;
+    } else if (k.shaftType === 'knurled') {
+      const numSplines = 18;
+      const splinesPts = [];
+      for (let sIdx = 0; sIdx < numSplines * 2; sIdx++) {
+        const angle = sIdx * Math.PI / numSplines;
+        const rr = (sIdx % 2 === 1) ? r_bore + 0.3 : r_bore;
+        splinesPts.push(`${(cx + rr * Math.cos(angle)).toFixed(3)},${(cy + rr * Math.sin(angle)).toFixed(3)}`);
+      }
+      svg += `    <polygon class="cut" points="${splinesPts.join(' ')}" />\n`;
+    } else {
+      svg += `    <circle class="cut" cx="${cx}" cy="${cy}" r="${r_bore}" />\n`;
+    }
+    
+    svg += `    <rect class="cut" x="${(cx - R_slot - slotSize/2).toFixed(3)}" y="${(cy - slotSize/2).toFixed(3)}" width="${slotSize}" height="${slotSize}" />\n`;
+    svg += `    <rect class="cut" x="${(cx + R_slot - slotSize/2).toFixed(3)}" y="${(cy - slotSize/2).toFixed(3)}" width="${slotSize}" height="${slotSize}" />\n`;
+    svg += `    <text class="text" x="${cx - 8}" y="${cy - R_slot/2}">L${i+1}/${N}</text>\n`;
+    svg += `  </g>\n`;
+  }
+  
+  svg += `</svg>`;
+  
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  dl(blob, `${k.id}_laser_layers_${t}mm.svg`);
+  closeLaserModal();
+};
+
+window.copyShareLink = function() {
+  const k = knobs.find(x => x.id === selectedId);
+  if (!k) return;
+  const b64 = encodeParams(k);
+  const shareUrl = window.location.origin + window.location.pathname + '?cfg=' + b64;
+  
+  navigator.clipboard.writeText(shareUrl).then(() => {
+    const btn = document.getElementById('copyShareBtn');
+    const oldText = btn.textContent;
+    btn.textContent = "✓ COPIED!";
+    btn.style.color = "var(--accent)";
+    btn.style.borderColor = "var(--accent)";
+    setTimeout(() => {
+      btn.textContent = oldText;
+      btn.style.color = "";
+      btn.style.borderColor = "";
+    }, 2000);
+  }).catch(err => {
+    alert("Failed to copy link: " + err);
+  });
+};
 
 window.stepInput = function(id, dir) {
   const input = document.getElementById(id);
