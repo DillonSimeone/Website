@@ -52,7 +52,9 @@ const themes = {
         glowColor: 'rgba(148, 163, 184, 0.05)',
         speedFactor: 0.5,
         count: 100,
-        behavior: 'random'
+        behavior: 'random',
+        glowRadius: 400,
+        connections: { maxDistance: 120 }
     },
     sundered: {
         particleColor: 'rgba(201, 168, 76, 0.3)',
@@ -61,6 +63,8 @@ const themes = {
         speedFactor: 0.3,
         count: 150,
         behavior: 'vortex',
+        glowRadius: 300,
+        connections: { maxDistance: 120 },
         vortex: {
             minDist: 50,
             orbitAngleStep: 0.015,
@@ -76,7 +80,9 @@ const themes = {
         glowColor: 'rgba(57, 255, 20, 0.2)',
         speedFactor: 1.2,
         count: 80,
-        behavior: 'rain'
+        behavior: 'rain',
+        glowRadius: 400,
+        connections: false
     },
     deaf: {
         particleColor: 'rgba(20, 184, 166, 0.35)',
@@ -84,7 +90,9 @@ const themes = {
         glowColor: 'rgba(245, 158, 11, 0.12)',
         speedFactor: 0.7,
         count: 120,
-        behavior: 'waves'
+        behavior: 'waves',
+        glowRadius: 400,
+        connections: { maxDistance: 120 }
     },
     naruto: {
         particleColor: 'rgba(239, 68, 68, 0.35)',
@@ -93,6 +101,8 @@ const themes = {
         speedFactor: 0.8,
         count: 130,
         behavior: 'vortex',
+        glowRadius: 400,
+        connections: { maxDistance: 120 },
         vortex: {
             minDist: 30,
             orbitAngleStep: 0.025,
@@ -108,7 +118,9 @@ const themes = {
         glowColor: 'rgba(60, 240, 144, 0.18)',
         speedFactor: 1.0,
         count: 140,
-        behavior: 'mako'
+        behavior: 'mako',
+        glowRadius: 400,
+        connections: { maxDistance: 120 }
     }
 };
 
@@ -307,7 +319,10 @@ function lerpColor(c1, c2, factor) {
 }
 
 function drawConnections(currentThemeParams) {
-    const maxDistance = activeTheme === 'optimizer' ? 80 : 120;
+    const connConfig = themes[activeTheme].connections;
+    if (!connConfig) return;
+
+    const maxDistance = connConfig.maxDistance || 120;
     
     for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
@@ -322,15 +337,7 @@ function drawConnections(currentThemeParams) {
                 const alpha = (1 - (dist / maxDistance)) * 0.85;
                 ctx.beginPath();
                 ctx.moveTo(p1.x, p1.y);
-                
-                // Strict grid lines in optimizer mode
-                if (activeTheme === 'optimizer') {
-                    if (Math.abs(dx) < 20 || Math.abs(dy) < 20) {
-                        ctx.lineTo(p2.x, p2.y);
-                    }
-                } else {
-                    ctx.lineTo(p2.x, p2.y);
-                }
+                ctx.lineTo(p2.x, p2.y);
                 
                 // Parse alpha and merge
                 let c = currentThemeParams.lineColor;
@@ -378,7 +385,11 @@ function animate() {
     if (activeTheme !== 'neutral' || targetTheme !== 'neutral') {
         const cx = mouse.active ? mouse.x : width / 2;
         const cy = mouse.active ? mouse.y : height / 2;
-        const radius = activeTheme === 'sundered' ? 300 : 400;
+        
+        // Lerp glow radius smoothly
+        const sourceRadius = themes[activeTheme].glowRadius || 400;
+        const targetRadius = themes[targetTheme].glowRadius || 400;
+        const radius = sourceRadius + (targetRadius - sourceRadius) * transitionProgress;
         
         const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, radius);
         grad.addColorStop(0, currentParams.glowColor);
@@ -397,7 +408,7 @@ function animate() {
         p.draw(currentParams);
     });
 
-    if (activeTheme !== 'optimizer') {
+    if (themes[activeTheme].connections) {
         drawConnections(currentParams);
     }
 
