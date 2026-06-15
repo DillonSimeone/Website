@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News Gazette Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Magnifying glass lens -->
+  <div class="magnifier-lens" id="mag-lens"></div>
+
+  <div class="newspaper-page" id="news-page">
+    <!-- Newspaper Header -->
+    <header class="newspaper-header">
+      <div class="header-meta">VOL. LXXVI // NO. 142 // NEW YORK, 1976</div>
+      <h1 class="newspaper-logo">The Daily Gazette</h1>
+      <div class="header-divider"></div>
+    </header>
+
+    <main class="newspaper-content">
+      
+      <!-- Lead story (Full width) -->
+      <section class="lead-story">
+        <h2 class="headline">AMAZING STYLE COLLECTION EXPANDS TO 51 AESTHETICS!</h2>
+        <div class="lead-meta">SPECIAL REPORT // BY AGENT ANTIGRAVITY</div>
+        
+        <div class="story-columns">
+          <p>Today marks a major architectural milestone as the experimental styling collection grows to accommodate a whopping fifty-one individual and unique aesthetics. What began as a simple investigation into glassmorphism alternatives has spiraled into an ultimate catalog of visual diversity.</p>
+          <p>Designers worldwide are celebrating the return of raw, tactile, and expressive layouts. From woodblocks and stained glass window projections to 3D concrete Monolith blocks, the catalog serves as an inspiration hub for modern web design.</p>
+        </div>
+      </section>
+
+      <!-- Side columns -->
+      <div class="side-stories-grid">
+        
+        <section class="side-story">
+          <h3>THE HALFTONE LOOK</h3>
+          <div class="halftone-image-wrapper">
+            <div class="halftone-dot-matrix"></div>
+            <div class="halftone-content-img"></div>
+          </div>
+          <p class="caption">Fig. 1: Simulated halftone dot matrix print.</p>
+        </section>
+
+        <section class="side-story">
+          <h3>INTERACTIVE LENS</h3>
+          <p>This page features a realistic print magnifying glass. Hover your cursor over the newsprint columns to inspect the typography and dot matrix halftone textures up close!</p>
+          <a href="../index.html" class="hub-link">RETURN TO CENTRAL HUB</a>
+        </section>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

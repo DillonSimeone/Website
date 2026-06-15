@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neobrutalist Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Syne:wght@800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="neo-container">
+    <header class="neo-header">
+      <a href="../index.html" class="back-btn">← Back to Hub</a>
+      <h1 class="neo-title">NEOBRUTALISM</h1>
+      <p class="neo-subtitle">Raw, high-contrast, unapologetic design.</p>
+    </header>
+
+    <main class="neo-grid">
+      <section class="neo-card brand-card">
+        <h2>Visual Principles</h2>
+        <ul>
+          <li>High-contrast primary/neon fills</li>
+          <li>Thick black borders (4px+)</li>
+          <li>Hard, unblurred black drop shadows</li>
+          <li>Asymmetric spacing and layouts</li>
+        </ul>
+      </section>
+
+      <section class="neo-card interactive-card">
+        <h2>Interactive Elements</h2>
+        <p>Hover and click the buttons to see the rigid, mechanical translation effects.</p>
+        <div class="button-group">
+          <button class="neo-btn neo-btn-cyan" id="btn-color">Change Theme Color</button>
+          <button class="neo-btn neo-btn-yellow" id="btn-alert">Trigger Alert</button>
+        </div>
+      </section>
+
+      <section class="neo-card feedback-card">
+        <h2>Live Component Playground</h2>
+        <p>A neat layout grid showcasing inputs, checkboxes, and state management.</p>
+        <div class="input-wrapper">
+          <input type="text" class="neo-input" placeholder="Type something cool..." id="neo-text-input">
+          <button class="neo-btn neo-btn-pink" id="btn-send">Send</button>
+        </div>
+        <p class="live-preview" id="live-output">Output preview will appear here...</p>
+      </section>
+
+      <section class="neo-card stat-card">
+        <div class="stat-num">99%</div>
+        <div class="stat-label">Tactile Satisfaction</div>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

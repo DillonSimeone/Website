@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neo-Noir Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Gritty Newspaper Halftone Grid background -->
+  <div class="halftone-screen"></div>
+
+  <div class="noir-container">
+    <header class="noir-header">
+      <a href="../index.html" class="nav-back">/// RETURN_TO_HUB</a>
+      <h1 class="noir-title">NEO-NOIR</h1>
+      <p class="noir-subtitle">CASE FILE #9082. TYPEWRITING AND HALFTONE CONTRAST.</p>
+    </header>
+
+    <main class="noir-grid">
+      <!-- Card 1: Vibe -->
+      <section class="noir-card info-card">
+        <h2>THE CASE</h2>
+        <p>A style forged in deep shadows and gritty high contrast. The rain-slicked streets of mid-century crime novels are brought to life through monospace typewriter fonts, newspaper print textures, and stark lighting ratios.</p>
+      </section>
+
+      <!-- Card 2: Interactive Typewriter -->
+      <section class="noir-card typewriter-card">
+        <h2>TYPEWRITER DRIVER</h2>
+        <p>Feed a memo below to stamp it onto the file sheet.</p>
+        
+        <div class="input-wrapper">
+          <input type="text" class="noir-input" id="typewriter-input" placeholder="Enter case memo..." autocomplete="off">
+          <button class="noir-btn" id="btn-print">PRINT</button>
+        </div>
+
+        <div class="typewriter-paper">
+          <div class="paper-clip"></div>
+          <div class="printed-text" id="paper-screen">MEMO: awaiting input...</div>
+        </div>
+      </section>
+
+      <!-- Card 3: Crime details -->
+      <section class="noir-card checklist-card">
+        <h2>EVIDENCE REGISTER</h2>
+        <ul class="noir-list">
+          <li>- Stark contrast values</li>
+          <li>- Special Elite typewriter type</li>
+          <li>- Repeating dot halftone overlay</li>
+          <li>- Deep vignette shadows</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

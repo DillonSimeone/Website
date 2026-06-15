@@ -1,0 +1,237 @@
+:root {
+  --parchment-dark: #eee9dc;
+  --sheet-bg: #faf7f0;
+  --leaf-green: #5c6b5e;
+  --ink-color: #3e3a34;
+  
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-script: 'Mr De Haviland', cursive;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--parchment-dark);
+  background-image: radial-gradient(rgba(120, 140, 120, 0.08) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+  color: var(--ink-color);
+  font-family: var(--font-serif);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.herbarium-container {
+  width: 92%;
+  max-width: 950px;
+  padding: 40px 0;
+}
+
+.herbarium-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.nav-back {
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  border-bottom: 1px solid var(--ink-color);
+}
+
+.herbarium-title {
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 7vw, 5rem);
+  font-weight: 400;
+  margin: 20px 0 0 0;
+  font-style: italic;
+}
+
+.herbarium-subtitle {
+  font-size: 0.8rem;
+  letter-spacing: 2.5px;
+  opacity: 0.8;
+  margin-top: 10px;
+}
+
+/* Specimen Grid */
+.herbarium-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+  gap: 35px;
+}
+
+/* Specimen Sheet */
+.specimen-sheet {
+  background: var(--sheet-bg);
+  border: 1px solid #dcd7ca;
+  padding: 25px;
+  box-shadow: 2px 10px 25px rgba(62, 58, 52, 0.08);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 380px;
+}
+
+.specimen-sheet:hover {
+  transform: translateY(-4px);
+  box-shadow: 4px 15px 35px rgba(62, 58, 52, 0.12);
+}
+
+/* Specimen plant graphics */
+.specimen-vector {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  min-height: 220px;
+}
+
+.leaf-branch, .fern-frond, .oak-cluster {
+  background-color: var(--leaf-green);
+  opacity: 0.65;
+}
+
+.leaf-branch {
+  width: 4px;
+  height: 160px;
+  transform: rotate(-10deg);
+  border-radius: 2px;
+  position: relative;
+}
+.leaf-branch::before, .leaf-branch::after {
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 45px;
+  background-color: var(--leaf-green);
+  border-radius: 50% 0 50% 0;
+}
+.leaf-branch::before { top: 30px; left: -22px; transform: rotate(-45deg); }
+.leaf-branch::after { top: 70px; right: -22px; transform: rotate(45deg); }
+
+.fern-frond {
+  width: 4px;
+  height: 170px;
+  position: relative;
+  transform: rotate(5deg);
+}
+.fern-frond::before, .fern-frond::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 25px;
+  background-color: var(--leaf-green);
+  border-radius: 50% 50% 0 0;
+}
+.fern-frond::before { top: 20px; left: -14px; transform: rotate(-60deg); }
+.fern-frond::after { top: 50px; right: -14px; transform: rotate(60deg); }
+
+.oak-cluster {
+  width: 8px;
+  height: 140px;
+  position: relative;
+}
+.oak-cluster::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: -20px;
+  width: 50px;
+  height: 70px;
+  background-color: var(--leaf-green);
+  border-radius: 30% 70% 30% 70% / 50% 60% 40% 50%;
+  transform: rotate(-30deg);
+}
+
+/* Botanical labels */
+.botanical-label {
+  border-top: 1px dashed #d0cabc;
+  padding-top: 15px;
+  margin-top: 15px;
+}
+
+.handwritten-title {
+  font-family: var(--font-script);
+  font-size: 2.8rem;
+  line-height: 0.9;
+  color: #5c554a;
+}
+
+.sheet-number {
+  font-size: 0.75rem;
+  color: #9c9482;
+  letter-spacing: 1px;
+  margin-top: 5px;
+}
+
+/* Modal spec block */
+.botanical-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.botanical-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background: var(--sheet-bg);
+  border: 1px solid #c2bfae;
+  padding: 40px;
+  max-width: 450px;
+  width: 85%;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+  position: relative;
+}
+
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.modal-content h2 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  margin-top: 0;
+  font-style: italic;
+  border-bottom: 1px solid var(--ink-color);
+  padding-bottom: 10px;
+}
+
+.specimen-table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+}
+
+.specimen-table td {
+  padding: 8px 0;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+.specimen-table tr td:first-child {
+  font-weight: bold;
+  color: #888;
+}

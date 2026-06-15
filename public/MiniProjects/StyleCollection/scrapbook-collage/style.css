@@ -1,0 +1,206 @@
+:root {
+  --wood-bg: #d7c5ae;
+  --paper-cream: #faf7f0;
+  --ink-color: #2b2b2b;
+  --tape-color: rgba(253, 239, 175, 0.65);
+  
+  --font-hand: 'Architects Daughter', cursive;
+  --font-title: 'Shadows Into Light', cursive;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--wood-bg);
+  background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+  font-family: var(--font-hand);
+  color: var(--ink-color);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.scrapbook-canvas {
+  width: 95%;
+  max-width: 900px;
+  padding: 40px 20px;
+  position: relative;
+  min-height: 80vh;
+}
+
+/* Header Polaroid card */
+.scrapbook-header {
+  margin-bottom: 50px;
+  text-align: center;
+  display: inline-block;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1deg);
+}
+
+.hub-link {
+  color: #777;
+  text-decoration: none;
+  font-size: 0.95rem;
+  border: 1px dashed #777;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 15px;
+}
+.hub-link:hover {
+  background: #eee;
+  color: #000;
+}
+
+.scrapbook-title {
+  font-family: var(--font-title);
+  font-size: 3.5rem;
+  margin: 0;
+}
+
+.scrapbook-subtitle {
+  font-size: 1.1rem;
+  margin: 5px 0 0 0;
+}
+
+/* Main Grid */
+.scrapbook-main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 40px;
+  align-items: start;
+}
+
+/* Card Styling */
+.scrapbook-card {
+  position: relative;
+  box-shadow: 2px 8px 15px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s, box-shadow 0.2s;
+  transform: rotate(var(--rot, 0deg));
+}
+
+.scrapbook-card:hover {
+  transform: scale(1.02) rotate(var(--rot, 0deg)) !important;
+  box-shadow: 4px 15px 25px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+/* Polaroid Photo Card */
+.polaroid {
+  background: #fff;
+  padding: 15px 15px 35px 15px;
+  border: 1px solid #ddd;
+}
+
+.polaroid-photo {
+  width: 100%;
+  padding-bottom: 95%; /* Make it square */
+  background: #e2dbcd;
+  position: relative;
+  border: 1px solid #ccc;
+  overflow: hidden;
+}
+
+.photo-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(135deg, #a89f8d 0%, #857c6b 100%);
+  opacity: 0.75;
+}
+
+.polaroid-caption {
+  font-family: var(--font-title);
+  font-size: 1.6rem;
+  text-align: center;
+  margin-top: 15px;
+  color: #333;
+}
+
+/* Torn Paper Card */
+.torn-paper {
+  background: var(--paper-cream);
+  padding: 30px;
+  border-radius: 99% 1% 98% 2% / 4% 95% 5% 95%;
+  border-left: 2px solid #eae5d9;
+  border-right: 2px solid #eae5d9;
+}
+
+.torn-paper h2 {
+  font-family: var(--font-title);
+  font-size: 1.8rem;
+  margin-top: 0;
+}
+
+/* Notebook lined paper card */
+.lined-paper {
+  background: #fff;
+  background-image: linear-gradient(rgba(0, 168, 204, 0.15) 1px, transparent 1px);
+  background-size: 100% 24px;
+  padding: 35px 30px;
+  border-left: 10px solid #f99; /* Margin strip */
+}
+
+.lined-paper h2 {
+  font-family: var(--font-title);
+  font-size: 1.8rem;
+  margin-top: 0;
+}
+
+/* Tape styling */
+.tape {
+  position: absolute;
+  width: 85px;
+  height: 25px;
+  background-color: var(--tape-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transform: rotate(-12deg);
+  opacity: 0.85;
+}
+
+.tape-top-left {
+  top: -12px;
+  left: -20px;
+}
+
+/* Clickable Placement tape */
+.placed-tape {
+  position: absolute;
+  width: 90px;
+  height: 28px;
+  background-color: var(--tape-color);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  pointer-events: none;
+  z-index: 99;
+}
+
+/* Pin icon */
+.pin {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.8rem;
+  text-shadow: 1px 4px 6px rgba(0,0,0,0.3);
+}
+
+/* Buttons */
+.clear-btn {
+  font-family: var(--font-hand);
+  background: transparent;
+  border: 2px dashed var(--ink-color);
+  color: var(--ink-color);
+  padding: 5px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-top: 15px;
+}
+
+.clear-btn:hover {
+  background: rgba(0,0,0,0.05);
+}

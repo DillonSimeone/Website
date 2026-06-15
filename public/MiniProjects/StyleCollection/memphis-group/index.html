@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memphis Group Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="memphis-container">
+    <header class="memphis-header">
+      <a href="../index.html" class="nav-back">/// GO_HUB</a>
+      <h1 class="memphis-title">MEMPHIS</h1>
+      <p class="memphis-subtitle">80S POSTMODERN GEOMETRY & SQUIGGLES</p>
+    </header>
+
+    <main class="memphis-grid">
+      <!-- Info Card -->
+      <section class="memphis-card card-pink">
+        <div class="stripe-accent"></div>
+        <h2>THE REBELLION</h2>
+        <p>Founded in Milan in 1980, the Memphis Group rejected the rules of minimalist "good taste". They designed bold, playful, and colorful furniture featuring plastic laminates, squiggles, and asymmetric block geometries.</p>
+      </section>
+
+      <!-- Confetti Interactive -->
+      <section class="memphis-card card-yellow">
+        <h2>CONFETTI BOX</h2>
+        <p>Click the button to scatter random geometric Memphis shapes inside the playroom below.</p>
+        <div class="confetti-playroom" id="playroom">
+          <!-- Confetti stamps here -->
+        </div>
+        <button class="memphis-btn" id="btn-confetti">SCATTER SHAPES</button>
+      </section>
+
+      <!-- Graphic Card -->
+      <section class="memphis-card card-blue">
+        <div class="dot-accent"></div>
+        <h2>AESTHETIC DECK</h2>
+        <ul class="memphis-list">
+          <li>- Bright pastel gradients</li>
+          <li>- Asymmetrical shapes</li>
+          <li>- Thick black grid outlines</li>
+          <li>- Playful grid squiggles</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

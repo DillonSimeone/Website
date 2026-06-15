@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cathedral Stained Glass Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Dynamic blurred light reflection background cast -->
+  <div class="light-cast" id="light-cast"></div>
+
+  <div class="cathedral-container">
+    <header class="cathedral-header">
+      <a href="../index.html" class="nav-back">← HUB HUB</a>
+      <h1 class="cathedral-title">STAINED GLASS</h1>
+      <p class="cathedral-tagline">SACRED LIGHT & TRANSLUCENT MOSAICS</p>
+    </header>
+
+    <main class="cathedral-window">
+      <!-- Stained glass grid panes -->
+      <div class="pane pane-violet" data-color="rgba(148, 0, 211, 0.4)">
+        <div class="pane-content">
+          <h2>THE CRAFT</h2>
+          <p>Dating back centuries, stained glass uses iron leads to hold vibrant glass shapes together, filtering incoming sunlight into breathtaking colored projection fields.</p>
+        </div>
+      </div>
+      
+      <div class="pane pane-gold active" data-color="rgba(255, 183, 0, 0.45)">
+        <div class="pane-content">
+          <h2>LIGHT TRANSMISSION</h2>
+          <p>Hover over the glass panes! The script tracks which pane you are looking at and projects a colored ambient glow onto the background floor structure.</p>
+        </div>
+      </div>
+
+      <div class="pane pane-cyan" data-color="rgba(0, 206, 209, 0.4)">
+        <div class="pane-content">
+          <h2>SACRED GRID</h2>
+          <p>Deep mystical violet backdrops, neon refraction shadows, thick iron frame lines, and high-end serif typography pairs.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
