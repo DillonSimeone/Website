@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academic Minimalist Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="academic-container">
+    <header class="academic-header">
+      <div class="nav-row">
+        <a href="../index.html" class="nav-link">← Return to Index</a>
+        <span class="pub-number">DOC. #408-A</span>
+      </div>
+      <h1 class="academic-title">Academic Minimalist</h1>
+      <p class="author-info">Department of Design Mechanics, 2026</p>
+    </header>
+
+    <div class="layout-panel">
+      <button class="tufte-btn" id="btn-toggle-sidenotes">TOGGLE MARGIN NOTES</button>
+    </div>
+
+    <main class="academic-content" id="article-body">
+      <article class="text-body">
+        <h2>1. Design Principles</h2>
+        <p>This layout is inspired by the print style of Edward Tufte. It values high legibility, clean serif text, and side-channel notes rather than footnotes. Empty space is allocated to the margins to contain references and notes.<span class="sidenote" id="note-1">Sidenote 1: Edward Tufte is famous for data visualization and book layouts that prioritize clean reading grids.</span></p>
+        
+        <h2>2. Data Grids</h2>
+        <p>Tables use thin hairline borders and alignment principles. Vertical lines are excluded entirely, relying on whitespace to define column groups.</p>
+        
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Aesthetic Element</th>
+              <th>Value Profile</th>
+              <th>Ratio Index</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Whitespace Density</td>
+              <td>High (30%+)</td>
+              <td>1.45</td>
+            </tr>
+            <tr>
+              <td>Font Weight</td>
+              <td>Light (200-400)</td>
+              <td>0.82</td>
+            </tr>
+            <tr>
+              <td>Border Width</td>
+              <td>Hairline (0.5-1px)</td>
+              <td>1.00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>3. Margin Layouts</h2>
+        <p>Notes can reside inline on mobile displays, but transition into floating columns on wide viewports.<span class="sidenote" id="note-2">Sidenote 2: Dragging the viewport size below 768px triggers the media query to collapse margin notes inline.</span></p>
+      </article>
+    </main>
+
+    <footer class="academic-footer">
+      <span>© 2026 Style Collection</span>
+      <span>Published under Tufte-Minimal Protocol</span>
+    </footer>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

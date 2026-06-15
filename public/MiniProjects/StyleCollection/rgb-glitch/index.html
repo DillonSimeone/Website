@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RGB Glitch Art Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Screen static noise -->
+  <div class="glitch-noise"></div>
+
+  <div class="glitch-container">
+    <header class="glitch-header">
+      <a href="../index.html" class="nav-back">/// GO_BACK_TO_HUB</a>
+      <h1 class="glitch-title" id="glitch-main-title">RGB_GLITCH</h1>
+      <p class="glitch-subtitle">SYSTEM STATUS // STABILITY TEST OVERLOAD</p>
+    </header>
+
+    <main class="glitch-grid">
+      <!-- Info block -->
+      <section class="glitch-card info-card">
+        <div class="glitch-tag">DIAG_01</div>
+        <h2>THE ANOMALY</h2>
+        <p>A style representing digital breakdown, CRT display synchronization errors, and offset color channels. It relies on shifted text-shadow coordinates, visual static noise, and raw terminal monospace alignment grids.</p>
+      </section>
+
+      <!-- Interactive Glitch slider -->
+      <section class="glitch-card interactive-card" id="glitch-interactive-box">
+        <div class="glitch-tag">DISPLACE_X</div>
+        <h2>CHANNEL SHIFT</h2>
+        <p>Hover and move your cursor across the panel below to split the red/green/blue displacement offsets of the test signal.</p>
+        
+        <div class="glitch-test-panel">
+          <div class="glitch-signal-text" id="signal-text">SIGNAL_OK</div>
+        </div>
+      </section>
+
+      <!-- Specifications -->
+      <section class="glitch-card status-card">
+        <div class="glitch-tag">EST_INDEX</div>
+        <h2>SPECS</h2>
+        <p>ERROR RATE: 12.8%</p>
+        <p>SCAN RATE: 60Hz</p>
+        <div class="static-badge blinking">CRITICAL STABILITY</div>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

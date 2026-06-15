@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Windows 95 Desktop</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="desktop">
+    <!-- Desktop Icons -->
+    <div class="desktop-icons">
+      <div class="icon" id="icon-computer">
+        <div class="icon-img computer-img">💻</div>
+        <div class="icon-label">My Computer</div>
+      </div>
+      
+      <div class="icon" id="icon-readme">
+        <div class="icon-img notepad-img">📝</div>
+        <div class="icon-label">README.txt</div>
+      </div>
+      
+      <a href="../index.html" class="icon nav-icon">
+        <div class="icon-img hub-img">🏠</div>
+        <div class="icon-label">Exit to Hub</div>
+      </a>
+    </div>
+
+    <!-- Draggable Window (README) -->
+    <div class="win95-window" id="readme-window">
+      <div class="win-title-bar" id="window-header">
+        <span class="win-title">README.txt - Notepad</span>
+        <div class="win-controls">
+          <button class="ctrl-btn" id="btn-minimize">?</button>
+          <button class="ctrl-btn" id="btn-maximize">⬜</button>
+          <button class="ctrl-btn close-btn" id="btn-close">×</button>
+        </div>
+      </div>
+
+      <div class="win-menu-bar">
+        <span>File</span>
+        <span>Edit</span>
+        <span>Search</span>
+        <span>Help</span>
+      </div>
+
+      <div class="win-body">
+        <textarea readonly class="notepad-textarea">WELCOME TO WINDOWS 95 SHOWCASE.
+
+This layout replicates the classic Microsoft Windows 95 operating system GUI.
+
+KEY PRINCIPLES:
+- Solid teal desktop background (#008080)
+- Beveled outlines using inset/outset border borders
+- Classic system fonts and layout alignment rules
+
+Drag this window by its title bar to explore! Double-click the desktop icons to reveal them if closed.
+        </textarea>
+      </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="taskbar">
+      <button class="start-btn">
+        <span class="start-logo">❖</span> Start
+      </button>
+      <div class="task-divider"></div>
+      <div class="active-tasks">
+        <div class="task-item active" id="taskbar-item-readme">README.txt - Not...</div>
+      </div>
+      <div class="clock" id="taskbar-clock">04:30 PM</div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
