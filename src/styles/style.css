@@ -916,7 +916,8 @@ details[open] summary::after {
 
 #hobby img,
 #work .medias img,
-#embedded .medias img {
+#embedded .medias img,
+#shop .medias img {
     width: 100%;
     max-width: 800px;
     aspect-ratio: 4 / 3;
@@ -942,6 +943,7 @@ details[open] summary::after {
 body.dark-mode #hobby img,
 body.dark-mode #work .medias img,
 body.dark-mode #embedded .medias img,
+body.dark-mode #shop .medias img,
 body.dark-mode .gallery-thumbnail img {
     border-color: var(--border-color);
 }
@@ -978,7 +980,9 @@ body.dark-mode .gallery-thumbnail img {
     iframe,
     #hobby .medias .videos iframe,
     #hobby img,
-    #work .medias img {
+    #work .medias img,
+    #embedded .medias img,
+    #shop .medias img {
         width: 100% !important;
         max-width: 100% !important;
         border-radius: 10px;
@@ -1045,7 +1049,9 @@ body.dark-mode .gallery-thumbnail img {
     text-align: center;
 }
 
-#work .medias {
+#work .medias,
+#embedded .medias,
+#shop .medias {
     margin: auto;
     width: 80%;
     display: flex;
