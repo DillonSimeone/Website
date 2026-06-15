@@ -7,6 +7,7 @@ Manages the tray icon, tooltip, refresh timer, and popup lifecycle.
 import threading
 import time
 import logging
+import tkinter as tk
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -17,14 +18,6 @@ from token_parser import scan_conversations, compute_stats, get_daily_breakdown,
 from icon_gen import create_tray_icon, create_default_icon, format_token_count
 from popup_ui import TokenPopup
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-    ]
-)
 logger = logging.getLogger('token_tracker')
 
 
@@ -40,6 +33,10 @@ class TokenTrackerApp:
         self.tray_icon: pystray.Icon | None = None
         self._stop_event = threading.Event()
         self._refresh_thread: threading.Thread | None = None
+        
+        # Initialize hidden Tkinter root window on main thread
+        self.root = tk.Tk()
+        self.root.withdraw()
         
         # Determine path to persistence cache file
         self._cache_file = Path(conversations_dir).parent / "token_tracker_cache.json"
@@ -119,7 +116,7 @@ class TokenTrackerApp:
         # Create tray icon
         icon_image = self._get_current_icon()
         self.tray_icon = pystray.Icon(
-            name="token_tracker",
+            name="AntiGravityTokenTracker",
             icon=icon_image,
             title=self._get_tooltip_text(),
             menu=self._build_menu()
@@ -131,13 +128,24 @@ class TokenTrackerApp:
         )
         self._refresh_thread.start()
 
-        # Run the tray icon (blocking)
-        logger.info("Tray icon ready.")
-        self.tray_icon.run(setup=self._on_tray_setup)
+        # Start tray icon in background thread (Windows allows this for tray icon)
+        logger.info("Starting tray icon thread...")
+        self.tray_thread = threading.Thread(
+            target=self.tray_icon.run,
+            kwargs={"setup": self._on_tray_setup},
+            daemon=True
+        )
+        self.tray_thread.start()
+
+        # Run the Tkinter main loop on the main thread (blocking)
+        logger.info("Starting main Tkinter event loop...")
+        self.root.mainloop()
 
     def _on_tray_setup(self, icon):
         """Called when the tray icon is set up."""
         icon.visible = True
+        # Force redraw event instantly upon window shell registration
+        self._update_tray()
 
     def _build_menu(self) -> pystray.Menu:
         """Build the right-click context menu."""
@@ -222,6 +230,10 @@ class TokenTrackerApp:
 
     def _on_left_click(self, icon=None, item=None):
         """Handle left click — show the popup."""
+        # Schedule the popup creation on the main thread (Tkinter must run on main thread)
+        self.root.after(0, self._show_popup)
+
+    def _show_popup(self):
         # Close existing popup
         if self.popup:
             try:
@@ -256,28 +268,24 @@ class TokenTrackerApp:
             # Close and reopen popup with fresh data
             if self.popup:
                 self.popup.close()
-            self._on_left_click()
+            self._show_popup()
 
-        # Launch popup in a new thread (since it has its own event loop)
-        def show_popup():
-            try:
-                self.popup = TokenPopup(
-                    stats_today=self._get_stats_dict(stats_today),
-                    stats_7d=self._get_stats_dict(stats_7d),
-                    stats_30d=self._get_stats_dict(stats_30d),
-                    stats_lifetime=self._get_stats_dict(stats_lifetime),
-                    daily_breakdown=daily_dicts,
-                    refresh_interval_minutes=self.refresh_interval_minutes,
-                    on_refresh_interval_change=on_interval_change,
-                    on_refresh_now=on_refresh_now,
-                    last_scan_time=self.last_scan_time,
-                )
-                self.popup.run()
-            except Exception as e:
-                logger.error(f"Error showing popup: {e}", exc_info=True)
-
-        popup_thread = threading.Thread(target=show_popup, daemon=True)
-        popup_thread.start()
+        try:
+            self.popup = TokenPopup(
+                stats_today=self._get_stats_dict(stats_today),
+                stats_7d=self._get_stats_dict(stats_7d),
+                stats_30d=self._get_stats_dict(stats_30d),
+                stats_lifetime=self._get_stats_dict(stats_lifetime),
+                daily_breakdown=daily_dicts,
+                refresh_interval_minutes=self.refresh_interval_minutes,
+                on_refresh_interval_change=on_interval_change,
+                on_refresh_now=on_refresh_now,
+                last_scan_time=self.last_scan_time,
+                parent=self.root
+            )
+            self.popup.run()
+        except Exception as e:
+            logger.error(f"Error showing popup: {e}", exc_info=True)
 
     def _on_refresh_click(self, icon=None, item=None):
         """Handle refresh menu click."""
@@ -301,3 +309,7 @@ class TokenTrackerApp:
                 pass
         if self.tray_icon:
             self.tray_icon.stop()
+        try:
+            self.root.quit()
+        except Exception:
+            pass

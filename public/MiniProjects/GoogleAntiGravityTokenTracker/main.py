@@ -58,10 +58,20 @@ def main():
 
     # Configure logging
     log_level = logging.DEBUG if args.debug else logging.INFO
-    handlers = [logging.StreamHandler()]
+    handlers = []
+    
+    # Only use StreamHandler if standard out stream is available (otherwise throws errors in windowed mode)
+    if sys.stdout is not None:
+        handlers.append(logging.StreamHandler())
 
-    if args.log_file:
-        handlers.append(logging.FileHandler(args.log_file))
+    # Default fallback log file path for windowed mode if not specified
+    log_path = args.log_file
+    if not log_path and sys.stdout is None:
+        # Save log next to the conversations dir for easy debugging in windowed mode
+        log_path = os.path.join(os.path.dirname(args.conversations_dir), "token_tracker.log")
+
+    if log_path:
+        handlers.append(logging.FileHandler(log_path, encoding='utf-8'))
 
     logging.basicConfig(
         level=log_level,

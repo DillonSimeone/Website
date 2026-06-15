@@ -32,39 +32,47 @@
             <p class="description">Click on any period card below to view the total mL/L of data center cooling water consumed.</p>
             
             <div class="stats-interactive-grid">
-                <div class="stat-period-card active" data-tokens="1541530" data-label="Today">
+                <div class="stat-period-card active" data-tokens="3720000" data-label="Today">
                     <span class="period-title">Today</span>
-                    <span class="token-value">1.54M</span>
+                    <span class="token-value">3.72M</span>
                 </div>
-                <div class="stat-period-card" data-tokens="4746850" data-label="Last 7 Days">
+                <div class="stat-period-card" data-tokens="6930000" data-label="Last 7 Days">
                     <span class="period-title">Week</span>
-                    <span class="token-value">4.75M</span>
+                    <span class="token-value">6.93M</span>
                 </div>
-                <div class="stat-period-card" data-tokens="8134077" data-label="Last 30 Days">
+                <div class="stat-period-card" data-tokens="10310000" data-label="Last 30 Days">
                     <span class="period-title">Month</span>
-                    <span class="token-value">8.13M</span>
+                    <span class="token-value">10.31M</span>
                 </div>
-                <div class="stat-period-card" data-tokens="8134077" data-label="Lifetime">
+                <div class="stat-period-card" data-tokens="10310000" data-label="Lifetime">
                     <span class="period-title">Lifetime</span>
-                    <span class="token-value">8.13M</span>
+                    <span class="token-value">10.31M</span>
                 </div>
             </div>
             
             <div class="calc-grid">
                 <div class="calc-results-full">
                     <div class="result-box large">
-                        <span class="value" id="water-output">462.5 mL</span>
+                        <span class="value" id="water-output">1.12 L</span>
                         <span class="label" id="comparison-label">Water consumed for Today's tokens</span>
                     </div>
                     <div class="result-box large">
-                        <span class="value" id="human-percentage">18.5%</span>
+                        <span class="value" id="human-percentage">44.8%</span>
                         <span class="label">Equivalent of human daily hydration limit (~2.5L)</span>
                     </div>
                 </div>
             </div>
             
             <div class="progress-bar-container">
-                <div class="progress-bar" id="water-bar" style="width: 18.5%;"></div>
+                <div class="progress-bar" id="water-bar" style="width: 44.8%;"></div>
+            </div>
+
+            <!-- Model Breakdown Section -->
+            <div class="model-breakdown-web-section">
+                <h3>Model Token Breakdown</h3>
+                <div class="model-grid" id="model-breakdown-grid">
+                    <!-- Dynamic model cards will be inserted here by JS -->
+                </div>
             </div>
         </section>
 
@@ -75,43 +83,7 @@
             <div class="chart-container-card">
                 <!-- Inline SVG Bar Chart -->
                 <svg id="trend-chart" viewBox="0 0 800 300" width="100%" height="300" class="neon-chart">
-                    <!-- Axes & Grid -->
-                    <line x1="50" y1="20" x2="50" y2="250" stroke="#2f3e46" stroke-width="2"/>
-                    <line x1="50" y1="250" x2="780" y2="250" stroke="#2f3e46" stroke-width="2"/>
-                    
-                    <!-- Y Axis Labels -->
-                    <text x="40" y="25" fill="#9aa0a6" font-size="10" text-anchor="end">3.0M</text>
-                    <text x="40" y="100" fill="#9aa0a6" font-size="10" text-anchor="end">2.0M</text>
-                    <text x="40" y="175" fill="#9aa0a6" font-size="10" text-anchor="end">1.0M</text>
-                    <text x="40" y="250" fill="#9aa0a6" font-size="10" text-anchor="end">0.0</text>
-
-                    <!-- Bars (Dynamically Sized) -->
-                    <!-- Jun 03: 1.17M -->
-                    <rect x="150" y="162" width="45" height="88" fill="url(#blue-grad)" rx="4" class="chart-bar" data-val="1.17M" data-date="June 3rd"/>
-                    <text x="172" y="270" fill="#9aa0a6" font-size="10" text-anchor="middle">Jun 03</text>
-                    <text x="172" y="152" fill="#66fcf1" font-size="11" text-anchor="middle" font-weight="600">1.17M</text>
-
-                    <!-- Jun 14: 3.20M -->
-                    <rect x="370" y="20" width="45" height="230" fill="url(#teal-grad)" rx="4" class="chart-bar" data-val="3.20M" data-date="June 14th"/>
-                    <text x="392" y="270" fill="#9aa0a6" font-size="10" text-anchor="middle">Jun 14</text>
-                    <text x="392" y="12" fill="#45f3ff" font-size="11" text-anchor="middle" font-weight="600">3.20M</text>
-
-                    <!-- Jun 15 (Today): 1.54M -->
-                    <rect x="590" y="132" width="45" height="118" fill="url(#blue-grad)" rx="4" class="chart-bar active" data-val="1.54M" data-date="Today (June 15)"/>
-                    <text x="612" y="270" fill="#9aa0a6" font-size="10" text-anchor="middle">Jun 15</text>
-                    <text x="612" y="122" fill="#66fcf1" font-size="11" text-anchor="middle" font-weight="600">1.54M</text>
-
-                    <!-- Gradients definitions -->
-                    <defs>
-                        <linearGradient id="blue-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#66fcf1" stop-opacity="1"/>
-                            <stop offset="100%" stop-color="#1f2833" stop-opacity="0.2"/>
-                        </linearGradient>
-                        <linearGradient id="teal-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#45f3ff" stop-opacity="1"/>
-                            <stop offset="100%" stop-color="#1f2833" stop-opacity="0.2"/>
-                        </linearGradient>
-                    </defs>
+                    <!-- Dynamic stacked chart elements injected by JS -->
                 </svg>
             </div>
         </section>
@@ -212,6 +184,7 @@
         <p>Built for the AntiGravity Environment Suite &copy; 2026</p>
     </footer>
 
+    <div class="chart-tooltip" id="chart-tooltip"></div>
     <script src="script.js"></script>
 </body>
 </html>
