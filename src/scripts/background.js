@@ -44,45 +44,49 @@ function draw() {
     container.appendChild(pattern);
     container.appendChild(circleElement);
 
-    const circle = document.querySelector('.circle');
-    const radius = circle ? circle.clientWidth / 2 : 50;
-
     paths.forEach(poly => {
         poly.classList.add('poly', 'fade');
     });
 
-    const polyPoints = paths.map(poly => {
-        const rect = poly.getBoundingClientRect();
-        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    });
-
     document.removeEventListener('mousemove', document.fn);
-    let ticking = false;
-    let frameCount = 0;
-    const polyActiveStates = new Array(polyPoints.length).fill(false);
 
-    document.addEventListener('mousemove', document.fn = function fn(e) {
-        if (!ticking) {
-            window.requestAnimationFrame(() => {
-                frameCount++;
-                if (frameCount % 2 !== 0) { ticking = false; return; }
-                if (!circle) { ticking = false; return; }
-                const center = { x: e.clientX, y: e.clientY };
-                circle.style.transform = `translate(${center.x - radius}px, ${center.y - radius}px)`;
-                for (let i = 0; i < polyPoints.length; i++) {
-                    const isInCircle = detectPointInCircle(polyPoints[i], radius, center);
-                    if (isInCircle && !polyActiveStates[i]) {
-                        paths[i].classList.remove('fade');
-                        polyActiveStates[i] = true;
-                    } else if (!isInCircle && polyActiveStates[i]) {
-                        paths[i].classList.add('fade');
-                        polyActiveStates[i] = false;
+    // Defer DOM geometry queries to the next animation frame to prevent layout thrashing (forced reflow)
+    requestAnimationFrame(() => {
+        const circle = document.querySelector('.circle');
+        const radius = circle ? circle.clientWidth / 2 : 50;
+
+        const polyPoints = paths.map(poly => {
+            const rect = poly.getBoundingClientRect();
+            return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        });
+
+        let ticking = false;
+        let frameCount = 0;
+        const polyActiveStates = new Array(polyPoints.length).fill(false);
+
+        document.addEventListener('mousemove', document.fn = function fn(e) {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    frameCount++;
+                    if (frameCount % 2 !== 0) { ticking = false; return; }
+                    if (!circle) { ticking = false; return; }
+                    const center = { x: e.clientX, y: e.clientY };
+                    circle.style.transform = `translate(${center.x - radius}px, ${center.y - radius}px)`;
+                    for (let i = 0; i < polyPoints.length; i++) {
+                        const isInCircle = detectPointInCircle(polyPoints[i], radius, center);
+                        if (isInCircle && !polyActiveStates[i]) {
+                            paths[i].classList.remove('fade');
+                            polyActiveStates[i] = true;
+                        } else if (!isInCircle && polyActiveStates[i]) {
+                            paths[i].classList.add('fade');
+                            polyActiveStates[i] = false;
+                        }
                     }
-                }
-                ticking = false;
-            });
-            ticking = true;
-        }
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
     });
 }
 
