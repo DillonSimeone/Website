@@ -1,55 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wireless Kinetic Light Baton | ESP-NOW &amp; Motion Tracking</title>
-    <meta name="description" content="A motion-reactive light baton system built on ESP32-C3, integrating MPU6050 motion tracking, custom haptic feedback, and real-time ESP-NOW LED strip synchronization.">
+    <meta name="description"
+        content="A motion-reactive light baton system built on ESP32-C3, integrating MPU6050 motion tracking, custom haptic feedback, and real-time ESP-NOW LED strip synchronization.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <div class="glass-bg-glow"></div>
 
     <header>
         <div class="header-container">
             <span class="badge">ESP32-C3 &amp; ESP-NOW</span>
             <h1>Wireless Kinetic Light Baton</h1>
-            <p class="subtitle">A real-time motion-to-light synchronizer utilizing MPU6050 IMU tracking and sub-millisecond broadcast latency.</p>
+            <p class="subtitle">A real-time motion-to-light synchronizer utilizing MPU6050 IMU tracking and
+                sub-millisecond broadcast latency.</p>
         </div>
     </header>
 
     <main class="container">
-        
+
         <!-- Interactive Simulator Section -->
-        <section class="simulator-card glass-panel">
+        <section class="simulator-card retro-panel">
             <h2 class="section-title">Live ESP-NOW &amp; Delta Math Simulator</h2>
-            <p class="card-desc">Shake or swipe your mouse/touch quickly inside the <strong>Kinetic Charge Pad</strong> to build up energy. Watch the real-time ESP-NOW signal transmit the charge state (0.0 to 1.0) to the follower, which interpolates smoothly using delta math.</p>
-            
+            <p class="card-desc">Shake or swipe your mouse/touch quickly inside the <strong>Kinetic Charge Pad</strong>
+                to build up energy. Watch the real-time ESP-NOW signal transmit the charge state (0.0 to 1.0) to the
+                follower, which interpolates smoothly using delta math.</p>
+
+            <!-- Full-width Kinetic Charge Pad above both nodes -->
+            <div id="charge-pad" class="charge-pad" style="margin-bottom: 20px;">
+                <span>SWIPE RAPIDLY HERE TO CHARGE</span>
+            </div>
+
             <div class="sim-grid">
                 <!-- Handle / Sender -->
-                <div class="sim-node handle-node glass-subpanel">
+                <div class="sim-node handle-node retro-subpanel">
                     <h3>Handle (Sender)</h3>
                     <div class="energy-display">
-                        <svg class="progress-ring" width="120" height="120">
-                            <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
-                            <circle class="progress-ring-circle" id="handle-ring" stroke="url(#cyan-grad)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60" stroke-dasharray="314.16" stroke-dashoffset="314.16"/>
-                            <defs>
-                                <linearGradient id="cyan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#00f2fe" />
-                                    <stop offset="100%" stop-color="#4facfe" />
-                                </linearGradient>
-                            </defs>
+                        <svg class="progress-ring" viewBox="0 0 120 120" width="120" height="120">
+                            <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8"
+                                fill="transparent" r="50" cx="60" cy="60" />
+                            <circle class="progress-ring-circle" id="handle-ring" stroke="currentColor" stroke-width="8"
+                                fill="transparent" r="50" cx="60" cy="60" stroke-dasharray="314.16"
+                                stroke-dashoffset="314.16" />
                         </svg>
                         <div class="energy-text"><span id="energy-val">0</span>%</div>
                     </div>
-                    
-                    <div id="charge-pad" class="charge-pad">
-                        <span>SWIPE RAPIDLY HERE TO CHARGE</span>
-                    </div>
-                    
+
                     <div class="status-indicator">
                         <span class="status-label">Haptic Motor:</span>
                         <span id="motor-status" class="status-value motor-off">OFF</span>
@@ -67,7 +72,7 @@
                 </div>
 
                 <!-- Follower / Receiver -->
-                <div class="sim-node follower-node glass-subpanel">
+                <div class="sim-node follower-node retro-subpanel">
                     <h3>Follower (Receiver)</h3>
                     <div class="follower-strip-container">
                         <div id="led-strip" class="led-strip">
@@ -90,30 +95,66 @@
 
         <!-- Technical Specification Layout -->
         <div class="info-grid">
-            
+
             <!-- Left Info Block: Description & Math -->
             <div class="info-column">
-                <section class="glass-panel text-block">
+                <section class="retro-panel text-block">
                     <h2>Project Overview</h2>
-                    <p>The Wireless Kinetic Light Baton decomposes motion-reactive graphics into a distributed hardware topology. Instead of running sensors and high-density LED strips off a single micro-controller, this project splits the responsibility: one device senses and generates haptic feedback inside the handle, while a separate follower handles the high-power visual rendering.</p>
-                    
+                    <p>The Wireless Kinetic Light Baton decomposes motion-reactive graphics into a distributed hardware
+                        topology. Instead of running sensors and high-density LED strips off a single micro-controller,
+                        this project splits the responsibility: one device senses and generates haptic feedback inside
+                        the handle, while a separate follower handles the high-power visual rendering.</p>
+
                     <h3>Why ESP-NOW?</h3>
-                    <p>ESP-NOW is a connectionless protocol developed by Espressif that bypasses traditional Wi-Fi handshakes and overhead. This allows the handle to broadcast 4-byte floating-point energy updates every 30 milliseconds with a transmission latency under <strong>1.5 milliseconds</strong>, making it feel completely instantaneous to the human eye.</p>
+                    <p>ESP-NOW is a connectionless protocol developed by Espressif that bypasses traditional Wi-Fi
+                        handshakes and overhead. This allows the handle to broadcast 4-byte floating-point energy
+                        updates every 30 milliseconds with a transmission latency under <strong>1.5
+                            milliseconds</strong>, making it feel completely instantaneous to the human eye.</p>
                 </section>
 
-                <section class="glass-panel text-block">
+                <section class="retro-panel text-block">
                     <h2>The Delta Math Easing</h2>
-                    <p>When the handle broadcasts the target charge (e.g., jumping from 0.0 to 0.7 immediately during a fast swing), displaying it directly on the LEDs causes visual stepping. To make the animation fluid, the follower implements a <strong>dt-based exponential easing function</strong>:</p>
+                    <p>When the handle broadcasts the target charge (e.g., jumping from 0.0 to 0.7 immediately during a
+                        fast swing), displaying it directly on the LEDs causes visual stepping. To make the animation
+                        fluid, the follower implements a <strong>dt-based exponential easing function</strong>:</p>
                     <div class="code-math">
                         <code>currentCharge += (targetCharge - currentCharge) * easingFactor * dt;</code>
                     </div>
-                    <p>This guarantees smooth visual convergence towards the target charge regardless of packet drop or timing jitter. We use a snap window of <code>&lt; 0.001</code> to prevent floating-point micro-oscillations once the target is reached.</p>
+                    <p>This guarantees smooth visual convergence towards the target charge regardless of packet drop or
+                        timing jitter. We use a snap window of <code>&lt; 0.001</code> to prevent floating-point
+                        micro-oscillations once the target is reached.</p>
+                </section>
+
+                <section class="retro-panel text-block">
+                    <h2>Parametric CAD Configurator</h2>
+                    <p>This project features a fully parametric 3D CAD configurator designed to generate custom haptic
+                        and visual baton assemblies. Built with JavaScript/TypeScript, it harnesses the high-performance
+                        WASM-compiled Manifold geometry kernel for instant CSG (Constructive Solid Geometry) boolean
+                        operations.</p>
+                    <h3>Configurable Part Parameters</h3>
+                    <p>Using the interactive CAD environment, you can dynamically configure and resize several
+                        mechanical features:</p>
+                    <ul class="retro-list">
+                        <li><strong>Central Rod:</strong> Tube Outer Diameter and internal wall thickness.</li>
+                        <li><strong>Housing / Sled:</strong> Sized length/wall thickness to accommodate battery cells,
+                            ESP32-C3, haptic motor driver, switch, and MPU6050 IMU.</li>
+                        <li><strong>Ridges &amp; Rings:</strong> Decorative outer profiles, flange heights, and end-cap
+                            slip tolerances.</li>
+                        <li><strong>Fasteners:</strong> M3 clearance hole diameters and threaded depth tolerances.</li>
+                        <li><strong>Handle Profile:</strong> Length and lanyard tether hole placement.</li>
+                    </ul>
+                    <p>The CAD suite supports assembly exploding, Blueprint wireframe views, and instant STL downloads
+                        for direct slicer preparation.</p>
+                    <div style="margin-top: 25px; text-align: center;">
+                        <a href="../index.html" class="geo-link" style="font-size: 1.1rem; font-weight: bold;">[ OPEN
+                            PARAMETRIC 3D CONFIGURATOR ]</a>
+                    </div>
                 </section>
             </div>
 
             <!-- Right Info Block: Hardware & Pinouts -->
             <div class="info-column">
-                <section class="glass-panel table-panel">
+                <section class="retro-panel table-panel">
                     <h2>Hardware Pinout Configuration</h2>
                     <p class="subtitle">Configured on ESP32-C3-DevKitM-1 Development Boards.</p>
 
@@ -180,7 +221,7 @@
                                 </tr>
                                 <tr>
                                     <td><span class="pin-badge pin-vcc">Power</span></td>
-                                    <td><code>5V / USB</code></td>
+                                    <td><code>5V</code></td>
                                     <td>External power source for high current draw</td>
                                 </tr>
                                 <tr>
@@ -190,6 +231,40 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </section>
+
+                <section class="retro-panel text-block">
+                    <h2>ESP32 Firmware Architecture</h2>
+                    <p>The hardware system is partitioned into two distinct C++ firmware applications running on
+                        separate ESP32-C3 modules to minimize wiring complexity and ensure latency-free performance.</p>
+
+                    <h3>1. Reactive Handle (Sender)</h3>
+                    <p>The handle read loop polls the MPU6050 IMU over I2C to calculate physical swing acceleration and
+                        rotation. It applies a soft-ground trick to simplify electrical routing by pulling Pin 4 LOW to
+                        act as ground. The combined motion vector drives a haptic driver chip on Pin 7, switching
+                        vibration states dynamically:</p>
+                    <ul class="retro-list">
+                        <li><strong>Low Energy (&lt; 0.3):</strong> Slow periodic <em>Heartbeat</em> vibration pulse.
+                        </li>
+                        <li><strong>Medium Energy (&lt; 0.7):</strong> Rapid rhythmic <em>Gallop</em> haptic pattern.
+                        </li>
+                        <li><strong>High Energy (&gt;= 0.7):</strong> Constant high-intensity <em>Shimmer/Buzz</em>.
+                        </li>
+                    </ul>
+                    <p>Simultaneously, the energy level is broadcasted via raw ESP-NOW packets to the follower's MAC
+                        address at 30ms intervals.</p>
+
+                    <h3>2. Reactive Follower (Receiver)</h3>
+                    <p>The receiver listens for the broadcasted energy value in a non-blocking ESP-NOW interrupt
+                        callback. As the baton is swung, the follower lights up a WS2812B pixel array on Pin 6. The
+                        motion-reactive color mapping shifting and length scaling is computed dynamically.
+                        Easing-interpolated delta math eliminates packet jitter, delivering organic, smooth visual
+                        sweeps.</p>
+
+                    <div style="margin-top: 25px; text-align: center;">
+                        <a href="../../../ESP32Codes/PlatformIO/Visuals_Art/LightBaton" class="geo-link"
+                            style="font-size: 1.1rem; font-weight: bold;">[ BROWSE FIRMWARE SOURCE CODE ]</a>
                     </div>
                 </section>
             </div>
@@ -202,4 +277,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

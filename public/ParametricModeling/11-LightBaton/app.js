@@ -1270,26 +1270,64 @@ function generateDecorativeRidges(cylinderIndex) {
         parts.push(positioned);
     }
 
-    // ─── Bottom Mounting Ring (Solid) ─────────────────────────────────
+    // ─── Bottom Mounting Ring (Solid with arches) ─────────────────────
     let botRingOuter = Manifold.cylinder(ringThick, botRingOuterR, botRingOuterR, 32, true);
     let botRingInner = Manifold.cylinder(ringThick + 2, ringInnerR, ringInnerR, 32, true);
     let botRing = botRingOuter.subtract(botRingInner);
     botRingOuter.delete();
     botRingInner.delete();
 
-    let botPos = botRing.translate([0, 0, cylZ + ringThick / 2]);
+    // Calculate mathematically perfect support-free arches starting exactly at the spine edges
+    const R_mid_bot = (ringInnerR + botRingOuterR) / 2;
+    const theta_edge_bot = (Math.PI / 4) - (rw / 2) / R_mid_bot;
+    const d_edge_bot = R_mid_bot * Math.sin(theta_edge_bot);
+    const deltaZ = ringThick - 2.0; // arch depth
+    const archR_bot = (d_edge_bot * d_edge_bot + deltaZ * deltaZ) / (2 * deltaZ);
+    const z_axis_bot = ringThick / 2 - deltaZ + archR_bot;
+
+    const cutLen_bot = botRingOuterR * 2 + 10;
+    
+    let cutX_bot = Manifold.cylinder(cutLen_bot, archR_bot, archR_bot, 32, true).rotate([0, 90, 0]).translate([0, 0, z_axis_bot]);
+    let cutY_bot = Manifold.cylinder(cutLen_bot, archR_bot, archR_bot, 32, true).rotate([90, 0, 0]).translate([0, 0, z_axis_bot]);
+    let cuts_bot = cutX_bot.add(cutY_bot);
+    cutX_bot.delete();
+    cutY_bot.delete();
+    
+    let botRingArched = botRing.subtract(cuts_bot);
     botRing.delete();
+    cuts_bot.delete();
+
+    let botPos = botRingArched.translate([0, 0, cylZ + ringThick / 2]);
+    botRingArched.delete();
     parts.push(botPos);
 
-    // ─── Top Mounting Ring (Solid) ────────────────────────────────────
+    // ─── Top Mounting Ring (Solid with arches) ────────────────────────
     let topRingOuter = Manifold.cylinder(ringThick, topRingOuterR, topRingOuterR, 32, true);
     let topRingInner = Manifold.cylinder(ringThick + 2, ringInnerR, ringInnerR, 32, true);
     let topRing = topRingOuter.subtract(topRingInner);
     topRingOuter.delete();
     topRingInner.delete();
 
-    let topPos = topRing.translate([0, 0, cylZ + cylLen - ringThick / 2]);
+    const R_mid_top = (ringInnerR + topRingOuterR) / 2;
+    const theta_edge_top = (Math.PI / 4) - (rw / 2) / R_mid_top;
+    const d_edge_top = R_mid_top * Math.sin(theta_edge_top);
+    const archR_top = (d_edge_top * d_edge_top + deltaZ * deltaZ) / (2 * deltaZ);
+    const z_axis_top = -ringThick / 2 + deltaZ - archR_top;
+
+    const cutLen_top = topRingOuterR * 2 + 10;
+
+    let cutX_top = Manifold.cylinder(cutLen_top, archR_top, archR_top, 32, true).rotate([0, 90, 0]).translate([0, 0, z_axis_top]);
+    let cutY_top = Manifold.cylinder(cutLen_top, archR_top, archR_top, 32, true).rotate([90, 0, 0]).translate([0, 0, z_axis_top]);
+    let cuts_top = cutX_top.add(cutY_top);
+    cutX_top.delete();
+    cutY_top.delete();
+
+    let topRingArched = topRing.subtract(cuts_top);
     topRing.delete();
+    cuts_top.delete();
+
+    let topPos = topRingArched.translate([0, 0, cylZ + cylLen - ringThick / 2]);
+    topRingArched.delete();
     parts.push(topPos);
 
     // ─── Merge all parts ─────────────────────────────────────────────
