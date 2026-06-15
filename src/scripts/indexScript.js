@@ -43,6 +43,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (themeToggle) {
         themeToggle.addEventListener('click', toggleTheme);
     }
+
+    // Event delegation for navigation toggles
+    document.addEventListener('click', (e) => {
+        const localToggle = e.target.closest('.section-nav-toggle');
+        if (localToggle) {
+            toggleLocalNav(localToggle);
+            return;
+        }
+
+        const globalToggle = e.target.closest('#globalNavToggle');
+        if (globalToggle) {
+            toggleGlobalNav();
+            return;
+        }
+    });
 });
 
 /*=======================================================
@@ -206,20 +221,15 @@ function randomizeColor() {
 }
 window.randomizeColor = randomizeColor;
 
-function getUrlVars() {
-    const vars = {};
-    window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
-        vars[key] = value;
-    });
-    return vars;
-}
+// Function getUrlVars has been refactored to use URLSearchParams directly where needed.
 
 /*=======================================================
                 Initialization Logic
 =========================================================*/
 
 function setUp() {
-    const page = getUrlVars().page;
+    const urlParams = new URLSearchParams(window.location.search);
+    const page = urlParams.get('page');
     // Handle resize in JS instead of HTML
     window.addEventListener('resize', () => {
         if (typeof window.redraw === 'function') {
@@ -243,10 +253,16 @@ function setUp() {
 
     generateDynamicNavs();
     injectFooters();
-    initHobbyGalleries();
-    initProjectGalleries();
-    initSectionGalleries('embedded', '.grid-item', 0);
-    initSectionGalleries('shop', '.grid-item', 0);
+
+    // Data-driven Section Gallery Initialization
+    const galleriesConfig = [
+        { id: 'hobby', selector: '.artwork, .headers + .images', minSize: 0 },
+        { id: 'work', selector: '.medias, .images', minSize: 2 },
+        { id: 'embedded', selector: '.grid-item', minSize: 0 },
+        { id: 'shop', selector: '.grid-item', minSize: 0 }
+    ];
+    galleriesConfig.forEach(cfg => initSectionGalleries(cfg.id, cfg.selector, cfg.minSize));
+
     initYouTubeFacades();
     
     // Start dynamic favicon cycle
@@ -406,14 +422,15 @@ function injectFooters() {
             .catch(() => document.querySelectorAll('.last-updated').forEach(el => el.textContent = 'Recently'));
     };
 
+    const interactionEvents = ['mousemove', 'mousedown', 'touchstart', 'scroll', 'keydown'];
     const triggerFetch = () => {
-        ['mousemove', 'mousedown', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
+        interactionEvents.forEach(evt => {
             window.removeEventListener(evt, triggerFetch);
         });
         fetchLastCommit();
     };
 
-    ['mousemove', 'mousedown', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
+    interactionEvents.forEach(evt => {
         window.addEventListener(evt, triggerFetch, { passive: true });
     });
 }
@@ -422,13 +439,7 @@ function injectFooters() {
                 Gallery Modal Logic
 =========================================================*/
 
-function initHobbyGalleries() {
-    initSectionGalleries('hobby', '.artwork, .headers + .images', 0);
-}
-
-function initProjectGalleries() {
-    initSectionGalleries('work', '.medias, .images', 2);
-}
+// Section galleries are initialized dynamically in setUp() via galleriesConfig loop.
 
 /**
  * Transforms image groups into modal galleries.
