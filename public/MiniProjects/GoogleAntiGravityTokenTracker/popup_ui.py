@@ -97,7 +97,8 @@ class TokenPopup:
                  refresh_interval_minutes: int,
                  on_refresh_interval_change: Callable[[int], None] | None = None,
                  on_refresh_now: Callable[[], None] | None = None,
-                 last_scan_time: datetime | None = None):
+                 last_scan_time: datetime | None = None,
+                 parent: tk.Tk | None = None):
         """
         Create the popup window.
 
@@ -108,9 +109,13 @@ class TokenPopup:
         self.on_refresh_interval_change = on_refresh_interval_change
         self.on_refresh_now = on_refresh_now
         self.refresh_interval_minutes = refresh_interval_minutes
+        self.parent = parent
 
-        self.root = tk.Tk()
-        self.root.withdraw()  # Hide initially
+        if parent is not None:
+            self.root = tk.Toplevel(parent)
+        else:
+            self.root = tk.Tk()
+            self.root.withdraw()  # Hide initially
 
         # Window configuration
         self.root.title("Token Tracker")
@@ -121,7 +126,7 @@ class TokenPopup:
         # Position near system tray (bottom-right of screen)
         screen_w = self.root.winfo_screenwidth()
         screen_h = self.root.winfo_screenheight()
-        popup_w = 420
+        popup_w = 450
         popup_h = 680
         x = screen_w - popup_w - 12
         y = screen_h - popup_h - 52  # Above taskbar
@@ -130,6 +135,9 @@ class TokenPopup:
         # Close on focus loss
         self.root.bind('<FocusOut>', self._on_focus_out)
         self.root.bind('<Escape>', lambda e: self.close())
+
+        # Setup modern dark style for ttk widgets
+        self._setup_styles()
 
         # Build UI
         self._build_ui(stats_today, stats_7d, stats_30d, stats_lifetime,
@@ -152,17 +160,82 @@ class TokenPopup:
 
     def _on_focus_out(self, event):
         """Close popup when it loses focus."""
-        # Small delay to handle clicks on child widgets
-        self.root.after(100, self._check_focus)
+        # Only process if the root window itself lost focus
+        if event.widget == self.root:
+            self.root.after(100, self._check_focus)
 
     def _check_focus(self):
-        """Check if focus is still within our window."""
+        """Check if focus is still within our window or its child popdowns."""
         try:
             focused = self.root.focus_get()
+            
+            # Check if focus is on any widget belonging to our window or the combobox popdown
+            if focused is not None:
+                focused_str = str(focused)
+                if focused_str.startswith(str(self.root)) or 'popdown' in focused_str:
+                    return  # Keep popup open!
+                    
+            # Check if the combobox popdown is currently open/visible (try both sibling and child hierarchy)
+            popdown_parents = []
+            if hasattr(self, 'dropdown_parent_path'):
+                popdown_parents.append(self.dropdown_parent_path)
+            if hasattr(self, 'dropdown_path'):
+                popdown_parents.append(self.dropdown_path)
+                
+            for parent in popdown_parents:
+                popdown_name = f"{parent}.popdown"
+                try:
+                    if self.root.tk.call('winfo', 'exists', popdown_name) and \
+                       self.root.tk.call('winfo', 'ismapped', popdown_name):
+                        return  # Keep popup open!
+                except Exception:
+                    pass
+
             if focused is None:
                 self.close()
         except Exception:
             self.close()
+
+    def _setup_styles(self):
+        """Configure styles for ttk widgets."""
+        style = ttk.Style(self.root)
+        try:
+            style.theme_use('clam')
+        except Exception:
+            pass
+
+        # Configure style for Combobox
+        style.configure('TCombobox',
+                        fieldbackground=COLORS['bg_card'],
+                        background=COLORS['bg_card'],
+                        foreground=COLORS['text_primary'],
+                        bordercolor=COLORS['border'],
+                        lightcolor=COLORS['border'],
+                        darkcolor=COLORS['border'],
+                        arrowcolor=COLORS['accent_blue'])
+
+        style.map('TCombobox',
+                  fieldbackground=[('readonly', COLORS['bg_card']),
+                                   ('focus', COLORS['bg_card_hover'])],
+                  background=[('readonly', COLORS['bg_card']),
+                              ('active', COLORS['bg_card_hover'])],
+                  foreground=[('readonly', COLORS['text_primary'])],
+                  arrowcolor=[('disabled', COLORS['text_dim']),
+                              ('pressed', COLORS['accent_blue']),
+                              ('active', COLORS['accent_blue'])],
+                  bordercolor=[('focus', COLORS['accent_blue']),
+                               ('!focus', COLORS['border'])],
+                  lightcolor=[('focus', COLORS['accent_blue']),
+                              ('!focus', COLORS['border'])],
+                  darkcolor=[('focus', COLORS['accent_blue']),
+                             ('!focus', COLORS['border'])])
+
+        # Style the dropdown Listbox
+        self.root.option_add('*TCombobox*Listbox.background', COLORS['bg_card'])
+        self.root.option_add('*TCombobox*Listbox.foreground', COLORS['text_primary'])
+        self.root.option_add('*TCombobox*Listbox.selectBackground', COLORS['bg_card_hover'])
+        self.root.option_add('*TCombobox*Listbox.selectForeground', COLORS['accent_blue'])
+        self.root.option_add('*TCombobox*Listbox.font', ('Segoe UI', 9))
 
     def close(self):
         """Close the popup."""
@@ -178,13 +251,18 @@ class TokenPopup:
         scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
 
         main_frame = tk.Frame(canvas, bg=COLORS['bg'])
-        main_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
-        canvas.create_window((0, 0), window=main_frame, anchor="nw",
-                             width=self.root.winfo_reqwidth() or 420)
+        self.window_item = canvas.create_window((0, 0), window=main_frame, anchor="nw")
+        
+        def _configure_frame(event):
+            # Update canvas scrollregion
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            
+        def _configure_canvas(event):
+            # Make sure main_frame fills the full canvas width when canvas resizes
+            canvas.itemconfig(self.window_item, width=canvas.winfo_width())
+            
+        main_frame.bind("<Configure>", _configure_frame)
+        canvas.bind("<Configure>", _configure_canvas)
         canvas.configure(yscrollcommand=scrollbar.set)
 
         # Mouse wheel scrolling
@@ -509,8 +587,11 @@ class TokenPopup:
         dropdown = ttk.Combobox(interval_frame,
                                 values=[interval_labels[i] for i in intervals],
                                 textvariable=interval_display,
-                                state='readonly', width=10)
+                                state='readonly', width=10,
+                                font=('Segoe UI', 9))
         dropdown.pack(side='right')
+        self.dropdown_path = str(dropdown)
+        self.dropdown_parent_path = dropdown.winfo_parent()
 
         def on_interval_change(event):
             selected = dropdown.get()
@@ -545,7 +626,8 @@ class TokenPopup:
 
     def run(self):
         """Run the popup's event loop."""
-        self.root.mainloop()
+        if self.parent is None:
+            self.root.mainloop()
 
 
 if __name__ == '__main__':
