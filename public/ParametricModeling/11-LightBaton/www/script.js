@@ -40,20 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
         lastMoveTime = now;
 
         const rect = chargePad.getBoundingClientRect();
+        const width = rect.width || 1;
+        const height = rect.height || 1;
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
         if (lastX !== null && lastY !== null && dt > 0) {
-            // Calculate movement speed (velocity)
-            const dx = x - lastX;
-            const dy = y - lastY;
+            // Calculate movement speed normalized by the element's dimensions
+            const dx = (x - lastX) / width;
+            const dy = (y - lastY) / height;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const speed = distance / dt;
+            const speed = distance / dt; // Speed in "widths" per second
 
-            // Trigger charge based on significant movement
-            if (speed > 150) {
-                // Add energy scaled by speed
-                energyLevel += (speed / 10000.0) * chargeRate;
+            // Trigger charge based on relative movement (25% of pad size per second)
+            if (speed > 0.25) {
+                // Add energy scaled by normalized speed
+                energyLevel += speed * 0.05 * chargeRate;
                 if (energyLevel > 1.0) energyLevel = 1.0;
                 
                 // Visual feedback for pad
