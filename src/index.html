@@ -9,114 +9,6 @@
     <link rel="preload" href="/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin>
     <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="%233498db"/></svg>'>
     <link href="./styles/style.css" rel="stylesheet">
-    <style>
-        .swal2-popup {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.418);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            border-radius: 16px;
-            color: black;
-            font-size: 1rem;
-        }
-
-        .swal2-title,
-        .swal2-html-container,
-        .swal2-footer {
-            color: black;
-        }
-
-        /* WIP Warning Component */
-        .wip-warning {
-            display: flex;
-            align-items: center;
-            background: var(--bg-glass);
-            border: 2px solid #ffcc00;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 30px auto;
-            width: 100%;
-            max-width: 800px;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px 0 rgba(255, 204, 0, 0.2);
-            position: relative;
-            overflow: hidden;
-            animation: warningPulse 2s infinite alternate;
-            transition: transform 0.3s ease;
-        }
-
-        .wip-warning:hover {
-            transform: scale(1.02);
-        }
-
-        .warning-icon {
-            font-size: 2.5rem;
-            margin-right: 25px;
-            filter: drop-shadow(0 0 10px #ffcc00);
-            animation: iconShake 0.5s infinite step-end;
-        }
-
-        .warning-content h3 {
-            margin: 0;
-            color: #ad2f7d !important;
-            font-family: 'Orbitron', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 1.4rem;
-        }
-
-        .warning-content p {
-            margin: 8px 0 0 0;
-            font-size: 1.1rem;
-            opacity: 0.9;
-            color: var(--text-primary);
-        }
-
-        @keyframes warningPulse {
-            from {
-                box-shadow: 0 0 15px rgba(255, 204, 0, 0.1);
-                border-color: rgba(255, 204, 0, 0.5);
-            }
-
-            to {
-                box-shadow: 0 0 30px rgba(255, 204, 0, 0.3);
-                border-color: rgba(255, 204, 0, 1);
-            }
-        }
-
-        @keyframes iconShake {
-            0% {
-                transform: translate(0, 0) rotate(0deg);
-            }
-
-            25% {
-                transform: translate(1px, -1px) rotate(1deg);
-            }
-
-            50% {
-                transform: translate(-1px, 1px) rotate(-1deg);
-            }
-
-            75% {
-                transform: translate(1px, 1px) rotate(0deg);
-            }
-
-            100% {
-                transform: translate(0, 0) rotate(0deg);
-            }
-        }
-
-        body.dark-mode .wip-warning {
-            background: rgba(255, 204, 0, 0.05);
-            border-color: #ffcc00;
-        }
-
-        body.dark-mode .warning-content h3::before {
-            content: '!! ';
-            color: #ff0040;
-            font-family: 'Share Tech Mono', monospace;
-        }
-    </style>
     <meta charset="utf-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.youtube.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.p5js.org https://code.jquery.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://api.stripe.com; frame-src 'self' https://js.stripe.com https://www.youtube.com https://www.youtube-nocookie.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -204,7 +96,7 @@
     {{> nav }}
 
     <!-- Global mobile toggle for section navigation -->
-    <div class="global-nav-toggle" id="globalNavToggle" onclick="toggleGlobalNav()">
+    <div class="global-nav-toggle" id="globalNavToggle">
         <div class="bar"></div>
         <div class="bar"></div>
         <div class="bar"></div>
@@ -216,7 +108,7 @@
         {{> hero }}
 
         <article class="item hide spin" id="hobby">
-            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+            <div class="section-nav-toggle">
                 <div class="bar"></div>
                 <div class="bar"></div>
                 <div class="bar"></div>
@@ -261,7 +153,7 @@
         </article>
 
         <article class="item hide spin" id="work">
-            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+            <div class="section-nav-toggle">
                 <div class="bar"></div>
                 <div class="bar"></div>
                 <div class="bar"></div>
@@ -281,7 +173,7 @@
         </article>
 
         <article class="item hide spin" id="projects">
-            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+            <div class="section-nav-toggle">
                 <div class="bar"></div>
                 <div class="bar"></div>
                 <div class="bar"></div>
@@ -305,7 +197,7 @@
 
         <!-- ESP32 Section from index.html (renamed to embedded in nav but matches ID) -->
         <article class="item hide spin" id="embedded">
-            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+            <div class="section-nav-toggle">
                 <div class="bar"></div>
                 <div class="bar"></div>
                 <div class="bar"></div>
@@ -332,7 +224,7 @@
         </article>
 
         <article class="item hide spin" id="shop">
-            <div class="section-nav-toggle" onclick="toggleLocalNav(this)">
+            <div class="section-nav-toggle">
                 <div class="bar"></div>
                 <div class="bar"></div>
                 <div class="bar"></div>
