@@ -17,6 +17,8 @@
 #include <vector>
 #include <cstring>
 #include <cmath>
+#include <esp_now.h>
+#include <esp_wifi.h>
 
 // ─── Settings ────────────────────────────────────────────────────────────────
 //
@@ -29,9 +31,10 @@ struct Settings {
     int   pixelPin    = 5;
     int   pixelCount  = 30;
     int   brightness  = 128;
-    char  hostname[32] = "ember4";
+    char  hostname[32] = "ember";
     char  wifiSSID[64] = "";
     char  wifiPass[64] = "";
+    char  apSSID[64] = "";
 
     // Audio
     int   micSource   = 0;          // 0=off, 1=INMP441, 2=MAX4466
@@ -47,11 +50,51 @@ struct Settings {
 AsyncWebServer  server(80);
 AsyncWebSocket  ws("/ws");
 static DNSServer       dnsServer;
+static bool            g_apMode = false;
 CRGB*           leds = nullptr;
 volatile float  g_fps = 0.0f;
 String          g_currentName = "Untitled";
 String          g_currentSource;
 String          g_lastError;
+
+// ─── ESP-NOW Motion Follower ─────────────────────────────────────────────────
+static volatile float g_motion = 0.0f;
+static SemaphoreHandle_t g_progMu = nullptr;
+
+static void onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
+    if (len == sizeof(float)) {
+        float val;
+        memcpy(&val, incomingData, sizeof(float));
+        if (val < 0.0f) val = 0.0f;
+        if (val > 1.0f) val = 1.0f;
+        g_motion = val;
+    }
+}
+
+static void initESPNow() {
+    if (esp_now_init() != ESP_OK) {
+        esp_now_deinit();
+        if (esp_now_init() != ESP_OK) {
+            Serial.println("espnow: init failed");
+            return;
+        }
+    }
+    esp_wifi_set_ps(WIFI_PS_NONE);
+    esp_now_register_recv_cb(onDataRecv);
+
+    // Broadcast peer on the current Wi-Fi channel (required for some senders).
+    uint8_t bcast[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    esp_now_peer_info_t peer = {};
+    memcpy(peer.peer_addr, bcast, 6);
+    peer.channel = 0; // 0 = follow current STA/AP channel
+    peer.encrypt = false;
+    peer.ifidx   = g_apMode ? WIFI_IF_AP : WIFI_IF_STA;
+    if (esp_now_is_peer_exist(bcast)) esp_now_del_peer(bcast);
+    esp_now_add_peer(&peer);
+
+    Serial.printf("espnow: listening on channel %d (%s mode)\n",
+                  WiFi.channel(), g_apMode ? "AP" : "STA");
+}
 
 // ─── Bytecode VM ─────────────────────────────────────────────────────────────
 //
@@ -72,6 +115,7 @@ enum : uint8_t {
     VAR_N, VAR_PIXELCOUNT,
     VAR_T, VAR_TIME,
     VAR_PI, VAR_TAU,
+    VAR_MOTION,
     VAR_RESERVED_END
 };
 
@@ -103,6 +147,7 @@ enum Fn : uint8_t {
     // Audio
     FN_VU, FN_PEAK, FN_PITCH, FN_BEAT, FN_BAND,
     FN_BASS, FN_MID, FN_TREBLE,
+    FN_MOTION,
     FN__COUNT
 };
 
@@ -146,7 +191,10 @@ static const FnEntry kFnTable[] = {
     {"hash",       FN_HASH,       1, 1},
     {"hsv",        FN_HSV,        3, 3},
     {"rgb",        FN_RGB,        3, 3},
-    // Audio — values are 0..1 unless noted.
+    {"bass",       FN_BASS,       0, 0},
+    {"mid",        FN_MID,        0, 0},
+    {"treble",     FN_TREBLE,     0, 0},
+    {"motion",     FN_MOTION,     0, 0},
     {"vu",         FN_VU,         0, 0},   // overall RMS level
     {"peak",       FN_PEAK,       0, 0},   // peak level with slow decay
     {"pitch",      FN_PITCH,      0, 0},   // dominant freq normalized (0=low, 1=high)
@@ -286,6 +334,7 @@ public:
         prog.varNames[VAR_TIME]       = "time";
         prog.varNames[VAR_PI]         = "PI";
         prog.varNames[VAR_TAU]        = "TAU";
+        prog.varNames[VAR_MOTION]     = "motion";
     }
 
     void fail(const String& m) {
@@ -353,6 +402,10 @@ public:
         if (rel < INT16_MIN || rel > INT16_MAX) { fail("jump too far"); return; }
         prog.code[p]   = (uint8_t)(rel & 0xFF);
         prog.code[p+1] = (uint8_t)((rel >> 8) & 0xFF);
+    }
+
+    bool isKeyword(const char* kw) {
+        return cur.type == TK_IDENT && identText(cur) == kw;
     }
 
     // ── Pratt-ish recursive descent producing bytecode directly ─────────────
@@ -484,10 +537,36 @@ public:
         fail("unexpected token");
     }
 
+    void parseIfStatement() {
+        advance(); // 'if'
+        if (cur.type != TK_LPAREN) { fail("expected '(' after if"); return; }
+        advance();
+        parseTernary();
+        if (cur.type != TK_RPAREN) { fail("expected ')'"); return; }
+        advance();
+
+        size_t jFalse = emitJump(OP_JMP_FALSE);
+        parseStatement();
+        if (isKeyword("else")) {
+            advance();
+            size_t jEnd = emitJump(OP_JMP);
+            patchJump(jFalse);
+            parseStatement();
+            patchJump(jEnd);
+        } else {
+            patchJump(jFalse);
+        }
+    }
+
     void parseStatement() {
         // Optional leading semicolons.
         while (cur.type == TK_SEMI) advance();
         if (cur.type == TK_EOF) return;
+
+        if (isKeyword("if")) {
+            parseIfStatement();
+            return;
+        }
 
         // Look ahead for assignment: IDENT '='
         if (cur.type == TK_IDENT) {
@@ -626,6 +705,7 @@ static inline float callFn(uint8_t id, float* a, uint8_t argc) {
         case FN_BASS:   return (audio::band(0) + audio::band(1)) * 0.5f;
         case FN_MID:    return (audio::band(3) + audio::band(4)) * 0.5f;
         case FN_TREBLE: return (audio::band(6) + audio::band(7)) * 0.5f;
+        case FN_MOTION: return g_motion;
     }
     return 0.0f;
 }
@@ -972,7 +1052,9 @@ static void start() {
 std::atomic<vm::Program*> g_program{nullptr};
 
 static void installProgram(vm::Program* p) {
-    vm::Program* old = g_program.exchange(p, std::memory_order_acq_rel);
+    if (g_progMu) xSemaphoreTake(g_progMu, portMAX_DELAY);
+    vm::Program* old = g_program.exchange(p, std::memory_order_relaxed);
+    if (g_progMu) xSemaphoreGive(g_progMu);
     if (old) delete old;
 }
 
@@ -999,7 +1081,8 @@ static void renderTask(void*) {
         vTaskDelayUntil(&last, period);
         if (!leds) continue;
 
-        vm::Program* p = g_program.load(std::memory_order_acquire);
+        if (g_progMu) xSemaphoreTake(g_progMu, portMAX_DELAY);
+        vm::Program* p = g_program.load(std::memory_order_relaxed);
         uint32_t now = millis();
         float t = now / 1000.0f;
         int n = settings.pixelCount;
@@ -1012,6 +1095,7 @@ static void renderTask(void*) {
         vars[vm::VAR_TIME]       = t;
         vars[vm::VAR_PI]         = (float)M_PI;
         vars[vm::VAR_TAU]        = (float)(2.0 * M_PI);
+        vars[vm::VAR_MOTION]     = g_motion;
 
         if (p) {
             for (int i = 0; i < n; i++) {
@@ -1039,6 +1123,7 @@ static void renderTask(void*) {
         } else {
             fill_solid(leds, n, CRGB::Black);
         }
+        if (g_progMu) xSemaphoreGive(g_progMu);
 
         FastLED.show();
 
@@ -1096,6 +1181,7 @@ static void loadSettings() {
         strlcpy(settings.hostname, doc["hostname"] | settings.hostname, sizeof(settings.hostname));
         strlcpy(settings.wifiSSID, doc["ssid"]     | settings.wifiSSID, sizeof(settings.wifiSSID));
         strlcpy(settings.wifiPass, doc["pass"]     | settings.wifiPass, sizeof(settings.wifiPass));
+        strlcpy(settings.apSSID,   doc["apSSID"]   | settings.apSSID,   sizeof(settings.apSSID));
         settings.micSource    = doc["micSrc"]    | settings.micSource;
         settings.micBCLK      = doc["micBCLK"]   | settings.micBCLK;
         settings.micWS        = doc["micWS"]     | settings.micWS;
@@ -1116,6 +1202,7 @@ static void saveSettings() {
     doc["hostname"]   = settings.hostname;
     doc["ssid"]       = settings.wifiSSID;
     doc["pass"]       = settings.wifiPass;
+    doc["apSSID"]     = settings.apSSID;
     doc["micSrc"]     = settings.micSource;
     doc["micBCLK"]    = settings.micBCLK;
     doc["micWS"]      = settings.micWS;
@@ -1151,6 +1238,19 @@ static void savePattern(const String& name, const String& code) {
     f.close();
     g_currentName = name;
     g_currentSource = code;
+}
+
+static void saveActivePattern(const String& name, const String& code) {
+    File f = LittleFS.open("/active.wfl", "w");
+    if (f) {
+        f.print(code);
+        f.close();
+    }
+    File fn = LittleFS.open("/active_name.txt", "w");
+    if (fn) {
+        fn.print(name);
+        fn.close();
+    }
 }
 
 static String patternListJson() {
@@ -1190,6 +1290,10 @@ static void sendStatus(AsyncWebSocketClient* c, const String& err) {
     resp["micADC"]   = settings.micADCPin;
     resp["micGain"]  = settings.micGain;
     resp["micSmooth"]= settings.micSmoothing;
+    resp["apSSID"]   = settings.apSSID;
+    resp["hostname"] = settings.hostname;
+    resp["wifiSSID"] = settings.wifiSSID;
+    resp["wifiPass"] = settings.wifiPass;
     String out; serializeJson(resp, out);
     if (c) c->text(out); else ws.textAll(out);
 }
@@ -1214,6 +1318,7 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         if (ok) {
             g_currentSource = code;
             g_lastError = "";
+            saveActivePattern(g_currentName, code);
         } else {
             g_lastError = err;
         }
@@ -1231,11 +1336,15 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         String err;
         recompile(code, err);
         g_lastError = err;
+        saveActivePattern(name, code);
         ws.textAll(String("{\"type\":\"patterns\",\"list\":") + patternListJson() + "}");
     }
     else if (action == "load") {
         String name = doc["name"] | "";
         loadPattern(name);
+        if (g_lastError.isEmpty()) {
+            saveActivePattern(name, g_currentSource);
+        }
         JsonDocument resp;
         resp["type"]  = "loaded";
         resp["name"]  = g_currentName;
@@ -1309,6 +1418,16 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
             ESP.restart();
         }
     }
+    else if (action == "wifiSet") {
+        if (doc["apSSID"].is<const char*>()) strlcpy(settings.apSSID, doc["apSSID"], sizeof(settings.apSSID));
+        if (doc["hostname"].is<const char*>()) strlcpy(settings.hostname, doc["hostname"], sizeof(settings.hostname));
+        if (doc["wifiSSID"].is<const char*>()) strlcpy(settings.wifiSSID, doc["wifiSSID"], sizeof(settings.wifiSSID));
+        if (doc["wifiPass"].is<const char*>()) strlcpy(settings.wifiPass, doc["wifiPass"], sizeof(settings.wifiPass));
+        saveSettings();
+        client->text("{\"type\":\"reboot\"}");
+        delay(150);
+        ESP.restart();
+    }
     else if (action == "micGain") {
         // Hot-applied — no reboot needed.
         float g = doc["value"] | 1.0f;
@@ -1332,24 +1451,69 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
 }
 
 // ─── Wi-Fi ───────────────────────────────────────────────────────────────────
+static bool mdnsHostnameTaken(const char* name) {
+    IPAddress addr = MDNS.queryHost(name, 2000);
+    if (!addr) return false;
+    if (WiFi.status() == WL_CONNECTED) return addr != WiFi.localIP();
+    return addr != WiFi.softAPIP();
+}
+
+static void setupMDNS() {
+    delay(300);
+
+    if (strcmp(settings.hostname, "ember") == 0 && mdnsHostnameTaken("ember")) {
+        uint8_t mac[6];
+        WiFi.macAddress(mac);
+        snprintf(settings.hostname, sizeof(settings.hostname), "ember-%02x%02x", mac[4], mac[5]);
+        Serial.printf("mDNS: ember.local taken, using %s.local\n", settings.hostname);
+        saveSettings();
+    }
+
+    if (!g_apMode && WiFi.status() == WL_CONNECTED) {
+        WiFi.setHostname(settings.hostname);
+    }
+
+    if (MDNS.begin(settings.hostname)) {
+        Serial.printf("mDNS: %s.local\n", settings.hostname);
+    } else {
+        Serial.printf("mDNS: failed to start for %s\n", settings.hostname);
+    }
+}
+
 static void setupWiFi() {
+    g_apMode = false;
+    // Determine MAC-based default AP name if empty
+    if (strlen(settings.apSSID) == 0) {
+        uint8_t mac[6];
+        WiFi.macAddress(mac);
+        snprintf(settings.apSSID, sizeof(settings.apSSID), "Ember-%02X%02X", mac[4], mac[5]);
+        saveSettings();
+    }
+
     if (strlen(settings.wifiSSID) > 0) {
         WiFi.mode(WIFI_STA);
         WiFi.setHostname(settings.hostname);
-        WiFi.begin(settings.wifiSSID, settings.wifiPass);
-        unsigned long start = millis();
-        while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) delay(250);
-        if (WiFi.status() == WL_CONNECTED) {
-            Serial.print("STA "); Serial.println(WiFi.localIP());
-            return;
+        
+        Serial.printf("Connecting to %s (3 attempts max)...\n", settings.wifiSSID);
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            Serial.printf("Attempt %d...\n", attempt);
+            WiFi.begin(settings.wifiSSID, settings.wifiPass);
+            unsigned long start = millis();
+            while (WiFi.status() != WL_CONNECTED && (millis() - start < 4000)) delay(250);
+            if (WiFi.status() == WL_CONNECTED) {
+                Serial.print("STA "); Serial.println(WiFi.localIP());
+                return;
+            }
         }
+        Serial.println("Connection failed. Falling back to AP mode.");
+        WiFi.disconnect(true);
     }
+    g_apMode = true;
     WiFi.mode(WIFI_AP);
-    IPAddress apIP(192, 168, 4, 1);
-    WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-    WiFi.softAP(settings.hostname, "ember123");
+    WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
+    WiFi.softAP(settings.apSSID, "ember123");
     delay(100); // Give AP interface time to settle
-    dnsServer.start(53, "*", apIP);
+    dnsServer.start(53, "*", IPAddress(192, 168, 4, 1));
     Serial.print("AP "); Serial.println(WiFi.softAPIP());
 }
 
@@ -1390,14 +1554,35 @@ void setup() {
 
     loadSettings();
     setupWiFi();
-
-    if (MDNS.begin(settings.hostname)) Serial.printf("mDNS: %s.local\n", settings.hostname);
+    setupMDNS();
 
     initFastLED();
 
-    // Default pattern — installs a valid Program immediately so the render
-    // task has something to run from frame 1.
-    {
+    g_progMu = xSemaphoreCreateMutex();
+
+    // Load active pattern or fallback to default
+    bool loadedActive = false;
+    if (LittleFS.exists("/active.wfl")) {
+        File f = LittleFS.open("/active.wfl", "r");
+        if (f) {
+            String src = f.readString();
+            f.close();
+            String name = "Untitled";
+            if (LittleFS.exists("/active_name.txt")) {
+                File fn = LittleFS.open("/active_name.txt", "r");
+                if (fn) { name = fn.readString(); fn.close(); }
+            }
+            String err;
+            if (recompile(src, err)) {
+                g_currentSource = src;
+                g_currentName   = name;
+                g_lastError     = "";
+                loadedActive = true;
+            }
+        }
+    }
+
+    if (!loadedActive) {
         const char* defaultSrc =
             "h = i/n + t*0.2;\n"
             "hsv(h, 1, 1)\n";
@@ -1410,7 +1595,11 @@ void setup() {
 
     ws.onEvent(onWsEvent);
     server.addHandler(&ws);
-    server.addHandler(new CaptiveRequestHandler()); // Redirect external requests to 192.168.4.1
+    if (g_apMode) {
+        server.addHandler(new CaptiveRequestHandler()); // Captive portal redirects (AP mode only)
+    }
+
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* r) {
         r->send(LittleFS, "/index.html", "text/html");
@@ -1423,6 +1612,21 @@ void setup() {
     });
     server.on("/api/patterns", HTTP_GET, [](AsyncWebServerRequest* r) {
         r->send(200, "application/json", patternListJson());
+    });
+    server.on("/api/patterns", HTTP_OPTIONS, [](AsyncWebServerRequest* r) {
+        r->send(204);
+    });
+    server.on("/api/discover", HTTP_GET, [](AsyncWebServerRequest* r) {
+        JsonDocument doc;
+        doc["device"]   = "ember";
+        doc["hostname"] = settings.hostname;
+        doc["ip"]       = g_apMode ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
+        String out;
+        serializeJson(doc, out);
+        r->send(200, "application/json", out);
+    });
+    server.on("/api/discover", HTTP_OPTIONS, [](AsyncWebServerRequest* r) {
+        r->send(204);
     });
     server.on("/api/reboot", HTTP_POST, [](AsyncWebServerRequest* r) {
         r->send(200, "text/plain", "rebooting");
@@ -1437,33 +1641,37 @@ void setup() {
     // is exactly what we want for sub-millisecond WebSocket response.
     xTaskCreatePinnedToCore(renderTask, "render", 4096, nullptr, 2, nullptr, 0);
 
+    // ESP-NOW: start listening for motion broadcasts
+    initESPNow();
+
     // Audio: starts only if a mic source is configured.
     audio::start();
 
     Serial.println("Ember ready");
 }
 
-// Broadcast an audio snapshot to all WS clients at ~20Hz when audio is active.
-// Tiny payload (~150 B), drives the live VU + band visualizer in the UI.
-static unsigned long g_lastAudioPush = 0;
-static void pushAudio() {
-    if (settings.micSource == 0) return;
+// Broadcast sensor & motion data to all WS clients at ~20Hz.
+static unsigned long g_lastSensorPush = 0;
+static void pushSensors() {
     if (ws.count() == 0) return;
     unsigned long now = millis();
-    if (now - g_lastAudioPush < 50) return;
-    g_lastAudioPush = now;
-
-    audio::Snap s;
-    audio::getSnap(s);
+    if (now - g_lastSensorPush < 50) return;
+    g_lastSensorPush = now;
 
     JsonDocument doc;
-    doc["type"]  = "audio";
-    doc["vu"]    = s.vu;
-    doc["peak"]  = s.peak;
-    doc["pitch"] = s.pitch;
-    doc["beat"]  = s.beat;
-    JsonArray a = doc["bands"].to<JsonArray>();
-    for (int i = 0; i < audio::BAND_COUNT; i++) a.add(s.bands[i]);
+    doc["type"]  = "sensors";
+    doc["motion"] = g_motion;
+
+    if (settings.micSource != 0) {
+        audio::Snap s;
+        audio::getSnap(s);
+        doc["vu"]    = s.vu;
+        doc["peak"]  = s.peak;
+        doc["pitch"] = s.pitch;
+        doc["beat"]  = s.beat;
+        JsonArray a = doc["bands"].to<JsonArray>();
+        for (int i = 0; i < audio::BAND_COUNT; i++) a.add(s.bands[i]);
+    }
 
     String out;
     serializeJson(doc, out);
@@ -1473,6 +1681,6 @@ static void pushAudio() {
 void loop() {
     dnsServer.processNextRequest();
     ws.cleanupClients();
-    pushAudio();
+    pushSensors();
     delay(20);
 }

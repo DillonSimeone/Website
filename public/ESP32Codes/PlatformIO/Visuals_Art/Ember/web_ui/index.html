@@ -27,6 +27,8 @@ html, body {
     color: var(--text);
     font: 14px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif;
     overflow: hidden;
+    overscroll-behavior-y: contain; 
+    overscroll-behavior-x: none;
 }
 .app {
     display: grid;
@@ -354,6 +356,7 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
     <aside>
         <div class="tabbar">
             <button class="tab active" data-tab="lib">Library</button>
+            <button class="tab" data-tab="espnow">ESP32NOW</button>
             <button class="tab" data-tab="saved">Saved</button>
             <button class="tab" data-tab="set">Settings</button>
             <button class="tab" data-tab="help">Help</button>
@@ -362,6 +365,24 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
         <div class="section" id="tab-lib">
             <h3>Demo Patterns</h3>
             <div class="cards" id="libCards"></div>
+        </div>
+
+        <div class="section" id="tab-espnow" style="display:none">
+            <h3>Motion Data</h3>
+            <div class="row">
+                <label>Current Motion</label>
+                <div style="flex: 1; background: var(--panel-2); border: 1px solid var(--border); height: 12px; border-radius: 6px; overflow: hidden; position: relative;">
+                    <div id="motionBar" style="background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 0%; height: 100%; transition: width 50ms;"></div>
+                </div>
+                <span class="val" id="motionVal">0.00</span>
+            </div>
+            <div class="row">
+                <label>Simulate Motion</label>
+                <input type="range" id="simMotion" min="0" max="100" value="0">
+            </div>
+            <p class="hint">Ember listens for ESP-NOW motion broadcasts (0.0–1.0). The sender must use the <strong>same Wi-Fi channel</strong> as Ember — check the serial log for <code>espnow: listening on channel N</code>. When connected to home Wi-Fi, the channel is set by your router (not channel 1).</p>
+            <h3 style="margin-top: 16px;">Motion Patterns</h3>
+            <div class="cards" id="motionCards"></div>
         </div>
 
         <div class="section" id="tab-saved" style="display:none">
@@ -467,6 +488,27 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                 </div>
             </div>
 
+            <h3 style="margin-top:16px">Wi-Fi &amp; Network</h3>
+            <div class="row">
+                <label>AP SSID</label>
+                <input type="text" id="wifiApSsid" style="width:160px" placeholder="Ember-XXXX">
+            </div>
+            <div class="row">
+                <label>Hostname</label>
+                <input type="text" id="wifiHost" style="width:160px" placeholder="ember">
+            </div>
+            <div class="row">
+                <label>Station SSID</label>
+                <input type="text" id="wifiStaSsid" style="width:160px" placeholder="Home Wi-Fi">
+            </div>
+            <div class="row">
+                <label>Station Pass</label>
+                <input type="password" id="wifiStaPass" style="width:160px" placeholder="Password">
+            </div>
+            <div style="margin-top:8px">
+                <button class="btn" id="wifiApplyBtn">Apply Wi-Fi Settings &amp; Reboot</button>
+            </div>
+
             <h3 style="margin-top:16px">System</h3>
             <button class="btn danger" id="reboot">Reboot Device</button>
         </div>
@@ -480,6 +522,12 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                 <code>n</code> / <code>pixelCount</code> — strip length<br>
                 <code>t</code> / <code>time</code> — seconds since boot<br>
                 <code>PI</code>, <code>TAU</code>
+            </p>
+            <h3 style="margin-top:14px">Conditionals</h3>
+            <p class="hint">
+                <code>if (cond) stmt;</code> — run stmt when cond is non-zero<br>
+                <code>if (cond) a; else b;</code> — optional else branch<br>
+                <code>a ? b : c</code> — ternary expression
             </p>
             <h3 style="margin-top:14px">Functions</h3>
             <p class="hint">
@@ -499,7 +547,8 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                 <code>pitch()</code> — dominant frequency, 0=low … 1=high<br>
                 <code>beat()</code> — 1 on attack, decays fast<br>
                 <code>band(n)</code> — band n (0..7), low→high<br>
-                <code>bass()</code>, <code>mid()</code>, <code>treble()</code> — band shortcuts
+                <code>bass()</code>, <code>mid()</code>, <code>treble()</code> — band shortcuts<br>
+                <code>motion()</code> / <code>motion</code> — ESP-NOW motion intensity 0→1
             </p>
         </div>
     </aside>
@@ -510,7 +559,7 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
     t.classList.add("active");
-    ["lib","saved","set","help"].forEach(id => {
+    ["lib","espnow","saved","set","help"].forEach(id => {
         document.getElementById("tab-" + id).style.display = (id === t.dataset.tab) ? "" : "none";
     });
 }));
@@ -521,7 +570,7 @@ const FNS  = ["sin","cos","tan","abs","sqrt","pow","floor","ceil","round","frac"
               "min","max","clamp","mix","lerp","step","smoothstep",
               "wave","triangle","square","time","perlin1D","perlin1d",
               "perlin2D","perlin2d","noise","noise2","random","hash","hsv","rgb",
-              "vu","peak","pitch","beat","band","bass","mid","treble"];
+              "vu","peak","pitch","beat","band","bass","mid","treble","motion"];
 const KWS  = new Set(KW), FNS_S = new Set(FNS);
 
 function highlight(src) {
@@ -649,6 +698,20 @@ class Parser {
         return {kind:"prog", stmts};
     }
     parseStmt() {
+        if (this.peek().t === "id" && this.peek().v === "if" && this.peek(1).t === "(") {
+            this.eat(); // if
+            this.eat(); // (
+            const cond = this.parseTern();
+            if (this.peek().t !== ")") throw new Error("expected ')'");
+            this.eat();
+            const thenStmt = this.parseStmt();
+            let elseStmt = null;
+            if (this.peek().t === "id" && this.peek().v === "else") {
+                this.eat();
+                elseStmt = this.parseStmt();
+            }
+            return {kind:"if", cond, thenStmt, elseStmt};
+        }
         if (this.peek().t === "id" && this.peek(1).t === "=") {
             const name = this.eat().v; this.eat();
             const val = this.parseTern();
@@ -808,20 +871,21 @@ const FNS_IMPL = {
     hash:     a => ihash(a[0]),
     // Audio — values are mirrored from the device's "audio" WS push so the
     // preview canvas reflects the same VU/bands the strip is reacting to.
-    vu:     () => LIVE_AUDIO.vu,
-    peak:   () => LIVE_AUDIO.peak,
-    pitch:  () => LIVE_AUDIO.pitch,
-    beat:   () => LIVE_AUDIO.beat,
+    vu:     () => LIVE_SENSORS.vu,
+    peak:   () => LIVE_SENSORS.peak,
+    pitch:  () => LIVE_SENSORS.pitch,
+    beat:   () => LIVE_SENSORS.beat,
     band:   a => {
         let n = Math.max(0, Math.min(7, Math.floor(a[0])));
-        return LIVE_AUDIO.bands[n] || 0;
+        return LIVE_SENSORS.bands[n] || 0;
     },
-    bass:   () => (LIVE_AUDIO.bands[0] + LIVE_AUDIO.bands[1]) * 0.5,
-    mid:    () => (LIVE_AUDIO.bands[3] + LIVE_AUDIO.bands[4]) * 0.5,
-    treble: () => (LIVE_AUDIO.bands[6] + LIVE_AUDIO.bands[7]) * 0.5,
+    bass:   () => (LIVE_SENSORS.bands[0] + LIVE_SENSORS.bands[1]) * 0.5,
+    mid:    () => (LIVE_SENSORS.bands[3] + LIVE_SENSORS.bands[4]) * 0.5,
+    treble: () => (LIVE_SENSORS.bands[6] + LIVE_SENSORS.bands[7]) * 0.5,
+    motion: () => LIVE_SENSORS.motion,
 };
 let RUN_T = 0;
-const LIVE_AUDIO = { vu: 0, peak: 0, pitch: 0, beat: 0, bands: [0,0,0,0,0,0,0,0] };
+const LIVE_SENSORS = { vu: 0, peak: 0, pitch: 0, beat: 0, bands: [0,0,0,0,0,0,0,0], motion: 0.0 };
 
 class Evaluator {
     constructor(ast) { this.ast = ast; this.reset(); }
@@ -834,11 +898,17 @@ class Evaluator {
         this.vars.i = i; this.vars.index = i;
         this.vars.n = n; this.vars.pixelCount = n;
         this.vars.t = t; this.vars.time = t;
+        this.vars.motion = LIVE_SENSORS.motion;
         RUN_T = t;
         for (const s of this.ast.stmts) this.evalStmt(s);
         return this.out;
     }
     evalStmt(s) {
+        if (s.kind === "if") {
+            if (this.evalExpr(s.cond) !== 0) this.evalStmt(s.thenStmt);
+            else if (s.elseStmt) this.evalStmt(s.elseStmt);
+            return;
+        }
         if (s.kind === "asn") this.vars[s.name] = this.evalExpr(s.val);
         else this.evalExpr(s.e);
     }
@@ -967,10 +1037,11 @@ function scheduleCompile() {
     recompileLocal();
     clearTimeout(compileTimer);
     compileTimer = setTimeout(() => {
-        if (ws && ws.readyState === 1) {
+        if (compileError) return;
+        if (ws && ws.readyState === 1 && ws.bufferedAmount === 0) {
             ws.send(JSON.stringify({action: "live", code: ta.value}));
         }
-    }, 140);
+    }, 300);
 }
 
 function connect() {
@@ -1007,6 +1078,10 @@ function connect() {
                 document.getElementById("micSmooth").value = Math.round(m.micSmooth * 100);
                 document.getElementById("micSmoothVal").textContent = (+m.micSmooth).toFixed(2);
             }
+            if (m.apSSID !== undefined) document.getElementById("wifiApSsid").value = m.apSSID;
+            if (m.hostname !== undefined) document.getElementById("wifiHost").value = m.hostname;
+            if (m.wifiSSID !== undefined) document.getElementById("wifiStaSsid").value = m.wifiSSID;
+            if (m.wifiPass !== undefined) document.getElementById("wifiStaPass").value = m.wifiPass;
             if (m.error) showError("device: " + m.error, false);
         }
         else if (m.type === "compile") {
@@ -1026,8 +1101,8 @@ function connect() {
         else if (m.type === "reboot") {
             showError("device rebooting…", true);
         }
-        else if (m.type === "audio") {
-            updateAudioViz(m);
+        else if (m.type === "audio" || m.type === "sensors") {
+            updateSensorViz(m);
         }
     });
 }
@@ -1195,25 +1270,154 @@ micSmoothSlider.addEventListener("change", () => {
     ws.send(JSON.stringify({action:"micSmooth", value: micSmoothSlider.value/100}));
 });
 
-function updateAudioViz(m) {
-    // Mirror the device's audio snapshot into the preview VM's globals.
-    LIVE_AUDIO.vu    = m.vu    || 0;
-    LIVE_AUDIO.peak  = m.peak  || 0;
-    LIVE_AUDIO.pitch = m.pitch || 0;
-    LIVE_AUDIO.beat  = m.beat  || 0;
-    if (m.bands) for (let i = 0; i < 8; i++) LIVE_AUDIO.bands[i] = m.bands[i] || 0;
+document.getElementById("wifiApplyBtn").addEventListener("click", () => {
+    const payload = {
+        action: "wifiSet",
+        apSSID: document.getElementById("wifiApSsid").value.trim(),
+        hostname: document.getElementById("wifiHost").value.trim(),
+        wifiSSID: document.getElementById("wifiStaSsid").value.trim(),
+        wifiPass: document.getElementById("wifiStaPass").value.trim()
+    };
+    if (!confirm("Save Wi-Fi settings? Device will reboot.")) return;
+    ws.send(JSON.stringify(payload));
+});
 
-    const bars = document.querySelectorAll("#audioViz .bar");
-    if (m.bands && bars.length === m.bands.length) {
-        for (let i = 0; i < bars.length; i++) {
-            bars[i].style.height = Math.round(Math.max(2, m.bands[i] * 100)) + "%";
-        }
+function updateSensorViz(m) {
+    // Mirror the device's sensor snapshot into the preview VM's globals.
+    if (m.motion !== undefined) {
+        LIVE_SENSORS.motion = m.motion;
+        document.getElementById("motionBar").style.width = Math.round(m.motion * 100) + "%";
+        document.getElementById("motionVal").textContent = m.motion.toFixed(2);
+        document.getElementById("simMotion").value = Math.round(m.motion * 100);
     }
-    document.getElementById("vuVal").textContent = (m.vu || 0).toFixed(2);
+    if (m.vu !== undefined) {
+        LIVE_SENSORS.vu    = m.vu    || 0;
+        LIVE_SENSORS.peak  = m.peak  || 0;
+        LIVE_SENSORS.pitch = m.pitch || 0;
+        LIVE_SENSORS.beat  = m.beat  || 0;
+        if (m.bands) for (let i = 0; i < 8; i++) LIVE_SENSORS.bands[i] = m.bands[i] || 0;
+
+        const bars = document.querySelectorAll("#audioViz .bar");
+        if (m.bands && bars.length === m.bands.length) {
+            for (let i = 0; i < bars.length; i++) {
+                bars[i].style.height = Math.round(Math.max(2, m.bands[i] * 100)) + "%";
+            }
+        }
+        document.getElementById("vuVal").textContent = (m.vu || 0).toFixed(2);
+    }
 }
 document.getElementById("reboot").addEventListener("click", () => {
     if (!confirm("Reboot the device?")) return;
     fetch("/api/reboot", {method:"POST"});
+});
+
+// ─── ESP-NOW Simulator & Motion Patterns ────────────────────────────────────
+const MOTION_PATTERNS = [
+    {
+        name: "Kinetic Wave",
+        tags: ["motion", "wave"],
+        code: "// Kinetic Wave\n// Motion controls wave frequency, speed, and brightness\nspeed = 0.5 + motion * 3.0;\nphase = t * speed;\n// Center-out distance\ndist = abs(i - n/2) / (n/2);\n// Wave pattern\nv = wave(dist * (1 + motion * 2) - phase);\nv = pow(v, 4) * (0.2 + motion * 0.8);\nh = motion * 0.2 + dist * 0.1 + t * 0.05;\nhsv(h, 0.9, v);"
+    },
+    {
+        name: "Chamber Ignite",
+        tags: ["motion", "fire"],
+        code: "// Chamber Ignite\n// Motion causes sparks to trigger and glow\nbaseGlow = motion * 0.3;\nspark = hash(i + t * 50) < (motion * 0.2) ? 1.0 : 0.0;\n// Fire colors (hue from 0.0 to 0.1)\nh = 0.02 + baseGlow * 0.1 + spark * 0.05;\ns = 1.0 - spark * 0.8;\nv = baseGlow + spark;\nhsv(h, s, v);"
+    },
+    {
+        name: "Swarm Centrifuge",
+        tags: ["motion", "swarm"],
+        code: "// Swarm Centrifuge\n// Motion pushes swarm outward and increases speed\ncenter = n / 2;\nspread = 2 + motion * (n / 3);\nspeed = t * (1.0 + motion * 5.0);\n// Swarm distribution\ndensity = wave((i - center) / spread + speed);\nv = pow(density, 3) * (0.3 + motion * 0.7);\nh = 0.6 + motion * 0.35 + (i/n) * 0.1;\nhsv(h, 0.85, v);"
+    },
+    {
+        name: "Velocity Warp",
+        tags: ["motion", "rainbow"],
+        code: "// Velocity Warp\n// Speed of the rainbow cycle is controlled by motion\nspeed = t * (0.1 + motion * 2.0);\nh = (i / n) * (1.0 + motion * 3.0) + speed;\nhsv(h, 0.9, 0.2 + motion * 0.8);"
+    },
+    {
+        name: "Shimmer Beacon",
+        tags: ["motion", "strobe"],
+        code: "// Shimmer Beacon\n// Motion increases strobe frequency and brightness\nfreq = 1.0 + motion * 12.0;\npulse = wave(t * freq);\n// Alternate odd/even pixels at high motion\nalt = (i % 2 == 0) ? pulse : (1.0 - pulse);\nmixPulse = mix(pulse, alt, motion);\nh = 0.5 + motion * 0.4; // Cyan to purple/pink\nv = mixPulse * (0.1 + motion * 0.9);\nhsv(h, 0.9, v);"
+    },
+    {
+        name: "Seismic Rumble",
+        tags: ["motion", "pulse"],
+        code: "// Seismic Rumble\n// Motion triggers outward red shockwaves\npulse = wave(t * (1.0 + motion * 8.0));\ndist = abs(i - n/2) / (n/2);\nv = wave(dist - t * (0.5 + motion * 3.0));\nv = pow(v, 6) * motion;\nhsv(0.0, 1.0, 0.05 + v);"
+    },
+    {
+        name: "Lightning Storm",
+        tags: ["motion", "lightning"],
+        code: "// Lightning Storm\n// Motion increases lightning frequency\nstrike = hash(t * 20) < (motion * 0.15) ? 1.0 : 0.0;\nv = strike * 0.9 + motion * 0.1;\nhsv(0.6, 1.0 - strike, v);"
+    },
+    {
+        name: "Engine Throttle",
+        tags: ["motion", "combust"],
+        code: "// Engine Throttle\n// Fuel burns hotter as motion increases\ncutoff = motion * n;\nisBurning = i < cutoff;\nflame = perlin2D(i/n * 4, t * 15.0);\nv = isBurning ? (0.3 + flame * 0.7) : 0.0;\nh = 0.01 + (1.0 - i/cutoff) * 0.08;\nhsv(h, 0.95, v);"
+    },
+    {
+        name: "Motion Compass",
+        tags: ["motion", "balance"],
+        code: "// Motion Compass\n// Center moves based on motion level\ncenter = n/2 + sin(t) * (motion * n/2);\nd = abs(i - center);\nv = clamp(1.0 - d / 5.0, 0.0, 1.0);\nhsv(0.35 + motion * 0.2, 0.9, v * v);"
+    },
+    {
+        name: "Shaking Lava",
+        tags: ["motion", "convection"],
+        code: "// Shaking Lava\n// Shaking accelerates convection speed and temperature\nspeed = t * (0.2 + motion * 4.0);\ndensity = perlin2D(i/n * 3, speed);\nv = smoothstep(0.3, 0.7, density);\nh = 0.02 + motion * 0.2 + density * 0.05;\nhsv(h, 1.0 - motion * 0.5, v);"
+    },
+    {
+        name: "Velocity Brush",
+        tags: ["motion", "trail"],
+        code: "// Velocity Paintbrush\n// Paints trail that fades based on motion\ntrail = wave(i/n - t * 0.5);\nv = pow(trail, 3) * (0.2 + motion * 0.8);\nh = t * 0.1 + i/n * 0.2;\nhsv(h, 0.9, v);"
+    },
+    {
+        name: "Bouncing Level",
+        tags: ["motion", "level"],
+        code: "// Bouncing Level\n// Bounce altitude matches motion intensity\nheight = motion * n;\nv = i < height ? 1.0 : (i < height + 1 ? (height - floor(height)) : 0.0);\nh = i/n * 0.3 + 0.33;\nhsv(h, 0.9, v);"
+    },
+    {
+        name: "Speed Ring",
+        tags: ["motion", "speed"],
+        code: "// Particle Accelerator\n// Speed of rotating sparks matches motion\nspeed = t * (0.5 + motion * 12.0);\npos = (i/n + speed) - floor(i/n + speed);\nv = pow(pos, 40) * (0.1 + motion * 0.9);\nhsv(0.75 + pos * 0.15, 0.85, v);"
+    },
+    {
+        name: "Zen Wave",
+        tags: ["motion", "surge"],
+        code: "// Zen Wave\n// Calmer surge gets brighter and more saturated with motion\nw = wave(i/n * 0.5 - t * 0.1);\nv = w * (0.25 + motion * 0.75);\nh = 0.52 + motion * 0.08;\nhsv(h, 0.4 + motion * 0.5, v);"
+    },
+    {
+        name: "Binary Strobe",
+        tags: ["motion", "strobe"],
+        code: "// Binary Strobe\n// Rapid strobe flashes proportional to motion\nstrobe = wave(t * (1.0 + motion * 20.0)) > 0.5 ? 1.0 : 0.0;\nalt = (i % 2 == 0) ? strobe : (1.0 - strobe);\nv = mix(0.1, alt, motion);\nhsv(0.9, 1.0 - motion * 0.2, v);"
+    }
+];
+
+function renderMotionLib() {
+    const root = document.getElementById("motionCards");
+    root.innerHTML = "";
+    MOTION_PATTERNS.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <div class="name">${esc(p.name)}</div>
+            <canvas width="60" height="6" style="width:100%;height:6px;border-radius:3px"></canvas>
+            <div class="tags">${(p.tags||[]).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`;
+        renderCardPreview(card.querySelector("canvas"), p.code);
+        card.addEventListener("click", () => {
+            ta.value = p.code;
+            document.getElementById("saveName").value = p.name;
+            syncHL();
+            scheduleCompile();
+        });
+        root.appendChild(card);
+    });
+}
+renderMotionLib();
+
+const simMotion = document.getElementById("simMotion");
+simMotion.addEventListener("input", () => {
+    const val = simMotion.value / 100;
+    LIVE_SENSORS.motion = val;
+    document.getElementById("motionBar").style.width = simMotion.value + "%";
+    document.getElementById("motionVal").textContent = val.toFixed(2);
 });
 
 // ─── Initial pattern ────────────────────────────────────────────────────────
@@ -1227,6 +1431,16 @@ const FALLBACK_LIB = [
     {name:"Plasma Field",  tags:["plasma"],  code:"x=i/n;p=perlin2D(x*4+t*0.3,t*0.2);hsv(p+time(20),1,1);"},
     {name:"Comet Trail",   tags:["motion"],  code:"head=time(4)*n;d=abs(i-head);d=min(d,abs(i-head-n));v=clamp(1-d/8,0,1);hsv(0.6,0.4,v*v);"},
     {name:"Heartbeat",     tags:["pulse"],   code:"p=frac(time(1.2));b=pow(wave(p*2),8)+pow(wave(p*2+0.3),8)*0.7;hsv(0,1,clamp(b,0,1));"},
+    {name:"Fire Breath",   tags:["flame"],   code:"noiseVal = perlin2D(i/n * 3, t * 1.5);\nv = pow(noiseVal, 2.5) * 0.8 + 0.2;\nh = 0.02 + noiseVal * 0.06;\nhsv(h, 0.95, v);"},
+    {name:"Glitch Matrix", tags:["glitch"],  code:"pos = (i + t * 25) % n;\nv = frac(pos / 15);\nv = pow(v, 6) * (hash(i + t*10) > 0.3 ? 1.0 : 0.2);\nhsv(0.33, 1.0, v);"},
+    {name:"Cyberpunk Neon",tags:["neon"],    code:"w1 = wave(i/n * 2 + t * 0.5);\nw2 = wave(i/n * 2 - t * 0.8 + 0.5);\nh = mix(0.85, 0.55, w1);\nv = mix(w1, w2, 0.5) * 0.9 + 0.1;\nhsv(h, 0.9, v);"},
+    {name:"Aurora Borealis",tags:["slow"],   code:"shift = perlin1D(t * 0.05) * 0.5;\npos = i/n + shift;\nh = 0.4 + perlin2D(pos * 2, t * 0.1) * 0.35;\nv = wave(i/n * 0.5 + t * 0.1) * 0.8 + 0.2;\nhsv(h, 0.85, v);"},
+    {name:"Double Heartbeat",tags:["pulse"], code:"cycle = frac(t / 1.2);\nb = pow(wave(cycle * 2.5), 10) + pow(wave(cycle * 2.5 - 0.25), 8) * 0.6;\nhsv(0.0, 1.0, clamp(b, 0.05, 1.0));"},
+    {name:"Lava Lamp",     tags:["warm"],    code:"b1 = perlin2D(i/n * 2, t * 0.2);\nb2 = perlin2D(i/n * 3 + 10, -t * 0.15);\ndensity = (b1 + b2) * 0.5;\nv = smoothstep(0.4, 0.6, density);\nh = 0.02 + density * 0.08;\nhsv(h, 0.95, v);"},
+    {name:"Zen Breath",    tags:["calm"],    code:"breath = wave(t * 0.2);\nv = 0.1 + breath * 0.7;\nh = 0.55 + breath * 0.05;\nhsv(h, 0.4, v);"},
+    {name:"Disco Strobe",  tags:["strobe"],  code:"block = floor(i / 4);\nflash = square(t * 3.0 + block * 0.25);\nh = hash(block) + t * 0.05;\nhsv(h, 0.9, flash);"},
+    {name:"Ocean Waves",   tags:["blue"],    code:"w1 = wave(i/n * 1.5 + t * 0.2);\nw2 = wave(i/n * 3.0 - t * 0.3);\nh = 0.55 + w1 * 0.1;\nv = (w1 + w2) * 0.4 + 0.2;\nhsv(h, 0.9, v);"},
+    {name:"Sparkler",      tags:["glitter"], code:"bg = 0.08;\nspark = hash(i + t * 80) > 0.97 ? 1.0 : 0.0;\nh = 0.08 + spark * 0.05;\ns = 1.0 - spark;\nv = bg + spark * 0.92;\nhsv(h, s, v);"},
 ];
 </script>
 </body>
