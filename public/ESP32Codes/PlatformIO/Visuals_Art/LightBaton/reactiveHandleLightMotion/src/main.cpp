@@ -5,6 +5,7 @@
 #include <FastLED.h>
 #include <WiFi.h>
 #include <esp_now.h>
+#include <esp_wifi.h>
 
 //--- Pin Definitions ---
 #define SDA_PIN 2
@@ -16,7 +17,14 @@
 
 //--- Configuration ---
 #define NUM_LEDS 74    // Approx 4 feet @ 60 LEDs/m
-#define INACTIVITY_TIMEOUT_MS 10000 
+#define INACTIVITY_TIMEOUT_MS 10000
+
+// ESP-NOW: when true, rotate through Wi-Fi channels 1–11 so receivers on any
+// channel (AP mode or home router) can hear motion packets. See ESP-NOW.md.
+constexpr bool CHANNEL_HOPPING = true;
+constexpr uint8_t FIXED_CHANNEL = 1;       // used when CHANNEL_HOPPING is false
+constexpr uint8_t HOP_CHANNEL_MIN = 1;
+constexpr uint8_t HOP_CHANNEL_MAX = 11;
 
 //--- Global Variables ---
 Adafruit_MPU6050 mpu;
@@ -31,16 +39,14 @@ uint8_t hue = 0;
 
 // ESP-NOW Broadcast Setup
 uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
-// Motor Pattern Variables
-unsigned long motorTimer = 0;
-int motorState = 0;
+uint8_t espNowChannel = FIXED_CHANNEL;
 
 //--- Function Prototypes ---
 void updateEnergy(float motionMag, float dt);
 void updateLEDs();
 void updateMotor(float dt);
 void goToSleep();
+void sendMotionEspNow();
 
 void setup() {
     Serial.begin(115200);
@@ -110,7 +116,17 @@ void setup() {
         if (esp_now_add_peer(&peerInfo) != ESP_OK) {
             Serial.println("Failed to add peer!");
         } else {
-            Serial.println("ESP-NOW Broadcast Peer Added Successfully!");
+            if (CHANNEL_HOPPING) {
+                espNowChannel = HOP_CHANNEL_MIN;
+                esp_wifi_set_channel(espNowChannel, WIFI_SECOND_CHAN_NONE);
+                Serial.printf("ESP-NOW: channel hopping ON (channels %u–%u)\n",
+                              HOP_CHANNEL_MIN, HOP_CHANNEL_MAX);
+            } else {
+                espNowChannel = FIXED_CHANNEL;
+                esp_wifi_set_channel(espNowChannel, WIFI_SECOND_CHAN_NONE);
+                Serial.printf("ESP-NOW: fixed channel %u\n", espNowChannel);
+            }
+            Serial.println("ESP-NOW broadcast peer added.");
         }
     }
 
@@ -152,7 +168,7 @@ void loop() {
     updateMotor(dt);
 
     EVERY_N_MILLISECONDS(30) {
-        esp_now_send(broadcastAddress, (uint8_t *) &energyLevel, sizeof(energyLevel));
+        sendMotionEspNow();
     }
 
     EVERY_N_MILLISECONDS(20) {
@@ -162,12 +178,26 @@ void loop() {
     EVERY_N_MILLISECONDS(500) {
         Serial.print("Motion: "); Serial.print(motionMag);
         Serial.print(" | Energy: "); Serial.print(energyLevel);
+        if (CHANNEL_HOPPING) {
+            Serial.print(" | ESP-NOW ch: "); Serial.print(espNowChannel);
+        }
         Serial.print(" | Timeout In: "); Serial.print((INACTIVITY_TIMEOUT_MS - (now - lastMotionTime)) / 1000.0);
         Serial.println("s");
     }
 
     FastLED.show();
     delay(10); 
+}
+
+void sendMotionEspNow() {
+    if (CHANNEL_HOPPING) {
+        esp_wifi_set_channel(espNowChannel, WIFI_SECOND_CHAN_NONE);
+    }
+    esp_now_send(broadcastAddress, (uint8_t*)&energyLevel, sizeof(energyLevel));
+    if (CHANNEL_HOPPING) {
+        espNowChannel++;
+        if (espNowChannel > HOP_CHANNEL_MAX) espNowChannel = HOP_CHANNEL_MIN;
+    }
 }
 
 void updateEnergy(float motionMag, float dt) {
