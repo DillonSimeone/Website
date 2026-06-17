@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WHO'S IN THE BATHROOM!? — The Ultimate File Unclogger</title>
+    <link rel="stylesheet" href="WhosInTheBathroomWeb_style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <span class="logo-icon">🧻</span>
+            <h1>WHO'S IN THE BATHROOM!?</h1>
+        </div>
+        <p class="tagline">Because when a file is locked, somebody is hogging the porcelain.</p>
+    </header>
+
+    <main>
+        <section class="hero-box">
+            <h2>The Scenario</h2>
+            <p>You try to delete a temporary build directory, or move a stray asset folder, and Windows hits you with that infuriating, mysterious corporate wall of text:</p>
+            <div class="windows-error-mimic">
+                <p><strong>Folder In Use</strong></p>
+                <p>The action can't be completed because the folder or a file in it is open in another program.</p>
+                <p class="error-sub">GoogleAntiGravityTokenTracker<br>Date created: 6/15/2026 2:58 AM</p>
+            </div>
+            <p class="rant">Which program?! Windows knows, but it won't tell you. It just sits there, blank-faced, offering a "Try Again" button that does absolutely nothing. Someone is locked inside that folder, reading the back of a shampoo bottle, and they refuse to come out.</p>
+        </section>
+
+        <section class="features">
+            <h2>System Features</h2>
+            <div class="grid-container">
+                <div class="feature-card">
+                    <h3>🔍 Knock on the Door</h3>
+                    <p>Right-click any stubborn folder or file, select <strong>"Find Locking Processes"</strong>, and violently query the internal Win32 kernel handle tables using completely isolated background threads to see exactly who is occupying the space.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚡ The "Flush" Option</h3>
+                    <p>An inline, targeted <code>PROCESS_TERMINATE</code> signal that forcefully evicts the single offending program right down the pipe so you can get back to work instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🚨 The Nuclear Flush (KILL ALL)</h3>
+                    <p>The ultimate architectural dynamic clearance tool. Evicts every single process currently locking your file asset simultaneously. Warning: Do not use if Windows Explorer itself is the one hiding out in there, unless you enjoy desktop environment updates via system reboots.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="interactive-demo">
+            <h2>Interactive Simulator</h2>
+            <p>Test your containment clearing reflexes below. Knock on the door and clear out the stalls!</p>
+            <div class="simulator-box">
+                <div class="controls">
+                    <button id="btn-knock" class="btn primary">Knock on Door (Scan)</button>
+                    <button id="btn-killall" class="btn danger hidden">FLUSH ALL</button>
+                </div>
+                <div id="bathroom-stalls" class="stalls-container">
+                    <div class="empty-state">The bathroom appears to be empty. Click scan to knock on the stall doors...</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="installation-guide">
+            <h2>One-Click Portability Pipeline</h2>
+            <p>No installer wizards, no telemetry, no bloatware. Just raw, unadulterated automation scripts for rapid deployment:</p>
+
+            <div class="code-block-header">Install.bat</div>
+            <pre><code>@echo off
+net session >nul 2>&1 || (echo Run as Admin! && pause && exit /b)
+set "DIR=%~dp0"
+if "%DIR:~-1%"=="\" set "DIR=%DIR:~0,-1%"
+regsvr32.exe /s "%DIR%\WhosInTheBathroomContextMenu.dll"
+reg add "HKLM\Software\WhosInTheBathroom" /v "HelperPath" /t REG_SZ /d "%DIR%\WhosInTheBathroomHelper.exe" /f
+echo Installed successfully!</code></pre>
+
+            <div class="code-block-header">Uninstall.bat</div>
+            <pre><code>@echo off
+net session >nul 2>&1 || (echo Run as Admin! && pause && exit /b)
+set "DIR=%~dp0"
+if "%DIR:~-1%"=="\" set "DIR=%DIR:~0,-1%"
+regsvr32.exe /u /s "%DIR%\WhosInTheBathroomContextMenu.dll"
+reg delete "HKLM\Software\WhosInTheBathroom" /f
+echo Uninstalled completely!</code></pre>
+        </section>
+    </main>
+
+    <footer>
+        <p>WhosInTheBathroom? is a lightweight, local-only, zero-dependency engineering tool. Keep your handles clean and your thread timeouts tight.</p>
+    </footer>
+
+    <script src="WhosInTheBathroomWeb_script.js"></script>
+</body>
+</html>
