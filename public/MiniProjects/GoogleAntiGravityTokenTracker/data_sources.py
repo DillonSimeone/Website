@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import sqlite3
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
@@ -39,12 +40,34 @@ class DataSource:
     extra_paths: list[Path] = field(default_factory=list)
 
 
+def _detect_runtime_root() -> Path:
+    """Resolve a writable app root relative to the running executable/script.
+
+    Preference order:
+    1) If frozen exe: nearest parent containing index.html (project root)
+    2) Frozen exe directory
+    3) Source checkout root (directory containing this module)
+    """
+    if getattr(sys, "frozen", False):
+        exe_dir = Path(sys.executable).resolve().parent
+        # Walk up a few levels to find the website/project root.
+        for candidate in [exe_dir, *exe_dir.parents[:5]]:
+            if (candidate / "index.html").is_file():
+                return candidate
+        return exe_dir
+    return Path(__file__).resolve().parent
+
+
 def get_app_data_dir(data_dir: str | Path | None = None) -> Path:
-    """Return the app config/cache root (~/.llm-token-tracker by default)."""
+    """Return the app config/cache root.
+
+    Defaults to a runtime-relative folder so the EXE writes cache.json beside the
+    project files when available, rather than in the user home directory.
+    """
     if data_dir:
         root = Path(data_dir).expanduser()
     else:
-        root = Path.home() / ".llm-token-tracker"
+        root = _detect_runtime_root()
     root.mkdir(parents=True, exist_ok=True)
     return root
 
