@@ -1,11 +1,23 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+_MODULE_FILES = [
+    'antigravity_parser.py',
+    'cursor_parser.py',
+    'cursor_csv_importer.py',
+    'data_sources.py',
+    'models.py',
+    'icon_gen.py',
+    'popup_ui.py',
+    'proto_decoder.py',
+    'token_parser.py',
+    'tray_app.py',
+]
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('icon_gen.py', '.'), ('popup_ui.py', '.'), ('proto_decoder.py', '.'), ('token_parser.py', '.'), ('tray_app.py', '.')],
+    datas=[(f, '.') for f in _MODULE_FILES],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

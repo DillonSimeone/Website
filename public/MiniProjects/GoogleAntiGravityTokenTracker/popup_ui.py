@@ -98,6 +98,7 @@ class TokenPopup:
                  on_refresh_interval_change: Callable[[int], None] | None = None,
                  on_refresh_now: Callable[[], None] | None = None,
                  last_scan_time: datetime | None = None,
+                 provider_breakdown: dict | None = None,
                  parent: tk.Tk | None = None):
         """
         Create the popup window.
@@ -109,6 +110,7 @@ class TokenPopup:
         self.on_refresh_interval_change = on_refresh_interval_change
         self.on_refresh_now = on_refresh_now
         self.refresh_interval_minutes = refresh_interval_minutes
+        self.provider_breakdown = provider_breakdown or {}
         self.parent = parent
 
         if parent is not None:
@@ -127,7 +129,7 @@ class TokenPopup:
         screen_w = self.root.winfo_screenwidth()
         screen_h = self.root.winfo_screenheight()
         popup_w = 450
-        popup_h = 680
+        popup_h = 760
         x = screen_w - popup_w - 12
         y = screen_h - popup_h - 52  # Above taskbar
         self.root.geometry(f"{popup_w}x{popup_h}+{x}+{y}")
@@ -141,7 +143,7 @@ class TokenPopup:
 
         # Build UI
         self._build_ui(stats_today, stats_7d, stats_30d, stats_lifetime,
-                       daily_breakdown, last_scan_time)
+                       daily_breakdown, last_scan_time, self.provider_breakdown)
 
         # Show with fade-in effect
         self.root.attributes('-alpha', 0.0)
@@ -244,7 +246,7 @@ class TokenPopup:
         except Exception:
             pass
 
-    def _build_ui(self, today, seven_d, thirty_d, lifetime, daily, last_scan):
+    def _build_ui(self, today, seven_d, thirty_d, lifetime, daily, last_scan, provider_breakdown):
         """Build all UI elements."""
         # Main scrollable frame
         canvas = tk.Canvas(self.root, bg=COLORS['bg'], highlightthickness=0)
@@ -279,6 +281,10 @@ class TokenPopup:
         # --- Today's Stats (hero section) ---
         self._build_hero_section(main_frame, today)
 
+        # --- Per-provider breakdown ---
+        if provider_breakdown:
+            self._build_provider_section(main_frame, provider_breakdown)
+
         # --- Divider ---
         self._divider(main_frame)
 
@@ -305,6 +311,10 @@ class TokenPopup:
         # --- Settings ---
         self._divider(main_frame)
         self._build_settings(main_frame)
+
+        # --- Source paths footer ---
+        if provider_breakdown:
+            self._build_sources_footer(main_frame, provider_breakdown)
 
         # Bottom padding
         tk.Frame(main_frame, bg=COLORS['bg'], height=16).pack(fill='x')
@@ -377,6 +387,66 @@ class TokenPopup:
         self._mini_stat(breakdown, "Turns",
                         str(today.get('turns', 0)),
                         COLORS['text_secondary'])
+
+    def _build_provider_section(self, parent, provider_breakdown):
+        """Build per-provider token breakdown under the Today hero."""
+        section = tk.Frame(parent, bg=COLORS['bg'], padx=20, pady=4)
+        section.pack(fill='x')
+
+        tk.Label(section, text="BY PROVIDER (TODAY)",
+                 bg=COLORS['bg'], fg=COLORS['text_secondary'],
+                 font=('Segoe UI', 9, 'bold')).pack(anchor='w', pady=(0, 6))
+
+        provider_labels = {
+            'antigravity': ('AntiGravity', COLORS['accent_blue']),
+            'cursor': ('Cursor', COLORS['accent_purple']),
+        }
+
+        for key, (label, color) in provider_labels.items():
+            info = provider_breakdown.get(key)
+            if not info:
+                continue
+
+            card = tk.Frame(section, bg=COLORS['bg_card'], padx=12, pady=8)
+            card.pack(fill='x', pady=2)
+
+            header = tk.Frame(card, bg=COLORS['bg_card'])
+            header.pack(fill='x')
+
+            tk.Label(header, text=label, bg=COLORS['bg_card'], fg=color,
+                     font=('Segoe UI Semibold', 10)).pack(side='left')
+
+            today_tokens = info.get('today_tokens', 0)
+            tk.Label(header, text=format_tokens(today_tokens),
+                     bg=COLORS['bg_card'], fg=COLORS['text_primary'],
+                     font=('Segoe UI Semibold', 11)).pack(side='right')
+
+            accounts = info.get('accounts', [])
+            if accounts:
+                acct_text = f"Account: {', '.join(accounts)}"
+                tk.Label(card, text=acct_text, bg=COLORS['bg_card'],
+                         fg=COLORS['text_dim'], font=('Segoe UI', 8)).pack(anchor='w')
+
+            disclaimer = info.get('disclaimer', '')
+            if disclaimer:
+                tk.Label(card, text=disclaimer, bg=COLORS['bg_card'],
+                         fg=COLORS['accent_amber'], font=('Segoe UI', 7)).pack(anchor='w')
+
+    def _build_sources_footer(self, parent, provider_breakdown):
+        """Show discovered data source paths."""
+        section = tk.Frame(parent, bg=COLORS['bg'], padx=20, pady=4)
+        section.pack(fill='x')
+
+        tk.Label(section, text="DATA SOURCES",
+                 bg=COLORS['bg'], fg=COLORS['text_dim'],
+                 font=('Segoe UI', 8, 'bold')).pack(anchor='w')
+
+        for provider, info in provider_breakdown.items():
+            for path in info.get('paths', [])[:3]:
+                display = path if len(path) < 55 else "..." + path[-52:]
+                tk.Label(section, text=f"  {provider}: {display}",
+                         bg=COLORS['bg'], fg=COLORS['text_dim'],
+                         font=('Segoe UI', 7)).pack(anchor='w')
 
     def _mini_stat(self, parent, label, value, color):
         """Build a small stat block inline."""
