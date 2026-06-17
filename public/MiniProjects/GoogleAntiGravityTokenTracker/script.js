@@ -7,120 +7,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const waterBar = document.getElementById('water-bar');
     const tooltip = document.getElementById('chart-tooltip');
     const modelGrid = document.getElementById('model-breakdown-grid');
+    const liveStatus = document.getElementById('live-status');
+    const liveError = document.getElementById('live-error');
+
+    const tokensTodayEl = document.getElementById('tokens-today');
+    const tokensWeekEl = document.getElementById('tokens-week');
+    const tokensMonthEl = document.getElementById('tokens-month');
+    const tokensLifetimeEl = document.getElementById('tokens-lifetime');
 
     // Constants
     const ML_PER_TOKEN = 0.0003; // Google: ~0.3 mL per 1K tokens
     const HUMAN_DAILY_WATER_ML = 2500; // ~2.5 Liters
 
-    // Model Colors mapping
-    const modelColors = {
-        'Gemini 3 Flash A': '#66fcf1', // Cyan
-        'Claude Opus 4 6 Thinking': '#b388ff', // Purple
-        'Gemini Pro Default': '#ffd740' // Amber
+    const PROVIDER_COLORS = {
+        antigravity: '#66fcf1',
+        cursor: '#b388ff',
+        other: '#ffd740',
     };
 
-    // Period model breakdowns matching screenshots
-    const modelDataByPeriod = {
-        'Today': [
-            { name: 'Gemini 3 Flash A', tokens: 3500000, color: modelColors['Gemini 3 Flash A'] },
-            { name: 'Claude Opus 4 6 Thinking', tokens: 150000, color: modelColors['Claude Opus 4 6 Thinking'] },
-            { name: 'Gemini Pro Default', tokens: 70000, color: modelColors['Gemini Pro Default'] }
-        ],
-        'Week': [
-            { name: 'Gemini 3 Flash A', tokens: 6450000, color: modelColors['Gemini 3 Flash A'] },
-            { name: 'Claude Opus 4 6 Thinking', tokens: 320000, color: modelColors['Claude Opus 4 6 Thinking'] },
-            { name: 'Gemini Pro Default', tokens: 160000, color: modelColors['Gemini Pro Default'] }
-        ],
-        'Month': [
-            { name: 'Gemini 3 Flash A', tokens: 9690000, color: modelColors['Gemini 3 Flash A'] },
-            { name: 'Claude Opus 4 6 Thinking', tokens: 442000, color: modelColors['Claude Opus 4 6 Thinking'] },
-            { name: 'Gemini Pro Default', tokens: 184700, color: modelColors['Gemini Pro Default'] }
-        ],
-        'Lifetime': [
-            { name: 'Gemini 3 Flash A', tokens: 9690000, color: modelColors['Gemini 3 Flash A'] },
-            { name: 'Claude Opus 4 6 Thinking', tokens: 442000, color: modelColors['Claude Opus 4 6 Thinking'] },
-            { name: 'Gemini Pro Default', tokens: 184700, color: modelColors['Gemini Pro Default'] }
-        ]
+    let live = {
+        periods: {
+            today: { label: 'Today', total: 0, breakdown: [] },
+            week: { label: 'Last 7 Days', total: 0, breakdown: [] },
+            month: { label: 'Last 30 Days', total: 0, breakdown: [] },
+            lifetime: { label: 'Lifetime', total: 0, breakdown: [] },
+        },
+        daily: [], // last 14 days: { dateKey, total, breakdown[] }
+        lastScanTime: null,
     };
-
-    // 30-day raw daily totals carefully selected so:
-    // - Today (Jun 15) is exactly 3.72M
-    // - Last 7 days (Jun 9 - Jun 15) sum is exactly 6.93M
-    // - Last 30 days (May 17 - Jun 15) sum is exactly 10.31M
-    const rawDailyTotals = [
-        { date: 'May 17', total: 150000 },
-        { date: 'May 18', total: 220000 },
-        { date: 'May 19', total: 310000 },
-        { date: 'May 20', total: 0 },
-        { date: 'May 21', total: 120000 },
-        { date: 'May 22', total: 80000 },
-        { date: 'May 23', total: 0 },
-        { date: 'May 24', total: 250000 },
-        { date: 'May 25', total: 410000 },
-        { date: 'May 26', total: 320000 },
-        { date: 'May 27', total: 180000 },
-        { date: 'May 28', total: 0 },
-        { date: 'May 29', total: 90000 },
-        { date: 'May 30', total: 140000 },
-        { date: 'May 31', total: 0 },
-        { date: 'Jun 01', total: 280000 },
-        { date: 'Jun 02', total: 340000 },
-        { date: 'Jun 03', total: 150000 },
-        { date: 'Jun 04', total: 0 },
-        { date: 'Jun 05', total: 110000 },
-        { date: 'Jun 06', total: 90000 },
-        { date: 'Jun 07', total: 0 },
-        { date: 'Jun 08', total: 140000 },
-        { date: 'Jun 09', total: 350000 },
-        { date: 'Jun 10', total: 540000 },
-        { date: 'Jun 11', total: 450000 },
-        { date: 'Jun 12', total: 0 },
-        { date: 'Jun 13', total: 620000 },
-        { date: 'Jun 14', total: 1250000 },
-        { date: 'Jun 15', total: 3720000 } // Today
-    ];
-
-    // Distribute daily totals dynamically among models with slight realistic variation
-    const dailyData = rawDailyTotals.map(item => {
-        const total = item.total;
-        if (total === 0) {
-            return {
-                date: item.date,
-                total: 0,
-                breakdown: [
-                    { name: 'Gemini 3 Flash A', tokens: 0, color: modelColors['Gemini 3 Flash A'] },
-                    { name: 'Claude Opus 4 6 Thinking', tokens: 0, color: modelColors['Claude Opus 4 6 Thinking'] },
-                    { name: 'Gemini Pro Default', tokens: 0, color: modelColors['Gemini Pro Default'] }
-                ]
-            };
-        }
-
-        // Base distributions: Gemini Flash (~93.9%), Claude (~4.3%), Pro (~1.8%)
-        let pFlash = 0.939;
-        let pClaude = 0.043;
-        let pPro = 0.018;
-
-        // Add minor variation based on date to make stacked bars look alive
-        const charSum = item.date.split('').reduce((sum, c) => sum + c.charCodeAt(0), 0);
-        const variation = (charSum % 10 - 5) / 500; // -1% to +1%
-        pFlash += variation;
-        pClaude -= variation * 0.7;
-        pPro -= variation * 0.3;
-
-        const flashTokens = Math.round(total * pFlash);
-        const claudeTokens = Math.round(total * pClaude);
-        const proTokens = total - flashTokens - claudeTokens; // Perfect sum match
-
-        return {
-            date: item.date,
-            total: total,
-            breakdown: [
-                { name: 'Gemini 3 Flash A', tokens: flashTokens, color: modelColors['Gemini 3 Flash A'] },
-                { name: 'Claude Opus 4 6 Thinking', tokens: claudeTokens, color: modelColors['Claude Opus 4 6 Thinking'] },
-                { name: 'Gemini Pro Default', tokens: proTokens, color: modelColors['Gemini Pro Default'] }
-            ]
-        };
-    });
 
     // Helper: format token values
     function formatTokens(count) {
@@ -238,24 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear svg contents
         svg.innerHTML = '';
 
-        // Add gradients definition to support glowing fills
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        defs.innerHTML = `
-            <linearGradient id="gemini-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#66fcf1" />
-                <stop offset="100%" stop-color="#00a896" />
-            </linearGradient>
-            <linearGradient id="claude-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#b388ff" />
-                <stop offset="100%" stop-color="#6200ea" />
-            </linearGradient>
-            <linearGradient id="pro-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#ffd740" />
-                <stop offset="100%" stop-color="#b58d00" />
-            </linearGradient>
-        `;
-        svg.appendChild(defs);
-
+        const dailyData = live.daily || [];
         const width = 800;
         const height = 300;
         const paddingLeft = 60;
@@ -266,11 +163,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const chartHeight = height - paddingTop - paddingBottom;
         const chartWidth = width - paddingLeft - paddingRight;
 
-        // Scale Y-axis to 4.0M max total tokens
-        const maxVal = 4000000;
+        const maxVal = Math.max(1, ...dailyData.map(d => d.total));
+
+        // Add gradients definition (provider keyed)
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        defs.innerHTML = `
+            <linearGradient id="antigravity-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#66fcf1" />
+                <stop offset="100%" stop-color="#00a896" />
+            </linearGradient>
+            <linearGradient id="cursor-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#b388ff" />
+                <stop offset="100%" stop-color="#6200ea" />
+            </linearGradient>
+            <linearGradient id="other-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffd740" />
+                <stop offset="100%" stop-color="#b58d00" />
+            </linearGradient>
+        `;
+        svg.appendChild(defs);
 
         // Draw Y Axis Ticks and Grid lines
-        const yTicks = [0, 1000000, 2000000, 3000000, 4000000];
+        const yTicks = [0, 0.25, 0.5, 0.75, 1].map(p => Math.round(maxVal * p));
         yTicks.forEach(tick => {
             const y = paddingTop + chartHeight - (tick / maxVal) * chartHeight;
             
@@ -292,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
             text.setAttribute('fill', '#9aa0a6');
             text.setAttribute('font-size', '10');
             text.setAttribute('text-anchor', 'end');
-            text.textContent = tick === 0 ? '0.0' : `${(tick / 1000000).toFixed(1)}M`;
+            text.textContent = tick === 0 ? '0' : formatTokens(tick);
             svg.appendChild(text);
         });
 
@@ -316,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         svg.appendChild(yAxis);
 
         // Draw stacked bars
-        const numBars = dailyData.length;
+        const numBars = dailyData.length || 1;
         const barWidth = 14;
         const gap = (chartWidth - numBars * barWidth) / (numBars - 1);
 
@@ -329,21 +243,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const barGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             barGroup.setAttribute('class', 'stacked-bar-group');
             barGroup.style.transition = 'opacity 0.2s';
-            if (day.date === 'Jun 15') {
-                barGroup.classList.add('active-day');
-            }
 
             if (day.total > 0) {
-                // Models draw stack: Gemini Pro at the bottom, then Claude, then Gemini Flash at the top
-                const models = [
-                    { name: 'Gemini Pro Default', grad: 'url(#pro-grad)' },
-                    { name: 'Claude Opus 4 6 Thinking', grad: 'url(#claude-grad)' },
-                    { name: 'Gemini 3 Flash A', grad: 'url(#gemini-grad)' }
+                const stacks = [
+                    { key: 'other', grad: 'url(#other-grad)' },
+                    { key: 'cursor', grad: 'url(#cursor-grad)' },
+                    { key: 'antigravity', grad: 'url(#antigravity-grad)' },
                 ];
 
-                models.forEach(modelInfo => {
-                    const modelEntry = day.breakdown.find(m => m.name === modelInfo.name);
-                    const tokens = modelEntry ? modelEntry.tokens : 0;
+                stacks.forEach(stack => {
+                    const stackEntry = day.breakdown.find(m => m.name === stack.key);
+                    const tokens = stackEntry ? stackEntry.tokens : 0;
                     if (tokens > 0) {
                         const h = (tokens / maxVal) * chartHeight;
                         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -351,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         rect.setAttribute('y', currentY - h);
                         rect.setAttribute('width', barWidth);
                         rect.setAttribute('height', h);
-                        rect.setAttribute('fill', modelInfo.grad);
+                        rect.setAttribute('fill', stack.grad);
                         rect.setAttribute('rx', '1');
                         rect.style.transition = 'filter 0.2s';
                         barGroup.appendChild(rect);
@@ -432,41 +342,163 @@ document.addEventListener('DOMContentLoaded', () => {
             periodCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             
-            const tokens = parseInt(card.getAttribute('data-tokens')) || 0;
+            const period = card.getAttribute('data-period') || 'today';
             const label = card.getAttribute('data-label') || 'Selected Period';
+            const tokens = (live.periods[period]?.total) || 0;
             calculateWaterForTokens(tokens, label);
-
-            // Update model breakdown grid based on selected period
-            let periodKey = 'Today';
-            if (label.includes('7 Days') || label.includes('Week')) {
-                periodKey = 'Week';
-            } else if (label.includes('30 Days') || label.includes('Month')) {
-                periodKey = 'Month';
-            } else if (label.includes('Lifetime')) {
-                periodKey = 'Lifetime';
-            }
-            updateModelGrid(modelDataByPeriod[periodKey]);
+            updateModelGrid(live.periods[period]?.breakdown || []);
         });
     });
 
-    // Initialize chart
-    renderChart();
-
-    // Initialize with active card (Today)
-    const initialActiveCard = document.querySelector('.stat-period-card.active');
-    if (initialActiveCard) {
-        const tokens = parseInt(initialActiveCard.getAttribute('data-tokens')) || 0;
-        const label = initialActiveCard.getAttribute('data-label') || 'Today';
-        calculateWaterForTokens(tokens, label);
-        
-        let periodKey = 'Today';
-        if (label.includes('7 Days') || label.includes('Week')) {
-            periodKey = 'Week';
-        } else if (label.includes('30 Days') || label.includes('Month')) {
-            periodKey = 'Month';
-        } else if (label.includes('Lifetime')) {
-            periodKey = 'Lifetime';
-        }
-        updateModelGrid(modelDataByPeriod[periodKey]);
+    function startOfLocalDay(d) {
+        const dt = new Date(d);
+        dt.setHours(0, 0, 0, 0);
+        return dt;
     }
+
+    function isSameLocalDay(a, b) {
+        return a.getFullYear() === b.getFullYear()
+            && a.getMonth() === b.getMonth()
+            && a.getDate() === b.getDate();
+    }
+
+    function parseEntries(cacheJson) {
+        const entries = Array.isArray(cacheJson.entries) ? cacheJson.entries : [];
+        const parsed = [];
+        for (const e of entries) {
+            if (!e || !e.timestamp) continue;
+            const ts = new Date(e.timestamp);
+            if (Number.isNaN(ts.getTime())) continue;
+            const prompt = Number(e.prompt_tokens || 0);
+            const output = Number(e.output_tokens || 0);
+            const provider = e.provider || 'unknown';
+            parsed.push({
+                ts,
+                provider,
+                model: e.model || 'unknown',
+                tokens: Math.max(0, prompt) + Math.max(0, output),
+            });
+        }
+        return parsed;
+    }
+
+    function computeBreakdown(entries) {
+        const byModel = new Map();
+        let total = 0;
+        for (const e of entries) {
+            total += e.tokens;
+            const key = `[${e.provider}] ${e.model}`;
+            byModel.set(key, (byModel.get(key) || 0) + e.tokens);
+        }
+        const rows = Array.from(byModel.entries())
+            .map(([name, tokens]) => ({ name, tokens, color: name.includes('[cursor]') ? PROVIDER_COLORS.cursor : PROVIDER_COLORS.antigravity }))
+            .sort((a, b) => b.tokens - a.tokens);
+        return { total, breakdown: rows };
+    }
+
+    function computeDaily(entries, days = 14) {
+        const now = new Date();
+        const cutoff = startOfLocalDay(now);
+        cutoff.setDate(cutoff.getDate() - (days - 1));
+
+        const buckets = new Map(); // dateKey -> { total, ag, cursor, other }
+        for (const e of entries) {
+            const localTs = new Date(e.ts);
+            if (localTs < cutoff) continue;
+            const d = startOfLocalDay(localTs);
+            const dateKey = d.toISOString().slice(0, 10); // ok for ordering
+            const b = buckets.get(dateKey) || { dateKey, total: 0, antigravity: 0, cursor: 0, other: 0 };
+            b.total += e.tokens;
+            if (e.provider === 'antigravity') b.antigravity += e.tokens;
+            else if (e.provider === 'cursor') b.cursor += e.tokens;
+            else b.other += e.tokens;
+            buckets.set(dateKey, b);
+        }
+
+        // Fill missing days with zeros
+        const out = [];
+        for (let i = 0; i < days; i++) {
+            const d = startOfLocalDay(cutoff);
+            d.setDate(d.getDate() + i);
+            const dateKey = d.toISOString().slice(0, 10);
+            const b = buckets.get(dateKey) || { dateKey, total: 0, antigravity: 0, cursor: 0, other: 0 };
+            out.push({
+                date: dateKey.slice(5), // MM-DD
+                dateKey,
+                total: b.total,
+                breakdown: [
+                    { name: 'antigravity', tokens: b.antigravity, color: PROVIDER_COLORS.antigravity },
+                    { name: 'cursor', tokens: b.cursor, color: PROVIDER_COLORS.cursor },
+                    { name: 'other', tokens: b.other, color: PROVIDER_COLORS.other },
+                ],
+            });
+        }
+        return out;
+    }
+
+    function updatePeriodCards(periods) {
+        if (tokensTodayEl) tokensTodayEl.textContent = formatTokens(periods.today.total);
+        if (tokensWeekEl) tokensWeekEl.textContent = formatTokens(periods.week.total);
+        if (tokensMonthEl) tokensMonthEl.textContent = formatTokens(periods.month.total);
+        if (tokensLifetimeEl) tokensLifetimeEl.textContent = formatTokens(periods.lifetime.total);
+    }
+
+    async function loadLiveCache() {
+        try {
+            if (liveError) liveError.style.display = 'none';
+            if (liveStatus) liveStatus.textContent = 'Loading live data from ./cache.json…';
+
+            const resp = await fetch('./cache.json', { cache: 'no-store' });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const cacheJson = await resp.json();
+
+            const entries = parseEntries(cacheJson);
+            const now = new Date();
+
+            const startToday = startOfLocalDay(now);
+            const startWeek = startOfLocalDay(now); startWeek.setDate(startWeek.getDate() - 6);
+            const startMonth = startOfLocalDay(now); startMonth.setDate(startMonth.getDate() - 29);
+
+            const todayEntries = entries.filter(e => e.ts >= startToday);
+            const weekEntries = entries.filter(e => e.ts >= startWeek);
+            const monthEntries = entries.filter(e => e.ts >= startMonth);
+
+            live.periods.today = { label: 'Today', ...computeBreakdown(todayEntries) };
+            live.periods.week = { label: 'Last 7 Days', ...computeBreakdown(weekEntries) };
+            live.periods.month = { label: 'Last 30 Days', ...computeBreakdown(monthEntries) };
+            live.periods.lifetime = { label: 'Lifetime', ...computeBreakdown(entries) };
+            live.daily = computeDaily(entries, 14);
+
+            updatePeriodCards(live.periods);
+            renderChart();
+
+            // Initialize view from active card
+            const initialActiveCard = document.querySelector('.stat-period-card.active');
+            const period = initialActiveCard?.getAttribute('data-period') || 'today';
+            const label = initialActiveCard?.getAttribute('data-label') || 'Today';
+            calculateWaterForTokens(live.periods[period]?.total || 0, label);
+            updateModelGrid(live.periods[period]?.breakdown || []);
+
+            const lastScan = cacheJson.last_scan_time ? new Date(cacheJson.last_scan_time) : null;
+            if (liveStatus) {
+                liveStatus.textContent = lastScan
+                    ? `Live data loaded. Last scan: ${lastScan.toLocaleString()}`
+                    : 'Live data loaded.';
+            }
+        } catch (err) {
+            if (liveStatus) liveStatus.textContent = 'Live data not available.';
+            if (liveError) {
+                liveError.style.display = 'block';
+                liveError.textContent =
+                    `Could not load ./cache.json. Make sure it exists and you are serving this folder with a web server (file:// cannot fetch local JSON reliably). Error: ${String(err)}`;
+            }
+            // fall back to empty rendering
+            updatePeriodCards(live.periods);
+            renderChart();
+            calculateWaterForTokens(0, 'Today');
+            updateModelGrid([]);
+        }
+    }
+
+    loadLiveCache();
 });

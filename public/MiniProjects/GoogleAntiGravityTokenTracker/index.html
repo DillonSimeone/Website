@@ -14,7 +14,7 @@
     
     <header>
         <div class="logo">
-            <span class="logo-accent">AntiGravity</span> Token Tracker
+            <span class="logo-accent">LLM</span> Token Tracker
         </div>
         <a href="https://github.com" class="btn-github">View Source</a>
     </header>
@@ -23,30 +23,34 @@
         <!-- Hero Section -->
         <section class="hero">
             <h1>Hardware-Free LLM Monitoring</h1>
-            <p class="subtitle">A Windows system tray companion that reverse-engineers binary protobuf structures to track your daily Gemini token usage, comparing cooling overheads to human biology.</p>
+            <p class="subtitle">A Windows system tray companion that tracks <strong>AntiGravity</strong> + <strong>Cursor</strong> token usage from local databases, comparing cooling overheads to human biology.</p>
         </section>
 
         <!-- Stats Visualizer Card -->
         <section class="water-calculator-card">
-            <h2>Dillon Simeone's Current Token Usage</h2>
-            <p class="description">Click on any period card below to view the total mL/L of data center cooling water consumed.</p>
+            <h2>Dillon Simeone Current Token Usage</h2>
+            <p class="description">This page loads token usage from the tracker cache JSON. Click a period card to view cooling water equivalents.</p>
+            <p class="description" id="live-status" style="margin-top: 8px; opacity: 0.9;">
+                Loading live data…
+            </p>
+            <p class="description" id="live-error" style="margin-top: 10px; color: #ffb4a2; display: none;"></p>
             
             <div class="stats-interactive-grid">
-                <div class="stat-period-card active" data-tokens="3720000" data-label="Today">
+                <div class="stat-period-card active" data-period="today" data-label="Today">
                     <span class="period-title">Today</span>
-                    <span class="token-value">3.72M</span>
+                    <span class="token-value" id="tokens-today">—</span>
                 </div>
-                <div class="stat-period-card" data-tokens="6930000" data-label="Last 7 Days">
+                <div class="stat-period-card" data-period="week" data-label="Last 7 Days">
                     <span class="period-title">Week</span>
-                    <span class="token-value">6.93M</span>
+                    <span class="token-value" id="tokens-week">—</span>
                 </div>
-                <div class="stat-period-card" data-tokens="10310000" data-label="Last 30 Days">
+                <div class="stat-period-card" data-period="month" data-label="Last 30 Days">
                     <span class="period-title">Month</span>
-                    <span class="token-value">10.31M</span>
+                    <span class="token-value" id="tokens-month">—</span>
                 </div>
-                <div class="stat-period-card" data-tokens="10310000" data-label="Lifetime">
+                <div class="stat-period-card" data-period="lifetime" data-label="Lifetime">
                     <span class="period-title">Lifetime</span>
-                    <span class="token-value">10.31M</span>
+                    <span class="token-value" id="tokens-lifetime">—</span>
                 </div>
             </div>
             
