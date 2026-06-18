@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wireless Kinetic Light Baton | ESP-NOW &amp; Motion Tracking</title>
     <meta name="description"
-        content="A motion-reactive light baton system built on ESP32-C3, integrating MPU6050 motion tracking, custom haptic feedback, and real-time ESP-NOW LED strip synchronization.">
+        content="A motion-reactive light baton system built on ESP32-C3, integrating MPU6050/MPU6500 motion tracking, custom haptic feedback, and real-time ESP-NOW LED strip synchronization.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -21,7 +21,7 @@
         <div class="header-container">
             <span class="badge">ESP32-C3 &amp; ESP-NOW</span>
             <h1>Wireless Kinetic Light Baton</h1>
-            <p class="subtitle">A real-time motion-to-light synchronizer utilizing MPU6050 IMU tracking and
+            <p class="subtitle">A real-time motion-to-light synchronizer utilizing MPU6050/MPU6500 IMU tracking and
                 sub-millisecond broadcast latency.</p>
         </div>
     </header>
@@ -137,7 +137,7 @@
                     <ul class="retro-list">
                         <li><strong>Central Rod:</strong> Tube Outer Diameter and internal wall thickness.</li>
                         <li><strong>Housing / Sled:</strong> Sized length/wall thickness to accommodate battery cells,
-                            ESP32-C3, haptic motor driver, switch, and MPU6050 IMU.</li>
+                            ESP32-C3, haptic motor driver, switch, and MPU6050/MPU6500 IMU.</li>
                         <li><strong>Ridges &amp; Rings:</strong> Decorative outer profiles, flange heights, and end-cap
                             slip tolerances.</li>
                         <li><strong>Fasteners:</strong> M3 clearance hole diameters and threaded depth tolerances.</li>
@@ -165,6 +165,8 @@
                                 <tr>
                                     <th>Function</th>
                                     <th>GPIO</th>
+                                    <th>MPU6050</th>
+                                    <th>MPU6500</th>
                                     <th>Description</th>
                                 </tr>
                             </thead>
@@ -172,32 +174,58 @@
                                 <tr>
                                     <td><span class="pin-badge pin-sda">I2C SDA</span></td>
                                     <td><code>2</code></td>
-                                    <td>Data line for MPU6050 accelerometer</td>
+                                    <td><code>SDA</code></td>
+                                    <td><code>SDA/SDI</code></td>
+                                    <td>I2C data line (same wiring for both sensors)</td>
                                 </tr>
                                 <tr>
                                     <td><span class="pin-badge pin-scl">I2C SCL</span></td>
                                     <td><code>3</code></td>
-                                    <td>Clock line for MPU6050 accelerometer</td>
+                                    <td><code>SCL</code></td>
+                                    <td><code>SCL/SCLK</code></td>
+                                    <td>I2C clock line (same wiring for both sensors)</td>
                                 </tr>
                                 <tr>
                                     <td><span class="pin-badge pin-gnd">Soft GND</span></td>
                                     <td><code>4</code></td>
-                                    <td>Asserted LOW in setup to ground MPU6050</td>
+                                    <td><code>GND</code></td>
+                                    <td><code>GND</code></td>
+                                    <td>Asserted LOW in setup as soft-ground for sensor</td>
                                 </tr>
                                 <tr>
                                     <td><span class="pin-badge pin-int">INT Pin</span></td>
                                     <td><code>5</code></td>
-                                    <td>MPU6050 motion interrupt; wakes device from deep sleep</td>
+                                    <td><code>INT</code></td>
+                                    <td><code>INT</code></td>
+                                    <td>Motion interrupt line; wakes device from deep sleep</td>
                                 </tr>
                                 <tr>
                                     <td><span class="pin-badge pin-led">FastLED</span></td>
                                     <td><code>6</code></td>
+                                    <td><code>n/a</code></td>
+                                    <td><code>n/a</code></td>
                                     <td>Signal line for local WS2812B strip</td>
                                 </tr>
                                 <tr>
                                     <td><span class="pin-badge pin-motor">Motor PWM</span></td>
                                     <td><code>7</code></td>
+                                    <td><code>n/a</code></td>
+                                    <td><code>n/a</code></td>
                                     <td>PWM driver control for haptic vibration motor</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-vcc">Sensor Power</span></td>
+                                    <td><code>3.3V</code></td>
+                                    <td><code>VCC</code></td>
+                                    <td><code>VDD/VCC</code></td>
+                                    <td>Use 3.3V logic/power domain for both IMUs</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-vcc">Extra Pins</span></td>
+                                    <td><code>NC</code></td>
+                                    <td><code>AD0, XDA, XCL, FSYNC</code></td>
+                                    <td><code>NCS, SDO, FSYNC</code></td>
+                                    <td>Leave unconnected in this project (I2C mode only)</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -240,7 +268,7 @@
                         separate ESP32-C3 modules to minimize wiring complexity and ensure latency-free performance.</p>
 
                     <h3>1. Reactive Handle (Sender)</h3>
-                    <p>The handle read loop polls the MPU6050 IMU over I2C to calculate physical swing acceleration and
+                    <p>The handle read loop polls the MPU6050/MPU6500 IMU over I2C to calculate physical swing acceleration and
                         rotation. It applies a soft-ground trick to simplify electrical routing by pulling Pin 4 LOW to
                         act as ground. The combined motion vector drives a haptic driver chip on Pin 7, switching
                         vibration states dynamically:</p>

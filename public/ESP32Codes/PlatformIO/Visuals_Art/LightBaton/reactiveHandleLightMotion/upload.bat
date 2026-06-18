@@ -23,9 +23,21 @@ if errorlevel 1 (
 echo [i] Using: %PIO%
 echo [i] Project: %CD%
 
-call "%PIO%" run --target upload
+echo.
+echo Which sensor?
+echo   1. MPU 6050
+echo   2. MPU 6500
+choice /c 12 /n /m "Select [1-2]: "
+if errorlevel 2 (
+    set "TARGET_ENV=esp32c3_mpu6500"
+) else (
+    set "TARGET_ENV=esp32c3_mpu6050"
+)
+
+echo [i] Upload environment: !TARGET_ENV!
+call "%PIO%" run --environment !TARGET_ENV! --target upload
 if !ERRORLEVEL! equ 0 (
     timeout /t 2 /nobreak >nul
-    call "%PIO%" device monitor
+    call "%PIO%" device monitor --environment !TARGET_ENV!
 )
 pause

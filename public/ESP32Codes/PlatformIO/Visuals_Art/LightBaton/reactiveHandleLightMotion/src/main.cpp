@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
 #include <Wire.h>
 #include <FastLED.h>
 #include <WiFi.h>
@@ -16,7 +14,7 @@
 #define LED_PIN 6
 
 //--- Configuration ---
-#define NUM_LEDS 74    // Approx 4 feet @ 60 LEDs/m
+#define NUM_LEDS 76    // Approx 4 feet @ 60 LEDs/m
 #define INACTIVITY_TIMEOUT_MS 10000
 
 // ESP-NOW: when true, rotate through Wi-Fi channels 1–11 so receivers on any
@@ -26,8 +24,168 @@ constexpr uint8_t FIXED_CHANNEL = 1;       // used when CHANNEL_HOPPING is false
 constexpr uint8_t HOP_CHANNEL_MIN = 1;
 constexpr uint8_t HOP_CHANNEL_MAX = 11;
 
+#if defined(SENSOR_MPU6050) && defined(SENSOR_MPU6500)
+#error "Define only one of SENSOR_MPU6050 or SENSOR_MPU6500."
+#elif !defined(SENSOR_MPU6050) && !defined(SENSOR_MPU6500)
+#error "Define SENSOR_MPU6050 or SENSOR_MPU6500 in build_flags."
+#endif
+
+enum class SensorType : uint8_t {
+    MPU6050,
+    MPU6500
+};
+
+#if defined(SENSOR_MPU6500)
+constexpr SensorType ACTIVE_SENSOR = SensorType::MPU6500;
+#else
+constexpr SensorType ACTIVE_SENSOR = SensorType::MPU6050;
+#endif
+
+struct MotionSample {
+    float accelX;
+    float accelY;
+    float accelZ;
+    float gyroX;
+    float gyroY;
+    float gyroZ;
+};
+
+class MpuSensor {
+public:
+    bool begin(TwoWire& wire, SensorType sensorType) {
+        wire_ = &wire;
+        sensorType_ = sensorType;
+        address_ = kDefaultAddressLow;
+
+        if (!detectAndConfigure()) {
+            address_ = kDefaultAddressHigh;
+            if (!detectAndConfigure()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool readMotion(MotionSample& sample) {
+        uint8_t raw[14];
+        if (!readRegisters(kRegAccelXoutH, raw, sizeof(raw))) {
+            return false;
+        }
+
+        const int16_t ax = (static_cast<int16_t>(raw[0]) << 8) | raw[1];
+        const int16_t ay = (static_cast<int16_t>(raw[2]) << 8) | raw[3];
+        const int16_t az = (static_cast<int16_t>(raw[4]) << 8) | raw[5];
+        const int16_t gx = (static_cast<int16_t>(raw[8]) << 8) | raw[9];
+        const int16_t gy = (static_cast<int16_t>(raw[10]) << 8) | raw[11];
+        const int16_t gz = (static_cast<int16_t>(raw[12]) << 8) | raw[13];
+
+        // Fixed to +/-8g and +/-500 dps to match previous behavior.
+        constexpr float accelScale = 9.80665f / 4096.0f;                      // m/s^2 per LSB
+        constexpr float gyroScale = (PI / 180.0f) / 65.5f;                    // rad/s per LSB
+        sample.accelX = ax * accelScale;
+        sample.accelY = ay * accelScale;
+        sample.accelZ = az * accelScale;
+        sample.gyroX = gx * gyroScale;
+        sample.gyroY = gy * gyroScale;
+        sample.gyroZ = gz * gyroScale;
+        return true;
+    }
+
+    void setMotionInterrupt(bool enabled) {
+        if (enabled) {
+            // Conservative thresholds so deep-sleep wake remains reliable.
+            writeRegister(kRegMotThr, 10);
+            writeRegister(kRegMotDur, 1);
+            writeRegister(kRegIntEnable, 0x40); // MOT_INT_EN bit
+        } else {
+            writeRegister(kRegIntEnable, 0x00);
+        }
+    }
+
+    const char* sensorName() const {
+        return sensorType_ == SensorType::MPU6500 ? "MPU6500" : "MPU6050";
+    }
+
+private:
+    static constexpr uint8_t kDefaultAddressLow = 0x68;
+    static constexpr uint8_t kDefaultAddressHigh = 0x69;
+    static constexpr uint8_t kRegSmplrtDiv = 0x19;
+    static constexpr uint8_t kRegConfig = 0x1A;
+    static constexpr uint8_t kRegGyroConfig = 0x1B;
+    static constexpr uint8_t kRegAccelConfig = 0x1C;
+    static constexpr uint8_t kRegAccelConfig2 = 0x1D;
+    static constexpr uint8_t kRegMotThr = 0x1F;
+    static constexpr uint8_t kRegMotDur = 0x20;
+    static constexpr uint8_t kRegIntEnable = 0x38;
+    static constexpr uint8_t kRegAccelXoutH = 0x3B;
+    static constexpr uint8_t kRegPwrMgmt1 = 0x6B;
+    static constexpr uint8_t kRegWhoAmI = 0x75;
+
+    bool detectAndConfigure() {
+        uint8_t whoAmI = 0;
+        if (!readRegister(kRegWhoAmI, whoAmI)) {
+            return false;
+        }
+
+        if (!isExpectedWhoAmI(whoAmI)) {
+            return false;
+        }
+
+        delay(10);
+        if (!writeRegister(kRegPwrMgmt1, 0x00)) return false;     // wake up
+        delay(50);
+        if (!writeRegister(kRegSmplrtDiv, 0x07)) return false;    // ~125 Hz
+        if (!writeRegister(kRegConfig, 0x04)) return false;       // DLPF ~20 Hz
+        if (!writeRegister(kRegGyroConfig, 0x08)) return false;   // +/-500 dps
+        if (!writeRegister(kRegAccelConfig, 0x10)) return false;  // +/-8g
+        if (!writeRegister(kRegAccelConfig2, 0x04)) return false; // accel DLPF
+
+        return true;
+    }
+
+    bool isExpectedWhoAmI(uint8_t whoAmI) const {
+        if (sensorType_ == SensorType::MPU6050) {
+            return whoAmI == 0x68 || whoAmI == 0x69;
+        }
+        return whoAmI == 0x70 || whoAmI == 0x71;
+    }
+
+    bool writeRegister(uint8_t reg, uint8_t value) {
+        wire_->beginTransmission(address_);
+        wire_->write(reg);
+        wire_->write(value);
+        return wire_->endTransmission() == 0;
+    }
+
+    bool readRegister(uint8_t reg, uint8_t& value) {
+        if (!readRegisters(reg, &value, 1)) {
+            return false;
+        }
+        return true;
+    }
+
+    bool readRegisters(uint8_t reg, uint8_t* data, uint8_t length) {
+        wire_->beginTransmission(address_);
+        wire_->write(reg);
+        if (wire_->endTransmission(false) != 0) {
+            return false;
+        }
+        if (wire_->requestFrom(static_cast<int>(address_), static_cast<int>(length)) != length) {
+            return false;
+        }
+        for (uint8_t i = 0; i < length; ++i) {
+            data[i] = wire_->read();
+        }
+        return true;
+    }
+
+    TwoWire* wire_ = nullptr;
+    SensorType sensorType_ = SensorType::MPU6050;
+    uint8_t address_ = kDefaultAddressLow;
+};
+
 //--- Global Variables ---
-Adafruit_MPU6050 mpu;
+MpuSensor mpu;
 CRGB leds[NUM_LEDS];
 
 float energyLevel = 0.0;
@@ -57,7 +215,7 @@ void setup() {
     Serial.println("Initializing Soft Ground (Pin 4)...");
     pinMode(GND_PIN, OUTPUT);
     digitalWrite(GND_PIN, LOW);
-    delay(500); // Give MPU6050 time to power up after grounding
+    delay(500); // Give IMU time to power up after grounding
 
     // Initialize Motor
     Serial.println("Initializing Motor (Pin 6)...");
@@ -68,25 +226,26 @@ void setup() {
     Serial.println("Initializing I2C (SDA:2, SCL:3)...");
     Wire.begin(SDA_PIN, SCL_PIN);
 
-    // Initialize MPU6050
-    Serial.print("Finding MPU6050...");
-    if (!mpu.begin()) {
+    // Initialize selected IMU type (MPU6050 or MPU6500).
+    Serial.print("Finding ");
+    Serial.print(ACTIVE_SENSOR == SensorType::MPU6500 ? "MPU6500" : "MPU6050");
+    Serial.print("...");
+    if (!mpu.begin(Wire, ACTIVE_SENSOR)) {
         Serial.println(" FAILED!");
-        Serial.println("Check wiring: VCC/GND, SDA(2), SCL(3). Is the ground pin 4 low?");
+        Serial.println("Check wiring: VCC/GND, SDA(2), SCL(3). Is ground pin 4 low?");
         while (1) { 
-            // Blink onboard LED or something? 
             delay(500); 
             Serial.print(".");
         }
     }
     Serial.println(" FOUND!");
+    Serial.print("Detected sensor: ");
+    Serial.println(mpu.sensorName());
 
-    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-    mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-
-    // Configure MPU6050 Interrupt
-    Serial.println("Configuring MPU6050 Interrupt...");
+    // Configure IMU motion interrupt for sleep wake-up.
+    Serial.print("Configuring ");
+    Serial.print(mpu.sensorName());
+    Serial.println(" interrupt...");
     mpu.setMotionInterrupt(true);
 
     // Initialize LEDs
@@ -140,14 +299,14 @@ void loop() {
     float dt = (now - lastUpdate) / 1000.0;
     lastUpdate = now;
 
-    sensors_event_t a, g, temp;
-    if (!mpu.getEvent(&a, &g, &temp)) {
+    MotionSample motion;
+    if (!mpu.readMotion(motion)) {
         // Serial.println("Event read failed!"); // Too noisy
     }
 
     // Calculate motion magnitude (Gyro + Accel)
-    float gyroMag = sqrt(pow(g.gyro.x, 2) + pow(g.gyro.y, 2) + pow(g.gyro.z, 2));
-    float accelMag = sqrt(pow(a.acceleration.x, 2) + pow(a.acceleration.y, 2) + pow(a.acceleration.z, 2)) - 9.81; 
+    float gyroMag = sqrt(pow(motion.gyroX, 2) + pow(motion.gyroY, 2) + pow(motion.gyroZ, 2));
+    float accelMag = sqrt(pow(motion.accelX, 2) + pow(motion.accelY, 2) + pow(motion.accelZ, 2)) - 9.81; 
     float motionMag = gyroMag + abs(accelMag);
 
     // Reset inactivity timer if there is significant motion (Deadzone: 3.0)
@@ -272,8 +431,8 @@ void goToSleep() {
     gpio_hold_en((gpio_num_t)GND_PIN);
     gpio_deep_sleep_hold_en();
 
-    // Configure wakeup from Pin 5 (MPU6050 INT)
-    // Most MPU6050 interrupts are ACTIVE LOW
+    // Configure wakeup from Pin 5 (MPU interrupt).
+    // MPU6050/MPU6500 breakout boards commonly drive motion INT active-low.
     esp_deep_sleep_enable_gpio_wakeup(1ULL << INT_PIN, ESP_GPIO_WAKEUP_GPIO_LOW);
     
     esp_deep_sleep_start();
