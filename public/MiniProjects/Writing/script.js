@@ -121,6 +121,54 @@ const themes = {
         behavior: 'mako',
         glowRadius: 400,
         connections: { maxDistance: 120 }
+    },
+    harvester: {
+        particleColor: 'rgba(126, 184, 212, 0.3)',
+        lineColor: 'rgba(126, 184, 212, 0.08)',
+        glowColor: 'rgba(126, 184, 212, 0.12)',
+        speedFactor: 0.4,
+        count: 110,
+        behavior: 'random',
+        glowRadius: 350,
+        connections: { maxDistance: 100 }
+    },
+    shrine: {
+        particleColor: 'rgba(62, 143, 212, 0.35)',
+        lineColor: 'rgba(196, 74, 32, 0.1)',
+        glowColor: 'rgba(62, 143, 212, 0.15)',
+        speedFactor: 0.6,
+        count: 130,
+        behavior: 'waves',
+        glowRadius: 400,
+        connections: { maxDistance: 120 }
+    },
+    kingdom: {
+        particleColor: 'rgba(201, 160, 80, 0.35)',
+        lineColor: 'rgba(201, 160, 80, 0.1)',
+        glowColor: 'rgba(201, 160, 80, 0.18)',
+        speedFactor: 0.5,
+        count: 140,
+        behavior: 'vortex',
+        glowRadius: 400,
+        connections: { maxDistance: 120 },
+        vortex: {
+            minDist: 40,
+            orbitAngleStep: 0.012,
+            orbitDecay: 0.993,
+            orbitPull: 0.06,
+            centerAngleStep: 0.003,
+            centerPull: 0.09
+        }
+    },
+    vermillion: {
+        particleColor: 'rgba(196, 48, 64, 0.4)',
+        lineColor: 'rgba(196, 48, 64, 0.1)',
+        glowColor: 'rgba(139, 24, 40, 0.2)',
+        speedFactor: 0.7,
+        count: 120,
+        behavior: 'rain',
+        glowRadius: 450,
+        connections: false
     }
 };
 

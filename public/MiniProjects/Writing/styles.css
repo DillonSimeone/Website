@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;700&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap');
 
 :root {
     --bg-color: #030308;
@@ -157,6 +157,10 @@ h1 {
 .card:nth-child(3) { animation-delay: 0.45s; }
 .card:nth-child(4) { animation-delay: 0.6s; }
 .card:nth-child(5) { animation-delay: 0.75s; }
+.card:nth-child(6) { animation-delay: 0.9s; }
+.card:nth-child(7) { animation-delay: 1.05s; }
+.card:nth-child(8) { animation-delay: 1.2s; }
+.card:nth-child(9) { animation-delay: 1.35s; }
 
 /* Card Light Sheen overlay */
 .card-sheen {
@@ -321,6 +325,34 @@ h1 {
     --theme-footer-color: #1e5a38;
 }
 
+/* 6. Harvester's Toll Card */
+.card-harvester {
+    --theme-primary-rgb: 126, 184, 212;
+    --theme-font: 'Instrument Serif', serif;
+    --theme-footer-color: #3a5060;
+}
+
+/* 7. Hunger of the Shrine Card */
+.card-shrine {
+    --theme-primary-rgb: 62, 143, 212;
+    --theme-font: 'Cormorant Garamond', serif;
+    --theme-footer-color: #1a4060;
+}
+
+/* 8. Kingdom of Living Dead Ends Card */
+.card-kingdom {
+    --theme-primary-rgb: 201, 160, 80;
+    --theme-font: 'Cinzel', serif;
+    --theme-footer-color: #5a4020;
+}
+
+/* 9. Vermillion Haze Card */
+.card-vermillion {
+    --theme-primary-rgb: 196, 48, 64;
+    --theme-font: 'Newsreader', serif;
+    --theme-footer-color: #5a1020;
+}
+
 /* Buttons & Actions */
 .btn {
     display: inline-flex;
@@ -398,6 +430,39 @@ h1 {
 .btn-ff7 {
     --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #1b5e3a);
     --btn-color: #05160c;
+}
+
+.btn-harvester {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #3a6078);
+    --btn-color: #040810;
+}
+
+.btn-harvester-ledger {
+    --btn-bg: rgba(255, 255, 255, 0.03);
+    --btn-color: #c8e0f0;
+    --btn-border: 1px solid rgba(126, 184, 212, 0.25);
+    --btn-hover-bg: rgba(126, 184, 212, 0.1);
+    --btn-hover-border: rgba(126, 184, 212, 0.4);
+    --btn-hover-filter: none;
+}
+
+.btn-harvester-ledger:hover {
+    box-shadow: 0 8px 25px rgba(126, 184, 212, 0.2);
+}
+
+.btn-shrine {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #1a5080);
+    --btn-color: #020810;
+}
+
+.btn-kingdom {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #8a6028);
+    --btn-color: #1a1008;
+}
+
+.btn-vermillion {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #6a1020);
+    --btn-color: #f0d8d4;
 }
 
 /* Footer */
