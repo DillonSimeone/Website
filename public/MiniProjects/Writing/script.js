@@ -172,6 +172,10 @@ const themes = {
     }
 };
 
+function resolveTheme(themeName) {
+    return themes[themeName] ? themeName : 'neutral';
+}
+
 window.addEventListener('resize', () => {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
@@ -193,8 +197,7 @@ window.addEventListener('mouseleave', () => {
 // Trigger theme change on card hover
 cards.forEach(card => {
     card.addEventListener('mouseenter', () => {
-        const theme = card.getAttribute('data-theme');
-        transitionTheme(theme);
+        transitionTheme(card.getAttribute('data-theme'));
     });
     card.addEventListener('mouseleave', () => {
         transitionTheme('neutral');
@@ -205,7 +208,9 @@ let targetTheme = 'neutral';
 let transitionProgress = 1;
 
 function transitionTheme(themeName) {
-    targetTheme = themeName;
+    const resolved = resolveTheme(themeName);
+    if (resolved === targetTheme && transitionProgress >= 1) return;
+    targetTheme = resolved;
     transitionProgress = 0;
 }
 
@@ -233,7 +238,8 @@ class Particle {
 
     update(currentThemeParams) {
         this.progress += 1;
-        const currentBehavior = themes[activeTheme].behavior;
+        const themeKey = resolveTheme(activeTheme);
+        const currentBehavior = themes[themeKey].behavior;
         
         if (currentBehavior === 'random') {
             // Drifts randomly
@@ -242,7 +248,7 @@ class Particle {
         } 
         else if (currentBehavior === 'vortex') {
             // Gravitates towards mouse or center screen in an orbit/vortex
-            const config = themes[activeTheme].vortex;
+            const config = themes[themeKey].vortex;
             if (mouse.active) {
                 const dx = mouse.x - this.x;
                 const dy = mouse.y - this.y;
@@ -367,7 +373,8 @@ function lerpColor(c1, c2, factor) {
 }
 
 function drawConnections(currentThemeParams) {
-    const connConfig = themes[activeTheme].connections;
+    const themeKey = resolveTheme(activeTheme);
+    const connConfig = themes[themeKey].connections;
     if (!connConfig) return;
 
     const maxDistance = connConfig.maxDistance || 120;
@@ -407,6 +414,9 @@ function drawConnections(currentThemeParams) {
 // Active running animation loop
 function animate() {
     ctx.clearRect(0, 0, width, height);
+
+    activeTheme = resolveTheme(activeTheme);
+    targetTheme = resolveTheme(targetTheme);
 
     // Smoothly interpolate active theme configuration parameters
     if (activeTheme !== targetTheme) {
@@ -456,7 +466,7 @@ function animate() {
         p.draw(currentParams);
     });
 
-    if (themes[activeTheme].connections) {
+    if (themes[resolveTheme(activeTheme)].connections) {
         drawConnections(currentParams);
     }
 
