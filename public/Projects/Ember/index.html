@@ -53,7 +53,7 @@
                         earlier project that ran patterns by parsing
                         JavaScript-like expressions on every pixel, every frame. It worked, but it was slow and
                         brittle. Ember replaces that interpreter with a proper bytecode compiler and
-                        a stack-based virtual machine running inside its own FreeRTOS task—which is how it manages a
+                        a stack-based virtual machine running inside its own FreeRTOS task, which is how it manages a
                         stable, smooth framerate on a $2 chip.
                     </p>
                     <p>
@@ -66,7 +66,7 @@
                     </p>
                     <p>
                         Ember is the scrappy DIY alternative. It's new, it's open-source, and it runs entirely on
-                        a bare ESP32-C3 module. No companion app, no proprietary cloud, just a captive portal you
+                        a bare ESP32-C3 module. No companion app (yet!), no proprietary cloud, just a captive portal you
                         connect to over Wi-Fi, write a pattern, hit save, and watch it render live. The idea is that
                         this would be perfect as a cheap solution for wearable lights, since if the controller got lost,
                         destroyed, etc, it's just two or three dollars to replace.
