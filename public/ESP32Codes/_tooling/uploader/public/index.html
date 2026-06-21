@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlatformIO Web Uploader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&family=Syne:wght@800&family=Fira+Code:wght@400;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="neo-container">
+    <header class="neo-header">
+      <h1 class="neo-title">PIO WEB UPLOADER</h1>
+    </header>
+
+    <div class="neo-main-layout">
+      <!-- Left Column: Project Catalog -->
+      <aside class="catalog-panel">
+        <div class="panel-header">
+          <h2>PROJECT CATALOG</h2>
+          <button class="neo-btn neo-btn-cyan" id="btn-refresh-projects">Refresh</button>
+        </div>
+        <div class="project-list" id="project-list">
+          <p class="loading-text">Scanning public/ESP32Codes for projects...</p>
+        </div>
+      </aside>
+
+      <!-- Right Column: Control & Console -->
+      <main class="control-panel">
+        <!-- Device Connection Status & Control -->
+        <section class="neo-card device-card">
+          <div class="device-grid">
+            <div class="control-group">
+              <label for="port-select">TARGET SERIAL PORT</label>
+              <div class="input-wrapper">
+                <select id="port-select" class="neo-select">
+                  <option value="">Auto-Detect Port</option>
+                </select>
+                <button class="neo-btn neo-btn-yellow" id="btn-refresh-ports">Scan Ports</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label for="baud-select">MONITOR BAUD RATE</label>
+              <select id="baud-select" class="neo-select">
+                <option value="9600">9600 bps</option>
+                <option value="115200" selected>115200 bps (Default)</option>
+                <option value="921600">921600 bps</option>
+                <option value="2000000">2000000 bps</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="port-details" id="port-details">
+            <!-- Details about selected port go here -->
+          </div>
+        </section>
+
+        <!-- Main Workspace Action Info -->
+        <section class="neo-card workspace-card" id="workspace-card" style="display: none;">
+          <div class="workspace-header">
+            <h2 id="active-project-name">SELECT A PROJECT</h2>
+            <div class="env-selector-wrapper">
+              <label for="env-select">ENV:</label>
+              <select id="env-select" class="neo-select"></select>
+              <select id="add-env-select" class="neo-select neo-select-small">
+                <option value="">+ Add Env</option>
+                <option value="esp32c3">ESP32-C3</option>
+                <option value="esp32s3">ESP32-S3</option>
+                <option value="esp32dev">Standard ESP32</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="workspace-actions">
+            <button class="neo-btn neo-btn-cyan action-large" id="btn-build-flash">BUILD & FLASH DEVICE</button>
+            <button class="neo-btn neo-btn-yellow action-large" id="btn-quick-flash">QUICK FLASH (EXISTING BIN)</button>
+            <button class="neo-btn neo-btn-pink" id="btn-kill-active">KILL PROCESS</button>
+          </div>
+
+          <div class="library-section">
+            <h3>LIBRARIES USED</h3>
+            <div class="library-tags" id="library-tags">
+              <!-- Badges will be generated here -->
+            </div>
+          </div>
+
+          <!-- README Section -->
+          <div class="readme-container" id="readme-container">
+            <div class="readme-header">
+              <span class="readme-header-title" id="readme-title">PROJECT README</span>
+              <button class="neo-btn neo-btn-yellow btn-small" id="btn-edit-readme" style="display: none;">EDIT</button>
+            </div>
+            <div class="readme-body" id="readme-body">
+              <p style="opacity: 0.6;">Select a project to view its README.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Console Log Output -->
+        <section class="neo-card console-card">
+          <div class="console-header">
+            <div class="tab-buttons">
+              <button class="tab-btn active" data-tab="build">BUILD & FLASH LOGS</button>
+              <button class="tab-btn" data-tab="monitor">SERIAL MONITOR LOGS</button>
+            </div>
+            <button class="neo-btn neo-btn-yellow btn-small" id="btn-clear-console">Clear Console</button>
+          </div>
+
+          <div class="console-body active" id="console-build">
+            <pre class="log-output" id="log-build-output">No logs yet. Select a project and trigger an action.</pre>
+          </div>
+          <div class="console-body" id="console-monitor">
+            <pre class="log-output" id="log-monitor-output">Serial monitor disconnected.</pre>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
