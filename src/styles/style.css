@@ -1050,6 +1050,7 @@ body.dark-mode .gallery-thumbnail img {
 }
 
 #work .medias,
+#work .videos,
 #embedded .medias,
 #shop .medias {
     margin: auto;
@@ -1062,10 +1063,6 @@ body.dark-mode .gallery-thumbnail img {
 }
 
 /* #work .medias img inherited from global block */
-
-#work .videos {
-    text-align: center;
-}
 
 #work iframe {
     height: 500px;
@@ -1444,9 +1441,11 @@ body.dark-mode .gallery-thumbnail img {
 
 
 
-.gallery-scroll-container img {
-    max-width: 100%;
-    height: auto;
+.gallery-scroll-container img,
+.gallery-scroll-container video,
+.gallery-scroll-container iframe {
+    width: 100%;
+    max-width: 800px;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     border: 2px solid var(--border-color);
@@ -1456,9 +1455,30 @@ body.dark-mode .gallery-thumbnail img {
     transition: opacity 0.6s, transform 0.6s;
 }
 
-.gallery-scroll-container img.loaded {
+.gallery-scroll-container img {
+    height: auto;
+}
+
+.gallery-scroll-container video,
+.gallery-scroll-container iframe {
+    aspect-ratio: 16 / 9;
+}
+
+.gallery-scroll-container img.loaded,
+.gallery-scroll-container video.loaded,
+.gallery-scroll-container iframe.loaded {
     opacity: 1;
     transform: scale(1);
+}
+
+.gallery-video-overlay {
+    position: absolute;
+    font-size: 3rem;
+    color: white;
+    text-shadow: 0 0 15px rgba(0, 0, 0, 0.9);
+    pointer-events: none;
+    z-index: 3;
+    animation: iconShake 1.5s infinite ease-in-out;
 }
 
 /* Button to trigger gallery */

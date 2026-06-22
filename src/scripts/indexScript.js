@@ -257,7 +257,7 @@ function setUp() {
     // Data-driven Section Gallery Initialization
     const galleriesConfig = [
         { id: 'hobby', selector: '.artwork, .headers + .images', minSize: 0 },
-        { id: 'work', selector: '.medias, .images', minSize: 2 },
+        { id: 'work', selector: '.medias, .images, .videos', minSize: 1 },
         { id: 'embedded', selector: '.grid-item', minSize: 0 },
         { id: 'shop', selector: '.grid-item', minSize: 0 }
     ];
@@ -442,38 +442,60 @@ function injectFooters() {
 // Section galleries are initialized dynamically in setUp() via galleriesConfig loop.
 
 /**
- * Transforms image groups into modal galleries.
+ * Transforms image/video groups into modal galleries.
  */
 function initSectionGalleries(sectionId, blockSelector, minSizeToConvert = 0) {
     const section = document.getElementById(sectionId);
     if (!section) return;
 
     section.querySelectorAll(blockSelector).forEach(block => {
-        const imageGrid = block.classList.contains('images') || block.classList.contains('medias')
+        const imageGrid = block.classList.contains('images') || block.classList.contains('medias') || block.classList.contains('videos')
             ? block
-            : block.querySelector('.images, .medias');
+            : block.querySelector('.images, .medias, .videos');
 
         if (!imageGrid) return;
 
-        const images = Array.from(imageGrid.querySelectorAll('img'));
-        if (images.length === 0) return;
+        const items = Array.from(imageGrid.querySelectorAll('img, video, .youtube-facade'));
+        if (items.length === 0) return;
 
         // Lazy-load fallback for non-gallery items
-        if (images.length <= minSizeToConvert) {
-            images.forEach(img => {
-                const ds = img.getAttribute('data-src');
-                if (ds) {
-                    img.src = ds;
-                    img.removeAttribute('data-src');
+        if (items.length <= minSizeToConvert) {
+            items.forEach(item => {
+                if (item.tagName === 'IMG') {
+                    const ds = item.getAttribute('data-src');
+                    if (ds) {
+                        item.src = ds;
+                        item.removeAttribute('data-src');
+                    }
                 }
             });
             return;
         }
 
-        const imageData = images.map(img => ({
-            src: img.getAttribute('data-src') || img.getAttribute('src'),
-            alt: img.getAttribute('alt') || 'Gallery Image'
-        }));
+        const mediaData = items.map(item => {
+            if (item.tagName === 'IMG') {
+                return {
+                    type: 'image',
+                    src: item.getAttribute('data-src') || item.getAttribute('src'),
+                    alt: item.getAttribute('alt') || 'Gallery Image'
+                };
+            } else if (item.tagName === 'VIDEO') {
+                const source = item.querySelector('source');
+                const src = source ? source.getAttribute('src') : item.getAttribute('src');
+                return {
+                    type: 'video',
+                    src: src,
+                    alt: item.getAttribute('alt') || 'Demo Video'
+                };
+            } else if (item.classList.contains('youtube-facade')) {
+                return {
+                    type: 'youtube',
+                    videoId: item.getAttribute('data-video-id'),
+                    playlistId: item.getAttribute('data-playlist-id'),
+                    title: item.getAttribute('data-title') || 'YouTube Video'
+                };
+            }
+        }).filter(Boolean);
 
         const parentBlock = block.closest('div, .artwork') || block.parentElement;
         const title = parentBlock.querySelector('h2')?.textContent || 'Project Gallery';
@@ -483,20 +505,37 @@ function initSectionGalleries(sectionId, blockSelector, minSizeToConvert = 0) {
         const thumbnail = document.createElement('div');
         thumbnail.className = 'gallery-thumbnail';
 
-        const firstImg = document.createElement('img');
-        Object.assign(firstImg, { src: imageData[0].src, alt: imageData[0].alt, loading: 'lazy' });
+        let thumbEl;
+        if (mediaData[0].type === 'image') {
+            thumbEl = document.createElement('img');
+            Object.assign(thumbEl, { src: mediaData[0].src, alt: mediaData[0].alt, loading: 'lazy' });
+        } else if (mediaData[0].type === 'youtube') {
+            thumbEl = document.createElement('img');
+            Object.assign(thumbEl, { src: `https://i.ytimg.com/vi/${mediaData[0].videoId}/hqdefault.jpg`, alt: mediaData[0].title, loading: 'lazy' });
+            
+            const playOverlay = document.createElement('div');
+            playOverlay.className = 'gallery-video-overlay';
+            playOverlay.innerHTML = '▶';
+            thumbnail.appendChild(playOverlay);
+        } else if (mediaData[0].type === 'video') {
+            thumbEl = document.createElement('video');
+            Object.assign(thumbEl, { src: mediaData[0].src, muted: true, loop: true, playsinline: true });
+            thumbEl.setAttribute('preload', 'metadata');
+            thumbnail.onmouseenter = () => thumbEl.play().catch(() => {});
+            thumbnail.onmouseleave = () => thumbEl.pause();
+        }
 
-        thumbnail.appendChild(firstImg);
-        thumbnail.onclick = () => window.openGallery(title, imageData);
+        thumbnail.appendChild(thumbEl);
+        thumbnail.onclick = () => window.openGallery(title, mediaData);
         imageGrid.appendChild(thumbnail);
 
-        if (imageData.length > 1) {
+        if (mediaData.length > 1) {
             const btn = document.createElement('button');
             btn.className = 'view-gallery-btn';
-            btn.textContent = `View Full Gallery (${imageData.length} images)`;
+            btn.textContent = `View Full Gallery (${mediaData.length} items)`;
             btn.onclick = (e) => {
                 e.stopPropagation();
-                window.openGallery(title, imageData);
+                window.openGallery(title, mediaData);
             };
             imageGrid.after(btn);
         }
@@ -521,12 +560,36 @@ function openGallery(title, images) {
     modal.style.display = 'flex';
     setTimeout(() => modal.classList.add('active'), 10);
 
-    images.forEach((imgData, index) => {
-        const img = document.createElement('img');
-        img.alt = imgData.alt;
-        img.onload = () => setTimeout(() => img.classList.add('loaded'), index * 100);
-        img.src = imgData.src;
-        container.appendChild(img);
+    images.forEach((media, index) => {
+        let el;
+        if (media.type === 'image') {
+            el = document.createElement('img');
+            el.alt = media.alt;
+            el.onload = () => setTimeout(() => el.classList.add('loaded'), index * 100);
+            el.src = media.src;
+        } else if (media.type === 'video') {
+            el = document.createElement('video');
+            el.controls = true;
+            el.playsinline = true;
+            el.src = media.src;
+            el.onloadeddata = () => setTimeout(() => el.classList.add('loaded'), index * 100);
+        } else if (media.type === 'youtube') {
+            el = document.createElement('iframe');
+            el.title = media.title;
+            el.frameBorder = '0';
+            el.setAttribute('allowfullscreen', 'true');
+            el.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen');
+            
+            let src = '';
+            if (media.playlistId) {
+                src = `https://www.youtube-nocookie.com/embed/videoseries?list=${media.playlistId}`;
+            } else {
+                src = `https://www.youtube-nocookie.com/embed/${media.videoId}`;
+            }
+            el.src = src;
+            el.onload = () => setTimeout(() => el.classList.add('loaded'), index * 100);
+        }
+        container.appendChild(el);
     });
 
     // Close on background click
