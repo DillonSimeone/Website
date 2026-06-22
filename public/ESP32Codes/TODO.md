@@ -1,2 +1,2 @@
-- [ ] Flesh out README.md for PlatformIO/Visuals_Art/LightBaton/reactiveHandleLightMotion (created via Web Uploader on 6/21/2026, 11:22:06 AM)
-- [ ] Flesh out README.md for ESP32C3Starter/src/Blink_Test (created via Web Uploader on 6/21/2026, 11:21:06 AM)
+- [x] Flesh out README.md for PlatformIO/Visuals_Art/LightBaton/reactiveHandleLightMotion
+- [x] Flesh out README.md for ESP32C3Starter/src/Blink_Test

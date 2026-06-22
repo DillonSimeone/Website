@@ -1,1 +1,0 @@
-Two different possible sensors, instead of just auto detecting them. Select MPU6050 or MPU6500.

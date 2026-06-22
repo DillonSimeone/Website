@@ -1,1 +1,0 @@
-Shrek was here.

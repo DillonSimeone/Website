@@ -1,9 +1,0 @@
-// Comet tail chasing
-pos = index / pixelCount;
-head = time * 0.3;
-head = head - floor(head);
-dist = pos - head;
-dist = dist < 0 ? dist + 1 : dist;
-tail = 1 - dist * 3;
-tail = tail < 0 ? 0 : tail;
-hsv(0.8, 1, tail * tail);
