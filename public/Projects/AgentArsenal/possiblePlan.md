@@ -341,7 +341,7 @@ Session name: firmware-multitarget
 Output dir:   ./output/firmware-multitarget/
 
 Reference project: MPU6050toLEDPixels
-https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/Hardware_Specific/MPU6050toLEDPixels
+https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/08_Hardware_Specific/MPU6050toLEDPixels
 Clone or copy that project into your working directory before launching.
 Feed agent the source files.
 You are an autonomous embedded systems engineer. Your job is to port an existing
