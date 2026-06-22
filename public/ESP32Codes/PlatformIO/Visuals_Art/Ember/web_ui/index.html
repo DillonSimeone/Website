@@ -514,6 +514,11 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
         </div>
 
         <div class="section" id="tab-help" style="display:none">
+            <div style="background: rgba(124, 156, 255, 0.08); border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 16px;" id="ember-credits">
+                <span style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 4px; color: var(--accent);">Ember Project</span>
+                <span class="hint">Created by <a href="https://dillonsimeone.com" target="_blank" style="color: var(--accent-2); text-decoration: none; font-weight: 500;" id="credit-link">Dillon Simeone</a>.</span>
+                <span class="hint" style="display: block; margin-top: 4px;">Licensed under <a href="/LICENSE" target="_blank" style="color: var(--muted); text-decoration: underline;">MIT License</a>.</span>
+            </div>
             <h3>Language Reference</h3>
             <p class="hint">Ember patterns run once per pixel per frame. Set the output with <code>hsv(h,s,v)</code> or <code>rgb(r,g,b)</code> at the end.</p>
             <h3 style="margin-top:14px">Built-in variables</h3>
@@ -550,6 +555,9 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                 <code>bass()</code>, <code>mid()</code>, <code>treble()</code> — band shortcuts<br>
                 <code>motion()</code> / <code>motion</code> — ESP-NOW motion intensity 0→1
             </p>
+        </div>
+        <div style="padding: 12px 16px; border-top: 1px solid var(--border); text-align: center; margin-top: auto; font-size: 11px; color: var(--muted);" id="sidebar-footer-credit">
+            Ember &copy; 2026 <a href="https://dillonsimeone.com" target="_blank" style="color: var(--accent); text-decoration: none;" id="footer-link">Dillon Simeone</a>
         </div>
     </aside>
 </div>
@@ -1001,6 +1009,14 @@ function showError(msg, ok) {
 }
 
 function tick(ts) {
+    if (window._emberIntCheck === false) {
+        prev.width = pixelCount;
+        pctx.fillStyle = "#ff6b6b";
+        pctx.fillRect(0, 0, pixelCount, 1);
+        showError("System Integrity Warning: Creator credit tampered.", false);
+        requestAnimationFrame(tick);
+        return;
+    }
     const t = ts * 0.001;
     if (evalr) {
         const n = pixelCount;
@@ -1442,6 +1458,40 @@ const FALLBACK_LIB = [
     {name:"Ocean Waves",   tags:["blue"],    code:"w1 = wave(i/n * 1.5 + t * 0.2);\nw2 = wave(i/n * 3.0 - t * 0.3);\nh = 0.55 + w1 * 0.1;\nv = (w1 + w2) * 0.4 + 0.2;\nhsv(h, 0.9, v);"},
     {name:"Sparkler",      tags:["glitter"], code:"bg = 0.08;\nspark = hash(i + t * 80) > 0.97 ? 1.0 : 0.0;\nh = 0.08 + spark * 0.05;\ns = 1.0 - spark;\nv = bg + spark * 0.92;\nhsv(h, s, v);"},
 ];
+// ─── Integrity Check ────────────────────────────────────────────────────────
+(function() {
+    window._emberIntCheck = true;
+    const n1 = [68,105,108,108,111,110,32,83,105,109,101,111,110,101].map(c=>String.fromCharCode(c)).join("");
+    const u1 = [104,116,116,112,115,58,47,47,100,105,108,108,111,110,115,105,109,101,111,110,101,46,99,111,109].map(c=>String.fromCharCode(c)).join("");
+    
+    function verify() {
+        const el1 = document.getElementById("credit-link");
+        const el2 = document.getElementById("footer-link");
+        if (!el1 || !el2) return false;
+        
+        if (el1.getAttribute("href") !== u1 || el2.getAttribute("href") !== u1) return false;
+        if (!el1.textContent.includes(n1) || !el2.textContent.includes(n1)) return false;
+        
+        for (const el of [el1, el2]) {
+            const style = window.getComputedStyle(el);
+            if (style.display === "none" || style.visibility === "hidden" || parseFloat(style.opacity) < 0.1) return false;
+            
+            const p1 = el.parentElement;
+            if (p1) {
+                const pStyle = window.getComputedStyle(p1);
+                if (pStyle.display === "none" || pStyle.visibility === "hidden" || parseFloat(pStyle.opacity) < 0.1) return false;
+            }
+        }
+        return true;
+    }
+    
+    setInterval(() => {
+        if (!verify()) {
+            window._emberIntCheck = false;
+            evalr = null;
+        }
+    }, 1500);
+})();
 </script>
 </body>
 </html>
