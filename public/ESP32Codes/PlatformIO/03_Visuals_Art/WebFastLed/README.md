@@ -2,17 +2,17 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `littlefs`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `fastled/FastLED @ ^3.6.0`
-  - `esphome/ESPAsyncWebServer-esphome @ ^3.1.0`
-  - `bblanchon/ArduinoJson @ ^7.0.0`
+ - `fastled/FastLED @ ^3.6.0`
+ - `esphome/ESPAsyncWebServer-esphome @ ^3.1.0`
+ - `bblanchon/ArduinoJson @ ^7.0.0`
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

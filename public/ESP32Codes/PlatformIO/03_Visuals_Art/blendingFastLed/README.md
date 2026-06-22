@@ -2,15 +2,15 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32dev`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `fastled/FastLED @ ^3.6.0`
+ - `fastled/FastLED @ ^3.6.0`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
@@ -18,7 +18,7 @@ A microcontroller project built using PlatformIO.
 | `CLK_PIN` | `13` |
 | `NUM_LEDS` | `32` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

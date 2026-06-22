@@ -2,20 +2,20 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32-c3-devkitm-1`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
 | `I2S_SCK` | `1` |
 | `LED_PIN` | `8` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

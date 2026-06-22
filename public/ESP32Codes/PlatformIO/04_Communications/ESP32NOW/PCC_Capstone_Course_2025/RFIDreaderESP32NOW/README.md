@@ -2,16 +2,16 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32-c3-devkitm-1`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `miguelbalboa/MFRC522 @ ^1.4.11`
-  - `fastled/FastLED @ ^3.6.0`
+ - `miguelbalboa/MFRC522 @ ^1.4.11`
+ - `fastled/FastLED @ ^3.6.0`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
@@ -22,7 +22,7 @@ A microcontroller project built using PlatformIO.
 | `RESET_INTERVAL` | `60000UL` |
 | `HW_RESET_INTERVAL` | `1800000UL` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

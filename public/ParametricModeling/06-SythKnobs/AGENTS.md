@@ -2,7 +2,7 @@
 
 This folder contains the ACCESS KNOB parametric customization suite, a specialized assistive engineering tool designed to make music synthesizers and commercial physical interfaces fully playable for musicians with reduced grip strength, motor impairments, or low vision.
 
-## 🚀 Key Features and Enhancements
+## Key Features and Enhancements
 
 ### 1. Procedural WASM Geometry Kernel
 - Powered by a WASM-compiled `Manifold` geometry engine that computes high-fidelity boolean operations on the client side in milliseconds.
@@ -43,15 +43,15 @@ This folder contains the ACCESS KNOB parametric customization suite, a specializ
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 ```text
 /06-SythKnobs/
-├── SIGACCESS2026/        # Academic paper manuscript, figures, and compiled PDF
-│   ├── ACCESS_KNOB_draft.tex  # Condensed 7-page LaTeX draft
-│   ├── ACCESS_KNOB_draft.pdf  # Compiled submission PDF
-│   ├── ProfileShapes.png      # Alternative text figures
-│   └── OutputDetailsScreen.png # Alternative text figures
-├── knob-parametric.html  # Customizer app with WebGL view, sliders, sharing, and SVG exporter
-├── poster.html           # A0 landscape scientific presentation poster (HTML/PDF print-optimized)
-└── gemini.md             # This local documentation
+├── SIGACCESS2026/ # Academic paper manuscript, figures, and compiled PDF
+│ ├── ACCESS_KNOB_draft.tex # Condensed 7-page LaTeX draft
+│ ├── ACCESS_KNOB_draft.pdf # Compiled submission PDF
+│ ├── ProfileShapes.png # Alternative text figures
+│ └── OutputDetailsScreen.png # Alternative text figures
+├── knob-parametric.html # Customizer app with WebGL view, sliders, sharing, and SVG exporter
+├── poster.html # A0 landscape scientific presentation poster (HTML/PDF print-optimized)
+└── gemini.md # This local documentation
 ```

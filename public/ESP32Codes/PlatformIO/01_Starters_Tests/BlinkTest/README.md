@@ -2,16 +2,16 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32-c3-devkitm-1`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `fastled/FastLED`
-  - `${env:esp32dev.lib_deps}`
+ - `fastled/FastLED`
+ - `${env:esp32dev.lib_deps}`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
@@ -19,7 +19,7 @@ A microcontroller project built using PlatformIO.
 | `DATA_PIN` | `3` |
 | `CLOCK_PIN` | `13` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

@@ -2,16 +2,16 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32dev`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `fastled/FastLED @ ^3.6.0`
-  - `kosme/arduinoFFT @ ^2.0.2`
+ - `fastled/FastLED @ ^3.6.0`
+ - `kosme/arduinoFFT @ ^2.0.2`
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

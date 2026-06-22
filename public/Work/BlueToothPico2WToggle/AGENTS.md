@@ -1,6 +1,6 @@
 # Bioni Input Switcher — Project Plan
-**Hardware:** Raspberry Pi Pico 2W (RP2350) + WeAct 2.9" B/W/R E-Ink Display  
-**Toolchain:** PlatformIO + C++ (Arduino framework via earlephilhower core)  
+**Hardware:** Raspberry Pi Pico 2W (RP2350) + WeAct 2.9" B/W/R E-Ink Display 
+**Toolchain:** PlatformIO + C++ (Arduino framework via earlephilhower core) 
 **App:** Flutter (Android) via Google IDX — built last
 
 ---
@@ -90,9 +90,9 @@ Use `display.setFullWindow()` before each draw cycle.
 display.setFullWindow();
 display.firstPage();
 do {
-  display.fillScreen(GxEPD_WHITE);
-  display.fillCircle(x, y, r, GxEPD_RED);   // ✅ Red works
-  display.fillRect(x, y, w, h, GxEPD_BLACK); // ✅ Black works
+ display.fillScreen(GxEPD_WHITE);
+ display.fillCircle(x, y, r, GxEPD_RED); // Red works
+ display.fillRect(x, y, w, h, GxEPD_BLACK); // Black works
 } while (display.nextPage());
 ```
 
@@ -122,9 +122,9 @@ Use `display.setPartialWindow()` before each draw cycle.
 display.setPartialWindow(0, 0, display.width(), display.height());
 display.firstPage();
 do {
-  display.fillScreen(GxEPD_WHITE);
-  display.fillCircle(x, y, r, GxEPD_BLACK); // ✅ Black works
-  // display.fillCircle(x, y, r, GxEPD_RED); // ❌ Red is ignored / not updated
+ display.fillScreen(GxEPD_WHITE);
+ display.fillCircle(x, y, r, GxEPD_BLACK); // Black works
+ // display.fillCircle(x, y, r, GxEPD_RED); // Red is ignored / not updated
 } while (display.nextPage());
 ```
 
@@ -144,15 +144,15 @@ We call this a `primingWipe()` and it only runs once at power-on:
 
 ```cpp
 void primingWipe() {
-  display.setFullWindow();   // one-time primer
-  display.firstPage();
-  do { display.fillScreen(GxEPD_WHITE); } while (display.nextPage());
+ display.setFullWindow(); // one-time primer
+ display.firstPage();
+ do { display.fillScreen(GxEPD_WHITE); } while (display.nextPage());
 }
 
 void setup() {
-  display.init(115200, true, 2, false);
-  display.setRotation(1);
-  primingWipe(); // prime once — never call setFullWindow() again
+ display.init(115200, true, 2, false);
+ display.setRotation(1);
+ primingWipe(); // prime once — never call setFullWindow() again
 }
 ```
 
@@ -163,7 +163,7 @@ operation — as long as `setFullWindow()` is never called again after boot.
 
 ---
 
-### 🚀 The Cold Boot Fast Bypass (EEPROM Sync)
+### The Cold Boot Fast Bypass (EEPROM Sync)
 
 **Hypothesis:** Can we skip the slow 5-15s `primingWipe()` completely, even on a cold boot (power loss)?
 **Result (Tested in Phase 1): Success!** Cold boots can be truly instant.
@@ -174,7 +174,7 @@ By default, skipping the initial full refresh on a cold boot causes severe ghost
 
 ```cpp
 // 1. Init without the software lock
-display.init(115200, false, 2, false);  // The first 'false' skips the initial wipe flag
+display.init(115200, false, 2, false); // The first 'false' skips the initial wipe flag
 
 // 2. Read the known physical state from EEPROM
 int savedInput = EEPROM.read(0);
@@ -188,7 +188,7 @@ This tricks the controller into loading the exact image that is already on the p
 
 ---
 
-### ⚠️ The Hybrid Approach (Dead End)
+### ️ The Hybrid Approach (Dead End)
 
 **Hypothesis:** What if we pre-load the Red RAM once at startup (`0x00`), and then never touch it, using fast partial B/W updates to reveal the red layer beneath? giving us a fast-updating red background.
 
@@ -222,7 +222,7 @@ board_build.filesystem_size = 0.5m
 monitor_speed = 115200
 build_flags = -DPIO_FRAMEWORK_ARDUINO_ENABLE_BLUETOOTH
 lib_deps =
-    ZinggJM/GxEPD2 @ ^1.6.0
+ ZinggJM/GxEPD2 @ ^1.6.0
 ```
 
 > **Note:** The `platform = https://github.com/earlephilhower/arduino-pico.git`
@@ -240,14 +240,14 @@ lib_deps =
 **Fast mode driver (confirmed working):**
 ```cpp
 GxEPD2_BW<GxEPD2_290_BS, GxEPD2_290_BS::HEIGHT> display(
-    GxEPD2_290_BS(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
+ GxEPD2_290_BS(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
 );
 ```
 
 **Slow tri-color driver (SSD1680-based, if needed):**
 ```cpp
 GxEPD2_3C<GxEPD2_290_C90c, GxEPD2_290_C90c::HEIGHT> display(
-    GxEPD2_290_C90c(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
+ GxEPD2_290_C90c(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
 );
 ```
 > `GxEPD2_290_C90c` (GDEM029C90, SSD1680-based 3C) confirmed as the correct
@@ -255,7 +255,7 @@ GxEPD2_3C<GxEPD2_290_C90c, GxEPD2_290_C90c::HEIGHT> display(
 
 ---
 
-## Phase 0 — Project Scaffold ✅
+## Phase 0 — Project Scaffold 
 
 **Goal:** Get PlatformIO compiling and uploading to the Pico 2W.
 
@@ -263,7 +263,7 @@ GxEPD2_3C<GxEPD2_290_C90c, GxEPD2_290_C90c::HEIGHT> display(
 
 ---
 
-## Phase 1 — E-Ink Sanity Test ✅
+## Phase 1 — E-Ink Sanity Test 
 
 **Goal:** Drive the display and characterize real-world refresh behaviour.
 
@@ -288,9 +288,9 @@ play makes Jack a dull boy.", slides text off, bounces shapes, flickers B/W.
 
 - `currentInput` state variable: `0` = none, `1` = INPUT 1, `2` = INPUT 2 (expandable)
 - On selection:
-  - All output pins set `LOW`
-  - Selected pin set `HIGH`
-  - E-Ink display refreshes to show selected input
+ - All output pins set `LOW`
+ - Selected pin set `HIGH`
+ - E-Ink display refreshes to show selected input
 
 ### Display States
 
@@ -340,8 +340,8 @@ so the app UI stays in sync.
 
 ```
 [ADVERTISING] ---(connection)---> [CONNECTED]
-[CONNECTED]   ---(command rx)---> [UPDATING] → setInput() → screen refresh
-[CONNECTED]   ---(disconnect)---> [ADVERTISING]  (device keeps last state)
+[CONNECTED] ---(command rx)---> [UPDATING] → setInput() → screen refresh
+[CONNECTED] ---(disconnect)---> [ADVERTISING] (device keeps last state)
 ```
 
 **Deliverable:** Phone can connect to `BioniBLE`, send a byte, watch the
@@ -358,15 +358,15 @@ Since mobile dev comes last, a desktop utility is provided to test the hardware 
 
 > **Prerequisites:** Phases 0–3 confirmed working on hardware.
 
-**Platform:** Android only (initially)  
+**Platform:** Android only (initially) 
 **Dev Environment:** Google IDX (Flutter)
 
 ### App UI ("Input Switcher" screen)
 
 - BLE scan + auto-connect to device named `BioniBLE`
 - Two large radio-button-style cards:
-  - **INPUT 1** (dark/black theme card)
-  - **INPUT 2** (red theme card)
+ - **INPUT 1** (dark/black theme card)
+ - **INPUT 2** (red theme card)
 - Only one card is active/selected at a time (same radio logic as hardware)
 - Tapping a card sends the corresponding BLE command byte
 - Connection status indicator (searching / connected / disconnected)
@@ -378,12 +378,12 @@ Since mobile dev comes last, a desktop utility is provided to test the hardware 
 lib/
 ├── main.dart
 ├── ble/
-│   ├── ble_manager.dart       # Scan, connect, write, notify listener
-│   └── ble_constants.dart     # UUIDs, command bytes
+│ ├── ble_manager.dart # Scan, connect, write, notify listener
+│ └── ble_constants.dart # UUIDs, command bytes
 ├── screens/
-│   └── switcher_screen.dart   # Main UI
+│ └── switcher_screen.dart # Main UI
 └── widgets/
-    └── input_card.dart        # Reusable input button card
+ └── input_card.dart # Reusable input button card
 ```
 
 **Deliverable:** Installable APK that connects to the Pico and toggles inputs
@@ -407,17 +407,17 @@ with visual confirmation on both the phone and the E-Ink display.
 
 ```
 BlueToothPico2WToggle/
-├── GEMINI.md                  ← This file
+├── GEMINI.md ← This file
 ├── platformio.ini
 ├── src/
-│   ├── main.cpp               ← Entry point (active phase code)
-│   ├── display_manager.h/.cpp ← E-Ink drawing logic
-│   ├── ble_manager.h/.cpp     ← BLE advertising + command handler
-│   └── input_controller.h/.cpp← GPIO toggle state machine
+│ ├── main.cpp ← Entry point (active phase code)
+│ ├── display_manager.h/.cpp ← E-Ink drawing logic
+│ ├── ble_manager.h/.cpp ← BLE advertising + command handler
+│ └── input_controller.h/.cpp← GPIO toggle state machine
 ├── include/
-│   └── config.h               ← Pin definitions, UUIDs, constants
-└── flutter_app/               ← Created in Phase 4
-    └── bioni_input_switcher/
+│ └── config.h ← Pin definitions, UUIDs, constants
+└── flutter_app/ ← Created in Phase 4
+ └── bioni_input_switcher/
 ```
 
 ---

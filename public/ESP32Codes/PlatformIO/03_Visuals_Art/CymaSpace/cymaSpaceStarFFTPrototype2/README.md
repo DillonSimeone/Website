@@ -2,13 +2,13 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32dev`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
@@ -24,7 +24,7 @@ A microcontroller project built using PlatformIO.
 | `PRINT_FREQUENCY_DATA` | `1` |
 | `PRINT_COLOR_VALUES` | `1` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

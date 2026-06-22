@@ -2,21 +2,21 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32-c3-devkitm-1`
 - **Platform:** `espressif32@^6.7.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `adafruit/Adafruit DRV2605 Library @ ^1.2.4`
+ - `adafruit/Adafruit DRV2605 Library @ ^1.2.4`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
 | `ONBOARD_LED_PIN` | `8` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

@@ -4,25 +4,25 @@ This project contains two ESP32-C3 firmware applications that communicate via **
 
 ---
 
-## ⚡ How It Works
+## How It Works
 
 1. **Handle Device (`reactiveHandleLightMotion`)**:
-   - Reads accelerometer and gyroscope data from the **MPU6050** sensor.
-   - Computes an `energyLevel` (0.0 to 1.0) based on motion intensity.
-   - Updates local LEDs and controls a vibration motor with complex haptic patterns (heartbeat, gallop, buzz) depending on the charge.
-   - Broadcasts the float `energyLevel` every 30ms via ESP-NOW to all listening devices (`FF:FF:FF:FF:FF:FF`).
-   - Automatically enters deep sleep on inactivity, turning off the radio and waking up on motion.
+ - Reads accelerometer and gyroscope data from the **MPU6050** sensor.
+ - Computes an `energyLevel` (0.0 to 1.0) based on motion intensity.
+ - Updates local LEDs and controls a vibration motor with complex haptic patterns (heartbeat, gallop, buzz) depending on the charge.
+ - Broadcasts the float `energyLevel` every 30ms via ESP-NOW to all listening devices (`FF:FF:FF:FF:FF:FF`).
+ - Automatically enters deep sleep on inactivity, turning off the radio and waking up on motion.
 
 2. **Follower Device (`reactiveFollowerLightMotion`)**:
-   - Continuously listens for ESP-NOW broadcasts.
-   - Uses **Delta Math (exponential easing / interpolation)** to smoothly transition its current light level toward the target value received from the handle.
-   - Displays the level proportionally on its own LED strip. For example:
-     - `1.0` target lights up 100% of the strip.
-     - `0.5` target lights up 50% of the strip.
+ - Continuously listens for ESP-NOW broadcasts.
+ - Uses **Delta Math (exponential easing / interpolation)** to smoothly transition its current light level toward the target value received from the handle.
+ - Displays the level proportionally on its own LED strip. For example:
+ - `1.0` target lights up 100% of the strip.
+ - `0.5` target lights up 50% of the strip.
 
 ---
 
-## 📐 Delta Math (Smoothing)
+## Delta Math (Smoothing)
 
 To prevent the follower's LED strip from looking jittery or stepping abruptly when updating, we implement exponential decay easing (delta-time-based interpolation):
 
@@ -33,7 +33,7 @@ $$\text{currentCharge} \leftarrow \text{currentCharge} + (\text{targetCharge} - 
 
 ---
 
-## 🔌 Pinouts
+## Pinouts
 
 Here are the hardware configurations for both devices. Both utilize the **ESP32-C3-DevKitM-1** development board.
 
@@ -58,7 +58,7 @@ Here are the hardware configurations for both devices. Both utilize the **ESP32-
 
 ---
 
-## 🛠️ Flashing & Monitoring
+## ️ Flashing & Monitoring
 
 Scripts are provided in each directory to automate compilation, upload, and serial port monitoring.
 

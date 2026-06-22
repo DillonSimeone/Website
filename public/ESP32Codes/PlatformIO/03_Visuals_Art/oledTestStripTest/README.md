@@ -2,16 +2,16 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32dev`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `adafruit/Adafruit SSD1306 @ ^2.5.7`
-  - `adafruit/Adafruit GFX Library @ ^1.11.9`
+ - `adafruit/Adafruit SSD1306 @ ^2.5.7`
+ - `adafruit/Adafruit GFX Library @ ^1.11.9`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
@@ -20,7 +20,7 @@ A microcontroller project built using PlatformIO.
 | `ECHO_PIN` | `4` |
 | `LED_PIN` | `17` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

@@ -1,10 +1,10 @@
-# Pony XL Prompt Maker 🎨
+# Pony XL Prompt Maker 
 
 A premium, high-contrast prompt builder designed specifically for the **Pony Diffusion XL** ecosystem. This tool simplifies the complex tagging requirements of Pony XL by providing a curated, visual interface for prompt engineering.
 
 ---
 
-## 🚀 How Pony XL Works
+## How Pony XL Works
 
 **Pony Diffusion XL** is a specialized fine-tune of Stable Diffusion XL. Unlike standard models that understand natural language (e.g., "a girl walking in the park"), Pony XL is trained on a massive dataset derived from image boorus (**Danbooru** and **e621**).
 
@@ -20,7 +20,7 @@ Pony XL treats every word as a discrete "concept" or "tag."
 
 ---
 
-## 📊 The "Hard Data" Engine
+## The "Hard Data" Engine
 
 The "confidence" of this prompt maker comes from real-time and cached data from the sources Pony XL was trained on.
 
@@ -32,13 +32,13 @@ Every tag in the sidebar is color-coded based on its prevalence in the original 
 
 ### Multi-Source Sync (`update_tags.py`)
 The project includes a high-performance Python script that synchronizes the data with live Booru APIs:
-1.  **Danbooru API**: Primary source for human and anime tags. Uses `name_comma` for efficient batch matching.
-2.  **e621 API Fallback**: Automatically queried for any tags missing from Danbooru or returning 0 counts. Ensures that specialized furry and anthro-specific concepts receive accurate popularity tints.
-3.  **Batch Processing**: Fetches counts in groups of 50 to minimize API latency and respect rate limits.
+1. **Danbooru API**: Primary source for human and anime tags. Uses `name_comma` for efficient batch matching.
+2. **e621 API Fallback**: Automatically queried for any tags missing from Danbooru or returning 0 counts. Ensures that specialized furry and anthro-specific concepts receive accurate popularity tints.
+3. **Batch Processing**: Fetches counts in groups of 50 to minimize API latency and respect rate limits.
 
 ---
 
-## 🏗️ Architecture: JSON-Driven Data
+## ️ Architecture: JSON-Driven Data
 
 The application uses a modular, decoupled architecture where data is separated from the UI:
 
@@ -57,7 +57,7 @@ The sidebar implements a premium accordion UX:
 
 ---
 
-## ✨ Features
+## Features
 
 - **Glassmorphic UI**: High-contrast, dark-mode design with vibrant neon accents.
 - **Dynamic Data Loading**: Tags are fetched and rendered on the fly from modular JSON files.
@@ -67,15 +67,15 @@ The sidebar implements a premium accordion UX:
 
 ---
 
-## 🛠️ Maintenance & Expansion
+## ️ Maintenance & Expansion
 
 To add new tags or categories:
 
-1.  **Add/Edit JSON**: Create or modify a `.json` file in the `tags/` directory using the existing schema.
-2.  **Update Manifest**: If adding a new category, add its ID to `tags/manifest.json`.
-3.  **Run Sync**: 
-    ```bash
-    python update_tags.py
-    ```
-    This will batch-process all tags in the JSON files, fetch the latest post counts, and update the popularity classes automatically.
-4.  **Refresh**: Your new tags will appear in the sidebar with their correct color tints immediately.
+1. **Add/Edit JSON**: Create or modify a `.json` file in the `tags/` directory using the existing schema.
+2. **Update Manifest**: If adding a new category, add its ID to `tags/manifest.json`.
+3. **Run Sync**: 
+ ```bash
+ python update_tags.py
+ ```
+ This will batch-process all tags in the JSON files, fetch the latest post counts, and update the popularity classes automatically.
+4. **Refresh**: Your new tags will appear in the sidebar with their correct color tints immediately.

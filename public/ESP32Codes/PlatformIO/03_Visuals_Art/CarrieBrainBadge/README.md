@@ -2,21 +2,21 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32-c3-devkitm-1`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `fastled/FastLED @ ^3.6.0`
-  - `adafruit/Adafruit MPU6050 @ ^2.2.4`
-  - `adafruit/Adafruit Unified Sensor @ ^1.1.9`
-  - `adafruit/Adafruit BusIO @ ^1.14.1`
-  - `build_flags =`
-  - `-D ARDUINO_USB_MODE=1`
-  - `-D ARDUINO_USB_CDC_ON_BOOT=1`
+ - `fastled/FastLED @ ^3.6.0`
+ - `adafruit/Adafruit MPU6050 @ ^2.2.4`
+ - `adafruit/Adafruit Unified Sensor @ ^1.1.9`
+ - `adafruit/Adafruit BusIO @ ^1.14.1`
+ - `build_flags =`
+ - `-D ARDUINO_USB_MODE=1`
+ - `-D ARDUINO_USB_CDC_ON_BOOT=1`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
@@ -27,7 +27,7 @@ A microcontroller project built using PlatformIO.
 | `LED_DATA` | `0` |
 | `NUM_LEDS` | `9` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

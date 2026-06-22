@@ -2,17 +2,17 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32-c6-devkitm-1`
 - **Platform:** `https://github.com/pioarduino/platform-espressif32/releases/download/54.03.20/platform-espressif32.zip`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `adafruit/Adafruit SSD1306 @ ^2.5.13`
-  - `adafruit/Adafruit GFX Library @ ^1.11.11`
-  - `iavorvel/MyLD2410 @ ^1.0.1`
+ - `adafruit/Adafruit SSD1306 @ ^2.5.13`
+ - `adafruit/Adafruit GFX Library @ ^1.11.11`
+ - `iavorvel/MyLD2410 @ ^1.0.1`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
@@ -21,7 +21,7 @@ A microcontroller project built using PlatformIO.
 | `RADAR_RX` | `17` |
 | `RADAR_TX` | `16` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

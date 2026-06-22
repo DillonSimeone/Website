@@ -2,18 +2,18 @@
 
 A microcontroller project built using PlatformIO.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `esp32-c3-devkitm-1`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `majicdesigns/MD_Parola@^3.7.3`
-  - `majicdesigns/MD_MAX72XX@^3.5.1`
-  - `upload_speed = 921600`
-  - `monitor_speed = 115200`
+ - `majicdesigns/MD_Parola@^3.7.3`
+ - `majicdesigns/MD_MAX72XX@^3.5.1`
+ - `upload_speed = 921600`
+ - `monitor_speed = 115200`
 
-## 🔌 Pin Configuration
+## Pin Configuration
 
 | Signal Name | GPIO Pin |
 | :--- | :--- |
@@ -21,7 +21,7 @@ A microcontroller project built using PlatformIO.
 | `CLK_PIN` | `4` |
 | `CS_PIN` | `5` |
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

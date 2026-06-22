@@ -6,12 +6,12 @@ A PlatformIO project for the **Freenove ESP32-WROVER-DEV** board with OV2640 cam
 
 ## Features
 
-- 📡 **mDNS Discovery** - Access via `http://esp32cam.local` instead of IP address
-- 🎥 **MJPEG Streaming** - Real-time video stream at `/stream`
-- 📸 **Still Capture** - Capture individual frames at `/capture`
-- 🎨 **Glassmorphism UI** - Modern, premium web interface with blur effects and animations
-- 🔧 **Built-in Diagnostics** - I2C bus scanner to verify camera connectivity
-- 💾 **PSRAM Support** - Utilizes 4MB PSRAM for higher resolution streaming
+- **mDNS Discovery** - Access via `http://esp32cam.local` instead of IP address
+- **MJPEG Streaming** - Real-time video stream at `/stream`
+- **Still Capture** - Capture individual frames at `/capture`
+- **Glassmorphism UI** - Modern, premium web interface with blur effects and animations
+- **Built-in Diagnostics** - I2C bus scanner to verify camera connectivity
+- **PSRAM Support** - Utilizes 4MB PSRAM for higher resolution streaming
 
 ## Quick Start
 
@@ -65,7 +65,7 @@ This error means the camera was not detected on the I2C/SCCB bus. The project in
 
 **Check the serial monitor output:**
 
-✅ **Working camera:**
+ **Working camera:**
 ```
 --- I2C Bus Scan ---
 SDA: GPIO26, SCL: GPIO27
@@ -75,7 +75,7 @@ Found 1 I2C device(s)
 Camera probe successful!
 ```
 
-❌ **Dead/disconnected camera:**
+ **Dead/disconnected camera:**
 ```
 --- I2C Bus Scan ---
 SDA: GPIO26, SCL: GPIO27
@@ -109,12 +109,12 @@ Camera Ready! Use 'http://192.168.x.x' or 'http://esp32cam.local' to connect
 ```
 FreeNoveESP32WroverDev/
 ├── src/
-│   └── main.cpp          # Main application code
+│ └── main.cpp # Main application code
 ├── include/
-│   └── index_html.h      # Glassmorphism web interface
-├── platformio.ini        # PlatformIO configuration
-├── upload.bat            # Build & upload script
-└── README.md             # This file
+│ └── index_html.h # Glassmorphism web interface
+├── platformio.ini # PlatformIO configuration
+├── upload.bat # Build & upload script
+└── README.md # This file
 ```
 
 ## Development Notes
@@ -123,7 +123,7 @@ FreeNoveESP32WroverDev/
 
 During initial development with a V1.6 board, we encountered persistent `0x105` camera probe failures. After extensive debugging:
 
-1. **Verified PSRAM worked** ✅ - Board itself was functional
+1. **Verified PSRAM worked** - Board itself was functional
 2. **Tried multiple pin configurations** - Official Freenove pinout confirmed correct
 3. **Lowered XCLK from 20MHz to 10MHz** - Some OV2640 modules need slower clock
 4. **Added XCLK pre-initialization pulse** - Helps wake up stubborn cameras
@@ -136,8 +136,8 @@ During initial development with a V1.6 board, we encountered persistent `0x105` 
 
 For V1.x boards, these settings have helped:
 ```cpp
-config.xclk_freq_hz = 10000000;  // 10MHz instead of 20MHz
-config.sccb_i2c_port = 0;        // Explicit I2C port 0
+config.xclk_freq_hz = 10000000; // 10MHz instead of 20MHz
+config.sccb_i2c_port = 0; // Explicit I2C port 0
 config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
 ```
 

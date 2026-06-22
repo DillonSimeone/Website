@@ -2,18 +2,18 @@
 
 Ember — ESP32-C3 firmware Stack-based bytecode VM, atomic program swap, FreeRTOS task isolation. See ARCHITECTURE.md for the design rationale.
 
-## 🛠️ Project Specifications
+## ️ Project Specifications
 
 - **Board:** `min_spiffs.csv`
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 - **Dependencies:**
-  - `fastled/FastLED @ ^3.6.0`
-  - `esphome/ESPAsyncWebServer-esphome @ ^3.1.0`
-  - `bblanchon/ArduinoJson @ ^7.0.0`
-  - `kosme/arduinoFFT @ ^2.0.2`
+ - `fastled/FastLED @ ^3.6.0`
+ - `esphome/ESPAsyncWebServer-esphome @ ^3.1.0`
+ - `bblanchon/ArduinoJson @ ^7.0.0`
+ - `kosme/arduinoFFT @ ^2.0.2`
 
-## 🚀 Build & Upload Instructions
+## Build & Upload Instructions
 
 This project is configured for **PlatformIO**.
 

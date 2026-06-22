@@ -16,14 +16,14 @@ Bundle target: index.html ≤ 8 KB, app.js ≤ 80 KB, styles.css ≤ 20 KB, font
 ## 2. Information architecture
 
 ```
-/  (root SPA)
-├── #/setup       (first-run wizard; forced if config.firstRun)
-├── #/play        (default landing; pattern grid + master strip)
-├── #/library     (full pattern browser, filter + search)
-├── #/presets     (load/save up to 16 user presets)
-├── #/audio       (audio reactive panel; live FFT preview)
-├── #/api         (developer panel; tokens + endpoint cheat sheet)
-└── #/device      (hardware status, OTA, factory reset)
+/ (root SPA)
+├── #/setup (first-run wizard; forced if config.firstRun)
+├── #/play (default landing; pattern grid + master strip)
+├── #/library (full pattern browser, filter + search)
+├── #/presets (load/save up to 16 user presets)
+├── #/audio (audio reactive panel; live FFT preview)
+├── #/api (developer panel; tokens + endpoint cheat sheet)
+└── #/device (hardware status, OTA, factory reset)
 ```
 
 Navigation is a bottom tab bar on phones (4 tabs: Play / Library / Audio / Device), and a left sidebar on ≥ 900 px viewports.
@@ -49,18 +49,18 @@ Mobile layout (≤ 600 px):
 
 ```
 +--------------------------------+
-| Haxel       (●) Playing  |
-| -- pattern: Heartbeat --       |
+| Haxel (●) Playing |
+| -- pattern: Heartbeat -- |
 +--------------------------------+
-| [ 4x4 grid of pattern tiles ]  |
-| Each tile shows: name + tiny   |
-| envelope spark.                |
+| [ 4x4 grid of pattern tiles ] |
+| Each tile shows: name + tiny |
+| envelope spark. |
 +--------------------------------+
-| Intensity  [—●—————]   72%     |
-| Speed      [——●————]   1.0x    |
-| Channels   [1] [2] [3] [4]     |
+| Intensity [—●—————] 72% |
+| Speed [——●————] 1.0x |
+| Channels [1] [2] [3] [4] |
 +--------------------------------+
-| ⏵ Play     ⏹ Stop     🔇 Mute |
+| ⏵ Play ⏹ Stop Mute |
 +--------------------------------+
 ```
 
@@ -73,10 +73,10 @@ Mobile layout (≤ 600 px):
 - Search box (filters by name + tag).
 - Tag chips: pulse / rhythm / reactive / music / alert / ambient / lra-friendly / library-rom.
 - Each pattern card expands inline to show:
-  - One-sentence description.
-  - Live envelope spark over the last 4 s (uses the same WebSocket sample stream).
-  - Parameters as labeled controls (rendered from `ParamMeta`).
-  - "Set as preset 1..16" mini-menu.
+ - One-sentence description.
+ - Live envelope spark over the last 4 s (uses the same WebSocket sample stream).
+ - Parameters as labeled controls (rendered from `ParamMeta`).
+ - "Set as preset 1..16" mini-menu.
 
 ### 3.4 `#/presets` — Save / load
 
@@ -112,15 +112,15 @@ Mobile layout (≤ 600 px):
 
 ## 4. Components (Web Components)
 
-| Tag                  | Purpose                                                          |
+| Tag | Purpose |
 | -------------------- | ---------------------------------------------------------------- |
-| `<hb-status-pill>`   | Engine state badge with animated indicator.                      |
-| `<hb-slider>`        | Touch-friendly range slider with numeric badge & double-tap reset. |
-| `<hb-pattern-tile>`  | Tile in the play grid; renders envelope spark.                   |
-| `<hb-spark>`         | Tiny canvas chart, append-only, ring buffer.                     |
-| `<hb-pin-select>`    | Dropdown filtered by GPIO role; emits `conflict` events.         |
-| `<hb-toast>`         | Snack-bar notifications, max 1 visible.                          |
-| `<hb-modal>`         | Accessible modal with focus trap.                                |
+| `<hb-status-pill>` | Engine state badge with animated indicator. |
+| `<hb-slider>` | Touch-friendly range slider with numeric badge & double-tap reset. |
+| `<hb-pattern-tile>` | Tile in the play grid; renders envelope spark. |
+| `<hb-spark>` | Tiny canvas chart, append-only, ring buffer. |
+| `<hb-pin-select>` | Dropdown filtered by GPIO role; emits `conflict` events. |
+| `<hb-toast>` | Snack-bar notifications, max 1 visible. |
+| `<hb-modal>` | Accessible modal with focus trap. |
 
 All components emit standard `CustomEvent`s — no global state library.
 
@@ -130,12 +130,12 @@ A single `Store` module holds:
 
 ```js
 {
-  connected: bool,
-  state: { /* mirror of /json/state */ },
-  patterns: [...PatternMeta],
-  presets: [...UserPreset],
-  audio: { rms, peakDb, mags[32] },
-  diag: { ... }
+ connected: bool,
+ state: { /* mirror of /json/state */ },
+ patterns: [...PatternMeta],
+ presets: [...UserPreset],
+ audio: { rms, peakDb, mags[32] },
+ diag: { ... }
 }
 ```
 
@@ -145,14 +145,14 @@ A single `Store` module holds:
 
 When the device is in AP mode, the embedded DNS server resolves *every* hostname to its own IP. The web server matches these well-known captive-detection URLs and 302s them to `/#/play` (or `/#/setup` on first run):
 
-| Probe                             | Source                   |
+| Probe | Source |
 | --------------------------------- | ------------------------ |
-| `/generate_204`                   | Android, Chrome OS       |
-| `/gen_204`                        | Older Android            |
-| `/hotspot-detect.html`            | iOS, macOS               |
-| `/library/test/success.html`      | iOS legacy               |
-| `/connectivity-check.*`           | Windows, Ubuntu          |
-| `/ncsi.txt`                       | Windows NCSI             |
+| `/generate_204` | Android, Chrome OS |
+| `/gen_204` | Older Android |
+| `/hotspot-detect.html` | iOS, macOS |
+| `/library/test/success.html` | iOS legacy |
+| `/connectivity-check.*` | Windows, Ubuntu |
+| `/ncsi.txt` | Windows NCSI |
 
 On STA mode (joined to a real Wi-Fi network), these endpoints are **not** hijacked — they pass through 404 so the OS knows the network has real Internet.
 
@@ -172,15 +172,15 @@ CSS custom properties make a single recolor possible:
 
 ```css
 :root {
-  --bg: #0d0e10;
-  --bg-2: #15171b;
-  --fg: #f5f6f8;
-  --fg-dim: #9aa1ad;
-  --accent: #ff6a3d;     /* flame orange */
-  --accent-2: #ffb627;
-  --success: #2ec27e;
-  --warn:    #f5b400;
-  --error:   #e5484d;
+ --bg: #0d0e10;
+ --bg-2: #15171b;
+ --fg: #f5f6f8;
+ --fg-dim: #9aa1ad;
+ --accent: #ff6a3d; /* flame orange */
+ --accent-2: #ffb627;
+ --success: #2ec27e;
+ --warn: #f5b400;
+ --error: #e5484d;
 }
 ```
 
@@ -192,11 +192,11 @@ v1.0 ships English-only. Strings live in `data/strings/en.json`. Adding a locale
 
 ## 10. Performance budget
 
-| Metric                                  | Target                          |
+| Metric | Target |
 | --------------------------------------- | ------------------------------- |
-| Time to first interactive (Play screen) | < 1.5 s on first load over AP   |
-| WebSocket reconnect on link drop        | < 2 s                           |
-| Pattern grid scroll FPS (60 tiles)      | ≥ 50 fps on a 2019 mid-range phone |
-| JS heap                                 | < 12 MB                         |
+| Time to first interactive (Play screen) | < 1.5 s on first load over AP |
+| WebSocket reconnect on link drop | < 2 s |
+| Pattern grid scroll FPS (60 tiles) | ≥ 50 fps on a 2019 mid-range phone |
+| JS heap | < 12 MB |
 
 These are enforced by manual Lighthouse runs at PR time; automated CI checks via `playwright` come post-1.0.
