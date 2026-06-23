@@ -463,3 +463,83 @@ footer {
     scrollbar-width: thin;
     scrollbar-color: var(--bp-line) rgba(2, 9, 11, 0.95);
 }
+
+/* Styled Font Dropdown Select Menu */
+select.cyber-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%2300f3ff' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 8px 10px;
+    padding-right: 30px;
+    cursor: pointer;
+}
+
+select.cyber-input option {
+    background: #02090b;
+    color: var(--bp-text);
+    font-family: 'Space Mono', monospace;
+    border: 1px solid var(--bp-line);
+}
+
+/* Number Spinner Cyber Styling */
+.number-spinner {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    border: 1px solid rgba(0, 243, 255, 0.3);
+    background: rgba(0, 243, 255, 0.03);
+    transition: all 0.3s;
+}
+
+.number-spinner:focus-within {
+    border-color: var(--bp-line);
+    box-shadow: 0 0 8px rgba(0, 243, 255, 0.2);
+}
+
+.number-spinner input.cyber-input.num-input {
+    flex: 1;
+    border: none;
+    margin-bottom: 0;
+    text-align: center;
+    background: transparent;
+    padding: 8px;
+    /* Hide default spin buttons */
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+.number-spinner input.cyber-input.num-input::-webkit-inner-spin-button,
+.number-spinner input.cyber-input.num-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.number-spinner .spin-btn {
+    background: rgba(0, 243, 255, 0.08);
+    border: none;
+    color: var(--bp-line);
+    width: 32px;
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.number-spinner .spin-btn:hover {
+    background: rgba(0, 243, 255, 0.2);
+    color: #fff;
+    text-shadow: 0 0 5px var(--bp-line);
+}
+
+.number-spinner .spin-btn:active {
+    background: rgba(0, 243, 255, 0.35);
+}
+

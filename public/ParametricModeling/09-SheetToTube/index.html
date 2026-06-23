@@ -50,17 +50,29 @@
                     
                     <div class="param-row">
                         <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Width (inches)</span>
-                        <input type="number" id="input-sheetWidth" class="cyber-input" value="9.75" step="0.05" min="1" max="100">
+                        <div class="number-spinner">
+                            <button type="button" class="spin-btn spin-down" data-target="input-sheetWidth" data-step="-0.05">-</button>
+                            <input type="number" id="input-sheetWidth" class="cyber-input num-input" value="9.75" step="0.05" min="1" max="100">
+                            <button type="button" class="spin-btn spin-up" data-target="input-sheetWidth" data-step="0.05">+</button>
+                        </div>
                     </div>
 
                     <div class="param-row">
                         <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Height (inches)</span>
-                        <input type="number" id="input-sheetHeight" class="cyber-input" value="7.75" step="0.05" min="1" max="100">
+                        <div class="number-spinner">
+                            <button type="button" class="spin-btn spin-down" data-target="input-sheetHeight" data-step="-0.05">-</button>
+                            <input type="number" id="input-sheetHeight" class="cyber-input num-input" value="7.75" step="0.05" min="1" max="100">
+                            <button type="button" class="spin-btn spin-up" data-target="input-sheetHeight" data-step="0.05">+</button>
+                        </div>
                     </div>
 
                     <div class="param-row">
                         <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Thickness (mm)</span>
-                        <input type="number" id="input-sheetThickness" class="cyber-input" value="0.5" step="0.05" min="0.05" max="20">
+                        <div class="number-spinner">
+                            <button type="button" class="spin-btn spin-down" data-target="input-sheetThickness" data-step="-0.05">-</button>
+                            <input type="number" id="input-sheetThickness" class="cyber-input num-input" value="0.5" step="0.05" min="0.05" max="20">
+                            <button type="button" class="spin-btn spin-up" data-target="input-sheetThickness" data-step="0.05">+</button>
+                        </div>
                     </div>
                 </div>
 
@@ -71,11 +83,11 @@
                     <div class="radio-group">
                         <label>
                             <input type="radio" name="rollDirection" value="width" checked>
-                            <span>ROLL WIDTH (9.75")</span>
+                            <span id="label-rollWidth">ROLL WIDTH (9.75")</span>
                         </label>
                         <label>
                             <input type="radio" name="rollDirection" value="height">
-                            <span>ROLL HEIGHT (7.75")</span>
+                            <span id="label-rollHeight">ROLL HEIGHT (7.75")</span>
                         </label>
                     </div>
                     <p style="font-size: 0.65rem; color: rgba(224, 251, 252, 0.5); line-height: 1.3;">
@@ -93,18 +105,58 @@
                     </div>
 
                     <div class="param-row">
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Slip Ring Mount (13mm Center Hole)</span>
+                        <select id="select-slipRing" class="cyber-input">
+                            <option value="none" selected>None</option>
+                            <option value="bottom">Bottom Cap Only</option>
+                            <option value="top">Top Cap Only</option>
+                            <option value="both">Both Caps</option>
+                        </select>
+                    </div>
+
+                    <div class="param-row">
                         <div class="param-info"><span class="param-label">Lip Groove Depth</span><span class="param-value"><span id="val-lipDepth">8.0</span> mm</span></div>
                         <input type="range" id="input-lipDepth" min="3.0" max="30.0" step="0.5" value="8.0">
                     </div>
 
                     <div class="param-row">
                         <div class="param-info"><span class="param-label">Wall Thickness</span><span class="param-value"><span id="val-wallThick">2.0</span> mm</span></div>
-                        <input type="range" id="input-wallThick" min="1.0" max="10.0" step="0.2" value="2.0">
+                        <input type="range" id="input-wallThick" min="1.0" max="3.0" step="0.1" value="2.0">
                     </div>
 
                     <div class="param-row">
                         <div class="param-info"><span class="param-label">Groove Tolerance</span><span class="param-value"><span id="val-tolerance">0.20</span> mm</span></div>
                         <input type="range" id="input-tolerance" min="0.0" max="2.0" step="0.05" value="0.20">
+                    </div>
+                </div>
+
+                <!-- Section: LED Strip Channels -->
+                <div class="control-group">
+                    <div class="control-group-title">LED Strip Channels</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Channel Count</span><span class="param-value"><span id="val-ledCount">4</span></span></div>
+                        <input type="range" id="input-ledCount" min="0" max="12" step="1" value="4">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Channel Width</span><span class="param-value"><span id="val-ledWidth">10.0</span> mm</span></div>
+                        <input type="range" id="input-ledWidth" min="5.0" max="20.0" step="0.5" value="10.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Channel Depth</span><span class="param-value"><span id="val-ledDepth">2.0</span> mm</span></div>
+                        <input type="range" id="input-ledDepth" min="0.5" max="5.0" step="0.1" value="2.0">
+                    </div>
+                </div>
+
+                <!-- Section: Side Brackets & Screws -->
+                <div class="control-group">
+                    <div class="control-group-title">Side Brackets (M3 Screws)</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Bracket / Screw Count</span><span class="param-value"><span id="val-bracketCount">2</span></span></div>
+                        <input type="range" id="input-bracketCount" min="1" max="4" step="1" value="2">
                     </div>
                 </div>
             </div>
@@ -136,6 +188,10 @@
                     <div class="toggle-row">
                         <span>Show Rolled Sheet</span>
                         <input type="checkbox" id="show-sheet" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Show Side Brackets</span>
+                        <input type="checkbox" id="show-brackets" checked>
                     </div>
                 </div>
 
@@ -184,7 +240,8 @@
                         <span class="spec-val" id="spec-cap-od">--- mm</span>
                     </div>
                     
-                    <button class="btn btn-accent" id="btn-export-stl">Export Watertight STL</button>
+                    <button class="btn btn-accent" id="btn-export-stl">Export Cap STL</button>
+                    <button class="btn btn-accent" id="btn-export-bracket" style="margin-top: 10px; border-color: var(--bp-line); color: var(--bp-line); text-shadow: 0 0 4px var(--bp-line-dim);">Export Bracket STL</button>
                 </div>
             </div>
         </div>

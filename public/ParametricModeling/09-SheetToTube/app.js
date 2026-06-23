@@ -17,6 +17,11 @@ const params = {
     lipDepth: 8.0,          // mm
     wallThick: 2.0,         // mm
     tolerance: 0.20,        // mm
+    ledCount: 4,            // vertical channels
+    ledWidth: 10.0,         // mm
+    ledDepth: 2.0,          // mm
+    slipRing: 'none',       // 'none', 'bottom', 'top', 'both'
+    bracketCount: 2,        // number of M3 side brackets
     opacity: 90,
     mode: 'blueprint'       // 'rendered' or 'blueprint'
 };
@@ -24,13 +29,15 @@ const params = {
 const visibilities = {
     topCap: true,
     bottomCap: true,
-    sheet: true
+    sheet: true,
+    brackets: true
 };
 
 // Meshes references
 let bottomCapMesh = null;
 let topCapMesh = null;
 let sheetMesh = null;
+let bracketMeshes = [];
 
 // Colors (Neon Cyan Theme)
 const colors = {
@@ -162,6 +169,43 @@ function setupUIListeners() {
     bindNumberInput('input-sheetHeight', 'sheetHeight');
     bindNumberInput('input-sheetThickness', 'sheetThickness');
 
+    // LED channel sliders
+    bindSlider('input-ledCount', 'ledCount', false);
+    bindSlider('input-ledWidth', 'ledWidth');
+    bindSlider('input-ledDepth', 'ledDepth');
+
+    // Slip ring select
+    const slipRingSelect = document.getElementById('select-slipRing');
+    if (slipRingSelect) {
+        slipRingSelect.addEventListener('change', (e) => {
+            params.slipRing = e.target.value;
+            rebuild();
+        });
+    }
+
+    // Bracket count slider
+    bindSlider('input-bracketCount', 'bracketCount', false);
+
+    // Bind custom spinner buttons
+    document.querySelectorAll('.spin-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            const step = parseFloat(btn.getAttribute('data-step'));
+            const input = document.getElementById(targetId);
+            if (input) {
+                let val = parseFloat(input.value) + step;
+                const min = parseFloat(input.min);
+                const max = parseFloat(input.max);
+                if (!isNaN(min)) val = Math.max(min, val);
+                if (!isNaN(max)) val = Math.min(max, val);
+                
+                // Format decimal output to step resolution
+                input.value = val.toFixed(2);
+                input.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+
     // Roll Direction Radios
     const radios = document.getElementsByName('rollDirection');
     radios.forEach(radio => {
@@ -195,9 +239,11 @@ function setupUIListeners() {
     bindVisibility('show-topCap', 'topCap');
     bindVisibility('show-bottomCap', 'bottomCap');
     bindVisibility('show-sheet', 'sheet');
+    bindVisibility('show-brackets', 'brackets');
 
     // Export STL
     document.getElementById('btn-export-stl').addEventListener('click', exportSTL);
+    document.getElementById('btn-export-bracket').addEventListener('click', exportBracketSTL);
 }
 
 // Math/Geometry creation helpers
@@ -220,7 +266,7 @@ function manifoldToThree(manifoldMesh) {
 }
 
 // Generate the cap using Manifold WASM
-function generateCapGeometry(D_in, D_out) {
+function generateCapGeometry(D_in, D_out, hasSlipRing, isTopCap = false) {
     if (!Manifold) return null;
 
     const c = params.tolerance;
@@ -236,32 +282,182 @@ function generateCapGeometry(D_in, D_out) {
     const R_cap_out = R_g_out + T_cap;
     const R_cap_in = Math.max(0.1, R_g_in - T_cap);
 
-    // Center Hole Radius
-    const R_hole = params.holeDiam / 2;
+    // Center Hole Radius (Slip ring overrides to 13mm diameter / 6.5mm radius)
+    const R_hole = hasSlipRing ? 6.5 : (params.holeDiam / 2);
 
     // 1. Create outer body solid
     let capBody = makeCSGCylinder(R_cap_out, H_cap, 0, 0, H_cap / 2);
 
-    // 2. Create groove cut solid (groove outer cylinder - groove inner cylinder)
+    // 2. Subtract LED strip channels on the inner lip
+    if (params.ledCount > 0) {
+        const count = params.ledCount;
+        const w = params.ledWidth;
+        const d = params.ledDepth;
+        for (let i = 0; i < count; i++) {
+            const theta = (i * 2 * Math.PI) / count;
+            // Create channel box centered at origin
+            let box = Manifold.cube([w, d, H_cap + 2.0], true);
+            // Translate it radially to the outer edge of inner lip (R_g_in)
+            let translated = box.translate([0, R_g_in - d / 2, H_cap / 2]);
+            // Rotate around center axis
+            let rotated = translated.rotate([0, 0, (theta * 180) / Math.PI]);
+            box.delete();
+            translated.delete();
+
+            // Subtract from main body
+            let tempBody = capBody.subtract(rotated);
+            capBody.delete();
+            rotated.delete();
+            capBody = tempBody;
+        }
+    }
+
+    // 2.5 Add Side Bracket Tabs and subtract vertical M3 screw holes (radius 1.5mm)
+    // Positioned halfway between the LED channels to prevent intersection
+    if (params.bracketCount > 0) {
+        const count = params.bracketCount;
+        const offsetAngle = params.ledCount > 0 ? (Math.PI / params.ledCount) : 0;
+        const holeRad = 1.5; // M3 screw pilot radius (3.0mm diameter)
+        const tabRad = 4.5;  // Tab radius (9.0mm diameter for solid bracket mount)
+
+        // Union the solid tabs to the cap body first
+        for (let j = 0; j < count; j++) {
+            const theta = (j * 2 * Math.PI) / count + offsetAngle;
+            const actualTheta = isTopCap ? -theta : theta;
+            // Create tab cylinder shifted 8mm inward (further inland to avoid damaging lips)
+            let tab = makeCSGCylinder(tabRad, H_cap, R_cap_out - 8.0, 0, H_cap / 2);
+            let rotatedTab = tab.rotate([0, 0, (actualTheta * 180) / Math.PI]);
+            tab.delete();
+
+            let tempBody = capBody.add(rotatedTab);
+            capBody.delete();
+            rotatedTab.delete();
+            capBody = tempBody;
+        }
+
+        // Subtract the vertical screw pilot holes through the tabs (cutting completely through caps)
+        for (let j = 0; j < count; j++) {
+            const theta = (j * 2 * Math.PI) / count + offsetAngle;
+            const actualTheta = isTopCap ? -theta : theta;
+            let hole = makeCSGCylinder(holeRad, H_cap + 2.0, R_cap_out - 8.0, 0, H_cap / 2);
+            let rotatedHole = hole.rotate([0, 0, (actualTheta * 180) / Math.PI]);
+            hole.delete();
+
+            let tempBody = capBody.subtract(rotatedHole);
+            capBody.delete();
+            rotatedHole.delete();
+            capBody = tempBody;
+        }
+    }
+
+    // 3. Create groove cut solid (groove outer cylinder - groove inner cylinder)
     let grOuter = makeCSGCylinder(R_g_out, H_lip + 1.0, 0, 0, T_cap + (H_lip + 1.0) / 2);
     let grInner = makeCSGCylinder(R_g_in, H_lip + 2.0, 0, 0, T_cap + (H_lip + 1.0) / 2);
     let groove = grOuter.subtract(grInner);
     grOuter.delete();
     grInner.delete();
 
-    // 3. Create center hole cut solid
+    // 4. Create central cavity cutout (hollow out the inside of the inner lip)
+    // Starts at Z = T_cap (bottom plate thickness) and goes out of the top
+    let cavity = makeCSGCylinder(R_cap_in, H_lip + 1.0, 0, 0, T_cap + (H_lip + 1.0) / 2);
+
+    // 5. Create center hole cut solid
     let hole = makeCSGCylinder(R_hole, H_cap + 2.0, 0, 0, H_cap / 2);
 
-    // 4. Subtract groove and hole from body
+    // 6. Subtract groove, cavity, and hole from body
     let temp1 = capBody.subtract(groove);
     capBody.delete();
     groove.delete();
 
-    let finalizedCap = temp1.subtract(hole);
+    let temp2 = temp1.subtract(cavity);
     temp1.delete();
+    cavity.delete();
+
+    let finalizedCap = temp2.subtract(hole);
+    temp2.delete();
     hole.delete();
 
     return finalizedCap;
+}
+
+// Generate a C-shaped seam-securing bracket using Manifold WASM
+function generateBracketGeometry(D_out, tubeHeight_mm) {
+    if (!Manifold) return null;
+
+    const T_cap = params.wallThick;
+    const R_g_out = (D_out / 2) + params.tolerance;
+    const R_cap_out = R_g_out + T_cap;
+    const H_bracket = tubeHeight_mm + 2 * T_cap;
+
+    // 1. Vertical bar on the side of the caps (extended by 6mm to prevent top/bottom notches)
+    // Thicken the bar so it extends inwards from the outer edge (R_cap_out + 3.0) to touch the cylinder outer surface (D_out / 2)
+    const W_vert = (R_cap_out + 3.0) - (D_out / 2);
+    let vertBar = Manifold.cube([W_vert, 8.0, H_bracket + 6.0], true);
+    let vertBarTrans = vertBar.translate([(D_out / 2) + W_vert / 2, 0, H_bracket / 2]);
+    vertBar.delete();
+
+    // 2. Top arm extending inwards over the top cap (extended to 12.0mm length radially to cover the inland hole)
+    let topArm = Manifold.cube([12.0, 8.0, 3.0], true);
+    let topArmTrans = topArm.translate([R_cap_out - 4.5, 0, H_bracket + 1.5]);
+    topArm.delete();
+
+    // 3. Bottom arm extending inwards under the bottom cap (extended)
+    let bottomArm = Manifold.cube([12.0, 8.0, 3.0], true);
+    let bottomArmTrans = bottomArm.translate([R_cap_out - 4.5, 0, -1.5]);
+    bottomArm.delete();
+
+    // Union vertical bar and arms
+    let temp1 = vertBarTrans.add(topArmTrans);
+    vertBarTrans.delete();
+    topArmTrans.delete();
+
+    let bracketBody = temp1.add(bottomArmTrans);
+    temp1.delete();
+    bottomArmTrans.delete();
+
+    // Subtract vertical screw holes (radius 1.5mm) shifted 8mm inward to avoid damaging lips
+    let topHole = makeCSGCylinder(1.5, 10.0, R_cap_out - 8.0, 0, H_bracket + 1.5);
+    let bottomHole = makeCSGCylinder(1.5, 10.0, R_cap_out - 8.0, 0, -1.5);
+
+    let temp2 = bracketBody.subtract(topHole);
+    bracketBody.delete();
+    topHole.delete();
+
+    let temp3 = temp2.subtract(bottomHole);
+    temp2.delete();
+    bottomHole.delete();
+
+    // 4. Subtract Cap and Cylinder geometries to prevent clipping
+    const L_mm = params.rollDirection === 'width' ? params.sheetWidth * 25.4 : params.sheetHeight * 25.4;
+    const D_mid = L_mm / Math.PI;
+    const D_in = D_mid - params.sheetThickness;
+
+    // Generate cap volumes for subtraction (top cap must be generated with isTopCap=true so its slots align with the viewport top cap)
+    let capB = generateCapGeometry(D_in, D_out, false, false);
+    let capT = generateCapGeometry(D_in, D_out, false, true);
+    
+    // Position Top Cap volume (flipped and translated)
+    let capTRot = capT.rotate([180, 0, 0]);
+    let capTTrans = capTRot.translate([0, 0, tubeHeight_mm + 2 * T_cap]);
+    capT.delete();
+    capTRot.delete();
+
+    // Subtract caps
+    let temp4 = temp3.subtract(capB);
+    temp3.delete();
+    capB.delete();
+
+    let temp5 = temp4.subtract(capTTrans);
+    temp4.delete();
+    capTTrans.delete();
+
+    // Subtract Sheet Cylinder (slightly larger radius for fit/clearance subtraction)
+    let sheetCutout = makeCSGCylinder(D_out / 2, tubeHeight_mm, 0, 0, T_cap + tubeHeight_mm / 2);
+    let finalizedBracket = temp5.subtract(sheetCutout);
+    temp5.delete();
+    sheetCutout.delete();
+
+    return finalizedBracket;
 }
 
 // Rebuild the 3D Viewport representation
@@ -302,6 +498,12 @@ function rebuild() {
         tubeHeight_mm = w_in * 25.4;
         rollLabel = `Height (${h_in.toFixed(2)}")`;
     }
+
+    // Dynamic roll button label updates
+    const lblWidth = document.getElementById('label-rollWidth');
+    if (lblWidth) lblWidth.innerText = `ROLL WIDTH (${w_in.toFixed(2)}")`;
+    const lblHeight = document.getElementById('label-rollHeight');
+    if (lblHeight) lblHeight.innerText = `ROLL HEIGHT (${h_in.toFixed(2)}")`;
 
     // Midline (neutral axis), Outer, Inner Diameters
     const D_mid = L_mm / Math.PI;
@@ -365,7 +567,8 @@ function rebuild() {
 
     // 4. Generate & Render Bottom Cap
     if (visibilities.bottomCap) {
-        const bottomCapGeom = generateCapGeometry(D_in, D_out);
+        const hasSlipRingBottom = params.slipRing === 'bottom' || params.slipRing === 'both';
+        const bottomCapGeom = generateCapGeometry(D_in, D_out, hasSlipRingBottom, false);
         if (bottomCapGeom) {
             const bCapMesh = bottomCapGeom.getMesh();
             const bCapThreeGeom = manifoldToThree(bCapMesh);
@@ -386,7 +589,8 @@ function rebuild() {
 
     // 5. Generate & Render Top Cap (translated to the top of the cylinder and flipped)
     if (visibilities.topCap) {
-        const topCapGeom = generateCapGeometry(D_in, D_out);
+        const hasSlipRingTop = params.slipRing === 'top' || params.slipRing === 'both';
+        const topCapGeom = generateCapGeometry(D_in, D_out, hasSlipRingTop, true);
         if (topCapGeom) {
             const tCapMesh = topCapGeom.getMesh();
             const tCapThreeGeom = manifoldToThree(tCapMesh);
@@ -440,6 +644,69 @@ function rebuild() {
 
         mainGroup.add(sheetMesh);
     }
+
+    // Clear old brackets meshes from 3D scene
+    for (let m of bracketMeshes) {
+        mainGroup.remove(m);
+        m.geometry.dispose();
+    }
+    bracketMeshes = [];
+
+    // 7. Generate & Render Brackets (C-shaped side fasteners)
+    if (visibilities.brackets && params.bracketCount > 0) {
+        const bracketGeom = generateBracketGeometry(D_out, tubeHeight_mm);
+        if (bracketGeom) {
+            const bMesh = bracketGeom.getMesh();
+            const bThreeGeom = manifoldToThree(bMesh);
+            bracketGeom.delete();
+
+            let bracketMat, bLineColor;
+            if (params.mode === 'rendered') {
+                bracketMat = new THREE.MeshPhysicalMaterial({
+                    color: colors.limeAccent,
+                    emissive: 0x1a2200,
+                    roughness: 0.2,
+                    metalness: 0.3,
+                    transmission: 0.4,
+                    thickness: 3.0,
+                    transparent: true,
+                    opacity: params.opacity / 100,
+                    side: THREE.DoubleSide
+                });
+                bLineColor = 0xffffff;
+            } else {
+                bracketMat = new THREE.MeshBasicMaterial({
+                    color: 0x121c01,
+                    transparent: true,
+                    opacity: 0.7,
+                    side: THREE.DoubleSide
+                });
+                bLineColor = colors.limeAccent;
+            }
+
+            const count = params.bracketCount;
+            const offsetAngle = params.ledCount > 0 ? (Math.PI / params.ledCount) : 0;
+
+            for (let j = 0; j < count; j++) {
+                const theta = (j * 2 * Math.PI) / count + offsetAngle;
+                const mesh = new THREE.Mesh(bThreeGeom, bracketMat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+
+                // Rotate around Z axis to match cap tabs position
+                mesh.rotation.z = theta;
+
+                if (params.mode === 'blueprint') {
+                    const edges = new THREE.EdgesGeometry(bThreeGeom);
+                    const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: bLineColor, linewidth: 1.5 }));
+                    mesh.add(lines);
+                }
+
+                mainGroup.add(mesh);
+                bracketMeshes.push(mesh);
+            }
+        }
+    }
 }
 
 // STL Export: Compile watertight binary STL
@@ -461,25 +728,112 @@ function exportSTL() {
     const D_out = D_mid + t_mm;
     const D_in = D_mid - t_mm;
 
-    // Generate cap geometry
-    const cap = generateCapGeometry(D_in, D_out);
-    if (!cap) return;
+    // Helper to download single STL
+    const downloadCap = (hasSlipRing, nameSuffix, isTop) => {
+        const cap = generateCapGeometry(D_in, D_out, hasSlipRing, isTop);
+        if (!cap) return;
 
-    const mesh = cap.getMesh();
-    cap.delete();
+        const mesh = cap.getMesh();
+        cap.delete();
 
-    // Binary STL compiler
+        const totalTriangles = mesh.triVerts.length / 3;
+        const buffer = new ArrayBuffer(84 + totalTriangles * 50);
+        const view = new DataView(buffer);
+
+        const headerStr = `Cylinder Cap (${nameSuffix}) - Generated via Antigravity CAD (2026)`;
+        for (let i = 0; i < Math.min(80, headerStr.length); i++) {
+            view.setUint8(i, headerStr.charCodeAt(i));
+        }
+
+        view.setUint32(80, totalTriangles, true);
+
+        let offset = 84;
+        const getVert = (idx) => {
+            return [
+                mesh.vertProperties[idx * 3],
+                mesh.vertProperties[idx * 3 + 1],
+                mesh.vertProperties[idx * 3 + 2]
+            ];
+        };
+
+        for (let i = 0; i < totalTriangles; i++) {
+            const i0 = mesh.triVerts[i * 3];
+            const i1 = mesh.triVerts[i * 3 + 1];
+            const i2 = mesh.triVerts[i * 3 + 2];
+
+            const v0 = getVert(i0);
+            const v1 = getVert(i1);
+            const v2 = getVert(i2);
+
+            view.setFloat32(offset, 0, true);
+            view.setFloat32(offset + 4, 0, true);
+            view.setFloat32(offset + 8, 0, true);
+
+            view.setFloat32(offset + 12, v0[0], true);
+            view.setFloat32(offset + 16, v0[1], true);
+            view.setFloat32(offset + 20, v0[2], true);
+
+            view.setFloat32(offset + 24, v1[0], true);
+            view.setFloat32(offset + 28, v1[1], true);
+            view.setFloat32(offset + 32, v1[2], true);
+
+            view.setFloat32(offset + 36, v2[0], true);
+            view.setFloat32(offset + 40, v2[1], true);
+            view.setFloat32(offset + 44, v2[2], true);
+
+            view.setUint16(offset + 48, 0, true);
+            offset += 50;
+        }
+
+        const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `cylinder_cap_${nameSuffix}_roll_${params.rollDirection}_w_${w_in.toFixed(2)}_h_${h_in.toFixed(2)}.stl`;
+        link.click();
+    };
+
+    const hasSlipRingBottom = params.slipRing === 'bottom' || params.slipRing === 'both';
+    const hasSlipRingTop = params.slipRing === 'top' || params.slipRing === 'both';
+
+    if (params.slipRing === 'bottom' || params.slipRing === 'top' || params.bracketCount > 0) {
+        // Caps are asymmetric, download both
+        downloadCap(hasSlipRingBottom, "bottom_cap", false);
+        setTimeout(() => {
+            downloadCap(hasSlipRingTop, "top_cap", true);
+        }, 300);
+    } else {
+        // Caps are symmetric (either both have slip ring or neither, and no brackets)
+        downloadCap(hasSlipRingBottom, params.slipRing === 'both' ? "with_slipring" : "standard", false);
+    }
+}
+
+// STL Export: Compile single C-shaped bracket
+function exportBracketSTL() {
+    if (!Manifold) return;
+
+    const w_in = params.sheetWidth;
+    const h_in = params.sheetHeight;
+    const t_mm = params.sheetThickness;
+    const L_mm = params.rollDirection === 'width' ? w_in * 25.4 : h_in * 25.4;
+    const tubeHeight_mm = params.rollDirection === 'width' ? h_in * 25.4 : w_in * 25.4;
+    const D_mid = L_mm / Math.PI;
+    const D_out = D_mid + t_mm;
+
+    const bracket = generateBracketGeometry(D_out, tubeHeight_mm);
+    if (!bracket) return;
+
+    const mesh = bracket.getMesh();
+    bracket.delete();
+
     const totalTriangles = mesh.triVerts.length / 3;
     const buffer = new ArrayBuffer(84 + totalTriangles * 50);
     const view = new DataView(buffer);
 
-    // 80 bytes header
-    const headerStr = "Cylinder Cap for Rolled Sheet - Generated via Antigravity CAD (2026)";
+    const headerStr = "Cylinder Seam Bracket - Generated via Antigravity CAD (2026)";
     for (let i = 0; i < Math.min(80, headerStr.length); i++) {
         view.setUint8(i, headerStr.charCodeAt(i));
     }
 
-    // Number of triangles (4 bytes)
     view.setUint32(80, totalTriangles, true);
 
     let offset = 84;
@@ -500,12 +854,10 @@ function exportSTL() {
         const v1 = getVert(i1);
         const v2 = getVert(i2);
 
-        // Face Normal (zeros)
         view.setFloat32(offset, 0, true);
         view.setFloat32(offset + 4, 0, true);
         view.setFloat32(offset + 8, 0, true);
 
-        // Vertices 1, 2, 3
         view.setFloat32(offset + 12, v0[0], true);
         view.setFloat32(offset + 16, v0[1], true);
         view.setFloat32(offset + 20, v0[2], true);
@@ -518,7 +870,6 @@ function exportSTL() {
         view.setFloat32(offset + 40, v2[1], true);
         view.setFloat32(offset + 44, v2[2], true);
 
-        // Attribute byte count (2 bytes)
         view.setUint16(offset + 48, 0, true);
         offset += 50;
     }
@@ -526,9 +877,7 @@ function exportSTL() {
     const blob = new Blob([buffer], { type: 'application/octet-stream' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    
-    const label = `cylinder_cap_roll_${params.rollDirection}_w_${w_in.toFixed(2)}_h_${h_in.toFixed(2)}_t_${t_mm.toFixed(2)}mm.stl`;
-    link.download = label;
+    link.download = `cylinder_seam_bracket_roll_${params.rollDirection}_w_${w_in.toFixed(2)}_h_${h_in.toFixed(2)}.stl`;
     link.click();
 }
 
@@ -603,6 +952,8 @@ function updateLeaderLines() {
 
     // Leader lines pointing to cap outer edge, sheet edge, and overall height
     if (visibilities.bottomCap) {
+        const hasSlipRingBottom = params.slipRing === 'bottom' || params.slipRing === 'both';
+        const holeText = hasSlipRingBottom ? "Slip Ring Hole: Ø13.0mm" : `Hole: Ø${params.holeDiam.toFixed(1)}mm`;
         drawDimension(
             new THREE.Vector3(R_cap_out, 0, T_cap / 2),
             `Cap OD: Ø${(R_cap_out * 2).toFixed(1)}mm`,
@@ -610,9 +961,17 @@ function updateLeaderLines() {
         );
         drawDimension(
             new THREE.Vector3(0, 0, 0),
-            `Hole: Ø${params.holeDiam.toFixed(1)}mm`,
+            holeText,
             -1, 1, colors.limeAccent
         );
+        if (params.bracketCount > 0) {
+            const offsetAngle = params.ledCount > 0 ? (Math.PI / params.ledCount) : 0;
+            drawDimension(
+                new THREE.Vector3((R_cap_out - 8.0) * Math.cos(offsetAngle), (R_cap_out - 8.0) * Math.sin(offsetAngle), T_cap + params.lipDepth),
+                `M3 Screw Hole: Ø3.0mm`,
+                1, 1, colors.limeAccent
+            );
+        }
     }
     if (visibilities.sheet) {
         drawDimension(
