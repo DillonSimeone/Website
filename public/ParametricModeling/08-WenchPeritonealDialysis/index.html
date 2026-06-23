@@ -149,25 +149,26 @@
             <div class="section-title">Baxter Twist (Reference Model)</div>
             <div id="params-baxter"></div>
 
-            <div class="section-title">Funnel Wrench (Bottom Taper)</div>
-            <div id="params-funnel"></div>
+            <div class="section-title">Socket Insert Settings</div>
+            <div id="params-tpu"></div>
 
-            <div class="section-title">Socket Wrench (Top Flat Tip)</div>
-            <div id="params-socket"></div>
-
-            <div class="section-title">Handle & Common</div>
-            <div id="params-handle"></div>
+            <div class="section-title">Clamp Jaw Notch Settings</div>
+            <div id="params-notch"></div>
 
             <div class="section-title">Tolerance & Specs</div>
             <div id="params-meta"></div>
 
+            <div class="section-title">Socket Wrench</div>
+            <div id="params-socket"></div>
+
             <div class="section-title" style="margin-top:20px">Manufacturing Export</div>
             <div class="btn-group" style="flex-direction: column; gap: 8px;">
-                <div style="display: flex; gap: 8px;">
-                    <button class="dl-btn" id="dl-funnel-wrench">EXPORT FUNNEL WRENCH (.STL)</button>
-                    <button class="dl-btn" id="dl-socket-wrench">EXPORT SOCKET WRENCH (.STL)</button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="dl-btn" id="dl-mid-insert" style="flex: 1 1 45%;">EXPORT SOCKET HALF (.STL)</button>
+                    <button class="dl-btn" id="dl-mid-solid" style="flex: 1 1 45%;">EXPORT SOLID TEMPLATE (.STL)</button>
+                    <button class="dl-btn" id="dl-cable" style="flex: 1 1 45%;">EXPORT CABLE REF (.STL)</button>
+                    <button class="dl-btn" id="dl-socket-wrench" style="flex: 1 1 45%;">EXPORT SOCKET WRENCH (.STL)</button>
                 </div>
-                <button class="dl-btn dl-main" id="dl-assembly" style="width: 100%;">EXPORT COMPLETE ASSEMBLY (.STL)</button>
             </div>
         </div>
     </div>
@@ -219,8 +220,13 @@
         let baxterTipModel = null;
         let baxterMiddleModel = null;
         let baxterBottomModel = null;
-        let funnelWrenchModel = null;
         let socketWrenchModel = null;
+
+        // Actual split insert halves
+        let tpu2_left = null, tpu2_right = null;
+
+        // Solid template halves
+        let tpu2_left_solid = null, tpu2_right_solid = null;
 
         // --- Parametric Setup ---
         const PARAMS = {};
@@ -417,6 +423,105 @@
             return mesh;
         }
 
+        function makeMiddleCylinder(r, len, gDepth, rWidth, nRidges, q) {
+            let midCyl = cylinder(r, len, q);
+            const totalRidges = nRidges;
+            let ridgesUnion = null;
+            for (let i = 0; i < totalRidges; i++) {
+                const angle = (i * 360) / totalRidges;
+                let ridgeBox = cube(r + gDepth + 2, rWidth, len + 2)
+                    .translate([r / 2, 0, 0])
+                    .rotate([0, 0, angle]);
+                if (ridgesUnion === null) {
+                    ridgesUnion = ridgeBox;
+                } else {
+                    let temp = ridgesUnion;
+                    ridgesUnion = Manifold.union(ridgesUnion, ridgeBox);
+                    temp.delete();
+                    ridgeBox.delete();
+                }
+            }
+            let grooveShell = cylinder(r, len + 2, q);
+            let innerKeep = cylinder(r - gDepth, len + 2, q);
+            let shellOnly = grooveShell.subtract(innerKeep);
+            grooveShell.delete(); innerKeep.delete();
+
+            if (ridgesUnion !== null) {
+                let grooveOnly = shellOnly.subtract(ridgesUnion);
+                shellOnly.delete(); ridgesUnion.delete();
+                let tempMid = midCyl;
+                midCyl = midCyl.subtract(grooveOnly);
+                tempMid.delete(); grooveOnly.delete();
+            } else {
+                shellOnly.delete();
+            }
+            return midCyl;
+        }
+
+        function makeSocketInsert(boreModel, outerR, height, wall, keyW, keyD, keyCount, q, isSolid = false) {
+            let outerCyl = cylinder(outerR, height, q);
+            
+            let keysUnion = null;
+            if (keyCount > 0 && keyW > 0 && keyD > 0) {
+                for (let i = 0; i < keyCount; i++) {
+                    const angle = (i * 360) / keyCount;
+                    let key = cube(keyD + 1, keyW, height)
+                        .translate([outerR + keyD / 2 - 0.5, 0, 0])
+                        .rotate([0, 0, angle]);
+                    if (keysUnion === null) {
+                        keysUnion = key;
+                    } else {
+                        let temp = keysUnion;
+                        keysUnion = Manifold.union(keysUnion, key);
+                        temp.delete();
+                        key.delete();
+                    }
+                }
+            }
+            
+            let insertBody;
+            if (keysUnion) {
+                insertBody = Manifold.union(outerCyl, keysUnion);
+                outerCyl.delete();
+                keysUnion.delete();
+            } else {
+                insertBody = outerCyl;
+            }
+            
+            if (isSolid || !boreModel) {
+                return insertBody;
+            } else {
+                let finalInsert = insertBody.subtract(boreModel);
+                insertBody.delete();
+                return finalInsert;
+            }
+        }
+
+        function splitModelLeft(model, height, totalWidth) {
+            let box = cube(500, 500, 500)
+                .translate([-250, 0, 0]);
+            let leftHalf = Manifold.intersection(model, box);
+            box.delete();
+            return leftHalf;
+        }
+
+        function splitModelRight(model, height, totalWidth) {
+            let box = cube(500, 500, 500)
+                .translate([250, 0, 0]);
+            let rightHalf = Manifold.intersection(model, box);
+            box.delete();
+            return rightHalf;
+        }
+
+        function rotateAroundPivot(model, angle, pivot) {
+            let temp = model.translate([-pivot[0], -pivot[1], -pivot[2]]);
+            let rotated = temp.rotate([0, 0, angle]);
+            temp.delete();
+            let finalModel = rotated.translate([pivot[0], pivot[1], pivot[2]]);
+            rotated.delete();
+            return finalModel;
+        }
+
         function generateModels() {
             // =====================================================================
             // PARAMETERS
@@ -424,7 +529,9 @@
 
             // Kinematics
             const explosion = param("Explosion", 35, { min: 0, max: 100 }, "kinematics") / 100;
-            const showWrenches = param("Show Wrenches", 1, { type: 'checkbox' }, "kinematics");
+            const showCable = param("Show Cable Reference", 1, { type: 'checkbox' }, "kinematics");
+            const showInserts = param("Show Socket Slots", 1, { type: 'checkbox' }, "kinematics");
+            const showSolids = param("Show Solid Templates", 0, { type: 'checkbox' }, "kinematics");
 
             // Baxter Twist reference model measurements
             const tipDiam = param("Tip Cylinder Diam", 14.0, { min: 10.0, max: 20.0, step: 0.5 }, "baxter");
@@ -441,305 +548,204 @@
             const botBottomDiam = param("Bottom Bottom Diam", 16.0, { min: 12.0, max: 22.0, step: 0.5 }, "baxter");
             const botLength = param("Bottom Length", 18.0, { min: 10.0, max: 35.0, step: 1.0 }, "baxter");
 
-            // Funnel wrench params
-            const funnelSmallDiam = param("Funnel Narrow Diam", 15.0, { min: 12.0, max: 20.0, step: 0.1 }, "funnel");
-            const funnelLargeDiam = param("Funnel Wide Diam", 15.8, { min: 12.0, max: 22.0, step: 0.1 }, "funnel");
-            const funnelLength = param("Funnel Depth", 10, { min: 5, max: 25, step: 1 }, "funnel");
-            const funnelWall = param("Funnel Wall Thickness", 3.0, { min: 2.0, max: 8.0, step: 0.5 }, "funnel");
-            const funnelGripRibs = param("Grip Ribs", 1, { type: 'checkbox' }, "funnel");
+            // Socket Insert settings
+            const tpuWall = param("Wall Thickness", 3.0, { min: 1.5, max: 8.0, step: 0.5 }, "tpu");
+            const tpuKeyWidth = param("Key Width", 0.0, { min: 0.0, max: 6.0, step: 0.5 }, "tpu");
+            const tpuKeyDepth = param("Key Depth", 0.0, { min: 0.0, max: 4.0, step: 0.1 }, "tpu");
+            const tpuKeyCount = param("Key Count", 0, { min: 0, max: 8, step: 1 }, "tpu");
 
-            // Socket wrench params
+            // Notch Settings
+            const enableNotch = param("Enable Center Notch", 1, { type: 'checkbox' }, "notch");
+            const notchW = param("Notch Width (X-axis)", 6.0, { min: 1.0, max: 20.0, step: 0.5 }, "notch");
+            const notchH = param("Notch Height (Z-axis)", 4.0, { min: 1.0, max: 15.0, step: 0.5 }, "notch");
+            const notchZOffset = param("Notch Z Offset", 0.0, { min: -15.0, max: 15.0, step: 0.5 }, "notch");
+
+            // Meta
+            const tolerance = param("Fitting Tolerance", 0.25, { min: 0.1, max: 0.8, step: 0.05 }, "meta");
+            const quality = param("Mesh Smoothness", 64, { min: 32, max: 128, step: 16 }, "meta");
+
+            // Socket Wrench params
             const socketDiam = param("Socket Inner Diam", 11.7, { min: 9.0, max: 16.0, step: 0.1 }, "socket");
             const socketDepth = param("Socket Depth", 12, { min: 6, max: 25, step: 1 }, "socket");
             const socketWall = param("Socket Wall Thickness", 4.0, { min: 2.0, max: 8.0, step: 0.5 }, "socket");
+            const sHandleLen = param("Socket Handle Length", 140, { min: 45, max: 200 }, "socket");
+            const sHandleW = param("Socket Wrench Handle Width", 22, { min: 8, max: 35 }, "socket");
+            const sHandleThick = param("Socket Wrench Handle Thickness", 8.0, { min: 4.0, max: 20.0, step: 1.0 }, "socket");
+            const sRingDiam = param("Socket Wrench Ring Diam", 30, { min: 10, max: 50 }, "socket");
+            const sMagnetD = param("Socket Wrench Magnet Diam", 20, { min: 4, max: 30 }, "socket");
+            const sMagnetH = param("Socket Wrench Magnet Depth", 1, { min: 1, max: 30 }, "socket");
 
-            // Handle params
-            const wrenchHandleLen = param("Handle Length", 140, { min: 45, max: 200 }, "handle");
-            const wrenchHandleW = param("Handle Width", 22, { min: 8, max: 35 }, "handle");
-            const wrenchThick = param("Handle Thickness", 8.0, { min: 4.0, max: 20.0, step: 1.0 }, "handle");
-            const ringDiam = param("Thumb Ring Diameter", 30, { min: 10, max: 50 }, "handle");
-            const magnetD = param("Magnet Slot Diameter", 20, { min: 4, max: 30 }, "handle");
-            const magnetH = param("Magnet Slot Depth", 1, { min: 1, max: 30 }, "handle");
-
-            // Meta
-            const tolerance = param("Wrench Tolerance", 0.25, { min: 0.1, max: 0.8, step: 0.05 }, "meta");
-            const quality = param("Mesh Smoothness", 64, { min: 32, max: 128, step: 16 }, "meta");
-
-            const innerRingR = ringDiam / 2;
-            const outerRingR = innerRingR + 5.0;
+            const sInnerRingR = sRingDiam / 2;
+            const sOuterRingR = sInnerRingR + 5.0;
 
             // Cleanup old geometries
-            if (baxterTipModel) { baxterTipModel.delete(); baxterTipModel = null; }
-            if (baxterMiddleModel) { baxterMiddleModel.delete(); baxterMiddleModel = null; }
-            if (baxterBottomModel) { baxterBottomModel.delete(); baxterBottomModel = null; }
-            if (funnelWrenchModel) { funnelWrenchModel.delete(); funnelWrenchModel = null; }
-            if (socketWrenchModel) { socketWrenchModel.delete(); socketWrenchModel = null; }
+            const cleanupList = [
+                baxterTipModel, baxterMiddleModel, baxterBottomModel, socketWrenchModel,
+                tpu2_left, tpu2_right, tpu2_left_solid, tpu2_right_solid
+            ];
+            cleanupList.forEach(m => { if (m) m.delete(); });
+            baxterTipModel = baxterMiddleModel = baxterBottomModel = socketWrenchModel = null;
+            tpu2_left = tpu2_right = tpu2_left_solid = tpu2_right_solid = null;
 
             // =====================================================================
-            // 1. BAXTER TWIST — REFERENCE MODEL (accurate to measurements)
-            // Layout: tip at top, middle in center, bottom at bottom
-            // Middle occupies Z: [-midLength/2 .. +midLength/2]
-            // Tip: bottom face at Z=+midLength/2, extends up
-            // Bottom: top face at Z=-midLength/2, extends down
+            // 1. BAXTER TWIST — REFERENCE MODEL
             // =====================================================================
-
             const tipR = tipDiam / 2;
             const midR = midDiam / 2;
             const botTopR = botTopDiam / 2;
             const botBotR = botBottomDiam / 2;
 
-            // --- A. Middle piece: 14mm cylinder with grooves ---
-            // Grooves run along the length; 4 ridges of 6mm width with 1mm-deep grooves between
-            let midCyl = cylinder(midR, midLength, quality);
+            baxterMiddleModel = makeMiddleCylinder(midR, midLength, grooveDepth, ridgeWidth, numRidges, quality);
 
-            // Cut grooves: we create a slightly oversized cylinder and subtract the ridges approach
-            // Actually easier: cut grooves as radial slots between ridges
-            // With 4 ridges, we have 4 grooves between them
-            // Each ridge spans ridgeWidth mm of arc, grooves fill the rest
-            // We'll approximate by cutting flat channels at cardinal points
-            const totalRidges = numRidges;
-            const grooveCutter = cylinder(midR + grooveDepth, midLength + 2, quality);
-            // Keep the ridges by unioning ridge-shaped pieces
-            let ridgesUnion = null;
-            const ridgeAngleSpan = (ridgeWidth / (Math.PI * midDiam)) * 360; // degrees each ridge spans
-            for (let i = 0; i < totalRidges; i++) {
-                const angle = (i * 360) / totalRidges;
-                // Create a wedge-shaped ridge: box that spans the ridge width at the OD
-                // Use a tall thin box at radius, rotated to the angle
-                let ridgeBox = cube(midR + grooveDepth + 2, ridgeWidth, midLength + 2)
-                    .translate([midR / 2, 0, 0])
-                    .rotate([0, 0, angle]);
-                if (ridgesUnion === null) {
-                    ridgesUnion = ridgeBox;
-                } else {
-                    let temp = ridgesUnion;
-                    ridgesUnion = Manifold.union(ridgesUnion, ridgeBox);
-                    temp.delete();
-                    ridgeBox.delete();
-                }
-            }
-            // The groove region = grooveCutter minus the ridges, intersected with the shell
-            let grooveShell = cylinder(midR + grooveDepth, midLength + 2, quality);
-            let innerKeep = cylinder(midR - grooveDepth, midLength + 2, quality);
-            let shellOnly = grooveShell.subtract(innerKeep);
-            grooveShell.delete(); innerKeep.delete();
-
-            // Remove the ridge zones from the shell to get only groove zones
-            if (ridgesUnion !== null) {
-                let grooveOnly = shellOnly.subtract(ridgesUnion);
-                shellOnly.delete(); ridgesUnion.delete();
-                // Subtract groove zones from the main cylinder
-                let tempMid = midCyl;
-                midCyl = midCyl.subtract(grooveOnly);
-                tempMid.delete(); grooveOnly.delete();
-            } else {
-                shellOnly.delete();
-            }
-            grooveCutter.delete();
-
-            baxterMiddleModel = midCyl;
-
-            // --- B. Tip piece: 14mm cylinder with flat region (11.5mm top-to-bottom) ---
-            // The tip is round but has two flats making the cross-section 11.5mm in one axis
             let tipCyl = cylinder(tipR, tipTotalH, quality);
-            // Flat cuts: remove material so the flat-to-flat distance = tipFlatH
             const flatCutDepth = tipR - tipFlatH / 2;
             if (flatCutDepth > 0) {
                 const cutBoxSize = tipDiam + 4;
-                let flatCut1 = cube(cutBoxSize, cutBoxSize, tipTotalH + 2)
-                    .translate([0, tipFlatH / 2 + cutBoxSize / 2, 0]);
-                let flatCut2 = cube(cutBoxSize, cutBoxSize, tipTotalH + 2)
-                    .translate([0, -(tipFlatH / 2 + cutBoxSize / 2), 0]);
+                let flatCut1 = cube(cutBoxSize, cutBoxSize, tipTotalH + 2).translate([0, tipFlatH / 2 + cutBoxSize / 2, 0]);
+                let flatCut2 = cube(cutBoxSize, cutBoxSize, tipTotalH + 2).translate([0, -(tipFlatH / 2 + cutBoxSize / 2), 0]);
                 let tempTip = tipCyl;
-                tipCyl = tipCyl.subtract(flatCut1);
-                tempTip.delete();
+                tipCyl = tipCyl.subtract(flatCut1); tempTip.delete();
                 tempTip = tipCyl;
-                tipCyl = tipCyl.subtract(flatCut2);
-                tempTip.delete();
+                tipCyl = tipCyl.subtract(flatCut2); tempTip.delete();
                 flatCut1.delete(); flatCut2.delete();
             }
             baxterTipModel = tipCyl;
 
-            // --- C. Bottom piece: tapered cylinder 15mm top -> 16mm bottom ---
-            // Manifold.cylinder(height, radiusLow, radiusHigh, segments, center)
-            // radiusLow = bottom (-Z) toward tube, radiusHigh = top (+Z) toward middle
-            // 16mm (wider) at bottom toward tube, 15mm (narrower) at top toward middle
             let botTaper = Manifold.cylinder(botLength, botBotR, botTopR, quality, true);
-
             let botSolid = botTaper;
-
-            // 8 radial ramp notches going halfway up the body (from original design)
-            const notchDepth = 1.0;
-            const notchWidth = 1.6;
+            const refNotchDepth = 1.0;
+            const refNotchWidth = 1.6;
             const rampLen = botLength / 2;
-            const slope = notchDepth / rampLen;
+            const slope = refNotchDepth / rampLen;
             const rotAngleRad = Math.atan(slope);
             const rotAngleDeg = (rotAngleRad * 180) / Math.PI;
             let notchesUnion = null;
-
             for (let i = 0; i < 8; i++) {
                 let angle = (i * 360) / 8;
-                let notchBox = cube(4.0, notchWidth, rampLen);
-                let translatedBox = notchBox.translate([botBotR + 2.0, 0, -rampLen / 2]);
-                let pivotedBox = translatedBox.translate([-botBotR, 0, 0])
-                    .rotate([0, rotAngleDeg, 0])
-                    .translate([botBotR, 0, 0])
-                    .rotate([0, 0, angle]);
-                notchBox.delete(); translatedBox.delete();
-
-                if (notchesUnion === null) {
-                    notchesUnion = pivotedBox;
-                } else {
-                    let tN = notchesUnion;
-                    notchesUnion = Manifold.union(notchesUnion, pivotedBox);
-                    tN.delete(); pivotedBox.delete();
-                }
+                let notchBox = cube(4.0, refNotchWidth, rampLen);
+                let pivotedBox = notchBox.translate([botBotR + 2.0, 0, -rampLen / 2]).translate([-botBotR, 0, 0]).rotate([0, rotAngleDeg, 0]).translate([botBotR, 0, 0]).rotate([0, 0, angle]);
+                notchBox.delete();
+                if (notchesUnion === null) notchesUnion = pivotedBox;
+                else { let tN = notchesUnion; notchesUnion = Manifold.union(notchesUnion, pivotedBox); tN.delete(); pivotedBox.delete(); }
             }
-            if (notchesUnion !== null) {
-                let tB = botSolid;
-                botSolid = botSolid.subtract(notchesUnion);
-                tB.delete(); notchesUnion.delete();
-            }
+            if (notchesUnion !== null) { let tB = botSolid; botSolid = botSolid.subtract(notchesUnion); tB.delete(); notchesUnion.delete(); }
             baxterBottomModel = botSolid;
 
-            // --- D. Tubing ---
-            const tubeLen = 100.0;
-            const tubeR = 3.5;
-            const tubeOverlap = 5.0;
+            // =====================================================================
+            // 2. SOCKET SLOTS (INSERTS) & SOLID TEMPLATE GENERATION
+            // =====================================================================
+            // 2. SOCKET SLOTS (INSERTS) & SOLID TEMPLATE GENERATION
+            // =====================================================================
+            const H2 = midLength;
+
+            // Insert 2 (Middle)
+            const tpu2_h = H2 + 4.0;
+            const r_tpu2_outer = midR + tolerance + tpuWall;
+            let tbore2 = makeMiddleCylinder(midR + tolerance, tpu2_h + 2, grooveDepth - tolerance, ridgeWidth + tolerance * 2, numRidges, quality);
+            let insert2_full = makeSocketInsert(tbore2, r_tpu2_outer, tpu2_h, tpuWall, tpuKeyWidth, tpuKeyDepth, tpuKeyCount, quality, false);
+            tbore2.delete();
+            let insert2_solid_full = makeSocketInsert(null, r_tpu2_outer, tpu2_h, tpuWall, tpuKeyWidth, tpuKeyDepth, tpuKeyCount, quality, true);
+
+            // Apply customizable horizontal notches to the outer faces
+            const applyNotches = (model, outerR, height) => {
+                if (!enableNotch) return model;
+                let cutter = cube(notchW, outerR * 3, notchH).translate([0, 0, height / 2 + notchZOffset]);
+                let temp = model.subtract(cutter);
+                model.delete();
+                cutter.delete();
+                return temp;
+            };
+
+            insert2_full = applyNotches(insert2_full, r_tpu2_outer, tpu2_h);
+            insert2_solid_full = applyNotches(insert2_solid_full, r_tpu2_outer, tpu2_h);
+
+            // Split all models into left/right halves
+            tpu2_left = splitModelLeft(insert2_full, tpu2_h, r_tpu2_outer * 3);
+            tpu2_right = splitModelRight(insert2_full, tpu2_h, r_tpu2_outer * 3);
+            insert2_full.delete();
+
+            tpu2_left_solid = splitModelLeft(insert2_solid_full, tpu2_h, r_tpu2_outer * 3);
+            tpu2_right_solid = splitModelRight(insert2_solid_full, tpu2_h, r_tpu2_outer * 3);
+            insert2_solid_full.delete();
 
             // =====================================================================
-            // 2. FUNNEL WRENCH — slides over from the tip end, catches bottom taper
-            //    Slim tapered cone. Flat bottom for 3D printing.
-            //    Inner bore tapers 15mm→15.8mm to catch the Baxter bottom taper.
-            //    Bottom of head aligned with bottom of handle for flat bed printing.
+            // 3. RENDERING & SCENE ASSEMBLY
             // =====================================================================
+            const tipCenterZ = midLength / 2 + tipTotalH / 2;
+            const botCenterZ = -(midLength / 2 + botLength / 2);
 
-            const fSmallR = funnelSmallDiam / 2 + tolerance;
-            const fLargeR = funnelLargeDiam / 2 + tolerance;
-            const fOuterSmallR = fSmallR + funnelWall;
-            const fOuterLargeR = fLargeR + funnelWall;
-            const fHeadH = funnelLength;
+            // Render Cable Reference if enabled
+            if (showCable) {
+                let midRender = baxterMiddleModel.translate([0, 0, 0]);
+                let tipRender = baxterTipModel.translate([0, 0, tipCenterZ]);
+                let botRender = baxterBottomModel.translate([0, 0, botCenterZ]);
 
-            // Flat-bottom alignment: shift head so its bottom = handle bottom (-wrenchThick/2)
-            const fHeadShiftZ = (fHeadH - wrenchThick) / 2;
+                const tubeLen = 100.0, tubeR = 3.5, tubeOverlap = 5.0;
+                const adapterBottomZ = botCenterZ - botLength / 2;
+                const tubeCenterZ = adapterBottomZ + tubeOverlap - tubeLen / 2;
+                let botTube = cylinder(tubeR, tubeLen, quality).translate([0, 0, tubeCenterZ]);
 
-            // Outer shell: tapered cone (wider at bottom, narrower at top)
-            let fOuter = Manifold.cylinder(fHeadH, fOuterLargeR, fOuterSmallR, quality, true)
-                .translate([0, 0, fHeadShiftZ]);
-            // Inner bore: tapered to match the Baxter bottom piece taper
-            let fBore = Manifold.cylinder(fHeadH + 2, fLargeR, fSmallR, quality, true)
-                .translate([0, 0, fHeadShiftZ]);
+                const mMid = manifoldToThreeMesh(midRender, 0x06b6d4, 0.85);
+                const mTip = manifoldToThreeMesh(tipRender, 0xf0f9ff, 0.9);
+                const mBot = manifoldToThreeMesh(botRender, 0xe2e8f0, 0.95);
 
-            let fHead = fOuter.subtract(fBore);
-            fOuter.delete(); fBore.delete();
+                let tubeMat = (viewMode === 'blueprint') 
+                    ? new THREE.MeshBasicMaterial({ color: 0x07294d, transparent: true, opacity: 0.3, side: THREE.DoubleSide }) 
+                    : new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, transmission: 0.85, roughness: 0.15, thickness: 1.0, side: THREE.DoubleSide });
 
-            // Optional slim grip ribs on the outside
-            if (funnelGripRibs) {
-                const ribCount = 12;
-                let ribsUnion = null;
-                for (let i = 0; i < ribCount; i++) {
-                    const angle = (i * 360) / ribCount;
-                    let rib = cube(1.2, 0.8, fHeadH)
-                        .translate([fOuterLargeR + 0.2, 0, fHeadShiftZ])
-                        .rotate([0, 0, angle]);
-                    if (ribsUnion === null) {
-                        ribsUnion = rib;
-                    } else {
-                        let tR = ribsUnion;
-                        ribsUnion = Manifold.union(ribsUnion, rib);
-                        tR.delete(); rib.delete();
-                    }
+                const mTubeMeshData = botTube.getMesh();
+                const mTubeGeo = new THREE.BufferGeometry();
+                mTubeGeo.setAttribute('position', new THREE.Float32BufferAttribute(mTubeMeshData.vertProperties, 3));
+                mTubeGeo.setIndex(new THREE.Uint32BufferAttribute(mTubeMeshData.triVerts, 1));
+                mTubeGeo.computeVertexNormals();
+                const mTubeMesh = new THREE.Mesh(mTubeGeo, tubeMat);
+
+                if (viewMode === 'blueprint') {
+                    const edges = new THREE.EdgesGeometry(mTubeGeo);
+                    mTubeMesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x00f2ff, linewidth: 1 })));
                 }
-                if (ribsUnion) {
-                    let tR2 = fHead;
-                    fHead = Manifold.union(fHead, ribsUnion);
-                    tR2.delete(); ribsUnion.delete();
-                }
+
+                scene.add(mMid); scene.add(mTip); scene.add(mBot); scene.add(mTubeMesh);
+                currentMeshes.push(mMid, mTip, mBot, mTubeMesh);
+
+                midRender.delete(); tipRender.delete(); botRender.delete(); botTube.delete();
             }
 
-            // --- Handle for funnel wrench — extends into head for solid connection ---
-            const fHandleHeadR = fOuterLargeR + (funnelGripRibs ? 1.0 : 0);
-            const fHandleEndX = -fHandleHeadR - wrenchHandleLen;
-            const fHandleMidX = -fHandleHeadR - wrenchHandleLen / 2;
-            // Handle bar extends from X=0 (center of head) to the thumb ring end
-            const fHandleTotalLen = fHandleHeadR + wrenchHandleLen;
+            // Render Socket Slots (Split Inserts)
+            const explodeDist = explosion * 25.0;
+            const renderHalf = (model, yOffset, zOffset, isRight, color) => {
+                if (!model) return;
+                const shiftX = isRight ? explodeDist : -explodeDist;
+                let visual = model.translate([shiftX, yOffset, zOffset]);
+                const mesh = manifoldToThreeMesh(visual, color, 0.9);
+                scene.add(mesh);
+                currentMeshes.push(mesh);
+                visual.delete();
+            };
 
-            let fHandle = cube(fHandleTotalLen, wrenchHandleW, wrenchThick)
-                .translate([-fHandleTotalLen / 2, 0, 0]);
-            let fRoundEnd = cylinder(outerRingR, wrenchThick, quality)
-                .translate([fHandleEndX, 0, 0]);
-
-            let fHandleFull = Manifold.union(fHandle, fRoundEnd);
-            fHandle.delete(); fRoundEnd.delete();
-
-            // Thumb hole
-            let fThumbHole = cylinder(innerRingR, wrenchThick + 4.0, quality)
-                .translate([fHandleEndX, 0, 0]);
-            let tempFH = fHandleFull;
-            fHandleFull = fHandleFull.subtract(fThumbHole);
-            tempFH.delete(); fThumbHole.delete();
-
-            // Magnet slot
-            let fMagnet = cylinder(magnetD / 2, magnetH + 0.1, quality)
-                .translate([fHandleMidX, 0, wrenchThick / 2 - magnetH / 2 + 0.05]);
-            tempFH = fHandleFull;
-            fHandleFull = fHandleFull.subtract(fMagnet);
-            tempFH.delete(); fMagnet.delete();
-
-            // Engrave text "BOTTOM" on both sides of magnet slot
-            // Text width: 6 chars * (4.0 + 1.2) - 1.2 = 30mm, half = 15mm
-            const fTextOffset = magnetD / 2 + 18;
-            let textBottomL = makeText("BOTTOM", 6.0, 4.0, 1.2, 1.2);
-            let textBottomR = makeText("BOTTOM", 6.0, 4.0, 1.2, 1.2);
-            if (textBottomL) {
-                let tL = textBottomL.translate([fHandleMidX - fTextOffset, 0, wrenchThick / 2 - 0.5]);
-                let tR = textBottomR.translate([fHandleMidX + fTextOffset, 0, wrenchThick / 2 - 0.5]);
-                tempFH = fHandleFull;
-                fHandleFull = fHandleFull.subtract(tL);
-                tempFH.delete();
-                tempFH = fHandleFull;
-                fHandleFull = fHandleFull.subtract(tR);
-                tempFH.delete();
-                textBottomL.delete(); textBottomR.delete();
-                tL.delete(); tR.delete();
+            if (showInserts) {
+                // Render insert at Y = 0
+                renderHalf(tpu2_left, 0.0, H2/2, false, 0x22c55e);
+                renderHalf(tpu2_right, 0.0, H2/2, true, 0x22c55e);
             }
 
-            // Collar: same height as handle, same bottom plane, round to match funnel base
-            let fCollar = cylinder(fOuterLargeR, wrenchThick, quality);
-            let fCollarBore = cylinder(fLargeR, wrenchThick + 2, quality);
-            let fCollarShell = fCollar.subtract(fCollarBore);
-            fCollar.delete(); fCollarBore.delete();
-
-            // Union: funnel head + collar + handle — all share the same flat bottom
-            let fAssembly1 = Manifold.union(fHead, fCollarShell);
-            let fAssembly2 = Manifold.union(fAssembly1, fHandleFull);
-            fHead.delete(); fCollarShell.delete(); fAssembly1.delete(); fHandleFull.delete();
-
-            // Re-cut the bore through the entire assembly so the handle doesn't fill it in
-            let fFinalBore = Manifold.cylinder(fHeadH + 4, fLargeR, fSmallR, quality, true)
-                .translate([0, 0, fHeadShiftZ]);
-            let fAssembly = fAssembly2.subtract(fFinalBore);
-            fAssembly2.delete(); fFinalBore.delete();
-
-            funnelWrenchModel = fAssembly;
+            // Render Solid Templates
+            if (showSolids) {
+                // Render Solid templates at Y = 0
+                renderHalf(tpu2_left_solid, 0.0, H2/2, false, 0xd946ef);
+                renderHalf(tpu2_right_solid, 0.0, H2/2, true, 0xd946ef);
+            }
 
             // =====================================================================
-            // 3. SOCKET WRENCH — grips the 11.5mm flat tip
-            //    Hex exterior, flat-bore socket. Flat bottom for 3D printing.
-            //    Bottom of head aligned with bottom of handle.
+            // 3. SOCKET WRENCH MODEL
             // =====================================================================
-
-            const sInnerR = tipR + tolerance;       // Round bore matches tip OD
-            const sFlatDist = socketDiam + tolerance * 2;  // Flat-to-flat bore distance
+            const sInnerR = tipR + tolerance;
+            const sFlatDist = socketDiam + tolerance * 2;
             const sOuterR = sInnerR + socketWall;
             const sHeadH = socketDepth;
+            const sHeadShiftZ = (sHeadH - sHandleThick) / 2;
 
-            // Flat-bottom alignment: shift head so its bottom = handle bottom
-            const sHeadShiftZ = (sHeadH - wrenchThick) / 2;
-
-            // Outer shape: HEXAGONAL exterior
-            let sOuterCyl = cylinder(sOuterR, sHeadH, quality)
-                .translate([0, 0, sHeadShiftZ]);
+            let sOuterCyl = cylinder(sOuterR, sHeadH, quality).translate([0, 0, sHeadShiftZ]);
             const hexFlat = sOuterR * Math.cos(Math.PI / 6);
             let sHexCutter = null;
             for (let i = 0; i < 6; i++) {
@@ -748,98 +754,63 @@
                     .translate([sOuterR * 1.5 + hexFlat, 0, 0])
                     .rotate([0, 0, ang])
                     .translate([0, 0, sHeadShiftZ]);
-                if (sHexCutter === null) {
-                    sHexCutter = slab;
-                } else {
-                    let tH = sHexCutter;
-                    sHexCutter = Manifold.union(sHexCutter, slab);
-                    tH.delete(); slab.delete();
-                }
+                if (sHexCutter === null) sHexCutter = slab;
+                else { let tH = sHexCutter; sHexCutter = Manifold.union(sHexCutter, slab); tH.delete(); slab.delete(); }
             }
             if (sHexCutter) {
-                let tO = sOuterCyl;
-                sOuterCyl = sOuterCyl.subtract(sHexCutter);
+                let tO = sOuterCyl; sOuterCyl = sOuterCyl.subtract(sHexCutter);
                 tO.delete(); sHexCutter.delete();
             }
 
-            // Inner bore: round cylinder clipped to flat profile
-            let sBore = cylinder(sInnerR, sHeadH + 2, quality)
-                .translate([0, 0, sHeadShiftZ]);
-
-            // Clip bore to the flat dimension (11.5mm across in Y)
+            let sBore = cylinder(sInnerR, sHeadH + 2, quality).translate([0, 0, sHeadShiftZ]);
             const cutBoxSize = tipDiam + 10;
-            let sKeepSlab = cube(cutBoxSize, sFlatDist, sHeadH + 4)
-                .translate([0, 0, sHeadShiftZ]);
-            let tempBore = sBore;
-            sBore = Manifold.intersection(sBore, sKeepSlab);
+            let sKeepSlab = cube(cutBoxSize, sFlatDist, sHeadH + 4).translate([0, 0, sHeadShiftZ]);
+            let tempBore = sBore; sBore = Manifold.intersection(sBore, sKeepSlab);
             tempBore.delete(); sKeepSlab.delete();
 
             let sHead = sOuterCyl.subtract(sBore);
             sOuterCyl.delete(); sBore.delete();
 
-            // --- Handle for socket wrench — extends into head for solid connection ---
             const sHeadOuterR = sOuterR;
-            const sHandleEndX = -sHeadOuterR - wrenchHandleLen;
-            const sHandleMidX = -sHeadOuterR - wrenchHandleLen / 2;
-            // Handle bar extends from X=0 (center of head) to the thumb ring end
-            const sHandleTotalLen = sHeadOuterR + wrenchHandleLen;
+            const sHandleEndX = -sHeadOuterR - sHandleLen;
+            const sHandleMidX = -sHeadOuterR - sHandleLen / 2;
+            const sHandleTotalLen = sHeadOuterR + sHandleLen;
 
-            let sHandle = cube(sHandleTotalLen, wrenchHandleW, wrenchThick)
-                .translate([-sHandleTotalLen / 2, 0, 0]);
-            let sRoundEnd = cylinder(outerRingR, wrenchThick, quality)
-                .translate([sHandleEndX, 0, 0]);
-
+            let sHandle = cube(sHandleTotalLen, sHandleW, sHandleThick).translate([-sHandleTotalLen / 2, 0, 0]);
+            let sRoundEnd = cylinder(sOuterRingR, sHandleThick, quality).translate([sHandleEndX, 0, 0]);
             let sHandleFull = Manifold.union(sHandle, sRoundEnd);
             sHandle.delete(); sRoundEnd.delete();
 
-            // Thumb hole
-            let sThumbHole = cylinder(innerRingR, wrenchThick + 4.0, quality)
-                .translate([sHandleEndX, 0, 0]);
-            let tSH = sHandleFull;
-            sHandleFull = sHandleFull.subtract(sThumbHole);
+            let sThumbHole = cylinder(sInnerRingR, sHandleThick + 4.0, quality).translate([sHandleEndX, 0, 0]);
+            let tSH = sHandleFull; sHandleFull = sHandleFull.subtract(sThumbHole);
             tSH.delete(); sThumbHole.delete();
 
-            // Magnet slot
-            let sMagnet = cylinder(magnetD / 2, magnetH + 0.1, quality)
-                .translate([sHandleMidX, 0, wrenchThick / 2 - magnetH / 2 + 0.05]);
-            tSH = sHandleFull;
-            sHandleFull = sHandleFull.subtract(sMagnet);
+            let sMagnet = cylinder(sMagnetD / 2, sMagnetH + 0.1, quality).translate([sHandleMidX, 0, sHandleThick / 2 - sMagnetH / 2 + 0.05]);
+            tSH = sHandleFull; sHandleFull = sHandleFull.subtract(sMagnet);
             tSH.delete(); sMagnet.delete();
 
-            // Engrave text "TOP" on both sides of magnet slot
-            // Text width: 3 chars * (4.0 + 1.2) - 1.2 = 14.4mm, half = 7.2mm
-            const sTextOffset = magnetD / 2 + 11;
+            const sTextOffset = sMagnetD / 2 + 11;
             let textTopL = makeText("TOP", 6.0, 4.0, 1.2, 1.2);
             let textTopR = makeText("TOP", 6.0, 4.0, 1.2, 1.2);
             if (textTopL) {
-                let tL = textTopL.translate([sHandleMidX - sTextOffset, 0, wrenchThick / 2 - 0.5]);
-                let tR = textTopR.translate([sHandleMidX + sTextOffset, 0, wrenchThick / 2 - 0.5]);
-                tSH = sHandleFull;
-                sHandleFull = sHandleFull.subtract(tL);
-                tSH.delete();
-                tSH = sHandleFull;
-                sHandleFull = sHandleFull.subtract(tR);
-                tSH.delete();
-                textTopL.delete(); textTopR.delete();
-                tL.delete(); tR.delete();
+                let tL = textTopL.translate([sHandleMidX - sTextOffset, 0, sHandleThick / 2 - 0.5]);
+                let tR = textTopR.translate([sHandleMidX + sTextOffset, 0, sHandleThick / 2 - 0.5]);
+                tSH = sHandleFull; sHandleFull = sHandleFull.subtract(tL); tSH.delete();
+                tSH = sHandleFull; sHandleFull = sHandleFull.subtract(tR); tSH.delete();
+                textTopL.delete(); textTopR.delete(); tL.delete(); tR.delete();
             }
 
-            // Collar: same height as handle, bridging hex head to handle
-            let sCollar = cylinder(sOuterR, wrenchThick, quality);
-            let sCollarBore = cylinder(sInnerR, wrenchThick + 2, quality);
+            let sCollar = cylinder(sOuterR, sHandleThick, quality);
+            let sCollarBore = cylinder(sInnerR, sHandleThick + 2, quality);
             let sCollarShell = sCollar.subtract(sCollarBore);
             sCollar.delete(); sCollarBore.delete();
 
-            // Union: hex head + collar + handle — all share flat bottom
             let sAssembly1 = Manifold.union(sHead, sCollarShell);
             let sAssembly2 = Manifold.union(sAssembly1, sHandleFull);
             sHead.delete(); sCollarShell.delete(); sAssembly1.delete(); sHandleFull.delete();
 
-            // Re-cut the flat-profile bore so the handle doesn't fill it in
-            let sFinalBore = cylinder(sInnerR, sHeadH + 4, quality)
-                .translate([0, 0, sHeadShiftZ]);
-            let sFinalSlab = cube(cutBoxSize, sFlatDist, sHeadH + 6)
-                .translate([0, 0, sHeadShiftZ]);
+            let sFinalBore = cylinder(sInnerR, sHeadH + 4, quality).translate([0, 0, sHeadShiftZ]);
+            let sFinalSlab = cube(cutBoxSize, sFlatDist, sHeadH + 6).translate([0, 0, sHeadShiftZ]);
             let sFinalBoreClipped = Manifold.intersection(sFinalBore, sFinalSlab);
             sFinalBore.delete(); sFinalSlab.delete();
             let sAssembly = sAssembly2.subtract(sFinalBoreClipped);
@@ -847,91 +818,15 @@
 
             socketWrenchModel = sAssembly;
 
-            // =====================================================================
-            // 4. EXPLOSION & RENDERING
-            // =====================================================================
-            const maxTopShift = 40.0;
-            const maxBotShift = 20.0;
-
-            const topShift = explosion * maxTopShift;
-            const botShift = explosion * maxBotShift;
-            const twistAngle = explosion * 90.0;
-
-            // Positions:
-            // Middle + Bottom move together (connected pieces)
-            // Tip separates upward during explosion (twist point)
-            // Bottom: center at -(midLength/2 + botLength/2)
-            const tipCenterZ = midLength / 2 + tipTotalH / 2;
-            const botCenterZ = -(midLength / 2 + botLength / 2);
-
-            // Middle moves down with bottom piece
-            let midRender = baxterMiddleModel.translate([0, 0, -botShift]);
-            let tipRender = baxterTipModel.rotate([0, 0, twistAngle])
-                .translate([0, 0, tipCenterZ + topShift]);
-            let botRender = baxterBottomModel.translate([0, 0, botCenterZ - botShift]);
-
-            // Tube
-            const adapterBottomZ = botCenterZ - botLength / 2 - botShift;
-            const tubeCenterZ = adapterBottomZ + tubeOverlap - tubeLen / 2;
-            let botTube = cylinder(tubeR, tubeLen, quality).translate([0, 0, tubeCenterZ]);
-
-            // Convert to Three.js meshes
-            const mMid = manifoldToThreeMesh(midRender, 0x06b6d4, 0.85);
-            const mTip = manifoldToThreeMesh(tipRender, 0xf0f9ff, 0.9);
-            const mBot = manifoldToThreeMesh(botRender, 0xe2e8f0, 0.95);
-
-            let tubeMat;
-            if (viewMode === 'blueprint') {
-                tubeMat = new THREE.MeshBasicMaterial({ color: 0x07294d, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
-            } else {
-                tubeMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, transmission: 0.85, roughness: 0.15, thickness: 1.0, side: THREE.DoubleSide });
-            }
-
-            const mTubeMeshData = botTube.getMesh();
-            const mTubeGeo = new THREE.BufferGeometry();
-            mTubeGeo.setAttribute('position', new THREE.Float32BufferAttribute(mTubeMeshData.vertProperties, 3));
-            mTubeGeo.setIndex(new THREE.Uint32BufferAttribute(mTubeMeshData.triVerts, 1));
-            mTubeGeo.computeVertexNormals();
-            const mTubeMesh = new THREE.Mesh(mTubeGeo, tubeMat);
-
-            if (viewMode === 'blueprint') {
-                const edges = new THREE.EdgesGeometry(mTubeGeo);
-                mTubeMesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x00f2ff, linewidth: 1 })));
-            }
-
-            scene.add(mMid); scene.add(mTip); scene.add(mBot); scene.add(mTubeMesh);
-            currentMeshes.push(mMid, mTip, mBot, mTubeMesh);
-
-            // Render Wrenches
-            if (showWrenches) {
-                // Funnel wrench: positioned at the bottom piece
-                // The funnel slides down from the tip end and catches the taper.
-                // At rest (explosion=0), it sits on the bottom piece.
-                // The funnel bore opens upward (small end up, large end down on bottom taper)
-                const fWrenchZ = botCenterZ - botShift;
-                let fwVisual = funnelWrenchModel.translate([0, 0, fWrenchZ]);
-
-                // Socket wrench: positioned at the tip
-                const sWrenchZ = tipCenterZ + topShift;
-                let swVisual = socketWrenchModel
-                    .rotate([0, 0, twistAngle])
-                    .translate([0, 0, sWrenchZ]);
-
-                const meshFw = manifoldToThreeMesh(fwVisual, 0xf97316, 0.95);
-                const meshSw = manifoldToThreeMesh(swVisual, 0x22c55e, 0.95);
-
-                scene.add(meshFw);
-                scene.add(meshSw);
-                currentMeshes.push(meshFw, meshSw);
-
-                fwVisual.delete();
-                swVisual.delete();
-            }
-
-            midRender.delete();
-            tipRender.delete();
-            botRender.delete();
-            botTube.delete();
+            // Render Socket Wrench
+            const topShift = explosion * 30.0;
+            const twistAngle = 45.0;
+            const sWrenchZ = tipCenterZ + 20.0 + topShift;
+            let swVisual = socketWrenchModel.rotate([0, 0, twistAngle]).translate([0, 0, sWrenchZ]);
+            const meshSw = manifoldToThreeMesh(swVisual, 0x06b6d4, 0.95);
+            scene.add(meshSw);
+            currentMeshes.push(meshSw);
+            swVisual.delete();
         }
 
         function requestUpdate() {
@@ -970,12 +865,37 @@
             URL.revokeObjectURL(url);
         }
 
-        function exportAssembly() {
-            if (!funnelWrenchModel || !socketWrenchModel) return;
-            // Export both wrenches as a single assembly
-            let assembly = Manifold.union(funnelWrenchModel, socketWrenchModel.translate([0, 50, 0]));
-            exportSTL(assembly, "Baxter_PD_WrenchSet");
+        function exportInsert(leftModel, rightModel, filename) {
+            if (!leftModel || !rightModel) return;
+            // Shift halves slightly apart by 1.5mm so they aren't fused, allowing them to be imported together
+            let leftClone = leftModel.translate([-1.5, 0, 0]);
+            let rightClone = rightModel.translate([1.5, 0, 0]);
+            let assembly = Manifold.union(leftClone, rightClone);
+            exportSTL(assembly, filename);
+            leftClone.delete();
+            rightClone.delete();
             assembly.delete();
+        }
+
+        function exportCable() {
+            if (!baxterTipModel || !baxterMiddleModel || !baxterBottomModel) return;
+            const midLength = PARAMS['middle-length'].value;
+            const tipTotalH = PARAMS['tip-total-height'].value;
+            const botLength = PARAMS['bottom-length'].value;
+            const tipCenterZ = midLength / 2 + tipTotalH / 2;
+            const botCenterZ = -(midLength / 2 + botLength / 2);
+
+            let midRender = baxterMiddleModel.translate([0, 0, 0]);
+            let tipRender = baxterTipModel.translate([0, 0, tipCenterZ]);
+            let botRender = baxterBottomModel.translate([0, 0, botCenterZ]);
+
+            let temp = Manifold.union(midRender, tipRender);
+            let cable = Manifold.union(temp, botRender);
+            temp.delete();
+            midRender.delete(); tipRender.delete(); botRender.delete();
+
+            exportSTL(cable, "Baxter_PD_Cable_Reference");
+            cable.delete();
         }
 
         let viewMode = 'blueprint';
@@ -1017,7 +937,6 @@
             wasm = await Module();
             wasm.setup();
             Manifold = wasm.Manifold;
-            // Apply blueprint default state to buttons on load
             setViewMode('blueprint');
             animate();
         }
@@ -1033,9 +952,11 @@
             renderer.setSize(window.innerWidth - 420, window.innerHeight);
         });
 
-        document.getElementById('dl-funnel-wrench').onclick = () => exportSTL(funnelWrenchModel, "Baxter_PD_FunnelWrench");
-        document.getElementById('dl-socket-wrench').onclick = () => exportSTL(socketWrenchModel, "Baxter_PD_SocketWrench");
-        document.getElementById('dl-assembly').onclick = () => exportAssembly();
+        // Set up export button click events
+        document.getElementById('dl-mid-insert').onclick = () => exportInsert(tpu2_left, tpu2_right, "Baxter_PD_Socket_Half");
+        document.getElementById('dl-mid-solid').onclick = () => exportInsert(tpu2_left_solid, tpu2_right_solid, "Baxter_PD_Solid_Template");
+        document.getElementById('dl-cable').onclick = () => exportCable();
+        document.getElementById('dl-socket-wrench').onclick = () => exportSTL(socketWrenchModel, "Baxter_PD_Socket_Wrench");
 
         init();
     </script>

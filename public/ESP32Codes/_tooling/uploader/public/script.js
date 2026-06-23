@@ -5,6 +5,10 @@ let currentTab = 'build';
 const openFolders = new Set();
 let isFlashing = false;
 
+const SVG_PLATFORMIO = `<svg class="folder-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>PlatformIO</title><path d="M12 23.992c1.25.211 7.051-3.743 9.113-8.217.253-.686.61-1.198.746-2.5.21-2.016-.41-3.912-1.59-5.419-.987-1.163-2.305-2.004-3.88-2.532l.683-2.583a1.371 1.371 0 1 0-.76-.189L15.64 5.1c-1.109-.288-2.328-.437-3.64-.444m5.978 11.667c-1.548 1.346-2.525 1.488-3.045 1.467-.274-.034-.75-.558-.919-1.104-.188-.612-.28-1.282-.273-2.2-.199-2.476 1.465-5.624 3.937-6.041 1.003-.186 2.39.493 2.889 2.088.506 1.422-.645 4.147-2.589 5.79zM12 4.656c-1.315.007-2.538.156-3.65.447l-.675-2.56A1.37 1.37 0 0 0 6.962 0a1.372 1.372 0 0 0-.044 2.742L7.6 5.328c-1.57.528-2.885 1.367-3.871 2.528-1.179 1.507-1.8 3.403-1.588 5.419.136 1.302.492 1.814.745 2.5 2.062 4.474 7.862 8.428 9.113 8.217m-1.507-9.507c.007.92-.086 1.589-.274 2.201-.167.546-.644 1.07-.918 1.104-.52.021-1.498-.121-3.045-1.467-1.944-1.643-3.095-4.368-2.589-5.79.5-1.595 1.886-2.274 2.889-2.088 2.471.417 4.136 3.565 3.937 6.04zm6.45-2.19a1.24 1.24 0 1 0 0 2.48 1.24 1.24 0 0 0 0-2.48zm.416 1.149a.325.325 0 1 1 0-.65.325.325 0 0 1 0 .65zM7.25 12.294a1.24 1.24 0 1 0 0 2.48 1.24 1.24 0 0 0 0-2.48zm-.418 1.15a.325.325 0 1 1 0-.65.325.325 0 0 1 0 .65z"/></svg>`;
+
+const SVG_MICROPYTHON = `<svg class="folder-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>MicroPython</title><path d="M0 0h11.509v18.737h.982V0H24v24h-5.263V5.263h-.983V24H6.246V5.263l-.983.035V24H0zm22.246 19.509h-1.404v2.386h1.404z"/></svg>`;
+
 // DOM Elements
 const projectListEl = document.getElementById('project-list');
 const portSelectEl = document.getElementById('port-select');
@@ -21,6 +25,7 @@ const readmeContainerEl = document.getElementById('readme-container');
 const readmeTitleEl = document.getElementById('readme-title');
 const readmeBodyEl = document.getElementById('readme-body');
 const btnEditReadme = document.getElementById('btn-edit-readme');
+const btnOpenExplorer = document.getElementById('btn-open-explorer');
 
 // Logs & Console Elements
 const logBuildOutputEl = document.getElementById('log-build-output');
@@ -157,13 +162,28 @@ function renderProjects() {
     const isFolderOpen = openFolders.has(folderName);
 
     const spoiler = document.createElement('div');
-    spoiler.className = `folder-spoiler ${isFolderOpen ? 'open' : ''}`;
+    let extraClass = '';
+    let iconHtml = '📁';
+    let cleanFolderName = displayFolderName;
+    if (folderName.toLowerCase().includes('platformio')) {
+      extraClass = 'folder-spoiler-platformio';
+      iconHtml = SVG_PLATFORMIO;
+      cleanFolderName = displayFolderName.replace(/^platformio\/?/i, '');
+    } else if (folderName.toLowerCase().includes('micropython')) {
+      extraClass = 'folder-spoiler-micropython';
+      iconHtml = SVG_MICROPYTHON;
+      cleanFolderName = displayFolderName.replace(/^micropython\/?/i, '');
+    }
+    spoiler.className = `folder-spoiler ${extraClass} ${isFolderOpen ? 'open' : ''}`;
 
     const header = document.createElement('div');
     header.className = 'folder-header';
     header.innerHTML = `
-      <span>📁 ${displayFolderName} (${groups[folderName].length})</span>
-      <span class="folder-icon">▶</span>
+      <span style="display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;">
+        ${iconHtml}
+        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cleanFolderName} (${groups[folderName].length})</span>
+      </span>
+      <span class="folder-icon" style="flex-shrink: 0;">▶</span>
     `;
 
     const content = document.createElement('div');
@@ -179,7 +199,14 @@ function renderProjects() {
         card.classList.add('active');
       }
 
-      const displayName = project.name.split('/').pop();
+      const prefix = folderName === '.' ? 'public/ESP32Codes/' : `public/ESP32Codes/${folderName}/`;
+      let displayName = project.name;
+      if (displayName.startsWith(prefix)) {
+        displayName = displayName.substring(prefix.length);
+      } else {
+        displayName = displayName.split('/').pop();
+      }
+
       card.innerHTML = `
         <h3>${displayName}</h3>
         <span class="board-tag">${project.board}</span>
@@ -218,7 +245,8 @@ function renderProjects() {
 function selectProject(project) {
   selectedProject = project;
   workspaceCardEl.style.display = 'block';
-  activeProjectNameEl.textContent = project.name.split('/').pop().toUpperCase();
+  activeProjectNameEl.innerHTML = `<span class="title-text">${project.name.split('/').pop().toUpperCase()}</span>`;
+  activeProjectNameEl.setAttribute('data-tooltip', project.name);
   
   // Reset Add Env dropdown
   addEnvSelectEl.value = "";
@@ -278,6 +306,7 @@ function updateQuickFlashState() {
 async function loadReadme(project) {
   readmeBodyEl.innerHTML = '<p style="opacity: 0.6;">Loading README...</p>';
   btnEditReadme.style.display = 'none';
+  btnOpenExplorer.style.display = 'none';
   isEditingReadme = false;
 
   try {
@@ -289,9 +318,11 @@ async function loadReadme(project) {
       renderReadmeHtml(data.content);
       btnEditReadme.style.display = 'block';
       btnEditReadme.textContent = 'EDIT';
+      btnOpenExplorer.style.display = 'block';
     } else {
       readmeCache = '';
       renderReadmeEditor(project.path);
+      btnOpenExplorer.style.display = 'block';
     }
   } catch (err) {
     readmeBodyEl.innerHTML = `<p style="color: var(--primary-pink);">Error loading README: ${err.message}</p>`;
@@ -339,6 +370,7 @@ function renderReadmeHtml(markdown) {
 // Display README edit text area
 function renderReadmeEditor(projectPath, existingContent = '') {
   btnEditReadme.style.display = 'none';
+  btnOpenExplorer.style.display = 'none';
   readmeBodyEl.innerHTML = `
     <div class="readme-status-empty">NO README.md FOUND FOR THIS PROJECT.</div>
     <textarea id="readme-input" class="readme-textarea" placeholder="Type project description, pin assignments, notes...">${existingContent}</textarea>
@@ -388,6 +420,7 @@ function renderReadmeEditor(projectPath, existingContent = '') {
       isEditingReadme = false;
       btnEditReadme.style.display = 'block';
       btnEditReadme.textContent = 'EDIT';
+      btnOpenExplorer.style.display = 'block';
       renderReadmeHtml(readmeCache);
     });
   }
@@ -399,11 +432,34 @@ btnEditReadme.addEventListener('click', () => {
   if (isEditingReadme) {
     isEditingReadme = false;
     btnEditReadme.textContent = 'EDIT';
+    btnOpenExplorer.style.display = 'block';
     renderReadmeHtml(readmeCache);
   } else {
     isEditingReadme = true;
     btnEditReadme.textContent = 'CANCEL';
+    btnOpenExplorer.style.display = 'none';
     renderReadmeEditor(selectedProject.path, readmeCache);
+  }
+});
+
+btnOpenExplorer.addEventListener('click', async () => {
+  if (!selectedProject) return;
+  try {
+    const res = await fetch('/api/project/open-explorer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        projectPath: selectedProject.path
+      })
+    });
+    const result = await res.json();
+    if (!result.success) {
+      alert('Failed to open explorer: ' + (result.error || 'Unknown error'));
+    }
+  } catch (err) {
+    alert('Error opening explorer: ' + err.message);
   }
 });
 

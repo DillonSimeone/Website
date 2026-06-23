@@ -143,63 +143,85 @@ function killProcess(type) {
 app.get('/api/projects', (req, res) => {
   const searchDir = path.join(WORKSPACE_DIR, 'public/ESP32Codes');
   const projects = [];
+  const logLines = [];
+
+  logLines.push(`=== Catalog Scan Start at ${new Date().toISOString()} ===`);
+  logLines.push(`Search directory: ${searchDir}`);
 
   function scan(dir) {
-    if (!fs.existsSync(dir)) return;
+    if (!fs.existsSync(dir)) {
+      logLines.push(`Directory does not exist: ${dir}`);
+      return;
+    }
     const files = fs.readdirSync(dir);
-    if (files.includes('platformio.ini')) {
-      // Parse platformio.ini for envs and libs
-      const iniPath = path.join(dir, 'platformio.ini');
-      const iniContent = fs.readFileSync(iniPath, 'utf8');
-      const envs = [];
-      const libs = [];
+    logLines.push(`Scanning directory: ${dir} (Found files/folders: [${files.join(', ')}])`);
 
-      // Simple INI parsing
-      const lines = iniContent.split(/\r?\n/);
-      let currentSection = null;
-      let inLibDeps = false;
+    const hasPio = files.includes('platformio.ini');
+    const hasMicroPython = files.includes('main.py') || files.includes('boot.py');
+    const hasArduino = files.some(f => f.toLowerCase().endsWith('.ino'));
 
-      lines.forEach(line => {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-          currentSection = trimmed.slice(1, -1);
-          inLibDeps = false;
-          if (currentSection.startsWith('env:')) {
-            envs.push(currentSection.replace('env:', ''));
-          }
-        } else if (currentSection && trimmed) {
-          if (trimmed.startsWith('lib_deps')) {
-            inLibDeps = true;
-            const val = trimmed.substring(trimmed.indexOf('=') + 1).trim();
-            if (val) libs.push(val);
-          } else if (inLibDeps) {
-            if (trimmed.startsWith(';') || trimmed.startsWith('#')) {
-              // Comment
-            } else if (trimmed.includes('=')) {
-              // Next setting
-              inLibDeps = false;
-            } else {
-              libs.push(trimmed);
+    if (hasPio || hasMicroPython || hasArduino) {
+      logLines.push(`  -> Found project indicator in: ${dir} (Pio: ${hasPio}, MicroPython: ${hasMicroPython}, Arduino: ${hasArduino})`);
+      
+      let envs = [];
+      let libs = [];
+      let board = 'esp32';
+      let firmwareStatus = {};
+
+      if (hasPio) {
+        // Parse platformio.ini for envs and libs
+        const iniPath = path.join(dir, 'platformio.ini');
+        const iniContent = fs.readFileSync(iniPath, 'utf8');
+        const lines = iniContent.split(/\r?\n/);
+        let currentSection = null;
+        let inLibDeps = false;
+
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            currentSection = trimmed.slice(1, -1);
+            inLibDeps = false;
+            if (currentSection.startsWith('env:')) {
+              envs.push(currentSection.replace('env:', ''));
+            }
+          } else if (currentSection && trimmed) {
+            if (trimmed.startsWith('lib_deps')) {
+              inLibDeps = true;
+              const val = trimmed.substring(trimmed.indexOf('=') + 1).trim();
+              if (val) libs.push(val);
+            } else if (inLibDeps) {
+              if (trimmed.startsWith(';') || trimmed.startsWith('#')) {
+                // Comment
+              } else if (trimmed.includes('=')) {
+                // Next setting
+                inLibDeps = false;
+              } else {
+                libs.push(trimmed);
+              }
             }
           }
-        }
-      });
+        });
 
-      // Look for generated firmware.bin files
-      const firmwareStatus = {};
-      envs.forEach(env => {
-        const binPath = path.join(dir, '.pio', 'build', env, 'firmware.bin');
-        firmwareStatus[env] = {
-          exists: fs.existsSync(binPath),
-          path: binPath,
-          mtime: fs.existsSync(binPath) ? fs.statSync(binPath).mtime : null
-        };
-      });
+        // Look for generated firmware.bin files
+        envs.forEach(env => {
+          const binPath = path.join(dir, '.pio', 'build', env, 'firmware.bin');
+          firmwareStatus[env] = {
+            exists: fs.existsSync(binPath),
+            path: binPath,
+            mtime: fs.existsSync(binPath) ? fs.statSync(binPath).mtime : null
+          };
+        });
 
-      // Guess board / chip type
-      let board = 'esp32';
-      const boardMatch = iniContent.match(/^\s*board\s*=\s*(.+)$/m);
-      if (boardMatch) board = boardMatch[1].trim();
+        // Guess board / chip type
+        const boardMatch = iniContent.match(/^\s*board\s*=\s*(.+)$/m);
+        if (boardMatch) board = boardMatch[1].trim();
+      } else if (hasMicroPython) {
+        board = 'MicroPython Device';
+        envs = ['micropython'];
+      } else if (hasArduino) {
+        board = 'Arduino Device';
+        envs = ['arduino'];
+      }
 
       const relToSearch = path.relative(searchDir, dir).replace(/\\/g, '/');
       const parts = relToSearch.split('/');
@@ -211,6 +233,8 @@ app.get('/api/projects', (req, res) => {
           folder = parts[0];
         }
       }
+
+      logLines.push(`  -> Classified project: "${path.relative(WORKSPACE_DIR, dir)}" under folder group: "${folder}"`);
 
       projects.push({
         name: path.relative(WORKSPACE_DIR, dir).replace(/\\/g, '/'),
@@ -229,12 +253,22 @@ app.get('/api/projects', (req, res) => {
       if (fs.statSync(fullPath).isDirectory()) {
         if (file !== '.pio' && file !== 'dist' && file !== 'node_modules' && file !== '.git') {
           scan(fullPath);
+        } else {
+          logLines.push(`  -> Skipping excluded directory: ${file}`);
         }
       }
     });
   }
 
   scan(searchDir);
+
+  logLines.push(`=== Catalog Scan End. Found ${projects.length} projects. ===\n`);
+  try {
+    fs.writeFileSync(path.join(__dirname, 'catalog.log'), logLines.join('\n'), 'utf8');
+  } catch (logErr) {
+    console.error('Failed to write catalog.log:', logErr);
+  }
+
   res.json(projects);
 });
 
@@ -378,6 +412,77 @@ app.post('/api/project/readme', (req, res) => {
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to write readme or todo', details: err.message });
+  }
+});
+
+// API: Open project folder/file in local explorer
+app.post('/api/project/open-explorer', (req, res) => {
+  console.log('[API] POST /api/project/open-explorer request received');
+  console.log(`[API] Payload body:`, req.body);
+
+  const { projectPath } = req.body;
+  if (!projectPath) {
+    console.log('[API] Error: Missing project path');
+    return res.status(400).json({ error: 'Missing project path' });
+  }
+
+  const resolvedPath = path.resolve(projectPath);
+  const workspacePath = path.resolve(WORKSPACE_DIR);
+  console.log(`[API] Resolved Project Path: ${resolvedPath}`);
+  console.log(`[API] Workspace Path: ${workspacePath}`);
+
+  if (!resolvedPath.startsWith(workspacePath)) {
+    console.log('[API] Error: Access denied (path is outside workspace)');
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  try {
+    const files = fs.readdirSync(resolvedPath);
+    let readmeFile = files.find(f => f.toLowerCase() === 'readme.md');
+    let targetPath;
+    if (readmeFile) {
+      targetPath = path.join(resolvedPath, readmeFile);
+    } else {
+      targetPath = resolvedPath;
+    }
+    console.log(`[API] Target Path for Explorer: ${targetPath}`);
+
+    const { exec } = require('child_process');
+    let command = '';
+
+    if (process.platform === 'win32') {
+      const winPath = targetPath.replace(/\//g, '\\');
+      command = `start "" explorer.exe /select,"${winPath}"`;
+    } else if (process.platform === 'linux') {
+      const targetDir = readmeFile ? resolvedPath : resolvedPath;
+      command = `xdg-open "${targetDir}"`;
+    } else if (process.platform === 'darwin') {
+      command = `open -R "${targetPath}"`;
+    } else {
+      console.log(`[API] Error: Unsupported platform (${process.platform})`);
+      return res.status(500).json({ error: 'Unsupported platform' });
+    }
+
+    console.log(`[API] Spawning Command: ${command}`);
+
+    exec(command, (err, stdout, stderr) => {
+      console.log(`[API] Command completed: "${command}"`);
+      if (err) {
+        console.error(`[API] Command error details:`, err);
+      }
+      if (stdout) {
+        console.log(`[API] Command stdout: ${stdout}`);
+      }
+      if (stderr) {
+        console.warn(`[API] Command stderr: ${stderr}`);
+      }
+    });
+
+    console.log('[API] Responding success: true');
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(`[API] Exception caught:`, err);
+    return res.status(500).json({ error: 'Failed to process request', details: err.message });
   }
 });
 
