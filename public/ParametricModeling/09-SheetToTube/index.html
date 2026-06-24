@@ -21,19 +21,11 @@
 </head>
 <body>
 
-    <div class="scanline"></div>
     <div class="blueprint-border"></div>
 
     <!-- Drawing Title Block -->
-    <header>
-        <div class="title-block">
-            <div class="drawing-number">DWG-2026-STT-09</div>
-            <h1>SHEET-TO-TUBE CYLINDER CAP CONFIGURATOR</h1>
-        </div>
-        <div style="font-size: 0.75rem; text-align: right; line-height: 1.4;">
-            <div>SCALE: <span style="color: var(--bp-line);">1.00 : 1</span></div>
-            <div>STATUS: <span style="color: var(--bp-line); text-shadow: 0 0 5px var(--bp-line);">READY FOR BOOTING</span></div>
-        </div>
+    <header style="justify-content: center;">
+        <h1 style="text-align: center; margin: 0;">SHEET-TO-TUBE CYLINDER CAP CONFIGURATOR</h1>
     </header>
 
     <!-- Main Workspace -->
@@ -266,7 +258,12 @@
                         <span class="spec-val" id="spec-cap-od">--- mm</span>
                     </div>
                     
-                    <button class="btn btn-accent" id="btn-export-stl">Export Cap STL</button>
+                    <div style="font-size: 0.65rem; color: rgba(0, 243, 255, 0.65); line-height: 1.3; margin: 12px 0; font-family: 'Share Tech Mono', monospace; text-shadow: 0 0 2px rgba(0,243,255,0.2);">
+                        * EXPORT BUTTONS ARE COLOR-MATCHED TO THE RENDERED 3D VIEWPORT PARTS.
+                    </div>
+                    
+                    <button class="btn btn-accent rainbow-btn" id="btn-export-all" style="margin-bottom: 12px; font-weight: bold; border-width: 2px;">EXPORT ALL</button>
+                    <button class="btn btn-accent" id="btn-export-stl" style="border-color: #00ff88; color: #00ff88; text-shadow: 0 0 4px rgba(0,255,136,0.4);">Export Cap STL</button>
                     <button class="btn btn-accent" id="btn-export-bracket" style="margin-top: 10px; border-color: var(--bp-line); color: var(--bp-line); text-shadow: 0 0 4px var(--bp-line-dim);">Export Bracket STL</button>
                     <button class="btn btn-accent" id="btn-export-motor-holder" style="margin-top: 10px; border-color: #ff6600; color: #ff6600; text-shadow: 0 0 4px rgba(255,102,0,0.4);">Export Motor Holder STL</button>
                     <button class="btn btn-accent" id="btn-export-connector" style="margin-top: 10px; border-color: #c8ff00; color: #c8ff00; text-shadow: 0 0 4px rgba(200,255,0,0.4);">Export Connector Sleeve STL</button>
@@ -276,18 +273,6 @@
             </div>
         </div>
     </main>
-
-    <!-- Footer Status -->
-    <footer>
-        <div class="status-left">
-            <div class="status-dot"></div>
-            <span>CYLINDER CALCULATION ONLINE</span>
-            <span>|</span>
-            <span>MANIFOLD KERNEL LOADED</span>
-        </div>
-        <div style="text-align: center; color: var(--bp-line);">SHEET-TO-TUBE v2026.1</div>
-        <div style="text-align: right;">COORDINATES: LOCAL GRID</div>
-    </footer>
 
     <!-- JavaScript Module -->
     <script type="module" src="src/main.js"></script>

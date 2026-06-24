@@ -33,10 +33,15 @@ export const meshes = {
     sheet: null,
     brackets: [],
     motorHolder: null,
+    motorHolderTop: null,
     pinionGear: null,
     pinionGear2: null,
+    pinionGearTop: null,
+    pinionGearTop2: null,
     ringGear: null,
-    connector: null
+    ringGearTop: null,
+    connector: null,
+    connectorTop: null
 };
 
 export const context = {
@@ -55,6 +60,7 @@ export const colors = {
     cyanIce: 0x00f3ff,
     glowCyan: 0x00aaff,
     limeAccent: 0xc8ff00,
+    greenAccent: 0x00ff88,
     sheetBlue: 0x00bfff,
     blueprintLine: 0x00f3ff,
     blueprintFace: 0x011218

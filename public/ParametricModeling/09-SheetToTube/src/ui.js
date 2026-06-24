@@ -7,7 +7,8 @@ import {
     exportMotorHolderSTL,
     exportRingGearSTL,
     exportPinionGearSTL,
-    exportConnectorSTL
+    exportConnectorSTL,
+    exportAllSTL
 } from './exporter.js';
 
 // Bind sliders, inputs and buttons to parameters
@@ -125,6 +126,8 @@ export function setupUIListeners(rebuildCallback) {
     if (motorToggle) bindVisibility('show-motorHolder', 'motorHolder');
 
     // Export STL
+    const exportAllBtn = document.getElementById('btn-export-all');
+    if (exportAllBtn) exportAllBtn.addEventListener('click', exportAllSTL);
     document.getElementById('btn-export-stl').addEventListener('click', exportSTL);
     document.getElementById('btn-export-bracket').addEventListener('click', exportBracketSTL);
     const motorExportBtn = document.getElementById('btn-export-motor-holder');

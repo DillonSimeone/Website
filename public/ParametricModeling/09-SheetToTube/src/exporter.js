@@ -278,8 +278,6 @@ export function exportPinionGearSTL() {
 
 // STL Export: Connector Sleeve
 export function exportConnectorSTL() {
-    if (!context.Manifold) return;
-
     const L_mm = params.rollDirection === 'width' ? params.sheetWidthInches * 25.4 : params.sheetHeightInches * 25.4;
     const D_mid = L_mm / Math.PI;
     const D_out = D_mid + params.sheetThickness;
@@ -289,4 +287,175 @@ export function exportConnectorSTL() {
     if (!connector) return;
 
     exportManifoldSTL(connector, `connector_sleeve_13mm.stl`);
+}
+
+// STL Export: Export all active printable parts in a packed grid layout
+export function exportAllSTL() {
+    if (!context.Manifold) return;
+
+    const w_in = params.sheetWidthInches;
+    const h_in = params.sheetHeightInches;
+    const t_mm = params.sheetThickness;
+
+    let L_mm, tubeHeight_mm;
+    if (params.rollDirection === 'width') {
+        L_mm = w_in * 25.4;
+        tubeHeight_mm = h_in * 25.4;
+    } else {
+        L_mm = h_in * 25.4;
+        tubeHeight_mm = w_in * 25.4;
+    }
+
+    const D_mid = L_mm / Math.PI;
+    const D_out = D_mid + t_mm;
+    const D_in = D_mid - t_mm;
+
+    const hasSlipRingBottom = params.slipRing === 'bottom' || params.slipRing === 'both';
+    const hasSlipRingTop = params.slipRing === 'top' || params.slipRing === 'both';
+
+    // Helper to lay a manifold flat on the Z=0 bed and center it in XY
+    const layFlatAndGetDimensions = (manifoldGeom) => {
+        const mesh = manifoldGeom.getMesh();
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        let minZ = Infinity, maxZ = -Infinity;
+        const numVerts = mesh.vertProperties.length / 3;
+        for (let i = 0; i < numVerts; i++) {
+            const x = mesh.vertProperties[i * 3];
+            const y = mesh.vertProperties[i * 3 + 1];
+            const z = mesh.vertProperties[i * 3 + 2];
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            if (z < minZ) minZ = z;
+            if (z > maxZ) maxZ = z;
+        }
+
+        const sizeX = maxX - minX;
+        const sizeY = maxY - minY;
+        const sizeZ = maxZ - minZ;
+
+        const tx = -(minX + maxX) / 2;
+        const ty = -(minY + maxY) / 2;
+        const tz = -minZ;
+
+        const positionedGeom = manifoldGeom.translate([tx, ty, tz]);
+        manifoldGeom.delete();
+
+        return {
+            geom: positionedGeom,
+            width: sizeX,
+            height: sizeY,
+            depth: sizeZ
+        };
+    };
+
+    const itemsToProcess = [];
+
+    const addGeometryItem = (geom, rotateY = 0) => {
+        if (!geom) return;
+        let orientedGeom = geom;
+        if (rotateY !== 0) {
+            orientedGeom = geom.rotate([0, rotateY, 0]);
+            geom.delete();
+        }
+        const processed = layFlatAndGetDimensions(orientedGeom);
+        itemsToProcess.push(processed);
+    };
+
+    // 1. Bottom Cap
+    addGeometryItem(generateCapGeometry(D_in, D_out, hasSlipRingBottom, false));
+
+    // 2. Top Cap
+    addGeometryItem(generateCapGeometry(D_in, D_out, hasSlipRingTop, true));
+
+    // 3. Brackets
+    if (params.bracketCount > 0) {
+        for (let i = 0; i < params.bracketCount; i++) {
+            addGeometryItem(generateBracketGeometry(D_out, tubeHeight_mm), 90);
+        }
+    }
+
+    // 4. Bottom Slip Ring Parts
+    if (hasSlipRingBottom) {
+        addGeometryItem(generateMotorHolderGeometry(D_in, D_out));
+        addGeometryItem(generateRingGearGeometry(D_out));
+        addGeometryItem(generatePinionGearGeometry());
+        addGeometryItem(generatePinionGearGeometry());
+        addGeometryItem(generateConnectorGeometry(D_in, D_out));
+    }
+
+    // 5. Top Slip Ring Parts
+    if (hasSlipRingTop) {
+        addGeometryItem(generateMotorHolderGeometry(D_in, D_out));
+        addGeometryItem(generateRingGearGeometry(D_out));
+        addGeometryItem(generatePinionGearGeometry());
+        addGeometryItem(generatePinionGearGeometry());
+        addGeometryItem(generateConnectorGeometry(D_in, D_out));
+    }
+
+    if (itemsToProcess.length === 0) return;
+
+    // Pack items into a grid layout
+    let currentX = 0;
+    let currentY = 0;
+    let maxRowHeightInCurrentRow = 0;
+    const padding = 10.0;
+    const maxRowWidth = 220.0; // typical printer bed width (e.g. 220mm)
+
+    const packedGeoms = [];
+    
+    for (let item of itemsToProcess) {
+        // If adding this item exceeds maxRowWidth, wrap to next row
+        if (currentX + item.width > maxRowWidth && currentX > 0) {
+            currentX = 0;
+            currentY += maxRowHeightInCurrentRow + padding;
+            maxRowHeightInCurrentRow = 0;
+        }
+        
+        // Translate to layout position
+        const tx = currentX + item.width / 2;
+        const ty = currentY + item.height / 2;
+        
+        const translatedGeom = item.geom.translate([tx, ty, 0]);
+        packedGeoms.push(translatedGeom);
+        
+        currentX += item.width + padding;
+        if (item.height > maxRowHeightInCurrentRow) {
+            maxRowHeightInCurrentRow = item.height;
+        }
+        item.geom.delete();
+    }
+
+    // Union all packed geometries into one single Manifold
+    let finalManifold = packedGeoms[0];
+    for (let i = 1; i < packedGeoms.length; i++) {
+        let temp = finalManifold.add(packedGeoms[i]);
+        finalManifold.delete();
+        packedGeoms[i].delete();
+        finalManifold = temp;
+    }
+
+    // Center the final merged STL around X=0, Y=0
+    const finalMesh = finalManifold.getMesh();
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    const numVerts = finalMesh.vertProperties.length / 3;
+    for (let i = 0; i < numVerts; i++) {
+        const x = finalMesh.vertProperties[i * 3];
+        const y = finalMesh.vertProperties[i * 3 + 1];
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+    }
+    const finalTx = -(minX + maxX) / 2;
+    const finalTy = -(minY + maxY) / 2;
+
+    let centeredManifold = finalManifold.translate([finalTx, finalTy, 0]);
+    finalManifold.delete();
+
+    // Export centered manifold
+    exportManifoldSTL(centeredManifold, `all_printable_parts_packed.stl`);
 }

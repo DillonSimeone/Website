@@ -16,6 +16,25 @@ import {
 
 // Rebuild the 3D Viewport representation
 export function rebuild() {
+    const hasSlipRingBottom = params.slipRing === 'bottom' || params.slipRing === 'both';
+    const hasSlipRingTop = params.slipRing === 'top' || params.slipRing === 'both';
+    const slipRingActive = params.slipRing !== 'none';
+    const slipRingButtons = [
+        'btn-export-motor-holder',
+        'btn-export-connector',
+        'btn-export-ring',
+        'btn-export-pinion'
+    ];
+    slipRingButtons.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = slipRingActive ? 'block' : 'none';
+    });
+
+    if (context.mainGroup) {
+        // Move entire model up by 25mm to clear the bed grid only when bottom slip ring mount is active
+        context.mainGroup.position.y = hasSlipRingBottom ? 25.0 : 0.0;
+    }
+
     // Clear old meshes
     if (meshes.bottomCap) {
         context.mainGroup.remove(meshes.bottomCap);
@@ -57,11 +76,33 @@ export function rebuild() {
         meshes.connector.geometry.dispose();
         meshes.connector = null;
     }
+    if (meshes.motorHolderTop) {
+        context.mainGroup.remove(meshes.motorHolderTop);
+        meshes.motorHolderTop.geometry.dispose();
+        meshes.motorHolderTop = null;
+    }
+    if (meshes.pinionGearTop) {
+        context.mainGroup.remove(meshes.pinionGearTop);
+        meshes.pinionGearTop.geometry.dispose();
+        meshes.pinionGearTop = null;
+    }
+    if (meshes.pinionGearTop2) {
+        context.mainGroup.remove(meshes.pinionGearTop2);
+        meshes.pinionGearTop2.geometry.dispose();
+        meshes.pinionGearTop2 = null;
+    }
+    if (meshes.ringGearTop) {
+        context.mainGroup.remove(meshes.ringGearTop);
+        meshes.ringGearTop.geometry.dispose();
+        meshes.ringGearTop = null;
+    }
+    if (meshes.connectorTop) {
+        context.mainGroup.remove(meshes.connectorTop);
+        meshes.connectorTop.geometry.dispose();
+        meshes.connectorTop = null;
+    }
 
     if (!context.Manifold) return;
-
-    const hasSlipRingBottom = params.slipRing === 'bottom' || params.slipRing === 'both';
-    const hasSlipRingTop = params.slipRing === 'top' || params.slipRing === 'both';
 
     // 1. Perform Math calculations
     const w_in = params.sheetWidthInches;
@@ -122,8 +163,8 @@ export function rebuild() {
     let bodyMat, lineColor;
     if (params.mode === 'rendered') {
         bodyMat = new THREE.MeshPhysicalMaterial({
-            color: colors.cyanIce,
-            emissive: 0x001a22,
+            color: colors.greenAccent,
+            emissive: 0x001a09,
             roughness: 0.1,
             metalness: 0.1,
             transmission: 0.75,
@@ -142,7 +183,7 @@ export function rebuild() {
             opacity: 0.7,
             side: THREE.DoubleSide
         });
-        lineColor = colors.blueprintLine;
+        lineColor = colors.greenAccent;
     }
 
     // 4. Generate & Render Bottom Cap
@@ -240,8 +281,8 @@ export function rebuild() {
             let bracketMat, bLineColor;
             if (params.mode === 'rendered') {
                 bracketMat = new THREE.MeshPhysicalMaterial({
-                    color: colors.limeAccent,
-                    emissive: 0x1a2200,
+                    color: colors.cyanIce,
+                    emissive: 0x001a22,
                     roughness: 0.2,
                     metalness: 0.3,
                     transmission: 0.4,
@@ -253,12 +294,12 @@ export function rebuild() {
                 bLineColor = 0xffffff;
             } else {
                 bracketMat = new THREE.MeshBasicMaterial({
-                    color: 0x121c01,
+                    color: colors.blueprintFace,
                     transparent: true,
                     opacity: 0.7,
                     side: THREE.DoubleSide
                 });
-                bLineColor = colors.limeAccent;
+                bLineColor = colors.blueprintLine;
             }
 
             const count = params.bracketCount;
@@ -286,180 +327,166 @@ export function rebuild() {
     }
 
     // 8. Generate & Render Gear Drive System (only when slip ring is active)
-    const slipRingActive = params.slipRing !== 'none';
     if (slipRingActive && visibilities.motorHolder) {
-        // 8a. Motor Holder (below bottom cap, flipped)
-        const holderGeom = generateMotorHolderGeometry(D_in, D_out);
-        if (holderGeom) {
-            const hMesh = holderGeom.getMesh();
-            const hThreeGeom = manifoldToThree(hMesh);
-            holderGeom.delete();
-
-            let holderMat;
-            if (params.mode === 'rendered') {
-                holderMat = new THREE.MeshPhysicalMaterial({
-                    color: 0xff6600,
-                    emissive: 0x220800,
-                    roughness: 0.3,
-                    metalness: 0.4,
-                    transmission: 0.2,
-                    thickness: 3.0,
-                    transparent: true,
-                    opacity: params.opacity / 100,
-                    side: THREE.DoubleSide
-                });
-            } else {
-                holderMat = new THREE.MeshBasicMaterial({
-                    color: 0x1c0c01,
-                    transparent: true,
-                    opacity: 0.7,
-                    side: THREE.DoubleSide
-                });
-            }
-
-            meshes.motorHolder = new THREE.Mesh(hThreeGeom, holderMat);
-            meshes.motorHolder.castShadow = true;
-            meshes.motorHolder.receiveShadow = true;
-            meshes.motorHolder.rotation.x = Math.PI;
-            meshes.motorHolder.position.z = -9.0;
-
-            if (params.mode === 'blueprint') {
-                const edges = new THREE.EdgesGeometry(hThreeGeom);
-                const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff6600, linewidth: 1.5 }));
-                meshes.motorHolder.add(lines);
-            }
-            context.mainGroup.add(meshes.motorHolder);
+        // Define materials first so they can be shared between bottom and top systems
+        let holderMat, ringMat, pinionMat, connectorMat;
+        if (params.mode === 'rendered') {
+            holderMat = new THREE.MeshPhysicalMaterial({
+                color: 0xff6600,
+                emissive: 0x220800,
+                roughness: 0.3,
+                metalness: 0.4,
+                transmission: 0.2,
+                thickness: 3.0,
+                transparent: true,
+                opacity: params.opacity / 100,
+                side: THREE.DoubleSide
+            });
+            ringMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffcc00,
+                emissive: 0x221a00,
+                roughness: 0.25,
+                metalness: 0.5,
+                transparent: true,
+                opacity: params.opacity / 100,
+                side: THREE.DoubleSide
+            });
+            pinionMat = new THREE.MeshPhysicalMaterial({
+                color: 0xff00ff,
+                emissive: 0x220022,
+                roughness: 0.15,
+                metalness: 0.5,
+                transparent: true,
+                opacity: params.opacity / 100,
+                side: THREE.DoubleSide
+            });
+            connectorMat = new THREE.MeshPhysicalMaterial({
+                color: colors.limeAccent,
+                emissive: 0x1a2200,
+                roughness: 0.2,
+                metalness: 0.3,
+                transmission: 0.4,
+                thickness: 3.0,
+                transparent: true,
+                opacity: params.opacity / 100,
+                side: THREE.DoubleSide
+            });
+        } else {
+            holderMat = new THREE.MeshBasicMaterial({
+                color: 0x1c0c01,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide
+            });
+            ringMat = new THREE.MeshBasicMaterial({
+                color: 0x1c1800,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide
+            });
+            pinionMat = new THREE.MeshBasicMaterial({
+                color: 0x1c001c,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide
+            });
+            connectorMat = new THREE.MeshBasicMaterial({
+                color: 0x121c01,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide
+            });
         }
 
-        // 8b. Ring Gear (friction-fit around bottom cap, below cap lip)
-        const ringGeom = generateRingGearGeometry(D_out);
-        if (ringGeom) {
-            const rMesh = ringGeom.getMesh();
-            const rThreeGeom = manifoldToThree(rMesh);
-            ringGeom.delete();
-
-            let ringMat;
-            if (params.mode === 'rendered') {
-                ringMat = new THREE.MeshPhysicalMaterial({
-                    color: 0xffcc00,
-                    emissive: 0x221a00,
-                    roughness: 0.25,
-                    metalness: 0.5,
-                    transparent: true,
-                    opacity: params.opacity / 100,
-                    side: THREE.DoubleSide
-                });
-            } else {
-                ringMat = new THREE.MeshBasicMaterial({
-                    color: 0x1c1800,
-                    transparent: true,
-                    opacity: 0.7,
-                    side: THREE.DoubleSide
-                });
-            }
-
-            meshes.ringGear = new THREE.Mesh(rThreeGeom, ringMat);
-            meshes.ringGear.castShadow = true;
-            meshes.ringGear.receiveShadow = true;
-            meshes.ringGear.position.z = -3.0;
-
-            if (params.mode === 'blueprint') {
-                const edges = new THREE.EdgesGeometry(rThreeGeom);
-                const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffcc00, linewidth: 1.5 }));
-                meshes.ringGear.add(lines);
-            }
-            context.mainGroup.add(meshes.ringGear);
-        }
-
-        // 8c. Pinion Gear (on motor shaft, meshes with ring gear)
-        const pinionGeom = generatePinionGearGeometry();
-        if (pinionGeom) {
-            const pMesh = pinionGeom.getMesh();
-            const pThreeGeom = manifoldToThree(pMesh);
-            pinionGeom.delete();
-
-            let pinionMat;
-            if (params.mode === 'rendered') {
-                pinionMat = new THREE.MeshPhysicalMaterial({
-                    color: 0xff00ff,
-                    emissive: 0x220022,
-                    roughness: 0.15,
-                    metalness: 0.5,
-                    transparent: true,
-                    opacity: params.opacity / 100,
-                    side: THREE.DoubleSide
-                });
-            } else {
-                pinionMat = new THREE.MeshBasicMaterial({
-                    color: 0x1c001c,
-                    transparent: true,
-                    opacity: 0.7,
-                    side: THREE.DoubleSide
-                });
-            }
-
-            meshes.pinionGear = new THREE.Mesh(pThreeGeom, pinionMat);
-            meshes.pinionGear.castShadow = true;
-            meshes.pinionGear.receiveShadow = true;
-
-            meshes.pinionGear2 = new THREE.Mesh(pThreeGeom, pinionMat);
-            meshes.pinionGear2.castShadow = true;
-            meshes.pinionGear2.receiveShadow = true;
-
-            // Calculate precise positioning based on gear parameters
-            const ringInnerR = R_cap_out + 1.0;
-            const ringBodyOuterR = ringInnerR + 6.0;
-            const ringCenterR = ringBodyOuterR - 3.0;
-
-            // Rotate pinions so their shafts align horizontally with the radial direction (X-axis)
-            meshes.pinionGear.rotation.y = Math.PI / 2;
-            meshes.pinionGear2.rotation.y = -Math.PI / 2;
-
-            // Place pinions so they mesh with the bottom of the crown gear at ringCenterR and global Z = -13.0
-            meshes.pinionGear.position.set(ringCenterR, 0, -13.0);
-            meshes.pinionGear2.position.set(-ringCenterR, 0, -13.0);
-
-            if (params.mode === 'blueprint') {
-                const edges = new THREE.EdgesGeometry(pThreeGeom);
-                const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 1.5 }));
-                meshes.pinionGear.add(lines);
-
-                const lines2 = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 1.5 }));
-                meshes.pinionGear2.add(lines2);
-            }
-            context.mainGroup.add(meshes.pinionGear);
-            context.mainGroup.add(meshes.pinionGear2);
-        }
-
-        // 8d. Standalone Connector Sleeve (Neon Green)
+        // 8a. Bottom Gear Drive System
         if (hasSlipRingBottom) {
+            // Motor Holder (below bottom cap, flipped)
+            const holderGeom = generateMotorHolderGeometry(D_in, D_out);
+            if (holderGeom) {
+                const hMesh = holderGeom.getMesh();
+                const hThreeGeom = manifoldToThree(hMesh);
+                holderGeom.delete();
+
+                meshes.motorHolder = new THREE.Mesh(hThreeGeom, holderMat);
+                meshes.motorHolder.castShadow = true;
+                meshes.motorHolder.receiveShadow = true;
+                meshes.motorHolder.rotation.x = Math.PI;
+                meshes.motorHolder.position.z = -9.0;
+
+                if (params.mode === 'blueprint') {
+                    const edges = new THREE.EdgesGeometry(hThreeGeom);
+                    const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff6600, linewidth: 1.5 }));
+                    meshes.motorHolder.add(lines);
+                }
+                context.mainGroup.add(meshes.motorHolder);
+            }
+
+            // Ring Gear (friction-fit around bottom cap, below cap lip)
+            const ringGeom = generateRingGearGeometry(D_out);
+            if (ringGeom) {
+                const rMesh = ringGeom.getMesh();
+                const rThreeGeom = manifoldToThree(rMesh);
+                ringGeom.delete();
+
+                meshes.ringGear = new THREE.Mesh(rThreeGeom, ringMat);
+                meshes.ringGear.castShadow = true;
+                meshes.ringGear.receiveShadow = true;
+                meshes.ringGear.position.z = -3.0;
+
+                if (params.mode === 'blueprint') {
+                    const edges = new THREE.EdgesGeometry(rThreeGeom);
+                    const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffcc00, linewidth: 1.5 }));
+                    meshes.ringGear.add(lines);
+                }
+                context.mainGroup.add(meshes.ringGear);
+            }
+
+            // Pinion Gear (on motor shaft, meshes with ring gear)
+            const pinionGeom = generatePinionGearGeometry();
+            if (pinionGeom) {
+                const pMesh = pinionGeom.getMesh();
+                const pThreeGeom = manifoldToThree(pMesh);
+                pinionGeom.delete();
+
+                meshes.pinionGear = new THREE.Mesh(pThreeGeom, pinionMat);
+                meshes.pinionGear.castShadow = true;
+                meshes.pinionGear.receiveShadow = true;
+
+                meshes.pinionGear2 = new THREE.Mesh(pThreeGeom, pinionMat);
+                meshes.pinionGear2.castShadow = true;
+                meshes.pinionGear2.receiveShadow = true;
+
+                // Calculate precise positioning based on gear parameters
+                const ringInnerR = R_cap_out + 1.0;
+                const ringBodyOuterR = ringInnerR + 6.0;
+                const ringCenterR = ringBodyOuterR - 3.0;
+
+                // Rotate pinions so their shafts align horizontally with the radial direction (X-axis)
+                meshes.pinionGear.rotation.y = Math.PI / 2;
+                meshes.pinionGear2.rotation.y = -Math.PI / 2;
+
+                // Place pinions so they mesh with the bottom of the crown gear at ringCenterR and global Z = -13.0
+                meshes.pinionGear.position.set(ringCenterR, 0, -13.0);
+                meshes.pinionGear2.position.set(-ringCenterR, 0, -13.0);
+
+                if (params.mode === 'blueprint') {
+                    const edges = new THREE.EdgesGeometry(pThreeGeom);
+                    const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 1.5 }));
+                    meshes.pinionGear.add(lines);
+
+                    const lines2 = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 1.5 }));
+                    meshes.pinionGear2.add(lines2);
+                }
+                context.mainGroup.add(meshes.pinionGear);
+                context.mainGroup.add(meshes.pinionGear2);
+            }
+
+            // Standalone Connector Sleeve (Neon Green)
             const connectorGeom = generateConnectorGeometry(D_in, D_out);
             if (connectorGeom) {
                 const cMesh = connectorGeom.getMesh();
                 const cThreeGeom = manifoldToThree(cMesh);
                 connectorGeom.delete();
-
-                let connectorMat;
-                if (params.mode === 'rendered') {
-                    connectorMat = new THREE.MeshPhysicalMaterial({
-                        color: colors.limeAccent,
-                        emissive: 0x1a2200,
-                        roughness: 0.2,
-                        metalness: 0.3,
-                        transmission: 0.4,
-                        thickness: 3.0,
-                        transparent: true,
-                        opacity: params.opacity / 100,
-                        side: THREE.DoubleSide
-                    });
-                } else {
-                    connectorMat = new THREE.MeshBasicMaterial({
-                        color: 0x121c01,
-                        transparent: true,
-                        opacity: 0.7,
-                        side: THREE.DoubleSide
-                    });
-                }
 
                 meshes.connector = new THREE.Mesh(cThreeGeom, connectorMat);
                 meshes.connector.castShadow = true;
@@ -472,6 +499,112 @@ export function rebuild() {
                     meshes.connector.add(lines);
                 }
                 context.mainGroup.add(meshes.connector);
+            }
+        }
+
+        // 8b. Top Gear Drive System (mirrored to top cap)
+        if (hasSlipRingTop) {
+            // Motor Holder (above top cap, pointing UP, so no X rotation flip)
+            const holderGeom = generateMotorHolderGeometry(D_in, D_out);
+            if (holderGeom) {
+                const hMesh = holderGeom.getMesh();
+                const hThreeGeom = manifoldToThree(hMesh);
+                holderGeom.delete();
+
+                meshes.motorHolderTop = new THREE.Mesh(hThreeGeom, holderMat);
+                meshes.motorHolderTop.castShadow = true;
+                meshes.motorHolderTop.receiveShadow = true;
+                // No X rotation because it extends upwards from the top cap
+                meshes.motorHolderTop.position.z = tubeHeight_mm + 2 * T_cap + 9.0;
+
+                if (params.mode === 'blueprint') {
+                    const edges = new THREE.EdgesGeometry(hThreeGeom);
+                    const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff6600, linewidth: 1.5 }));
+                    meshes.motorHolderTop.add(lines);
+                }
+                context.mainGroup.add(meshes.motorHolderTop);
+            }
+
+            // Ring Gear (friction-fit around top cap, sitting at +3.0 relative to cap base)
+            const ringGeom = generateRingGearGeometry(D_out);
+            if (ringGeom) {
+                const rMesh = ringGeom.getMesh();
+                const rThreeGeom = manifoldToThree(rMesh);
+                ringGeom.delete();
+
+                meshes.ringGearTop = new THREE.Mesh(rThreeGeom, ringMat);
+                meshes.ringGearTop.castShadow = true;
+                meshes.ringGearTop.receiveShadow = true;
+                meshes.ringGearTop.position.z = tubeHeight_mm + 2 * T_cap + 3.0;
+
+                if (params.mode === 'blueprint') {
+                    const edges = new THREE.EdgesGeometry(rThreeGeom);
+                    const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffcc00, linewidth: 1.5 }));
+                    meshes.ringGearTop.add(lines);
+                }
+                context.mainGroup.add(meshes.ringGearTop);
+            }
+
+            // Pinion Gear (on top motor shafts, meshes with top ring gear)
+            const pinionGeom = generatePinionGearGeometry();
+            if (pinionGeom) {
+                const pMesh = pinionGeom.getMesh();
+                const pThreeGeom = manifoldToThree(pMesh);
+                pinionGeom.delete();
+
+                meshes.pinionGearTop = new THREE.Mesh(pThreeGeom, pinionMat);
+                meshes.pinionGearTop.castShadow = true;
+                meshes.pinionGearTop.receiveShadow = true;
+
+                meshes.pinionGearTop2 = new THREE.Mesh(pThreeGeom, pinionMat);
+                meshes.pinionGearTop2.castShadow = true;
+                meshes.pinionGearTop2.receiveShadow = true;
+
+                // Calculate precise positioning based on gear parameters
+                const ringInnerR = R_cap_out + 1.0;
+                const ringBodyOuterR = ringInnerR + 6.0;
+                const ringCenterR = ringBodyOuterR - 3.0;
+
+                // Rotate pinions so their shafts align horizontally with the radial direction (X-axis)
+                meshes.pinionGearTop.rotation.y = Math.PI / 2;
+                meshes.pinionGearTop2.rotation.y = -Math.PI / 2;
+
+                // Place pinions so they mesh with the crown gear at ringCenterR and global Z = tubeHeight_mm + 2 * T_cap + 13.0
+                const pinionZ = tubeHeight_mm + 2 * T_cap + 13.0;
+                meshes.pinionGearTop.position.set(ringCenterR, 0, pinionZ);
+                meshes.pinionGearTop2.position.set(-ringCenterR, 0, pinionZ);
+
+                if (params.mode === 'blueprint') {
+                    const edges = new THREE.EdgesGeometry(pThreeGeom);
+                    const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 1.5 }));
+                    meshes.pinionGearTop.add(lines);
+
+                    const lines2 = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 1.5 }));
+                    meshes.pinionGearTop2.add(lines2);
+                }
+                context.mainGroup.add(meshes.pinionGearTop);
+                context.mainGroup.add(meshes.pinionGearTop2);
+            }
+
+            // Standalone Connector Sleeve (Neon Green, flipped to extend sleeve downwards into tube)
+            const connectorGeom = generateConnectorGeometry(D_in, D_out);
+            if (connectorGeom) {
+                const cMesh = connectorGeom.getMesh();
+                const cThreeGeom = manifoldToThree(cMesh);
+                connectorGeom.delete();
+
+                meshes.connectorTop = new THREE.Mesh(cThreeGeom, connectorMat);
+                meshes.connectorTop.castShadow = true;
+                meshes.connectorTop.receiveShadow = true;
+                meshes.connectorTop.rotation.x = Math.PI;
+                meshes.connectorTop.position.z = tubeHeight_mm + 2 * T_cap;
+
+                if (params.mode === 'blueprint') {
+                    const edges = new THREE.EdgesGeometry(cThreeGeom);
+                    const lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: colors.limeAccent, linewidth: 1.5 }));
+                    meshes.connectorTop.add(lines);
+                }
+                context.mainGroup.add(meshes.connectorTop);
             }
         }
     }
