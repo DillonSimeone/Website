@@ -80,8 +80,8 @@ export function generateMotorHolderGeometry(D_in, D_out) {
     shaftTube.delete();
     body = tempBodyS;
 
-    // Cut a 2mm depth 10mm wide notch into the hollow cylinder centered at X=13 and X=-13
-    let notchCube = Manifold.cube([4.0, 10.0, 24.0], true);
+    // Cut a 4mm depth (2mm more breathing space than before) 10mm wide notch into the hollow cylinder centered at X=13 and X=-13
+    let notchCube = Manifold.cube([8.0, 10.0, 24.0], true);
     let notchTrans1 = notchCube.translate([13.0, 0, 5.0]);
     let notchTrans2 = notchCube.translate([-13.0, 0, 5.0]);
     notchCube.delete();
@@ -128,7 +128,7 @@ export function generateMotorHolderGeometry(D_in, D_out) {
     body = temp;
 
     // 4.5. Subtract U-shaped horizontal shaft slots through the outer wall (open to the top)
-    const shaftHoleR = MOTOR_130.shaftDiam / 2 + 0.5;
+    const shaftHoleR = 3.0; // 6mm diameter slot (3.0mm radius) for motor shaft exit clearance
     let cyl = Manifold.cylinder(30.0, shaftHoleR, shaftHoleR, 16, true);
     let cylRot = cyl.rotate([0, 90, 0]);
     cyl.delete();

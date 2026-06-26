@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametric Potentiometer Box Configurator</title>
+    <!-- Browser Import Map for resolving 'three' bare specifiers -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+      }
+    </script>
+    <!-- Google Fonts for Retro-Cyber Aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="blueprint-border"></div>
+
+    <!-- Drawing Title Block Header -->
+    <header>
+        <div class="title-block">
+            <span class="drawing-number">DRW.NO: 2026-POT-012</span>
+            <h1>PARAMETRIC POTENTIOMETER BOX CONFIGURATOR</h1>
+        </div>
+        <div class="status-indicator">
+            GEOMETRY KERNEL: <span id="engine-status" style="color: #00ffaa;">LOADING WASM...</span>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+        <!-- Left Panel: Grid & Enclosure Parameters -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">1. Grid & Box Parameters</span>
+            </div>
+            <div class="panel-content">
+                <!-- Section: Knob Grid -->
+                <div class="control-group">
+                    <div class="control-group-title">Potentiometer Grid</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Distance between knobs</span>
+                            <span class="param-value"><span id="val-pitch">32.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-pitch" min="25.0" max="50.0" step="1.0" value="32.0">
+                    </div>
+
+                    <div class="param-row">
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Amount Columns</span>
+                        <div class="number-spinner">
+                            <button type="button" class="spin-btn spin-down" data-target="input-cols" data-step="-1">-</button>
+                            <input type="number" id="input-cols" class="cyber-input num-input" value="4" min="1" max="8">
+                            <button type="button" class="spin-btn spin-up" data-target="input-cols" data-step="1">+</button>
+                        </div>
+                    </div>
+
+                    <div class="param-row">
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Amount Rows</span>
+                        <div class="number-spinner">
+                            <button type="button" class="spin-btn spin-down" data-target="input-rows" data-step="-1">-</button>
+                            <input type="number" id="input-rows" class="cyber-input num-input" value="1" min="1" max="5">
+                            <button type="button" class="spin-btn spin-up" data-target="input-rows" data-step="1">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Enclosure Sizing -->
+                <div class="control-group">
+                    <div class="control-group-title">Enclosure Geometry</div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Wall Thickness</span>
+                            <span class="param-value"><span id="val-wallThick">2.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-wallThick" min="1.5" max="3.5" step="0.1" value="2.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Lid Fit Clearance</span>
+                            <span class="param-value"><span id="val-clearance">0.25</span> mm</span>
+                        </div>
+                        <input type="range" id="input-clearance" min="0.1" max="0.5" step="0.05" value="0.25">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Internal Padding</span>
+                            <span class="param-value"><span id="val-padding">10.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-padding" min="8.0" max="15.0" step="0.5" value="10.0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Panel: 3D Viewport -->
+        <div id="viewport-container">
+            <div id="canvas3d"></div>
+            <div class="viewport-hud">
+                <div>[LMB] ROTATE VIEW | [RMB] PAN | [SCROLL] ZOOM</div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Hardware Specs & Export Options -->
+        <div class="panel panel-right">
+            <div class="panel-header">
+                <span class="panel-title">2. Specs & Export</span>
+            </div>
+            <div class="panel-content">
+                <!-- Section: Component Specs -->
+                <div class="control-group">
+                    <div class="control-group-title">Potentiometer Shaft Spec</div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Shaft Length (L)</span>
+                            <span class="param-value"><span id="val-shaftLength">15.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-shaftLength" min="15.0" max="30.0" step="5.0" value="15.0">
+                    </div>
+
+                    <div class="param-row">
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Shaft Profile Style</span>
+                        <select id="select-shaftStyle" class="cyber-input">
+                            <option value="dshaft" selected>D-Shaft (Flat Mount)</option>
+                            <option value="knurled">Knurled / Splined (18T)</option>
+                            <option value="round">Solid Round Shaft</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Section: Visibility Toggles -->
+                <div class="control-group">
+                    <div class="control-group-title">Display Settings</div>
+                    
+                    <div class="toggle-row">
+                        <span>Show Enclosure Base</span>
+                        <input type="checkbox" id="show-base" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Show Drop-on Lid</span>
+                        <input type="checkbox" id="show-lid" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Show Potentiometers</span>
+                        <input type="checkbox" id="show-pots" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Show Synth Knobs</span>
+                        <input type="checkbox" id="show-knobs" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Show Internal Electronics</span>
+                        <input type="checkbox" id="show-electronics" checked>
+                    </div>
+
+                    <div class="param-row" style="margin-top: 15px;">
+                        <div class="param-info">
+                            <span class="param-label">Exploded View</span>
+                            <span class="param-value"><span id="val-exploded">0.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-exploded" min="0.0" max="50.0" step="1.0" value="0.0">
+                    </div>
+                </div>
+
+                <!-- Section: Production Export -->
+                <div class="control-group">
+                    <div class="control-group-title">3D Print Exports</div>
+                    <button type="button" id="btn-export-base" class="cyber-btn">EXPORT BOX BASE STL</button>
+                    <button type="button" id="btn-export-lid" class="cyber-btn" style="margin-top: 8px;">EXPORT DROP-ON LID STL</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Status Bar -->
+    <footer>
+        <div class="status-left">
+            <span>UNITS: MM</span>
+            <span>|</span>
+            <span>ENCLOSURE SYSTEM: MODULAR DROP-ON</span>
+        </div>
+        <div class="status-right">
+            <span>ANTIGRAVITY CAD LABS v2026</span>
+        </div>
+    </footer>
+
+    <!-- Main Orchestrator Loader -->
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
