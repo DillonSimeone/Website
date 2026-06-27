@@ -213,6 +213,34 @@ input[type="range"]::-webkit-slider-thumb {
     transform: translate(3px, 3px);
 }
 
+.btn-slogan-update {
+    width: 100%;
+    background: #bf00ff;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    box-shadow: 0 0 12px rgba(191, 0, 255, 0.55);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn-slogan-update:hover:not(:disabled) {
+    background: #d24dff;
+    box-shadow: 0 0 16px rgba(191, 0, 255, 0.75);
+    transform: translateY(-1px);
+}
+
+.btn-slogan-update:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 /* Viewport Area */
 .viewport-area {
     flex: 1;
@@ -346,4 +374,131 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"]::-webkit-inner-spin-button:hover {
     opacity: 1.0;
     filter: drop-shadow(0 0 4px var(--neon-lime)) brightness(1.2);
+}
+
+/* Vaporwave Synthwave Loading Screen Styles */
+.compile-overlay.vaporwave-mode {
+    background: radial-gradient(circle at 50% 45%, #18032b 0%, #030008 100%);
+    overflow: hidden;
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.compile-overlay.vaporwave-mode.is-visible {
+    display: flex;
+}
+
+.vaporwave-sun {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: linear-gradient(to bottom, #ff007f 0%, #ff8c00 100%);
+    box-shadow: 0 0 40px rgba(255, 0, 127, 0.4), 0 0 80px rgba(255, 140, 0, 0.2);
+    animation: sun-glitch 4.5s infinite;
+}
+
+.vaporwave-sun::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(24, 3, 43, 0) 20%, rgba(3, 0, 8, 1) 95%),
+                repeating-linear-gradient(to bottom, transparent, transparent 12px, #030008 12px, #030008 16px);
+    border-radius: 50%;
+}
+
+.vaporwave-grid {
+    position: absolute;
+    bottom: 0;
+    left: -50%;
+    width: 200%;
+    height: 45%;
+    background-image: 
+      linear-gradient(to right, rgba(0, 240, 255, 0.2) 2px, transparent 2px),
+      linear-gradient(to bottom, rgba(0, 240, 255, 0.2) 2px, transparent 2px);
+    background-size: 50px 50px;
+    transform: perspective(220px) rotateX(60deg);
+    transform-origin: top center;
+    animation: grid-move 2.5s linear infinite;
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+}
+
+.vaporwave-content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 180px;
+}
+
+.spinner-neon {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(0, 240, 255, 0.1);
+    border-top: 4px solid var(--neon-cyan);
+    border-right: 4px solid var(--neon-magenta);
+    border-radius: 50%;
+    animation: spin 0.8s cubic-bezier(0.5, 0.15, 0.45, 0.85) infinite;
+    filter: drop-shadow(0 0 6px var(--neon-cyan)) drop-shadow(0 0 6px var(--neon-magenta));
+    margin-bottom: 24px;
+}
+
+.vaporwave-text {
+    font-family: var(--font-wide);
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #fff;
+    text-shadow: 0 0 10px var(--neon-magenta), 0 0 20px var(--neon-cyan);
+    animation: text-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes grid-move {
+    from { background-position: 0 0; }
+    to { background-position: 0 50px; }
+}
+
+@keyframes text-pulse {
+    from {
+        opacity: 0.75;
+        transform: scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1.03);
+    }
+}
+
+@keyframes sun-glitch {
+    0%, 91%, 95%, 100% {
+        transform: translate(-50%, -50%) skewX(0deg) scale(1);
+        filter: hue-rotate(0deg) saturate(1);
+    }
+    92% {
+        transform: translate(-52%, -48%) skewX(-12deg) scaleY(0.85);
+        filter: hue-rotate(120deg) saturate(1.8) brightness(1.2);
+    }
+    93% {
+        transform: translate(-48%, -52%) skewX(12deg) scaleX(1.15);
+        filter: hue-rotate(-60deg) saturate(2) contrast(1.5);
+    }
+    94% {
+        transform: translate(-50%, -50%) skewX(-5deg) scaleY(1.05);
+        filter: hue-rotate(180deg) invert(0.1);
+    }
 }

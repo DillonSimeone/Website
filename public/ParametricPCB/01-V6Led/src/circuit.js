@@ -7,6 +7,23 @@ import {
 } from "../../00-commonParts/circuit-json-to-gerber.js";
 import { WS2812B_3535, VerticalThreePadHeader, HorizontalEdgeHeader } from "../../00-commonParts/Led/led.js";
 
+function BoardLabel({ name, text, pcbX, pcbY, pcbRotation = 0, fontSize = 0.5 }) {
+  return React.createElement("chip", {
+    name: name,
+    pcbX: pcbX,
+    pcbY: pcbY,
+    pcbRotation: pcbRotation,
+    footprint: React.createElement("footprint", null,
+      React.createElement("silkscreentext", {
+        text: text,
+        pcbX: "0mm",
+        pcbY: "0mm",
+        fontSize: `${fontSize}mm`
+      })
+    )
+  });
+}
+
 /**
  * Programmatically builds the tscircuit project based on user inputs.
  * Returns the Circuit object.
@@ -31,7 +48,7 @@ export async function compileCircuit(params) {
   // 1. BEGINNING HEADER (vertical pads flush with left edge)
   // ============================================================
   const leftEdgeX = -boardWidth / 2;
-  const j_beg_x = leftEdgeX + 1.25; // 2.5mm component width
+  const j_beg_x = leftEdgeX + 1.0; // 2.0mm pad width, left edge flush with board boundary
   children.push(React.createElement(VerticalThreePadHeader, {
     name: "J_BEG", pcbX: `${j_beg_x}mm`, pcbY: "0mm", key: "j_beg", isEnd: false
   }));
@@ -40,6 +57,11 @@ export async function compileCircuit(params) {
   children.push(React.createElement("trace", { from: ".J_BEG > .pin1", to: ".U1 > .pin1", key: "t_beg_u1_v", name: "t_beg_u1_vcc" }));
   children.push(React.createElement("trace", { from: ".J_BEG > .pin2", to: ".U1 > .pin4", key: "t_beg_u1_d", name: "t_beg_u1_dat" }));
   children.push(React.createElement("trace", { from: ".J_BEG > .pin3", to: ".U1 > .pin3", key: "t_beg_u1_g", name: "t_beg_u1_gnd" }));
+  
+  // Silkscreen text next to J_BEG pads
+  children.push(React.createElement(BoardLabel, { name: "LABEL_BEG_V5", text: "V5", pcbX: `${j_beg_x + 2.4}mm`, pcbY: "3.5mm", fontSize: 0.6, key: "j_beg_v5_txt" }));
+  children.push(React.createElement(BoardLabel, { name: "LABEL_BEG_DATA", text: "DATA", pcbX: `${j_beg_x + 2.4}mm`, pcbY: "0mm", fontSize: 0.6, key: "j_beg_data_txt" }));
+  children.push(React.createElement(BoardLabel, { name: "LABEL_BEG_GND", text: "GND", pcbX: `${j_beg_x + 2.4}mm`, pcbY: "-3.5mm", fontSize: 0.6, key: "j_beg_gnd_txt" }));
   
   // ============================================================
   // 2. LEDs + INTERMEDIATE HEADERS + VIAS FOR BOTTOM LAYER TRANSITIONS
@@ -61,13 +83,15 @@ export async function compileCircuit(params) {
         name: `J_MID${i}`, pcbX: `${midX}mm`, pcbY: "0mm", key: `j_mid_${i}`
       }));
       
-      // Place Vias to route crossing connections on bottom copper layer
-      children.push(React.createElement("via", {
-        name: `VIA_D_${i}`, pcbX: `${midX - 1.0}mm`, pcbY: "1.5mm", holeDiameter: "0.3mm", outerDiameter: "0.6mm", key: `via_d_${i}`
-      }));
-      children.push(React.createElement("via", {
-        name: `VIA_G_${i}`, pcbX: `${midX + 1.0}mm`, pcbY: "-1.5mm", holeDiameter: "0.3mm", outerDiameter: "0.6mm", key: `via_g_${i}`
-      }));
+      // Top 3 Pads labels
+      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_V5_T`, text: "V5", pcbX: `${midX - 1.0}mm`, pcbY: "3.8mm", pcbRotation: 90, key: `jmid_${i}_v5_t_txt` }));
+      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_DATA_T`, text: "DATA", pcbX: `${midX}mm`, pcbY: "3.8mm", pcbRotation: 90, key: `jmid_${i}_data_t_txt` }));
+      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_GND_T`, text: "GND", pcbX: `${midX + 1.0}mm`, pcbY: "3.8mm", pcbRotation: 90, key: `jmid_${i}_gnd_t_txt` }));
+      
+      // Bottom 3 Pads labels
+      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_V5_B`, text: "V5", pcbX: `${midX - 1.0}mm`, pcbY: "-3.8mm", pcbRotation: 90, key: `jmid_${i}_v5_b_txt` }));
+      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_DATA_B`, text: "DATA", pcbX: `${midX}mm`, pcbY: "-3.8mm", pcbRotation: 90, key: `jmid_${i}_data_b_txt` }));
+      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_GND_B`, text: "GND", pcbX: `${midX + 1.0}mm`, pcbY: "-3.8mm", pcbRotation: 90, key: `jmid_${i}_gnd_b_txt` }));
       
       // --- LED[i] Outputs to Solder Header J_MID[i] ---
       // VCC (top route, all on top layer)
@@ -77,16 +101,14 @@ export async function compileCircuit(params) {
       // DATA (top DOUT to top DATA pad: straight top layer)
       children.push(React.createElement("trace", { from: `.U${i} > .pin2`, to: `.J_MID${i} > .pin2`, key: `t_${i}_d_t`, name: `t_${i}_dat_t` }));
       
-      // DATA (top DOUT to bottom DATA pad: via transition to bottom layer)
-      children.push(React.createElement("trace", { from: `.U${i} > .pin2`, to: `.VIA_D_${i}`, key: `t_${i}_d_b1`, name: `t_${i}_dat_b1` }));
-      children.push(React.createElement("trace", { from: `.VIA_D_${i}`, to: `.J_MID${i} > .pin5`, key: `t_${i}_d_b2`, name: `t_${i}_dat_b2` }));
+      // DATA (top DOUT to bottom DATA pad: autorouter handles layer transition)
+      children.push(React.createElement("trace", { from: `.U${i} > .pin2`, to: `.J_MID${i} > .pin5`, key: `t_${i}_d_b`, name: `t_${i}_dat_b` }));
       
       // GND (bottom GND to bottom GND pad: straight top layer)
       children.push(React.createElement("trace", { from: `.U${i} > .pin3`, to: `.J_MID${i} > .pin6`, key: `t_${i}_g_b`, name: `t_${i}_gnd_b` }));
       
-      // GND (bottom GND to top GND pad: via transition to bottom layer)
-      children.push(React.createElement("trace", { from: `.U${i} > .pin3`, to: `.VIA_G_${i}`, key: `t_${i}_g_t1`, name: `t_${i}_gnd_t1` }));
-      children.push(React.createElement("trace", { from: `.VIA_G_${i}`, to: `.J_MID${i} > .pin3`, key: `t_${i}_g_t2`, name: `t_${i}_gnd_t2` }));
+      // GND (bottom GND to top GND pad: autorouter handles layer transition)
+      children.push(React.createElement("trace", { from: `.U${i} > .pin3`, to: `.J_MID${i} > .pin3`, key: `t_${i}_g_t`, name: `t_${i}_gnd_t` }));
       
       
       // --- Solder Header J_MID[i] to LED[i+1] Inputs ---
@@ -96,13 +118,13 @@ export async function compileCircuit(params) {
       
       // DATA (top DATA pad to DIN: straight top layer)
       children.push(React.createElement("trace", { from: `.J_MID${i} > .pin2`, to: `.U${i + 1} > .pin4`, key: `t_mid_${i}_d_t`, name: `t_mid_${i}_dat_t` }));
-      // DATA (bottom DATA pad to DIN: via transition to bottom layer)
-      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin5`, to: `.VIA_D_${i}`, key: `t_mid_${i}_d_b1`, name: `t_mid_${i}_dat_b1` }));
+      // DATA (bottom DATA pad to DIN: autorouter handles layer transition)
+      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin5`, to: `.U${i + 1} > .pin4`, key: `t_mid_${i}_d_b`, name: `t_mid_${i}_dat_b` }));
       
       // GND (bottom GND pad to GND: straight top layer)
       children.push(React.createElement("trace", { from: `.J_MID${i} > .pin6`, to: `.U${i + 1} > .pin3`, key: `t_mid_${i}_g_b`, name: `t_mid_${i}_gnd_b` }));
-      // GND (top GND pad to GND: via transition to bottom layer)
-      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin3`, to: `.VIA_G_${i}`, key: `t_mid_${i}_g_t1`, name: `t_mid_${i}_gnd_t1` }));
+      // GND (top GND pad to GND: autorouter handles layer transition)
+      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin3`, to: `.U${i + 1} > .pin3`, key: `t_mid_${i}_g_t`, name: `t_mid_${i}_gnd_t` }));
     }
   }
   
@@ -110,7 +132,7 @@ export async function compileCircuit(params) {
   // 3. END HEADER (vertical pads flush with right edge)
   // ============================================================
   const rightEdgeX = boardWidth / 2;
-  const j_end_x = rightEdgeX - 1.25;
+  const j_end_x = rightEdgeX - 1.0; // 2.0mm pad width, right edge flush with board boundary
   children.push(React.createElement(VerticalThreePadHeader, {
     name: "J_END", pcbX: `${j_end_x}mm`, pcbY: "0mm", key: "j_end", isEnd: true
   }));
@@ -119,6 +141,11 @@ export async function compileCircuit(params) {
   children.push(React.createElement("trace", { from: `.U${ledCount} > .pin1`, to: ".J_END > .pin1", key: "t_end_v", name: "t_end_vcc" }));
   children.push(React.createElement("trace", { from: `.U${ledCount} > .pin2`, to: ".J_END > .pin2", key: "t_end_d", name: "t_end_dat" }));
   children.push(React.createElement("trace", { from: `.U${ledCount} > .pin3`, to: ".J_END > .pin3", key: "t_end_g", name: "t_end_gnd" }));
+  
+  // Silkscreen text next to J_END pads
+  children.push(React.createElement(BoardLabel, { name: "LABEL_END_V5", text: "V5", pcbX: `${j_end_x - 2.4}mm`, pcbY: "3.5mm", fontSize: 0.6, key: "j_end_v5_txt" }));
+  children.push(React.createElement(BoardLabel, { name: "LABEL_END_DATA", text: "DATA", pcbX: `${j_end_x - 2.4}mm`, pcbY: "0mm", fontSize: 0.6, key: "j_end_data_txt" }));
+  children.push(React.createElement(BoardLabel, { name: "LABEL_END_GND", text: "GND", pcbX: `${j_end_x - 2.4}mm`, pcbY: "-3.5mm", fontSize: 0.6, key: "j_end_gnd_txt" }));
   
   // ============================================================
   // 4. CREATE BOARD
@@ -133,6 +160,31 @@ export async function compileCircuit(params) {
   
   // Perform layout compilation and routing
   await circuit.renderUntilSettled();
+
+  // Copy resolved coordinate transformations from parent components to silkscreen text elements
+  const soup = circuit.getCircuitJson();
+  const comps = soup.filter(e => e.type === "pcb_component");
+  soup.forEach(el => {
+    if (el.type === "pcb_silkscreen_text" && el.pcb_component_id) {
+      const comp = comps.find(c => c.pcb_component_id === el.pcb_component_id);
+      if (comp && comp.center) {
+        // Apply relative offset and component rotation
+        const localX = el.x || 0;
+        const localY = el.y || 0;
+        const rad = (comp.rotation || 0) * Math.PI / 180;
+        
+        const rotatedX = localX * Math.cos(rad) - localY * Math.sin(rad);
+        const rotatedY = localX * Math.sin(rad) + localY * Math.cos(rad);
+        
+        el.x = comp.center.x + rotatedX;
+        el.y = comp.center.y + rotatedY;
+        el.center = { x: el.x, y: el.y };
+        if (comp.rotation !== undefined) {
+          el.rotation = (el.rotation || 0) + comp.rotation;
+        }
+      }
+    }
+  });
   
   return circuit;
 }
@@ -190,6 +242,8 @@ export function panelizeCircuitJson(singleCircuitJson, params) {
         if (clone.pcb_via_id) clone.pcb_via_id = prefix + clone.pcb_via_id;
         if (clone.pcb_port_id) clone.pcb_port_id = prefix + clone.pcb_port_id;
         if (clone.source_port_id) clone.source_port_id = prefix + clone.source_port_id;
+        if (clone.pcb_silkscreen_text_id) clone.pcb_silkscreen_text_id = prefix + clone.pcb_silkscreen_text_id;
+        if (clone.source_silkscreen_text_id) clone.source_silkscreen_text_id = prefix + clone.source_silkscreen_text_id;
         
         if (clone.name) clone.name = prefix + clone.name;
         
@@ -273,28 +327,30 @@ export function generateBOM(circuitJson) {
   let csv = "Designator,Comment,Footprint,LCSC Part Number,Manufacturer,Part Number\n";
   for (const comp of components) {
     const sourceComp = sourceComponents.find(sc => sc.source_component_id === comp.source_component_id);
-    const designator = comp.pcb_component_id || comp.name || "";
+    const designator = sourceComp?.name || comp.pcb_component_id || "";
     
-    if (designator.startsWith("board")) continue;
+    if (designator.startsWith("board") || designator.startsWith("panel_board") || designator.startsWith("LABEL") || designator.startsWith("SLOGAN")) continue;
+    
+    const baseDesignator = designator.replace(/^R\d+_C\d+_/, "");
     
     let comment = "";
     let lcsc = "N/A";
     let mfg = "Generic";
     let partNum = "";
     
-    if (designator.startsWith("U")) {
+    if (baseDesignator.startsWith("U")) {
       comment = "RGB LED 3535 (V6 w/ built-in cap)";
       lcsc = "C52941388";
       mfg = "Worldsemi";
       partNum = "WS2812B-3535";
-    } else if (designator.startsWith("J")) {
+    } else if (baseDesignator.startsWith("J")) {
       comment = "Solder Pad Header";
       lcsc = "N/A";
       mfg = "Generic";
       partNum = "SolderPad";
     }
     
-    const footprint = designator.startsWith("U") ? "3535" : "PADS";
+    const footprint = baseDesignator.startsWith("U") ? "3535" : "PADS";
     
     csv += `"${designator}","${comment}","${footprint}","${lcsc}","${mfg}","${partNum}"\n`;
   }
@@ -306,11 +362,14 @@ export function generateBOM(circuitJson) {
  */
 export function generatePNP(circuitJson) {
   const components = circuitJson.filter(e => e.type === "pcb_component");
+  const sourceComponents = circuitJson.filter(e => e.type === "source_component");
   
   let csv = "Designator,Mid X,Mid Y,Layer,Rotation\n";
   for (const comp of components) {
-    const designator = comp.pcb_component_id || comp.name || "";
-    if (designator.startsWith("board")) continue;
+    const sourceComp = sourceComponents.find(sc => sc.source_component_id === comp.source_component_id);
+    const designator = sourceComp?.name || comp.pcb_component_id || "";
+    
+    if (designator.startsWith("board") || designator.startsWith("panel_board") || designator.startsWith("LABEL") || designator.startsWith("SLOGAN")) continue;
     
     const x = comp.center?.x || 0;
     const y = comp.center?.y || 0;
@@ -327,6 +386,7 @@ export function generatePNP(circuitJson) {
  */
 export function generateGerbers(circuitJson) {
   try {
+
     const gerberCommands = convertSoupToGerberCommands(circuitJson);
     const gerberLayers = stringifyGerberCommandLayers(gerberCommands);
     

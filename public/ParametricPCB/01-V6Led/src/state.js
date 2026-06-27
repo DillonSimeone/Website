@@ -1,3 +1,5 @@
+import { DEFAULT_SLOGAN_PHRASES } from "../../00-commonParts/slogan-placements.js";
+
 /**
  * Application state manager for the V6 LED Strip Parametric generator.
  */
@@ -11,6 +13,8 @@ export class StateManager {
       useMouseBites: false,
       panelRows: 2,
       panelCols: 2,
+      sloganPhrases: DEFAULT_SLOGAN_PHRASES,
+      sloganCount: 40,
       showView: "pcb", // "pcb" or "3d" or "schematic"
       circuitJson: null,
       bomCsv: "",

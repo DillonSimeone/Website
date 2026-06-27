@@ -1,1 +1,8 @@
 # Track all files in this directory
+
+witchery.md
+
+# Ignore built/minified output and temp files
+01-V6Led/minified.html
+01-V6Led/temp_*
+temp_*

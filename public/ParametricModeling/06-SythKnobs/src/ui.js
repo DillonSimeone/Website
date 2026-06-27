@@ -39,6 +39,7 @@ window.closeLaserModal = closeLaserModal;
 window.generateLaserSVG = generateLaserSVG;
 window.copyShareLink = copyShareLink;
 window.closeDetail = closeDetail;
+window.closeViewer = closeViewer;
 window.prevKnob = prevKnob;
 window.nextKnob = nextKnob;
 window.updateShaftType = updateShaftType;

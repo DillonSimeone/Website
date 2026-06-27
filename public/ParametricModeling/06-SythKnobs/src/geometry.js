@@ -94,9 +94,6 @@ function getClippedRect(el, container) {
 
 function animateThree(time) {
   requestAnimationFrame(animateThree);
-  
-  if (time && time - lastTime < 100) return; // ~10 fps
-  if (time) lastTime = time;
 
   // Always clear the entire screen manually before scissor rendering
   if (renderer) {
@@ -110,6 +107,8 @@ function animateThree(time) {
   if (!renderer || state.knobs.length === 0) {
       return;
   }
+  
+  const dpr = window.devicePixelRatio || 1;
   
   state.knobs.forEach(k => {
     if (!k.mesh) return;
@@ -126,9 +125,9 @@ function animateThree(time) {
     
     if (clip.height <= 0 || clip.width <= 0) return;
     
-    let canvasBottom = window.innerHeight - (clip.top + clip.height);
-    renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
-    renderer.setScissor(clip.left, canvasBottom, clip.width, clip.height);
+    let canvasBottom = (window.innerHeight - (clip.top + clip.height)) * dpr;
+    renderer.setViewport(rect.left * dpr, (window.innerHeight - rect.bottom) * dpr, rect.width * dpr, rect.height * dpr);
+    renderer.setScissor(clip.left * dpr, canvasBottom, clip.width * dpr, clip.height * dpr);
     
     const maxDim = Math.max(k.outerD, k.height);
     const dist = Math.max(50, maxDim * 2.8);
@@ -152,9 +151,9 @@ function animateThree(time) {
         const rect = detailPreview.getBoundingClientRect();
         const clip = getClippedRect(detailPreview, panel);
         if (clip.height > 0 && clip.width > 0) {
-          let canvasBottom = window.innerHeight - (clip.top + clip.height);
-          renderer.setViewport(rect.left, window.innerHeight - rect.bottom, rect.width, rect.height);
-          renderer.setScissor(clip.left, canvasBottom, clip.width, clip.height);
+          let canvasBottom = (window.innerHeight - (clip.top + clip.height)) * dpr;
+          renderer.setViewport(rect.left * dpr, (window.innerHeight - rect.bottom) * dpr, rect.width * dpr, rect.height * dpr);
+          renderer.setScissor(clip.left * dpr, canvasBottom, clip.width * dpr, clip.height * dpr);
           
           const maxDim = Math.max(k.outerD, k.height);
           const dist = Math.max(50, maxDim * 2.2);

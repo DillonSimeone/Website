@@ -56,8 +56,8 @@ export function WS2812B_3535({ name, pcbX, pcbY, pcbRotation = 0 }) {
         layer: "top"
       }),
       
-      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "0mm", width: "3.5mm", height: "3.5mm" }),
-      React.createElement("silkscreencircle", { pcbX: "-1.2mm", pcbY: "1.2mm", radius: "0.2mm" }),
+      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "0mm", width: "3.2mm", height: "2.2mm" }),
+      React.createElement("silkscreencircle", { pcbX: "-1.6mm", pcbY: "1.5mm", radius: "0.2mm" }),
       
       // Pin labels placed clearly off the pads
       React.createElement("silkscreentext", { text: "+", pcbX: "-1.8mm", pcbY: "0.8mm", fontSize: "0.5mm" }),
@@ -72,10 +72,6 @@ export function WS2812B_3535({ name, pcbX, pcbY, pcbRotation = 0 }) {
  * Vertical 3-pad solder header (V5, DATA, GND) for the beginning/end edges of the strip.
  */
 export function VerticalThreePadHeader({ name, pcbX, pcbY, pcbRotation = 0, isEnd = false }) {
-  // Place label on the right side if it's the beginning header (left edge),
-  // and on the left side if it's the end header (right edge) to avoid printing off-board
-  const labelX = isEnd ? "-1.8mm" : "1.8mm";
-
   return React.createElement("chip", {
     name: name,
     pcbX: pcbX,
@@ -115,11 +111,7 @@ export function VerticalThreePadHeader({ name, pcbX, pcbY, pcbRotation = 0, isEn
         layer: "top"
       }),
       
-      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "0mm", width: "2.5mm", height: "11mm" }),
-      
-      React.createElement("silkscreentext", { text: "V5", pcbX: labelX, pcbY: "3.5mm", fontSize: "0.6mm" }),
-      React.createElement("silkscreentext", { text: "DATA", pcbX: labelX, pcbY: "0mm", fontSize: "0.6mm" }),
-      React.createElement("silkscreentext", { text: "GND", pcbX: labelX, pcbY: "-3.5mm", fontSize: "0.6mm" })
+      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "0mm", width: "2.5mm", height: "9.2mm" })
     )
   });
 }
@@ -201,17 +193,8 @@ export function HorizontalEdgeHeader({ name, pcbX, pcbY, pcbRotation = 0 }) {
         layer: "top"
       }),
       
-      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "4.8mm", width: "3.0mm", height: "1.4mm" }),
-      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "-4.8mm", width: "3.0mm", height: "1.4mm" }),
-      
-      // Silkscreen labels moved to y = ±2.6mm (completely clear of pads y: ±4.2mm to ±5.4mm)
-      React.createElement("silkscreentext", { text: "V5", pcbX: "-1.0mm", pcbY: "2.6mm", fontSize: "0.5mm" }),
-      React.createElement("silkscreentext", { text: "DATA", pcbX: "0mm", pcbY: "2.6mm", fontSize: "0.5mm" }),
-      React.createElement("silkscreentext", { text: "GND", pcbX: "1.0mm", pcbY: "2.6mm", fontSize: "0.5mm" }),
-      
-      React.createElement("silkscreentext", { text: "V5", pcbX: "-1.0mm", pcbY: "-2.6mm", fontSize: "0.5mm" }),
-      React.createElement("silkscreentext", { text: "DATA", pcbX: "0mm", pcbY: "-2.6mm", fontSize: "0.5mm" }),
-      React.createElement("silkscreentext", { text: "GND", pcbX: "1.0mm", pcbY: "-2.6mm", fontSize: "0.5mm" })
+      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "4.4mm", width: "3.0mm", height: "0.2mm" }),
+      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "-4.4mm", width: "3.0mm", height: "0.2mm" })
     )
   });
 }
