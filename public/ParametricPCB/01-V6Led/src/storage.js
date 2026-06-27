@@ -8,7 +8,8 @@ const PERSISTED_KEYS = [
   "panelCols",
   "sloganPhrases",
   "sloganCount",
-  "showView"
+  "showView",
+  "routing"
 ];
 
 export function loadPersistedConfig(defaults) {
@@ -20,6 +21,9 @@ export function loadPersistedConfig(defaults) {
     const loaded = {};
     for (const key of PERSISTED_KEYS) {
       if (parsed[key] !== undefined) loaded[key] = parsed[key];
+    }
+    if (loaded.routing && typeof loaded.routing === "object") {
+      loaded.routing = { ...defaults.routing, ...loaded.routing };
     }
     return loaded;
   } catch {

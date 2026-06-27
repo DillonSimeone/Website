@@ -1,10 +1,58 @@
 import { React } from "../../00-commonParts/tscircuit-core.js";
 const { useState, useEffect, useRef } = React;
 import { appState } from "./state.js";
-import { compileCircuit, generateBOM, generatePNP, generateGerbers, panelizeCircuitJson } from "./circuit.js";
+import { compileCircuit, generateBOM, generatePNP, generateGerbers, panelizeCircuitJson, runManufacturingDrc } from "./circuit.js";
 import { applySlogansForState, DEFAULT_SLOGAN_PHRASES, resolveSloganPhrases } from "../../00-commonParts/slogan.js";
 import { SVGPCBViewer, SVGSchematicViewer } from "./visualizer2d.js";
 import { logDebug } from "./debug.js";
+import { drcItemText, drcItemRefs } from "./drc-highlight.js";
+import { TSCIRCUIT_BOARD_PARAM_DEFS, DRC_CHECK_PARAM_DEFS, parseRoutingInputs, routingInputsFromState } from "./pcb-rules.js";
+
+function drcHighlightFromItem(item) {
+  if (!item) return null;
+  return { text: drcItemText(item), refs: drcItemRefs(item) };
+}
+
+function renderRoutingParamRow(def, idx, routingInputs, setRoutingInputs) {
+  return React.createElement("div", {
+    key: def.key,
+    className: `slider-group routing-param-row${idx > 0 ? " slider-group-spaced" : ""}`
+  },
+    React.createElement("div", { className: "slider-labels" },
+      React.createElement("span", null, def.label),
+      React.createElement("span", { className: "val-glow" }, def.unit)
+    ),
+    React.createElement("input", {
+      type: "number",
+      className: "param-input routing-input",
+      min: def.min,
+      max: def.max,
+      step: def.step,
+      value: routingInputs[def.key] ?? "",
+      onChange: (e) => setRoutingInputs((prev) => ({
+        ...prev,
+        [def.key]: e.target.value
+      }))
+    })
+  );
+}
+
+function drcListPreview(text, maxLen = 72) {
+  const s = String(text ?? "");
+  if (s.length <= maxLen) return s;
+  return `${s.slice(0, maxLen - 1)}…`;
+}
+
+function renderDrcListItem(item, className, key, setDrcHighlight) {
+  const fullText = drcItemText(item);
+  return React.createElement("li", {
+    key,
+    className: `drc-item ${className}`,
+    title: fullText,
+    onMouseEnter: () => setDrcHighlight(drcHighlightFromItem(item)),
+    onMouseLeave: () => setDrcHighlight(null)
+  }, drcListPreview(fullText));
+}
 
 export function PCBStudioApp() {
   const [state, setState] = useState(appState.getState());
@@ -55,6 +103,10 @@ export function PCBStudioApp() {
   );
   const [sloganCountInput, setSloganCountInput] = useState(state.sloganCount);
   const [isUpdatingSlogans, setIsUpdatingSlogans] = useState(false);
+  const [routingOpen, setRoutingOpen] = useState(false);
+  const [routingInputs, setRoutingInputs] = useState(() => routingInputsFromState(state.routing));
+  const [drcHighlight, setDrcHighlight] = useState(null);
+  const [drc3dPopup, setDrc3dPopup] = useState(null);
 
   useEffect(() => {
     const unsub = appState.subscribe((newState) => {
@@ -74,7 +126,8 @@ export function PCBStudioApp() {
     setPanelColsInput(state.panelCols);
     setSloganPhrasesInput(resolveSloganPhrases(state.sloganPhrases));
     setSloganCountInput(state.sloganCount);
-  }, [state.ledCount, state.spacing, state.useMouseBites, state.panelRows, state.panelCols, state.sloganPhrases, state.sloganCount]);
+    setRoutingInputs(routingInputsFromState(state.routing));
+  }, [state.ledCount, state.spacing, state.useMouseBites, state.panelRows, state.panelCols, state.sloganPhrases, state.sloganCount, state.routing]);
 
   // Initialize and update the 3D viewport in the background as soon as 2D view reports centering is complete
   useEffect(() => {
@@ -104,6 +157,42 @@ export function PCBStudioApp() {
     }
   }, [state.showView]);
 
+  // DRC hover highlight in 3D view (markers + tracked popup position)
+  useEffect(() => {
+    if (!drcHighlight || state.showView !== "3d" || !state.circuitJson) {
+      setDrc3dPopup(null);
+      import("./visualizer3d.js").then(({ clearDrcHighlight }) => clearDrcHighlight(threeInstanceRef));
+      return;
+    }
+
+    let rafId;
+    let cancelled = false;
+
+    (async () => {
+      const { applyDrcHighlight, getDrcHighlightScreen } = await import("./visualizer3d.js");
+      if (cancelled) return;
+      applyDrcHighlight(threeInstanceRef, drcHighlight, state.circuitJson);
+
+      const tick = () => {
+        const screen = getDrcHighlightScreen(threeInstanceRef);
+        if (screen) {
+          setDrc3dPopup(screen);
+        } else {
+          setDrc3dPopup(null);
+        }
+        rafId = requestAnimationFrame(tick);
+      };
+      rafId = requestAnimationFrame(tick);
+    })();
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      setDrc3dPopup(null);
+      import("./visualizer3d.js").then(({ clearDrcHighlight }) => clearDrcHighlight(threeInstanceRef));
+    };
+  }, [drcHighlight, state.showView, state.circuitJson]);
+
   // Clean up WebGL context on component unmount
   useEffect(() => {
     return () => {
@@ -122,7 +211,8 @@ export function PCBStudioApp() {
         ledCount: curState.ledCount,
         spacing: curState.spacing,
         boardWidth: curState.boardWidth,
-        boardHeight: curState.boardHeight
+        boardHeight: curState.boardHeight,
+        routing: curState.routing
       });
       let circuitJson = circuit.getCircuitJson();
       
@@ -139,11 +229,16 @@ export function PCBStudioApp() {
       // Stamp silkscreen slogans once copper/layout is ready
       const sloganResult = await applySlogansForState(circuitJson, curState);
       circuitJson = sloganResult.circuitJson;
+
+      const drc = runManufacturingDrc(circuitJson, curState.routing);
       
       appState.updateState({
         circuitJson,
         sloganPlacedCount: sloganResult.placedCount,
         sloganAttemptedCount: sloganResult.attemptedCount,
+        drcOk: drc.ok,
+        drcErrors: drc.errors,
+        drcWarnings: drc.warnings,
         bomCsv: generateBOM(circuitJson),
         pnpCsv: generatePNP(circuitJson),
         gerberZip: true, // Enabled for on-demand generation on click
@@ -161,6 +256,20 @@ export function PCBStudioApp() {
     showCompileOverlay();
     afterOverlayPaint(() => {
       appState.updateState({ isCompiling: true, error: null });
+      void runCompilation();
+    });
+  };
+
+  const handleUpdateRouting = () => {
+    showCompileOverlay();
+    const parsedRouting = parseRoutingInputs(routingInputs);
+
+    afterOverlayPaint(() => {
+      appState.updateState({
+        routing: parsedRouting,
+        isCompiling: true,
+        error: null
+      });
       void runCompilation();
     });
   };
@@ -386,6 +495,39 @@ export function PCBStudioApp() {
             )
           ),
 
+          // Routing parameters (collapsible)
+          React.createElement("div", { className: `routing-spoiler${routingOpen ? " is-open" : ""}` },
+            React.createElement("button", {
+              type: "button",
+              className: "routing-spoiler-toggle",
+              onClick: () => setRoutingOpen((open) => !open),
+              "aria-expanded": routingOpen
+            },
+              React.createElement("span", null, "Board Rules (tscircuit)"),
+              React.createElement("span", { className: "routing-spoiler-chevron" }, routingOpen ? "▾" : "▸")
+            ),
+            React.createElement("div", { className: "routing-spoiler-panel" },
+              React.createElement("div", { className: "routing-spoiler-inner" },
+                React.createElement("p", { className: "routing-param-note" },
+                  "Trace and via sizes below are sent to tscircuit when you Update Routing. Clearances are advisory only (see DRC section)."
+                ),
+                React.createElement("div", { className: "routing-param-section-label" }, "Applied to autorouter"),
+                TSCIRCUIT_BOARD_PARAM_DEFS.map((def, idx) =>
+                  renderRoutingParamRow(def, idx, routingInputs, setRoutingInputs)
+                ),
+                React.createElement("div", { className: "routing-param-section-label routing-param-section-spaced" }, "Manufacturing check only"),
+                DRC_CHECK_PARAM_DEFS.map((def, idx) =>
+                  renderRoutingParamRow(def, idx, routingInputs, setRoutingInputs)
+                ),
+                React.createElement("button", {
+                  className: "btn-update-routing",
+                  onClick: handleUpdateRouting,
+                  disabled: state.isCompiling || isUpdatingSlogans
+                }, state.isCompiling ? "Compiling..." : "Update Routing")
+              )
+            )
+          ),
+
           // Action update trigger button
           React.createElement("button", {
             className: "btn-update-generator",
@@ -441,7 +583,24 @@ export function PCBStudioApp() {
                 className: "board-info-link",
                 href: "https://www.lcsc.com/product-detail/C52941388.html", 
                 target: "_blank"
-              }, "C52941388 (WS2812B-3535)")
+              }, "C52941388 (WS2812B-1313-V6)")
+            ),
+            React.createElement("div", { className: "drc-status" },
+              state.drcOk && state.drcWarnings.length === 0
+                ? React.createElement("span", { className: "drc-ok" }, "DRC: JLCPCB 2L rules OK")
+                : React.createElement("span", { className: state.drcOk ? "drc-warn" : "drc-fail" },
+                    state.drcOk
+                      ? `DRC: OK (${state.drcWarnings.length} advisory warning(s))`
+                      : `DRC: ${state.drcErrors.length} error(s), ${state.drcWarnings.length} warning(s)`
+                  )
+            ),
+            (state.drcErrors.length > 0 || state.drcWarnings.length > 0) && React.createElement("ul", { className: "drc-list" },
+              state.drcErrors.slice(0, 4).map((item, idx) =>
+                renderDrcListItem(item, "drc-item-error", `drc-e-${idx}`, setDrcHighlight)
+              ),
+              state.drcWarnings.slice(0, 6).map((item, idx) =>
+                renderDrcListItem(item, "drc-item-warn", `drc-w-${idx}`, setDrcHighlight)
+              )
             )
           )
         ),
@@ -507,12 +666,14 @@ export function PCBStudioApp() {
 
           // PCB SVG Render View (always mounted to preserve zoom/pan position, hidden via CSS)
           React.createElement("div", {
-            style: { display: state.showView === "pcb" ? "block" : "none", width: "100%", height: "100%" }
+            className: "viewport-pcb-pane",
+            style: { display: state.showView === "pcb" ? "block" : "none" }
           },
             state.circuitJson && React.createElement(SVGPCBViewer, { 
               circuitJson: state.circuitJson,
               boardWidth: state.useMouseBites ? (state.panelCols * state.boardWidth + (state.panelCols - 1) * 2.0) : state.boardWidth,
               boardHeight: state.useMouseBites ? (state.panelRows * state.boardHeight + (state.panelRows - 1) * 2.0) : state.boardHeight,
+              drcHighlight: state.showView === "pcb" ? drcHighlight : null,
               onCentered: () => {
                 logDebug("[Click Timing] 2D SVG Viewport finished centering!");
                 setIsCentered(true);
@@ -532,7 +693,18 @@ export function PCBStudioApp() {
             ref: threeRef, 
             className: "viewport-pane three-container",
             style: { display: state.showView === "3d" ? "block" : "none" }
-          })
+          }),
+
+          state.showView === "3d" && drc3dPopup && React.createElement("div", {
+            className: "drc-viewport-popup drc-viewport-popup-3d",
+            style: {
+              left: `${drc3dPopup.x}px`,
+              top: `${drc3dPopup.y - 48}px`
+            }
+          },
+            React.createElement("div", { className: "drc-viewport-popup-title" }, drc3dPopup.label),
+            React.createElement("div", { className: "drc-viewport-popup-body" }, drc3dPopup.text)
+          )
         )
       )
     )

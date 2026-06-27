@@ -2,6 +2,7 @@ import * as THREE from 'https://esm.sh/three@0.136.0';
 import { OrbitControls } from 'https://esm.sh/three@0.136.0/examples/jsm/controls/OrbitControls.js';
 import { mergeBufferGeometries } from 'https://esm.sh/three@0.136.0/examples/jsm/utils/BufferGeometryUtils.js';
 import { logDebug } from './debug.js';
+import { resolveDrcTargets, drcItemText } from './drc-highlight.js';
 
 export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
   if (!container) return;
@@ -315,27 +316,24 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
     const rotRad = (rotation * Math.PI) / 180;
 
     if (baseDesignator.startsWith("U")) {
-      // Draw 3D WS2812B-3535 LED package
+      // Draw 3D WS2812B-1313-V6 LED package
       const ledGroup = new THREE.Group();
       ledGroup.position.set(cx, 0.8, -cy);
-      ledGroup.rotation.y = -rotRad; // Reverse rot for WebGL coordinates
+      ledGroup.rotation.y = -rotRad;
 
-      // 1. Black package body (reused geometry)
-      const bodyGeom = getBoxGeometry(3.5, 0.8, 3.5);
+      const bodyGeom = getBoxGeometry(1.3, 0.65, 1.3);
       const bodyMesh = new THREE.Mesh(bodyGeom, ledBodyMat);
-      bodyMesh.position.y = 0.4;
+      bodyMesh.position.y = 0.325;
       ledGroup.add(bodyMesh);
 
-      // 2. Clear lens/epoxy dome (reused geometry)
-      const lensGeom = getBoxGeometry(2.6, 0.1, 2.6);
+      const lensGeom = getBoxGeometry(1.0, 0.08, 1.0);
       const lensMesh = new THREE.Mesh(lensGeom, ledLensMat);
-      lensMesh.position.y = 0.85;
+      lensMesh.position.y = 0.69;
       ledGroup.add(lensMesh);
 
-      // 3. Central light-emitting diode (reused geometry)
-      const emitterGeom = getBoxGeometry(0.8, 0.2, 0.8);
+      const emitterGeom = getBoxGeometry(0.35, 0.12, 0.35);
       const emitterMesh = new THREE.Mesh(emitterGeom, ledEmitterMat);
-      emitterMesh.position.y = 0.75;
+      emitterMesh.position.y = 0.62;
       ledGroup.add(emitterMesh);
 
       scene.add(ledGroup);
@@ -398,11 +396,11 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
       silkCtx.textAlign = "center";
       silkCtx.textBaseline = "middle";
       
-      // Draw +, O, -, I around the package boundary
-      silkCtx.fillText("+", drawX - 22, drawY - 10);
-      silkCtx.fillText("O", drawX + 22, drawY - 10);
-      silkCtx.fillText("-", drawX + 22, drawY + 10);
-      silkCtx.fillText("I", drawX - 22, drawY + 10);
+      // Pin labels: +/I top row, O/- bottom row (1313 layout)
+      silkCtx.fillText("+", drawX - 8, drawY - 4);
+      silkCtx.fillText("I", drawX + 8, drawY - 4);
+      silkCtx.fillText("O", drawX - 8, drawY + 4);
+      silkCtx.fillText("-", drawX + 8, drawY + 4);
     }
   });
   pcbTexts.forEach(txt => {
@@ -500,9 +498,12 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
 
 export const destroyThreeJS = (container, threeInstanceRef) => {
   if (threeInstanceRef && threeInstanceRef.current) {
-    const { renderer, animId, resizeHandler } = threeInstanceRef.current;
+    const { renderer, animId, resizeHandler, scene, drcHighlightGroup } = threeInstanceRef.current;
     cancelAnimationFrame(animId);
     window.removeEventListener("resize", resizeHandler);
+    if (scene && drcHighlightGroup) {
+      scene.remove(drcHighlightGroup);
+    }
     renderer.dispose();
     if (container) {
       container.innerHTML = "";
@@ -510,3 +511,91 @@ export const destroyThreeJS = (container, threeInstanceRef) => {
     threeInstanceRef.current = null;
   }
 };
+
+function projectBoardPoint(instance, x, y) {
+  if (!instance?.camera || !instance?.renderer) return null;
+  const vector = new THREE.Vector3(x, 0.92, -y);
+  vector.project(instance.camera);
+  const rect = instance.renderer.domElement.getBoundingClientRect();
+  return {
+    x: rect.left + (vector.x * 0.5 + 0.5) * rect.width,
+    y: rect.top + (-vector.y * 0.5 + 0.5) * rect.height
+  };
+}
+
+/** Highlight DRC targets in the 3D scene; returns screen position for popup. */
+export function applyDrcHighlight(threeInstanceRef, highlight, circuitJson) {
+  const inst = threeInstanceRef?.current;
+  if (!inst?.scene) return null;
+
+  if (inst.drcHighlightGroup) {
+    inst.scene.remove(inst.drcHighlightGroup);
+    inst.drcHighlightGroup.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose?.();
+      if (obj.material) obj.material.dispose?.();
+    });
+    inst.drcHighlightGroup = null;
+  }
+  inst.drcHighlightPrimary = null;
+
+  if (!highlight?.refs?.length || !circuitJson) return null;
+
+  const targets = resolveDrcTargets(circuitJson, highlight.refs);
+  if (!targets.length) return null;
+
+  const group = new THREE.Group();
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xff007f, transparent: true, opacity: 0.95 });
+  const pillarMat = new THREE.MeshBasicMaterial({ color: 0xff007f, transparent: true, opacity: 0.35 });
+
+  for (const t of targets) {
+    const ringGeom = new THREE.TorusGeometry(1.1, 0.07, 8, 28);
+    const ring = new THREE.Mesh(ringGeom, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(t.x, 0.95, -t.y);
+    group.add(ring);
+
+    const pillarGeom = new THREE.CylinderGeometry(0.06, 0.06, 1.6, 8);
+    const pillar = new THREE.Mesh(pillarGeom, pillarMat);
+    pillar.position.set(t.x, 0, -t.y);
+    group.add(pillar);
+  }
+
+  inst.scene.add(group);
+  inst.drcHighlightGroup = group;
+
+  const primary = targets[0];
+  inst.drcHighlightPrimary = {
+    x: primary.x,
+    y: primary.y,
+    label: primary.label,
+    text: highlight.text ?? drcItemText(highlight)
+  };
+
+  const screen = projectBoardPoint(inst, primary.x, primary.y);
+  return screen
+    ? { screen, label: inst.drcHighlightPrimary.label, text: inst.drcHighlightPrimary.text }
+    : null;
+}
+
+export function getDrcHighlightScreen(threeInstanceRef) {
+  const inst = threeInstanceRef?.current;
+  const p = inst?.drcHighlightPrimary;
+  if (!p) return null;
+  const screen = projectBoardPoint(inst, p.x, p.y);
+  return screen ? { ...screen, label: p.label, text: p.text } : null;
+}
+
+export function clearDrcHighlight(threeInstanceRef) {
+  const inst = threeInstanceRef?.current;
+  if (!inst?.scene) return;
+
+  if (inst.drcHighlightGroup) {
+    inst.scene.remove(inst.drcHighlightGroup);
+    inst.drcHighlightGroup.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose?.();
+      if (obj.material) obj.material.dispose?.();
+    });
+    inst.drcHighlightGroup = null;
+  }
+  inst.drcHighlightPrimary = null;
+}

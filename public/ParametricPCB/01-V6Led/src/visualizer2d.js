@@ -1,7 +1,8 @@
 import { React } from "../../00-commonParts/tscircuit-core.js";
+import { isTraceRef, matchesDrcHighlight, resolveDrcTargets, drcItemText } from "./drc-highlight.js";
 
 // --- Custom 2D PCB Renderer (SVG-based, high performance, neon glows) ---
-export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered }) {
+export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered, drcHighlight }) {
   const pcbComponents = circuitJson.filter(e => e.type === "pcb_component");
   const pcbPads = circuitJson.filter(e => e.type === "pcb_smtpad");
   const pcbTraces = circuitJson.filter(e => e.type === "pcb_trace");
@@ -14,6 +15,9 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
   const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
   const [hoveredItem, setHoveredItem] = React.useState(null);
   const [tooltipPos, setTooltipPos] = React.useState({ x: 0, y: 0 });
+  const [drcPopup, setDrcPopup] = React.useState(null);
+
+  const highlightRefs = drcHighlight?.refs ?? [];
 
   const scale = 5.5; 
   const padding = 15;
@@ -80,6 +84,32 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
     }
   }, [boardWidth, boardHeight, circuitJson]);
 
+  React.useEffect(() => {
+    if (!highlightRefs.length) {
+      setDrcPopup(null);
+      return;
+    }
+    const targets = resolveDrcTargets(circuitJson, highlightRefs);
+    if (!targets.length) {
+      setDrcPopup(null);
+      return;
+    }
+    const primary = targets[0];
+    setDrcPopup({
+      svgX: toSvgX(primary.x),
+      svgY: toSvgY(primary.y),
+      label: primary.label,
+      text: drcHighlight?.text ?? drcItemText(drcHighlight)
+    });
+  }, [drcHighlight, circuitJson, boardWidth, boardHeight, highlightRefs.length]);
+
+  const drcScreenPos = drcPopup
+    ? {
+        x: transform.x + drcPopup.svgX * transform.zoom,
+        y: transform.y + drcPopup.svgY * transform.zoom
+      }
+    : null;
+
   return (
     React.createElement("div", { 
       className: "pcb-svg-container",
@@ -109,6 +139,13 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
               React.createElement("feMergeNode", { in: "blur" }),
               React.createElement("feMergeNode", { in: "SourceGraphic" })
             )
+          ),
+          React.createElement("filter", { id: "drc-glow", x: "-50%", y: "-50%", width: "200%", height: "200%" },
+            React.createElement("feGaussianBlur", { stdDeviation: "2.5", result: "blur" }),
+            React.createElement("feMerge", null,
+              React.createElement("feMergeNode", { in: "blur" }),
+              React.createElement("feMergeNode", { in: "SourceGraphic" })
+            )
           )
         ),
 
@@ -131,6 +168,7 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
           
           const srcTrace = sourceTraces.find(st => st.source_trace_id === trace.source_trace_id);
           const netName = srcTrace?.name || "unknown net";
+          const isDrcHot = traceHighlighted(highlightRefs, trace);
           
           return trace.route.slice(0, -1).map((pt1, i) => {
             const pt2 = trace.route[i + 1];
@@ -148,6 +186,9 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
             }
             
             const strokeDash = isTop ? "none" : "3,2";
+            if (isDrcHot) {
+              strokeColor = "#ff007f";
+            }
             
             const hoverHandler = {
               onMouseEnter: () => {
@@ -176,25 +217,29 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
               stroke: strokeColor,
               strokeLinecap: "round",
               style: { cursor: "help" },
+              filter: isDrcHot ? "url(#drc-glow)" : undefined,
+              opacity: isDrcHot ? 1 : undefined,
               ...hoverHandler
             };
+
+            const segWidth = toSvgDim(trace.width || 0.3) * (isDrcHot ? 1.6 : 1);
 
             if (isTop) {
               return React.createElement("g", { key: `trace-${idx}-${i}` },
                 React.createElement("line", {
                   ...lineProps,
-                  strokeWidth: toSvgDim(trace.width || 0.3) * 2.5,
-                  opacity: 0.35
+                  strokeWidth: segWidth * 2.5,
+                  opacity: isDrcHot ? 0.55 : 0.35
                 }),
                 React.createElement("line", {
                   ...lineProps,
-                  strokeWidth: toSvgDim(trace.width || 0.3)
+                  strokeWidth: segWidth
                 })
               );
             } else {
               return React.createElement("line", {
                 ...lineProps,
-                strokeWidth: toSvgDim(trace.width || 0.3),
+                strokeWidth: segWidth,
                 strokeDasharray: strokeDash,
                 key: `trace-${idx}-${i}`
               });
@@ -224,6 +269,7 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
           const cy = toSvgY(via.y || 0);
           const outerR = toSvgDim(via.outer_diameter / 2);
           const innerR = toSvgDim(via.hole_diameter / 2);
+          const isDrcHot = matchesDrcHighlight(highlightRefs, "pcb_via", via.pcb_via_id);
           
           const hoverHandler = {
             onMouseEnter: () => {
@@ -244,7 +290,11 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
           };
 
           return React.createElement("g", { key: `via-${idx}`, style: { cursor: "help" }, ...hoverHandler },
-            React.createElement("circle", { cx: cx, cy: cy, r: outerR, fill: "#ccaa44" }),
+            isDrcHot && React.createElement("circle", {
+              cx, cy, r: outerR * 1.8, fill: "none", stroke: "#ff007f", strokeWidth: 2,
+              filter: "url(#drc-glow)", opacity: 0.9
+            }),
+            React.createElement("circle", { cx: cx, cy: cy, r: outerR, fill: isDrcHot ? "#ff4499" : "#ccaa44" }),
             React.createElement("circle", { cx: cx, cy: cy, r: innerR, fill: "#111" })
           );
         }),
@@ -254,6 +304,7 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
           if (pad.x === undefined || pad.y === undefined) return null;
           const cx = toSvgX(pad.x);
           const cy = toSvgY(pad.y);
+          const isDrcHot = matchesDrcHighlight(highlightRefs, "pcb_smtpad", pad.pcb_smtpad_id);
           
           const hoverHandler = {
             onMouseEnter: () => {
@@ -275,31 +326,40 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
           if (pad.shape === "rect") {
             const w = toSvgDim(pad.width);
             const h = toSvgDim(pad.height);
-            return React.createElement("rect", {
-              x: cx - w/2,
-              y: cy - h/2,
-              width: w,
-              height: h,
-              fill: "#ccaa44",
-              stroke: "#eeddbb",
-              strokeWidth: 0.5,
-              key: `pad-${idx}`,
-              style: { cursor: "help" },
-              ...hoverHandler
-            });
+            return React.createElement("g", { key: `pad-${idx}` },
+              isDrcHot && React.createElement("rect", {
+                x: cx - w / 2 - 2, y: cy - h / 2 - 2, width: w + 4, height: h + 4,
+                fill: "none", stroke: "#ff007f", strokeWidth: 2, filter: "url(#drc-glow)"
+              }),
+              React.createElement("rect", {
+                x: cx - w/2,
+                y: cy - h/2,
+                width: w,
+                height: h,
+                fill: isDrcHot ? "#ffaa55" : "#ccaa44",
+                stroke: isDrcHot ? "#ff007f" : "#eeddbb",
+                strokeWidth: isDrcHot ? 1.5 : 0.5,
+                style: { cursor: "help" },
+                ...hoverHandler
+              })
+            );
           } else {
             const r = toSvgDim(pad.radius || (pad.width / 2));
-            return React.createElement("circle", {
-              cx: cx,
-              cy: cy,
-              r: r,
-              fill: "#ccaa44",
-              stroke: "#eeddbb",
-              strokeWidth: 0.5,
-              key: `pad-${idx}`,
-              style: { cursor: "help" },
-              ...hoverHandler
-            });
+            return React.createElement("g", { key: `pad-${idx}` },
+              isDrcHot && React.createElement("circle", {
+                cx, cy, r: r * 1.5, fill: "none", stroke: "#ff007f", strokeWidth: 2, filter: "url(#drc-glow)"
+              }),
+              React.createElement("circle", {
+                cx: cx,
+                cy: cy,
+                r: r,
+                fill: isDrcHot ? "#ffaa55" : "#ccaa44",
+                stroke: isDrcHot ? "#ff007f" : "#eeddbb",
+                strokeWidth: isDrcHot ? 1.5 : 0.5,
+                style: { cursor: "help" },
+                ...hoverHandler
+              })
+            );
           }
         }),
 
@@ -320,8 +380,8 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
                 setHoveredItem({
                   title: designator,
                   details: [
-                    { label: "Type", value: baseDesignator.startsWith("U") ? "WS2812B LED" : "Solder Header" },
-                    { label: "Part Number", value: baseDesignator.startsWith("U") ? "WS2812B-3535" : "Custom-Pads" },
+                    { label: "Type", value: "WS2812B-1313-V6 LED" },
+                    { label: "Part Number", value: "WS2812B-1313-V6" },
                     { label: "Coordinates", value: `X: ${(comp.center?.x || 0).toFixed(2)}, Y: ${(comp.center?.y || 0).toFixed(2)}` }
                   ]
                 });
@@ -334,8 +394,9 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
             };
             
             if (baseDesignator.startsWith("U")) {
-              // LED WS2812B-3535
-              const size = toSvgDim(3.5);
+              // LED WS2812B-1313-V6
+              const size = toSvgDim(1.3);
+              const padOffset = toSvgDim(0.4);
               return React.createElement("g", { key: `comp-${idx}`, style: { cursor: "help" }, ...hoverComp },
                 React.createElement("rect", {
                   x: cx - size/2,
@@ -355,11 +416,10 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
                   textAnchor: "middle",
                   fontFamily: "monospace"
                 }, baseDesignator),
-                // Silkscreen pin labels on the 2D SVG
-                React.createElement("text", { x: cx - size/2 - 2, y: cy - size/2 + 7, fill: "#fff", fontSize: "3.5px", textAnchor: "middle" }, "+"),
-                React.createElement("text", { x: cx + size/2 + 2, y: cy - size/2 + 7, fill: "#fff", fontSize: "3.5px", textAnchor: "middle" }, "O"),
-                React.createElement("text", { x: cx + size/2 + 2, y: cy + size/2 - 2, fill: "#fff", fontSize: "3.5px", textAnchor: "middle" }, "-"),
-                React.createElement("text", { x: cx - size/2 - 2, y: cy + size/2 - 2, fill: "#fff", fontSize: "3.5px", textAnchor: "middle" }, "I")
+                React.createElement("text", { x: cx - padOffset, y: cy - padOffset, fill: "#fff", fontSize: "3px", textAnchor: "middle" }, "+"),
+                React.createElement("text", { x: cx + padOffset, y: cy - padOffset, fill: "#fff", fontSize: "3px", textAnchor: "middle" }, "I"),
+                React.createElement("text", { x: cx - padOffset, y: cy + padOffset, fill: "#fff", fontSize: "3px", textAnchor: "middle" }, "O"),
+                React.createElement("text", { x: cx + padOffset, y: cy + padOffset, fill: "#fff", fontSize: "3px", textAnchor: "middle" }, "-")
               );
             } else if (baseDesignator.startsWith("SLOGAN") || baseDesignator.startsWith("LABEL") || baseDesignator.startsWith("J")) {
               return null;
@@ -406,11 +466,23 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
             key: `silk-txt-${idx}`
           }, txt.text);
         });
-        })()
+        })(),
+
+        drcPopup && React.createElement("circle", {
+          cx: drcPopup.svgX,
+          cy: drcPopup.svgY,
+          r: 10,
+          fill: "none",
+          stroke: "#ff007f",
+          strokeWidth: 2,
+          filter: "url(#drc-glow)",
+          pointerEvents: "none",
+          className: "drc-highlight-ring"
+        })
       ),
-      
+
       // --- Hover Tooltip Display ---
-      hoveredItem && React.createElement("div", {
+      hoveredItem && !drcHighlight && React.createElement("div", {
         style: {
           position: "absolute",
           left: `${tooltipPos.x}px`,
@@ -432,6 +504,18 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
           React.createElement("span", { style: { color: "#888", marginRight: "6px" } }, `${d.label}:`),
           React.createElement("span", { style: { color: "#eee" } }, d.value)
         ))
+      ),
+
+      // --- DRC issue popup (from sidebar hover) ---
+      drcPopup && drcScreenPos && React.createElement("div", {
+        className: "drc-viewport-popup",
+        style: {
+          left: `${drcScreenPos.x}px`,
+          top: `${drcScreenPos.y - 48}px`
+        }
+      },
+        React.createElement("div", { className: "drc-viewport-popup-title" }, drcPopup.label),
+        React.createElement("div", { className: "drc-viewport-popup-body" }, drcPopup.text)
       ),
       
       // --- Floating Trace/Net Color Legend (Fixed bottom right) ---
@@ -471,6 +555,10 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered 
       )
     )
   );
+}
+
+function traceHighlighted(refs, trace) {
+  return refs?.some((r) => isTraceRef(r, trace));
 }
 
 // --- Custom 2D Schematic Renderer (SVG-based) ---

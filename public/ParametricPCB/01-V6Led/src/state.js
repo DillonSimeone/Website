@@ -1,5 +1,6 @@
 import { DEFAULT_SLOGAN_PHRASES } from "../../00-commonParts/slogan-placements.js";
 import { loadPersistedConfig, savePersistedConfig } from "./storage.js";
+import { DEFAULT_ROUTING, normalizeRouting } from "./pcb-rules.js";
 
 /**
  * Application state manager for the V6 LED Strip Parametric generator.
@@ -23,11 +24,21 @@ export class StateManager {
       bomCsv: "",
       pnpCsv: "",
       gerberZip: null,
+      drcOk: true,
+      drcErrors: [],
+      drcWarnings: [],
+      routing: { ...DEFAULT_ROUTING },
       isCompiling: false,
       error: null
     };
 
-    this.state = { ...defaults, ...loadPersistedConfig(defaults) };
+    const loaded = loadPersistedConfig(defaults);
+
+    this.state = {
+      ...defaults,
+      ...loaded,
+      routing: normalizeRouting(loaded.routing ?? defaults.routing)
+    };
     this.listeners = [];
     this.autoCalculateWidth();
   }
@@ -48,6 +59,9 @@ export class StateManager {
   }
 
   updateState(updates) {
+    if (updates.routing !== undefined) {
+      updates = { ...updates, routing: normalizeRouting(updates.routing) };
+    }
     this.state = { ...this.state, ...updates };
 
     // Auto-calculate board width if spacing or count changes
