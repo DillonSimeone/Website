@@ -1,11 +1,12 @@
 import { DEFAULT_SLOGAN_PHRASES } from "../../00-commonParts/slogan-placements.js";
+import { loadPersistedConfig, savePersistedConfig } from "./storage.js";
 
 /**
  * Application state manager for the V6 LED Strip Parametric generator.
  */
 export class StateManager {
   constructor() {
-    this.state = {
+    const defaults = {
       ledCount: 10,
       spacing: 15, // in mm
       boardWidth: 160, // in mm (will be auto-updated)
@@ -15,6 +16,8 @@ export class StateManager {
       panelCols: 2,
       sloganPhrases: DEFAULT_SLOGAN_PHRASES,
       sloganCount: 40,
+      sloganPlacedCount: 0,
+      sloganAttemptedCount: 0,
       showView: "pcb", // "pcb" or "3d" or "schematic"
       circuitJson: null,
       bomCsv: "",
@@ -23,6 +26,8 @@ export class StateManager {
       isCompiling: false,
       error: null
     };
+
+    this.state = { ...defaults, ...loadPersistedConfig(defaults) };
     this.listeners = [];
     this.autoCalculateWidth();
   }
@@ -44,20 +49,19 @@ export class StateManager {
 
   updateState(updates) {
     this.state = { ...this.state, ...updates };
-    
+
     // Auto-calculate board width if spacing or count changes
     if (updates.ledCount !== undefined || updates.spacing !== undefined) {
       this.autoCalculateWidth();
     }
-    
+
+    savePersistedConfig(this.state);
     this.notify();
   }
 
   autoCalculateWidth() {
-    // Width is determined by spacing * (count - 1) + padding at ends
-    // Beginning and ending header pads need about 10mm padding on each side
     const activeLength = this.state.spacing * (this.state.ledCount - 1);
-    this.state.boardWidth = Math.max(40, activeLength + 20); // Min width 40mm
+    this.state.boardWidth = Math.max(40, activeLength + 20);
   }
 }
 

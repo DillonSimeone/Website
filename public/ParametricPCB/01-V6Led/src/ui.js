@@ -14,9 +14,10 @@ export function PCBStudioApp() {
   const threeInstanceRef = useRef(null);
   const compileOverlayRef = useRef(null);
 
-  const showCompileOverlay = () => {
+  const showCompileOverlay = (mode = "compile") => {
     if (compileOverlayRef.current) {
       compileOverlayRef.current.classList.add("is-visible");
+      compileOverlayRef.current.classList.toggle("slogan-mode", mode === "slogan");
     }
   };
 
@@ -29,7 +30,7 @@ export function PCBStudioApp() {
 
   const hideCompileOverlay = () => {
     if (compileOverlayRef.current) {
-      compileOverlayRef.current.classList.remove("is-visible");
+      compileOverlayRef.current.classList.remove("is-visible", "slogan-mode");
     }
     setOverlayMessage("Compiling Project...");
   };
@@ -136,10 +137,13 @@ export function PCBStudioApp() {
       }
 
       // Stamp silkscreen slogans once copper/layout is ready
-      circuitJson = await applySlogansForState(circuitJson, curState);
+      const sloganResult = await applySlogansForState(circuitJson, curState);
+      circuitJson = sloganResult.circuitJson;
       
       appState.updateState({
         circuitJson,
+        sloganPlacedCount: sloganResult.placedCount,
+        sloganAttemptedCount: sloganResult.attemptedCount,
         bomCsv: generateBOM(circuitJson),
         pnpCsv: generatePNP(circuitJson),
         gerberZip: true, // Enabled for on-demand generation on click
@@ -192,7 +196,7 @@ export function PCBStudioApp() {
   const handleUpdateSlogan = () => {
     if (!state.circuitJson || state.isCompiling || isUpdatingSlogans) return;
 
-    showCompileOverlay();
+    showCompileOverlay("slogan");
     setOverlayMessage("Updating Slogans...");
 
     const newSloganCount = Math.max(0, Math.min(200, parseInt(sloganCountInput) || 0));
@@ -206,10 +210,15 @@ export function PCBStudioApp() {
             sloganCount: newSloganCount
           });
           const curState = appState.getState();
-          const circuitJson = await applySlogansForState(curState.circuitJson, curState, {
+          const sloganResult = await applySlogansForState(curState.circuitJson, curState, {
             randomize: true
           });
-          appState.updateState({ circuitJson, error: null });
+          appState.updateState({
+            circuitJson: sloganResult.circuitJson,
+            sloganPlacedCount: sloganResult.placedCount,
+            sloganAttemptedCount: sloganResult.attemptedCount,
+            error: null
+          });
         } catch (err) {
           console.error(err);
           appState.updateState({ error: err.message });
@@ -240,13 +249,22 @@ export function PCBStudioApp() {
 
   const downloadGerbers = async () => {
     if (!state.circuitJson) return;
-    
-    // Load JSZip dynamically to zip the files in browser
+
     appState.updateState({ isCompiling: true });
     try {
-      const gerberData = generateGerbers(state.circuitJson);
+      const curState = appState.getState();
+      const sloganResult = await applySlogansForState(curState.circuitJson, curState);
+      const exportJson = sloganResult.circuitJson;
+
+      const gerberData = generateGerbers(exportJson);
       if (!gerberData) throw new Error("Gerber generation failed");
       const { layers, drill } = gerberData;
+
+      appState.updateState({
+        circuitJson: exportJson,
+        sloganPlacedCount: sloganResult.placedCount,
+        sloganAttemptedCount: sloganResult.attemptedCount
+      });
       
       const JSZip = (await import("https://esm.sh/jszip")).default;
       const zip = new JSZip();
@@ -301,66 +319,43 @@ export function PCBStudioApp() {
             ),
             React.createElement("input", {
               type: "number",
+              className: "param-input",
               min: 3,
               max: 24,
               value: ledCountInput,
-              onChange: (e) => setLedCountInput(e.target.value),
-              style: {
-                width: "100%",
-                background: "#080808",
-                border: "2px solid #39ff14",
-                color: "#fff",
-                padding: "8px",
-                fontFamily: "monospace",
-                outline: "none",
-                marginTop: "6px"
-              }
+              onChange: (e) => setLedCountInput(e.target.value)
             })
           ),
 
           // Styled Number input 2: Spacing/Pitch
-          React.createElement("div", { className: "slider-group", style: { marginTop: "12px" } },
+          React.createElement("div", { className: "slider-group slider-group-spaced" },
             React.createElement("div", { className: "slider-labels" },
               React.createElement("span", null, "LED Pitch/Spacing"),
               React.createElement("span", { className: "val-glow" }, "8mm - 30mm")
             ),
             React.createElement("input", {
               type: "number",
+              className: "param-input",
               min: 8,
               max: 30,
               value: spacingInput,
-              onChange: (e) => setSpacingInput(e.target.value),
-              style: {
-                width: "100%",
-                background: "#080808",
-                border: "2px solid #39ff14",
-                color: "#fff",
-                padding: "8px",
-                fontFamily: "monospace",
-                outline: "none",
-                marginTop: "6px"
-              }
+              onChange: (e) => setSpacingInput(e.target.value)
             })
           ),
 
           // Panelization Switch
-          React.createElement("div", { className: "panel-toggle-group", style: { marginTop: "20px", display: "flex", alignItems: "center", justifyContent: "space-between" } },
-            React.createElement("span", { style: { fontFamily: "monospace", fontSize: "12px" } }, "PANELIZE GRID (MOUSEBITES)"),
+          React.createElement("div", { className: "panel-toggle-group" },
+            React.createElement("span", null, "PANELIZE GRID (MOUSEBITES)"),
             React.createElement("input", {
               type: "checkbox",
+              className: "panel-toggle-checkbox",
               checked: useMouseBitesInput,
-              onChange: (e) => setUseMouseBitesInput(e.target.checked),
-              style: {
-                width: "18px",
-                height: "18px",
-                cursor: "pointer",
-                accentColor: "#39ff14"
-              }
+              onChange: (e) => setUseMouseBitesInput(e.target.checked)
             })
           ),
 
           // Conditional Panel Parameters
-          useMouseBitesInput && React.createElement("div", { style: { marginTop: "12px", borderLeft: "2px solid #39ff14", paddingLeft: "10px" } },
+          useMouseBitesInput && React.createElement("div", { className: "panel-params-block" },
             React.createElement("div", { className: "slider-group" },
               React.createElement("div", { className: "slider-labels" },
                 React.createElement("span", null, "Panel Rows"),
@@ -368,112 +363,63 @@ export function PCBStudioApp() {
               ),
               React.createElement("input", {
                 type: "number",
+                className: "param-input panel-input",
                 min: 1,
                 max: 5,
                 value: panelRowsInput,
-                onChange: (e) => setPanelRowsInput(e.target.value),
-                style: {
-                  width: "100%",
-                  background: "#080808",
-                  border: "1px solid #39ff14",
-                  color: "#fff",
-                  padding: "8px",
-                  fontFamily: "monospace",
-                  outline: "none",
-                  marginTop: "6px"
-                }
+                onChange: (e) => setPanelRowsInput(e.target.value)
               })
             ),
-            React.createElement("div", { className: "slider-group", style: { marginTop: "10px" } },
+            React.createElement("div", { className: "slider-group slider-group-spaced" },
               React.createElement("div", { className: "slider-labels" },
                 React.createElement("span", null, "Panel Columns"),
                 React.createElement("span", { className: "val-glow" }, "1 - 5")
               ),
               React.createElement("input", {
                 type: "number",
+                className: "param-input panel-input",
                 min: 1,
                 max: 5,
                 value: panelColsInput,
-                onChange: (e) => setPanelColsInput(e.target.value),
-                style: {
-                  width: "100%",
-                  background: "#080808",
-                  border: "1px solid #39ff14",
-                  color: "#fff",
-                  padding: "8px",
-                  fontFamily: "monospace",
-                  outline: "none",
-                  marginTop: "6px"
-                }
+                onChange: (e) => setPanelColsInput(e.target.value)
               })
             )
           ),
 
           // Action update trigger button
           React.createElement("button", {
+            className: "btn-update-generator",
             onClick: handleUpdate,
-            disabled: state.isCompiling || isUpdatingSlogans,
-            style: {
-              width: "100%",
-              background: "#39ff14",
-              color: "#000",
-              border: "none",
-              padding: "12px",
-              fontFamily: "monospace",
-              fontWeight: "bold",
-              cursor: "pointer",
-              marginTop: "16px",
-              marginBottom: "12px",
-              textTransform: "uppercase",
-              boxShadow: "0 0 10px rgba(57, 255, 20, 0.5)"
-            }
+            disabled: state.isCompiling || isUpdatingSlogans
           }, state.isCompiling ? "Compiling..." : "Update Generator"),
 
           // Slogan generator (silkscreen-only update)
-          React.createElement("div", { className: "slider-group", style: { marginTop: "4px" } },
+          React.createElement("div", { className: "slider-group slider-group-slogan" },
             React.createElement("div", { className: "slider-labels" },
               React.createElement("span", null, "Slogan Generator"),
               React.createElement("span", { className: "val-glow" }, "Comma-separated")
             ),
             React.createElement("input", {
               type: "text",
+              className: "param-input slogan-input",
               value: sloganPhrasesInput,
               placeholder: DEFAULT_SLOGAN_PHRASES,
-              onChange: (e) => setSloganPhrasesInput(e.target.value),
-              style: {
-                width: "100%",
-                background: "#080808",
-                border: "2px solid #bf00ff",
-                color: "#fff",
-                padding: "8px",
-                fontFamily: "monospace",
-                outline: "none",
-                marginTop: "6px"
-              }
+              onChange: (e) => setSloganPhrasesInput(e.target.value)
             })
           ),
 
-          React.createElement("div", { className: "slider-group", style: { marginTop: "10px" } },
+            React.createElement("div", { className: "slider-group slider-group-slogan-count" },
             React.createElement("div", { className: "slider-labels" },
               React.createElement("span", null, "Slogan Amount"),
               React.createElement("span", { className: "val-glow" }, "0 - 200")
             ),
             React.createElement("input", {
               type: "number",
+              className: "param-input slogan-input",
               min: 0,
               max: 200,
               value: sloganCountInput,
-              onChange: (e) => setSloganCountInput(e.target.value),
-              style: {
-                width: "100%",
-                background: "#080808",
-                border: "2px solid #bf00ff",
-                color: "#fff",
-                padding: "8px",
-                fontFamily: "monospace",
-                outline: "none",
-                marginTop: "6px"
-              }
+              onChange: (e) => setSloganCountInput(e.target.value)
             })
           ),
 
@@ -483,14 +429,18 @@ export function PCBStudioApp() {
             disabled: !state.circuitJson || state.isCompiling || isUpdatingSlogans
           }, isUpdatingSlogans ? "Updating Slogans..." : "Update Slogan"),
 
+          state.sloganAttemptedCount > 0 && React.createElement("div", { className: "slogan-stats" },
+            `Placed ${state.sloganPlacedCount} / ${state.sloganAttemptedCount} slogans`
+          ),
+
           // Board Info Details
-          React.createElement("div", { className: "board-info", style: { marginTop: "24px" } },
+          React.createElement("div", { className: "board-info board-info-spaced" },
             React.createElement("div", null, "Board Size: ", React.createElement("strong", null, `${state.boardWidth}mm x ${state.boardHeight}mm`)),
             React.createElement("div", null, "LCSC LED Part: ", 
               React.createElement("a", { 
+                className: "board-info-link",
                 href: "https://www.lcsc.com/product-detail/C52941388.html", 
-                target: "_blank", 
-                style: { color: "#39ff14", textDecoration: "underline", fontWeight: "bold" } 
+                target: "_blank"
               }, "C52941388 (WS2812B-3535)")
             )
           )
@@ -528,7 +478,7 @@ export function PCBStudioApp() {
             className: `tab-btn ${state.showView === "3d" ? "active" : ""}`, 
             onClick: () => {
               window.tabClickTime = performance.now();
-              console.log(`[Click Timing] "3D Model" button clicked at ${window.tabClickTime.toFixed(1)}ms`);
+              logDebug(`[Click Timing] "3D Model" button clicked at ${window.tabClickTime.toFixed(1)}ms`);
               appState.updateState({ showView: "3d" });
             }
           }, "3D Model"),
@@ -571,15 +521,17 @@ export function PCBStudioApp() {
           ),
 
           // Schematic SVG Render View
-          state.showView === "schematic" && state.circuitJson && React.createElement(SVGSchematicViewer, { 
-            circuitJson: state.circuitJson
-          }),
+          state.showView === "schematic" && state.circuitJson && React.createElement("div", { className: "viewport-pane" },
+            React.createElement(SVGSchematicViewer, { 
+              circuitJson: state.circuitJson
+            })
+          ),
 
           // 3D Viewport Element (always mounted, hidden via CSS to keep WebGL context alive)
           React.createElement("div", { 
             ref: threeRef, 
-            className: "three-container",
-            style: { display: state.showView === "3d" ? "block" : "none", width: "100%", height: "100%" }
+            className: "viewport-pane three-container",
+            style: { display: state.showView === "3d" ? "block" : "none" }
           })
         )
       )

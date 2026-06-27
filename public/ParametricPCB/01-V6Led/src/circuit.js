@@ -339,7 +339,7 @@ export function generateBOM(circuitJson) {
     let partNum = "";
     
     if (baseDesignator.startsWith("U")) {
-      comment = "RGB LED 3535 (V6 w/ built-in cap)";
+      comment = "RGB LED 3535 WS2812B";
       lcsc = "C52941388";
       mfg = "Worldsemi";
       partNum = "WS2812B-3535";
@@ -382,15 +382,40 @@ export function generatePNP(circuitJson) {
 }
 
 /**
+ * Ensure silkscreen entries have fields required by circuit-json-to-gerber.
+ */
+export function prepareCircuitJsonForExport(circuitJson) {
+  return circuitJson.map((el) => {
+    if (el.type !== "pcb_silkscreen_text") return el;
+
+    const x = el.center?.x ?? el.x ?? 0;
+    const y = el.center?.y ?? el.y ?? 0;
+
+    return {
+      ...el,
+      x,
+      y,
+      center: { x, y },
+      anchor_position: el.anchor_position ?? { x, y },
+      anchor_alignment: el.anchor_alignment ?? "center",
+      ccw_rotation: el.ccw_rotation ?? el.rotation ?? 0,
+      font: el.font ?? "tscircuit2024",
+      font_size: el.font_size ?? 0.6,
+      layer: el.layer ?? "top"
+    };
+  });
+}
+
+/**
  * Generates the Gerber layer files and drill file outputs.
  */
 export function generateGerbers(circuitJson) {
   try {
-
-    const gerberCommands = convertSoupToGerberCommands(circuitJson);
+    const prepared = prepareCircuitJsonForExport(circuitJson);
+    const gerberCommands = convertSoupToGerberCommands(prepared);
     const gerberLayers = stringifyGerberCommandLayers(gerberCommands);
     
-    const drillCommands = convertSoupToExcellonDrillCommands({ circuitJson, is_plated: true });
+    const drillCommands = convertSoupToExcellonDrillCommands({ circuitJson: prepared, is_plated: true });
     const drillString = stringifyExcellonDrill(drillCommands);
     
     return {

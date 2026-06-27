@@ -123,18 +123,26 @@ export function boxesOverlap(a, b) {
 }
 
 /**
- * Estimate an axis-aligned bounding box for a slogan string at a position.
+ * Estimate a collision box for rotated slogan text (axis-aligned bounds).
  * @param {string} text
  * @param {number} rx
  * @param {number} ry
+ * @param {number} [rotationDeg]
  */
-export function estimateSloganBox(text, rx, ry) {
+export function estimateSloganBox(text, rx, ry, rotationDeg = 0) {
   const { textWidth, textHeight, marginX, marginY } = getSloganMetrics(text);
+  const hw = textWidth / 2 + marginX;
+  const hh = textHeight / 2 + marginY;
+  const rad = (rotationDeg * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  const aabbW = hw * cos + hh * sin;
+  const aabbH = hw * sin + hh * cos;
   return {
-    minX: rx - textWidth / 2 - marginX,
-    maxX: rx + textWidth / 2 + marginX,
-    minY: ry - textHeight / 2 - marginY,
-    maxY: ry + textHeight / 2 + marginY
+    minX: rx - aabbW,
+    maxX: rx + aabbW,
+    minY: ry - aabbH,
+    maxY: ry + aabbH
   };
 }
 
@@ -148,7 +156,7 @@ export function estimateSloganBox(text, rx, ry) {
  * @param {string[]} params.phrases
  * @param {number} params.sloganCount
  * @param {number} [params.seed]
- * @returns {{ index: number, text: string, rx: number, ry: number, rotation: number, fontSize: number }[]}
+ * @returns {{ placements: { index: number, text: string, rx: number, ry: number, rotation: number, fontSize: number }[], attemptedCount: number, placedCount: number }}
  */
 export function computeSloganPlacements({
   boardWidth,
@@ -160,11 +168,12 @@ export function computeSloganPlacements({
   seed = boardWidth + ledCount + 42
 }) {
   if (!phrases?.length || sloganCount <= 0) {
-    return [];
+    return { placements: [], attemptedCount: 0, placedCount: 0 };
   }
 
   const obstacles = buildSilkscreenObstacles({ boardWidth, boardHeight, ledCount, spacing });
   const placements = [];
+  let placedCount = 0;
 
   let rngSeed = seed;
   const random = () => {
@@ -190,7 +199,7 @@ export function computeSloganPlacements({
         1.25 +
         textHeight / 2;
       const rotation = (random() - 0.5) * 60;
-      const box = estimateSloganBox(text, rx, ry);
+      const box = estimateSloganBox(text, rx, ry, rotation);
 
       let collision = false;
       for (const obs of obstacles) {
@@ -211,6 +220,7 @@ export function computeSloganPlacements({
         });
         obstacles.push(box);
         placed = true;
+        placedCount++;
         break;
       }
     }
@@ -221,5 +231,5 @@ export function computeSloganPlacements({
     }
   }
 
-  return placements;
+  return { placements, attemptedCount: sloganCount, placedCount };
 }

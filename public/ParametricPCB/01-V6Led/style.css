@@ -67,11 +67,14 @@ body {
     display: flex;
     height: 100vh;
     width: 100vw;
+    overflow: hidden;
 }
 
 /* Sidebar */
 .sidebar {
     width: 380px;
+    min-width: 380px;
+    flex-shrink: 0;
     background: var(--sidebar-bg);
     border-right: 3px solid var(--neon-lime);
     display: flex;
@@ -79,7 +82,27 @@ body {
     z-index: 100;
     box-shadow: 5px 0 0px var(--neon-magenta);
     padding: 24px;
+    overflow-x: hidden;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neon-lime) #111;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #111;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, var(--neon-lime), var(--neon-cyan));
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-lime);
 }
 
 .brand-header {
@@ -109,8 +132,20 @@ body {
     text-shadow: 2px 2px 0px var(--neon-magenta);
 }
 
+.slider-group {
+    background: #111;
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 4px 4px 0px var(--neon-cyan);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 24px;
+    min-width: 0;
+    overflow: hidden;
+}
+
 .controls-section, .downloads-section {
     margin-bottom: 35px;
+    min-width: 0;
 }
 
 .controls-section h3, .downloads-section h3 {
@@ -121,15 +156,6 @@ body {
     color: var(--neon-cyan);
     margin-bottom: 20px;
     text-shadow: 1px 1px 0px #000;
-}
-
-.slider-group {
-    background: #111;
-    border: 2px solid var(--neon-cyan);
-    box-shadow: 4px 4px 0px var(--neon-cyan);
-    border-radius: 6px;
-    padding: 16px;
-    margin-bottom: 24px;
 }
 
 .slider-labels {
@@ -143,6 +169,73 @@ body {
 
 .val-glow {
     color: var(--neon-lime);
+}
+
+/* Parameter inputs */
+.sidebar .param-input {
+    width: 100%;
+    max-width: 100%;
+    background: #080808;
+    border: 2px solid var(--neon-lime);
+    color: #fff;
+    padding: 8px 32px 8px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    outline: none;
+    margin-top: 6px;
+    box-sizing: border-box;
+}
+
+.sidebar .param-input:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+}
+
+.sidebar .param-input.slogan-input {
+    border-color: #bf00ff;
+}
+
+.sidebar input[type="text"].param-input.slogan-input {
+    padding-right: 8px;
+}
+
+.sidebar .param-input.slogan-input:focus {
+    border-color: #d24dff;
+    box-shadow: 0 0 8px rgba(191, 0, 255, 0.45);
+}
+
+.sidebar input[type="number"].param-input {
+    -moz-appearance: auto;
+    appearance: auto;
+}
+
+.sidebar input[type="number"].param-input::-webkit-outer-spin-button,
+.sidebar input[type="number"].param-input::-webkit-inner-spin-button {
+    -webkit-appearance: inner-spin-button;
+    opacity: 1;
+    width: 22px;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+    background: linear-gradient(180deg, #1f1f1f 0%, #0a0a0a 100%);
+    border-left: 2px solid var(--neon-lime);
+}
+
+.sidebar input[type="number"].param-input::-webkit-inner-spin-button:hover {
+    filter: drop-shadow(0 0 4px var(--neon-lime)) brightness(1.15);
+}
+
+.sidebar input[type="number"].param-input.slogan-input::-webkit-inner-spin-button {
+    border-left-color: #bf00ff;
+}
+
+.sidebar input[type="number"].param-input.slogan-input::-webkit-inner-spin-button:hover {
+    filter: drop-shadow(0 0 4px #bf00ff) brightness(1.15);
+}
+
+.sidebar .slider-group input[type="number"].param-input.panel-input {
+    border-color: var(--neon-lime);
+    border-width: 1px;
 }
 
 input[type="range"] {
@@ -241,13 +334,95 @@ input[type="range"]::-webkit-slider-thumb {
     box-shadow: none;
 }
 
+.btn-update-generator {
+    width: 100%;
+    background: var(--neon-lime);
+    color: #000;
+    border: none;
+    padding: 12px;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 16px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn-update-generator:hover:not(:disabled) {
+    box-shadow: 0 0 14px rgba(57, 255, 20, 0.75);
+    transform: translateY(-1px);
+}
+
+.btn-update-generator:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.panel-toggle-group {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.panel-toggle-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--neon-lime);
+}
+
+.panel-params-block {
+    margin-top: 12px;
+    border-left: 2px solid var(--neon-lime);
+    padding-left: 10px;
+}
+
+.board-info-spaced {
+    margin-top: 24px;
+}
+
+.board-info-link {
+    color: var(--neon-lime);
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.slogan-stats {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: #bf00ff;
+    text-align: center;
+}
+
+.slider-group-spaced {
+    margin-top: 12px;
+}
+
+.slider-group-slogan {
+    margin-top: 4px;
+}
+
+.slider-group-slogan-count {
+    margin-top: 10px;
+}
+
 /* Viewport Area */
 .viewport-area {
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     position: relative;
     background: #000;
+    overflow: hidden;
 }
 
 .viewport-tabs {
@@ -283,8 +458,16 @@ input[type="range"]::-webkit-slider-thumb {
 
 .viewport-display {
     flex: 1;
+    min-height: 0;
     background: #000;
     position: relative;
+    overflow: hidden;
+}
+
+.viewport-pane {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
 }
 
 /* Overlay compiling/error status */
@@ -327,53 +510,55 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* Custom SVG viewers */
-.svg-viewer-container, .schematic-svg-container, .three-container {
+.schematic-svg-container {
     width: 100%;
     height: 100%;
+    position: relative;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 40px;
-    position: relative;
-    z-index: 10;
+    box-sizing: border-box;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neon-cyan) #111;
 }
 
-.svg-viewer-container svg {
-    border: 3px solid var(--neon-lime);
-    background: #050505;
-    box-shadow: 8px 8px 0px var(--neon-lime);
+.schematic-svg-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.schematic-svg-container::-webkit-scrollbar-track {
+    background: #111;
+}
+
+.schematic-svg-container::-webkit-scrollbar-thumb {
+    background: var(--neon-cyan);
+    border-radius: 3px;
 }
 
 .schematic-svg-container svg {
-    max-height: 85%;
-    max-width: 90%;
+    max-height: 100%;
+    max-width: 100%;
     border: 3px solid var(--neon-cyan);
     background: #050505;
     box-shadow: 8px 8px 0px var(--neon-cyan);
 }
 
 .three-container {
-    padding: 0;
+    padding: 40px;
+    box-sizing: border-box;
+}
+
+.three-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
     border: 3px solid var(--neon-magenta);
-    margin: 20px;
     box-shadow: 8px 8px 0px var(--neon-magenta);
-    height: calc(100% - 40px);
-}
-
-/* Custom styling for number input spin-buttons (spinner) */
-input[type="number"]::-webkit-inner-spin-button {
-    background-color: var(--neon-lime);
-    border-left: 2px solid #000;
-    cursor: pointer;
-    height: 36px;
-    width: 20px;
-    opacity: 0.85;
-    transition: opacity 0.2s, filter 0.2s;
-}
-
-input[type="number"]::-webkit-inner-spin-button:hover {
-    opacity: 1.0;
-    filter: drop-shadow(0 0 4px var(--neon-lime)) brightness(1.2);
+    background: #0a0a0f;
 }
 
 /* Vaporwave Synthwave Loading Screen Styles */
@@ -391,6 +576,25 @@ input[type="number"]::-webkit-inner-spin-button:hover {
 
 .compile-overlay.vaporwave-mode.is-visible {
     display: flex;
+}
+
+.compile-overlay.slogan-mode {
+    background: rgba(0, 0, 0, 0.88);
+}
+
+.compile-overlay.slogan-mode .vaporwave-sun,
+.compile-overlay.slogan-mode .vaporwave-grid {
+    display: none;
+}
+
+.compile-overlay.slogan-mode .vaporwave-content {
+    margin-top: 0;
+}
+
+.compile-overlay.slogan-mode .spinner-neon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 16px;
 }
 
 .vaporwave-sun {

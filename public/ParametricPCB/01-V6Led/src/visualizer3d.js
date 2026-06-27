@@ -1,5 +1,6 @@
 import * as THREE from 'https://esm.sh/three@0.136.0';
 import { OrbitControls } from 'https://esm.sh/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+import { mergeBufferGeometries } from 'https://esm.sh/three@0.136.0/examples/jsm/utils/BufferGeometryUtils.js';
 import { logDebug } from './debug.js';
 
 export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
@@ -46,6 +47,7 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
+    renderer.domElement.style.display = "block";
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -182,6 +184,30 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
   const tTraces0 = performance.now();
   const traces = state.circuitJson.filter(e => e.type === "pcb_trace");
   const sourceTraces = state.circuitJson.filter(e => e.type === "source_trace");
+  const traceGeometriesByMaterial = {};
+
+  const queueTraceSegment = (pts, width, netName) => {
+    const layer = pts[0].layer;
+    const isTop = layer === "top";
+    const yCoord = isTop ? 0.81 : -0.81;
+
+    const points3D = pts.map(p => new THREE.Vector3(p.x, yCoord, -p.y));
+    const curve = new THREE.CatmullRomCurve3(points3D);
+    curve.curveType = "centripetal";
+
+    const lowerNet = netName.toLowerCase();
+    let matKey = isTop ? "top_data" : "bottom_data";
+    if (lowerNet.includes("vcc") || lowerNet.includes("v5")) {
+      matKey = isTop ? "top_vcc" : "bottom_vcc";
+    } else if (lowerNet.includes("gnd")) {
+      matKey = isTop ? "top_gnd" : "bottom_gnd";
+    }
+
+    const tubularSegments = Math.min(Math.max(pts.length * 2, 4), 24);
+    const geom = new THREE.TubeGeometry(curve, tubularSegments, width / 2, 6, false);
+    if (!traceGeometriesByMaterial[matKey]) traceGeometriesByMaterial[matKey] = [];
+    traceGeometriesByMaterial[matKey].push(geom);
+  };
 
   traces.forEach(trace => {
     if (!trace.route || trace.route.length < 2) return;
@@ -189,7 +215,6 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
     const srcTrace = sourceTraces.find(st => st.source_trace_id === trace.source_trace_id);
     const netName = srcTrace?.name || "unknown net";
 
-    // Group consecutive route points residing on the same layer to draw smooth continuous wires
     let segment = [];
     for (let i = 0; i < trace.route.length; i++) {
       const pt = trace.route[i];
@@ -197,39 +222,26 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
 
       if (segment.length > 0 && segment[0].layer !== pt.layer) {
         if (segment.length >= 2) {
-          drawTraceSegment(segment, trace.width || 0.3, netName);
+          queueTraceSegment(segment, trace.width || 0.3, netName);
         }
         segment = [];
       }
       segment.push(pt);
     }
     if (segment.length >= 2) {
-      drawTraceSegment(segment, trace.width || 0.3, netName);
+      queueTraceSegment(segment, trace.width || 0.3, netName);
     }
   });
 
-  function drawTraceSegment(pts, width, netName) {
-    const layer = pts[0].layer;
-    const isTop = layer === "top";
-    const yCoord = isTop ? 0.81 : -0.81;
-
-    const points3D = pts.map(p => new THREE.Vector3(p.x, yCoord, -p.y));
-    const curve = new THREE.CatmullRomCurve3(points3D);
-    curve.curveType = 'centripetal';
-    
-    // Style layers and net colors differently (VCC = Red, DATA = Green, GND = Blue)
-    const lowerNet = netName.toLowerCase();
-    let matKey = isTop ? "top_data" : "bottom_data";
-    
-    if (lowerNet.includes("vcc") || lowerNet.includes("v5")) {
-      matKey = isTop ? "top_vcc" : "bottom_vcc";
-    } else if (lowerNet.includes("gnd")) {
-      matKey = isTop ? "top_gnd" : "bottom_gnd";
+  for (const [matKey, geoms] of Object.entries(traceGeometriesByMaterial)) {
+    if (!geoms.length) continue;
+    const merged = geoms.length === 1 ? geoms[0] : mergeBufferGeometries(geoms, false);
+    if (merged) {
+      scene.add(new THREE.Mesh(merged, traceMaterials[matKey]));
     }
-
-    const geom = new THREE.TubeGeometry(curve, pts.length * 4, width / 2, 8, false);
-    const mesh = new THREE.Mesh(geom, traceMaterials[matKey]);
-    scene.add(mesh);
+    geoms.forEach((g) => {
+      if (g !== merged) g.dispose();
+    });
   }
   logTiming("Traces Tube Geometry", tTraces0);
 
@@ -444,11 +456,13 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
     if (!container) return;
     const w = container.clientWidth;
     const h = container.clientHeight;
+    if (w <= 0 || h <= 0) return;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   };
   window.addEventListener("resize", handleResize);
+  handleResize();
 
   // Animation Loop: Render scene and cycle LED emitters color (rainbow glow)
   let animId;

@@ -1,7 +1,14 @@
 import { React } from "./tscircuit-core.js";
-import { computeSloganPlacements, parseSloganPhrases, resolveSloganPhrases } from "./slogan-placements.js";
+import {
+  computeSloganPlacements,
+  parseSloganPhrases,
+  resolveSloganPhrases
+} from "./slogan-placements.js";
 
 export { DEFAULT_SLOGAN_PHRASES, resolveSloganPhrases } from "./slogan-placements.js";
+
+let activeWorker = null;
+let activeRequestId = 0;
 
 function SloganTextComponent({ name, text, pcbX, pcbY, pcbRotation = 0 }) {
   return React.createElement("chip", {
@@ -20,12 +27,38 @@ function SloganTextComponent({ name, text, pcbX, pcbY, pcbRotation = 0 }) {
   });
 }
 
+/** Build a circuit-json silkscreen entry compatible with gerber export. */
+export function buildSloganSilkscreenEntry({ id, text, x, y, rotation, fontSize }) {
+  return {
+    type: "pcb_silkscreen_text",
+    pcb_silkscreen_text_id: id,
+    text,
+    x,
+    y,
+    center: { x, y },
+    anchor_position: { x, y },
+    anchor_alignment: "center",
+    ccw_rotation: rotation ?? 0,
+    rotation: rotation ?? 0,
+    font: "tscircuit2024",
+    font_size: fontSize ?? 0.6,
+    layer: "top"
+  };
+}
+
 /**
- * Run placement on a Web Worker when available; fall back to the main thread.
- * @param {Object} params
+ * Run placement on a Web Worker when available; cancels any in-flight request.
  * @returns {Promise<ReturnType<typeof computeSloganPlacements>>}
  */
 export function runSloganPlacement(params) {
+  activeRequestId += 1;
+  const requestId = activeRequestId;
+
+  if (activeWorker) {
+    activeWorker.terminate();
+    activeWorker = null;
+  }
+
   if (typeof Worker === "undefined") {
     return Promise.resolve(computeSloganPlacements(params));
   }
@@ -34,6 +67,7 @@ export function runSloganPlacement(params) {
     let worker;
     try {
       worker = new Worker(new URL("./slogan-worker.js", import.meta.url), { type: "module" });
+      activeWorker = worker;
     } catch {
       resolve(computeSloganPlacements(params));
       return;
@@ -41,28 +75,30 @@ export function runSloganPlacement(params) {
 
     worker.onmessage = (event) => {
       worker.terminate();
-      resolve(event.data.placements);
+      if (activeWorker === worker) activeWorker = null;
+      if (requestId !== activeRequestId) return;
+      resolve(event.data);
     };
     worker.onerror = (err) => {
       worker.terminate();
+      if (activeWorker === worker) activeWorker = null;
+      if (requestId !== activeRequestId) return;
       reject(err);
     };
     worker.postMessage(params);
   });
 }
 
+async function resolvePlacements(params) {
+  try {
+    return await runSloganPlacement(params);
+  } catch {
+    return computeSloganPlacements(params);
+  }
+}
+
 /**
  * Generates random, collision-checked tilted slogans on a background worker thread.
- * Each slot picks a random phrase from the list; skips placement after 3 failed attempts.
- *
- * @param {Object} params
- * @param {number} params.boardWidth
- * @param {number} params.boardHeight
- * @param {number} params.ledCount
- * @param {number} params.spacing
- * @param {string} [params.sloganPhrases] - Comma-separated phrases
- * @param {number} [params.sloganCount] - How many slogans to attempt
- * @returns {Promise<React.Element[]>}
  */
 export async function generateSlogans({
   boardWidth,
@@ -74,29 +110,17 @@ export async function generateSlogans({
 }) {
   const phrases = parseSloganPhrases(sloganPhrases);
   const count = Math.max(0, Math.min(200, parseInt(sloganCount, 10) || 0));
+  const seed = boardWidth + ledCount + spacing + count + phrases.join("").length;
 
-  let placements;
-  try {
-    placements = await runSloganPlacement({
-      boardWidth,
-      boardHeight,
-      ledCount,
-      spacing,
-      phrases,
-      sloganCount: count,
-      seed: boardWidth + ledCount + spacing + count + phrases.join("").length
-    });
-  } catch {
-    placements = computeSloganPlacements({
-      boardWidth,
-      boardHeight,
-      ledCount,
-      spacing,
-      phrases,
-      sloganCount: count,
-      seed: boardWidth + ledCount + spacing + count + phrases.join("").length
-    });
-  }
+  const { placements } = await resolvePlacements({
+    boardWidth,
+    boardHeight,
+    ledCount,
+    spacing,
+    phrases,
+    sloganCount: count,
+    seed
+  });
 
   return placements.map((p) =>
     React.createElement(SloganTextComponent, {
@@ -145,7 +169,7 @@ export function stripSlogansFromCircuitJson(circuitJson) {
 
 /**
  * Replace slogans in an existing circuit JSON without recompiling copper/layout.
- * @returns {Promise<object[]>}
+ * @returns {Promise<{ circuitJson: object[], placedCount: number, attemptedCount: number }>}
  */
 export async function applySlogansToCircuitJson(circuitJson, {
   boardWidth,
@@ -165,31 +189,18 @@ export async function applySlogansToCircuitJson(circuitJson, {
   const stripped = stripSlogansFromCircuitJson(circuitJson);
 
   if (count <= 0) {
-    return stripped;
+    return { circuitJson: stripped, placedCount: 0, attemptedCount: 0 };
   }
 
-  let placements;
-  try {
-    placements = await runSloganPlacement({
-      boardWidth,
-      boardHeight,
-      ledCount,
-      spacing,
-      phrases,
-      sloganCount: count,
-      seed
-    });
-  } catch {
-    placements = computeSloganPlacements({
-      boardWidth,
-      boardHeight,
-      ledCount,
-      spacing,
-      phrases,
-      sloganCount: count,
-      seed
-    });
-  }
+  const { placements, placedCount, attemptedCount } = await resolvePlacements({
+    boardWidth,
+    boardHeight,
+    ledCount,
+    spacing,
+    phrases,
+    sloganCount: count,
+    seed
+  });
 
   const rows = useMouseBites ? panelRows : 1;
   const cols = useMouseBites ? panelCols : 1;
@@ -206,22 +217,23 @@ export async function applySlogansToCircuitJson(circuitJson, {
       for (const p of placements) {
         const x = p.rx + offsetX;
         const y = p.ry + offsetY;
-        newEntries.push({
-          type: "pcb_silkscreen_text",
-          pcb_silkscreen_text_id: `${prefix}slogan_${p.index}`,
+        newEntries.push(buildSloganSilkscreenEntry({
+          id: `${prefix}slogan_${p.index}`,
           text: p.text,
           x,
           y,
-          center: { x, y },
           rotation: p.rotation,
-          font_size: p.fontSize ?? 0.6,
-          layer: "top"
-        });
+          fontSize: p.fontSize
+        }));
       }
     }
   }
 
-  return [...stripped, ...newEntries];
+  return {
+    circuitJson: [...stripped, ...newEntries],
+    placedCount: useMouseBites ? placedCount * rows * cols : placedCount,
+    attemptedCount: useMouseBites ? attemptedCount * rows * cols : attemptedCount
+  };
 }
 
 /** Build a stable or randomized seed for placement runs. */

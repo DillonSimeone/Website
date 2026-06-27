@@ -484,9 +484,9 @@ export function SVGSchematicViewer({ circuitJson }) {
   const svgH = 380;
 
   return (
-    React.createElement("div", { className: "schematic-svg-container", style: { overflow: "auto" } },
+    React.createElement("div", { className: "schematic-svg-container" },
       React.createElement("svg", { width: "100%", height: "100%", viewBox: `0 0 ${svgW} ${svgH}` },
-        React.createElement("text", { x: svgW / 2, y: 30, fill: "#39ff14", fontSize: "16px", textAnchor: "middle", fontFamily: "monospace", fontWeight: "bold" }, "V6 LED STRIP SCHEMATIC (NO EXTERNAL CAPS)"),
+        React.createElement("text", { x: svgW / 2, y: 30, fill: "#39ff14", fontSize: "16px", textAnchor: "middle", fontFamily: "monospace", fontWeight: "bold" }, "V6 LED STRIP SCHEMATIC"),
 
         // VCC Bus line
         React.createElement("line", { x1: 30, y1: 80, x2: svgW - 30, y2: 80, stroke: "#39ff14", strokeWidth: 2 }),
@@ -525,10 +525,7 @@ export function SVGSchematicViewer({ circuitJson }) {
             // DOUT connection (to right bus)
             idx < leds.length - 1 ? React.createElement("line", { x1: x + 50, y1: y + 10, x2: x + 55, y2: 200, stroke: "#00f0ff", strokeWidth: 1 }) : null
           );
-        }),
-
-        // Note about built-in caps
-        React.createElement("text", { x: svgW / 2, y: svgH - 15, fill: "#666", fontSize: "10px", textAnchor: "middle", fontFamily: "monospace" }, "V6 WS2812B has built-in decoupling capacitors — no external caps required")
+        })
       )
     )
   );
