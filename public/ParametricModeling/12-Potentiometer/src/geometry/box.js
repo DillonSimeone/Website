@@ -39,10 +39,10 @@ export function generateEnclosureGeometry() {
     basePocket.delete();
 
     // Standoffs / mounting slot for 18650 Battery Holder (Rotated 90 deg: 76.0 x 21.0 x 18.0 mm)
-    // Positioned horizontally in the back-left corner: y = L_int / 2 - 10.5 - 2.0
-    const batX = -W_int / 2 + 38.0 + 2.0; // 38.0 is half of length (76.0), shifted left with 2mm wall clearance
-    const batY = L_int / 2 - 10.5 - 2.0; // 10.5 is half of width (21.0)
-    let batHolderCradle = makeBox(76.0 + 2.0, 21.0 + 2.0, 8.0, true).translate([batX, batY, wall + 4.0]);
+    // Positioned horizontally in the back-left corner: flush with left and back walls
+    const batX = -W_int / 2 + 39.5; // Flush with left wall, cradle is 76.0 + 3.0 wide
+    const batY = L_int / 2 - 12.0;  // Flush with back wall, cradle is 21.0 + 3.0 deep
+    let batHolderCradle = makeBox(76.0 + 3.0, 21.0 + 3.0, 8.0, true).translate([batX, batY, wall + 4.0]);
     let batHolderCutout = makeBox(76.4, 21.4, 10.0, true).translate([batX, batY, wall + 5.0]);
     let tempCradle = batHolderCradle.subtract(batHolderCutout);
     let tempBase = baseBox.add(tempCradle);
@@ -55,11 +55,11 @@ export function generateEnclosureGeometry() {
     // ESP32 C3 Cradle (Length 22.52 along Y, width 18.0 along X)
     // Placed on front wall (negative Y), right side (x = 18.0)
     const espX = 18.0;
-    const espY = -L_int / 2 + 11.26 + 2.0; // 11.26 is half of length (22.52)
+    const espY = -L_int / 2 + 11.26; // Board front edge flush against inner wall; cradle overlaps wall by 1.5mm to fuse
     let espCradle = makeBox(18.0 + 3.0, 22.52 + 3.0, 6.0, true).translate([espX, espY, wall + 3.0]);
     let espCutout = makeBox(18.4, 22.92, 8.0, true).translate([espX, espY, wall + 4.0]);
     // Cutout for Type-C port facing south (negative Y, out front wall)
-    let espPortCut = makeBox(10.0, 10.0, 5.0, true).translate([espX, -L_int / 2 - 1.0, wall + 3.5]);
+    let espPortCut = makeBox(10.0, 10.0, 5.0, true).translate([espX, -L_int / 2 - 2.0, wall + 3.5]);
     
     let tempEsp = espCradle.subtract(espCutout);
     let tempBase2 = baseBox.add(tempEsp).subtract(espPortCut);
@@ -73,11 +73,11 @@ export function generateEnclosureGeometry() {
     // TP4056 Lipo Charger Cradle (Length 28.0 along Y, width 17.2 along X)
     // Placed on front wall (negative Y), left side (x = -18.0)
     const chgX = -18.0;
-    const chgY = -L_int / 2 + 14.0 + 2.0; // 14.0 is half of length (28.0)
+    const chgY = -L_int / 2 + 14.0; // Board front edge flush against inner wall; cradle overlaps wall by 1.5mm to fuse
     let chgCradle = makeBox(17.2 + 3.0, 28.0 + 3.0, 6.0, true).translate([chgX, chgY, wall + 3.0]);
     let chgCutout = makeBox(17.6, 28.4, 8.0, true).translate([chgX, chgY, wall + 4.0]);
     // Cutout through the front wall for the charger's Type-C port
-    let chgPortCut = makeBox(10.0, 10.0, 5.0, true).translate([chgX, -L_int / 2 - 1.0, wall + 3.5]);
+    let chgPortCut = makeBox(10.0, 10.0, 5.0, true).translate([chgX, -L_int / 2 - 2.0, wall + 3.5]);
 
     let tempChg = chgCradle.subtract(chgCutout);
     let tempBase3 = baseBox.add(tempChg).subtract(chgPortCut);
@@ -101,21 +101,36 @@ export function generateEnclosureGeometry() {
     // or keep it clean as a smooth friction-fit drop-on lid. Let's make it a friction fit.
 
     // --- LID ---
-    // Lip height/depth for drop-on: 4.0mm
-    const lipDepth = 4.0;
-    const lidHeight = 6.0;
+    // Lip height/depth for drop-on: 3.0mm
+    const lipDepth = 3.0;
+    const lidHeight = 3.0;
 
-    let lidSolid = makeBox(W_ext + cl, L_ext + cl, lidHeight, true).translate([0, 0, lidHeight / 2]);
-    // Inner lip cutout (mates with base inner perimeter)
-    let lidLipCut = makeBox(W_int + cl * 2, L_int + cl * 2, lipDepth + 0.1, true).translate([0, 0, lipDepth / 2 - 0.05]);
-    let lidBox = lidSolid.subtract(lidLipCut);
-    lidSolid.delete();
-    lidLipCut.delete();
+    // Shoebox-style lid: outer lip that fits over the outside of the box
+    // Outer dimensions of the base box: W_ext, L_ext
+    const W_lid_int = W_ext + cl * 2;
+    const L_lid_int = L_ext + cl * 2;
+    const W_lid_ext = W_lid_int + wall * 2;
+    const L_lid_ext = L_lid_int + wall * 2;
+
+    // Main lid plate (covers the entire outer lip)
+    let lidPlate = makeBox(W_lid_ext, L_lid_ext, lidHeight, true).translate([0, 0, lidHeight / 2]);
+
+    // Downward-extending outer mating plug frame (lip) to slide over the outside of the base box
+    let plugSolid = makeBox(W_lid_ext, L_lid_ext, lipDepth, true).translate([0, 0, -lipDepth / 2]);
+    let plugPocket = makeBox(W_lid_int, L_lid_int, lipDepth + 2.0, true).translate([0, 0, -lipDepth / 2]);
+    let lipFrame = plugSolid.subtract(plugPocket);
+    
+    let lidBox = lidPlate.add(lipFrame);
+    
+    lidPlate.delete();
+    plugSolid.delete();
+    plugPocket.delete();
+    lipFrame.delete();
 
     // Now subtract Potentiometer grid holes, OLED screen cutout, and Rocker Switch from the Lid
     // OLED is placed at x = 0, y = L_int / 2 - 22.0
     const oledY = L_int / 2 - 22.0;
-    let oledCut = generateOLEDCutout(M);
+    let oledCut = generateOLEDCutout(M, params.oledWidth, params.oledHeight, params.oledHolePitchX, params.oledHolePitchY);
     let translatedOled = oledCut.translate([0, oledY, lidHeight / 2]);
     let tempLid = lidBox.subtract(translatedOled);
     lidBox.delete();

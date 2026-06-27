@@ -45,6 +45,10 @@ export function setupUIListeners(rebuildCallback) {
     bindSlider('input-clearance', 'clearance');
     bindSlider('input-padding', 'padding');
     bindSlider('input-exploded', 'exploded');
+    bindSlider('input-oledWidth', 'oledWidth');
+    bindSlider('input-oledHeight', 'oledHeight');
+    bindSlider('input-oledHolePitchX', 'oledHolePitchX');
+    bindSlider('input-oledHolePitchY', 'oledHolePitchY');
 
     bindSelect('select-shaftStyle', 'shaftStyle');
 

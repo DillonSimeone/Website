@@ -1,22 +1,24 @@
 // Reusable SSD1306 OLED Display Geometry & Cutouts
 import { makeCylinder, makeBox } from '../helpers.js';
 
-export function generateOLEDGeometry(M) {
+export function generateOLEDGeometry(M, width = 25.0, height = 14.0, holeX = 21.0, holeY = 21.0) {
     if (!M) return null;
 
-    const boardW = 26.0;
-    const boardL = 26.0;
+    const boardW = holeX + 4.5;
+    const boardL = holeY + 4.5;
     const boardH = 1.6;
     let board = makeBox(M, boardW, boardL, boardH, true).translate([0, 0, -boardH / 2]);
 
-    let screen = makeBox(M, 21.74, 16.60, 1.5, true).translate([0, 0, 1.5 / 2]);
-    let active = makeBox(M, 21.74 - 1.0, 11.18, 0.2, true).translate([0, 1.5, 1.5 + 0.1]);
+    // Glass panel is width x height x 1.5, centered at y = 0
+    let screen = makeBox(M, width, height, 1.5, true).translate([0, 0, 1.5 / 2]);
+    // Active area is slightly smaller, centered at y = 0
+    let active = makeBox(M, width - 2.0, height - 2.0, 0.2, true).translate([0, 0.0, 1.5 + 0.1]);
 
-    const holeR = 2.2 / 2;
-    let h1 = makeCylinder(M, holeR, 3.0, 16, true).translate([-12.35, 10.8, -boardH]);
-    let h2 = makeCylinder(M, holeR, 3.0, 16, true).translate([12.35, 10.8, -boardH]);
-    let h3 = makeCylinder(M, holeR, 3.0, 16, true).translate([-12.35, -11.1, -boardH]);
-    let h4 = makeCylinder(M, holeR, 3.0, 16, true).translate([12.35, -11.1, -boardH]);
+    const holeR = 3.2 / 2; // For M3 clearance / screw alignment
+    let h1 = makeCylinder(M, holeR, 3.0, 16, true).translate([-holeX / 2, holeY / 2, -boardH]);
+    let h2 = makeCylinder(M, holeR, 3.0, 16, true).translate([holeX / 2, holeY / 2, -boardH]);
+    let h3 = makeCylinder(M, holeR, 3.0, 16, true).translate([-holeX / 2, -holeY / 2, -boardH]);
+    let h4 = makeCylinder(M, holeR, 3.0, 16, true).translate([holeX / 2, -holeY / 2, -boardH]);
 
     let holes = h1.add(h2).add(h3).add(h4);
     let drilledBoard = board.subtract(holes);
@@ -33,18 +35,20 @@ export function generateOLEDGeometry(M) {
     return oled;
 }
 
-export function generateOLEDCutout(M) {
+export function generateOLEDCutout(M, width = 25.0, height = 14.0, holeX = 21.0, holeY = 21.0) {
     if (!M) return null;
 
-    let viewWindow = makeBox(M, 22.2, 17.0, 20.0, true).translate([0, 0, 0]);
+    // View window matching the screen, centered at y = 0
+    let viewWindow = makeBox(M, width, height, 20.0, true).translate([0, 0, 0]);
 
-    const holeR = 2.2 / 2;
-    let h1 = makeCylinder(M, holeR, 20.0, 16, true).translate([-12.35, 10.8, 0]);
-    let h2 = makeCylinder(M, holeR, 20.0, 16, true).translate([12.35, 10.8, 0]);
-    let h3 = makeCylinder(M, holeR, 20.0, 16, true).translate([-12.35, -11.1, 0]);
-    let h4 = makeCylinder(M, holeR, 20.0, 16, true).translate([12.35, -11.1, 0]);
+    const holeR = 3.2 / 2; // For M3 screws
+    let h1 = makeCylinder(M, holeR, 20.0, 16, true).translate([-holeX / 2, holeY / 2, 0]);
+    let h2 = makeCylinder(M, holeR, 20.0, 16, true).translate([holeX / 2, holeY / 2, 0]);
+    let h3 = makeCylinder(M, holeR, 20.0, 16, true).translate([-holeX / 2, -holeY / 2, 0]);
+    let h4 = makeCylinder(M, holeR, 20.0, 16, true).translate([holeX / 2, -holeY / 2, 0]);
 
-    let boardClearance = makeBox(M, 27.0, 27.0, 4.0, true).translate([0, 0, -2.0]);
+    // Board clearance
+    let boardClearance = makeBox(M, holeX + 5.0, holeY + 5.0, 4.0, true).translate([0, 0, -2.0]);
 
     let cutout = viewWindow.add(h1).add(h2).add(h3).add(h4).add(boardClearance);
 

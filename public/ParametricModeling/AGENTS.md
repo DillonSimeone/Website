@@ -46,10 +46,35 @@ For AI agents generating models in this project:
 ## Project Structure
 ```text
 /
-├── 00-CommonParts/ # Reusable parametric components (ForgeCAD)
-├── 01-ForgeCAD/ # The high-level studio approach
-├── 02-OpenJSCAD/ # The functional CSG approach
-├── 03-Manifold/ # The raw WASM-kernel approach
-├── serve_exploration.py # Simple server to launch all three
-└── gemini.md # This documentation
+├── 00-CommonParts/      # Reusable parametric components and utilities
+│   ├── Exporter/        # Shared STL and SVG exporter libraries
+│   └── ...
+├── 01-ForgeCAD/         # The high-level studio approach
+├── 02-OpenJSCAD/        # The functional CSG approach
+├── 03-Manifold/         # The raw WASM-kernel approach
+├── 06-SythKnobs/        # Access Synth Knobs parametric configurator
+│   └── src/             # Modular JS code split (state, geometry, ui)
+├── 12-Potentiometer/    # Parametric box enclosure project
+└── ...
 ```
+
+---
+
+## 🛠️ Modularization & Refactoring Standards
+
+To maintain code readability and make AI-assisted improvements easier, we enforce the following architectural rules for all projects:
+
+1. **500-Line Limit per File**:
+   * Avoid massive monolithic scripts inside HTML templates.
+   * Split business logic into dedicated JavaScript module files under a project's `src/` directory (e.g., `state.js`, `geometry.js`, `ui.js`).
+   * Each file should ideally stay under **500 lines** of code.
+
+2. **Standardized Directory Architecture**:
+   * **`state.js`**: Holds runtime state variables, parameter collection (`getParams`), slider synchronization, haptic feedback, and audio context tone scaling.
+   * **`geometry.js`**: Contains geometry kernel setup (e.g., Manifold WASM), 3D canvas viewport loops, and Three.js mesh mappings.
+   * **`ui.js`**: Binds DOM event listeners, handles presets, triggers batch mutations, and serves as the orchestrator.
+
+3. **Shared Exporter Libraries**:
+   * Any geometry export formats (such as ASCII `.stl` or 2D layered `.svg` for laser cutting) are treated as shared features.
+   * Place exporters in the `00-CommonParts/Exporter/` directory (e.g., `stl.js` and `svg.js`) so that any parametric configurator in the workspace can import and reuse them.
+

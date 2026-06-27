@@ -279,7 +279,7 @@ export function rebuild() {
         }
 
         // SSD1306 OLED Screen (Mounted in Lid Cutout)
-        const oledSolid = generateOLEDGeometry(M);
+        const oledSolid = generateOLEDGeometry(M, params.oledWidth, params.oledHeight, params.oledHolePitchX, params.oledHolePitchY);
         if (oledSolid) {
             const oledGeom = manifoldToThree(oledSolid.getMesh());
             oledSolid.delete();

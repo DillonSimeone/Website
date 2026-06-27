@@ -14,6 +14,12 @@ export const params = {
     wallThick: 2.0,         // Wall thickness in mm (1.5 to 3.5)
     clearance: 0.25,        // Clearance tolerance between base and lid (0.1 to 0.5)
     padding: 10.0,          // Margin around grid/components inside box in mm (8 to 15)
+
+    // OLED Configurator (Tweak size and M3 screw spacing)
+    oledWidth: 25.0,        // OLED window width (15.0 to 35.0)
+    oledHeight: 14.0,       // OLED window height (10.0 to 25.0)
+    oledHolePitchX: 21.0,   // Horizontal distance between mounting holes (15.0 to 30.0)
+    oledHolePitchY: 21.0,   // Vertical distance between mounting holes (15.0 to 30.0)
     
     // Visibilities & View
     showBase: true,
