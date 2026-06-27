@@ -569,23 +569,15 @@ export function PCBStudioApp() {
 
     // Spawn random slogans in collision-free zones
     const slogans = [
-      "This kills fascism",
-      "This kills fascism",
-      "This machine kills fascists",
-      "This machine kills fascists",
-      "Parametric PCB",
-      "Antigravity",
-      "V6 LED Strip",
-      "Made with tscircuit",
-      "3535 LED"
+      "this machine kills facism"
     ];
     
     const fontFamilies = ["monospace", "serif", "sans-serif", "Courier New", "Arial", "Georgia"];
     const fontStyles = ["normal", "italic", "bold", "bold italic"];
-    const numTextsToSpawn = Math.min(15, Math.floor(pcbW / 8));
+    const numTextsToSpawn = Math.min(50, Math.floor(pcbW / 3.5)); // High density
     
     for (let t = 0; t < numTextsToSpawn; t++) {
-      const slogan = slogans[Math.floor(Math.random() * slogans.length)];
+      const slogan = slogans[0];
       const fontSize = Math.floor(Math.random() * 8) + 12; // 12px to 20px
       const fontFamily = fontFamilies[Math.floor(Math.random() * fontFamilies.length)];
       const fontStyle = fontStyles[Math.floor(Math.random() * fontStyles.length)];
@@ -610,11 +602,15 @@ export function PCBStudioApp() {
         
         if (!collision) {
           silkCtx.save();
+          silkCtx.translate(rx, ry);
+          // Rotate randomly (tilt between -45 and +45 degrees)
+          const angle = (Math.random() - 0.5) * Math.PI * 0.5;
+          silkCtx.rotate(angle);
           silkCtx.fillStyle = "rgba(255, 255, 255, 0.55)";
           silkCtx.font = `${fontStyle} ${fontSize}px ${fontFamily}`;
           silkCtx.textAlign = "center";
           silkCtx.textBaseline = "middle";
-          silkCtx.fillText(slogan, rx, ry);
+          silkCtx.fillText(slogan, 0, 0);
           silkCtx.restore();
           
           obstacles.push(box);
