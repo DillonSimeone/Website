@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Cutter</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: #000;
+  color: #d4c9b0;
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  line-height: 1.85;
+  overflow-x: hidden;
+}
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#cut-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+main {
+  position: relative;
+  z-index: 10;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 2.5rem;
+}
+
+/* ── SECTIONS ── */
+.section {
+  padding: 6rem 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ── TITLE SECTION ── */
+#title-section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 8rem;
+}
+
+.title-eyebrow {
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.4em;
+  color: #7a6e5e;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fadeIn 2s ease 1s forwards;
+}
+
+h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(4rem, 12vw, 8.5rem);
+  font-weight: 900;
+  line-height: 0.88;
+  letter-spacing: -0.02em;
+  color: #e8e0d0;
+  opacity: 0;
+  animation: fadeInUp 2s ease 1.4s forwards;
+  margin-bottom: 2.5rem;
+}
+
+h1 .subtitle {
+  display: block;
+  font-weight: 400;
+  font-size: 0.28em;
+  letter-spacing: 0.2em;
+  color: #8a7f6e;
+  margin-top: 0.6em;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── PROSE ── */
+p {
+  color: #c4b9a0;
+  margin-bottom: 1.5rem;
+  font-weight: 300;
+}
+
+p:last-child { margin-bottom: 0; }
+
+.bright { color: #ddd4be; }
+
+/* ── DROP CAP ── */
+.dropcap::first-letter {
+  font-family: 'Cinzel', serif;
+  font-size: 3.8em;
+  line-height: 0.75;
+  float: left;
+  margin-right: 0.08em;
+  margin-top: 0.06em;
+  color: #e8e0d0;
+  font-weight: 700;
+}
+
+/* ── PULLED LINES ── */
+.pull {
+  font-style: italic;
+  color: #ddd4be;
+  font-size: 1.2em;
+  line-height: 1.5;
+  margin: 2.5rem 0;
+  padding-left: 1.5rem;
+  border-left: 1px solid rgba(200, 98, 42, 0.4);
+}
+
+/* ── REVELATION ── */
+.revelation {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1rem, 2.2vw, 1.3rem);
+  color: #c8622a;
+  text-align: center;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  padding: 3.5rem 0;
+  position: relative;
+}
+
+.revelation::before {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, rgba(200,98,42,0.4));
+  margin: 0 auto 2rem;
+}
+
+.revelation::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to top, transparent, rgba(200,98,42,0.4));
+  margin: 2rem auto 0;
+}
+
+/* ── QUESTION SEQUENCE ── */
+.question-block {
+  margin: 3rem 0;
+}
+
+.q-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.q-row.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.q-row.warning {
+  border-bottom-color: rgba(155, 58, 58, 0.2);
+}
+
+.q-label {
+  font-style: italic;
+  color: #b0a48e;
+  font-size: 1.05em;
+  flex: 1;
+}
+
+.q-ans {
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  color: #c8622a;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.q-row.warning .q-label { color: #8a7070; }
+.q-row.warning .q-ans { color: #7a3030; }
+
+/* ── CONSEQUENCE ── */
+.consequence-block {
+  border-left: 1px solid rgba(155, 58, 58, 0.25);
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+}
+
+.consequence-block p {
+  color: #a09080;
+  font-style: italic;
+}
+
+/* ── CLOSING ── */
+#closing {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  padding-bottom: 12rem;
+}
+
+.final-line {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: #7a6e5e;
+  letter-spacing: 0.15em;
+}
+
+/* ── SCROLL HINT ── */
+.scroll-cue {
+  position: fixed;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  opacity: 1;
+  transition: opacity 0.8s;
+}
+
+.scroll-cue.gone { opacity: 0; pointer-events: none; }
+
+.scroll-cue span {
+  font-size: 0.55rem;
+  letter-spacing: 0.35em;
+  color: #4a4035;
+  text-transform: uppercase;
+}
+
+.scroll-cue-line {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(to bottom, #7a5030, transparent);
+  animation: breathe 2.5s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scaleY(0.6); opacity: 0.3; }
+  50% { transform: scaleY(1); opacity: 0.8; }
+}
+
+/* ── SECTION REVEAL ── */
+.reveal-section {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 1.4s ease, transform 1.4s ease;
+}
+
+.reveal-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-section { transition: none; }
+  .q-row { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<canvas id="cut-canvas"></canvas>
+
+<div class="scroll-cue" id="scrollCue">
+  <span>read on</span>
+  <div class="scroll-cue-line"></div>
+</div>
+
+<main>
+
+  <!-- TITLE -->
+  <section id="title-section">
+    <div class="title-eyebrow">A story of severance</div>
+    <h1>The<br>Cutter<span class="subtitle">and what remained whole</span></h1>
+  </section>
+
+  <!-- I. THE COMPANY -->
+  <section class="section reveal-section" id="s-company">
+    <p class="dropcap">There were five of them when they entered the valley. The healer, who kept her faith wrapped tight like a wound. The archer, quiet to the point of near-disappearance. The mage, whose words cost something each time she spent them. The wanderer, whose name had been forgotten by everyone, himself included. And the swordsman, who had carried the same blade for eleven years and knew its weight better than he knew his own face.</p>
+    <p>They did not go looking for what found them. Nobody does, not really. The thing at the valley's far end had been waiting there since before the valley had a name, patient in the way that only old and terrible things can be patient. When they saw it, they all knew at once that they were probably going to die.</p>
+    <p>They fought anyway. That is the particular stubbornness of people who have traveled a long way together.</p>
+  </section>
+
+  <!-- II. THE BREAKING -->
+  <section class="section reveal-section" id="s-breaking">
+    <p>The healer ran dry first. Then the mage went silent, the cost of her last working still visible in the trembling of her hands. The archer's quiver was long empty, and the wanderer lay somewhere behind him in the dark, breathing in a way that sounded like a question.</p>
+    <p>The swordsman was the last one standing, and his sword was not.</p>
+    <p>It snapped at the hilt. He heard it before he felt it, a sound like a sentence interrupted. The enemy before him was still moving, still vast, still entirely indifferent to him. He looked at the broken handle in his hand. He looked at the air where the blade used to be.</p>
+    <p class="bright">He swung anyway.</p>
+    <p>Not from hope. Not from training. He swung because the motion had already begun somewhere deep in the hinge of his shoulder, already traveling down his arm, already committed to arrival, and stopping would have been the stranger act. The broken edge passed through nothing. Through air. Through the space where intention goes when there is nothing left to carry it.</p>
+    <div class="pull">Something opened. He felt it the way you feel a room change when someone quietly leaves it.</div>
+    <p>He did not understand what had happened. But the thing before him was no longer moving.</p>
+  </section>
+
+  <!-- III. THE MOUNTAIN -->
+  <section class="section reveal-section" id="s-mountain">
+    <p>The mountain had been listening. Mountains are not passive, he had once been told by a very old woman who kept bees and seemed to have no reason to lie. They think slowly, in the way stone thinks, which is mostly about weight and time and the specific angle of everything. This mountain had been thinking its own long thought for perhaps two centuries, and it chose this moment to finish it.</p>
+    <p>The slope released itself along a clean geometric line, the way a hand opens when it finally lets go of something. It did not fall so much as slide, with a sound like the world clearing its throat. And as it moved, as the mass of it shifted and opened, the setting sun came through the gap it left, and the valley filled with the kind of light that has no business being beautiful but is.</p>
+    <p>He stood in it. The orange of it fell across his face and across the ground around him, and he became aware, slowly, of the state of the valley. The battle was over. The evidence was everywhere.</p>
+    <p>He closed his eyes. He kept them closed for a long time. When he opened them, the light had shifted a degree warmer, the sun another fraction down, and he understood that the world had decided to continue without asking him.</p>
+    <p>He walked back to the others. There was nothing else to do.</p>
+  </section>
+
+  <!-- IV. AFTERWARD -->
+  <section class="section reveal-section" id="s-after">
+    <p>The months that followed were quiet in the way that things are quiet after great noise. He stayed in a small town the others had recommended, in a room above a cooperage where the sound of barrel-making came up through the floor all day, regular as breathing. He ate. He slept. He did not carry the broken sword.</p>
+    <p>Then one morning he picked it up again, and he began to think.</p>
+    <p>It had not been the steel. He had known this since the moment it happened, known it the way you know a thing you are not ready to examine. The blade had been a instrument of focus, a tuning fork held up to something that had always been vibrating inside him at the frequency of severance. When the blade disappeared, the frequency remained. The cut remained. It had simply needed to find a new way out.</p>
+    <div class="revelation">The cut was never in the steel.<br>It was in the intention behind it.</div>
+    <p>He went into the hills alone, because some questions can only be asked in silence, and some answers need room to be strange without frightening anyone.</p>
+  </section>
+
+  <!-- V. THE EXPERIMENTS -->
+  <section class="section reveal-section" id="s-questions">
+    <p>He began carefully, with the obvious things. He cut wood. He cut rope. He cut water, which did not stay cut but held the memory of parting for a moment before it forgot. He cut air, and felt it remember. He began to understand that everything had a seam, if you knew how to look.</p>
+    <p>Then he began to wonder about less obvious seams.</p>
+
+    <div class="question-block" id="qblock">
+      <div class="q-row" data-delay="0">
+        <span class="q-label">A spell in the moment between casting and arrival</span>
+        <span class="q-ans">YES</span>
+      </div>
+      <div class="q-row" data-delay="250">
+        <span class="q-label">A concept, the idea of fire, the notion of cold</span>
+        <span class="q-ans">YES</span>
+      </div>
+      <div class="q-row" data-delay="500">
+        <span class="q-label">Memory, the thread between a moment and its weight</span>
+        <span class="q-ans">YES</span>
+      </div>
+      <div class="q-row" data-delay="750">
+        <span class="q-label">The bond between a cause and its effect</span>
+        <span class="q-ans">YES</span>
+      </div>
+      <div class="q-row warning" data-delay="1100">
+        <span class="q-label">A natural law. Gravity. The insistence of entropy. Time.</span>
+        <span class="q-ans">YES. BUT.</span>
+      </div>
+    </div>
+
+    <p>He sat with that last answer for a long time before he did anything about it.</p>
+  </section>
+
+  <!-- VI. THE CONSEQUENCES -->
+  <section class="section reveal-section" id="s-consequence">
+    <p>The first time he cut gravity, just a localized pocket, just a test, a flock of birds a hundred miles away briefly forgot which direction the sky was. They corrected themselves. Most of them.</p>
+    <p>The second time, he cut the rule that says fire requires fuel. It burned very brightly for three seconds, then remembered that it should not exist. In the moment of that confusion, everything within thirty feet smelled of smoke for the rest of his life, no matter how far he traveled from any fire.</p>
+    <p>The third time, he cut one second from time, a single removed moment between two consecutive instants, and for the rest of that day he kept finishing other people's sentences. Not from perception. He had simply already heard them.</p>
+
+    <div class="consequence-block">
+      <p>The laws did not break. They were cut. And a cut thing heals wrong, the same as anything else. Scar tissue where there was once clean order. The world around him began to accumulate small wrongnesses in the places he had passed through: shadows at incorrect angles, doors opening onto rooms that were slightly the wrong size, conversations that looped once before completing, like a record that had learned to skip forward instead of back.</p>
+      <p>Nothing catastrophic. Just the universe, slowly growing scar tissue around the places where he had been.</p>
+    </div>
+
+    <p>He understood something else then, sitting in a room that was very slightly the wrong shape, in a chair that was almost certainly where he had left it.</p>
+  </section>
+
+  <!-- CLOSING -->
+  <section id="closing" class="reveal-section">
+    <div>
+      <p class="pull">Not: can I cut this.<br>But: what should remain whole.</p>
+      <div class="final-line">He still carries the broken sword. He walks carefully now.</div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ============================================================
+// SHADER SETUP
+// ============================================================
+const bgCanvas = document.getElementById('bg-canvas');
+const gl = bgCanvas.getContext('webgl') || bgCanvas.getContext('experimental-webgl');
+
+const VS = `
+attribute vec2 a_pos;
+void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+`;
+
+// The background shader has multiple "phases" driven by u_phase:
+// 0.0 = deep dark (battle)
+// 1.0 = flash (the cut)
+// 2.0 = mountain slides, warm golden sunset light
+// 3.0 = fading warm, settling into dusk
+// 4.0 = quiet night (months later)
+const FS = `
+precision mediump float;
+uniform float u_time;
+uniform float u_phase;
+uniform vec2 u_res;
+
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f*f*(3.0-2.0*f);
+  float a = hash(i);
+  float b = hash(i + vec2(1,0));
+  float c = hash(i + vec2(0,1));
+  float d = hash(i + vec2(1,1));
+  return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+}
+
+float fbm(vec2 p) {
+  float v = 0.0; float a = 0.5;
+  for (int i=0; i<5; i++) {
+    v += a * noise(p);
+    p = p*2.1 + vec2(1.3, 0.7);
+    a *= 0.5;
+  }
+  return v;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_res;
+  vec2 p = uv * 3.0;
+  float t = u_time * 0.05;
+
+  float fog = fbm(p + vec2(t, t*0.4));
+
+  // Base colors per phase
+  // phase 0: near black, cold blue-dark
+  vec3 dark = vec3(0.03, 0.025, 0.02);
+  // phase 1: white flash
+  vec3 flash = vec3(1.0, 0.98, 0.92);
+  // phase 2: warm golden sunset
+  vec3 sunsetLow = vec3(0.72, 0.28, 0.06);
+  vec3 sunsetMid = vec3(0.95, 0.52, 0.12);
+  vec3 sunsetSky = vec3(0.55, 0.18, 0.12);
+  // phase 3: fading ember dusk
+  vec3 dusk = vec3(0.18, 0.08, 0.04);
+  // phase 4: quiet deep night
+  vec3 night = vec3(0.05, 0.04, 0.06);
+
+  vec3 col = dark;
+
+  if (u_phase < 1.0) {
+    // Dark with barely any life in it
+    col = dark + fog * 0.015 * vec3(0.3, 0.2, 0.1);
+    // subtle cold fog
+    float coldFog = fbm(p*1.5 - vec2(t*0.3, 0.0));
+    col += coldFog * 0.008 * vec3(0.2, 0.25, 0.3);
+
+  } else if (u_phase < 2.0) {
+    // Flash: white bloom expanding from center
+    float flashAmt = u_phase - 1.0;
+    vec2 center = uv - 0.5;
+    float dist = length(center);
+    float bloom = smoothstep(0.7, 0.0, dist) * smoothstep(0.0, 0.6, flashAmt) * (1.0 - smoothstep(0.4, 1.0, flashAmt));
+    col = mix(dark, flash, bloom * 1.5);
+    // keep surroundings dark
+    col = mix(dark, col, 1.0);
+
+  } else if (u_phase < 3.0) {
+    // Sunset reveal: mountain slides, light pours in
+    float reveal = u_phase - 2.0;
+    // Light source appears from right-center, like gap in mountain
+    vec2 sunPos = vec2(0.7, 0.42);
+    float sunDist = length(uv - sunPos);
+    float sunGlow = smoothstep(0.8, 0.0, sunDist) * reveal;
+    // Sky gradient
+    float skyGrad = 1.0 - uv.y;
+    vec3 sky = mix(sunsetSky, sunsetMid, smoothstep(0.0, 0.5, skyGrad));
+    sky = mix(sky, sunsetLow, smoothstep(0.3, 1.0, skyGrad));
+    // Ground is darker
+    vec3 ground = sunsetLow * 0.3;
+    col = mix(dark, sky, reveal * smoothstep(0.0, 0.3, reveal));
+    // Add sun warmth
+    col += sunGlow * sunsetMid * 0.8;
+    // Fog gets warm
+    col += fog * 0.04 * mix(vec3(0.2,0.1,0.05), sunsetMid, reveal);
+    // Vignette lifts with reveal
+    vec2 vig = uv - 0.5;
+    float vignette = 1.0 - dot(vig,vig) * mix(3.0, 0.6, reveal);
+    col *= clamp(vignette, 0.0, 1.0);
+
+  } else if (u_phase < 4.0) {
+    // Settling into dusk, embers
+    float settle = u_phase - 3.0;
+    vec3 sky = mix(sunsetSky, dusk, settle);
+    col = sky + fog * 0.03 * mix(sunsetMid, vec3(0.3,0.1,0.05), settle);
+    vec2 vig = uv - 0.5;
+    float vignette = 1.0 - dot(vig,vig) * 0.8;
+    col *= clamp(vignette, 0.0, 1.0);
+
+  } else {
+    // Quiet night, months later. Slight cold fog.
+    float nightTime = u_phase - 4.0;
+    col = night + fog * 0.012 * vec3(0.15, 0.18, 0.25);
+    // Very faint blue moonlight from top
+    float moon = smoothstep(1.0, 0.0, uv.y) * 0.04;
+    col += vec3(0.3, 0.35, 0.5) * moon;
+    vec2 vig = uv - 0.5;
+    float vignette = 1.0 - dot(vig,vig) * 1.4;
+    col *= clamp(vignette, 0.0, 1.0);
+  }
+
+  // Grain always
+  col += hash(uv + vec2(u_time * 0.07)) * 0.018;
+
+  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+}
+`;
+
+function mkShader(gl, type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  return s;
+}
+
+let bgProg = null, uTime, uPhase, uRes;
+
+if (gl) {
+  bgProg = gl.createProgram();
+  gl.attachShader(bgProg, mkShader(gl, gl.VERTEX_SHADER, VS));
+  gl.attachShader(bgProg, mkShader(gl, gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(bgProg);
+  gl.useProgram(bgProg);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(bgProg, 'a_pos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  uTime  = gl.getUniformLocation(bgProg, 'u_time');
+  uPhase = gl.getUniformLocation(bgProg, 'u_phase');
+  uRes   = gl.getUniformLocation(bgProg, 'u_res');
+}
+
+// ============================================================
+// CUT CANVAS
+// ============================================================
+const cutCanvas = document.getElementById('cut-canvas');
+const ctx = cutCanvas.getContext('2d');
+let cuts = [];
+
+class Cut {
+  constructor(x1, y1, x2, y2, opts = {}) {
+    this.x1 = x1; this.y1 = y1;
+    this.x2 = x2; this.y2 = y2;
+    this.life = 1.0;
+    this.decay = opts.decay || (0.006 + Math.random() * 0.008);
+    this.w = opts.w || 1.0;
+    this.color = opts.color || '#ffffff';
+    this.glowColor = opts.glowColor || '#f8f0e0';
+    this.branches = [];
+    if (opts.branch) {
+      const dx = x2 - x1, dy = y2 - y1;
+      for (let i = 0; i < 2; i++) {
+        const bt = 0.3 + Math.random() * 0.4;
+        const bx = x1 + dx * bt, by = y1 + dy * bt;
+        const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 1.8;
+        const len = 30 + Math.random() * 70;
+        this.branches.push({ x1: bx, y1: by, x2: bx + Math.cos(angle)*len, y2: by + Math.sin(angle)*len });
+      }
+    }
+  }
+
+  draw(ctx) {
+    if (this.life <= 0) return;
+    const a = this.life * this.life;
+
+    // Glow
+    ctx.save();
+    ctx.globalAlpha = a * 0.12;
+    ctx.strokeStyle = this.glowColor;
+    ctx.lineWidth = this.w * 7;
+    ctx.shadowColor = this.glowColor;
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.moveTo(this.x1, this.y1);
+    ctx.lineTo(this.x2, this.y2);
+    ctx.stroke();
+    ctx.restore();
+
+    // Core
+    ctx.save();
+    ctx.globalAlpha = a * 0.88;
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = this.w;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(this.x1, this.y1);
+    ctx.lineTo(this.x2, this.y2);
+    ctx.stroke();
+    ctx.restore();
+
+    for (const b of this.branches) {
+      ctx.save();
+      ctx.globalAlpha = a * 0.35;
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = this.w * 0.45;
+      ctx.beginPath();
+      ctx.moveTo(b.x1, b.y1); ctx.lineTo(b.x2, b.y2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    this.life -= this.decay;
+  }
+}
+
+function spawnCut(opts = {}) {
+  const w = cutCanvas.width, h = cutCanvas.height;
+  const cx = (opts.cx !== undefined) ? opts.cx : Math.random() * w;
+  const cy = (opts.cy !== undefined) ? opts.cy : Math.random() * h;
+  const angle = opts.angle !== undefined ? opts.angle : (Math.random() * Math.PI * 2);
+  const len = opts.len || (100 + Math.random() * 250);
+  cuts.push(new Cut(
+    cx - Math.cos(angle) * len/2, cy - Math.sin(angle) * len/2,
+    cx + Math.cos(angle) * len/2, cy + Math.sin(angle) * len/2,
+    opts
+  ));
+}
+
+// The ONE big cut for the battle moment
+function spawnBattleCut() {
+  const w = cutCanvas.width, h = cutCanvas.height;
+  // Diagonal slash across center
+  const cx = w * 0.48, cy = h * 0.5;
+  const angle = Math.PI * 0.28;
+  const len = Math.min(w, h) * 0.85;
+  cuts.push(new Cut(
+    cx - Math.cos(angle)*len/2, cy - Math.sin(angle)*len/2,
+    cx + Math.cos(angle)*len/2, cy + Math.sin(angle)*len/2,
+    { w: 2.0, decay: 0.003, branch: true, color: '#ffffff', glowColor: '#fffff0' }
+  ));
+  // A hairline echo slightly offset
+  setTimeout(() => {
+    cuts.push(new Cut(
+      cx - Math.cos(angle)*len/2 + 8, cy - Math.sin(angle)*len/2 + 4,
+      cx + Math.cos(angle)*len/2 + 8, cy + Math.sin(angle)*len/2 + 4,
+      { w: 0.5, decay: 0.004, color: '#e0d4b0', glowColor: '#f0e8c0' }
+    ));
+  }, 60);
+}
+
+// Gentle ambient cuts in the "wondering" phase: sparse, philosophical
+function spawnAmbientCut() {
+  const w = cutCanvas.width, h = cutCanvas.height;
+  const styles = [
+    // Near vertical, slow
+    { cx: Math.random()*w, cy: h*0.5, angle: Math.PI/2 + (Math.random()-0.5)*0.25, len: 120+Math.random()*180, w:0.7, decay:0.004, color:'#b8a880', glowColor:'#d4c090' },
+    // Long horizontal whisper
+    { cx: w*0.5, cy: Math.random()*h, angle: (Math.random()-0.5)*0.3, len: 200+Math.random()*300, w:0.5, decay:0.005, color:'#908060', glowColor:'#c0a870' },
+    // Short diagonal
+    { cx: Math.random()*w, cy: Math.random()*h, angle: Math.PI*0.25+Math.random()*0.5, len: 60+Math.random()*100, w:0.6, decay:0.006, color:'#a09070' },
+  ];
+  const s = styles[Math.floor(Math.random()*styles.length)];
+  spawnCut(s);
+}
+
+// ============================================================
+// PHASE CONTROLLER
+// The phase float 0..5 drives both the shader and cut behavior.
+// It advances based on scroll position mapped to sections.
+// ============================================================
+
+let currentPhase = 0.0;
+let targetPhase = 0.0;
+
+// Sections and the phase they correspond to
+// s-company   -> 0.0 (dark)
+// s-breaking  -> 0.5 (building)
+// Flash fires when s-breaking hits center -> 1.0 then 2.0 (handled as event)
+// s-mountain  -> 2.5
+// s-after     -> 3.0
+// s-questions -> 3.5
+// s-consequence -> 4.0
+// closing     -> 4.5
+
+const phaseMap = {
+  'title-section': 0.0,
+  's-company':    0.05,
+  's-breaking':   0.15,
+  's-mountain':   2.6,
+  's-after':      3.2,
+  's-questions':  3.8,
+  's-consequence':4.2,
+  'closing':      4.6,
+};
+
+let flashFired = false;
+let ambientCutInterval = null;
+
+function getSectionPhase() {
+  const vh = window.innerHeight;
+  let best = { id: 'title-section', ratio: 0 };
+
+  for (const id in phaseMap) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const rect = el.getBoundingClientRect();
+    const visible = Math.min(rect.bottom, vh) - Math.max(rect.top, 0);
+    const ratio = Math.max(0, visible / vh);
+    if (ratio > best.ratio) best = { id, ratio };
+  }
+  return phaseMap[best.id] || 0.0;
+}
+
+// Listen for when s-breaking is deeply in view to fire the flash+mountain
+let breakingFired = false;
+
+function checkBreaking() {
+  const el = document.getElementById('s-breaking');
+  if (!el || breakingFired) return;
+  const rect = el.getBoundingClientRect();
+  const vh = window.innerHeight;
+  // Fire when the paragraph about "He swung anyway" is well into view
+  const progress = (vh - rect.top) / (vh + rect.height);
+  if (progress > 0.55) {
+    breakingFired = true;
+    fireBreakingSequence();
+  }
+}
+
+function fireBreakingSequence() {
+  // 1. Single massive cut
+  spawnBattleCut();
+
+  // 2. Quick flash to phase 1 (white bloom)
+  const flashStart = performance.now();
+  const flashDuration = 600;
+  function doFlash(now) {
+    const p = Math.min((now - flashStart) / flashDuration, 1.0);
+    // p goes 0->1, we want phase to go 0.15 -> 1.0 -> 2.0
+    if (p < 0.5) {
+      currentPhase = 0.15 + (p / 0.5) * 0.85; // 0.15 to 1.0
+    } else {
+      currentPhase = 1.0 + ((p - 0.5) / 0.5) * 1.0; // 1.0 to 2.0
+    }
+    if (p < 1.0) requestAnimationFrame(doFlash);
+    else {
+      // Sunset is now live; let scroll take over smoothly
+      targetPhase = 2.0;
+    }
+  }
+  requestAnimationFrame(doFlash);
+}
+
+// Start ambient cuts in question/consequence sections
+function ensureAmbientCuts(phase) {
+  if (phase >= 3.5 && !ambientCutInterval) {
+    ambientCutInterval = setInterval(() => {
+      if (Math.random() > 0.3) spawnAmbientCut();
+    }, 2200);
+  }
+  if (phase < 3.0 && ambientCutInterval) {
+    clearInterval(ambientCutInterval);
+    ambientCutInterval = null;
+  }
+}
+
+// ============================================================
+// SCROLL HANDLER
+// ============================================================
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY > 60;
+  document.getElementById('scrollCue').classList.toggle('gone', scrolled);
+  checkBreaking();
+
+  if (breakingFired) {
+    const sp = getSectionPhase();
+    if (sp > currentPhase || sp >= 3.0) {
+      targetPhase = sp;
+    }
+  }
+
+  ensureAmbientCuts(currentPhase);
+}, { passive: true });
+
+// ============================================================
+// INTERSECTION OBSERVER for prose reveals + question stagger
+// ============================================================
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('visible');
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal-section').forEach(el => io.observe(el));
+
+// Question rows stagger
+const qObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const block = entry.target;
+    block.querySelectorAll('.q-row').forEach(row => {
+      const delay = parseInt(row.dataset.delay || 0);
+      setTimeout(() => {
+        row.classList.add('revealed');
+        // Each question revealed gets one quiet ambient cut
+        setTimeout(() => spawnAmbientCut(), 100);
+      }, delay);
+    });
+    qObserver.unobserve(block);
+  });
+}, { threshold: 0.3 });
+
+const qblock = document.getElementById('qblock');
+if (qblock) qObserver.observe(qblock);
+
+// ============================================================
+// RESIZE
+// ============================================================
+function resize() {
+  bgCanvas.width = cutCanvas.width = window.innerWidth;
+  bgCanvas.height = cutCanvas.height = window.innerHeight;
+  if (gl) gl.viewport(0, 0, bgCanvas.width, bgCanvas.height);
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ============================================================
+// RENDER LOOP
+// ============================================================
+const t0 = performance.now();
+
+function render(now) {
+  const t = (now - t0) / 1000;
+
+  // Smooth phase towards target
+  const diff = targetPhase - currentPhase;
+  if (Math.abs(diff) > 0.001) currentPhase += diff * 0.025;
+
+  // Background shader
+  if (gl && bgProg) {
+    gl.uniform1f(uTime, t);
+    gl.uniform1f(uPhase, currentPhase);
+    gl.uniform2f(uRes, bgCanvas.width, bgCanvas.height);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  // Cut canvas
+  ctx.clearRect(0, 0, cutCanvas.width, cutCanvas.height);
+  cuts = cuts.filter(c => c.life > 0);
+  for (const c of cuts) c.draw(ctx);
+
+  requestAnimationFrame(render);
+}
+
+requestAnimationFrame(render);
+</script>
+</body>
+</html>

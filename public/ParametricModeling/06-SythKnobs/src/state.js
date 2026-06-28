@@ -19,8 +19,63 @@ export const state = {
   selectedId: null,
   sortMode: 'none',
   mountMode: 'swap',
-  renderMode: 'blueprint'
+  renderMode: 'blueprint',
+  // Grid display size
+  gridSize: 'md',
+  // Accumulated grid rotation for 10fps stepped animation
+  gridRotation: 0,
+  // Detail preview interaction
+  detailEuler: { x: -Math.PI / 2, y: 0 },
+  detailZoom: 1.0,
 };
+
+// ─── MOUNT MODE ──────────────────────────────────────────────────
+export function setMountMode(mode) {
+  state.mountMode = mode;
+  const container = document.querySelector('.toggle-container');
+  if (container) container.setAttribute('data-mode', state.mountMode);
+  const optSlide = document.getElementById('optSlide');
+  const optSwap = document.getElementById('optSwap');
+  if (optSlide) optSlide.classList.toggle('active', state.mountMode === 'slide');
+  if (optSwap) optSwap.classList.toggle('active', state.mountMode === 'swap');
+  
+  const controls = document.getElementById('slideOverControls');
+  if (controls) controls.style.display = state.mountMode === 'swap' ? 'none' : 'block';
+}
+
+export function toggleMountMode() {
+  setMountMode(state.mountMode === 'slide' ? 'swap' : 'slide');
+}
+
+// ─── LOCALSTORAGE PERSISTENCE ───────────────────────────────────
+const STORAGE_KEY = 'accessKnobs_batch';
+
+export function saveKnobs() {
+  try {
+    const serialized = state.knobs.map(k => ({
+      id: k.id, shape: k.shape, outerD: k.outerD, height: k.height,
+      taper: k.taper, texMode: k.texMode, texDepth: k.texDepth,
+      texScale: k.texScale, texCount: k.texCount, boreD: k.boreD,
+      slotH: k.slotH, clearance: k.clearance, setScrew: k.setScrew,
+      mountMode: k.mountMode, shaftType: k.shaftType, sides: k.sides,
+      star: k.star, wave: k.wave
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
+  } catch (e) {
+    console.warn('Failed to save knobs to localStorage:', e);
+  }
+}
+
+export function loadKnobs() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    console.warn('Failed to load knobs from localStorage:', e);
+    return null;
+  }
+}
 
 // Accessibility / Audio Context
 let audioCtx = null;
