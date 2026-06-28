@@ -16,6 +16,7 @@ public:
 
     bool ready() const { return ready_; }
     AudioFrame latest() const { return latest_; }   // copy is intentional; single producer
+    void setGain(float g) { cfg_.gain = g; }
 
 private:
     bool        ready_ = false;

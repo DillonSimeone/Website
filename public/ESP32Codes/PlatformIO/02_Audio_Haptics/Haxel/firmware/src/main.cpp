@@ -20,6 +20,8 @@
 #include "web/WebServer.h"
 #include "web/CaptivePortal.h"
 #include "core/LedController.h"
+#include "core/KnobController.h"
+#include "core/OledDisplay.h"
 
 using namespace haxel;
 
@@ -37,6 +39,8 @@ Config           gConfig;
 core::Engine     gEngine;
 core::AudioAnalyzer gAudio;
 StatusLed        gStatusLed;
+core::KnobController gKnobs;
+core::OledDisplay    gOled;
 web::WebServer   gWeb;
 web::CaptivePortal gPortal;
 hal::IHapticDriver* gDriver = nullptr;
@@ -75,9 +79,16 @@ void housekeepingTask(void*) {
     const TickType_t period = pdMS_TO_TICKS(100);
     TickType_t last = xTaskGetTickCount();
     uint8_t broadcastDiv = 0;
+    uint8_t oledDiv = 0;
     uint32_t lastStaRetryMs = millis();
     for (;;) {
         gStatusLed.tick();
+        gKnobs.tick();
+        gOled.sample();
+        if (++oledDiv >= 3) {
+            oledDiv = 0;
+            gOled.tick();
+        }
         gConfig.flushIfDirty();
         gPortal.pump();
         if (WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
@@ -208,6 +219,13 @@ void setup() {
             xTaskCreatePinnedToCore(ledTask, "leds", 4096, nullptr, 2, &hLed, HB_CORE_NET);
             log_i("FastLED Controller started successfully");
         }
+    }
+
+    if (gKnobs.begin(&gConfig, &gEngine, gConfig.audioEnabled() ? &gAudio : nullptr)) {
+        log_i("Knob controller started (%u knobs)", (unsigned)gConfig.knobCount());
+    }
+    if (gOled.begin(&gConfig, &gEngine)) {
+        log_i("SSD1306 OLED started");
     }
 
     log_i("Boot complete; engine running");

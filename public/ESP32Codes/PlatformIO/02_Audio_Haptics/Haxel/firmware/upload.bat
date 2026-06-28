@@ -1,10 +1,9 @@
 @echo off
-pio run -e esp32-c3 --target upload
-if %ERRORLEVEL% EQU 0 (
-    pio run -e esp32-c3 --target uploadfs
-    if %ERRORLEVEL% EQU 0 (
-        timeout /t 2 /nobreak >nul
-        pio device monitor -e esp32-c3
-    )
+REM Launch the PlatformIO Web Uploader (handles UTF-8, upload + uploadfs for LittleFS projects).
+cd /d "%~dp0..\..\..\..\_tooling\uploader"
+if not exist "start-uploader.bat" (
+  echo [ERROR] Web uploader not found at %CD%
+  pause
+  exit /b 1
 )
-pause
+call start-uploader.bat

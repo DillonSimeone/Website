@@ -30,6 +30,32 @@ void Config::applyDefaults_() {
     led_.enabled = true;
     led_.pin = 5;
     led_.count = 60;
+
+    knobCount_ = 4;
+    knobs_[0] = { true, 0, "speed" };
+    knobs_[1] = { true, 1, "intensity" };
+    knobs_[2] = { true, 3, "gain" };
+    knobs_[3] = { true, 4, "pattern" };
+    for (size_t i = 4; i < kMaxKnobs; ++i) {
+        knobs_[i] = { false, -1, "none" };
+    }
+
+    oled_ = {};
+    oled_.enabled = true;
+    oled_.sda = 8;
+    oled_.scl = 9;
+    oled_.i2cAddr = 0x3C;
+    oled_.width = 128;
+    oled_.height = 64;
+}
+
+void Config::setKnobs(const KnobConfig* knobs, size_t count) {
+    knobCount_ = count > kMaxKnobs ? kMaxKnobs : count;
+    for (size_t i = 0; i < knobCount_; ++i) knobs_[i] = knobs[i];
+    for (size_t i = knobCount_; i < kMaxKnobs; ++i) {
+        knobs_[i] = { false, -1, "none" };
+    }
+    markDirty();
 }
 
 String Config::generateApSsid_() {
@@ -83,6 +109,37 @@ bool Config::load() {
     led_.enabled = doc["led"]["enabled"] | false;
     led_.pin     = doc["led"]["pin"]     | 2;
     led_.count   = doc["led"]["count"]   | 60;
+
+    knobCount_ = 0;
+    if (JsonArrayConst ka = doc["knobs"].as<JsonArrayConst>()) {
+        for (JsonObjectConst k : ka) {
+            if (knobCount_ >= kMaxKnobs) break;
+            knobs_[knobCount_].enabled = k["enabled"] | true;
+            knobs_[knobCount_].pin     = k["pin"]     | -1;
+            knobs_[knobCount_].param   = (const char*)(k["param"] | "none");
+            knobCount_++;
+        }
+    }
+    if (knobCount_ == 0) {
+        knobCount_ = 4;
+        knobs_[0] = { true, 0, "speed" };
+        knobs_[1] = { true, 1, "intensity" };
+        knobs_[2] = { true, 3, "gain" };
+        knobs_[3] = { true, 4, "pattern" };
+    }
+
+    oled_.enabled  = doc["oled"]["enabled"]  | true;
+    oled_.sda      = doc["oled"]["sda"]      | 8;
+    oled_.scl      = doc["oled"]["scl"]      | 9;
+    oled_.i2cAddr  = doc["oled"]["i2cAddr"]  | 0x3C;
+    oled_.width    = doc["oled"]["width"]    | 128;
+    oled_.height   = doc["oled"]["height"]   | 64;
+    if (!doc["oled"].is<JsonObjectConst>()) {
+        oled_.enabled = true;
+        oled_.sda = 8;
+        oled_.scl = 9;
+        oled_.i2cAddr = 0x3C;
+    }
     return true;
 }
 
@@ -118,6 +175,22 @@ bool Config::save() {
     ld["enabled"] = led_.enabled;
     ld["pin"]     = led_.pin;
     ld["count"]   = led_.count;
+
+    auto knobs = doc["knobs"].to<JsonArray>();
+    for (size_t i = 0; i < knobCount_; ++i) {
+        auto k = knobs.add<JsonObject>();
+        k["enabled"] = knobs_[i].enabled;
+        k["pin"]     = knobs_[i].pin;
+        k["param"]   = knobs_[i].param;
+    }
+
+    auto ol = doc["oled"].to<JsonObject>();
+    ol["enabled"] = oled_.enabled;
+    ol["sda"]     = oled_.sda;
+    ol["scl"]     = oled_.scl;
+    ol["i2cAddr"]  = oled_.i2cAddr;
+    ol["width"]    = oled_.width;
+    ol["height"]   = oled_.height;
 
     File f = LittleFS.open(kTmpPath, "w");
     if (!f) return false;

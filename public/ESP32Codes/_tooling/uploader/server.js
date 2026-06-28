@@ -14,7 +14,13 @@ const PORT = process.env.PORT || 3567;
 const WORKSPACE_DIR = path.resolve(__dirname, '../../../..');
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.js') || filePath.endsWith('.html') || filePath.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
+  }
+}));
 
 // Keep track of active processes
 let activeProcesses = {
@@ -66,17 +72,280 @@ function getPioCommand() {
 const PIO_PATH = getPioCommand();
 console.log(`[Uploader Backend] Resolved pio path: ${PIO_PATH}`);
 
-// Helper: Find esptool package
-function getEsptoolCommand() {
+// Windows cp932 consoles crash PlatformIO when esptool prints Unicode progress bars.
+function childEnv() {
+  return {
+    ...process.env,
+    PYTHONIOENCODING: 'utf-8',
+    PYTHONUTF8: '1',
+    PYTHONLEGACYWINDOWSSTDIO: 'utf-8',
+    PATH: `${path.dirname(PIO_PATH)}${path.delimiter}${process.env.PATH}`
+  };
+}
+
+function projectHasLittleFS(projectDir) {
+  const dataDir = path.join(projectDir, 'data');
+  if (!fs.existsSync(dataDir)) return false;
+  const iniPath = path.join(projectDir, 'platformio.ini');
+  if (!fs.existsSync(iniPath)) return true;
+  const ini = fs.readFileSync(iniPath, 'utf8');
+  return /board_build\.filesystem\s*=/i.test(ini)
+    || /filesystem_type\s*=/i.test(ini)
+    || /littlefs/i.test(ini);
+}
+
+function attachBuildOutput(proc) {
+  proc.stdout.on('data', data => {
+    broadcast({ type: 'log', stream: 'build', text: data.toString('utf8') });
+  });
+  proc.stderr.on('data', data => {
+    broadcast({ type: 'log', stream: 'build', text: data.toString('utf8') });
+  });
+}
+
+function resumeMonitor(wasMonitoring) {
+  if (!wasMonitoring) return;
+  broadcast({ type: 'log', stream: 'build', text: '[System] Auto-resuming serial monitor in 2 seconds...\n' });
+  setTimeout(() => {
+    const args = ['device', 'monitor'];
+    if (monitorConfig.port) args.push('--port', monitorConfig.port);
+    if (monitorConfig.baud) args.push('--baud', monitorConfig.baud);
+
+    const monProc = spawn(PIO_PATH, args, {
+      cwd: monitorConfig.projectDir || WORKSPACE_DIR,
+      env: childEnv()
+    });
+
+    activeProcesses.monitor = monProc;
+    broadcast({ type: 'status', stream: 'monitor', active: true });
+
+    monProc.stdout.on('data', data => {
+      broadcast({ type: 'log', stream: 'monitor', text: data.toString('utf8') });
+    });
+    monProc.stderr.on('data', data => {
+      broadcast({ type: 'log', stream: 'monitor', text: data.toString('utf8') });
+    });
+    monProc.on('close', () => {
+      broadcast({ type: 'status', stream: 'monitor', active: false });
+      activeProcesses.monitor = null;
+    });
+  }, 2000);
+}
+
+function runPioTargets(projectDir, env, port, targets, wasMonitoring) {
+  let step = 0;
+
+  const runNext = () => {
+    if (step >= targets.length) {
+      activeProcesses.build = null;
+      broadcast({ type: 'status', stream: 'build', active: false });
+      broadcast({ type: 'log', stream: 'build', text: '\n[System] Flash SUCCESSFUL!\n' });
+      resumeMonitor(wasMonitoring);
+      return;
+    }
+
+    const target = targets[step++];
+    const args = ['run', '-t', target, '-e', env];
+    if (port) args.push('--upload-port', port);
+
+    broadcast({
+      type: 'log',
+      stream: 'build',
+      text: `[System] pio ${args.join(' ')}\n\n`
+    });
+
+    const proc = spawn(PIO_PATH, args, { cwd: projectDir, env: childEnv() });
+    activeProcesses.build = proc;
+    attachBuildOutput(proc);
+
+    proc.on('close', code => {
+      if (code !== 0) {
+        activeProcesses.build = null;
+        broadcast({ type: 'status', stream: 'build', active: false });
+        broadcast({
+          type: 'log',
+          stream: 'build',
+          text: `\n[System] Flash FAILED at target "${target}" (exit ${code}).\n`
+        });
+        return;
+      }
+      if (target === 'upload' && projectHasLittleFS(projectDir)) {
+        broadcast({ type: 'log', stream: 'build', text: '[System] Firmware OK — uploading LittleFS (data/)...\n' });
+      }
+      runNext();
+    });
+  };
+
+  runNext();
+}
+
+// Helper: resolve esptool executable (prefer v5 `esptool` over deprecated `esptool.py`)
+function resolveEsptool() {
   const homeDir = os.homedir();
-  const p = path.join(homeDir, '.platformio/packages/tool-esptoolpy');
-  if (fs.existsSync(p)) {
-    const exe = path.join(p, 'esptool.exe');
-    if (fs.existsSync(exe)) return exe;
-    const py = path.join(p, 'esptool.py');
-    if (fs.existsSync(py)) return py;
+  const pioPython = path.join(homeDir, '.platformio/penv/Scripts/python.exe');
+  const candidates = [
+    path.join(homeDir, '.platformio/penv/Scripts/esptool.exe'),
+    path.join(homeDir, '.platformio/packages/tool-esptoolpy/esptool.exe'),
+  ];
+  for (const exe of candidates) {
+    if (fs.existsSync(exe)) return { cmd: exe, baseArgs: [] };
+  }
+  if (fs.existsSync(pioPython)) {
+    return { cmd: pioPython, baseArgs: ['-m', 'esptool'] };
+  }
+  const legacyPy = path.join(homeDir, '.platformio/packages/tool-esptoolpy/esptool.py');
+  if (fs.existsSync(legacyPy) && fs.existsSync(pioPython)) {
+    return { cmd: pioPython, baseArgs: [legacyPy] };
   }
   return null;
+}
+
+function buildEsptoolFlashArgs(resolved, chip, port, offset, binPath) {
+  const args = [...resolved.baseArgs];
+  args.push('--chip', chip);
+  if (port) args.push('--port', port);
+  args.push('--baud', '921600');
+  // esptool v5: write-flash subcommand; --no-progress is per-subcommand, not global
+  args.push('write-flash', '--no-progress', offset, binPath);
+  return args;
+}
+
+function detectChipFromIni(iniContent) {
+  const ini = iniContent.toLowerCase();
+  if (ini.includes('esp32-c3') || ini.includes('esp32c3')) return 'esp32c3';
+  if (ini.includes('esp32-s3') || ini.includes('esp32s3')) return 'esp32s3';
+  if (ini.includes('esp32-c6') || ini.includes('esp32c6')) return 'esp32c6';
+  return 'esp32';
+}
+
+function parsePartitionOffset(projectDir, matcher) {
+  const csvPath = path.join(projectDir, 'partitions.csv');
+  if (!fs.existsSync(csvPath)) return null;
+  for (const line of fs.readFileSync(csvPath, 'utf8').split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const parts = t.split(',').map(s => s.trim());
+    if (parts.length < 4) continue;
+    if (matcher(parts)) return parts[3];
+  }
+  return null;
+}
+
+function getAppPartitionOffset(projectDir) {
+  return parsePartitionOffset(projectDir, parts => {
+    const type = (parts[1] || '').toLowerCase();
+    const subtype = (parts[2] || '').toLowerCase();
+    return type === 'app' && (subtype.startsWith('ota_') || subtype === 'factory');
+  }) || '0x10000';
+}
+
+function getFilesystemPartitionOffset(projectDir) {
+  return parsePartitionOffset(projectDir, parts => {
+    const name = (parts[0] || '').toLowerCase();
+    const subtype = (parts[2] || '').toLowerCase();
+    return name.includes('spiffs') || name.includes('littlefs') || name.includes('fat')
+      || subtype === 'spiffs' || subtype === 'fat' || subtype === 'littlefs';
+  });
+}
+
+function spawnEsptoolFlash(resolved, chip, port, offset, binPath, onClose) {
+  const args = buildEsptoolFlashArgs(resolved, chip, port, offset, binPath);
+  broadcast({
+    type: 'log',
+    stream: 'build',
+    text: `[System] esptool ${args.join(' ')}\n\n`
+  });
+  const proc = spawn(resolved.cmd, args, { env: childEnv() });
+  activeProcesses.build = proc;
+  attachBuildOutput(proc);
+  proc.on('close', onClose);
+  return proc;
+}
+
+function spawnPioTarget(projectDir, env, port, target, onClose) {
+  const args = ['run', '-t', target, '-e', env];
+  if (port) args.push('--upload-port', port);
+  broadcast({ type: 'log', stream: 'build', text: `[System] pio ${args.join(' ')}\n\n` });
+  const proc = spawn(PIO_PATH, args, { cwd: projectDir, env: childEnv() });
+  activeProcesses.build = proc;
+  attachBuildOutput(proc);
+  proc.on('close', onClose);
+  return proc;
+}
+
+function finishBuildJob(wasMonitoring, ok, message) {
+  activeProcesses.build = null;
+  broadcast({ type: 'status', stream: 'build', active: false });
+  broadcast({ type: 'log', stream: 'build', text: message });
+  if (ok) resumeMonitor(wasMonitoring);
+}
+
+function runQuickFlash(projectDir, env, port, wasMonitoring) {
+  const resolved = resolveEsptool();
+  const iniPath = path.join(projectDir, 'platformio.ini');
+  const iniContent = fs.existsSync(iniPath) ? fs.readFileSync(iniPath, 'utf8') : '';
+  const chip = detectChipFromIni(iniContent);
+  const appOffset = getAppPartitionOffset(projectDir);
+  const binPath = path.join(projectDir, '.pio', 'build', env, 'firmware.bin');
+  const needFs = projectHasLittleFS(projectDir);
+
+  if (!resolved || !fs.existsSync(binPath)) {
+    broadcast({ type: 'log', stream: 'build', text: '[System] No firmware.bin — falling back to pio upload...\n' });
+    const targets = ['upload'];
+    if (needFs) targets.push('uploadfs');
+    runPioTargets(projectDir, env, port, targets, wasMonitoring);
+    return;
+  }
+
+  broadcast({
+    type: 'log',
+    stream: 'build',
+    text: `[System] Quick flash firmware${needFs ? ' + LittleFS (data/)' : ''}...\n\n`
+  });
+
+  spawnEsptoolFlash(resolved, chip, port, appOffset, binPath, (fwCode) => {
+    if (fwCode !== 0) {
+      finishBuildJob(wasMonitoring, false, `\n[System] Quick flash FAILED at firmware (exit ${fwCode}).\n`);
+      return;
+    }
+
+    if (!needFs) {
+      finishBuildJob(wasMonitoring, true, '\n[System] Quick flash SUCCESSFUL!\n');
+      return;
+    }
+
+    broadcast({ type: 'log', stream: 'build', text: '[System] Firmware OK — building LittleFS image from data/...\n' });
+    spawnPioTarget(projectDir, env, port, 'buildfs', (buildFsCode) => {
+      if (buildFsCode !== 0) {
+        finishBuildJob(wasMonitoring, false, `\n[System] LittleFS build FAILED (exit ${buildFsCode}).\n`);
+        return;
+      }
+
+      const fsBin = path.join(projectDir, '.pio', 'build', env, 'littlefs.bin');
+      const fsOffset = getFilesystemPartitionOffset(projectDir);
+
+      if (fs.existsSync(fsBin) && fsOffset) {
+        broadcast({ type: 'log', stream: 'build', text: `[System] Flashing LittleFS @ ${fsOffset}...\n` });
+        spawnEsptoolFlash(resolved, chip, port, fsOffset, fsBin, (fsCode) => {
+          if (fsCode !== 0) {
+            finishBuildJob(wasMonitoring, false, `\n[System] LittleFS flash FAILED (exit ${fsCode}).\n`);
+            return;
+          }
+          finishBuildJob(wasMonitoring, true, '\n[System] Quick flash SUCCESSFUL (firmware + LittleFS)!\n');
+        });
+        return;
+      }
+
+      broadcast({ type: 'log', stream: 'build', text: '[System] Falling back to pio uploadfs...\n' });
+      spawnPioTarget(projectDir, env, port, 'uploadfs', (uploadFsCode) => {
+        if (uploadFsCode !== 0) {
+          finishBuildJob(wasMonitoring, false, `\n[System] uploadfs FAILED (exit ${uploadFsCode}).\n`);
+          return;
+        }
+        finishBuildJob(wasMonitoring, true, '\n[System] Quick flash SUCCESSFUL (firmware + LittleFS)!\n');
+      });
+    });
+  });
 }
 
 // WS client broadcasting helper
@@ -243,7 +512,8 @@ app.get('/api/projects', (req, res) => {
         envs,
         libs: libs.filter(Boolean),
         board,
-        firmwareStatus
+        firmwareStatus,
+        hasLittleFS: hasPio && projectHasLittleFS(dir)
       });
       return;
     }
@@ -520,7 +790,7 @@ wss.on('connection', ws => {
       
       const proc = spawn(PIO_PATH, args, {
         cwd: projectDir || WORKSPACE_DIR,
-        env: { ...process.env, PATH: `${path.dirname(PIO_PATH)}${path.delimiter}${process.env.PATH}` }
+        env: childEnv()
       });
 
       activeProcesses.monitor = proc;
@@ -553,7 +823,6 @@ wss.on('connection', ws => {
         }
       }
 
-      // Automatically kill active monitor so the COM port is freed
       let wasMonitoring = !!activeProcesses.monitor;
       if (wasMonitoring) {
         broadcast({ type: 'log', stream: 'build', text: '[System] Auto-suspending serial monitor to free port...\n' });
@@ -563,114 +832,18 @@ wss.on('connection', ws => {
       killProcess('build');
       broadcast({ type: 'status', stream: 'build', active: true });
 
-      let proc;
       if (quick) {
-        // Attempt quick flash via direct esptool if available
-        const esptool = getEsptoolCommand();
-        const iniPath = path.join(projectDir, 'platformio.ini');
-        const iniContent = fs.existsSync(iniPath) ? fs.readFileSync(iniPath, 'utf8') : '';
-        
-        let chip = 'esp32';
-        let offset = '0x10000'; // Default ESP32 partition offset
-
-        if (iniContent.toLowerCase().includes('esp32-c3') || iniContent.toLowerCase().includes('esp32c3')) {
-          chip = 'esp32c3';
-        } else if (iniContent.toLowerCase().includes('esp32-s3') || iniContent.toLowerCase().includes('esp32s3')) {
-          chip = 'esp32s3';
-        } else if (iniContent.toLowerCase().includes('esp32-c6') || iniContent.toLowerCase().includes('esp32c6')) {
-          chip = 'esp32c6';
-        }
-
-        const binPath = path.join(projectDir, '.pio', 'build', env, 'firmware.bin');
-
-        if (esptool && fs.existsSync(binPath)) {
-          const args = [];
-          let cmd = esptool;
-          if (esptool.toLowerCase().endsWith('.py')) {
-            const homeDir = os.homedir();
-            const pioPython = path.join(homeDir, '.platformio/penv/Scripts/python.exe');
-            if (fs.existsSync(pioPython)) {
-              cmd = pioPython;
-            } else {
-              cmd = 'python';
-            }
-            args.push(esptool);
-          }
-          args.push('--chip', chip);
-          if (port) args.push('--port', port);
-          args.push('--baud', '921600', 'write_flash', offset, binPath);
-
-          broadcast({ type: 'log', stream: 'build', text: `[System] Quick Flash starting via esptool.py...\nCommand: esptool ${args.slice(esptool.toLowerCase().endsWith('.py') ? 1 : 0).join(' ')}\n\n` });
-          
-          proc = spawn(cmd, args);
-        } else {
-          // Fallback to standard pio upload with nobuild target if supported or fallback to normal pio upload
-          broadcast({ type: 'log', stream: 'build', text: `[System] esptool not found or firmware.bin missing. Falling back to platformio upload...\n` });
-          const args = ['run', '-t', 'upload', '-e', env];
-          if (port) args.push('--upload-port', port);
-          proc = spawn(PIO_PATH, args, { cwd: projectDir });
-        }
+        runQuickFlash(projectDir, env, port, wasMonitoring);
       } else {
-        // Normal Compile & Flash
-        const args = ['run', '-t', 'upload', '-e', env];
-        if (port) args.push('--upload-port', port);
-        
-        broadcast({ type: 'log', stream: 'build', text: `[System] Starting Build & Upload...\nCommand: pio ${args.join(' ')}\n\n` });
-
-        proc = spawn(PIO_PATH, args, {
-          cwd: projectDir,
-          env: { ...process.env, PATH: `${path.dirname(PIO_PATH)}${path.delimiter}${process.env.PATH}` }
+        const targets = ['upload'];
+        if (projectHasLittleFS(projectDir)) targets.push('uploadfs');
+        broadcast({
+          type: 'log',
+          stream: 'build',
+          text: `[System] Build & upload (${targets.join(' → ')})...\n\n`
         });
+        runPioTargets(projectDir, env, port, targets, wasMonitoring);
       }
-
-      activeProcesses.build = proc;
-
-      proc.stdout.on('data', data => {
-        broadcast({ type: 'log', stream: 'build', text: data.toString() });
-      });
-
-      proc.stderr.on('data', data => {
-        broadcast({ type: 'log', stream: 'build', text: data.toString() });
-      });
-
-      proc.on('close', code => {
-        activeProcesses.build = null;
-        broadcast({ type: 'status', stream: 'build', active: false });
-
-        if (code === 0) {
-          broadcast({ type: 'log', stream: 'build', text: '\n[System] Flash SUCCESSFUL!\n' });
-          // Auto-resume monitor if it was open
-          if (wasMonitoring) {
-            broadcast({ type: 'log', stream: 'build', text: '[System] Auto-resuming serial monitor in 2 seconds...\n' });
-            setTimeout(() => {
-              const args = ['device', 'monitor'];
-              if (monitorConfig.port) args.push('--port', monitorConfig.port);
-              if (monitorConfig.baud) args.push('--baud', monitorConfig.baud);
-
-              const monProc = spawn(PIO_PATH, args, {
-                cwd: monitorConfig.projectDir || WORKSPACE_DIR,
-                env: { ...process.env, PATH: `${path.dirname(PIO_PATH)}${path.delimiter}${process.env.PATH}` }
-              });
-
-              activeProcesses.monitor = monProc;
-              broadcast({ type: 'status', stream: 'monitor', active: true });
-
-              monProc.stdout.on('data', data => {
-                broadcast({ type: 'log', stream: 'monitor', text: data.toString() });
-              });
-              monProc.stderr.on('data', data => {
-                broadcast({ type: 'log', stream: 'monitor', text: data.toString() });
-              });
-              monProc.on('close', () => {
-                broadcast({ type: 'status', stream: 'monitor', active: false });
-                activeProcesses.monitor = null;
-              });
-            }, 2000);
-          }
-        } else {
-          broadcast({ type: 'log', stream: 'build', text: `\n[System] Flash FAILED with exit code ${code}.\n` });
-        }
-      });
     }
   });
 

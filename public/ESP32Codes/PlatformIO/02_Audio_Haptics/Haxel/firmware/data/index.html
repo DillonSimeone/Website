@@ -37,6 +37,21 @@
   </section>
 
   <section data-view="setup" hidden>
+    <div class="pinout-panel card">
+      <h2>Pinout</h2>
+      <p class="dim">ESP32-C3 box — live view of assigned GPIOs.</p>
+      <div class="pinout-scroll">
+        <table class="pinout-table">
+          <thead>
+            <tr><th>Function</th><th>Pin</th><th>Maps to</th></tr>
+          </thead>
+          <tbody id="pinoutTable">
+            <tr><td colspan="3" class="dim">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <h2>Motor setup</h2>
     <p class="dim">Wire each motor's direction inputs to GPIO pins. Pick them
     in the dropdowns below. Speed pin is optional — leave it as <em>jumper / +5V</em>
@@ -69,6 +84,30 @@
       <button id="btnTestBuzz" type="button">Test buzz</button>
     </div>
     <p id="cfgStatus" class="dim"></p>
+
+    <h2>Knobs</h2>
+    <p class="dim">Potentiometers must use <strong>ADC pins</strong> (analogRead). On ESP32-C3 that is GPIO <strong>0–4</strong> only — not the full GPIO list.</p>
+    <div id="knobList"></div>
+    <button id="btnAddKnob" type="button">+ Add knob</button>
+
+    <h2>OLED display</h2>
+    <p class="dim">SSD1306 over I²C — shows pattern, intensity, speed, and knob levels.</p>
+    <label class="check-row">
+      <input type="checkbox" id="cfgOledEnabled" />
+      <span>Enable SSD1306 OLED</span>
+    </label>
+    <label>SDA pin
+      <select id="cfgOledSda"></select>
+    </label>
+    <label>SCL pin
+      <select id="cfgOledScl"></select>
+    </label>
+    <label>I²C address
+      <select id="cfgOledAddr">
+        <option value="60">0x3C (default)</option>
+        <option value="61">0x3D</option>
+      </select>
+    </label>
   </section>
 
   <section data-view="device" hidden>

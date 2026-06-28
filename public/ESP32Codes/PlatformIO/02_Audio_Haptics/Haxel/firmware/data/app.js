@@ -188,25 +188,181 @@ const DRIVER_SLOTS = {
   5: { name: 'Mini H-Bridge',maxMotors: 2, slots: [[-1,0,1],[-1,2,3]], labels: { speed:null, fwd:'Forward (IN1 / AIN1)', rev:'Backward (IN2 / AIN2)' } },
 };
 
-const FALLBACK_GPIOS = [0,1,3,4,5,6,7,10,20,21];
+const FALLBACK_GPIOS = [0,1,2,3,4,5,6,7,8,9,10,20,21];
+const FALLBACK_ADC   = [0,1,2,3,4];
+const KNOB_PARAMS = [
+  { id: 'none', label: '— none —' },
+  { id: 'speed', label: 'Speed' },
+  { id: 'intensity', label: 'Intensity' },
+  { id: 'gain', label: 'Audio gain' },
+  { id: 'pattern', label: 'Pattern' },
+];
+const MAX_KNOBS = 8;
 let GPIO_LIST = FALLBACK_GPIOS.slice();
+let ADC_LIST  = FALLBACK_ADC.slice();
 
 async function loadGpios() {
   try {
     const r = await api('/json/gpios');
     if (Array.isArray(r.available) && r.available.length) GPIO_LIST = r.available;
+    if (Array.isArray(r.adc) && r.adc.length) ADC_LIST = r.adc;
   } catch (e) {
     console.warn('gpios endpoint unavailable, using fallback', e.message);
   }
   return GPIO_LIST;
 }
 
-function gpioOptions(selected, includeNone) {
+function collectUsedPins(ignore = {}) {
+  const used = new Map();
+  const ignoreMotor = new Set(ignore.motorSlots || []);
+  const driverKind = parseInt($('#cfgDriver')?.value || '4', 10);
+  const def = DRIVER_SLOTS[driverKind];
+
+  const mark = (pin, label) => {
+    if (pin >= 0) used.set(pin, label);
+  };
+
+  if (def) {
+    def.slots.forEach(([sSlot, fSlot, bSlot], mi) => {
+      const n = mi + 1;
+      if (sSlot >= 0 && !ignoreMotor.has(sSlot) && currentPins[sSlot] >= 0) {
+        mark(currentPins[sSlot], `Motor ${n} speed`);
+      }
+      if (fSlot >= 0 && !ignoreMotor.has(fSlot) && currentPins[fSlot] >= 0) {
+        mark(currentPins[fSlot], `Motor ${n} forward`);
+      }
+      if (bSlot >= 0 && !ignoreMotor.has(bSlot) && currentPins[bSlot] >= 0) {
+        mark(currentPins[bSlot], `Motor ${n} reverse`);
+      }
+    });
+  }
+
+  if (!ignoreMotor.has(6) && currentPins[6] >= 0) {
+    mark(currentPins[6], 'Standby / Enable');
+  }
+
+  currentKnobs.forEach((k, i) => {
+    if (ignore.knobIndex === i) return;
+    if (!k.enabled || k.param === 'none' || k.pin < 0) return;
+    const label = (KNOB_PARAMS.find(p => p.id === k.param) || {}).label || k.param;
+    mark(k.pin, `Knob ${i + 1} (${label})`);
+  });
+
+  if ($('#cfgOledEnabled')?.checked) {
+    const sda = parseInt($('#cfgOledSda')?.value, 10);
+    const scl = parseInt($('#cfgOledScl')?.value, 10);
+    if (ignore.oledField !== 'sda' && sda >= 0) mark(sda, 'OLED SDA');
+    if (ignore.oledField !== 'scl' && scl >= 0) mark(scl, 'OLED SCL');
+  }
+
+  const led = State.cfg?.led;
+  if (led?.enabled && led.pin >= 0) mark(led.pin, 'LED strip');
+
+  return used;
+}
+
+function buildPinSelectOptions(pinList, selected, includeNone, extraPins, ignore) {
+  const used = collectUsedPins(ignore);
+  const pins = [...new Set([
+    ...pinList,
+    ...extraPins,
+    ...(selected >= 0 ? [selected] : []),
+  ])].sort((a, b) => a - b);
+
   const none = includeNone
     ? `<option value="-1"${selected < 0 ? ' selected' : ''}>— jumper / +5V —</option>`
     : `<option value="-1"${selected < 0 ? ' selected' : ''}>— none —</option>`;
-  return none + GPIO_LIST.map(p =>
-    `<option value="${p}"${p === selected ? ' selected' : ''}>GPIO ${p}</option>`).join('');
+
+  return none + pins.map(p => {
+    const taken = used.has(p);
+    const disabled = taken ? ' disabled' : '';
+    const note = taken ? ` — ${used.get(p)}` : '';
+    return `<option value="${p}" class="${taken ? 'pin-used' : ''}"${p === selected ? ' selected' : ''}${disabled} title="${taken ? used.get(p) : ''}">GPIO ${p}${note}</option>`;
+  }).join('');
+}
+
+function gpioOptions(selected, includeNone, extraPins = [], ignore = {}) {
+  return buildPinSelectOptions(GPIO_LIST, selected, includeNone, extraPins, ignore);
+}
+
+function adcOptions(selected, ignore = {}) {
+  return buildPinSelectOptions(ADC_LIST, selected, false, [selected >= 0 ? selected : null].filter(p => p != null), ignore);
+}
+
+function parsePinSelect(el, fallback) {
+  if (!el) return fallback;
+  const v = parseInt(el.value, 10);
+  return isNaN(v) ? fallback : v;
+}
+
+function refreshPinSelectors() {
+  const driverKind = parseInt($('#cfgDriver')?.value || '4', 10);
+  const oledCfg = State.cfg?.oled || {};
+  const sdaDefault = oledCfg.sda ?? 8;
+  const sclDefault = oledCfg.scl ?? 9;
+  const sda = parsePinSelect($('#cfgOledSda'), sdaDefault);
+  const scl = parsePinSelect($('#cfgOledScl'), sclDefault);
+  const stbyVal = parsePinSelect($('#cfgStandby'), currentPins[6] ?? -1);
+
+  renderMotorList(driverKind, currentPins);
+  renderKnobList();
+
+  const stby = $('#cfgStandby');
+  if (stby) {
+    stby.innerHTML = gpioOptions(isNaN(stbyVal) ? -1 : stbyVal, true, [], { motorSlots: [6] });
+    stby.value = String(isNaN(stbyVal) ? -1 : stbyVal);
+  }
+  if ($('#cfgOledSda')) {
+    const sdaSel = $('#cfgOledSda');
+    sdaSel.innerHTML = gpioOptions(sda, false, [8, 9], { oledField: 'sda' });
+    sdaSel.value = String(sda);
+  }
+  if ($('#cfgOledScl')) {
+    const sclSel = $('#cfgOledScl');
+    sclSel.innerHTML = gpioOptions(scl, false, [8, 9], { oledField: 'scl' });
+    sclSel.value = String(scl);
+  }
+  renderPinoutTable();
+}
+
+function renderPinoutTable() {
+  const tbody = $('#pinoutTable');
+  if (!tbody) return;
+  const rows = [];
+  const driverKind = parseInt($('#cfgDriver')?.value || '4', 10);
+
+  if (driverKind === 4 && currentPins[0] >= 0) {
+    rows.push(['Motor', `GPIO ${currentPins[0]}`, 'MOSFET gate']);
+  } else if (driverKind === 5) {
+    if (currentPins[0] >= 0 || currentPins[1] >= 0) {
+      const fwd = currentPins[0] >= 0 ? currentPins[0] : '—';
+      const rev = currentPins[1] >= 0 ? currentPins[1] : '—';
+      rows.push(['Motor 1', `GPIO ${fwd} / ${rev}`, 'Fwd / Rev']);
+    }
+  }
+
+  const led = State.cfg?.led;
+  if (led?.enabled && led.pin >= 0) {
+    rows.push(['LED strip', `GPIO ${led.pin}`, `${led.count || '?'} pixels`]);
+  }
+
+  currentKnobs.forEach((k, i) => {
+    if (!k.enabled || k.param === 'none' || k.pin < 0) return;
+    const label = (KNOB_PARAMS.find(p => p.id === k.param) || {}).label || k.param;
+    rows.push([`Knob ${i + 1}`, `GPIO ${k.pin}`, label]);
+  });
+
+  if ($('#cfgOledEnabled')?.checked) {
+    const sda = $('#cfgOledSda')?.value ?? '8';
+    const scl = $('#cfgOledScl')?.value ?? '9';
+    rows.push(['OLED SDA', `GPIO ${sda}`, 'SSD1306 I²C']);
+    rows.push(['OLED SCL', `GPIO ${scl}`, 'SSD1306 I²C']);
+  }
+
+  tbody.innerHTML = rows.length
+    ? rows.map(([fn, pin, note]) =>
+        `<tr><td>${fn}</td><td><code>${pin}</code></td><td>${note}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="dim">No pins assigned yet</td></tr>';
 }
 
 function renderMotorList(driverKind, pins) {
@@ -224,6 +380,7 @@ function renderMotorList(driverKind, pins) {
   if (motorCount === 0) motorCount = 1;
   for (let m = 0; m < motorCount; m++) addMotorCard(driverKind, m, pins);
   $('#btnAddMotor').style.display = motorCount < def.maxMotors ? '' : 'none';
+  renderPinoutTable();
 }
 
 function addMotorCard(driverKind, motorIdx, pins) {
@@ -240,11 +397,11 @@ function addMotorCard(driverKind, motorIdx, pins) {
       <button type="button" class="x" aria-label="Remove">×</button>
     </div>
     ${(fSlot >= 0 && L.fwd) ? `<label>${L.fwd}
-      <select data-slot="${fSlot}">${gpioOptions(pins[fSlot] ?? -1, false)}</select></label>` : ''}
+      <select data-slot="${fSlot}">${gpioOptions(pins[fSlot] ?? -1, false, [], { motorSlots: [fSlot] })}</select></label>` : ''}
     ${(bSlot >= 0 && L.rev) ? `<label>${L.rev}
-      <select data-slot="${bSlot}">${gpioOptions(pins[bSlot] ?? -1, false)}</select></label>` : ''}
+      <select data-slot="${bSlot}">${gpioOptions(pins[bSlot] ?? -1, false, [], { motorSlots: [bSlot] })}</select></label>` : ''}
     ${(sSlot >= 0 && L.speed) ? `<label>${L.speed}
-      <select data-slot="${sSlot}">${gpioOptions(pins[sSlot] ?? -1, true)}</select></label>` : ''}
+      <select data-slot="${sSlot}">${gpioOptions(pins[sSlot] ?? -1, true, [], { motorSlots: [sSlot] })}</select></label>` : ''}
   `;
   card.querySelector('.x').onclick = () => {
     [sSlot, fSlot, bSlot].forEach(slot => { if (slot >= 0) currentPins[slot] = -1; });
@@ -253,30 +410,115 @@ function addMotorCard(driverKind, motorIdx, pins) {
   card.querySelectorAll('select[data-slot]').forEach(sel => {
     sel.addEventListener('change', () => {
       currentPins[parseInt(sel.dataset.slot)] = parseInt(sel.value);
+      refreshPinSelectors();
     });
   });
   $('#motorList').appendChild(card);
 }
 
 let currentPins = [-1,-1,-1,-1,-1,-1,-1,-1];
+let currentKnobs = [];
+
+function paramOptions(selected) {
+  return KNOB_PARAMS.map(p =>
+    `<option value="${p.id}"${p.id === selected ? ' selected' : ''}>${p.label}</option>`).join('');
+}
+
+function renderKnobList() {
+  const wrap = $('#knobList');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  currentKnobs.forEach((k, idx) => {
+    const card = document.createElement('div');
+    card.className = 'motor-card knob-card';
+    card.innerHTML = `
+      <div class="motor-head">
+        <strong>Knob ${idx + 1}</strong>
+        <button type="button" class="x" aria-label="Remove">×</button>
+      </div>
+      <label>Parameter
+        <select data-kfield="param">${paramOptions(k.param || 'none')}</select></label>
+      <label>GPIO pin
+        <select data-kfield="pin">${adcOptions(k.pin ?? 0, { knobIndex: idx })}</select></label>
+    `;
+    card.querySelector('.x').onclick = () => {
+      currentKnobs.splice(idx, 1);
+      renderKnobList();
+    };
+    card.querySelectorAll('select[data-kfield]').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const field = sel.dataset.kfield;
+        if (field === 'pin') currentKnobs[idx].pin = parseInt(sel.value);
+        else currentKnobs[idx].param = sel.value;
+        currentKnobs[idx].enabled = currentKnobs[idx].param !== 'none';
+        refreshPinSelectors();
+      });
+    });
+    wrap.appendChild(card);
+  });
+  const addBtn = $('#btnAddKnob');
+  if (addBtn) addBtn.style.display = currentKnobs.length >= MAX_KNOBS ? 'none' : '';
+  renderPinoutTable();
+}
 
 async function renderSetup() {
   await loadGpios();
   try { State.cfg = await api('/json/config'); } catch {}
-  const cfg = State.cfg || { driver: { kind: 5, pins: [-1,-1,-1,-1,-1,-1,-1,-1], pwmHz: 20000 } };
+  const cfg = State.cfg || {
+    driver: { kind: 5, pins: [-1,-1,-1,-1,-1,-1,-1,-1], pwmHz: 20000 },
+    knobs: [
+      { enabled: true, pin: 0, param: 'speed' },
+      { enabled: true, pin: 1, param: 'intensity' },
+      { enabled: true, pin: 3, param: 'gain' },
+      { enabled: true, pin: 4, param: 'pattern' },
+    ],
+    oled: { enabled: true, sda: 8, scl: 9, i2cAddr: 60, width: 128, height: 64 },
+  };
   currentPins = (cfg.driver.pins && cfg.driver.pins.length === 8)
     ? cfg.driver.pins.slice()
     : [-1,-1,-1,-1,-1,-1,-1,-1];
   $('#cfgDriver').value = String(cfg.driver.kind);
   $('#cfgPwmHz').value  = cfg.driver.pwmHz || 20000;
-  const stby = $('#cfgStandby');
-  if (stby) stby.innerHTML = gpioOptions(currentPins[6] ?? -1, true);
-  renderMotorList(cfg.driver.kind, currentPins);
+
+  currentKnobs = Array.isArray(cfg.knobs) && cfg.knobs.length
+    ? cfg.knobs.map(k => ({
+        enabled: k.enabled !== false,
+        pin: k.pin ?? 0,
+        param: k.param || 'none',
+      }))
+    : [
+        { enabled: true, pin: 0, param: 'speed' },
+        { enabled: true, pin: 1, param: 'intensity' },
+        { enabled: true, pin: 3, param: 'gain' },
+        { enabled: true, pin: 4, param: 'pattern' },
+      ];
+
+  const oled = cfg.oled || { enabled: true, sda: 8, scl: 9, i2cAddr: 60 };
+  $('#cfgOledEnabled').checked = oled.enabled !== false;
+  $('#cfgOledAddr').value = String(oled.i2cAddr ?? 60);
+  if (!State.cfg) State.cfg = {};
+  if (!State.cfg.oled) State.cfg.oled = {};
+  State.cfg.oled.sda = oled.sda ?? 8;
+  State.cfg.oled.scl = oled.scl ?? 9;
+
+  refreshPinSelectors();
 }
+
+function wirePinoutUpdates() {
+  $('#cfgOledEnabled')?.addEventListener('change', refreshPinSelectors);
+  $('#cfgOledSda')?.addEventListener('change', refreshPinSelectors);
+  $('#cfgOledScl')?.addEventListener('change', refreshPinSelectors);
+  $('#cfgStandby')?.addEventListener('change', () => {
+    const stby = $('#cfgStandby');
+    if (stby) currentPins[6] = parseInt(stby.value, 10);
+    refreshPinSelectors();
+  });
+}
+wirePinoutUpdates();
 
 $('#cfgDriver')?.addEventListener('change', () => {
   currentPins = [-1,-1,-1,-1,-1,-1,-1,-1];
-  renderMotorList(parseInt($('#cfgDriver').value), currentPins);
+  refreshPinSelectors();
 });
 
 $('#btnAddMotor')?.addEventListener('click', () => {
@@ -288,6 +530,14 @@ $('#btnAddMotor')?.addEventListener('click', () => {
   if (existing + 1 >= def.maxMotors) $('#btnAddMotor').style.display = 'none';
 });
 
+$('#btnAddKnob')?.addEventListener('click', () => {
+  if (currentKnobs.length >= MAX_KNOBS) return;
+  const used = collectUsedPins();
+  const freePin = ADC_LIST.find(p => !used.has(p)) ?? ADC_LIST[0] ?? 0;
+  currentKnobs.push({ enabled: true, pin: freePin, param: 'none' });
+  refreshPinSelectors();
+});
+
 $('#btnSaveCfg')?.addEventListener('click', async () => {
   const stby = $('#cfgStandby');
   if (stby) currentPins[6] = parseInt(stby.value);
@@ -296,6 +546,19 @@ $('#btnSaveCfg')?.addEventListener('click', async () => {
       kind:  parseInt($('#cfgDriver').value),
       pins:  currentPins.slice(),
       pwmHz: parseInt($('#cfgPwmHz').value),
+    },
+    knobs: currentKnobs.map(k => ({
+      enabled: k.param !== 'none',
+      pin: k.pin,
+      param: k.param,
+    })),
+    oled: {
+      enabled: $('#cfgOledEnabled').checked,
+      sda: parseInt($('#cfgOledSda').value),
+      scl: parseInt($('#cfgOledScl').value),
+      i2cAddr: parseInt($('#cfgOledAddr').value),
+      width: 128,
+      height: 64,
     },
   };
   $('#cfgStatus').textContent = 'Saving + rebooting…';

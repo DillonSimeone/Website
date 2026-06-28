@@ -300,6 +300,48 @@ input[type=range]::-moz-range-thumb {
 /* ── Setup page ── */
 h2 { margin:4px 0 10px; font-size:17px; font-weight:700; }
 
+.pinout-panel {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-card-2) 100%);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+}
+.pinout-panel h2 { margin-top: 0; }
+.pinout-scroll { overflow-x: auto; margin-top: 8px; }
+.pinout-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.pinout-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--fg-dim);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.pinout-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+.pinout-table tr:last-child td { border-bottom: none; }
+.pinout-table td:first-child { font-weight: 600; color: var(--fg); }
+.pinout-table code {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 106, 61, 0.12);
+  color: var(--accent-2, #ffb627);
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 11px;
+}
+.pinout-table td:last-child { color: var(--fg-dim); }
+
 input[type=number],select {
   padding:9px 12px; border-radius:var(--radius-sm);
   border:1px solid var(--border);
@@ -308,6 +350,15 @@ input[type=number],select {
   transition:border-color var(--fast);
 }
 input[type=number]:focus,select:focus { border-color:var(--accent); }
+
+select option.pin-used,
+select option:disabled {
+  color: #6b7280;
+  background: #1a1c22;
+}
+select option:disabled {
+  opacity: 0.55;
+}
 
 button.primary {
   background:var(--accent);
@@ -357,6 +408,26 @@ button.primary:active { transform:scale(.97); }
   transition:border-color var(--fast), color var(--fast);
 }
 #btnAddMotor:hover { color:var(--fg); border-color:var(--accent); }
+
+#btnAddKnob {
+  width:100%; padding:12px; border:1px dashed var(--border);
+  background:transparent; color:var(--fg-muted); border-radius:var(--radius);
+  cursor:pointer; margin:8px 0 14px; font-size:12px; font-weight:500;
+  transition:border-color var(--fast), color var(--fast);
+}
+#btnAddKnob:hover { color:var(--fg); border-color:var(--accent); }
+
+.check-row {
+  display:flex; align-items:center; gap:10px;
+  margin:10px 0; font-size:13px; color:var(--fg);
+}
+.check-row input[type=checkbox] {
+  width:18px; height:18px; accent-color:var(--accent);
+}
+
+section[data-view="setup"] h2 {
+  margin-top:22px;
+}
 
 section[data-view="setup"] > label {
   display:block; margin:10px 0; font-size:12px; color:var(--fg-dim);

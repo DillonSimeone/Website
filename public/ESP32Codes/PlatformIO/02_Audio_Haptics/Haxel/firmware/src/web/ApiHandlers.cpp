@@ -85,6 +85,29 @@ void applyConfigPatch(JsonObjectConst patch, Config* config) {
     if (patch["hostname"].is<const char*>()) {
         config->setHostname(patch["hostname"].as<const char*>());
     }
+    if (patch["knobs"].is<JsonArrayConst>()) {
+        KnobConfig knobs[Config::kMaxKnobs];
+        size_t count = 0;
+        for (JsonObjectConst k : patch["knobs"].as<JsonArrayConst>()) {
+            if (count >= Config::kMaxKnobs) break;
+            knobs[count].enabled = k["enabled"] | true;
+            knobs[count].pin     = k["pin"]     | -1;
+            knobs[count].param   = (const char*)(k["param"] | "none");
+            count++;
+        }
+        config->setKnobs(knobs, count);
+    }
+    if (patch["oled"].is<JsonObjectConst>()) {
+        OledConfig oc = config->oledConfig();
+        JsonObjectConst o = patch["oled"].as<JsonObjectConst>();
+        if (o["enabled"].is<bool>()) oc.enabled = o["enabled"];
+        if (o["sda"].is<int>())      oc.sda     = o["sda"];
+        if (o["scl"].is<int>())      oc.scl     = o["scl"];
+        if (o["i2cAddr"].is<int>())  oc.i2cAddr = (uint8_t)o["i2cAddr"].as<int>();
+        if (o["width"].is<int>())    oc.width   = o["width"];
+        if (o["height"].is<int>())   oc.height  = o["height"];
+        config->setOledConfig(oc);
+    }
     config->setFirstRunComplete();
     config->save();
 }
@@ -99,7 +122,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         JsonDocument doc;
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
         doc["target"] = "esp32-c3";
-        int safe[] = {0,1,3,4,5,6,7,10,20,21};
+        int safe[] = {0,1,2,3,4,5,6,7,8,9,10,20,21};
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         doc["target"] = "esp32-s3";
         int safe[] = {1,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,21,33,34,35,36,37,38,39,40,41,42,47,48};
@@ -109,6 +132,15 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
 #endif
         auto arr = doc["available"].to<JsonArray>();
         for (int p : safe) arr.add(p);
+        auto adc = doc["adc"].to<JsonArray>();
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)
+        int adcPins[] = {0, 1, 2, 3, 4};
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+        int adcPins[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
+#else
+        int adcPins[] = {32,33,34,35,36,37,38,39};
+#endif
+        for (int p : adcPins) adc.add(p);
         String body; serializeJson(doc, body);
         req->send(200, "application/json", body);
     });
@@ -125,6 +157,34 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         drv["sda"] = dc.sda;
         drv["scl"] = dc.scl;
         drv["pwmHz"] = dc.pwmHz;
+
+        auto au = doc["audio"].to<JsonObject>();
+        au["enabled"] = config->audioEnabled();
+        au["gain"]    = config->audioConfig().gain;
+
+        auto ld = doc["led"].to<JsonObject>();
+        ld["enabled"] = config->ledEnabled();
+        ld["pin"]     = config->ledConfig().pin;
+        ld["count"]   = config->ledConfig().count;
+
+        auto knobs = doc["knobs"].to<JsonArray>();
+        for (size_t i = 0; i < config->knobCount(); ++i) {
+            const auto& k = config->knob(i);
+            auto ko = knobs.add<JsonObject>();
+            ko["enabled"] = k.enabled;
+            ko["pin"]     = k.pin;
+            ko["param"]   = k.param;
+        }
+
+        const auto& oc = config->oledConfig();
+        auto ol = doc["oled"].to<JsonObject>();
+        ol["enabled"] = config->oledEnabled();
+        ol["sda"]     = oc.sda;
+        ol["scl"]     = oc.scl;
+        ol["i2cAddr"]  = oc.i2cAddr;
+        ol["width"]    = oc.width;
+        ol["height"]   = oc.height;
+
         String body; serializeJson(doc, body);
         req->send(200, "application/json", body);
     });
