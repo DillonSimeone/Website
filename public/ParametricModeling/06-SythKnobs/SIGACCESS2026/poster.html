@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>ACCESS KNOB Poster - ASSETS 2026</title>
@@ -24,7 +25,8 @@
     }
 
     /* Page Setup for Screen View - Viewport for Pan & Zoom */
-    html, body {
+    html,
+    body {
       width: 100vw;
       height: 100vh;
       background-color: #ff85a2;
@@ -56,9 +58,12 @@
     .poster::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background-size: 25mm 25mm;
-      background-image: 
+      background-image:
         linear-gradient(to right, rgba(56, 0, 107, 0.08) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(56, 0, 107, 0.08) 1px, transparent 1px);
       pointer-events: none;
@@ -285,7 +290,8 @@
       box-shadow: 4px 4px 0 var(--city-purple);
     }
 
-    th, td {
+    th,
+    td {
       border: 2px solid var(--city-purple);
       padding: 3mm;
       text-align: center;
@@ -348,7 +354,9 @@
 
     /* Print Optimization Rules */
     @media print {
-      html, body {
+
+      html,
+      body {
         width: 1189mm;
         height: 841mm;
         background: #ff85a2 !important;
@@ -378,516 +386,643 @@
     }
   </style>
 </head>
+
 <body>
 
-<div class="poster">
-  
-  <!-- Header -->
-  <header>
-    <div class="header-left">
-      <h1>ACCESS KNOB: Parametric Design of 3D-Printable Accessible Synthesizer Controls</h1>
-      <div class="authors">
-        Anonymized Author(s)
-      </div>
-      <div class="affiliations">
-        Double-Blind Review Submission &nbsp;&bull;&nbsp; Paper ID: ASSETS26-1024
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="conf">ASSETS '26</div>
-      <div class="tagline">The 28th International ACM SIGACCESS Conference</div>
-      <div style="color: #64748b; font-size: 10pt; margin-top: 1mm;">Athens, Greece &nbsp;&bull;&nbsp; October 26–28, 2026</div>
-    </div>
-  </header>
+  <div class="poster">
 
-  <!-- Main 3-Column Grid -->
-  <div class="main-grid">
-
-    <!-- Column 1 -->
-    <div class="column">
-      
-      <!-- Abstract & Introduction -->
-      <div class="card" style="flex-grow: 1.4;">
-        <div class="card-title">Introduction & Co-Design Context</div>
-        <div class="card-content">
-          <p>Commercial synthesizer interfaces present significant accessibility barriers for musicians with motor and sensory impairments. Standard controls are typically small, smooth, and closely spaced, requiring high-precision pinch grips and force. Globally, <strong>roughly 16%</strong> of the population lives with physical disabilities affecting daily functioning and motor coordination [1]. Among clinical cohorts, diabetic peripheral neuropathy eventually affects <strong>nearly 50%</strong> of adults with diabetes in their lifetime, causing progressive muscle weakness, paresthesia, and diminished tactile sensation in the hands and feet [2].</p>
-          <div class="highlight-box">
-            "Dialysis-dependent kidney failure caused severe hand neuropathy in a retired IT worker and synth collector, leaving his collection of 20 hardware synthesizers completely unplayable. Workarounds like T-wrenches or palm-dragging were fatiguing and lacked expressive control."
-          </div>
-          <p>This lived co-design encounter inspired **ACCESS KNOB**, an open-source browser-based parametric customizer. Built on Universal Music Design (UMD) principles, the project shifts the paradigm from mass-produced controls to personalized, user-fabricated interfaces that enhance musical expression, independence, and creative control.</p>
-          <div class="references-list" style="margin-top: 3mm; border-top: 2px solid var(--city-purple); padding-top: 2mm; font-size: 9.5pt; font-family: var(--font-body); font-weight: 600; opacity: 0.85;">
-            <strong>References:</strong><br>
-            [1] World Health Organization. 2022. <i>Global report on health equity for persons with disabilities</i>. Geneva. <a href="https://www.who.int/teams/noncommunicable-diseases/sensory-functions-disability-and-rehabilitation/global-report-on-health-equity-for-persons-with-disabilities" target="_blank" style="color: var(--city-pink);">who.int/health-equity-report</a><br>
-            [2] Hicks CW, Selvin E. 2019. Epidemiology of Peripheral Neuropathy and Lower Extremity Disease in Diabetes. <i>Curr Diab Rep</i> 19, 10: 86. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6755905/" target="_blank" style="color: var(--city-pink);">ncbi.nlm.nih.gov/articles/PMC6755905</a>
-          </div>
+    <!-- Header -->
+    <header>
+      <div class="header-left">
+        <h1>ACCESS KNOB: Parametric Design of 3D-Printable Accessible Synthesizer Controls</h1>
+        <div class="authors">
+          Anonymized Author(s)
+        </div>
+        <div class="affiliations">
+          Double-Blind Review Submission &nbsp;&bull;
         </div>
       </div>
+      <div class="header-right">
+        <div class="conf">ASSETS '26</div>
+        <div class="tagline">The 28th International ACM SIGACCESS Conference</div>
+        <div style="color: #64748b; font-size: 10pt; margin-top: 1mm;">Athens, Greece &nbsp;&bull;&nbsp; October 26–28,
+          2026</div>
+      </div>
+    </header>
 
-      <!-- Procedural WASM Geometry Engine -->
-      <div class="card" style="flex-grow: 2.6;">
-        <div class="card-title">Procedural WASM CAD Kernel</div>
-        <div class="card-content">
-          <p>Traditional CAD tools present steep learning curves and lack accessibility. ACCESS KNOB utilizes a client-side WebAssembly-compiled **Manifold** geometry kernel to perform boolean operations in milliseconds, enabling real-time parameter tweaking directly in the browser.</p>
-          
-          <p><strong>Two Mounting Modes &amp; Three Spindle Bores:</strong></p>
-          <ul>
-            <li><strong>Swap-In Mode:</strong> Replaces the original manufacturer knob entirely. Generates custom internal flat/splined bores to slide flush onto the bare metal/plastic spindle.</li>
-            <li><strong>Slide-Over Mode:</strong> An adaptive sleeve that slides snugly over the original control cap, preserving the instrument's resale value and avoiding complex hardware disassembly.</li>
-            <li><strong>Spindle Bore Profiles:</strong> Generates custom flats/splines for <strong>D-Shafts</strong>, <strong>Knurled/Splined</strong> (18/24-tooth gears), and <strong>Solid Round</strong> spindles (secured via integrated M3 set-screw).</li>
-          </ul>
+    <!-- Main 3-Column Grid -->
+    <div class="main-grid">
 
-          <!-- SVG Diagram: Mounting Modes & Shaft Bores -->
-          <svg viewBox="0 0 500 175" class="svg-diagram" style="width: 100%; height: auto; margin: 4mm 0; background: #f0e6ff; border: 3px solid var(--city-purple); border-radius: 8px; padding: 2mm; box-shadow: 4px 4px 0 var(--city-purple);">
-            <!-- Swap-In Mode (Left) -->
-            <g transform="translate(10, 10)">
-              <rect x="10" y="2" width="120" height="15" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-              <text x="70" y="13" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px" text-anchor="middle">SWAP-IN MODE</text>
-              <rect x="65" y="80" width="10" height="40" fill="var(--city-purple)" />
-              <rect x="50" y="120" width="40" height="20" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="2" />
-              <line x1="40" y1="140" x2="100" y2="140" stroke="var(--city-purple)" stroke-width="2" />
-              <path d="M60,80 C60,68 80,68 80,80 Z" fill="var(--city-cyan)" stroke="var(--city-purple)" stroke-width="2" />
-              <path d="M 40,23 A 3,3 0 0 1 43,20 L 97,20 A 3,3 0 0 1 100,23 L 100,50 L 78,50 L 78,40 L 62,40 L 62,50 L 40,50 Z" fill="rgba(255, 117, 143, 0.35)" stroke="var(--city-purple)" stroke-width="2" />
-              <line x1="50" y1="20" x2="50" y2="50" stroke="var(--city-purple)" stroke-width="1.5" />
-              <line x1="60" y1="20" x2="60" y2="40" stroke="var(--city-purple)" stroke-width="1.5" />
-              <line x1="80" y1="20" x2="80" y2="40" stroke="var(--city-purple)" stroke-width="1.5" />
-              <line x1="90" y1="20" x2="90" y2="50" stroke="var(--city-purple)" stroke-width="1.5" />
-              <path d="M70,55 L70,65 M67,62 L70,65 L73,62" fill="none" stroke="var(--city-purple)" stroke-width="2" />
-              <text x="70" y="155" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px" font-weight="bold" text-anchor="middle">Direct Shaft Replacement</text>
-            </g>
+      <!-- Column 1 -->
+      <div class="column">
 
-            <!-- Divider -->
-            <line x1="250" y1="10" x2="250" y2="160" stroke="var(--city-purple)" stroke-dasharray="4,4" stroke-width="2" />
-
-            <!-- Slide-Over Mode (Right) -->
-            <g transform="translate(240, 10)">
-              <rect x="45" y="2" width="150" height="15" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-              <text x="120" y="13" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px" text-anchor="middle">SLIDE-OVER SLEEVE</text>
-              <rect x="95" y="80" width="50" height="40" rx="2" fill="rgba(255, 170, 0, 0.25)" stroke="var(--city-purple)" stroke-width="2" />
-              <line x1="105" y1="85" x2="105" y2="115" stroke="var(--city-purple)" stroke-width="1.5" opacity="0.5" />
-              <line x1="120" y1="85" x2="120" y2="115" stroke="var(--city-purple)" stroke-width="1.5" opacity="0.5" />
-              <line x1="135" y1="85" x2="135" y2="115" stroke="var(--city-purple)" stroke-width="1.5" opacity="0.5" />
-              <rect x="115" y="120" width="10" height="20" fill="none" stroke="var(--city-purple)" stroke-width="2" stroke-dasharray="3,3" />
-              <line x1="90" y1="140" x2="150" y2="140" stroke="var(--city-purple)" stroke-width="2" />
-              <path d="M 85,50 L 80,45 L 85,40 L 80,35 L 85,30 L 80,25 L 88,20 L 152,20 L 160,25 L 155,30 L 160,35 L 155,40 L 160,45 L 155,50 L 140,50 L 140,35 L 100,35 L 100,50 Z" fill="rgba(255, 253, 0, 0.45)" stroke="var(--city-purple)" stroke-width="2" />
-              <path d="M120,55 L120,72 M117,69 L120,72 L123,69" fill="none" stroke="var(--city-purple)" stroke-width="2" />
-              <text x="120" y="155" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px" font-weight="bold" text-anchor="middle">Non-Destructive Friction Fit</text>
-            </g>
-          </svg>
-
-          <!-- Figure 4: Small Knobs in Action -->
-          <div class="figure-container" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100mm; margin: 4mm 0;">
-            <img src="SmallKnobsSecuredWithM3Screws.png" alt="Dense layout of small custom knobs secured with M3 screws on a synthesizer panel." style="max-height: 150mm; width: auto; object-fit: contain; flex-grow: 1; margin: auto;">
-            <div class="figure-caption">
-              <strong>Figure 4:</strong> Small, high-density configurations showing how varied diameters and shape options fit compact Eurorack or desktop synthesizer panels, utilizing M3 set-screws for secure shaft locking.
+        <!-- Abstract & Introduction -->
+        <div class="card" style="flex-grow: 1.4;">
+          <div class="card-title">Introduction & Co-Design Context</div>
+          <div class="card-content">
+            <p>Commercial synthesizer interfaces present significant accessibility barriers for musicians with motor and
+              sensory impairments. Standard controls are typically small, smooth, and closely spaced, requiring
+              high-precision pinch grips and force. Globally, <strong>roughly 16%</strong> of the population lives with
+              physical disabilities affecting daily functioning and motor coordination [1]. Among clinical cohorts,
+              diabetic peripheral neuropathy eventually affects <strong>nearly 50%</strong> of adults with diabetes in
+              their lifetime, causing progressive muscle weakness, paresthesia, and diminished tactile sensation in the
+              hands and feet [2].</p>
+            <div class="highlight-box">
+              "Dialysis-dependent kidney failure caused severe hand neuropathy in a retired IT worker and synth
+              collector, leaving his collection of 20 hardware synthesizers completely unplayable. Workarounds like
+              T-wrenches or palm-dragging were fatiguing and lacked expressive control."
+            </div>
+            <p>This lived co-design encounter inspired **ACCESS KNOB**, an open-source browser-based parametric
+              customizer. Built on Universal Music Design (UMD) principles, the project shifts the paradigm from
+              mass-produced controls to personalized, user-fabricated interfaces that enhance musical expression,
+              independence, and creative control.</p>
+            <div class="references-list"
+              style="margin-top: 3mm; border-top: 2px solid var(--city-purple); padding-top: 2mm; font-size: 9.5pt; font-family: var(--font-body); font-weight: 600; opacity: 0.85;">
+              <strong>References:</strong><br>
+              [1] World Health Organization. 2022. <i>Global report on health equity for persons with disabilities</i>.
+              Geneva. <a
+                href="https://www.who.int/teams/noncommunicable-diseases/sensory-functions-disability-and-rehabilitation/global-report-on-health-equity-for-persons-with-disabilities"
+                target="_blank" style="color: var(--city-pink);">who.int/health-equity-report</a><br>
+              [2] Hicks CW, Selvin E. 2019. Epidemiology of Peripheral Neuropathy and Lower Extremity Disease in
+              Diabetes. <i>Curr Diab Rep</i> 19, 10: 86. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6755905/"
+                target="_blank" style="color: var(--city-pink);">ncbi.nlm.nih.gov/articles/PMC6755905</a>
             </div>
           </div>
         </div>
+
+        <!-- Procedural WASM Geometry Engine -->
+        <div class="card" style="flex-grow: 2.6;">
+          <div class="card-title">Procedural WASM CAD Kernel</div>
+          <div class="card-content">
+            <p>Traditional CAD tools present steep learning curves and lack accessibility. ACCESS KNOB utilizes a
+              client-side WebAssembly-compiled **Manifold** geometry kernel to perform boolean operations in
+              milliseconds, enabling real-time parameter tweaking directly in the browser.</p>
+
+            <p><strong>Two Mounting Modes &amp; Three Spindle Bores:</strong></p>
+            <ul>
+              <li><strong>Swap-In Mode:</strong> Replaces the original manufacturer knob entirely. Generates custom
+                internal flat/splined bores to slide flush onto the bare metal/plastic spindle.</li>
+              <li><strong>Slide-Over Mode:</strong> An adaptive sleeve that slides snugly over the original control cap,
+                preserving the instrument's resale value and avoiding complex hardware disassembly.</li>
+              <li><strong>Spindle Bore Profiles:</strong> Generates custom flats/splines for <strong>D-Shafts</strong>,
+                <strong>Knurled/Splined</strong> (18/24-tooth gears), and <strong>Solid Round</strong> spindles (secured
+                via integrated M3 set-screw).</li>
+            </ul>
+
+            <!-- SVG Diagram: Mounting Modes & Shaft Bores -->
+            <svg viewBox="0 0 500 175" class="svg-diagram"
+              style="width: 100%; height: auto; margin: 4mm 0; background: #f0e6ff; border: 3px solid var(--city-purple); border-radius: 8px; padding: 2mm; box-shadow: 4px 4px 0 var(--city-purple);">
+              <!-- Swap-In Mode (Left) -->
+              <g transform="translate(10, 10)">
+                <rect x="10" y="2" width="120" height="15" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="1.5" />
+                <text x="70" y="13" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px"
+                  text-anchor="middle">SWAP-IN MODE</text>
+                <rect x="65" y="80" width="10" height="40" fill="var(--city-purple)" />
+                <rect x="50" y="120" width="40" height="20" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="2" />
+                <line x1="40" y1="140" x2="100" y2="140" stroke="var(--city-purple)" stroke-width="2" />
+                <path d="M60,80 C60,68 80,68 80,80 Z" fill="var(--city-cyan)" stroke="var(--city-purple)"
+                  stroke-width="2" />
+                <path
+                  d="M 40,23 A 3,3 0 0 1 43,20 L 97,20 A 3,3 0 0 1 100,23 L 100,50 L 78,50 L 78,40 L 62,40 L 62,50 L 40,50 Z"
+                  fill="rgba(255, 117, 143, 0.35)" stroke="var(--city-purple)" stroke-width="2" />
+                <line x1="50" y1="20" x2="50" y2="50" stroke="var(--city-purple)" stroke-width="1.5" />
+                <line x1="60" y1="20" x2="60" y2="40" stroke="var(--city-purple)" stroke-width="1.5" />
+                <line x1="80" y1="20" x2="80" y2="40" stroke="var(--city-purple)" stroke-width="1.5" />
+                <line x1="90" y1="20" x2="90" y2="50" stroke="var(--city-purple)" stroke-width="1.5" />
+                <path d="M70,55 L70,65 M67,62 L70,65 L73,62" fill="none" stroke="var(--city-purple)" stroke-width="2" />
+                <text x="70" y="155" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px"
+                  font-weight="bold" text-anchor="middle">Direct Shaft Replacement</text>
+              </g>
+
+              <!-- Divider -->
+              <line x1="250" y1="10" x2="250" y2="160" stroke="var(--city-purple)" stroke-dasharray="4,4"
+                stroke-width="2" />
+
+              <!-- Slide-Over Mode (Right) -->
+              <g transform="translate(240, 10)">
+                <rect x="45" y="2" width="150" height="15" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="1.5" />
+                <text x="120" y="13" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px"
+                  text-anchor="middle">SLIDE-OVER SLEEVE</text>
+                <rect x="95" y="80" width="50" height="40" rx="2" fill="rgba(255, 170, 0, 0.25)"
+                  stroke="var(--city-purple)" stroke-width="2" />
+                <line x1="105" y1="85" x2="105" y2="115" stroke="var(--city-purple)" stroke-width="1.5" opacity="0.5" />
+                <line x1="120" y1="85" x2="120" y2="115" stroke="var(--city-purple)" stroke-width="1.5" opacity="0.5" />
+                <line x1="135" y1="85" x2="135" y2="115" stroke="var(--city-purple)" stroke-width="1.5" opacity="0.5" />
+                <rect x="115" y="120" width="10" height="20" fill="none" stroke="var(--city-purple)" stroke-width="2"
+                  stroke-dasharray="3,3" />
+                <line x1="90" y1="140" x2="150" y2="140" stroke="var(--city-purple)" stroke-width="2" />
+                <path
+                  d="M 85,50 L 80,45 L 85,40 L 80,35 L 85,30 L 80,25 L 88,20 L 152,20 L 160,25 L 155,30 L 160,35 L 155,40 L 160,45 L 155,50 L 140,50 L 140,35 L 100,35 L 100,50 Z"
+                  fill="rgba(255, 253, 0, 0.45)" stroke="var(--city-purple)" stroke-width="2" />
+                <path d="M120,55 L120,72 M117,69 L120,72 L123,69" fill="none" stroke="var(--city-purple)"
+                  stroke-width="2" />
+                <text x="120" y="155" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px"
+                  font-weight="bold" text-anchor="middle">Non-Destructive Friction Fit</text>
+              </g>
+            </svg>
+
+            <!-- Figure 4: Small Knobs in Action -->
+            <div class="figure-container"
+              style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100mm; margin: 4mm 0;">
+              <img src="SmallKnobsSecuredWithM3Screws.png"
+                alt="Dense layout of small custom knobs secured with M3 screws on a synthesizer panel."
+                style="max-height: 150mm; width: auto; object-fit: contain; flex-grow: 1; margin: auto;">
+              <div class="figure-caption">
+                <strong>Figure 4:</strong> Small, high-density configurations showing how varied diameters and shape
+                options fit compact Eurorack or desktop synthesizer panels, utilizing M3 set-screws for secure shaft
+                locking.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Column 2 -->
+      <div class="column">
+
+        <!-- 2D Vector SVG Stacking Exporter -->
+        <div class="card" style="flex-grow: 1.4;">
+          <div class="card-title">2D Vector SVG Stacking Exporter</div>
+          <div class="card-content">
+            <p>To democratize fabrication for makerspaces without access to 3D printers, ACCESS KNOB includes a 2D
+              vector SVG stacking exporter. This tool enables subtractive manufacturing (laser-cutting or CNC routing)
+              using sheet materials (wood, acrylic, basswood, or composites).</p>
+
+            <div class="orange-box">
+              "The exporter dynamically slices the 3D model into layer profiles, compensates for laser kerf, and adds
+              kerf-compensated slot paths and stacking rods."
+            </div>
+
+            <p><strong>System Assembly Mechanics:</strong></p>
+            <ul>
+              <li><strong>Kerf Compensation:</strong> Sub-millimeter adjustment (default 0.1 mm) ensures slots and outer
+                boundaries match target shapes after laser-cutting.</li>
+              <li><strong>Dual Alignment Rods:</strong> Generates two rods of width <code>thickness</code> and length
+                <code>heightKnob + kerf</code>. Slits are cut through all stacked layers, allowing the rods to slide
+                through, aligning the pieces perfectly for gluing.</li>
+              <li><strong>Layer Taper:</strong> Outer contours are calculated iteratively at height intervals to
+                preserve the overall tapered ergonomic profile.</li>
+            </ul>
+
+            <!-- SVG Diagram: Laser-Cut Layer Stacking -->
+            <svg viewBox="0 0 500 180" class="svg-diagram"
+              style="width: 100%; flex-grow: 1; min-height: 80mm; max-height: 150mm; margin: 4mm 0; background: #f0e6ff; border: 3px solid var(--city-purple); border-radius: 8px; padding: 2mm; box-shadow: 4px 4px 0 var(--city-purple);">
+              <!-- Alignment Rod Left -->
+              <path d="M195,20 L195,150" stroke="var(--city-purple)" stroke-width="2" stroke-dasharray="3,3" />
+              <rect x="192" y="10" width="6" height="20" rx="1.5" fill="var(--city-cyan)" stroke="var(--city-purple)"
+                stroke-width="2" />
+
+              <!-- Alignment Rod Right -->
+              <path d="M305,20 L305,150" stroke="var(--city-purple)" stroke-width="2" stroke-dasharray="3,3" />
+              <rect x="302" y="10" width="6" height="20" rx="1.5" fill="var(--city-cyan)" stroke="var(--city-purple)"
+                stroke-width="2" />
+
+              <!-- Exploded Layers -->
+              <!-- Layer 3 (Top) -->
+              <g transform="translate(0, -30)">
+                <polygon points="250,55 330,70 330,95 250,110 170,95 170,70" fill="rgba(255, 117, 143, 0.3)"
+                  stroke="var(--city-purple)" stroke-width="2" />
+                <ellipse cx="250" cy="82.5" rx="20" ry="10" fill="none" stroke="var(--city-purple)" stroke-width="1.5"
+                  stroke-dasharray="3,3" />
+                <circle cx="195" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="2" />
+                <circle cx="305" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="2" />
+                <rect x="210" y="66" width="80" height="11" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="1.5" />
+                <text x="250" y="74" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px"
+                  text-anchor="middle">Layer 3 (Top)</text>
+              </g>
+
+              <!-- Layer 2 (Middle) -->
+              <g transform="translate(0, 10)">
+                <polygon points="250,55 330,70 330,95 250,110 170,95 170,70" fill="rgba(0, 243, 255, 0.25)"
+                  stroke="var(--city-purple)" stroke-width="2" />
+                <ellipse cx="250" cy="82.5" rx="20" ry="10" fill="none" stroke="var(--city-purple)" stroke-width="2" />
+                <circle cx="195" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="2" />
+                <circle cx="305" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="2" />
+                <rect x="200" y="66" width="100" height="11" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="1.5" />
+                <text x="250" y="74" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px"
+                  text-anchor="middle">Layer 2 (Middle)</text>
+              </g>
+
+              <!-- Layer 1 (Base) -->
+              <g transform="translate(0, 50)">
+                <polygon points="250,55 330,70 330,95 250,110 170,95 170,70" fill="rgba(255, 253, 0, 0.4)"
+                  stroke="var(--city-purple)" stroke-width="2" />
+                <path d="M235,82.5 C235,76 265,76 265,82.5 L265,87 L235,87 Z" fill="var(--city-purple)"
+                  stroke="var(--city-purple)" stroke-width="1.5" />
+                <circle cx="195" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="2" />
+                <circle cx="305" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="2" />
+                <rect x="190" y="64" width="120" height="11" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="1.5" />
+                <text x="250" y="72" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px"
+                  text-anchor="middle">Layer 1 (Bore Lock)</text>
+              </g>
+
+              <text x="90" y="20" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="8px"
+                font-weight="bold">Alignment Rods</text>
+              <text x="380" y="20" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="8px"
+                font-weight="bold">Thickness (t)</text>
+
+              <text x="250" y="171" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px"
+                font-weight="800" text-anchor="middle">Exploded stacking sequence: Basswood sheet layers aligned by
+                matching rods</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Tactile Material Dynamics -->
+        <div class="card" style="flex-grow: 1.6;">
+          <div class="card-title">Tactile Material Dynamics</div>
+          <div class="card-content">
+            <p>Material choice impacts physical sensation, thermal stability, and control responsiveness during musical
+              play:</p>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Process</th>
+                  <th>Rigidity</th>
+                  <th>Friction</th>
+                  <th>Tactile Feedback &amp; Damping</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">PLA</td>
+                  <td>3D Print</td>
+                  <td>Medium</td>
+                  <td>Medium</td>
+                  <td>Hard contact; crisp edges; poor damping</td>
+                </tr>
+                <tr>
+                  <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">PETG</td>
+                  <td>3D Print</td>
+                  <td>High</td>
+                  <td>Medium</td>
+                  <td>Tough structure; hard contact; poor damping</td>
+                </tr>
+                <tr>
+                  <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">TPU</td>
+                  <td>3D Print</td>
+                  <td>Low</td>
+                  <td>High</td>
+                  <td>Soft elastomeric grip; high damping</td>
+                </tr>
+                <tr>
+                  <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Basswood</td>
+                  <td>Laser-Cut</td>
+                  <td>Medium</td>
+                  <td>Medium-High</td>
+                  <td>Warm organic feel; good damping</td>
+                </tr>
+                <tr>
+                  <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Acrylic</td>
+                  <td>Laser-Cut</td>
+                  <td>High</td>
+                  <td>Low</td>
+                  <td>Hard polished surface; poor damping</td>
+                </tr>
+                <tr>
+                  <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Foam</td>
+                  <td>Laser-Cut</td>
+                  <td>Very Low</td>
+                  <td>Low</td>
+                  <td>Spongy texture; excellent vibration absorption</td>
+                </tr>
+                <tr>
+                  <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Cardboard</td>
+                  <td>Laser-Cut</td>
+                  <td>Low</td>
+                  <td>Medium-High</td>
+                  <td>Matte texture; high damping; low durability</td>
+                </tr>
+                <tr>
+                  <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Cork</td>
+                  <td>Laser-Cut</td>
+                  <td>Low-Medium</td>
+                  <td>High</td>
+                  <td>Textured grip; excellent damping and shock absorption</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="figure-container"
+              style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100mm; margin: 4mm 0;">
+              <img src="ProfileShapes.png" alt="Geometrical tactile shape profiles generated by the engine."
+                style="max-height: 150mm; width: auto; object-fit: contain; flex-grow: 1; margin: auto;">
+              <div class="figure-caption">
+                <strong>Figure 1:</strong> Procedural geometric profile options (triangle, square, hexagon, octagon,
+                star, and gear) for tactile shape-coding, aiding blind or low-vision users in distinguishing knob
+                functions by touch.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Column 3 -->
+      <div class="column">
+
+        <!-- Engineering Evaluation & Torque Advantage -->
+        <div class="card" style="flex-grow: 2.6;">
+          <div class="card-title">Mechanical Evaluation</div>
+          <div class="card-content">
+            <p>To evaluate how parametric adjustments reduce required physical force, we model the peripheral finger
+              force <i>F</i> required to rotate a potentiometer with torque resistance <i>T</i>:</p>
+            <div class="formula">
+              <i>T</i> = <i>F</i> &middot; (<i>D</i> / 2) &nbsp;&rArr;&nbsp; <i>F</i> = 2<i>T</i> / <i>D</i>
+            </div>
+            <p>Increasing the outer diameter <i>D</i> from a standard 10 mm to an accessible 32 mm or 40 mm reduces the
+              required finger pinch force by <strong>68.8% to 75.0%</strong>, compensating directly for reduced grip
+              strength.</p>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Diameter (<i>D</i>)</th>
+                  <th>Required Force (<i>F</i>)</th>
+                  <th>Force Reduction</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>10 mm (Standard)</td>
+                  <td><i>F</i><sub>10</sub> = 2<i>T</i> / 10</td>
+                  <td>0.0% (Baseline)</td>
+                </tr>
+                <tr>
+                  <td>15 mm</td>
+                  <td>0.67 &middot; <i>F</i><sub>10</sub></td>
+                  <td>33.3%</td>
+                </tr>
+                <tr>
+                  <td>25 mm (Medium)</td>
+                  <td>0.40 &middot; <i>F</i><sub>10</sub></td>
+                  <td>60.0%</td>
+                </tr>
+                <tr>
+                  <td>32 mm (Large)</td>
+                  <td>0.31 &middot; <i>F</i><sub>10</sub></td>
+                  <td>68.8%</td>
+                </tr>
+                <tr>
+                  <td>40 mm (Accessible)</td>
+                  <td>0.25 &middot; <i>F</i><sub>10</sub></td>
+                  <td>75.0%</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Grip Shear Force:</strong> For musicians utilizing palm-dragging or side-of-hand shear
+              techniques, the functional friction force <i>F<sub>f</sub></i> driving rotation is modeled as:</p>
+            <div class="formula"
+              style="color: #00f2ff; border-color: rgba(0, 242, 255, 0.3); box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);">
+              <i>F<sub>f</sub></i> = &mu; &middot; <i>F<sub>n</sub></i> &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp;
+              <i>A</i> = &pi; &middot; <i>D</i> &middot; <i>H</i>
+            </div>
+            <p>where &mu; is the material's friction coefficient, and <i>F<sub>n</sub></i> is the normal force. Taller
+              knobs expand contact area <i>A</i>, distributing downward pressure to enable actuation with minimal pinch
+              grasp requirements.</p>
+
+            <!-- Figure 3: Bigger Knobs for Palm Dragging -->
+            <div class="figure-container">
+              <img src="BiggerKnobsDifferentGrooves.png"
+                alt="Star-pattern custom knobs on a synthesizer, showing tactile flutes and grooves.">
+              <div class="figure-caption">
+                <strong>Figure 3:</strong> Star-pattern flutes and deep grooves on custom ACCESS KNOBs. The pronounced
+                edges allow palm-dragging and side-of-hand shear techniques, dramatically increasing rotational torque
+                without requiring a tight pinch.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accessibility & Future Work -->
+        <div class="card" style="flex-grow: 2.6;">
+          <div class="card-title">Accessibility &amp; Future Work</div>
+          <div class="card-content">
+            <p><strong>Hands-Free Design Customization:</strong></p>
+            <p>The web customizer features high-contrast glowing visual focus states, supporting commodity webcam
+              head-tracking and facial gesture interfaces (Google Project Gameface, Apple Voice/Switch Control).</p>
+
+            <!-- SVG Diagram: Accessibility Flow -->
+            <svg viewBox="0 0 500 150" class="svg-diagram"
+              style="width: 100%; height: auto; margin: 4mm 0; background: #f0e6ff; border: 3px solid var(--city-purple); border-radius: 8px; padding: 2mm; box-shadow: 4px 4px 0 var(--city-purple);">
+              <defs>
+                <marker id="arrow-purple" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6"
+                  orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--city-purple)" />
+                </marker>
+              </defs>
+
+              <!-- Left Inputs -->
+              <rect x="10" y="20" width="130" height="110" rx="3" fill="rgba(0, 243, 255, 0.15)"
+                stroke="var(--city-purple)" stroke-width="2" stroke-dasharray="3,3" />
+              <rect x="20" y="4" width="110" height="14" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                stroke-width="1.5" />
+              <text x="75" y="14" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="7.5px"
+                text-anchor="middle">ACCESSIBLE INPUT</text>
+
+              <rect x="20" y="30" width="110" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                stroke-width="1.5" />
+              <text x="75" y="44" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px"
+                font-weight="bold" text-anchor="middle">Face Head-Tracking</text>
+
+              <rect x="20" y="60" width="110" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                stroke-width="1.5" />
+              <text x="75" y="74" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px"
+                font-weight="bold" text-anchor="middle">Voice Command Input</text>
+
+              <rect x="20" y="90" width="110" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                stroke-width="1.5" />
+              <text x="75" y="104" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px"
+                font-weight="bold" text-anchor="middle">Switch Control Scans</text>
+
+              <!-- Center Core -->
+              <g transform="translate(170, 40)">
+                <rect x="0" y="0" width="130" height="70" rx="4" fill="rgba(255, 117, 143, 0.25)"
+                  stroke="var(--city-purple)" stroke-width="2" />
+                <rect x="15" y="-7" width="100" height="14" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                  stroke-width="1.5" />
+                <text x="65" y="3" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="7.5px"
+                  text-anchor="middle">WASM KERNEL</text>
+
+                <text x="65" y="32" fill="var(--city-purple)" font-family="var(--font-body)" font-weight="800"
+                  font-size="11px" text-anchor="middle">Manifold 3D Engine</text>
+                <text x="65" y="49" fill="var(--city-purple)" font-family="var(--font-body)" font-weight="600"
+                  font-size="9px" text-anchor="middle">(Instant CSG Booleans)</text>
+              </g>
+
+              <!-- Arrow Inputs to Core -->
+              <line x1="140" y1="75" x2="165" y2="75" stroke="var(--city-purple)" stroke-width="2"
+                marker-end="url(#arrow-purple)" />
+
+              <!-- Right Outputs -->
+              <rect x="340" y="20" width="150" height="110" rx="3" fill="rgba(255, 253, 0, 0.2)"
+                stroke="var(--city-purple)" stroke-width="2" stroke-dasharray="3,3" />
+              <rect x="345" y="4" width="140" height="14" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                stroke-width="1.5" />
+              <text x="415" y="14" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="7.5px"
+                text-anchor="middle">MULTIMODAL FEEDBACK</text>
+
+              <rect x="350" y="30" width="130" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                stroke-width="1.5" />
+              <text x="415" y="44" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px"
+                font-weight="bold" text-anchor="middle">Aural Sonification (Pitch)</text>
+
+              <rect x="350" y="60" width="130" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                stroke-width="1.5" />
+              <text x="415" y="74" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px"
+                font-weight="bold" text-anchor="middle">Haptic Vibration Cues</text>
+
+              <rect x="350" y="90" width="130" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)"
+                stroke-width="1.5" />
+              <text x="415" y="104" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px"
+                font-weight="bold" text-anchor="middle">Aria-Live Speech Updates</text>
+
+              <!-- Arrow Core to Outputs -->
+              <line x1="300" y1="75" x2="335" y2="75" stroke="var(--city-purple)" stroke-width="2"
+                marker-end="url(#arrow-purple)" />
+            </svg>
+
+            <p><strong>Future Work &amp; Clinical Evaluation:</strong></p>
+            <p>We are expanding the customizer to generate fader caps and drum pads. We propose an IRB-approved protocol
+              with <i>N</i> = 12 musicians with hand impairments to assess custom slide-over vs. swap-in controls.
+              Evaluation metrics will include task completion times, error rates (such as accidental adjacent knob
+              nudging), and System Usability Scale (SUS) scores to evaluate creative agency.</p>
+
+            <div class="figure-container" style="margin-top: 4mm;">
+              <img src="OutputDetailsScreen.png" alt="ACCESS KNOB interface showing generative mutations.">
+              <div class="figure-caption">
+                <strong>Figure 2:</strong> Procedural customizer interface showing a batch of 12 generated variants, the
+                real-time WebGL view, and the parameter sliders.
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
 
-    <!-- Column 2 -->
-    <div class="column">
-
-      <!-- 2D Vector SVG Stacking Exporter -->
-      <div class="card" style="flex-grow: 1.4;">
-        <div class="card-title">2D Vector SVG Stacking Exporter</div>
-        <div class="card-content">
-          <p>To democratize fabrication for makerspaces without access to 3D printers, ACCESS KNOB includes a 2D vector SVG stacking exporter. This tool enables subtractive manufacturing (laser-cutting or CNC routing) using sheet materials (wood, acrylic, basswood, or composites).</p>
-          
-          <div class="orange-box">
-            "The exporter dynamically slices the 3D model into layer profiles, compensates for laser kerf, and adds kerf-compensated slot paths and stacking rods."
-          </div>
-          
-          <p><strong>System Assembly Mechanics:</strong></p>
-          <ul>
-            <li><strong>Kerf Compensation:</strong> Sub-millimeter adjustment (default 0.1 mm) ensures slots and outer boundaries match target shapes after laser-cutting.</li>
-            <li><strong>Dual Alignment Rods:</strong> Generates two rods of width <code>thickness</code> and length <code>heightKnob + kerf</code>. Slits are cut through all stacked layers, allowing the rods to slide through, aligning the pieces perfectly for gluing.</li>
-            <li><strong>Layer Taper:</strong> Outer contours are calculated iteratively at height intervals to preserve the overall tapered ergonomic profile.</li>
-          </ul>
-
-          <!-- SVG Diagram: Laser-Cut Layer Stacking -->
-          <svg viewBox="0 0 500 180" class="svg-diagram" style="width: 100%; flex-grow: 1; min-height: 80mm; max-height: 150mm; margin: 4mm 0; background: #f0e6ff; border: 3px solid var(--city-purple); border-radius: 8px; padding: 2mm; box-shadow: 4px 4px 0 var(--city-purple);">
-            <!-- Alignment Rod Left -->
-            <path d="M195,20 L195,150" stroke="var(--city-purple)" stroke-width="2" stroke-dasharray="3,3" />
-            <rect x="192" y="10" width="6" height="20" rx="1.5" fill="var(--city-cyan)" stroke="var(--city-purple)" stroke-width="2" />
-            
-            <!-- Alignment Rod Right -->
-            <path d="M305,20 L305,150" stroke="var(--city-purple)" stroke-width="2" stroke-dasharray="3,3" />
-            <rect x="302" y="10" width="6" height="20" rx="1.5" fill="var(--city-cyan)" stroke="var(--city-purple)" stroke-width="2" />
-
-            <!-- Exploded Layers -->
-            <!-- Layer 3 (Top) -->
-            <g transform="translate(0, -30)">
-              <polygon points="250,55 330,70 330,95 250,110 170,95 170,70" fill="rgba(255, 117, 143, 0.3)" stroke="var(--city-purple)" stroke-width="2" />
-              <ellipse cx="250" cy="82.5" rx="20" ry="10" fill="none" stroke="var(--city-purple)" stroke-width="1.5" stroke-dasharray="3,3" />
-              <circle cx="195" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="2" />
-              <circle cx="305" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="2" />
-              <rect x="210" y="66" width="80" height="11" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-              <text x="250" y="74" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px" text-anchor="middle">Layer 3 (Top)</text>
-            </g>
- 
-            <!-- Layer 2 (Middle) -->
-            <g transform="translate(0, 10)">
-              <polygon points="250,55 330,70 330,95 250,110 170,95 170,70" fill="rgba(0, 243, 255, 0.25)" stroke="var(--city-purple)" stroke-width="2" />
-              <ellipse cx="250" cy="82.5" rx="20" ry="10" fill="none" stroke="var(--city-purple)" stroke-width="2" />
-              <circle cx="195" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="2" />
-              <circle cx="305" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="2" />
-              <rect x="200" y="66" width="100" height="11" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-              <text x="250" y="74" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px" text-anchor="middle">Layer 2 (Middle)</text>
-            </g>
- 
-            <!-- Layer 1 (Base) -->
-            <g transform="translate(0, 50)">
-              <polygon points="250,55 330,70 330,95 250,110 170,95 170,70" fill="rgba(255, 253, 0, 0.4)" stroke="var(--city-purple)" stroke-width="2" />
-              <path d="M235,82.5 C235,76 265,76 265,82.5 L265,87 L235,87 Z" fill="var(--city-purple)" stroke="var(--city-purple)" stroke-width="1.5" />
-              <circle cx="195" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="2" />
-              <circle cx="305" cy="82.5" r="5" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="2" />
-              <rect x="190" y="64" width="120" height="11" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-              <text x="250" y="72" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="9px" text-anchor="middle">Layer 1 (Bore Lock)</text>
-            </g>
- 
-            <text x="90" y="20" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="8px" font-weight="bold">Alignment Rods</text>
-            <text x="380" y="20" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="8px" font-weight="bold">Thickness (t)</text>
-            
-            <text x="250" y="171" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px" font-weight="800" text-anchor="middle">Exploded stacking sequence: Basswood sheet layers aligned by matching rods</text>
-          </svg>
-        </div>
-      </div>
-
-      <!-- Tactile Material Dynamics -->
-      <div class="card" style="flex-grow: 1.6;">
-        <div class="card-title">Tactile Material Dynamics</div>
-        <div class="card-content">
-          <p>Material choice impacts physical sensation, thermal stability, and control responsiveness during musical play:</p>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Material</th>
-                <th>Process</th>
-                <th>Rigidity</th>
-                <th>Friction</th>
-                <th>Tactile Feedback &amp; Damping</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">PLA</td>
-                <td>3D Print</td>
-                <td>Medium</td>
-                <td>Medium</td>
-                <td>Hard contact; crisp edges; poor damping</td>
-              </tr>
-              <tr>
-                <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">PETG</td>
-                <td>3D Print</td>
-                <td>High</td>
-                <td>Medium</td>
-                <td>Tough structure; hard contact; poor damping</td>
-              </tr>
-              <tr>
-                <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">TPU</td>
-                <td>3D Print</td>
-                <td>Low</td>
-                <td>High</td>
-                <td>Soft elastomeric grip; high damping</td>
-              </tr>
-              <tr>
-                <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Basswood</td>
-                <td>Laser-Cut</td>
-                <td>Medium</td>
-                <td>Medium-High</td>
-                <td>Warm organic feel; good damping</td>
-              </tr>
-              <tr>
-                <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Acrylic</td>
-                <td>Laser-Cut</td>
-                <td>High</td>
-                <td>Low</td>
-                <td>Hard polished surface; poor damping</td>
-              </tr>
-              <tr>
-                <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Foam</td>
-                <td>Laser-Cut</td>
-                <td>Very Low</td>
-                <td>Low</td>
-                <td>Spongy texture; excellent vibration absorption</td>
-              </tr>
-              <tr>
-                <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Cardboard</td>
-                <td>Laser-Cut</td>
-                <td>Low</td>
-                <td>Medium-High</td>
-                <td>Matte texture; high damping; low durability</td>
-              </tr>
-              <tr>
-                <td style="font-family: 'Share Tech Mono', monospace; font-weight: bold;">Cork</td>
-                <td>Laser-Cut</td>
-                <td>Low-Medium</td>
-                <td>High</td>
-                <td>Textured grip; excellent damping and shock absorption</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div class="figure-container" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100mm; margin: 4mm 0;">
-            <img src="ProfileShapes.png" alt="Geometrical tactile shape profiles generated by the engine." style="max-height: 150mm; width: auto; object-fit: contain; flex-grow: 1; margin: auto;">
-            <div class="figure-caption">
-              <strong>Figure 1:</strong> Procedural geometric profile options (triangle, square, hexagon, octagon, star, and gear) for tactile shape-coding, aiding blind or low-vision users in distinguishing knob functions by touch.
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Column 3 -->
-    <div class="column">
-      
-      <!-- Engineering Evaluation & Torque Advantage -->
-      <div class="card" style="flex-grow: 2.6;">
-        <div class="card-title">Mechanical Evaluation</div>
-        <div class="card-content">
-          <p>To evaluate how parametric adjustments reduce required physical force, we model the peripheral finger force <i>F</i> required to rotate a potentiometer with torque resistance <i>T</i>:</p>
-          <div class="formula">
-            <i>T</i> = <i>F</i> &middot; (<i>D</i> / 2) &nbsp;&rArr;&nbsp; <i>F</i> = 2<i>T</i> / <i>D</i>
-          </div>
-          <p>Increasing the outer diameter <i>D</i> from a standard 10 mm to an accessible 32 mm or 40 mm reduces the required finger pinch force by <strong>68.8% to 75.0%</strong>, compensating directly for reduced grip strength.</p>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Diameter (<i>D</i>)</th>
-                <th>Required Force (<i>F</i>)</th>
-                <th>Force Reduction</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>10 mm (Standard)</td>
-                <td><i>F</i><sub>10</sub> = 2<i>T</i> / 10</td>
-                <td>0.0% (Baseline)</td>
-              </tr>
-              <tr>
-                <td>15 mm</td>
-                <td>0.67 &middot; <i>F</i><sub>10</sub></td>
-                <td>33.3%</td>
-              </tr>
-              <tr>
-                <td>25 mm (Medium)</td>
-                <td>0.40 &middot; <i>F</i><sub>10</sub></td>
-                <td>60.0%</td>
-              </tr>
-              <tr>
-                <td>32 mm (Large)</td>
-                <td>0.31 &middot; <i>F</i><sub>10</sub></td>
-                <td>68.8%</td>
-              </tr>
-              <tr>
-                <td>40 mm (Accessible)</td>
-                <td>0.25 &middot; <i>F</i><sub>10</sub></td>
-                <td>75.0%</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <p><strong>Grip Shear Force:</strong> For musicians utilizing palm-dragging or side-of-hand shear techniques, the functional friction force <i>F<sub>f</sub></i> driving rotation is modeled as:</p>
-          <div class="formula" style="color: #00f2ff; border-color: rgba(0, 242, 255, 0.3); box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);">
-            <i>F<sub>f</sub></i> = &mu; &middot; <i>F<sub>n</sub></i> &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp; <i>A</i> = &pi; &middot; <i>D</i> &middot; <i>H</i>
-          </div>
-          <p>where &mu; is the material's friction coefficient, and <i>F<sub>n</sub></i> is the normal force. Taller knobs expand contact area <i>A</i>, distributing downward pressure to enable actuation with minimal pinch grasp requirements.</p>
-
-          <!-- Figure 3: Bigger Knobs for Palm Dragging -->
-          <div class="figure-container">
-            <img src="BiggerKnobsDifferentGrooves.png" alt="Star-pattern custom knobs on a synthesizer, showing tactile flutes and grooves.">
-            <div class="figure-caption">
-              <strong>Figure 3:</strong> Star-pattern flutes and deep grooves on custom ACCESS KNOBs. The pronounced edges allow palm-dragging and side-of-hand shear techniques, dramatically increasing rotational torque without requiring a tight pinch.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Accessibility & Future Work -->
-      <div class="card" style="flex-grow: 2.6;">
-        <div class="card-title">Accessibility &amp; Future Work</div>
-        <div class="card-content">
-          <p><strong>Hands-Free Design Customization:</strong></p>
-          <p>The web customizer features high-contrast glowing visual focus states, supporting commodity webcam head-tracking and facial gesture interfaces (Google Project Gameface, Apple Voice/Switch Control).</p>
-          
-          <!-- SVG Diagram: Accessibility Flow -->
-          <svg viewBox="0 0 500 150" class="svg-diagram" style="width: 100%; height: auto; margin: 4mm 0; background: #f0e6ff; border: 3px solid var(--city-purple); border-radius: 8px; padding: 2mm; box-shadow: 4px 4px 0 var(--city-purple);">
-            <defs>
-              <marker id="arrow-purple" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--city-purple)" />
-              </marker>
-            </defs>
-
-            <!-- Left Inputs -->
-            <rect x="10" y="20" width="130" height="110" rx="3" fill="rgba(0, 243, 255, 0.15)" stroke="var(--city-purple)" stroke-width="2" stroke-dasharray="3,3" />
-            <rect x="20" y="4" width="110" height="14" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-            <text x="75" y="14" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="7.5px" text-anchor="middle">ACCESSIBLE INPUT</text>
-            
-            <rect x="20" y="30" width="110" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-            <text x="75" y="44" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px" font-weight="bold" text-anchor="middle">Face Head-Tracking</text>
-            
-            <rect x="20" y="60" width="110" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-            <text x="75" y="74" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px" font-weight="bold" text-anchor="middle">Voice Command Input</text>
-            
-            <rect x="20" y="90" width="110" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-            <text x="75" y="104" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px" font-weight="bold" text-anchor="middle">Switch Control Scans</text>
-
-            <!-- Center Core -->
-            <g transform="translate(170, 40)">
-              <rect x="0" y="0" width="130" height="70" rx="4" fill="rgba(255, 117, 143, 0.25)" stroke="var(--city-purple)" stroke-width="2" />
-              <rect x="15" y="-7" width="100" height="14" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-              <text x="65" y="3" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="7.5px" text-anchor="middle">WASM KERNEL</text>
-              
-              <text x="65" y="32" fill="var(--city-purple)" font-family="var(--font-body)" font-weight="800" font-size="11px" text-anchor="middle">Manifold 3D Engine</text>
-              <text x="65" y="49" fill="var(--city-purple)" font-family="var(--font-body)" font-weight="600" font-size="9px" text-anchor="middle">(Instant CSG Booleans)</text>
-            </g>
-
-            <!-- Arrow Inputs to Core -->
-            <line x1="140" y1="75" x2="165" y2="75" stroke="var(--city-purple)" stroke-width="2" marker-end="url(#arrow-purple)" />
-
-            <!-- Right Outputs -->
-            <rect x="340" y="20" width="150" height="110" rx="3" fill="rgba(255, 253, 0, 0.2)" stroke="var(--city-purple)" stroke-width="2" stroke-dasharray="3,3" />
-            <rect x="345" y="4" width="140" height="14" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-            <text x="415" y="14" fill="var(--city-purple)" font-family="var(--font-gothic)" font-size="7.5px" text-anchor="middle">MULTIMODAL FEEDBACK</text>
-            
-            <rect x="350" y="30" width="130" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-            <text x="415" y="44" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px" font-weight="bold" text-anchor="middle">Aural Sonification (Pitch)</text>
-            
-            <rect x="350" y="60" width="130" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-            <text x="415" y="74" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px" font-weight="bold" text-anchor="middle">Haptic Vibration Cues</text>
-            
-            <rect x="350" y="90" width="130" height="22" rx="2" fill="var(--city-white)" stroke="var(--city-purple)" stroke-width="1.5" />
-            <text x="415" y="104" fill="var(--city-purple)" font-family="var(--font-body)" font-size="9px" font-weight="bold" text-anchor="middle">Aria-Live Speech Updates</text>
-
-            <!-- Arrow Core to Outputs -->
-            <line x1="300" y1="75" x2="335" y2="75" stroke="var(--city-purple)" stroke-width="2" marker-end="url(#arrow-purple)" />
-          </svg>
-
-          <p><strong>Future Work &amp; Clinical Evaluation:</strong></p>
-          <p>We are expanding the customizer to generate fader caps and drum pads. We propose an IRB-approved protocol with <i>N</i> = 12 musicians with hand impairments to assess custom slide-over vs. swap-in controls. Evaluation metrics will include task completion times, error rates (such as accidental adjacent knob nudging), and System Usability Scale (SUS) scores to evaluate creative agency.</p>
-
-          <div class="figure-container" style="margin-top: 4mm;">
-            <img src="OutputDetailsScreen.png" alt="ACCESS KNOB interface showing generative mutations.">
-            <div class="figure-caption">
-              <strong>Figure 2:</strong> Procedural customizer interface showing a batch of 12 generated variants, the real-time WebGL view, and the parameter sliders.
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
+    <!-- Footer -->
+    <footer>
+      <div class="left">ACCESS KNOB &nbsp;&bull;&nbsp; Open-Source Parametric Assistive Technology</div>
+      <div>Anonymized for Double-Blind Review</div>
+      <div style="color: var(--city-white);">Source Code: github.com/anonymized-for-review</div>
+    </footer>
 
   </div>
 
-  <!-- Footer -->
-  <footer>
-    <div class="left">ACCESS KNOB &nbsp;&bull;&nbsp; Open-Source Parametric Assistive Technology</div>
-    <div>Anonymized for Double-Blind Review</div>
-    <div style="color: var(--city-white);">Source Code: github.com/anonymized-for-review</div>
-  </footer>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const poster = document.querySelector('.poster');
+      const viewport = document.body;
 
-</div>
+      // Dimensions of the poster in mm
+      const posterWidthMM = 1189;
+      const posterHeightMM = 841;
 
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const poster = document.querySelector('.poster');
-    const viewport = document.body;
+      // Convert mm to pixels at runtime to calculate screen-fit
+      const temp = document.createElement('div');
+      temp.style.width = '1mm';
+      document.body.appendChild(temp);
+      const mmToPx = temp.getBoundingClientRect().width;
+      document.body.removeChild(temp);
 
-    // Dimensions of the poster in mm
-    const posterWidthMM = 1189;
-    const posterHeightMM = 841;
+      const wPx = posterWidthMM * mmToPx;
+      const hPx = posterHeightMM * mmToPx;
 
-    // Convert mm to pixels at runtime to calculate screen-fit
-    const temp = document.createElement('div');
-    temp.style.width = '1mm';
-    document.body.appendChild(temp);
-    const mmToPx = temp.getBoundingClientRect().width;
-    document.body.removeChild(temp);
+      // State
+      let scale = Math.min(window.innerWidth / wPx, window.innerHeight / hPx) * 0.95;
+      let translateX = (window.innerWidth - wPx * scale) / 2;
+      let translateY = (window.innerHeight - hPx * scale) / 2;
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
 
-    const wPx = posterWidthMM * mmToPx;
-    const hPx = posterHeightMM * mmToPx;
+      function updateTransform() {
+        poster.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+      }
 
-    // State
-    let scale = Math.min(window.innerWidth / wPx, window.innerHeight / hPx) * 0.95;
-    let translateX = (window.innerWidth - wPx * scale) / 2;
-    let translateY = (window.innerHeight - hPx * scale) / 2;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-
-    function updateTransform() {
-      poster.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-    }
-
-    // Set initial transform
-    updateTransform();
-
-    // Prevent default browser dragging on images so panning works on them
-    document.querySelectorAll('img').forEach(img => {
-      img.addEventListener('dragstart', (e) => e.preventDefault());
-    });
-
-    // Resize handler
-    window.addEventListener('resize', () => {
-      // Re-center on resize
-      scale = Math.min(window.innerWidth / wPx, window.innerHeight / hPx) * 0.95;
-      translateX = (window.innerWidth - wPx * scale) / 2;
-      translateY = (window.innerHeight - hPx * scale) / 2;
+      // Set initial transform
       updateTransform();
+
+      // Prevent default browser dragging on images so panning works on them
+      document.querySelectorAll('img').forEach(img => {
+        img.addEventListener('dragstart', (e) => e.preventDefault());
+      });
+
+      // Resize handler
+      window.addEventListener('resize', () => {
+        // Re-center on resize
+        scale = Math.min(window.innerWidth / wPx, window.innerHeight / hPx) * 0.95;
+        translateX = (window.innerWidth - wPx * scale) / 2;
+        translateY = (window.innerHeight - hPx * scale) / 2;
+        updateTransform();
+      });
+
+      // Pan (click and drag)
+      viewport.addEventListener('mousedown', (e) => {
+        // Don't drag if clicking buttons or interactive content
+        if (e.target.closest('button, a, input, select')) return;
+        isDragging = true;
+        viewport.style.cursor = 'grabbing';
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        updateTransform();
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+        viewport.style.cursor = 'grab';
+      });
+
+      // Zoom (mouse wheel)
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+
+        const zoomFactor = 1.1;
+        const zoomIn = e.deltaY < 0;
+
+        // Target scale
+        let nextScale = zoomIn ? scale * zoomFactor : scale / zoomFactor;
+
+        // Bound scale
+        nextScale = Math.min(Math.max(nextScale, 0.15), 5.0);
+
+        // Zoom relative to cursor position
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+
+        translateX = mouseX - (mouseX - translateX) * (nextScale / scale);
+        translateY = mouseY - (mouseY - translateY) * (nextScale / scale);
+        scale = nextScale;
+
+        updateTransform();
+      }, { passive: false });
     });
-
-    // Pan (click and drag)
-    viewport.addEventListener('mousedown', (e) => {
-      // Don't drag if clicking buttons or interactive content
-      if (e.target.closest('button, a, input, select')) return;
-      isDragging = true;
-      viewport.style.cursor = 'grabbing';
-      startX = e.clientX - translateX;
-      startY = e.clientY - translateY;
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      translateX = e.clientX - startX;
-      translateY = e.clientY - startY;
-      updateTransform();
-    });
-
-    window.addEventListener('mouseup', () => {
-      isDragging = false;
-      viewport.style.cursor = 'grab';
-    });
-
-    // Zoom (mouse wheel)
-    viewport.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      
-      const zoomFactor = 1.1;
-      const zoomIn = e.deltaY < 0;
-      
-      // Target scale
-      let nextScale = zoomIn ? scale * zoomFactor : scale / zoomFactor;
-      
-      // Bound scale
-      nextScale = Math.min(Math.max(nextScale, 0.15), 5.0);
-
-      // Zoom relative to cursor position
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
-
-      translateX = mouseX - (mouseX - translateX) * (nextScale / scale);
-      translateY = mouseY - (mouseY - translateY) * (nextScale / scale);
-      scale = nextScale;
-
-      updateTransform();
-    }, { passive: false });
-  });
-</script>
+  </script>
 
 </body>
+
 </html>

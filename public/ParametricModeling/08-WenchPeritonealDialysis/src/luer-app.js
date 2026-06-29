@@ -255,8 +255,8 @@ function initParameters() {
 
     param("Handle Ring Diameter", 30, { min: 10, max: 50 }, "kinematics");
     param("Handle Diameter", 19.05, { min: 10.0, max: 30.0, step: 0.5 }, "kinematics");
-    param("Groove Width", 8.0, { min: 4.0, max: 15.0, step: 0.5 }, "kinematics");
-    param("Groove Depth", 3.0, { min: 1.0, max: 8.0, step: 0.5 }, "kinematics");
+    param("Groove Width", 16.0, { min: 8.0, max: 25.0, step: 0.5 }, "kinematics");
+    param("Groove Depth", 2.0, { min: 1.0, max: 8.0, step: 0.5 }, "kinematics");
     param("Card Guide Lip", 1.0, { min: 0.0, max: 3.0, step: 0.2 }, "kinematics");
 
     param("Connector Tolerance", 0.25, { min: 0.1, max: 0.8, step: 0.05 }, "meta");

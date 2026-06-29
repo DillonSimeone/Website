@@ -366,8 +366,8 @@ function initParameters() {
     param("Socket Wrench Ring Diam", 30, { min: 10, max: 50 }, "socket");
     param("Socket Wrench Handle Thickness", 8.0, { min: 4.0, max: 20.0, step: 1.0 }, "socket");
     param("Handle Diameter", 19.05, { min: 10.0, max: 30.0, step: 0.5 }, "socket");
-    param("Groove Width", 8.0, { min: 4.0, max: 15.0, step: 0.5 }, "socket");
-    param("Groove Depth", 3.0, { min: 1.0, max: 8.0, step: 0.5 }, "socket");
+    param("Groove Width", 16.0, { min: 8.0, max: 25.0, step: 0.5 }, "socket");
+    param("Groove Depth", 2.0, { min: 1.0, max: 8.0, step: 0.5 }, "socket");
     param("Card Guide Lip", 1.0, { min: 0.0, max: 3.0, step: 0.2 }, "socket");
 }
 

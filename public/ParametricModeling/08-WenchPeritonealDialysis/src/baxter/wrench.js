@@ -10,18 +10,25 @@ export function generateSocketWrench(Manifold, config, q) {
     const sFlatDist = config.socketDiam + config.tolerance * 2;
     const sOuterR = sInnerR + config.socketWall;
     const sHeadH = config.socketDepth;
-    const sHeadShiftZ = (sHeadH - config.sHandleThick) / 2;
+
+    const R_handle = config.handleDiam / 2;
+    const Z_flat = -R_handle + 2.5;
+
+    // Extend the head and collar down to Z_flat
+    const headH = (sHeadH - config.sHandleThick / 2) - Z_flat;
+    const headZ = ((sHeadH - config.sHandleThick / 2) + Z_flat) / 2;
+    const sHeadShiftZ = headZ;
 
     // --- STEP 1: BUILD SOLID BODY ---
-    let sOuterCyl = cylinder(sOuterR, sHeadH, q).translate([0, 0, sHeadShiftZ]);
+    let sOuterCyl = cylinder(sOuterR, headH, q).translate([0, 0, headZ]);
     const hexFlat = sOuterR * Math.cos(Math.PI / 6);
     let sHexCutter = null;
     for (let i = 0; i < 6; i++) {
         const ang = i * 60;
-        let slab = cube(sOuterR * 3, sOuterR * 3, sHeadH + 4)
+        let slab = cube(sOuterR * 3, sOuterR * 3, headH + 4)
             .translate([sOuterR * 1.5 + hexFlat, 0, 0])
             .rotate([0, 0, ang])
-            .translate([0, 0, sHeadShiftZ]);
+            .translate([0, 0, headZ]);
         if (sHexCutter === null) sHexCutter = slab;
         else {
             let tH = sHexCutter;
@@ -37,8 +44,13 @@ export function generateSocketWrench(Manifold, config, q) {
         sHexCutter.delete();
     }
 
-    let sCollar = cylinder(sOuterR, config.sHandleThick, q);
-    let sCollarBore = cylinder(sInnerR, config.sHandleThick + 2, q);
+    const collarH = (config.sHandleThick / 2) - Z_flat;
+    const collarZ = (config.sHandleThick / 2 + Z_flat) / 2;
+    let sCollar = cylinder(sOuterR, collarH, q).translate([0, 0, collarZ]);
+
+    const collarBoreH = (config.sHandleThick / 2) - Z_flat + 2;
+    const collarBoreZ = collarZ;
+    let sCollarBore = cylinder(sInnerR, collarBoreH, q).translate([0, 0, collarBoreZ]);
     let sCollarShell = sCollar.subtract(sCollarBore);
     sCollar.delete();
     sCollarBore.delete();
@@ -57,7 +69,6 @@ export function generateSocketWrench(Manifold, config, q) {
     const sInnerRingR = config.sRingDiam / 2;
     const sOuterRingR = sInnerRingR + 5.0;
 
-    const R_handle = config.handleDiam / 2;
     const transitionLength = 15.0;
     const handleLength = config.sHandleLen;
     const overlap = 14.0; // Sink the handle/transition 14mm deep into the circular head
@@ -68,21 +79,30 @@ export function generateSocketWrench(Manifold, config, q) {
         .rotate([0, 90, 0])
         .translate([sHandleEndX + (handleLength - transitionLength + overlap) / 2, 0, 0]);
 
+    // Flat top block to contain the groove and ensure lips are not cut away
+    let handleBlock = cube(handleLength - transitionLength + overlap, config.grooveWidth + 4, R_handle)
+        .translate([sHandleEndX + (handleLength - transitionLength + overlap) / 2, 0, R_handle / 2]);
+
     // Tapered transition cone to Head (overlapping into head to make joint strong)
     let transition = Manifold.cylinder(transitionLength, R_handle, config.sHandleThick / 2, q, true)
         .rotate([0, 90, 0])
         .translate([transitionStartX - transitionLength / 2, 0, 0]);
 
     // Round end ring
-    let sRoundEnd = cylinder(sOuterRingR, config.sHandleThick, q).translate([sHandleEndX, 0, 0]);
+    const ringH = (config.sHandleThick / 2) - Z_flat;
+    const ringZ = (config.sHandleThick / 2 + Z_flat) / 2;
+    let sRoundEnd = cylinder(sOuterRingR, ringH, q).translate([sHandleEndX, 0, ringZ]);
 
     // Union handle components
-    let handleParts = Manifold.union(handleCyl, transition);
-    let handleSolid = Manifold.union(handleParts, sRoundEnd);
+    let handleParts = Manifold.union(handleCyl, handleBlock);
+    let handleParts2 = Manifold.union(handleParts, transition);
+    let handleSolid = Manifold.union(handleParts2, sRoundEnd);
     handleCyl.delete();
+    handleBlock.delete();
     transition.delete();
     sRoundEnd.delete();
     handleParts.delete();
+    handleParts2.delete();
 
     // Combine Wrench Head and Wrench Handle
     let wrenchSolid = Manifold.union(sHeadSolid, handleSolid);
