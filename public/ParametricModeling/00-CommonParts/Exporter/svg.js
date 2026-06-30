@@ -1,8 +1,9 @@
-// Reusable SVG Exporter for Laser Cutting Layers
-// Reusable SVG Exporter for Laser Cutting Layers
-export function getLaserSVG(k, t, k_f) {
+import { generateKnobManifold } from '../../../06-SythKnobs/src/geometry.js';
+
+export async function getLaserSVG(k, t, k_f) {
   const H = k.height;
   const N = Math.ceil(H / t);
+  const model = await generateKnobManifold(k);
   
   const R_outer = k.outerD / 2;
   const R_top = R_outer * k.taper;
@@ -29,7 +30,7 @@ export function getLaserSVG(k, t, k_f) {
       R_profile_min = R_top_layer * Math.cos(Math.PI / sides);
     }
   }
-  if (k.texMode === 'flutes') {
+  if (k.texMode === 'flutes' || k.texMode === 'twist' || k.texMode === 'vrings') {
     R_profile_min = Math.min(R_profile_min, R_top_layer - k.texDepth);
   } else if (k.texMode === 'rings') {
     R_profile_min = Math.min(R_profile_min, R_top_layer - k.texDepth);
@@ -169,66 +170,32 @@ export function getLaserSVG(k, t, k_f) {
       svg += `  <!-- Layer ${i+1} (Z = ${Z_i.toFixed(2)}mm, R = ${R_i.toFixed(2)}mm) -->\n`;
       svg += `  <g id="layer-${i+1}">\n`;
       
-      if (k.shape === 'cyl') {
-        svg += `    <circle class="cut" cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="${R_i.toFixed(3)}" />\n`;
-      } else if (k.wave) {
+      // Slice the 3D model to get exact 2D contours (including exact outer perimeter & inner shaft bore)
+      const sliceHeight = Z_i - H / 2;
+      const cs = model.slice(sliceHeight);
+      const polygons = cs.toPolygons();
+      cs.delete();
+      
+      const numPolys = (typeof polygons.size === 'function') ? polygons.size() : polygons.length;
+      for (let pIdx = 0; pIdx < numPolys; pIdx++) {
+        const poly = (typeof polygons.get === 'function') ? polygons.get(pIdx) : polygons[pIdx];
+        
+        const numVerts = (typeof poly.size === 'function') ? poly.size() : poly.length;
         const pts = [];
-        for (let a = 0; a < 360; a += 10) {
-          const rad = a * Math.PI / 180;
-          const rr = R_i - 2 + Math.sin(a * 0.15) * 3;
-          pts.push(`${(cx + rr * Math.cos(rad)).toFixed(3)},${(cy + rr * Math.sin(rad)).toFixed(3)}`);
+        for (let vIdx = 0; vIdx < numVerts; vIdx++) {
+          const pt = (typeof poly.get === 'function') ? poly.get(vIdx) : poly[vIdx];
+          const px = (typeof pt.x !== 'undefined') ? pt.x : pt[0];
+          const py = (typeof pt.y !== 'undefined') ? pt.y : pt[1];
+          pts.push(`${(cx + px).toFixed(3)},${(cy + py).toFixed(3)}`);
         }
         svg += `    <polygon class="cut" points="${pts.join(' ')}" />\n`;
-      } else {
-        const sides = k.sides || 6;
-        const star = k.star;
-        const pts = [];
-        const numPts = star ? sides * 2 : sides;
-        for (let pIdx = 0; pIdx < numPts; pIdx++) {
-          const angle = pIdx * 2 * Math.PI / numPts - Math.PI / 2;
-          const rr = (star && pIdx % 2 === 1) ? R_i * 0.5 : R_i;
-          pts.push(`${(cx + rr * Math.cos(angle)).toFixed(3)},${(cy + rr * Math.sin(angle)).toFixed(3)}`);
-        }
-        svg += `    <polygon class="cut" points="${pts.join(' ')}" />\n`;
-      }
-      
-      if (k.texMode === 'flutes') {
-        const fluteR = k.texScale / 2;
-        const fluteDist = R_i - k.texDepth + fluteR;
-        for (let fIdx = 0; fIdx < k.texCount; fIdx++) {
-          const angle = fIdx * 2 * Math.PI / k.texCount;
-          const fcx = cx + fluteDist * Math.cos(angle);
-          const fcy = cy + fluteDist * Math.sin(angle);
-          svg += `    <circle class="cut" cx="${fcx.toFixed(3)}" cy="${fcy.toFixed(3)}" r="${fluteR.toFixed(3)}" />\n`;
+        
+        if (typeof poly.delete === 'function') {
+          poly.delete();
         }
       }
-      
-      const d_bore = k.boreD;
-      const r_bore = d_bore / 2;
-      if (k.shaftType === 'dshaft') {
-        const flatDepth = 1.0;
-        const yFlat = r_bore - flatDepth;
-        const angleFlat = Math.acos(yFlat / r_bore);
-        const x1 = -r_bore * Math.sin(angleFlat);
-        const x2 = r_bore * Math.sin(angleFlat);
-        
-        const p1x = (cx + x1).toFixed(3);
-        const p1y = (cy - yFlat).toFixed(3);
-        const p2x = (cx + x2).toFixed(3);
-        const p2y = (cy - yFlat).toFixed(3);
-        
-        svg += `    <path class="cut" d="M ${p1x} ${p1y} L ${p2x} ${p2y} A ${r_bore.toFixed(3)} ${r_bore.toFixed(3)} 0 1 1 ${p1x} ${p1y}" />\n`;
-      } else if (k.shaftType === 'knurled') {
-        const numSplines = 18;
-        const splinesPts = [];
-        for (let sIdx = 0; sIdx < numSplines * 2; sIdx++) {
-          const angle = sIdx * Math.PI / numSplines;
-          const rr = (sIdx % 2 === 1) ? r_bore + 0.3 : r_bore;
-          splinesPts.push(`${(cx + rr * Math.cos(angle)).toFixed(3)},${(cy + rr * Math.sin(angle)).toFixed(3)}`);
-        }
-        svg += `    <polygon class="cut" points="${splinesPts.join(' ')}" />\n`;
-      } else {
-        svg += `    <circle class="cut" cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="${r_bore.toFixed(3)}" />\n`;
+      if (typeof polygons.delete === 'function') {
+        polygons.delete();
       }
       
       // Draw alignment slots
@@ -247,6 +214,8 @@ export function getLaserSVG(k, t, k_f) {
     }
   }
   
+  model.delete();
   svg += `</svg>`;
   return svg;
 }
+

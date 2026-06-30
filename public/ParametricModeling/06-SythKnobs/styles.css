@@ -231,7 +231,17 @@ input[type=range]::-webkit-slider-thumb {
 .spinner-container {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--border-lit);
+  background: var(--surface);
+  border: 1px solid var(--border-lit);
+  border-radius: 2px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 2px 4px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.spinner-container:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(200, 255, 0, 0.2);
 }
 .spinner-container input {
   width: 100%;
@@ -819,6 +829,41 @@ input:focus, select:focus, button:focus, .shape-btn:focus {
 }
 .batch-edit-section select {
   margin-bottom: 6px;
+}
+
+/* GLOBAL TEXT & NUMBER INPUT STYLING */
+.input-field {
+  background: var(--surface);
+  border: 1px solid var(--border-lit);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 6px 8px;
+  outline: none;
+  border-radius: 2px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -moz-appearance: textfield; /* Hide Firefox spinners */
+}
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(200, 255, 0, 0.2);
+}
+/* Hide Webkit spinners */
+.input-field::-webkit-inner-spin-button,
+.input-field::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* LASER MODAL CUSTOM INPUT STYLING OVERRIDES (CYAN THEMED) */
+#laserModal .input-field {
+  border-color: rgba(0, 242, 255, 0.3);
+}
+#laserModal .input-field:focus {
+  border-color: #00f2ff;
+  box-shadow: 0 0 8px rgba(0, 242, 255, 0.3);
 }
 
 /* KEYBOARD FOCUS RING FOR GRID CARDS */

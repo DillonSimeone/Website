@@ -155,14 +155,14 @@ function closeLaserModal() {
   document.getElementById('laserModal').style.display = 'none';
 }
 
-function generateLaserSVG() {
+async function generateLaserSVG() {
   const k = state.knobs.find(x => x.id === state.selectedId);
   if (!k) return;
   
   const t = parseFloat(document.getElementById('v_laserMaterialThick').value) || 3.0;
   const k_f = parseFloat(document.getElementById('laserKerf').value) || 0.1;
   
-  const svgContent = getLaserSVG(k, t, k_f);
+  const svgContent = await getLaserSVG(k, t, k_f);
   const blob = new Blob([svgContent], { type: 'image/svg+xml' });
   dl(blob, `${k.id}_laser_layers_${t}mm.svg`);
   closeLaserModal();
