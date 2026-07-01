@@ -1,4 +1,4 @@
-import { generateKnobManifold } from '../../../06-SythKnobs/src/geometry.js';
+import { generateKnobManifold } from '../../06-SythKnobs/src/geometry.js';
 
 export async function getLaserSVG(k, t, k_f) {
   const H = k.height;
