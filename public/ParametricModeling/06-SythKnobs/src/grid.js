@@ -148,6 +148,14 @@ export function selectKnob(id) {
 
   const panel = document.getElementById('detailPanel');
   const shp = SHAPES.find(s => s.id === k.shape);
+  
+  const sorted = getSortedKnobs();
+  const idx = sorted.findIndex(x => x.id === k.id);
+  const counterEl = document.getElementById('dpCounter');
+  if (counterEl) {
+    counterEl.textContent = `KNOB ${idx + 1} OF ${sorted.length}`;
+  }
+
   document.getElementById('dpTitle').textContent = k.id;
   document.getElementById('dpSub').textContent = shp?.label + ' — ' + (k.texMode || 'flutes').toUpperCase() + ' TEXTURE';
 
@@ -170,6 +178,16 @@ export function selectKnob(id) {
   document.getElementById('dpRows').innerHTML = rows.map(([k2,v]) =>
     `<div class="detail-row"><span class="dk">${k2}</span><span class="dv">${v}</span></div>`
   ).join('');
+
+  // Auto-collapse spoilers on mobile to save vertical space
+  const isMobile = window.innerWidth <= 768;
+  panel.querySelectorAll('details.detail-spoiler').forEach(det => {
+    if (isMobile) {
+      det.removeAttribute('open');
+    } else {
+      det.setAttribute('open', '');
+    }
+  });
 
   panel.classList.add('open');
   document.querySelector('.main').classList.add('detail-open');

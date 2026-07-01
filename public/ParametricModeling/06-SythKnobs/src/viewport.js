@@ -1,4 +1,4 @@
-import { state } from './state.js';
+import { state, triggerHapticFeedback } from './state.js';
 
 export let THREE = null;
 export let renderer = null;
@@ -16,6 +16,8 @@ let rotationAccumulator = 0;
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
+let lastTickY = 0;
+let lastTickX = 0;
 
 export async function initThree() {
   THREE = await import('https://cdn.skypack.dev/three@0.136.0');
@@ -228,6 +230,14 @@ function initDetailDrag() {
     state.detailEuler.y += dx * 0.01;
     state.detailEuler.x += dy * 0.01;
     state.detailEuler.x = Math.max(-Math.PI, Math.min(0, state.detailEuler.x));
+
+    const diffY = Math.abs(state.detailEuler.y - lastTickY);
+    const diffX = Math.abs(state.detailEuler.x - lastTickX);
+    if (diffY >= 0.15 || diffX >= 0.15) {
+      triggerHapticFeedback('tick');
+      lastTickY = state.detailEuler.y;
+      lastTickX = state.detailEuler.x;
+    }
   });
 
   window.addEventListener('mouseup', () => {
@@ -258,6 +268,14 @@ function initDetailDrag() {
     state.detailEuler.y += dx * 0.01;
     state.detailEuler.x += dy * 0.01;
     state.detailEuler.x = Math.max(-Math.PI, Math.min(0, state.detailEuler.x));
+
+    const diffY = Math.abs(state.detailEuler.y - lastTickY);
+    const diffX = Math.abs(state.detailEuler.x - lastTickX);
+    if (diffY >= 0.15 || diffX >= 0.15) {
+      triggerHapticFeedback('tick');
+      lastTickY = state.detailEuler.y;
+      lastTickX = state.detailEuler.x;
+    }
   }, { passive: true });
 
   previewEl.addEventListener('touchend', () => {

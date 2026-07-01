@@ -515,6 +515,14 @@ input[type=range]::-webkit-slider-thumb {
 }
 .detail-panel.open { transform: translateX(0); }
 
+.detail-counter {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
 .detail-title {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 22px;
@@ -529,6 +537,51 @@ input[type=range]::-webkit-slider-thumb {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 16px;
+}
+.detail-spoiler {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+  border-radius: 2px;
+}
+.detail-spoiler summary {
+  padding: 10px 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  outline: none;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid transparent;
+  transition: all 0.15s;
+}
+.detail-spoiler summary:hover {
+  background: rgba(255,255,255,0.02);
+  color: var(--accent);
+}
+.detail-spoiler summary::-webkit-details-marker {
+  display: none;
+}
+.detail-spoiler summary::after {
+  content: '▼';
+  font-size: 8px;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  transform: rotate(-90deg);
+}
+.detail-spoiler[open] summary::after {
+  transform: rotate(0deg);
+  color: var(--accent);
+}
+.detail-spoiler[open] summary {
+  border-bottom: 1px solid var(--border);
+  color: var(--accent);
 }
 .detail-row {
   display: flex;
@@ -630,6 +683,17 @@ body.view-mode #pullOutMenuBtn { display: block; }
   body.view-mode .main { display: grid; width: 100%; }
   body.view-mode .layout { height: auto; flex: 1; }
   .detail-panel { width: 100%; border-left: none; }
+
+  /* Hide Sort & Grid size on mobile viewports */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  /* Prevent toolbar and card grids from showing behind transparent WebGL viewport on mobile details */
+  .main.detail-open .toolbar,
+  .main.detail-open .knob-grid {
+    display: none !important;
+  }
 }
 
 /* SCROLLBAR */

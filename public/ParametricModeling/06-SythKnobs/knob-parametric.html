@@ -212,19 +212,19 @@
     <div class="toolbar">
       <span class="toolbar-label">Batch</span>
       <span class="count-badge" id="countBadge">0 KNOBS</span>
-      <span class="toolbar-label" style="margin-left:8px;">Sort:</span>
-      <button class="btn-sm active" id="sortNone" onclick="sortBy('none')" data-tooltip="Sort: default" data-tooltip-pos="left">ADDED</button>
-      <button class="btn-sm" id="sortDia" onclick="sortBy('dia')" data-tooltip="Sort: outer diameter">DIA ↓</button>
-      <button class="btn-sm" id="sortGroove" onclick="sortBy('groove')" data-tooltip="Sort: texture depth">DEPTH ↓</button>
+      <span class="toolbar-label hide-mobile" style="margin-left:8px;">Sort:</span>
+      <button class="btn-sm active hide-mobile" id="sortNone" onclick="sortBy('none')" data-tooltip="Sort: default" data-tooltip-pos="left">ADDED</button>
+      <button class="btn-sm hide-mobile" id="sortDia" onclick="sortBy('dia')" data-tooltip="Sort: outer diameter">DIA ↓</button>
+      <button class="btn-sm hide-mobile" id="sortGroove" onclick="sortBy('groove')" data-tooltip="Sort: texture depth">DEPTH ↓</button>
       
       <span class="toolbar-label" style="margin-left:8px;">View:</span>
       <button class="btn-sm" id="btn-render-mode" onclick="setRenderMode('rendered')" data-tooltip="Style: standard material">RENDERED</button>
       <button class="btn-sm active" id="btn-blueprint-mode" onclick="setRenderMode('blueprint')" data-tooltip="Style: technical blueprint">BLUEPRINT</button>
 
-      <span class="toolbar-label" style="margin-left:8px;">Grid:</span>
-      <button class="btn-sm" id="gridSm" onclick="setGridSize('sm')" data-tooltip="Small cards">SM</button>
-      <button class="btn-sm active" id="gridMd" onclick="setGridSize('md')" data-tooltip="Medium cards">MD</button>
-      <button class="btn-sm" id="gridLg" onclick="setGridSize('lg')" data-tooltip="Large cards">LG</button>
+      <span class="toolbar-label hide-mobile" style="margin-left:8px;">Grid:</span>
+      <button class="btn-sm hide-mobile" id="gridSm" onclick="setGridSize('sm')" data-tooltip="Small cards">SM</button>
+      <button class="btn-sm active hide-mobile" id="gridMd" onclick="setGridSize('md')" data-tooltip="Medium cards">MD</button>
+      <button class="btn-sm hide-mobile" id="gridLg" onclick="setGridSize('lg')" data-tooltip="Large cards">LG</button>
 
       <div class="export-row">
         <button class="btn-sm" id="purgeAllBtn" style="color:var(--danger); border-color:#331111;" onclick="confirmPurgeAll()" data-tooltip="Delete all knobs">✕ PURGE ALL</button>
@@ -248,28 +248,34 @@
     <div class="detail-panel" id="detailPanel">
       <div id="detailPreview" class="preview" style="height: 200px; background: transparent; margin-bottom: 4px; border: 1px solid var(--border);"></div>
       <div class="detail-caption">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+      <div id="dpCounter" class="detail-counter">—</div>
       <div class="detail-title" id="dpTitle">—</div>
       <div class="detail-sub" id="dpSub">—</div>
-      <div id="dpRows"></div>
+      <details class="detail-spoiler" open>
+        <summary>Parameters</summary>
+        <div id="dpRows" style="padding: 0 12px 8px 12px;"></div>
+      </details>
 
       <!-- POST-GEN BATCH EDIT -->
-      <div class="batch-edit-section">
-        <div class="section-label">Post-Gen Edit</div>
-        <select id="batchEditParam">
-          <option value="">Select parameter…</option>
-          <option value="texMode">Texture Mode</option>
-          <option value="texDepth">Texture Depth (mm)</option>
-          <option value="texScale">Texture Scale (mm)</option>
-          <option value="texCount">Texture Count</option>
-          <option value="taper">Taper Ratio</option>
-          <option value="outerD">Outer Diameter (mm)</option>
-          <option value="height">Height (mm)</option>
-          <option value="shape">Profile Shape</option>
-        </select>
-        <div id="batchEditValue"></div>
-        <button class="btn btn-primary" style="margin-top: 6px;" onclick="applyEditToThis()">APPLY TO THIS</button>
-        <button class="btn btn-ghost" onclick="applyEditToAll()">APPLY TO ALL</button>
-      </div>
+      <details class="detail-spoiler" open>
+        <summary>Post-Gen Edit</summary>
+        <div class="batch-edit-section" style="margin-top: 0; border-top: none; padding: 8px 12px 12px 12px;">
+          <select id="batchEditParam">
+            <option value="">Select parameter…</option>
+            <option value="texMode">Texture Mode</option>
+            <option value="texDepth">Texture Depth (mm)</option>
+            <option value="texScale">Texture Scale (mm)</option>
+            <option value="texCount">Texture Count</option>
+            <option value="taper">Taper Ratio</option>
+            <option value="outerD">Outer Diameter (mm)</option>
+            <option value="height">Height (mm)</option>
+            <option value="shape">Profile Shape</option>
+          </select>
+          <div id="batchEditValue"></div>
+          <button class="btn btn-primary" style="margin-top: 6px;" onclick="applyEditToThis()">APPLY TO THIS</button>
+          <button class="btn btn-ghost" onclick="applyEditToAll()">APPLY TO ALL</button>
+        </div>
+      </details>
 
       <div style="display:flex; gap: 8px; margin-top: 16px;">
         <button class="btn" id="btnPrev" style="margin-bottom:0; border-color: #ff4444; color: #ff4444; text-shadow: 0 0 8px rgba(255,68,68,0.5); box-shadow: 0 0 10px rgba(255,68,68,0.2) inset;" onclick="prevKnob()">◀ PREV</button>

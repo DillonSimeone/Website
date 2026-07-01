@@ -70,7 +70,7 @@ async function init() {
     r.addEventListener('input', () => {
       updateParamDisplay(r);
       playToneForParam(r.id, +r.value);
-      triggerHapticFeedback();
+      triggerHapticFeedback('tick');
     });
   });
 
@@ -211,6 +211,21 @@ async function init() {
 
   // ─── Restore knobs from localStorage ───
   await loadKnobs();
+
+  // Wire global haptics for interactive elements
+  document.body.addEventListener('click', (e) => {
+    const target = e.target.closest('button, select, .shape-btn, .toggle-container, .toggle-opt, [role="button"], .delete-btn');
+    if (!target) return;
+    
+    // Determine haptic feedback strength based on the element
+    if (target.classList.contains('btn-danger') || target.id === 'purgeAllBtn' || target.classList.contains('delete-btn')) {
+      triggerHapticFeedback('heavy');
+    } else if (target.closest('.batch-edit-section') || target.id === 'exportBatchStlBtn' || target.classList.contains('btn-primary')) {
+      triggerHapticFeedback('medium');
+    } else {
+      triggerHapticFeedback('light');
+    }
+  });
 }
 
 export function selectShape(id) {

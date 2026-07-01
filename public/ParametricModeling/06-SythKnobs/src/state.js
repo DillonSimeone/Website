@@ -1,5 +1,7 @@
 // State Management & Parameter Utils for Access Knobs Configurator
 
+import { triggerHaptic } from './haptic.js';
+
 export const SHAPES = [
   { id: 'tri',  label: 'TRI',  sides: 3 },
   { id: 'quad', label: 'QUAD', sides: 4 },
@@ -125,10 +127,8 @@ export function playToneForParam(paramId, value) {
   }
 }
 
-export function triggerHapticFeedback() {
-  if (navigator.vibrate) {
-    navigator.vibrate(15);
-  }
+export function triggerHapticFeedback(type = 'light') {
+  triggerHaptic(type);
 }
 
 // ─── GET CURRENT PARAMS ───────────────────────────────────────────
