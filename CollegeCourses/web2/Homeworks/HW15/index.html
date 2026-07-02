@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<HTML lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Homework 8</title>
+    <meta name="description" content="A homework!.">
+    <meta name="author" content="Dillon Simeone">
+    <link rel="stylesheet" href="./style/style.css">
+    <script>
+        
+        function validateForm()
+        {
+            var error = "<p>";
+            var x;
+            var unchecked;
+            
+            x = document.forms["orderForm"]["name"];
+            if(x.value == null || x.value == "")
+                {   
+                    error += "Name must be filled out!<br>"
+                    x.style.border = parseInt(5) + "px" + " solid" + " red";
+                }
+            
+            x = document.forms["orderForm"]["hairColor"];
+            if(x.value == null || x.value == "")
+                {   
+                    error += "Hair color must be filled out!<br>"
+                    x.style.border = parseInt(5) + "px" + " solid" + " red";
+                }
+            
+            x = document.forms["orderForm"]["streetAddress"];
+            if(x.value == null || x.value == "")
+                {   
+                    error += "Street address must be filled out!<br>"
+                    x.style.border = parseInt(5) + "px" + " solid" + " red";
+                }
+            
+            x = document.forms["orderForm"]["zipCode"];
+            if(x.value == null || x.value == "" || x.value > 5 || [0-9].test(x.value) || x.value.length != 5)
+                {   
+                    error += "Zipcode must be filled out! Format: ##### (numbers only!)<br>"
+                    x.style.border = parseInt(5) + "px" + " solid" + " red";
+                }
+            
+            x = document.forms["orderForm"]["state"];
+            if(x.value == null || x.value == "" || [a-zA-Z].test(x.value) || x.value.length != 2)
+                {   
+                    error += "State must be filled out! Format: Two letters only!<br>"
+                    x.style.border = parseInt(5) + "px" + " solid" + " red";
+                }
+            
+            x = document.forms["orderForm"]["email"];
+            var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            if(x.value == null || x.value == "" || re.test(x.value))
+                {   
+                    error += "Street address must be filled out! Format: name@email.com!<br>"
+                    x.style.border = parseInt(5) + "px" + " solid" + " red";
+                }
+            
+            x = document.forms["orderForm"]["color"];
+            for(var i = 0; i < x.length; i++)
+                {
+                    if(x[i].checked)
+                        {
+                            unchecked = false;
+                            break;
+                        }
+                    else
+                        {
+                            unchecked = true;
+                            //This just crash the website page. Odd.
+                            //document.getElementsById("radioQuestion1").style.border = parseInt(5) + "px" + " solid" + " red";
+                        }
+                }
+            
+            if(unchecked)
+                {
+                    error += "A color radio button must be pushed!<br>";
+                }
+            
+            x = document.forms["orderForm"]["size"];
+            for(var i = 0; i < x.length; i++)
+                {
+                    if(x[i].checked)
+                        {
+                            unchecked = false;
+                            break;
+                        }
+                    else
+                        {
+                            unchecked = true;
+                        }
+                }
+            
+            if(unchecked)
+                error += "A size radio button must be pushed!<br>";
+            
+            x = document.forms["orderForm"]["shape"];
+            for(var i = 0; i < x.length; i++)
+                {
+                    if(x[i].checked)
+                        {
+                            unchecked = false;
+                            break;
+                        }
+                    else
+                        {
+                            unchecked = true;
+                        }
+                }
+            
+            if(unchecked)
+                error += "A shape radio button must be pushed!<br>";
+            
+            x = document.forms["orderForm"]["monsterName"];
+            if(x.value == null || x.value == "")
+                {   
+                    error += "Monster's name must be filled out!<br>"
+                    x.style.border = parseInt(5) + "px" + " solid" + " red";
+                }
+            
+            error += "<p>"
+            if(error.length == 0)
+                return true;
+            else
+                {
+                    var message =  document.getElementById("mistakes");
+                    message.style.backgroundColor = "red";
+                    message.style.border = parseInt(5) + "px" + " solid" + " black";
+                    message.style.borderRadius = parseInt(50) + "px";
+                    message.style.padding = parseInt(5) + "px";
+                    message.innerHTML = error;
+                    return false;
+                    
+                }
+        }
+    </script>
+</head>
+<body>
+    <header>
+    </header>
+    <form action="https://people.rit.edu/dys8701/Homeworks/Homework14/index.html" 
+          method="get" 
+          name="orderForm"
+          onsubmit="return validateForm()">
+        <div id="mistakes">
+        </div>
+        <div id="userInfo">
+            <h1>Your shipping Address: </h1>
+            <div class="form">
+                <div class="question">
+                    <label for="name">Full Name: </label>
+                    <input type="text" size="25" id="name" name="name">
+                </div>
+                
+                <div class="question">
+                    <label for="hairColor">Hair color: </label>
+                    <input type="text" size="20" id="hairColor" name="hairColor" title="This is super important! The fate of the universe depends on your answer! ANSWER THIS QUESTION!">
+                </div>
+                
+                <div class="question">
+                    <label for="streetAddress">Street Address: </label>
+                    <input type="text" size="30" id="streetAddress" name ="streetAddress">
+                </div>
+                
+                <div class="question">
+                    <label for="zipCode">Five-digit Zip Code: </label>
+                    <input type="text" size="5" title="Five-digit zip Code." id="zipCode" name="zipCode">
+                </div>
+                
+                <div class="question">
+                    <label for="state">State: </label>
+                    <input type="text" size="2" title="Two letters, example: OR for oregon." id="state" name ="state">
+                </div>
+                
+                <div class="question">
+                    <label for="email">Email: </label>
+                    <input type="email" size="25" title="Email" id="email" name="email">
+                </div>
+                
+                <div class="question">
+                    <input type="checkbox" name="mailingList"><b>Plase add my address to the mailing list!</b>
+                </div>
+                
+                <div class="question">
+                    <input type="checkbox" name="emailingList"><b>Plase add my email address to the spam list!</b>
+                </div>
+                
+            </div>
+        </div>
+        <div id="widgetInfo">
+            <h1>The new monster you want to order: </h1>
+            <div class="form">
+                <div class="radioQuestion1">
+                    <label>Monster Color:</label>
+                    
+                    <div class="radio">
+                        <input type="radio" name="color"><b>Red</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="color"><b>Blue</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="color"><b class="rainbowText">EverythingAtOnce!</b>
+                    </div>
+                </div>
+                <div class="radioQuestion2">
+                    <label>Monster Size:</label>
+                    
+                    <div class="radio">
+                        <input type="radio" name="size"><b>Small</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="size"><b>Medium</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="size"><b>Large</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="size"><b class="rainbowText">MASSIVE, as in larger than the universe!</b>
+                    </div>
+                </div>
+                <div class="radioQuestion3" >
+                    <label>Monster Shape:</label>
+                    
+                    <div class="radio">
+                        <input type="radio" name="shape"><b>Sphere</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="shape"><b>Cube</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="shape"><b>Star</b>
+                    </div>
+                    
+                    <div class="radio">
+                        <input type="radio" name="shape"><b class="rainbowText">Non-euclidean!</b>
+                    </div>
+                </div>
+            </div>
+            <div class="question">
+                <label>Monster status of life: </label>
+                <select name ="status">
+                    <option>Non-living</option>
+                    <option>Living</option>
+                    <option class="rainbowText">Both!</option>
+                </select>
+            </div>
+            <div class="question">
+                <label>Your new Monster's name: </label>
+                <input type="text" size="25" name="monsterName">
+            </div>
+        </div>
+        <div class="buttons">
+            <input type="submit" value="Submit"> <input type="reset">
+        </div>
+    </form>
+</body>
+</HTML>

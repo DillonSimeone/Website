@@ -1,0 +1,50 @@
+body, html{
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+h2{
+    text-align: center;
+}
+
+p{
+    font-size: 1rem;
+    padding: 0rem 1rem;
+}
+
+section{
+    width: 90%;
+    margin: auto;
+}
+
+.grid-item{
+    max-width: 30%;
+}
+
+.grid-item{
+    margin: 10px auto 10px auto;
+    border: 5px solid black;
+    transition: all 1s;
+}
+
+.grid-item:hover{
+    border: 5px solid red;
+}
+
+.grid-item h1{
+    border-bottom: 1px solid black;
+    padding: 10px;
+    margin: 0;
+}
+
+.grid{
+    max-width: 90%;
+    margin: 0 auto;
+}
+
+@media all and (max-width: 1500px) {
+    .grid-item, .grid{
+        max-width: 100%;
+    }
+}

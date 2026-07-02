@@ -1,0 +1,215 @@
+:root {
+  --bg-dark: #0f0913;
+  --velvet-purple: #1e112a;
+  --gold-primary: #c4a45a;
+  --gold-shadow: rgba(196, 164, 90, 0.3);
+  --text-pale: #e4ddeb;
+  
+  --font-gothic: 'Cinzel', serif;
+  --font-sharp: 'MedievalSharp', cursive;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-pale);
+  font-family: var(--font-gothic);
+  font-weight: normal;
+  line-height: 1.6;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(30, 17, 42, 0.8) 0%, transparent 80%),
+    linear-gradient(rgba(196, 164, 90, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 20px 20px;
+}
+
+.gothic-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.gothic-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: var(--gold-primary);
+  text-decoration: none;
+  font-family: var(--font-sharp);
+  letter-spacing: 2px;
+  border: 1px solid var(--gold-primary);
+  padding: 5px 15px;
+  background: transparent;
+  transition: all 0.2s;
+  box-shadow: 0 0 5px var(--gold-shadow);
+}
+
+.nav-back:hover {
+  background: var(--gold-primary);
+  color: var(--bg-dark);
+  box-shadow: 0 0 15px var(--gold-primary);
+}
+
+.gothic-title {
+  font-size: clamp(2.3rem, 5vw, 3.8rem);
+  color: var(--gold-primary);
+  letter-spacing: 4px;
+  margin: 25px 0 10px 0;
+  text-shadow: 0 0 10px var(--gold-shadow);
+}
+
+.stars-divider {
+  color: var(--gold-primary);
+  font-size: 1.1rem;
+  letter-spacing: 10px;
+  margin-bottom: 10px;
+}
+
+.gothic-subtitle {
+  font-family: var(--font-sharp);
+  font-size: 1rem;
+  opacity: 0.8;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.gothic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 35px;
+}
+
+/* Ornate Gothic Cards */
+.gothic-card {
+  background: var(--velvet-purple);
+  border: 1px solid var(--gold-primary);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(196, 164, 90, 0.08);
+  padding: 35px;
+  text-align: center;
+  position: relative;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.gothic-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8), 0 0 10px var(--gold-shadow);
+}
+
+.card-border-line {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border: 1px dashed rgba(196, 164, 90, 0.2);
+  pointer-events: none;
+}
+
+.gothic-card h2 {
+  font-family: var(--font-sharp);
+  color: var(--gold-primary);
+  font-size: 1.4rem;
+  margin-top: 0;
+  letter-spacing: 2px;
+}
+
+.gothic-card p {
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.gothic-quote {
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--gold-primary);
+  line-height: 1.5;
+}
+
+.gothic-btn {
+  background: transparent;
+  border: 1px solid var(--gold-primary);
+  color: var(--gold-primary);
+  font-family: var(--font-sharp);
+  padding: 10px 24px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.2s;
+  box-shadow: 0 0 5px var(--gold-shadow);
+}
+
+.gothic-btn:hover {
+  background: var(--gold-primary);
+  color: var(--bg-dark);
+  box-shadow: 0 0 12px var(--gold-primary);
+}
+
+/* 3D Tarot Card Flip Animation */
+.tarot-wrapper {
+  height: 180px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1000px;
+  margin: 25px 0;
+}
+
+.tarot-card-visual {
+  width: 90px;
+  height: 140px;
+  border: 2px solid var(--gold-primary);
+  border-radius: 6px;
+  background: #000;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+}
+
+/* Flip state class added dynamically */
+.tarot-card-visual.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-back-pattern, .card-front-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.card-back-pattern {
+  background: radial-gradient(circle, var(--velvet-purple) 0%, #000000 100%);
+  border: 1px solid rgba(196, 164, 90, 0.3);
+}
+
+.moon-phase {
+  font-size: 3rem;
+  color: var(--gold-primary);
+}
+
+.card-front-face {
+  background: #000;
+  transform: rotateY(180deg);
+  border: 1px solid var(--gold-primary);
+  padding: 10px;
+}
+
+.tarot-symbol {
+  font-size: 3rem;
+  color: var(--gold-primary);
+  margin-bottom: 10px;
+}
+
+.tarot-title {
+  font-family: var(--font-sharp);
+  font-size: 8px;
+  letter-spacing: 1px;
+}

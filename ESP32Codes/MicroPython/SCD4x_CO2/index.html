@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CO2 Monitor</title>
+    <style>
+        :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --primary: #03dac6; --danger: #cf6679; --alert: #2979ff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 20px; max-width: 700px; margin: 0 auto; }
+        .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: background-color 0.5s; }
+        h1, h2 { margin-top: 0; color: var(--primary); font-size: 1.4rem; }
+        .sensor-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; text-align: center; }
+        .value { font-size: 2.5rem; font-weight: bold; }
+        .unit { font-size: 0.9rem; opacity: 0.7; }
+        .sub-grid { display: flex; justify-content: space-around; margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; }
+        .sub-val { font-size: 1.2rem; font-weight: bold; }
+        
+        /* Dew Point Alert Animation */
+        @keyframes flashBlue {
+            0% { background-color: var(--card); }
+            50% { background-color: rgba(41, 121, 255, 0.3); box-shadow: 0 0 15px var(--alert); }
+            100% { background-color: var(--card); }
+        }
+        .dew-alert { animation: flashBlue 2s infinite; border: 1px solid var(--alert); }
+        .dew-warning-text { color: var(--alert); font-weight: bold; display: none; margin-top: 5px; font-size: 0.9rem; }
+
+        /* Inputs */
+        input[type="range"] { width: 100%; height: 6px; background: #333; border-radius: 3px; outline: none; -webkit-appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--primary); border-radius: 50%; cursor: pointer; }
+        input[type="number"] { background: #333; color: white; border: 1px solid #444; border-radius: 4px; padding: 5px; width: 70px; }
+        
+        /* Threshold List */
+        .threshold-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #333; }
+        .t-row { display: flex; align-items: center; gap: 15px; margin-bottom: 12px; flex-wrap: wrap; }
+        .t-row:last-child { margin-bottom: 0; }
+        
+        .brightness-control { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 200px; }
+        .flash-options { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 4px; border: 1px solid #444; }
+        
+        .btn { background: var(--primary); color: #000; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8rem; }
+        .btn-small { padding: 6px 12px; font-size: 0.8rem; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        canvas { width: 100%; height: 250px; background: #222; border-radius: 8px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <!-- Live Data -->
+    <div class="card" id="sensor-card">
+        <h2>Live Readings</h2>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="value" id="co2" style="font-size: 4rem; line-height: 1;">--</div>
+            <div class="unit" style="font-size: 1.2rem;">PPM CO2</div>
+        </div>
+        
+        <div class="sub-grid">
+            <div>
+                <div class="sub-val" id="temp">--</div>
+                <div class="unit">°C Temp</div>
+            </div>
+            <div>
+                <div class="sub-val" id="hum">--</div>
+                <div class="unit">% Hum</div>
+            </div>
+            <div>
+                <div class="sub-val" id="dp">--</div>
+                <div class="unit">°C Dew Pt</div>
+            </div>
+        </div>
+        <div id="dew-warning" class="dew-warning-text" style="text-align: center;">⚠️ CONDENSATION RISK</div>
+    </div>
+
+    <!-- History Graph -->
+    <div class="card">
+        <div class="flex-between">
+            <h2>History (Last 500 Pts)</h2>
+            <div style="text-align: right;">
+                <span id="refresh-label" style="font-size: 0.7rem; opacity: 0.6; display: block; margin-bottom: 5px;">Auto-refresh: --s</span>
+                <a href="/api/download" class="btn btn-small" target="_blank">Download CSV</a>
+            </div>
+        </div>
+        <canvas id="chart"></canvas>
+    </div>
+
+    <!-- Settings -->
+    <div class="card">
+        <h2>Global Settings</h2>
+        <div class="flex-between" style="margin-bottom:10px;">
+            <label>LED Pixel Count</label>
+            <input type="number" id="num_pixels" min="1" max="100" value="1">
+        </div>
+        <div class="flex-between">
+            <label>Flash Rate (Hz)</label>
+            <div style="flex:1; margin:0 15px; text-align:center;">
+                <input type="range" id="flash_rate" min="1" max="50" step="1" value="10">
+                <span id="rate-val" style="font-size:0.8rem; display:block;">1.0 Hz</span>
+            </div>
+        </div>
+        <div class="flex-between" style="margin-top:10px;">
+            <label>Log Interval (sec)</label>
+            <input type="number" id="log_interval" min="10" value="60">
+        </div>
+    </div>
+
+    <!-- Rules -->
+    <div class="card">
+        <div class="flex-between" style="margin-bottom: 15px;">
+            <h2>Threshold Rules</h2>
+            <button class="btn btn-small" onclick="addThreshold()">+ Add Rule</button>
+        </div>
+        <div id="threshold-list"></div>
+        <div style="margin-top: 25px; text-align: right;">
+            <button class="btn" onclick="saveSettings()">Save & Apply</button>
+        </div>
+    </div>
+
+    <script>
+        let settings = { thresholds: [] };
+        let graphIntervalId = null;
+
+        // --- Data Fetching ---
+        async function fetchData() {
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
+                document.getElementById('co2').innerText = data.co2;
+                document.getElementById('temp').innerText = data.temp.toFixed(1);
+                document.getElementById('hum').innerText = data.hum.toFixed(1);
+                
+                // Dew Point Logic
+                const dp = data.dew_point || 0;
+                document.getElementById('dp').innerText = dp.toFixed(1);
+                
+                // Alert if Temp is close to Dew Point (within 3 degrees)
+                const card = document.getElementById('sensor-card');
+                const warnText = document.getElementById('dew-warning');
+                
+                if (data.temp - dp <= 3.0) {
+                    if (!card.classList.contains('dew-alert')) card.classList.add('dew-alert');
+                    warnText.style.display = 'block';
+                } else {
+                    card.classList.remove('dew-alert');
+                    warnText.style.display = 'none';
+                }
+            } catch (e) {}
+        }
+
+        // --- Graphing ---
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const data = await res.json();
+                drawChart(data);
+            } catch (e) { console.error("History error", e); }
+        }
+
+        function updateGraphInterval(seconds) {
+            if (graphIntervalId) clearInterval(graphIntervalId);
+            seconds = seconds || 60;
+            graphIntervalId = setInterval(loadHistory, seconds * 1000);
+            document.getElementById('refresh-label').innerText = `Auto-refresh: ${seconds}s`;
+        }
+
+        function drawChart(data) {
+            const canvas = document.getElementById('chart');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width = canvas.offsetWidth;
+            const h = canvas.height = canvas.offsetHeight;
+            
+            ctx.clearRect(0, 0, w, h);
+            if (data.length < 2) return;
+
+            // Convert Timestamps (ESP32 Epoch 2000 -> JS Epoch 1970)
+            const processedData = data.map(d => ({
+                ...d,
+                date: new Date((d.ts + 946684800) * 1000)
+            }));
+
+            // Find min/max
+            let minVal = Infinity, maxVal = -Infinity;
+            processedData.forEach(d => {
+                if(d.co2 < minVal) minVal = d.co2;
+                if(d.co2 > maxVal) maxVal = d.co2;
+            });
+            const range = maxVal - minVal;
+            const yMin = Math.max(0, minVal - range * 0.1); 
+            const yMax = maxVal + range * 0.1;
+            
+            // Layout margins
+            const padLeft = 40;
+            const padBottom = 30;
+            const graphW = w - padLeft;
+            const graphH = h - padBottom;
+            const getX = (i) => padLeft + (i / (processedData.length - 1)) * graphW;
+            const getY = (val) => graphH - ((val - yMin) / (yMax - yMin)) * graphH;
+
+            // Grid & Labels
+            ctx.fillStyle = '#888';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+
+            const steps = 5;
+            for(let i=0; i<=steps; i++) {
+                const val = yMin + (i/steps) * (yMax - yMin);
+                const y = getY(val);
+                ctx.beginPath(); ctx.moveTo(padLeft, y); ctx.lineTo(w, y); ctx.stroke();
+                ctx.fillText(Math.round(val), padLeft - 5, y + 3);
+            }
+
+            // X-axis Time Labels (Pacific Time)
+            ctx.textAlign = 'center';
+            const xSteps = 5;
+            for(let i=0; i<xSteps; i++) {
+                const index = Math.floor(i * (processedData.length - 1) / (xSteps - 1));
+                const d = processedData[index];
+                const x = getX(index);
+                const timeStr = d.date.toLocaleTimeString('en-US', { 
+                    timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' 
+                });
+                ctx.fillText(timeStr, x, h - 10);
+            }
+
+            // Line Graph
+            ctx.beginPath();
+            ctx.strokeStyle = '#03dac6';
+            ctx.lineWidth = 2;
+            processedData.forEach((d, i) => {
+                const x = getX(i);
+                const y = getY(d.co2);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
+
+        // --- Settings Logic ---
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                settings = await res.json();
+                document.getElementById('num_pixels').value = settings.num_pixels || 1;
+                document.getElementById('log_interval').value = settings.log_interval_sec || 60;
+                const hz = settings.flash_rate_hz || 1.0;
+                document.getElementById('flash_rate').value = hz * 10;
+                document.getElementById('rate-val').innerText = hz.toFixed(1) + " Hz";
+                renderThresholds();
+                updateGraphInterval(settings.log_interval_sec);
+            } catch (e) {}
+        }
+
+        function renderThresholds() {
+            const list = document.getElementById('threshold-list');
+            list.innerHTML = '';
+            settings.thresholds.sort((a,b) => a.ppm - b.ppm);
+            settings.thresholds.forEach((t, index) => {
+                const div = document.createElement('div');
+                div.className = 'threshold-item';
+                div.innerHTML = `
+                    <div class="t-row flex-between">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <label>> PPM:</label>
+                            <input type="number" value="${t.ppm}" onchange="updateT(${index}, 'ppm', this.value)">
+                        </div>
+                        ${index > 0 ? `<button class="btn btn-danger" onclick="removeThreshold(${index})">Remove</button>` : ''}
+                    </div>
+                    <div class="t-row">
+                        <div class="brightness-control">
+                            <label>Bright:</label>
+                            <input type="range" min="0" max="100" value="${(t.brightness || 0.3) * 100}" oninput="this.nextElementSibling.innerText = this.value + '%'; updateT(${index}, 'brightness', this.value)">
+                            <span style="font-size:0.8rem; width:35px;">${Math.round((t.brightness || 0.3) * 100)}%</span>
+                        </div>
+                    </div>
+                    <div class="t-row">
+                        <div style="display:flex; align-items:center; gap:5px; margin-right:15px;">
+                            <label>Color:</label>
+                            <input type="color" value="${t.color1}" onchange="updateT(${index}, 'color1', this.value)">
+                        </div>
+                        <div class="flash-options">
+                            <input type="checkbox" id="flash-${index}" ${t.flashing ? 'checked' : ''} onchange="updateT(${index}, 'flashing', this.checked)">
+                            <label for="flash-${index}">Flash</label>
+                            <div id="flash-color-${index}" style="display: ${t.flashing ? 'flex' : 'none'}; align-items:center; gap:5px; margin-left: 10px; border-left: 1px solid #555; padding-left: 10px;">
+                                <label>Alt:</label>
+                                <input type="color" value="${t.color2 || '#000000'}" onchange="updateT(${index}, 'color2', this.value)">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updateT(index, key, value) {
+            if (key === 'ppm') value = parseInt(value);
+            if (key === 'brightness') value = parseInt(value) / 100.0;
+            settings.thresholds[index][key] = value;
+            if (key === 'flashing') {
+                const altColorDiv = document.getElementById(`flash-color-${index}`);
+                altColorDiv.style.display = value ? 'flex' : 'none';
+            }
+        }
+
+        function addThreshold() {
+            settings.thresholds.push({ ppm: 3000, color1: "#ffffff", brightness: 0.5, flashing: false, color2: "#ff0000" });
+            renderThresholds();
+        }
+
+        function removeThreshold(index) {
+            if(confirm("Delete rule?")) {
+                settings.thresholds.splice(index, 1);
+                renderThresholds();
+            }
+        }
+
+        async function saveSettings() {
+            settings.num_pixels = parseInt(document.getElementById('num_pixels').value);
+            settings.log_interval_sec = parseInt(document.getElementById('log_interval').value);
+            settings.flash_rate_hz = parseInt(document.getElementById('flash_rate').value) / 10;
+            try {
+                const res = await fetch('/api/settings', { method: 'POST', body: JSON.stringify(settings) });
+                if (res.ok) {
+                    alert("Saved!");
+                    updateGraphInterval(settings.log_interval_sec);
+                }
+                else alert("Error saving.");
+            } catch (e) { alert("Error: " + e); }
+        }
+
+        document.getElementById('flash_rate').addEventListener('input', (e) => {
+            document.getElementById('rate-val').innerText = (e.target.value / 10).toFixed(1) + " Hz";
+        });
+
+        // Init
+        loadSettings();
+        fetchData();
+        setInterval(fetchData, 2000); // Live readings every 2s
+        setTimeout(loadHistory, 1000); // Initial graph load
+    </script>
+</body>
+</html>

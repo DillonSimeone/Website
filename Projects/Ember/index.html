@@ -1,0 +1,393 @@
+<!--
+  Ember - Stack Bytecode VM & Pattern Engine
+  Copyright (c) 2026 Dillon Simeone (https://dillonsimeone.com)
+  Licensed under the MIT License. See LICENSE file in project root.
+-->
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Ember — Stack Bytecode VM & Pattern Engine</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="page-container">
+        <!-- HERO SECTION -->
+        <header class="hero">
+            <div class="hero-content">
+                <div class="badge">ESP32-C3 Firmware</div>
+                <h1>EMBER</h1>
+                <p class="subtitle">A high-performance pattern engine, stack-based bytecode VM, and real-time audio
+                    analyzer for expressive addressable LED installations.</p>
+                <div class="hero-actions">
+                    <a href="#simulator" class="btn primary">Launch Simulator</a>
+                    <a href="#architecture" class="btn secondary">Read Architecture</a>
+                    <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/03_Visuals_Art/Ember"
+                        target="_blank" class="btn">View Source</a>
+                </div>
+            </div>
+            <div class="hero-graphic">
+                <div class="led-strip-glow"></div>
+                <div class="led-strip-preview" id="hero-strip">
+                    <canvas id="hero-canvas" width="600" height="12"></canvas>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT WRAPPER: DOCS & SIMULATOR -->
+        <div class="summary-sim-row">
+
+            <!-- LEFT: EXECUTIVE SUMMARY -->
+            <div class="summary-column">
+                <section class="doc-card" style="margin-bottom: 0;">
+                    <h2>What Is Ember?</h2>
+                    <p>
+                        <strong>Ember</strong> grew out of <a
+                            href="https://github.com/DillonSimeone/Website/tree/main/ESP32Codes/PlatformIO/03_Visuals_Art/WebFastLed/"
+                            target="_blank" style="color:var(--accent-1); text-decoration:underline;">WebFastLed</a>, an
+                        earlier project that ran patterns by parsing
+                        JavaScript-like expressions on every pixel, every frame. It worked, but it was slow and
+                        brittle. Ember replaces that interpreter with a proper bytecode compiler and
+                        a stack-based virtual machine running inside its own FreeRTOS task, which is how it manages a
+                        stable, smooth framerate on a $2 chip.
+                    </p>
+                    <p>
+                        <strong>Caveat first:</strong> if you want the gold standard in scriptable LED systems,
+                        go look at <a href="https://www.electromage.com/" target="_blank"
+                            style="color:var(--accent-1); text-decoration:underline;">ElectroMage's Pixelblaze</a>.
+                        It's more expensive hardware, but it's a battle-tested ecosystem that can drive thousands
+                        of pixels with expansion boards and a mature compiler. Zero friction, rock-solid. It's
+                        worth every dollar if that's what you need!
+                    </p>
+                    <p>
+                        Ember is the scrappy DIY alternative. It's new, it's open-source, and it runs entirely on
+                        a bare ESP32-C3 module. No companion app (yet!), no proprietary cloud, just a captive portal you
+                        connect to over Wi-Fi, write a pattern, hit save, and watch it render live. The idea is that
+                        this would be perfect as a cheap solution for wearable lights, since if the controller got lost,
+                        destroyed, etc, it's just two or three dollars to replace.
+                    </p>
+
+                    <div class="tech-table-wrapper" style="margin-top: auto;">
+                        <table class="tech-table">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th><a href="https://github.com/DillonSimeone/Website/tree/main/ESP32Codes/PlatformIO/03_Visuals_Art/WebFastLed/"
+                                            target="_blank"
+                                            style="color:var(--accent-1); text-decoration:underline;">WebFastLed
+                                            (Legacy)</a></th>
+                                    <th>Ember</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Execution Model</strong></td>
+                                    <td>AST tree-walking interpreter</td>
+                                    <td>Stack-based bytecode VM</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hot-Loop Allocations</strong></td>
+                                    <td>Heavy heap churn (strings, vectors)</td>
+                                    <td><strong>Zero heap allocations</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Performance (60 LEDs)</strong></td>
+                                    <td>Roughly 28 FPS (~190 µs/pixel)</td>
+                                    <td><strong>Up to 60 FPS (~14 µs/pixel)</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Audio Reactivity</strong></td>
+                                    <td>None</td>
+                                    <td>256-point FFT (I2S &amp; Analog)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Threading</strong></td>
+                                    <td>Single-threaded Arduino loop</td>
+                                    <td>Isolated FreeRTOS tasks</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>UI</strong></td>
+                                    <td>Basic web sliders</td>
+                                    <td>Live captive portal + pattern editor</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- RIGHT: INTERACTIVE CAPTIVE PORTAL SIMULATOR -->
+            <section class="simulator-column" id="simulator">
+                <div class="simulator-sticky">
+
+                    <div class="sim-header">
+                        <div class="sim-title">
+                            <span class="dot live blinking"></span>
+                            <h2>Live Portal Simulator</h2>
+                        </div>
+                        <div class="audio-mic-btn-wrap">
+                            <button class="btn btn-audio-mic" id="audio-mic-toggle">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <path d="M12 1v11m-6-6a6 6 0 0012 0" />
+                                    <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                                </svg>
+                                <span>Enable Live Mic</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- VIRTUAL LED STRIP CHASSIS -->
+                    <div class="virtual-strip-chassis">
+                        <div class="strip-header">
+                            <span>Virtual Addressable Strip</span>
+                            <span class="sim-fps" id="sim-fps">60 FPS</span>
+                        </div>
+                        <div class="led-viewport">
+                            <canvas id="prev" width="300" height="24"></canvas>
+                        </div>
+                        <div class="strip-footer">
+                            <span id="prevCount">60</span> Pixels | Pin: <span id="prevPin">GPIO 4</span>
+                        </div>
+                    </div>
+
+                    <!-- PORTAL CONTAINER -->
+                    <div class="portal-container">
+                        <div class="portal-header">
+                            <div class="portal-logo">EMBER</div>
+                            <div class="portal-crumb">Active: <b id="patternName">Rainbow Drift</b></div>
+                            <div class="portal-status">
+                                <span class="portal-dot" id="dot"></span>
+                                <span id="connText">connected</span>
+                            </div>
+                        </div>
+
+                        <div class="portal-body">
+                            <!-- EDITOR & CONTROLS -->
+                            <div class="portal-main">
+                                <div class="editor-container">
+                                    <div class="gutter" id="gutter">1</div>
+                                    <pre class="layer hl" id="hl"></pre>
+                                    <textarea class="layer" id="ta" spellcheck="false" autocomplete="off"
+                                        autocorrect="off" autocapitalize="off"></textarea>
+                                </div>
+                                <div class="err ok" id="err">ready</div>
+                                <div class="portal-actions">
+                                    <input type="text" id="saveName" placeholder="Pattern name">
+                                    <button class="btn primary" id="saveBtn">Save</button>
+                                    <button class="btn" id="newBtn">New</button>
+                                </div>
+                            </div>
+
+                            <!-- PANEL TABS & CONTROLS -->
+                            <aside class="portal-sidebar">
+                                <div class="tabbar">
+                                    <button class="tab active" data-tab="lib">Library</button>
+                                    <button class="tab" data-tab="saved">Saved</button>
+                                    <button class="tab" data-tab="set">Settings</button>
+                                    <button class="tab" data-tab="help">Help</button>
+                                </div>
+
+                                <div class="tab-content" id="tab-lib">
+                                    <h3>Demo Patterns</h3>
+                                    <div class="cards" id="libCards"></div>
+                                </div>
+
+                                <div class="tab-content" id="tab-saved" style="display:none">
+                                    <h3>Stored on Browser</h3>
+                                    <div class="saved" id="savedChips"></div>
+                                    <p class="hint">Patterns are saved to your browser's local storage for previewing.
+                                    </p>
+                                </div>
+
+                                <div class="tab-content" id="tab-set" style="display:none">
+                                    <h3>Strip Hardware</h3>
+                                    <div class="row">
+                                        <label>Brightness</label>
+                                        <input type="range" id="bright" min="0" max="255" value="255">
+                                        <span class="val" id="brightVal">255</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Data Pin</label>
+                                        <select id="pin">
+                                            <option value="0">GPIO 0</option>
+                                            <option value="1">GPIO 1</option>
+                                            <option value="2">GPIO 2</option>
+                                            <option value="3">GPIO 3</option>
+                                            <option value="4" selected>GPIO 4</option>
+                                            <option value="5">GPIO 5</option>
+                                            <option value="6">GPIO 6</option>
+                                            <option value="7">GPIO 7</option>
+                                            <option value="8">GPIO 8</option>
+                                            <option value="9">GPIO 9</option>
+                                            <option value="10">GPIO 10</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <label>Pixel Count</label>
+                                        <input type="number" id="count" min="10" max="300" value="60"
+                                            style="width:70px">
+                                    </div>
+
+                                    <h3 style="margin-top:18px">Virtual Audio Mic</h3>
+                                    <div class="row">
+                                        <label>Audio Source</label>
+                                        <select id="micSrc">
+                                            <option value="0">Sequencer Simulation</option>
+                                            <option value="1" id="mic-browser-option">Live Microphone</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <label>Gain Sensitivity</label>
+                                        <input type="range" id="micGain" min="10" max="500" value="100">
+                                        <span class="val" id="micGainVal">1.0×</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Smoothing</label>
+                                        <input type="range" id="micSmooth" min="0" max="95" value="60">
+                                        <span class="val" id="micSmoothVal">0.60</span>
+                                    </div>
+
+                                    <!-- REAL-TIME AUDIO SPECTRUM BARS -->
+                                    <div id="audioViz" style="margin-top:12px">
+                                        <div class="bars-container">
+                                            <div class="bar" style="height:0%"></div>
+                                            <div class="bar" style="height:0%"></div>
+                                            <div class="bar" style="height:0%"></div>
+                                            <div class="bar" style="height:0%"></div>
+                                            <div class="bar" style="height:0%"></div>
+                                            <div class="bar" style="height:0%"></div>
+                                            <div class="bar" style="height:0%"></div>
+                                            <div class="bar" style="height:0%"></div>
+                                        </div>
+                                        <div class="freq-labels">
+                                            <span>62Hz</span><span>VU: <span
+                                                    id="vuVal">0.00</span></span><span>8kHz</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="tab-content" id="tab-help" style="display:none">
+                                    <h3>VM Variables</h3>
+                                    <p class="hint">
+                                        <code>i</code> / <code>index</code> — LED index<br>
+                                        <code>n</code> / <code>pixelCount</code> — Strip length<br>
+                                        <code>t</code> / <code>time</code> — Secs since load<br>
+                                        <code>PI</code>, <code>TAU</code>
+                                    </p>
+                                    <h3>Special Builtins</h3>
+                                    <p class="hint">
+                                        <code>time(s)</code> — sawtooth 0→1 every s seconds<br>
+                                        <code>wave(v)</code> — 0→1 sine cycles of v<br>
+                                        <code>triangle(v)</code> — 0→1→0 triangle of v<br>
+                                        <code>square(v, duty)</code> — 0/1 square wave<br>
+                                        <code>perlin1D(x)</code>, <code>perlin2D(x,y)</code> — smooth noise<br>
+                                        <code>hash(x)</code> — stable per-pixel random
+                                    </p>
+                                    <h3>Audio Builtins</h3>
+                                    <p class="hint">
+                                        <code>vu()</code> — master sound amplitude (0→1)<br>
+                                        <code>peak()</code> — slow-decay sound peak<br>
+                                        <code>pitch()</code> — dominant pitch (0→1)<br>
+                                        <code>beat()</code> — 1 on audio hit, decays rapidly<br>
+                                        <code>band(n)</code> — band n (0..7)<br>
+                                        <code>bass()</code>, <code>mid()</code>, <code>treble()</code> — shortcuts
+                                    </p>
+                                </div>
+                            </aside>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
+
+        <!-- BOTTOM: DEEPER ARCHITECTURAL REPORT -->
+        <article class="bottom-docs-column" id="architecture">
+            <section class="doc-card">
+                <h2>Compiler &amp; VM</h2>
+                <h3>Why the old approach was slow</h3>
+                <p>
+                    WebFastLed parsed your pattern expression character-by-character on <em>every pixel of every
+                        frame</em>. At 60 LEDs and 30 FPS, that's roughly 1,800 parse-eval cycles per second. Each one
+                    dragged in heap allocations for temporary token strings and <code>std::map</code> lookups. On a
+                    microcontroller, that adds up: memory fragments, the allocator stalls, frames drop.
+                </p>
+                <h3>How Ember fixes it</h3>
+                <p>
+                    Ember ships a <strong>single-pass Pratt-style compiler</strong> baked directly into the firmware.
+                    When you save a pattern it compiles <em>once</em> into a flat bytecode array, stashes numeric
+                    literals in a de-duplicated float pool, and resolves variable names to
+                    <code>uint8_t</code> register indices. After that the render loop just executes
+                    opcodes against pre-allocated stack buffers, no malloc, no free, no surprises.
+                </p>
+                <div class="diagram-container">
+                    <div class="bytecode-flow">
+                        <span class="box">Source Code</span> ──►
+                        <span class="box compiler">Pratt Compiler</span> ──►
+                        <span class="box bytecode">Bytecode Array</span> ──►
+                        <span class="box vm">Tight VM Loop</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="doc-card">
+                <h2>Concurrency on a Single Core</h2>
+                <p>
+                    The ESP32-C3 is a single-core chip, so we have to share nicely. Ember uses a small FreeRTOS task
+                    schedule to make sure everything stays responsive:
+                </p>
+                <ul>
+                    <li><strong><code>RenderTask</code> (Priority 2)</strong> — This is the heart of the show. It stays
+                        locked to 60Hz and doesn't get interrupted by the networking layer.</li>
+                    <li><strong><code>AsyncTCP Worker</code> (Priority 3)</strong> — This runs slightly above the
+                        renderer. It handles web requests, meaning the dashboard feels snappy, and it only steals a few
+                        microseconds to do its job.</li>
+                    <li><strong>Atomic pointer swap</strong> — When you update a pattern, it doesn't break the current
+                        frame. It just atomically replaces a <code>std::atomic&lt;Program*&gt;</code> pointer that the
+                        renderer grabs at the top of the next cycle.</li>
+                </ul>
+            </section>
+
+            <section class="doc-card">
+                <h2>Audio &amp; FFT</h2>
+                <p>
+                    Ember has two mic options depending on your build: a digital
+                    <strong>INMP441</strong> MEMS mic over I2S (cleaner signal, better for music), or an analog
+                    <strong>MAX4466</strong> electret mic through ADC1 (cheaper, easier to wire up). Either way,
+                    the processing pipeline is the same:
+                </p>
+                <ul>
+                    <li>A 256-point Hamming-windowed FFT runs via <code>arduinoFFT</code> in a background task.</li>
+                    <li>Raw frequency bins get compressed into 8 logarithmic bands that map well to human
+                        hearing: bass, mids, and treble don't all fight for the same bucket.</li>
+                    <li>The results feed into pattern builtins you can call directly:
+                        <code>vu()</code>, <code>beat()</code>, <code>bass()</code>, <code>mid()</code>,
+                        <code>treble()</code>, and <code>band(n)</code> for per-band access.
+                    </li>
+                    <li>The simulator above supports both a sequencer simulation and your actual browser microphone,
+                        so you can prototype audio-reactive patterns without touching hardware.</li>
+                </ul>
+            </section>
+        </article>
+
+        <footer style="text-align: center; padding: 32px 24px; color: var(--text-muted, #8893a8); font-size: 13px; border-top: 1px solid var(--border, #232938); margin: 40px 24px 0;">
+            <p>&copy; 2026 <a href="https://dillonsimeone.com" target="_blank" style="color: var(--accent-1, #7c9cff); text-decoration: none; font-weight: 500;">Dillon Simeone</a>. All rights reserved. Licensed under the <a href="/LICENSE" target="_blank" style="color: var(--accent-1, #7c9cff); text-decoration: underline;">MIT License</a>.</p>
+        </footer>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+
+</html>

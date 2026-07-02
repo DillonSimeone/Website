@@ -1,0 +1,11 @@
+{
+    "num_pixels": 1,
+    "flash_rate_hz": 1.0,
+    "log_interval_sec": 60,
+    "thresholds": [
+        {"ppm": 0, "color1": "#00FF00", "brightness": 0.1, "flashing": false, "color2": "#000000"},
+        {"ppm": 1000, "color1": "#FFFF00", "brightness": 0.3, "flashing": false, "color2": "#000000"},
+        {"ppm": 1500, "color1": "#FF8000", "brightness": 0.5, "flashing": true, "color2": "#FF0000"},
+        {"ppm": 2000, "color1": "#FF0000", "brightness": 1.0, "flashing": true, "color2": "#0000FF"}
+    ]
+}

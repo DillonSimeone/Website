@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Pacific Trails Resort :: Reservations</title>
+<meta charset="utf-8">
+<link href="pacific.css" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--[if lt IE 9]>
+   <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"> </script>   
+<![endif]-->
+</head>
+    <style>
+    </style>
+<body>
+<div id="wrapper">
+<header><h1>Pacific Trails Resort</h1></header>
+<nav>
+  <ul>
+  <li><a href="index.html">Home</a></li>
+  <li><a href="yurts.html">Yurts</a></li>
+  <li><a href="activities.html">Activities</a></li>
+  <li><a href="reservations.html">Reservations</a></li>
+  </ul>
+</nav>
+<main>
+<h2>Reservations at the silly trails</h2>
+    <h3>Don't contact us today!</h3>
+    <form method="post" action="http://webdevbasics.net/scripts/pacific.php">
+        <label for="Fname" class="right">*First Name</label>
+        <input type="text" name="Fname" id="Fname" placeholder="DO NOT PUT YER NAME HERE" required="required" class="right">
+        <label for="Lname" class="left">*Last Name</label>
+        <input type="text" name="Lname" id="Lname" placeholder="YOU WILL REGRET THIS" required="required" class="left">
+        <label for="email" class="right">*Email</label>
+        <input type=email name="email" id="email" placeholder="RUE THIS DAY!" required="required" class="left">
+        <label for="Phone" class="left">*Phone</label>
+        <input type="tel" name="Phone" id="Phone" placeholder="FOR EVER AND EVER!" required="required" class="right">
+        <label for="Date" class="right" >Arrival Date</label>
+        <input type="date" name="Date" id="Date" required="required" class="right">
+        <label for="Nights" class="left">Nights</label>
+        <input type="number" min="1" max="30" name="Nights" id="Nights" required="required" class="right">
+        <label for="Comments" class="left">*Comments</label>
+        <textarea name="Comments" id="Comments" rows="2" cols="30" placeholder="FOR EVER! FOR EVER!" required="required" class="right">
+        </textarea>
+        <input type="submit" value="I have no idea why... This... All of this." class="left">
+    </form>
+  <div id="contact">
+  <span class="resort">Pacific Trails Resort</span><br>
+  12010 Pacific Trails Road<br>
+  Zephyr, CA 95555<br><br>
+  <a id="mobile" href="tel:888-555-5555">888-555-5555</a><span id="desktop">888-555-5555</span><br><br>
+  </div>
+</main>
+<footer>
+Copyright &copy; 2016 Pacific Trails Resort<br>
+<a href="mailto:yourfirstname@yourlastname.com">yourfirstname@yourlastname.com</a>
+</footer>
+</div>
+</body>
+</html>

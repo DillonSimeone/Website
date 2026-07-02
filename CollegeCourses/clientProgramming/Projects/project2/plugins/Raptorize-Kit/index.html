@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Title This Page :)</title>
+	
+	<!-- jQuery: Grab Google CDN jQuery. fall back to local if necessary -->
+	<script src="https://people.rit.edu/dys8701/projects/clientprogramming/project2/plugins/JQuery/jquery-3.2.1.min.js"></script>
+	
+	<!-- The raptorize file  -->
+	<script src="as.js"></script>
+	
+	<!-- For the button version -->
+	<script type="text/javascript">
+	$(document).ready(function()
+	{
+		$('.button').raptorize();
+	});
+	</script>
+	
+	
+	<!-- For the Timer version -->
+	<!-- <script type="text/javascript">
+		$(window).load(function() {
+			$('.button').raptorize({
+				'enterOn' : 'timer',
+				'delayTime' : 2000
+			});
+		});
+	</script>	
+	-->
+
+</head>
+<body>
+	<h1>Hey There!</h1>
+	
+	<p><a href="#" class="button">Click me</a> to activate the Raptorize plugin.</p>
+	<p>You can also use the Konami-Code (on your keyboard type &uarr; &uarr; &darr; &darr; &larr; &rarr; &larr; &rarr; B A)</p>
+	
+</body>
+</html>

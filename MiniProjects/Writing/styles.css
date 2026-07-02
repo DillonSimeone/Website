@@ -1,0 +1,524 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;700&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap');
+
+:root {
+    --bg-color: #030308;
+    --text-color: #e2e8f0;
+    --text-dim: #94a3b8;
+    --transition-speed: 0.4s;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Ambient Canvas background */
+#portal-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    transition: filter var(--transition-speed) ease;
+}
+
+/* Grid Background overlay for tech feel */
+.bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+    background-size: 50px 50px;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.bg-glow {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80vw;
+    height: 80vh;
+    background: radial-gradient(circle, rgba(15, 23, 42, 0.4) 0%, transparent 80%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Main Container */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+    padding: 80px 0 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Header Styles */
+header {
+    text-align: center;
+    margin-bottom: 60px;
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    margin-bottom: 15px;
+    display: block;
+}
+
+h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #ffffff 40%, #a5b4fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+    font-weight: 300;
+}
+
+/* Cards Grid */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 40px;
+    width: 100%;
+    margin-bottom: 60px;
+    perspective: 1000px; /* Crucial for 3D tilt */
+}
+
+/* General Card Styles */
+.card {
+    background: rgba(10, 10, 18, 0.65);
+    border-radius: 20px;
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 480px;
+    position: relative;
+    z-index: 10;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-style: preserve-3d;
+    will-change: transform;
+    opacity: 0;
+    transform: none;
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+    /* Derived Theme-driven configurations */
+    border: 1px solid rgba(var(--theme-primary-rgb), 0.12);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
+}
+
+.card:nth-child(1) { animation-delay: 0.15s; }
+.card:nth-child(2) { animation-delay: 0.3s; }
+.card:nth-child(3) { animation-delay: 0.45s; }
+.card:nth-child(4) { animation-delay: 0.6s; }
+.card:nth-child(5) { animation-delay: 0.75s; }
+.card:nth-child(6) { animation-delay: 0.9s; }
+.card:nth-child(7) { animation-delay: 1.05s; }
+.card:nth-child(8) { animation-delay: 1.2s; }
+.card:nth-child(9) { animation-delay: 1.35s; }
+
+/* Card Light Sheen overlay */
+.card-sheen {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.card:hover .card-sheen {
+    opacity: 1;
+}
+
+/* Generic card overlay for pulsing borders */
+.card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.card:hover {
+    border-color: rgba(var(--theme-primary-rgb), 0.3);
+    box-shadow: 0 20px 50px -10px rgba(var(--theme-primary-rgb), 0.15);
+}
+
+.card:hover::after {
+    opacity: 1;
+    animation: cardBorderPulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes cardBorderPulse {
+    0% { border-color: rgba(var(--theme-primary-rgb), 0.2); }
+    100% { border-color: rgb(var(--theme-primary-rgb)); }
+}
+
+/* Transform elements inside the card on tilt */
+.card-content {
+    transform: translateZ(30px); /* Pushes content out in 3D */
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-actions {
+    transform: translateZ(50px); /* Pushes buttons further out */
+    position: relative;
+    z-index: 20;
+    margin-top: 30px;
+}
+
+.card .project-tag {
+    font-family: 'JetBrains Mono', monospace;
+    color: rgb(var(--theme-primary-rgb));
+    border: 1px solid rgba(var(--theme-primary-rgb), 0.3);
+    background: rgba(var(--theme-primary-rgb), 0.05);
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 50px;
+    align-self: flex-start;
+    margin-bottom: 25px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.card h2 {
+    font-family: var(--theme-font, 'Outfit', sans-serif);
+    font-size: var(--theme-h2-size, 2.1rem);
+    font-weight: 700;
+    color: var(--theme-title-color, rgb(var(--theme-primary-rgb)));
+    margin-bottom: 12px;
+    text-shadow: 0 0 15px rgba(var(--theme-primary-rgb), 0.15);
+    letter-spacing: var(--theme-letter-spacing, 1px);
+}
+
+.card h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-bottom: 25px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.card p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+    font-weight: 300;
+    flex-grow: 1;
+}
+
+.card .card-footer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--theme-footer-color);
+    letter-spacing: 2px;
+    margin-top: 30px;
+}
+
+/* Specific Card Themes Override Configs */
+
+/* 1. Sundered Minds Card */
+.card-sundered {
+    --theme-primary-rgb: 201, 168, 76;
+    --theme-font: 'Cinzel Decorative', serif;
+    --theme-footer-color: #7a6030;
+}
+
+/* 2. The Optimizer Card */
+.card-optimizer {
+    --theme-primary-rgb: 57, 255, 20;
+    --theme-font: 'JetBrains Mono', monospace;
+    --theme-h2-size: 1.9rem;
+    --theme-letter-spacing: -0.5px;
+    --theme-footer-color: #1b5e20;
+}
+
+/* 3. Deaf Card (The Frequency Below) */
+.card-deaf {
+    --theme-primary-rgb: 20, 184, 166;
+    --theme-font: 'Playfair Display', serif;
+    --theme-title-color: #ffffff;
+    --theme-letter-spacing: -0.5px;
+    --theme-footer-color: rgb(var(--theme-primary-rgb));
+}
+
+.card-deaf h2 em {
+    color: rgb(var(--theme-primary-rgb));
+    font-style: italic;
+}
+
+.card-deaf .card-footer {
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 4. Naruto Card */
+.card-naruto {
+    --theme-primary-rgb: 239, 68, 68;
+    --theme-font: 'Noto Serif JP', serif;
+    --theme-footer-color: #7f1d1d;
+}
+
+/* 5. Final Fanstery 7 Card */
+.card-ff7 {
+    --theme-primary-rgb: 60, 240, 144;
+    --theme-font: 'Outfit', sans-serif;
+    --theme-footer-color: #1e5a38;
+}
+
+/* 6. Harvester's Toll Card */
+.card-harvester {
+    --theme-primary-rgb: 126, 184, 212;
+    --theme-font: 'Instrument Serif', serif;
+    --theme-footer-color: #3a5060;
+}
+
+/* 7. Hunger of the Shrine Card */
+.card-shrine {
+    --theme-primary-rgb: 62, 143, 212;
+    --theme-font: 'Cormorant Garamond', serif;
+    --theme-footer-color: #1a4060;
+}
+
+/* 8. Kingdom of Living Dead Ends Card */
+.card-kingdom {
+    --theme-primary-rgb: 201, 160, 80;
+    --theme-font: 'Cinzel', serif;
+    --theme-footer-color: #5a4020;
+}
+
+/* 9. Vermillion Haze Card */
+.card-vermillion {
+    --theme-primary-rgb: 196, 48, 64;
+    --theme-font: 'Newsreader', serif;
+    --theme-footer-color: #5a1020;
+}
+
+/* Buttons & Actions */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 14px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+
+    background: var(--btn-bg);
+    color: var(--btn-color);
+    border: var(--btn-border, none);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(var(--theme-primary-rgb), 0.4);
+    background: var(--btn-hover-bg, var(--btn-bg));
+    border-color: var(--btn-hover-border, initial);
+    filter: var(--btn-hover-filter, brightness(1.1));
+}
+
+/* Specific Button Themes Overrides */
+.btn-sundered {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #8e7228);
+    --btn-color: #0d0901;
+}
+
+.btn-optimizer {
+    --btn-bg: transparent;
+    --btn-color: rgb(var(--theme-primary-rgb));
+    --btn-border: 1px solid rgb(var(--theme-primary-rgb));
+    --btn-hover-bg: rgba(var(--theme-primary-rgb), 0.1);
+    --btn-hover-filter: none;
+}
+
+/* Dual action container for Deaf card */
+.btn-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.btn-deaf-map {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #0d9488);
+    --btn-color: #022c22;
+}
+
+.btn-deaf-chapter {
+    --btn-bg: rgba(255, 255, 255, 0.03);
+    --btn-color: #ffffff;
+    --btn-border: 1px solid rgba(255, 255, 255, 0.1);
+    --btn-hover-bg: rgba(255, 255, 255, 0.08);
+    --btn-hover-border: rgba(255, 255, 255, 0.25);
+    --btn-hover-filter: none;
+}
+
+.btn-deaf-chapter:hover {
+    box-shadow: none;
+}
+
+.btn-naruto {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #991b1b);
+    --btn-color: #ffffff;
+}
+
+.btn-ff7 {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #1b5e3a);
+    --btn-color: #05160c;
+}
+
+.btn-harvester {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #3a6078);
+    --btn-color: #040810;
+}
+
+.btn-harvester-ledger {
+    --btn-bg: rgba(255, 255, 255, 0.03);
+    --btn-color: #c8e0f0;
+    --btn-border: 1px solid rgba(126, 184, 212, 0.25);
+    --btn-hover-bg: rgba(126, 184, 212, 0.1);
+    --btn-hover-border: rgba(126, 184, 212, 0.4);
+    --btn-hover-filter: none;
+}
+
+.btn-harvester-ledger:hover {
+    box-shadow: 0 8px 25px rgba(126, 184, 212, 0.2);
+}
+
+.btn-shrine {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #1a5080);
+    --btn-color: #020810;
+}
+
+.btn-kingdom {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #8a6028);
+    --btn-color: #1a1008;
+}
+
+.btn-vermillion {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #6a1020);
+    --btn-color: #f0d8d4;
+}
+
+/* Footer */
+footer.site-footer {
+    width: 100%;
+    text-align: center;
+    padding: 40px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    position: relative;
+    z-index: 10;
+    margin-top: auto;
+    opacity: 0;
+    animation: fadeIn 1s ease 0.8s forwards;
+}
+
+footer.site-footer p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 40px 0 40px;
+    }
+    .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    .card {
+        min-height: auto;
+    }
+    .btn-group {
+        grid-template-columns: 1fr;
+    }
+    h1 {
+        margin-top: 10px;
+    }
+}

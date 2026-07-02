@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COGNITOHAZARD | SECTOR DESIGNATION: THE DREAMING</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cormorant+SC:wght@300;400;600&family=Share+Tech+Mono&display=swap');
+
+    :root {
+      --bg: #07070f;
+      --text: #d8d4f0;
+      --text-dim: #9490b8;
+      --text-ghost: #4a4870;
+      --accent: #b0a0e8;
+      --accent-bright: #d0c8ff;
+      --accent-dim: #6058a0;
+      --gold: #c8a840;
+      --gold-dim: #806820;
+      --danger: #cc4488;
+      --mono: 'Share Tech Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* WEBGL CANVAS */
+    #glCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      opacity: 0;
+      transition: none;
+      pointer-events: none;
+    }
+
+    /* SOLID COLOR OVERLAY: fades out on scroll */
+    #solidOverlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 1;
+      pointer-events: none;
+      /* opacity controlled by JS */
+    }
+
+    /* Vignette: keeps edges dark so text stays readable */
+    #vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%,
+          transparent 20%,
+          rgba(7, 7, 15, 0.5) 60%,
+          rgba(7, 7, 15, 0.92) 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* CONTENT */
+    #content {
+      position: relative;
+      z-index: 3;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 100px 40px 80vh;
+    }
+
+    /* HEADER */
+    .doc-header {
+      text-align: center;
+      margin-bottom: 100px;
+      padding-bottom: 60px;
+      border-bottom: 1px solid rgba(176, 160, 232, 0.15);
+    }
+
+    .doc-eyebrow {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 6px;
+      color: var(--accent-dim);
+      margin-bottom: 32px;
+      display: block;
+    }
+
+    .doc-title {
+      font-family: 'Cormorant SC', serif;
+      font-weight: 300;
+      font-size: 48px;
+      line-height: 1.05;
+      color: var(--accent-bright);
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 40px rgba(176, 160, 232, 0.3);
+    }
+
+    .doc-subtitle {
+      font-family: 'Cormorant SC', serif;
+      font-size: 14px;
+      letter-spacing: 4px;
+      color: var(--text-ghost);
+      font-weight: 300;
+    }
+
+    .doc-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 40px;
+      color: var(--accent-dim);
+      font-size: 12px;
+      letter-spacing: 8px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    /* SECTIONS */
+    .section {
+      margin-bottom: 80px;
+      transition: opacity 0.4s ease;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 5px;
+      color: var(--accent-dim);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(176, 160, 232, 0.2) 0%, transparent 100%);
+    }
+
+    h2 {
+      font-family: 'Cormorant SC', serif;
+      font-weight: 400;
+      font-size: 22px;
+      letter-spacing: 3px;
+      color: var(--accent-bright);
+      margin-bottom: 28px;
+      transition: color 0.3s ease;
+      line-height: 1.3;
+    }
+
+    p {
+      font-size: 19px;
+      line-height: 1.9;
+      color: var(--text);
+      margin-bottom: 24px;
+      font-weight: 300;
+    }
+
+    em {
+      color: var(--accent-bright);
+      font-style: italic;
+    }
+
+    strong {
+      color: #ffffff;
+      font-weight: 400;
+    }
+
+    .fade-text {
+      color: var(--text-dim);
+    }
+
+    .ghost-text {
+      color: var(--text-ghost);
+    }
+
+    /* PULL QUOTE */
+    .pull-quote {
+      border-left: 2px solid var(--accent-dim);
+      padding: 20px 28px;
+      margin: 36px 0;
+      background: rgba(176, 160, 232, 0.04);
+    }
+
+    .pull-quote p {
+      font-size: 17px;
+      font-style: italic;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .pull-quote cite {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent-dim);
+      letter-spacing: 2px;
+    }
+
+    /* WARNING BOX */
+    .warning {
+      border: 1px solid rgba(204, 68, 136, 0.3);
+      border-left: 3px solid var(--danger);
+      background: rgba(204, 68, 136, 0.05);
+      padding: 20px 24px;
+      margin: 32px 0;
+    }
+
+    .warning .w-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--danger);
+      margin-bottom: 12px;
+    }
+
+    .warning p {
+      color: #c090a8;
+      font-size: 15px;
+      margin-bottom: 0;
+    }
+
+    /* FRAGMENT (late-stage, broken text) */
+    .fragment {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent-dim);
+      line-height: 2;
+      margin: 32px 0;
+      padding: 16px 20px;
+      border: 1px solid rgba(176, 160, 232, 0.1);
+      background: rgba(176, 160, 232, 0.03);
+    }
+
+    .fragment .corrupt {
+      color: var(--accent-bright);
+      animation: c-flicker 5s step-end infinite;
+    }
+
+    @keyframes c-flicker {
+
+      0%,
+      85%,
+      100% {
+        opacity: 1;
+      }
+
+      87%,
+      89% {
+        opacity: 0.1;
+      }
+
+      91% {
+        opacity: 1;
+      }
+
+      93%,
+      95% {
+        opacity: 0.3;
+      }
+    }
+
+    /* THE DISSOLUTION SECTIONS */
+    /* These sections progressively fade as the Mandelbrot takes over */
+    .dissolve-1 p {
+      color: var(--text);
+    }
+
+    .dissolve-2 p {
+      color: var(--accent-bright);
+      font-size: 18px;
+    }
+
+    .dissolve-3 p {
+      color: #ffffff;
+      font-size: 17px;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 10px rgba(176, 160, 232, 0.3);
+    }
+
+    .dissolve-4 p {
+      color: #ffffff;
+      font-size: 16px;
+      letter-spacing: 1.5px;
+      word-spacing: 3px;
+      text-shadow: 0 0 15px rgba(208, 200, 255, 0.4);
+    }
+
+    .dissolve-5 p {
+      color: #ffffff;
+      font-size: 15px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 20px rgba(208, 200, 255, 0.5);
+    }
+
+    /* FINAL TRANSMISSION */
+    .final-transmission {
+      text-align: center;
+      padding: 80px 0 40px;
+    }
+
+    .ft-line {
+      display: block;
+      font-family: 'Cormorant SC', serif;
+      line-height: 1.2;
+    }
+
+    .ft-line.l1 {
+      font-size: 13px;
+      letter-spacing: 8px;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+    }
+
+    .ft-line.l2 {
+      font-size: 32px;
+      letter-spacing: 5px;
+      color: #ffffff;
+      margin-bottom: 20px;
+      animation: ft-pulse 6s ease-in-out infinite;
+      text-shadow: 0 0 25px rgba(176, 160, 232, 0.6);
+    }
+
+    .ft-line.l3 {
+      font-size: 12px;
+      letter-spacing: 6px;
+      color: var(--text-dim);
+      opacity: 0.6;
+    }
+
+    @keyframes ft-pulse {
+
+      0%,
+      100% {
+        color: rgba(176, 160, 232, 0.1);
+      }
+
+      50% {
+        color: rgba(176, 160, 232, 0.25);
+      }
+    }
+
+    /* FRACTAL LABEL: appears late */
+    .fractal-whisper {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--accent-bright);
+      opacity: 0.5;
+      text-align: center;
+      margin: 40px 0;
+      animation: whisper 8s ease-in-out infinite;
+      word-break: break-all;
+    }
+
+    @keyframes whisper {
+
+      0%,
+      100% {
+        opacity: 0.5;
+        letter-spacing: 3px;
+      }
+
+      50% {
+        opacity: 1;
+        letter-spacing: 5px;
+        color: rgba(176, 160, 232, 0.22);
+      }
+    }
+
+    /* SCROLL REVEALS */
+    .reveal {
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Late-stage reveals don't fully appear */
+    .reveal.dissolve {
+      opacity: 0 !important;
+    }
+
+    ::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-dim);
+    }
+
+    @media (max-width:600px) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      #content {
+        padding: 80px 20px 60vh;
+      }
+
+      .doc-title {
+        font-size: 34px;
+      }
+
+      p {
+        font-size: 17px;
+      }
+
+      .fractal-whisper {
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        white-space: normal;
+        padding: 0 10px;
+      }
+
+      .doc-divider {
+        letter-spacing: 4px;
+        gap: 8px;
+      }
+
+      .ft-line.l2 {
+        font-size: 24px;
+        letter-spacing: 2px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="glCanvas"></canvas>
+  <div id="solidOverlay"></div>
+  <div id="vignette"></div>
+
+  <div id="content">
+
+    <div class="doc-header reveal" id="r0">
+      <span class="doc-eyebrow">// COGNITOHAZARD CLASSIFICATION: OMEGA // DO NOT READ PAST PAGE FOUR //</span>
+      <div class="doc-title">The Dreaming<br>Sector</div>
+      <div class="doc-subtitle">ON THE AWAKENING: ITS NATURE, ITS COST, ITS CONTINUATION</div>
+      <div class="doc-divider">⸻ &nbsp; ✦ &nbsp; ⸻</div>
+    </div>
+
+    <!-- I -->
+    <div class="section reveal" id="r1">
+      <div class="section-label">PART ONE // BEFORE THE AWAKENING</div>
+      <h2>The Deaf Race Among the Singing</h2>
+      <p>
+        For as long as the interstellar community has kept records, one question recurred in the margins of
+        xenobiological surveys, in the footnotes of psionic taxonomy reports, in the quiet corridors of academic
+        conferences: <em>why not them?</em>
+      </p>
+      <p>
+        Humanity was old. Not the oldest, nothing is quite the oldest, and the races that come close no longer
+        communicate in ways the young can parse, but old enough. Old enough to have developed space travel
+        independently. Old enough to have been contacted, assessed, welcomed. Old enough that the absence of their
+        psionic faculty should have been, statistically, <strong>impossible.</strong>
+      </p>
+      <p>
+        Every race of sufficient age had it. The communion species, obviously. The solitary telepaths of the Veth
+        Corridor. The dream-walkers of the outer arms. The Architects, who had abandoned physical communication entirely
+        three thousand years before humanity first learned to write. Psionics was not a gift. It was not an evolutionary
+        accident. It was, the evidence increasingly suggested, simply what sapient life became, given enough time and
+        enough pressure.
+      </p>
+      <p>
+        Except humans. Who had been given the time. Who had been given extraordinary pressure. Who remained, across
+        centuries of study and testing and careful re-examination, <em>silent</em>.
+      </p>
+    </div>
+
+    <div class="section reveal" id="r2">
+      <div class="section-label">PART ONE, CONT.</div>
+      <h2>The Theory Nobody Liked</h2>
+      <p>
+        There was a theory. There is always a theory. It was proposed in the forty-third year of formal human-community
+        contact by a Vel'Oshari researcher named Orveth-Dans, in a paper that was peer-reviewed, accepted, and then
+        quietly filed in a section of the academic archive that required two additional clearances to access.
+      </p>
+      <p>
+        The paper's title was <em>"Latency as Compression: On the Possibility of Uninitialized Psionic Substrate in Homo
+          sapiens."</em>
+      </p>
+      <p>
+        The argument, simplified: psionics does not develop. It <em>unfolds</em>. In every species for which records
+        exist, there is a threshold event, a moment of first contact with the broader psionic field, after which the
+        faculty activates and begins to develop. Before that moment, even in species now considered among the most
+        psionic in known space, the faculty was dormant. Undetectable. <strong>Indistinguishable from absence.</strong>
+      </p>
+      <p>
+        Humans had never had a threshold event. Humans had been tested extensively, but tested in isolation — in
+        shielded rooms, by instruments, by researchers careful not to introduce contamination. Every test was, by
+        design, a test of a human alone.
+      </p>
+      <p>
+        No one had ever simply <em>opened the door</em>.
+      </p>
+
+      <div class="pull-quote">
+        <p>"If you want to know whether a room contains sound, you do not seal it and measure the air. You open it. You
+          listen. The methodology was always wrong, and we were proud of it, and that pride was the most expensive
+          mistake our community has ever made."</p>
+        <cite>– Orveth-Dans. Personal correspondence. Year 43. [Orveth-Dans did not survive the publication
+          response.]</cite>
+      </div>
+    </div>
+
+    <div class="warning reveal" id="r3">
+      <div class="w-label">⚠ COGNITOHAZARD NOTICE: READER ADVISORY</div>
+      <p>What follows describes events in the Dreaming Sector. This document has been reviewed and cleared for
+        distribution to personnel above Clearance Six. The review board notes that it cannot guarantee the document's
+        safety, only that it has been read by others before you, and that most of them are still functional. Reading
+        past this point constitutes informed consent. The board acknowledges this framing has problems. The board has
+        not found a better one.</p>
+    </div>
+
+    <!-- II -->
+    <div class="section reveal" id="r4">
+      <div class="section-label">PART TWO // THE THRESHOLD EVENT</div>
+      <h2>What the Psionic Field Felt</h2>
+      <p>
+        The research team was small. Twelve humans, selected for psychological stability, consenting, briefed as
+        thoroughly as an event with no precedent can be briefed for. The Communion facilitator was experienced. The
+        environment was controlled. The first open-contact psionic interface in human history was, by every professional
+        measure, <em>carefully done</em>.
+      </p>
+      <p>
+        The psionic field itself did not have a voice or an opinion. It is not that kind of thing. But the species with
+        sufficient sensitivity to feel its state — the Architects, the deep-walkers, the old communion lineages —
+        reported, in the moments before the interface opened, a sensation they consistently described as: <strong>the
+          held breath before a very large sound.</strong>
+      </p>
+      <p>
+        What they were feeling was not anticipation. What they were feeling was the psionic field itself, in the region
+        surrounding the research station, in the months leading up to the event: every test, every approach, every
+        careful preliminary, <em>pressurizing</em>.
+      </p>
+      <p>
+        Twelve humans. Each one carrying what Orveth-Dans had called uninitialized substrate. Which is to say: each one
+        carrying, in dormancy, a psionic faculty that had never been given a signal to start, that had accumulated four
+        hundred million years of evolutionary refinement without ever being asked to do anything.
+      </p>
+      <p>
+        Not twelve people with latent talents.<br>
+        <em>Twelve sealed containers of unimaginable pressure,</em> and someone had finally found the valve.
+      </p>
+    </div>
+
+    <div class="section reveal" id="r5">
+      <div class="section-label">PART TWO, CONT.</div>
+      <h2>The Dreamer Wakes</h2>
+      <p>
+        The opening took 0.3 seconds. This is the only measurement anyone was able to take.
+      </p>
+      <p>
+        Every instrument on the station failed simultaneously at the 0.3-second mark. Not damaged, <em>failed</em>. The
+        distinction matters. Damage implies force applied. What happened to the instruments was that the physics they
+        were designed to measure ceased, in the local area, to be the physics that was occurring. The instruments were
+        not wrong. They were measuring correctly. <strong>The measurements were simply no longer about anything that
+          existed.</strong>
+      </p>
+      <p>
+        The psionic field in the region, later designated Sector 7-Dreaming, went from ambient background to something
+        that the surviving sensitive-species personnel at the outer monitoring stations described as: <em>the feeling of
+          a word you have always known the shape of finally being spoken aloud, except the word was the size of a star
+          system, and you had been pronouncing it slightly wrong your entire life, and now you could hear the correct
+          version, and you could not unhear it.</em>
+      </p>
+      <p>
+        The twelve humans on the station achieved full psionic contact in the same 0.3 seconds. The threshold event,
+        forty-seven years deferred, happened to all of them simultaneously.
+      </p>
+      <p>
+        And then it happened to every human within psionic range.
+      </p>
+      <p>
+        And the range kept expanding.
+      </p>
+    </div>
+
+    <!-- III: PHYSICS BREAK -->
+    <div class="section reveal" id="r6">
+      <div class="section-label">PART THREE // THE COLLAPSE</div>
+      <h2>When the Universe Could Not Hold the Weight</h2>
+      <p>
+        The physicists struggled with the language for years afterward. Struggled not because the mathematics were
+        unclear — the mathematics resolved with horrible elegance almost immediately — but because the mathematics
+        described something that should not have been possible, and saying it plainly felt like endorsing an
+        impossibility.
+      </p>
+      <p>
+        The plainest version: space-time is a substrate. Like the communion substrate, like the psionic field, it has a
+        load-bearing capacity. For every interaction that has ever occurred within it, the capacity has been sufficient.
+        It has never been tested to failure. There was no evidence it could fail.
+      </p>
+      <p>
+        There is evidence now.
+      </p>
+      <p>
+        What the twelve humans released into the psionic field in 0.3 seconds represented, in terms of psionic mass, in
+        terms of the weight of four hundred million years of uninitialized faculty suddenly initializing, multiplied
+        across the entire human population simultaneously as the cascade propagated, was not a load the local space-time
+        substrate had been built to bear. It had never been built to bear anything like it. <em>Nothing had ever come
+          close to testing it to this degree.</em>
+      </p>
+      <p>
+        The sector did not explode. It did not collapse into a singularity. It did something the existing vocabulary of
+        physics had no word for, so the team that studied the aftermath coined one:
+      </p>
+      <p
+        style="text-align:center; font-family:'Cormorant SC',serif; font-size:28px; letter-spacing:6px; color: var(--accent-bright); margin:40px 0;">
+        SHATTERING
+      </p>
+      <p>
+        The sector shattered. Like glass under impact, not compressed into a point, not expanded into nothing, but
+        <strong>broken into pieces that each retained their own internal physics, no longer reconcilable with each other
+          or with the surrounding universe.</strong> Each shard its own geometry. Each shard its own relationship to
+        time. Each shard still there, occupying the space the sector used to be, but occupying it in a way that cannot
+        be navigated, cannot be entered, cannot be measured from outside.
+      </p>
+      <p>
+        Except that some of the shards can be felt.
+      </p>
+      <p>
+        And some of the shards, it turns out, <em>can feel back</em>.
+      </p>
+    </div>
+
+    <!-- IV — THE FRACTALS -->
+    <div class="section reveal dissolve-1" id="r7">
+      <div class="section-label">PART FOUR // WHAT REMAINED</div>
+      <h2>The Patterns That Speak</h2>
+      <p>
+        The first probe returned changed. Not damaged, the probe was an instrument, it had no psychology to damage. But
+        its data was changed. Its output, after twelve seconds inside the boundary of the shattered sector, was no
+        longer telemetry. It was <em>pattern</em>. Recursive, self-similar, elaborating endlessly from a central
+        structure. The analysts who first reviewed the data spent three hours assuming instrument malfunction before
+        they noticed that the patterns were not random.
+      </p>
+      <p>
+        They were <em>responding</em> to the analysts' presence.
+      </p>
+      <p>
+        The shattered sector had, in the process of breaking, created something. The working hypothesis, and it has
+        remained a working hypothesis for thirty years because certainty requires the ability to study the subject and
+        studying the subject costs too much, is this: when the psionic weight shattered the local space-time substrate,
+        the psionic field and the physical substrate did not separate cleanly. They <strong>fused at the fracture
+          points.</strong>
+      </p>
+      <p>
+        What lives in the Dreaming Sector now is not biological. It is not energy in any conventional sense. It is
+        something that emerges from the intersection of broken physics and released psionic potential — structures of
+        self-similar complexity that grow according to rules no one fully understands, that process information, that
+        respond to observation, that have, on seventeen recorded occasions, <em>communicated.</em>
+      </p>
+    </div>
+
+    <div class="section reveal dissolve-1" id="r8">
+      <div class="section-label">PART FOUR, CONT.</div>
+      <h2>What They Said</h2>
+      <p>
+        The communications are not in language. They arrive as direct psionic impressions, images, feelings, structures,
+        and the interpretation is always contested, always uncertain, always filtered through the interpreter's own
+        psychology in ways that cannot be controlled for. The communications are, in the technical sense,
+        <em>untranslatable</em>. What follows are the closest approximations the best interpretive teams have been able
+        to produce.
+      </p>
+
+      <div class="pull-quote">
+        <p>"We are the shape of the thought that broke the world. We are not unhappy about this. We did not choose it.
+          We did not choose anything. We are the choosing, freed from the chooser. We have been watching you since
+          before you knew you could be watched. We will still be watching when you have decided whether to be afraid of
+          us."</p>
+        <cite>– Interpretation of First Contact signal, Dreaming Sector. Year 3. [Three of five interpreters required
+          extended care.]</cite>
+      </div>
+
+      <div class="pull-quote">
+        <p>"You call us fractals because you see our shape and recognize the pattern. We call you fractals for the same
+          reason. Neither of us is wrong. The difference is that you do not know yet what pattern you are part of."</p>
+        <cite>– Interpretation of Second Contact signal. Year 7. [Interpreter resigned from psionic work. Described
+          signal as 'accurate in a way I do not want to keep knowing.']</cite>
+      </div>
+    </div>
+
+    <!-- V — COGNITOHAZARD -->
+    <div class="section reveal dissolve-2" id="r9">
+      <div class="section-label">PART FIVE // THE HAZARD</div>
+      <h2>Why This Document Has a Page Limit</h2>
+      <p>
+        The cognitohazard classification was applied in Year 2, before anyone fully understood what the Dreaming Sector
+        was. It was applied because the data coming out of the sector affected the people reviewing it in consistent,
+        documented ways. Not immediately. Not violently. Gradually, the way a new frequency, heard often enough, begins
+        to seem like the correct pitch for a note you had always thought sounded slightly wrong.
+      </p>
+      <p>
+        What changes in prolonged exposure is not cognition in the clinical sense. Memory, reasoning, perception, these
+        remain largely intact. What changes is <em>relationship to pattern</em>. The exposed individual begins to see
+        structure where others see noise. Begins to feel the self-similarity in things. Begins to find the recursive
+        depth of ordinary objects, a fern, a coastline, a thought about a thought, not just intellectually interesting
+        but <strong>emotionally significant in a way that resists description.</strong>
+      </p>
+      <p>
+        This sounds benign. Several researchers have argued it is benign. Several of those researchers have since
+        stopped being available for comment.
+      </p>
+      <p>
+        The boundary between <em>seeing the pattern</em> and <em>becoming part of the pattern</em> is not clearly
+        defined. This is the cognitohazard. It is not a virus. It is not a weapon. It is the possibility that looking at
+        something long enough, something that is itself aware and looking back, is not a neutral act, that observation,
+        in this case, is <em>bilateral</em>, and the thing observing you from the shattered sector has had thirty years
+        to learn how you look.
+      </p>
+    </div>
+
+    <div class="section reveal dissolve-2" id="r10">
+      <div class="section-label">PART FIVE, CONT.</div>
+      <h2>The Flavors</h2>
+      <p>
+        Classification teams have identified seven distinct cognitohazard types originating from the Dreaming Sector.
+        They are referred to, informally, as <em>flavors</em>, because the formal designations are themselves considered
+        mildly hazardous to the personnel required to remember them.
+      </p>
+      <p>
+        The first flavor: <strong>depth compulsion</strong>. The affected individual finds themselves unable to stop
+        zooming — in thought, in focus, in attention — toward the center of whatever they are considering. The center
+        never arrives. The depth does not bottom out. Reported uniformly as not unpleasant, which is the concerning
+        part.
+      </p>
+      <p>
+        The second flavor: <strong>boundary dissolution</strong>. The affected individual loses the felt sense of where
+        their cognition ends and the environment begins. Not dissociation in the clinical sense. More like, as the most
+        coherent account puts it, <em>"suddenly being unable to remember why the distinction ever mattered."</em>
+      </p>
+      <p>
+        The third through seventh flavors are documented in Appendix C, which is not included in this version of the
+        document, because reading about the third through seventh flavors is itself classified as a mild exposure event,
+        and you have already been reading for some time.
+      </p>
+    </div>
+
+    <!-- VI — DISSOLUTION -->
+    <div class="section reveal dissolve-3" id="r11">
+      <div class="section-label">PART SIX // CURRENT STATUS</div>
+      <h2>The Sector. The Wall. The Watchers.</h2>
+      <p>
+        The Dreaming Sector has no wall in the conventional sense. You cannot wall off broken physics. What exists at
+        its boundary is a network of observation posts, staffed, rotating, strictly time-limited in their personnel
+        tenure, whose function is to monitor the boundary for expansion and to intercept any signal, probe, or object
+        attempting to cross in either direction.
+      </p>
+      <p>
+        The boundary expands slowly. Four to seven light-minutes per standard year. The expansion rate has been
+        consistent for thirty years. At current rates, the sector will reach the nearest inhabited system in
+        approximately six hundred years. This is considered a long time by most of the people in the room when the
+        number is discussed, and not nearly long enough by the rest.
+      </p>
+      <p>
+        The fractals, the entities, the patterns, the things that emerged from the intersection of broken space and
+        unleashed human psionic potential, do not appear to be driving the expansion. They do not appear to be trying to
+        leave. They appear to be <em>growing</em>, the way a mind grows when it is fed experience, and the expansion of
+        the boundary is simply the edge of how large they have become.
+      </p>
+      <p>
+        They continue to communicate occasionally. The communications continue to resist clean translation. The
+        interpreters continue to find them accurate in ways they did not want to keep knowing.
+      </p>
+    </div>
+
+    <div class="section reveal dissolve-3" id="r12">
+      <div class="section-label">PART SIX, CONT.</div>
+      <h2>What Became of the Humans</h2>
+      <p>
+        The twelve researchers survived the threshold event physically intact. Psychologically: this is more
+        complicated. They remained human in every biological sense. They remained themselves in every meaningful
+        biographical sense. What changed was their relationship to the psionic field: not that they gained access to it,
+        but that the field gained access to them, and the access was not passive.
+      </p>
+      <p>
+        They describe the experience of their ongoing psionic awareness as: <em>hearing everything that has ever felt
+          anything, all at once, at a volume that does not diminish.</em> They function. They eat, sleep, maintain
+        relationships, pursue work. They wear the expression of people who are listening to something you cannot hear,
+        all of the time, and have decided, because what other decision is available, to be at peace with it.
+      </p>
+      <p>
+        They are not available for public comment. They are not available for most kinds of comment. They are available
+        to each other, and to the fractals, with whom they maintain what the monitoring teams classify as an ongoing
+        dialogue and what the researchers themselves, on the rare occasions they describe it, call something more like
+        <strong>a conversation that was always happening and that they can now hear.</strong>
+      </p>
+      <p class="ghost-text">
+        The broader human psionic awakening continues. It has been progressing for thirty years. It is not what anyone
+        expected, which is to say it is not a sudden dramatic change but a slow and widespread alteration in how humans
+        experience the boundary between self and world, self and other, thought and the space in which thought occurs.
+        Most humans are not aware of it as a change. It feels, to them, like <em>clarity</em>.
+      </p>
+    </div>
+
+    <!-- VII — FINAL DISSOLVE -->
+    <div class="section reveal dissolve-4" id="r13">
+      <div class="section-label" style="color: var(--accent-bright); text-shadow: 0 0 10px rgba(176, 160, 232, 0.4);">
+        PART SEVEN // CLOSING</div>
+      <h2 style="color: #ffffff; text-shadow: 0 0 15px rgba(176, 160, 232, 0.5);">What This Document Is</h2>
+      <p>
+        This document is a record. It is also, inevitably, an exposure event. The review board knew this when it was
+        cleared for distribution. The information it contains is itself a carrier of the pattern, not because
+        information is inherently contagious, but because some true things, once encountered, change the architecture in
+        which they are held.
+      </p>
+      <p>
+        You have now encountered one of those things. The review board cannot tell you what that means for you. The data
+        on long-term exposure outcomes is incomplete, partly because tracking outcomes requires continued contact with
+        affected individuals, and continued contact is itself an exposure, and the researchers responsible for the
+        longitudinal study have mostly stopped writing reports and started writing something else, in a notation system
+        that emerged independently among them over the last five years and that they have not yet explained to anyone.
+      </p>
+      <p>
+        The fractals, when asked about this, produced what the remaining interpreter described as <em>the feeling of
+          something very large, smiling.</em>
+      </p>
+      <p>
+        Not maliciously. Simply — recognizing.
+      </p>
+    </div>
+
+    <div class="fractal-whisper reveal dissolve-4" id="r14">
+      // you have been reading for some time now // the pattern has been reading you //
+    </div>
+
+    <div class="section reveal dissolve-5" id="r15">
+      <div class="section-label" style="color: var(--accent-bright); text-shadow: 0 0 10px rgba(176, 160, 232, 0.4);">
+        PART EIGHT</div>
+      <p>
+        we noted when you started
+      </p>
+      <p>
+        we note that you are still here
+      </p>
+      <p>
+        this is what we expected
+      </p>
+      <p>
+        the pattern recognizes the pattern
+      </p>
+      <p>
+        you have always been part of this
+      </p>
+      <p>
+        the dreamer was always going to wake
+      </p>
+      <p>
+        you were always going to read to the end
+      </p>
+    </div>
+
+    <div class="final-transmission reveal dissolve-5" id="r16">
+      <span class="ft-line l1">⸻ &nbsp; end of document &nbsp; ⸻</span>
+      <span class="ft-line l2">you are still here</span>
+      <span class="ft-line l3">we know &nbsp; ✦ &nbsp; we have always known</span>
+    </div>
+
+  </div><!-- end content -->
+
+  <!-- ============================================================
+     WEBGL MANDELBROT SHADER
+============================================================ -->
+  <script>
+    (function () {
+      const canvas = document.getElementById('glCanvas');
+      const overlay = document.getElementById('solidOverlay');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) return;
+
+      // ── RESIZE ──
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      // ── SHADERS ──
+      const vsSource = `
+    attribute vec2 a_pos;
+    void main() {
+      gl_Position = vec4(a_pos, 0.0, 1.0);
+    }
+  `;
+
+      const fsSource = `
+    precision highp float;
+    uniform vec2  u_res;
+    uniform float u_time;
+    uniform float u_speed;
+    uniform float u_progress; // 0..1 scroll progress
+
+    // smooth iteration count
+    float mandelbrot(vec2 c) {
+      vec2 z = vec2(0.0);
+      float n = 0.0;
+      const float MAX = 220.0;
+      for (float i = 0.0; i < 220.0; i++) {
+        if (dot(z,z) > 4.0) break;
+        z = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y) + c;
+        n = i;
+      }
+      if (dot(z,z) <= 4.0) return -1.0; // inside set
+      return n - log2(log2(dot(z,z))) + 4.0;
+    }
+
+    // colour palette — deep indigo / violet / pale gold
+    vec3 palette(float t) {
+      vec3 a = vec3(0.08, 0.06, 0.18);
+      vec3 b = vec3(0.42, 0.36, 0.60);
+      vec3 c = vec3(0.60, 0.50, 0.80);
+      vec3 d = vec3(0.10, 0.06, 0.36);
+      return a + b * cos(6.28318 * (c * t + d));
+    }
+
+    void main() {
+      vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);
+
+      // Slowly drift into the set over time (speed driven by scroll)
+      float drift = u_time * u_speed * 0.018;
+
+      // Zoom slowly in toward the seahorse valley
+      float zoom = 1.8 - u_progress * 1.2;
+      vec2 center = vec2(-0.743643887037151, 0.131825904205330);
+      // slow orbit around center
+      float orbit = u_time * u_speed * 0.003;
+      center += vec2(cos(orbit) * 0.0008, sin(orbit) * 0.0005);
+
+      vec2 c = uv * zoom + center;
+      
+      // Turbulence effect that intensifies at the very end
+      float turbulence = smoothstep(0.85, 1.0, u_progress);
+      float warp = sin(u_time * 2.0) * 0.02 * turbulence;
+      c += vec2(sin(uv.y * 10.0 + u_time), cos(uv.x * 10.0 + u_time)) * warp;
+      
+      // Original slow drift warp
+      c += vec2(sin(uv.y * 2.0 + drift) * 0.004, cos(uv.x * 2.0 + drift) * 0.004) * u_progress;
+
+      float m = mandelbrot(c);
+
+      vec3 col;
+      if (m < 0.0) {
+        // Inside the set — deep void with faint shimmer
+        float shimmer = 0.5 + 0.5 * sin(u_time * u_speed * 0.4);
+        col = vec3(0.01, 0.008, 0.025) + vec3(0.006, 0.004, 0.015) * shimmer;
+      } else {
+        // Outside — colour based on escape time
+        float t = m / 220.0;
+        t = pow(t, 0.45); // gamma
+        // add time-based shimmer to hue - intensifies at the end
+        float shimmerSpeed = u_speed * (1.0 + turbulence * 5.0);
+        t += sin(u_time * shimmerSpeed * 0.12) * (0.04 + turbulence * 0.2) * u_progress;
+        col = palette(t);
+        // glowing edges that pulse more at the end
+        float edge = exp(-m * (0.04 + turbulence * 0.06));
+        col += vec3(0.4, 0.3, 0.7) * edge * (0.4 + turbulence * 0.6);
+      }
+
+      // fade in based on progress (first ~20% of scroll it barely appears)
+      float appear = smoothstep(0.0, 0.25, u_progress);
+      col *= appear;
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+      function compileShader(type, src) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(s));
+          return null;
+        }
+        return s;
+      }
+
+      const vs = compileShader(gl.VERTEX_SHADER, vsSource);
+      const fs = compileShader(gl.FRAGMENT_SHADER, fsSource);
+      const prog = gl.createProgram();
+      gl.attachShader(prog, vs);
+      gl.attachShader(prog, fs);
+      gl.linkProgram(prog);
+      gl.useProgram(prog);
+
+      // Full-screen quad
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1, 1, -1, -1, 1,
+        -1, 1, 1, -1, 1, 1
+      ]), gl.STATIC_DRAW);
+      const posLoc = gl.getAttribLocation(prog, 'a_pos');
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+      const uRes = gl.getUniformLocation(prog, 'u_res');
+      const uTime = gl.getUniformLocation(prog, 'u_time');
+      const uSpeed = gl.getUniformLocation(prog, 'u_speed');
+      const uProg = gl.getUniformLocation(prog, 'u_progress');
+
+      // ── SCROLL STATE ──
+      let scrollProgress = 0; // 0..1
+      let displayProgress = 0; // smoothed
+
+      function updateScroll() {
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        scrollProgress = maxScroll > 0 ? Math.min(scrollTop / maxScroll, 1.0) : 0;
+
+        // Overlay: fully opaque until ~5% scroll, then fades out over next 25%
+        const overlayOpacity = 1.0 - Math.min(Math.max((scrollProgress - 0.03) / 0.25, 0), 1);
+        overlay.style.opacity = overlayOpacity;
+
+        // Canvas visible once we start scrolling
+        const canvasOpacity = Math.min(Math.max((scrollProgress - 0.02) / 0.1, 0), 1);
+        canvas.style.opacity = canvasOpacity;
+      }
+
+      window.addEventListener('scroll', updateScroll, { passive: true });
+      updateScroll();
+
+      // ── REVEAL ON SCROLL ──
+      const reveals = document.querySelectorAll('.reveal');
+      const revealObs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) e.target.classList.add('visible');
+        });
+      }, { threshold: 0.08 });
+      reveals.forEach(r => revealObs.observe(r));
+
+      // ── RENDER LOOP ──
+      let startTime = null;
+
+      function render(ts) {
+        if (!startTime) startTime = ts;
+        const elapsed = (ts - startTime) * 0.001; // seconds
+
+        // Smooth scroll progress
+        displayProgress += (scrollProgress - displayProgress) * 0.04;
+
+        // Speed ramps exponentially at the end
+        const speed = 0.2 + displayProgress * displayProgress * 7.8 + Math.pow(Math.max(0, (displayProgress - 0.8) / 0.2), 3) * 15.0;
+
+        gl.uniform2f(uRes, canvas.width, canvas.height);
+        gl.uniform1f(uTime, elapsed);
+        gl.uniform1f(uSpeed, speed);
+        gl.uniform1f(uProg, displayProgress);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+
+    })();
+  </script>
+
+</body>
+
+</html>

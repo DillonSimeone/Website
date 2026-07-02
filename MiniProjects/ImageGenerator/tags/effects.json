@@ -1,0 +1,130 @@
+{
+    "id": "effects",
+    "title": "Camera & Effects",
+    "tags": [
+        {
+            "id": "blurry_background",
+            "label": "blurry background",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "blurry_foreground",
+            "label": "blurry foreground",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "chromatic_aberration",
+            "label": "chromatic aberration",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "motion_blur",
+            "label": "motion blur",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "lens_flare",
+            "label": "lens flare",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "fisheye",
+            "label": "fisheye",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "dutch_angle",
+            "label": "dutch angle",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "bloom",
+            "label": "bloom",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "speed_lines",
+            "label": "speed lines",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "sparkles",
+            "label": "sparkles",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "glowing_eyes",
+            "label": "glowing eyes",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "glowing",
+            "label": "glowing",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "cinematic_lighting",
+            "label": "cinematic lighting",
+            "classes": []
+        },
+        {
+            "id": "sunlight",
+            "label": "sunlight",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "moonlight",
+            "label": "moonlight",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "silhouette",
+            "label": "silhouette",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "backlighting",
+            "label": "backlighting",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "caustics",
+            "label": "caustics",
+            "classes": [
+                "tag-rare"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,35 @@
+html, body{
+	margin: 0;
+	padding: 0;
+}
+
+div{
+	display: flex;
+	flex-direction: column;
+}
+
+div h1{
+	margin-left: 25%;
+}
+
+div figure{
+	width: 300px;
+	border: 5px solid black;
+}
+
+figure img{
+	height: 100%;
+	width: 100%;
+}
+
+input:checked ~ div{
+	background-color: red;
+}
+
+.fooditem{
+	display: flex;
+	flex-direction: row;
+	border: 5px solid black;
+	padding: 10px;
+	width: 600px;
+}

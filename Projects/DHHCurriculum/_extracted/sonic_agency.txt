@@ -1,0 +1,1603 @@
+
+===== PAGE 1 =====
+Sonic Agency: A Group Autoethnography of 
+Technology-mediated Performance Practice by Deaf and Hard of 
+Hearing Musicians 
+Doga Cavdir 
+IT University of Copenhagen 
+Copenhagen, Denmark 
+Stanford Universtiy 
+Stanford, USA 
+dogc@itu.dk 
+Dillion Simone 
+CymaSpace 
+Portland, USA 
+dillonsimeone@gmail.com 
+Myles de Bastion 
+CymaSpace 
+Portland, USA 
+myles@cymaspace.org 
+Shawn Trail 
+Conﬂuence Recording Co. 
+Portland, USA 
+shawntrail@gmail.com 
+Nate Hergert 
+CymaSpace 
+Portland, USA 
+nate@cymaspace.org 
+Abstract 
+While many assistive devices and accessible technologies aim to 
+increase access and participation of d/Deaf and Hard of Hearing 
+(DHH) audiences, DHH people’s active participation in music per-
+formance remains limited. Through a 15-month-long group au-
+toethnography, we present a case study of a Deaf-owned music 
+and culture institution in a mixed-hearing, technology-mediated 
+performance practice. We unpack how technologies are adapted 
+and developed by DHH musicians and highlight the existing and 
+emerging challenges of mixed hearing creative spaces. We use ret-
+rospective accounts, ﬁeld notes, and performance artifacts to reveal 
+the methods we developed for more inclusive music co-creativity. 
+We lastly present three essential strategies that support DHH in-
+dividuals’ sonic agency and access, with or without prior music 
+knowledge, applicable by diﬀerent actors who partake in the DHH 
+or mixed hearing music performance ecosystem. 
+CCS Concepts 
+• Human-centered computing → Accessibility technologies; 
+Accessibility theory, concepts and paradigms; • Applied comput-
+ing → Performing arts. 
+Keywords 
+musical accessibility, autoethnography, creative practice, deaf stud-
+ies, performance-led, active participation 
+ACM Reference Format: 
+Doga Cavdir, Dillion Simone, Myles de Bastion, Shawn Trail, and Nate 
+Hergert. 2025. Sonic Agency: A Group Autoethnography of Technology-
+mediated Performance Practice by Deaf and Hard of Hearing Musicians. 
+In The 27th International ACM SIGACCESS Conference on Computers and 
+Accessibility (ASSETS ’25), October 26–29, 2025, Denver, CO, USA. ACM, New 
+York, NY, USA, 15 pages. https://doi.org/10.1145/3663547.3746396 
+This work is licensed under a Creative Commons Attribution 4.0 International License. 
+ASSETS ’25, Denver, CO, USA 
+© 2025 Copyright held by the owner/author(s). 
+ACM ISBN 979-8-4007-0676-9/25/10 
+https://doi.org/10.1145/3663547.3746396 
+1 Introduction 
+Many assistive devices and accessible technologies aim to increase 
+access and participation of d/Deaf and Hard of Hearing (DHH) audi-
+ences in music performance as listeners. However, research remains 
+limited when promoting access for DHH people’s active participa-
+tion as artists, designers, and developers [17, 54]. Speciﬁcally, when 
+we consider the actors in the design and technology development 
+process, DHH people with musicianship skills are little represented 
+[31, 32]. 
+Recent research has focused on increasing active participation of 
+disabled musicians in design through participatory [4, 21], bespoke 
+[46], and dialogical [77] approaches. Despite the eﬀorts toward a 
+more inclusive design practice, DHH individuals partook in the de-
+sign process with limited agency, and their creative role remained 
+relatively passive. Few research studies collaborated with DHH in-
+dividuals as creative actors. Ohshiro and Cartwright [58] conducted 
+survey studies to identify the trends in technology use by DHH au-
+dio engineers. Cavdir [11] carried co-design session for music-dance 
+collaboration with a Deaf performer. Other researchers explored 
+DHH individuals’ relationship with music by centering them in 
+the studies through the lens of song signing [ 17, 76] or sensory 
+substitution [22, 36]. Outside Human-Computer Interaction (HCI), 
+some researchers sought to understand how DHH musicianship is 
+learned, developed, and practiced [6, 18, 27]. 
+Despite the shift in accessibility research from designing for peo-
+ple to designing by people [ 3, 9, 43], deaf-led research remains rare 
+at the intersection of HCI and musical accessibility. Music access 
+for DHH individuals remains restricted within passive audience 
+roles, rather than exploring active musicianship. 
+In this study, we examine the experience of DHH musicians, 
+technology developers, and designers who advocate for their sonic 
+agency and their communities’ rights to an equitable musical ex-
+perience. Through a 15-month-long group autoethnography, we 
+present a case study of a Deaf-owned music and culture institution 
+in a mixed-hearing, technology-mediated performance practice. 
+Utilizing retrospective accounts, ﬁeld notes, and performance arti-
+facts, we draw perspectives on how technologies are integrated into 
+creative musical practice through real-life performance scenarios. 
+
+===== PAGE 2 =====
+ASSETS ’25, October 26–29, 2025, Denver, CO, USA Cavdir et al. 
+Our contribution from this research is three-fold. First, we un-
+pack how technologies are adapted and developed by DHH musi-
+cians. We provide a summary of our current practices with custom 
+design and commercially available assistive musical technologies 
+through three main integrated sensory modalities: haptic displays, 
+audio-reactive light and visuals, and gestural interfaces. Second, 
+we reﬂect on how DHH musicians deﬁne sonic agency in hearing-
+centric communities and articulate three underlying practices: our 
+role as music technology developers, hacking and re-purposing 
+practice as a form of resilience, and performance as a tool to gain 
+visibility, access, and sonic agency. Third, we highlight three main 
+challenges of misalignment of musical expectations, unfamiliarity 
+with musical concepts, and technological limitations that existing 
+technologies impose. We detail such limitations that derive from 
+the lack of Deaf technologists’ participation in design and develop-
+ment. To cope with these limitations, we provide our strategies of 
+prioritizing music composed by Deaf musicians, adapting a more 
+somatic approach to novice music practice, integrating graphical 
+and gestural notation systems, and engaging in bespoke design and 
+appropriating technology. These strategies were devised through-
+out this practice-based research to cope with some of the challenges 
+that Deaf musicians and audience members experience in mixed 
+hearing co-creative spaces. 
+2 Related Work 
+In this section, we ﬁrst review foundational research on musical 
+accessibility across multiple HCI literature as a background for our 
+work. We also discuss speciﬁc background work on accessibility 
+research for music and audio technologies designed speciﬁcally for, 
+with, or by Deaf and Hard of Hearing individuals. Lastly, we survey 
+the method of autoethnography from its adaptation in HCI to its 
+applications in accessibility research. 
+2.1 Music Accessibility in HCI 
+Music accessibility research extends across multiple research com-
+munities, from Human-Computer Interaction (HCI) to New Inter-
+faces for Musical Expression (NIME), and across various disabled 
+populations, such as Blind and Low Vision (BLV), neurodivergent 
+individuals, individuals with mobility restrictions, and individuals 
+with cognitive disabilities. In this section, we outline the accessi-
+bility research for musical expression, learning, and participation 
+for a broader group of users. In the following section, we survey 
+musical accessibility more speciﬁcally from the perspective of Deaf 
+and Hard of Hearing individuals and communities. Both HCI and 
+music researchers closely studied musical interaction for visually 
+impaired individuals. Ahmed et al. initially designed a music no-
+tation system for BLV musicians and composers, SoundCells, that 
+simultaneously outputs visual and braille notation while provid-
+ing audio feedback [ 2]. Payne et al. further conducted a 6-week 
+study using SoundCells, investigating how vision ability, along with 
+musical experience and use of assistive technologies, impacted mu-
+sical access, creativity, and expressivity [60]. While Ahmed adapted 
+braille notation systems for music composition [ 2], Manenti and 
+Dal Ri conducted workshops with BLV musicians to design graph-
+ical tactile scores as an alternative to the Braille music notation 
+[51]. Payne et al. carried assistive music technologies to the music 
+classroom to improve the accessibility of live coding ensembles to 
+both BVI and high school learners [61]. More speciﬁcally for music 
+training and practice, Lu et al. investigated the multimodality of 
+assistive musical technologies for music reading and memorization 
+[45]. 
+Designing accessible musical interactions for mobility restric-
+tions and physical limitations is among the most commonly studied 
+topics in accessibility research [26]. Sporka et al. also worked with 
+three music composers and producers who have motor disabilities 
+to identify the access opportunities and limitations of existing as-
+sistive music technologies [71]. Similar to Sporka, McMillian and 
+Morreale explored mobility restrictions by integrating diﬀerent oc-
+cupational therapy methods into instrument design considerations 
+from sensing technologies to movement and functional limitations 
+[53]. McCloskey et al. studied accessible button/switch controllers 
+for digital musicians with cerebral palsy to explore more inclu-
+sive gestural control [ 52]. Similarly, Payne et al. integrated eye 
+tracking into accessible musical instrument design for people who 
+experience severe physical limitations and rely on eye trackers for 
+computer access [62]. 
+Much research also focused on increasing musical accessibility 
+for individuals with neurodivergencies [ 26]. Jarvis Holland pro-
+totyped an ensemble of adapted instruments for artists with in-
+tellectual or developmental disabilities [40]. Lobo et al. developed 
+a mobile system to support therapists "for teaching and tracking 
+socio-communicative behaviors in children with neurodevelopmen-
+tal disorders during music therapy sessions" [44]. Similarly, Forster 
+et al. addressed children with complex or intellectual disabilities in 
+special education needs classroom settings [29]. They designed a 
+block-based musical interface to include children in musical activity 
+without prior music knowledge required, providing visual feedback 
+and passive haptic feedback from the materiality of the interface 
+without external actuation. 
+Similar to the diversity of disabilities that the musical interfaces 
+addressed, researchers also adapted diﬀerent methods with varying 
+levels of disabled individuals’ engagement and participation, from 
+bespoke design [46] to more participatory methods [ 4, 11, 21] to 
+dialogical methods [77]. Although researchers advocate for partici-
+patory methods or centering the disabled person’s lived experiences 
+[70], the disabled individuals’ participation in the design process 
+and the researchers’ interpretation and adaptation of the methods 
+vary signiﬁcantly [77]. 
+On one hand, more user/musician-centric methods have been 
+increasingly adapted [69]. On the other hand, accessibility research 
+and designs conducted by disabled researchers and musicians are 
+signiﬁcantly limited. The literature includes a single autoethnog-
+raphy of a disabled musician with physical limitations [ 53] and 
+could beneﬁt from more research based on disabled musicians’ ﬁrst-
+person experiences of design, creative practice, and performance. 
+Deaf experiences are even more reduced at the intersection of HCI, 
+music, and accessibility research. In the next section, we detail the 
+research for musical accessibility, speciﬁcally for Deaf and Hard of 
+Hearing (DHH). 
+
+===== PAGE 3 =====
+Sonic Agency: A Group Autoethnography of Technology-mediated Practice 
+by Deaf and Hard of Hearing Musicians ASSETS ’25, October 26–29, 2025, Denver, CO, USA 
+2.2 Music Accessibility and DHH 
+In Frid’s survey on accessible musical instruments from 2019, no 
+studies addressed deafness, and only %6 of all studies included 
+worked with musicians with hearing impairments [26]. Although 
+this statistic has changed in the past ﬁve years [ 11, 12, 17, 36], 
+research on Deaf musicianship still remains limited. Research rather 
+focuses on DHH individuals as users or music consumers rather 
+than creators. For example, Choi et al. integrate customizable cross-
+modality into exploring musical concepts for DHH music listeners’ 
+appreciation [16]. 
+To support DHH engagement in music, much research explores 
+assistive modalities such as visual [ 14, 22, 33, 65] or vibrotactile 
+representations [67]. These representations often provide musical 
+information to substitute for the missing senses, while some uti-
+lize these stimuli to enhance this user group’s musical experience. 
+Nanayakkara, Wyse, Ong, and Taylor develop assistive devices with 
+visual and haptic displays [56]. Similarly, Fourney and Fels provide 
+visual feedback to inform “deaf, deafened, and hard of hearing music 
+consumers” about musical emotions conveyed in the performance, 
+extending their experience of accessing the music of the larger 
+hearing culture [25]. Burn applies sensory substitution in designing 
+new interfaces using haptic and visual feedback for “deaf musicians 
+who wish to play virtual instruments and expand their range of 
+live performance opportunities. ” [8]. He highlights the importance 
+of multisensory integration for Deaf musicians when playing elec-
+tronic instruments and integrates additional feedback modalities 
+into virtual instruments. Similarly, Richards et al. [ 68] develop a 
+wearable, multimodal harness to study tactile listening experiences 
+with hearing participants. These experiences are delivered via extra-
+tympanic sound conduction and vibrotactile stimulation of the skin 
+on the upper body. 
+Iijima et al. explored diﬀerent gestural interactions on the smart-
+phone for augmenting digital musical instruments while providing 
+tactile feedback to DHH users [36]. Cavdir and Wang [13] explore 
+new compositional and performance paradigms to provide a more 
+physically felt musical experience through movement and haptic 
+modalities. Cavdir [ 11] presents a co-design study with a Deaf 
+dancer to develop a multimodal wearable haptic interface and a 
+cross-modal vocabulary for a dance-music collaboration. In a sur-
+vey study, Ohshiro and Cartwright collected DHH audio producers’ 
+experience [58]; however, their participants took a more speculative 
+approach to technology support than reﬂecting their ongoing prac-
+tice with assistive technologies. The DHH music technologies that 
+engage in DIY practices for new musical interface design remain 
+underrepresented in the HCI and music accessibility research. Simi-
+larly, only a few research studies explore the music created, listened 
+to, and appreciated by Deaf musicians and audience across genres 
+such as Deaf hiphop [6] or practices such as Deaf Rave [41, 59]. In 
+this paper, we highlight DHH music creators and technologists’ mo-
+tivations, perspectives, and experiences as we identify them within 
+Deaf Jazz thanks to jazz practice’s openness to improvisation and 
+experimentation. 
+2.3 First-person Methods 
+First-person account originates from experience on the body, or 
+the lived experiences [ 55, 63, 64, 73], focusing on our perception, 
+understanding, and experience of the outside world and diﬀers 
+from a third-person perspective of seeing the body as an external 
+object in the world [35]. Similarly, autobiographical or biographical 
+design methods can reveal participants’ ﬁrst-person perspectives 
+in design research [5, 34]. Inspired by the following background 
+literature, we ground our work on group autoethnography and 
+autobiographical design within ﬁrst-person approaches. 
+2.3.1 Autoethnography. Autoethnography, as a qualitative, ﬁrst-
+person method, describes and analyzes personal experiences of a 
+speciﬁc cultural context or phenomena [ 24, 66]. It encapsulates 
+a holistic representation of the autoethnographer, from personal 
+experiences to their cultural identity and personal backgrounds 
+[20], investigating the studied phenomenon in its cultural con-
+text. By using methodological tools that are drawn from qualitative, 
+ethnographic, narrative, and arts-based research [19], an autoethno-
+grapher connects their individual experiences to a wider cultural 
+context. Among other ﬁrst-person methods [ 23, 30, 49], HCI re-
+searchers have been integrating autoethnography to acknowledge 
+the researcher’s role and to explore diﬀerent forms of observing 
+and describing personal experiences with technology [48]. 
+As accessibility researchers and disability studies scholars, Hof-
+mann et al. provided their ﬁrst-person experiences through a re-
+ﬂexive analysis surrounding misunderstandings of their own dis-
+abilities and oversimpliﬁcation of disabilities. Similarly, Janicki et 
+al. [39] articulate their lived experience with chronic illness within 
+the context of more-than-human design and disability theories, 
+expanding more-than-human design practices through disability 
+perspectives. 
+In accessibility research, autoethnography has been increasingly 
+adopted as a method to report the researcher’s ﬁrst-person experi-
+ences. Jain et al. [37] were among the ﬁrst researchers to unpack 
+the experience of traveling solo as a disabled individual. Similarly, 
+Zeidieh [78] and Stephens et al. [ 72] focus on the experience of 
+traveling as a disabled person from an autoethnographical account 
+and discuss how technology can provide independence to the vi-
+sually impaired individual as well as lack of systematic support 
+and assistance for people with visual impairments [10]. Similar to 
+travel, relocation experiences pose signiﬁcant challenges for indi-
+viduals with accessibility needs [75]. Yildiz et al. describe the ﬁrst 
+author’s personal experience as a researcher with a mobility dis-
+ability to understand present and new access needs, interpersonal 
+accessibility, and digital access and connections with local disability 
+communities to rethink "accessibility on the move. " The authors 
+further provided design implications to support the relation and 
+travel of disabled individuals, extending to academic communities. 
+Researchers, who track their experience "on the move, " from 
+traveling and transportation to relocation experiences, reveal the 
+challenges and opportunities in providing assistive systems in pub-
+lic spaces, various sociocultural contexts, and outside their comfort 
+zones. From a diﬀerent perspective on interdependence and assis-
+tive technology, Fusenegger and Spiel focus on personal use of 
+assistive devices, providing insights on the ﬁrst author’s lived expe-
+rience around the necessary use of assistive technologies (AT) on a 
+daily basis, revealing the socio-technical dependencies on AT [28]. 
+Fusenegger tracked their daily use of multiple assistive technolo-
+gies to highlight how much AT supports the researcher’s everyday, 
+
+===== PAGE 4 =====
+ASSETS ’25, October 26–29, 2025, Denver, CO, USA Cavdir et al. 
+social, professional life, and well-being. In a similar study, Wu et al. 
+apply autoethnography to investigate the experience of a person 
+who stutters (PWS) when using videoconferencing technologies 
+[74]. 
+The duration of autoethnography, often as a longitudinal study, 
+varies signiﬁcantly based on the researched phenomena, method-
+ological adaptations, and researchers. While Yildiz et al. engaged 
+in the autoethnographic data collection for three months, some 
+researchers collected data from individual instances or periods over 
+a longer study time. Cassidy et al. collected data from 13 instances 
+over a 2.5-year-long period [ 10], and Jain et al. [ 37] focused on 
+the two distinct travel periods from the ﬁrst author’s life. Most 
+longitudinal autoethnographies captured isolated instances rather 
+than engaging in everyday data collection from personal experi-
+ences throughout the process. For example, Wu et al. captured the 
+researcher’s experience qualitatively and quantitatively after each 
+video conference meeting over a 15-month-long autoethnography 
+[74]. A shorter period, just as in Yildiz et al. ’s 3-month-long [75] 
+or Fussenegger’s and Spiel’s 10-day-long studies [28], allows for 
+continuous data collection and reﬂection. Although data collection 
+focuses on individual periods in the former cases, autoethnogra-
+phy reﬂectively continues after such personal experiences, and 
+researchers continuously engage in reﬂexive writing and retrospec-
+tive writing. 
+2.3.2 Group Autoethnography. Although Wu et al. they provide "a 
+unique and complementary perspective beyond more traditional 
+user-centered design and research methodologies, " they recognize 
+the challenges of the method since autoethnography can present an 
+inherent subjectivity and bias, diﬃculty of balancing the personal 
+and the analytical voice, an emotional intensity throughout the 
+process placing the researcher in a vulnerable position [ 74]. To 
+address this predominant meta-narrative and subjectivity rooted in 
+deeply personal perspectives, researchers proposed involving other 
+researchers to approach the shared phenomenon from multiple 
+perspectives [57]. Jain et al. [38] adapt Norris et al. ’s approach by 
+conducting a trio-ethnography to retrospectively understand their 
+experiences in academia, speciﬁcally the graduate school experi-
+ences as people with disabilities. 
+In their duoethnography, Abromonovich and Patitsas collected 
+12 journal entries each, and between each journaling session, they 
+aligned their experiences by commenting and responding on each 
+other’s journals for clariﬁcation [1]. Similarly, Jain et al. commented 
+on each other’s retrospective account and ﬁeld notes in a shared 
+document, "relating to the experience, challenging the assumptions, 
+oﬀering revisions and alternate viewpoints" [38]. 
+Compared to duo- and trio-ethnographies, group autoethno-
+graphies, which are larger than three autoethnographers, follow 
+similar approaches since group autoethnographies provide oppor-
+tunities to reﬂect on group thinking and experience collectively 
+through more systematic ways of aligning experiences and reﬂec-
+tions and challenging assumptions and misconceptions. Chen et al. 
+employ group autoethnography of a hearing individual’s experi-
+ence in mixed-hearing ability higher education settings [15]. The 
+authors emphasized that the "group" element in group or collective 
+autoethnography becomes more pronounced in the data collection 
+phase since each researcher collects their "experiences individually 
+yet within the context of the collective experience. " They also report 
+that they gathered for in-depth reﬂection meetings when analyzing 
+the data, while the collaborative spirit emerged more evidently in 
+the "meaning-making phase", ensuring that the group members’ 
+insights collectively shape the interpretation and conclusions of our 
+writing [15]. Similarly, Mack et al. applied this method to a larger 
+group autoethnography setting with eleven authors to understand 
+the experiences in the mixed ability and diverse experience virtual 
+environments, combining ﬁeldnotes and retrospective accounts 
+[50]. 
+3 Methods 
+We provide background on group autoethnography, the team com-
+position and our positionality, and our data collection and analysis 
+methods. 
+3.1 Team Composition and Posionality 
+CymaSpace 1 is a Deaf-owned technology hub whose mission is to 
+increase media, arts, and culture accessibility for Deaf and Hard of 
+Hearing (DHH) communities. Through ﬁve programs, they support 
+Deaf communities’ access to arts and culture: Research, educa-
+tion, outreach, entrepreneurship, and practice. Because diversity 
+in hearing, experience of living with assistive devices, and expo-
+sure to music have close connections to individuals’ participation 
+and appreciation of music, in this section, we provide the musical, 
+technical, and hearing backgrounds of the researchers 2 , including 
+their cultural associations and communication languages, to con-
+textualize our ﬁndings in relation to the mixed ability performance 
+ecosystem. 
+DC is an accessibility researcher and a musical instrument de-
+signer, studying the integration of sign languages into design space 
+and designing new accessible interfaces for dance and music per-
+formance. She culturally associates with the hearing communities 
+and actively collaborates with DHH artists. As a music and dance 
+technology developer, she contributes to the design and research of 
+CymaSpace’s universal music design team as the team’s academic 
+mentor. She has a music and engineering background, performs 
+with custom-designed musical interfaces, and composes with mu-
+sical haptics. She is currently an American Sign Language (ASL) 
+student and communicates with spoken and written English. 
+DS is a deaf technologist and lead design engineer who had 
+profound hearing loss from birth. He associates with the lowercase 
+d, deaf culture, due to being raised in a hearing family and cultural 
+disagreements with the uppercase D, deaf communities. He only 
+developed an interest in music and performance in 2023, starting 
+with his collaboration with the CymaSpace organization. As a ﬁrst-
+generation student, he is currently working towards his associate 
+degree in Music and Sonic Arts. He performs percussion and custom 
+sonic interfaces with hearing and Deaf musicians and develops his 
+custom-designed assistive music technologies. He communicates 
+with ASL and written English. 
+1https://www.cymaspace.org/
+2Initials are used to refer to the co-authors. 
+
+===== PAGE 5 =====
+Sonic Agency: A Group Autoethnography of Technology-mediated Practice 
+by Deaf and Hard of Hearing Musicians ASSETS ’25, October 26–29, 2025, Denver, CO, USA 
+(a) 
+ (b) 
+ (c) 
+ (d) 
+Figure 1: Sound reactive LED-based visualization: (a) a performer plays with the visualization system embedded on the guitar 
+fretboard, (b) pitch and amplitude content of music are mapped to light, color, and movement during piano performance, 
+(c) sound reactive LED strip is assembled into a sound board for visual feedback on sound eﬀects, (d) sound reactive LED 
+structure displayed on stage during concert performance. Image credits for (a) belong to Eric Buchner and for (b) through (d) to 
+CymaSpace. 
+MB , the executive director of CymaSpace, is a Deaf/Blind musi-
+cian. He uses hearing aids for a small band of audio perception due 
+to progressing hearing loss, which started at birth and developed 
+in his teenage years. Myles associates both with Deaf and hearing 
+cultures. Growing up in a musical family, he has more than 20 
+years of music experience, playing the electric guitar, performing 
+and touring with bands, and composing. With his background in 
+UX/UI design, he collaborates with the team’s designers on custom 
+assistive music technologies, speciﬁcally for music performance 
+and sensory substitution. He communicates with ASL, spoken, and 
+written English. 
+ST is a hearing music producer, audio engineer, computer scien Studio Sessions. 3.2.1 -
+tist, and researcher with autism. He started experiencing hearing 
+damage in his teenage years, such as hyperacusis and tinnitus. He 
+associates with the hearing culture and closely collaborates with 
+DHH musicians and community members. Thanks to his experi-
+ence, he manages the music studio and multimodal sensory setup 
+during practice sessions and contributes to developing music educa-
+tional materials for Deaf students. He also performs the percussion 
+instruments and electronics. He communicates with ASL, spoken, 
+and written English. 
+NH is a Deaf Musician and project lead of the universal music 
+design team at CymaSpace. Growing up with hearing aids since 
+the age of 3, NH progressively lost his hearing at 16. Five years 
+after losing his hearing, he received a cochlear implant (CI) in one 
+ear. He wears his implants when listening and speaking; however, 
+during Deaf community events, he prefers to keep them deactivated 
+for cultural reasons. He associates both with Deaf and hearing 
+cultures. As a child, he actively participated in music practice and 
+performance by playing various musical instruments, including 
+the piano and trumpet, and participating in the marching band, as 
+well as singing in touring music performance groups. He currently 
+performs as a DJ and composes music using synthesizers and elec-
+tronics. He communicates with ASL, spoken, and written English. 
+The team members have diﬀerent cultural associations regard-
+less of their hearing abilities. They collaborate on designing new 
+assistive music technologies, composing, creating educational mate-
+rials, and performing music. During the study, they communicated 
+through ASL, sign interpretations, written, and spoken English. In 
+virtual meetings, they only used video conferencing applications 
+that allowed for accurate live captioning. 
+3.2 Background on the Performance Ecosystem 
+Four members of the team (DS, MB, NH, and ST) formed a Deaf-
+led ensemble, practicing technology-integrated music learning, co-
+performing, and composing, in two settings: practice sessions in a 
+music recording studio and on tour across three local educational 
+institutions. 
+The group gathered periodically in a music 
+studio to co-perform as a small ensemble. ST led the studio sessions 
+by mastering and engineering audio signals to multimodal channels, 
+structuring the studio setup for increased collaboration and tech-
+nology integration, and preparing educational and compositional 
+materials in the form of etudes. These educational and compo-
+sitional materials were designed speciﬁcally for Deaf musicians 
+through the practice sessions and rehearsals for public events in 
+the studio. He also recorded the Deaf musicians’ compositions and 
+participated as a percussionist in the performance sessions. Both DS 
+and MB designed custom interfaces for musical control, expression, 
+and communication between co-performers that are integrated into 
+the studio setup (as detailed in Section 4). NH and MB created audio-
+haptic compositions for the ensemble’s co-performance sessions. 
+DC participated in facilitating the group discussions and organized 
+group reﬂections on the individual performance sessions. She also 
+collaborated in designing the custom gestural musical interfaces 
+that were integrated into the studio’s assistive technology setup. 
+All Deaf musicians participated in practicing new musical etudes, 
+co-performing, and improvising in a mixed-hearing performance 
+ecosystem. 
+3.2.2 Tour and Outreach. The ensemble participated in a perform-
+ing tour with two additional hearing musicians in December 2024, 
+visiting three local institutions for four days of performance and 
+outreach activities. During the tour, they performed both as an en-
+semble and in collaboration with the local jazz and voice orchestras 
+for mixed-hearing audiences. Each performance was complemented 
+with workshops and community events, providing participants with 
+
+===== PAGE 6 =====
+ASSETS ’25, October 26–29, 2025, Denver, CO, USA Cavdir et al. 
+an opportunity to engage hands-on with haptic technology, experi-
+ence audio-reactive visuals, and explore new interfaces for musical 
+expression. The workshops were tailored to the music students and 
+DHH community. 
+3.3 Data Collection 
+Data collection began in January 2024 and continued until March 
+2025. Each member collected their experiences through (1) retro-
+spective account [ 24, 47], (2) ﬁeldnotes [ 66] collected after stu-
+dio and performance sessions, and (3) other artifacts, including 
+memos, audio and video recordings, and personal reﬂections. The 
+group aspect of this autoethnography was more pronounced in 
+this stage since each member documented their experiences indi-
+vidually within a shared music studio environment. Some of the 
+ﬁeldnotes and personal reﬂections include the narrative of perfor-
+mances or community engagement events, such as speciﬁc tour 
+days, outreach events in local schools and Deaf communities, or 
+speciﬁc studio sessions. The retrospective accounts were collected 
+based on the autoethnographer’s experience with music learning, 
+performing with technology, performing with others, or developing 
+technology. 
+We initially developed a retrospective account of experience 
+with music and technology development before more structurally 
+collecting data in January 2024. These accounts included digital 
+notes and correspondences of experiences in music learning, perfor-
+mance, technology use, community associations and outreach, and 
+engaging in assistive and accessible technology design. To support 
+recollecting these experiences, we referred to email correspondence, 
+design logs, and performance recordings. These past experiences 
+were also shared and discussed in group meetings, enabling other 
+members to relate and reﬂect on each other’s experiences. Field-
+notes were collected after studio sessions and after performances 
+during the tour. In addition to collecting personal reﬂections, the 
+authors shared their experiences, self-observations, and reﬂections 
+in a shared form. They articulated speciﬁc musical activities from 
+the sessions—including diﬀerent musical instruments, assistive and 
+custom technologies—performance dynamics, and expectations and 
+takeaways. They also articulated their somatic state, including phys-
+ical, emotional, and mental, before and after the studio sessions. 
+In addition to keeping ﬁeldnotes as a musician, as the studio 
+manager, ST documented his observations of the performance dy-
+namics between co-performers and musical content as the studio 
+manager. The collected data was reviewed one-on-one between DC 
+and ensemble members and, again, collectively in group sessions. 
+At the same time, she collected her self-reﬂexive account on the 
+design, compositional, and performance experiences in addition to 
+reﬂection on her correspondences with the ensemble. Although DC 
+organized follow-up and journaling structures, the frequency of 
+data collection occasionally ﬂuctuated due to the nature of the stu-
+dio practice (e.g., lasting until late at night) and to prevent cognitive 
+overload related to varying access needs of the ensemble. Similarly, 
+ST’s data collection was interrupted for a month in December 2024 
+due to a medical leave. 
+3.4 Data Analysis 
+Following the approach adopted by Chen et al. [15] and Mack et al. 
+[50], DC collected and organized the data from the retrospective 
+accounts, ﬁeldnotes, and reﬂections on the audio-visual artifacts. 
+The group discussions were transcribed and included in the analysis. 
+The collected data was analyzed through an inductive thematic 
+analysis similar to Braun and Clark’s approach to a more ﬂexible and 
+recursive process of codifying data and deﬁning themes [7]. Starting 
+the analysis, the authors initially created six high-level, fourteen 
+low-level axial codes, which increased to eight high-level and ﬁfteen 
+low-level axial codes after collectively revising the codes. To prevent 
+misinterpretations, these codes were reviewed with all authors in 
+group meetings to align interpretations and to include additional 
+reﬂections. These group sessions allowed for critically revising the 
+codes by adding, removing, or merging them. Finally, the codes 
+were combined into four overarching themes presented in Section 
+5: music technologies in practice, sonic agency and accessibility, 
+challenges and access barriers, and strategies for increased inclusion 
+in mixed-hearing performance ecosystems. 
+4 Current Practices and Musical Artifacts 
+Studio sessions allow the ensemble to develop and experiment with 
+custom-designed assistive music technologies while simultaneously 
+integrating commercially available technologies into the studio and 
+performance spaces. The ensemble focused on augmenting these 
+spaces with audio-reactive visuals, audio-haptic sensory integration, 
+and gestural control and expressions. To better conceptualize the 
+ﬁndings, in this section, we outline new technologies designed by 
+the team and the existing technologies integrated into the team’s 
+multimodal music practices in the studio and on stage. 
+4.1 Audio Reactive Visuals 
+Visuals comprise a signiﬁcant part of DHH individuals’ communi-
+cation means. MB has been developing visual performance systems 
+both to facilitate communication between co-performers, regardless 
+of their hearing, and to visualize the ambient sound. The former 
+was developed during the autoethnography and designed as an LED 
+display to be integrated into parts of musical instruments (such as 
+the guitar fretboard). By retrieving music information, including 
+note onsets, frequency analysis, and parameter mapping, it visu-
+alizes the player’s musical notes in real-time. This interface was 
+used in performances during the tour on the guitar and drum ma-
+chines. The latter was previously designed to translate the ambient 
+sound into color and movement using a type of frequency analysis, 
+Fast Fourier Transforms (FFT). By allowing environmental audio to 
+become visible in space, the system aims to amplify sensory aware-
+ness of sound and visuals. Figure 1a presents the two systems setup 
+in a rehearsal session during the tour to inform the co-performers 
+of the musical content of the guitarist’s performance. Both MB and 
+co-performers can follow the note progressions through the visu-
+alizer on the guitarist’s fretboard. In the background of Figure 1a, 
+the musician placed the ambient sound visualizer that is connected 
+to the musician’s audio output. This system was also integrated 
+into instruments such as pianos and keyboards (Figure 1b), sound 
+mixers and controllers (see Figure 1c), and concert settings (see 
+Figure 1d). 
+
+===== PAGE 7 =====
+Sonic Agency: A Group Autoethnography of Technology-mediated Practice 
+by Deaf and Hard of Hearing Musicians ASSETS ’25, October 26–29, 2025, Denver, CO, USA 
+(a) 
+(b) 
+ (c) 
+Figure 2: Performers wore audio-reactive masks on the stage 
+during tour concerts, but as a concert artifact and an assistive 
+device for DHH musicians. The image credits belong to Eric 
+Buchner. 
+DS designed and built a similar LED-based audio-reactive visual 
+assistive technology as a wearable mask, speciﬁcally for the ensem-
+ble’s tour. These 3D printed masks are designed to be worn during 
+live performance, visually mapping music’s spectral content across 
+the performer’s face. As fully mobile, battery-powered masks, they 
+perform real-time FFT analysis and drive responsive lighting based 
+on the sound input. As a Deaf performer, DS’s motivation behind 
+the design derives from two accessibility needs: (1) DS’s to read 
+musical qualities, such as rhythm and spectral energy, directly from 
+each other beyond visualizing the sole sonic activity and (2) as an 
+autistic musician, ST’s aspiration for performing behind a mask. 
+Figure 2 shows two Deaf musicians, DS and NH, wearing masks 
+during one of the tour performances. 
+4.2 Audio-Haptic Integration 
+While visual feedback provides a sensorially rich music information, 
+on-skin vibrotactile haptics provide more direct, nuanced, and ar-
+ticulated musical perception [11, 67]. The ensemble has integrated 
+haptics into their studio and performance practices in multiple 
+ways, two of which have been consistently practiced: (1) tactilely 
+and visually augmented electro-acoustic marimba, EPK 3 , and (2) 
+commercially available haptic Woojer vest 4 . 
+The ensemble leveraged the electro-acoustic marimba’s digital 
+sound output by amplifying and streaming the sound signal to the 
+haptic jackets for increased frequency resolution of the pitched 
+percussion. Thanks to this setup, the Deaf musicians can more 
+accurately perceive and follow the music’s rhythmic qualities. The 
+haptic jackets were worn by all ensemble members (Figure 4a-4e), 
+regardless of hearing abilities, and by local music collaborators 
+or some of the audience members (Figure 4f-4h). Figure 4 shows 
+that each musician wears the haptic jacket to perceive the same 
+vibrotactile information while on stage or in the studio. 
+In addition to integrating musical artifacts and assistive tech-
+nologies, ST customized the studio environment to optimize haptic 
+listening. Adapted from the headphone mixers, the haptic mixers 
+receive the individual sound signals from each instrument without 
+the superﬂuous sound eﬀects added to the signal. This setup allows 
+the audio engineer and the musicians to customize the audio mix 
+according to the musicians’ haptic perception, sonic preferences, 
+and musical needs. The musicians become able to receive and sit-
+uate each signal directly on the vest and tune their ampliﬁcation, 
+panning, and mix, providing an increased control and agency. 
+4.3 Gestural Interfaces 
+As a third modality that supports DHH musicians, gestural interac-
+tion in music aligns with sign language expression as a kinesthetic 
+communication method. Led by DS, the ensemble performed with 
+two gestural musical interfaces. DS designed and built a controller 
+system (GeLu) that includes two wearable interfaces: a ring system 
+3https://www.modemarimba.com/epk/intro
+4https://www.woojer.com/ 
+(a) 
+(b) 
+ (c) 
+Figure 3: A glove-based hand controller for gestural musi-
+cal interaction aims to accompany American Sign Language 
+(ASL) signs while controlling sound parameters. 
+
+===== PAGE 8 =====
+ASSETS ’25, October 26–29, 2025, Denver, CO, USA Cavdir et al. 
+(a) 
+ (b) 
+ (c) 
+ (d) 
+ (e) 
+(f) 
+ (g) 
+ (h) 
+Figure 4: Haptic vests were worn by the ensemble members both during the studio sessions (4d and 4e) and during the tour 
+concerns (4a-4c). They were also distributed to the audience members. Two Deaf musicians help the audience members wear 
+the haptic suits in 4g and 4h. Image credits belong to Eric Buchner. 
+with gestural sensing that provides haptic feedback on the ﬁnger-
+tips and a bracelet with audio-reactive light feedback (see Figure 
+3). 
+These interfaces were originally designed to strengthen the co-
+performer communication and improvisation between DS and NH, a 
+Deaf music student and CI-user musician to support DHH music stu-
+dents to develop a better understanding of musical rhythm. While 
+one DHH musician performs basic percussive patterns, the other 
+DHH musician receives, through the interface, the sensation of the 
+rhythmic patterns on one ﬁngertip. In return, the musician with 
+the interface can perform polyrhythms using another ﬁnger. This 
+performance dynamic mimics the multi-track recording process 
+with headphones that hearing musicians often practice in recording 
+studios, and it instead replaces the audio through headphones with 
+haptics. The design was informed by the signing musicians’ need to 
+integrate glove-like technologies into music performance without 
+allowing the interface to disrupt signing. 
+In addition to facilitating improvisation between two DHH mu-
+sicians, these interfaces were also used in the studio sessions to 
+inform the development of a DHH music curriculum. However, as 
+early-stage prototypes, they were not performed at the concerts 
+and workshops during the tour. Instead, a more established ges-
+tural interface, Theremin, was performed by DS along with other 
+musicians (see Figure 2c). 
+5 Findings 
+Through the performance practices over 15 months, we integrated 
+several technologies described in Section 4, which we either adopted 
+and transformed the existing technologies or designed our own 
+assistive technologies and musical artifacts for the personalized 
+needs of DHH musicians. These practices addressed multiple facets 
+of the access barriers, challenges, and opportunities of Deaf mu-
+sicianship and bespoke design. Some of these aspects overlapped 
+across the arising themes due to the themes’ interconnectedness. 
+We organized the ﬁndings into the themes of music technology in 
+practice, Deaf musicians’ sonic agency and literacy, and the chal-
+lenges the ensemble faced in mixed-hearing co-creative space, along 
+with the strategies we developed in response to these challenges 
+and limitations. 
+5.1 Music Technology in Practice 
+LaBelle describes how "sonic agency places an emphasis on the 
+social experience and productions of sound and audition" and how 
+visibility through practice plays a key role in "building alternative 
+frameworks [...] of listening and being heard" [42]. For our practice, 
+participating in music practice and performing on stage provided 
+this visibility, access to listening and audition, and being heard. To 
+be able to improve musicianship skills as DHH musicians and to re-
+hearse in a mixed-hearing performance space, we turn to designing 
+and integrating music technologies into our practices. This practice 
+quickly revealed the most prevalent access need to substitute sound 
+information through vibrotactile haptic feedback, audio-reactive 
+light and visual displays, and gestural interaction. 
+5.1.1 Haptic Displays. We collectively believe that vibrotactile sen-
+sory integration, despite the haptic AT’s shortcomings, provides 
+better substitution and better "demonstration of variance in mu-
+sic" “due to the increased awareness of the sound waves in a speciﬁc 
+frequency range, ” i.e. through vibrotactile feedback, speciﬁc frequen-
+cies can be produced which would be inaudible with traditional 
+speakers otherwise, as ST and NH articulate (4/18/2024). 
+
+===== PAGE 9 =====
+Sonic Agency: A Group Autoethnography of Technology-mediated Practice 
+by Deaf and Hard of Hearing Musicians ASSETS ’25, October 26–29, 2025, Denver, CO, USA 
+During all performances, including rehearsals and studio ses-
+sions, all musicians wear the haptic vests regardless of their hearing 
+to perceive the same tactile information. ST noted the motivation 
+for providing vibrotactile feedback to all musicians, regardless of 
+whether they have hearing loss. "Bringing haptics into the more 
+conventional performance space, while jazz being an entry point 
+for the Deaf musicians, aﬀords the diﬀerent aspects of agency son-
+ically and socially in parallel. " (11/14/2024). Beyond aiding Deaf 
+performers and facilitating co-performer connections, the haptics 
+also supported the audience’s listening experiences. We observed 
+that some audience members were aﬀected by feeling the nuances 
+in the music when listening through the haptic vests. DS retrospec-
+tively collected his experience in a Deaf school during an outreach 
+event: "It seems that they felt nothing as accurate as what NH showed 
+them with the vests. The reaction was pretty strong! They said that 
+they could actually feel things, instead of white noise from many 
+musical instruments getting mixed up. Separating the sounds to left 
+and right made a big diﬀerence with those haptics! Like they’ve just 
+gotten a glimpse of an entirely new dimension that they can start 
+exploring now!" (4/25/2024). 
+MB reﬂects that many Deaf individuals " have a fractured rela-
+tionship with sound and music. Many Deaf schools don’t have a music 
+program. It has been observed that the concepts of tempo and count-
+ing time signatures are often abstract and challenging when teaching 
+rhythm and keeping time. Even in my case, it is diﬃcult for me to tell 
+what key a performance may be in, and I cannot be conﬁdent I am 
+playing similar tones unless I have a visual or haptic aid. " (4/19/2024). 
+This fractured relationship originates from missing an introduction 
+to experiencing, understanding, and creating music and sound. For 
+example, NH wrote about his experience demonstrating assistive 
+music technologies in a Deaf school: 
+Not a lot of Deaf people engage with music, but when 
+I showed them the haptic vest, they immediately knew 
+what they were missing. They loved loud music, but 
+the opportunity to be loud is scarce. The technology 
+gives them the opportunity to be "loud". (12/3/2024) 
+Growing up with music while their hearing loss progressed, both 
+MB and NH reﬂected on the inﬂuence of early exposure to music and 
+emphasized how a lack of introduction to the listening experiences 
+impacts DHH individuals’ participation and appreciation of music. 
+5.1.2 Light and Visual Displays. Designing visual assistance de-
+rived from speciﬁc needs to compensate for diﬀerent musical ele-
+ments. MB wrote his motivation for integrating light and visuals 
+for (1) supporting harmonic progression, (2) synchronization, and 
+(3) co-performer dynamics: 
+I am currently designing an AI/ML-driven system that 
+would allow me to improvise more conﬁdently with 
+musician peers. It would "listen" to note and chord 
+choices and make recommendations as to diﬀerent 
+musical possibilities that could be played next. It will 
+visualize these suggestions on instrument-speciﬁc 
+LED displays (e.g., guitar fretboards) that light up with 
+the possible "harmonious" suggestions that would 
+evolve as the performer decides which notes/chords 
+to adhere to. The same system would also trigger 
+light and haptic devices that subscribe to the music 
+"session" for others to synchronize their eﬀorts and 
+contribute harmoniously, regardless of hearing ability 
+(4/12/2024). 
+Similarly, DS’s wearable mask design aimed to communicate 
+music’s spectral content, or energy, an often neglected musical 
+feature in accessible technology design. DS elaborated how light 
+visuals were connected to sound features: 
+Each frequency band has an associated color palette 
+and intensity level. The louder a frequency region 
+is, the more active the mask’s corresponding LEDs 
+become, so you can visually read both pitch region 
+and amplitude across someone’s face. 
+This was especially useful in performance. Since Deaf 
+musicians often rely on visual cues to stay in sync, the 
+masks gave us a new layer of feedback. For example, 
+when I played the Theremin, my own mask would 
+react more vividly to its output due to microphone 
+proximity. Likewise, NH and MB had their masks 
+tuned to be more reactive to their own instruments 
+or speakers. The masks allowed us to look at each 
+other and see, not just that someone was playing, but 
+what kind of energy they were putting into it. That’s 
+something Deaf performers are often left out of, and 
+the masks helped close that gap (4/14/2024). 
+These experiences prove the signiﬁcance of visual perception 
+in DHH individuals’, speciﬁcally in musicians’, everyday experi-
+ences. DC noted how much the visual expression and culture were 
+embedded into their communication between hearing and DHH 
+collaborators: Apart from integrating new technologies into our per-
+formance and design spaces, as a hearing person closely collaborating 
+with DHH artists, I have noticed visuals and emotional expression 
+have been big parts of our correspondences. I have received visual 
+references along with my collaborators’ experiences, such as videos, 
+visual vernacular, talks, images, or emojis. (6/17/2024). 
+5.1.3 Gestural Interfaces. Gestural expressions act as a bridge be-
+tween embodied aspects of music performance to sign- and visual 
+vernacular-based DHH communication. DS experienced perform-
+ing with diﬀerent gestural interfaces during this autoethnography, 
+from intangible instruments such as the Theremin to percussion 
+instruments and custom gestural interfaces. He noted these perfor-
+mance experiences with a strong emphasis on his personal design 
+considerations: 
+While I received positive feedback about my control 
+of the Theremin, I personally found it limiting 
+compared to more advanced gestural systems, 
+particularly those I’ve been prototyping using 
+computer vision or approaches like the Somi 5 . 
+The biggest contrast between the Theremin and GeLu 
+lies in intentionality and feedback. GeLu is built 
+around a feedback loop: haptics, light, motion. That 
+5https://instrumentsofthings.com/ 
+
+===== PAGE 10 =====
+ASSETS ’25, October 26–29, 2025, Denver, CO, USA Cavdir et al. 
+gives the performer actionable information in real-
+time. The Theremin, by contrast, oﬀers no tactile feed-
+back and forces the performer into a constrained pose, 
+arms raised, hands shaped unnaturally. As someone 
+who tends to move my entire body while presenting 
+or performing, I pace, sign, and gesture broadly, and I 
+found the Theremin physically stiﬂing (2/7/2025). 
+He added "GeLu was intentionally designed to avoid these kinds 
+of limitations. One of my goals has always been to develop gestural 
+interfaces that do not interfere with signing or typing, so performers, 
+engineers, and artists alike can remain fully expressive and func-
+tional. " (2/7/2025). DS’s reﬂections highlight that DHH designers 
+value gestural communication and expression, while they struggle 
+to achieve the same expressive aﬀordances with the existing de-
+vices. They turn to bespoke designs to meet these needs in desired 
+expressivity and creativity. 
+5.2 Sonic Agency and Accessibility 
+MB describes sonic agency as "the ability to inﬂuence and inter-
+act with sound in a meaningful way, manifesting itself in forms 
+of expression, visual, and tactile experiences as well as creating 
+inclusive environments where all musicians can engage with sound 
+and music. This sense of Deaf-led music agency includes writing 
+music with only vibrations and no audio, incorporating visual tools 
+used also for hearing collaborators, and shifting away from music 
+that relies on listening with the ears towards listening with the 
+body. " 
+This concept relates to sensory inclusivity, extending beyond 
+mere auditory perception and advocating for increased access to 
+music and the sonic world for all individuals, regardless of auditory "As other commercially available technologies are 
+getting involved in the practice, the studio setup becomes a blend of 
+customized technology for the speciﬁc needs, to make the space more 
+haptically engaging for the deaf musician. " 
+abilities [42]. NH emphasized the importance of sonic agency and 
+highlighted that DHH individuals have limited access to ‘‘full un-
+derstanding of sonic agency in their lives with tools within reach for 
+full equitable experience. ” Similar to NH’s remarks, an overarching 
+theme is centered on the separation between DHH individuals’ 
+sonic agency and access to resources. 
+DS articulated this interdependent space and their understanding 
+of sonic agency in their reﬂections: "I see sonic agency as the right 
+and the ability to shape sound, whether or not you can hear it. It’s 
+about having access to the tools and spaces where sound is created, 
+shared, and experienced. That includes music, but also communication, 
+feedback systems, and control over your environment. " (3/13/2025). 
+Through group discussion, aligning our experiences, and crit-
+ically reviewing our observations, we derived three areas where 
+sonic agency is practiced within technology-mediated music per-
+formance. 
+5.2.1 DHH as Music Technology Developers. Because the design 
+space for assistive music technology still lacks the participation 
+of DHH musicians and audio engineers, the existing technologies 
+remain short in their applicability or are unknown to the DHH 
+communities [58]. This challenge encouraged DHH musicians to 
+develop their custom-designed technologies. 
+Both MB and DS led the team’s design practice by reﬂecting on 
+their lived experiences [34]. MB wrote: "I have traversed a variety of 
+technologies from analog ampliﬁers/eﬀect pedals to more recent use 
+of digital ampliﬁer modeling and digital eﬀects. My current process is 
+to use an Axe-FX III to create complex patches of eﬀects that can be 
+tuned to resonate more on the haptic level. " DS’s design experience 
+was gained before he started engaging in music practice: 
+I’ve been a full-stack developer for a decade. I also hap-
+pened to pick up a lot of embedded hardware and soft-
+ware skills on the side since technology is also my hobby. 
+With participation in music and performance, DS’s approaches 
+shifted toward more speciﬁc considerations: 
+As an engineer, I need to be able to type, program, 
+solder, and debug without having to remove or work 
+around a device. That’s why I’ve increasingly moved 
+toward computer vision and contactless systems. 
+This shift to contactless, open-access tools is core 
+to my design philosophy, accessibility that doesn’t 
+require sacriﬁcing freedom or complexity (2/7/2025). 
+While DHH communities face the challenge of resourcing appro-
+priate technologies, embodying the role of designers and technology 
+developers provides an increased sense of sonic agency through 
+gaining "access to the tools and spaces where sound is created, 
+shared, and experienced, " as DS emphasized. 
+5.2.2 Hacking and Re-building as Resilience. Recording studio en-
+vironments are optimized for normative listening, dampening most 
+of the acoustic vibrations. However, Deaf musicians and producers 
+rely on this knowledge to listen with the whole body. ST and NH 
+realized how NH was utilizing "the car speakers to give the tactile 
+experience of a concert, but that’s what I’m missing when listening 
+to music via streaming or when I am in the studio. " (10/9/2024). For 
+an inclusive studio space, ST repurposed and appropriated exist-
+ing technologies: 
+(1/3/2024). 
+5.2.3 Performance as a Tool. We note that the music for Deaf mu-
+sicians extends beyond the sole auditory experience and is rather 
+a co-creation of "a shared musical language that wasn’t reliant on 
+hearing" (MB, 2/27/2025). While for NH, performing with a diverse 
+group of musicians facilitates "connections across co-performers, mo-
+tivates, and energizes for future practices" (2/20/2025), for other DHH 
+performers, performance emphasizes presence and visibility. DS 
+described his experience after the tour: 
+For me, performing hasn’t made music more mean-
+ingful in the emotional sense, but it has sharpened my 
+understanding of how sound is used socially. Music 
+gets attention. [...] It opens doors that other forms of 
+accessibility work just don’t. So I’ve learned to use it 
+as a tool. Not because I care about harmony or melody, 
+but because I care about infrastructure, equity, and 
+building systems that include everyone. 
+He further articulated a more political aspect of performance to 
+DHH musicians’ sonic agency: "When I talk about sonic agency, I 
+mean the right to be heard, even without making a sound. The right to 
+shape attention. That’s what performance gives us, whether through 
+music, sign, lights, or high-tech masks. It’s not about sound. It’s about 
+presence. " 
+
+===== PAGE 11 =====
+Sonic Agency: A Group Autoethnography of Technology-mediated Practice 
+by Deaf and Hard of Hearing Musicians ASSETS ’25, October 26–29, 2025, Denver, CO, USA 
+5.3 Challenges and Strategies in Deaf Music 
+Co-creation 
+While musicianship is integral in our practices, we recognize that 
+sonic agency extends beyond sound and music-making. It relates 
+to space, tools, timing, movement, and kinesthetic expression, as 
+well as a shared meaning and world-making. This perspective in-
+forms how we approach challenges that emerged in mixed hearing 
+co-creative design space, learning and communicating musical con-
+cepts, and representing Deaf perspectives in accessibility design 
+research. 
+5.3.1 Mixed Hearing Performance Ecosystem. Our approach to tech-
+nology derives from our access needs in music performance but 
+aims to extend to all musicians and listeners, regardless of hearing 
+abilities. While we value the diversity of abilities in the ensemble, 
+we face the challenges of co-creating in a mixed hearing perfor-
+mance ecosystem. 
+Challenge: Misalignment of Expectations. As NH and DS 
+articulated that there were moments during the tour, the perfor-
+mances "felt less like a mixed-ability collaboration and more like 
+a hearing music ensemble with a few Deaf performers tacked on" 
+(3/7/2025). MB echoed this experience of misaligned musical expec-
+tations that "the piece lacked Deaf-centered musicality or structure" 
+(2/20/2025). 
+Strategy: Prioritizing Deaf-Composed Music. Sonic agency 
+stems from advocating for Deaf co-creation rather than sole par-
+ticipation as agents to redeﬁne musical standards, language, and 
+appreciation. DS details "mixed-ability spaces inherently demand 
+strong, Deaf-led coordination and clear cultural grounding. Without 
+that, they default toward hearing norms, and the supposed ’mix’ be-
+comes performative rather than collaborative. " (3/27/2025). In the 
+following rehearsal sessions, one of the strategies to better align 
+expectations across diﬀerent abilities focused on prioritizing deaf-
+composed musical pieces, regardless of the composer’s music level, 
+weaving co-creation into practice and learning. 
+5.3.2 Learning and Teaching Musical Concepts. Rehearsal sessions 
+in the studios served as an experimental space to practice both 
+learning musical concepts and theory as a Deaf student and teach-
+ing music as a hearing or Deaf mentor. Both experiences revealed 
+missed opportunities and challenges with the balance between 
+technology, pacing, and ways of conceptualizing. 
+Challenge: Unfamiliarity with Musical Concepts. Despite 
+the integration and assistance of technology, DHH musicians tend 
+to experience unfamiliarity with musical concepts and perceptions. 
+Rhythm, as a fundamental musical element, became a challenging 
+concept to perceive and follow with other musicians. 
+Strategy: Return to the Body. MB composed a musical piece 
+with a rhythmic line resembling heartbeats, "ba-bum, pause, ba-
+bum" to "help our Deaf collaborators internalize timing and groove. 
+This somatic approach to rhythm—starting with something you can 
+feel rather than hear—allowed everyone to embody the pulse before 
+we layered additional percussive or melodic elements on top. It oﬀered 
+a grounding rhythm that could be memorized physically, like muscle 
+Figure 5: The team adapted the graphic score for their piece 
+"Sounds and Shapes, " which was originally composed by Sanc-
+ton Wood Creative. 
+memory, and became a shared temporal anchor across sensory modal-
+ities. " (2/20/2025). Another embodied approach that is adopted by 
+DS during practice sessions addresses the somatic understanding of 
+music through the mimicry of other musicians’ musical movements. 
+Strategy: Graphic Scores as an Accessible Documentation 
+and Notation. NH’s compositional explorations in the studio were 
+notated and documented through graphical scores. This approach of 
+communicating musical concepts oﬀered a more accessible transfer 
+of musical knowledge to the Deaf musicians. DS shared, "I felt more 
+engaged following a graphic ’Sounds and Shapes’ score, represented 
+with dots, lines, cells, and rows. I used two diﬀerent bells, switching to 
+the other for each dot as I led the group. " The graphic score shown 
+in Figure 5 is adapted from Sancton Wood Creative’s composition, 
+Aleatory 6 . NH worked with his own graphic scores, which were 
+lost during the tour. 
+5.3.3 Representation in Music Accessibility Design. The main mo-
+tivation to design custom music technologies is derived from the 
+disconnection between the instruments and technologies that Deaf 
+musicians need and what is publicly available. The existing tool 
+did not always represent Deaf musicians and performers. This lack 
+of representation of Deaf musicianship in design encouraged the 
+team to explore custom and bespoke design as well as appropriating 
+existing technologies. 
+Challenge: Lack of DHH Music Technologists and Techno-
+logical Limitations. Despite the increased access and agency that 
+the assistive technologies provide in the performance spaces, the
+limitations of technologies pose challenges to the ensemble. ST ex-
+pressed the time lost to technical setups and errors, expressing how 
+6https://sanctonwoodcreative.wordpress.com/2016/10/14/take-a-chance-aleatory-
+music/ 
+
+===== PAGE 12 =====
+ASSETS ’25, October 26–29, 2025, Denver, CO, USA Cavdir et al. 
+"having all tech available and usable would overcome speciﬁc mu-
+sical challenges such as tones and layering" (3/13/2025). Similarly, 
+NH wrote about the limitations of the existing haptic technologies 
+in providing spatial information about music through haptics in 
+the studio. 
+Strategy: Bespoke Design and Appropriating Technology. DS 
+and MB, as DHH designers, followed a bespoke approach, integrat-
+ing their lived experience with technology while still aiming for 
+its implications for all hearing abilities. When technical limitations 
+were faced, the existing technologies were adapted in new ways to 
+address the gap between resources and musical needs. For example, 
+NH and ST created a "haptic design station" in the recording studio 
+using a "traditional headphone mixer" to enable each instrument 
+signal to connect to the performer’s preferred listening channel. 
+Music as a Bridge Across Communities. 6.1.3 
+NH used this new system to map diﬀerent instruments to the sides 
+of the haptic vest to create musical spatiality on the body. 
+6 Discussion 
+Drawing from collaborative group reﬂections on our lived experi
+]. Our practice-based approach provided the experimental 
+foundations to understand the underlying associations between the 
+body and listening, between movement and music. 
+-
+ences as a mixed hearing music performance and design team, we 
+outline design implications for diﬀerent actors involved in musical 
+practice for a more inclusive performance ecosystem. 
+6.1 Design Implications for Mixed-Hearing 
+Performance Spaces 
+The majority of performance spaces are occupied by hearing-centric 
+cultures and music communities, creating tensions or misalign-
+ment between hearing and DHH musicians. Collaborations and 
+co-creativity in mixed hearing environments require forming new 
+musical worlds collectively [6]. We found embodied, soma-centric 
+approaches center Deaf experience and expand the boundaries of 
+hearing-centric listening practices. 
+6.1.1 Somatic Approaches to Music Practice. Soma-centric design 
+and somaesthetics [35] prioritize listening to the body and body sen-
+sations. Similarly, a somatic approach to music practice shifts the 
+listening from an auditory experience to a bodily listening experi-
+ence. While such somatic methods become more challenging due to 
+the close integration of senses, they allow musicians to internalize 
+]. We found the rhythm to suggest 
+multiple methods for an embodied learning approach led by both 
+hearing and Deaf musicians to support Deaf co-performers. Deaf 
+performers often communicate their artistic expressivity through 
+sign language and visual vernacular. Similar approaches, either 
+through sign language incorporation into music performance or 
+gestural interfaces, can support adding physical interaction and 
+embodied layers into performance. 
+and embody musical concepts [18
+A Deaf performer with little to no musical knowledge developed 
+mimicry as a performance technique to calculate musical timing and 
+improve synchronization. We suggest new compositional strategies 
+to center Deaf music as its own genre and the physicality of the 
+Deaf performance. For example, another Deaf musician composed 
+new music, speciﬁcally to amplify the rhythmic elements in music 
+in strong connections to the body’s own rhythms, such as heart-
+beats. Both of these examples highlight the entangled relationship 
+between music perception, Deaf listening, and bodily knowledge. 
+Just as MB emphasizes, music can be internalized, similar to muscle 
+memory. 
+6.1.2 Deaf Music as a Genre. A possible tension point between 
+hearing and Deaf performance spaces derives from misaligned musi-
+cal expectations of co-performers. While diﬀerent subcultures lead 
+their own Deaf-owned music genres, such as Deaf Rave and Deaf 
+hip hop [6, 41, 59], a new form of music needs to be deﬁned by the 
+co-performers. We suggest that performers in mixed hearing col-
+laborations practice attunement exercises to each other’s listening 
+modes, technologies, and musical expectations. Such attunement 
+will naturally shift the music away from traditional hearing norms. 
+Given the isolation 
+that Deaf people might experience in a hearing culture, the con-
+nections between the two communities are constructed through 
+redeﬁning the music culture, its technologies, and methods to par-
+take. When co-created, music can hold the potential for being a 
+bridge, not across sensory divides but across values and priorities. 
+We suggest collectively engaging in musicking as a shared activ-
+ity [18
+6.2 Design Implications for Hearing Assistive 
+Music Technology Design 
+6.2.1 Promoting for Agency. Trends in designing assistive music 
+technologies follow hearing-led design practices of technologies for 
+the deaf (TFD) [ ], even though in music, the need for a Deaf mu3 -
+sician’s participation emerges more frequently. Music researchers 
+adopted bespoke, participatory, or co-design practices to increase 
+the participation of deaf people in the design process [11, 21, 46]. 
+However, Deaf collaborators’ sonic agency remained limited. While 
+hearing designers will need to actively and closely collaborate with 
+deaf designers, a Deaf-led design team would further contribute to 
+increased sonic agency. 
+6.2.2 Return to the Body. A turn to body-centric approaches in the 
+design practice, speciﬁcally for musical expression, will support the 
+shift needed in listening modes from auditory forms to bodily expe-
+riences. We need to emphasize that this focus on the body does not 
+need to follow a technology-led trend, but a balance of integrating 
+technology and music theory to enrich the bodily experiences. 
+6.2.3 Designing within the Deaf Cultures. Designing with Deaf 
+musicians will carry their associated Deaf cultures into the design 
+practice. A hearing designer’s attunement to such a culture becomes 
+necessary and inevitable. We ﬁnd that preserving Deaf communi-
+cation methods and expressions supports a more inclusive design. 
+For example, drawing parallels between sign language and music 
+provides design considerations that are closely linked with sign 
+language, that both unfold in time, both rely on rhythm, repetition, 
+and silence, and both are performative [13]. 
+Reiterating the importance of bodily experiences, we suggest 
+considerations for what Deaf performers sense. Sensory awareness 
+constitutes a large portion of listening to engage multiple senses in 
+conversation. We recommend anchoring across sensory modalities 
+
+===== PAGE 13 =====
+Sonic Agency: A Group Autoethnography of Technology-mediated Practice 
+by Deaf and Hard of Hearing Musicians ASSETS ’25, October 26–29, 2025, Denver, CO, USA 
+that Deaf individuals identify, relate with, and appreciate, both 
+sonically and physically. 
+6.3 Design Implications for Inclusive Recording 
+Studios 
+Music recording studios are optimized for hearing audio engineers 
+and producers. They fail to support Deaf musicians’ existing prac-
+tices and meet their sensory needs. 
+6.3.1 Multimodal Assistance. Multisensory integration can mul-
+tiply the sonic information received by DHH musicians. We ﬁnd 
+that visual and haptic sensory substitution can both support each 
+modality and amplify the missing sound information while mul-
+tiplying the quantity of musical information by communicating 
+distinct musical features. The multisensory approach to providing 
+assistive feedback will also support musicians with sensitivities to 
+one modality over others. 
+6.3.2 Personalizing Haptic Stations. Hearing musicians receive 
+mixing opportunities for individual signals or instruments dur-
+ing performances. In our rehearsals, we replaced this mixing option 
+for musicians’ headphones with their haptic listening. This sub-
+stitution provided ﬂexibility to personalize their haptic feedback 
+on the wearables, allowing for ampliﬁcation of an instrument or 
+panning multiple instruments on the body. Similar adaptability 
+was provided for the audio-reactive light system to tune into the 
+musicians’ own instruments. 
+6.3.3 Multichannel Communications. In mixed hearing perfor-
+mance settings, in studio or performance stages, the sign language 
+interpreter might not always be visible to all signing musicians. 
+Likewise, verbal instructions or non-verbal co-performer collabora-
+tions based on musical cues will create weakened communication in 
+collaborations. Technologies such as closed captions or integrated 
+visuals for each performer could fully support informing musicians. 
+For example, a minimeter was integrated into a Deaf musician’s 
+assistive technology setup to inform him of synchronization be-
+tween co-performers, supporting his musical timing. Such timing 
+cues are often communicated through auditory cues among hearing 
+musicians. 
+Musical experience and knowledge of a Deaf musician highly 
+depend on musical exposure, love of music, and prior musicality. 
+This interdependence will lead to misinterpretations and misalign-
+ment of musical vocabulary (such as rhythm, accent, harmony, or 
+melody) and shared descriptions of sound properties (such as fre-
+quency or spectrum). Novice musicians often communicate musical 
+ideas with more descriptive and metaphorical language [ 58]. An 
+adaptive vocabulary and agreed-upon norms and languages for 
+in-studio collaboration could beneﬁt the co-performer dynamics 
+and their collective experience. 
+We echo advocating for designing the studio and performance 
+spaces not only with DHH musicians but by DHH musicians, fol-
+lowing the shift in accessibility research emphasized by Lewis [ 43]. 
+We extend Lewis’s advocacy with designing by DHH communities 
+for DHH communities. 
+6.4 Limitations and Future Work 
+We selected autoethnography as a qualitative methodology due to 
+the positionality of each team member and the incorporation of 
+ﬁrst-person approaches within HCI and music accessibility. The 
+team’s personal experiences through ongoing music practice with 
+technology provided opportunities for capturing the personalized, 
+longitudinal, ﬁrst-person perspective within a practice led by Deaf 
+members. At the same time, the diverse range of abilities and plural-
+ity in music and design activities posed limitations on consistency 
+across authors’ experiences. Group discussions allowed us to align 
+and repave the research direction collectively as a team. 
+Authors only shared what they felt comfortable with with the 
+rest of the team to protect the sensitive and personal nature of the 
+autoethnographic data. However, this sensitive process required 
+longer periods of data collection to achieve transparency and hon-
+esty [38]. Longitudinal study oﬀers promising results and oppor-
+tunities to identify larger-scale, overarching patterns while facing 
+changing circumstances in the authors’ personal lives. For example, 
+one author’s data collection was interrupted due to medical leave, 
+and another one decreased in frequency due to changing schedules 
+and workloads. 
+Another limitation of the study stems from narrowing the par-
+ticipants down into the core team without including other actors 
+involved in the process, including but not limited to the two other 
+hearing musicians, workshop participants during the tour’s out-
+reach events, and CymaSpace’s volunteers. Although including the 
+hearing musicians’ experiences would provide new perspectives 
+into the phenomenon, we decided that this change would cause a 
+drift in our longitudinal approach and highlight the Deaf voices 
+and experiences. 
+Lastly, we had to omit large eﬀorts of the team in developing 
+educational materials for Deaf music students to stay within the 
+scope of our research questions. In this research, we framed the 
+strategies developed to support Deaf members of the team. In the 
+future, we plan to incorporate the progress of these educational 
+strategies and their applications at Deaf schools. 
+7 Conclusion 
+Through a 15-month-long group autoethnography, we present a 
+case study of a Deaf-owned music and culture institution in a mixed-
+hearing performance practice. We report our current practices in 
+integrating existing and custom-designed assistive musical tech-
+nologies into performance practices. We encapsulated nuanced 
+challenges and strategies, self-motivations for new design direc-
+tions, and tensions and opportunities of co-creating in a mixed 
+hearing performance ecosystem. We present three essential strate-
+gies that support DHH individuals’ sonic agency and access with 
+or without prior music knowledge. Our case presents how group 
+autoethnography can be applied eﬀectively in a creative, practice-
+based research setting. We ﬁnally provide design suggestions for 
+diﬀerent actors in the DHH or mixed hearing music performance 
+ecosystem, advocating for diversity in culture, abilities, and meth-
+ods to be shared among all people. 
+
+===== PAGE 14 =====
+ASSETS ’25, October 26–29, 2025, Denver, CO, USA Cavdir et al. 
+References 
+[1] Shira Abramovich and Elizabeth Patitsas. 2024. "Slipping through the cracks": A 
+Duoethnography of Web Accessibility. In The 26th International ACM SIGACCESS 
+Conference on Computers and Accessibility. ACM, St. John’s NL Canada, 1–6. 
+doi:10.1145/3663548.3688543 
+[2] Fabiha Ahmed, Dennis Kuzminer, Michael Zachor, Lisa Ye, Rachel Josepho, 
+William Christopher Payne, and Amy Hurst. 2021. Sound Cells: Rendering 
+Visual and Braille Music in the Browser. In Proceedings of the 23rd International 
+ACM SIGACCESS Conference on Computers and Accessibility. ACM, Virtual Event 
+USA, 1–4. doi:10.1145/3441852.3476555 
+[3] Robin Angelini, Katta Spiel, and Maartje De Meulder. 2024. Experiencing Deaf 
+Tech: A Deep Dive into the Concept of Deaf Watch. In The 26th International 
+ACM SIGACCESS Conference on Computers and Accessibility. ACM, St. John’s NL 
+Canada, 1–4. doi:10.1145/3663548.3688483 
+[4] Hugh Aynsley, Tom Mitchell, and Dave Meckin. 2023. Participatory Conceptual 
+Design of Accessible Digital Musical Instruments using Generative AI. (May 
+2023). doi:10.5281/ZENODO.11189302 
+[5] Cynthia L. Bennett, Burren Peil, and Daniela K. Rosner. 2019. Biographical 
+Prototypes: Reimagining Recognition and Disability in Design. InProceedings of 
+the 2019 on Designing Interactive Systems Conference. ACM, San Diego CA USA, 
+35–47. doi:10.1145/3322276.3322376 
+[6] Katelyn Best. 2018. Musical Belonging in a Hearing-Centric Society: Adapting 
+and Contesting Dominant Cultural Norms through Deaf Hip Hop. Journal of 
+American Sign Languages and Literatures (2018). 
+[7] Virginia Braun and Victoria Clarke. 2006. Using thematic analysis in psychol-
+ogy. Qualitative Research in Psychology 3, 2 (Jan. 2006), 77–101. doi:10.1191/ 
+1478088706qp063oa 
+[8] Richard Burn. 2016. Music-making for the Deaf: Exploring new ways of enhancing 
+musical experience with visual and haptic feedback systems. Proceedings of 
+International Conference on Live Interfaces (2016). 
+[9] Carl Börstell. 2023. Ableist Language Teching over Sign Language Research. In 
+Proceedings of the Second Workshop on Resources and Representations for Under-
+Resourced Languages and Domains (RESOURCEFUL-2023), Nikolai Ilinykh, Felix 
+Morger, Dana Dannélls, Simon Dobnik, Beáta Megyesi, and Joakim Nivre (Eds.). 
+Association for Computational Linguistics, Tórshavn, the Faroe Islands, 1–10. 
+https://aclanthology.org/2023.resourceful-1.1/ 
+[10] Cameron Tyler Cassidy and Stacy Marie Branham. 2024. Dude, Where’s My 
+Luggage? An Autoethnographic Account of Airport Navigation by a Traveler 
+with Residual Vision. In The 26th International ACM SIGACCESS Conference on 
+Computers and Accessibility. ACM, St. John’s NL Canada, 1–13. doi:10.1145/ 
+3663548.3675624 
+[11] Doga Cavdir. 2022. Touch, Listen, (Re)Act: Co-designing Vibrotactile Wearable 
+Instruments for Deaf and Hard of Hearing. In NIME 2022. PubPub, The University 
+of Auckland, New Zealand. doi:10.21428/92fbeb44.b24043e8 
+[12] Doga Cavdir. 2024. Development of embodied listening studies with multimodal 
+and wearable haptic interfaces for hearing accessibility in music. Frontiers in 
+Computer Science 5 (Jan. 2024), 1162758. doi:10.3389/fcomp.2023.1162758 
+[13] Doga Cavdir and Ge Wang. 2020. Felt Sound: A Shared Musical Experience for 
+the Deaf and Hard of Hearing. (June 2020). doi:10.5281/ZENODO.4813305 
+[14] Angela Chang and Conor O’Sullivan. 2008. An Audio-Haptic Aesthetic Frame-
+work Inﬂuenced by Visual Theory. In Haptic and Audio Interaction Design, David 
+Hutchison, Takeo Kanade, Josef Kittler, Jon M. Kleinberg, Friedemann Mattern, 
+John C. Mitchell, Moni Naor, Oscar Nierstrasz, C. Pandu Rangan, Bernhard Stef-
+fen, Madhu Sudan, Demetri Terzopoulos, Doug Tygar, Moshe Y. Vardi, Gerhard 
+Weikum, Antti Pirhonen, and Stephen Brewster (Eds.). Vol. 5270. Springer Berlin 
+Heidelberg, Berlin, Heidelberg, 70–80. doi:10.1007/978-3-540-87883-4_8 
+[15] Si Chen, James Waller, Matthew Seita, Christian Vogler, Raja Kushalnagar, and Qi 
+Wang. 2024. Towards Co-Creating Access and Inclusion: A Group Autoethnog-
+raphy on a Hearing Individual’s Journey Towards Eﬀective Communication in 
+Mixed-Hearing Ability Higher Education Settings. In Proceedings of the CHI Con-
+ference on Human Factors in Computing Systems. ACM, Honolulu HI USA, 1–14. 
+doi:10.1145/3613904.3642017 
+[16] Youjin Choi, Junryeol Jeon, ChungHa Lee, Yeo-Gyeong Noh, and Jin-Hyuk Hong. 
+2024. A Way for Deaf and Hard of Hearing People to Enjoy Music by Exploring 
+and Customizing Cross-modal Music Concepts. In Proceedings of the CHI Con-
+ference on Human Factors in Computing Systems. ACM, Honolulu HI USA, 1–17. 
+doi:10.1145/3613904.3642665 
+[17] Youjin Choi, ChungHa Lee, Songmin Chung, Eunhye Cho, Suhyeon Yoo, and 
+Jin-Hyuk Hong. 2025. Enhancing collaborative signing songwriting experience 
+of the d/Deaf individuals. International Journal of Human-Computer Studies 193 
+(Jan. 2025), 103382. doi:10.1016/j.ijhcs.2024.103382 
+[18] Warren N. Churchill. 2015. Deaf and hard-of-hearing musicians: Crafting a 
+narrative strategy. Research Studies in Music Education 37, 1 (June 2015), 21–36. 
+doi:10.1177/1321103X15589777 
+[19] Robin Cooper and Bruce Lilyea. 2022. I’m Interested in Autoethnography, but 
+How Do I Do It? The Qualitative Report (2022). doi:10.46743/2160-3715/2022.5288 
+[20] Lyall Crawford. 1996. Personal ethnography. Communication Monographs 63, 2 
+(June 1996), 158–170. doi:10.1080/03637759609376384 
+[21] Teodoro Dannemann. 2023. Music jamming as a participatory design method. A 
+case study with disabled musicians. (May 2023). doi:10.5281/ZENODO.11189108 
+[22] Jordan Aiko Deja, Alexczar Dela Torre, Hans Joshua Lee, Jose Florencio Ciriaco, 
+and Carlo Miguel Eroles. 2020. ViTune: A Visualizer Tool to Allow the Deaf and 
+Hard of Hearing to See Music With Their Eyes. In Extended Abstracts of the 2020 
+CHI Conference on Human Factors in Computing Systems. ACM, Honolulu HI USA, 
+1–8. doi:10.1145/3334480.3383046 
+[23] Audrey Desjardins, Oscar Tomico, Andrés Lucero, Marta E. Cecchinato, and 
+Carman Neustaedter. 2021. Introduction to the Special Issue on First-Person 
+Methods in HCI. ACM Transactions on Computer-Human Interaction 28, 6 (Dec. 
+2021), 1–12. doi:10.1145/3492342 
+[24] Carolyn Ellis, Tony E. Adams, and Arthur P. Bochner. 2011. Autoethnography: 
+An Overview. Historical Social Research / Historische Sozialforschung 36, 4 (138) 
+(2011), 273–290. https://www.jstor.org/stable/23032294 
+[25] David W. Fourney and Deborah I. Fels. 2009. Creating access to music through 
+visualization. 2009 IEEE Toronto International Conference Science and Technology 
+for Humanity (TIC-STH) (2009), 939–944. doi:10.1109/TIC-STH.2009.5444364 
+[26] Emma Frid. 2019. Accessible Digital Musical Instruments—A Review of Musical 
+Interfaces in Inclusive Music Practice. Multimodal Technologies and Interaction 3, 
+3 (July 2019), 57. doi:10.3390/mti3030057 
+[27] Robert Fulford, Jane Ginsborg, and Juliet Goldbart. 2011. Learning not to listen: 
+the experiences of musicians with hearing impairments.Music Education Research
+13, 4 (Dec. 2011), 447–464. doi:10.1080/14613808.2011.632086 
+[28] Felix Fussenegger and Katta Spiel. 2022. Depending on Independence An Au-
+toethnographic Account of Daily Use of Assistive Technologies. In Proceedings of 
+the 24th International ACM SIGACCESS Conference on Computers and Accessibility. 
+ACM, Athens Greece, 1–6. doi:10.1145/3517428.3551354 
+[29] Andreas Förster, Alarith Uhde, Mathias Komesker, Christina Komesker, and Irina 
+Schmidt. 2023. LoopBoxes - Evaluation of a Collaborative Accessible Digital 
+Musical Instrument. (May 2023). doi:10.5281/ZENODO.11189094 
+[30] Mafalda Gamboa, Claudia Núñez-Pacheco, Sarah Homewood, Andrés Lucero, 
+Janne Mascha Beuthel, Audrey Desjardins, Karey Helms, William Gaver, Kristina 
+Höök, and Laura Forlano. 2024. More Samples of One: Weaving First-Person 
+Perspectives into Mainstream HCI Research. In Designing Interactive Systems 
+Conference. ACM, IT University of Copenhagen Denmark, 364–367. doi:10.1145/ 
+3656156.3658382 
+[31] Steven Goodman, Susanne Kirchner, Rose Guttman, Dhruv Jain, Jon Froehlich, 
+and Leah Findlater. 2020. Evaluating Smartwatch-based Sound Feedback for 
+Deaf and Hard-of-hearing Users Across Contexts. In Proceedings of the 2020 CHI 
+Conference on Human Factors in Computing Systems. ACM, Honolulu HI USA, 
+1–13. doi:10.1145/3313831.3376406 
+[32] Steven M. Goodman, Ping Liu, Dhruv Jain, Emma J. McDonnell, Jon E. Froehlich, 
+and Leah Findlater. 2021. Toward User-Driven Sound Recognizer Personalization 
+with People Who Are d/Deaf or Hard of Hearing. Proceedings of the ACM on 
+Interactive, Mobile, Wearable and Ubiquitous Technologies 5, 2 (June 2021), 1–23. 
+doi:10.1145/3463501 
+[33] Michael S. Grierson. 2011. Making music with images: interactive audiovisual 
+performance systems for the deaf. 10, 1 (March 2011), 37–41. doi:10.1515/ijdhd. 
+2011.009 
+[34] Megan Hofmann, Devva Kasnitz, Jennifer Mankoﬀ, and Cynthia L Bennett. 2020. 
+Living Disability Theory: Reﬂections on Access, Research, and Design. In Pro-
+ceedings of the 22nd International ACM SIGACCESS Conference on Computers and 
+Accessibility. ACM, Virtual Event Greece, 1–13. doi:10.1145/3373625.3416996 
+[35] Kristina Höök, Baptiste Caramiaux, Cumhur Erkut, Jodi Forlizzi, Nassrin Ha-
+jinejad, Michael Haller, Caroline Hummels, Katherine Isbister, Martin Jonsson, 
+George Khut, and others. 2018. Embracing ﬁrst-person perspectives in soma-
+based design. Informatics 5, 1 (2018), 8. doi:10.3390/informatics5010008 Publisher: 
+Multidisciplinary Digital Publishing Institute. 
+[36] Ryo Iijima, Akihisa Shitara, and Yoichi Ochiai. 2022. Designing Gestures for 
+Digital Musical Instruments: Gesture Elicitation Study with Deaf and Hard of 
+Hearing People. In Proceedings of the 24th International ACM SIGACCESS Con-
+ference on Computers and Accessibility. ACM, Athens Greece, 1–8. doi:10.1145/ 
+3517428.3544828 
+[37] Dhruv Jain, Audrey Desjardins, Leah Findlater, and Jon E. Froehlich. 2019. Au-
+toethnography of a Hard of Hearing Traveler. In The 21st International ACM 
+SIGACCESS Conference on Computers and Accessibility. ACM, Pittsburgh PA USA, 
+236–248. doi:10.1145/3308561.3353800 
+[38] Dhruv Jain, Venkatesh Potluri, and Ather Sharif. 2020. Navigating Graduate 
+School with a Disability. In Proceedings of the 22nd International ACM SIGACCESS 
+Conference on Computers and Accessibility. ACM, Virtual Event Greece, 1–11. 
+doi:10.1145/3373625.3416986 
+[39] Sylvia Janicki, Nassim Parvin, and Noura Howell. 2024. Crip Reﬂections on 
+Designing with Plants: Intersecting Disability Theory, Chronic Illness, and More-
+than-Human Design*. In Designing Interactive Systems Conference. ACM, IT Uni-
+versity of Copenhagen Denmark, 1044–1058. doi:10.1145/3643834.3661509 
+
+===== PAGE 15 =====
+Sonic Agency: A Group Autoethnography of Technology-mediated Practice 
+by Deaf and Hard of Hearing Musicians ASSETS ’25, October 26–29, 2025, Denver, CO, USA 
+[40] Quinn D Jarvis Holland, Crystal Quartez, Francisco Botello, and Nathan Gammill. 
+2020. EXPANDING ACCESS TO MUSIC TECHNOLOGY- Rapid Prototyping 
+Accessible Instrument Solutions For Musicians With Intellectual Disabilities. 
+(June 2020). doi:10.5281/ZENODO.4813286 
+[41] Jeanette DiBernardo Jones. 2016. Imagined Hearing: Music-Making in Deaf 
+Culture. In The Oxford Handbook of Music and Disability Studies (1 ed.), Blake 
+Howe, Stephanie Jensen-Moulton, Neil Lerner, and Joseph Straus (Eds.). Oxford 
+University Press, 54–72. doi:10.1093/oxfordhb/9780199331444.013.3 
+[42] Brandon LaBelle. 2020. Sonic agency: sound and emergent forms of resistance 
+(paperback edition ed.). Goldsmiths Press, London. 
+[43] Clayton H. Lewis. 2022. Challenges and opportunities in technology for inclusion. 
+In Proceedings of the 24th International ACM SIGACCESS Conference on Computers 
+and Accessibility. ACM, Athens Greece, 1–1. doi:10.1145/3517428.3566096 
+[44] Joana Lobo, Soichiro Matsuda, Izumi Futamata, Ryoichi Sakuta, and Kenji Suzuki. 
+2019. CHIMELIGHT: Augmenting Instruments in Interactive Music Therapy 
+for Children with Neurodevelopmental Disorders. In Proceedings of the 21st 
+International ACM SIGACCESS Conference on Computers and Accessibility. ACM, 
+Pittsburgh PA USA, 124–135. doi:10.1145/3308561.3353784 
+[45] Leon Lu, Chase Crispin, and Audrey Girouard. 2024. "We Musicians Know 
+How to Divide and Conquer": Exploring Multimodal Interactions To Improve 
+Music Reading and Memorization for Blind and Low Vision Learners. In The 26th 
+International ACM SIGACCESS Conference on Computers and Accessibility. ACM, 
+St. John’s NL Canada, 1–14. doi:10.1145/3663548.3675604 
+[46] Alex Michael Lucas, Miguel Ortiz, and Dr. Franziska Schroeder. 2019. Bespoke
+Design for Inclusive Music: The Challenges of Evaluation. (June 2019). doi:10. 
+5281/ZENODO.3672884 
+[47] Andrés Lucero. 2018. Living Without a Mobile Phone: An Autoethnography. 
+In Proceedings of the 2018 Designing Interactive Systems Conference. ACM, Hong 
+Kong China, 765–776. doi:10.1145/3196709.3196731 
+[48] Andrés Lucero, Audrey Desjardins, and Carman Neustaedter. 2021. Longitudinal 
+First-Person HCI Research Methods. In Advances in Longitudinal HCI Research, 
+Evangelos Karapanos, Jens Gerken, Jesper Kjeldskov, and Mikael B. Skov (Eds.). 
+Springer International Publishing, Cham, 79–99. doi:10.1007/978-3-030-67322-
+2_5 
+[49] Andrés Lucero, Audrey Desjardins, Carman Neustaedter, Kristina Höök, Marc 
+Hassenzahl, and Marta E. Cecchinato. 2019. A Sample of One: First-Person 
+Research Methods in HCI. In Companion Publication of the 2019 on Designing 
+Interactive Systems Conference 2019 Companion. ACM, San Diego CA USA, 385– 
+388. doi:10.1145/3301019.3319996 
+[50] Kelly Mack, Maitraye Das, Dhruv Jain, Danielle Bragg, John Tang, Andrew 
+Begel, Erin Beneteau, Josh Urban Davis, Abraham Glasser, Joon Sung Park, 
+and Venkatesh Potluri. 2021. Mixed Abilities and Varied Experiences: a group 
+autoethnography of a virtual summer internship. In Proceedings of the 23rd In-
+ternational ACM SIGACCESS Conference on Computers and Accessibility. ACM, 
+Virtual Event USA, 1–13. doi:10.1145/3441852.3471199 
+[51] Francesco Manenti and Francesco Ardan Dal Rì. 2024. Accessibility of Graphic 
+Scores: Design and Exploration of Tactile Supports for Blind People. (Oct. 2024). 
+doi:10.5281/ZENODO.13904941 
+[52] Brendan McCloskey, Brian Bridges, and Frank Lyons. 2015. Accessibility And Di-
+mensionalty: Enhanced Real-Time Creative Independence For Digital Musicians 
+With Quadriplegic Cerebral Palsy. (June 2015). doi:10.5281/ZENODO.1179132 
+[53] Andrew McMillan and Fabio Morreale. 2023. Designing accessible musical instru-
+ments by addressing musician-instrument relationships. Frontiers in Computer 
+Science 5 (May 2023), 1153232. doi:10.3389/fcomp.2023.1153232
+[54] Henrique Meissner, Renee Timmers, and Stephanie Pitts (Eds.). 2022. Sound 
+teaching: a research-informed approach to inspiring conﬁdence, skill, and enjoyment 
+in music performance. Routledge, Abingdon, Oxon ; New York, NY. OCLC: 
+1273728171. 
+[55] Maurice Merleau-Ponty. 1982. Phenomenology of perception. Routledge. 
+[56] S.C. Nanayakkara, L. Wyse, S. H. Ong, and E. A. Taylor. 2013. Enhancing Mu-
+sical Experience for the Hearing-Impaired Using Visual and Haptic Displays. 
+Human–Computer Interaction 28, 3 (2013), 115–160. doi:10.1080/07370024.2012. 
+697006 
+[57] Joe Norris, Richard D Sawyer, and Darren E Lund. 2012. Duoethnography: Dialogic 
+Methods for Social, Health, and Educational Research. Left Coast Press. doi:10. 
+13140/2.1.2184.8644 
+[58] Keita Ohshiro and Mark Cartwright. 2024. Audio Engineering by People Who Are 
+deaf and Hard of Hearing: Balancing Conﬁdence and Limitations. In Proceedings 
+of the CHI Conference on Human Factors in Computing Systems. ACM, Honolulu 
+HI USA, 1–13. doi:10.1145/3613904.3642454 
+[59] Panayotis Panopoulos. 2021. Deaf voices / Deaf art: Vocality through and beyond 
+sound and sign1. Journal of Interdisciplinary Voice Studies6, 1 (April 2021), 9–26. 
+doi:10.1386/jivs_00034_1 
+[60] William Christopher Payne, Fabiha Ahmed, Michael Zachor, Michael Gardell, 
+Isabel Huey, Amy Hurst, and R. Luke Dubois. 2022. Empowering Blind Musi-
+cians to Compose and Notate Music with SoundCells. In Proceedings of the 24th 
+International ACM SIGACCESS Conference on Computers and Accessibility. ACM, 
+Athens Greece, 1–14. doi:10.1145/3517428.3544825 
+[61] William C Payne, Matthew Kaney, Yuhua Cao, Eric Xu, Xinran Shen, Katrina 
+Lee, and Amy Hurst. 2023. Live Coding Ensemble as Accessible Classroom. (May 
+2023). doi:10.5281/ZENODO.11189248 
+[62] William C Payne, Ann Paradiso, and Shaun Kane. 2020. Cyclops: Designing 
+an eye-controlled instrument for accessibility and ﬂexible use. (June 2020). 
+doi:10.5281/ZENODO.4813204 
+[63] Claire Petitmengin and Michel Bitbol. 2009. Listening from within. Journal of 
+Consciousness studies 16, 10-11 (2009), 363–404. Publisher: Imprint Academic. 
+[64] Claire Petitmengin and others. 2009. The validity of ﬁrst-person descriptions 
+as authenticity and coherence. Journal of Consciousness studies 16, 10-11 (2009), 
+252–284. Publisher: Imprint Academic. 
+[65] Benjamin Petry, Thavishi Illandara, Juan Pablo Forero, and Suranga Nanayakkara. 
+2016. Ad-Hoc Access to Musical Sound for Deaf Individuals. In Proceedings of the 
+18th International ACM SIGACCESS Conference on Computers and Accessibility. 
+ACM, Reno Nevada USA, 285–286. doi:10.1145/2982142.2982213 
+[66] Christopher N. Poulos. 2021. Essentials of autoethnography. American Psycholog-
+ical Association, Washington. doi:10.1037/0000222-000 
+[67] Byron Remache-Vinueza, Andrés Trujillo-León, Mireya Zapata, Fabián Sarmiento-
+Ortiz, and Fernando Vidal-Verdú. 2021. Audio-Tactile Rendering: A Review on 
+Technology and Methods to Convey Musical Information through the Sense of 
+Touch. Sensors 21, 19 (Sept. 2021), 6575. doi:10.3390/s21196575 
+[68] Claire Richards, Roland Cahen, and Nicolas Misdariis. 2022. Designing the 
+Balance between Sound and Touch: Methods for Multimodal Composition. (June 
+2022). doi:10.5281/ZENODO.6573461
+[69] Elizabeth B.-N. Sanders and Pieter Jan Stappers. 2008. Co-creation and the 
+new landscapes of design. CoDesign 4, 1 (March 2008), 5–18. doi:10.1080/ 
+15710880701875068 
+[70] Amble H C Skuse and Shelly Knotts. 2020. Creating an Online Ensemble for 
+Home Based Disabled Musicians: Disabled Access and Universal Design - why 
+disabled people must be at the heart of developing technology. (June 2020). 
+doi:10.5281/ZENODO.4813266 
+[71] Adam J. Sporka, Ben L. Carson, Paul Nauert, and Sri H. Kurniawan. 2013. Toward 
+accessible technology for music composers and producers with motor disabilities. 
+In Proceedings of the 15th International ACM SIGACCESS Conference on Computers 
+and Accessibility. ACM, Bellevue Washington, 1–2. doi:10.1145/2513383.2513412 
+[72] Kate Stephens, Matthew Butler, Leona M Holloway, Cagatay Goncu, and Kim 
+Marriott. 2020. Smooth Sailing? Autoethnography of Recreational Travel by a 
+Blind Person. In Proceedings of the 22nd International ACM SIGACCESS Conference 
+on Computers and Accessibility. ACM, Virtual Event Greece, 1–12. doi:10.1145/ 
+3373625.3417011 
+[73] Francisco J Varela and Jonathan Shear. 1999. First-person methodologies: What, 
+why, how. Journal of Consciousness studies 6, 2-3 (1999), 1–14. Publisher: Citeseer. 
+[74] Shaomei Wu, Jingjin Li, and Gilly Leshed. 2024. Finding My Voice over Zoom: An 
+Autoethnography of Videoconferencing Experience for a Person Who Stutters. 
+InProceedings of the CHI Conference on Human Factors in Computing Systems. 
+ACM, Honolulu HI USA, 1–16. doi:10.1145/3613904.3642746 
+[75] Zeynep Yildiz, Caroline Karmann, and Kathrin Gerling. 2024. Not a “Typical 
+Expat”: An Autoethnographic Account on Accessible Relocation. InThe 26th 
+International ACM SIGACCESS Conference on Computers and Accessibility. ACM, 
+St. John’s NL Canada, 1–6. doi:10.1145/3663548.3688546 
+[76] Suhyeon Yoo, Georgianna Lin, Hyeon Jeong Byeon, Amy S. Hwang, and 
+Khai Nhut Truong. 2023. Understanding tensions in music accessibility through 
+song signing for and with d/Deaf and Non-d/Deaf persons. In Proceedings of the 
+2023 CHI Conference on Human Factors in Computing Systems. ACM, Hamburg 
+Germany, 1–18. doi:10.1145/3544548.3581287 
+[77] Eevee Zayas-Garin and Andrew McPherson. 2022. Dialogic Design of Accessi-
+ble Digital Musical Instruments: Investigating Performer Experience. In NIME 
+2022. PubPub, The University of Auckland, New Zealand. doi:10.21428/92fbeb44. 
+2b8ce9a4 
+[78] Aziz N Zeidieh. 2024. "Seven Stitches Later": A Technologically Interdependent 
+Travel Experience From The Perspective Of A Visually Impaired Individual. In 
+The 26th International ACM SIGACCESS Conference on Computers and Accessibility. 
+ACM, St. John’s NL Canada, 1–6. doi:10.1145/3663548.3688544 

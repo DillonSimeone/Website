@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Pose Capture to STL</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .camera-panel {
+            flex: 1;
+        }
+        .preview-panel {
+            flex: 1;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #357abd;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .capture-btn {
+            background: #e74c3c;
+            font-size: 18px;
+            padding: 15px 30px;
+            font-weight: bold;
+        }
+        .capture-btn:hover {
+            background: #c0392b;
+        }
+        #videoElement {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+        #canvasElement {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            background: #000;
+        }
+        #preview3D {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            background: #000;
+        }
+        .status {
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #333;
+        }
+        .hand-detected {
+            background: #27ae60 !important;
+        }
+        .info {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #4a90e2;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #e67e22;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖐️ Hand Pose Capture to STL</h1>
+    
+    <div class="container">
+        <div class="panel camera-panel">
+            <h2>Camera Feed</h2>
+            <div class="controls">
+                <button id="startBtn">Start Camera</button>
+                <button id="captureBtn" class="capture-btn" disabled>📸 Capture Hand (SPACE)</button>
+            </div>
+            <video id="videoElement" autoplay muted></video>
+            <canvas id="canvasElement"></canvas>
+            <div id="status" class="status">Camera not started</div>
+        </div>
+
+        <div class="panel preview-panel">
+            <h2>3D Hand Model</h2>
+            <div class="controls">
+                <button id="downloadBtn" disabled>⬇️ Download STL</button>
+                <button id="clearBtn">🗑️ Clear Model</button>
+            </div>
+            <div id="preview3D"></div>
+            <div class="info">
+                <h3>Instructions:</h3>
+                <ul>
+                    <li>Click "Start Camera" to begin hand tracking</li>
+                    <li>Show your hand to the camera</li>
+                    <li>Press SPACEBAR or click "Capture Hand" when ready</li>
+                    <li>View the 3D model on the right</li>
+                    <li>Download as STL for 3D printing</li>
+                </ul>
+                <p><strong>Tips:</strong> Good lighting and clear hand visibility work best!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let camera, hands, scene, renderer, handMesh, handGeometry;
+        let isCapturing = false;
+        let latestHandLandmarks = null;
+
+        // Three.js setup
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x222222);
+
+            const camera3D = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            camera3D.position.set(0, 0, 2);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            const container = document.getElementById('preview3D');
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+
+            // Add orbit-like controls with mouse
+            let isMouseDown = false;
+            let mouseX = 0, mouseY = 0;
+            let targetRotationX = 0, targetRotationY = 0;
+            let rotationX = 0, rotationY = 0;
+
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                isMouseDown = true;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isMouseDown) return;
+                
+                targetRotationY += (e.clientX - mouseX) * 0.01;
+                targetRotationX += (e.clientY - mouseY) * 0.01;
+                
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            document.addEventListener('mouseup', () => {
+                isMouseDown = false;
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Smooth rotation
+                rotationX += (targetRotationX - rotationX) * 0.1;
+                rotationY += (targetRotationY - rotationY) * 0.1;
+                
+                if (handMesh) {
+                    handMesh.rotation.x = rotationX;
+                    handMesh.rotation.y = rotationY;
+                }
+                
+                renderer.render(scene, camera3D);
+            }
+            animate();
+        }
+
+        // MediaPipe setup
+        function initHandTracking() {
+            hands = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            hands.onResults(onHandResults);
+        }
+
+        function onHandResults(results) {
+            const canvas = document.getElementById('canvasElement');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = results.image.width;
+            canvas.height = results.image.height;
+            
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+            
+            const status = document.getElementById('status');
+            
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                status.textContent = 'Hand detected - Ready to capture!';
+                status.className = 'status hand-detected';
+                document.getElementById('captureBtn').disabled = false;
+                
+                latestHandLandmarks = results.multiHandLandmarks[0];
+                
+                // Draw hand landmarks
+                drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+                drawLandmarks(ctx, results.multiHandLandmarks[0], {color: '#FF0000', lineWidth: 2});
+            } else {
+                status.textContent = 'No hand detected';
+                status.className = 'status';
+                document.getElementById('captureBtn').disabled = true;
+                latestHandLandmarks = null;
+            }
+            
+            ctx.restore();
+        }
+
+        function create3DHandFromLandmarks(landmarks) {
+            if (!landmarks || landmarks.length < 21) return;
+
+            // Clear existing hand model
+            if (handMesh) {
+                scene.remove(handMesh);
+            }
+
+            // Scale and center the hand
+            const scale = 2;
+            let centerX = 0, centerY = 0, centerZ = 0;
+            
+            landmarks.forEach(landmark => {
+                centerX += landmark.x;
+                centerY += landmark.y;
+                centerZ += landmark.z;
+            });
+            centerX /= landmarks.length;
+            centerY /= landmarks.length;
+            centerZ /= landmarks.length;
+
+            // Convert landmarks to 3D coordinates
+            const vertices = landmarks.map(landmark => ({
+                x: (landmark.x - centerX) * scale,
+                y: -(landmark.y - centerY) * scale,
+                z: (landmark.z - centerZ) * scale * 2
+            }));
+
+            // Create a smooth hand using metaball-like approach
+            handGeometry = new THREE.BufferGeometry();
+            
+            // Define hand structure with smooth radius falloff
+            const handStructure = [
+                // Thumb chain
+                { points: [0, 1, 2, 3, 4], baseRadius: 0.12, tipRadius: 0.06 },
+                // Index finger
+                { points: [5, 6, 7, 8], baseRadius: 0.10, tipRadius: 0.05 },
+                // Middle finger
+                { points: [9, 10, 11, 12], baseRadius: 0.11, tipRadius: 0.05 },
+                // Ring finger
+                { points: [13, 14, 15, 16], baseRadius: 0.10, tipRadius: 0.05 },
+                // Pinky
+                { points: [17, 18, 19, 20], baseRadius: 0.08, tipRadius: 0.04 },
+                // Palm structure
+                { points: [0, 5, 9, 13, 17], baseRadius: 0.15, tipRadius: 0.12 }
+            ];
+
+            const meshVertices = [];
+            const meshIndices = [];
+            let vertexIndex = 0;
+
+            // Create smooth tubes for each finger/palm section
+            handStructure.forEach(structure => {
+                const points = structure.points.map(idx => new THREE.Vector3(vertices[idx].x, vertices[idx].y, vertices[idx].z));
+                
+                // Create smooth spline curve through points
+                const curve = new THREE.CatmullRomCurve3(points);
+                const tubeGeometry = new THREE.TubeGeometry(
+                    curve, 
+                    Math.max(20, points.length * 8), // segments along curve
+                    structure.baseRadius, // radius
+                    16, // radial segments
+                    false // not closed
+                );
+
+                // Taper the tube from base to tip
+                const positions = tubeGeometry.attributes.position.array;
+                const positionsCount = positions.length / 3;
+                
+                for (let i = 0; i < positionsCount; i++) {
+                    const t = (i % 17) / 16; // normalized position around tube
+                    const segmentProgress = Math.floor(i / 17) / Math.max(1, Math.floor(positionsCount / 17) - 1);
+                    
+                    // Calculate radius at this point (taper from base to tip)
+                    const currentRadius = structure.baseRadius + (structure.tipRadius - structure.baseRadius) * segmentProgress;
+                    const radiusScale = currentRadius / structure.baseRadius;
+                    
+                    // Get center point of this segment
+                    const segmentIndex = Math.floor(i / 17);
+                    const curvePoint = curve.getPoint(segmentProgress);
+                    
+                    // Scale radially from center
+                    const vertex = new THREE.Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+                    const direction = vertex.clone().sub(curvePoint).normalize();
+                    const distance = vertex.distanceTo(curvePoint);
+                    
+                    const newVertex = curvePoint.clone().add(direction.multiplyScalar(distance * radiusScale));
+                    positions[i * 3] = newVertex.x;
+                    positions[i * 3 + 1] = newVertex.y;
+                    positions[i * 3 + 2] = newVertex.z;
+                }
+
+                // Add to main geometry
+                for (let i = 0; i < positions.length; i += 3) {
+                    meshVertices.push(positions[i], positions[i + 1], positions[i + 2]);
+                }
+
+                const indices = tubeGeometry.index.array;
+                for (let i = 0; i < indices.length; i += 3) {
+                    meshIndices.push(
+                        indices[i] + vertexIndex,
+                        indices[i + 1] + vertexIndex,
+                        indices[i + 2] + vertexIndex
+                    );
+                }
+
+                vertexIndex += positions.length / 3;
+            });
+
+            // Create palm base - a smooth surface connecting finger bases
+            const palmPoints = [0, 5, 9, 13, 17].map(idx => vertices[idx]);
+            
+            // Create palm triangulation for solid base
+            for (let i = 0; i < palmPoints.length - 1; i++) {
+                const p1 = palmPoints[0]; // wrist center
+                const p2 = palmPoints[i + 1];
+                const p3 = palmPoints[i === palmPoints.length - 2 ? 1 : i + 2];
+                
+                // Add slightly inset palm surface
+                const offset = 0.05;
+                meshVertices.push(p1.x, p1.y - offset, p1.z);
+                meshVertices.push(p2.x, p2.y - offset, p2.z);
+                meshVertices.push(p3.x, p3.y - offset, p3.z);
+                
+                meshIndices.push(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                vertexIndex += 3;
+            }
+
+            // Add back of hand surface
+            for (let i = 1; i < palmPoints.length - 1; i++) {
+                const p1 = palmPoints[0]; // wrist center
+                const p2 = palmPoints[i];
+                const p3 = palmPoints[i + 1];
+                
+                // Add back surface
+                const offset = 0.05;
+                meshVertices.push(p1.x, p1.y + offset, p1.z);
+                meshVertices.push(p2.x, p2.y + offset, p2.z);
+                meshVertices.push(p3.x, p3.y + offset, p3.z);
+                
+                meshIndices.push(vertexIndex, vertexIndex + 2, vertexIndex + 1); // flipped winding
+                vertexIndex += 3;
+            }
+
+            handGeometry.setIndex(meshIndices);
+            handGeometry.setAttribute('position', new THREE.Float32BufferAttribute(meshVertices, 3));
+            
+            // Smooth the geometry
+            handGeometry.computeVertexNormals();
+            
+            // Apply additional smoothing
+            const smoothingIterations = 2;
+            for (let iter = 0; iter < smoothingIterations; iter++) {
+                const positions = handGeometry.attributes.position.array;
+                const smoothedPositions = new Float32Array(positions.length);
+                
+                // Laplacian smoothing
+                for (let i = 0; i < positions.length; i += 3) {
+                    const vertex = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]);
+                    const neighbors = [];
+                    
+                    // Find neighboring vertices (simplified approach)
+                    for (let j = 0; j < positions.length; j += 3) {
+                        if (i !== j) {
+                            const neighbor = new THREE.Vector3(positions[j], positions[j + 1], positions[j + 2]);
+                            if (vertex.distanceTo(neighbor) < 0.15) {
+                                neighbors.push(neighbor);
+                            }
+                        }
+                    }
+                    
+                    if (neighbors.length > 0) {
+                        const avgNeighbor = new THREE.Vector3();
+                        neighbors.forEach(n => avgNeighbor.add(n));
+                        avgNeighbor.divideScalar(neighbors.length);
+                        
+                        // Blend original position with average of neighbors
+                        const smoothed = vertex.clone().lerp(avgNeighbor, 0.1);
+                        smoothedPositions[i] = smoothed.x;
+                        smoothedPositions[i + 1] = smoothed.y;
+                        smoothedPositions[i + 2] = smoothed.z;
+                    } else {
+                        smoothedPositions[i] = positions[i];
+                        smoothedPositions[i + 1] = positions[i + 1];
+                        smoothedPositions[i + 2] = positions[i + 2];
+                    }
+                }
+                
+                handGeometry.setAttribute('position', new THREE.Float32BufferAttribute(smoothedPositions, 3));
+            }
+            
+            handGeometry.computeVertexNormals();
+
+            const material = new THREE.MeshLambertMaterial({ 
+                color: 0xfdbcb4, // Skin tone
+                wireframe: false,
+                side: THREE.DoubleSide // Ensure both sides are rendered
+            });
+
+            handMesh = new THREE.Mesh(handGeometry, material);
+            scene.add(handMesh);
+
+            document.getElementById('downloadBtn').disabled = false;
+        }
+
+        function downloadSTL() {
+            if (!handGeometry) return;
+
+            const vertices = handGeometry.attributes.position.array;
+            const indices = handGeometry.index.array;
+
+            let stlString = 'solid hand\n';
+
+            for (let i = 0; i < indices.length; i += 3) {
+                const i1 = indices[i] * 3;
+                const i2 = indices[i + 1] * 3;
+                const i3 = indices[i + 2] * 3;
+
+                const v1 = new THREE.Vector3(vertices[i1], vertices[i1 + 1], vertices[i1 + 2]);
+                const v2 = new THREE.Vector3(vertices[i2], vertices[i2 + 1], vertices[i2 + 2]);
+                const v3 = new THREE.Vector3(vertices[i3], vertices[i3 + 1], vertices[i3 + 2]);
+
+                const normal = new THREE.Vector3()
+                    .crossVectors(
+                        new THREE.Vector3().subVectors(v2, v1),
+                        new THREE.Vector3().subVectors(v3, v1)
+                    )
+                    .normalize();
+
+                stlString += `  facet normal ${normal.x} ${normal.y} ${normal.z}\n`;
+                stlString += '    outer loop\n';
+                stlString += `      vertex ${v1.x} ${v1.y} ${v1.z}\n`;
+                stlString += `      vertex ${v2.x} ${v2.y} ${v2.z}\n`;
+                stlString += `      vertex ${v3.x} ${v3.y} ${v3.z}\n`;
+                stlString += '    endloop\n';
+                stlString += '  endfacet\n';
+            }
+
+            stlString += 'endsolid hand\n';
+
+            const blob = new Blob([stlString], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hand_pose_${new Date().getTime()}.stl`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Event listeners
+        document.getElementById('startBtn').addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 } 
+                });
+                
+                const video = document.getElementById('videoElement');
+                video.srcObject = stream;
+                
+                camera = new Camera(video, {
+                    onFrame: async () => {
+                        await hands.send({ image: video });
+                    },
+                    width: 640,
+                    height: 480
+                });
+                camera.start();
+                
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('status').textContent = 'Camera started - Show your hand!';
+            } catch (error) {
+                alert('Could not access camera: ' + error.message);
+            }
+        });
+
+        document.getElementById('captureBtn').addEventListener('click', () => {
+            if (latestHandLandmarks) {
+                create3DHandFromLandmarks(latestHandLandmarks);
+            }
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', downloadSTL);
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (handMesh) {
+                scene.remove(handMesh);
+                handMesh = null;
+                handGeometry = null;
+                document.getElementById('downloadBtn').disabled = true;
+            }
+        });
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space' && latestHandLandmarks) {
+                event.preventDefault();
+                create3DHandFromLandmarks(latestHandLandmarks);
+            }
+        });
+
+        // Initialize
+        init3D();
+        initHandTracking();
+    </script>
+</body>
+</html>

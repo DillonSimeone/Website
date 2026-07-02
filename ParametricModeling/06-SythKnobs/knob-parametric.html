@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACCESS KNOB — Parametric Suite</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="srAnnouncer" class="sr-only" aria-live="polite" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;"></div>
+
+<header>
+  <div>
+    <div class="site-label">Parametric Suite</div>
+    <h1>ACCESS KNOB</h1>
+  </div>
+  <span class="tag green">ACCESSIBILITY</span>
+  <span class="tag">HAPTIC GRIP</span>
+  <span class="tag">MUTATION ENGINE</span>
+  <span class="header-right">
+    <span class="live-dot"></span>
+    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);">PARAMETRIC LIVE</span>
+  </span>
+  <button id="closeViewerBtn" class="btn btn-danger" style="display:none !important; margin-left:auto; width:auto; margin-bottom:0; padding:6px 16px;" onclick="closeViewer()">✕ RETURN TO MENUS</button>
+</header>
+
+<div class="layout" style="position: relative; z-index: 110;">
+  <div id="pullOutMenuBtn" onclick="closeViewer()" title="Open Menu">▶</div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- PROFILE SHAPE -->
+    <div class="section">
+      <div class="section-label" data-tooltip="Select the geometric profile of the outer grip">Profile Shape</div>
+      <div class="shape-grid" id="shapeGrid">
+        <!-- shapes injected by JS -->
+      </div>
+    </div>
+
+    <!-- BODY DIMENSIONS -->
+    <div class="section">
+      <div class="section-label" data-tooltip="Adjust overall diameter, height, and top-to-bottom taper">Body Dimensions</div>
+
+      <!-- PRESET SYSTEM -->
+      <div class="param">
+        <label>Synth Preset</label>
+      </div>
+      <select id="synthPreset" style="margin-bottom: 12px;" aria-label="Synthesizer Preset Profile">
+        <option value="custom" selected>Custom — Manual Settings</option>
+        <option value="wh148">WH148 Potentiometer (Standard D-Shaft)</option>
+        <option value="eurorack">Moog / Eurorack (Small, Dense)</option>
+        <option value="prophet">Sequential Prophet (Standard D-Shaft)</option>
+        <option value="microfreak">Arturia MicroFreak (Slide-Over sleeve)</option>
+      </select>
+
+      <div class="param">
+        <label>Outer Diameter</label>
+        <input type="number" class="val" id="v_outerD" value="25" min="10" max="80" step="1" aria-label="Outer Diameter Value">
+        <span class="unit">mm</span>
+      </div>
+      <select id="outerDSelect" style="margin-bottom: 8px;">
+        <option value="19">Small (19mm)</option>
+        <option value="25" selected>Medium (25mm)</option>
+        <option value="32">Large (32mm)</option>
+        <option value="custom">Custom</option>
+      </select>
+      <div id="outerDSliderContainer" style="display: none; width: 100%;">
+        <input type="range" id="outerD" min="10" max="80" value="25" step="1">
+      </div>
+
+      <div class="param">
+        <label>Height</label>
+        <input type="number" class="val" id="v_height" value="22" min="10" max="50" step="1" aria-label="Height Value">
+        <span class="unit">mm</span>
+      </div>
+      <input type="range" id="height" min="10" max="50" value="22" step="1">
+
+      <div class="param">
+        <label>Taper Ratio</label>
+        <input type="number" class="val" id="v_taper" value="0.85" min="0.60" max="1.00" step="0.01" aria-label="Taper Ratio Value">
+        <span class="unit"></span>
+      </div>
+      <input type="range" id="taper" min="60" max="100" value="85" step="1">
+    </div>
+
+    <!-- TEXTURE SYSTEM -->
+    <div class="section">
+      <div class="section-label" data-tooltip="Select a grip texture mode and tune its depth, scale, and density">Texture System</div>
+
+      <div class="param">
+        <label>Texture Mode</label>
+      </div>
+      <select id="textureMode">
+        <option value="flutes" selected>Axial Flutes — deep vertical channels</option>
+        <option value="twist">Spiral Twist — helical helical grooves</option>
+        <option value="rings">Radial Rings — horizontal ridges</option>
+        <option value="vrings">Vertical Rings — longitude slices</option>
+        <option value="knurl">Diamond Knurl — cross-hatch grid</option>
+        <option value="scallops">Scallops — finger divots</option>
+        <option value="bumps">Scallop Bumps — protruding tactile studs</option>
+        <option value="smooth">Smooth — no texture</option>
+      </select>
+
+      <div class="param">
+        <label>Texture Depth</label>
+        <input type="number" class="val" id="v_texDepth" value="3.0" min="1.0" max="8.0" step="0.1" aria-label="Texture Depth Value">
+        <span class="unit">mm</span>
+      </div>
+      <input type="range" id="texDepth" min="10" max="80" value="30" step="1">
+
+      <div class="param">
+        <label>Texture Scale</label>
+        <input type="number" class="val" id="v_texScale" value="3.0" min="1.0" max="6.0" step="0.1" aria-label="Texture Scale Value">
+        <span class="unit">mm</span>
+      </div>
+      <input type="range" id="texScale" min="10" max="60" value="30" step="1">
+
+      <div class="param">
+        <label>Texture Count</label>
+        <input type="number" class="val" id="v_texCount" value="8" min="3" max="36" step="1" aria-label="Texture Count Value">
+        <span class="unit">×</span>
+      </div>
+      <input type="range" id="texCount" min="3" max="36" value="8" step="1">
+    </div>
+
+    <!-- MOUNTING INTERFACE -->
+    <div class="section">
+      <div class="section-label" data-tooltip="Set attachment style: slide-over cap or small shaft swap-in">Mounting Interface</div>
+
+      <div class="toggle-container" data-mode="swap" onclick="toggleMountMode()">
+        <div class="toggle-pill" id="mountPill"></div>
+        <div class="toggle-opt" id="optSlide">SLIDE OVER</div>
+        <div class="toggle-opt active" id="optSwap">SWAP IN</div>
+      </div>
+
+      <div class="param" style="margin-top:12px;">
+        <label>Shaft Type</label>
+      </div>
+      <select id="shaftType" onchange="updateShaftType()" aria-label="Shaft Mounting Profile Type">
+        <option value="dshaft" selected>D-Shaft (flat edge)</option>
+        <option value="round">Solid Round (circular)</option>
+        <option value="knurled">Knurled / Splined (split shaft)</option>
+      </select>
+
+      <div id="slideOverControls" style="display: none;">
+        <div class="param" style="margin-top:12px;">
+          <label>Inner Bore Ø</label>
+          <input type="number" class="val" id="v_boreD" value="18.0" min="6.0" max="50.0" step="0.5" aria-label="Inner Bore Diameter Value">
+          <span class="unit">mm</span>
+        </div>
+        <input type="range" id="boreD" min="6" max="50" value="18" step="0.5">
+
+        <div class="param">
+          <label>Slot Depth</label>
+          <input type="number" class="val" id="v_slotH" value="12" min="4" max="40" step="1" aria-label="Slot Depth Value">
+          <span class="unit">mm</span>
+        </div>
+        <input type="range" id="slotH" min="4" max="40" value="12" step="1">
+
+        <div class="param">
+          <label>Clearance</label>
+          <input type="number" class="val" id="v_clearance" value="0.3" min="0.1" max="1.0" step="0.1" aria-label="Clearance Value">
+          <span class="unit">mm</span>
+        </div>
+        <input type="range" id="clearance" min="1" max="10" value="3" step="1">
+
+        <div class="param">
+          <label>Set-Screw</label>
+        </div>
+        <select id="setScrew">
+          <option value="none">None — friction fit</option>
+          <option value="m2">M2 radial set screw</option>
+          <option value="m3" selected>M3 radial set screw</option>
+          <option value="m4">M4 radial set screw</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- MUTATION ENGINE -->
+    <div class="section">
+      <div class="section-label" data-tooltip="Generates randomized variations by mutating current parameters using a seed value and percentage spread">Mutation Engine</div>
+      <div class="mutation-controls">
+        <div class="mut-param">
+          <label>Variants</label>
+          <div class="spinner-container">
+            <button class="spin-btn" onclick="stepInput('mutCount', -1)">-</button>
+            <input type="number" id="mutCount" value="12" min="1" max="64">
+            <button class="spin-btn" onclick="stepInput('mutCount', 1)">+</button>
+          </div>
+        </div>
+        <div class="mut-param">
+          <label>Spread %</label>
+          <div class="spinner-container">
+            <button class="spin-btn" onclick="stepInput('mutSpread', -5)">-</button>
+            <input type="number" id="mutSpread" value="30" min="5" max="80">
+            <button class="spin-btn" onclick="stepInput('mutSpread', 5)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="seed-display" id="seedDisplay">SEED: —</div>
+      <button class="btn btn-primary" onclick="runMutation()">⬡ GENERATE MUTATIONS</button>
+      <button class="btn btn-ghost" onclick="addSingle()">+ ADD CURRENT CONFIG</button>
+      <button class="btn btn-danger" onclick="clearAll()">✕ CLEAR ALL</button>
+    </div>
+
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="main" style="position:relative;">
+
+    <div class="toolbar">
+      <span class="toolbar-label">Batch</span>
+      <span class="count-badge" id="countBadge">0 KNOBS</span>
+      <span class="toolbar-label hide-mobile" style="margin-left:8px;">Sort:</span>
+      <button class="btn-sm active hide-mobile" id="sortNone" onclick="sortBy('none')" data-tooltip="Sort: default" data-tooltip-pos="left">ADDED</button>
+      <button class="btn-sm hide-mobile" id="sortDia" onclick="sortBy('dia')" data-tooltip="Sort: outer diameter">DIA ↓</button>
+      <button class="btn-sm hide-mobile" id="sortGroove" onclick="sortBy('groove')" data-tooltip="Sort: texture depth">DEPTH ↓</button>
+      
+      <span class="toolbar-label" style="margin-left:8px;">View:</span>
+      <button class="btn-sm" id="btn-render-mode" onclick="setRenderMode('rendered')" data-tooltip="Style: standard material">RENDERED</button>
+      <button class="btn-sm active" id="btn-blueprint-mode" onclick="setRenderMode('blueprint')" data-tooltip="Style: technical blueprint">BLUEPRINT</button>
+
+      <span class="toolbar-label hide-mobile" style="margin-left:8px;">Grid:</span>
+      <button class="btn-sm hide-mobile" id="gridSm" onclick="setGridSize('sm')" data-tooltip="Small cards">SM</button>
+      <button class="btn-sm active hide-mobile" id="gridMd" onclick="setGridSize('md')" data-tooltip="Medium cards">MD</button>
+      <button class="btn-sm hide-mobile" id="gridLg" onclick="setGridSize('lg')" data-tooltip="Large cards">LG</button>
+
+      <div class="export-row">
+        <button class="btn-sm" id="purgeAllBtn" style="color:var(--danger); border-color:#331111;" onclick="confirmPurgeAll()" data-tooltip="Delete all knobs">✕ PURGE ALL</button>
+        <button class="btn-sm" onclick="triggerStlImport()" style="color:var(--accent); border-color:var(--accent-dim);" data-tooltip="Import parameters from STL">+ IMPORT STL</button>
+        <button class="btn-sm" id="exportBatchStlBtn" onclick="exportBatchSTL()" data-tooltip="Download all as combined STL">↓ STL (ALL)</button>
+        <button class="btn-sm" onclick="exportJSON()" data-tooltip="Download parameters as JSON">↓ JSON</button>
+        <button class="btn-sm" onclick="exportCSV()" data-tooltip="Download database as CSV" data-tooltip-pos="right">↓ CSV</button>
+        <button class="btn-sm" onclick="exportOpenSCAD()" data-tooltip="Download OpenSCAD script" data-tooltip-pos="right">↓ SCAD</button>
+      </div>
+      <input type="file" id="importStlInput" accept=".stl" style="display:none;" onchange="handleStlImport(event)">
+    </div>
+
+    <div class="knob-grid grid-md" id="knobGrid">
+      <div class="empty-state">
+        <div class="big">0 KNOBS</div>
+        <div class="sub">Generate mutations or add current config</div>
+      </div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div class="detail-panel" id="detailPanel">
+      <div id="detailPreview" class="preview" style="height: 200px; background: transparent; margin-bottom: 4px; border: 1px solid var(--border);"></div>
+      <div class="detail-caption">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+      <div id="dpCounter" class="detail-counter">—</div>
+      <div class="detail-title" id="dpTitle">—</div>
+      <div class="detail-sub" id="dpSub">—</div>
+      <details class="detail-spoiler" open>
+        <summary>Parameters</summary>
+        <div id="dpRows" style="padding: 0 12px 8px 12px;"></div>
+      </details>
+
+      <!-- POST-GEN BATCH EDIT -->
+      <details class="detail-spoiler" open>
+        <summary>Post-Gen Edit</summary>
+        <div class="batch-edit-section" style="margin-top: 0; border-top: none; padding: 8px 12px 12px 12px;">
+          <select id="batchEditParam">
+            <option value="">Select parameter…</option>
+            <option value="texMode">Texture Mode</option>
+            <option value="texDepth">Texture Depth (mm)</option>
+            <option value="texScale">Texture Scale (mm)</option>
+            <option value="texCount">Texture Count</option>
+            <option value="taper">Taper Ratio</option>
+            <option value="outerD">Outer Diameter (mm)</option>
+            <option value="height">Height (mm)</option>
+            <option value="shape">Profile Shape</option>
+          </select>
+          <div id="batchEditValue"></div>
+          <button class="btn btn-primary" style="margin-top: 6px;" onclick="applyEditToThis()">APPLY TO THIS</button>
+          <button class="btn btn-ghost" onclick="applyEditToAll()">APPLY TO ALL</button>
+        </div>
+      </details>
+
+      <div style="display:flex; gap: 8px; margin-top: 16px;">
+        <button class="btn" id="btnPrev" style="margin-bottom:0; border-color: #ff4444; color: #ff4444; text-shadow: 0 0 8px rgba(255,68,68,0.5); box-shadow: 0 0 10px rgba(255,68,68,0.2) inset;" onclick="prevKnob()">◀ PREV</button>
+        <button class="btn" id="btnNext" style="margin-bottom:0; border-color: #44aaff; color: #44aaff; text-shadow: 0 0 8px rgba(68,170,255,0.5); box-shadow: 0 0 10px rgba(68,170,255,0.2) inset;" onclick="nextKnob()">NEXT ▶</button>
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px; width:100%;" id="exportSingleStlBtn" onclick="exportSingleSTL()">↓ DOWNLOAD THIS STL</button>
+      <button class="btn btn-primary" style="margin-top:8px; width:100%; border-color: #00f2ff; color: #00f2ff; text-shadow: 0 0 8px rgba(0,242,255,0.5);" id="exportSvgBtn" onclick="openLaserModal()">↓ EXPORT SVG (LASER)</button>
+      <button class="btn btn-ghost" style="margin-top:8px; width:100%;" id="copyShareBtn" onclick="copyShareLink()">🔗 COPY SHARE LINK</button>
+      <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeDetail()">✕ CLOSE DETAIL</button>
+  </div>
+</div>
+</div>
+
+<!-- LASER CUTTING SVG EXPORT MODAL -->
+<div id="laserModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; font-family: 'Share Tech Mono', monospace;">
+  <div style="background: #0d0d0d; border: 1px solid rgba(0, 242, 255, 0.4); padding: 24px; width: 340px; box-shadow: 0 0 25px rgba(0, 242, 255, 0.25);">
+    <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #00f2ff; letter-spacing: 0.05em; margin-bottom: 16px; text-shadow: 0 0 8px rgba(0, 242, 255, 0.3);">LASER CUTTING SVG EXPORTER</h2>
+    <p style="font-size: 10px; color: var(--text-dim); line-height: 1.5; margin-bottom: 16px;">This generates a layered 2D SVG file. Stacking and gluing these layers builds the 3D tapered knob profile. It includes alignment rods for easy assembly.</p>
+    
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 10px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase;">Material Thickness</label>
+      <select id="laserMaterialThick" style="margin-bottom: 4px; border-color: rgba(0,242,255,0.4); color: var(--text);">
+        <option value="3">3.0 mm (standard acrylic/plywood)</option>
+        <option value="3.175">3.175 mm (1/8 inch)</option>
+        <option value="4">4.0 mm</option>
+        <option value="6">6.0 mm (thick target)</option>
+        <option value="6.35">6.35 mm (1/4 inch)</option>
+      </select>
+      <input type="number" id="v_laserMaterialThick" class="input-field" value="3.0" min="0.5" max="20" step="0.1" placeholder="Or type custom thickness (mm)">
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 10px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase;">Laser Kerf (Width of cut)</label>
+      <input type="number" id="laserKerf" class="input-field" value="0.1" step="0.01" min="0" max="1">
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-ghost" style="margin-bottom:0; flex: 1;" onclick="closeLaserModal()">✕ CANCEL</button>
+      <button class="btn btn-primary" style="margin-bottom:0; flex: 1; border-color: #00f2ff; color: #00f2ff; text-shadow: 0 0 8px rgba(0,242,255,0.5);" onclick="generateLaserSVG()">↓ EXPORT SVG</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="src/ui.js"></script>
+</body>
+</html>

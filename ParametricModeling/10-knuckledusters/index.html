@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>McAfee Tactical Enforcer - Parametric Configurator</title>
+    <!-- Browser Import Map for resolving 'three' bare specifiers -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+      }
+    </script>
+    <!-- Google Fonts for Cyberpunk Aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="scanline"></div>
+    <div class="blueprint-border"></div>
+
+    <!-- Drawing Title Block -->
+    <header>
+        <div class="title-block">
+            <div class="drawing-number">DWG-2026-MCF-01</div>
+            <h1>MCAFEE SECURE PUNCH CONFIGURATOR</h1>
+        </div>
+        <div style="font-size: 0.75rem; text-align: right; line-height: 1.4;">
+            <div>SCALE: <span style="color: var(--bp-line);">1.00 : 1</span></div>
+            <div>STATUS: <span style="color: var(--bp-line); text-shadow: 0 0 5px var(--bp-line);">READY FOR PUNCHING</span></div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+        <!-- Left Panel: Combined Parametric Configurator -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">1. Ergonomics & Weapons</span>
+            </div>
+            <div class="panel-content">
+                <!-- Navigation Tabs -->
+                <div class="sub-toggle">
+                    <button id="tab-btn-bio" class="sub-toggle-btn active" onclick="switchSection('bio')">BIOMETRIC FIT</button>
+                    <button id="tab-btn-tactical" class="sub-toggle-btn" onclick="switchSection('tactical')">TACTICAL MODS</button>
+                </div>
+
+                <!-- Section: Biometric Fit -->
+                <div id="section-bio" class="tab-content-panel active">
+                    <div class="control-group" style="margin-bottom: 15px;">
+                        <div class="control-group-title">Hand Ergonomics</div>
+                        
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Finger Hole Diam</span><span class="param-value"><span id="val-fingerDiam">23.0</span> mm</span></div>
+                            <input type="range" id="input-fingerDiam" min="18" max="30" step="0.5" value="23.0">
+                        </div>
+                        
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Total Hand Width</span><span class="param-value"><span id="val-handWidth">105.0</span> mm</span></div>
+                            <input type="range" id="input-handWidth" min="80" max="140" step="1.0" value="105.0">
+                        </div>
+
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Core Thickness</span><span class="param-value"><span id="val-dusterHeight">16.0</span> mm</span></div>
+                            <input type="range" id="input-dusterHeight" min="12" max="25" step="0.5" value="16.0">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-group-title">Knuckle Guard Armor</div>
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Guard Thickness</span><span class="param-value"><span id="val-guardThick">10.0</span> mm</span></div>
+                            <input type="range" id="input-guardThick" min="5" max="25" step="0.5" value="10.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Tactical Mods -->
+                <div id="section-tactical" class="tab-content-panel">
+                    <div class="control-group" style="margin-bottom: 15px;">
+                        <div class="control-group-title">Tactical Engraving</div>
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Engraving text:</span>
+                        <textarea id="input-engravingText" class="cyber-input" rows="2" style="resize: none; height: 50px; width: 100%;" maxlength="80">MCAFEE&#10;SECURE</textarea>
+                        
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Font Type:</span>
+                        <select id="select-font" class="cyber-input">
+                            <option value="helvetiker_regular" selected>Helvetiker Sans (Local)</option>
+                            <option value="helvetiker_bold">Helvetiker Bold (Local)</option>
+                            <option value="optimer_regular">Optimer Technical (Local)</option>
+                            <option value="gentilis_regular">Gentilis Modern (Local)</option>
+                            <option value="google_orbitron">Orbitron (Cyber)</option>
+                            <option value="google_share-tech-mono">Share Tech Mono</option>
+                            <option value="google_space-mono">Space Mono (Terminal)</option>
+                            <option value="google_vt323">VT323 (Retro Pixel)</option>
+                            <option value="google_syncopate">Syncopate (Wide)</option>
+                        </select>
+                        
+                        <div style="margin-top: 8px; margin-bottom: 12px;">
+                            <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Or Custom Google Font:</span>
+                            <input type="text" id="input-custom-font" class="cyber-input" placeholder="Type font name (e.g. Montserrat, Inter)">
+                        </div>
+                        
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Text Size</span><span class="param-value"><span id="val-textSize">8.0</span> mm</span></div>
+                            <input type="range" id="input-textSize" min="4.0" max="15.0" step="0.5" value="8.0">
+                        </div>
+
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Text Depth / Height</span><span class="param-value"><span id="val-textDepth">1.5</span> mm</span></div>
+                            <input type="range" id="input-textDepth" min="0.5" max="4.0" step="0.1" value="1.5">
+                        </div>
+
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Character Kerning</span><span class="param-value"><span id="val-textKerning">1.0</span>x</span></div>
+                            <input type="range" id="input-textKerning" min="0.6" max="1.5" step="0.05" value="1.0">
+                        </div>
+
+                        <div style="margin-top: 12px;">
+                            <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Engraving Style:</span>
+                            <div class="btn-group" style="grid-template-columns: 1fr 1fr;">
+                                <button class="btn active" id="btn-style-emboss">Emboss</button>
+                                <button class="btn" id="btn-style-cutout">Cutout</button>
+                            </div>
+                        </div>
+
+                        <div class="toggle-row" style="margin-top: 12px;">
+                            <span>Mirror / Stamp Text</span>
+                            <input type="checkbox" id="show-mirrorText" checked>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-group-title">Hardware Modifications</div>
+                        
+                        <div class="param-row">
+                            <div class="param-info"><span class="param-label">Cyber-Spikes Height</span><span class="param-value"><span id="val-spikeHeight">0.0</span> mm</span></div>
+                            <input type="range" id="input-spikeHeight" min="0.0" max="15.0" step="0.5" value="0.0">
+                        </div>
+
+                        <div class="toggle-row" style="margin-top: 10px;">
+                            <span>Hidden USB Drive Slot</span>
+                            <input type="checkbox" id="show-usb-slot">
+                        </div>
+
+                        <div class="toggle-row">
+                            <span>Hidden SD Card Slot</span>
+                            <input type="checkbox" id="show-sd-slot">
+                        </div>
+
+                        <div class="toggle-row">
+                            <span>Heavy Hex Studs</span>
+                            <input type="checkbox" id="show-hex-studs">
+                        </div>
+
+                        <div class="toggle-row" style="margin-top: 10px; border-top: 1px solid rgba(255,0,60,0.2); padding-top: 10px;">
+                            <span>Haptic System</span>
+                            <input type="checkbox" id="show-haptic-system">
+                        </div>
+
+                        <div id="haptic-options-row" style="display: none; margin-top: 8px;">
+                            <span class="param-label" style="display:block; margin-bottom: 4px; font-size: 0.7rem; text-transform: uppercase;">Battery Mount Location:</span>
+                            <button class="btn active" id="btn-battery-side" style="width: 100%;">RIGHT SIDE</button>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- Middle Panel: Viewport -->
+        <div id="viewport-container">
+            <div id="canvas3d"></div>
+            <svg id="dimensions-overlay"></svg>
+        </div>
+
+        <!-- Right Panel: Diagnostics, Visibility & Export -->
+        <div class="panel panel-right">
+            <div class="panel-header">
+                <span class="panel-title">2. Draw & Spec Sheet</span>
+            </div>
+            <div class="panel-content">
+                <!-- Visibilities -->
+                <div class="control-group">
+                    <div class="control-group-title">Assembly Elements</div>
+                    <div class="toggle-row">
+                        <span>Knuckle Duster Core</span>
+                        <input type="checkbox" id="show-knuckles" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Glowing Ghost Hand</span>
+                        <input type="checkbox" id="show-ghost-hand" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Cutout Volumes (Amber)</span>
+                        <input type="checkbox" id="show-cutouts">
+                    </div>
+                </div>
+
+                <!-- Display settings -->
+                <div class="control-group">
+                    <div class="control-group-title">Display Settings</div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Solid Opacity</span><span class="param-value"><span id="val-opacity">90</span>%</span></div>
+                        <input type="range" id="input-opacity" min="10" max="100" step="5" value="90">
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Render Mode</span>
+                        <div class="btn-group">
+                            <button class="btn" id="btn-render-mode">Red Ice Render</button>
+                            <button class="btn active" id="btn-blueprint-mode">Blueprint</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specs -->
+                <div class="control-group">
+                    <div class="control-group-title">Estimated Parameters</div>
+                    <div class="spec-item">
+                        <span class="spec-label">Part Volume:</span>
+                        <span class="spec-val" id="spec-volume">--- cm³</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Estimated Weight (PLA):</span>
+                        <span class="spec-val" id="spec-weight">--- g</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Outer Dimensions:</span>
+                        <span class="spec-val" id="spec-bounds">--- mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Threat Mitigation:</span>
+                        <span class="spec-val" style="color: var(--bp-line); text-shadow: 0 0 5px var(--bp-line);">100% PURE SECURE</span>
+                    </div>
+                    
+                    <button class="btn btn-accent" id="btn-export-stl">Export Watertight STL</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Status -->
+    <footer>
+        <div class="status-left">
+            <div class="status-dot"></div>
+            <span>SECURE SYSTEM ENGAGED</span>
+            <span>|</span>
+            <span>MANIFOLD GEOMETRY KERNEL LOADED</span>
+        </div>
+        <div style="text-align: center; color: var(--bp-line);">MCAFEE SECURITY PUNCH v2026.4</div>
+        <div style="text-align: right;">COORDINATES: LOCAL GRID</div>
+    </footer>
+
+    <!-- Inline Section Switch Script -->
+    <script>
+        let currentSection = 'bio';
+
+        function switchSection(sectionId) {
+            currentSection = sectionId;
+            updateSectionVisibility();
+        }
+
+        function updateSectionVisibility() {
+            // Update tabs active state
+            document.querySelectorAll('.sub-toggle-btn').forEach(btn => {
+                const btnId = btn.id.replace('tab-btn-', '');
+                if (btnId === currentSection) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Hide/show content panels
+            document.querySelectorAll('.tab-content-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            const activePanel = document.getElementById(`section-${currentSection}`);
+            if (activePanel) {
+                activePanel.classList.add('active');
+            }
+        }
+
+        // Initialize visibility
+        updateSectionVisibility();
+    </script>
+
+    <!-- JavaScript Module -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
