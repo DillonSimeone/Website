@@ -4,15 +4,15 @@
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{array}
+\geometry{hmarginratio=1:1}
+\graphicspath{{images/}}
 \setlength{\headheight}{21pt}
 
 % Conference information
-\acmConference[ASSETS '26]{The 28th International ACM SIGACCESS Conference on Computers and Accessibility}{October 26--28, 2026}{Athens, Greece}
+\acmConference[ASSETS '26]{The 28th International ACM SIGACCESS Conference on Computers and Accessibility}{October 26--28, 2026}{Porto, Portugal}
 
 \acmYear{2026}
 \copyrightyear{2026}
-
-%Porto, Portugal, why does this say greece? why does the pdf say new york
 
 \begin{document}
 
@@ -114,7 +114,7 @@ We contribute: (1) documentation of a parametric design system for accessible sy
 
 Research in accessibility-focused Digital Musical Instruments (DMIs) has historically prioritized eye-tracking, occupational therapy frameworks, rapid prototyping of bespoke instruments, or entirely novel interfaces to support musicians with diverse motor and cognitive impairments \cite{frid2019accessible, mcmillan2023designing, mccloskey2015accessibility, payne2020eye, holland2020expanding}. However, these approaches focus on creating new instruments rather than retrofitting existing commercial hardware, leaving classic physical synthesizers largely inaccessible. Parametric and generative design frameworks address this by enabling personalized, custom-fit physical adaptations, such as non-invasive mappable gesture sensing \cite{strail2012nime} and custom 3D-printed orthopedic grips or pneumatic controls with variable activation forces \cite{tandon2023parametric, santos2023parametric, desai20153dprinting}. Generative systems further democratize fabrication by exploring design spaces algorithmically, removing manual CAD editing bottlenecks \cite{hofmann2020living}. ACCES KNOB builds on this by utilizing a mutation engine to generate customizable variant batches, ensuring direct user agency in selecting ergonomic shapes.
 
-ACCESS KNOB integrates and promotes UMD's ethos of sonic agency \cite{labelle2018sonic} to increase accessibility of music technology that historically excluded DHH musicians and musicians with motor disabilities. These frameworks emphasize multimodal, cross-disability design by integrating visual, auditory, and haptic feedback channels \cite{breteche2019deaf, cavdir2022embodied}. %these are redundant, are there more cannonical examples? 
+ACCESS KNOB integrates and promotes UMD's ethos of sonic agency \cite{labelle2018sonic} to increase accessibility of music technology that historically excluded DHH musicians and musicians with motor disabilities. These frameworks emphasize multi modal, cross-disability design by integrating visual, auditory, and haptic feedback channels. \cite{breteche2019deaf, cavdir2022embodied}. %these are redundant, are there more cannonical examples? 
 
 This is particularly relevant for DHH musicians who utilize vibrotactile interfaces for sensory reinforcement \cite{cavdir2022touch, cavdir2020felt}. Given that vestibular variations in DHH populations can affect motor coordination \cite{wink2018balance, erkilicc2011conceptual}, our parametric customizer combines tactile shapes, voice/facial inputs, and auditory/haptic feedback to unify motor and sensory accessibility.
 
@@ -150,47 +150,31 @@ Users adjust the following parameters via sliders and numerical inputs (Table~\r
 
 %\textbf{Set Screw}: Toggle and position (top/side). Enables secure mechanical fastening without requiring friction fit.
 
-\begin{table}[t]
+\begin{table*}[ht]
 \centering
 \caption{Primary parametric knob design parameters.}
 \label{tab:knobparameters}
-\begin{tabular}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{2.6cm}|p{6.6cm}|}
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{8.3cm}}
 \hline
-\textbf{Parameter} & \textbf{Range / Options} & \textbf{Purpose} \\
+\textbf{Parameter} & \textbf{App Range / Options} & \textbf{Purpose \& Design Context} \\
 \hline
-Shape & Circular, square, hexagonal, triangular, pentagonal, octagonal, star, gear &
-Shape-coding enables tactile and visual differentiation of control functions, supporting users with low vision through recognizable profiles (Fig.~\ref{fig:profiles}) \cite{manenti2024accessibility}. \\
-\hline
-Outer Diameter & 15--50 mm (default: 35 mm) &
-Larger diameters increase mechanical advantage and reduce the grip force required for rotation. \\
-\hline
-Height & 10--40 mm &
-Taller knobs increase graspable surface area, supporting palm-dragging and diverse grip strategies. \\
-\hline
-Taper & 0--70\% Angle&
-Provides ergonomic grip variation and improves visual and tactile distinction between controls. \\
-\hline
-Groove Profile & Square, rounded, V-shaped &
-Affects grip friction, tactile feel, and rotational control. \\
-\hline
-Bore Diameter & 4--10 mm &
-Matches the shaft diameter of the target synthesizer. A knob database provides common dimensions for popular synthesizers. \\
-\hline
-Slot Depth & 0--3 mm &
-Controls D-shaft slot depth for secure rotational locking. \\
-\hline
-Clearance & 0--0.5 mm &
-Adjusts bore fit tolerance for printer precision and preferred friction fit. \\
-\hline
-Set Screw & Enabled/Disabled; Top or Side &
-Provides secure mechanical fastening independent of friction fit. \\
+Shape & 10 profiles (tri, hex, stars, wave, etc.) & Tactile shape-coding for low-vision users \cite{manenti2024accessibility}. \\
+Outer Diameter & 10--80 mm (defaults: 19, 25, 32 mm) & Larger size increases mechanical torque advantage. \\
+Height & 10--50 mm (default: 22 mm) & Maximizes grasp area for palm-drag rotation. \\
+Taper Ratio & 0.60--1.00 (top\slash bottom ratio) & Improves ergonomics and tactile distinction. \\
+Texture Mode & 8 styles (flutes, rings, knurl, bumps, etc.) & Enhances surface friction and tactile feedback. \\
+Inner Bore & 6.0--50.0 mm (sleeve); 4--10 mm (direct) & Matches target synthesizer potentiometer shafts. \\
+Slot Depth & 4--40 mm & Matches shaft heights for rotational locking. \\
+Clearance & 0.1--1.0 mm (default: 0.3 mm) & Compensates for 3D printer tolerance variances. \\
+Set Screw & None (friction), radial M2, M3, M4 & Secures physical interface against high torque. \\
 \hline
 \end{tabular}
-\end{table}
+\end{table*}
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=0.9\columnwidth]{ProfileShapes.png}
+  \includegraphics[width=0.7\columnwidth]{ProfileShapes-large-1200w.png}
   \Description{A diagram showcasing various cross-sectional geometric profiles for the knobs, such as triangular, quadrilateral, pentagonal, hexagonal, octagonal, dodecagonal, circular, and star shapes. This demonstrates the visual and tactile shape-coding design options.}
   \caption{Profile shape options including triangle, diamond, pentagon, hexagon, octagon, and star configurations for tactile and visual distinction.} 
   \label{fig:profiles}
@@ -205,7 +189,7 @@ The tool exports manifold STL meshes, OpenSCAD scripts, 2D SVG layer contours, a
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=\columnwidth]{OutputDetailsScreen.png}
+  \includegraphics[width=0.8\columnwidth]{OutputDetailsScreen-large-1200w.png}
   \Description{A screenshot of the ACCESS KNOB web interface. The sidebar contains sliders for body dimensions, texture configuration, mounting interface, and mutation settings. The main panel displays a grid of 12 mutated knob variations alongside a detailed inspector panel with 3D preview and numeric parameter listings.}
   \caption{ACCESS KNOB interface showing a batch of 12 generated knob variants with hexagonal profiles. Parameters are displayed for the selected knob (K793-001) including shape, diameter, height, groove geometry, and bore specifications. The mutation engine enables rapid design exploration.}
   \label{fig:output}
@@ -223,26 +207,23 @@ A critical consideration in assistive technology design is whether the design to
 
 We evaluate the design space enabled by ACCESS KNOB by analyzing its mechanical advantage, fabrication tolerances, and interface accessibility.
 
-\subsection{Mechanical Torque Advantage}
-To quantify how parametric changes reduce the grip force required to actuate a control, we model the mechanical torque $T$ necessary to rotate a potentiometer or rotary switch:
-\begin{equation}
-T = F \cdot \left(\frac{D}{2}\right) \quad \Longrightarrow \quad F = \frac{2T}{D}
-\end{equation}
-where $F$ is the applied peripheral finger pinch or grip force, and $D$ is the outer diameter of the knob. This mechanical scaling directly compensates for reduced hand strength without modifying the internal electronic hardware of the instrument. Increasing knob height (from standard $12\text{ mm}$ to $25\text{ mm}$ or taller) increases the usable vertical surface area, enabling musicians to employ palm-dragging or side-of-hand shear techniques to actuate the controls.
-
-\subsection{Fabrication Tolerances and Materials}
+% \subsection{Mechanical Torque Advantage}
+% To quantify how parametric changes reduce the grip force required to actuate a control, we model the mechanical torque $T$ necessary to rotate a potentiometer or rotary switch:
+% \begin{equation}
+% T = F \cdot \left(\frac{D}{2}\right) \quad \Longrightarrow \quad F = \frac{2T}{D}
+% \end{equation}
+% where $F$ is the applied peripheral finger pinch or grip force, and $D$ is the outer diameter of the knob. This mechanical scaling directly compensates for reduced hand strength without modifying the internal electronic hardware of the instrument. Increasing knob height (from standard $12\text{ mm}$ to $25\text{ mm}$ or taller) increases the usable vertical surface area, enabling musicians to employ palm-dragging or side-of-hand shear techniques to actuate the controls.
 
 \subsection{Interface Accessibility Conformance}
-The browser-based customizer supports keyboard navigation and platform-level hands-free interfaces (Apple Voice\slash Switch Control, Google Project Gameface) using commodity webcams. For blind or low-vision users, a multimodal interaction loop integrates hidden `aria-live` parameter announcements, oscillator-based parameter sonification (Web Audio API), and short haptic confirmation pulses (`navigator.vibrate()`). %IS THIS FORMMATTED CORRECTLY???
+The browser-based customizer supports keyboard navigation and platform-level hands-free interfaces (Apple Voice\slash Switch Control, Google Project Gameface) using commodity webcams. For blind or low-vision users, a multimodal interaction loop integrates hidden `aria-live` parameter announcements, oscillator-based parameter sonification (Web Audio API), and short haptic confirmation pulses (`navigator.vibrate()`)
 
 \section{Deployment and Field Study}
-Our initial deployment targets the individual whose needs catalyzed this project: a retired IT professional (age 64) and avid musician with dialysis-dependent kidney failure resulting in progressive hand strength and sensation loss over the past eight years. Over his lifetime, this musician acquired approximately 20 hardware synthesizers spanning modular, semi-modular, and keyboard formats to produce electronic music and live performances. %[would be interesting to have a table listing all the synths make/model/year made, etc.] 
+Our initial deployment targets the individual whose needs catalyzed this project: a retired IT professional and avid musician with dialysis-dependent kidney failure resulting in progressive hand strength and sensation loss over the past eight years. Over his lifetime, this musician acquired approximately 20 hardware synthesizers spanning modular, semi-modular, and keyboard formats to produce electronic music and live performances. %[would be interesting to have a table listing all the synths make/model/year made, etc.] 
 Unfortunately, the impacts of progressive disability made it difficult for him to interact with his expansive and carefully curated instrument collection. Our goal was to create a tool that would allow this dedicated musician to continue his music practice, regardless of physical challenges \cite{mccormack2026jugaad}.
 
 To adapt to mobility loss, this musician used the following workarounds: 1) Apply a T-wrench for leverage on small knobs (limited to knobs with compatible geometries); 2) Drag a palm across control surfaces (imprecise, fatiguing); 3) Avoid instruments with densely packed or recessed controls; and 4) Rely on software-based synthesis (reducing tactile instrument interaction). Ultimately, these modifications reportedly led to frustration due to loss of expressive control and decreased motivation to engage with hardware instruments despite continued interest in this creative practice.
 
-%FLAGGING THIS!
-Once the custom knobs were generated on a 3D printer using ACCESS KNOB software, our musician required assistance to install an extremely large number of Access Knobs to upgrade his collection of synthesizers. Once installed, the musician was able to manipulate the knobs on his own, making the instruments more usable. As we tested the Access Knobs, we learned that application of the modified knobs requires assistance for the mobility-limited user. Pairing increased usability of these knobs with other adaptations has improved the user's quality of life and reduced the burden of implementing imperfect workarounds, giving him more energy for other projects.
+The mutation engine generated a batch of variants across sizes, shapes, and heights which Cliff evaluated directly, identifying large, tall profiles as most effective for his grip strategy. Initial swap-in replacements required assistance to install across his collection of approximately 20 instruments. This informed the development of the slide-over sleeve design, allowing Cliff to independently mount and remove knobs without assistance. Informal follow-up confirmed renewed engagement with his instruments, with a third-party observer noting increased quality of life and energy for other projects.
 
 \section{Discussion} %Conclusion/Future Work as title, or this is what conference provided?
 
@@ -363,7 +344,6 @@ Sylvain Br\'{e}t\'{e}ch\'{e}. 2021.
 Springer, 422--448.
 DOI: 10.1007/978-3-030-70210-6\_28
 
-
 \bibitem{cavdir2022embodied}
 [Anonymous]. 2024.
 [Anonymized Reference].
@@ -406,7 +386,7 @@ M. E. Wink. 2018.
 Master's thesis. University of Tennessee, Knoxville.
 
 \bibitem{erkilicc2011conceptual}
-Mualla Erkili\c{c}. 2011.
+Mualla ErkiliÇ{\c{c}}. 2011
 \textit{Conceptual challenges between universal design and disability in relation to the body, impairment, and the environment}.
 \textit{METU Journal of the Faculty of Architecture/Mimarl{\i}k Fak{\"u}ltesi Dergisi} 28, 2 (2011).
 
@@ -431,7 +411,6 @@ Jutta Treviranus. 2014.
 The Value of the Curb Cut Effect.
 \textit{Slaw (Co-operative Legal Journal)}.
 Retrieved January 21, 2014 from \url{http://www.slaw.ca/2014/01/21/the-value-of-the-curb-cut-effect/}
-
 
   \bibitem{mccormack2026jugaad}
 Calvin McCormack. 2026.

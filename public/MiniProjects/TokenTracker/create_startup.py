@@ -6,6 +6,18 @@ def create_startup_shortcut():
     startup_dir = Path(os.environ["APPDATA"]) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
     shortcut_path = startup_dir / "LLMTokenTracker.lnk"
     
+    # Clean up old potential shortcuts
+    old_shortcuts = ["AntigravityTokenTracker.lnk", "GoogleAntiGravityTokenTracker.lnk"]
+    for old_name in old_shortcuts:
+        old_path = startup_dir / old_name
+        if old_path.exists():
+            try:
+                old_path.unlink()
+                print(f"Removed old startup shortcut: {old_path}")
+            except Exception as e:
+                print(f"Could not remove {old_path}: {e}")
+    
+    
     exe_path = Path(__file__).parent / "dist" / "LLMTokenTracker" / "LLMTokenTracker.exe"
     working_dir = exe_path.parent
     

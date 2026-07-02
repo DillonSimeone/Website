@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.6.14)  30 JUN 2026 17:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.6.14)  30 JUN 2026 18:57
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -943,15 +943,16 @@ File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 * paper: letterpaper
 * layout: <same size as paper>
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
+* hratio: 1:1
 * modes: twoside heightrounded 
-* h-part:(L,W,R)=(73.71613pt, 430.00462pt, 110.57425pt)
+* h-part:(L,W,R)=(92.14519pt, 430.00462pt, 92.14519pt)
 * v-part:(T,H,B)=(95.39737pt, 556.47656pt, 143.09605pt)
 * \paperwidth=614.295pt
 * \paperheight=794.96999pt
 * \textwidth=430.00462pt
 * \textheight=560.0pt
-* \oddsidemargin=1.44614pt
-* \evensidemargin=38.30426pt
+* \oddsidemargin=19.8752pt
+* \evensidemargin=19.8752pt
 * \topmargin=-3.87262pt
 * \headheight=21.0pt
 * \headsep=14.0pt
@@ -1085,65 +1086,30 @@ ming/MiKTeX/fonts/enc/dvips/libertine/lbtn_nh77jq.enc}{C:/Users/DoctorNightmare
 s/AppData/Roaming/MiKTeX/fonts/enc/dvips/libertine/lbtn_7grukw.enc}]
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
 (Font)              scaled to size 8.0pt on input line 155.
-LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 9.0pt on input line 157.
-LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 6.6pt on input line 157.
-LaTeX Font Info:    Font shape `OML/nxlmi/m/it' will be
-(Font)              scaled to size 9.0pt on input line 157.
-LaTeX Font Info:    Font shape `OML/nxlmi/m/it' will be
-(Font)              scaled to size 6.6pt on input line 157.
-LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 9.0pt on input line 157.
-LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 6.6pt on input line 157.
-LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 9.0pt on input line 157.
-LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 6.6pt on input line 157.
-LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 9.0pt on input line 157.
-LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 6.6pt on input line 157.
-LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 9.0pt on input line 157.
-LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 6.6pt on input line 157.
-LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 9.0pt on input line 157.
-LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 6.6pt on input line 157.
-LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 9.0pt on input line 157.
-LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 6.6pt on input line 157.
+<images/ProfileShapes-large-1200w.png, id=100, 903.375pt x 475.02469pt>
+File: images/ProfileShapes-large-1200w.png Graphic file (type png)
+<use images/ProfileShapes-large-1200w.png>
+Package pdftex.def Info: images/ProfileShapes-large-1200w.png  used on input li
+ne 177.
+(pdftex.def)             Requested size: 301.00192pt x 158.28076pt.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
-(Font)              scaled to size 9.0pt on input line 159.
-<ProfileShapes.png, id=109, 94.84251pt x 74.9256pt>
-File: ProfileShapes.png Graphic file (type png)
-<use ProfileShapes.png>
-Package pdftex.def Info: ProfileShapes.png  used on input line 193.
-(pdftex.def)             Requested size: 387.00153pt x 305.8261pt.
+(Font)              scaled to size 9.0pt on input line 184.
  [2.2]
-<OutputDetailsScreen.png, id=135, 113.81102pt x 116.18208pt>
-File: OutputDetailsScreen.png Graphic file (type png)
-<use OutputDetailsScreen.png>
-Package pdftex.def Info: OutputDetailsScreen.png  used on input line 208.
-(pdftex.def)             Requested size: 430.00462pt x 439.07661pt.
+<images/OutputDetailsScreen-large-1200w.png, id=126, 903.375pt x 639.89063pt>
+File: images/OutputDetailsScreen-large-1200w.png Graphic file (type png)
+<use images/OutputDetailsScreen-large-1200w.png>
+Package pdftex.def Info: images/OutputDetailsScreen-large-1200w.png  used on in
+put line 192.
+(pdftex.def)             Requested size: 344.005pt x 243.66869pt.
 
-[3.3]
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 6.6pt on input line 231.
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 5.5pt on input line 231.
- [4.4{C:/Users/DoctorNightmares/AppData/Roaming/MiKTeX/fonts/enc/dvips/libertin
-e/lbtn_oexx6f.enc} <./ProfileShapes.png>]
+[3.3 <./images/ProfileShapes-large-1200w.png>] [4.4 <./images/OutputDetailsScre
+en-large-1200w.png>]
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [5.5 <./OutputDetailsScreen.png>] [6.6]
+ [5.5]
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
-(Font)              scaled to size 7.0pt on input line 269.
- [7.7]
+(Font)              scaled to size 7.0pt on input line 250.
+
 (C:\Users\DoctorNightmares\AppData\Roaming\MiKTeX\tex/generic/stringenc\se-pdfd
 oc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
@@ -1151,40 +1117,33 @@ File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 (C:\Users\DoctorNightmares\AppData\Roaming\MiKTeX\tex/generic/stringenc\se-utf8
 .def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [8.8] (accessKnobsNew.aux)
+) [6.6] (accessKnobsNew.aux)
  ***********
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-05-26>
  ***********
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `accessKnobsNew.out' has not changed.
-(rerunfilecheck)             Checksum: D0B6F7B2084794CBF42BE06D9CD3A571;2819.
+(rerunfilecheck)             Checksum: 461ACF2D2876A64E26BCB38366CA9A48;2327.
  ) 
 Here is how much of TeX's memory you used:
- 21485 strings out of 467508
- 351724 string characters out of 5418835
- 835459 words of memory out of 5000000
- 49752 multiletter control sequences out of 15000+600000
- 786781 words of font info for 364 fonts, out of 8000000 for 9000
+ 21391 strings out of 467508
+ 350151 string characters out of 5418835
+ 843728 words of memory out of 5000000
+ 49708 multiletter control sequences out of 15000+600000
+ 762051 words of font info for 318 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 89i,17n,131p,1695b,824s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/DoctorNightmares/AppData/Roaming/MiKTeX/fonts/type1/public/newtx/Li
-bertineMathMI.pfb><C:/Users/DoctorNightmares/AppData/Roaming/MiKTeX/fonts/type1
-/public/libertine/LinBiolinumT.pfb><C:/Users/DoctorNightmares/AppData/Roaming/M
-iKTeX/fonts/type1/public/libertine/LinBiolinumTB.pfb><C:/Users/DoctorNightmares
-/AppData/Roaming/MiKTeX/fonts/type1/public/libertine/LinLibertineT.pfb><C:/User
-s/DoctorNightmares/AppData/Roaming/MiKTeX/fonts/type1/public/libertine/LinLiber
-tineTB.pfb><C:/Users/DoctorNightmares/AppData/Roaming/MiKTeX/fonts/type1/public
-/libertine/LinLibertineTI.pfb><C:/Users/DoctorNightmares/AppData/Roaming/MiKTeX
-/fonts/type1/public/newtx/txexs.pfb><C:/Users/DoctorNightmares/AppData/Roaming/
-MiKTeX/fonts/type1/public/newtx/txmiaX.pfb><C:/Users/DoctorNightmares/AppData/R
-oaming/MiKTeX/fonts/type1/public/newtx/txsys.pfb>
-Output written on accessKnobsNew.pdf (8 pages, 1055297 bytes).
+ 89i,17n,131p,1695b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<C:/Users/DoctorNightmares/AppData/Roaming/MiKTeX/fonts/type1/public/libertin
+e/LinBiolinumT.pfb><C:/Users/DoctorNightmares/AppData/Roaming/MiKTeX/fonts/type
+1/public/libertine/LinBiolinumTB.pfb><C:/Users/DoctorNightmares/AppData/Roaming
+/MiKTeX/fonts/type1/public/libertine/LinLibertineT.pfb><C:/Users/DoctorNightmar
+es/AppData/Roaming/MiKTeX/fonts/type1/public/libertine/LinLibertineTB.pfb><C:/U
+sers/DoctorNightmares/AppData/Roaming/MiKTeX/fonts/type1/public/libertine/LinLi
+bertineTI.pfb><C:/Users/DoctorNightmares/AppData/Roaming/MiKTeX/fonts/type1/pub
+lic/newtx/txsys.pfb>
+Output written on accessKnobsNew.pdf (6 pages, 827316 bytes).
 PDF statistics:
- 258 PDF objects out of 1000 (max. 8388607)
- 60 named destinations out of 1000 (max. 500000)
- 84115 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 219 PDF objects out of 1000 (max. 8388607)
+ 55 named destinations out of 1000 (max. 500000)
+ 73859 words of extra memory for PDF output out of 74296 (max. 10000000)
 
