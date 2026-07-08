@@ -10,6 +10,9 @@
 #include "../core/PatternRegistry.h"
 #include <math.h>
 #include <cstring>
+#include <LittleFS.h>
+#include <ArduinoJson.h>
+#include "CustomPattern.h"
 
 namespace haxel::patterns {
 using namespace haxel::core;
@@ -513,6 +516,58 @@ void registerAll(PatternRegistry& reg) {
     reg.registerPattern(&gSpectrumPulse);
     reg.registerPattern(&gBeatSync);
     reg.registerPattern(&gExternal);
+}
+
+void loadCustomPatterns(core::PatternRegistry& reg) {
+    if (!LittleFS.exists("/custom_patterns.json")) {
+        return;
+    }
+    File f = LittleFS.open("/custom_patterns.json", "r");
+    if (!f) {
+        log_e("Failed to open /custom_patterns.json");
+        return;
+    }
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, f);
+    f.close();
+    if (err) {
+        log_e("Failed to parse /custom_patterns.json");
+        return;
+    }
+    JsonArray arr = doc.as<JsonArray>();
+    for (JsonVariant v : arr) {
+        JsonObject obj = v.as<JsonObject>();
+        std::string id = obj["id"] | "";
+        std::string name = obj["name"] | "";
+        std::string code = obj["code"] | "";
+        if (!id.empty() && !code.empty()) {
+            CustomPattern* cp = new CustomPattern(id, name, code);
+            reg.registerCustomPattern(cp);
+        }
+    }
+}
+
+void saveCustomPatterns(const core::PatternRegistry& reg) {
+    JsonDocument doc;
+    JsonArray arr = doc.to<JsonArray>();
+    for (auto* p : reg.all()) {
+        if (strcmp(p->meta().category, "custom") == 0) {
+            CustomPattern* cp = static_cast<CustomPattern*>(p);
+            if (cp) {
+                JsonObject obj = arr.add<JsonObject>();
+                obj["id"] = cp->meta().id;
+                obj["name"] = cp->getName();
+                obj["code"] = cp->getCode();
+            }
+        }
+    }
+    File f = LittleFS.open("/custom_patterns.json", "w");
+    if (!f) {
+        log_e("Failed to open /custom_patterns.json for writing");
+        return;
+    }
+    serializeJson(doc, f);
+    f.close();
 }
 
 } // namespace haxel::patterns

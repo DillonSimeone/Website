@@ -34,6 +34,12 @@ struct StagedState {
     ChannelState channels[8];
     uint8_t     channelCount = 1;
     bool        clearFault = false;
+
+    // Audio Partitioning and Calibration Config
+    float       startupFloor = 0.15f;
+    uint8_t     numBins = 3;
+    uint8_t     dividers[4] = {8, 18, 24, 28};
+    char        binPatterns[5][32] = {"Pulse", "Rumble", "Staccato", "none", "none"};
 };
 
 struct DiagSnapshot {

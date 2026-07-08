@@ -181,6 +181,7 @@ void setup() {
     }
 
     patterns::registerAll(core::PatternRegistry::instance());
+    patterns::loadCustomPatterns(core::PatternRegistry::instance());
     gEngine.begin();
 
     if (gConfig.audioEnabled()) {

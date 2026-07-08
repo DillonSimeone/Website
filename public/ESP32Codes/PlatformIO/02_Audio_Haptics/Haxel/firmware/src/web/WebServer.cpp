@@ -81,6 +81,19 @@ void WebServer::broadcastState() {
     data["intensity"] = s.intensity;
     data["speed"] = s.speed;
     data["pattern"] = s.pattern ? s.pattern->id() : "";
+    data["startupFloor"] = s.startupFloor;
+    data["numBins"] = s.numBins;
+
+    auto divs = data["dividers"].to<JsonArray>();
+    for (int i = 0; i < s.numBins - 1 && i < 4; ++i) {
+        divs.add(s.dividers[i]);
+    }
+
+    auto binPats = data["binPatterns"].to<JsonArray>();
+    for (int i = 0; i < s.numBins && i < 5; ++i) {
+        binPats.add(s.binPatterns[i]);
+    }
+
     String body;
     serializeJson(doc, body);
     ws_->textAll(body);

@@ -3,6 +3,8 @@
 #include "../core/Config.h"
 #include "../core/AudioAnalyzer.h"
 #include "../core/PatternRegistry.h"
+#include "../patterns/CustomPattern.h"
+#include "../patterns/Patterns.h"
 #include <ArduinoJson.h>
 #include <AsyncJson.h>
 #include <Update.h>
@@ -21,6 +23,19 @@ void serializeState(JsonObject root, Engine* engine) {
     root["intensity"] = s.intensity;
     root["speed"] = s.speed;
     root["pattern"] = s.pattern ? s.pattern->id() : "";
+    root["startupFloor"] = s.startupFloor;
+    root["numBins"] = s.numBins;
+
+    auto divs = root["dividers"].to<JsonArray>();
+    for (int i = 0; i < s.numBins - 1 && i < 4; ++i) {
+        divs.add(s.dividers[i]);
+    }
+
+    auto binPats = root["binPatterns"].to<JsonArray>();
+    for (int i = 0; i < s.numBins && i < 5; ++i) {
+        binPats.add(s.binPatterns[i]);
+    }
+
     auto ch = root["channels"].to<JsonArray>();
     for (int i = 0; i < s.channelCount; ++i) {
         auto c = ch.add<JsonObject>();
@@ -41,6 +56,25 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine) {
     if (patch["intensity"].is<float>())s.intensity = patch["intensity"].as<float>();
     if (patch["speed"].is<float>())    s.speed     = patch["speed"].as<float>();
     if (patch["clear"].is<bool>())     s.clearFault = patch["clear"].as<bool>();
+
+    if (patch["startupFloor"].is<float>()) s.startupFloor = patch["startupFloor"].as<float>();
+    if (patch["numBins"].is<int>())        s.numBins      = patch["numBins"].as<int>();
+    if (patch["dividers"].is<JsonArrayConst>()) {
+        int i = 0;
+        for (JsonVariantConst v : patch["dividers"].as<JsonArrayConst>()) {
+            if (i < 4) s.dividers[i++] = v.as<int>();
+        }
+    }
+    if (patch["binPatterns"].is<JsonArrayConst>()) {
+        int i = 0;
+        for (JsonVariantConst v : patch["binPatterns"].as<JsonArrayConst>()) {
+            if (i < 5) {
+                strncpy(s.binPatterns[i], v.as<const char*>(), sizeof(s.binPatterns[i]) - 1);
+                s.binPatterns[i][sizeof(s.binPatterns[i]) - 1] = '\0';
+                i++;
+            }
+        }
+    }
 
     if (patch["bri"].is<int>()) s.intensity = patch["bri"].as<int>() / 255.0f;
 
@@ -301,6 +335,75 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
     };
     server.on("/json/buzz", HTTP_GET,  buzzHandler);
     server.on("/json/buzz", HTTP_POST, buzzHandler);
+
+    // ----- Custom Patterns Studio API -----
+
+    server.on("/json/custom-patterns", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument doc;
+        JsonArray arr = doc.to<JsonArray>();
+        for (auto* p : PatternRegistry::instance().all()) {
+            if (strcmp(p->meta().category, "custom") == 0) {
+                patterns::CustomPattern* cp = static_cast<patterns::CustomPattern*>(p);
+                if (cp) {
+                    JsonObject obj = arr.add<JsonObject>();
+                    obj["id"] = cp->meta().id;
+                    obj["name"] = cp->getName();
+                    obj["code"] = cp->getCode();
+                }
+            }
+        }
+        String body;
+        serializeJson(doc, body);
+        req->send(200, "application/json", body);
+    });
+
+    auto* customPatternPost = new AsyncCallbackJsonWebHandler("/json/custom-patterns",
+        [](AsyncWebServerRequest* req, JsonVariant& json) {
+            JsonObjectConst obj = json.as<JsonObjectConst>();
+            std::string id = obj["id"] | "";
+            std::string name = obj["name"] | "";
+            std::string code = obj["code"] | "";
+            if (id.empty() || code.empty()) {
+                req->send(400, "application/json", "{\"ok\":false,\"error\":\"id and code are required\"}");
+                return;
+            }
+            
+            patterns::CustomPatternEvaluator evaluator;
+            if (!evaluator.compile(code)) {
+                req->send(400, "application/json", "{\"ok\":false,\"error\":\"" + String(evaluator.getLastError().c_str()) + "\"}");
+                return;
+            }
+            
+            // Remove existing pattern if it exists
+            PatternRegistry::instance().unregisterPattern(id.c_str());
+            
+            // Register new CustomPattern
+            patterns::CustomPattern* cp = new patterns::CustomPattern(id, name, code);
+            PatternRegistry::instance().registerCustomPattern(cp);
+            
+            // Save to LittleFS
+            patterns::saveCustomPatterns(PatternRegistry::instance());
+            
+            req->send(200, "application/json", "{\"ok\":true}");
+        });
+    customPatternPost->setMethod(HTTP_POST | HTTP_PUT);
+    server.addHandler(customPatternPost);
+
+    server.on("/json/custom-patterns", HTTP_DELETE, [](AsyncWebServerRequest* req) {
+        String id = "";
+        if (req->hasParam("id")) {
+            id = req->getParam("id")->value();
+        }
+        if (id.length() == 0) {
+            req->send(400, "application/json", "{\"ok\":false,\"error\":\"id parameter is required\"}");
+            return;
+        }
+        
+        PatternRegistry::instance().unregisterPattern(id.c_str());
+        patterns::saveCustomPatterns(PatternRegistry::instance());
+        
+        req->send(200, "application/json", "{\"ok\":true}");
+    });
 
     // ----- OTA -----
 

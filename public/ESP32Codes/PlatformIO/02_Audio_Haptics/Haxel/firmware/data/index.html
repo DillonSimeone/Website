@@ -1,131 +1,258 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#0e0f13" />
-<meta name="color-scheme" content="dark" />
-<meta name="description" content="Haxel — ESP32 haptic feedback controller" />
-<title>Haxel</title>
-<link rel="stylesheet" href="/styles.css" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Haxel — Bauhaus Haptic Control Portal</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Optimize layout specifically for standalone captive portal device screen */
+        body {
+            background-color: #0d0d0d;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .page-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
+        .simulator-column {
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+        .simulator-sticky {
+            position: static;
+        }
+    </style>
 </head>
+
 <body>
 
-<header class="hb-header">
-  <h1>Haxel</h1>
-  <div class="header-right">
-    <span id="status" class="status">Idle</span>
-    <div id="ws-indicator" title="WebSocket"></div>
-  </div>
-</header>
+    <div class="page-container">
+        <!-- PORTAL UI ONLY -->
+        <section class="simulator-column" id="simulator">
+            <div class="simulator-sticky">
 
-<main id="root">
+                <!-- VIRTUAL ACTUATOR / TELEMETRY CHASSIS -->
+                <div class="virtual-actuator-chassis">
+                    <div class="strip-header">
+                        <span>Tactile Actuator Telemetry</span>
+                        <span class="sim-fps" id="sim-fps">60 FPS</span>
+                    </div>
+                    <div class="telemetry-viewport">
+                        <canvas id="prev" width="400" height="180"></canvas>
+                    </div>
+                    <div class="strip-footer">
+                        <span>Driver: <b id="currentDriver">DRV2605L</b></span> | <span>Actuator: <b id="currentActuator">LRA</b></span>
+                    </div>
+                </div>
 
-  <section data-view="play" hidden>
-    <input class="search" id="patternSearch" placeholder="Search patterns…" />
-    <div class="grid" id="pattern-grid"></div>
-    <div class="controls">
-      <label><span>Intensity</span> <input type="range" min="0" max="1" step="0.01" value="0.6" id="intensity" /></label>
-      <label><span>Speed</span>     <input type="range" min="0.25" max="4" step="0.01" value="1.0" id="speed" /></label>
+                <!-- PORTAL CONTAINER -->
+                <div class="portal-container">
+                    <div class="portal-header">
+                        <div class="portal-logo">HAXEL</div>
+                        <div class="portal-crumb">Active: <b id="patternName">Pulse Wave</b></div>
+                        <div class="portal-status">
+                            <span class="portal-dot" id="dot"></span>
+                            <span id="connText">connected</span>
+                        </div>
+                    </div>
+
+                    <div class="portal-body">
+                        <!-- PANEL TABS & CONTROLS -->
+                        <div class="portal-tabs">
+                            <div class="tabbar">
+                                <button class="tab active" data-tab="play">Play</button>
+                                <button class="tab" data-tab="lib">Library</button>
+                                <button class="tab" data-tab="studio">Pattern Studio</button>
+                                <button class="tab" data-tab="audio">Audio-Reactive</button>
+                                <button class="tab" data-tab="device">Device</button>
+                            </div>
+
+                            <!-- PLAY TAB -->
+                            <div class="tab-content" id="tab-play">
+                                <h3>Quick Control Panel</h3>
+
+                                <div class="row">
+                                    <label>Master Intensity</label>
+                                    <input type="range" id="bright" min="0" max="255" value="180">
+                                    <span class="val" id="brightVal">70%</span>
+                                </div>
+                                <div class="row">
+                                    <label>Frequency Shift</label>
+                                    <input type="range" id="freqShift" min="50" max="250" value="150">
+                                    <span class="val" id="freqVal">150 Hz</span>
+                                </div>
+                                <div class="row">
+                                    <label>Playback Speed</label>
+                                    <input type="range" id="speed" min="5" max="30" value="10">
+                                    <span class="val" id="speedVal">1.0x</span>
+                                </div>
+                                <div class="row">
+                                    <label>Motor Startup Floor</label>
+                                    <input type="range" id="startFloor" min="0" max="50" value="15">
+                                    <span class="val" id="floorVal">15%</span>
+                                </div>
+
+                                <div class="control-actions">
+                                    <button class="btn primary" id="playBtn">Play Pattern</button>
+                                    <button class="btn danger" id="stopBtn">Stop</button>
+                                </div>
+                            </div>
+
+                            <!-- LIBRARY TAB -->
+                            <div class="tab-content" id="tab-lib" style="display:none">
+                                <h3>Pattern Library</h3>
+                                <div class="tag-chips">
+                                    <span class="chip active" data-tag="all">All</span>
+                                    <span class="chip" data-tag="pulse">Pulse</span>
+                                    <span class="chip" data-tag="rhythm">Rhythm</span>
+                                    <span class="chip" data-tag="alert">Alert</span>
+                                    <span class="chip" data-tag="music">Audio</span>
+                                    <span class="chip" data-tag="custom">Custom</span>
+                                </div>
+                                <div class="cards" id="libCards"></div>
+                            </div>
+
+                            <!-- PATTERN STUDIO TAB (EMBER-LIKE COMPILER) -->
+                            <div class="tab-content" id="tab-studio" style="display:none">
+                                <h3>Pattern Studio</h3>
+                                <p class="hint">Write haptic math expressions. Press Compile to preview on the virtual motor.</p>
+                                
+                                <div class="studio-presets">
+                                    <span class="chip-preset" data-template="pulse">Pulse Click</span>
+                                    <span class="chip-preset" data-template="saw">Sawtooth Sweep</span>
+                                    <span class="chip-preset" data-template="pwm">PWM Buzz</span>
+                                    <span class="chip-preset" data-template="chaos">Chaos Noise</span>
+                                </div>
+
+                                <!-- IDE Code Editor -->
+                                <div class="editor-container">
+                                    <div class="editor-gutter" id="gutter">1</div>
+                                    <div class="editor-textarea-wrapper">
+                                        <pre class="editor-hl" id="hl"></pre>
+                                        <textarea class="editor-textarea" id="ta" spellcheck="false" autocomplete="off" wrap="off">/* Custom Haptic Expression */
+// t = time in seconds, freq = frequency shift
+// Try functions like: wave(t), triangle(t), square(t)
+wave(t * (freq * 0.05))
+</textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="compilation-status ok" id="compiler-status">compiled ✓</div>
+
+                                <div class="studio-actions">
+                                    <input type="text" id="customPatternName" placeholder="Pattern Name" value="My Waveform">
+                                    <button class="btn primary" id="savePatternBtn">Save to Library</button>
+                                </div>
+                            </div>
+
+                            <!-- AUDIO TAB -->
+                            <div class="tab-content" id="tab-audio" style="display:none">
+                                <h3>Audio-Reactive Telemetry</h3>
+                                <div class="row">
+                                    <label>Telemetry Source</label>
+                                    <select id="micSrc">
+                                        <option value="0">Simulated Synthesizer</option>
+                                        <option value="1">I2S Microphone (INMP441)</option>
+                                    </select>
+                                </div>
+                                <div class="row">
+                                    <label>Reactive Gain</label>
+                                    <input type="range" id="audioGain" min="1" max="10" value="4">
+                                    <span class="val" id="gainVal">4.0x</span>
+                                </div>
+                                <div class="spectrum-visualizer">
+                                    <canvas id="spectrum-canvas" width="400" height="80"></canvas>
+                                </div>
+                                <div class="audio-bins-list" style="margin-top: 15px; border-top: 2px solid #111; padding-top: 15px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; flex-wrap: wrap;">
+                                        <h4 style="margin: 0;">Frequency Band Partitioning</h4>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button class="btn" id="addBinBtn" style="padding: 2px 8px; font-size: 11px;">+ Add Bin</button>
+                                            <button class="btn" id="subBinBtn" style="padding: 2px 8px; font-size: 11px;">- Subtract Bin</button>
+                                        </div>
+                                    </div>
+                                    <div id="bins-container">
+                                        <!-- Dynamically rendered bin rows go here -->
+                                    </div>
+                                </div>
+                                <p class="hint">Maps acoustic audio frequencies into physical mechanical pulses for sensory substitution.</p>
+                            </div>
+
+                            <!-- DEVICE TAB -->
+                            <div class="tab-content" id="tab-device" style="display:none">
+                                <h3>Hardware Calibration</h3>
+                                <div class="row">
+                                    <label>Driver IC</label>
+                                    <select id="drvChip">
+                                        <option value="DRV2605L" selected>DRV2605L (I2C Low-Latency)</option>
+                                        <option value="DRV8833">DRV8833 (Dual PWM H-Bridge)</option>
+                                        <option value="MOSFET">Raw MOSFET (Direct PWM Output)</option>
+                                    </select>
+                                </div>
+                                <div class="row">
+                                    <label>Actuator Type</label>
+                                    <select id="actuatorType">
+                                        <option value="LRA" selected>Linear Resonant Actuator (LRA)</option>
+                                        <option value="ERM">Eccentric Rotating Mass (ERM)</option>
+                                        <option value="Solenoid">High-Amplitude Solenoid</option>
+                                    </select>
+                                </div>
+                                <div class="row">
+                                    <label>Phone Haptics</label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="phoneHapticsToggle" checked style="width: auto; margin: 0;">
+                                        <span style="font-size: 0.85rem; color: #94a3b8;" id="hapticsStatusText">Enabled</span>
+                                    </label>
+                                </div>
+
+                                <div class="diag-specs">
+                                    <div class="diag-line"><span>Firmware Version</span> <span>v1.0.0-haxel</span></div>
+                                    <div class="diag-line"><span>FreeRTOS Core Jitter</span> <span>&lt; 1.4 ms</span></div>
+                                    <div class="diag-line"><span>ESP32-C3 Uptime</span> <span id="uptime">0s</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
     </div>
-    <div class="play-controls">
-      <button id="btnOn">Play</button>
-      <button id="btnOff">Stop</button>
-      <button id="btnMute">Mute</button>
-    </div>
-    <div id="paramsPanel" class="card" hidden></div>
-  </section>
 
-  <section data-view="setup" hidden>
-    <div class="pinout-panel card">
-      <h2>Pinout</h2>
-      <p class="dim">ESP32-C3 box — live view of assigned GPIOs.</p>
-      <div class="pinout-scroll">
-        <table class="pinout-table">
-          <thead>
-            <tr><th>Function</th><th>Pin</th><th>Maps to</th></tr>
-          </thead>
-          <tbody id="pinoutTable">
-            <tr><td colspan="3" class="dim">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- Haptics Warning Modal -->
+    <div id="haptics-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+            <div class="modal-icon-container">
+                <svg class="modal-warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <h4>Haptic Feedback Support</h4>
+            <p>This simulator features real-time haptics, confirmed working on <strong>Chrome for Android</strong>. Note that Apple does not allow iOS browsers to control device haptics.</p>
+            <button class="btn primary modal-dismiss-btn" id="modal-dismiss-btn">Dismiss</button>
+        </div>
     </div>
 
-    <h2>Motor setup</h2>
-    <p class="dim">Wire each motor's direction inputs to GPIO pins. Pick them
-    in the dropdowns below. Speed pin is optional — leave it as <em>jumper / +5V</em>
-    if your driver's ENA pin is hard-tied to power.</p>
-
-    <label>Driver
-      <select id="cfgDriver">
-        <option value="5">Mini H-Bridge (MX1508, L9110S, DRV8833 mini, TB6612FNG)</option>
-        <option value="1">L298N (full-size, ENA per motor)</option>
-        <option value="2">DRV8833 (full DIP)</option>
-        <option value="3">DRV2605L (I²C haptic driver)</option>
-        <option value="4">Raw MOSFET</option>
-      </select>
-    </label>
-
-    <div id="motorList"></div>
-
-    <button id="btnAddMotor" type="button">+ Add motor</button>
-
-    <label style="margin-top:14px">Standby / Enable pin (optional)
-      <select id="cfgStandby"></select>
-    </label>
-
-    <label>PWM frequency
-      <input id="cfgPwmHz" type="number" min="1000" max="40000" step="100" value="20000" />
-    </label>
-
-    <div class="play-controls">
-      <button id="btnSaveCfg" class="primary">Save and reboot</button>
-      <button id="btnTestBuzz" type="button">Test buzz</button>
-    </div>
-    <p id="cfgStatus" class="dim"></p>
-
-    <h2>Knobs</h2>
-    <p class="dim">Potentiometers must use <strong>ADC pins</strong> (analogRead). On ESP32-C3 that is GPIO <strong>0–4</strong> only — not the full GPIO list.</p>
-    <div id="knobList"></div>
-    <button id="btnAddKnob" type="button">+ Add knob</button>
-
-    <h2>OLED display</h2>
-    <p class="dim">SSD1306 over I²C — shows pattern, intensity, speed, and knob levels.</p>
-    <label class="check-row">
-      <input type="checkbox" id="cfgOledEnabled" />
-      <span>Enable SSD1306 OLED</span>
-    </label>
-    <label>SDA pin
-      <select id="cfgOledSda"></select>
-    </label>
-    <label>SCL pin
-      <select id="cfgOledScl"></select>
-    </label>
-    <label>I²C address
-      <select id="cfgOledAddr">
-        <option value="60">0x3C (default)</option>
-        <option value="61">0x3D</option>
-      </select>
-    </label>
-  </section>
-
-  <section data-view="device" hidden>
-    <h2>Device</h2>
-    <pre id="diag" class="card mono"></pre>
-    <div class="play-controls">
-      <button id="btnReboot">Reboot</button>
-    </div>
-  </section>
-
-</main>
-
-<nav class="tabbar" role="tablist">
-  <a href="#/play"    data-tab="play"    role="tab">Play</a>
-  <a href="#/setup"   data-tab="setup"   role="tab">Setup</a>
-  <a href="#/device"  data-tab="device"  role="tab">Device</a>
-</nav>
-
-<script type="module" src="/app.js"></script>
+    <!-- SCRIPTS -->
+    <script type="module" src="main.js"></script>
 </body>
+
 </html>

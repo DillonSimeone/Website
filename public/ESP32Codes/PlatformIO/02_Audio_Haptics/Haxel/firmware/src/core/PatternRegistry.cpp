@@ -8,9 +8,41 @@ PatternRegistry& PatternRegistry::instance() {
     return r;
 }
 
+PatternRegistry::~PatternRegistry() {
+    for (auto* p : customPatternsOwned_) {
+        delete p;
+    }
+}
+
 void PatternRegistry::registerPattern(IPattern* p) {
     if (!p) return;
     patterns_.push_back(p);
+}
+
+void PatternRegistry::registerCustomPattern(IPattern* p) {
+    if (!p) return;
+    patterns_.push_back(p);
+    customPatternsOwned_.push_back(p);
+}
+
+void PatternRegistry::unregisterPattern(const char* id) {
+    if (!id) return;
+    // Remove from main patterns list
+    for (auto it = patterns_.begin(); it != patterns_.end(); ++it) {
+        if (strcmp((*it)->meta().id, id) == 0) {
+            patterns_.erase(it);
+            break;
+        }
+    }
+    // Remove and delete from owned custom patterns list
+    for (auto it = customPatternsOwned_.begin(); it != customPatternsOwned_.end(); ++it) {
+        if (strcmp((*it)->meta().id, id) == 0) {
+            IPattern* p = *it;
+            customPatternsOwned_.erase(it);
+            delete p;
+            break;
+        }
+    }
 }
 
 IPattern* PatternRegistry::find(const char* id) const {

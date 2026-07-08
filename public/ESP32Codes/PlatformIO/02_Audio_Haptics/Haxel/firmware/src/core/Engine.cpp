@@ -1,5 +1,6 @@
 #include "Engine.h"
 #include "AudioAnalyzer.h"
+#include "PatternRegistry.h"
 #include "../hal/IHapticDriver.h"
 #include <algorithm>
 
@@ -133,9 +134,45 @@ void Engine::writeAllChannels(float tMs) {
         }
         ctx.channelIndex = ch;
         IPattern* p = cs.patternOverride ? cs.patternOverride : active_.pattern;
-        float v = p->sample(ctx);
+        
+        float v = 0.0f;
+        if (state_ == EngineState::AUDIO_REACTIVE && p && p->usesAudio()) {
+            // Apply Dynamic Partitioning logic
+            float maxAmp = 0.0f;
+            for (int i = 0; i < active_.numBins; ++i) {
+                int startIdx = (i == 0) ? 0 : active_.dividers[i - 1];
+                int endIdx = (i == active_.numBins - 1) ? 32 : active_.dividers[i];
+                int len = endIdx - startIdx;
+                if (len < 1) len = 1;
+                
+                float sum = 0.0f;
+                for (int b = startIdx; b < endIdx && b < 32; ++b) {
+                    sum += ctx.audio.mags[b];
+                }
+                // Calculate band volume modulated by master RMS
+                float vol = (sum / len) * (ctx.audio.rms * 4.0f * 0.45f);
+                
+                const char* patId = active_.binPatterns[i];
+                if (strcmp(patId, "none") != 0 && strlen(patId) > 0) {
+                    IPattern* binPat = PatternRegistry::instance().find(patId);
+                    if (binPat) {
+                        float out = vol * binPat->sample(ctx);
+                        if (out > maxAmp) maxAmp = out;
+                    }
+                }
+            }
+            v = maxAmp;
+        } else if (p) {
+            v = p->sample(ctx);
+        }
+        
         v *= cs.intensity * active_.intensity;
         if (active_.mute) v = 0.0f;
+
+        // Apply Motor Startup Floor Calibration
+        if (v > 0.001f) {
+            v = active_.startupFloor + v * (1.0f - active_.startupFloor);
+        }
 
         // Soft-start: rate-limit deltas.
         float prev = lastWritten_[ch];
