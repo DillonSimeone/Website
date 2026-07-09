@@ -34,3 +34,11 @@ For detailed developer specifications, see:
 * [HAL_SPEC.md](file:///F:/Github/Website/dist/ESP32Codes/PlatformIO/Haptic/Haxel/HAL_SPEC.md)
 * [API_SPEC.md](file:///F:/Github/Website/dist/ESP32Codes/PlatformIO/Haptic/Haxel/API_SPEC.md)
 
+---
+
+## 3. Documentation & Reference Manual
+
+* **Reference Manual (`manual.html`)**: A newly added static documentation reference explaining system tasks, back-EMF hardware protection, stiction stall calibration, and raw WebSocket/REST API JSON structures.
+* **Pattern Script Cheatsheet Integration**: Plan includes expanding `manual.html` to act as an on-demand, interactive cheatsheet inside the Pattern Studio UI via an iframe modal, preventing the user from losing current work states when querying API or scripting variables.
+* **Firmware Deployment**: The manual page is deployed directly in the firmware's LittleFS (`/manual.html`) to be served directly by the ESP32 in captive portal standalone deployments.
+

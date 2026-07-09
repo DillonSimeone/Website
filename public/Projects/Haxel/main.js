@@ -21,8 +21,8 @@ let startupFloor = 0.15; // default 15%
 
 // Dynamic Audio Partitioning Bins Configuration
 const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-let numBins = isMobileDevice ? 4 : 3;
-let dividers = isMobileDevice ? [5, 8, 18] : [8, 18];
+let numBins = isMobileDevice ? 5 : 4;
+let dividers = isMobileDevice ? [5, 12, 22, 28] : [12, 22, 28];
 let draggingDividerIdx = -1;
 
 let timeSec = 0;
@@ -247,6 +247,76 @@ stopBtn.addEventListener("click", () => {
     syncStateToESP32();
 });
 
+const audioMinFreqInput = document.getElementById("audioMinFreq");
+const minFreqValLabel = document.getElementById("minFreqVal");
+const audioMaxFreqInput = document.getElementById("audioMaxFreq");
+const maxFreqValLabel = document.getElementById("maxFreqVal");
+const audioGainInput = document.getElementById("audioGain");
+const gainValLabel = document.getElementById("gainVal");
+
+if (audioGainInput) {
+    audioGainInput.addEventListener("input", (e) => {
+        if (gainValLabel) gainValLabel.textContent = parseFloat(e.target.value).toFixed(1) + "x";
+    });
+}
+
+function recalculateDividers() {
+    const minFreq = parseFloat(audioMinFreqInput ? audioMinFreqInput.value : 40);
+    const maxFreq = parseFloat(audioMaxFreqInput ? audioMaxFreqInput.value : 16000);
+    
+    const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+    const minBandIdx = getBandAtFreq(minFreq);
+    const maxBandIdx = getBandAtFreq(maxFreq);
+    
+    const numDividers = numBins - 1;
+    if (numDividers >= 1) {
+        dividers = new Array(numDividers);
+        dividers[0] = minBandIdx;
+        if (numDividers > 1) {
+            dividers[numDividers - 1] = maxBandIdx;
+            for (let i = 1; i < numDividers - 1; i++) {
+                const ratio = i / (numDividers - 1);
+                dividers[i] = Math.round(minBandIdx + ratio * (maxBandIdx - minBandIdx));
+            }
+        }
+    }
+    
+    for (let i = 0; i < dividers.length; i++) {
+        if (i > 0 && dividers[i] <= dividers[i - 1]) {
+            dividers[i] = dividers[i - 1] + 1;
+        }
+    }
+    for (let i = dividers.length - 1; i >= 0; i--) {
+        if (dividers[i] >= 32) dividers[i] = 31;
+        if (i < dividers.length - 1 && dividers[i] >= dividers[i + 1]) {
+            dividers[i] = dividers[i + 1] - 1;
+        }
+    }
+    
+    renderBinRows();
+    syncStateToESP32();
+}
+
+if (audioMinFreqInput) {
+    audioMinFreqInput.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        if (minFreqValLabel) minFreqValLabel.textContent = val + " Hz";
+    });
+    audioMinFreqInput.addEventListener("change", () => {
+        recalculateDividers();
+    });
+}
+
+if (audioMaxFreqInput) {
+    audioMaxFreqInput.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        if (maxFreqValLabel) maxFreqValLabel.textContent = val + " Hz";
+    });
+    audioMaxFreqInput.addEventListener("change", () => {
+        recalculateDividers();
+    });
+}
+
 drvSelect.addEventListener("change", (e) => {
     currentDriverText.textContent = e.target.value;
     addSerialLog(`[HAL] Driver reconfigured to: ${e.target.value}`);
@@ -459,7 +529,7 @@ async function setupMicrophone() {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 64; // 32 bands
+        analyser.fftSize = 256; // 128 bands
         
         micStream = stream;
         micSource = audioCtx.createMediaStreamSource(stream);
@@ -503,12 +573,17 @@ document.getElementById("micSrc").addEventListener("change", (e) => {
 
 // ─── AUDIO REACTIVE BINS DRAG INTERACTIVES ──────────────────────────────────
 function updateBinRangeLabels() {
+    const getFreqAtBand = (b) => {
+        if (b === 0) return 0;
+        if (b === 32) return 20000;
+        return Math.round(40 * Math.pow(20000 / 40, b / 32));
+    };
     for (let i = 0; i < numBins; i++) {
         const startVal = i === 0 ? 0 : dividers[i - 1];
         const endVal = i === numBins - 1 ? 32 : dividers[i];
         
-        const fStart = Math.round(startVal * 172);
-        const fEnd = Math.min(5500, Math.round(endVal * 172));
+        const fStart = getFreqAtBand(startVal);
+        const fEnd = getFreqAtBand(endVal);
         
         const label = document.getElementById(`bin-${i}-range`);
         if (label) {
@@ -541,13 +616,29 @@ function renderBinRows() {
         row.className = "bin-row";
         row.style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px;";
         
+        const minFreq = parseFloat(document.getElementById("audioMinFreq")?.value || 40);
+        const maxFreq = parseFloat(document.getElementById("audioMaxFreq")?.value || 16000);
+        const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+        const minBandIdx = getBandAtFreq(minFreq);
+        const maxBandIdx = getBandAtFreq(maxFreq);
+
         let labelName = `Bin ${i}`;
-        if (isMobileDevice && numBins === 4) {
-            const labels = ["Anti-Loop", "Bass", "Mids", "Treble"];
-            labelName += ` (${labels[i]})`;
-        } else if (numBins === 3) {
-            const labels = ["Bass", "Mids", "Treble"];
-            labelName += ` (${labels[i]})`;
+        if (i === 0 && minBandIdx > 0) {
+            labelName += ` (Anti-Loop / Low Cut)`;
+        } else if (i === numBins - 1 && maxBandIdx < 32) {
+            labelName += ` (High Cut / End Bin)`;
+        } else {
+            const activeIdx = (minBandIdx > 0) ? (i - 1) : i;
+            const activeCount = numBins - (minBandIdx > 0 ? 1 : 0) - (maxBandIdx < 32 ? 1 : 0);
+            if (activeCount === 3) {
+                const labels = ["Bass", "Mids", "Treble"];
+                labelName += ` (${labels[activeIdx]})`;
+            } else if (activeCount === 2) {
+                const labels = ["Bass/Mids", "Treble"];
+                labelName += ` (${labels[activeIdx]})`;
+            } else {
+                labelName += ` (Active ${activeIdx + 1})`;
+            }
         }
         
         row.innerHTML = `
@@ -576,14 +667,13 @@ function renderBinRows() {
         if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
             select.value = prevVal;
         } else {
-            if (isMobileDevice && numBins === 4) {
-                if (i === 0) {
-                    select.value = "none";
-                } else {
-                    select.value = defaults[(i - 1) % defaults.length];
-                }
+            if (i === 0 && minBandIdx > 0) {
+                select.value = "none";
+            } else if (i === numBins - 1 && maxBandIdx < 32) {
+                select.value = "none";
             } else {
-                select.value = defaults[i % defaults.length];
+                const offset = (minBandIdx > 0) ? 1 : 0;
+                select.value = defaults[(i - offset) % defaults.length];
             }
         }
     }
@@ -706,7 +796,35 @@ renderBinRows();
 function getAudioData() {
     if (useLiveMic && analyser) {
         analyser.getByteFrequencyData(dataArray);
-        const mags = Array.from(dataArray).map(v => v / 255);
+        const rawMags = Array.from(dataArray).map(v => v / 255);
+        const mags = new Array(32).fill(0);
+        
+        const kWindow = analyser.fftSize;
+        const sampleRate = audioCtx.sampleRate;
+        const minFreq = 40;
+        const maxFreq = 20000;
+        let maxMag = 1e-9;
+        
+        for (let b = 0; b < 32; ++b) {
+            const lo = minFreq * Math.pow(maxFreq / minFreq, b / 32);
+            const hi = minFreq * Math.pow(maxFreq / minFreq, (b + 1) / 32);
+            let loBin = Math.floor(lo * kWindow / sampleRate);
+            let hiBin = Math.floor(hi * kWindow / sampleRate);
+            if (hiBin <= loBin) hiBin = loBin + 1;
+            
+            let sum = 0;
+            let count = 0;
+            for (let k = loBin; k < hiBin && k < rawMags.length; ++k) {
+                sum += rawMags[k];
+                count++;
+            }
+            mags[b] = count > 0 ? (sum / count) : 0;
+            if (mags[b] > maxMag) maxMag = mags[b];
+        }
+        for (let b = 0; b < 32; ++b) {
+            mags[b] = Math.min(1.0, mags[b] / (maxMag * 1.2));
+        }
+        
         smoothedAudioAmp += (mags.slice(0, 4).reduce((a,b)=>a+b,0)/4 - smoothedAudioAmp) * 0.2;
         updateAudioState(mags, smoothedAudioAmp);
         return mags;
@@ -872,6 +990,78 @@ function drawVirtualActuator(ctx, cx, cy, radius, activeAmp) {
 // ─── TICK LOOP ──────────────────────────────────────────────────────────────
 function animate() {
     requestAnimationFrame(animate);
+
+    // Render dynamic spikes on mobile float canvas button
+    const floatBtn = document.getElementById("mobile-haptic-float-btn");
+    const hapticCanvas = document.getElementById("mobile-haptic-canvas");
+    if (floatBtn && floatBtn.style.display !== "none" && hapticCanvas) {
+        const ctx = hapticCanvas.getContext("2d");
+        const w = hapticCanvas.width;
+        const h = hapticCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const centerX = w / 2;
+        const centerY = h / 2;
+        const baseRadius = 35; // 17.5px CSS radius (matches 35px diameter circle)
+        
+        // Draw spikes radiating outward
+        const numSpikes = 28;
+        const maxSpikeLength = 18;
+        const amp = smoothedAmp; // ranges smoothly from 0.0 to 1.0
+        
+        ctx.strokeStyle = isPlaying ? "#e23b24" : "#f2b134"; // Bauhaus Red or Yellow
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = "round";
+        
+        for (let i = 0; i < numSpikes; i++) {
+            // Give them a slow rotation for a very premium feel
+            const angle = (i / numSpikes) * Math.PI * 2 + timeSec * 0.4;
+            // Generate micro-movement for secondary smoothness
+            const noiseVal = Math.sin(timeSec * 8 + i * 1.5) * 0.12 + 0.88;
+            const spikeLen = (amp * 0.85 + 0.15 * noiseVal) * maxSpikeLength;
+            
+            const startX = centerX + Math.cos(angle) * baseRadius;
+            const startY = centerY + Math.sin(angle) * baseRadius;
+            const endX = centerX + Math.cos(angle) * (baseRadius + spikeLen);
+            const endY = centerY + Math.sin(angle) * (baseRadius + spikeLen);
+            
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+        }
+        
+        // Draw inner circular button background
+        ctx.fillStyle = isPlaying ? "#e23b24" : "#f2b134";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Circular button border
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Draw Play / Pause icon in the center
+        ctx.fillStyle = "#111111";
+        if (isPlaying) {
+            // Pause icon: two vertical bars
+            const barW = 5;
+            const barH = 15;
+            const gap = 5;
+            ctx.fillRect(centerX - barW - gap / 2, centerY - barH / 2, barW, barH);
+            ctx.fillRect(centerX + gap / 2, centerY - barH / 2, barW, barH);
+        } else {
+            // Play icon: triangle pointing right
+            ctx.beginPath();
+            const triSize = 9;
+            ctx.moveTo(centerX - triSize * 0.7 + 1.5, centerY - triSize);
+            ctx.lineTo(centerX + triSize * 1.3 + 1.5, centerY);
+            ctx.lineTo(centerX - triSize * 0.7 + 1.5, centerY + triSize);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
     
     timeSec += 0.016 * playbackSpeed;
     const isAudioTab = document.getElementById("tab-audio").style.display !== "none";
@@ -1263,16 +1453,62 @@ if (isMobileDevice) {
     }
     
     if (navigator.vibrate) {
+        const floatBtn = document.getElementById("mobile-haptic-float-btn");
+        if (floatBtn) {
+            floatBtn.style.display = "flex";
+            floatBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                isPlaying = !isPlaying;
+                const dot = document.getElementById("dot");
+                const connText = document.getElementById("connText");
+                if (isPlaying) {
+                    if (dot) dot.className = "portal-dot ok";
+                    if (connText) connText.textContent = "playing";
+                    addSerialLog("[PORTAL] Mobile action: START pattern playback");
+                } else {
+                    if (dot) dot.className = "portal-dot";
+                    if (connText) connText.textContent = "idle";
+                    addSerialLog("[PORTAL] Mobile action: STOP pattern playback");
+                }
+                syncStateToESP32();
+            });
+        }
+
         const overlay = document.getElementById("haptic-activation-overlay");
+        const enableBtn = document.getElementById("enable-haptics-btn");
+        const testBtn = document.getElementById("test-haptics-btn");
+        const disableBtn = document.getElementById("disable-haptics-btn");
         if (overlay) {
             overlay.style.display = "flex";
-            overlay.addEventListener("click", () => {
-                overlay.style.display = "none";
-                try {
-                    navigator.vibrate(50);
-                } catch (e) {}
-                addSerialLog("[PORTAL] Touch detected. Mobile haptics permission unlocked.");
-            });
+            if (enableBtn) {
+                enableBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    overlay.style.display = "none";
+                    phoneHaptics.setEnabled(true);
+                    try {
+                        navigator.vibrate(50);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Mobile haptics enabled by user choice.");
+                });
+            }
+            if (testBtn) {
+                testBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    try {
+                        // Sample vibration: short burst sequence
+                        navigator.vibrate([80, 40, 80, 40, 150]);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Mobile haptics test vibration triggered.");
+                });
+            }
+            if (disableBtn) {
+                disableBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    overlay.style.display = "none";
+                    phoneHaptics.setEnabled(false);
+                    addSerialLog("[PORTAL] Mobile haptics disabled by user choice.");
+                });
+            }
         }
     }
 }
@@ -1471,3 +1707,21 @@ if (isRealESP32) {
         openWebSocket();
     })();
 }
+
+// Setup Iframe Reference Manual Modal Listeners
+(function() {
+    const openBtn = document.getElementById("openManualBtn");
+    const closeBtn = document.getElementById("closeManualBtn");
+    const modal = document.getElementById("manualModal");
+    if (openBtn && modal) {
+        openBtn.addEventListener("click", () => {
+            modal.style.display = "flex";
+        });
+    }
+    if (closeBtn && modal) {
+        closeBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+    }
+})();
+

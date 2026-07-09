@@ -26,7 +26,7 @@
                     haptic control portal.</p>
                 <div class="hero-actions">
                     <a href="#simulator" class="btn primary">Launch Simulator</a>
-                    <a href="#architecture" class="btn secondary">Read Specifications</a>
+                    <a href="manual.html" class="btn secondary">Read Manual</a>
                     <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/02_Audio_Haptics/Haxel"
                         target="_blank" class="btn">View Source</a>
                 </div>
@@ -217,9 +217,13 @@
 
                                 <!-- PATTERN STUDIO TAB (EMBER-LIKE COMPILER) -->
                                 <div class="tab-content" id="tab-studio" style="display:none">
-                                    <h3>Pattern Studio</h3>
-                                    <p class="hint">Write haptic math expressions. Press Compile to preview on the
-                                        virtual motor.</p>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <h3 style="margin-bottom: 0;">Pattern Studio</h3>
+                                        <button class="btn" id="openManualBtn" style="font-family: var(--font-display); font-size: 11px; text-transform: uppercase; padding: 4px 10px; background: var(--bauhaus-blue); color: #fff; border: 2px solid var(--black); cursor: pointer;">
+                                            📖 Read Manual
+                                        </button>
+                                    </div>
+                                    <p class="hint">Write haptic math expressions. Press Compile to preview on the virtual motor.</p>
 
                                     <div class="studio-presets">
                                         <span class="chip-preset" data-template="pulse">Pulse Click</span>
@@ -265,6 +269,16 @@ wave(t * (freq * 0.05))
                                         <label>Reactive Gain</label>
                                         <input type="range" id="audioGain" min="1" max="10" value="4">
                                         <span class="val" id="gainVal">4.0x</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Min Active Freq</label>
+                                        <input type="range" id="audioMinFreq" min="40" max="2000" step="10" value="40">
+                                        <span class="val" id="minFreqVal">40 Hz</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Max Active Freq</label>
+                                        <input type="range" id="audioMaxFreq" min="2000" max="20000" step="100" value="16000">
+                                        <span class="val" id="maxFreqVal">16000 Hz</span>
                                     </div>
                                     <div class="spectrum-visualizer">
                                         <canvas id="spectrum-canvas" width="400" height="80"></canvas>
@@ -440,7 +454,7 @@ wave(t * (freq * 0.05))
                     The underlying neuroscience of <a
                         href="https://en.wikipedia.org/wiki/Neuroplasticity#Multisensory_plasticity">cross-modal
                         plasticity</a> shows that the brain can repurpose cortical areas when an input modality is
-                    missing, meaning that structured tactile signals can, over time, become genuinely interpretable.
+                    missing. This prior work suggests that structured tactile signals could, over time, become interpretable by the wearer (a hypothesis Haxel intends to evaluate in the Section 11 user study).
                 </p>
                 <p>
                     But building an accessible, programmable haptic device runs into two distinct challenges.
@@ -471,8 +485,7 @@ wave(t * (freq * 0.05))
                 <p>
                     Haxel's audio-reactive pipeline ingests raw sound through either an analog aux port or an <a
                         href="https://en.wikipedia.org/wiki/I%C2%B2S">I2S</a> digital microphone and runs a 256-point <a
-                        href="https://en.wikipedia.org/wiki/Fast_Fourier_Transform">FFT</a> to decompose it into 32
-                    frequency bands in real time. The goal is <a
+                        href="https://en.wikipedia.org/wiki/Fast_Fourier_Transform">FFT</a> to decompose the full 0–20 kHz spectrum into 32 log-spaced bands in real time. The goal is <a
                         href="https://en.wikipedia.org/wiki/Sensory_substitution">sensory substitution</a>: translating
                     the structure of sound into tactile patterns that a user can feel, learn, and eventually interpret,
                     serving as a direct accessibility bridge for the Deaf and Hard-of-Hearing.
@@ -485,7 +498,7 @@ wave(t * (freq * 0.05))
                     sharp staccato <a href="https://en.wikipedia.org/wiki/Solenoid">solenoid</a> impacts. Mid-range
                     vocal presence could modulate a sustained <a
                         href="https://en.wikipedia.org/wiki/Eccentric_rotating_mass">ERM</a> rumble. High-frequency
-                    transients produce rapid micro-pulses. The result is <strong>structured tactile semantics</strong>:
+                    transients produce rapid micro-pulses. The design aims to establish **structured tactile semantics**:
                     the user doesn't feel "sound"; they feel distinct, learnable textures that correspond to acoustic
                     categories.
                 </p>
@@ -633,26 +646,26 @@ wave(t * (freq * 0.05))
                     <div class="spec-item">
                         <h3><a href="https://www.entandaudiologynews.com/reviews/tech-reviews/post/neosensory-buzz-can-a-wristband-really-help-with-sound-awareness-and-tinnitus" target="_blank">Neosensory Buzz</a></h3>
                         <p>A wristband for Deaf users that maps audio to vibrotactile patterns across multiple
-                            actuators. Closest commercial analog to Haxel, but closed-source, proprietary hardware, and
-                            not user-scriptable.</p>
+                            actuators. While functionally related, Haxel distinguishes itself by focusing on a fully open-source 
+                            platform, utilizing standard off-the-shelf components, and exposing a client-side user-scriptable pattern sandbox.</p>
                     </div>
                     <div class="spec-item">
                         <h3><a href="https://subpac.com" target="_blank">Subpac</a></h3>
-                        <p>A wearable bass transducer (backpack/seat form factor) designed for music producers. Uses a
-                            single low-pass filtered channel, so it only conveys bass energy. No frequency-band
-                            partitioning or pattern scripting.</p>
+                        <p>A wearable bass transducer (backpack/seat form factor) designed for music producers. Focuses 
+                            on single-channel low-pass tactile sub-bass reproduction, whereas Haxel targets multi-band frequency-band 
+                            partitioning and scriptable pattern modulation.</p>
                     </div>
                     <div class="spec-item">
                         <h3><a href="https://www.audicus.com/blog/hearing-aid-tech/vest-hearing-loss-technology/" target="_blank">Eagleman's VEST</a></h3>
-                        <p>David Eagleman's Versatile Extra-Sensory Transducer: a vibrotactile vest for hearing.
-                            Research-grade, demonstrated cross-modal plasticity in longitudinal studies. Not
-                            open-source, not commercially available as a kit.</p>
+                        <p>David Eagleman's Versatile Extra-Sensory Transducer: a vibrotactile vest for hearing. Demonstrates 
+                            cross-modal plasticity in longitudinal academic studies. Haxel aims to adapt these sensory-substitution 
+                            principles into a low-cost, highly accessible DIY framework.</p>
                     </div>
                     <div class="spec-item">
                         <h3><a href="https://dl.acm.org/doi/10.1145/1753846.1753919" target="_blank">Emoti-Chair</a></h3>
-                        <p>Ryerson University's multi-channel vibrotactile chair for music appreciation. Maps audio
-                            bands to physical zones across the chair. Fixed hardware, lab-only deployment, not portable
-                            or field-configurable.</p>
+                        <p>Ryerson University's multi-channel vibrotactile chair for music appreciation. Maps audio 
+                            bands to physical zones across the chair. Haxel scales down these multi-channel sound-localization 
+                            advantages into a portable, field-configurable, and wearable package.</p>
                     </div>
                 </div>
                 <p>
@@ -678,13 +691,13 @@ wave(t * (freq * 0.05))
                     <div class="algo-step">
                         <div class="step-num-badge">01</div>
                         <h4>FFT Decomp</h4>
-                        <p>256-point FFT produces 32 usable frequency bins (0 to 5,500 Hz).</p>
+                        <p>256-point FFT at 44.1 kHz sample rate produces 128 raw frequency bins. Haxel downsamples and aggregates these into 32 log-spaced bands (0 to 20,000 Hz) to capture full musical details.</p>
                     </div>
                     <div class="algo-arrow">→</div>
                     <div class="algo-step">
                         <div class="step-num-badge">02</div>
                         <h4>Partitioning</h4>
-                        <p>Dividers split the 32 bins into N contiguous bands (1 to 5 bands).</p>
+                        <p>Dividers split the 32 log-spaced bands into N contiguous brackets (up to 5 bands).</p>
                     </div>
                     <div class="algo-arrow">→</div>
                     <div class="algo-step">
@@ -729,8 +742,9 @@ wave(t * (freq * 0.05))
                     <div class="spec-item">
                         <h3><a href="https://en.wikipedia.org/wiki/Mechanoreceptor" target="_blank">Mechanoreceptors</a></h3>
                         <p>Pacinian corpuscles, located deep in the skin and joints, are the primary vibration
-                            detectors. They are most sensitive between 200 and 300 Hz, which maps directly to the
-                            operating range of LRA actuators. Meissner's corpuscles, closer to the skin surface, respond
+                            detectors. They are most sensitive between 200 and 300 Hz. While standard LRAs operate 
+                            slightly lower at 170 to 235 Hz, this range overlaps significantly with the Pacinian response 
+                            band, allowing effective coupling. Meissner's corpuscles, closer to the skin surface, respond
                             to lower frequencies (10 to 50 Hz) and detect flutter and texture. Haxel's frequency shift
                             control allows tuning output to target either receptor population.</p>
 
@@ -863,10 +877,7 @@ wave(t * (freq * 0.05))
                         </div>
                         <div class="spec-item">
                             <h3>Total Budget</h3>
-                            <p class="callout callout-right">Estimated end-to-end latency is 10 to 15 ms, which falls comfortably within the
-                                perceptual threshold. FreeRTOS task scheduling runs the haptic loop at elevated priority
-                                with core jitter below 1.4 ms, ensuring that haptic feedback feels instantaneous
-                                relative to the audio events.</p>
+                            <p class="callout callout-right">Estimated end-to-end latency is 10 to 15 ms, calculated as empirical design constraints based on the ESP32-C3 firmware execution model (DMA buffer intervals and FreeRTOS task timings). FreeRTOS task scheduling runs the haptic loop at elevated priority with core jitter below 1.4 ms, ensuring that haptic feedback feels instantaneous relative to the audio events.</p>
                         </div>
                     </div>
 
@@ -875,8 +886,8 @@ wave(t * (freq * 0.05))
                         <div class="flow-stage stage-audio">
                             <div class="stage-num">STAGE 01</div>
                             <div class="stage-title">Audio Capture</div>
-                            <div class="stage-time">~5.0 ms</div>
-                            <div class="stage-desc">I2S DMA buffer fills in ~5 ms at 16 kHz sample rate</div>
+                            <div class="stage-time">~5.8 ms</div>
+                            <div class="stage-desc">I2S DMA buffer fills in ~5.8 ms at 44.1 kHz sample rate</div>
                         </div>
                         <div class="flow-arrow">→</div>
                         <div class="flow-stage stage-fft">
@@ -953,6 +964,16 @@ wave(t * (freq * 0.05))
                         pattern value produces perceptible motion. The simulator's stall detection warns when the floor
                         is set too low for the selected actuator type.
                     </p>
+                    <h3>Hardware Safety & Motor Protection</h3>
+                    <div class="callout" style="border-left-color: var(--bauhaus-red);">
+                        <p style="margin: 0 0 10px 0;"><strong>Hardware & Electromechanical Protection:</strong> Because Haxel is a general-purpose engine driving inductive motor loads, several firmware and circuit safety boundaries are supported:</p>
+                        <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
+                            <li style="margin-bottom: 8px;"><strong>Engine Fault State Machine:</strong> The firmware implements a dedicated <code>EngineState::FAULT</code> safety state. When a fault is raised (via <code>raiseFault()</code>), the engine halts the real-time execution loop (<code>Engine::tick()</code> returns early) and shuts off all motor drive. Haptics remain completely stopped until the user explicitly clears the fault state via the web API (sending a <code>{"clear": true}</code> state patch).</li>
+                            <li style="margin-bottom: 8px;"><strong>Watchdog Extensions:</strong> While the fault-handling engine is fully implemented, active triggers (e.g., continuous duty-cycle timeout or temperature sensor inputs) are left as customizable hardware extension points. Builders can easily bind custom safety checks to trigger <code>raiseFault()</code> on their specific ESP32 pin configurations.</li>
+                            <li style="margin-bottom: 8px;"><strong>Inductive Back-EMF Protection:</strong> Vibration motors are inductive loads. When drive current is cut, the collapsing magnetic field creates high-voltage spikes. The hardware implementation must include flyback diodes or dedicated driver ICs (like the DRV2605L) with integrated overcurrent and thermal shutdown.</li>
+                            <li><strong>Stall Protection:</strong> Operating motors below their stiction threshold (startup floor) causes them to draw current without rotating, producing purely resistive heat. Configuring a proper startup floor directly mitigates this electromechanical stall condition.</li>
+                        </ul>
+                    </div>
                 </section>
 
                 <!-- 11 // FUTURE WORK -->
@@ -1028,6 +1049,11 @@ wave(t * (freq * 0.05))
         </div>
     </div>
 
+    <!-- Mobile Haptic Float Button -->
+    <div id="mobile-haptic-float-btn" style="display: none; position: fixed; top: 5px; right: 5px; z-index: 9999; width: 55px; height: 55px; cursor: pointer; background: transparent; overflow: visible; align-items: center; justify-content: center;" title="Toggle Playback">
+        <canvas id="mobile-haptic-canvas" width="110" height="110" style="width: 55px; height: 55px; display: block; pointer-events: none;"></canvas>
+    </div>
+
     <!-- Mobile Haptic Activation Overlay -->
     <div id="haptic-activation-overlay" class="bauhaus-overlay" style="display: none;">
         <div class="bauhaus-modal">
@@ -1036,9 +1062,24 @@ wave(t * (freq * 0.05))
             <p>
                 This interactive portal simulates real-time mechanical haptics. To enable physical vibration on your device, the browser requires an initial user interaction.
             </p>
-            <div class="tap-prompt">
-                <span class="finger-icon">👇</span> POKE ANYWHERE TO START
+            <div class="modal-buttons" style="display: flex; gap: 10px; width: 100%; margin-top: 20px;">
+                <button id="enable-haptics-btn" class="btn primary" style="flex: 1; padding: 12px 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;">ENABLE</button>
+                <button id="test-haptics-btn" class="btn secondary" style="flex: 1; padding: 12px 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;">TEST</button>
+                <button id="disable-haptics-btn" class="btn" style="flex: 1; padding: 12px 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; background: #ffffff; color: var(--black); border: var(--border-width) solid var(--black); box-shadow: 4px 4px 0 var(--black);">DISABLE</button>
             </div>
+        </div>
+    </div>
+
+    <!-- IFRAME MANUAL MODAL -->
+    <div id="manualModal" class="activation-overlay" style="display: none; justify-content: center; align-items: center; z-index: 2000; background: rgba(0,0,0,0.7); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;">
+        <div style="width: 90vw; height: 90vh; border: 4px solid var(--black); background: var(--bg-canvas); display: flex; flex-direction: column; box-shadow: 12px 12px 0 var(--black); position: relative;">
+            <div style="background: var(--black); color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+                <span style="font-family: var(--font-display); font-size: 14px; letter-spacing: 1px;">HAXEL // REFERENCE MANUAL</span>
+                <button id="closeManualBtn" style="background: var(--bauhaus-red); color: #fff; border: 2px solid #fff; font-family: var(--font-display); font-size: 12px; cursor: pointer; padding: 4px 10px; text-transform: uppercase;">
+                    Close [X]
+                </button>
+            </div>
+            <iframe src="manual.html" style="flex: 1; border: none; width: 100%; height: 100%;"></iframe>
         </div>
     </div>
 

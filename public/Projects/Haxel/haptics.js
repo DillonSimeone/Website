@@ -324,6 +324,22 @@ export function initPhoneHaptics(addLog) {
 
     return {
         isEnabled: () => isPhoneHapticsEnabled,
+        setEnabled: (val) => {
+            isPhoneHapticsEnabled = val;
+            if (phoneHapticsToggle) {
+                phoneHapticsToggle.checked = val;
+            }
+            if (hapticsStatusText) {
+                hapticsStatusText.textContent = val ? "Enabled" : "Disabled";
+                hapticsStatusText.style.color = val ? "#111111" : "#666666";
+            }
+            if (!val) {
+                try {
+                    navigator.vibrate(0);
+                } catch (e) {}
+                phoneVibrateActive = false;
+            }
+        },
         setVibrateActive: (v) => { phoneVibrateActive = v; },
         isVibrateActive: () => phoneVibrateActive
     };

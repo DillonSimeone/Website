@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Haxel — Firmware Specifications & Scripting Manual</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Additional page-specific overrides for a premium manual look */
+        .manual-section {
+            padding: 40px;
+            border-bottom: 4px solid var(--black);
+        }
+        .manual-section:last-of-type {
+            border-bottom: none;
+        }
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid var(--black);
+            padding: 20px 40px;
+            background: var(--black);
+            color: #ffffff;
+        }
+        .nav-header a {
+            color: #ffffff;
+            text-decoration: none;
+            font-family: var(--font-display);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 2px solid #ffffff;
+            padding: 6px 16px;
+            transition: all 0.2s ease;
+        }
+        .nav-header a:hover {
+            background: var(--bauhaus-red);
+            border-color: var(--bauhaus-red);
+        }
+        .code-block {
+            background: #1e1e1e;
+            color: #dcdcdc;
+            font-family: var(--mono);
+            font-size: 13px;
+            padding: 20px;
+            border: 3px solid var(--black);
+            margin: 15px 0;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+        .keyword { color: #569cd6; }
+        .comment { color: #6a9955; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        
+        .spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-family: var(--mono);
+            font-size: 13px;
+            border: 3px solid var(--black);
+        }
+        .spec-table th, .spec-table td {
+            border: 1px solid var(--black);
+            padding: 10px 15px;
+            text-align: left;
+        }
+        .spec-table th {
+            background: var(--black);
+            color: #ffffff;
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        .spec-table tr:nth-child(even) {
+            background: #fbf9f1;
+        }
+        .topic-studio .spec-table tr:nth-child(even) {
+            background: #222222;
+        }
+        .topic-studio .spec-table tr:nth-child(odd) {
+            background: #181818;
+        }
+        .topic-studio .spec-table th {
+            background: #000000;
+            border-color: #333333;
+        }
+        .topic-studio .spec-table td {
+            color: #dddddd;
+            border-color: #333333;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page-container">
+        <!-- NAVIGATION HEADER -->
+        <div class="nav-header">
+            <span style="font-family: var(--font-display); font-size: 18px; letter-spacing: 1.5px;">HAXEL // REFERENCE MANUAL</span>
+            <a href="index.html">← Back to Portal</a>
+        </div>
+
+        <!-- HERO INTRODUCTION -->
+        <header class="hero">
+            <div class="hero-content" style="border-right: none; flex: 1 1 100%;">
+                <div class="badge" style="background: var(--bauhaus-red);">SYSTEM ARCHITECTURE</div>
+                <h1 style="margin: 15px 0;">Firmware Specifications & Developer Manual</h1>
+                <p class="subtitle" style="max-width: 800px;">
+                    An in-depth guide detailing Haxel's multi-tasking FreeRTOS scheduling model, safety state machines, 
+                    firmware API interfaces, and advanced mathematical expression scripting.
+                </p>
+            </div>
+        </header>
+
+        <!-- SECTION 01: ARCHITECTURE OVERVIEW -->
+        <section class="manual-section topic-architecture card-technical">
+            <span class="block-label">01 // OVERVIEW</span>
+            <h2>Architectural Philosophy</h2>
+            <p>
+                Haxel is designed to bridge the gap between abstract software concepts and high-performance physical haptics. 
+                Instead of treating haptic feedback as an arbitrary series of on/off motor commands, Haxel models tactile 
+                actuation as a continuous, mathematically-defined waveform stream.
+            </p>
+            <p style="margin-top: 15px;">
+                The platform decouples visual interaction (handled in the client web UI) from real-time execution (processed 
+                locally on the ESP32 chip). By utilizing a local mathematical expression evaluator in firmware, users can 
+                develop, deploy, and evaluate complex haptic behaviors dynamically without needing to recompile or flash code.
+            </p>
+        </section>
+
+        <!-- SECTION 02: FREERTOS CONCURRENCY -->
+        <section class="manual-section topic-novel card-novel">
+            <span class="block-label">02 // EMBEDDED CONCURRENCY</span>
+            <h2>FreeRTOS Concurrency Model</h2>
+            <p>
+                To achieve low-latency audio processing alongside responsive network control, Haxel distributes its workloads 
+                across both cores of the ESP32 using a 4-task FreeRTOS scheduling architecture:
+            </p>
+            
+            <table class="spec-table">
+                <thead>
+                    <tr>
+                        <th>Task Name</th>
+                        <th>Core Pinned</th>
+                        <th>Priority</th>
+                        <th>Frequency</th>
+                        <th>Functionality Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>engine_task</strong></td>
+                        <td>Core 1</td>
+                        <td>Priority 5 (RT)</td>
+                        <td>1,000 Hz</td>
+                        <td>Evaluates pattern mathematics, processes envelopes, and commits duty cycles to the HAL driver.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>audio_task</strong></td>
+                        <td>Core 1</td>
+                        <td>Priority 4 (RT)</td>
+                        <td>DMA Driven</td>
+                        <td>Collects I2S microphone samples, runs the 256-point FFT, and computes envelope statistics.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>web_task</strong></td>
+                        <td>Core 0</td>
+                        <td>Priority 2 (Normal)</td>
+                        <td>Asynchronous</td>
+                        <td>Drives the captive portal DNS, handles standard HTTP API endpoints, and handles active WebSockets.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>housekeeping</strong></td>
+                        <td>Core 0</td>
+                        <td>Priority 1 (Low)</td>
+                        <td>10 Hz</td>
+                        <td>Manages mDNS broadcasting, WiFi status checks, system statistics, and writes configuration to LittleFS.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Priority Separation (Core 1 vs. Core 0)</h3>
+            <p class="callout" style="border-left-color: var(--bauhaus-blue); background: #f0f4f8;">
+                <strong>Real-Time Isolation:</strong> All network operations (Wi-Fi stack, TCP/IP, WebSockets) are restricted 
+                to <strong>Core 0</strong>. This guarantees that network traffic spikes or socket re-connections cannot 
+                block the high-priority real-time tasks (Engine and Audio) on <strong>Core 1</strong>, ensuring jitter 
+                remains below 1.4 ms even under heavy web traffic.
+            </p>
+        </section>
+
+        <!-- SECTION 03: ENGINE FAULT WATCHDOG -->
+        <section class="manual-section topic-calibration card-technical">
+            <span class="block-label">03 // HARDWARE WATCHDOG</span>
+            <h2>Safety Watchdogs & FAULT States</h2>
+            <p>
+                When driving physical, inductive actuators like LRA and ERM motors, firmware safety is critical to prevent 
+                hardware damage due to bugs or thermal buildup. Haxel provides a built-in safety state machine:
+            </p>
+            
+            <div class="code-block">
+<span class="keyword">void</span> Engine::tick() {
+    <span class="keyword">if</span> (state_ == EngineState::FAULT) {
+        <span class="comment">// Cease all motor driver outputs immediately</span>
+        driver_->writeDuty(<span class="number">0</span>, <span class="number">0.0f</span>);
+        <span class="keyword">return</span>;
+    }
+    
+    <span class="comment">// ... regular haptic execution loop ...</span>
+}
+            </div>
+
+            <div class="spec-grid" style="margin-top: 20px;">
+                <div class="spec-item">
+                    <h3>Emergency Shutdown</h3>
+                    <p>Calling the function <code>raiseFault(const char* code)</code> locks the engine into the FAULT state. Haptics are instantly cut off and will not resume automatically under any circumstances.</p>
+                </div>
+                <div class="spec-item">
+                    <h3>Fault Recovery Loop</h3>
+                    <p>To clear a fault, the user must resolve the hardware issue and send a <code>{"clear": true}</code> state patch via the Web API. Only after this explicit reset can the system be put back into <code>PLAYING</code> mode.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 04: SCRIPTING GUIDE -->
+        <section class="manual-section topic-studio" style="background: #111; color: #eee; border-left: 10px solid var(--bauhaus-yellow);">
+            <span class="block-label" style="color: var(--bauhaus-yellow);">04 // EXPRESSION ENGINE</span>
+            <h2 style="color: #fff;">Pattern Scripting Guide</h2>
+            <p style="color: #ccc;">
+                Haxel's expression engine runs math scripting expressions at 1 kHz in real time. Scripts have access to 
+                system variables and standard math helpers:
+            </p>
+
+            <table class="spec-table" style="background: #1a1a1a; color: #ddd; border-color: #333;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #333;">
+                        <th style="background: #222; color: #fff;">Variable</th>
+                        <th style="background: #222; color: #fff;">Type</th>
+                        <th style="background: #222; color: #fff;">Units</th>
+                        <th style="background: #222; color: #fff;">Definition & Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td><code>t</code></td>
+                        <td><code>float</code></td>
+                        <td>Seconds</td>
+                        <td>Global time counter. Loops at 3600 seconds to preserve float precision.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td><code>dt</code></td>
+                        <td><code>float</code></td>
+                        <td>Seconds</td>
+                        <td>Delta time slice since the last interpreter tick (consistently 0.001s).</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td><code>freq</code></td>
+                        <td><code>float</code></td>
+                        <td>Hertz</td>
+                        <td>The base frequency parameter configured for the active pattern channel.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td><code>speed</code></td>
+                        <td><code>float</code></td>
+                        <td>Scalar</td>
+                        <td>The global playback speed coefficient (default is 1.0).</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td><code>amp</code></td>
+                        <td><code>float</code></td>
+                        <td>0.0 to 1.0</td>
+                        <td>The envelope magnitude parameter (mapped to raw volume in audio-reactive mode).</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: #fff; margin-top: 30px;">Delta Time Scripting Techniques</h3>
+            <p style="color: #ccc;">
+                Because <code>t</code> is global, making patterns that are phase-independent or require persistent local accumulation 
+                requires delta-time integration. The code snippets below demonstrate advanced script behaviors:
+            </p>
+
+            <div class="spec-grid" style="margin-top: 20px;">
+                <div class="spec-item" style="background: #1e1e1e; border: 1px solid #333; padding: 20px;">
+                    <h4 style="color: var(--bauhaus-yellow);">01 // Delta-Time LFO Phase Accumulator</h4>
+                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Creates a sweep rate that accelerates over time regardless of global timeline offsets:</p>
+                    <code style="font-family: var(--mono); color: #dcdcdc; display: block; background: #000; padding: 10px;">
+                        // Accumulate phase dynamically using dt<br>
+                        phase = (phase + dt * (freq + sin(t) * 10)) % 1.0;<br>
+                        wave(phase * 2 * PI) * amp
+                    </code>
+                </div>
+                <div class="spec-item" style="background: #1e1e1e; border: 1px solid #333; padding: 20px;">
+                    <h4 style="color: var(--bauhaus-yellow);">02 // Simulated State-Variable Filter (SVF)</h4>
+                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Integrates state variables to filter noise at 1 kHz, creating a resonant physical sweep:</p>
+                    <code style="font-family: var(--mono); color: #dcdcdc; display: block; background: #000; padding: 10px;">
+                        // Low-pass filter loop via delta-time integration<br>
+                        f = freq * dt;<br>
+                        bp = bp + f * (noise(t) - lp - q * bp);<br>
+                        lp = lp + f * bp;<br>
+                        lp * amp
+                    </code>
+                </div>
+            </div>
+
+            <div class="spec-grid" style="margin-top: 15px;">
+                <div class="spec-item" style="background: #1e1e1e; border: 1px solid #333; padding: 20px;">
+                    <h4 style="color: var(--bauhaus-yellow);">03 // Envelope Follower with Attack/Release</h4>
+                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Models physical inertia by lagging envelope responses using differential equations:</p>
+                    <code style="font-family: var(--mono); color: #dcdcdc; display: block; background: #000; padding: 10px;">
+                        // Lag the input amplitude for smooth decay curves<br>
+                        decay = amp > env ? 0.95 : 0.999;<br>
+                        env = env * decay + amp * (1 - decay);<br>
+                        wave(t * freq) * env
+                    </code>
+                </div>
+                <div class="spec-item" style="background: #1e1e1e; border: 1px solid #333; padding: 20px;">
+                    <h4 style="color: var(--bauhaus-yellow);">04 // Pseudo-random Pink Noise Burst</h4>
+                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Shapes raw white noise into organic, textured clicks using a decay envelope:</p>
+                    <code style="font-family: var(--mono); color: #dcdcdc; display: block; background: #000; padding: 10px;">
+                        // Exponentially decaying noise burst<br>
+                        envelope = exp(-5 * (t % 1.5));<br>
+                        noise(t) * envelope * amp
+                    </code>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 05: API SPECIFICATION -->
+        <section class="manual-section topic-prior card-reference">
+            <span class="block-label">05 // DATA SPECIFICATION</span>
+            <h2>WebSocket & REST API Protocol</h2>
+            <p>
+                The ESP32 hosts a JSON REST API and a WebSocket server at <code>ws:///ws</code>. Clients can query 
+                the status and send updates using raw JSON objects.
+            </p>
+
+            <h3>GET /json/state</h3>
+            <p style="margin-bottom: 10px;">Returns the active status of the haptic engine, parameters, and segment lists:</p>
+            <div class="code-block">
+{
+  "on": true,
+  "mute": false,
+  "intensity": 0.75,
+  "speed": 1.0,
+  "pattern": "bass_booster",
+  "channels": [
+    { "on": true, "intensity": 1.0 }
+  ],
+  "info": {
+    "version": "1.2.0",
+    "uptime_ms": 32840,
+    "heap_free": 184752
+  }
+}
+            </div>
+
+            <h3>POST /json/state (State Patch)</h3>
+            <p style="margin-bottom: 10px;">Applies incremental updates to the active engine state. Unspecified parameters are preserved:</p>
+            <div class="code-block">
+{
+  "on": true,
+  "intensity": 0.85,
+  "pattern": "rhythmic_pulse",
+  "params": {
+    "freqShift": 150.0,
+    "decayRate": 5.5
+  }
+}
+            </div>
+        </section>
+    </div>
+
+    <!-- Page footer script if any layout stabilization is needed -->
+</body>
+
+</html>
