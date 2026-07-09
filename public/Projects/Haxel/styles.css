@@ -334,6 +334,26 @@ body::-webkit-scrollbar-thumb:hover,
     justify-content: space-between;
 }
 
+.telemetry-toggle-btn {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 2px 6px;
+    font-family: var(--font-display);
+    font-size: 9px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+.telemetry-toggle-btn:hover {
+    background: #444;
+}
+.telemetry-toggle-btn.active {
+    background: var(--bauhaus-yellow);
+    color: var(--black);
+    border-color: var(--black);
+}
+
 .telemetry-viewport {
     height: 180px;
     background: var(--bg-canvas);
@@ -1999,3 +2019,78 @@ body::-webkit-scrollbar-thumb:hover,
     }
 }
 
+/* Bauhaus Overlay Modal */
+.bauhaus-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(244, 235, 208, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.bauhaus-modal {
+    background: #ffffff;
+    border: 4px solid var(--black);
+    padding: 30px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 10px 10px 0 var(--black);
+    text-align: center;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bauhaus-modal h2 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    margin: 15px 0 10px;
+    text-transform: uppercase;
+    color: var(--black);
+}
+
+.bauhaus-modal p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #475569;
+    margin-bottom: 20px;
+}
+
+.tap-prompt {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    background: var(--bauhaus-yellow);
+    border: 2px solid var(--black);
+    padding: 10px 15px;
+    display: inline-block;
+    animation: pulsePrompt 1.5s infinite ease-in-out;
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes pulsePrompt {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.03);
+    }
+}

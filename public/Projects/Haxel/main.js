@@ -20,13 +20,17 @@ let smoothedAmp = 0;
 let startupFloor = 0.15; // default 15%
 
 // Dynamic Audio Partitioning Bins Configuration
-let numBins = 3;
-let dividers = [8, 18];
+const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let numBins = isMobileDevice ? 4 : 3;
+let dividers = isMobileDevice ? [5, 8, 18] : [8, 18];
 let draggingDividerIdx = -1;
 
 let timeSec = 0;
 const waveHistory = [];
+const colorHistory = [];
+const specHistory = [];
 const historyLen = 220;
+let telemetryMode = "classic";
 let isMotorStalled = false;
 let stallLogThrottle = 0;
 
@@ -378,6 +382,18 @@ chips.forEach(chip => chip.addEventListener("click", () => {
     renderCards(chip.dataset.tag);
 }));
 
+document.querySelectorAll(".telemetry-toggle-btn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".telemetry-toggle-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    telemetryMode = btn.dataset.mode;
+    addSerialLog(`[IDE] Telemetry mode switched to: ${telemetryMode.toUpperCase()}`);
+    
+    if (telemetryMode === "waterfall") {
+        const audioTab = document.querySelector('.tab[data-tab="audio"]');
+        if (audioTab) audioTab.click();
+    }
+}));
+
 // LocalStorage Custom Patterns Save Handler
 const savePatternBtn = document.getElementById("savePatternBtn");
 if (savePatternBtn) {
@@ -526,7 +542,10 @@ function renderBinRows() {
         row.style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px;";
         
         let labelName = `Bin ${i}`;
-        if (numBins === 3) {
+        if (isMobileDevice && numBins === 4) {
+            const labels = ["Anti-Loop", "Bass", "Mids", "Treble"];
+            labelName += ` (${labels[i]})`;
+        } else if (numBins === 3) {
             const labels = ["Bass", "Mids", "Treble"];
             labelName += ` (${labels[i]})`;
         }
@@ -557,7 +576,15 @@ function renderBinRows() {
         if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
             select.value = prevVal;
         } else {
-            select.value = defaults[i % defaults.length];
+            if (isMobileDevice && numBins === 4) {
+                if (i === 0) {
+                    select.value = "none";
+                } else {
+                    select.value = defaults[(i - 1) % defaults.length];
+                }
+            } else {
+                select.value = defaults[i % defaults.length];
+            }
         }
     }
     
@@ -941,6 +968,23 @@ function animate() {
     waveHistory.push(smoothedAmp);
     if (waveHistory.length > historyLen) waveHistory.shift();
     
+    let activeColor = "rgba(0, 47, 108, 0.25)";
+    if (isAudioTab && mags) {
+        const sortedBins = Array.from({length: 32}, (_, idx) => ({index: idx, val: mags[idx]}))
+            .sort((a, b) => b.val - a.val);
+        const top3 = sortedBins.slice(0, 3);
+        const hue1 = (top3[0].index / 31) * 280;
+        const hue2 = (top3[1].index / 31) * 280;
+        const hue3 = (top3[2].index / 31) * 280;
+        const avgHue = (hue1 + hue2 + hue3) / 3;
+        activeColor = `hsl(${avgHue}, 85%, 45%)`;
+    }
+    colorHistory.push(activeColor);
+    if (colorHistory.length > historyLen) colorHistory.shift();
+    
+    specHistory.push(mags ? [...mags] : new Array(32).fill(0));
+    if (specHistory.length > historyLen) specHistory.shift();
+    
     updateHardwarePins(smoothedAmp, isMotorStalled);
 
     // 1. Draw telemetry
@@ -990,25 +1034,153 @@ function animate() {
         const width = cssW - startX;
         const step = width / (historyLen - 1);
         
-        prevCtx.beginPath();
-        for (let i = 0; i < waveHistory.length; i++) {
-            const h = waveHistory[i] * (cssH - 20);
-            const x = startX + i * step;
-            const y = cssH - 10 - h;
-            if (i === 0) prevCtx.moveTo(x, y);
-            else prevCtx.lineTo(x, y);
+        if (telemetryMode === "classic") {
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (cssH - 20);
+                const h2 = waveHistory[i + 1] * (cssH - 20);
+                const x1 = startX + i * step;
+                const x2 = startX + (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                }
+                prevCtx.fillStyle = fillCol;
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, cssH - 10);
+                prevCtx.lineTo(x1, cssH - 10 - h1);
+                prevCtx.lineTo(x2, cssH - 10 - h2);
+                prevCtx.lineTo(x2, cssH - 10);
+                prevCtx.closePath();
+                prevCtx.fill();
+                
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, cssH - 10 - h1);
+                prevCtx.lineTo(x2, cssH - 10 - h2);
+                prevCtx.stroke();
+            }
+        } else if (telemetryMode === "symmetric") {
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (cssH - 20);
+                const h2 = waveHistory[i + 1] * (cssH - 20);
+                const x1 = startX + i * step;
+                const x2 = startX + (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                }
+                prevCtx.fillStyle = fillCol;
+                
+                const y1_top = cssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_top = cssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                const y1_bot = cssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_bot = cssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1_top - h1 / 2);
+                prevCtx.lineTo(x2, y2_top - h2 / 2);
+                prevCtx.lineTo(x2, y2_bot + h2 / 2);
+                prevCtx.lineTo(x1, y1_bot + h1 / 2);
+                prevCtx.closePath();
+                prevCtx.fill();
+                
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1_top - h1 / 2);
+                prevCtx.lineTo(x2, y2_top - h2 / 2);
+                prevCtx.stroke();
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x2, y2_bot + h2 / 2);
+                prevCtx.lineTo(x1, y1_bot + h1 / 2);
+                prevCtx.stroke();
+            }
+        } else if (telemetryMode === "waterfall") {
+            const cellH = (cssH - 20) / 32;
+            for (let i = 0; i < specHistory.length; i++) {
+                const x = startX + i * step;
+                const spec = specHistory[i];
+                for (let j = 0; j < 32; j++) {
+                    const val = spec ? spec[j] : 0;
+                    if (val > 0.01) {
+                        const hue = (j / 31) * 280;
+                        prevCtx.fillStyle = `hsla(${hue}, 85%, 45%, ${val * 0.75})`;
+                        prevCtx.fillRect(x, cssH - 10 - (j + 1) * cellH, step + 1, cellH + 0.5);
+                    }
+                }
+            }
+        } else if (telemetryMode === "orbit") {
+            const cx = startX + width / 2;
+            const cy = cssH / 2;
+            
+            prevCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+            prevCtx.lineWidth = 2;
+            prevCtx.beginPath();
+            prevCtx.arc(cx, cy, (cssH - 30) * 0.25, 0, Math.PI * 2);
+            prevCtx.stroke();
+            
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const amp1 = waveHistory[i];
+                const amp2 = waveHistory[i + 1];
+                
+                const angle1 = (i / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
+                const angle2 = ((i + 1) / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
+                
+                const baseR = (cssH - 30) * 0.28;
+                const r1 = baseR + amp1 * baseR * 0.8;
+                const r2 = baseR + amp2 * baseR * 0.8;
+                
+                const x1 = cx + Math.cos(angle1) * r1;
+                const y1 = cy + Math.sin(angle1) * r1;
+                const x2 = cx + Math.cos(angle2) * r2;
+                const y2 = cy + Math.sin(angle2) * r2;
+                
+                let strokeCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                const alpha = (i / (waveHistory.length - 1)) * 0.8;
+                if (strokeCol.startsWith("hsl")) {
+                    strokeCol = strokeCol.replace("hsl", "hsla").replace(")", `, ${alpha})`);
+                } else {
+                    strokeCol = `rgba(0, 47, 108, ${alpha})`;
+                }
+                
+                prevCtx.strokeStyle = strokeCol;
+                prevCtx.lineWidth = 2 + (i / waveHistory.length) * 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1);
+                prevCtx.lineTo(x2, y2);
+                prevCtx.stroke();
+            }
+            
+            if (waveHistory.length > 0) {
+                const latestAmp = waveHistory[waveHistory.length - 1];
+                const latestAngle = Math.PI * 2 * 4 + timeSec * 3;
+                const baseR = (cssH - 30) * 0.28;
+                const latestR = baseR + latestAmp * baseR * 0.8;
+                const lx = cx + Math.cos(latestAngle) * latestR;
+                const ly = cy + Math.sin(latestAngle) * latestR;
+                
+                prevCtx.fillStyle = colorHistory[colorHistory.length - 1] || "#111111";
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 2;
+                prevCtx.beginPath();
+                prevCtx.arc(lx, ly, 6 + latestAmp * 5, 0, Math.PI * 2);
+                prevCtx.fill();
+                prevCtx.stroke();
+                
+                prevCtx.strokeStyle = "rgba(17, 17, 17, 0.25)";
+                prevCtx.lineWidth = 1.5;
+                prevCtx.beginPath();
+                prevCtx.moveTo(cx, cy);
+                prevCtx.lineTo(lx, ly);
+                prevCtx.stroke();
+            }
         }
-        
-        prevCtx.strokeStyle = "#111111";
-        prevCtx.lineWidth = 3;
-        prevCtx.stroke();
-        
-        prevCtx.lineTo(cssW, cssH - 10);
-        prevCtx.lineTo(startX, cssH - 10);
-        prevCtx.closePath();
-        
-        prevCtx.fillStyle = "rgba(0, 47, 108, 0.25)";
-        prevCtx.fill();
     }
     
     // 2. Draw Hero banner
@@ -1029,27 +1201,47 @@ function animate() {
     
     if (waveHistory.length > 1) {
         const step = heroCssW / (historyLen - 1);
-        heroCtx.beginPath();
-        for (let i = 0; i < waveHistory.length; i++) {
-            const h = waveHistory[i] * (heroCssH - 15);
-            const x = i * step;
-            const y = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h * 0.4;
-            if (i === 0) heroCtx.moveTo(x, y - h/2);
-            else heroCtx.lineTo(x, y - h/2);
-        }
-        for (let i = waveHistory.length - 1; i >= 0; i--) {
-            const h = waveHistory[i] * (heroCssH - 15);
-            const x = i * step;
-            const y = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h * 0.4;
-            heroCtx.lineTo(x, y + h/2);
-        }
         
-        heroCtx.strokeStyle = "#111111";
-        heroCtx.lineWidth = 3;
-        heroCtx.stroke();
-
-        heroCtx.fillStyle = "#e23b24";
-        heroCtx.fill();
+        for (let i = 0; i < waveHistory.length - 1; i++) {
+            const h1 = waveHistory[i] * (heroCssH - 15);
+            const h2 = waveHistory[i + 1] * (heroCssH - 15);
+            const x1 = i * step;
+            const x2 = (i + 1) * step;
+            
+            let fillCol = colorHistory[i] || "rgba(226, 59, 36, 0.25)";
+            if (fillCol.startsWith("hsl")) {
+                fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+            } else if (fillCol.startsWith("rgba(0, 47, 108")) {
+                fillCol = "rgba(226, 59, 36, 0.35)"; // default red for hero
+            }
+            heroCtx.fillStyle = fillCol;
+            
+            const y1_top = heroCssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+            const y2_top = heroCssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+            
+            const y1_bot = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+            const y2_bot = heroCtx ? (heroCssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4) : 0;
+            
+            heroCtx.beginPath();
+            heroCtx.moveTo(x1, y1_top - h1 / 2);
+            heroCtx.lineTo(x2, y2_top - h2 / 2);
+            heroCtx.lineTo(x2, y2_bot + h2 / 2);
+            heroCtx.lineTo(x1, y1_bot + h1 / 2);
+            heroCtx.closePath();
+            heroCtx.fill();
+            
+            heroCtx.strokeStyle = "#111111";
+            heroCtx.lineWidth = 3;
+            heroCtx.beginPath();
+            heroCtx.moveTo(x1, y1_top - h1 / 2);
+            heroCtx.lineTo(x2, y2_top - h2 / 2);
+            heroCtx.stroke();
+            
+            heroCtx.beginPath();
+            heroCtx.moveTo(x2, y2_bot + h2 / 2);
+            heroCtx.lineTo(x1, y1_bot + h1 / 2);
+            heroCtx.stroke();
+        }
     }
 
     const uptimeText = document.getElementById("uptime");
@@ -1062,6 +1254,27 @@ function animate() {
 const draft = localStorage.getItem("HAXEL_EDITOR_DRAFT");
 if (draft && ta) {
     ta.value = draft;
+}
+
+if (isMobileDevice) {
+    const noteEl = document.getElementById("mobile-feedback-note");
+    if (noteEl) {
+        noteEl.style.display = "block";
+    }
+    
+    if (navigator.vibrate) {
+        const overlay = document.getElementById("haptic-activation-overlay");
+        if (overlay) {
+            overlay.style.display = "flex";
+            overlay.addEventListener("click", () => {
+                overlay.style.display = "none";
+                try {
+                    navigator.vibrate(50);
+                } catch (e) {}
+                addSerialLog("[PORTAL] Touch detected. Mobile haptics permission unlocked.");
+            });
+        }
+    }
 }
 
 loadCustomPatterns(frequencyShift, playbackSpeed, masterIntensity, startupFloor);
