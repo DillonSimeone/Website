@@ -46,6 +46,27 @@ let smoothedAudioAmp = 0;
 const phoneHaptics = initPhoneHaptics(addSerialLog);
 let lastPhoneVibrateTime = 0;
 
+function showMobileHapticGuide() {
+    const guide = document.getElementById("mobile-haptic-guide");
+    if (guide && isMobileDevice && navigator.vibrate) {
+        guide.style.display = "flex";
+        // Force reflow
+        guide.offsetHeight;
+        guide.style.transform = "translateY(0)";
+        guide.style.opacity = "1";
+        
+        // Hide after 3.5 seconds
+        clearTimeout(window.mobileGuideTimeout);
+        window.mobileGuideTimeout = setTimeout(() => {
+            guide.style.transform = "translateY(-100px)";
+            guide.style.opacity = "0";
+            setTimeout(() => {
+                guide.style.display = "none";
+            }, 400);
+        }, 3500);
+    }
+}
+
 // ─── HIGH-DPI CANVAS SHARPNESS HELPER ───────────────────────────────────────
 function setupSharpCanvas(canvas) {
     if (!canvas) return;
@@ -153,6 +174,11 @@ document.querySelectorAll(".chip-preset").forEach(btn => {
             document.getElementById("dot").className = "portal-dot ok";
             document.getElementById("connText").textContent = "playing";
             localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+            
+            if (isMobileDevice && navigator.vibrate) {
+                phoneHaptics.setEnabled(true);
+                showMobileHapticGuide();
+            }
         }
     });
 });
@@ -237,6 +263,11 @@ playBtn.addEventListener("click", () => {
     document.getElementById("connText").textContent = "playing";
     addSerialLog("[HTTP] API Command: START pattern playback");
     syncStateToESP32();
+    
+    if (isMobileDevice && navigator.vibrate) {
+        phoneHaptics.setEnabled(true);
+        showMobileHapticGuide();
+    }
 });
 
 stopBtn.addEventListener("click", () => {
@@ -383,6 +414,11 @@ function renderCards(filterTag = "all") {
                 compileCustom();
             }
             syncStateToESP32();
+
+            if (isMobileDevice && navigator.vibrate) {
+                phoneHaptics.setEnabled(true);
+                showMobileHapticGuide();
+            }
         });
         
         const editBtn = card.querySelector(".btn-edit-pat");
@@ -399,6 +435,11 @@ function renderCards(filterTag = "all") {
                 document.getElementById("connText").textContent = "playing";
                 document.getElementById("patternName").textContent = `${pat.name} (Studio)`;
                 localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+
+                if (isMobileDevice && navigator.vibrate) {
+                    phoneHaptics.setEnabled(true);
+                    showMobileHapticGuide();
+                }
             });
         }
         
@@ -1458,6 +1499,13 @@ if (isMobileDevice) {
             floatBtn.style.display = "flex";
             floatBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
+                if (!phoneHaptics.isEnabled()) {
+                    phoneHaptics.setEnabled(true);
+                    try {
+                        navigator.vibrate(50);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Mobile haptics engaged via float button click.");
+                }
                 isPlaying = !isPlaying;
                 const dot = document.getElementById("dot");
                 const connText = document.getElementById("connText");
