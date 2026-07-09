@@ -72,6 +72,46 @@ export const PATTERNS = [
         code: "0.3 + sin(t * 12) * 0.15",
         func: (t) => 0.3 + Math.sin(t * 12) * 0.15 
     },
+    {
+        id: "sub_bass",
+        name: "Sub-Bass Boost",
+        category: "music",
+        desc: "Deep, slow modulation optimized to emulate heavy sub-bass beats.",
+        code: "wave(t * 8) * 0.9",
+        func: (t) => Math.sin(t * 8) * 0.9
+    },
+    {
+        id: "vocal_presence",
+        name: "Vocal Follower",
+        category: "music",
+        desc: "Voice band simulator mimicking conversational inflections.",
+        code: "(wave(t * 30) > 0 ? 1.0 : 0.0) * (wave(t * 1.5) * 0.4 + 0.6)",
+        func: (t) => (Math.sin(t * 30) > 0 ? 1.0 : 0.0) * (Math.sin(t * 1.5) * 0.4 + 0.6)
+    },
+    {
+        id: "transient_gate",
+        name: "Transient Gate",
+        category: "music",
+        desc: "Gated amplitude pulses mirroring rapid drum strikes.",
+        code: "square(t * 15) * (noise(t * 5) > 0.3 ? 1.0 : 0.1)",
+        func: (t) => (Math.sin(t * 15) > 0 ? 1.0 : 0.0) * (pnoise1(t * 5) > 0.3 ? 1.0 : 0.1)
+    },
+    {
+        id: "treble_flutter",
+        name: "Treble Flutter",
+        category: "music",
+        desc: "High-frequency micro-flutter targeting hi-hat cymbals.",
+        code: "noise(t * 50) * (wave(t * 12) > 0.5 ? 0.9 : 0.0)",
+        func: (t) => pnoise1(t * 50) * (Math.sin(t * 12) > 0.5 ? 0.9 : 0.0)
+    },
+    {
+        id: "pitch_modulator",
+        name: "Pitch Modulator",
+        category: "music",
+        desc: "Continuous frequency-swept oscillator tracking melody variations.",
+        code: "sin(t * (60 + wave(t * 4) * 30))",
+        func: (t) => Math.sin(t * (60 + Math.sin(t * 4) * 30))
+    },
     { 
         id: "sawtooth_sweep", 
         name: "Sawtooth Sweep", 
@@ -108,7 +148,7 @@ export const PATTERNS = [
     {
         id: "accelerating_buzz",
         name: "Accelerating Buzz",
-        category: "rhythm",
+        category: "time",
         desc: "A vibration frequency that accelerates over time.",
         code: "modTime = t % 5.0;\nsin(t * (10 + modTime * 20)) * 0.5 + 0.5",
         func: (t) => {
@@ -119,7 +159,7 @@ export const PATTERNS = [
     {
         id: "bouncing_decay",
         name: "Bouncing Decay",
-        category: "pulse",
+        category: "time",
         desc: "Pulse gaps decay over time to simulate a bouncing ball.",
         code: "cycle = t % 4.0;\ndecay = 1.0 - (cycle / 4.0);\nbounce = frac(cycle * (2.5 + cycle * 1.5));\nsquare(bounce, 0.25) * decay",
         func: (t) => {
@@ -128,6 +168,82 @@ export const PATTERNS = [
             const bounce = (cycle * (2.5 + cycle * 1.5)) % 1.0;
             return (bounce < 0.25 ? 1.0 : 0.0) * decay;
         }
+    },
+    {
+        id: "time_swell",
+        name: "Time Swell",
+        category: "time",
+        desc: "Slowly breathing swell pattern over a 6-second window.",
+        code: "wave(t * (3.1415 / 6.0)) * 0.8",
+        func: (t) => Math.sin(t * (Math.PI / 6.0)) * 0.8
+    },
+    {
+        id: "metronome_click",
+        name: "Metronome BPM",
+        category: "time",
+        desc: "Precise time-based pulse repeating exactly every 1.0s.",
+        code: "(t % 1.0 < 0.05) ? 1.0 : 0.0",
+        func: (t) => (t % 1.0 < 0.05) ? 1.0 : 0.0
+    },
+    {
+        id: "linear_fade",
+        name: "Linear Fade Out",
+        category: "time",
+        desc: "Vibration that starts at maximum and fades to zero over 3 seconds.",
+        code: "max(0, 1.0 - (t % 3.0) / 3.0) * wave(t * 30)",
+        func: (t) => Math.max(0, 1.0 - (t % 3.0) / 3.0) * Math.sin(t * 30)
+    },
+    {
+        id: "decelerating_pulse",
+        name: "Decelerating Pulse",
+        category: "time",
+        desc: "Pulse intervals that slow down over a 4-second cycle.",
+        code: "cycle = t % 4.0;\nrate = 1.0 + (3.0 * (1.0 - cycle / 4.0));\nwave(t * rate * 5.0) > 0.5 ? 1.0 : 0.0",
+        func: (t) => {
+            const cycle = t % 4.0;
+            const rate = 1.0 + (3.0 * (1.0 - cycle / 4.0));
+            return Math.sin(t * rate * 5.0) > 0.5 ? 1.0 : 0.0;
+        }
+    },
+    {
+        id: "doppler_sweep",
+        name: "Doppler Sweep",
+        category: "time",
+        desc: "Simulates a passing haptic source using frequency and volume shift.",
+        code: "cycle = t % 3.0 - 1.5;\nvolume = 1.0 / (1.0 + cycle * cycle * 4.0);\nfreq = 150.0 - cycle * 80.0;\nsin(t * freq * 0.1) * volume",
+        func: (t) => {
+            const cycle = (t % 3.0) - 1.5;
+            const volume = 1.0 / (1.0 + cycle * cycle * 4.0);
+            const freq = 150.0 - cycle * 80.0;
+            return Math.sin(t * freq * 0.1) * volume;
+        }
+    },
+    {
+        id: "fibonacci_beat",
+        name: "Fibonacci Beat",
+        category: "time",
+        desc: "Rhythmic intervals spaced by Fibonacci sequence elements.",
+        code: "cycle = t % 5.0;\n(cycle < 0.1 || (cycle > 0.2 && cycle < 0.3) || (cycle > 0.5 && cycle < 0.6) || (cycle > 1.0 && cycle < 1.1) || (cycle > 2.1 && cycle < 2.2) || (cycle > 3.4 && cycle < 3.5)) ? 1.0 : 0.0",
+        func: (t) => {
+            const c = t % 5.0;
+            return (c < 0.1 || (c > 0.2 && c < 0.3) || (c > 0.5 && c < 0.6) || (c > 1.0 && c < 1.1) || (c > 2.1 && c < 2.2) || (c > 3.4 && c < 3.5)) ? 1.0 : 0.0;
+        }
+    },
+    {
+        id: "saw_tremolo",
+        name: "Sawtooth AM",
+        category: "time",
+        desc: "High-frequency carrier modulated by a slow sawtooth wave.",
+        code: "carrier = sin(t * 80);\nmodulator = (t % 2.0) / 2.0;\ncarrier * modulator",
+        func: (t) => Math.sin(t * 80) * ((t % 2.0) / 2.0)
+    },
+    {
+        id: "lighthouse",
+        name: "Lighthouse Sweep",
+        category: "time",
+        desc: "Slow periodic sweeping beam with an exponential peak.",
+        code: "pow(max(0, sin(t * 1.5)), 6) * 1.0",
+        func: (t) => Math.pow(Math.max(0, Math.sin(t * 1.5)), 6)
     }
 ];
 
