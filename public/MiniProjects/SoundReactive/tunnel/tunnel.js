@@ -50,15 +50,20 @@ const fragmentShader = `
   }
 
   void main() {
-    // Normalize coordinates to [-1, 1] and adjust for aspect ratio
-    vec2 uv = (gl_FragCoord.xy / u_resolution.xy) * 2.0 - 1.0;
-    uv.x *= u_resolution.x / u_resolution.y;
+    // Normalize coordinates correctly so that the shorter screen dimension maps to [-1, 1]
+    // This makes it fully responsive on mobile/portrait aspect ratios!
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    uv *= 1.8; // Scale the tunnel viewport slightly to fill the screen nicely
 
     float r_raw = length(uv);
 
+    // If screen is taller than it is wide (mobile/portrait), increase curve size and separation
+    float mobileScale = u_resolution.y > u_resolution.x ? 1.6 : 1.0;
+    float finalCurveAmp = u_curve_amp * mobileScale;
+
     // Calculate separation/weave offset based on energy
     // As energy increases, separation approaches 0 (collapse)
-    float separation = smoothstep(0.8, 0.2, u_energy) * 0.22;
+    float separation = smoothstep(0.8, 0.2, u_energy) * 0.22 * mobileScale;
     vec2 weaveOffset = vec2(cos(u_time * 1.4), sin(u_time * 0.9)) * separation;
 
     // --- TUNNEL 1 ---
@@ -67,7 +72,7 @@ const fragmentShader = `
     // Estimate depth z to apply curve displacement
     float r1_est = length(uv1);
     float z1_est = 2.0 / (r1_est + 0.015) + u_time * 2.2;
-    vec2 curve1 = vec2(sin(z1_est * u_freq_curve), cos(z1_est * u_freq_curve * 1.2)) * u_curve_amp;
+    vec2 curve1 = vec2(sin(z1_est * u_freq_curve), cos(z1_est * u_freq_curve * 1.2)) * finalCurveAmp;
     
     vec2 uv1_curved = uv1 - curve1;
     float r1 = length(uv1_curved);
@@ -85,7 +90,7 @@ const fragmentShader = `
     // Estimate depth z for Tunnel 2 curve (inverted direction curve)
     float r2_est = length(uv2);
     float z2_est = 2.0 / (r2_est + 0.015) + u_time * 2.2;
-    vec2 curve2 = vec2(cos(z2_est * u_freq_curve * 1.1), sin(z2_est * u_freq_curve)) * u_curve_amp;
+    vec2 curve2 = vec2(cos(z2_est * u_freq_curve * 1.1), sin(z2_est * u_freq_curve)) * finalCurveAmp;
     
     vec2 uv2_curved = uv2 - curve2;
     float r2 = length(uv2_curved);
@@ -98,7 +103,7 @@ const fragmentShader = `
     // --- TUNNEL 3 (COLLAPSED STATE) ---
     // Collapsed tunnel curves centrally
     float z3_est = 2.0 / (r_raw + 0.015) + u_time * 3.8;
-    vec2 curve3 = vec2(sin(z3_est * u_freq_curve * 1.3), cos(z3_est * u_freq_curve * 0.8)) * (u_curve_amp * 1.3);
+    vec2 curve3 = vec2(sin(z3_est * u_freq_curve * 1.3), cos(z3_est * u_freq_curve * 0.8)) * (finalCurveAmp * 1.3);
     vec2 uv3_curved = uv - curve3;
     float r3_curved = length(uv3_curved);
     float theta3_curved = atan(uv3_curved.y, uv3_curved.x);
@@ -126,7 +131,7 @@ const fragmentShader = `
     finalColor *= fog;
 
     // Audio-driven glow/strobe
-    finalColor *= (1.0 + u_energy * 1.5);
+    finalColor *= (1.0 + u_energy * 2.8);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
@@ -241,9 +246,8 @@ function animate(now) {
 
   // HSL Color mapping
   // Dominant frequency maps to a position in HSL spectrum
-  // total bins is 256 (for fftSize 512)
-  const totalBins = analyser ? analyser.frequencyBinCount : 256;
-  const normFreq = dominantIndex / totalBins;
+  // We limit the active range to 4000Hz so the hues rotate fully with normal audio pitches
+  const normFreq = Math.min(currentFreq / 4000.0, 1.0);
 
   // Color 1: Low frequencies are Red, High are Purple
   const hue1 = normFreq * 0.85;
@@ -262,24 +266,24 @@ function animate(now) {
   document.getElementById('freq-val').innerText = Math.round(currentFreq) + 'Hz';
 
   // Increment virtual time (louder audio makes speed faster, creating speeding sensation)
-  const speedMultiplier = 0.5 + currentEnergy * 3.0;
+  const speedMultiplier = 0.5 + currentEnergy * 4.0; // Increased speed multiplier
   virtualTime += delta * speedMultiplier;
 
   // Dynamic spin calculations based on energy level
   const baseSpinSpeed = 0.4;
-  const energySpinSpeed = currentEnergy * 4.5;
+  const energySpinSpeed = currentEnergy * 6.0; // Increased spin speed
   spinAngle1 += delta * (baseSpinSpeed + energySpinSpeed);
   spinAngle2 -= delta * (baseSpinSpeed + energySpinSpeed * 1.3);
 
   // Calculate dynamic curves based on frequency and energy
   // Frequency dictates how tightly the tunnel twists/turns
-  const maxAnalyzableFreq = audioContext ? audioContext.sampleRate / 2 : 22050;
-  const freqRatio = currentFreq / maxAnalyzableFreq;
-  const targetFreqCurve = 0.5 + freqRatio * 6.0; // Twist frequency modifier
-  currentFreqCurve += (targetFreqCurve - currentFreqCurve) * 0.08;
+  const responsiveMaxFreq = 4000;
+  const freqRatio = Math.min(currentFreq / responsiveMaxFreq, 1.0);
+  const targetFreqCurve = 0.5 + freqRatio * 7.5; // Twist frequency modifier
+  currentFreqCurve += (targetFreqCurve - currentFreqCurve) * 0.12;
 
   // Energy dictates the amplitude (wildness) of the curves
-  const targetCurveAmp = 0.04 + currentEnergy * 0.15;
+  const targetCurveAmp = 0.05 + currentEnergy * 0.22; // Increased curve amplitude
 
   // Pass uniforms to Shader
   uniforms.u_time.value = virtualTime;
