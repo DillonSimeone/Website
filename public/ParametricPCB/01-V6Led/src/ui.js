@@ -98,8 +98,8 @@ export function PCBStudioApp() {
 
   // Local draft states for inputs
   const [ledCountInput, setLedCountInput] = useState(state.ledCount);
-  const [spacingInput, setSpacingInput] = useState(state.spacing);
-  const [boardHeightInput, setBoardHeightInput] = useState(state.boardHeight);
+  const [pcbXInput, setPcbXInput] = useState(state.pcbX);
+  const [pcbYInput, setPcbYInput] = useState(state.pcbY);
   const [useMouseBitesInput, setUseMouseBitesInput] = useState(state.useMouseBites);
   const [panelRowsInput, setPanelRowsInput] = useState(state.panelRows);
   const [panelColsInput, setPanelColsInput] = useState(state.panelCols);
@@ -117,23 +117,23 @@ export function PCBStudioApp() {
     const unsub = appState.subscribe((newState) => {
       setState(newState);
     });
-    // Trigger initial compilation
-    triggerCompilation();
+    // Trigger initial compilation (without routing for fast load)
+    triggerCompilation(false);
     return unsub;
   }, []);
 
   // Sync draft inputs if state changes from elsewhere
   useEffect(() => {
     setLedCountInput(state.ledCount);
-    setSpacingInput(state.spacing);
-    setBoardHeightInput(state.boardHeight);
+    setPcbXInput(state.pcbX);
+    setPcbYInput(state.pcbY);
     setUseMouseBitesInput(state.useMouseBites);
     setPanelRowsInput(state.panelRows);
     setPanelColsInput(state.panelCols);
     setSloganPhrasesInput(resolveSloganPhrases(state.sloganPhrases));
     setSloganCountInput(state.sloganCount);
     setRoutingInputs(routingInputsFromState(state.routing));
-  }, [state.ledCount, state.spacing, state.boardHeight, state.useMouseBites, state.panelRows, state.panelCols, state.sloganPhrases, state.sloganCount, state.routing]);
+  }, [state.ledCount, state.pcbX, state.pcbY, state.useMouseBites, state.panelRows, state.panelCols, state.sloganPhrases, state.sloganCount, state.routing]);
 
   // Initialize and update the 3D viewport ONLY when the 3D Model tab is active
   useEffect(() => {
@@ -211,24 +211,25 @@ export function PCBStudioApp() {
 
   /** Fingerprint for single-board layout: only these params affect routing. */
   const boardCacheKey = (s) =>
-    `${s.ledCount}_${s.spacing}_${s.boardWidth}_${s.boardHeight}_${JSON.stringify(s.routing)}`;
+    `${s.ledCount}_${s.spacing}_${s.pcbX}_${s.pcbY}_${JSON.stringify(s.routing)}`;
 
   /**
-   * Full compilation: runs expensive tscircuit routing for a single board,
+   * Full compilation: runs tscircuit compiler for a single board,
    * caches the result, then panelizes + slogans + DRC.
    */
-  const runCompilation = async () => {
+  const runCompilation = async (routeRequired) => {
     try {
       const curState = appState.getState();
-      const key = boardCacheKey(curState);
+      const key = boardCacheKey(curState) + `_routed_${routeRequired}`;
       
       // Compile single board layout
       const circuit = await compileCircuit({
         ledCount: curState.ledCount,
         spacing: curState.spacing,
-        boardWidth: curState.boardWidth,
-        boardHeight: curState.boardHeight,
-        routing: curState.routing
+        boardWidth: curState.pcbX,
+        boardHeight: curState.pcbY,
+        routing: curState.routing,
+        skipRouting: !routeRequired
       });
       const singleJson = circuit.getCircuitJson();
 
@@ -236,7 +237,7 @@ export function PCBStudioApp() {
       singleBoardCacheRef.current = { key, circuitJson: singleJson };
 
       // Panelize + slogans + DRC
-      await finalizePanelAndSlogans(curState, singleJson);
+      await finalizePanelAndSlogans(curState, singleJson, routeRequired);
     } catch (err) {
       console.error(err);
       appState.updateState({ isCompiling: false, error: err.message });
@@ -255,10 +256,10 @@ export function PCBStudioApp() {
       const cachedJson = singleBoardCacheRef.current.circuitJson;
       if (!cachedJson) {
         // No cache available, fall back to full compilation
-        await runCompilation();
+        await runCompilation(curState.isRouted);
         return;
       }
-      await finalizePanelAndSlogans(curState, cachedJson);
+      await finalizePanelAndSlogans(curState, cachedJson, curState.isRouted);
     } catch (err) {
       console.error(err);
       appState.updateState({ isCompiling: false, error: err.message });
@@ -268,20 +269,23 @@ export function PCBStudioApp() {
   };
 
   /** Shared post-routing step: panelize, stamp slogans, run DRC. */
-  const finalizePanelAndSlogans = async (curState, singleJson) => {
+  const finalizePanelAndSlogans = async (curState, singleJson, routeRequired) => {
     let circuitJson = singleJson;
 
     const tDrc = performance.now();
-    // Run DRC on the single board layout ONLY to keep check performance at O(N) relative to panel size
-    const drc = runManufacturingDrc(singleJson, curState.routing);
+    // Run DRC only if routed
+    let drc = { ok: true, errors: [], warnings: [] };
+    if (routeRequired) {
+      drc = runManufacturingDrc(singleJson, curState.routing);
+    }
     console.log(`[Compilation Profiling] DRC check completed in ${(performance.now() - tDrc).toFixed(1)}ms`);
 
     const tPanel = performance.now();
     // Instantly panelize if enabled (millisecond copy-paste, no re-routing)
     if (curState.useMouseBites) {
       circuitJson = panelizeCircuitJson(circuitJson, {
-        boardWidth: curState.boardWidth,
-        boardHeight: curState.boardHeight,
+        boardWidth: curState.pcbX,
+        boardHeight: curState.pcbY,
         panelRows: curState.panelRows,
         panelCols: curState.panelCols
       });
@@ -308,16 +312,16 @@ export function PCBStudioApp() {
       drcWarnings: drc.warnings,
       bomCsv,
       pnpCsv,
-      gerberZip: true,
+      gerberZip: routeRequired,
       isCompiling: false
     });
   };
 
-  const triggerCompilation = () => {
+  const triggerCompilation = (routeRequired = false) => {
     showCompileOverlay();
     afterOverlayPaint(() => {
-      appState.updateState({ isCompiling: true, error: null });
-      void runCompilation();
+      appState.updateState({ isCompiling: true, isRouted: routeRequired, error: null });
+      void runCompilation(routeRequired);
     });
   };
 
@@ -331,18 +335,16 @@ export function PCBStudioApp() {
         isCompiling: true,
         error: null
       });
-      void runCompilation();
+      void runCompilation(state.isRouted);
     });
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = (routeRequired = false) => {
     showCompileOverlay();
 
     const newCount = Math.max(3, Math.min(24, parseInt(ledCountInput) || 3));
-    const newSpacing = Math.max(8, Math.min(30, parseInt(spacingInput) || 8));
-    const newHeight = Math.max(2.0, Math.min(15.0, parseFloat(boardHeightInput) || 3.0));
-    // Calculate new board width: pitch * (count - 1) + 25mm margins
-    const newBoardWidth = newSpacing * (newCount - 1) + 25;
+    const newPcbX = Math.max(40, Math.min(1000, parseFloat(pcbXInput) || 108));
+    const newPcbY = Math.max(2.0, Math.min(15.0, parseFloat(pcbYInput) || 3.0));
     const newRows = Math.max(1, Math.min(500, parseInt(panelRowsInput) || 1));
     const newCols = Math.max(1, Math.min(500, parseInt(panelColsInput) || 1));
     const newSloganCount = Math.max(0, Math.min(200, parseInt(sloganCountInput) || 0));
@@ -351,32 +353,33 @@ export function PCBStudioApp() {
     const curState = appState.getState();
     const boardParamsChanged =
       newCount !== curState.ledCount ||
-      newSpacing !== curState.spacing ||
-      newBoardWidth !== curState.boardWidth ||
-      newHeight !== curState.boardHeight;
+      newPcbX !== curState.pcbX ||
+      newPcbY !== curState.pcbY;
+
+    const routingStatusChanged = routeRequired !== curState.isRouted;
 
     afterOverlayPaint(() => {
       appState.updateState({
         ledCount: newCount,
-        spacing: newSpacing,
-        boardWidth: newBoardWidth,
-        boardHeight: newHeight,
+        pcbX: newPcbX,
+        pcbY: newPcbY,
         useMouseBites: useMouseBitesInput,
         panelRows: newRows,
         panelCols: newCols,
         sloganPhrases: resolveSloganPhrases(sloganPhrasesInput),
         sloganCount: newSloganCount,
         isCompiling: true,
+        isRouted: routeRequired,
         error: null
       });
 
       // Fast path: if only panel/slogan params changed, skip the expensive
       // tscircuit re-routing and re-panelize from the cached single-board result.
-      if (!boardParamsChanged && singleBoardCacheRef.current.circuitJson) {
+      if (!boardParamsChanged && !routingStatusChanged && singleBoardCacheRef.current.circuitJson) {
         logDebug(`[Panelize Fast Path] Skipping tscircuit recompile — only panel params changed`);
         void runPanelizeOnly();
       } else {
-        void runCompilation();
+        void runCompilation(routeRequired);
       }
     });
   };
@@ -515,26 +518,26 @@ export function PCBStudioApp() {
             })
           ),
 
-          // Styled Number input 2: Spacing/Pitch
+          // Styled Number input 2: PCB X
           React.createElement("div", { className: "slider-group slider-group-spaced" },
             React.createElement("div", { className: "slider-labels" },
-              React.createElement("span", null, "LED Pitch/Spacing"),
-              React.createElement("span", { className: "val-glow" }, "8mm - 30mm")
+              React.createElement("span", null, "PCB X (Width)"),
+              React.createElement("span", { className: "val-glow" }, "40mm - 1000mm")
             ),
             React.createElement("input", {
               type: "number",
               className: "param-input",
-              min: 8,
-              max: 30,
-              value: spacingInput,
-              onChange: (e) => setSpacingInput(e.target.value)
+              min: 40,
+              max: 1000,
+              value: pcbXInput,
+              onChange: (e) => setPcbXInput(e.target.value)
             })
           ),
 
-          // Styled Number input 3: Board Height
+          // Styled Number input 3: PCB Y
           React.createElement("div", { className: "slider-group slider-group-spaced" },
             React.createElement("div", { className: "slider-labels" },
-              React.createElement("span", null, "Board Height"),
+              React.createElement("span", null, "PCB Y (Height)"),
               React.createElement("span", { className: "val-glow" }, "2mm - 15mm")
             ),
             React.createElement("input", {
@@ -543,9 +546,17 @@ export function PCBStudioApp() {
               min: 2,
               max: 15,
               step: 0.1,
-              value: boardHeightInput,
-              onChange: (e) => setBoardHeightInput(e.target.value)
+              value: pcbYInput,
+              onChange: (e) => setPcbYInput(e.target.value)
             })
+          ),
+
+          // Read-only calculated LED pitch
+          React.createElement("div", { className: "slider-group slider-group-spaced read-only-group" },
+            React.createElement("div", { className: "slider-labels" },
+              React.createElement("span", null, "Calculated LED Pitch/Spacing"),
+              React.createElement("span", { className: "val-glow" }, `${state.spacing.toFixed(2)}mm`)
+            )
           ),
 
           // Panelization Switch
@@ -624,12 +635,19 @@ export function PCBStudioApp() {
             )
           ),
 
-          // Action update trigger button
-          React.createElement("button", {
-            className: "btn-update-generator",
-            onClick: handleUpdate,
-            disabled: state.isCompiling || isUpdatingSlogans
-          }, state.isCompiling ? "Compiling..." : "Update Generator"),
+          // Action update trigger button group
+          React.createElement("div", { className: "update-buttons-group" },
+            React.createElement("button", {
+              className: "btn-update-generator",
+              onClick: () => handleUpdate(false),
+              disabled: state.isCompiling || isUpdatingSlogans
+            }, "Update Placement"),
+            React.createElement("button", {
+              className: "btn-route-board",
+              onClick: () => handleUpdate(true),
+              disabled: state.isCompiling || isUpdatingSlogans
+            }, "Route Board")
+          ),
 
           // Slogan generator (silkscreen-only update)
           React.createElement("div", { className: "slider-group slider-group-slogan" },
@@ -673,7 +691,7 @@ export function PCBStudioApp() {
 
           // Board Info Details
           React.createElement("div", { className: "board-info board-info-spaced" },
-            React.createElement("div", null, "Board Size: ", React.createElement("strong", null, `${state.boardWidth}mm x ${state.boardHeight}mm`)),
+            React.createElement("div", null, "Board Size: ", React.createElement("strong", null, `${state.pcbX}mm x ${state.pcbY}mm`)),
             React.createElement("div", null, "LCSC LED Part: ", 
               React.createElement("a", { 
                 className: "board-info-link",

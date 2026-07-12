@@ -15,9 +15,6 @@ export function WS2812B_1313({ name, pcbX, pcbY, pcbRotation = 0 }) {
     pcbX: pcbX,
     pcbY: pcbY,
     pcbRotation: pcbRotation,
-    supplierPartNumber: "C52941388",
-    manufacturer: "Worldsemi",
-    partNumber: "WS2812B-1313-V6",
     pinLabels: {
       pin1: "VDD",
       pin2: "DOUT",
@@ -123,7 +120,26 @@ export function VerticalThreePadHeader({ name, pcbX, pcbY, pcbRotation = 0, isEn
         layer: "top"
       }),
 
-      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "0mm", width: `${padW + 0.5}mm`, height: `${Math.max(1.0, boardHeight - 2.8)}mm` })
+      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "0mm", width: `${padW + 0.5}mm`, height: `${Math.max(1.0, boardHeight - 2.8)}mm` }),
+
+      boardHeight >= 2.5 && React.createElement("silkscreentext", {
+        text: "V5",
+        pcbX: isEnd ? `-${padW / 2 + 1.2}mm` : `${padW / 2 + 1.2}mm`,
+        pcbY: `${padSpacing}mm`,
+        fontSize: `${Math.min(0.6, boardHeight * 0.15)}mm`
+      }),
+      boardHeight >= 2.5 && React.createElement("silkscreentext", {
+        text: "DATA",
+        pcbX: isEnd ? `-${padW / 2 + 1.2}mm` : `${padW / 2 + 1.2}mm`,
+        pcbY: "0mm",
+        fontSize: `${Math.min(0.6, boardHeight * 0.15)}mm`
+      }),
+      boardHeight >= 2.5 && React.createElement("silkscreentext", {
+        text: "GND",
+        pcbX: isEnd ? `-${padW / 2 + 1.2}mm` : `${padW / 2 + 1.2}mm`,
+        pcbY: `-${padSpacing}mm`,
+        fontSize: `${Math.min(0.6, boardHeight * 0.15)}mm`
+      })
     )
   });
 }
@@ -209,7 +225,15 @@ export function HorizontalEdgeHeader({ name, pcbX, pcbY, pcbRotation = 0, boardH
       }),
 
       React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: `${boardHeight / 2 - padH - 0.2}mm`, width: `${pin13Offset * 3}mm`, height: "0.2mm" }),
-      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: `-${boardHeight / 2 - padH - 0.2}mm`, width: `${pin13Offset * 3}mm`, height: "0.2mm" })
+      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: `-${boardHeight / 2 - padH - 0.2}mm`, width: `${pin13Offset * 3}mm`, height: "0.2mm" }),
+
+      boardHeight >= 6.0 && React.createElement("silkscreentext", { text: "V5", pcbX: `-${pin13Offset}mm`, pcbY: `${boardHeight/2 - 2.2}mm`, pcbRotation: 90, fontSize: "0.5mm" }),
+      boardHeight >= 6.0 && React.createElement("silkscreentext", { text: "DATA", pcbX: "0mm", pcbY: `${boardHeight/2 - 2.2}mm`, pcbRotation: 90, fontSize: "0.5mm" }),
+      boardHeight >= 6.0 && React.createElement("silkscreentext", { text: "GND", pcbX: `${pin13Offset}mm`, pcbY: `${boardHeight/2 - 2.2}mm`, pcbRotation: 90, fontSize: "0.5mm" }),
+
+      boardHeight >= 6.0 && React.createElement("silkscreentext", { text: "V5", pcbX: `-${pin13Offset}mm`, pcbY: `-${boardHeight/2 - 2.2}mm`, pcbRotation: 90, fontSize: "0.5mm" }),
+      boardHeight >= 6.0 && React.createElement("silkscreentext", { text: "DATA", pcbX: "0mm", pcbY: `-${boardHeight/2 - 2.2}mm`, pcbRotation: 90, fontSize: "0.5mm" }),
+      boardHeight >= 6.0 && React.createElement("silkscreentext", { text: "GND", pcbX: `${pin13Offset}mm`, pcbY: `-${boardHeight/2 - 2.2}mm`, pcbRotation: 90, fontSize: "0.5mm" })
     )
   });
 }

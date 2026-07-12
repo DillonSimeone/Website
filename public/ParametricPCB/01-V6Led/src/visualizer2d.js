@@ -458,8 +458,8 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
             if (e.pcb_component_id) {
               const name = getComponentName(e.pcb_component_id);
               const cleanName = name.replace(/^R\d+_C\d+_/, "");
-              if (cleanName.startsWith("U") || cleanName.startsWith("J")) {
-                return false; // Filter out footprint texts inside LEDs and solder headers
+              if (cleanName.startsWith("U")) {
+                return false; // Filter out footprint texts inside LEDs to avoid double-rendering (since they are custom-drawn below)
               }
             }
             return true;
@@ -582,7 +582,11 @@ function traceHighlighted(refs, trace) {
 // --- Custom 2D Schematic Renderer (SVG-based) ---
 export function SVGSchematicViewer({ circuitJson }) {
   const sourceComps = circuitJson.filter(e => e.type === "source_component");
-  const leds = sourceComps.filter(c => c.name && c.name.startsWith("U"));
+  const leds = sourceComps.filter(c => {
+    if (!c.name) return false;
+    const cleanName = c.name.replace(/^R\d+_C\d+_/, "");
+    return cleanName.startsWith("U");
+  });
 
   // Calculate viewBox to fit all components
   const totalLeds = leds.length;

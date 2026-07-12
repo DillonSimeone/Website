@@ -1,4 +1,7 @@
-/** @typedef {{ kind: string, id: string }} DrcRef */
+function stripPanelPrefix(id) {
+  if (!id) return "";
+  return id.replace(/^R\d+_C\d+_/, "");
+}
 
 /**
  * Resolve DRC refs to board-space targets for highlighting.
@@ -19,11 +22,12 @@ export function resolveDrcTargets(circuitJson, refs) {
   const targets = [];
 
   for (const ref of refs) {
+    const refIdClean = stripPanelPrefix(ref.id);
     if (ref.kind === "pcb_trace" || ref.kind === "source_trace") {
       const trace =
         ref.kind === "pcb_trace"
-          ? traces.find((t) => t.pcb_trace_id === ref.id)
-          : traces.find((t) => t.source_trace_id === ref.id);
+          ? traces.find((t) => stripPanelPrefix(t.pcb_trace_id) === refIdClean)
+          : traces.find((t) => stripPanelPrefix(t.source_trace_id) === refIdClean);
       if (!trace?.route?.length) continue;
       const pts = trace.route.filter((p) => p.x !== undefined && p.y !== undefined);
       if (!pts.length) continue;
@@ -46,7 +50,7 @@ export function resolveDrcTargets(circuitJson, refs) {
     }
 
     if (ref.kind === "pcb_via") {
-      const via = vias.find((v) => v.pcb_via_id === ref.id);
+      const via = vias.find((v) => stripPanelPrefix(v.pcb_via_id) === refIdClean);
       if (!via) continue;
       targets.push({
         kind: ref.kind,
@@ -59,7 +63,7 @@ export function resolveDrcTargets(circuitJson, refs) {
     }
 
     if (ref.kind === "pcb_smtpad") {
-      const pad = pads.find((p) => p.pcb_smtpad_id === ref.id);
+      const pad = pads.find((p) => stripPanelPrefix(p.pcb_smtpad_id) === refIdClean);
       if (!pad) continue;
       targets.push({
         kind: ref.kind,
@@ -105,11 +109,13 @@ export function drcItemRefs(item) {
 
 export function isTraceRef(ref, trace) {
   if (!ref || !trace) return false;
-  if (ref.kind === "pcb_trace") return trace.pcb_trace_id === ref.id;
-  if (ref.kind === "source_trace") return trace.source_trace_id === ref.id;
+  const refIdClean = stripPanelPrefix(ref.id);
+  if (ref.kind === "pcb_trace") return stripPanelPrefix(trace.pcb_trace_id) === refIdClean;
+  if (ref.kind === "source_trace") return stripPanelPrefix(trace.source_trace_id) === refIdClean;
   return false;
 }
 
 export function matchesDrcHighlight(refs, kind, id) {
-  return refs?.some((r) => r.kind === kind && r.id === id);
+  const idClean = stripPanelPrefix(id);
+  return refs?.some((r) => r.kind === kind && stripPanelPrefix(r.id) === idClean);
 }

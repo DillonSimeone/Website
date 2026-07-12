@@ -86,15 +86,21 @@ export function routingInputsFromState(routing) {
   return out;
 }
 
-export function boardProps(width, height, routing) {
+export function boardProps(width, height, routing, options = {}) {
   const r = normalizeRouting(routing);
-  return {
+  const props = {
     width: `${width}mm`,
     height: `${height}mm`,
     layers: 2,
     defaultTraceWidth: `${r.nominalTraceWidth}mm`,
     minTraceWidth: `${r.minTraceWidth}mm`,
     minViaHoleDiameter: `${r.viaHoleDiameter}mm`,
-    minViaPadDiameter: `${r.viaPadDiameter}mm`
+    minViaPadDiameter: `${r.viaPadDiameter}mm`,
+    partsEngineDisabled: true,
+    autorouter: "auto_local"
   };
+  if (options.skipRouting) {
+    props.routingDisabled = true;
+  }
+  return props;
 }

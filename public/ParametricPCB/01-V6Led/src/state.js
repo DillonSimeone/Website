@@ -9,9 +9,11 @@ export class StateManager {
   constructor() {
     const defaults = {
       ledCount: 10,
-      spacing: 15, // in mm
-      boardWidth: 160, // in mm (will be auto-updated)
-      boardHeight: 3.0, // in mm
+      spacing: 9.22, // in mm (auto-calculated)
+      pcbX: 108, // in mm (formerly boardWidth)
+      pcbY: 10.0, // in mm (formerly boardHeight)
+      boardWidth: 108,
+      boardHeight: 10.0,
       useMouseBites: false,
       panelRows: 2,
       panelCols: 2,
@@ -29,18 +31,27 @@ export class StateManager {
       drcWarnings: [],
       routing: { ...DEFAULT_ROUTING },
       isCompiling: false,
+      isRouted: false,
       error: null
     };
 
     const loaded = loadPersistedConfig(defaults);
+    if (loaded.boardWidth !== undefined && loaded.pcbX === undefined) {
+      loaded.pcbX = loaded.boardWidth;
+    }
+    if (loaded.boardHeight !== undefined && loaded.pcbY === undefined) {
+      loaded.pcbY = loaded.boardHeight;
+    }
 
     this.state = {
       ...defaults,
       ...loaded,
+      boardWidth: loaded.pcbX ?? defaults.pcbX,
+      boardHeight: loaded.pcbY ?? defaults.pcbY,
       routing: normalizeRouting(loaded.routing ?? defaults.routing)
     };
     this.listeners = [];
-    this.autoCalculateWidth();
+    this.autoCalculateSpacing();
   }
 
   getState() {
@@ -62,20 +73,26 @@ export class StateManager {
     if (updates.routing !== undefined) {
       updates = { ...updates, routing: normalizeRouting(updates.routing) };
     }
+    if (updates.pcbX !== undefined) {
+      updates.boardWidth = updates.pcbX;
+    }
+    if (updates.pcbY !== undefined) {
+      updates.boardHeight = updates.pcbY;
+    }
     this.state = { ...this.state, ...updates };
 
-    // Auto-calculate board width if spacing or count changes
-    if (updates.ledCount !== undefined || updates.spacing !== undefined) {
-      this.autoCalculateWidth();
+    // Auto-calculate spacing if width or count changes
+    if (updates.pcbX !== undefined || updates.ledCount !== undefined) {
+      this.autoCalculateSpacing();
     }
 
     savePersistedConfig(this.state);
     this.notify();
   }
 
-  autoCalculateWidth() {
-    const activeLength = this.state.spacing * (this.state.ledCount - 1);
-    this.state.boardWidth = Math.max(40, activeLength + 20);
+  autoCalculateSpacing() {
+    const activeLength = this.state.pcbX - 25;
+    this.state.spacing = Math.max(1.0, activeLength / (this.state.ledCount - 1));
   }
 }
 
