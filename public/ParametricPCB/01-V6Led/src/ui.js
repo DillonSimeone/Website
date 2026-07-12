@@ -62,6 +62,10 @@ export function PCBStudioApp() {
   const threeInstanceRef = useRef(null);
   const compileOverlayRef = useRef(null);
 
+  // Cache single-board compiled JSON to skip expensive tscircuit re-routing
+  // when only panelization parameters (rows, cols, mousebites) change.
+  const singleBoardCacheRef = useRef({ key: null, circuitJson: null });
+
   const showCompileOverlay = (mode = "compile") => {
     if (compileOverlayRef.current) {
       compileOverlayRef.current.classList.add("is-visible");
@@ -95,6 +99,7 @@ export function PCBStudioApp() {
   // Local draft states for inputs
   const [ledCountInput, setLedCountInput] = useState(state.ledCount);
   const [spacingInput, setSpacingInput] = useState(state.spacing);
+  const [boardHeightInput, setBoardHeightInput] = useState(state.boardHeight);
   const [useMouseBitesInput, setUseMouseBitesInput] = useState(state.useMouseBites);
   const [panelRowsInput, setPanelRowsInput] = useState(state.panelRows);
   const [panelColsInput, setPanelColsInput] = useState(state.panelCols);
@@ -121,13 +126,14 @@ export function PCBStudioApp() {
   useEffect(() => {
     setLedCountInput(state.ledCount);
     setSpacingInput(state.spacing);
+    setBoardHeightInput(state.boardHeight);
     setUseMouseBitesInput(state.useMouseBites);
     setPanelRowsInput(state.panelRows);
     setPanelColsInput(state.panelCols);
     setSloganPhrasesInput(resolveSloganPhrases(state.sloganPhrases));
     setSloganCountInput(state.sloganCount);
     setRoutingInputs(routingInputsFromState(state.routing));
-  }, [state.ledCount, state.spacing, state.useMouseBites, state.panelRows, state.panelCols, state.sloganPhrases, state.sloganCount, state.routing]);
+  }, [state.ledCount, state.spacing, state.boardHeight, state.useMouseBites, state.panelRows, state.panelCols, state.sloganPhrases, state.sloganCount, state.routing]);
 
   // Initialize and update the 3D viewport in the background as soon as 2D view reports centering is complete
   useEffect(() => {
@@ -202,9 +208,18 @@ export function PCBStudioApp() {
     };
   }, []);
 
+  /** Fingerprint for single-board layout: only these params affect routing. */
+  const boardCacheKey = (s) =>
+    `${s.ledCount}_${s.spacing}_${s.boardWidth}_${s.boardHeight}_${JSON.stringify(s.routing)}`;
+
+  /**
+   * Full compilation: runs expensive tscircuit routing for a single board,
+   * caches the result, then panelizes + slogans + DRC.
+   */
   const runCompilation = async () => {
     try {
       const curState = appState.getState();
+      const key = boardCacheKey(curState);
       
       // Compile single board layout
       const circuit = await compileCircuit({
@@ -214,42 +229,75 @@ export function PCBStudioApp() {
         boardHeight: curState.boardHeight,
         routing: curState.routing
       });
-      let circuitJson = circuit.getCircuitJson();
-      
-      // Instantly panelize if enabled
-      if (curState.useMouseBites) {
-        circuitJson = panelizeCircuitJson(circuitJson, {
-          boardWidth: curState.boardWidth,
-          boardHeight: curState.boardHeight,
-          panelRows: curState.panelRows,
-          panelCols: curState.panelCols
-        });
-      }
+      const singleJson = circuit.getCircuitJson();
 
-      // Stamp silkscreen slogans once copper/layout is ready
-      const sloganResult = await applySlogansForState(circuitJson, curState);
-      circuitJson = sloganResult.circuitJson;
+      // Cache the single-board result for fast re-panelization
+      singleBoardCacheRef.current = { key, circuitJson: singleJson };
 
-      const drc = runManufacturingDrc(circuitJson, curState.routing);
-      
-      appState.updateState({
-        circuitJson,
-        sloganPlacedCount: sloganResult.placedCount,
-        sloganAttemptedCount: sloganResult.attemptedCount,
-        drcOk: drc.ok,
-        drcErrors: drc.errors,
-        drcWarnings: drc.warnings,
-        bomCsv: generateBOM(circuitJson),
-        pnpCsv: generatePNP(circuitJson),
-        gerberZip: true, // Enabled for on-demand generation on click
-        isCompiling: false
-      });
+      // Panelize + slogans + DRC
+      await finalizePanelAndSlogans(curState, singleJson);
     } catch (err) {
       console.error(err);
       appState.updateState({ isCompiling: false, error: err.message });
     } finally {
       hideCompileOverlay();
     }
+  };
+
+  /**
+   * Fast path: re-panelize from cached single-board JSON without re-routing.
+   * Used when only panel rows/cols/mousebites changed.
+   */
+  const runPanelizeOnly = async () => {
+    try {
+      const curState = appState.getState();
+      const cachedJson = singleBoardCacheRef.current.circuitJson;
+      if (!cachedJson) {
+        // No cache available, fall back to full compilation
+        await runCompilation();
+        return;
+      }
+      await finalizePanelAndSlogans(curState, cachedJson);
+    } catch (err) {
+      console.error(err);
+      appState.updateState({ isCompiling: false, error: err.message });
+    } finally {
+      hideCompileOverlay();
+    }
+  };
+
+  /** Shared post-routing step: panelize, stamp slogans, run DRC. */
+  const finalizePanelAndSlogans = async (curState, singleJson) => {
+    let circuitJson = singleJson;
+
+    // Instantly panelize if enabled (millisecond copy-paste, no re-routing)
+    if (curState.useMouseBites) {
+      circuitJson = panelizeCircuitJson(circuitJson, {
+        boardWidth: curState.boardWidth,
+        boardHeight: curState.boardHeight,
+        panelRows: curState.panelRows,
+        panelCols: curState.panelCols
+      });
+    }
+
+    // Stamp silkscreen slogans once copper/layout is ready
+    const sloganResult = await applySlogansForState(circuitJson, curState);
+    circuitJson = sloganResult.circuitJson;
+
+    const drc = runManufacturingDrc(circuitJson, curState.routing);
+    
+    appState.updateState({
+      circuitJson,
+      sloganPlacedCount: sloganResult.placedCount,
+      sloganAttemptedCount: sloganResult.attemptedCount,
+      drcOk: drc.ok,
+      drcErrors: drc.errors,
+      drcWarnings: drc.warnings,
+      bomCsv: generateBOM(circuitJson),
+      pnpCsv: generatePNP(circuitJson),
+      gerberZip: true,
+      isCompiling: false
+    });
   };
 
   const triggerCompilation = () => {
@@ -279,17 +327,27 @@ export function PCBStudioApp() {
 
     const newCount = Math.max(3, Math.min(24, parseInt(ledCountInput) || 3));
     const newSpacing = Math.max(8, Math.min(30, parseInt(spacingInput) || 8));
+    const newHeight = Math.max(2.0, Math.min(15.0, parseFloat(boardHeightInput) || 3.0));
     // Calculate new board width: pitch * (count - 1) + 25mm margins
     const newBoardWidth = newSpacing * (newCount - 1) + 25;
-    const newRows = Math.max(1, Math.min(5, parseInt(panelRowsInput) || 1));
-    const newCols = Math.max(1, Math.min(5, parseInt(panelColsInput) || 1));
+    const newRows = Math.max(1, Math.min(500, parseInt(panelRowsInput) || 1));
+    const newCols = Math.max(1, Math.min(500, parseInt(panelColsInput) || 1));
     const newSloganCount = Math.max(0, Math.min(200, parseInt(sloganCountInput) || 0));
+
+    // Determine if single-board layout params actually changed
+    const curState = appState.getState();
+    const boardParamsChanged =
+      newCount !== curState.ledCount ||
+      newSpacing !== curState.spacing ||
+      newBoardWidth !== curState.boardWidth ||
+      newHeight !== curState.boardHeight;
 
     afterOverlayPaint(() => {
       appState.updateState({
         ledCount: newCount,
         spacing: newSpacing,
         boardWidth: newBoardWidth,
+        boardHeight: newHeight,
         useMouseBites: useMouseBitesInput,
         panelRows: newRows,
         panelCols: newCols,
@@ -298,7 +356,15 @@ export function PCBStudioApp() {
         isCompiling: true,
         error: null
       });
-      void runCompilation();
+
+      // Fast path: if only panel/slogan params changed, skip the expensive
+      // tscircuit re-routing and re-panelize from the cached single-board result.
+      if (!boardParamsChanged && singleBoardCacheRef.current.circuitJson) {
+        logDebug(`[Panelize Fast Path] Skipping tscircuit recompile — only panel params changed`);
+        void runPanelizeOnly();
+      } else {
+        void runCompilation();
+      }
     });
   };
 
@@ -452,6 +518,23 @@ export function PCBStudioApp() {
             })
           ),
 
+          // Styled Number input 3: Board Height
+          React.createElement("div", { className: "slider-group slider-group-spaced" },
+            React.createElement("div", { className: "slider-labels" },
+              React.createElement("span", null, "Board Height"),
+              React.createElement("span", { className: "val-glow" }, "2mm - 15mm")
+            ),
+            React.createElement("input", {
+              type: "number",
+              className: "param-input",
+              min: 2,
+              max: 15,
+              step: 0.1,
+              value: boardHeightInput,
+              onChange: (e) => setBoardHeightInput(e.target.value)
+            })
+          ),
+
           // Panelization Switch
           React.createElement("div", { className: "panel-toggle-group" },
             React.createElement("span", null, "PANELIZE GRID (MOUSEBITES)"),
@@ -468,13 +551,13 @@ export function PCBStudioApp() {
             React.createElement("div", { className: "slider-group" },
               React.createElement("div", { className: "slider-labels" },
                 React.createElement("span", null, "Panel Rows"),
-                React.createElement("span", { className: "val-glow" }, "1 - 5")
+                React.createElement("span", { className: "val-glow" }, "Min 1")
               ),
               React.createElement("input", {
                 type: "number",
                 className: "param-input panel-input",
                 min: 1,
-                max: 5,
+                max: 500,
                 value: panelRowsInput,
                 onChange: (e) => setPanelRowsInput(e.target.value)
               })
@@ -482,13 +565,13 @@ export function PCBStudioApp() {
             React.createElement("div", { className: "slider-group slider-group-spaced" },
               React.createElement("div", { className: "slider-labels" },
                 React.createElement("span", null, "Panel Columns"),
-                React.createElement("span", { className: "val-glow" }, "1 - 5")
+                React.createElement("span", { className: "val-glow" }, "Min 1")
               ),
               React.createElement("input", {
                 type: "number",
                 className: "param-input panel-input",
                 min: 1,
-                max: 5,
+                max: 500,
                 value: panelColsInput,
                 onChange: (e) => setPanelColsInput(e.target.value)
               })

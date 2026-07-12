@@ -1,7 +1,9 @@
 /** @typedef {{ minX: number, maxX: number, minY: number, maxY: number }} ObstacleBox */
 
-export const MAX_SLOGAN_ATTEMPTS = 3;
+export const MAX_SLOGAN_ATTEMPTS = 50;
 export const DEFAULT_SLOGAN_PHRASES = "this machine kills facism";
+
+const LED_SIZE = 1.3; // WS2812B-1313 package size in mm
 
 /**
  * Normalize raw UI/state input to a non-empty phrase string.
@@ -51,65 +53,72 @@ export function buildSilkscreenObstacles({ boardWidth, boardHeight, ledCount, sp
   const jBegX = leftEdgeX + 1.0;
   const jEndX = rightEdgeX - 1.0;
 
-  // Vertical header zones
+  // Header physical widths (tied directly to dynamic board dimensions)
+  const begHeaderW = Math.min(2.0, boardHeight * 0.6);
+
+  // Vertical header keep-out zones (with 1.5mm safety margin)
   obstacles.push({
     minX: leftEdgeX,
-    maxX: leftEdgeX + 5.0,
+    maxX: leftEdgeX + begHeaderW + 1.5,
     minY: -boardHeight / 2,
     maxY: boardHeight / 2
   });
   obstacles.push({
-    minX: rightEdgeX - 5.0,
+    minX: rightEdgeX - begHeaderW - 1.5,
     maxX: rightEdgeX,
     minY: -boardHeight / 2,
     maxY: boardHeight / 2
   });
 
-  // J_BEG / J_END pad labels
-  obstacles.push({ minX: jBegX + 1.5, maxX: jBegX + 6.0, minY: -5.0, maxY: 5.0 });
-  obstacles.push({ minX: jEndX - 6.0, maxX: jEndX - 1.5, minY: -5.0, maxY: 5.0 });
+  // J_BEG / J_END pad labels (printed if boardHeight >= 2.5)
+  if (boardHeight >= 2.5) {
+    const labelBegX = jBegX + begHeaderW / 2 + 1.2;
+    const labelEndX = jEndX - begHeaderW / 2 - 1.2;
+    obstacles.push({
+      minX: labelBegX - 0.5,
+      maxX: labelBegX + 3.0,
+      minY: -boardHeight / 2,
+      maxY: boardHeight / 2
+    });
+    obstacles.push({
+      minX: labelEndX - 3.0,
+      maxX: labelEndX + 0.5,
+      minY: -boardHeight / 2,
+      maxY: boardHeight / 2
+    });
+  }
 
+  // LED and intermediate header spacing parameters
   const startX = -((spacing * (ledCount - 1)) / 2);
+  const midHeaderPadH = Math.min(1.2, boardHeight / 4.5);
+  const midHeaderPadSpacing = boardHeight / 2 - midHeaderPadH / 2;
+
   for (let i = 1; i <= ledCount; i++) {
     const ledX = startX + (i - 1) * spacing;
 
+    // LED keep-out box (tied directly to the WS2812B package size with 0.35mm margin)
     obstacles.push({
-      minX: ledX - 2.2,
-      maxX: ledX + 2.2,
-      minY: -2.2,
-      maxY: 2.2
+      minX: ledX - (LED_SIZE / 2 + 0.35),
+      maxX: ledX + (LED_SIZE / 2 + 0.35),
+      minY: -(LED_SIZE / 2 + 0.35),
+      maxY: (LED_SIZE / 2 + 0.35)
     });
 
     if (i < ledCount) {
       const midX = ledX + spacing / 2;
 
+      // Intermediate header edge pads keep-out zone
       obstacles.push({
-        minX: midX - 2.0,
-        maxX: midX + 2.0,
-        minY: -6.0,
-        maxY: -3.5
+        minX: midX - 1.5,
+        maxX: midX + 1.5,
+        minY: midHeaderPadSpacing - midHeaderPadH / 2 - 0.2,
+        maxY: boardHeight / 2
       });
       obstacles.push({
-        minX: midX - 2.0,
-        maxX: midX + 2.0,
-        minY: 3.5,
-        maxY: 6.0
-      });
-
-      // Intermediate header silkscreen labels (top and bottom rows)
-      [-1.0, 0, 1.0].forEach((dx) => {
-        obstacles.push({
-          minX: midX + dx - 1.4,
-          maxX: midX + dx + 1.4,
-          minY: 2.8,
-          maxY: 5.2
-        });
-        obstacles.push({
-          minX: midX + dx - 1.4,
-          maxX: midX + dx + 1.4,
-          minY: -5.2,
-          maxY: -2.8
-        });
+        minX: midX - 1.5,
+        maxX: midX + 1.5,
+        minY: -boardHeight / 2,
+        maxY: -(midHeaderPadSpacing - midHeaderPadH / 2 - 0.2)
       });
     }
   }

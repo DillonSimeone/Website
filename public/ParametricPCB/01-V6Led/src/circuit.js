@@ -63,17 +63,24 @@ export async function compileCircuit(params) {
   const leftEdgeX = -boardWidth / 2;
   const j_beg_x = leftEdgeX + 1.0; // 2.0mm pad width, left edge flush with board boundary
   children.push(React.createElement(VerticalThreePadHeader, {
-    name: "J_BEG", pcbX: `${j_beg_x}mm`, pcbY: "0mm", key: "j_beg", isEnd: false
+    name: "J_BEG", pcbX: `${j_beg_x}mm`, pcbY: "0mm", key: "j_beg", isEnd: false, boardHeight: boardHeight
   }));
 
   children.push(React.createElement("trace", { from: ".J_BEG > .pin1", to: ".U1 > .pin1", key: "t_beg_u1_v", name: "t_beg_u1_vcc", width: PWR }));
   children.push(React.createElement("trace", { from: ".J_BEG > .pin2", to: ".U1 > .pin4", key: "t_beg_u1_d", name: "t_beg_u1_dat", width: SIG }));
   children.push(React.createElement("trace", { from: ".J_BEG > .pin3", to: ".U1 > .pin3", key: "t_beg_u1_g", name: "t_beg_u1_gnd", width: PWR }));
   
-  // Silkscreen text next to J_BEG pads
-  children.push(React.createElement(BoardLabel, { name: "LABEL_BEG_V5", text: "V5", pcbX: `${j_beg_x + 2.4}mm`, pcbY: "3.5mm", fontSize: 0.6, key: "j_beg_v5_txt" }));
-  children.push(React.createElement(BoardLabel, { name: "LABEL_BEG_DATA", text: "DATA", pcbX: `${j_beg_x + 2.4}mm`, pcbY: "0mm", fontSize: 0.6, key: "j_beg_data_txt" }));
-  children.push(React.createElement(BoardLabel, { name: "LABEL_BEG_GND", text: "GND", pcbX: `${j_beg_x + 2.4}mm`, pcbY: "-3.5mm", fontSize: 0.6, key: "j_beg_gnd_txt" }));
+  // Silkscreen text next to J_BEG pads (scale dynamically with board height)
+  const padSpacing = boardHeight / 2 - Math.min(1.2, boardHeight / 4.5) / 2;
+  const labelBegX = j_beg_x + Math.min(2.0, boardHeight * 0.6) / 2 + 1.2;
+  const labelEndX = (boardWidth / 2 - 1.0) - Math.min(2.0, boardHeight * 0.6) / 2 - 1.2;
+  const labelFontSize = Math.min(0.6, boardHeight * 0.15);
+
+  if (boardHeight >= 2.5) {
+    children.push(React.createElement(BoardLabel, { name: "LABEL_BEG_V5", text: "V5", pcbX: `${labelBegX}mm`, pcbY: `${padSpacing}mm`, fontSize: labelFontSize, key: "j_beg_v5_txt" }));
+    children.push(React.createElement(BoardLabel, { name: "LABEL_BEG_DATA", text: "DATA", pcbX: `${labelBegX}mm`, pcbY: "0mm", fontSize: labelFontSize, key: "j_beg_data_txt" }));
+    children.push(React.createElement(BoardLabel, { name: "LABEL_BEG_GND", text: "GND", pcbX: `${labelBegX}mm`, pcbY: `-${padSpacing}mm`, fontSize: labelFontSize, key: "j_beg_gnd_txt" }));
+  }
   
   // ============================================================
   // 2. LEDs + INTERMEDIATE HEADERS + VIAS FOR BOTTOM LAYER TRANSITIONS
@@ -92,18 +99,19 @@ export async function compileCircuit(params) {
       
       // Place header component
       children.push(React.createElement(HorizontalEdgeHeader, {
-        name: `J_MID${i}`, pcbX: `${midX}mm`, pcbY: "0mm", key: `j_mid_${i}`
+        name: `J_MID${i}`, pcbX: `${midX}mm`, pcbY: "0mm", key: `j_mid_${i}`, boardHeight: boardHeight
       }));
       
-      // Top 3 Pads labels
-      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_V5_T`, text: "V5", pcbX: `${midX - 1.0}mm`, pcbY: "3.8mm", pcbRotation: 90, key: `jmid_${i}_v5_t_txt` }));
-      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_DATA_T`, text: "DATA", pcbX: `${midX}mm`, pcbY: "3.8mm", pcbRotation: 90, key: `jmid_${i}_data_t_txt` }));
-      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_GND_T`, text: "GND", pcbX: `${midX + 1.0}mm`, pcbY: "3.8mm", pcbRotation: 90, key: `jmid_${i}_gnd_t_txt` }));
-      
-      // Bottom 3 Pads labels
-      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_V5_B`, text: "V5", pcbX: `${midX - 1.0}mm`, pcbY: "-3.8mm", pcbRotation: 90, key: `jmid_${i}_v5_b_txt` }));
-      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_DATA_B`, text: "DATA", pcbX: `${midX}mm`, pcbY: "-3.8mm", pcbRotation: 90, key: `jmid_${i}_data_b_txt` }));
-      children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_GND_B`, text: "GND", pcbX: `${midX + 1.0}mm`, pcbY: "-3.8mm", pcbRotation: 90, key: `jmid_${i}_gnd_b_txt` }));
+      // Top/Bottom Pads labels (only if height supports it)
+      if (boardHeight >= 6.0) {
+        children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_V5_T`, text: "V5", pcbX: `${midX - 1.0}mm`, pcbY: `${boardHeight/2 - 2.2}mm`, pcbRotation: 90, key: `jmid_${i}_v5_t_txt` }));
+        children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_DATA_T`, text: "DATA", pcbX: `${midX}mm`, pcbY: `${boardHeight/2 - 2.2}mm`, pcbRotation: 90, key: `jmid_${i}_data_t_txt` }));
+        children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_GND_T`, text: "GND", pcbX: `${midX + 1.0}mm`, pcbY: `${boardHeight/2 - 2.2}mm`, pcbRotation: 90, key: `jmid_${i}_gnd_t_txt` }));
+        
+        children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_V5_B`, text: "V5", pcbX: `${midX - 1.0}mm`, pcbY: `-${boardHeight/2 - 2.2}mm`, pcbRotation: 90, key: `jmid_${i}_v5_b_txt` }));
+        children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_DATA_B`, text: "DATA", pcbX: `${midX}mm`, pcbY: `-${boardHeight/2 - 2.2}mm`, pcbRotation: 90, key: `jmid_${i}_data_b_txt` }));
+        children.push(React.createElement(BoardLabel, { name: `LABEL_MID_${i}_GND_B`, text: "GND", pcbX: `${midX + 1.0}mm`, pcbY: `-${boardHeight/2 - 2.2}mm`, pcbRotation: 90, key: `jmid_${i}_gnd_b_txt` }));
+      }
 
       children.push(React.createElement("trace", { from: `.U${i} > .pin1`, to: `.J_MID${i} > .pin1`, key: `t_${i}_v_t`, name: `t_${i}_vcc_t`, width: PWR }));
       children.push(React.createElement("trace", { from: `.U${i} > .pin1`, to: `.J_MID${i} > .pin4`, key: `t_${i}_v_b`, name: `t_${i}_vcc_b`, width: PWR }));
@@ -127,17 +135,19 @@ export async function compileCircuit(params) {
   const rightEdgeX = boardWidth / 2;
   const j_end_x = rightEdgeX - 1.0; // 2.0mm pad width, right edge flush with board boundary
   children.push(React.createElement(VerticalThreePadHeader, {
-    name: "J_END", pcbX: `${j_end_x}mm`, pcbY: "0mm", key: "j_end", isEnd: true
+    name: "J_END", pcbX: `${j_end_x}mm`, pcbY: "0mm", key: "j_end", isEnd: true, boardHeight: boardHeight
   }));
 
   children.push(React.createElement("trace", { from: `.U${ledCount} > .pin1`, to: ".J_END > .pin1", key: "t_end_v", name: "t_end_vcc", width: PWR }));
   children.push(React.createElement("trace", { from: `.U${ledCount} > .pin2`, to: ".J_END > .pin2", key: "t_end_d", name: "t_end_dat", width: SIG }));
   children.push(React.createElement("trace", { from: `.U${ledCount} > .pin3`, to: ".J_END > .pin3", key: "t_end_g", name: "t_end_gnd", width: PWR }));
   
-  // Silkscreen text next to J_END pads
-  children.push(React.createElement(BoardLabel, { name: "LABEL_END_V5", text: "V5", pcbX: `${j_end_x - 2.4}mm`, pcbY: "3.5mm", fontSize: 0.6, key: "j_end_v5_txt" }));
-  children.push(React.createElement(BoardLabel, { name: "LABEL_END_DATA", text: "DATA", pcbX: `${j_end_x - 2.4}mm`, pcbY: "0mm", fontSize: 0.6, key: "j_end_data_txt" }));
-  children.push(React.createElement(BoardLabel, { name: "LABEL_END_GND", text: "GND", pcbX: `${j_end_x - 2.4}mm`, pcbY: "-3.5mm", fontSize: 0.6, key: "j_end_gnd_txt" }));
+  // Silkscreen text next to J_END pads (scale dynamically with board height)
+  if (boardHeight >= 2.5) {
+    children.push(React.createElement(BoardLabel, { name: "LABEL_END_V5", text: "V5", pcbX: `${labelEndX}mm`, pcbY: `${padSpacing}mm`, fontSize: labelFontSize, key: "j_end_v5_txt" }));
+    children.push(React.createElement(BoardLabel, { name: "LABEL_END_DATA", text: "DATA", pcbX: `${labelEndX}mm`, pcbY: "0mm", fontSize: labelFontSize, key: "j_end_data_txt" }));
+    children.push(React.createElement(BoardLabel, { name: "LABEL_END_GND", text: "GND", pcbX: `${labelEndX}mm`, pcbY: `-${padSpacing}mm`, fontSize: labelFontSize, key: "j_end_gnd_txt" }));
+  }
   
   // ============================================================
   // 4. CREATE BOARD

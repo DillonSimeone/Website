@@ -79,7 +79,11 @@ export const WS2812B_3535 = WS2812B_1313;
 /**
  * Vertical 3-pad solder header (V5, DATA, GND) for the beginning/end edges of the strip.
  */
-export function VerticalThreePadHeader({ name, pcbX, pcbY, pcbRotation = 0, isEnd = false }) {
+export function VerticalThreePadHeader({ name, pcbX, pcbY, pcbRotation = 0, isEnd = false, boardHeight = 12 }) {
+  const padH = Math.min(1.2, boardHeight / 4.5);
+  const padW = Math.min(2.0, boardHeight * 0.6); // Scale width to maintain aesthetic proportions
+  const padSpacing = boardHeight / 2 - padH / 2;
+
   return React.createElement("chip", {
     name: name,
     pcbX: pcbX,
@@ -94,10 +98,10 @@ export function VerticalThreePadHeader({ name, pcbX, pcbY, pcbRotation = 0, isEn
       React.createElement("smtpad", {
         portHints: ["pin1"],
         pcbX: "0mm",
-        pcbY: "5.4mm",
+        pcbY: `${padSpacing}mm`,
         shape: "rect",
-        width: "2.0mm",
-        height: "1.2mm",
+        width: `${padW}mm`,
+        height: `${padH}mm`,
         layer: "top"
       }),
       React.createElement("smtpad", {
@@ -105,21 +109,21 @@ export function VerticalThreePadHeader({ name, pcbX, pcbY, pcbRotation = 0, isEn
         pcbX: "0mm",
         pcbY: "0mm",
         shape: "rect",
-        width: "2.0mm",
-        height: "1.2mm",
+        width: `${padW}mm`,
+        height: `${padH}mm`,
         layer: "top"
       }),
       React.createElement("smtpad", {
         portHints: ["pin3"],
         pcbX: "0mm",
-        pcbY: "-5.4mm",
+        pcbY: `-${padSpacing}mm`,
         shape: "rect",
-        width: "2.0mm",
-        height: "1.2mm",
+        width: `${padW}mm`,
+        height: `${padH}mm`,
         layer: "top"
       }),
 
-      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "0mm", width: "2.5mm", height: "9.2mm" })
+      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "0mm", width: `${padW + 0.5}mm`, height: `${Math.max(1.0, boardHeight - 2.8)}mm` })
     )
   });
 }
@@ -128,7 +132,12 @@ export function VerticalThreePadHeader({ name, pcbX, pcbY, pcbRotation = 0, isEn
  * Horizontal 6-pad solder header placed between pixels.
  * Silkscreen text moved completely off the pads into the safe inner PCB area.
  */
-export function HorizontalEdgeHeader({ name, pcbX, pcbY, pcbRotation = 0 }) {
+export function HorizontalEdgeHeader({ name, pcbX, pcbY, pcbRotation = 0, boardHeight = 12 }) {
+  const padH = Math.min(1.2, boardHeight / 4.5);
+  const padW = Math.min(0.8, boardHeight * 0.25);
+  const padSpacing = boardHeight / 2 - padH / 2;
+  const pin13Offset = Math.min(1.0, boardHeight * 0.3); // spacing in X direction between the three pads
+
   return React.createElement("chip", {
     name: name,
     pcbX: pcbX,
@@ -145,62 +154,62 @@ export function HorizontalEdgeHeader({ name, pcbX, pcbY, pcbRotation = 0 }) {
     footprint: React.createElement("footprint", null,
       React.createElement("smtpad", {
         portHints: ["pin1"],
-        pcbX: "-1.0mm",
-        pcbY: "5.4mm",
+        pcbX: `-${pin13Offset}mm`,
+        pcbY: `${padSpacing}mm`,
         shape: "rect",
-        width: "0.8mm",
-        height: "1.2mm",
+        width: `${padW}mm`,
+        height: `${padH}mm`,
         layer: "top"
       }),
       React.createElement("smtpad", {
         portHints: ["pin2"],
         pcbX: "0mm",
-        pcbY: "5.4mm",
+        pcbY: `${padSpacing}mm`,
         shape: "rect",
-        width: "0.8mm",
-        height: "1.2mm",
+        width: `${padW}mm`,
+        height: `${padH}mm`,
         layer: "top"
       }),
       React.createElement("smtpad", {
         portHints: ["pin3"],
-        pcbX: "1.0mm",
-        pcbY: "5.4mm",
+        pcbX: `${pin13Offset}mm`,
+        pcbY: `${padSpacing}mm`,
         shape: "rect",
-        width: "0.8mm",
-        height: "1.2mm",
+        width: `${padW}mm`,
+        height: `${padH}mm`,
         layer: "top"
       }),
 
       React.createElement("smtpad", {
         portHints: ["pin4"],
-        pcbX: "-1.0mm",
-        pcbY: "-5.4mm",
+        pcbX: `-${pin13Offset}mm`,
+        pcbY: `-${padSpacing}mm`,
         shape: "rect",
-        width: "0.8mm",
-        height: "1.2mm",
+        width: `${padW}mm`,
+        height: `${padH}mm`,
         layer: "top"
       }),
       React.createElement("smtpad", {
         portHints: ["pin5"],
         pcbX: "0mm",
-        pcbY: "-5.4mm",
+        pcbY: `-${padSpacing}mm`,
         shape: "rect",
-        width: "0.8mm",
-        height: "1.2mm",
+        width: `${padW}mm`,
+        height: `${padH}mm`,
         layer: "top"
       }),
       React.createElement("smtpad", {
         portHints: ["pin6"],
-        pcbX: "1.0mm",
-        pcbY: "-5.4mm",
+        pcbX: `${pin13Offset}mm`,
+        pcbY: `-${padSpacing}mm`,
         shape: "rect",
-        width: "0.8mm",
-        height: "1.2mm",
+        width: `${padW}mm`,
+        height: `${padH}mm`,
         layer: "top"
       }),
 
-      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "4.4mm", width: "3.0mm", height: "0.2mm" }),
-      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: "-4.4mm", width: "3.0mm", height: "0.2mm" })
+      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: `${boardHeight / 2 - padH - 0.2}mm`, width: `${pin13Offset * 3}mm`, height: "0.2mm" }),
+      React.createElement("silkscreenrect", { pcbX: "0mm", pcbY: `-${boardHeight / 2 - padH - 0.2}mm`, width: `${pin13Offset * 3}mm`, height: "0.2mm" })
     )
   });
 }

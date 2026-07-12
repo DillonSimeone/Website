@@ -11,7 +11,7 @@ export class StateManager {
       ledCount: 10,
       spacing: 15, // in mm
       boardWidth: 160, // in mm (will be auto-updated)
-      boardHeight: 12, // in mm
+      boardHeight: 3.0, // in mm
       useMouseBites: false,
       panelRows: 2,
       panelCols: 2,
