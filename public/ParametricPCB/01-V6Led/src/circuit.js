@@ -277,7 +277,7 @@ export function panelizeCircuitJson(singleCircuitJson, params) {
       const offsetX = (c - (cols - 1) / 2) * (boardWidth + colGap);
       const tabX = offsetX + boardWidth / 2 + colGap / 2;
       
-      [offsetY + 3.0, offsetY - 3.0].forEach((tabY, tabIdx) => {
+      [offsetY - boardHeight / 4, offsetY + boardHeight / 4].forEach((tabY, tabIdx) => {
         for (let k = -1.5; k <= 1.5; k += 1.0) {
           panelJson.push({
             type: "pcb_via",
@@ -285,7 +285,8 @@ export function panelizeCircuitJson(singleCircuitJson, params) {
             x: tabX,
             y: tabY + k * 0.7,
             hole_diameter: 0.5,
-            outer_diameter: 0.5
+            outer_diameter: 0.5,
+            layers: ["top", "bottom"]
           });
         }
       });
@@ -307,7 +308,8 @@ export function panelizeCircuitJson(singleCircuitJson, params) {
             x: tabX + k * 0.7,
             y: tabY,
             hole_diameter: 0.5,
-            outer_diameter: 0.5
+            outer_diameter: 0.5,
+            layers: ["top", "bottom"]
           });
         }
       });

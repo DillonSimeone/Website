@@ -3,10 +3,19 @@ import { isTraceRef, matchesDrcHighlight, resolveDrcTargets, drcItemText } from 
 
 // --- Custom 2D PCB Renderer (SVG-based, high performance, neon glows) ---
 export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered, drcHighlight }) {
+  const t0 = performance.now();
   const pcbComponents = circuitJson.filter(e => e.type === "pcb_component");
   const pcbPads = circuitJson.filter(e => e.type === "pcb_smtpad");
   const pcbTraces = circuitJson.filter(e => e.type === "pcb_trace");
   const sourceTraces = circuitJson.filter(e => e.type === "source_trace");
+  const sourceComponents = circuitJson.filter(e => e.type === "source_component");
+
+  // O(1) Map lookups to prevent massive O(N^2) CPU hang on large panel grids
+  const sourceTraceMap = new Map(sourceTraces.map(st => [st.source_trace_id, st]));
+  const pcbComponentMap = new Map(pcbComponents.map(c => [c.pcb_component_id, c]));
+  const sourceComponentMap = new Map(sourceComponents.map(sc => [sc.source_component_id, sc]));
+
+  console.log(`[2D Render Profiling] Prepared ${pcbTraces.length} traces, ${pcbPads.length} pads, ${pcbComponents.length} components. Map setup time: ${(performance.now() - t0).toFixed(1)}ms`);
 
   // Zoom and Drag Pan State for Interactive SVG Viewport
   const [transform, setTransform] = React.useState({ x: 0, y: 0, zoom: 1 });
@@ -16,6 +25,8 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
   const [hoveredItem, setHoveredItem] = React.useState(null);
   const [tooltipPos, setTooltipPos] = React.useState({ x: 0, y: 0 });
   const [drcPopup, setDrcPopup] = React.useState(null);
+
+  const isLargePanel = pcbTraces.length > 5000;
 
   const highlightRefs = drcHighlight?.refs ?? [];
 
@@ -110,7 +121,7 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
       }
     : null;
 
-  return (
+  const renderedElements = (
     React.createElement("div", { 
       className: "pcb-svg-container",
       ref: containerRef,
@@ -165,8 +176,9 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
         // 2. Render Copper Traces
         pcbTraces.map((trace, idx) => {
           if (!trace.route || trace.route.length < 2) return null;
+          if (isLargePanel && trace.pcb_trace_id && !trace.pcb_trace_id.startsWith("R0_C0_") && !trace.pcb_trace_id.startsWith("mb_via")) return null;
           
-          const srcTrace = sourceTraces.find(st => st.source_trace_id === trace.source_trace_id);
+          const srcTrace = sourceTraceMap.get(trace.source_trace_id);
           const netName = srcTrace?.name || "unknown net";
           const isDrcHot = traceHighlighted(highlightRefs, trace);
           
@@ -223,8 +235,9 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
             };
 
             const segWidth = toSvgDim(trace.width || 0.3) * (isDrcHot ? 1.6 : 1);
+            const showGlow = isTop && pcbTraces.length < 1000;
 
-            if (isTop) {
+            if (showGlow) {
               return React.createElement("g", { key: `trace-${idx}-${i}` },
                 React.createElement("line", {
                   ...lineProps,
@@ -240,7 +253,7 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
               return React.createElement("line", {
                 ...lineProps,
                 strokeWidth: segWidth,
-                strokeDasharray: strokeDash,
+                strokeDasharray: isTop ? "none" : strokeDash,
                 key: `trace-${idx}-${i}`
               });
             }
@@ -265,6 +278,7 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
 
         // 2.6. Render Standard Vias
         circuitJson.filter(e => e.type === "pcb_via" && !e.pcb_via_id?.startsWith("mb_via")).map((via, idx) => {
+          if (isLargePanel && via.pcb_via_id && !via.pcb_via_id.startsWith("R0_C0_")) return null;
           const cx = toSvgX(via.x || 0);
           const cy = toSvgY(via.y || 0);
           const outerR = toSvgDim(via.outer_diameter / 2);
@@ -302,6 +316,7 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
         // 2.7. Render Copper Pads
         pcbPads.map((pad, idx) => {
           if (pad.x === undefined || pad.y === undefined) return null;
+          if (isLargePanel && pad.pcb_smtpad_id && !pad.pcb_smtpad_id.startsWith("R0_C0_")) return null;
           const cx = toSvgX(pad.x);
           const cy = toSvgY(pad.y);
           const isDrcHot = matchesDrcHighlight(highlightRefs, "pcb_smtpad", pad.pcb_smtpad_id);
@@ -365,9 +380,8 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
 
         // 3. Render Components Outline & Labels
         (() => {
-          const srcComps2D = circuitJson.filter(e => e.type === "source_component");
           return pcbComponents.map((comp, idx) => {
-            const srcComp = srcComps2D.find(sc => sc.source_component_id === comp.source_component_id);
+            const srcComp = sourceComponentMap.get(comp.source_component_id);
             const designator = srcComp?.name || comp.pcb_component_id || "";
             if (!designator || designator === "board") return null;
             
@@ -432,14 +446,15 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
         (() => {
           const getComponentName = (pcbCompId) => {
             if (!pcbCompId) return "";
-            const comp = pcbComponents.find(c => c.pcb_component_id === pcbCompId);
+            const comp = pcbComponentMap.get(pcbCompId);
             if (!comp) return "";
-            const srcComp = circuitJson.find(e => e.type === "source_component" && e.source_component_id === comp.source_component_id);
+            const srcComp = sourceComponentMap.get(comp.source_component_id);
             return srcComp?.name || "";
           };
 
           return circuitJson.filter(e => {
             if (e.type !== "pcb_silkscreen_text") return false;
+            if (isLargePanel && e.pcb_silkscreen_text_id && !e.pcb_silkscreen_text_id.startsWith("R0_C0_")) return false;
             if (e.pcb_component_id) {
               const name = getComponentName(e.pcb_component_id);
               const cleanName = name.replace(/^R\d+_C\d+_/, "");
@@ -555,6 +570,9 @@ export function SVGPCBViewer({ circuitJson, boardWidth, boardHeight, onCentered,
       )
     )
   );
+
+  console.log(`[2D Render Profiling] Completed SVGPCBViewer render in ${(performance.now() - t0).toFixed(1)}ms`);
+  return renderedElements;
 }
 
 function traceHighlighted(refs, trace) {

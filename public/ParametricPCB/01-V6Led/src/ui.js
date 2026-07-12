@@ -135,8 +135,9 @@ export function PCBStudioApp() {
     setRoutingInputs(routingInputsFromState(state.routing));
   }, [state.ledCount, state.spacing, state.boardHeight, state.useMouseBites, state.panelRows, state.panelCols, state.sloganPhrases, state.sloganCount, state.routing]);
 
-  // Initialize and update the 3D viewport in the background as soon as 2D view reports centering is complete
+  // Initialize and update the 3D viewport ONLY when the 3D Model tab is active
   useEffect(() => {
+    if (state.showView !== "3d") return;
     if (!threeRef.current || !state.circuitJson) return;
     // On first load, wait for 2D centering before starting the heavy 3D build
     if (!isCentered && !threeInstanceRef.current) return;
@@ -150,7 +151,7 @@ export function PCBStudioApp() {
         setIsThreeLoaded(true);
       });
     })();
-  }, [isCentered, state.circuitJson]);
+  }, [isCentered, state.circuitJson, state.showView]);
 
   // Adjust camera aspect ratio and viewport size when tab transitions to active 3D view
   useEffect(() => {
@@ -270,6 +271,12 @@ export function PCBStudioApp() {
   const finalizePanelAndSlogans = async (curState, singleJson) => {
     let circuitJson = singleJson;
 
+    const tDrc = performance.now();
+    // Run DRC on the single board layout ONLY to keep check performance at O(N) relative to panel size
+    const drc = runManufacturingDrc(singleJson, curState.routing);
+    console.log(`[Compilation Profiling] DRC check completed in ${(performance.now() - tDrc).toFixed(1)}ms`);
+
+    const tPanel = performance.now();
     // Instantly panelize if enabled (millisecond copy-paste, no re-routing)
     if (curState.useMouseBites) {
       circuitJson = panelizeCircuitJson(circuitJson, {
@@ -279,13 +286,19 @@ export function PCBStudioApp() {
         panelCols: curState.panelCols
       });
     }
+    console.log(`[Compilation Profiling] Panelization completed in ${(performance.now() - tPanel).toFixed(1)}ms`);
 
+    const tSlogan = performance.now();
     // Stamp silkscreen slogans once copper/layout is ready
     const sloganResult = await applySlogansForState(circuitJson, curState);
     circuitJson = sloganResult.circuitJson;
-
-    const drc = runManufacturingDrc(circuitJson, curState.routing);
+    console.log(`[Compilation Profiling] Slogan stamping completed in ${(performance.now() - tSlogan).toFixed(1)}ms`);
     
+    const tBomPnp = performance.now();
+    const bomCsv = generateBOM(circuitJson);
+    const pnpCsv = generatePNP(circuitJson);
+    console.log(`[Compilation Profiling] BOM & PNP generation completed in ${(performance.now() - tBomPnp).toFixed(1)}ms`);
+
     appState.updateState({
       circuitJson,
       sloganPlacedCount: sloganResult.placedCount,
@@ -293,8 +306,8 @@ export function PCBStudioApp() {
       drcOk: drc.ok,
       drcErrors: drc.errors,
       drcWarnings: drc.warnings,
-      bomCsv: generateBOM(circuitJson),
-      pnpCsv: generatePNP(circuitJson),
+      bomCsv,
+      pnpCsv,
       gerberZip: true,
       isCompiling: false
     });

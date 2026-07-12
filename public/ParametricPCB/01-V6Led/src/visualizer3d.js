@@ -90,7 +90,7 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
       const offsetX = (c - (cols - 1) / 2) * (singleW + colGap);
       const subGeom = new THREE.BoxGeometry(singleW, 1.6, singleH);
       const subMesh = new THREE.Mesh(subGeom, pcbMat);
-      subMesh.position.set(offsetX, 0, offsetY);
+      subMesh.position.set(offsetX, 0, -offsetY);
       scene.add(subMesh);
     }
   }
@@ -106,11 +106,11 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
       const offsetY = (r - (rows - 1) / 2) * (singleH + rowGap);
       for (let c = 0; c < cols - 1; c++) {
         const tabX = (c - (cols - 1) / 2) * (singleW + colGap) + singleW / 2 + colGap / 2;
-        [offsetY - singleH / 3, offsetY, offsetY + singleH / 3].forEach(tabY => {
+        [offsetY - singleH / 4, offsetY + singleH / 4].forEach(tabY => {
           // Add tab bridge mesh
           const tabGeom = new THREE.BoxGeometry(colGap, 1.6, 1.0);
           const tabMesh = new THREE.Mesh(tabGeom, tabMat);
-          tabMesh.position.set(tabX, 0, tabY);
+          tabMesh.position.set(tabX, 0, -tabY);
           scene.add(tabMesh);
 
           // Render mousebite cylinder drill holes (unplated, dark)
@@ -118,7 +118,7 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
           for (let k = -1.5; k <= 1.5; k += 1.0) {
             const hGeom = new THREE.CylinderGeometry(0.25, 0.25, 1.62, 16);
             const hMesh = new THREE.Mesh(hGeom, holeMat);
-            hMesh.position.set(tabX, 0, tabY + k * 0.7);
+            hMesh.position.set(tabX, 0, -tabY + k * 0.7);
             scene.add(hMesh);
           }
         });
@@ -134,7 +134,7 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
           // Add tab bridge mesh
           const tabGeom = new THREE.BoxGeometry(1.0, 1.6, rowGap);
           const tabMesh = new THREE.Mesh(tabGeom, tabMat);
-          tabMesh.position.set(tabX, 0, tabY);
+          tabMesh.position.set(tabX, 0, -tabY);
           scene.add(tabMesh);
 
           // Render horizontal mousebite drill holes
@@ -142,7 +142,7 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
           for (let k = -1.5; k <= 1.5; k += 1.0) {
             const hGeom = new THREE.CylinderGeometry(0.25, 0.25, 1.62, 16);
             const hMesh = new THREE.Mesh(hGeom, holeMat);
-            hMesh.position.set(tabX + k * 0.7, 0, tabY);
+            hMesh.position.set(tabX + k * 0.7, 0, -tabY);
             scene.add(hMesh);
           }
         });
@@ -185,7 +185,10 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
   const tTraces0 = performance.now();
   const traces = state.circuitJson.filter(e => e.type === "pcb_trace");
   const sourceTraces = state.circuitJson.filter(e => e.type === "source_trace");
+  const sourceTraceMap = new Map(sourceTraces.map(st => [st.source_trace_id, st]));
   const traceGeometriesByMaterial = {};
+
+  const isLargePanel = traces.length > 5000;
 
   const queueTraceSegment = (pts, width, netName) => {
     const layer = pts[0].layer;
@@ -212,8 +215,9 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
 
   traces.forEach(trace => {
     if (!trace.route || trace.route.length < 2) return;
+    if (isLargePanel && trace.pcb_trace_id && !trace.pcb_trace_id.startsWith("R0_C0_")) return;
 
-    const srcTrace = sourceTraces.find(st => st.source_trace_id === trace.source_trace_id);
+    const srcTrace = sourceTraceMap.get(trace.source_trace_id);
     const netName = srcTrace?.name || "unknown net";
 
     let segment = [];
@@ -255,6 +259,7 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
   vias.forEach(via => {
     // Skip breakaway tab drill holes
     if (via.pcb_via_id?.startsWith("mb_via")) return;
+    if (isLargePanel && via.pcb_via_id && !via.pcb_via_id.startsWith("R0_C0_")) return;
 
     const vx = via.x || 0;
     const vy = via.y || 0;
@@ -281,9 +286,13 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
   const pcbPads = state.circuitJson.filter(e => e.type === "pcb_smtpad");
   const sourceComps = state.circuitJson.filter(e => e.type === "source_component");
 
+  const pcbComponentMap = new Map(pcbComponents.map(c => [c.pcb_component_id, c]));
+  const sourceComponentMap = new Map(sourceComps.map(sc => [sc.source_component_id, sc]));
+
   // Draw SMT Pads (drawn directly at absolute coordinates with correct shape rect/circle)
   pcbPads.forEach(pad => {
     if (pad.x === undefined || pad.y === undefined) return;
+    if (isLargePanel && pad.pcb_smtpad_id && !pad.pcb_smtpad_id.startsWith("R0_C0_")) return;
     
     let padGeom;
     const thickness = 0.03;
@@ -305,7 +314,7 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
   const ledGroups = [];
 
   pcbComponents.forEach(comp => {
-    const srcComp = sourceComps.find(sc => sc.source_component_id === comp.source_component_id);
+    const srcComp = sourceComponentMap.get(comp.source_component_id);
     const designator = srcComp?.name || comp.pcb_component_id || "";
     if (!designator || designator === "board") return;
 
@@ -356,15 +365,16 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
   // Helper to resolve the real component designator (e.g. U1, J_MID1) from a physical ID
   const getComponentName = (pcbCompId) => {
     if (!pcbCompId) return "";
-    const comp = pcbComponents.find(c => c.pcb_component_id === pcbCompId);
+    const comp = pcbComponentMap.get(pcbCompId);
     if (!comp) return "";
-    const srcComp = sourceComps.find(sc => sc.source_component_id === comp.source_component_id);
+    const srcComp = sourceComponentMap.get(comp.source_component_id);
     return srcComp?.name || "";
   };
 
   // Draw slogans and other compiled silkscreen texts onto the decal canvas (ignoring footprint-level stacked texts)
   const pcbTexts = state.circuitJson.filter(e => {
     if (e.type !== "pcb_silkscreen_text") return false;
+    if (isLargePanel && e.pcb_silkscreen_text_id && !e.pcb_silkscreen_text_id.startsWith("R0_C0_")) return false;
     if (e.pcb_component_id) {
       const name = getComponentName(e.pcb_component_id);
       const cleanName = name.replace(/^R\d+_C\d+_/, "");
@@ -377,7 +387,7 @@ export const initThreeJS = (container, state, threeInstanceRef, onLoaded) => {
 
   // Draw LED corner pin labels (+, -, I, O) onto the silkscreen decal canvas
   pcbComponents.forEach(comp => {
-    const srcComp = sourceComps.find(sc => sc.source_component_id === comp.source_component_id);
+    const srcComp = sourceComponentMap.get(comp.source_component_id);
     const designator = srcComp?.name || comp.pcb_component_id || "";
     if (!designator || designator === "board") return;
     
