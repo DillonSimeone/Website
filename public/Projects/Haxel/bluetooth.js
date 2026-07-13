@@ -1,0 +1,1319 @@
+import { Parser, tokenize, Evaluator, highlight, updateAudioState, pnoise1 } from './compiler.js';
+import { addSerialLog, triggerI2CBlink, updateHardwarePins, initBootLogs, serialConsole } from './emulator.js';
+import { PATTERNS, loadCustomPatterns, initPhoneHaptics } from './haptics.js';
+
+// ─── CANVAS REFS ────────────────────────────────────────────────────────────
+const prevCanvas = document.getElementById("prev");
+const prevCtx = prevCanvas.getContext("2d");
+const heroCanvas = document.getElementById("hero-canvas");
+const heroCtx = heroCanvas.getContext("2d");
+const specCanvas = document.getElementById("spectrum-canvas");
+const specCtx = specCanvas.getContext("2d");
+
+// ─── MAIN VARIABLES ─────────────────────────────────────────────────────────
+let activePattern = PATTERNS[0];
+let masterIntensity = 180; // 0-255
+let frequencyShift = 150; // Hz
+let playbackSpeed = 1.0;
+let isPlaying = true;
+let smoothedAmp = 0;
+let startupFloor = 0.15; // default 15%
+
+// Dynamic Audio Partitioning Bins Configuration
+const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let numBins = isMobileDevice ? 5 : 4;
+let dividers = isMobileDevice ? [5, 12, 22, 28] : [12, 22, 28];
+let draggingDividerIdx = -1;
+
+let timeSec = 0;
+const waveHistory = [];
+const colorHistory = [];
+const specHistory = [];
+const historyLen = 220;
+let telemetryMode = "classic";
+let isMotorStalled = false;
+let stallLogThrottle = 0;
+
+let audioCtx = null;
+let analyser = null;
+let micStream = null;
+let micSource = null;
+let dataArray = null;
+let useLiveMic = false;
+let smoothedAudioAmp = 0;
+
+// Phone haptics controller
+const phoneHaptics = initPhoneHaptics(addSerialLog);
+let lastPhoneVibrateTime = 0;
+
+function showMobileHapticGuide() {
+    const guide = document.getElementById("mobile-haptic-guide");
+    if (guide && isMobileDevice && navigator.vibrate) {
+        guide.style.display = "flex";
+        // Force reflow
+        guide.offsetHeight;
+        guide.style.transform = "translateY(0)";
+        guide.style.opacity = "1";
+        
+        // Hide after 3.5 seconds
+        clearTimeout(window.mobileGuideTimeout);
+        window.mobileGuideTimeout = setTimeout(() => {
+            guide.style.transform = "translateY(-100px)";
+            guide.style.opacity = "0";
+            setTimeout(() => {
+                guide.style.display = "none";
+            }, 400);
+        }, 3500);
+    }
+}
+
+// ─── HIGH-DPI CANVAS SHARPNESS HELPER ───────────────────────────────────────
+function setupSharpCanvas(canvas) {
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scale
+    ctx.scale(dpr, dpr);
+}
+
+// Initialize sharp canvases on load
+setupSharpCanvas(prevCanvas);
+setupSharpCanvas(heroCanvas);
+setupSharpCanvas(specCanvas);
+
+window.addEventListener("resize", () => {
+    setupSharpCanvas(prevCanvas);
+    setupSharpCanvas(heroCanvas);
+    setupSharpCanvas(specCanvas);
+});
+
+// Tab switching
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    ["play", "lib", "studio", "audio", "device"].forEach(id => {
+        const el = document.getElementById("tab-" + id);
+        if (el) el.style.display = (id === t.dataset.tab) ? "" : "none";
+    });
+    if (t.dataset.tab === "audio") {
+        setupSharpCanvas(specCanvas);
+        setupMicrophone();
+    } else {
+        stopMicrophone();
+    }
+    // Setup visible canvases
+    setupSharpCanvas(prevCanvas);
+    setupSharpCanvas(heroCanvas);
+}));
+
+// ─── EDITOR WIRING ──────────────────────────────────────────────────────────
+const ta = document.getElementById("ta");
+const hl = document.getElementById("hl");
+const gutter = document.getElementById("gutter");
+const compilerStatus = document.getElementById("compiler-status");
+const customPatternNameInput = document.getElementById("customPatternName");
+
+function syncHL() {
+    if (!ta) return;
+    const v = ta.value;
+    hl.innerHTML = highlight(v);
+    const lines = v.split("\n").length;
+    let g = ""; for (let i = 1; i <= lines; i++) g += i + "\n";
+    gutter.textContent = g;
+    hl.scrollTop  = ta.scrollTop;
+    hl.scrollLeft = ta.scrollLeft;
+}
+
+if (ta) {
+    ta.addEventListener("input", () => { 
+        syncHL(); 
+        compileCustom(); 
+        localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+    });
+    ta.addEventListener("scroll", () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; });
+    ta.addEventListener("keydown", (e) => {
+        if (e.key === "Tab") {
+            e.preventDefault();
+            const s = ta.selectionStart, en = ta.selectionEnd;
+            ta.value = ta.value.slice(0, s) + "    " + ta.value.slice(en);
+            ta.selectionStart = ta.selectionEnd = s + 4;
+            syncHL(); 
+            compileCustom();
+            localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+        }
+    });
+}
+
+// Presets
+const PRESETS = {
+    pulse: `/* Pulse Click preset */\nsquare(t * 5, 0.2)`,
+    saw: `/* Sawtooth Sweep preset */\nfrac(t * 1.8) * (intensity / 255)`,
+    pwm: `/* PWM Buzz preset */\nsin(t * 60) * 0.4 + 0.6`,
+    chaos: `/* Chaos Noise preset */\nnoise(t * 22) * wave(t * 3)`
+};
+document.querySelectorAll(".chip-preset").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const code = PRESETS[btn.dataset.template];
+        if (code) {
+            const start = ta.selectionStart;
+            const end = ta.selectionEnd;
+            const text = ta.value;
+            const separator = text.length > 0 && !text.endsWith("\n") ? "\n\n" : "";
+            ta.value = text.substring(0, start) + separator + code + "\n" + text.substring(end);
+            
+            const newCursorPos = start + separator.length + code.length + 1;
+            ta.selectionStart = ta.selectionEnd = newCursorPos;
+            
+            syncHL();
+            compileCustom();
+            isPlaying = true;
+            document.getElementById("dot").className = "portal-dot ok";
+            document.getElementById("connText").textContent = "playing";
+            localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+            
+            if (isMobileDevice && navigator.vibrate) {
+                phoneHaptics.setEnabled(true);
+                showMobileHapticGuide();
+            }
+        }
+    });
+});
+
+let customEvaluator = null;
+function compileCustom() {
+    if (!ta) return;
+    const src = ta.value;
+    try {
+        const ast = new Parser(tokenize(src)).parseProgram();
+        customEvaluator = new Evaluator(ast);
+        compilerStatus.textContent = "compiled ✓";
+        compilerStatus.className = "compilation-status ok";
+        addSerialLog("[IDE] Compiled custom pattern successfully!");
+    } catch (e) {
+        compilerStatus.textContent = "Error: " + e.message;
+        compilerStatus.className = "compilation-status err";
+    }
+}
+
+// ─── CONTROL BINDINGS ───────────────────────────────────────────────────────
+const brightInput = document.getElementById("bright");
+const brightVal = document.getElementById("brightVal");
+const freqInput = document.getElementById("freqShift");
+const freqVal = document.getElementById("freqVal");
+const speedInput = document.getElementById("speed");
+const speedVal = document.getElementById("speedVal");
+const floorSlider = document.getElementById("startFloor");
+const floorValLabel = document.getElementById("floorVal");
+
+const playBtn = document.getElementById("playBtn");
+const stopBtn = document.getElementById("stopBtn");
+const currentDriverText = document.getElementById("currentDriver");
+const currentActuatorText = document.getElementById("currentActuator");
+const drvSelect = document.getElementById("drvChip");
+const actSelect = document.getElementById("actuatorType");
+
+if (floorSlider) {
+    floorSlider.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        startupFloor = val / 100;
+        if (floorValLabel) floorValLabel.textContent = val + "%";
+        addSerialLog(`[HAL] Startup floor adjusted to ${val}% (${Math.round(val * 2.55)}/255)`);
+        triggerI2CBlink();
+        syncStateToESP32();
+    });
+}
+
+brightInput.addEventListener("input", (e) => {
+    masterIntensity = parseInt(e.target.value);
+    brightVal.textContent = Math.round((masterIntensity / 255) * 100) + "%";
+});
+brightInput.addEventListener("change", (e) => {
+    addSerialLog(`[BLE] Set Master Intensity to ${e.target.value} / 255`);
+    triggerI2CBlink();
+    syncStateToESP32();
+});
+
+freqInput.addEventListener("input", (e) => {
+    frequencyShift = parseInt(e.target.value);
+    freqVal.textContent = frequencyShift + " Hz";
+});
+freqInput.addEventListener("change", (e) => {
+    addSerialLog(`[BLE] Set Frequency Shift to ${e.target.value} Hz`);
+    triggerI2CBlink();
+    syncStateToESP32();
+});
+
+speedInput.addEventListener("input", (e) => {
+    playbackSpeed = parseFloat(e.target.value) / 10;
+    speedVal.textContent = playbackSpeed.toFixed(1) + "x";
+});
+speedInput.addEventListener("change", (e) => {
+    addSerialLog(`[BLE] Set Playback Speed to ${playbackSpeed.toFixed(1)}x`);
+    triggerI2CBlink();
+    syncStateToESP32();
+});
+
+playBtn.addEventListener("click", () => {
+    isPlaying = true;
+    document.getElementById("dot").className = "portal-dot ok";
+    document.getElementById("connText").textContent = "playing";
+    addSerialLog("[BLE] API Command: START pattern playback");
+    syncStateToESP32();
+    
+    if (isMobileDevice && navigator.vibrate) {
+        phoneHaptics.setEnabled(true);
+        showMobileHapticGuide();
+    }
+});
+
+stopBtn.addEventListener("click", () => {
+    isPlaying = false;
+    document.getElementById("dot").className = "portal-dot";
+    document.getElementById("connText").textContent = "idle";
+    addSerialLog("[BLE] API Command: STOP pattern playback");
+    syncStateToESP32();
+});
+
+const audioMinFreqInput = document.getElementById("audioMinFreq");
+const minFreqValLabel = document.getElementById("minFreqVal");
+const audioMaxFreqInput = document.getElementById("audioMaxFreq");
+const maxFreqValLabel = document.getElementById("maxFreqVal");
+const audioGainInput = document.getElementById("audioGain");
+const gainValLabel = document.getElementById("gainVal");
+
+if (audioGainInput) {
+    audioGainInput.addEventListener("input", (e) => {
+        if (gainValLabel) gainValLabel.textContent = parseFloat(e.target.value).toFixed(1) + "x";
+    });
+}
+
+function recalculateDividers() {
+    const minFreq = parseFloat(audioMinFreqInput ? audioMinFreqInput.value : 40);
+    const maxFreq = parseFloat(audioMaxFreqInput ? audioMaxFreqInput.value : 16000);
+    
+    const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+    const minBandIdx = getBandAtFreq(minFreq);
+    const maxBandIdx = getBandAtFreq(maxFreq);
+    
+    const numDividers = numBins - 1;
+    if (numDividers >= 1) {
+        dividers = new Array(numDividers);
+        dividers[0] = minBandIdx;
+        if (numDividers > 1) {
+            dividers[numDividers - 1] = maxBandIdx;
+            for (let i = 1; i < numDividers - 1; i++) {
+                const ratio = i / (numDividers - 1);
+                dividers[i] = Math.round(minBandIdx + ratio * (maxBandIdx - minBandIdx));
+            }
+        }
+    }
+    
+    for (let i = 0; i < dividers.length; i++) {
+        if (i > 0 && dividers[i] <= dividers[i - 1]) {
+            dividers[i] = dividers[i - 1] + 1;
+        }
+    }
+    for (let i = dividers.length - 1; i >= 0; i--) {
+        if (dividers[i] >= 32) dividers[i] = 31;
+        if (i < dividers.length - 1 && dividers[i] >= dividers[i + 1]) {
+            dividers[i] = dividers[i + 1] - 1;
+        }
+    }
+    
+    renderBinRows();
+    syncStateToESP32();
+}
+
+if (audioMinFreqInput) {
+    audioMinFreqInput.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        if (minFreqValLabel) minFreqValLabel.textContent = val + " Hz";
+    });
+    audioMinFreqInput.addEventListener("change", () => {
+        recalculateDividers();
+    });
+}
+
+if (audioMaxFreqInput) {
+    audioMaxFreqInput.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        if (maxFreqValLabel) maxFreqValLabel.textContent = val + " Hz";
+    });
+    audioMaxFreqInput.addEventListener("change", () => {
+        recalculateDividers();
+    });
+}
+
+drvSelect.addEventListener("change", (e) => {
+    currentDriverText.textContent = e.target.value;
+    addSerialLog(`[HAL] Driver reconfigured to: ${e.target.value}`);
+    triggerI2CBlink();
+    // Save/Sync config
+    sendConfigUpdate({ driver: { kind: getDriverKindEnum(e.target.value) } });
+});
+
+actSelect.addEventListener("change", (e) => {
+    const act = e.target.value;
+    currentActuatorText.textContent = act;
+    if (act === "LRA" || act === "ERM") {
+        drvSelect.value = "DRV2605L";
+    } else if (act === "Solenoid") {
+        drvSelect.value = "DRV8833";
+    }
+    currentDriverText.textContent = drvSelect.value;
+    addSerialLog(`[HAL] Actuator mapped to: ${act} (Driver: ${drvSelect.value})`);
+    triggerI2CBlink();
+    sendConfigUpdate({ driver: { kind: getDriverKindEnum(drvSelect.value) } });
+});
+
+function getDriverKindEnum(kindStr) {
+    if (kindStr === "DRV2605L") return 0;
+    if (kindStr === "DRV8833") return 1;
+    if (kindStr === "L298N") return 2;
+    if (kindStr === "MOSFET") return 3;
+    return 0;
+}
+
+// ─── PATTERN LIBRARY CARD RENDER ─────────────────────────────────────────────
+const libCards = document.getElementById("libCards");
+const chips = document.querySelectorAll(".chip");
+
+function renderCards(filterTag = "all") {
+    if (!libCards) return;
+    libCards.innerHTML = "";
+    PATTERNS.forEach(pat => {
+        if (filterTag !== "all" && pat.category !== filterTag) return;
+        
+        const card = document.createElement("div");
+        card.className = `card-item ${pat.id === activePattern.id ? "active" : ""}`;
+        
+        let actionsHtml = "";
+        if (pat.isCustom) {
+            actionsHtml += `<button class="btn-delete-pat" title="Delete custom pattern">&times;</button>`;
+        }
+        if (pat.code) {
+            actionsHtml += `<button class="btn-edit-pat" title="Edit in Studio">EDIT</button>`;
+        }
+        
+        card.innerHTML = `
+            <div>
+                <h4>${pat.name} ${pat.isCustom ? '<span class="badge-custom">Custom</span>' : ''}</h4>
+                <p>${pat.desc}</p>
+            </div>
+            <div class="card-actions-row">
+                ${actionsHtml}
+            </div>
+        `;
+        
+        card.addEventListener("click", () => {
+            activePattern = pat;
+            document.querySelectorAll(".card-item").forEach(c => c.classList.remove("active"));
+            card.classList.add("active");
+            document.getElementById("patternName").textContent = pat.name;
+            isPlaying = true;
+            document.getElementById("dot").className = "portal-dot ok";
+            document.getElementById("connText").textContent = "playing";
+            addSerialLog(`[HAL] Loaded library pattern: "${pat.name}"`);
+            
+            if (pat.isCustom && pat.code) {
+                ta.value = pat.code;
+                syncHL();
+                compileCustom();
+            }
+            syncStateToESP32();
+
+            if (isMobileDevice && navigator.vibrate) {
+                phoneHaptics.setEnabled(true);
+                showMobileHapticGuide();
+            }
+        });
+        
+        const editBtn = card.querySelector(".btn-edit-pat");
+        if (editBtn) {
+            editBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                ta.value = pat.code;
+                customPatternNameInput.value = pat.name;
+                syncHL();
+                compileCustom();
+                document.querySelector('.tab[data-tab="studio"]').click();
+                isPlaying = true;
+                document.getElementById("dot").className = "portal-dot ok";
+                document.getElementById("connText").textContent = "playing";
+                document.getElementById("patternName").textContent = `${pat.name} (Studio)`;
+                localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+
+                if (isMobileDevice && navigator.vibrate) {
+                    phoneHaptics.setEnabled(true);
+                    showMobileHapticGuide();
+                }
+            });
+        }
+        
+        const del = card.querySelector(".btn-delete-pat");
+        if (del) {
+            del.addEventListener("click", (e) => {
+                deleteCustomPattern(pat.id, e);
+            });
+        }
+        
+        libCards.appendChild(card);
+    });
+    populateBinPatternSelects();
+}
+
+function deleteCustomPattern(id, event) {
+    event.stopPropagation();
+    if (!confirm("Delete this custom pattern?")) return;
+    
+    const idx = PATTERNS.findIndex(p => p.id === id);
+    if (idx >= 0) PATTERNS.splice(idx, 1);
+    
+    const raw = localStorage.getItem("HAXEL_CUSTOM_PATTERNS");
+    if (raw) {
+        try {
+            let list = JSON.parse(raw);
+            list = list.filter(p => p.id !== id);
+            localStorage.setItem("HAXEL_CUSTOM_PATTERNS", JSON.stringify(list));
+        } catch (e) {}
+    }
+    
+    if (rxCharacteristic) {
+        const payload = JSON.stringify({ type: "deletePattern", id: id });
+        const encoder = new TextEncoder();
+        rxCharacteristic.writeValueWithoutResponse(encoder.encode(payload))
+            .then(() => addSerialLog(`[BLE] Sent delete custom pattern request for ${id}`))
+            .catch(err => addSerialLog(`[BLE] [ERROR] Failed to send delete pattern: ${err.message}`));
+    }
+    
+    activePattern = PATTERNS[0];
+    document.getElementById("patternName").textContent = activePattern.name;
+    addSerialLog(`[IDE] Deleted custom pattern ${id}`);
+    renderCards();
+}
+
+chips.forEach(chip => chip.addEventListener("click", () => {
+    chips.forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    renderCards(chip.dataset.tag);
+}));
+
+document.querySelectorAll(".telemetry-toggle-btn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".telemetry-toggle-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    telemetryMode = btn.dataset.mode;
+    addSerialLog(`[IDE] Telemetry mode switched to: ${telemetryMode.toUpperCase()}`);
+    
+    if (telemetryMode === "waterfall") {
+        const audioTab = document.querySelector('.tab[data-tab="audio"]');
+        if (audioTab) audioTab.click();
+    }
+}));
+
+// LocalStorage Custom Patterns Save Handler
+const savePatternBtn = document.getElementById("savePatternBtn");
+if (savePatternBtn) {
+    savePatternBtn.addEventListener("click", () => {
+        const name = customPatternNameInput.value.trim() || "My Waveform";
+        const code = ta.value;
+        const id = "custom_" + Date.now();
+        
+        try {
+            const ast = new Parser(tokenize(code)).parseProgram();
+            const evalr = new Evaluator(ast);
+            
+            const raw = localStorage.getItem("HAXEL_CUSTOM_PATTERNS");
+            const list = raw ? JSON.parse(raw) : [];
+            list.push({ id, name, code });
+            localStorage.setItem("HAXEL_CUSTOM_PATTERNS", JSON.stringify(list));
+            
+            const newPat = {
+                id,
+                name,
+                category: "custom",
+                desc: "User defined JavaScript math pattern.",
+                isCustom: true,
+                code,
+                func: (t) => evalr.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+            };
+            PATTERNS.push(newPat);
+            activePattern = newPat;
+            document.getElementById("patternName").textContent = name;
+            
+            addSerialLog(`[IDE] Saved new custom pattern: "${name}"`);
+            
+            if (rxCharacteristic) {
+                const payload = JSON.stringify({ type: "savePattern", id, name, code });
+                const encoder = new TextEncoder();
+                rxCharacteristic.writeValueWithoutResponse(encoder.encode(payload))
+                    .then(() => addSerialLog(`[BLE] Sent save custom pattern request for "${name}"`))
+                    .catch(err => addSerialLog(`[BLE] [ERROR] Failed to send save pattern: ${err.message}`));
+            }
+            
+            renderCards();
+            document.querySelector('.tab[data-tab="lib"]').click();
+        } catch (e) {
+            alert("Cannot save pattern. Code has compilation errors!");
+        }
+    });
+}
+
+// ─── AUDIO SYSTEM ───────────────────────────────────────────────────────────
+async function setupMicrophone() {
+    if (useLiveMic) return;
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256; // 128 bands
+        
+        micStream = stream;
+        micSource = audioCtx.createMediaStreamSource(stream);
+        micSource.connect(analyser);
+        
+        const bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+        
+        useLiveMic = true;
+        document.getElementById("micSrc").value = "1";
+        setupSharpCanvas(specCanvas);
+        addSerialLog("[AUDIO] I2S Microphone Stream Connected");
+    } catch (err) {
+        console.warn("Microphone access denied:", err);
+        document.getElementById("micSrc").value = "0";
+        addSerialLog("[AUDIO] [ERROR] Failed to bind I2S Microphone");
+    }
+}
+
+function stopMicrophone() {
+    if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+        micStream = null;
+    }
+    if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+    }
+    useLiveMic = false;
+    document.getElementById("micSrc").value = "0";
+    addSerialLog("[AUDIO] I2S Microphone Stream Closed");
+}
+
+const micSrcSelect = document.getElementById("micSrc");
+if (micSrcSelect) {
+    micSrcSelect.addEventListener("change", (e) => {
+        if (e.target.value === "1") {
+            setupMicrophone();
+        } else {
+            stopMicrophone();
+        }
+    });
+}
+
+// ─── SPECTRUM ROUTING MATRIX GENERATION ─────────────────────────────────────
+const routingMatrix = document.getElementById("routingMatrix");
+function renderBinRows() {
+    if (!routingMatrix) return;
+    routingMatrix.innerHTML = "";
+    
+    for (let i = 0; i < numBins; ++i) {
+        const row = document.createElement("div");
+        row.className = "routing-row";
+        
+        let rangeStr = "";
+        const getFreqAtBand = (idx) => Math.round(40 * Math.pow(20000 / 40, idx / 32));
+        const lowIdx = (i === 0) ? 0 : dividers[i - 1];
+        const highIdx = (i === numBins - 1) ? 31 : dividers[i];
+        rangeStr = `${getFreqAtBand(lowIdx)}-${getFreqAtBand(highIdx)} Hz`;
+        
+        row.innerHTML = `
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <span class="bin-title" style="font-weight: bold; font-size: 11px;">BIN ${String(i).padStart(2, '0')}</span>
+                <span class="bin-freq-label" style="font-size: 10px; color: #555;">${rangeStr}</span>
+            </div>
+            
+            <div class="bin-divider-handles" style="display: flex; gap: 4px; align-items: center; margin-right: 15px;">
+                ${i < numBins - 1 ? `<button class="btn-div-adj down" data-div="${i}">&lt;</button><span class="div-val">${dividers[i]}</span><button class="btn-div-adj up" data-div="${i}">&gt;</button>` : ''}
+            </div>
+
+            <div style="flex: 2; display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                <label style="font-size: 10px;">Pattern:</label>
+                <select class="bin-pattern-select" id="bin-${i}-pattern" style="padding: 4px; font-family: var(--font-display); font-size: 10px;">
+                    <option value="none">None (Muted)</option>
+                </select>
+            </div>
+        `;
+        
+        routingMatrix.appendChild(row);
+    }
+
+    document.querySelectorAll(".btn-div-adj").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const divIdx = parseInt(btn.dataset.div);
+            const isUp = btn.classList.contains("up");
+            
+            let val = dividers[divIdx];
+            if (isUp) val++; else val--;
+            
+            const min = (divIdx === 0) ? 1 : dividers[divIdx - 1] + 1;
+            const max = (divIdx === dividers.length - 1) ? 30 : dividers[divIdx + 1] - 1;
+            
+            if (val >= min && val <= max) {
+                dividers[divIdx] = val;
+                recalculateDividers();
+            }
+        });
+    });
+
+    populateBinPatternSelects();
+    
+    document.querySelectorAll(".bin-pattern-select").forEach(sel => {
+        sel.addEventListener("change", () => {
+            syncStateToESP32();
+        });
+    });
+}
+
+function populateBinPatternSelects() {
+    for (let i = 0; i < numBins; ++i) {
+        const sel = document.getElementById(`bin-${i}-pattern`);
+        if (!sel) continue;
+        
+        const oldVal = sel.value;
+        sel.innerHTML = `<option value="none">None (Muted)</option>`;
+        PATTERNS.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.id;
+            opt.textContent = p.name;
+            sel.appendChild(opt);
+        });
+        
+        if (Array.from(sel.options).some(o => o.value === oldVal)) {
+            sel.value = oldVal;
+        } else {
+            if (i === 0) sel.value = "Pulse";
+            else if (i === 1) sel.value = "Sawtooth";
+            else sel.value = "none";
+        }
+    }
+}
+
+renderBinRows();
+
+// ─── WEB BLUETOOTH INTEGRATION ───────────────────────────────────────────────
+let bleDevice = null;
+let rxCharacteristic = null;
+let txCharacteristic = null;
+
+const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+document.getElementById('bleConnectBtn').addEventListener('click', async () => {
+    if (bleDevice && bleDevice.gatt.connected) {
+        disconnectBLE();
+        return;
+    }
+    await connectBLE();
+});
+
+async function connectBLE() {
+    const dot = document.getElementById("dot");
+    const connText = document.getElementById("connText");
+    const connectBtn = document.getElementById("bleConnectBtn");
+    const bleStatus = document.getElementById("bleStatusLabel");
+    
+    addSerialLog("[BLE] Requesting Bluetooth Device...");
+    try {
+        bleDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'Haxel' }],
+            optionalServices: [HAXEL_SERVICE_UUID]
+        });
+        
+        addSerialLog(`[BLE] Found: ${bleDevice.name}. Connecting to GATT Server...`);
+        dot.className = "portal-dot";
+        connText.textContent = "connecting...";
+        
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+        
+        const server = await bleDevice.gatt.connect();
+        addSerialLog("[BLE] Connected! Getting Service...");
+        
+        const service = await server.getPrimaryService(HAXEL_SERVICE_UUID);
+        addSerialLog("[BLE] Service found. Getting Characteristics...");
+        
+        rxCharacteristic = await service.getCharacteristic(RX_CHAR_UUID);
+        txCharacteristic = await service.getCharacteristic(TX_CHAR_UUID);
+        
+        addSerialLog("[BLE] Starting Notifications...");
+        await txCharacteristic.startNotifications();
+        txCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
+        
+        dot.className = "portal-dot ok";
+        connText.textContent = "connected";
+        if (bleStatus) bleStatus.textContent = "Connected";
+        connectBtn.textContent = "DISCONNECT BLE";
+        connectBtn.style.backgroundColor = "var(--bauhaus-red)";
+        addSerialLog("[BLE] Bluetooth connection fully established!");
+        
+        // Request current status
+        sendStateUpdate({ getStatus: true });
+        
+    } catch (err) {
+        addSerialLog(`[BLE] [ERROR] Connection failed: ${err.message}`);
+        dot.className = "portal-dot error";
+        connText.textContent = "error";
+        if (bleStatus) bleStatus.textContent = "Failed";
+        connectBtn.textContent = "CONNECT BLE";
+        connectBtn.style.backgroundColor = "";
+    }
+}
+
+function disconnectBLE() {
+    if (bleDevice) {
+        addSerialLog("[BLE] Disconnecting...");
+        bleDevice.gatt.disconnect();
+    }
+}
+
+function onDisconnected() {
+    const dot = document.getElementById("dot");
+    const connText = document.getElementById("connText");
+    const connectBtn = document.getElementById("bleConnectBtn");
+    const bleStatus = document.getElementById("bleStatusLabel");
+    
+    dot.className = "portal-dot";
+    connText.textContent = "disconnected";
+    if (bleStatus) bleStatus.textContent = "Disconnected";
+    if (connectBtn) {
+        connectBtn.textContent = "CONNECT BLE";
+        connectBtn.style.backgroundColor = "";
+    }
+    rxCharacteristic = null;
+    txCharacteristic = null;
+    addSerialLog("[BLE] Disconnected from device.");
+}
+
+function handleNotification(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder();
+    const str = decoder.decode(value);
+    
+    try {
+        const m = JSON.parse(str);
+        if (m.type === 'state' && m.data) {
+            const s = m.data;
+            if (s.intensity !== undefined) {
+                masterIntensity = Math.round(s.intensity * 255);
+                const el = document.getElementById("bright");
+                if (el && !el.matches(':active')) {
+                    el.value = masterIntensity;
+                    const vLabel = document.getElementById("brightVal");
+                    if (vLabel) vLabel.textContent = Math.round((masterIntensity/255)*100) + "%";
+                }
+            }
+            if (s.speed !== undefined) {
+                playbackSpeed = s.speed;
+                const el = document.getElementById("speed");
+                if (el && !el.matches(':active')) {
+                    el.value = Math.round(playbackSpeed * 10);
+                    const vLabel = document.getElementById("speedVal");
+                    if (vLabel) vLabel.textContent = playbackSpeed.toFixed(1) + "x";
+                }
+            }
+            if (s.startupFloor !== undefined) {
+                startupFloor = s.startupFloor;
+                const el = document.getElementById("startFloor");
+                if (el && !el.matches(':active')) {
+                    el.value = Math.round(startupFloor * 100);
+                    const vLabel = document.getElementById("floorVal");
+                    if (vLabel) vLabel.textContent = Math.round(startupFloor * 100) + "%";
+                }
+            }
+            if (s.numBins !== undefined) {
+                numBins = s.numBins;
+                if (s.dividers) dividers = s.dividers.slice();
+                renderBinRows();
+            }
+            if (s.pattern) {
+                const p = PATTERNS.find(pat => pat.id === s.pattern);
+                if (p) {
+                    activePattern = p;
+                    const vLabel = document.getElementById("patternName");
+                    if (vLabel) vLabel.textContent = p.name;
+                }
+            }
+            if (s.uptime_ms !== undefined) {
+                const uptimeText = document.getElementById("uptime");
+                if (uptimeText) {
+                    uptimeText.textContent = Math.floor(s.uptime_ms / 1000) + "s";
+                }
+            }
+        }
+    } catch (e) {
+        console.error("BLE Notification Parse Error:", e);
+    }
+}
+
+function throttle(fn, ms) {
+    let last = 0, timer = null;
+    return function(...args) {
+        const now = Date.now();
+        if (now - last >= ms) {
+            last = now;
+            fn.apply(this, args);
+        } else {
+            clearTimeout(timer);
+            timer = setTimeout(() => { last = Date.now(); fn.apply(this, args); }, ms - (now - last));
+        }
+    };
+}
+
+const sendStateUpdate = throttle(async (patch) => {
+    if (!rxCharacteristic) return;
+    try {
+        const payload = JSON.stringify({ type: "state", patch: patch });
+        const encoder = new TextEncoder();
+        const data = encoder.encode(payload);
+        await rxCharacteristic.writeValueWithoutResponse(data);
+    } catch (err) {
+        console.error("BLE State Write Error:", err);
+    }
+}, 100);
+
+async function sendConfigUpdate(configPatch) {
+    if (!rxCharacteristic) return;
+    try {
+        const payload = JSON.stringify({ type: "config", patch: configPatch });
+        const encoder = new TextEncoder();
+        const data = encoder.encode(payload);
+        await rxCharacteristic.writeValueWithoutResponse(data);
+        addSerialLog(`[BLE] Sent config update to ESP32: ${JSON.stringify(configPatch)}`);
+    } catch (err) {
+        console.error("BLE Config Write Error:", err);
+    }
+}
+
+function syncStateToESP32() {
+    sendStateUpdate({
+        on: isPlaying,
+        intensity: masterIntensity / 255,
+        speed: playbackSpeed,
+        startupFloor: startupFloor,
+        pattern: activePattern ? activePattern.id : "",
+        numBins: numBins,
+        dividers: dividers,
+        binPatterns: Array.from({length: numBins}).map((_, i) => {
+            const el = document.getElementById(`bin-${i}-pattern`);
+            return el ? el.value : "none";
+        })
+    });
+}
+
+// ─── ANIMATION / EMULATOR RENDER LOOP ─────────────────────────────────────────
+function drawVirtualActuator(ctx, cx, cy, radius, amp) {
+    ctx.fillStyle = "#111111";
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius - 4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const maxOffset = 18 * amp;
+    const angle = timeSec * 35; // Resonant frequency visual oscillation
+    const ox = Math.cos(angle) * maxOffset;
+    const oy = Math.sin(angle) * maxOffset;
+
+    ctx.fillStyle = "#e23b24";
+    ctx.beginPath();
+    ctx.arc(cx + ox, cy + oy, radius * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(cx + ox - 4, cy + oy - 4, 3, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    timeSec += 0.0167 * playbackSpeed;
+    
+    // Evaluate active pattern haptic value
+    let amp = 0;
+    if (isPlaying && activePattern) {
+        if (activePattern.isCustom && customEvaluator) {
+            try {
+                amp = customEvaluator.run(timeSec, frequencyShift, playbackSpeed, masterIntensity, startupFloor);
+            } catch (e) {
+                amp = 0;
+            }
+        } else if (activePattern.func) {
+            amp = activePattern.func(timeSec);
+        }
+        
+        if (amp < 0) amp = 0;
+        if (amp > 1) amp = 1;
+    }
+    
+    // Handle audio reactivity input mapping if enabled
+    let mags = null;
+    if (useLiveMic && analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        mags = new Array(32).fill(0);
+        
+        // Logarithmic downsampling to 32 bands
+        for (let i = 0; i < 32; ++i) {
+            const startBand = Math.floor(Math.pow(128, i / 32));
+            const endBand = Math.floor(Math.pow(128, (i + 1) / 32));
+            let maxVal = 0;
+            for (let j = startBand; j < endBand; ++j) {
+                if (dataArray[j] > maxVal) maxVal = dataArray[j];
+            }
+            mags[i] = maxVal / 255;
+        }
+
+        // Apply audio reactivity routing matrix
+        let finalAudioAmp = 0;
+        for (let b = 0; b < numBins; ++b) {
+            const sel = document.getElementById(`bin-${b}-pattern`);
+            const pId = sel ? sel.value : "none";
+            if (pId !== "none") {
+                const lowIdx = (b === 0) ? 0 : dividers[b - 1];
+                const highIdx = (b === numBins - 1) ? 31 : dividers[b];
+                
+                let binSum = 0, count = 0;
+                for (let j = lowIdx; j <= highIdx; ++j) {
+                    binSum += mags[j];
+                    count++;
+                }
+                const binAvg = (count > 0) ? (binSum / count) : 0;
+                
+                const gain = parseFloat(audioGainInput ? audioGainInput.value : 15) / 10;
+                const routedAmp = Math.min(1.0, binAvg * gain);
+                if (routedAmp > finalAudioAmp) {
+                    finalAudioAmp = routedAmp;
+                }
+            }
+        }
+        
+        const gainVal = parseFloat(audioGainInput ? audioGainInput.value : 15) / 10;
+        smoothedAudioAmp += (finalAudioAmp - smoothedAudioAmp) * 0.15;
+        
+        if (isPlaying) {
+            amp = amp * (1.0 - smoothedAudioAmp) + (smoothedAudioAmp * amp);
+        } else {
+            amp = finalAudioAmp;
+        }
+    }
+    
+    smoothedAmp += (amp - smoothedAmp) * 0.22;
+    
+    // Virtual Motor Stall Detection Warn
+    if (isPlaying && amp > 0 && amp < 0.12 && startupFloor < 0.12) {
+        if (++stallLogThrottle % 180 === 0) {
+            addSerialLog("[EMU] [WARNING] Motor drawing current below stiction threshold. Stalling risk!");
+        }
+        isMotorStalled = true;
+    } else {
+        isMotorStalled = false;
+    }
+
+    // Trigger Phone Haptic Vibration if active
+    if (isPlaying && amp > 0.05) {
+        const now = Date.now();
+        if (now - lastPhoneVibrateTime > 60) {
+            const intensityScaled = Math.round(amp * 255);
+            phoneHaptics.vibrate(intensityScaled);
+            lastPhoneVibrateTime = now;
+        }
+    }
+
+    // Render visualizers
+    renderVisualizer(mags);
+}
+
+function renderVisualizer(mags) {
+    const isAudioTab = (document.getElementById("tab-audio").style.display !== "none");
+    
+    waveHistory.push(smoothedAmp);
+    if (waveHistory.length > historyLen) waveHistory.shift();
+    
+    let activeColor = "rgba(0, 47, 108, 0.25)";
+    if (isAudioTab && mags) {
+        const sortedBins = Array.from({length: 32}, (_, idx) => ({index: idx, val: mags[idx]}))
+            .sort((a, b) => b.val - a.val);
+        const top3 = sortedBins.slice(0, 3);
+        const hue1 = (top3[0].index / 31) * 280;
+        const hue2 = (top3[1].index / 31) * 280;
+        const hue3 = (top3[2].index / 31) * 280;
+        const avgHue = (hue1 + hue2 + hue3) / 3;
+        activeColor = `hsl(${avgHue}, 85%, 45%)`;
+    }
+    colorHistory.push(activeColor);
+    if (colorHistory.length > historyLen) colorHistory.shift();
+    
+    specHistory.push(mags ? [...mags] : new Array(32).fill(0));
+    if (specHistory.length > historyLen) specHistory.shift();
+    
+    updateHardwarePins(smoothedAmp, isMotorStalled);
+
+    // Draw telemetry
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = prevCanvas.width / dpr;
+    const cssH = prevCanvas.height / dpr;
+
+    prevCtx.fillStyle = "#f4ebd0";
+    prevCtx.fillRect(0, 0, cssW, cssH);
+    
+    drawVirtualActuator(prevCtx, 60, cssH / 2, 36, smoothedAmp);
+    
+    prevCtx.fillStyle = "#f4ebd0";
+    prevCtx.fillRect(120, 0, cssW - 120, cssH);
+    
+    prevCtx.strokeStyle = "#111111";
+    prevCtx.lineWidth = 4;
+    prevCtx.beginPath();
+    prevCtx.moveTo(120, 0);
+    prevCtx.lineTo(120, cssH);
+    prevCtx.stroke();
+
+    prevCtx.strokeStyle = "rgba(17, 17, 17, 0.08)";
+    prevCtx.lineWidth = 1;
+    for (let x = 120; x < cssW; x += 40) {
+        prevCtx.beginPath();
+        prevCtx.moveTo(x, 0);
+        prevCtx.lineTo(x, cssH);
+        prevCtx.stroke();
+    }
+    for (let y = 30; y < cssH; y += 30) {
+        prevCtx.beginPath();
+        prevCtx.moveTo(120, y);
+        prevCtx.lineTo(cssW, y);
+        prevCtx.stroke();
+    }
+    
+    if (isMotorStalled) {
+        prevCtx.fillStyle = "#e23b24";
+        prevCtx.font = "bold 11px Inter";
+        prevCtx.textAlign = "center";
+        prevCtx.fillText("MOTOR STALLED", 180, 25);
+    }
+
+    if (waveHistory.length > 1) {
+        const startX = 120;
+        const width = cssW - startX;
+        const step = width / (historyLen - 1);
+        
+        if (telemetryMode === "classic") {
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (cssH - 20);
+                const h2 = waveHistory[i + 1] * (cssH - 20);
+                const x1 = startX + i * step;
+                const x2 = startX + (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                }
+                prevCtx.fillStyle = fillCol;
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, cssH - 10);
+                prevCtx.lineTo(x1, cssH - 10 - h1);
+                prevCtx.lineTo(x2, cssH - 10 - h2);
+                prevCtx.lineTo(x2, cssH - 10);
+                prevCtx.closePath();
+                prevCtx.fill();
+                
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, cssH - 10 - h1);
+                prevCtx.lineTo(x2, cssH - 10 - h2);
+                prevCtx.stroke();
+            }
+        } else if (telemetryMode === "symmetric") {
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (cssH - 20);
+                const h2 = waveHistory[i + 1] * (cssH - 20);
+                const x1 = startX + i * step;
+                const x2 = startX + (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                }
+                prevCtx.fillStyle = fillCol;
+                
+                const y1_top = cssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_top = cssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                const y1_bot = cssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_bot = cssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1_top - h1 / 2);
+                prevCtx.lineTo(x2, y2_top - h2 / 2);
+                prevCtx.lineTo(x2, y2_bot + h2 / 2);
+                prevCtx.lineTo(x1, y1_bot + h1 / 2);
+                prevCtx.closePath();
+                prevCtx.fill();
+                
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1_top - h1 / 2);
+                prevCtx.lineTo(x2, y2_top - h2 / 2);
+                prevCtx.stroke();
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x2, y2_bot + h2 / 2);
+                prevCtx.lineTo(x1, y1_bot + h1 / 2);
+                prevCtx.stroke();
+            }
+        } else if (telemetryMode === "waterfall") {
+            const cellH = (cssH - 20) / 32;
+            for (let i = 0; i < specHistory.length; i++) {
+                const x = startX + i * step;
+                const spec = specHistory[i];
+                for (let j = 0; j < 32; j++) {
+                    const val = spec ? spec[j] : 0;
+                    if (val > 0.01) {
+                        const hue = (j / 31) * 280;
+                        prevCtx.fillStyle = `hsla(${hue}, 85%, 45%, ${val * 0.75})`;
+                        prevCtx.fillRect(x, cssH - 10 - (j + 1) * cellH, step + 1, cellH + 0.5);
+                    }
+                }
+            }
+        } else if (telemetryMode === "orbit") {
+            const cx = startX + width / 2;
+            const cy = cssH / 2;
+            
+            prevCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+            prevCtx.lineWidth = 2;
+            prevCtx.beginPath();
+            prevCtx.arc(cx, cy, (cssH - 30) * 0.25, 0, Math.PI * 2);
+            prevCtx.stroke();
+            
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const amp1 = waveHistory[i];
+                const amp2 = waveHistory[i + 1];
+                
+                const angle1 = (i / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
+                const angle2 = ((i + 1) / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
+                
+                const baseR = (cssH - 30) * 0.28;
+                const r1 = baseR + amp1 * baseR * 0.8;
+                const r2 = baseR + amp2 * baseR * 0.8;
+                
+                const x1 = cx + Math.cos(angle1) * r1;
+                const y1 = cy + Math.sin(angle1) * r1;
+                const x2 = cx + Math.cos(angle2) * r2;
+                const y2 = cy + Math.sin(angle2) * r2;
+                
+                let strokeCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                const alpha = (i / (waveHistory.length - 1)) * 0.8;
+                if (strokeCol.startsWith("hsl")) {
+                    strokeCol = strokeCol.replace("hsl", "hsla").replace(")", `, ${alpha})`);
+                } else {
+                    strokeCol = `rgba(0, 47, 108, ${alpha})`;
+                }
+                
+                prevCtx.strokeStyle = strokeCol;
+                prevCtx.lineWidth = 2 + (i / waveHistory.length) * 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1);
+                prevCtx.lineTo(x2, y2);
+                prevCtx.stroke();
+            }
+        }
+    }
+    
+    // Draw Hero banner
+    const heroCssW = heroCanvas.width / dpr;
+    const heroCssH = heroCanvas.height / dpr;
+
+    heroCtx.fillStyle = "#f4ebd0";
+    heroCtx.fillRect(0, 0, heroCssW, heroCssH);
+    
+    heroCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+    heroCtx.lineWidth = 1;
+    for (let x = 0; x < heroCssW; x += 50) {
+        heroCtx.beginPath();
+        heroCtx.moveTo(x, 0);
+        heroCtx.lineTo(x, heroCssH);
+        heroCtx.stroke();
+    }
+    
+    if (waveHistory.length > 1) {
+        const step = heroCssW / (historyLen - 1);
+        
+        for (let i = 0; i < waveHistory.length - 1; i++) {
+            const h1 = waveHistory[i] * (heroCssH - 15);
+            const h2 = waveHistory[i + 1] * (heroCssH - 15);
+            const x1 = i * step;
+            const x2 = (i + 1) * step;
+            
+            let fillCol = colorHistory[i] || "rgba(226, 59, 36, 0.25)";
+            if (fillCol.startsWith("hsl")) {
+                fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+            } else if (fillCol.startsWith("rgba(0, 47, 108")) {
+                fillCol = "rgba(226, 59, 36, 0.35)"; // default red for hero
+            }
+            heroCtx.fillStyle = fillCol;
+            
+            const y1_top = heroCssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+            const y2_top = heroCssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+            
+            const y1_bot = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+            const y2_bot = heroCtx ? (heroCssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4) : 0;
+            
+            heroCtx.beginPath();
+            heroCtx.moveTo(x1, y1_top - h1 / 2);
+            heroCtx.lineTo(x2, y2_top - h2 / 2);
+            heroCtx.lineTo(x2, y2_bot + h2 / 2);
+            heroCtx.lineTo(x1, y1_bot + h1 / 2);
+            heroCtx.closePath();
+            heroCtx.fill();
+            
+            heroCtx.strokeStyle = "#111111";
+            heroCtx.lineWidth = 3;
+            heroCtx.beginPath();
+            heroCtx.moveTo(x1, y1_top - h1 / 2);
+            heroCtx.lineTo(x2, y2_top - h2 / 2);
+            heroCtx.stroke();
+            
+            heroCtx.beginPath();
+            heroCtx.moveTo(x2, y2_bot + h2 / 2);
+            heroCtx.lineTo(x1, y1_bot + h1 / 2);
+            heroCtx.stroke();
+        }
+    }
+}
+
+// ─── INITIALIZATION BOOT ─────────────────────────────────────────────────────
+const draft = localStorage.getItem("HAXEL_EDITOR_DRAFT");
+if (draft && ta) {
+    ta.value = draft;
+}
+
+loadCustomPatterns(frequencyShift, playbackSpeed, masterIntensity, startupFloor);
+renderCards();
+syncHL();
+compileCustom();
+initBootLogs();
+animate();
+addSerialLog("[BLE Portal] Initialized. Click CONNECT BLE to link your hardware.");
