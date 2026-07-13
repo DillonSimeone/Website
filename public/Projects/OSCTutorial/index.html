@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OSC Bridge Tutorial | Art Deco Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="deco-container border-style-classic">
+    <header class="deco-header">
+      <a href="/" class="nav-back">← Back to Portfolio</a>
+      <h1 class="deco-title">OSC BRIDGE</h1>
+      <div class="header-divider">
+        <span class="diamond">♦</span>
+        <span class="line"></span>
+        <span class="diamond">♦</span>
+      </div>
+      <p class="deco-subtitle">Connecting VR Worlds and Physical Space via OSC & ESP32</p>
+    </header>
+
+    <main class="deco-grid">
+      <!-- Section 1: Overview -->
+      <section class="deco-card full-width">
+        <h2>THE ARCHITECTURE</h2>
+        <p class="deco-intro">
+          This system bridges the virtual and physical environments by routing Open Sound Control (OSC) messages from virtual reality (such as Patchworld/PatchXR) to real-world physical actuators powered by ESP32 microcontrollers.
+        </p>
+        <div class="deco-diagram">
+          <div class="node">VR HEADSET<br><small>(PatchXR Sender)</small></div>
+          <div class="arrow">♦ ───►</div>
+          <div class="node highlight">OSC MONITOR<br><small>(Python Forwarder)</small></div>
+          <div class="arrow">♦ ───►</div>
+          <div class="node">ESP32 DEVICE<br><small>(oscdevice.local)</small></div>
+        </div>
+      </section>
+
+      <!-- Section 2: ESP32 Setup -->
+      <section class="deco-card">
+        <h2>I. THE HARDWARE CONFIGURATION</h2>
+        <p>The ESP32-C3 firmware offers dual-mode capability: an easy-to-use web configuration panel and a high-performance OSC runtime engine.</p>
+        <div class="deco-steps">
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Connection Fallback:</strong> The ESP32 attempts to connect to your local Wi-Fi. If it fails, it spawns its own access point named <code>OSCdevice</code>.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Web Dashboard:</strong> Open a browser and navigate to <a href="http://oscdevice.local" target="_blank">http://oscdevice.local</a> (or the IP displayed in the serial monitor).
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Pin Mappings:</strong> Create rules mapping OSC address patterns (e.g., <code>/led</code>) to physical pins using types like <code>toggle</code>, <code>pulse</code>, or <code>pwm</code>.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Boot Selection:</strong> Press the physical <code>BOOT</code> button (GPIO 9) on the ESP32 to switch between Web Config mode and OSC runtime mode.
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 25px;">
+          <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/MicroPython/OSCcontrols/" class="deco-btn-link" target="_blank">♦ EXPLORE ESP32 FIRMWARE ♦</a>
+        </div>
+      </section>
+
+      <!-- Section 3: Monitor Setup -->
+      <section class="deco-card">
+        <h2>II. THE MONITOR & FORWARDER</h2>
+        <p>The desktop helper monitors incoming OSC traffic and forwards packets between different clients, enabling multi-device orchestration.</p>
+        <div class="deco-steps">
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Start the app:</strong> Navigate to the <code>OSCWebApp</code> directory and run <code>run_gui.bat</code>. This initializes a Python environment and launches the graphical interface.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Configure Listening:</strong> Input your target listening port (default is <code>3330</code>) and click <strong>Start Listener</strong>.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Device Forwarding:</strong> As OSC packets hit the monitor, devices are auto-discovered. Check the boxes next to <code>oscdevice.local</code> (or its IP) to forward messages.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Real-time Log:</strong> Use the dark-mode console to view addresses, arguments, and source IPs of incoming triggers in real time.
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 25px;">
+          <a href="https://github.com/DillonSimeone/Website/tree/main/public/MiniProjects/OSCWebApp/" class="deco-btn-link" target="_blank">♦ EXPLORE OSC MONITOR ♦</a>
+        </div>
+      </section>
+
+      <!-- Section 4: VR Integration -->
+      <section class="deco-card full-width">
+        <h2>III. BRIDGING THE VR GAP</h2>
+        <p>To integrate physical LEDs or haptics with your virtual instruments in Patchworld:</p>
+        <div class="deco-two-col">
+          <div>
+            <h3>PATCHWORLD SETUP</h3>
+            <ol>
+              <li>Create an <code>execute</code> block or sound-trigger node.</li>
+              <li>Add a <code>port_out 3330</code> action node.</li>
+              <li>Direct the payload to your computer's local IP address.</li>
+              <li>Bind the action to an interactive object like a virtual drum or button.</li>
+            </ol>
+          </div>
+          <div class="divider-vertical"></div>
+          <div>
+            <h3>OSC ADDRESS MAPS</h3>
+            <ul>
+              <li><strong>Toggle:</strong> Sends a trigger to flip the state of the pin. Perfect for turning room lamps on/off.</li>
+              <li><strong>Pulse:</strong> Triggers a quick pulse (e.g., 50ms) to actuate relays or solenoids.</li>
+              <li><strong>PWM Fader:</strong> Maps float values from 0.0–1.0 to change LED brightness or motor speeds.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Decorative Footer card -->
+      <section class="deco-card quote-card full-width">
+        <div class="quote-symbol">♦ ♦ ♦</div>
+        <blockquote>
+          “The transition from virtual gestures to physical illumination completes the loop of spatial presence.”
+        </blockquote>
+        <cite>— OSC Bridge Integration Guide</cite>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

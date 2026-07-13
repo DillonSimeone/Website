@@ -1,18 +1,39 @@
 # OSC WebApp Monitor
 
-A simple OSC (Open Sound Control) monitor application using Python, Qt (via pywebview), and python-osc.
+An elegant, real-time desktop utility for monitoring and forwarding **Open Sound Control (OSC)** traffic. Built with **Python**, **pywebview** (rendering a premium glassmorphic frontend), and **python-osc**, it was designed for patchXR/Patchworld workflows to orchestrate communications between VR engines and physical hardware (such as ESP32 devices).
 
-## Features
-- Listens for OSC messages on a configurable port (default 3330).
-- Displays address and arguments of incoming messages in real-time.
-- "Dark Mode" UI inspired by Govee Light Controls.
-- Built to work with PatchXR and other OSC-compatible software.
+---
 
-## Setup
-1. Ensure you have Python installed.
-2. Run `run_gui.bat`.
-   - This will create a virtual environment, install dependencies (`python-osc`, `pywebview`, `PyQt6`), and launch the app.
+## Key Features
 
-## Usage with PatchXR
-1. In Patchworld, use an `execute` block with `port_out [PORT]` (e.g., `port_out 3330`) to send data to this app.
-2. Or configure your external software to send OSC messages to this computer's IP at the port specified in the app.
+1. **Real-time Monitoring:**
+   * Listens on a configurable local UDP port (default `3330`).
+   * Beautifully captures and displays OSC addresses, values, arguments, and source IPs in a dark-mode console.
+2. **Dynamic Client Discovery:**
+   * Automatically detects and registers incoming OSC-transmitting devices.
+3. **Smart Packet Forwarding:**
+   * Toggle forwarding checkboxes next to any registered IP.
+   * Forward incoming VR messages to other local nodes (like your `oscdevice.local` ESP32 controller) on the fly.
+4. **Zero-Configuration Launcher:**
+   * Double-clicking `run_gui.bat` sets up a virtual environment, auto-installs dependencies, and launches the app.
+
+---
+
+## Installation & Setup
+
+1. Verify Python is installed and added to your system's PATH.
+2. Launch the application by running:
+   ```bash
+   run_gui.bat
+   ```
+3. Enter your target listening port and click **Start Listener**.
+
+---
+
+## Integration with VR (PatchXR / Patchworld)
+
+1. In Patchworld, configure an OSC execution block:
+   * **Target IP:** Set to your computer's Local IP (displayed at the top of the monitor window).
+   * **Target Port:** `3330` (or your chosen listener port).
+2. Connect your physical devices (such as an ESP32 mapping LED triggers to `/led`) to the same network.
+3. Once the monitor captures a message from the VR headset, the headset's IP appears under **Forward To**. Toggle forwarding to sync virtual instruments directly with physical space.
