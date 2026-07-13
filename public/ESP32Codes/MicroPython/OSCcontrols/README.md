@@ -48,3 +48,4 @@ This project turns an **ESP32-C3 SuperMini** (or generic ESP32) into a network-e
 2. Deploy the firmware to your ESP32 using PlatformIO or Arduino IDE.
 3. Boot the device. If it cannot connect to local Wi-Fi, connect your PC/phone to the `OSCdevice` hotspot.
 4. Navigate to `http://oscdevice.local` (or `192.168.4.1` in AP mode) to configure your OSC mappings!
+ 

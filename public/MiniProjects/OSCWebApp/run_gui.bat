@@ -16,4 +16,4 @@ pip install pywebview --no-deps
 
 echo Starting Application...
 python app.py
-pause
+pause 

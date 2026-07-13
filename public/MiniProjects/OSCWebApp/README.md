@@ -37,3 +37,4 @@ An elegant, real-time desktop utility for monitoring and forwarding **Open Sound
    * **Target Port:** `3330` (or your chosen listener port).
 2. Connect your physical devices (such as an ESP32 mapping LED triggers to `/led`) to the same network.
 3. Once the monitor captures a message from the VR headset, the headset's IP appears under **Forward To**. Toggle forwarding to sync virtual instruments directly with physical space.
+ 

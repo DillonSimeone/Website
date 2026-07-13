@@ -149,3 +149,4 @@ if __name__ == '__main__':
     
     # gui='qt' forces the Qt backend (PyQt6/PySide6)
     webview.start(debug=False, gui='qt')
+ 

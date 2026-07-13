@@ -24,3 +24,4 @@ echo.
 echo Build Complete!
 echo You can find your app in the "dist" folder.
 pause
+ 
