@@ -37,8 +37,8 @@
         </header>
 
         <!-- CONTENT WRAPPER: DOCS & SIMULATOR -->
-        <div class="summary-sim-row" style="flex-direction: column;"> <!-- LEFT: EXECUTIVE SUMMARY -->
-            <div class="summary-column" style="border-right: none; border-bottom: 4px solid var(--black);">
+        <div class="summary-sim-row column-layout"> <!-- LEFT: EXECUTIVE SUMMARY -->
+            <div class="summary-column no-border-right">
                 <section class="doc-card" style="margin-bottom: 0;">
                     <span class="block-label">01 // BLUETOOTH CONTROL</span>
                     <h2>Web Bluetooth Mode</h2>
@@ -51,8 +51,8 @@
                          To start, make sure your Haxel unit is powered on and its Bluetooth/WiFi configuration is set to Bluetooth. 
                          You can pair and connect directly using the button below:
                     </p>
-                    <div style="margin: 20px 0; display: flex; justify-content: center;">
-                        <button id="bleConnectBtnDoc" class="btn primary" style="cursor: pointer;">CONNECT BLE</button>
+                    <div class="doc-btn-center">
+                        <button id="bleConnectBtnDoc" class="btn primary">CONNECT BLE</button>
                     </div>
 
                     <div class="tech-table-wrapper" style="margin-top: auto; margin-bottom: 20px;">
@@ -373,14 +373,14 @@ sin(t * 12) * 0.5 + 0.5</textarea>
     </div>
 
     <!-- Mobile Haptic Float Button -->
-    <div id="mobile-haptic-float-btn" style="display: none; position: fixed; top: 5px; right: 5px; z-index: 9999; width: 55px; height: 55px; cursor: pointer; background: transparent; overflow: visible; align-items: center; justify-content: center;" title="Toggle Playback">
-        <canvas id="mobile-haptic-canvas" width="110" height="110" style="width: 55px; height: 55px; display: block; pointer-events: none;"></canvas>
+    <div id="mobile-haptic-float-btn" style="display: none;" title="Toggle Phone Haptics">
+        <canvas id="mobile-haptic-canvas" width="110" height="110"></canvas>
     </div>
 
     <!-- Mobile Haptic Guide Tooltip Pop-up -->
-    <div id="mobile-haptic-guide" style="display: none; position: fixed; top: 15px; right: 75px; z-index: 9998; background: #111111; color: white; border: 3px solid #111111; box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3); padding: 8px 12px; font-family: var(--font-display); font-size: 11px; align-items: center; gap: 8px; transform: translateY(-100px); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease; opacity: 0; pointer-events: none;">
+    <div id="mobile-haptic-guide" style="display: none;">
         <span>ENGAGE/DISABLE HAPTICS</span>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f2b134" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(-45deg);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f2b134" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
         </svg>
@@ -389,15 +389,15 @@ sin(t * 12) * 0.5 + 0.5</textarea>
     <!-- Mobile Haptic Activation Overlay -->
     <div id="haptic-activation-overlay" class="bauhaus-overlay" style="display: none;">
         <div class="bauhaus-modal">
-            <span class="block-label" style="background: var(--bauhaus-red); color: white;">MOBILE SENSORY PORTAL</span>
+            <span class="block-label primary">MOBILE SENSORY PORTAL</span>
             <h2>Tactile Feedback Ready</h2>
             <p>
-                This interactive portal simulates real-time mechanical haptics. To enable physical vibration on your device, the browser requires an initial user interaction.
+                This interactive portal simulates real-time haptics. To enable physical vibration on your device, the browser requires an initial user interaction.
             </p>
-            <div class="modal-buttons" style="display: flex; gap: 10px; width: 100%; margin-top: 20px;">
-                <button id="enable-haptics-btn" class="btn primary" style="flex: 1; padding: 12px 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;">ENABLE</button>
-                <button id="test-haptics-btn" class="btn secondary" style="flex: 1; padding: 12px 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;">TEST</button>
-                <button id="disable-haptics-btn" class="btn" style="flex: 1; padding: 12px 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; background: #ffffff; color: var(--black); border: var(--border-width) solid var(--black); box-shadow: 4px 4px 0 var(--black);">DISABLE</button>
+            <div class="modal-buttons">
+                <button id="enable-haptics-btn" class="btn primary">ENABLE</button>
+                <button id="test-haptics-btn" class="btn secondary">TEST</button>
+                <button id="disable-haptics-btn" class="btn">DISABLE</button>
             </div>
         </div>
     </div>

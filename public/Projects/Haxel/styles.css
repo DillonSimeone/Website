@@ -2094,3 +2094,86 @@ body::-webkit-scrollbar-thumb:hover,
         transform: scale(1.03);
     }
 }
+
+/* Mobile Haptic Float Button */
+#mobile-haptic-float-btn {
+    display: none;
+    position: fixed;
+    top: 5px;
+    right: 5px;
+    z-index: 9999;
+    width: 55px;
+    height: 55px;
+    cursor: pointer;
+    background: transparent;
+    overflow: visible;
+    align-items: center;
+    justify-content: center;
+}
+#mobile-haptic-canvas {
+    width: 55px;
+    height: 55px;
+    display: block;
+    pointer-events: none;
+}
+
+/* Mobile Haptic Guide Tooltip Pop-up */
+#mobile-haptic-guide {
+    display: none;
+    position: fixed;
+    top: 15px;
+    right: 75px;
+    z-index: 9998;
+    background: #111111;
+    color: white;
+    border: 3px solid #111111;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    padding: 8px 12px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(-100px);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+#mobile-haptic-guide svg {
+    transform: rotate(-45deg);
+}
+
+/* Modal Buttons wrapper & styling */
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-top: 20px;
+}
+.modal-buttons .btn {
+    flex: 1;
+    padding: 12px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+/* Document connect button centering */
+.doc-btn-center {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+}
+
+/* Specific single-column layouts for Bluetooth */
+.summary-sim-row.column-layout {
+    flex-direction: column;
+}
+.summary-column.no-border-right {
+    border-right: none;
+    border-bottom: 4px solid var(--black);
+}
+
+.block-label.primary {
+    background: var(--bauhaus-red);
+    color: #ffffff;
+}
