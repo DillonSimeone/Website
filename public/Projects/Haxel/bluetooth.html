@@ -24,7 +24,8 @@
                 <h1>HAXEL</h1>
                 <p class="subtitle">Control Haxel haptic units directly from your Chrome browser using Bluetooth Low Energy (BLE).</p>
                 <div class="hero-actions">
-                    <a href="#simulator" class="btn primary">Launch Simulator</a>
+                    <button type="button" id="bleConnectBtnDoc" class="btn primary">CONNECT BLE</button>
+                    <a href="#simulator" class="btn">Launch Simulator</a>
                     <a href="index.html" class="btn" style="border-color: #e23b24; color: #e23b24; font-weight: bold;">WiFi Mode</a>
                     <a href="manual.html" class="btn secondary">Read Manual</a>
                     <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/02_Audio_Haptics/Haxel"
@@ -42,30 +43,18 @@
         <div class="summary-sim-row"> <!-- LEFT: EXECUTIVE SUMMARY -->
             <div class="summary-column">
                 <section class="doc-card" style="margin-bottom: 0;">
-                    <span class="block-label">01 // INTRODUCTION</span>
-                    <h2>What Is Haxel?</h2>
+                    <span class="block-label">01 // BLUETOOTH CONTROL</span>
+                    <h2>Web Bluetooth Mode</h2>
                     <p>
-                        <strong>Haxel</strong> is what happens when you ask "why doesn't <a
-                            href="https://kno.wled.ge/">WLED</a> exist for haptics?" It's open-source firmware that
-                        turns any <a href="https://en.wikipedia.org/wiki/ESP32">ESP32</a> board and a motor driver into
-                        a web-controlled haptic engine you can tune from any wireless device with a browser.
+                        This page controls Haxel hardware directly through Chrome's
+                        <strong>Web Bluetooth API</strong>. No local network or Wi-Fi configuration is required —
+                        as long as the unit is flashed in Bluetooth mode, you can pair and stream real-time haptic
+                        commands from this browser.
                     </p>
                     <p>
-                        The name is the concept. A <em>haxel</em> (haptic pixel) is one discrete sample of vibration:
-                        amplitude and frequency collapsed into a single addressable value, just as a pixel collapses
-                        red, green, and blue into one unit of visible light. Where LED engines stream spatial arrays of
-                        color to pixel strips, Haxel streams temporal arrays of intensity to mechanical <a
-                            href="https://en.wikipedia.org/wiki/Actuator">actuators</a>.
-                    </p>
-                    <p>
-                        The architecture is directly inspired by <a
-                            href="https://electromage.com/pixelblaze">Pixelblaze</a>, which drives thousands of LEDs
-                        through a scriptable expression engine on an <a
-                            href="https://en.wikipedia.org/wiki/ESP32">ESP32</a>. Haxel applies the same model to
-                        haptics, but the stakes are different. For the Deaf and Hard-of-Hearing community, programmable
-                        audio-reactive haptics aren't a novelty; they're a sensory bridge. Haxel's goal is to make that
-                        bridge open-source, zero-cost, and accessible to anyone with an <a
-                            href="https://en.wikipedia.org/wiki/ESP32">ESP32</a> and a motor.
+                        Power on your Haxel board, then click <strong>CONNECT BLE</strong> (hero bar or portal
+                        header), pick the device named like <code>Haxel-XXXX</code>, and the portal unlocks for live
+                        control.
                     </p>
 
                     <div class="tech-table-wrapper" style="margin-top: auto;">
@@ -143,18 +132,19 @@
                         </div>
                         <div class="strip-footer">
                             <span>Driver: <b id="currentDriver">DRV2605L</b></span> | <span>Actuator: <b
-                                    id="currentActuator">LRA</b></span>
+                                    id="currentActuator">ERM</b></span>
                         </div>
                     </div>
 
                     <!-- PORTAL CONTAINER -->
                     <div class="portal-container">
                         <div class="portal-header">
-                            <div class="portal-logo">HAXEL</div>
-                            <div class="portal-crumb">Active: <b id="patternName">Pulse Wave</b></div>
+                            <div class="portal-logo" style="margin-right: auto;">HAXEL (BLE)</div>
+                            <button type="button" id="bleConnectBtn" class="btn primary" style="margin-right: 15px; padding: 6px 12px; font-size: 11px; font-weight: bold; cursor: pointer; border-width: 2px; box-shadow: 2px 2px 0 var(--black);">CONNECT BLE</button>
+                            <div class="portal-crumb" style="margin-right: 15px;">Active: <b id="patternName">Pulse Wave</b></div>
                             <div class="portal-status">
                                 <span class="portal-dot" id="dot"></span>
-                                <span id="connText">connected</span>
+                                <span id="connText">disconnected</span>
                             </div>
                         </div>
 
