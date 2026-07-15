@@ -190,8 +190,13 @@
                                     </div>
                                     <div class="row">
                                         <label>Motor Startup Floor</label>
-                                        <input type="range" id="startFloor" min="0" max="50" value="15">
+                                        <input type="range" id="startFloor" min="0" max="70" value="15">
                                         <span class="val" id="floorVal">15%</span>
+                                    </div>
+
+                                    <div class="motor-presets" style="display:flex; flex-wrap:wrap; gap:8px; margin: 10px 0 14px;">
+                                        <span class="chip-preset motor-preset" data-motor="130" title="Floor 50% · Intensity 100%">Type 130 Motor</span>
+                                        <span class="chip-preset motor-preset" data-motor="gentle" title="Floor 15% · Intensity 70%">Gentle / LRA</span>
                                     </div>
 
                                     <div class="control-actions">

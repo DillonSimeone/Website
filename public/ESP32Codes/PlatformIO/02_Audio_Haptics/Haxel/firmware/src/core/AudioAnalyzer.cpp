@@ -1,14 +1,21 @@
 #include "AudioAnalyzer.h"
 #include <Arduino.h>
+
+#ifndef HAXEL_FEATURE_AUDIO
+#define HAXEL_FEATURE_AUDIO 0
+#endif
+
+#if HAXEL_FEATURE_AUDIO
+
 #include <arduinoFFT.h>
 #include <driver/i2s_std.h>
 #include <math.h>
 #include <esp_timer.h>
+#include <cstring>
 
 namespace haxel::core {
 
 static constexpr float kSampleRate = 22050.0f;
-
 void AudioAnalyzer::adcTimerCallback(void* arg) {
     AudioAnalyzer* self = (AudioAnalyzer*)arg;
     if (!self || !self->ready_) return;
@@ -106,18 +113,31 @@ void AudioAnalyzer::end() {
 void AudioAnalyzer::processOneFrame() {
     if (!ready_) { delay(50); return; }
 
-    // 1. Read one window's worth of samples.
+    // 1. Read one window's worth of samples (I2S: purge DMA backlog so we
+    //    analyze "now", not a Wi-Fi-delayed past).
     if (cfg_.source == AudioConfig::I2S_MEMS) {
         size_t bytesRead = 0;
         int32_t raw[kWindow];
         i2s_chan_handle_t rx_handle = (i2s_chan_handle_t)rxChan_;
-        if (i2s_channel_read(rx_handle, raw, sizeof(raw), &bytesRead, portMAX_DELAY) == ESP_OK) {
-            size_t n = bytesRead / sizeof(int32_t);
-            for (size_t i = 0; i < n; ++i) {
-                // 32-bit MEMS samples are left-justified, sign-extended.
-                samples_[i] = (raw[i] >> 14) * (1.0f / 131072.0f) * cfg_.gain;
-            }
+        if (i2s_channel_read(rx_handle, raw, sizeof(raw), &bytesRead, portMAX_DELAY) != ESP_OK) {
+            return;
         }
+        // Non-blocking drain: keep overwriting with newer full windows.
+        int32_t scratch[kWindow];
+        for (;;) {
+            size_t more = 0;
+            esp_err_t e = i2s_channel_read(rx_handle, scratch, sizeof(scratch), &more, 0);
+            if (e != ESP_OK || more < sizeof(scratch)) break;
+            memcpy(raw, scratch, sizeof(scratch));
+            bytesRead = more;
+        }
+        size_t n = bytesRead / sizeof(int32_t);
+        if (n > kWindow) n = kWindow;
+        for (size_t i = 0; i < n; ++i) {
+            // 32-bit MEMS samples are left-justified, sign-extended.
+            samples_[i] = (raw[i] >> 14) * (1.0f / 131072.0f) * cfg_.gain;
+        }
+        for (size_t i = n; i < kWindow; ++i) samples_[i] = 0.0f;
     } else if (cfg_.source == AudioConfig::ADC) {
         while (!bufferReady_ && ready_) {
             vTaskDelay(pdMS_TO_TICKS(2));
@@ -187,4 +207,18 @@ void AudioAnalyzer::processOneFrame() {
     latest_ = f;
 }
 
+
 } // namespace haxel::core
+
+#else // !HAXEL_FEATURE_AUDIO
+
+namespace haxel::core {
+
+bool AudioAnalyzer::begin(const AudioConfig&) { return false; }
+void AudioAnalyzer::end() { ready_ = false; }
+void AudioAnalyzer::processOneFrame() { delay(50); }
+void AudioAnalyzer::adcTimerCallback(void*) {}
+
+} // namespace haxel::core
+
+#endif

@@ -27,6 +27,14 @@
 #include "web/BleServer.h"
 #endif
 #include "core/LedController.h"
+#include "core/RuntimeStore.h"
+#if HAXEL_FEATURE_KNOBS
+#include "core/KnobController.h"
+#endif
+#if HAXEL_FEATURE_OLED
+#include "core/OledDisplay.h"
+#endif
+#include <cstring>
 
 using namespace haxel;
 
@@ -44,6 +52,12 @@ Config           gConfig;
 core::Engine     gEngine;
 core::AudioAnalyzer gAudio;
 StatusLed        gStatusLed;
+#if HAXEL_FEATURE_KNOBS
+core::KnobController gKnobs;
+#endif
+#if HAXEL_FEATURE_OLED
+core::OledDisplay gOled;
+#endif
 #ifdef HAXEL_WIFI
 web::WebServer   gWeb;
 web::CaptivePortal gPortal;
@@ -54,10 +68,15 @@ web::BleServer   gBle;
 hal::IHapticDriver* gDriver = nullptr;
 
 TaskHandle_t hEngine = nullptr;
+#if HAXEL_FEATURE_AUDIO
 TaskHandle_t hAudio  = nullptr;
+#endif
 TaskHandle_t hHouse  = nullptr;
+#if HAXEL_FEATURE_LED
 TaskHandle_t hLed    = nullptr;
+#endif
 
+#if HAXEL_FEATURE_LED
 void ledTask(void*) {
     const TickType_t period = pdMS_TO_TICKS(33); // ~30 Hz
     TickType_t last = xTaskGetTickCount();
@@ -66,31 +85,64 @@ void ledTask(void*) {
         vTaskDelayUntil(&last, period);
     }
 }
+#endif
 
 void engineTask(void*) {
     const TickType_t period = pdMS_TO_TICKS(1);
     TickType_t last = xTaskGetTickCount();
     for (;;) {
         gEngine.tick();
+#if HAXEL_FEATURE_OLED
+        gOled.sample();
+#endif
         vTaskDelayUntil(&last, period);
     }
 }
 
+#if HAXEL_FEATURE_AUDIO
 void audioTask(void*) {
     for (;;) {
         gAudio.processOneFrame();
-        // processOneFrame() blocks on the I2S DMA; no explicit delay needed.
     }
 }
+#endif
 
 void housekeepingTask(void*) {
     const TickType_t period = pdMS_TO_TICKS(100);
     TickType_t last = xTaskGetTickCount();
     uint8_t broadcastDiv = 0;
+#ifdef HAXEL_WIFI
     uint32_t lastStaRetryMs = millis();
+#endif
+    bool eStopLatched = false;
     for (;;) {
         gStatusLed.tick();
+#if HAXEL_FEATURE_KNOBS
+        gKnobs.tick();
+#endif
+#if HAXEL_FEATURE_OLED
+        static uint8_t oledDiv = 0;
+        if (++oledDiv >= 2) {
+            oledDiv = 0;
+            gOled.tick();
+        }
+#endif
         gConfig.flushIfDirty();
+        core::flushRuntimeIfDirty();
+
+        // Optional active-low E-stop GPIO (config.eStopPin, -1 = off).
+        if (gConfig.eStopPin() >= 0) {
+            pinMode(gConfig.eStopPin(), INPUT_PULLUP);
+            const bool pressed = digitalRead(gConfig.eStopPin()) == LOW;
+            if (pressed && !eStopLatched) {
+                gEngine.requestEStop();
+                eStopLatched = true;
+                log_w("E-stop GPIO %d asserted", (int)gConfig.eStopPin());
+            } else if (!pressed) {
+                eStopLatched = false;
+            }
+        }
+
 #ifdef HAXEL_WIFI
         gPortal.pump();
         if (WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
@@ -141,7 +193,7 @@ bool bringUpWifi() {
         gStatusLed.breathing();
         WiFi.mode(WIFI_STA);
         WiFi.setTxPower(WIFI_POWER_8_5dBm);
-        Serial.printf("\n\n>>> Connecting to WiFi SSID: '%s', Password: '%s' <<<\n\n", gConfig.staSsid().c_str(), gConfig.staPass().c_str());
+        Serial.printf("\n\n>>> Connecting to WiFi SSID: '%s' <<<\n\n", gConfig.staSsid().c_str());
         WiFi.begin(gConfig.staSsid().c_str(), gConfig.staPass().c_str());
         uint32_t until = millis() + 8000; // 8 seconds connection timeout
         while (WiFi.status() != WL_CONNECTED && millis() < until) {
@@ -178,7 +230,19 @@ void setup() {
     }
 
     gConfig.load();
-    Serial.printf("\n[DEBUG] Loaded Config SSID: '%s', Password: '%s'\n\n", gConfig.staSsid().c_str(), gConfig.staPass().c_str());
+    Serial.printf("\n[DEBUG] Loaded Config SSID: '%s' (pass %s)\n\n",
+                  gConfig.staSsid().c_str(),
+                  gConfig.staPass().isEmpty() ? "empty" : "set");
+
+    Serial.printf("[DEBUG] Driver kind=%d pin0=%d LED enabled=%d pin=%d\n",
+                  (int)gConfig.driverKind(),
+                  (int)gConfig.driverConfig().pins[0],
+                  (int)gConfig.ledEnabled(),
+                  (int)gConfig.ledConfig().pin);
+
+    if (!gEngine.begin()) {
+        log_e("Engine begin failed (cmd queue alloc)");
+    }
 
     gDriver = hal::DriverFactory::create(gConfig.driverKind());
     if (gDriver && gDriver->begin(gConfig.driverConfig())) {
@@ -186,18 +250,70 @@ void setup() {
         log_i("Driver %s initialized (%u channels)", gDriver->name(), gDriver->channelCount());
     } else {
         log_e("Driver init failed — engine will stay IDLE; configure via portal.");
-        gEngine.attachDriver(nullptr);
+        // DriverFactory owns the pointer — do not delete here.
         gDriver = nullptr;
+        gEngine.attachDriver(nullptr);
+        gEngine.raiseFault("driver_init");
     }
 
     patterns::registerAll(core::PatternRegistry::instance());
     patterns::loadCustomPatterns(core::PatternRegistry::instance());
-    gEngine.begin();
+
+    // Restore last play state, or fall back to Breath calibration pattern.
+    if (gDriver) {
+        core::StagedState boot;
+        boot.on = true;
+        boot.intensity = 0.6f;
+        boot.speed = 1.0f;
+        boot.channelCount = gDriver->channelCount();
+
+        core::RuntimeSnapshot rt;
+        if (core::loadRuntime(rt)) {
+            boot.on = rt.on;
+            boot.mute = rt.mute;
+            boot.intensity = rt.intensity;
+            boot.speed = rt.speed;
+            boot.startupFloor = rt.startupFloor;
+            boot.numBins = rt.numBins;
+            for (int i = 0; i < 4; ++i) boot.dividers[i] = rt.dividers[i];
+            for (int i = 0; i < 5; ++i) {
+                strncpy(boot.binPatterns[i], rt.binPatterns[i], sizeof(boot.binPatterns[i]) - 1);
+                boot.binPatterns[i][sizeof(boot.binPatterns[i]) - 1] = '\0';
+            }
+            core::IPattern* p = core::PatternRegistry::instance().find(rt.patternId);
+            if (!p) p = core::PatternRegistry::instance().find("Breath");
+            if (!p) p = core::PatternRegistry::instance().at(0);
+            boot.pattern = p;
+            log_i("Restored runtime: %s on=%d", p ? p->id() : "(none)", (int)boot.on);
+        } else {
+            core::IPattern* p = core::PatternRegistry::instance().find("Breath");
+            if (!p) p = core::PatternRegistry::instance().at(0);
+            boot.pattern = p;
+            log_i("Boot autoplay: %s", p ? p->id() : "(none)");
+        }
+        gEngine.stageState(boot);
+        core::markRuntimeDirty(boot);
+    }
 
     if (gConfig.audioEnabled()) {
+#if HAXEL_FEATURE_AUDIO
         gAudio.begin(gConfig.audioConfig());
         gEngine.attachAudio(&gAudio);
+#else
+        log_w("Audio enabled in config but this build has HAXEL_FEATURE_AUDIO=0");
+#endif
     }
+
+#if HAXEL_FEATURE_KNOBS
+    if (gKnobs.begin(&gConfig, &gEngine, gConfig.audioEnabled() ? &gAudio : nullptr)) {
+        log_i("KnobController active");
+    }
+#endif
+#if HAXEL_FEATURE_OLED
+    if (gOled.begin(&gConfig, &gEngine)) {
+        log_i("OLED display active");
+    }
+#endif
 
     // Initialize status LED on GPIO 8 (ESP32-C3 onboard LED), LEDC channel 5.
     #ifdef HAXEL_TARGET_C3
@@ -224,20 +340,28 @@ void setup() {
 #endif
 
     xTaskCreatePinnedToCore(engineTask, "engine", 4096, nullptr, 5, &hEngine, HB_CORE_RT);
+#if HAXEL_FEATURE_AUDIO
     if (gConfig.audioEnabled()) {
         xTaskCreatePinnedToCore(audioTask, "audio", 6144, nullptr, 4, &hAudio, HB_CORE_RT);
     }
+#endif
     xTaskCreatePinnedToCore(housekeepingTask, "house", 4096, nullptr, 1, &hHouse, HB_CORE_NET);
 
-    // Initialize and start FastLED Controller task
+#if HAXEL_FEATURE_LED
     if (gConfig.ledEnabled()) {
         if (core::LedController::instance().begin(&gConfig, &gEngine)) {
             xTaskCreatePinnedToCore(ledTask, "leds", 4096, nullptr, 2, &hLed, HB_CORE_NET);
             log_i("FastLED Controller started successfully");
         }
     }
+#else
+    if (gConfig.ledEnabled()) {
+        log_w("LEDs enabled in config but this build has HAXEL_FEATURE_LED=0");
+    }
+#endif
 
-    log_i("Boot complete; engine running");
+    log_i("Boot complete; features LED=%d AUDIO=%d KNOBS=%d OLED=%d",
+          HAXEL_FEATURE_LED, HAXEL_FEATURE_AUDIO, HAXEL_FEATURE_KNOBS, HAXEL_FEATURE_OLED);
 }
 
 void loop() {

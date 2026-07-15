@@ -45,10 +45,25 @@ void PatternRegistry::unregisterPattern(const char* id) {
     }
 }
 
+static bool idEqualsIgnoreCase_(const char* a, const char* b) {
+    if (!a || !b) return false;
+    while (*a && *b) {
+        char ca = *a++, cb = *b++;
+        if (ca >= 'A' && ca <= 'Z') ca = (char)(ca + 32);
+        if (cb >= 'A' && cb <= 'Z') cb = (char)(cb + 32);
+        if (ca != cb) return false;
+    }
+    return *a == *b;
+}
+
 IPattern* PatternRegistry::find(const char* id) const {
     if (!id) return nullptr;
     for (auto* p : patterns_) {
         if (strcmp(p->meta().id, id) == 0) return p;
+    }
+    // Fallback: case-insensitive match for portal/UI typos.
+    for (auto* p : patterns_) {
+        if (idEqualsIgnoreCase_(p->meta().id, id)) return p;
     }
     return nullptr;
 }

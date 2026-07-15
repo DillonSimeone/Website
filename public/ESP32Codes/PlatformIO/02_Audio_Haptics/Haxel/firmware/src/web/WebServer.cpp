@@ -1,3 +1,5 @@
+#ifdef HAXEL_WIFI
+
 #include "WebServer.h"
 #include "ApiHandlers.h"
 #include "../core/Engine.h"
@@ -140,7 +142,7 @@ void WebServer::mountCaptiveProbes_() {
     }
     server_->onNotFound([](AsyncWebServerRequest* req) {
         const String& url = req->url();
-        // API paths must NEVER receive an HTML redirect — clients expect JSON
+        // API paths must NEVER receive an HTML redirect  Eclients expect JSON
         // (or 404 text). Returning HTML here is what makes fetch().json() blow up.
         if (url.startsWith("/json") || url.startsWith("/win") || url == "/ws") {
             req->send(404, "application/json",
@@ -169,3 +171,5 @@ void WebServer::mountCaptiveProbes_() {
 }
 
 } // namespace haxel::web
+
+#endif // HAXEL_WIFI

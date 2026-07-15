@@ -31,6 +31,11 @@ private:
     uint8_t r_ = 255;
     uint8_t g_ = 106;
     uint8_t b_ = 61; // Default accent color: #ff6a3d
+
+    // Smoothed haptic envelope driving LED fade in/out.
+    float smoothIntensity_ = 0.0f;
+    static constexpr float kAttack  = 0.45f; // ~immediate punch with motor
+    static constexpr float kRelease = 0.12f; // visible fade-out trail
 };
 
 } // namespace haxel::core

@@ -34,8 +34,9 @@ public:
     }
 
     float sample(const core::PatternContext& ctx) override {
-        // Evaluates dynamically using active context
-        return evaluator_.evaluate(ctx, ctx.intensityMaster, 0.15f); 
+        // speed/floor are engine-owned; Engine applies startupFloor after sample().
+        // Pass them as script variables only — do not re-apply the floor here.
+        return evaluator_.evaluate(ctx, ctx.speed, ctx.startupFloor);
     }
 
     const std::string& getCode() const { return code_; }

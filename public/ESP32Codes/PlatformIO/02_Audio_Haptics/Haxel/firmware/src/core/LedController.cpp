@@ -1,5 +1,9 @@
 #include "LedController.h"
+
+#if HAXEL_FEATURE_LED
+
 #include <FastLED.h>
+#include <math.h>
 
 namespace haxel::core {
 
@@ -11,7 +15,7 @@ LedController& LedController::instance() {
 bool LedController::begin(Config* config, Engine* engine) {
     config_ = config;
     engine_ = engine;
-    
+
     const auto& lc = config_->ledConfig();
     enabled_ = lc.enabled;
     pin_ = lc.pin;
@@ -24,11 +28,10 @@ bool LedController::begin(Config* config, Engine* engine) {
     CRGB* crgbLeds = new CRGB[count_];
     memset(crgbLeds, 0, count_ * sizeof(CRGB));
     leds_ = (void*)crgbLeds;
+    smoothIntensity_ = 0.0f;
 
-    // FastLED template pin initialization helper
     switch (pin_) {
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
-        // ESP32-C3 valid pins
         case 2:  FastLED.addLeds<WS2812B, 2,  GRB>(crgbLeds, count_); break;
         case 3:  FastLED.addLeds<WS2812B, 3,  GRB>(crgbLeds, count_); break;
         case 4:  FastLED.addLeds<WS2812B, 4,  GRB>(crgbLeds, count_); break;
@@ -42,7 +45,6 @@ bool LedController::begin(Config* config, Engine* engine) {
         case 19: FastLED.addLeds<WS2812B, 19, GRB>(crgbLeds, count_); break;
         case 21: FastLED.addLeds<WS2812B, 21, GRB>(crgbLeds, count_); break;
 #else
-        // Classic ESP32 & ESP32-S3 valid pins
         case 2:  FastLED.addLeds<WS2812B, 2,  GRB>(crgbLeds, count_); break;
         case 4:  FastLED.addLeds<WS2812B, 4,  GRB>(crgbLeds, count_); break;
         case 5:  FastLED.addLeds<WS2812B, 5,  GRB>(crgbLeds, count_); break;
@@ -64,7 +66,6 @@ bool LedController::begin(Config* config, Engine* engine) {
         case 33: FastLED.addLeds<WS2812B, 33, GRB>(crgbLeds, count_); break;
 #endif
         default:
-            // Fallback to GPIO 2
             FastLED.addLeds<WS2812B, 2, GRB>(crgbLeds, count_);
             pin_ = 2;
             break;
@@ -83,6 +84,7 @@ void LedController::end() {
         leds_ = nullptr;
     }
     enabled_ = false;
+    smoothIntensity_ = 0.0f;
 }
 
 void LedController::tick() {
@@ -90,7 +92,6 @@ void LedController::tick() {
 
     CRGB* crgbLeds = (CRGB*)leds_;
 
-    // 1. Get haptic engine state & check if pattern changed
     StagedState s;
     engine_->copyState(s);
 
@@ -98,9 +99,7 @@ void LedController::tick() {
     if (currentPattern != lastPattern_) {
         lastPattern_ = currentPattern;
         if (currentPattern) {
-            // Check if pattern defines its own custom color
             if (!currentPattern->getColor(r_, g_, b_)) {
-                // Otherwise randomize color using vibrant CHSV
                 CHSV randomHsv(random8(), 255, 255);
                 CRGB randomRgb;
                 hsv2rgb_rainbow(randomHsv, randomRgb);
@@ -109,35 +108,64 @@ void LedController::tick() {
                 b_ = randomRgb.b;
             }
         } else {
-            // No pattern -> default accent color #ff6a3d
             r_ = 255;
             g_ = 106;
             b_ = 61;
         }
     }
 
-    // 2. Scale amount of pixels lit up based on current motor PWM values
-    float maxVal = 0.0f;
+    // Pattern envelope BEFORE motor floor / soft-start.
+    float target = 0.0f;
     if (s.on && !s.mute) {
         for (uint8_t i = 0; i < s.channelCount; ++i) {
-            float val = engine_->getChannelValue(i);
-            if (val > maxVal) maxVal = val;
+            float val = engine_->getPatternValue(i);
+            if (val > target) target = val;
         }
     }
 
-    uint16_t litCount = (uint16_t)(maxVal * count_);
-    if (litCount > count_) litCount = count_;
+    if (target > smoothIntensity_) {
+        smoothIntensity_ += (target - smoothIntensity_) * kAttack;
+    } else {
+        smoothIntensity_ += (target - smoothIntensity_) * kRelease;
+    }
+    if (smoothIntensity_ < 0.002f) smoothIntensity_ = 0.0f;
+    if (smoothIntensity_ > 1.0f) smoothIntensity_ = 1.0f;
 
-    // 3. Update pixels
+    float fill = smoothIntensity_ * (float)count_;
+    uint8_t bri = (uint8_t)lroundf(smoothIntensity_ * 255.0f);
+
     for (uint16_t i = 0; i < count_; ++i) {
-        if (i < litCount) {
-            crgbLeds[i] = CRGB(r_, g_, b_);
-        } else {
+        float edge = fill - (float)i;
+        if (edge <= 0.0f || bri == 0) {
             crgbLeds[i] = CRGB(0, 0, 0);
+            continue;
         }
+        float edgeScale = edge >= 1.0f ? 1.0f : edge;
+        uint8_t pixelBri = (uint8_t)lroundf(bri * edgeScale);
+        crgbLeds[i] = CRGB(
+            scale8(r_, pixelBri),
+            scale8(g_, pixelBri),
+            scale8(b_, pixelBri)
+        );
     }
 
     FastLED.show();
 }
 
 } // namespace haxel::core
+
+#else // !HAXEL_FEATURE_LED
+
+namespace haxel::core {
+
+LedController& LedController::instance() {
+    static LedController inst;
+    return inst;
+}
+bool LedController::begin(Config*, Engine*) { return false; }
+void LedController::end() {}
+void LedController::tick() {}
+
+} // namespace haxel::core
+
+#endif

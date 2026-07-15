@@ -11,30 +11,81 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Optimize layout specifically for standalone captive portal device screen */
-        body {
+        /* Full-viewport single-column portal (phone + desktop) */
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             background-color: #0d0d0d;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
+        }
+        body {
+            display: block;
         }
         .page-container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            margin: 0;
             border: none;
             box-shadow: none;
             padding: 0;
+            overflow: hidden;
         }
         .simulator-column {
             padding: 0;
             margin: 0;
             width: 100%;
+            height: 100%;
         }
         .simulator-sticky {
             position: static;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .virtual-actuator-chassis,
+        .portal-container {
+            margin: 0;
+            width: 100%;
+            box-shadow: none;
+            border-left: none;
+            border-right: none;
+        }
+        .virtual-actuator-chassis {
+            flex: 0 0 auto;
+            border-top: none;
+        }
+        .portal-container {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            border-bottom: none;
+        }
+        .portal-body {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .portal-tabs {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .telemetry-viewport {
+            height: clamp(120px, 22vh, 220px);
         }
     </style>
 </head>
@@ -64,7 +115,7 @@
                 <div class="portal-container">
                     <div class="portal-header">
                         <div class="portal-logo">HAXEL</div>
-                        <div class="portal-crumb">Active: <b id="patternName">Pulse Wave</b></div>
+                        <div class="portal-crumb">Active: <b id="patternName">Breath</b></div>
                         <div class="portal-status">
                             <span class="portal-dot" id="dot"></span>
                             <span id="connText">connected</span>
@@ -103,8 +154,13 @@
                                 </div>
                                 <div class="row">
                                     <label>Motor Startup Floor</label>
-                                    <input type="range" id="startFloor" min="0" max="50" value="15">
+                                    <input type="range" id="startFloor" min="0" max="70" value="15">
                                     <span class="val" id="floorVal">15%</span>
+                                </div>
+
+                                <div class="motor-presets" style="display:flex; flex-wrap:wrap; gap:8px; margin: 10px 0 14px;">
+                                    <span class="chip-preset motor-preset" data-motor="130" title="Floor 50% · Intensity 100%">Type 130 Motor</span>
+                                    <span class="chip-preset motor-preset" data-motor="gentle" title="Floor 15% · Intensity 70%">Gentle / LRA</span>
                                 </div>
 
                                 <div class="control-actions">
@@ -199,9 +255,9 @@ wave(t * (freq * 0.05))
                                 <div class="row">
                                     <label>Driver IC</label>
                                     <select id="drvChip">
-                                        <option value="DRV2605L" selected>DRV2605L (I2C Low-Latency)</option>
+                                        <option value="MOSFET" selected>Raw MOSFET (Direct PWM Output)</option>
                                         <option value="DRV8833">DRV8833 (Dual PWM H-Bridge)</option>
-                                        <option value="MOSFET">Raw MOSFET (Direct PWM Output)</option>
+                                        <option value="DRV2605L">DRV2605L (I2C Low-Latency)</option>
                                     </select>
                                 </div>
                                 <div class="row">
@@ -353,11 +409,11 @@ wave(t * (freq * 0.05))
                                     <div class="row">
                                         <label>Feedback Pin</label>
                                         <select id="ledPin">
-                                            <option value="-1" selected>Unassigned (-1)</option>
+                                            <option value="-1">Unassigned (-1)</option>
                                             <option value="2">GPIO 2</option>
                                             <option value="3">GPIO 3</option>
                                             <option value="4">GPIO 4</option>
-                                            <option value="5">GPIO 5</option>
+                                            <option value="5" selected>GPIO 5</option>
                                             <option value="6">GPIO 6</option>
                                             <option value="7">GPIO 7</option>
                                             <option value="10">GPIO 10</option>
@@ -365,11 +421,7 @@ wave(t * (freq * 0.05))
                                     </div>
                                     <div class="row">
                                         <label>Feedback Count</label>
-                                        <select id="ledCount">
-                                            <option value="30">30 LEDs</option>
-                                            <option value="60" selected>60 LEDs</option>
-                                            <option value="120">120 LEDs</option>
-                                        </select>
+                                        <input type="number" id="ledCount" min="1" max="300" step="1" value="20" style="flex: 2 1 120px; padding: 8px 12px; border: var(--border-width) solid var(--black); font-family: var(--mono); font-size: 13px;">
                                     </div>
                                 </div>
                                 
@@ -391,9 +443,6 @@ wave(t * (freq * 0.05))
                                         <label>OLED Enabled</label>
                                         <input type="checkbox" id="oledEnabled" style="width:auto; margin:0;">
                                     </div>
-                                    <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px; margin-bottom: 0;">
-                                        Note: The OLED screen shares the main I2C interface bus pins configured in the I2C section above.
-                                    </p>
                                 </div>
                                 
                                 <div class="row" style="display: none;">

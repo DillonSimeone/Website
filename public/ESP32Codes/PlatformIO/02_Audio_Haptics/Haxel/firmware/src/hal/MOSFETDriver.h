@@ -17,6 +17,8 @@ public:
 
 private:
     DriverConfig cfg_{};
+    // Dense map: logical channel index → GPIO. Sparse cfg_.pins[] are collapsed here.
+    int8_t  chPins_[4] = {-1, -1, -1, -1};
     uint8_t channelCount_ = 0;
     bool ready_ = false;
 };

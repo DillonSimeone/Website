@@ -1,3 +1,9 @@
+#ifndef HAXEL_FEATURE_KNOBS
+#define HAXEL_FEATURE_KNOBS 0
+#endif
+
+#if HAXEL_FEATURE_KNOBS
+
 #include "KnobController.h"
 #include "AudioAnalyzer.h"
 #include "PatternRegistry.h"
@@ -99,3 +105,15 @@ void KnobController::tick() {
 }
 
 } // namespace haxel::core
+
+#else
+
+#include "KnobController.h"
+namespace haxel::core {
+bool KnobController::begin(Config*, Engine*, AudioAnalyzer*) { return false; }
+void KnobController::tick() {}
+float KnobController::readKnob01_(int8_t) const { return 0; }
+void KnobController::applyKnob_(const KnobConfig&, float) {}
+}
+
+#endif

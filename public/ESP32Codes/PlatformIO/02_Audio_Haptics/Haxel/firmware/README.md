@@ -22,13 +22,27 @@ For the easiest compilation and deployment experience, use the visual **Web Uplo
 To compile and upload from the command line:
 
 ```bash
-# Flash WiFi variant
-pio run -e esp32-c3-wifi -t upload
-pio run -e esp32-c3-wifi -t uploadfs    # Upload LittleFS UI assets (required for WiFi mode)
+# Default C3 profile: WiFi + FastLED strip
+pio run -e c3WIFILED -t upload
+pio run -e c3WIFILED -t uploadfs
 
-# Flash BLE variant
-pio run -e esp32-c3-ble -t upload
+# Other useful envs
+pio run -e c3WIFI          # WiFi only (no LED/audio/OLED)
+pio run -e c3WIFIAUDIOLED  # WiFi + LED + mic FFT
+pio run -e c3BLULED        # BLE + LED
+pio run -e c3FULLOLED      # WiFi + LED + Audio + Knobs + OLED
 ```
+
+### Feature modules (`HAXEL_FEATURE_*`)
+
+| Flag | What it enables | Typical env |
+|------|-----------------|-------------|
+| `LED` | FastLED strip | `c3WIFILED` |
+| `AUDIO` | I2S/ADC FFT | `c3WIFIAUDIOLED` |
+| `KNOBS` | ADC knobs | `c3FULLOLED` |
+| `OLED` | SSD1306 HUD | `c3FULLOLED` |
+
+Legacy env names (`esp32-c3-wifi`, etc.) still work as aliases.
 
 ---
 

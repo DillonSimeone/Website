@@ -547,12 +547,12 @@ body {
     background: var(--bauhaus-yellow);
 }
 
-/* Cards library grid */
+/* Cards library grid — always single column */
 .cards {
     display: grid;
     grid-template-columns: 1fr;
     gap: 12px;
-    max-height: 280px;
+    max-height: min(420px, 45vh);
     overflow-y: auto;
     padding-right: 5px;
 }

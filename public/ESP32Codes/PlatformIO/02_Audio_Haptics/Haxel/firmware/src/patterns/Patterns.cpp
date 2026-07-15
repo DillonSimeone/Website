@@ -466,7 +466,689 @@ private:
     float envelope_ = 0.0f;
 };
 
-// ---------- 5. External (driven entirely by API push) ----------
+// ---------- 4. More built-in pulse / alert / multi-channel patterns ----------
+
+class Triangle : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"period_ms","Period",ParamType::FLOAT,50,5000,1000,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,0.8f,nullptr},
+        };
+        static const PatternMeta m{
+            "Triangle","pulse","pulse,linear","Linear ramp up and down.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"period_ms")) { period_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float ph = fmodf(ctx.tMs, period_) / period_;
+        float tri = ph < 0.5f ? (ph * 2.0f) : (2.0f - ph * 2.0f);
+        return clamp01(intensity_ * tri);
+    }
+private:
+    float period_ = 1000.0f;
+    float intensity_ = 0.8f;
+};
+
+class Throb : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"intensity","Intensity",ParamType::FLOAT,0,1,0.7f,nullptr},
+        };
+        static const PatternMeta m{
+            "Throb","pulse","pulse,ambient,organic","Two layered sines (4 Hz x 0.7 Hz).",
+            p,1,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float v = (0.5f + 0.5f * sinf(t * 4.0f * 2.0f * (float)M_PI)) *
+                  (0.5f + 0.5f * sinf(t * 0.7f * 2.0f * (float)M_PI));
+        return clamp01(intensity_ * v);
+    }
+private:
+    float intensity_ = 0.7f;
+};
+
+class Click : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"period_ms","Period",ParamType::FLOAT,50,5000,500,nullptr},
+            {"width_ms","Width",ParamType::FLOAT,2,40,5,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "Click","pulse","pulse,sharp,click","Ultra-short spike click.",
+            p,3,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"period_ms")) { period_ = v; return true; }
+        if (!strcmp(id,"width_ms"))  { width_ = v;  return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = fmodf(ctx.tMs, period_);
+        return t < width_ ? intensity_ : 0.0f;
+    }
+private:
+    float period_ = 500.0f;
+    float width_ = 5.0f;
+    float intensity_ = 1.0f;
+};
+
+class DoubleTap : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"period_ms","Period",ParamType::FLOAT,400,4000,1500,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "DoubleTap","pulse","pulse,confirm","Tactile confirmation double buzz.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"period_ms")) { period_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = fmodf(ctx.tMs, period_);
+        if (t < 80.0f || (t > 160.0f && t < 240.0f)) return intensity_;
+        return 0.0f;
+    }
+private:
+    float period_ = 1500.0f;
+    float intensity_ = 1.0f;
+};
+
+class SOS : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "SOS","alert","alert,morse","Morse S.O.S. beacon.",
+            p,1,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float cycle = fmodf(ctx.tMs * 0.001f, 4.0f);
+        auto on = [](float c, float a, float b) { return c >= a && c < b; };
+        if (on(cycle,0.0f,0.1f) || on(cycle,0.2f,0.3f) || on(cycle,0.4f,0.5f)) return intensity_;
+        if (on(cycle,0.8f,1.1f) || on(cycle,1.2f,1.5f) || on(cycle,1.6f,1.9f)) return intensity_;
+        if (on(cycle,2.2f,2.3f) || on(cycle,2.4f,2.5f) || on(cycle,2.6f,2.7f)) return intensity_;
+        return 0.0f;
+    }
+private:
+    float intensity_ = 1.0f;
+};
+
+class EngineRev : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"intensity","Intensity",ParamType::FLOAT,0,1,0.85f,nullptr},
+        };
+        static const PatternMeta m{
+            "EngineRev","alert","alert,accel","Frequency-modulated acceleration pulse.",
+            p,1,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float sweep = fmodf(t, 2.0f);
+        float v = 0.4f + 0.6f * sinf(t * (15.0f + sweep * 45.0f));
+        return clamp01(intensity_ * (v < 0 ? -v : v));
+    }
+private:
+    float intensity_ = 0.85f;
+};
+
+class Crescendo : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"period_ms","Period",ParamType::FLOAT,200,5000,1800,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "Crescendo","rhythm","rhythm,rise","Smooth intensity sweep to maximum.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"period_ms")) { period_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float ph = fmodf(ctx.tMs, period_) / period_;
+        return clamp01(intensity_ * ph);
+    }
+private:
+    float period_ = 1800.0f;
+    float intensity_ = 1.0f;
+};
+
+class Lighthouse : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"period_ms","Period",ParamType::FLOAT,500,8000,4200,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "Lighthouse","ambient","ambient,sweep","Slow sweeping beam with sharp peak.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"period_ms")) { period_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float ph = fmodf(ctx.tMs, period_) / period_;
+        float s = sinf(ph * 2.0f * (float)M_PI);
+        if (s < 0) s = 0;
+        float peak = powf(s, 6.0f);
+        return clamp01(intensity_ * peak);
+    }
+private:
+    float period_ = 4200.0f;
+    float intensity_ = 1.0f;
+};
+
+class AmbientHum : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"intensity","Intensity",ParamType::FLOAT,0,1,0.45f,nullptr},
+        };
+        static const PatternMeta m{
+            "AmbientHum","ambient","ambient,gentle","Gentle low-intensity background pulse.",
+            p,1,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        return clamp01(intensity_ * (0.3f + 0.15f * sinf(t * 12.0f)));
+    }
+private:
+    float intensity_ = 0.45f;
+};
+
+class ModRumble : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"intensity","Intensity",ParamType::FLOAT,0,1,0.8f,nullptr},
+        };
+        static const PatternMeta m{
+            "ModRumble","alert","alert,am","AM high-speed buzz.",
+            p,1,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float env = 0.5f + 0.5f * sinf(t * 3.0f);
+        float car = 0.5f + 0.5f * sinf(t * 60.0f);
+        return clamp01(intensity_ * env * car);
+    }
+private:
+    float intensity_ = 0.8f;
+};
+
+class ChaosWave : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"intensity","Intensity",ParamType::FLOAT,0,1,0.9f,nullptr},
+            {"density","Density",ParamType::FLOAT,0.1f,1.0f,0.55f,nullptr},
+        };
+        static const PatternMeta m{
+            "ChaosWave","pulse","pulse,noise","Semi-random tactile noise impulses.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        if (!strcmp(id,"density"))   { density_ = v;   return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        // Cheap hash of time for glittery impulses.
+        uint32_t h = (uint32_t)(ctx.tMs * 15.0f);
+        h ^= h << 13; h ^= h >> 17; h ^= h << 5;
+        float n = (float)(h & 0xFFFF) / 65535.0f;
+        float v = n * 2.0f - (1.0f - density_);
+        if (v < 0) v = 0;
+        return clamp01(intensity_ * v);
+    }
+private:
+    float intensity_ = 0.9f;
+    float density_ = 0.55f;
+};
+
+class Metronome : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"bpm","BPM",ParamType::FLOAT,40,240,60,nullptr},
+            {"width_ms","Width",ParamType::FLOAT,5,80,40,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "Metronome","rhythm","rhythm,tempo","Precise BPM click.",
+            p,3,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"bpm")) { bpm_ = v; return true; }
+        if (!strcmp(id,"width_ms")) { width_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float period = 60000.0f / bpm_;
+        float t = fmodf(ctx.tMs, period);
+        return t < width_ ? intensity_ : 0.0f;
+    }
+private:
+    float bpm_ = 60.0f;
+    float width_ = 40.0f;
+    float intensity_ = 1.0f;
+};
+
+class Cascade : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"period_ms","Period",ParamType::FLOAT,200,4000,1200,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,0.85f,nullptr},
+        };
+        static const PatternMeta m{
+            "Cascade","rhythm","rhythm,multi,spatial","Phase-offset envelope across channels.",
+            p,2,true,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"period_ms")) { period_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float phase = (float)ctx.channelIndex * 0.25f; // 90° steps for up to 4 ch
+        float ph = fmodf(ctx.tMs / period_ + phase, 1.0f);
+        float v = 0.5f + 0.5f * sinf(ph * 2.0f * (float)M_PI);
+        return clamp01(intensity_ * v);
+    }
+private:
+    float period_ = 1200.0f;
+    float intensity_ = 0.85f;
+};
+
+class TrebleSpark : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"gain","Gain",ParamType::FLOAT,0,10,4.0f,nullptr},
+            {"gate","Gate",ParamType::FLOAT,0,1,0.08f,nullptr},
+        };
+        static const PatternMeta m{
+            "TrebleSpark","music","reactive,music,treble","High-band flutter from FFT.",
+            p,2,false,true,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"gain")) { gain_ = v; return true; }
+        if (!strcmp(id,"gate")) { gate_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        if (!ctx.audio.valid) return 0.0f;
+        float sum = 0;
+        for (int i = 16; i < 32; ++i) sum += ctx.audio.mags[i];
+        float v = (sum / 16.0f) * gain_;
+        if (v < gate_) return 0.0f;
+        return clamp01(v);
+    }
+private:
+    float gain_ = 4.0f;
+    float gate_ = 0.08f;
+};
+
+class MidPresence : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"gain","Gain",ParamType::FLOAT,0,10,3.5f,nullptr},
+            {"gate","Gate",ParamType::FLOAT,0,1,0.05f,nullptr},
+        };
+        static const PatternMeta m{
+            "MidPresence","music","reactive,music,vocal","Mid-band presence / vocal follower.",
+            p,2,false,true,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"gain")) { gain_ = v; return true; }
+        if (!strcmp(id,"gate")) { gate_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        if (!ctx.audio.valid) return 0.0f;
+        float sum = 0;
+        for (int i = 6; i < 16; ++i) sum += ctx.audio.mags[i];
+        float v = (sum / 10.0f) * gain_;
+        if (v < gate_) return 0.0f;
+        return clamp01(v);
+    }
+private:
+    float gain_ = 3.5f;
+    float gate_ = 0.05f;
+};
+
+// ---------- Time-based evolving patterns ----------
+
+class AcceleratingBuzz : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"cycle_s","Cycle (s)",ParamType::FLOAT,1,12,5,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "AcceleratingBuzz","time","time,accel","Buzz frequency accelerates over a cycle.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float mod = fmodf(t, cycle_);
+        float v = 0.5f + 0.5f * sinf(t * (10.0f + mod * 20.0f));
+        return clamp01(intensity_ * v);
+    }
+private:
+    float cycle_ = 5.0f;
+    float intensity_ = 1.0f;
+};
+
+class BouncingDecay : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"cycle_s","Cycle (s)",ParamType::FLOAT,1,10,4,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "BouncingDecay","time","time,bounce","Bounce gaps that decay like a dropped ball.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float c = fmodf(t, cycle_);
+        float decay = 1.0f - (c / cycle_);
+        float bounce = fmodf(c * (2.5f + c * 1.5f), 1.0f);
+        return bounce < 0.25f ? clamp01(intensity_ * decay) : 0.0f;
+    }
+private:
+    float cycle_ = 4.0f;
+    float intensity_ = 1.0f;
+};
+
+class TimeSwell : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"period_s","Period (s)",ParamType::FLOAT,2,20,6,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,0.8f,nullptr},
+        };
+        static const PatternMeta m{
+            "TimeSwell","time","time,ambient,swell","Slow breathing swell over a long window.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"period_s")) { period_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float v = sinf(t * ((float)M_PI / period_));
+        if (v < 0) v = -v; // full-wave breathe
+        return clamp01(intensity_ * v);
+    }
+private:
+    float period_ = 6.0f;
+    float intensity_ = 0.8f;
+};
+
+class LinearFade : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"fade_s","Fade (s)",ParamType::FLOAT,0.5f,10,3,nullptr},
+            {"carrier_hz","Carrier Hz",ParamType::FLOAT,5,80,30,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "LinearFade","time","time,fade","Starts full and fades to zero each cycle.",
+            p,3,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"fade_s")) { fade_ = v; return true; }
+        if (!strcmp(id,"carrier_hz")) { carrier_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float env = 1.0f - fmodf(t, fade_) / fade_;
+        if (env < 0) env = 0;
+        float car = 0.5f + 0.5f * sinf(t * carrier_ * 2.0f * (float)M_PI);
+        return clamp01(intensity_ * env * car);
+    }
+private:
+    float fade_ = 3.0f;
+    float carrier_ = 30.0f;
+    float intensity_ = 1.0f;
+};
+
+class DeceleratingPulse : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"cycle_s","Cycle (s)",ParamType::FLOAT,1,10,4,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "DeceleratingPulse","time","time,decel","Pulse rate slows across each cycle.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float c = fmodf(t, cycle_);
+        float rate = 1.0f + (3.0f * (1.0f - c / cycle_));
+        return sinf(t * rate * 5.0f) > 0.5f ? intensity_ : 0.0f;
+    }
+private:
+    float cycle_ = 4.0f;
+    float intensity_ = 1.0f;
+};
+
+class DopplerSweep : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"cycle_s","Cycle (s)",ParamType::FLOAT,1,8,3,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "DopplerSweep","time","time,doppler","Passing-source freq + volume shift.",
+            p,2,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float c = fmodf(t, cycle_) - cycle_ * 0.5f;
+        float volume = 1.0f / (1.0f + c * c * 4.0f);
+        float freq = 150.0f - c * 80.0f;
+        float v = sinf(t * freq * 0.1f) * volume;
+        if (v < 0) v = -v;
+        return clamp01(intensity_ * v);
+    }
+private:
+    float cycle_ = 3.0f;
+    float intensity_ = 1.0f;
+};
+
+class FibonacciBeat : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"cycle_s","Cycle (s)",ParamType::FLOAT,2,12,5,nullptr},
+            {"hit_s","Hit (s)",ParamType::FLOAT,0.02f,0.3f,0.1f,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "FibonacciBeat","time","time,rhythm,fibonacci","Hits spaced by Fibonacci intervals.",
+            p,3,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
+        if (!strcmp(id,"hit_s")) { hit_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        // Relative marks at 0, 0.2, 0.5, 1.0, 2.1, 3.4 inside a 5s reference, scaled to cycle_.
+        static const float marks[] = {0.0f, 0.2f, 0.5f, 1.0f, 2.1f, 3.4f};
+        const float scale = cycle_ / 5.0f;
+        float c = fmodf(ctx.tMs * 0.001f, cycle_);
+        for (float m : marks) {
+            float at = m * scale;
+            if (c >= at && c < at + hit_) return intensity_;
+        }
+        return 0.0f;
+    }
+private:
+    float cycle_ = 5.0f;
+    float hit_ = 0.1f;
+    float intensity_ = 1.0f;
+};
+
+class SawTremolo : public IPattern {
+public:
+    const PatternMeta& meta() const override {
+        static const ParamMeta p[] = {
+            {"carrier_hz","Carrier Hz",ParamType::FLOAT,10,120,80,nullptr},
+            {"mod_s","Mod period (s)",ParamType::FLOAT,0.2f,8,2,nullptr},
+            {"intensity","Intensity",ParamType::FLOAT,0,1,1.0f,nullptr},
+        };
+        static const PatternMeta m{
+            "SawTremolo","time","time,am,tremolo","Fast carrier AM'd by a slow saw.",
+            p,3,false,false,
+        };
+        return m;
+    }
+    bool setParam(const char* id, float v) override {
+        if (!strcmp(id,"carrier_hz")) { carrier_ = v; return true; }
+        if (!strcmp(id,"mod_s")) { mod_ = v; return true; }
+        if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
+        return false;
+    }
+    float sample(const PatternContext& ctx) override {
+        float t = ctx.tMs * 0.001f;
+        float car = 0.5f + 0.5f * sinf(t * carrier_ * 2.0f * (float)M_PI);
+        float modulator = fmodf(t, mod_) / mod_;
+        return clamp01(intensity_ * car * modulator);
+    }
+private:
+    float carrier_ = 80.0f;
+    float mod_ = 2.0f;
+    float intensity_ = 1.0f;
+};
+
+// ---------- External (driven entirely by API push) ----------
 
 class External : public IPattern {
 public:
@@ -497,6 +1179,29 @@ EnvelopeFollow  gEnvelopeFollow;
 BassPunch       gBassPunch;
 SpectrumPulse   gSpectrumPulse;
 BeatSync        gBeatSync;
+Triangle        gTriangle;
+Throb           gThrob;
+Click           gClick;
+DoubleTap       gDoubleTap;
+SOS             gSOS;
+EngineRev       gEngineRev;
+Crescendo       gCrescendo;
+Lighthouse      gLighthouse;
+AmbientHum      gAmbientHum;
+ModRumble       gModRumble;
+ChaosWave       gChaosWave;
+Metronome       gMetronome;
+Cascade         gCascade;
+TrebleSpark     gTrebleSpark;
+MidPresence     gMidPresence;
+AcceleratingBuzz gAcceleratingBuzz;
+BouncingDecay   gBouncingDecay;
+TimeSwell       gTimeSwell;
+LinearFade      gLinearFade;
+DeceleratingPulse gDeceleratingPulse;
+DopplerSweep    gDopplerSweep;
+FibonacciBeat   gFibonacciBeat;
+SawTremolo      gSawTremolo;
 External        gExternal;
 
 } // anonymous
@@ -511,10 +1216,33 @@ void registerAll(PatternRegistry& reg) {
     reg.registerPattern(&gRamp);
     reg.registerPattern(&gStaccato);
     reg.registerPattern(&gOcean);
+    reg.registerPattern(&gTriangle);
+    reg.registerPattern(&gThrob);
+    reg.registerPattern(&gClick);
+    reg.registerPattern(&gDoubleTap);
+    reg.registerPattern(&gSOS);
+    reg.registerPattern(&gEngineRev);
+    reg.registerPattern(&gCrescendo);
+    reg.registerPattern(&gLighthouse);
+    reg.registerPattern(&gAmbientHum);
+    reg.registerPattern(&gModRumble);
+    reg.registerPattern(&gChaosWave);
+    reg.registerPattern(&gMetronome);
+    reg.registerPattern(&gCascade);
+    reg.registerPattern(&gAcceleratingBuzz);
+    reg.registerPattern(&gBouncingDecay);
+    reg.registerPattern(&gTimeSwell);
+    reg.registerPattern(&gLinearFade);
+    reg.registerPattern(&gDeceleratingPulse);
+    reg.registerPattern(&gDopplerSweep);
+    reg.registerPattern(&gFibonacciBeat);
+    reg.registerPattern(&gSawTremolo);
     reg.registerPattern(&gEnvelopeFollow);
     reg.registerPattern(&gBassPunch);
     reg.registerPattern(&gSpectrumPulse);
     reg.registerPattern(&gBeatSync);
+    reg.registerPattern(&gTrebleSpark);
+    reg.registerPattern(&gMidPresence);
     reg.registerPattern(&gExternal);
 }
 

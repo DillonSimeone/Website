@@ -1,5 +1,5 @@
 #include "BleServer.h"
-#include "ApiHandlers.h"
+#include "StateApi.h"
 #include <ArduinoJson.h>
 #include <esp_mac.h>
 
@@ -99,22 +99,24 @@ void BleServer::onDisconnect(BLEServer* pServer) {
 void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
     String value = pCharacteristic->getValue();
     if (value.length() > 0) {
+        Serial.printf("[CTRL] BLE <- %s\n", value.c_str());
         JsonDocument doc;
         DeserializationError err = deserializeJson(doc, value.c_str(), value.length());
         if (err) {
             log_e("BLE JSON parse error: %s", err.c_str());
+            Serial.printf("[CTRL] BLE JSON parse error: %s\n", err.c_str());
             return;
         }
         const char* type = doc["type"] | "";
         if (strcmp(type, "state") == 0) {
             if (doc["patch"].is<JsonObjectConst>()) {
-                ApiHandlers::applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine_);
+                applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine_);
             }
         } else if (strcmp(type, "config") == 0) {
             if (doc["patch"].is<JsonObjectConst>()) {
                 // Apply config updates over BLE
                 JsonObjectConst patch = doc["patch"].as<JsonObjectConst>();
-                ApiHandlers::applyConfigPatch(patch, config_);
+                applyConfigPatch(patch, config_);
 
                 config_->setFirstRunComplete();
                 config_->save();
@@ -123,6 +125,8 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
                 delay(800);
                 ESP.restart();
             }
+        } else {
+            Serial.printf("[CTRL] BLE unknown type '%s'\n", type);
         }
         // Force state update broadcast back to client
         broadcastState();
@@ -135,7 +139,7 @@ void BleServer::broadcastState() {
     JsonDocument doc;
     doc["type"] = "state";
     auto data = doc["data"].to<JsonObject>();
-    ApiHandlers::serializeState(data, engine_);
+    serializeState(data, engine_);
     data.remove("info"); // Remove verbose info structure to stay under 253 bytes
 
     String body;

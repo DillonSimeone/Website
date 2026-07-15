@@ -1,8 +1,13 @@
 #include "ApiHandlers.h"
+
+#ifdef HAXEL_WIFI
+
+#include "StateApi.h"
 #include "../core/Engine.h"
 #include "../core/Config.h"
 #include "../core/AudioAnalyzer.h"
 #include "../core/PatternRegistry.h"
+#include "../core/RuntimeStore.h"
 #include "../patterns/CustomPattern.h"
 #include "../patterns/Patterns.h"
 #include <ArduinoJson.h>
@@ -12,160 +17,6 @@
 namespace haxel::web {
 
 using namespace haxel::core;
-
-namespace {
-
-void serializeState(JsonObject root, Engine* engine) {
-    StagedState s;
-    engine->copyState(s);
-    root["on"] = s.on;
-    root["mute"] = s.mute;
-    root["intensity"] = s.intensity;
-    root["speed"] = s.speed;
-    root["pattern"] = s.pattern ? s.pattern->id() : "";
-    root["startupFloor"] = s.startupFloor;
-    root["numBins"] = s.numBins;
-
-    auto divs = root["dividers"].to<JsonArray>();
-    for (int i = 0; i < s.numBins - 1 && i < 4; ++i) {
-        divs.add(s.dividers[i]);
-    }
-
-    auto binPats = root["binPatterns"].to<JsonArray>();
-    for (int i = 0; i < s.numBins && i < 5; ++i) {
-        binPats.add(s.binPatterns[i]);
-    }
-
-    auto ch = root["channels"].to<JsonArray>();
-    for (int i = 0; i < s.channelCount; ++i) {
-        auto c = ch.add<JsonObject>();
-        c["on"] = s.channels[i].on;
-        c["intensity"] = s.channels[i].intensity;
-    }
-    auto info = root["info"].to<JsonObject>();
-    info["version"] = HAXEL_VERSION_STR;
-    info["uptime_ms"] = millis();
-    info["heap_free"] = ESP.getFreeHeap();
-}
-
-void applyStatePatch(JsonObjectConst patch, Engine* engine) {
-    StagedState s;
-    engine->copyState(s);
-    if (patch["on"].is<bool>())        s.on        = patch["on"].as<bool>();
-    if (patch["mute"].is<bool>())      s.mute      = patch["mute"].as<bool>();
-    if (patch["intensity"].is<float>())s.intensity = patch["intensity"].as<float>();
-    if (patch["speed"].is<float>())    s.speed     = patch["speed"].as<float>();
-    if (patch["clear"].is<bool>())     s.clearFault = patch["clear"].as<bool>();
-
-    if (patch["startupFloor"].is<float>()) s.startupFloor = patch["startupFloor"].as<float>();
-    if (patch["numBins"].is<int>())        s.numBins      = patch["numBins"].as<int>();
-    if (patch["dividers"].is<JsonArrayConst>()) {
-        int i = 0;
-        for (JsonVariantConst v : patch["dividers"].as<JsonArrayConst>()) {
-            if (i < 4) s.dividers[i++] = v.as<int>();
-        }
-    }
-    if (patch["binPatterns"].is<JsonArrayConst>()) {
-        int i = 0;
-        for (JsonVariantConst v : patch["binPatterns"].as<JsonArrayConst>()) {
-            if (i < 5) {
-                strncpy(s.binPatterns[i], v.as<const char*>(), sizeof(s.binPatterns[i]) - 1);
-                s.binPatterns[i][sizeof(s.binPatterns[i]) - 1] = '\0';
-                i++;
-            }
-        }
-    }
-
-    if (patch["bri"].is<int>()) s.intensity = patch["bri"].as<int>() / 255.0f;
-
-    if (patch["pattern"].is<const char*>()) {
-        const char* pid = patch["pattern"].as<const char*>();
-        IPattern* p = PatternRegistry::instance().find(pid);
-        if (p) s.pattern = p;
-    }
-    if (patch["seg"][0]["fx"].is<int>()) {
-        int idx = patch["seg"][0]["fx"].as<int>();
-        IPattern* p = PatternRegistry::instance().at((size_t)idx);
-        if (p) s.pattern = p;
-    }
-    if (patch["params"].is<JsonObjectConst>() && s.pattern) {
-        for (auto kv : patch["params"].as<JsonObjectConst>()) {
-            s.pattern->setParam(kv.key().c_str(), kv.value().as<float>());
-        }
-    }
-    engine->stageState(s);
-}
-
-void applyConfigPatch(JsonObjectConst patch, Config* config) {
-    if (patch["driver"].is<JsonObjectConst>()) {
-        hal::DriverConfig dc = config->driverConfig();
-        JsonObjectConst d = patch["driver"].as<JsonObjectConst>();
-        if (d["kind"].is<int>()) {
-            config->setDriverKind((hal::DriverKind)(int)d["kind"]);
-            dc.kind = config->driverKind();
-        }
-        if (d["pins"].is<JsonArrayConst>()) {
-            int i = 0;
-            for (JsonVariantConst p : d["pins"].as<JsonArrayConst>()) {
-                if (i < 8) dc.pins[i++] = p.as<int>();
-            }
-        }
-        if (d["sda"].is<int>())   dc.sda   = d["sda"];
-        if (d["scl"].is<int>())   dc.scl   = d["scl"];
-        if (d["pwmHz"].is<int>()) dc.pwmHz = d["pwmHz"];
-        if (d["flags"].is<uint32_t>()) dc.flags = d["flags"];
-        config->setDriverConfig(dc);
-    }
-    if (patch["hostname"].is<const char*>()) {
-        config->setHostname(patch["hostname"].as<const char*>());
-    }
-    if (patch["knobs"].is<JsonArrayConst>()) {
-        KnobConfig knobs[Config::kMaxKnobs];
-        size_t count = 0;
-        for (JsonObjectConst k : patch["knobs"].as<JsonArrayConst>()) {
-            if (count >= Config::kMaxKnobs) break;
-            knobs[count].enabled = k["enabled"] | true;
-            knobs[count].pin     = k["pin"]     | -1;
-            knobs[count].param   = (const char*)(k["param"] | "none");
-            count++;
-        }
-        config->setKnobs(knobs, count);
-    }
-    if (patch["oled"].is<JsonObjectConst>()) {
-        OledConfig oc = config->oledConfig();
-        JsonObjectConst o = patch["oled"].as<JsonObjectConst>();
-        if (o["enabled"].is<bool>()) oc.enabled = o["enabled"];
-        if (o["sda"].is<int>())      oc.sda     = o["sda"];
-        if (o["scl"].is<int>())      oc.scl     = o["scl"];
-        if (o["i2cAddr"].is<int>())  oc.i2cAddr = (uint8_t)o["i2cAddr"].as<int>();
-        if (o["width"].is<int>())    oc.width   = o["width"];
-        if (o["height"].is<int>())   oc.height  = o["height"];
-        config->setOledConfig(oc);
-    }
-    if (patch["led"].is<JsonObjectConst>()) {
-        LedConfig lc = config->ledConfig();
-        JsonObjectConst l = patch["led"].as<JsonObjectConst>();
-        if (l["enabled"].is<bool>()) lc.enabled = l["enabled"];
-        if (l["pin"].is<int>())      lc.pin     = l["pin"];
-        if (l["count"].is<int>())    lc.count   = l["count"];
-        config->setLedConfig(lc);
-    }
-    if (patch["audio"].is<JsonObjectConst>()) {
-        AudioConfig ac = config->audioConfig();
-        JsonObjectConst a = patch["audio"].as<JsonObjectConst>();
-        if (a["enabled"].is<bool>()) ac.enabled = a["enabled"];
-        if (a["source"].is<int>())   ac.source  = a["source"];
-        if (a["bclk"].is<int>())     ac.i2sBclk = a["bclk"];
-        if (a["ws"].is<int>())       ac.i2sWs   = a["ws"];
-        if (a["sd"].is<int>())       ac.i2sSd   = a["sd"];
-        if (a["adc"].is<int>())      ac.adcPin  = a["adc"];
-        config->setAudioConfig(ac);
-    }
-    config->setFirstRunComplete();
-    config->save();
-}
-
-} // anon
 
 void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config, AudioAnalyzer* audio) {
 
@@ -212,8 +63,14 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         drv["pwmHz"] = dc.pwmHz;
 
         auto au = doc["audio"].to<JsonObject>();
+        const auto& ac = config->audioConfig();
         au["enabled"] = config->audioEnabled();
-        au["gain"]    = config->audioConfig().gain;
+        au["source"]  = (int)ac.source;
+        au["bclk"]    = ac.i2sBclk;
+        au["ws"]      = ac.i2sWs;
+        au["sd"]      = ac.i2sSd;
+        au["adc"]     = ac.adcPin;
+        au["gain"]    = ac.gain;
 
         auto ld = doc["led"].to<JsonObject>();
         ld["enabled"] = config->ledEnabled();
@@ -237,6 +94,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         ol["i2cAddr"]  = oc.i2cAddr;
         ol["width"]    = oc.width;
         ol["height"]   = oc.height;
+        doc["eStopPin"] = config->eStopPin();
 
         String body; serializeJson(doc, body);
         req->send(200, "application/json", body);
@@ -290,6 +148,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         j["max"] = d.jitterMax_us;
         doc["state"] = (int)d.state;
         doc["fault"] = d.faultCode ? d.faultCode : (const char*)nullptr;
+        doc["queue_depth"] = d.queueDepth;
         doc["audio_ready"] = audio && audio->ready();
         String body; serializeJson(doc, body);
         req->send(200, "application/json", body);
@@ -302,8 +161,12 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
 
     auto* stateJson = new AsyncCallbackJsonWebHandler("/json/state",
         [engine](AsyncWebServerRequest* req, JsonVariant& json) {
+            Serial.printf("[CTRL] HTTP %s %s from %s\n",
+                          req->methodToString(), req->url().c_str(),
+                          req->client() ? req->client()->remoteIP().toString().c_str() : "?");
             JsonObjectConst patch = json.as<JsonObjectConst>();
             if (patch["reboot"].is<bool>() && patch["reboot"].as<bool>()) {
+                Serial.println("[CTRL] reboot requested");
                 req->send(200, "application/json", "{\"ok\":true,\"reboot\":true}");
                 delay(800);
                 ESP.restart();
@@ -320,6 +183,9 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
 
     auto* configJson = new AsyncCallbackJsonWebHandler("/json/config",
         [config](AsyncWebServerRequest* req, JsonVariant& json) {
+            Serial.printf("[CTRL] HTTP %s %s from %s\n",
+                          req->methodToString(), req->url().c_str(),
+                          req->client() ? req->client()->remoteIP().toString().c_str() : "?");
             applyConfigPatch(json.as<JsonObjectConst>(), config);
             req->send(200, "application/json", "{\"ok\":true,\"reboot\":true}");
             // Generous flush window before reboot — async send queues the
@@ -378,17 +244,28 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
 
     auto* customPatternPost = new AsyncCallbackJsonWebHandler("/json/custom-patterns",
         [](AsyncWebServerRequest* req, JsonVariant& json) {
+            Serial.printf("[CTRL] HTTP %s %s from %s\n",
+                          req->methodToString(), req->url().c_str(),
+                          req->client() ? req->client()->remoteIP().toString().c_str() : "?");
             JsonObjectConst obj = json.as<JsonObjectConst>();
+            {
+                String body;
+                serializeJson(obj, body);
+                Serial.printf("[CTRL] custom-pattern <- %s\n", body.c_str());
+            }
             std::string id = obj["id"] | "";
             std::string name = obj["name"] | "";
             std::string code = obj["code"] | "";
             if (id.empty() || code.empty()) {
+                Serial.println("[CTRL] custom-pattern rejected: missing id/code");
                 req->send(400, "application/json", "{\"ok\":false,\"error\":\"id and code are required\"}");
                 return;
             }
             
             patterns::CustomPatternEvaluator evaluator;
             if (!evaluator.compile(code)) {
+                Serial.printf("[CTRL] custom-pattern compile failed: %s\n",
+                              evaluator.getLastError().c_str());
                 req->send(400, "application/json", "{\"ok\":false,\"error\":\"" + String(evaluator.getLastError().c_str()) + "\"}");
                 return;
             }
@@ -400,8 +277,13 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
             patterns::CustomPattern* cp = new patterns::CustomPattern(id, name, code);
             PatternRegistry::instance().registerCustomPattern(cp);
             
-            // Save to LittleFS
-            patterns::saveCustomPatterns(PatternRegistry::instance());
+            // Save to LittleFS (skip ephemeral studio drafts)
+            bool draft = (id.rfind("studio_draft", 0) == 0);
+            if (!draft) {
+                patterns::saveCustomPatterns(PatternRegistry::instance());
+            }
+            Serial.printf("[CTRL] custom-pattern registered id='%s' name='%s' draft=%d\n",
+                          id.c_str(), name.c_str(), (int)draft);
             
             req->send(200, "application/json", "{\"ok\":true}");
         });
@@ -476,30 +358,28 @@ void ApiHandlers::handleWebSocket(AsyncWebSocket* /*server*/,
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
     if (!info->final || info->index != 0 || info->len != len) return;
 
+    Serial.printf("[CTRL] WS #%lu <- %.*s\n", (unsigned long)client->id(), (int)len, (const char*)data);
+
     JsonDocument doc;
-    if (deserializeJson(doc, data, len)) return;
+    if (deserializeJson(doc, data, len)) {
+        Serial.println("[CTRL] WS JSON parse error");
+        return;
+    }
     const char* msgType = doc["type"] | "";
     if (!strcmp(msgType, "state")) {
         applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine);
     } else if (!strcmp(msgType, "external")) {
         uint8_t ch = doc["channel"] | 0;
         float v   = doc["value"]   | 0.0f;
+        Serial.printf("[CTRL] external ch=%u value=%.3f\n", ch, v);
         engine->pushExternal(ch, v);
     } else if (!strcmp(msgType, "ping")) {
         client->text("{\"type\":\"pong\"}");
+    } else {
+        Serial.printf("[CTRL] WS unknown type '%s'\n", msgType);
     }
 }
 
-void ApiHandlers::serializeState(JsonObject root, Engine* engine) {
-    haxel::web::serializeState(root, engine);
-}
-
-void ApiHandlers::applyStatePatch(JsonObjectConst patch, Engine* engine) {
-    haxel::web::applyStatePatch(patch, engine);
-}
-
-void ApiHandlers::applyConfigPatch(JsonObjectConst patch, Config* config) {
-    haxel::web::applyConfigPatch(patch, config);
-}
-
 } // namespace haxel::web
+
+#endif // HAXEL_WIFI

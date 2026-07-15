@@ -22,12 +22,16 @@ bool MOSFETDriver::begin(const DriverConfig& cfg) {
     }
     auto& alloc = LedcAllocator::instance();
     channelCount_ = 0;
+    for (int i = 0; i < 4; ++i) chPins_[i] = -1;
+
+    // Collapse sparse pin slots into a dense channel list so write(ch)
+    // always targets a real GPIO even when holes exist in cfg_.pins[].
     for (int i = 0; i < 4; ++i) {
         if (cfg_.pins[i] < 0) continue;
         if (alloc.allocate(cfg_.pins[i], cfg_.pwmHz ? cfg_.pwmHz : 20000, cfg_.pwmBits) < 0) {
             return false;
         }
-        channelCount_++;
+        chPins_[channelCount_++] = cfg_.pins[i];
     }
     if (channelCount_ == 0) {
         log_e("MOSFET: no channels configured");
@@ -42,7 +46,8 @@ void MOSFETDriver::end() {
     if (!ready_) return;
     allOff();
     auto& alloc = LedcAllocator::instance();
-    for (int i = 0; i < 4; ++i) alloc.release(cfg_.pins[i]);
+    for (uint8_t i = 0; i < channelCount_; ++i) alloc.release(chPins_[i]);
+    for (int i = 0; i < 4; ++i) chPins_[i] = -1;
     ready_ = false;
     channelCount_ = 0;
 }
@@ -51,7 +56,7 @@ void MOSFETDriver::write(uint8_t ch, float duty01) {
     if (!ready_ || ch >= channelCount_) return;
     if (duty01 < 0) duty01 = 0;
     if (duty01 > 1) duty01 = 1;
-    LedcAllocator::instance().write(cfg_.pins[ch], duty01);
+    LedcAllocator::instance().write(chPins_[ch], duty01);
 }
 
 void MOSFETDriver::writeSigned(uint8_t ch, float v) {
@@ -60,8 +65,8 @@ void MOSFETDriver::writeSigned(uint8_t ch, float v) {
 
 void MOSFETDriver::allOff() {
     auto& alloc = LedcAllocator::instance();
-    for (int i = 0; i < 4; ++i) {
-        if (cfg_.pins[i] >= 0) alloc.write(cfg_.pins[i], 0.0f);
+    for (uint8_t i = 0; i < channelCount_; ++i) {
+        if (chPins_[i] >= 0) alloc.write(chPins_[i], 0.0f);
     }
 }
 

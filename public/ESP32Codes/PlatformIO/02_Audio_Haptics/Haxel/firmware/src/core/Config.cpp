@@ -13,8 +13,8 @@ void Config::applyDefaults_() {
     staEnabled_ = false;
     hostname_ = "haxel";
     apSsid_   = generateApSsid_();
-    staSsid_  = "Cumzone - FishyZone";
-    staPass_  = "7414stinky$$$";
+    staSsid_  = "";
+    staPass_  = "";
 
     driverKind_ = hal::DriverKind::MOSFET;
     driverConfig_ = {};
@@ -29,7 +29,7 @@ void Config::applyDefaults_() {
     led_ = {};
     led_.enabled = true;
     led_.pin = 5;
-    led_.count = 60;
+    led_.count = 20;
 
     knobCount_ = 0;
     for (size_t i = 0; i < kMaxKnobs; ++i) {
@@ -43,6 +43,8 @@ void Config::applyDefaults_() {
     oled_.i2cAddr = 0x3C;
     oled_.width = 128;
     oled_.height = 64;
+
+    eStopPin_ = -1;
 }
 
 void Config::setKnobs(const KnobConfig* knobs, size_t count) {
@@ -65,15 +67,22 @@ String Config::generateApSsid_() {
 bool Config::load() {
     applyDefaults_();
     File f = LittleFS.open(kPath, "r");
-    if (!f) return false;
+    if (!f) {
+        log_i("No config.json — writing factory defaults");
+        save();
+        return false;
+    }
 
     JsonDocument doc;
     DeserializationError err = deserializeJson(doc, f);
     f.close();
     if (err) {
         log_e("config.json parse failed: %s", err.c_str());
+        save(); // rewrite known-good defaults
         return false;
     }
+
+    bool migrated = false;
 
     firstRun_ = doc["firstRun"] | true;
     staEnabled_ = doc["staEnabled"] | false;
@@ -82,11 +91,45 @@ bool Config::load() {
     staSsid_  = (const char*)(doc["staSsid"]  | "");
     staPass_  = (const char*)(doc["staPass"]  | "");
 
-    driverKind_ = (hal::DriverKind)(uint8_t)(doc["driver"]["kind"] | (int)hal::DriverKind::L298N);
+    // Fallbacks must match applyDefaults_() (MOSFET on GPIO 6, LEDs on GPIO 5 / count 20).
+    if (doc["driver"]["kind"].is<int>()) {
+        driverKind_ = (hal::DriverKind)(uint8_t)doc["driver"]["kind"].as<int>();
+    } else {
+        driverKind_ = hal::DriverKind::MOSFET;
+    }
+    // Old portal bug saved MOSFET as kind 0 (NONE). Recover.
+    if (driverKind_ == hal::DriverKind::NONE) {
+        driverKind_ = hal::DriverKind::MOSFET;
+        migrated = true;
+        log_w("Migrated driver kind NONE → MOSFET");
+    }
     driverConfig_.kind = driverKind_;
     JsonArrayConst pins = doc["driver"]["pins"].as<JsonArrayConst>();
-    for (size_t i = 0; i < 8 && i < pins.size(); ++i) {
-        driverConfig_.pins[i] = pins[i] | -1;
+    if (pins.size() > 0) {
+        for (int i = 0; i < 8; ++i) driverConfig_.pins[i] = -1;
+        for (size_t i = 0; i < 8 && i < pins.size(); ++i) {
+            driverConfig_.pins[i] = pins[i] | -1;
+        }
+    }
+    // If pins were omitted, keep applyDefaults_() pin map (MOSFET GPIO 6).
+    if (driverKind_ == hal::DriverKind::MOSFET && driverConfig_.pins[0] < 0) {
+        driverConfig_.pins[0] = 6;
+        migrated = true;
+    }
+    // Migrate boards that inherited the old L298N fallback with a single
+    // gate pin — that layout is MOSFET, not an H-bridge.
+    if (driverKind_ == hal::DriverKind::L298N && driverConfig_.pins[0] >= 0) {
+        bool onlyPin0 = true;
+        for (int i = 1; i < 8; ++i) {
+            if (driverConfig_.pins[i] >= 0) { onlyPin0 = false; break; }
+        }
+        if (onlyPin0) {
+            driverKind_ = hal::DriverKind::MOSFET;
+            driverConfig_.kind = driverKind_;
+            migrated = true;
+            log_w("Migrated single-pin L298N config to MOSFET (GPIO %d)",
+                  (int)driverConfig_.pins[0]);
+        }
     }
     driverConfig_.sda     = doc["driver"]["sda"]     | -1;
     driverConfig_.scl     = doc["driver"]["scl"]     | -1;
@@ -94,48 +137,51 @@ bool Config::load() {
     driverConfig_.pwmHz   = doc["driver"]["pwmHz"]   | 20000;
     driverConfig_.pwmBits = doc["driver"]["pwmBits"] | 10;
 
-    audio_.enabled = doc["audio"]["enabled"] | false;
-    audio_.source  = (AudioConfig::Source)(int)(doc["audio"]["source"] | 0);
-    audio_.i2sBclk = doc["audio"]["bclk"] | -1;
-    audio_.i2sWs   = doc["audio"]["ws"]   | -1;
-    audio_.i2sSd   = doc["audio"]["sd"]   | -1;
-    audio_.adcPin  = doc["audio"]["adc"]  | -1;
-    audio_.gain    = doc["audio"]["gain"] | 1.0f;
+    if (doc["audio"].is<JsonObjectConst>()) {
+        audio_.enabled = doc["audio"]["enabled"] | false;
+        audio_.source  = (AudioConfig::Source)(int)(doc["audio"]["source"] | 0);
+        audio_.i2sBclk = doc["audio"]["bclk"] | -1;
+        audio_.i2sWs   = doc["audio"]["ws"]   | -1;
+        audio_.i2sSd   = doc["audio"]["sd"]   | -1;
+        audio_.adcPin  = doc["audio"]["adc"]  | -1;
+        audio_.gain    = doc["audio"]["gain"] | 1.0f;
+    }
 
-    led_.enabled = doc["led"]["enabled"] | false;
-    led_.pin     = doc["led"]["pin"]     | 2;
-    led_.count   = doc["led"]["count"]   | 60;
+    if (doc["led"].is<JsonObjectConst>()) {
+        led_.enabled = doc["led"]["enabled"] | true;
+        led_.pin     = doc["led"]["pin"]     | 5;
+        led_.count   = doc["led"]["count"]   | 20;
+        if (led_.pin < 0) { led_.pin = 5; migrated = true; }
+        if (led_.count == 0) { led_.count = 20; migrated = true; }
+    }
+    // else keep applyDefaults_() (enabled, pin 5, count 20)
 
     knobCount_ = 0;
     if (JsonArrayConst ka = doc["knobs"].as<JsonArrayConst>()) {
         for (JsonObjectConst k : ka) {
             if (knobCount_ >= kMaxKnobs) break;
-            knobs_[knobCount_].enabled = k["enabled"] | true;
+            knobs_[knobCount_].enabled = k["enabled"] | false;
             knobs_[knobCount_].pin     = k["pin"]     | -1;
             knobs_[knobCount_].param   = (const char*)(k["param"] | "none");
             knobCount_++;
         }
     }
-    if (knobCount_ == 0) {
-        knobCount_ = 4;
-        knobs_[0] = { true, 0, "speed" };
-        knobs_[1] = { true, 1, "intensity" };
-        knobs_[2] = { true, 3, "gain" };
-        knobs_[3] = { true, 4, "pattern" };
-    }
+    // No default knobs — leave empty unless the portal / another project enables them.
 
-    oled_.enabled  = doc["oled"]["enabled"]  | true;
-    oled_.sda      = doc["oled"]["sda"]      | 8;
-    oled_.scl      = doc["oled"]["scl"]      | 9;
-    oled_.i2cAddr  = doc["oled"]["i2cAddr"]  | 0x3C;
-    oled_.width    = doc["oled"]["width"]    | 128;
-    oled_.height   = doc["oled"]["height"]   | 64;
-    if (!doc["oled"].is<JsonObjectConst>()) {
-        oled_.enabled = true;
-        oled_.sda = 8;
-        oled_.scl = 9;
-        oled_.i2cAddr = 0x3C;
+    if (doc["oled"].is<JsonObjectConst>()) {
+        oled_.enabled  = doc["oled"]["enabled"]  | false;
+        oled_.sda      = doc["oled"]["sda"]      | 8;
+        oled_.scl      = doc["oled"]["scl"]      | 9;
+        oled_.i2cAddr  = doc["oled"]["i2cAddr"]  | 0x3C;
+        oled_.width    = doc["oled"]["width"]    | 128;
+        oled_.height   = doc["oled"]["height"]   | 64;
     }
+    // else keep applyDefaults_() (oled disabled)
+
+    eStopPin_ = (int8_t)(doc["eStopPin"] | -1);
+
+    // Persist migrated corrections so the portal sees them next load.
+    if (migrated) save();
     return true;
 }
 
@@ -188,12 +234,22 @@ bool Config::save() {
     ol["width"]    = oled_.width;
     ol["height"]   = oled_.height;
 
+    doc["eStopPin"] = eStopPin_;
+
+    String serialized;
+    serializeJson(doc, serialized);
+    if (serialized == lastSavedJson_) {
+        dirty_ = false;
+        return true; // Dedup identical writes to spare flash.
+    }
+
     File f = LittleFS.open(kTmpPath, "w");
     if (!f) return false;
-    if (serializeJson(doc, f) == 0) { f.close(); return false; }
+    if (f.print(serialized) == 0) { f.close(); return false; }
     f.close();
     LittleFS.remove(kPath);
     LittleFS.rename(kTmpPath, kPath);
+    lastSavedJson_ = serialized;
     dirty_ = false;
     return true;
 }

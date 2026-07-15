@@ -1,3 +1,5 @@
+#ifdef HAXEL_WIFI
+
 #include "CaptivePortal.h"
 #include <Arduino.h>
 
@@ -21,3 +23,5 @@ void CaptivePortal::pump() {
 }
 
 } // namespace haxel::web
+
+#endif // HAXEL_WIFI

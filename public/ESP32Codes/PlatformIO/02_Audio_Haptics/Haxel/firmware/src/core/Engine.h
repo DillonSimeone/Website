@@ -19,6 +19,15 @@ enum class EngineState : uint8_t {
     FAULT,
 };
 
+enum class EngineCmdType : uint8_t {
+    Estop = 1,
+    ClearFault = 2,
+};
+
+struct EngineCmd {
+    EngineCmdType type;
+};
+
 struct ChannelState {
     bool   on        = true;
     float  intensity = 1.0f;
@@ -37,9 +46,10 @@ struct StagedState {
 
     // Audio Partitioning and Calibration Config
     float       startupFloor = 0.15f;
+    // Audio partition defaults: Bin0=NONE, Bin1/Bin2=library patterns.
     uint8_t     numBins = 3;
     uint8_t     dividers[4] = {8, 18, 24, 28};
-    char        binPatterns[5][32] = {"Pulse", "Rumble", "Staccato", "none", "none"};
+    char        binPatterns[5][32] = {"none", "Pulse", "Rumble", "none", "none"};
 };
 
 struct DiagSnapshot {
@@ -48,6 +58,7 @@ struct DiagSnapshot {
     uint32_t jitterP99_us  = 0;
     uint32_t jitterMax_us  = 0;
     uint32_t lastTickUs    = 0;
+    uint32_t queueDepth    = 0;
     EngineState state      = EngineState::IDLE;
     const char* faultCode  = nullptr;
 };
@@ -61,8 +72,12 @@ public:
     // Called at 1 kHz from engineTask.
     void tick();
 
-    // Thread-safe: enqueue a state mutation; engine commits on next tick.
+    // Thread-safe: double-buffer the next full state snapshot (latest wins).
     bool stageState(const StagedState& s);
+
+    // Discrete commands that must not be lost under concurrent writers.
+    bool requestEStop();
+    bool requestClearFault();
 
     // Direct sample injection for the "External" pattern.
     void pushExternal(uint8_t channel, float value01);
@@ -73,13 +88,19 @@ public:
     // Read-only state for /json/state. Safe from any task.
     void copyState(StagedState& out) const;
 
-    // Thread-safe getter for real-time channel duty values.
+    // Thread-safe getter for real-time channel duty values (post floor + soft-start).
     float getChannelValue(uint8_t ch) const;
+
+    // Pattern envelope BEFORE startup-floor + soft-start. LEDs should use this
+    // so motor calibration floor does not wash out visual dynamics.
+    float getPatternValue(uint8_t ch) const;
 
     EngineState state() const { return state_; }
     void raiseFault(const char* code);
 
 private:
+    void drainCommands_();
+    void hardAllOff_();
     void writeAllChannels(float masterTime_ms);
     void recordJitter(uint32_t tickUs);
 
@@ -91,19 +112,24 @@ private:
     bool                hasStaged_ = false;
     portMUX_TYPE        mux_ = portMUX_INITIALIZER_UNLOCKED;
 
+    QueueHandle_t       cmdQ_ = nullptr;
+
     EngineState         state_ = EngineState::IDLE;
     const char*         faultCode_ = nullptr;
     uint32_t            tickCount_ = 0;
     uint32_t            lastTickUs_ = 0;
+    bool                wasIdle_ = true;
 
     // Per-channel external sample latches (for "External" pseudo-pattern).
     float               externalValues_[8] = {0};
 
     // Soft-start: per-channel last-written value, ramped toward target.
     float               lastWritten_[8] = {0};
+    // Pre-floor pattern amplitude (0..1) for LED / diagnostics.
+    float               lastPattern_[8] = {0};
     float               rampStepPerTick_ = 0.05f; // ≈20 ms 0→1
 
-    // Reservoir-ish jitter samples for p50/p99 (last 1024).
+    // Reservoir-ish jitter samples for p50/p99.
     static constexpr size_t kJitterWindow = 256;
     uint16_t            jitter_us_[kJitterWindow] = {0};
     uint16_t            jitterIdx_ = 0;

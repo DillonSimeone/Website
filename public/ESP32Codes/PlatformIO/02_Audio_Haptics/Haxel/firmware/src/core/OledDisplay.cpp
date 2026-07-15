@@ -1,3 +1,9 @@
+#ifndef HAXEL_FEATURE_OLED
+#define HAXEL_FEATURE_OLED 0
+#endif
+
+#if HAXEL_FEATURE_OLED
+
 #include "OledDisplay.h"
 #include "PatternRegistry.h"
 #include <Wire.h>
@@ -132,7 +138,7 @@ void OledDisplay::draw_() {
         disp->print(F("---"));
     }
 
-    // Row 1: knob assignments — e.g. "S1.2 I72 G3.1 P5"
+    // Row 1: knob assignments  Ee.g. "S1.2 I72 G3.1 P5"
     char knobLine[24] = "";
     for (size_t i = 0; i < config_->knobCount(); ++i) {
         appendKnobSegment_(knobLine, sizeof(knobLine), config_->knob(i), s);
@@ -165,3 +171,17 @@ void OledDisplay::tick() {
 }
 
 } // namespace haxel::core
+
+#else
+
+#include "OledDisplay.h"
+namespace haxel::core {
+bool OledDisplay::begin(Config*, Engine*) { return false; }
+void OledDisplay::end() {}
+void OledDisplay::sample() {}
+void OledDisplay::tick() {}
+void OledDisplay::draw_() {}
+void OledDisplay::appendKnobSegment_(char*, size_t, const KnobConfig&, const StagedState&) const {}
+}
+
+#endif

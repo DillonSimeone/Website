@@ -14,9 +14,9 @@ struct AudioConfig {
 };
 
 struct LedConfig {
-    bool     enabled = false;
-    int8_t   pin = 2;
-    uint16_t count = 60;
+    bool     enabled = true;
+    int8_t   pin = 5;
+    uint16_t count = 20;
 };
 
 struct KnobConfig {
@@ -65,6 +65,10 @@ public:
     bool         oledEnabled() const { return oled_.enabled; }
     const OledConfig& oledConfig() const { return oled_; }
 
+    // Optional active-low E-stop GPIO. -1 = disabled.
+    int8_t eStopPin() const { return eStopPin_; }
+    void setEStopPin(int8_t pin) { eStopPin_ = pin; markDirty(); }
+
     void setDriverKind(hal::DriverKind k) { driverKind_ = k; markDirty(); }
     void setDriverConfig(const hal::DriverConfig& c) { driverConfig_ = c; markDirty(); }
     void setStaEnabled(bool e) { staEnabled_ = e; markDirty(); }
@@ -87,7 +91,7 @@ private:
     String staSsid_;
     String staPass_;
 
-    hal::DriverKind   driverKind_   = hal::DriverKind::L298N;
+    hal::DriverKind   driverKind_   = hal::DriverKind::MOSFET;
     hal::DriverConfig driverConfig_;
 
     AudioConfig audio_;
@@ -95,9 +99,11 @@ private:
     KnobConfig  knobs_[kMaxKnobs];
     size_t      knobCount_ = 0;
     OledConfig  oled_;
+    int8_t      eStopPin_ = -1;
 
     bool   dirty_ = false;
     uint32_t lastDirtyMs_ = 0;
+    String lastSavedJson_;
 
     void applyDefaults_();
     String generateApSsid_();

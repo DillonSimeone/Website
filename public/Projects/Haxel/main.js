@@ -227,6 +227,33 @@ if (floorSlider) {
     });
 }
 
+document.querySelectorAll(".motor-preset").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-motor");
+        if (id === "130") {
+            startupFloor = 0.50;
+            masterIntensity = 255;
+            addSerialLog("[HAL] Preset: Type 130 Motor (floor 50%, intensity 100%)");
+        } else if (id === "gentle") {
+            startupFloor = 0.15;
+            masterIntensity = Math.round(0.70 * 255);
+            addSerialLog("[HAL] Preset: Gentle / LRA (floor 15%, intensity 70%)");
+        } else {
+            return;
+        }
+        if (floorSlider) {
+            floorSlider.value = Math.round(startupFloor * 100);
+            if (floorValLabel) floorValLabel.textContent = Math.round(startupFloor * 100) + "%";
+        }
+        if (brightInput) {
+            brightInput.value = masterIntensity;
+            if (brightVal) brightVal.textContent = Math.round((masterIntensity / 255) * 100) + "%";
+        }
+        triggerI2CBlink();
+        syncStateToESP32();
+    });
+});
+
 brightInput.addEventListener("input", (e) => {
     masterIntensity = parseInt(e.target.value);
     brightVal.textContent = Math.round((masterIntensity / 255) * 100) + "%";
