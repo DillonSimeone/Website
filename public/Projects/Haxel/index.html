@@ -325,22 +325,54 @@ wave(t * (freq * 0.05))
                                             <option value="ERM">Eccentric Rotating Mass (ERM)</option>
                                             <option value="Solenoid">High-Amplitude Solenoid</option>
                                         </select>
-                                    </div>
-                                                                  <div class="row">
+                                                                        <div class="row">
                                         <label>SDA Pin (I2C)</label>
-                                        <input type="number" id="pinSDA" min="0" max="48" value="1">
+                                        <select id="pinSDA">
+                                            <option value="1" selected>GPIO 1</option>
+                                            <option value="3">GPIO 3</option>
+                                            <option value="4">GPIO 4</option>
+                                            <option value="5">GPIO 5</option>
+                                            <option value="6">GPIO 6</option>
+                                            <option value="7">GPIO 7</option>
+                                            <option value="10">GPIO 10</option>
+                                        </select>
                                     </div>
                                     <div class="row">
                                         <label>SCL Pin (I2C)</label>
-                                        <input type="number" id="pinSCL" min="0" max="48" value="2">
+                                        <select id="pinSCL">
+                                            <option value="1">GPIO 1</option>
+                                            <option value="2" selected>GPIO 2</option>
+                                            <option value="3">GPIO 3</option>
+                                            <option value="4">GPIO 4</option>
+                                            <option value="5">GPIO 5</option>
+                                            <option value="6">GPIO 6</option>
+                                            <option value="7">GPIO 7</option>
+                                            <option value="10">GPIO 10</option>
+                                        </select>
                                     </div>
                                     <div class="row">
                                         <label>PWM Output Pin</label>
-                                        <input type="number" id="pinPWM" min="0" max="48" value="6">
+                                        <select id="pinPWM">
+                                            <option value="0">GPIO 0</option>
+                                            <option value="1">GPIO 1</option>
+                                            <option value="2">GPIO 2</option>
+                                            <option value="3">GPIO 3</option>
+                                            <option value="4">GPIO 4</option>
+                                            <option value="5">GPIO 5</option>
+                                            <option value="6" selected>GPIO 6</option>
+                                            <option value="7">GPIO 7</option>
+                                            <option value="10">GPIO 10</option>
+                                        </select>
                                     </div>
                                     <div class="row">
                                         <label>PWM Freq (Hz)</label>
-                                        <input type="number" id="pwmFreq" min="100" max="100000" value="20000">
+                                        <select id="pwmFreq">
+                                            <option value="5000">5000 Hz</option>
+                                            <option value="10000">10000 Hz</option>
+                                            <option value="20000" selected>20000 Hz</option>
+                                            <option value="30000">30000 Hz</option>
+                                            <option value="40000">40000 Hz</option>
+                                        </select>
                                     </div>
                                     <div style="margin-top: 15px; display: flex; justify-content: flex-end; width: 100%;">
                                         <button class="btn primary" id="saveHardwareBtn" style="padding: 6px 12px; font-size: 11px; font-weight: bold; cursor: pointer;">Save & Reboot</button>

@@ -832,18 +832,22 @@ wss.on('connection', ws => {
       killProcess('build');
       broadcast({ type: 'status', stream: 'build', active: true });
 
-      if (quick) {
-        runQuickFlash(projectDir, env, port, wasMonitoring);
-      } else {
-        const targets = ['upload'];
-        if (projectHasLittleFS(projectDir)) targets.push('uploadfs');
-        broadcast({
-          type: 'log',
-          stream: 'build',
-          text: `[System] Build & upload (${targets.join(' → ')})...\n\n`
-        });
-        runPioTargets(projectDir, env, port, targets, wasMonitoring);
-      }
+      // Give Windows/esptool a brief delay to release the COM port handle
+      const delayTime = wasMonitoring ? 800 : 0;
+      setTimeout(() => {
+        if (quick) {
+          runQuickFlash(projectDir, env, port, wasMonitoring);
+        } else {
+          const targets = ['upload'];
+          if (projectHasLittleFS(projectDir)) targets.push('uploadfs');
+          broadcast({
+            type: 'log',
+            stream: 'build',
+            text: `[System] Build & upload (${targets.join(' → ')})...\n\n`
+          });
+          runPioTargets(projectDir, env, port, targets, wasMonitoring);
+        }
+      }, delayTime);
     }
   });
 

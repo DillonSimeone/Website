@@ -1,6 +1,7 @@
 #include "BleServer.h"
 #include "ApiHandlers.h"
 #include <ArduinoJson.h>
+#include <esp_mac.h>
 
 namespace haxel::web {
 

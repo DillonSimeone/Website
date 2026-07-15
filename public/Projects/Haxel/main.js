@@ -1770,6 +1770,12 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     const scl = parseInt(document.getElementById("pinSCL").value) || 2;
     const pwm = parseInt(document.getElementById("pinPWM").value) || 6;
     const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
+
+    if (sda === scl || sda === pwm || scl === pwm) {
+        alert("Pin Conflict: SDA, SCL, and PWM pins must all be unique!");
+        addSerialLog("[ERROR] Hardware Configuration aborted: Duplicate pin assignment.");
+        return;
+    }
     
     const configPatch = {
         driver: {
