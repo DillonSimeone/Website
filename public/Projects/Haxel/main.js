@@ -6,7 +6,7 @@ import { PATTERNS, loadCustomPatterns, initPhoneHaptics } from './haptics.js';
 const prevCanvas = document.getElementById("prev");
 const prevCtx = prevCanvas.getContext("2d");
 const heroCanvas = document.getElementById("hero-canvas");
-const heroCtx = heroCanvas.getContext("2d");
+const heroCtx = heroCanvas ? heroCanvas.getContext("2d") : null;
 const specCanvas = document.getElementById("spectrum-canvas");
 const specCtx = specCanvas.getContext("2d");
 
@@ -1415,63 +1415,65 @@ function animate() {
     }
     
     // 2. Draw Hero banner
-    const heroCssW = heroCanvas.width / dpr;
-    const heroCssH = heroCanvas.height / dpr;
+    if (heroCanvas && heroCtx) {
+        const heroCssW = heroCanvas.width / dpr;
+        const heroCssH = heroCanvas.height / dpr;
 
-    heroCtx.fillStyle = "#f4ebd0";
-    heroCtx.fillRect(0, 0, heroCssW, heroCssH);
-    
-    heroCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
-    heroCtx.lineWidth = 1;
-    for (let x = 0; x < heroCssW; x += 50) {
-        heroCtx.beginPath();
-        heroCtx.moveTo(x, 0);
-        heroCtx.lineTo(x, heroCssH);
-        heroCtx.stroke();
-    }
-    
-    if (waveHistory.length > 1) {
-        const step = heroCssW / (historyLen - 1);
+        heroCtx.fillStyle = "#f4ebd0";
+        heroCtx.fillRect(0, 0, heroCssW, heroCssH);
         
-        for (let i = 0; i < waveHistory.length - 1; i++) {
-            const h1 = waveHistory[i] * (heroCssH - 15);
-            const h2 = waveHistory[i + 1] * (heroCssH - 15);
-            const x1 = i * step;
-            const x2 = (i + 1) * step;
+        heroCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+        heroCtx.lineWidth = 1;
+        for (let x = 0; x < heroCssW; x += 50) {
+            heroCtx.beginPath();
+            heroCtx.moveTo(x, 0);
+            heroCtx.lineTo(x, heroCssH);
+            heroCtx.stroke();
+        }
+        
+        if (waveHistory.length > 1) {
+            const step = heroCssW / (historyLen - 1);
             
-            let fillCol = colorHistory[i] || "rgba(226, 59, 36, 0.25)";
-            if (fillCol.startsWith("hsl")) {
-                fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
-            } else if (fillCol.startsWith("rgba(0, 47, 108")) {
-                fillCol = "rgba(226, 59, 36, 0.35)"; // default red for hero
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (heroCssH - 15);
+                const h2 = waveHistory[i + 1] * (heroCssH - 15);
+                const x1 = i * step;
+                const x2 = (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(226, 59, 36, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                } else if (fillCol.startsWith("rgba(0, 47, 108")) {
+                    fillCol = "rgba(226, 59, 36, 0.35)"; // default red for hero
+                }
+                heroCtx.fillStyle = fillCol;
+                
+                const y1_top = heroCssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_top = heroCssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                const y1_bot = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_bot = heroCssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                heroCtx.beginPath();
+                heroCtx.moveTo(x1, y1_top - h1 / 2);
+                heroCtx.lineTo(x2, y2_top - h2 / 2);
+                heroCtx.lineTo(x2, y2_bot + h2 / 2);
+                heroCtx.lineTo(x1, y1_bot + h1 / 2);
+                heroCtx.closePath();
+                heroCtx.fill();
+                
+                heroCtx.strokeStyle = "#111111";
+                heroCtx.lineWidth = 3;
+                heroCtx.beginPath();
+                heroCtx.moveTo(x1, y1_top - h1 / 2);
+                heroCtx.lineTo(x2, y2_top - h2 / 2);
+                heroCtx.stroke();
+                
+                heroCtx.beginPath();
+                heroCtx.moveTo(x2, y2_bot + h2 / 2);
+                heroCtx.lineTo(x1, y1_bot + h1 / 2);
+                heroCtx.stroke();
             }
-            heroCtx.fillStyle = fillCol;
-            
-            const y1_top = heroCssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-            const y2_top = heroCssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
-            
-            const y1_bot = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-            const y2_bot = heroCtx ? (heroCssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4) : 0;
-            
-            heroCtx.beginPath();
-            heroCtx.moveTo(x1, y1_top - h1 / 2);
-            heroCtx.lineTo(x2, y2_top - h2 / 2);
-            heroCtx.lineTo(x2, y2_bot + h2 / 2);
-            heroCtx.lineTo(x1, y1_bot + h1 / 2);
-            heroCtx.closePath();
-            heroCtx.fill();
-            
-            heroCtx.strokeStyle = "#111111";
-            heroCtx.lineWidth = 3;
-            heroCtx.beginPath();
-            heroCtx.moveTo(x1, y1_top - h1 / 2);
-            heroCtx.lineTo(x2, y2_top - h2 / 2);
-            heroCtx.stroke();
-            
-            heroCtx.beginPath();
-            heroCtx.moveTo(x2, y2_bot + h2 / 2);
-            heroCtx.lineTo(x1, y1_bot + h1 / 2);
-            heroCtx.stroke();
         }
     }
 
@@ -2070,11 +2072,9 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     // Dynamic conflict validator
     const pinAllocations = [];
     
-    // Add I2C pins if using I2C driver
-    if (kind === 2) {
-        pinAllocations.push({ name: "I2C SDA", pin: sda });
-        pinAllocations.push({ name: "I2C SCL", pin: scl });
-    }
+    // Always validate configured I2C pins
+    pinAllocations.push({ name: "I2C SDA", pin: sda });
+    pinAllocations.push({ name: "I2C SCL", pin: scl });
     
     // Add motor pins
     activeMotors.forEach((pin, idx) => {
@@ -2082,31 +2082,21 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     });
 
     // Add audio pins
-    if (audioEnabled) {
-        if (audioSource === 2) {
-            pinAllocations.push({ name: "I2S BCLK", pin: audioBclk });
-            pinAllocations.push({ name: "I2S WS", pin: audioWs });
-            pinAllocations.push({ name: "I2S SD", pin: audioSd });
-        } else if (audioSource === 1) {
-            pinAllocations.push({ name: "ADC Analog Mic", pin: audioAdc });
-        }
+    if (audioSource === 2) {
+        pinAllocations.push({ name: "I2S BCLK", pin: audioBclk });
+        pinAllocations.push({ name: "I2S WS", pin: audioWs });
+        pinAllocations.push({ name: "I2S SD", pin: audioSd });
+    } else if (audioSource === 1) {
+        pinAllocations.push({ name: "ADC Analog Mic", pin: audioAdc });
     }
 
     // Add LED pin
-    if (ledEnabled) {
-        pinAllocations.push({ name: "Status LED", pin: ledPin });
-    }
+    pinAllocations.push({ name: "Status LED", pin: ledPin });
 
     // Add knob pins
     activeKnobs.forEach((k, idx) => {
         pinAllocations.push({ name: `Knob ${idx}`, pin: k.pin });
     });
-
-    // Add OLED pins
-    if (oledEnabled) {
-        pinAllocations.push({ name: "OLED SDA", pin: oledSda });
-        pinAllocations.push({ name: "OLED SCL", pin: oledScl });
-    }
 
     // Check for duplicate assignments
     const pinCounts = {};
@@ -2173,7 +2163,7 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         fetch('/json/config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ patch: configPatch })
+            body: JSON.stringify(configPatch)
         })
         .then(() => {
             addSerialLog("[PORTAL] Sent configuration patch successfully. Rebooting ESP32...");

@@ -142,6 +142,25 @@ void applyConfigPatch(JsonObjectConst patch, Config* config) {
         if (o["height"].is<int>())   oc.height  = o["height"];
         config->setOledConfig(oc);
     }
+    if (patch["led"].is<JsonObjectConst>()) {
+        LedConfig lc = config->ledConfig();
+        JsonObjectConst l = patch["led"].as<JsonObjectConst>();
+        if (l["enabled"].is<bool>()) lc.enabled = l["enabled"];
+        if (l["pin"].is<int>())      lc.pin     = l["pin"];
+        if (l["count"].is<int>())    lc.count   = l["count"];
+        config->setLedConfig(lc);
+    }
+    if (patch["audio"].is<JsonObjectConst>()) {
+        AudioConfig ac = config->audioConfig();
+        JsonObjectConst a = patch["audio"].as<JsonObjectConst>();
+        if (a["enabled"].is<bool>()) ac.enabled = a["enabled"];
+        if (a["source"].is<int>())   ac.source  = a["source"];
+        if (a["bclk"].is<int>())     ac.i2sBclk = a["bclk"];
+        if (a["ws"].is<int>())       ac.i2sWs   = a["ws"];
+        if (a["sd"].is<int>())       ac.i2sSd   = a["sd"];
+        if (a["adc"].is<int>())      ac.adcPin  = a["adc"];
+        config->setAudioConfig(ac);
+    }
     config->setFirstRunComplete();
     config->save();
 }

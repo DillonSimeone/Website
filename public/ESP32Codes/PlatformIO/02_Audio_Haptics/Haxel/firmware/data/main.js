@@ -6,7 +6,7 @@ import { PATTERNS, loadCustomPatterns, initPhoneHaptics } from './haptics.js';
 const prevCanvas = document.getElementById("prev");
 const prevCtx = prevCanvas.getContext("2d");
 const heroCanvas = document.getElementById("hero-canvas");
-const heroCtx = heroCanvas.getContext("2d");
+const heroCtx = heroCanvas ? heroCanvas.getContext("2d") : null;
 const specCanvas = document.getElementById("spectrum-canvas");
 const specCtx = specCanvas.getContext("2d");
 
@@ -20,13 +20,17 @@ let smoothedAmp = 0;
 let startupFloor = 0.15; // default 15%
 
 // Dynamic Audio Partitioning Bins Configuration
-let numBins = 3;
-let dividers = [8, 18];
+const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let numBins = isMobileDevice ? 5 : 4;
+let dividers = isMobileDevice ? [5, 12, 22, 28] : [12, 22, 28];
 let draggingDividerIdx = -1;
 
 let timeSec = 0;
 const waveHistory = [];
+const colorHistory = [];
+const specHistory = [];
 const historyLen = 220;
+let telemetryMode = "classic";
 let isMotorStalled = false;
 let stallLogThrottle = 0;
 
@@ -41,6 +45,27 @@ let smoothedAudioAmp = 0;
 // Phone haptics controller
 const phoneHaptics = initPhoneHaptics(addSerialLog);
 let lastPhoneVibrateTime = 0;
+
+function showMobileHapticGuide() {
+    const guide = document.getElementById("mobile-haptic-guide");
+    if (guide && isMobileDevice && navigator.vibrate) {
+        guide.style.display = "flex";
+        // Force reflow
+        guide.offsetHeight;
+        guide.style.transform = "translateY(0)";
+        guide.style.opacity = "1";
+        
+        // Hide after 3.5 seconds
+        clearTimeout(window.mobileGuideTimeout);
+        window.mobileGuideTimeout = setTimeout(() => {
+            guide.style.transform = "translateY(-100px)";
+            guide.style.opacity = "0";
+            setTimeout(() => {
+                guide.style.display = "none";
+            }, 400);
+        }, 3500);
+    }
+}
 
 // ─── HIGH-DPI CANVAS SHARPNESS HELPER ───────────────────────────────────────
 function setupSharpCanvas(canvas) {
@@ -149,6 +174,11 @@ document.querySelectorAll(".chip-preset").forEach(btn => {
             document.getElementById("dot").className = "portal-dot ok";
             document.getElementById("connText").textContent = "playing";
             localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+            
+            if (isMobileDevice && navigator.vibrate) {
+                phoneHaptics.setEnabled(true);
+                showMobileHapticGuide();
+            }
         }
     });
 });
@@ -233,6 +263,11 @@ playBtn.addEventListener("click", () => {
     document.getElementById("connText").textContent = "playing";
     addSerialLog("[HTTP] API Command: START pattern playback");
     syncStateToESP32();
+    
+    if (isMobileDevice && navigator.vibrate) {
+        phoneHaptics.setEnabled(true);
+        showMobileHapticGuide();
+    }
 });
 
 stopBtn.addEventListener("click", () => {
@@ -242,6 +277,76 @@ stopBtn.addEventListener("click", () => {
     addSerialLog("[HTTP] API Command: STOP pattern playback");
     syncStateToESP32();
 });
+
+const audioMinFreqInput = document.getElementById("audioMinFreq");
+const minFreqValLabel = document.getElementById("minFreqVal");
+const audioMaxFreqInput = document.getElementById("audioMaxFreq");
+const maxFreqValLabel = document.getElementById("maxFreqVal");
+const audioGainInput = document.getElementById("audioGain");
+const gainValLabel = document.getElementById("gainVal");
+
+if (audioGainInput) {
+    audioGainInput.addEventListener("input", (e) => {
+        if (gainValLabel) gainValLabel.textContent = parseFloat(e.target.value).toFixed(1) + "x";
+    });
+}
+
+function recalculateDividers() {
+    const minFreq = parseFloat(audioMinFreqInput ? audioMinFreqInput.value : 40);
+    const maxFreq = parseFloat(audioMaxFreqInput ? audioMaxFreqInput.value : 16000);
+    
+    const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+    const minBandIdx = getBandAtFreq(minFreq);
+    const maxBandIdx = getBandAtFreq(maxFreq);
+    
+    const numDividers = numBins - 1;
+    if (numDividers >= 1) {
+        dividers = new Array(numDividers);
+        dividers[0] = minBandIdx;
+        if (numDividers > 1) {
+            dividers[numDividers - 1] = maxBandIdx;
+            for (let i = 1; i < numDividers - 1; i++) {
+                const ratio = i / (numDividers - 1);
+                dividers[i] = Math.round(minBandIdx + ratio * (maxBandIdx - minBandIdx));
+            }
+        }
+    }
+    
+    for (let i = 0; i < dividers.length; i++) {
+        if (i > 0 && dividers[i] <= dividers[i - 1]) {
+            dividers[i] = dividers[i - 1] + 1;
+        }
+    }
+    for (let i = dividers.length - 1; i >= 0; i--) {
+        if (dividers[i] >= 32) dividers[i] = 31;
+        if (i < dividers.length - 1 && dividers[i] >= dividers[i + 1]) {
+            dividers[i] = dividers[i + 1] - 1;
+        }
+    }
+    
+    renderBinRows();
+    syncStateToESP32();
+}
+
+if (audioMinFreqInput) {
+    audioMinFreqInput.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        if (minFreqValLabel) minFreqValLabel.textContent = val + " Hz";
+    });
+    audioMinFreqInput.addEventListener("change", () => {
+        recalculateDividers();
+    });
+}
+
+if (audioMaxFreqInput) {
+    audioMaxFreqInput.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        if (maxFreqValLabel) maxFreqValLabel.textContent = val + " Hz";
+    });
+    audioMaxFreqInput.addEventListener("change", () => {
+        recalculateDividers();
+    });
+}
 
 drvSelect.addEventListener("change", (e) => {
     currentDriverText.textContent = e.target.value;
@@ -309,6 +414,11 @@ function renderCards(filterTag = "all") {
                 compileCustom();
             }
             syncStateToESP32();
+
+            if (isMobileDevice && navigator.vibrate) {
+                phoneHaptics.setEnabled(true);
+                showMobileHapticGuide();
+            }
         });
         
         const editBtn = card.querySelector(".btn-edit-pat");
@@ -325,6 +435,11 @@ function renderCards(filterTag = "all") {
                 document.getElementById("connText").textContent = "playing";
                 document.getElementById("patternName").textContent = `${pat.name} (Studio)`;
                 localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+
+                if (isMobileDevice && navigator.vibrate) {
+                    phoneHaptics.setEnabled(true);
+                    showMobileHapticGuide();
+                }
             });
         }
         
@@ -376,6 +491,18 @@ chips.forEach(chip => chip.addEventListener("click", () => {
     chips.forEach(c => c.classList.remove("active"));
     chip.classList.add("active");
     renderCards(chip.dataset.tag);
+}));
+
+document.querySelectorAll(".telemetry-toggle-btn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".telemetry-toggle-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    telemetryMode = btn.dataset.mode;
+    addSerialLog(`[IDE] Telemetry mode switched to: ${telemetryMode.toUpperCase()}`);
+    
+    if (telemetryMode === "waterfall") {
+        const audioTab = document.querySelector('.tab[data-tab="audio"]');
+        if (audioTab) audioTab.click();
+    }
 }));
 
 // LocalStorage Custom Patterns Save Handler
@@ -443,7 +570,7 @@ async function setupMicrophone() {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 64; // 32 bands
+        analyser.fftSize = 256; // 128 bands
         
         micStream = stream;
         micSource = audioCtx.createMediaStreamSource(stream);
@@ -487,12 +614,17 @@ document.getElementById("micSrc").addEventListener("change", (e) => {
 
 // ─── AUDIO REACTIVE BINS DRAG INTERACTIVES ──────────────────────────────────
 function updateBinRangeLabels() {
+    const getFreqAtBand = (b) => {
+        if (b === 0) return 0;
+        if (b === 32) return 20000;
+        return Math.round(40 * Math.pow(20000 / 40, b / 32));
+    };
     for (let i = 0; i < numBins; i++) {
         const startVal = i === 0 ? 0 : dividers[i - 1];
         const endVal = i === numBins - 1 ? 32 : dividers[i];
         
-        const fStart = Math.round(startVal * 172);
-        const fEnd = Math.min(5500, Math.round(endVal * 172));
+        const fStart = getFreqAtBand(startVal);
+        const fEnd = getFreqAtBand(endVal);
         
         const label = document.getElementById(`bin-${i}-range`);
         if (label) {
@@ -525,10 +657,29 @@ function renderBinRows() {
         row.className = "bin-row";
         row.style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px;";
         
+        const minFreq = parseFloat(document.getElementById("audioMinFreq")?.value || 40);
+        const maxFreq = parseFloat(document.getElementById("audioMaxFreq")?.value || 16000);
+        const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+        const minBandIdx = getBandAtFreq(minFreq);
+        const maxBandIdx = getBandAtFreq(maxFreq);
+
         let labelName = `Bin ${i}`;
-        if (numBins === 3) {
-            const labels = ["Bass", "Mids", "Treble"];
-            labelName += ` (${labels[i]})`;
+        if (i === 0 && minBandIdx > 0) {
+            labelName += ` (Anti-Loop / Low Cut)`;
+        } else if (i === numBins - 1 && maxBandIdx < 32) {
+            labelName += ` (High Cut / End Bin)`;
+        } else {
+            const activeIdx = (minBandIdx > 0) ? (i - 1) : i;
+            const activeCount = numBins - (minBandIdx > 0 ? 1 : 0) - (maxBandIdx < 32 ? 1 : 0);
+            if (activeCount === 3) {
+                const labels = ["Bass", "Mids", "Treble"];
+                labelName += ` (${labels[activeIdx]})`;
+            } else if (activeCount === 2) {
+                const labels = ["Bass/Mids", "Treble"];
+                labelName += ` (${labels[activeIdx]})`;
+            } else {
+                labelName += ` (Active ${activeIdx + 1})`;
+            }
         }
         
         row.innerHTML = `
@@ -557,7 +708,14 @@ function renderBinRows() {
         if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
             select.value = prevVal;
         } else {
-            select.value = defaults[i % defaults.length];
+            if (i === 0 && minBandIdx > 0) {
+                select.value = "none";
+            } else if (i === numBins - 1 && maxBandIdx < 32) {
+                select.value = "none";
+            } else {
+                const offset = (minBandIdx > 0) ? 1 : 0;
+                select.value = defaults[(i - offset) % defaults.length];
+            }
         }
     }
     
@@ -679,7 +837,35 @@ renderBinRows();
 function getAudioData() {
     if (useLiveMic && analyser) {
         analyser.getByteFrequencyData(dataArray);
-        const mags = Array.from(dataArray).map(v => v / 255);
+        const rawMags = Array.from(dataArray).map(v => v / 255);
+        const mags = new Array(32).fill(0);
+        
+        const kWindow = analyser.fftSize;
+        const sampleRate = audioCtx.sampleRate;
+        const minFreq = 40;
+        const maxFreq = 20000;
+        let maxMag = 1e-9;
+        
+        for (let b = 0; b < 32; ++b) {
+            const lo = minFreq * Math.pow(maxFreq / minFreq, b / 32);
+            const hi = minFreq * Math.pow(maxFreq / minFreq, (b + 1) / 32);
+            let loBin = Math.floor(lo * kWindow / sampleRate);
+            let hiBin = Math.floor(hi * kWindow / sampleRate);
+            if (hiBin <= loBin) hiBin = loBin + 1;
+            
+            let sum = 0;
+            let count = 0;
+            for (let k = loBin; k < hiBin && k < rawMags.length; ++k) {
+                sum += rawMags[k];
+                count++;
+            }
+            mags[b] = count > 0 ? (sum / count) : 0;
+            if (mags[b] > maxMag) maxMag = mags[b];
+        }
+        for (let b = 0; b < 32; ++b) {
+            mags[b] = Math.min(1.0, mags[b] / (maxMag * 1.2));
+        }
+        
         smoothedAudioAmp += (mags.slice(0, 4).reduce((a,b)=>a+b,0)/4 - smoothedAudioAmp) * 0.2;
         updateAudioState(mags, smoothedAudioAmp);
         return mags;
@@ -845,6 +1031,78 @@ function drawVirtualActuator(ctx, cx, cy, radius, activeAmp) {
 // ─── TICK LOOP ──────────────────────────────────────────────────────────────
 function animate() {
     requestAnimationFrame(animate);
+
+    // Render dynamic spikes on mobile float canvas button
+    const floatBtn = document.getElementById("mobile-haptic-float-btn");
+    const hapticCanvas = document.getElementById("mobile-haptic-canvas");
+    if (floatBtn && floatBtn.style.display !== "none" && hapticCanvas) {
+        const ctx = hapticCanvas.getContext("2d");
+        const w = hapticCanvas.width;
+        const h = hapticCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const centerX = w / 2;
+        const centerY = h / 2;
+        const baseRadius = 35; // 17.5px CSS radius (matches 35px diameter circle)
+        
+        // Draw spikes radiating outward
+        const numSpikes = 28;
+        const maxSpikeLength = 18;
+        const amp = smoothedAmp; // ranges smoothly from 0.0 to 1.0
+        
+        ctx.strokeStyle = isPlaying ? "#e23b24" : "#f2b134"; // Bauhaus Red or Yellow
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = "round";
+        
+        for (let i = 0; i < numSpikes; i++) {
+            // Give them a slow rotation for a very premium feel
+            const angle = (i / numSpikes) * Math.PI * 2 + timeSec * 0.4;
+            // Generate micro-movement for secondary smoothness
+            const noiseVal = Math.sin(timeSec * 8 + i * 1.5) * 0.12 + 0.88;
+            const spikeLen = (amp * 0.85 + 0.15 * noiseVal) * maxSpikeLength;
+            
+            const startX = centerX + Math.cos(angle) * baseRadius;
+            const startY = centerY + Math.sin(angle) * baseRadius;
+            const endX = centerX + Math.cos(angle) * (baseRadius + spikeLen);
+            const endY = centerY + Math.sin(angle) * (baseRadius + spikeLen);
+            
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+        }
+        
+        // Draw inner circular button background
+        ctx.fillStyle = isPlaying ? "#e23b24" : "#f2b134";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Circular button border
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Draw Play / Pause icon in the center
+        ctx.fillStyle = "#111111";
+        if (isPlaying) {
+            // Pause icon: two vertical bars
+            const barW = 5;
+            const barH = 15;
+            const gap = 5;
+            ctx.fillRect(centerX - barW - gap / 2, centerY - barH / 2, barW, barH);
+            ctx.fillRect(centerX + gap / 2, centerY - barH / 2, barW, barH);
+        } else {
+            // Play icon: triangle pointing right
+            ctx.beginPath();
+            const triSize = 9;
+            ctx.moveTo(centerX - triSize * 0.7 + 1.5, centerY - triSize);
+            ctx.lineTo(centerX + triSize * 1.3 + 1.5, centerY);
+            ctx.lineTo(centerX - triSize * 0.7 + 1.5, centerY + triSize);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
     
     timeSec += 0.016 * playbackSpeed;
     const isAudioTab = document.getElementById("tab-audio").style.display !== "none";
@@ -941,6 +1199,23 @@ function animate() {
     waveHistory.push(smoothedAmp);
     if (waveHistory.length > historyLen) waveHistory.shift();
     
+    let activeColor = "rgba(0, 47, 108, 0.25)";
+    if (isAudioTab && mags) {
+        const sortedBins = Array.from({length: 32}, (_, idx) => ({index: idx, val: mags[idx]}))
+            .sort((a, b) => b.val - a.val);
+        const top3 = sortedBins.slice(0, 3);
+        const hue1 = (top3[0].index / 31) * 280;
+        const hue2 = (top3[1].index / 31) * 280;
+        const hue3 = (top3[2].index / 31) * 280;
+        const avgHue = (hue1 + hue2 + hue3) / 3;
+        activeColor = `hsl(${avgHue}, 85%, 45%)`;
+    }
+    colorHistory.push(activeColor);
+    if (colorHistory.length > historyLen) colorHistory.shift();
+    
+    specHistory.push(mags ? [...mags] : new Array(32).fill(0));
+    if (specHistory.length > historyLen) specHistory.shift();
+    
     updateHardwarePins(smoothedAmp, isMotorStalled);
 
     // 1. Draw telemetry
@@ -990,66 +1265,216 @@ function animate() {
         const width = cssW - startX;
         const step = width / (historyLen - 1);
         
-        prevCtx.beginPath();
-        for (let i = 0; i < waveHistory.length; i++) {
-            const h = waveHistory[i] * (cssH - 20);
-            const x = startX + i * step;
-            const y = cssH - 10 - h;
-            if (i === 0) prevCtx.moveTo(x, y);
-            else prevCtx.lineTo(x, y);
+        if (telemetryMode === "classic") {
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (cssH - 20);
+                const h2 = waveHistory[i + 1] * (cssH - 20);
+                const x1 = startX + i * step;
+                const x2 = startX + (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                }
+                prevCtx.fillStyle = fillCol;
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, cssH - 10);
+                prevCtx.lineTo(x1, cssH - 10 - h1);
+                prevCtx.lineTo(x2, cssH - 10 - h2);
+                prevCtx.lineTo(x2, cssH - 10);
+                prevCtx.closePath();
+                prevCtx.fill();
+                
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, cssH - 10 - h1);
+                prevCtx.lineTo(x2, cssH - 10 - h2);
+                prevCtx.stroke();
+            }
+        } else if (telemetryMode === "symmetric") {
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (cssH - 20);
+                const h2 = waveHistory[i + 1] * (cssH - 20);
+                const x1 = startX + i * step;
+                const x2 = startX + (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                }
+                prevCtx.fillStyle = fillCol;
+                
+                const y1_top = cssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_top = cssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                const y1_bot = cssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_bot = cssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1_top - h1 / 2);
+                prevCtx.lineTo(x2, y2_top - h2 / 2);
+                prevCtx.lineTo(x2, y2_bot + h2 / 2);
+                prevCtx.lineTo(x1, y1_bot + h1 / 2);
+                prevCtx.closePath();
+                prevCtx.fill();
+                
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1_top - h1 / 2);
+                prevCtx.lineTo(x2, y2_top - h2 / 2);
+                prevCtx.stroke();
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x2, y2_bot + h2 / 2);
+                prevCtx.lineTo(x1, y1_bot + h1 / 2);
+                prevCtx.stroke();
+            }
+        } else if (telemetryMode === "waterfall") {
+            const cellH = (cssH - 20) / 32;
+            for (let i = 0; i < specHistory.length; i++) {
+                const x = startX + i * step;
+                const spec = specHistory[i];
+                for (let j = 0; j < 32; j++) {
+                    const val = spec ? spec[j] : 0;
+                    if (val > 0.01) {
+                        const hue = (j / 31) * 280;
+                        prevCtx.fillStyle = `hsla(${hue}, 85%, 45%, ${val * 0.75})`;
+                        prevCtx.fillRect(x, cssH - 10 - (j + 1) * cellH, step + 1, cellH + 0.5);
+                    }
+                }
+            }
+        } else if (telemetryMode === "orbit") {
+            const cx = startX + width / 2;
+            const cy = cssH / 2;
+            
+            prevCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+            prevCtx.lineWidth = 2;
+            prevCtx.beginPath();
+            prevCtx.arc(cx, cy, (cssH - 30) * 0.25, 0, Math.PI * 2);
+            prevCtx.stroke();
+            
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const amp1 = waveHistory[i];
+                const amp2 = waveHistory[i + 1];
+                
+                const angle1 = (i / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
+                const angle2 = ((i + 1) / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
+                
+                const baseR = (cssH - 30) * 0.28;
+                const r1 = baseR + amp1 * baseR * 0.8;
+                const r2 = baseR + amp2 * baseR * 0.8;
+                
+                const x1 = cx + Math.cos(angle1) * r1;
+                const y1 = cy + Math.sin(angle1) * r1;
+                const x2 = cx + Math.cos(angle2) * r2;
+                const y2 = cy + Math.sin(angle2) * r2;
+                
+                let strokeCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                const alpha = (i / (waveHistory.length - 1)) * 0.8;
+                if (strokeCol.startsWith("hsl")) {
+                    strokeCol = strokeCol.replace("hsl", "hsla").replace(")", `, ${alpha})`);
+                } else {
+                    strokeCol = `rgba(0, 47, 108, ${alpha})`;
+                }
+                
+                prevCtx.strokeStyle = strokeCol;
+                prevCtx.lineWidth = 2 + (i / waveHistory.length) * 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1);
+                prevCtx.lineTo(x2, y2);
+                prevCtx.stroke();
+            }
+            
+            if (waveHistory.length > 0) {
+                const latestAmp = waveHistory[waveHistory.length - 1];
+                const latestAngle = Math.PI * 2 * 4 + timeSec * 3;
+                const baseR = (cssH - 30) * 0.28;
+                const latestR = baseR + latestAmp * baseR * 0.8;
+                const lx = cx + Math.cos(latestAngle) * latestR;
+                const ly = cy + Math.sin(latestAngle) * latestR;
+                
+                prevCtx.fillStyle = colorHistory[colorHistory.length - 1] || "#111111";
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 2;
+                prevCtx.beginPath();
+                prevCtx.arc(lx, ly, 6 + latestAmp * 5, 0, Math.PI * 2);
+                prevCtx.fill();
+                prevCtx.stroke();
+                
+                prevCtx.strokeStyle = "rgba(17, 17, 17, 0.25)";
+                prevCtx.lineWidth = 1.5;
+                prevCtx.beginPath();
+                prevCtx.moveTo(cx, cy);
+                prevCtx.lineTo(lx, ly);
+                prevCtx.stroke();
+            }
         }
-        
-        prevCtx.strokeStyle = "#111111";
-        prevCtx.lineWidth = 3;
-        prevCtx.stroke();
-        
-        prevCtx.lineTo(cssW, cssH - 10);
-        prevCtx.lineTo(startX, cssH - 10);
-        prevCtx.closePath();
-        
-        prevCtx.fillStyle = "rgba(0, 47, 108, 0.25)";
-        prevCtx.fill();
     }
     
     // 2. Draw Hero banner
-    const heroCssW = heroCanvas.width / dpr;
-    const heroCssH = heroCanvas.height / dpr;
+    if (heroCanvas && heroCtx) {
+        const heroCssW = heroCanvas.width / dpr;
+        const heroCssH = heroCanvas.height / dpr;
 
-    heroCtx.fillStyle = "#f4ebd0";
-    heroCtx.fillRect(0, 0, heroCssW, heroCssH);
-    
-    heroCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
-    heroCtx.lineWidth = 1;
-    for (let x = 0; x < heroCssW; x += 50) {
-        heroCtx.beginPath();
-        heroCtx.moveTo(x, 0);
-        heroCtx.lineTo(x, heroCssH);
-        heroCtx.stroke();
-    }
-    
-    if (waveHistory.length > 1) {
-        const step = heroCssW / (historyLen - 1);
-        heroCtx.beginPath();
-        for (let i = 0; i < waveHistory.length; i++) {
-            const h = waveHistory[i] * (heroCssH - 15);
-            const x = i * step;
-            const y = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h * 0.4;
-            if (i === 0) heroCtx.moveTo(x, y - h/2);
-            else heroCtx.lineTo(x, y - h/2);
-        }
-        for (let i = waveHistory.length - 1; i >= 0; i--) {
-            const h = waveHistory[i] * (heroCssH - 15);
-            const x = i * step;
-            const y = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h * 0.4;
-            heroCtx.lineTo(x, y + h/2);
+        heroCtx.fillStyle = "#f4ebd0";
+        heroCtx.fillRect(0, 0, heroCssW, heroCssH);
+        
+        heroCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+        heroCtx.lineWidth = 1;
+        for (let x = 0; x < heroCssW; x += 50) {
+            heroCtx.beginPath();
+            heroCtx.moveTo(x, 0);
+            heroCtx.lineTo(x, heroCssH);
+            heroCtx.stroke();
         }
         
-        heroCtx.strokeStyle = "#111111";
-        heroCtx.lineWidth = 3;
-        heroCtx.stroke();
-
-        heroCtx.fillStyle = "#e23b24";
-        heroCtx.fill();
+        if (waveHistory.length > 1) {
+            const step = heroCssW / (historyLen - 1);
+            
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (heroCssH - 15);
+                const h2 = waveHistory[i + 1] * (heroCssH - 15);
+                const x1 = i * step;
+                const x2 = (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(226, 59, 36, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                } else if (fillCol.startsWith("rgba(0, 47, 108")) {
+                    fillCol = "rgba(226, 59, 36, 0.35)"; // default red for hero
+                }
+                heroCtx.fillStyle = fillCol;
+                
+                const y1_top = heroCssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_top = heroCssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                const y1_bot = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_bot = heroCssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                heroCtx.beginPath();
+                heroCtx.moveTo(x1, y1_top - h1 / 2);
+                heroCtx.lineTo(x2, y2_top - h2 / 2);
+                heroCtx.lineTo(x2, y2_bot + h2 / 2);
+                heroCtx.lineTo(x1, y1_bot + h1 / 2);
+                heroCtx.closePath();
+                heroCtx.fill();
+                
+                heroCtx.strokeStyle = "#111111";
+                heroCtx.lineWidth = 3;
+                heroCtx.beginPath();
+                heroCtx.moveTo(x1, y1_top - h1 / 2);
+                heroCtx.lineTo(x2, y2_top - h2 / 2);
+                heroCtx.stroke();
+                
+                heroCtx.beginPath();
+                heroCtx.moveTo(x2, y2_bot + h2 / 2);
+                heroCtx.lineTo(x1, y1_bot + h1 / 2);
+                heroCtx.stroke();
+            }
+        }
     }
 
     const uptimeText = document.getElementById("uptime");
@@ -1064,6 +1489,80 @@ if (draft && ta) {
     ta.value = draft;
 }
 
+if (isMobileDevice) {
+    const noteEl = document.getElementById("mobile-feedback-note");
+    if (noteEl) {
+        noteEl.style.display = "block";
+    }
+    
+    if (navigator.vibrate) {
+        const floatBtn = document.getElementById("mobile-haptic-float-btn");
+        if (floatBtn) {
+            floatBtn.style.display = "flex";
+            floatBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (!phoneHaptics.isEnabled()) {
+                    phoneHaptics.setEnabled(true);
+                    try {
+                        navigator.vibrate(50);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Mobile haptics engaged via float button click.");
+                }
+                isPlaying = !isPlaying;
+                const dot = document.getElementById("dot");
+                const connText = document.getElementById("connText");
+                if (isPlaying) {
+                    if (dot) dot.className = "portal-dot ok";
+                    if (connText) connText.textContent = "playing";
+                    addSerialLog("[PORTAL] Mobile action: START pattern playback");
+                } else {
+                    if (dot) dot.className = "portal-dot";
+                    if (connText) connText.textContent = "idle";
+                    addSerialLog("[PORTAL] Mobile action: STOP pattern playback");
+                }
+                syncStateToESP32();
+            });
+        }
+
+        const overlay = document.getElementById("haptic-activation-overlay");
+        const enableBtn = document.getElementById("enable-haptics-btn");
+        const testBtn = document.getElementById("test-haptics-btn");
+        const disableBtn = document.getElementById("disable-haptics-btn");
+        if (overlay) {
+            overlay.style.display = "flex";
+            if (enableBtn) {
+                enableBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    overlay.style.display = "none";
+                    phoneHaptics.setEnabled(true);
+                    try {
+                        navigator.vibrate(50);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Mobile haptics enabled by user choice.");
+                });
+            }
+            if (testBtn) {
+                testBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    try {
+                        // Sample vibration: short burst sequence
+                        navigator.vibrate([80, 40, 80, 40, 150]);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Mobile haptics test vibration triggered.");
+                });
+            }
+            if (disableBtn) {
+                disableBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    overlay.style.display = "none";
+                    phoneHaptics.setEnabled(false);
+                    addSerialLog("[PORTAL] Mobile haptics disabled by user choice.");
+                });
+            }
+        }
+    }
+}
+
 loadCustomPatterns(frequencyShift, playbackSpeed, masterIntensity, startupFloor);
 renderCards();
 syncHL();
@@ -1071,8 +1570,18 @@ compileCustom();
 initBootLogs();
 animate();
 
-// ─── REAL TIME ESP32 BRIDGE IMPLEMENTATION ────────────────────────────────────
+// ─── REAL TIME ESP32 BRIDGE & WEB BLUETOOTH UNIFICATION ─────────────────────
 const isRealESP32 = (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'dillonsimeone.com' && window.location.hostname !== '');
+const isBleMode = window.location.pathname.includes("bluetooth.html");
+
+// BLE Variables
+let bleDevice = null;
+let rxCharacteristic = null;
+let txCharacteristic = null;
+const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const isBluetoothSupported = 'bluetooth' in navigator;
 
 function throttle(fn, ms) {
     let last = 0, timer = null;
@@ -1088,17 +1597,79 @@ function throttle(fn, ms) {
     };
 }
 
-const sendStateUpdate = throttle((patch) => {
-    if (!isRealESP32) return;
-    fetch('/json/state', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch)
-    }).catch(() => {});
+// Common state applier
+function applyStateUpdate(s) {
+    if (s.intensity !== undefined) {
+        masterIntensity = Math.round(s.intensity * 255);
+        const el = document.getElementById("bright");
+        if (el && !el.matches(':active')) {
+            el.value = masterIntensity;
+            const vLabel = document.getElementById("brightVal");
+            if (vLabel) vLabel.textContent = Math.round((masterIntensity/255)*100) + "%";
+        }
+    }
+    if (s.speed !== undefined) {
+        playbackSpeed = s.speed;
+        const el = document.getElementById("speed");
+        if (el && !el.matches(':active')) {
+            el.value = Math.round(playbackSpeed * 10);
+            const vLabel = document.getElementById("speedVal");
+            if (vLabel) vLabel.textContent = playbackSpeed.toFixed(1) + "x";
+        }
+    }
+    if (s.startupFloor !== undefined) {
+        startupFloor = s.startupFloor;
+        const el = document.getElementById("startFloor");
+        if (el && !el.matches(':active')) {
+            el.value = Math.round(startupFloor * 100);
+            const vLabel = document.getElementById("floorVal");
+            if (vLabel) vLabel.textContent = Math.round(startupFloor * 100) + "%";
+        }
+    }
+    if (s.numBins !== undefined) {
+        numBins = s.numBins;
+        if (s.dividers) dividers = s.dividers.slice();
+        renderBinRows();
+    }
+    if (s.pattern) {
+        const p = PATTERNS.find(pat => pat.id === s.pattern);
+        if (p) {
+            activePattern = p;
+            const vLabel = document.getElementById("patternName");
+            if (vLabel) vLabel.textContent = p.name;
+        }
+    }
+    if (s.uptime_ms !== undefined) {
+        const uptimeText = document.getElementById("uptime");
+        if (uptimeText) {
+            uptimeText.textContent = Math.floor(s.uptime_ms / 1000) + "s";
+        }
+    }
+}
+
+// Send State Updates
+const sendStateUpdate = throttle(async (patch) => {
+    if (isBleMode) {
+        if (!rxCharacteristic) return;
+        try {
+            const payload = JSON.stringify({ type: "state", patch: patch });
+            const encoder = new TextEncoder();
+            const data = encoder.encode(payload);
+            await rxCharacteristic.writeValueWithoutResponse(data);
+        } catch (err) {
+            console.error("BLE State Write Error:", err);
+        }
+    } else {
+        if (!isRealESP32) return;
+        fetch('/json/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch)
+        }).catch(() => {});
+    }
 }, 100);
 
 function syncStateToESP32() {
-    if (!isRealESP32) return;
     sendStateUpdate({
         on: isPlaying,
         intensity: masterIntensity / 255,
@@ -1114,7 +1685,121 @@ function syncStateToESP32() {
     });
 }
 
+// BLE Connect Button Handlers
+function updateConnectButtonsState(connected, connecting = false) {
+    const connectBtn = document.getElementById("connectBleBtn") || document.getElementById("bleConnectBtn");
+    const connectBtnDoc = document.getElementById("connectBleBtnDoc") || document.getElementById("bleConnectBtnDoc");
+    const buttons = [connectBtn, connectBtnDoc].filter(Boolean);
+    
+    buttons.forEach(btn => {
+        if (!isBluetoothSupported) {
+            btn.textContent = "BLE UNSUPPORTED";
+            btn.disabled = true;
+            btn.style.cursor = "not-allowed";
+            btn.style.opacity = "0.6";
+        } else if (connecting) {
+            btn.textContent = "CONNECTING...";
+            btn.disabled = true;
+        } else if (connected) {
+            btn.textContent = "DISCONNECT BLE";
+            btn.disabled = false;
+            btn.style.backgroundColor = "var(--bauhaus-red)";
+        } else {
+            btn.textContent = "CONNECT BLE";
+            btn.disabled = false;
+            btn.style.backgroundColor = "";
+        }
+    });
+}
+
+async function connectBLE() {
+    const dot = document.getElementById("dot");
+    const connText = document.getElementById("connText");
+    const bleStatus = document.getElementById("bleStatusLabel");
+    
+    addSerialLog("[BLE] Requesting Bluetooth Device...");
+    updateConnectButtonsState(false, true);
+    
+    try {
+        bleDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'Haxel' }],
+            optionalServices: [HAXEL_SERVICE_UUID]
+        });
+        
+        addSerialLog(`[BLE] Found: ${bleDevice.name}. Connecting to GATT Server...`);
+        if (dot) dot.className = "portal-dot";
+        if (connText) connText.textContent = "connecting...";
+        
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+        
+        const server = await bleDevice.gatt.connect();
+        addSerialLog("[BLE] Connected! Getting Service...");
+        
+        const service = await server.getPrimaryService(HAXEL_SERVICE_UUID);
+        addSerialLog("[BLE] Service found. Getting Characteristics...");
+        
+        rxCharacteristic = await service.getCharacteristic(RX_CHAR_UUID);
+        txCharacteristic = await service.getCharacteristic(TX_CHAR_UUID);
+        
+        addSerialLog("[BLE] Starting Notifications...");
+        await txCharacteristic.startNotifications();
+        txCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
+        
+        if (dot) dot.className = "portal-dot ok";
+        if (connText) connText.textContent = "connected";
+        if (bleStatus) bleStatus.textContent = "Connected";
+        updateConnectButtonsState(true);
+        addSerialLog("[BLE] Bluetooth connection fully established!");
+        
+        sendStateUpdate({ getStatus: true });
+        
+    } catch (err) {
+        addSerialLog(`[BLE] [ERROR] Connection failed: ${err.message}`);
+        if (dot) dot.className = "portal-dot error";
+        if (connText) connText.textContent = "error";
+        if (bleStatus) bleStatus.textContent = "Failed";
+        updateConnectButtonsState(false);
+    }
+}
+
+function disconnectBLE() {
+    if (bleDevice) {
+        addSerialLog("[BLE] Disconnecting...");
+        bleDevice.gatt.disconnect();
+    }
+}
+
+function onDisconnected() {
+    const dot = document.getElementById("dot");
+    const connText = document.getElementById("connText");
+    const bleStatus = document.getElementById("bleStatusLabel");
+    
+    if (dot) dot.className = "portal-dot";
+    if (connText) connText.textContent = "disconnected";
+    if (bleStatus) bleStatus.textContent = "Disconnected";
+    updateConnectButtonsState(false);
+    rxCharacteristic = null;
+    txCharacteristic = null;
+    addSerialLog("[BLE] Disconnected from device.");
+}
+
+function handleNotification(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder();
+    const str = decoder.decode(value);
+    try {
+        const m = JSON.parse(str);
+        if (m.type === 'state' && m.data) {
+            applyStateUpdate(m.data);
+        }
+    } catch (e) {
+        console.error("BLE Notification Parse Error:", e);
+    }
+}
+
+// WebSocket connection
 function openWebSocket() {
+    if (isBleMode) return;
     let ws;
     const dot = document.getElementById("dot");
     const connText = document.getElementById("connText");
@@ -1143,60 +1828,65 @@ function openWebSocket() {
         try {
             const m = JSON.parse(ev.data);
             if (m.type === 'state' && m.data) {
-                const s = m.data;
-                if (s.intensity !== undefined) {
-                    masterIntensity = Math.round(s.intensity * 255);
-                    const el = document.getElementById("bright");
-                    if (el && !el.matches(':active')) {
-                        el.value = masterIntensity;
-                        const vLabel = document.getElementById("brightVal");
-                        if (vLabel) vLabel.textContent = Math.round((masterIntensity/255)*100) + "%";
-                    }
-                }
-                if (s.speed !== undefined) {
-                    playbackSpeed = s.speed;
-                    const el = document.getElementById("speed");
-                    if (el && !el.matches(':active')) {
-                        el.value = Math.round(playbackSpeed * 10);
-                        const vLabel = document.getElementById("speedVal");
-                        if (vLabel) vLabel.textContent = playbackSpeed.toFixed(1) + "x";
-                    }
-                }
-                if (s.startupFloor !== undefined) {
-                    startupFloor = s.startupFloor;
-                    const el = document.getElementById("startFloor");
-                    if (el && !el.matches(':active')) {
-                        el.value = Math.round(startupFloor * 100);
-                        const vLabel = document.getElementById("floorVal");
-                        if (vLabel) vLabel.textContent = Math.round(startupFloor * 100) + "%";
-                    }
-                }
-                if (s.numBins !== undefined) {
-                    numBins = s.numBins;
-                    if (s.dividers) dividers = s.dividers.slice();
-                    renderBinRows();
-                }
-                if (s.pattern) {
-                    const p = PATTERNS.find(pat => pat.id === s.pattern);
-                    if (p) {
-                        activePattern = p;
-                        const vLabel = document.getElementById("patternName");
-                        if (vLabel) vLabel.textContent = p.name;
-                    }
-                }
+                applyStateUpdate(m.data);
             }
         } catch (e) {}
     });
 }
 
-if (isRealESP32) {
+// BLE initialization or WiFi init
+if (isBleMode) {
+    // Show BLE connect buttons and hide emulator status status text
+    const connectBtn = document.getElementById("connectBleBtn") || document.getElementById("bleConnectBtn");
+    const connectBtnDoc = document.getElementById("connectBleBtnDoc") || document.getElementById("bleConnectBtnDoc");
+    if (connectBtn) connectBtn.style.display = "inline-block";
+    if (connectBtnDoc) connectBtnDoc.style.display = "inline-block";
+    
+    [connectBtn, connectBtnDoc].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', async () => {
+                if (!isBluetoothSupported) return;
+                if (bleDevice && bleDevice.gatt.connected) {
+                    disconnectBLE();
+                    return;
+                }
+                await connectBLE();
+            });
+        }
+    });
+    
+    if (!isBluetoothSupported) {
+        updateConnectButtonsState(false);
+        const docCard = document.querySelector(".doc-card");
+        if (docCard) {
+            const warningAlert = document.createElement("div");
+            warningAlert.style.background = "var(--bauhaus-red)";
+            warningAlert.style.color = "#ffffff";
+            warningAlert.style.border = "var(--border-width) solid var(--black)";
+            warningAlert.style.padding = "20px";
+            warningAlert.style.fontWeight = "bold";
+            warningAlert.style.marginTop = "20px";
+            warningAlert.style.boxShadow = "6px 6px 0 var(--black)";
+            warningAlert.innerHTML = `
+                <div style="font-size: 14px; text-transform: uppercase; margin-bottom: 8px; font-family: var(--font-display);">⚠️ Web Bluetooth API Unsupported</div>
+                <div style="font-size: 13px; font-weight: normal; line-height: 1.4;">
+                    This browser does not support the Web Bluetooth API. Please open this page in <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, or another Chromium-based browser to connect to Haxel devices.
+                </div>
+            `;
+            docCard.appendChild(warningAlert);
+        }
+    } else {
+        updateConnectButtonsState(false);
+    }
+    
+    addSerialLog("[BLE Portal] Initialized. Click CONNECT BLE to link your hardware.");
+} else if (isRealESP32) {
     (async function initRealESP32() {
         try {
             // Fetch custom patterns first
             const cpRes = await fetch('/json/custom-patterns');
             const cpList = await cpRes.json();
             cpList.forEach(p => {
-                // If it doesn't already exist in PATTERNS, add it
                 if (!PATTERNS.some(x => x.id === p.id)) {
                     try {
                         const ast = new Parser(tokenize(p.code)).parseProgram();
@@ -1218,43 +1908,288 @@ if (isRealESP32) {
             const r = await fetch('/json');
             const data = await r.json();
             if (data.state) {
-                const s = data.state;
-                if (s.intensity !== undefined) {
-                    masterIntensity = Math.round(s.intensity * 255);
-                    const el = document.getElementById("bright");
-                    if (el) el.value = masterIntensity;
-                    const vLabel = document.getElementById("brightVal");
-                    if (vLabel) vLabel.textContent = Math.round((masterIntensity/255)*100) + "%";
-                }
-                if (s.speed !== undefined) {
-                    playbackSpeed = s.speed;
-                    const el = document.getElementById("speed");
-                    if (el) el.value = Math.round(playbackSpeed * 10);
-                    const vLabel = document.getElementById("speedVal");
-                    if (vLabel) vLabel.textContent = playbackSpeed.toFixed(1) + "x";
-                }
-                if (s.startupFloor !== undefined) {
-                    startupFloor = s.startupFloor;
-                    const el = document.getElementById("startFloor");
-                    if (el) el.value = Math.round(startupFloor * 100);
-                    const vLabel = document.getElementById("floorVal");
-                    if (vLabel) vLabel.textContent = Math.round(startupFloor * 100) + "%";
-                }
-                if (s.numBins !== undefined) {
-                    numBins = s.numBins;
-                    if (s.dividers) dividers = s.dividers.slice();
-                    renderBinRows();
-                }
-                if (s.pattern) {
-                    const p = PATTERNS.find(pat => pat.id === s.pattern);
-                    if (p) {
-                        activePattern = p;
-                        const vLabel = document.getElementById("patternName");
-                        if (vLabel) vLabel.textContent = p.name;
-                    }
-                }
+                applyStateUpdate(data.state);
             }
         } catch (e) {}
         openWebSocket();
     })();
 }
+
+// --- Dynamic Hardware Calibration Logic ---
+let activeMotors = [6];
+let activeKnobs = [];
+const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+
+function renderMotors() {
+    const container = document.getElementById("motorsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    activeMotors.forEach((pin, idx) => {
+        const row = document.createElement("div");
+        row.className = "motor-row";
+        row.innerHTML = `
+            <span style="font-size: 11px;">Ch ${idx}:</span>
+            <select class="motor-pin" data-index="${idx}">
+                ${pinOptions.map(p => `<option value="${p}" ${p === pin ? 'selected' : ''}>GPIO ${p}</option>`).join('')}
+            </select>
+            <button class="btn btn-remove-row remove-motor" data-index="${idx}" style="cursor:pointer;">&times;</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function renderKnobs() {
+    const container = document.getElementById("knobsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    activeKnobs.forEach((knob, idx) => {
+        const row = document.createElement("div");
+        row.className = "knob-row";
+        row.innerHTML = `
+            <span style="font-size: 11px;">Knob ${idx}:</span>
+            <select class="knob-pin" data-index="${idx}">
+                ${pinOptions.map(p => `<option value="${p}" ${p === knob.pin ? 'selected' : ''}>GPIO ${p}</option>`).join('')}
+            </select>
+            <select class="knob-param" data-index="${idx}">
+                <option value="speed" ${knob.param === 'speed' ? 'selected' : ''}>Speed</option>
+                <option value="intensity" ${knob.param === 'intensity' ? 'selected' : ''}>Intensity</option>
+                <option value="gain" ${knob.param === 'gain' ? 'selected' : ''}>Gain</option>
+                <option value="pattern" ${knob.param === 'pattern' ? 'selected' : ''}>Pattern</option>
+                <option value="none" ${knob.param === 'none' ? 'selected' : ''}>None</option>
+            </select>
+            <button class="btn btn-remove-row remove-knob" data-index="${idx}" style="cursor:pointer;">&times;</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// Event Listeners for Dynamic Setup
+document.getElementById("addMotorBtn")?.addEventListener("click", () => {
+    if (activeMotors.length >= 8) {
+        alert("Maximum of 8 motor channels supported.");
+        return;
+    }
+    // Find first unused pin to prevent immediate conflict
+    const used = new Set(activeMotors);
+    const nextPin = pinOptions.find(p => !used.has(p)) || 0;
+    activeMotors.push(nextPin);
+    renderMotors();
+});
+
+document.getElementById("addKnobBtn")?.addEventListener("click", () => {
+    if (activeKnobs.length >= 8) {
+        alert("Maximum of 8 analog knob controllers supported.");
+        return;
+    }
+    const used = new Set(activeKnobs.map(k => k.pin));
+    const nextPin = pinOptions.find(p => !used.has(p)) || 0;
+    activeKnobs.push({ pin: nextPin, param: "none" });
+    renderKnobs();
+});
+
+document.getElementById("motorsContainer")?.addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-motor")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeMotors.splice(idx, 1);
+        renderMotors();
+    }
+});
+
+document.getElementById("knobsContainer")?.addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-knob")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeKnobs.splice(idx, 1);
+        renderKnobs();
+    }
+});
+
+document.getElementById("motorsContainer")?.addEventListener("change", (e) => {
+    if (e.target.classList.contains("motor-pin")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeMotors[idx] = parseInt(e.target.value);
+    }
+});
+
+document.getElementById("knobsContainer")?.addEventListener("change", (e) => {
+    const idx = parseInt(e.target.getAttribute("data-index"));
+    if (e.target.classList.contains("knob-pin")) {
+        activeKnobs[idx].pin = parseInt(e.target.value);
+    } else if (e.target.classList.contains("knob-param")) {
+        activeKnobs[idx].param = e.target.value;
+    }
+});
+
+// Audio source switch handler
+document.getElementById("audioSource")?.addEventListener("change", (e) => {
+    const src = parseInt(e.target.value);
+    const i2sContainer = document.getElementById("i2sPinsContainer");
+    const adcContainer = document.getElementById("adcPinsContainer");
+    if (src === 2) { // I2S
+        if (i2sContainer) i2sContainer.style.display = "block";
+        if (adcContainer) adcContainer.style.display = "none";
+    } else if (src === 1) { // ADC
+        if (i2sContainer) i2sContainer.style.display = "none";
+        if (adcContainer) adcContainer.style.display = "block";
+    } else { // None/Simulated
+        if (i2sContainer) i2sContainer.style.display = "none";
+        if (adcContainer) adcContainer.style.display = "none";
+    }
+});
+
+// Initialize dynamic lists
+renderMotors();
+renderKnobs();
+
+// Hardware Calibration Form Submission
+document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
+    const drvKindMap = {
+        "MOSFET": 0,
+        "DRV8833": 1,
+        "DRV2605L": 2
+    };
+    const drvChip = document.getElementById("drvChip").value;
+    const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 0;
+    const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
+    
+    const sda = parseInt(document.getElementById("pinSDA").value) || 1;
+    const scl = parseInt(document.getElementById("pinSCL").value) || 2;
+
+    const audioEnabled = document.getElementById("audioEnabled").checked;
+    const audioSource = parseInt(document.getElementById("audioSource").value);
+    const audioBclk = parseInt(document.getElementById("audioBclk").value);
+    const audioWs = parseInt(document.getElementById("audioWs").value);
+    const audioSd = parseInt(document.getElementById("audioSd").value);
+    const audioAdc = parseInt(document.getElementById("audioAdc").value);
+
+    const ledEnabled = document.getElementById("ledEnabled").checked;
+    const ledPin = parseInt(document.getElementById("ledPin").value);
+    const ledCount = parseInt(document.getElementById("ledCount").value);
+
+    const oledEnabled = document.getElementById("oledEnabled").checked;
+    const oledSda = sda;
+    const oledScl = scl;
+
+    // Dynamic conflict validator
+    const pinAllocations = [];
+    
+    // Always validate configured I2C pins
+    pinAllocations.push({ name: "I2C SDA", pin: sda });
+    pinAllocations.push({ name: "I2C SCL", pin: scl });
+    
+    // Add motor pins
+    activeMotors.forEach((pin, idx) => {
+        pinAllocations.push({ name: `Motor Ch ${idx}`, pin });
+    });
+
+    // Add audio pins
+    if (audioSource === 2) {
+        pinAllocations.push({ name: "I2S BCLK", pin: audioBclk });
+        pinAllocations.push({ name: "I2S WS", pin: audioWs });
+        pinAllocations.push({ name: "I2S SD", pin: audioSd });
+    } else if (audioSource === 1) {
+        pinAllocations.push({ name: "ADC Analog Mic", pin: audioAdc });
+    }
+
+    // Add LED pin
+    pinAllocations.push({ name: "Status LED", pin: ledPin });
+
+    // Add knob pins
+    activeKnobs.forEach((k, idx) => {
+        pinAllocations.push({ name: `Knob ${idx}`, pin: k.pin });
+    });
+
+    // Check for duplicate assignments
+    const pinCounts = {};
+    let hasConflict = false;
+    let conflictMsg = "";
+
+    pinAllocations.forEach(alloc => {
+        if (alloc.pin === -1) return;
+        if (!pinCounts[alloc.pin]) {
+            pinCounts[alloc.pin] = [];
+        }
+        pinCounts[alloc.pin].push(alloc.name);
+    });
+
+    for (const [pin, names] of Object.entries(pinCounts)) {
+        if (names.length > 1) {
+            hasConflict = true;
+            conflictMsg += `\n- GPIO ${pin} is assigned to: ${names.join(", ")}`;
+        }
+    }
+
+    if (hasConflict) {
+        alert("Pin Conflict Detected! You cannot assign the same GPIO pin to multiple hardware peripherals." + conflictMsg);
+        addSerialLog("[ERROR] Hardware Configuration aborted: Duplicate pin assignments detected." + conflictMsg.replace(/\n/g, " "));
+        return;
+    }
+
+    // Build pins array (firmware expects 8 slots, padded with -1)
+    const pinsPadded = Array(8).fill(-1);
+    activeMotors.forEach((pin, idx) => {
+        if (idx < 8) pinsPadded[idx] = pin;
+    });
+
+    const configPatch = {
+        driver: {
+            kind: kind,
+            pins: pinsPadded,
+            sda: sda,
+            scl: scl,
+            pwmHz: pwmHz
+        },
+        audio: {
+            enabled: audioEnabled,
+            source: audioSource,
+            bclk: audioBclk,
+            ws: audioWs,
+            sd: audioSd,
+            adc: audioAdc
+        },
+        led: {
+            enabled: ledEnabled,
+            pin: ledPin,
+            count: ledCount
+        },
+        knobs: activeKnobs.map(k => ({ enabled: true, pin: k.pin, param: k.param })),
+        oled: {
+            enabled: oledEnabled,
+            sda: oledSda,
+            scl: oledScl
+        }
+    };
+    
+    if (isRealESP32) {
+        fetch('/json/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(configPatch)
+        })
+        .then(() => {
+            addSerialLog("[PORTAL] Sent configuration patch successfully. Rebooting ESP32...");
+        })
+        .catch(err => {
+            console.error("Config save error:", err);
+        });
+    } else {
+        addSerialLog(`[SIMULATOR] Saved config (offline): ${JSON.stringify(configPatch)}`);
+    }
+});
+
+// Setup Iframe Reference Manual Modal Listeners
+(function() {
+    const openBtn = document.getElementById("openManualBtn");
+    const closeBtn = document.getElementById("closeManualBtn");
+    const modal = document.getElementById("manualModal");
+    if (openBtn && modal) {
+        openBtn.addEventListener("click", () => {
+            modal.style.display = "flex";
+        });
+    }
+    if (closeBtn && modal) {
+        closeBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+    }
+})();
+

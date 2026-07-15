@@ -359,7 +359,8 @@ wave(t * (freq * 0.05))
                                         <div class="row">
                                             <label>SDA Pin</label>
                                             <select id="pinSDA">
-                                                <option value="1" selected>GPIO 1</option>
+                                                <option value="-1" selected>Unassigned (-1)</option>
+                                                <option value="1">GPIO 1</option>
                                                 <option value="3">GPIO 3</option>
                                                 <option value="4">GPIO 4</option>
                                                 <option value="5">GPIO 5</option>
@@ -371,8 +372,9 @@ wave(t * (freq * 0.05))
                                         <div class="row">
                                             <label>SCL Pin</label>
                                             <select id="pinSCL">
+                                                <option value="-1" selected>Unassigned (-1)</option>
                                                 <option value="1">GPIO 1</option>
-                                                <option value="2" selected>GPIO 2</option>
+                                                <option value="2">GPIO 2</option>
                                                 <option value="3">GPIO 3</option>
                                                 <option value="4">GPIO 4</option>
                                                 <option value="5">GPIO 5</option>
@@ -402,11 +404,12 @@ wave(t * (freq * 0.05))
                                             <div class="row">
                                                 <label>I2S BCLK Pin</label>
                                                 <select id="audioBclk">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
                                                     <option value="0">GPIO 0</option>
                                                     <option value="1">GPIO 1</option>
                                                     <option value="2">GPIO 2</option>
                                                     <option value="3">GPIO 3</option>
-                                                    <option value="4" selected>GPIO 4</option>
+                                                    <option value="4">GPIO 4</option>
                                                     <option value="5">GPIO 5</option>
                                                     <option value="6">GPIO 6</option>
                                                     <option value="7">GPIO 7</option>
@@ -416,12 +419,13 @@ wave(t * (freq * 0.05))
                                             <div class="row">
                                                 <label>I2S WS Pin</label>
                                                 <select id="audioWs">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
                                                     <option value="0">GPIO 0</option>
                                                     <option value="1">GPIO 1</option>
                                                     <option value="2">GPIO 2</option>
                                                     <option value="3">GPIO 3</option>
                                                     <option value="4">GPIO 4</option>
-                                                    <option value="5" selected>GPIO 5</option>
+                                                    <option value="5">GPIO 5</option>
                                                     <option value="6">GPIO 6</option>
                                                     <option value="7">GPIO 7</option>
                                                     <option value="10">GPIO 10</option>
@@ -430,13 +434,14 @@ wave(t * (freq * 0.05))
                                             <div class="row">
                                                 <label>I2S SD Pin</label>
                                                 <select id="audioSd">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
                                                     <option value="0">GPIO 0</option>
                                                     <option value="1">GPIO 1</option>
                                                     <option value="2">GPIO 2</option>
                                                     <option value="3">GPIO 3</option>
                                                     <option value="4">GPIO 4</option>
                                                     <option value="5">GPIO 5</option>
-                                                    <option value="6" selected>GPIO 6</option>
+                                                    <option value="6">GPIO 6</option>
                                                     <option value="7">GPIO 7</option>
                                                     <option value="10">GPIO 10</option>
                                                 </select>
@@ -446,7 +451,8 @@ wave(t * (freq * 0.05))
                                             <div class="row">
                                                 <label>ADC Analog Pin</label>
                                                 <select id="audioAdc">
-                                                    <option value="0" selected>GPIO 0 / A0</option>
+                                                    <option value="-1" selected>Unassigned (-1)</option>
+                                                    <option value="0">GPIO 0 / A0</option>
                                                     <option value="1">GPIO 1 / A1</option>
                                                     <option value="2">GPIO 2 / A2</option>
                                                     <option value="3">GPIO 3 / A3</option>
@@ -467,7 +473,8 @@ wave(t * (freq * 0.05))
                                         <div class="row">
                                             <label>Feedback Pin</label>
                                             <select id="ledPin">
-                                                <option value="2" selected>GPIO 2</option>
+                                                <option value="-1" selected>Unassigned (-1)</option>
+                                                <option value="2">GPIO 2</option>
                                                 <option value="3">GPIO 3</option>
                                                 <option value="4">GPIO 4</option>
                                                 <option value="5">GPIO 5</option>

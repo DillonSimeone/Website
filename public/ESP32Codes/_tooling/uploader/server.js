@@ -396,7 +396,7 @@ function killProcess(type) {
     try {
       // In Windows, we might need taskkill to force sub-processes to die
       if (process.platform === 'win32') {
-        spawn('taskkill', ['/pid', activeProcesses[type].pid, '/f', '/t']);
+        execSync(`taskkill /pid ${activeProcesses[type].pid} /f /t`, { stdio: 'ignore' });
       } else {
         activeProcesses[type].kill('SIGTERM');
       }
