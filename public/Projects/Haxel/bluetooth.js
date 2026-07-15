@@ -1565,6 +1565,135 @@ if (isMobileDevice) {
     }
 }
 
+// --- Dynamic Hardware Calibration Logic ---
+let activeMotors = [6];
+let activeKnobs = [
+    { pin: 0, param: "speed" },
+    { pin: 1, param: "intensity" },
+    { pin: 3, param: "gain" },
+    { pin: 4, param: "pattern" }
+];
+const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+
+function renderMotors() {
+    const container = document.getElementById("motorsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    activeMotors.forEach((pin, idx) => {
+        const row = document.createElement("div");
+        row.className = "motor-row";
+        row.innerHTML = `
+            <span style="font-size: 11px;">Ch ${idx}:</span>
+            <select class="motor-pin" data-index="${idx}">
+                ${pinOptions.map(p => `<option value="${p}" ${p === pin ? 'selected' : ''}>GPIO ${p}</option>`).join('')}
+            </select>
+            <button class="btn btn-remove-row remove-motor" data-index="${idx}" style="cursor:pointer;">&times;</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function renderKnobs() {
+    const container = document.getElementById("knobsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    activeKnobs.forEach((knob, idx) => {
+        const row = document.createElement("div");
+        row.className = "knob-row";
+        row.innerHTML = `
+            <span style="font-size: 11px;">Knob ${idx}:</span>
+            <select class="knob-pin" data-index="${idx}">
+                ${pinOptions.map(p => `<option value="${p}" ${p === knob.pin ? 'selected' : ''}>GPIO ${p}</option>`).join('')}
+            </select>
+            <select class="knob-param" data-index="${idx}">
+                <option value="speed" ${knob.param === 'speed' ? 'selected' : ''}>Speed</option>
+                <option value="intensity" ${knob.param === 'intensity' ? 'selected' : ''}>Intensity</option>
+                <option value="gain" ${knob.param === 'gain' ? 'selected' : ''}>Gain</option>
+                <option value="pattern" ${knob.param === 'pattern' ? 'selected' : ''}>Pattern</option>
+                <option value="none" ${knob.param === 'none' ? 'selected' : ''}>None</option>
+            </select>
+            <button class="btn btn-remove-row remove-knob" data-index="${idx}" style="cursor:pointer;">&times;</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// Event Listeners for Dynamic Setup
+document.getElementById("addMotorBtn")?.addEventListener("click", () => {
+    if (activeMotors.length >= 8) {
+        alert("Maximum of 8 motor channels supported.");
+        return;
+    }
+    const used = new Set(activeMotors);
+    const nextPin = pinOptions.find(p => !used.has(p)) || 0;
+    activeMotors.push(nextPin);
+    renderMotors();
+});
+
+document.getElementById("addKnobBtn")?.addEventListener("click", () => {
+    if (activeKnobs.length >= 8) {
+        alert("Maximum of 8 analog knob controllers supported.");
+        return;
+    }
+    const used = new Set(activeKnobs.map(k => k.pin));
+    const nextPin = pinOptions.find(p => !used.has(p)) || 0;
+    activeKnobs.push({ pin: nextPin, param: "none" });
+    renderKnobs();
+});
+
+document.getElementById("motorsContainer")?.addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-motor")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeMotors.splice(idx, 1);
+        renderMotors();
+    }
+});
+
+document.getElementById("knobsContainer")?.addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-knob")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeKnobs.splice(idx, 1);
+        renderKnobs();
+    }
+});
+
+document.getElementById("motorsContainer")?.addEventListener("change", (e) => {
+    if (e.target.classList.contains("motor-pin")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeMotors[idx] = parseInt(e.target.value);
+    }
+});
+
+document.getElementById("knobsContainer")?.addEventListener("change", (e) => {
+    const idx = parseInt(e.target.getAttribute("data-index"));
+    if (e.target.classList.contains("knob-pin")) {
+        activeKnobs[idx].pin = parseInt(e.target.value);
+    } else if (e.target.classList.contains("knob-param")) {
+        activeKnobs[idx].param = e.target.value;
+    }
+});
+
+// Audio source switch handler
+document.getElementById("audioSource")?.addEventListener("change", (e) => {
+    const src = parseInt(e.target.value);
+    const i2sContainer = document.getElementById("i2sPinsContainer");
+    const adcContainer = document.getElementById("adcPinsContainer");
+    if (src === 2) { // I2S
+        if (i2sContainer) i2sContainer.style.display = "block";
+        if (adcContainer) adcContainer.style.display = "none";
+    } else if (src === 1) { // ADC
+        if (i2sContainer) i2sContainer.style.display = "none";
+        if (adcContainer) adcContainer.style.display = "block";
+    } else { // None/Simulated
+        if (i2sContainer) i2sContainer.style.display = "none";
+        if (adcContainer) adcContainer.style.display = "none";
+    }
+});
+
+// Initialize dynamic lists
+renderMotors();
+renderKnobs();
+
 // Hardware Calibration Form Submission
 document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     const drvKindMap = {
@@ -1574,25 +1703,125 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     };
     const drvChip = document.getElementById("drvChip").value;
     const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 0;
+    const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
     
     const sda = parseInt(document.getElementById("pinSDA").value) || 1;
     const scl = parseInt(document.getElementById("pinSCL").value) || 2;
-    const pwm = parseInt(document.getElementById("pinPWM").value) || 6;
-    const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
 
-    if (sda === scl || sda === pwm || scl === pwm) {
-        alert("Pin Conflict: SDA, SCL, and PWM pins must all be unique!");
-        addSerialLog("[ERROR] Hardware Configuration aborted: Duplicate pin assignment.");
-        return;
+    const audioEnabled = document.getElementById("audioEnabled").checked;
+    const audioSource = parseInt(document.getElementById("audioSource").value);
+    const audioBclk = parseInt(document.getElementById("audioBclk").value);
+    const audioWs = parseInt(document.getElementById("audioWs").value);
+    const audioSd = parseInt(document.getElementById("audioSd").value);
+    const audioAdc = parseInt(document.getElementById("audioAdc").value);
+
+    const ledEnabled = document.getElementById("ledEnabled").checked;
+    const ledPin = parseInt(document.getElementById("ledPin").value);
+    const ledCount = parseInt(document.getElementById("ledCount").value);
+
+    const oledEnabled = document.getElementById("oledEnabled").checked;
+    const oledSda = parseInt(document.getElementById("oledSda").value);
+    const oledScl = parseInt(document.getElementById("oledScl").value);
+
+    // Dynamic conflict validator
+    const pinAllocations = [];
+    
+    // Add I2C pins if using I2C driver
+    if (kind === 2) {
+        pinAllocations.push({ name: "I2C SDA", pin: sda });
+        pinAllocations.push({ name: "I2C SCL", pin: scl });
     }
     
+    // Add motor pins
+    activeMotors.forEach((pin, idx) => {
+        pinAllocations.push({ name: `Motor Ch ${idx}`, pin });
+    });
+
+    // Add audio pins
+    if (audioEnabled) {
+        if (audioSource === 2) {
+            pinAllocations.push({ name: "I2S BCLK", pin: audioBclk });
+            pinAllocations.push({ name: "I2S WS", pin: audioWs });
+            pinAllocations.push({ name: "I2S SD", pin: audioSd });
+        } else if (audioSource === 1) {
+            pinAllocations.push({ name: "ADC Analog Mic", pin: audioAdc });
+        }
+    }
+
+    // Add LED pin
+    if (ledEnabled) {
+        pinAllocations.push({ name: "Status LED", pin: ledPin });
+    }
+
+    // Add knob pins
+    activeKnobs.forEach((k, idx) => {
+        pinAllocations.push({ name: `Knob ${idx}`, pin: k.pin });
+    });
+
+    // Add OLED pins
+    if (oledEnabled) {
+        pinAllocations.push({ name: "OLED SDA", pin: oledSda });
+        pinAllocations.push({ name: "OLED SCL", pin: oledScl });
+    }
+
+    // Check for duplicate assignments
+    const pinCounts = {};
+    let hasConflict = false;
+    let conflictMsg = "";
+
+    pinAllocations.forEach(alloc => {
+        if (alloc.pin === -1) return;
+        if (!pinCounts[alloc.pin]) {
+            pinCounts[alloc.pin] = [];
+        }
+        pinCounts[alloc.pin].push(alloc.name);
+    });
+
+    for (const [pin, names] of Object.entries(pinCounts)) {
+        if (names.length > 1) {
+            hasConflict = true;
+            conflictMsg += `\n- GPIO ${pin} is assigned to: ${names.join(", ")}`;
+        }
+    }
+
+    if (hasConflict) {
+        alert("Pin Conflict Detected! You cannot assign the same GPIO pin to multiple hardware peripherals." + conflictMsg);
+        addSerialLog("[ERROR] Hardware Configuration aborted: Duplicate pin assignments detected." + conflictMsg.replace(/\n/g, " "));
+        return;
+    }
+
+    // Build pins array (firmware expects 8 slots, padded with -1)
+    const pinsPadded = Array(8).fill(-1);
+    activeMotors.forEach((pin, idx) => {
+        if (idx < 8) pinsPadded[idx] = pin;
+    });
+
     const configPatch = {
         driver: {
             kind: kind,
-            pins: [pwm, -1, -1, -1, -1, -1, -1, -1],
+            pins: pinsPadded,
             sda: sda,
             scl: scl,
             pwmHz: pwmHz
+        },
+        audio: {
+            enabled: audioEnabled,
+            source: audioSource,
+            bclk: audioBclk,
+            ws: audioWs,
+            sd: audioSd,
+            adc: audioAdc
+        },
+        led: {
+            enabled: ledEnabled,
+            pin: ledPin,
+            count: ledCount
+        },
+        knobs: activeKnobs.map(k => ({ enabled: true, pin: k.pin, param: k.param })),
+        oled: {
+            enabled: oledEnabled,
+            sda: oledSda,
+            scl: oledScl
         }
     };
     

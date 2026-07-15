@@ -1568,8 +1568,18 @@ compileCustom();
 initBootLogs();
 animate();
 
-// ─── REAL TIME ESP32 BRIDGE IMPLEMENTATION ────────────────────────────────────
+// ─── REAL TIME ESP32 BRIDGE & WEB BLUETOOTH UNIFICATION ─────────────────────
 const isRealESP32 = (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'dillonsimeone.com' && window.location.hostname !== '');
+const isBleMode = window.location.pathname.includes("bluetooth.html");
+
+// BLE Variables
+let bleDevice = null;
+let rxCharacteristic = null;
+let txCharacteristic = null;
+const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const isBluetoothSupported = 'bluetooth' in navigator;
 
 function throttle(fn, ms) {
     let last = 0, timer = null;
@@ -1585,17 +1595,79 @@ function throttle(fn, ms) {
     };
 }
 
-const sendStateUpdate = throttle((patch) => {
-    if (!isRealESP32) return;
-    fetch('/json/state', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch)
-    }).catch(() => {});
+// Common state applier
+function applyStateUpdate(s) {
+    if (s.intensity !== undefined) {
+        masterIntensity = Math.round(s.intensity * 255);
+        const el = document.getElementById("bright");
+        if (el && !el.matches(':active')) {
+            el.value = masterIntensity;
+            const vLabel = document.getElementById("brightVal");
+            if (vLabel) vLabel.textContent = Math.round((masterIntensity/255)*100) + "%";
+        }
+    }
+    if (s.speed !== undefined) {
+        playbackSpeed = s.speed;
+        const el = document.getElementById("speed");
+        if (el && !el.matches(':active')) {
+            el.value = Math.round(playbackSpeed * 10);
+            const vLabel = document.getElementById("speedVal");
+            if (vLabel) vLabel.textContent = playbackSpeed.toFixed(1) + "x";
+        }
+    }
+    if (s.startupFloor !== undefined) {
+        startupFloor = s.startupFloor;
+        const el = document.getElementById("startFloor");
+        if (el && !el.matches(':active')) {
+            el.value = Math.round(startupFloor * 100);
+            const vLabel = document.getElementById("floorVal");
+            if (vLabel) vLabel.textContent = Math.round(startupFloor * 100) + "%";
+        }
+    }
+    if (s.numBins !== undefined) {
+        numBins = s.numBins;
+        if (s.dividers) dividers = s.dividers.slice();
+        renderBinRows();
+    }
+    if (s.pattern) {
+        const p = PATTERNS.find(pat => pat.id === s.pattern);
+        if (p) {
+            activePattern = p;
+            const vLabel = document.getElementById("patternName");
+            if (vLabel) vLabel.textContent = p.name;
+        }
+    }
+    if (s.uptime_ms !== undefined) {
+        const uptimeText = document.getElementById("uptime");
+        if (uptimeText) {
+            uptimeText.textContent = Math.floor(s.uptime_ms / 1000) + "s";
+        }
+    }
+}
+
+// Send State Updates
+const sendStateUpdate = throttle(async (patch) => {
+    if (isBleMode) {
+        if (!rxCharacteristic) return;
+        try {
+            const payload = JSON.stringify({ type: "state", patch: patch });
+            const encoder = new TextEncoder();
+            const data = encoder.encode(payload);
+            await rxCharacteristic.writeValueWithoutResponse(data);
+        } catch (err) {
+            console.error("BLE State Write Error:", err);
+        }
+    } else {
+        if (!isRealESP32) return;
+        fetch('/json/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch)
+        }).catch(() => {});
+    }
 }, 100);
 
 function syncStateToESP32() {
-    if (!isRealESP32) return;
     sendStateUpdate({
         on: isPlaying,
         intensity: masterIntensity / 255,
@@ -1611,7 +1683,121 @@ function syncStateToESP32() {
     });
 }
 
+// BLE Connect Button Handlers
+function updateConnectButtonsState(connected, connecting = false) {
+    const connectBtn = document.getElementById("connectBleBtn") || document.getElementById("bleConnectBtn");
+    const connectBtnDoc = document.getElementById("connectBleBtnDoc") || document.getElementById("bleConnectBtnDoc");
+    const buttons = [connectBtn, connectBtnDoc].filter(Boolean);
+    
+    buttons.forEach(btn => {
+        if (!isBluetoothSupported) {
+            btn.textContent = "BLE UNSUPPORTED";
+            btn.disabled = true;
+            btn.style.cursor = "not-allowed";
+            btn.style.opacity = "0.6";
+        } else if (connecting) {
+            btn.textContent = "CONNECTING...";
+            btn.disabled = true;
+        } else if (connected) {
+            btn.textContent = "DISCONNECT BLE";
+            btn.disabled = false;
+            btn.style.backgroundColor = "var(--bauhaus-red)";
+        } else {
+            btn.textContent = "CONNECT BLE";
+            btn.disabled = false;
+            btn.style.backgroundColor = "";
+        }
+    });
+}
+
+async function connectBLE() {
+    const dot = document.getElementById("dot");
+    const connText = document.getElementById("connText");
+    const bleStatus = document.getElementById("bleStatusLabel");
+    
+    addSerialLog("[BLE] Requesting Bluetooth Device...");
+    updateConnectButtonsState(false, true);
+    
+    try {
+        bleDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'Haxel' }],
+            optionalServices: [HAXEL_SERVICE_UUID]
+        });
+        
+        addSerialLog(`[BLE] Found: ${bleDevice.name}. Connecting to GATT Server...`);
+        if (dot) dot.className = "portal-dot";
+        if (connText) connText.textContent = "connecting...";
+        
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+        
+        const server = await bleDevice.gatt.connect();
+        addSerialLog("[BLE] Connected! Getting Service...");
+        
+        const service = await server.getPrimaryService(HAXEL_SERVICE_UUID);
+        addSerialLog("[BLE] Service found. Getting Characteristics...");
+        
+        rxCharacteristic = await service.getCharacteristic(RX_CHAR_UUID);
+        txCharacteristic = await service.getCharacteristic(TX_CHAR_UUID);
+        
+        addSerialLog("[BLE] Starting Notifications...");
+        await txCharacteristic.startNotifications();
+        txCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
+        
+        if (dot) dot.className = "portal-dot ok";
+        if (connText) connText.textContent = "connected";
+        if (bleStatus) bleStatus.textContent = "Connected";
+        updateConnectButtonsState(true);
+        addSerialLog("[BLE] Bluetooth connection fully established!");
+        
+        sendStateUpdate({ getStatus: true });
+        
+    } catch (err) {
+        addSerialLog(`[BLE] [ERROR] Connection failed: ${err.message}`);
+        if (dot) dot.className = "portal-dot error";
+        if (connText) connText.textContent = "error";
+        if (bleStatus) bleStatus.textContent = "Failed";
+        updateConnectButtonsState(false);
+    }
+}
+
+function disconnectBLE() {
+    if (bleDevice) {
+        addSerialLog("[BLE] Disconnecting...");
+        bleDevice.gatt.disconnect();
+    }
+}
+
+function onDisconnected() {
+    const dot = document.getElementById("dot");
+    const connText = document.getElementById("connText");
+    const bleStatus = document.getElementById("bleStatusLabel");
+    
+    if (dot) dot.className = "portal-dot";
+    if (connText) connText.textContent = "disconnected";
+    if (bleStatus) bleStatus.textContent = "Disconnected";
+    updateConnectButtonsState(false);
+    rxCharacteristic = null;
+    txCharacteristic = null;
+    addSerialLog("[BLE] Disconnected from device.");
+}
+
+function handleNotification(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder();
+    const str = decoder.decode(value);
+    try {
+        const m = JSON.parse(str);
+        if (m.type === 'state' && m.data) {
+            applyStateUpdate(m.data);
+        }
+    } catch (e) {
+        console.error("BLE Notification Parse Error:", e);
+    }
+}
+
+// WebSocket connection
 function openWebSocket() {
+    if (isBleMode) return;
     let ws;
     const dot = document.getElementById("dot");
     const connText = document.getElementById("connText");
@@ -1640,60 +1826,65 @@ function openWebSocket() {
         try {
             const m = JSON.parse(ev.data);
             if (m.type === 'state' && m.data) {
-                const s = m.data;
-                if (s.intensity !== undefined) {
-                    masterIntensity = Math.round(s.intensity * 255);
-                    const el = document.getElementById("bright");
-                    if (el && !el.matches(':active')) {
-                        el.value = masterIntensity;
-                        const vLabel = document.getElementById("brightVal");
-                        if (vLabel) vLabel.textContent = Math.round((masterIntensity/255)*100) + "%";
-                    }
-                }
-                if (s.speed !== undefined) {
-                    playbackSpeed = s.speed;
-                    const el = document.getElementById("speed");
-                    if (el && !el.matches(':active')) {
-                        el.value = Math.round(playbackSpeed * 10);
-                        const vLabel = document.getElementById("speedVal");
-                        if (vLabel) vLabel.textContent = playbackSpeed.toFixed(1) + "x";
-                    }
-                }
-                if (s.startupFloor !== undefined) {
-                    startupFloor = s.startupFloor;
-                    const el = document.getElementById("startFloor");
-                    if (el && !el.matches(':active')) {
-                        el.value = Math.round(startupFloor * 100);
-                        const vLabel = document.getElementById("floorVal");
-                        if (vLabel) vLabel.textContent = Math.round(startupFloor * 100) + "%";
-                    }
-                }
-                if (s.numBins !== undefined) {
-                    numBins = s.numBins;
-                    if (s.dividers) dividers = s.dividers.slice();
-                    renderBinRows();
-                }
-                if (s.pattern) {
-                    const p = PATTERNS.find(pat => pat.id === s.pattern);
-                    if (p) {
-                        activePattern = p;
-                        const vLabel = document.getElementById("patternName");
-                        if (vLabel) vLabel.textContent = p.name;
-                    }
-                }
+                applyStateUpdate(m.data);
             }
         } catch (e) {}
     });
 }
 
-if (isRealESP32) {
+// BLE initialization or WiFi init
+if (isBleMode) {
+    // Show BLE connect buttons and hide emulator status status text
+    const connectBtn = document.getElementById("connectBleBtn") || document.getElementById("bleConnectBtn");
+    const connectBtnDoc = document.getElementById("connectBleBtnDoc") || document.getElementById("bleConnectBtnDoc");
+    if (connectBtn) connectBtn.style.display = "inline-block";
+    if (connectBtnDoc) connectBtnDoc.style.display = "inline-block";
+    
+    [connectBtn, connectBtnDoc].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', async () => {
+                if (!isBluetoothSupported) return;
+                if (bleDevice && bleDevice.gatt.connected) {
+                    disconnectBLE();
+                    return;
+                }
+                await connectBLE();
+            });
+        }
+    });
+    
+    if (!isBluetoothSupported) {
+        updateConnectButtonsState(false);
+        const docCard = document.querySelector(".doc-card");
+        if (docCard) {
+            const warningAlert = document.createElement("div");
+            warningAlert.style.background = "var(--bauhaus-red)";
+            warningAlert.style.color = "#ffffff";
+            warningAlert.style.border = "var(--border-width) solid var(--black)";
+            warningAlert.style.padding = "20px";
+            warningAlert.style.fontWeight = "bold";
+            warningAlert.style.marginTop = "20px";
+            warningAlert.style.boxShadow = "6px 6px 0 var(--black)";
+            warningAlert.innerHTML = `
+                <div style="font-size: 14px; text-transform: uppercase; margin-bottom: 8px; font-family: var(--font-display);">⚠️ Web Bluetooth API Unsupported</div>
+                <div style="font-size: 13px; font-weight: normal; line-height: 1.4;">
+                    This browser does not support the Web Bluetooth API. Please open this page in <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, or another Chromium-based browser to connect to Haxel devices.
+                </div>
+            `;
+            docCard.appendChild(warningAlert);
+        }
+    } else {
+        updateConnectButtonsState(false);
+    }
+    
+    addSerialLog("[BLE Portal] Initialized. Click CONNECT BLE to link your hardware.");
+} else if (isRealESP32) {
     (async function initRealESP32() {
         try {
             // Fetch custom patterns first
             const cpRes = await fetch('/json/custom-patterns');
             const cpList = await cpRes.json();
             cpList.forEach(p => {
-                // If it doesn't already exist in PATTERNS, add it
                 if (!PATTERNS.some(x => x.id === p.id)) {
                     try {
                         const ast = new Parser(tokenize(p.code)).parseProgram();
@@ -1715,46 +1906,137 @@ if (isRealESP32) {
             const r = await fetch('/json');
             const data = await r.json();
             if (data.state) {
-                const s = data.state;
-                if (s.intensity !== undefined) {
-                    masterIntensity = Math.round(s.intensity * 255);
-                    const el = document.getElementById("bright");
-                    if (el) el.value = masterIntensity;
-                    const vLabel = document.getElementById("brightVal");
-                    if (vLabel) vLabel.textContent = Math.round((masterIntensity/255)*100) + "%";
-                }
-                if (s.speed !== undefined) {
-                    playbackSpeed = s.speed;
-                    const el = document.getElementById("speed");
-                    if (el) el.value = Math.round(playbackSpeed * 10);
-                    const vLabel = document.getElementById("speedVal");
-                    if (vLabel) vLabel.textContent = playbackSpeed.toFixed(1) + "x";
-                }
-                if (s.startupFloor !== undefined) {
-                    startupFloor = s.startupFloor;
-                    const el = document.getElementById("startFloor");
-                    if (el) el.value = Math.round(startupFloor * 100);
-                    const vLabel = document.getElementById("floorVal");
-                    if (vLabel) vLabel.textContent = Math.round(startupFloor * 100) + "%";
-                }
-                if (s.numBins !== undefined) {
-                    numBins = s.numBins;
-                    if (s.dividers) dividers = s.dividers.slice();
-                    renderBinRows();
-                }
-                if (s.pattern) {
-                    const p = PATTERNS.find(pat => pat.id === s.pattern);
-                    if (p) {
-                        activePattern = p;
-                        const vLabel = document.getElementById("patternName");
-                        if (vLabel) vLabel.textContent = p.name;
-                    }
-                }
+                applyStateUpdate(data.state);
             }
         } catch (e) {}
         openWebSocket();
     })();
 }
+
+// --- Dynamic Hardware Calibration Logic ---
+let activeMotors = [6];
+let activeKnobs = [];
+const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+
+function renderMotors() {
+    const container = document.getElementById("motorsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    activeMotors.forEach((pin, idx) => {
+        const row = document.createElement("div");
+        row.className = "motor-row";
+        row.innerHTML = `
+            <span style="font-size: 11px;">Ch ${idx}:</span>
+            <select class="motor-pin" data-index="${idx}">
+                ${pinOptions.map(p => `<option value="${p}" ${p === pin ? 'selected' : ''}>GPIO ${p}</option>`).join('')}
+            </select>
+            <button class="btn btn-remove-row remove-motor" data-index="${idx}" style="cursor:pointer;">&times;</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function renderKnobs() {
+    const container = document.getElementById("knobsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    activeKnobs.forEach((knob, idx) => {
+        const row = document.createElement("div");
+        row.className = "knob-row";
+        row.innerHTML = `
+            <span style="font-size: 11px;">Knob ${idx}:</span>
+            <select class="knob-pin" data-index="${idx}">
+                ${pinOptions.map(p => `<option value="${p}" ${p === knob.pin ? 'selected' : ''}>GPIO ${p}</option>`).join('')}
+            </select>
+            <select class="knob-param" data-index="${idx}">
+                <option value="speed" ${knob.param === 'speed' ? 'selected' : ''}>Speed</option>
+                <option value="intensity" ${knob.param === 'intensity' ? 'selected' : ''}>Intensity</option>
+                <option value="gain" ${knob.param === 'gain' ? 'selected' : ''}>Gain</option>
+                <option value="pattern" ${knob.param === 'pattern' ? 'selected' : ''}>Pattern</option>
+                <option value="none" ${knob.param === 'none' ? 'selected' : ''}>None</option>
+            </select>
+            <button class="btn btn-remove-row remove-knob" data-index="${idx}" style="cursor:pointer;">&times;</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// Event Listeners for Dynamic Setup
+document.getElementById("addMotorBtn")?.addEventListener("click", () => {
+    if (activeMotors.length >= 8) {
+        alert("Maximum of 8 motor channels supported.");
+        return;
+    }
+    // Find first unused pin to prevent immediate conflict
+    const used = new Set(activeMotors);
+    const nextPin = pinOptions.find(p => !used.has(p)) || 0;
+    activeMotors.push(nextPin);
+    renderMotors();
+});
+
+document.getElementById("addKnobBtn")?.addEventListener("click", () => {
+    if (activeKnobs.length >= 8) {
+        alert("Maximum of 8 analog knob controllers supported.");
+        return;
+    }
+    const used = new Set(activeKnobs.map(k => k.pin));
+    const nextPin = pinOptions.find(p => !used.has(p)) || 0;
+    activeKnobs.push({ pin: nextPin, param: "none" });
+    renderKnobs();
+});
+
+document.getElementById("motorsContainer")?.addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-motor")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeMotors.splice(idx, 1);
+        renderMotors();
+    }
+});
+
+document.getElementById("knobsContainer")?.addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-knob")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeKnobs.splice(idx, 1);
+        renderKnobs();
+    }
+});
+
+document.getElementById("motorsContainer")?.addEventListener("change", (e) => {
+    if (e.target.classList.contains("motor-pin")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeMotors[idx] = parseInt(e.target.value);
+    }
+});
+
+document.getElementById("knobsContainer")?.addEventListener("change", (e) => {
+    const idx = parseInt(e.target.getAttribute("data-index"));
+    if (e.target.classList.contains("knob-pin")) {
+        activeKnobs[idx].pin = parseInt(e.target.value);
+    } else if (e.target.classList.contains("knob-param")) {
+        activeKnobs[idx].param = e.target.value;
+    }
+});
+
+// Audio source switch handler
+document.getElementById("audioSource")?.addEventListener("change", (e) => {
+    const src = parseInt(e.target.value);
+    const i2sContainer = document.getElementById("i2sPinsContainer");
+    const adcContainer = document.getElementById("adcPinsContainer");
+    if (src === 2) { // I2S
+        if (i2sContainer) i2sContainer.style.display = "block";
+        if (adcContainer) adcContainer.style.display = "none";
+    } else if (src === 1) { // ADC
+        if (i2sContainer) i2sContainer.style.display = "none";
+        if (adcContainer) adcContainer.style.display = "block";
+    } else { // None/Simulated
+        if (i2sContainer) i2sContainer.style.display = "none";
+        if (adcContainer) adcContainer.style.display = "none";
+    }
+});
+
+// Initialize dynamic lists
+renderMotors();
+renderKnobs();
 
 // Hardware Calibration Form Submission
 document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
@@ -1765,25 +2047,125 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     };
     const drvChip = document.getElementById("drvChip").value;
     const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 0;
+    const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
     
     const sda = parseInt(document.getElementById("pinSDA").value) || 1;
     const scl = parseInt(document.getElementById("pinSCL").value) || 2;
-    const pwm = parseInt(document.getElementById("pinPWM").value) || 6;
-    const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
 
-    if (sda === scl || sda === pwm || scl === pwm) {
-        alert("Pin Conflict: SDA, SCL, and PWM pins must all be unique!");
-        addSerialLog("[ERROR] Hardware Configuration aborted: Duplicate pin assignment.");
-        return;
+    const audioEnabled = document.getElementById("audioEnabled").checked;
+    const audioSource = parseInt(document.getElementById("audioSource").value);
+    const audioBclk = parseInt(document.getElementById("audioBclk").value);
+    const audioWs = parseInt(document.getElementById("audioWs").value);
+    const audioSd = parseInt(document.getElementById("audioSd").value);
+    const audioAdc = parseInt(document.getElementById("audioAdc").value);
+
+    const ledEnabled = document.getElementById("ledEnabled").checked;
+    const ledPin = parseInt(document.getElementById("ledPin").value);
+    const ledCount = parseInt(document.getElementById("ledCount").value);
+
+    const oledEnabled = document.getElementById("oledEnabled").checked;
+    const oledSda = sda;
+    const oledScl = scl;
+
+    // Dynamic conflict validator
+    const pinAllocations = [];
+    
+    // Add I2C pins if using I2C driver
+    if (kind === 2) {
+        pinAllocations.push({ name: "I2C SDA", pin: sda });
+        pinAllocations.push({ name: "I2C SCL", pin: scl });
     }
     
+    // Add motor pins
+    activeMotors.forEach((pin, idx) => {
+        pinAllocations.push({ name: `Motor Ch ${idx}`, pin });
+    });
+
+    // Add audio pins
+    if (audioEnabled) {
+        if (audioSource === 2) {
+            pinAllocations.push({ name: "I2S BCLK", pin: audioBclk });
+            pinAllocations.push({ name: "I2S WS", pin: audioWs });
+            pinAllocations.push({ name: "I2S SD", pin: audioSd });
+        } else if (audioSource === 1) {
+            pinAllocations.push({ name: "ADC Analog Mic", pin: audioAdc });
+        }
+    }
+
+    // Add LED pin
+    if (ledEnabled) {
+        pinAllocations.push({ name: "Status LED", pin: ledPin });
+    }
+
+    // Add knob pins
+    activeKnobs.forEach((k, idx) => {
+        pinAllocations.push({ name: `Knob ${idx}`, pin: k.pin });
+    });
+
+    // Add OLED pins
+    if (oledEnabled) {
+        pinAllocations.push({ name: "OLED SDA", pin: oledSda });
+        pinAllocations.push({ name: "OLED SCL", pin: oledScl });
+    }
+
+    // Check for duplicate assignments
+    const pinCounts = {};
+    let hasConflict = false;
+    let conflictMsg = "";
+
+    pinAllocations.forEach(alloc => {
+        if (alloc.pin === -1) return;
+        if (!pinCounts[alloc.pin]) {
+            pinCounts[alloc.pin] = [];
+        }
+        pinCounts[alloc.pin].push(alloc.name);
+    });
+
+    for (const [pin, names] of Object.entries(pinCounts)) {
+        if (names.length > 1) {
+            hasConflict = true;
+            conflictMsg += `\n- GPIO ${pin} is assigned to: ${names.join(", ")}`;
+        }
+    }
+
+    if (hasConflict) {
+        alert("Pin Conflict Detected! You cannot assign the same GPIO pin to multiple hardware peripherals." + conflictMsg);
+        addSerialLog("[ERROR] Hardware Configuration aborted: Duplicate pin assignments detected." + conflictMsg.replace(/\n/g, " "));
+        return;
+    }
+
+    // Build pins array (firmware expects 8 slots, padded with -1)
+    const pinsPadded = Array(8).fill(-1);
+    activeMotors.forEach((pin, idx) => {
+        if (idx < 8) pinsPadded[idx] = pin;
+    });
+
     const configPatch = {
         driver: {
             kind: kind,
-            pins: [pwm, -1, -1, -1, -1, -1, -1, -1],
+            pins: pinsPadded,
             sda: sda,
             scl: scl,
             pwmHz: pwmHz
+        },
+        audio: {
+            enabled: audioEnabled,
+            source: audioSource,
+            bclk: audioBclk,
+            ws: audioWs,
+            sd: audioSd,
+            adc: audioAdc
+        },
+        led: {
+            enabled: ledEnabled,
+            pin: ledPin,
+            count: ledCount
+        },
+        knobs: activeKnobs.map(k => ({ enabled: true, pin: k.pin, param: k.param })),
+        oled: {
+            enabled: oledEnabled,
+            sda: oledSda,
+            scl: oledScl
         }
     };
     

@@ -2177,3 +2177,41 @@ body::-webkit-scrollbar-thumb:hover,
     background: var(--bauhaus-red);
     color: #ffffff;
 }
+
+/* Hardware calibration layout styles */
+.calib-section {
+    border-bottom: 2px solid var(--black);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+.calib-section h4 {
+    font-family: var(--font-display);
+    font-size: 11px;
+    text-transform: uppercase;
+    margin-top: 0;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+    color: var(--black);
+}
+.calib-section h5 {
+    font-size: 11px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+.motor-row, .knob-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.motor-row select, .knob-row select {
+    flex: 1;
+    padding: 4px;
+    font-size: 11px;
+}
+.btn-remove-row {
+    padding: 2px 8px;
+    font-size: 11px;
+    background: var(--bauhaus-red) !important;
+    color: white !important;
+}

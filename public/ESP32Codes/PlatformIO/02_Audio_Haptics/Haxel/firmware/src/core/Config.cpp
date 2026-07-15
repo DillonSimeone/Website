@@ -31,17 +31,13 @@ void Config::applyDefaults_() {
     led_.pin = 5;
     led_.count = 60;
 
-    knobCount_ = 4;
-    knobs_[0] = { true, 0, "speed" };
-    knobs_[1] = { true, 1, "intensity" };
-    knobs_[2] = { true, 3, "gain" };
-    knobs_[3] = { true, 4, "pattern" };
-    for (size_t i = 4; i < kMaxKnobs; ++i) {
+    knobCount_ = 0;
+    for (size_t i = 0; i < kMaxKnobs; ++i) {
         knobs_[i] = { false, -1, "none" };
     }
 
     oled_ = {};
-    oled_.enabled = true;
+    oled_.enabled = false;
     oled_.sda = 8;
     oled_.scl = 9;
     oled_.i2cAddr = 0x3C;
