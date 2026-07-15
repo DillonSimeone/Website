@@ -77,12 +77,30 @@ async function main() {
     stdio: 'inherit'
   });
 
-  // Open browser after 1 second
-  setTimeout(() => {
-    const url = `http://localhost:${port}`;
-    const startCmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-    spawn(startCmd, [url], { shell: true });
-  }, 1000);
+  // Open browser only when the server is ready
+  const url = `http://localhost:${port}`;
+  const startCmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+  const pollInterval = 100;
+  const maxAttempts = 100; // 10 seconds timeout
+  let attempts = 0;
+
+  async function checkServerReady() {
+    const identity = await requestJSON(`http://localhost:${port}/api/identify`);
+    if (identity && identity.app === 'pio-web-uploader') {
+      console.log(`[Startup] Server is ready on port ${port}. Opening browser...`);
+      spawn(startCmd, [url], { shell: true });
+    } else {
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(checkServerReady, pollInterval);
+      } else {
+        console.warn(`[Startup] Server did not respond. Opening browser anyway...`);
+        spawn(startCmd, [url], { shell: true });
+      }
+    }
+  }
+
+  checkServerReady();
 
   serverProc.on('close', (code) => {
     process.exit(code);

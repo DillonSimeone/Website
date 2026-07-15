@@ -1756,6 +1756,48 @@ if (isRealESP32) {
     })();
 }
 
+// Hardware Calibration Form Submission
+document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
+    const drvKindMap = {
+        "MOSFET": 0,
+        "DRV8833": 1,
+        "DRV2605L": 2
+    };
+    const drvChip = document.getElementById("drvChip").value;
+    const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 0;
+    
+    const sda = parseInt(document.getElementById("pinSDA").value) || 1;
+    const scl = parseInt(document.getElementById("pinSCL").value) || 2;
+    const pwm = parseInt(document.getElementById("pinPWM").value) || 6;
+    const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
+    
+    const configPatch = {
+        driver: {
+            kind: kind,
+            pins: [pwm, -1, -1, -1, -1, -1, -1, -1],
+            sda: sda,
+            scl: scl,
+            pwmHz: pwmHz
+        }
+    };
+    
+    if (isRealESP32) {
+        fetch('/json/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ patch: configPatch })
+        })
+        .then(() => {
+            addSerialLog("[PORTAL] Sent configuration patch successfully. Rebooting ESP32...");
+        })
+        .catch(err => {
+            console.error("Config save error:", err);
+        });
+    } else {
+        addSerialLog(`[SIMULATOR] Saved config (offline): ${JSON.stringify(configPatch)}`);
+    }
+});
+
 // Setup Iframe Reference Manual Modal Listeners
 (function() {
     const openBtn = document.getElementById("openManualBtn");

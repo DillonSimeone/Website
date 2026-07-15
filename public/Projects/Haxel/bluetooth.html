@@ -278,6 +278,25 @@ sin(t * 12) * 0.5 + 0.5</textarea>
                                         </select>
                                     </div>
                                     <div class="row">
+                                        <label>SDA Pin (I2C)</label>
+                                        <input type="number" id="pinSDA" min="0" max="48" value="1">
+                                    </div>
+                                    <div class="row">
+                                        <label>SCL Pin (I2C)</label>
+                                        <input type="number" id="pinSCL" min="0" max="48" value="2">
+                                    </div>
+                                    <div class="row">
+                                        <label>PWM Output Pin</label>
+                                        <input type="number" id="pinPWM" min="0" max="48" value="6">
+                                    </div>
+                                    <div class="row">
+                                        <label>PWM Freq (Hz)</label>
+                                        <input type="number" id="pwmFreq" min="100" max="100000" value="20000">
+                                    </div>
+                                    <div style="margin-top: 15px; display: flex; justify-content: flex-end; width: 100%;">
+                                        <button class="btn primary" id="saveHardwareBtn" style="padding: 6px 12px; font-size: 11px; font-weight: bold; cursor: pointer;">Save & Reboot</button>
+                                    </div>
+                                    <div class="row">
                                         <label>Phone Haptics</label>
                                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                             <input type="checkbox" id="phoneHapticsToggle" checked
@@ -351,6 +370,36 @@ sin(t * 12) * 0.5 + 0.5</textarea>
         <footer class="main-footer">
             <p>Haxel &copy; 2026. Designed with Bauhaus Aesthetics. Form Follows Function.</p>
         </footer>
+    </div>
+
+    <!-- Mobile Haptic Float Button -->
+    <div id="mobile-haptic-float-btn" style="display: none; position: fixed; top: 5px; right: 5px; z-index: 9999; width: 55px; height: 55px; cursor: pointer; background: transparent; overflow: visible; align-items: center; justify-content: center;" title="Toggle Playback">
+        <canvas id="mobile-haptic-canvas" width="110" height="110" style="width: 55px; height: 55px; display: block; pointer-events: none;"></canvas>
+    </div>
+
+    <!-- Mobile Haptic Guide Tooltip Pop-up -->
+    <div id="mobile-haptic-guide" style="display: none; position: fixed; top: 15px; right: 75px; z-index: 9998; background: #111111; color: white; border: 3px solid #111111; box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3); padding: 8px 12px; font-family: var(--font-display); font-size: 11px; align-items: center; gap: 8px; transform: translateY(-100px); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease; opacity: 0; pointer-events: none;">
+        <span>ENGAGE/DISABLE HAPTICS</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f2b134" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(-45deg);">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+    </div>
+
+    <!-- Mobile Haptic Activation Overlay -->
+    <div id="haptic-activation-overlay" class="bauhaus-overlay" style="display: none;">
+        <div class="bauhaus-modal">
+            <span class="block-label" style="background: var(--bauhaus-red); color: white;">MOBILE SENSORY PORTAL</span>
+            <h2>Tactile Feedback Ready</h2>
+            <p>
+                This interactive portal simulates real-time mechanical haptics. To enable physical vibration on your device, the browser requires an initial user interaction.
+            </p>
+            <div class="modal-buttons" style="display: flex; gap: 10px; width: 100%; margin-top: 20px;">
+                <button id="enable-haptics-btn" class="btn primary" style="flex: 1; padding: 12px 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;">ENABLE</button>
+                <button id="test-haptics-btn" class="btn secondary" style="flex: 1; padding: 12px 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;">TEST</button>
+                <button id="disable-haptics-btn" class="btn" style="flex: 1; padding: 12px 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; background: #ffffff; color: var(--black); border: var(--border-width) solid var(--black); box-shadow: 4px 4px 0 var(--black);">DISABLE</button>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->

@@ -1067,6 +1067,71 @@ function drawVirtualActuator(ctx, cx, cy, radius, amp) {
 function animate() {
     requestAnimationFrame(animate);
     
+    // Render dynamic spikes on mobile float canvas button
+    const floatBtn = document.getElementById("mobile-haptic-float-btn");
+    const hapticCanvas = document.getElementById("mobile-haptic-canvas");
+    if (floatBtn && floatBtn.style.display !== "none" && hapticCanvas) {
+        const ctx = hapticCanvas.getContext("2d");
+        const w = hapticCanvas.width;
+        const h = hapticCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const centerX = w / 2;
+        const centerY = h / 2;
+        const baseRadius = 35; // 17.5px CSS radius
+        
+        const numSpikes = 28;
+        const maxSpikeLength = 18;
+        const amp = smoothedAmp;
+        const hapticsActive = phoneHaptics.isEnabled();
+        
+        ctx.strokeStyle = hapticsActive ? "#e23b24" : "#f2b134";
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = "round";
+        
+        for (let i = 0; i < numSpikes; i++) {
+            const angle = (i / numSpikes) * Math.PI * 2 + timeSec * 0.4;
+            const noiseVal = Math.sin(timeSec * 8 + i * 1.5) * 0.12 + 0.88;
+            const spikeLen = (amp * 0.85 + 0.15 * noiseVal) * maxSpikeLength;
+            
+            const startX = centerX + Math.cos(angle) * baseRadius;
+            const startY = centerY + Math.sin(angle) * baseRadius;
+            const endX = centerX + Math.cos(angle) * (baseRadius + spikeLen);
+            const endY = centerY + Math.sin(angle) * (baseRadius + spikeLen);
+            
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+        }
+        
+        ctx.fillStyle = hapticsActive ? "#e23b24" : "#f2b134";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        ctx.fillStyle = "#111111";
+        if (hapticsActive) {
+            const barW = 5;
+            const barH = 15;
+            const gap = 5;
+            ctx.fillRect(centerX - barW - gap / 2, centerY - barH / 2, barW, barH);
+            ctx.fillRect(centerX + gap / 2, centerY - barH / 2, barW, barH);
+        } else {
+            ctx.beginPath();
+            const triSize = 9;
+            ctx.moveTo(centerX - triSize * 0.7 + 1.5, centerY - triSize);
+            ctx.lineTo(centerX + triSize * 1.3 + 1.5, centerY);
+            ctx.lineTo(centerX - triSize * 0.7 + 1.5, centerY + triSize);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+    
     timeSec += 0.0167 * playbackSpeed;
     
     // Evaluate active pattern haptic value
@@ -1440,6 +1505,97 @@ const draft = localStorage.getItem("HAXEL_EDITOR_DRAFT");
 if (draft && ta) {
     ta.value = draft;
 }
+
+if (isMobileDevice) {
+    const noteEl = document.getElementById("mobile-feedback-note");
+    if (noteEl) {
+        noteEl.style.display = "block";
+    }
+    
+    if (navigator.vibrate) {
+        const floatBtn = document.getElementById("mobile-haptic-float-btn");
+        if (floatBtn) {
+            floatBtn.style.display = "flex";
+            floatBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                // Toggle phone haptics only
+                const currentlyEnabled = phoneHaptics.isEnabled();
+                phoneHaptics.setEnabled(!currentlyEnabled);
+                if (!currentlyEnabled) {
+                    try {
+                        navigator.vibrate(50);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Phone haptics ENABLED.");
+                } else {
+                    addSerialLog("[PORTAL] Phone haptics DISABLED.");
+                }
+            });
+        }
+
+        const overlay = document.getElementById("haptic-activation-overlay");
+        const enableBtn = document.getElementById("enable-haptics-btn");
+        const testBtn = document.getElementById("test-haptics-btn");
+        const disableBtn = document.getElementById("disable-haptics-btn");
+        if (overlay) {
+            overlay.style.display = "flex";
+            
+            enableBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                phoneHaptics.setEnabled(true);
+                overlay.style.display = "none";
+                addSerialLog("[PORTAL] Phone haptics ENABLED by user choice.");
+                showMobileHapticGuide();
+            });
+            
+            testBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                try {
+                    navigator.vibrate([100, 50, 100]);
+                } catch (err) {}
+                addSerialLog("[PORTAL] Mobile haptics test vibration triggered.");
+            });
+            
+            disableBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                phoneHaptics.setEnabled(false);
+                overlay.style.display = "none";
+                addSerialLog("[PORTAL] Phone haptics DISABLED by user choice.");
+            });
+        }
+    }
+}
+
+// Hardware Calibration Form Submission
+document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
+    const drvKindMap = {
+        "MOSFET": 0,
+        "DRV8833": 1,
+        "DRV2605L": 2
+    };
+    const drvChip = document.getElementById("drvChip").value;
+    const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 0;
+    
+    const sda = parseInt(document.getElementById("pinSDA").value) || 1;
+    const scl = parseInt(document.getElementById("pinSCL").value) || 2;
+    const pwm = parseInt(document.getElementById("pinPWM").value) || 6;
+    const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
+    
+    const configPatch = {
+        driver: {
+            kind: kind,
+            pins: [pwm, -1, -1, -1, -1, -1, -1, -1],
+            sda: sda,
+            scl: scl,
+            pwmHz: pwmHz
+        }
+    };
+    
+    if (rxCharacteristic) {
+        sendConfigUpdate(configPatch);
+    } else {
+        addSerialLog(`[SIMULATOR] Saved config (offline): ${JSON.stringify(configPatch)}`);
+    }
+});
 
 loadCustomPatterns(frequencyShift, playbackSpeed, masterIntensity, startupFloor);
 renderCards();

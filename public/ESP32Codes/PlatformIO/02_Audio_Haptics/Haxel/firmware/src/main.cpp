@@ -6,8 +6,10 @@
 
 #include <Arduino.h>
 #include <LittleFS.h>
+#ifdef HAXEL_WIFI
 #include <WiFi.h>
 #include <ESPmDNS.h>
+#endif
 
 #include "Haxel.h"
 #include "core/Engine.h"
@@ -17,11 +19,14 @@
 #include "core/StatusLed.h"
 #include "hal/DriverFactory.h"
 #include "patterns/Patterns.h"
+#ifdef HAXEL_WIFI
 #include "web/WebServer.h"
 #include "web/CaptivePortal.h"
+#endif
+#ifdef HAXEL_BLU
+#include "web/BleServer.h"
+#endif
 #include "core/LedController.h"
-#include "core/KnobController.h"
-#include "core/OledDisplay.h"
 
 using namespace haxel;
 
@@ -39,10 +44,13 @@ Config           gConfig;
 core::Engine     gEngine;
 core::AudioAnalyzer gAudio;
 StatusLed        gStatusLed;
-core::KnobController gKnobs;
-core::OledDisplay    gOled;
+#ifdef HAXEL_WIFI
 web::WebServer   gWeb;
 web::CaptivePortal gPortal;
+#endif
+#ifdef HAXEL_BLU
+web::BleServer   gBle;
+#endif
 hal::IHapticDriver* gDriver = nullptr;
 
 TaskHandle_t hEngine = nullptr;
@@ -79,17 +87,11 @@ void housekeepingTask(void*) {
     const TickType_t period = pdMS_TO_TICKS(100);
     TickType_t last = xTaskGetTickCount();
     uint8_t broadcastDiv = 0;
-    uint8_t oledDiv = 0;
     uint32_t lastStaRetryMs = millis();
     for (;;) {
         gStatusLed.tick();
-        gKnobs.tick();
-        gOled.sample();
-        if (++oledDiv >= 3) {
-            oledDiv = 0;
-            gOled.tick();
-        }
         gConfig.flushIfDirty();
+#ifdef HAXEL_WIFI
         gPortal.pump();
         if (WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
             // STA dropped — raise AP fallback alongside.
@@ -116,15 +118,22 @@ void housekeepingTask(void*) {
                 }
             }
         }
-        // Broadcast engine state to WebSocket clients every ~200ms (every 2nd tick).
+#endif
+        // Broadcast engine state to WebSocket/BLE clients every ~200ms (every 2nd tick).
         if (++broadcastDiv >= 2) {
             broadcastDiv = 0;
+#ifdef HAXEL_WIFI
             gWeb.broadcastState();
+#endif
+#ifdef HAXEL_BLU
+            gBle.broadcastState();
+#endif
         }
         vTaskDelayUntil(&last, period);
     }
 }
 
+#ifdef HAXEL_WIFI
 bool bringUpWifi() {
     WiFi.persistent(false);
     WiFi.setHostname(gConfig.hostname().c_str());
@@ -156,6 +165,7 @@ bool bringUpWifi() {
     gStatusLed.apMode();
     return false;
 }
+#endif
 
 } // namespace
 
@@ -194,6 +204,10 @@ void setup() {
     gStatusLed.begin(8, 5);
     #endif
 
+#ifdef HAXEL_BLU
+    gBle.begin(&gEngine, &gConfig);
+#endif
+#ifdef HAXEL_WIFI
     bool staConnected = bringUpWifi();
     gWeb.begin(&gEngine, &gConfig, &gAudio);
     if (!staConnected) {
@@ -207,6 +221,7 @@ void setup() {
         MDNS.addServiceTxt("haxel", "tcp", "driver",
                            gDriver ? gDriver->name() : "none");
     }
+#endif
 
     xTaskCreatePinnedToCore(engineTask, "engine", 4096, nullptr, 5, &hEngine, HB_CORE_RT);
     if (gConfig.audioEnabled()) {
@@ -220,13 +235,6 @@ void setup() {
             xTaskCreatePinnedToCore(ledTask, "leds", 4096, nullptr, 2, &hLed, HB_CORE_NET);
             log_i("FastLED Controller started successfully");
         }
-    }
-
-    if (gKnobs.begin(&gConfig, &gEngine, gConfig.audioEnabled() ? &gAudio : nullptr)) {
-        log_i("Knob controller started (%u knobs)", (unsigned)gConfig.knobCount());
-    }
-    if (gOled.begin(&gConfig, &gEngine)) {
-        log_i("SSD1306 OLED started");
     }
 
     log_i("Boot complete; engine running");

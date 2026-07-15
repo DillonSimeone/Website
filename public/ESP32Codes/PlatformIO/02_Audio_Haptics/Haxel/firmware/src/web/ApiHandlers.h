@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
 
 namespace haxel {
 class Config;
@@ -24,6 +25,10 @@ public:
                                 AwsEventType type,
                                 void* arg, uint8_t* data, size_t len,
                                 core::Engine* engine);
+
+    static void applyStatePatch(ArduinoJson::JsonObjectConst patch, core::Engine* engine);
+    static void serializeState(ArduinoJson::JsonObject root, core::Engine* engine);
+    static void applyConfigPatch(ArduinoJson::JsonObjectConst patch, Config* config);
 };
 
 } // namespace web

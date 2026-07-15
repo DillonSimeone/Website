@@ -471,4 +471,16 @@ void ApiHandlers::handleWebSocket(AsyncWebSocket* /*server*/,
     }
 }
 
+void ApiHandlers::serializeState(JsonObject root, Engine* engine) {
+    haxel::web::serializeState(root, engine);
+}
+
+void ApiHandlers::applyStatePatch(JsonObjectConst patch, Engine* engine) {
+    haxel::web::applyStatePatch(patch, engine);
+}
+
+void ApiHandlers::applyConfigPatch(JsonObjectConst patch, Config* config) {
+    haxel::web::applyConfigPatch(patch, config);
+}
+
 } // namespace haxel::web
