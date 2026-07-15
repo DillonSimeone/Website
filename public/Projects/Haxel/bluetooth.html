@@ -25,7 +25,7 @@
                 <p class="subtitle">Control Haxel haptic units directly from your Chrome browser using Bluetooth Low Energy (BLE).</p>
                 <div class="hero-actions">
                     <a href="#simulator" class="btn primary">Launch Portal</a>
-                    <a href="index.html" class="btn secondary" style="border-color: #e23b24; color: #e23b24; font-weight: bold;">WiFi Mode</a>
+                    <a href="index.html" class="btn" style="border-color: #e23b24; color: #e23b24; font-weight: bold;">WiFi Mode</a>
                     <a href="manual.html" class="btn secondary">Read Manual</a>
                 </div>
             </div>
@@ -37,8 +37,8 @@
         </header>
 
         <!-- CONTENT WRAPPER: DOCS & SIMULATOR -->
-        <div class="summary-sim-row"> <!-- LEFT: EXECUTIVE SUMMARY -->
-            <div class="summary-column">
+        <div class="summary-sim-row" style="flex-direction: column;"> <!-- LEFT: EXECUTIVE SUMMARY -->
+            <div class="summary-column" style="border-right: none; border-bottom: 4px solid var(--black);">
                 <section class="doc-card" style="margin-bottom: 0;">
                     <span class="block-label">01 // BLUETOOTH CONTROL</span>
                     <h2>Web Bluetooth Mode</h2>
@@ -48,11 +48,14 @@
                          you can pair with it and stream real-time haptic commands directly.
                     </p>
                     <p>
-                        To start, make sure your Haxel unit is powered on and its Bluetooth/WiFi configuration is set to Bluetooth. 
-                        Click the **Connect BLE** button in the control panel header below, select your device, and you are ready to go.
+                         To start, make sure your Haxel unit is powered on and its Bluetooth/WiFi configuration is set to Bluetooth. 
+                         You can pair and connect directly using the button below:
                     </p>
+                    <div style="margin: 20px 0; display: flex; justify-content: center;">
+                        <button id="bleConnectBtnDoc" class="btn primary" style="cursor: pointer;">CONNECT BLE</button>
+                    </div>
 
-                    <div class="tech-table-wrapper" style="margin-top: auto;">
+                    <div class="tech-table-wrapper" style="margin-top: auto; margin-bottom: 20px;">
                         <table class="tech-table">
                             <thead>
                                 <tr>
@@ -119,7 +122,7 @@
                     <div class="portal-container">
                         <div class="portal-header" style="display: flex; align-items: center; justify-content: space-between;">
                             <div class="portal-logo" style="margin-right: auto;">HAXEL (BLE)</div>
-                            <button id="bleConnectBtn" class="btn primary" style="margin-right: 15px; padding: 6px 12px; font-size: 11px; background-color: #0056b3; border: 2px solid #000; box-shadow: 2px 2px 0 #000; font-weight: bold; cursor: pointer; color: white;">CONNECT BLE</button>
+                            <button id="bleConnectBtn" class="btn primary" style="margin-right: 15px; padding: 6px 12px; font-size: 11px; font-weight: bold; cursor: pointer; border-width: 2px; box-shadow: 2px 2px 0 var(--black);">CONNECT BLE</button>
                             <div class="portal-crumb" style="margin-right: 15px;">Active: <b id="patternName">Pulse Wave</b></div>
                             <div class="portal-status">
                                 <span class="portal-dot" id="dot"></span>
@@ -319,11 +322,11 @@ sin(t * 12) * 0.5 + 0.5</textarea>
                                     <circle id="pin-pwm" cx="50" cy="95" r="4" fill="#111" stroke="#fff" stroke-width="1" />
                                     <text x="42" y="98" fill="#111" font-family="var(--mono)" font-size="8" text-anchor="end">PWM (G3)</text>
                                     <line x1="195" y1="35" x2="210" y2="35" stroke="#fff" stroke-width="2" />
-                                    <circle id="pin-tx" cx="210" cy="35" r="4" fill="#0080ff" stroke="#111" stroke-width="1.5" />
-                                    <text x="218" y="38" fill="#111" font-family="var(--mono)" font-size="8" text-anchor="start">BLE TX (G21)</text>
+                                    <circle id="pin-tx" cx="210" cy="35" r="4" fill="#f2b134" stroke="#111" stroke-width="1.5" />
+                                    <text x="218" y="38" fill="#111" font-family="var(--mono)" font-size="8" text-anchor="start">TX (G21)</text>
                                     <line x1="195" y1="65" x2="210" y2="65" stroke="#fff" stroke-width="2" />
                                     <circle id="pin-rx" cx="210" cy="65" r="4" fill="#111" stroke="#fff" stroke-width="1" />
-                                    <text x="218" y="68" fill="#111" font-family="var(--mono)" font-size="8" text-anchor="start">BLE RX (G20)</text>
+                                    <text x="218" y="68" fill="#111" font-family="var(--mono)" font-size="8" text-anchor="start">RX (G20)</text>
                                     <line x1="195" y1="95" x2="210" y2="95" stroke="#fff" stroke-width="2" />
                                     <circle id="pin-3v3" cx="210" cy="95" r="4" fill="#e23b24" stroke="#111" stroke-width="1.5" />
                                     <text x="218" y="98" fill="#111" font-family="var(--mono)" font-size="8" text-anchor="start">3V3</text>

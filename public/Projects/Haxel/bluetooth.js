@@ -713,21 +713,84 @@ const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-document.getElementById('bleConnectBtn').addEventListener('click', async () => {
-    if (bleDevice && bleDevice.gatt.connected) {
-        disconnectBLE();
-        return;
+// Bluetooth API Availability Check & UI Bindings
+const isBluetoothSupported = 'bluetooth' in navigator;
+
+function updateConnectButtonsState(connected, connecting = false) {
+    const connectBtn = document.getElementById("bleConnectBtn");
+    const connectBtnDoc = document.getElementById("bleConnectBtnDoc");
+    const buttons = [connectBtn, connectBtnDoc].filter(Boolean);
+    
+    buttons.forEach(btn => {
+        if (!isBluetoothSupported) {
+            btn.textContent = "BLE UNSUPPORTED";
+            btn.disabled = true;
+            btn.style.cursor = "not-allowed";
+            btn.style.opacity = "0.6";
+        } else if (connecting) {
+            btn.textContent = "CONNECTING...";
+            btn.disabled = true;
+        } else if (connected) {
+            btn.textContent = "DISCONNECT BLE";
+            btn.disabled = false;
+            btn.style.backgroundColor = "var(--bauhaus-red)";
+        } else {
+            btn.textContent = "CONNECT BLE";
+            btn.disabled = false;
+            btn.style.backgroundColor = "";
+        }
+    });
+}
+
+// Bind event listeners to both buttons
+const connectBtn = document.getElementById('bleConnectBtn');
+const connectBtnDoc = document.getElementById('bleConnectBtnDoc');
+[connectBtn, connectBtnDoc].forEach(btn => {
+    if (btn) {
+        btn.addEventListener('click', async () => {
+            if (!isBluetoothSupported) return;
+            if (bleDevice && bleDevice.gatt.connected) {
+                disconnectBLE();
+                return;
+            }
+            await connectBLE();
+        });
     }
-    await connectBLE();
 });
+
+// Display a clear warning on the page if Bluetooth is not supported
+if (!isBluetoothSupported) {
+    updateConnectButtonsState(false);
+    
+    // Add warning banner to doc-card
+    const docCard = document.querySelector(".doc-card");
+    if (docCard) {
+        const warningAlert = document.createElement("div");
+        warningAlert.style.background = "var(--bauhaus-red)";
+        warningAlert.style.color = "#ffffff";
+        warningAlert.style.border = "var(--border-width) solid var(--black)";
+        warningAlert.style.padding = "20px";
+        warningAlert.style.fontWeight = "bold";
+        warningAlert.style.marginTop = "20px";
+        warningAlert.style.boxShadow = "6px 6px 0 var(--black)";
+        warningAlert.innerHTML = `
+            <div style="font-size: 14px; text-transform: uppercase; margin-bottom: 8px; font-family: var(--font-display);">⚠️ Web Bluetooth API Unsupported</div>
+            <div style="font-size: 13px; font-weight: normal; line-height: 1.4;">
+                This browser does not support the Web Bluetooth API. Please open this page in <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, or another Chromium-based browser to connect to Haxel devices.
+            </div>
+        `;
+        docCard.appendChild(warningAlert);
+    }
+}
 
 async function connectBLE() {
     const dot = document.getElementById("dot");
     const connText = document.getElementById("connText");
-    const connectBtn = document.getElementById("bleConnectBtn");
     const bleStatus = document.getElementById("bleStatusLabel");
     
     addSerialLog("[BLE] Requesting Bluetooth Device...");
+    updateConnectButtonsState(false, true);
+    
     try {
         bleDevice = await navigator.bluetooth.requestDevice({
             filters: [{ namePrefix: 'Haxel' }],
@@ -756,8 +819,7 @@ async function connectBLE() {
         dot.className = "portal-dot ok";
         connText.textContent = "connected";
         if (bleStatus) bleStatus.textContent = "Connected";
-        connectBtn.textContent = "DISCONNECT BLE";
-        connectBtn.style.backgroundColor = "var(--bauhaus-red)";
+        updateConnectButtonsState(true);
         addSerialLog("[BLE] Bluetooth connection fully established!");
         
         // Request current status
@@ -768,8 +830,7 @@ async function connectBLE() {
         dot.className = "portal-dot error";
         connText.textContent = "error";
         if (bleStatus) bleStatus.textContent = "Failed";
-        connectBtn.textContent = "CONNECT BLE";
-        connectBtn.style.backgroundColor = "";
+        updateConnectButtonsState(false);
     }
 }
 
@@ -783,16 +844,12 @@ function disconnectBLE() {
 function onDisconnected() {
     const dot = document.getElementById("dot");
     const connText = document.getElementById("connText");
-    const connectBtn = document.getElementById("bleConnectBtn");
     const bleStatus = document.getElementById("bleStatusLabel");
     
     dot.className = "portal-dot";
     connText.textContent = "disconnected";
     if (bleStatus) bleStatus.textContent = "Disconnected";
-    if (connectBtn) {
-        connectBtn.textContent = "CONNECT BLE";
-        connectBtn.style.backgroundColor = "";
-    }
+    updateConnectButtonsState(false);
     rxCharacteristic = null;
     txCharacteristic = null;
     addSerialLog("[BLE] Disconnected from device.");
@@ -916,34 +973,95 @@ function syncStateToESP32() {
 
 // ─── ANIMATION / EMULATOR RENDER LOOP ─────────────────────────────────────────
 function drawVirtualActuator(ctx, cx, cy, radius, amp) {
-    ctx.fillStyle = "#111111";
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fill();
+    const isLRA = actSelect.value === "LRA";
+    const isSolenoid = actSelect.value === "Solenoid";
     
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius - 4, 0, Math.PI * 2);
-    ctx.stroke();
+    if (amp > 0.02 && !isMotorStalled) {
+        ctx.lineWidth = 3;
+        const numWaves = 3;
+        for (let i = 0; i < numWaves; i++) {
+            const phase = (timeSec * 4 + i / numWaves) % 1.0;
+            const currentR = radius + phase * 50;
+            const alpha = (1.0 - phase) * 0.8 * amp;
+            ctx.strokeStyle = `rgba(0, 47, 108, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
 
-    const maxOffset = 18 * amp;
-    const angle = timeSec * 35; // Resonant frequency visual oscillation
-    const ox = Math.cos(angle) * maxOffset;
-    const oy = Math.sin(angle) * maxOffset;
+    let dx = 0;
+    let dy = 0;
+    if (amp > 0.01 && !isMotorStalled) {
+        const vibrationFreq = isLRA ? frequencyShift : 25;
+        dx = (Math.random() - 0.5) * 6 * amp * (1.0 + Math.sin(timeSec * vibrationFreq) * 0.2);
+        dy = (Math.random() - 0.5) * 6 * amp * (1.0 + Math.cos(timeSec * vibrationFreq) * 0.2);
+    }
 
-    ctx.fillStyle = "#e23b24";
-    ctx.beginPath();
-    ctx.arc(cx + ox, cy + oy, radius * 0.45, 0, Math.PI * 2);
-    ctx.fill();
+    const ax = cx + dx;
+    const ay = cy + dy;
+
+    ctx.fillStyle = isMotorStalled ? "#e23b24" : "#ffffff";
     ctx.strokeStyle = "#111111";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    ctx.fillStyle = "#ffffff";
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(cx + ox - 4, cy + oy - 4, 3, 0, Math.PI * 2);
+    ctx.arc(cx, cy, radius + 4, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
+
+    if (isLRA) {
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = -15; i <= 15; i += 5) {
+            const sx = ax + i;
+            const sy = ay + Math.sin(i * 0.4) * 8;
+            if (i === -15) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.5)" : "#f2b134";
+        ctx.beginPath();
+        ctx.arc(ax, ay, radius * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.fillStyle = "#111111";
+        ctx.font = "bold 8px Inter";
+        ctx.textAlign = "center";
+        ctx.fillText(isMotorStalled ? "STALL" : "LRA", ax, ay + 3);
+    } else if (isSolenoid) {
+        ctx.fillStyle = "#002f6c";
+        ctx.fillRect(ax - 20, ay - 10, 40, 20);
+        ctx.strokeRect(ax - 20, ay - 10, 40, 20);
+
+        const stroke = isMotorStalled ? 0 : amp * 12;
+        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.8)" : "#e23b24";
+        ctx.fillRect(ax - 5 + stroke, ay - 6, 20, 12);
+        ctx.strokeRect(ax - 5 + stroke, ay - 6, 20, 12);
+    } else {
+        ctx.strokeStyle = "rgba(17,17,17,0.2)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ax, ay, radius * 0.75, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const rotationSpeed = isMotorStalled ? 0 : amp * 25;
+        const angle = timeSec * rotationSpeed;
+        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.5)" : "#e23b24";
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.arc(ax, ay, radius * 0.7, angle, angle + Math.PI, false);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#111111";
+        ctx.beginPath();
+        ctx.arc(ax, ay, 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
 }
 
 function animate() {
@@ -1032,12 +1150,25 @@ function animate() {
     }
 
     // Trigger Phone Haptic Vibration if active
-    if (isPlaying && amp > 0.05) {
+    if (phoneHaptics.isEnabled() && isPlaying && !isMotorStalled) {
         const now = Date.now();
-        if (now - lastPhoneVibrateTime > 60) {
-            const intensityScaled = Math.round(amp * 255);
-            phoneHaptics.vibrate(intensityScaled);
-            lastPhoneVibrateTime = now;
+        const hapticThreshold = 0.15;
+        if (amp > hapticThreshold) {
+            if (now - lastPhoneVibrateTime > 60) {
+                navigator.vibrate(50);
+                lastPhoneVibrateTime = now;
+                phoneHaptics.setVibrateActive(true);
+            }
+        } else {
+            if (phoneHaptics.isVibrateActive()) {
+                navigator.vibrate(0);
+                phoneHaptics.setVibrateActive(false);
+            }
+        }
+    } else {
+        if (phoneHaptics.isVibrateActive()) {
+            navigator.vibrate(0);
+            phoneHaptics.setVibrateActive(false);
         }
     }
 
