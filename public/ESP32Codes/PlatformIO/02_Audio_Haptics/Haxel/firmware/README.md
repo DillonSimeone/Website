@@ -1,64 +1,87 @@
 # Haxel Firmware
 
-This PlatformIO project implements the core real-time embedded logic for the Haxel tactile pattern engine. It supports a multi-tasking FreeRTOS environment that coordinates real-time haptic pattern generation, audio analysis, and connection services (WiFi or BLE).
+PlatformIO project for the Haxel tactile pattern engine: FreeRTOS haptic tick, optional audio FFT / FastLED / OLED, and either **WiFi** (captive portal + REST/WS) or **BLE** (GATT + Web Bluetooth) per compile environment.
 
-## Build & Flash (via Web Uploader)
+## Flash via Web Uploader (recommended)
 
-For the easiest compilation and deployment experience, use the visual **Web Uploader** tool provided in the project root:
+The ESP32Codes uploader builds firmware and, for LittleFS projects, uploads `data/` as well.
 
-1. Run the `StartUploader.bat` script.
-2. Open the page (defaults to `http://localhost:3567`).
-3. Select **Haxel/firmware** in the project catalog.
-4. Select your environment suffix in the **ENV** dropdown:
-   - `esp32-c3-wifi` / `esp32-c3-ble` (for ESP32-C3)
-   - `esp32-s3-wifi` / `esp32-s3-ble` (for ESP32-S3)
-   - `esp32dev-wifi` / `esp32dev-ble` (for classic ESP32)
+1. Double-click [`upload.bat`](upload.bat) in this folder  
+   *(launches [`_tooling/uploader/start-uploader.bat`](../../../../_tooling/uploader/start-uploader.bat))*  
+   **or** start the uploader from `public/ESP32Codes/_tooling/uploader/`.
+2. Open **http://localhost:3567**.
+3. Select **Haxel/firmware** in the catalog.
+4. Choose COM **port** and **ENV** (see table below).
 5. Click **BUILD & FLASH DEVICE**.
+
+Uploader docs: [`_tooling/uploader/README.md`](../../../../_tooling/uploader/README.md).
+
+### Useful ENV names
+
+| Env | Meaning |
+|-----|---------|
+| `c3WIFILED` | **Default** — ESP32-C3, WiFi + FastLED |
+| `c3WIFI` | ESP32-C3, WiFi only |
+| `c3WIFIAUDIOLED` | WiFi + LED + mic FFT |
+| `c3BLULED` | ESP32-C3, BLE + FastLED |
+| `c3FULLOLED` | WiFi + LED + Audio + Knobs + OLED |
+| `s3WIFILED` / `s3BLULED` | ESP32-S3 profiles |
+| `devWIFILED` / `devBLULED` | Classic ESP32 |
+
+Legacy aliases still work: `esp32-c3-wifi` → `c3WIFILED`, `esp32-c3-ble` → `c3BLULED`, etc.
 
 ---
 
-## Build & Flash (via CLI)
+## Flash via CLI (manual)
 
-To compile and upload from the command line:
+Requires PlatformIO CLI (`pio`).
 
-```bash
-# Default C3 profile: WiFi + FastLED strip
+```bat
+cd PlatformIO\02_Audio_Haptics\Haxel\firmware
+
+:: Default profile
 pio run -e c3WIFILED -t upload
 pio run -e c3WIFILED -t uploadfs
+pio device monitor
 
-# Other useful envs
-pio run -e c3WIFI          # WiFi only (no LED/audio/OLED)
-pio run -e c3WIFIAUDIOLED  # WiFi + LED + mic FFT
-pio run -e c3BLULED        # BLE + LED
-pio run -e c3FULLOLED      # WiFi + LED + Audio + Knobs + OLED
+:: BLE + LED (no AsyncWebServer / no captive portal)
+pio run -e c3BLULED -t upload
 ```
 
-### Feature modules (`HAXEL_FEATURE_*`)
+Optional: set `upload_port` / `monitor_port` in `platformio.ini` if auto-detect fails.
 
-| Flag | What it enables | Typical env |
-|------|-----------------|-------------|
+### ESP32-C3 download mode
+
+Hold **BOOT** → press/release **RESET** → release **BOOT**, then flash again.
+
+---
+
+## Feature modules (`HAXEL_FEATURE_*`)
+
+| Flag | Enables | Typical env |
+|------|---------|-------------|
 | `LED` | FastLED strip | `c3WIFILED` |
 | `AUDIO` | I2S/ADC FFT | `c3WIFIAUDIOLED` |
 | `KNOBS` | ADC knobs | `c3FULLOLED` |
 | `OLED` | SSD1306 HUD | `c3FULLOLED` |
 
-Legacy env names (`esp32-c3-wifi`, etc.) still work as aliases.
+Transport is compile-time: `-DHAXEL_WIFI` or `-DHAXEL_BLU`. Shared state JSON is in `StateApi`; WiFi HTTP handlers stay out of BLE builds.
 
 ---
 
-## Connection Modes
+## Connection modes
 
-Haxel compiles into either **WiFi Mode** or **Bluetooth Mode** to prevent resource contention and reduce memory footprint:
+### WiFi (`HAXEL_WIFI`)
 
-### 1. WiFi Mode (`*-wifi`)
-- **Captive Portal**: Broadcasts SSID `Haxel-XXXX` for initial credential provisioning.
-- **REST & WebSocket API**: Mounts an asynchronous web server for HTTP REST control and low-latency WebSockets.
-- **Web UI**: Access the main control page locally by navigating to `http://haxel.local` (or the softAP IP `192.168.4.1`) or via the [Haxel Portal Website Page](file:///f:/Github/Website/public/Projects/Haxel/index.html).
+- SoftAP SSID `Haxel-XXXX`, captive portal → `http://192.168.4.1`
+- REST / WebSocket API; UI served from LittleFS (`data/`)
+- Docs / simulator website: `public/Projects/Haxel/index.html`
 
-### 2. Bluetooth Mode (`*-ble`)
-- **Direct BLE GATT Server**: Broadcasts as `Haxel-XXXX` using BLE GATT services.
-- **Web Bluetooth API**: Control Haxel directly from your Chrome or Chromium-based browser with sub-15ms latency without any WiFi setup or network routing.
-- **Web UI**: Launch the [Haxel BLE Control Page](file:///f:/Github/Website/public/Projects/Haxel/bluetooth.html) in your browser and click **CONNECT BLE**.
+### Bluetooth (`HAXEL_BLU`)
+
+- BLE GATT as `Haxel-XXXX`
+- Control from Chrome/Edge: `public/Projects/Haxel/bluetooth.html` → **CONNECT BLE**
+- Do not expect the on-device WiFi portal in BLE builds
 
 ---
 
@@ -66,28 +89,16 @@ Haxel compiles into either **WiFi Mode** or **Bluetooth Mode** to prevent resour
 
 ```text
 firmware/
-├── platformio.ini         Build environment configurations
-├── partitions.csv         Flash partition table
-├── include/
-│   └── Haxel.h            Umbrella header
+├── platformio.ini         Modular envs + feature flags
+├── partitions.csv
+├── upload.bat             Launches Web Uploader
+├── include/Haxel.h
 ├── src/
-│   ├── main.cpp           FreeRTOS task layout and setups
-│   ├── core/
-│   │   ├── Engine         1 kHz pattern scheduler
-│   │   ├── Config         JSON-backed configurations
-│   │   ├── Pattern        IPattern base class
-│   │   ├── StatusLed      Status breathing/blinking states
-│   │   └── AudioAnalyzer  FFT envelope follower
-│   ├── hal/               Actuator driver interface
-│   │   ├── IHapticDriver
-│   │   ├── DriverFactory  Resolves driver kind (MOSFET, DRV2605L, etc.)
-│   │   └── MOSFETDriver   PWM motor driver
+│   ├── main.cpp           FreeRTOS tasks / feature gates
+│   ├── core/              Engine, Config, patterns, audio, LED
+│   ├── hal/               IHapticDriver + drivers
 │   ├── patterns/
-│   │   └── Patterns       Built-in pattern registry
-│   └── web/               Network APIs
-│       ├── WebServer      Async HTTP server
-│       ├── CaptivePortal  Captive portal DNS server
-│       ├── BleServer      BLE GATT server
-│       └── ApiHandlers    Common state patch/serialization helper
-└── data/                  LittleFS UI files (for WiFi mode)
+│   └── web/               WebServer, CaptivePortal, ApiHandlers (WiFi),
+│                          BleServer (BLE), StateApi (shared)
+└── data/                  LittleFS captive UI (WiFi)
 ```

@@ -21,6 +21,22 @@ let startupFloor = 0.15; // default 15%
 
 // Dynamic Audio Partitioning Bins Configuration
 const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+// Declared early so Pattern Studio compile-on-type can live-push.
+const isBleMode = window.location.pathname.includes("bluetooth.html");
+const isRealESP32 = (
+    window.location.hostname !== 'localhost'
+    && window.location.hostname !== '127.0.0.1'
+    && window.location.hostname !== 'dillonsimeone.com'
+    && window.location.hostname !== ''
+);
+let bleDevice = null;
+let rxCharacteristic = null;
+let txCharacteristic = null;
+const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const isBluetoothSupported = 'bluetooth' in navigator;
+
 let numBins = 3;
 let dividers = [8, 18];
 let draggingDividerIdx = -1;
@@ -186,11 +202,145 @@ document.querySelectorAll(".chip-preset").forEach(btn => {
 let customEvaluator = null;
 const STUDIO_DRAFT_ID = "studio_draft";
 let studioDraftTimer = null;
+let bleWriteChain = Promise.resolve();
+let lastUploadedPatternKey = "";
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function patternUploadKey(id, code) {
+    return `${id}\n${code}`;
+}
+
+function bleEnqueue(task) {
+    bleWriteChain = bleWriteChain.then(task, task);
+    return bleWriteChain;
+}
+
+async function bleWriteJson(obj) {
+    if (!rxCharacteristic) throw new Error("BLE not connected");
+    const payload = JSON.stringify(obj);
+    const data = new TextEncoder().encode(payload);
+    // Prefer acknowledged writes — NR drops are silent when over MTU.
+    if (rxCharacteristic.properties && rxCharacteristic.properties.write) {
+        await rxCharacteristic.writeValue(data);
+    } else {
+        await rxCharacteristic.writeValueWithoutResponse(data);
+    }
+}
+
+async function bleSendCustomPattern({ id, name, code }) {
+    // Keep full JSON under ~120 bytes so default ATT MTUs still work.
+    const CODE_CHUNK = 48;
+    const total = Math.max(1, Math.ceil(code.length / CODE_CHUNK));
+    addSerialLog(`[BLE] Uploading pattern '${id}' (${code.length} chars, ${total} chunk(s))`);
+    for (let seq = 0; seq < total; seq++) {
+        const piece = code.slice(seq * CODE_CHUNK, (seq + 1) * CODE_CHUNK);
+        await bleWriteJson({
+            type: "custom-pattern",
+            id,
+            name: name || id,
+            code: piece,
+            seq,
+            total
+        });
+        if (seq + 1 < total) await delay(40);
+    }
+    lastUploadedPatternKey = patternUploadKey(id, code);
+    addSerialLog(`[BLE] Pattern '${id}' upload complete`);
+}
+
+async function ensurePatternUploaded(pat) {
+    if (!pat || !pat.code) return false;
+    if (!isBleMode || !rxCharacteristic) {
+        if (isRealESP32) {
+            const res = await fetch('/json/custom-patterns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: pat.id, name: pat.name || pat.id, code: pat.code })
+            });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || "upload rejected");
+            lastUploadedPatternKey = patternUploadKey(pat.id, pat.code);
+            return true;
+        }
+        return false;
+    }
+    const key = patternUploadKey(pat.id, pat.code);
+    if (key === lastUploadedPatternKey) return true;
+    await bleEnqueue(() => bleSendCustomPattern({
+        id: pat.id,
+        name: pat.name || pat.id,
+        code: pat.code
+    }));
+    return true;
+}
 
 function pushStudioDraftToDevice(code, playAfter = true) {
-    if (!isRealESP32 && !isBleMode) return Promise.resolve(false);
+    if (!isRealESP32 && !(isBleMode && rxCharacteristic)) {
+        return Promise.resolve(false);
+    }
     const name = (customPatternNameInput && customPatternNameInput.value.trim()) || "Studio Draft";
     addSerialLog(`[CTRL→ESP] Pushing studio draft (${code.length} chars)`);
+
+    const afterOk = () => {
+        let draft = PATTERNS.find(p => p.id === STUDIO_DRAFT_ID);
+        if (!draft) {
+            draft = {
+                id: STUDIO_DRAFT_ID,
+                name: name + " (Live)",
+                category: "custom",
+                desc: "Live Pattern Studio draft on device.",
+                isCustom: true,
+                code,
+                func: (t) => customEvaluator
+                    ? customEvaluator.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+                    : 0
+            };
+            PATTERNS.push(draft);
+        } else {
+            draft.name = name + " (Live)";
+            draft.code = code;
+            draft.func = (t) => customEvaluator
+                ? customEvaluator.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+                : 0;
+        }
+        activePattern = draft;
+        const label = document.getElementById("patternName");
+        if (label) label.textContent = `${name} (Studio)`;
+        if (playAfter) {
+            isPlaying = true;
+            const dot = document.getElementById("dot");
+            if (dot) dot.className = "portal-dot ok";
+        }
+        // State sync without re-uploading (we just uploaded studio_draft).
+        sendStateUpdate({
+            on: isPlaying,
+            intensity: masterIntensity / 255,
+            speed: playbackSpeed,
+            startupFloor: startupFloor,
+            pattern: STUDIO_DRAFT_ID,
+            name,
+            numBins: numBins,
+            dividers: dividers,
+            binPatterns: Array.from({ length: numBins }).map((_, i) => {
+                const el = document.getElementById(`bin-${i}-pattern`);
+                return el ? el.value : "none";
+            })
+        });
+        return true;
+    };
+
+    if (isBleMode) {
+        return bleEnqueue(() => bleSendCustomPattern({ id: STUDIO_DRAFT_ID, name, code }))
+            .then(() => afterOk())
+            .catch(err => {
+                addSerialLog(`[CTRL→ESP] Studio draft BLE failed: ${err.message}`);
+                return false;
+            });
+    }
+
     return fetch('/json/custom-patterns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -201,31 +351,8 @@ function pushStudioDraftToDevice(code, playAfter = true) {
               addSerialLog(`[CTRL→ESP] Studio draft rejected: ${data.error || 'unknown'}`);
               return false;
           }
-          let draft = PATTERNS.find(p => p.id === STUDIO_DRAFT_ID);
-          if (!draft) {
-              draft = {
-                  id: STUDIO_DRAFT_ID,
-                  name: name + " (Live)",
-                  category: "custom",
-                  desc: "Live Pattern Studio draft on device.",
-                  isCustom: true,
-                  code,
-                  func: (t) => customEvaluator ? customEvaluator.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor) : 0
-              };
-              PATTERNS.push(draft);
-          } else {
-              draft.name = name + " (Live)";
-              draft.code = code;
-          }
-          activePattern = draft;
-          document.getElementById("patternName").textContent = `${name} (Studio)`;
-          if (playAfter) {
-              isPlaying = true;
-              document.getElementById("dot").className = "portal-dot ok";
-              document.getElementById("connText").textContent = "playing";
-          }
-          syncStateToESP32();
-          return true;
+          lastUploadedPatternKey = patternUploadKey(STUDIO_DRAFT_ID, code);
+          return afterOk();
       }).catch(err => {
           addSerialLog(`[CTRL→ESP] Studio draft failed: ${err.message}`);
           return false;
@@ -236,7 +363,7 @@ function pushStudioDraftDebounced(code) {
     clearTimeout(studioDraftTimer);
     studioDraftTimer = setTimeout(() => {
         if (customEvaluator) pushStudioDraftToDevice(code, true);
-    }, 400);
+    }, 350);
 }
 
 function compileCustom() {
@@ -248,11 +375,14 @@ function compileCustom() {
         compilerStatus.textContent = "compiled ✓";
         compilerStatus.className = "compilation-status ok";
         addSerialLog("[IDE] Compiled custom pattern successfully!");
-        // Live-push so typing in Studio actually drives the MOSFET, not just the canvas.
-        if (isRealESP32 || isBleMode) {
+        // Pixelblaze-style: successful compile live-pushes without Save.
+        if (isRealESP32 || (isBleMode && rxCharacteristic)) {
             pushStudioDraftDebounced(src);
+        } else if (isBleMode) {
+            addSerialLog("[IDE] Compiled locally — connect BLE to live-push to device");
         }
     } catch (e) {
+        customEvaluator = null;
         compilerStatus.textContent = "Error: " + e.message;
         compilerStatus.className = "compilation-status err";
     }
@@ -497,15 +627,28 @@ function renderCards(filterTag = "all") {
             document.getElementById("patternName").textContent = pat.name;
             isPlaying = true;
             document.getElementById("dot").className = "portal-dot ok";
-            document.getElementById("connText").textContent = "playing";
+            document.getElementById("connText").textContent =
+                (isBleMode && bleDevice && bleDevice.gatt && bleDevice.gatt.connected)
+                    ? "connected" : "playing";
             addSerialLog(`[HAL] Loaded library pattern: "${pat.name}"`);
             
             if (pat.isCustom && pat.code) {
                 ta.value = pat.code;
                 syncHL();
-                compileCustom();
+                try {
+                    const ast = new Parser(tokenize(pat.code)).parseProgram();
+                    customEvaluator = new Evaluator(ast);
+                    compilerStatus.textContent = "compiled ✓";
+                    compilerStatus.className = "compilation-status ok";
+                } catch (e) {
+                    customEvaluator = null;
+                }
+                ensurePatternUploaded(pat)
+                    .then(() => syncStateToESP32())
+                    .catch(err => addSerialLog(`[CTRL→ESP] Custom upload failed: ${err.message}`));
+            } else {
+                syncStateToESP32();
             }
-            syncStateToESP32();
 
             if (isMobileDevice && navigator.vibrate) {
                 phoneHaptics.setEnabled(true);
@@ -629,23 +772,17 @@ if (savePatternBtn) {
             
             addSerialLog(`[IDE] Saved new custom pattern: "${name}"`);
             
-            if (isRealESP32) {
-                fetch('/json/custom-patterns', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, name, code })
-                }).then(res => res.json())
-                  .then(data => {
-                      if (!data.ok) {
-                          alert("ESP32 Compilation Error: " + data.error);
-                      } else {
-                          addSerialLog(`[ESP32] Saved new custom pattern to ESP32: "${name}"`);
-                          syncStateToESP32();
-                      }
-                  }).catch(err => {
-                      addSerialLog(`[ESP32] [ERROR] Failed to save to ESP32: ${err.message}`);
-                  });
-            }
+            ensurePatternUploaded(newPat)
+                .then(() => {
+                    addSerialLog(`[ESP32] Custom pattern on device: "${name}"`);
+                    syncStateToESP32();
+                })
+                .catch(err => {
+                    addSerialLog(`[ESP32] [ERROR] Failed to save to device: ${err.message}`);
+                    if (isRealESP32 || isBleMode) {
+                        alert("Device upload failed: " + err.message);
+                    }
+                });
             
             renderCards();
             document.querySelector('.tab[data-tab="lib"]').click();
@@ -1664,17 +1801,7 @@ initBootLogs();
 animate();
 
 // ─── REAL TIME ESP32 BRIDGE & WEB BLUETOOTH UNIFICATION ─────────────────────
-const isRealESP32 = (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'dillonsimeone.com' && window.location.hostname !== '');
-const isBleMode = window.location.pathname.includes("bluetooth.html");
-
-// BLE Variables
-let bleDevice = null;
-let rxCharacteristic = null;
-let txCharacteristic = null;
-const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-const isBluetoothSupported = 'bluetooth' in navigator;
+// isRealESP32 / isBleMode / BLE handles are declared near the top of this file.
 
 function throttle(fn, ms) {
     let last = 0, timer = null;
@@ -1755,13 +1882,10 @@ const sendStateUpdate = throttle(async (patch) => {
     if (isBleMode) {
         if (!rxCharacteristic) return;
         try {
-            const payload = JSON.stringify({ type: "state", patch: patch });
-            const encoder = new TextEncoder();
-            const data = encoder.encode(payload);
-            await rxCharacteristic.writeValueWithoutResponse(data);
+            await bleEnqueue(() => bleWriteJson({ type: "state", patch }));
         } catch (err) {
             console.error("BLE State Write Error:", err);
-            addSerialLog(`[CTRL→ESP] BLE write failed: ${err.message}`);
+            addSerialLog(`[BLE] State write failed: ${err.message}`);
         }
     } else {
         if (!isRealESP32) return;
@@ -1775,8 +1899,8 @@ const sendStateUpdate = throttle(async (patch) => {
     }
 }, 100);
 
-function syncStateToESP32() {
-    sendStateUpdate({
+async function syncStateToESP32() {
+    const patch = {
         on: isPlaying,
         intensity: masterIntensity / 255,
         speed: playbackSpeed,
@@ -1788,7 +1912,16 @@ function syncStateToESP32() {
             const el = document.getElementById(`bin-${i}-pattern`);
             return el ? el.value : "none";
         })
-    });
+    };
+
+    if (activePattern && activePattern.code && (isBleMode || isRealESP32)) {
+        try {
+            await ensurePatternUploaded(activePattern);
+        } catch (err) {
+            addSerialLog(`[CTRL→ESP] ensure upload failed: ${err.message}`);
+        }
+    }
+    sendStateUpdate(patch);
 }
 
 // BLE Connect Button Handlers
@@ -1858,6 +1991,9 @@ async function connectBLE() {
         addSerialLog("[BLE] Bluetooth connection fully established!");
         
         sendStateUpdate({ getStatus: true });
+        if (customEvaluator && ta && ta.value.trim()) {
+            pushStudioDraftToDevice(ta.value, true);
+        }
         
     } catch (err) {
         addSerialLog(`[BLE] [ERROR] Connection failed: ${err.message}`);

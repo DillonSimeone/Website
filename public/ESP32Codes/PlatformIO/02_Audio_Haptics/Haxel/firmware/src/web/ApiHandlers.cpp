@@ -256,35 +256,12 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
             std::string id = obj["id"] | "";
             std::string name = obj["name"] | "";
             std::string code = obj["code"] | "";
-            if (id.empty() || code.empty()) {
-                Serial.println("[CTRL] custom-pattern rejected: missing id/code");
-                req->send(400, "application/json", "{\"ok\":false,\"error\":\"id and code are required\"}");
+            String err;
+            if (!upsertCustomPattern(id.c_str(), name.c_str(), code.c_str(), err)) {
+                req->send(400, "application/json",
+                          String("{\"ok\":false,\"error\":\"") + err + "\"}");
                 return;
             }
-            
-            patterns::CustomPatternEvaluator evaluator;
-            if (!evaluator.compile(code)) {
-                Serial.printf("[CTRL] custom-pattern compile failed: %s\n",
-                              evaluator.getLastError().c_str());
-                req->send(400, "application/json", "{\"ok\":false,\"error\":\"" + String(evaluator.getLastError().c_str()) + "\"}");
-                return;
-            }
-            
-            // Remove existing pattern if it exists
-            PatternRegistry::instance().unregisterPattern(id.c_str());
-            
-            // Register new CustomPattern
-            patterns::CustomPattern* cp = new patterns::CustomPattern(id, name, code);
-            PatternRegistry::instance().registerCustomPattern(cp);
-            
-            // Save to LittleFS (skip ephemeral studio drafts)
-            bool draft = (id.rfind("studio_draft", 0) == 0);
-            if (!draft) {
-                patterns::saveCustomPatterns(PatternRegistry::instance());
-            }
-            Serial.printf("[CTRL] custom-pattern registered id='%s' name='%s' draft=%d\n",
-                          id.c_str(), name.c_str(), (int)draft);
-            
             req->send(200, "application/json", "{\"ok\":true}");
         });
     customPatternPost->setMethod(HTTP_POST | HTTP_PUT);
@@ -299,10 +276,14 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
             req->send(400, "application/json", "{\"ok\":false,\"error\":\"id parameter is required\"}");
             return;
         }
-        
-        PatternRegistry::instance().unregisterPattern(id.c_str());
-        patterns::saveCustomPatterns(PatternRegistry::instance());
-        
+
+        String err;
+        if (!deleteCustomPattern(id.c_str(), err)) {
+            req->send(400, "application/json",
+                      String("{\"ok\":false,\"error\":\"") + err + "\"}");
+            return;
+        }
+
         req->send(200, "application/json", "{\"ok\":true}");
     });
 

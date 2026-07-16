@@ -1,6 +1,8 @@
 # Haxel — Roadmap
 
-Phased plan from spec-locked (this commit) through v2.0 (community-driven scripting). Each milestone has a single "we ship this" gate.
+> **Status note (2026-07):** Working firmware is past the early “tracer bullet” checklist below (~`1.2.0-dev`: modular WiFi/BLE envs, pattern library, HAL drivers, captive portal / Web Bluetooth, LittleFS UI). Treat this file as historical phasing + future ideas. For how to build/flash today, see [README.md](README.md) and [AGENTS.md](AGENTS.md).
+
+Phased plan from the original spec-locked skeleton through v2.0 (community-driven scripting). Each milestone had a single "we ship this" gate.
 
 ---
 

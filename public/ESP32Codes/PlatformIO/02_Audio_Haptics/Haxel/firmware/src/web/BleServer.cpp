@@ -1,5 +1,8 @@
 #include "BleServer.h"
 #include "StateApi.h"
+#include "../core/Engine.h"
+#include "../core/PatternRegistry.h"
+#include "../core/RuntimeStore.h"
 #include <ArduinoJson.h>
 #include <esp_mac.h>
 
@@ -98,39 +101,108 @@ void BleServer::onDisconnect(BLEServer* pServer) {
 
 void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
     String value = pCharacteristic->getValue();
-    if (value.length() > 0) {
-        Serial.printf("[CTRL] BLE <- %s\n", value.c_str());
-        JsonDocument doc;
-        DeserializationError err = deserializeJson(doc, value.c_str(), value.length());
-        if (err) {
-            log_e("BLE JSON parse error: %s", err.c_str());
-            Serial.printf("[CTRL] BLE JSON parse error: %s\n", err.c_str());
+    if (value.length() == 0) return;
+
+    Serial.printf("[CTRL] BLE <- (%u bytes) %s\n", (unsigned)value.length(), value.c_str());
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, value.c_str(), value.length());
+    if (err) {
+        log_e("BLE JSON parse error: %s", err.c_str());
+        Serial.printf("[CTRL] BLE JSON parse error: %s\n", err.c_str());
+        return;
+    }
+
+    const char* type = doc["type"] | "";
+    if (strcmp(type, "state") == 0) {
+        if (doc["patch"].is<JsonObjectConst>()) {
+            applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine_);
+        }
+    } else if (strcmp(type, "config") == 0) {
+        if (doc["patch"].is<JsonObjectConst>()) {
+            JsonObjectConst patch = doc["patch"].as<JsonObjectConst>();
+            applyConfigPatch(patch, config_);
+            config_->setFirstRunComplete();
+            config_->save();
+            delay(800);
+            ESP.restart();
+        }
+    } else if (strcmp(type, "custom-pattern") == 0) {
+        // Supports single-shot or chunked uploads:
+        // {type,id,name,code,seq,total}  seq=0..total-1
+        static String cpId;
+        static String cpName;
+        static String cpCode;
+        static int cpTotal = 0;
+        static int cpNext = 0;
+
+        const char* id = doc["id"] | "";
+        const char* name = doc["name"] | "";
+        const char* codeChunk = doc["code"] | "";
+        const int seq = doc["seq"] | 0;
+        const int total = doc["total"] | 1;
+
+        if (total < 1 || seq < 0 || seq >= total) {
+            Serial.println("[CTRL] BLE custom-pattern rejected: bad seq/total");
             return;
         }
-        const char* type = doc["type"] | "";
-        if (strcmp(type, "state") == 0) {
-            if (doc["patch"].is<JsonObjectConst>()) {
-                applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine_);
-            }
-        } else if (strcmp(type, "config") == 0) {
-            if (doc["patch"].is<JsonObjectConst>()) {
-                // Apply config updates over BLE
-                JsonObjectConst patch = doc["patch"].as<JsonObjectConst>();
-                applyConfigPatch(patch, config_);
 
-                config_->setFirstRunComplete();
-                config_->save();
-                
-                // Reboot if requested or required for config change
-                delay(800);
-                ESP.restart();
-            }
+        if (seq == 0) {
+            cpId = id;
+            cpName = name;
+            cpCode = codeChunk;
+            cpTotal = total;
+            cpNext = 1;
+        } else if (seq == cpNext && cpId == id) {
+            cpCode += codeChunk;
+            cpNext++;
         } else {
-            Serial.printf("[CTRL] BLE unknown type '%s'\n", type);
+            Serial.printf("[CTRL] BLE custom-pattern chunk desync (got seq=%d expect=%d)\n",
+                          seq, cpNext);
+            cpId = "";
+            cpCode = "";
+            cpTotal = 0;
+            cpNext = 0;
+            return;
         }
-        // Force state update broadcast back to client
-        broadcastState();
+
+        if (cpNext < cpTotal) {
+            Serial.printf("[CTRL] BLE custom-pattern chunk %d/%d (%u chars so far)\n",
+                          cpNext, cpTotal, (unsigned)cpCode.length());
+            return; // wait for remaining chunks before broadcasting
+        }
+
+        String upsertErr;
+        if (!upsertCustomPattern(cpId.c_str(), cpName.c_str(), cpCode.c_str(), upsertErr)) {
+            Serial.printf("[CTRL] BLE custom-pattern failed: %s\n", upsertErr.c_str());
+        } else if (engine_) {
+            // Activate the pattern we just uploaded (studio draft or saved custom_*).
+            core::StagedState s;
+            engine_->copyState(s);
+            core::IPattern* p = core::PatternRegistry::instance().find(cpId.c_str());
+            if (p) {
+                s.pattern = p;
+                s.on = true;
+                engine_->stageState(s);
+                core::markRuntimeDirty(s);
+                Serial.printf("[CTRL] BLE auto-selected pattern '%s'\n", cpId.c_str());
+            }
+        }
+        cpId = "";
+        cpName = "";
+        cpCode = "";
+        cpTotal = 0;
+        cpNext = 0;
+    } else if (strcmp(type, "custom-pattern-delete") == 0) {
+        const char* id = doc["id"] | "";
+        String delErr;
+        if (!deleteCustomPattern(id, delErr)) {
+            Serial.printf("[CTRL] BLE custom-pattern-delete failed: %s\n", delErr.c_str());
+        }
+    } else {
+        Serial.printf("[CTRL] BLE unknown type '%s'\n", type);
     }
+
+    broadcastState();
 }
 
 void BleServer::broadcastState() {

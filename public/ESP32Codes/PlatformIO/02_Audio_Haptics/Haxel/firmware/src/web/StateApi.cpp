@@ -3,6 +3,8 @@
 #include "../core/Config.h"
 #include "../core/PatternRegistry.h"
 #include "../core/RuntimeStore.h"
+#include "../patterns/CustomPattern.h"
+#include "../patterns/Patterns.h"
 #include <ArduinoJson.h>
 #include <cstring>
 
@@ -14,6 +16,45 @@ static void logIncomingJson_(const char* source, JsonObjectConst obj) {
     String body;
     serializeJson(obj, body);
     Serial.printf("[CTRL] %s <- %s\n", source, body.c_str());
+}
+
+bool upsertCustomPattern(const char* id, const char* name, const char* code, String& errOut) {
+    errOut = "";
+    if (!id || !id[0] || !code || !code[0]) {
+        errOut = "id and code are required";
+        return false;
+    }
+    patterns::CustomPatternEvaluator evaluator;
+    if (!evaluator.compile(code)) {
+        errOut = evaluator.getLastError().c_str();
+        Serial.printf("[CTRL] custom-pattern compile failed: %s\n", errOut.c_str());
+        return false;
+    }
+
+    PatternRegistry::instance().unregisterPattern(id);
+    patterns::CustomPattern* cp = new patterns::CustomPattern(
+        id, name ? name : "", code);
+    PatternRegistry::instance().registerCustomPattern(cp);
+
+    const bool draft = (strncmp(id, "studio_draft", 12) == 0);
+    if (!draft) {
+        patterns::saveCustomPatterns(PatternRegistry::instance());
+    }
+    Serial.printf("[CTRL] custom-pattern registered id='%s' name='%s' draft=%d len=%u\n",
+                  id, name ? name : "", (int)draft, (unsigned)strlen(code));
+    return true;
+}
+
+bool deleteCustomPattern(const char* id, String& errOut) {
+    errOut = "";
+    if (!id || !id[0]) {
+        errOut = "id is required";
+        return false;
+    }
+    PatternRegistry::instance().unregisterPattern(id);
+    patterns::saveCustomPatterns(PatternRegistry::instance());
+    Serial.printf("[CTRL] custom-pattern deleted id='%s'\n", id);
+    return true;
 }
 
 void serializeState(JsonObject root, Engine* engine) {
@@ -93,6 +134,17 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine) {
     if (patch["pattern"].is<const char*>()) {
         const char* pid = patch["pattern"].as<const char*>();
         IPattern* p = PatternRegistry::instance().find(pid);
+        // BLE/UI may select a custom id before the body arrives — accept inline code.
+        if (!p && patch["code"].is<const char*>()) {
+            const char* pname = patch["name"].is<const char*>()
+                ? patch["name"].as<const char*>() : "Custom";
+            String err;
+            if (upsertCustomPattern(pid, pname, patch["code"].as<const char*>(), err)) {
+                p = PatternRegistry::instance().find(pid);
+            } else {
+                Serial.printf("[CTRL] inline custom-pattern failed: %s\n", err.c_str());
+            }
+        }
         if (p) {
             s.pattern = p;
             Serial.printf("[CTRL] pattern '%s' -> loaded '%s'\n", pid, p->id());
