@@ -212,7 +212,7 @@ export const PATTERNS = [
       } },
     { id: "SawTremolo", name: "Saw Tremolo", category: "time",
       desc: "Fast carrier AM'd by a slow saw.",
-      code: "(0.5 + 0.5 * sin(t * 502.65)) * ((t % 2.0) / 2.0)",
+      code: "(0.5 + 0.5 * sin(t * 80 * 6.283)) * ((t % 2.0) / 2.0)",
       func: (t) => (0.5 + 0.5 * Math.sin(t * 80 * Math.PI * 2)) * ((t % 2) / 2) },
     {
         id: "External",

@@ -11,22 +11,22 @@ The portal is a single-page web app served from LittleFS at `/`. It is the only 
 - **Charts:** Tiny `<canvas>`-based spark renderer (~3 KB). Chart.js etc. are too heavy for a captive portal.
 - **Transport:** WebSocket at `/ws` for live state; REST `/json/state` for mutations. Fallback to long-poll only if WS handshake fails.
 
-Bundle target: index.html ≤ 8 KB, app.js ≤ 80 KB, styles.css ≤ 20 KB, fonts excluded (system stack only). All gzip-encoded by LittleFS server middleware.
+Bundle target: index.html + `main.js` + styles.css + companion modules (`haptics.js`, `compiler.js`, …). No separate `app.js`. All served from LittleFS on WiFi builds.
 
 ## 2. Information architecture
 
 ```
-/ (root SPA)
-├── #/setup (first-run wizard; forced if config.firstRun)
-├── #/play (default landing; pattern grid + master strip)
-├── #/library (full pattern browser, filter + search)
-├── #/presets (load/save up to 16 user presets)
-├── #/audio (audio reactive panel; live FFT preview)
-├── #/api (developer panel; tokens + endpoint cheat sheet)
-└── #/device (hardware status, OTA, factory reset)
+/ (root SPA — tabbed portal, not hash-router in current UI)
+├── Play (intensity / speed / floor + transport)
+├── Library (pattern browser + custom patterns)
+├── Pattern Studio (expression editor → /json/custom-patterns or BLE chunked upload)
+├── Audio-Reactive (mic / bins; works with browser mic or on-device FFT builds)
+└── Device (hardware config, diag, OTA on WiFi builds)
 ```
 
-Navigation is a bottom tab bar on phones (4 tabs: Play / Library / Audio / Device), and a left sidebar on ≥ 900 px viewports.
+Navigation is a top tab bar in the Bauhaus portal (Play / Library / Studio / Audio / Device).
+
+> **Deferred:** dedicated `#/presets` slots (16 named user presets) and bearer-token `#/api` panel — not in the shipped UI. Studio templates and motor floor chips are lightweight local helpers, not flash preset slots.
 
 ## 3. Screens
 
@@ -76,15 +76,11 @@ Mobile layout (≤ 600 px):
  - One-sentence description.
  - Live envelope spark over the last 4 s (uses the same WebSocket sample stream).
  - Parameters as labeled controls (rendered from `ParamMeta`).
- - "Set as preset 1..16" mini-menu.
+ - Edit / delete for custom patterns.
 
-### 3.4 `#/presets` — Save / load
+### 3.4 Presets (deferred)
 
-- List of 16 slots. Empty slots show "Empty — tap to save current".
-- Filled slots show preset name + pattern + intensity badge.
-- Drag to reorder (touch + mouse).
-- Per-slot context menu: rename, duplicate, export JSON, delete.
-- "Import JSON" button up top.
+Named 16-slot user presets are **not shipped**. Pattern Studio saves custom expressions; Play/Library restore last runtime via `/runtime.json`.
 
 ### 3.5 `#/audio` — Audio-reactive panel
 
@@ -108,7 +104,7 @@ Mobile layout (≤ 600 px):
 - Tick jitter spark.
 - "Run self-test" button — replays the wizard's "Test buzz" + reads back audio loopback.
 - **OTA upload** (drag-and-drop a .bin).
-- **Restart** / **Factory reset** (the latter wipes `/config.json` + `/presets.json` and reboots into the wizard).
+- **Restart** / **Factory reset** (the latter wipes `/config.json` + `/runtime.json` + `/custom_patterns.json` and reboots).
 
 ## 4. Components (Web Components)
 
@@ -133,12 +129,12 @@ A single `Store` module holds:
  connected: bool,
  state: { /* mirror of /json/state */ },
  patterns: [...PatternMeta],
- presets: [...UserPreset],
  audio: { rms, peakDb, mags[32] },
  diag: { ... }
 }
 ```
 
+> Named `presets[]` slots are deferred (not in the store today).
 `Store.subscribe(path, fn)` notifies subscribers on change. WebSocket frames are merged into the store; user actions debounce (200 ms) into `POST /json/state` writes; on response the store re-syncs to authoritative server state. Optimistic UI is allowed for sliders but **not** for pattern selection (it must round-trip to avoid double-fire).
 
 ## 6. Captive portal redirect behavior

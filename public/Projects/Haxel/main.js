@@ -21,7 +21,7 @@ let startupFloor = 0.15; // default 15%
 
 // Dynamic Audio Partitioning Bins Configuration
 const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-// Declared early so Pattern Studio compile-on-type can live-push (before bridge init at file bottom).
+// Declared early so Pattern Studio compile-on-type can live-push.
 const isBleMode = window.location.pathname.includes("bluetooth.html");
 const isRealESP32 = (
     window.location.hostname !== 'localhost'
@@ -37,8 +37,8 @@ const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 const isBluetoothSupported = 'bluetooth' in navigator;
 
-let numBins = isMobileDevice ? 5 : 4;
-let dividers = isMobileDevice ? [5, 12, 22, 28] : [12, 22, 28];
+let numBins = 3;
+let dividers = [8, 18];
 let draggingDividerIdx = -1;
 
 let timeSec = 0;
@@ -476,10 +476,9 @@ speedInput.addEventListener("change", (e) => {
 playBtn.addEventListener("click", () => {
     isPlaying = true;
     document.getElementById("dot").className = "portal-dot ok";
-    document.getElementById("connText").textContent = isBleMode && bleDevice && bleDevice.gatt.connected
-        ? "connected"
-        : "playing";
+    document.getElementById("connText").textContent = "playing";
     addSerialLog("[HTTP] API Command: START pattern playback");
+    // If Studio has compiled code in focus, push that live draft first.
     const studioTab = document.getElementById("tab-studio");
     if (studioTab && studioTab.style.display !== "none" && customEvaluator && ta) {
         pushStudioDraftToDevice(ta.value, true);
@@ -636,7 +635,6 @@ function renderCards(filterTag = "all") {
             if (pat.isCustom && pat.code) {
                 ta.value = pat.code;
                 syncHL();
-                // Compile for local preview; upload THIS id (not only studio_draft) then sync.
                 try {
                     const ast = new Parser(tokenize(pat.code)).parseProgram();
                     customEvaluator = new Evaluator(ast);
@@ -885,7 +883,8 @@ function renderBinRows() {
     
     container.innerHTML = "";
     
-    const defaults = ["pulse", "rumble", "staccato", "ambient", "crescendo"];
+    // Defaults must match firmware IDs. Bin 0 = NONE; Bin 1 & 2 = library.
+    const defaults = ["none", "Pulse", "Rumble", "Staccato", "Ocean"];
     
     for (let i = 0; i < numBins; i++) {
         const row = document.createElement("div");
@@ -938,19 +937,19 @@ function renderBinRows() {
             select.appendChild(opt);
         });
         
-        // Restore value or set default
+        // Restore value or set default (Bin0=none, Bin1=Pulse, Bin2=Rumble…)
         const prevVal = savedValues[i];
+        const pickDefault = () => {
+            if (i === 0) return "none";
+            if (i === 1) return Array.from(select.options).some(o => o.value === "Pulse") ? "Pulse" : (PATTERNS[0]?.id || "none");
+            if (i === 2) return Array.from(select.options).some(o => o.value === "Rumble") ? "Rumble" : (PATTERNS[1]?.id || PATTERNS[0]?.id || "none");
+            const cand = defaults[i] || "none";
+            return Array.from(select.options).some(o => o.value === cand) ? cand : "none";
+        };
         if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
             select.value = prevVal;
         } else {
-            if (i === 0 && minBandIdx > 0) {
-                select.value = "none";
-            } else if (i === numBins - 1 && maxBandIdx < 32) {
-                select.value = "none";
-            } else {
-                const offset = (minBandIdx > 0) ? 1 : 0;
-                select.value = defaults[(i - offset) % defaults.length];
-            }
+            select.value = pickDefault();
         }
     }
     
@@ -1856,6 +1855,15 @@ function applyStateUpdate(s) {
         if (s.dividers) dividers = s.dividers.slice();
         renderBinRows();
     }
+    if (Array.isArray(s.binPatterns)) {
+        for (let i = 0; i < s.binPatterns.length && i < numBins; i++) {
+            const el = document.getElementById(`bin-${i}-pattern`);
+            const val = s.binPatterns[i];
+            if (el && val && Array.from(el.options).some(o => o.value === val)) {
+                el.value = val;
+            }
+        }
+    }
     if (s.pattern) {
         const p = PATTERNS.find(pat => pat.id === s.pattern);
         if (p) {
@@ -1874,6 +1882,7 @@ function applyStateUpdate(s) {
 
 // Send State Updates
 const sendStateUpdate = throttle(async (patch) => {
+    addSerialLog(`[CTRL→ESP] ${JSON.stringify(patch)}`);
     if (isBleMode) {
         if (!rxCharacteristic) return;
         try {
@@ -1888,7 +1897,9 @@ const sendStateUpdate = throttle(async (patch) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(patch)
-        }).catch(() => {});
+        }).catch((err) => {
+            addSerialLog(`[CTRL→ESP] HTTP state failed: ${err.message}`);
+        });
     }
 }, 100);
 
@@ -1907,7 +1918,6 @@ async function syncStateToESP32() {
         })
     };
 
-    // Custom patterns must exist on-device before a bare pattern id lookup.
     if (activePattern && activePattern.code && (isBleMode || isRealESP32)) {
         try {
             await ensurePatternUploaded(activePattern);
@@ -1985,7 +1995,6 @@ async function connectBLE() {
         addSerialLog("[BLE] Bluetooth connection fully established!");
         
         sendStateUpdate({ getStatus: true });
-        // Catch up studio live draft if editor already has a compiled pattern.
         if (customEvaluator && ta && ta.value.trim()) {
             pushStudioDraftToDevice(ta.value, true);
         }
@@ -2120,6 +2129,33 @@ if (isBleMode) {
 } else if (isRealESP32) {
     (async function initRealESP32() {
         try {
+            // Prefer firmware pattern catalog so IDs always match PatternRegistry.
+            const r = await fetch('/json');
+            const data = await r.json();
+            if (Array.isArray(data.patterns) && data.patterns.length) {
+                const byId = new Map(PATTERNS.map(p => [p.id, p]));
+                // Keep only customs locally, then rebuild builtins from device.
+                const customs = PATTERNS.filter(p => p.isCustom);
+                PATTERNS.length = 0;
+                data.patterns.forEach(meta => {
+                    const prev = byId.get(meta.id);
+                    PATTERNS.push({
+                        id: meta.id,
+                        name: meta.id,
+                        category: meta.category || "pulse",
+                        desc: meta.description || "",
+                        usesAudio: !!meta.usesAudio,
+                        code: prev?.code || "",
+                        func: prev?.func || ((t) => 0.5 + 0.5 * Math.sin(t * 6))
+                    });
+                });
+                customs.forEach(c => {
+                    if (!PATTERNS.some(p => p.id === c.id)) PATTERNS.push(c);
+                });
+                activePattern = PATTERNS.find(p => p.id === (data.state && data.state.pattern)) || PATTERNS[0];
+                addSerialLog(`[CTRL] Synced ${data.patterns.length} firmware patterns`);
+            }
+
             // Fetch custom patterns first
             const cpRes = await fetch('/json/custom-patterns');
             const cpList = await cpRes.json();
@@ -2142,12 +2178,17 @@ if (isBleMode) {
             });
             renderCards();
 
-            const r = await fetch('/json');
-            const data = await r.json();
             if (data.state) {
                 applyStateUpdate(data.state);
+                isPlaying = !!data.state.on;
+                document.getElementById("dot").className = isPlaying ? "portal-dot ok" : "portal-dot";
+                document.getElementById("connText").textContent = isPlaying ? "playing" : "idle";
             }
-        } catch (e) {}
+
+            await populateDeviceConfigFromESP();
+        } catch (e) {
+            addSerialLog(`[CTRL] Init fetch failed: ${e.message}`);
+        }
         openWebSocket();
     })();
 }
@@ -2273,23 +2314,111 @@ document.getElementById("audioSource")?.addEventListener("change", (e) => {
     }
 });
 
-// Initialize dynamic lists
+function setSelectValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const str = String(value);
+    if (Array.from(el.options).some(o => o.value === str)) {
+        el.value = str;
+    } else if (el.tagName === "SELECT") {
+        // Inject missing option (e.g. GPIO 8/9) so the live device value shows.
+        const opt = document.createElement("option");
+        opt.value = str;
+        opt.textContent = str === "-1" ? "Unassigned (-1)" : `GPIO ${str}`;
+        el.appendChild(opt);
+        el.value = str;
+    } else {
+        el.value = str;
+    }
+}
+
+function applyDeviceConfig(cfg) {
+    if (!cfg) return;
+    const KIND_TO_NAME = { 1: "DRV8833", 2: "DRV8833", 3: "DRV2605L", 4: "MOSFET", 5: "DRV8833" };
+    // Prefer exact MOSFET/DRV mapping from firmware enum.
+    const kind = cfg.driver && cfg.driver.kind != null ? cfg.driver.kind : 4;
+    const drvName = kind === 4 ? "MOSFET" : (kind === 3 ? "DRV2605L" : (kind === 2 ? "DRV8833" : (KIND_TO_NAME[kind] || "MOSFET")));
+    setSelectValue("drvChip", drvName);
+
+    if (cfg.driver) {
+        if (cfg.driver.pwmHz != null) setSelectValue("pwmHz", cfg.driver.pwmHz);
+        if (cfg.driver.sda != null) setSelectValue("pinSDA", cfg.driver.sda);
+        if (cfg.driver.scl != null) setSelectValue("pinSCL", cfg.driver.scl);
+        if (Array.isArray(cfg.driver.pins)) {
+            activeMotors = cfg.driver.pins.filter(p => p != null && p >= 0);
+            if (activeMotors.length === 0) activeMotors = [6];
+            renderMotors();
+        }
+    }
+
+    if (cfg.audio) {
+        const ae = document.getElementById("audioEnabled");
+        if (ae) ae.checked = !!cfg.audio.enabled;
+        if (cfg.audio.source != null) setSelectValue("audioSource", cfg.audio.source);
+        if (cfg.audio.bclk != null) setSelectValue("audioBclk", cfg.audio.bclk);
+        if (cfg.audio.ws != null) setSelectValue("audioWs", cfg.audio.ws);
+        if (cfg.audio.sd != null) setSelectValue("audioSd", cfg.audio.sd);
+        if (cfg.audio.adc != null) setSelectValue("audioAdc", cfg.audio.adc);
+        document.getElementById("audioSource")?.dispatchEvent(new Event("change"));
+    }
+
+    if (cfg.led) {
+        const le = document.getElementById("ledEnabled");
+        if (le) le.checked = cfg.led.enabled !== false;
+        if (cfg.led.pin != null) setSelectValue("ledPin", cfg.led.pin);
+        const lc = document.getElementById("ledCount");
+        if (lc && cfg.led.count != null) lc.value = String(cfg.led.count);
+    }
+
+    if (cfg.oled) {
+        const oe = document.getElementById("oledEnabled");
+        if (oe) oe.checked = !!cfg.oled.enabled;
+    }
+
+    if (Array.isArray(cfg.knobs) && cfg.knobs.length) {
+        activeKnobs = cfg.knobs.map(k => ({
+            pin: k.pin ?? -1,
+            param: k.param || "none"
+        }));
+        renderKnobs();
+    }
+
+    addSerialLog(`[CTRL] Device config loaded (driver=${drvName}, led pin=${cfg.led?.pin}, count=${cfg.led?.count})`);
+}
+
+function populateDeviceConfigFromESP() {
+    return fetch('/json/config')
+        .then(r => r.json())
+        .then(cfg => {
+            applyDeviceConfig(cfg);
+            return cfg;
+        })
+        .catch(err => {
+            addSerialLog(`[CTRL] /json/config failed: ${err.message}`);
+        });
+}
+
+// Initialize dynamic lists (overwritten once /json/config arrives).
 renderMotors();
 renderKnobs();
 
 // Hardware Calibration Form Submission
 document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
+    // Must match haxel::hal::DriverKind enum values.
     const drvKindMap = {
-        "MOSFET": 0,
-        "DRV8833": 1,
-        "DRV2605L": 2
+        "NONE": 0,
+        "L298N": 1,
+        "DRV8833": 2,
+        "DRV2605L": 3,
+        "MOSFET": 4,
+        "MINI_HBRIDGE": 5
     };
     const drvChip = document.getElementById("drvChip").value;
-    const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 0;
-    const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
-    
-    const sda = parseInt(document.getElementById("pinSDA").value) || 1;
-    const scl = parseInt(document.getElementById("pinSCL").value) || 2;
+    const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 4;
+    const pwmHz = parseInt(document.getElementById("pwmHz")?.value) || 20000;
+
+    const sda = parseInt(document.getElementById("pinSDA").value);
+    const scl = parseInt(document.getElementById("pinSCL").value);
 
     const audioEnabled = document.getElementById("audioEnabled").checked;
     const audioSource = parseInt(document.getElementById("audioSource").value);
@@ -2300,25 +2429,26 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
 
     const ledEnabled = document.getElementById("ledEnabled").checked;
     const ledPin = parseInt(document.getElementById("ledPin").value);
-    const ledCount = parseInt(document.getElementById("ledCount").value);
+    const ledCountEl = document.getElementById("ledCount");
+    let ledCount = parseInt(ledCountEl?.value, 10);
+    if (!Number.isFinite(ledCount) || ledCount < 1) ledCount = 20;
+    if (ledCount > 300) ledCount = 300;
+    if (ledCountEl) ledCountEl.value = String(ledCount);
 
     const oledEnabled = document.getElementById("oledEnabled").checked;
-    const oledSda = sda;
-    const oledScl = scl;
+    const oledSda = Number.isFinite(sda) ? sda : 8;
+    const oledScl = Number.isFinite(scl) ? scl : 9;
 
     // Dynamic conflict validator
     const pinAllocations = [];
-    
-    // Always validate configured I2C pins
-    pinAllocations.push({ name: "I2C SDA", pin: sda });
-    pinAllocations.push({ name: "I2C SCL", pin: scl });
-    
-    // Add motor pins
+
+    pinAllocations.push({ name: "I2C SDA", pin: Number.isFinite(sda) ? sda : -1 });
+    pinAllocations.push({ name: "I2C SCL", pin: Number.isFinite(scl) ? scl : -1 });
+
     activeMotors.forEach((pin, idx) => {
         pinAllocations.push({ name: `Motor Ch ${idx}`, pin });
     });
 
-    // Add audio pins
     if (audioSource === 2) {
         pinAllocations.push({ name: "I2S BCLK", pin: audioBclk });
         pinAllocations.push({ name: "I2S WS", pin: audioWs });
@@ -2327,24 +2457,19 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         pinAllocations.push({ name: "ADC Analog Mic", pin: audioAdc });
     }
 
-    // Add LED pin
     pinAllocations.push({ name: "Status LED", pin: ledPin });
 
-    // Add knob pins
     activeKnobs.forEach((k, idx) => {
         pinAllocations.push({ name: `Knob ${idx}`, pin: k.pin });
     });
 
-    // Check for duplicate assignments
     const pinCounts = {};
     let hasConflict = false;
     let conflictMsg = "";
 
     pinAllocations.forEach(alloc => {
-        if (alloc.pin === -1) return;
-        if (!pinCounts[alloc.pin]) {
-            pinCounts[alloc.pin] = [];
-        }
+        if (alloc.pin === -1 || !Number.isFinite(alloc.pin)) return;
+        if (!pinCounts[alloc.pin]) pinCounts[alloc.pin] = [];
         pinCounts[alloc.pin].push(alloc.name);
     });
 
@@ -2361,7 +2486,6 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         return;
     }
 
-    // Build pins array (firmware expects 8 slots, padded with -1)
     const pinsPadded = Array(8).fill(-1);
     activeMotors.forEach((pin, idx) => {
         if (idx < 8) pinsPadded[idx] = pin;
@@ -2371,8 +2495,8 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         driver: {
             kind: kind,
             pins: pinsPadded,
-            sda: sda,
-            scl: scl,
+            sda: Number.isFinite(sda) ? sda : -1,
+            scl: Number.isFinite(scl) ? scl : -1,
             pwmHz: pwmHz
         },
         audio: {
@@ -2395,7 +2519,9 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
             scl: oledScl
         }
     };
-    
+
+    addSerialLog(`[CTRL→ESP] Saving config: ${JSON.stringify(configPatch)}`);
+
     if (isRealESP32) {
         fetch('/json/config', {
             method: 'POST',
@@ -2407,6 +2533,7 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         })
         .catch(err => {
             console.error("Config save error:", err);
+            addSerialLog(`[PORTAL] Config save failed: ${err.message}`);
         });
     } else {
         addSerialLog(`[SIMULATOR] Saved config (offline): ${JSON.stringify(configPatch)}`);

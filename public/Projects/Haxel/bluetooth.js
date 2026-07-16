@@ -398,11 +398,16 @@ actSelect.addEventListener("change", (e) => {
 });
 
 function getDriverKindEnum(kindStr) {
-    if (kindStr === "DRV2605L") return 0;
-    if (kindStr === "DRV8833") return 1;
-    if (kindStr === "L298N") return 2;
-    if (kindStr === "MOSFET") return 3;
-    return 0;
+    // Must match haxel::hal::DriverKind in firmware IHapticDriver.h
+    const map = {
+        "NONE": 0,
+        "L298N": 1,
+        "DRV8833": 2,
+        "DRV2605L": 3,
+        "MOSFET": 4,
+        "MINI_HBRIDGE": 5
+    };
+    return map[kindStr] !== undefined ? map[kindStr] : 4;
 }
 
 // ─── PATTERN LIBRARY CARD RENDER ─────────────────────────────────────────────
@@ -443,15 +448,29 @@ function renderCards(filterTag = "all") {
             document.getElementById("patternName").textContent = pat.name;
             isPlaying = true;
             document.getElementById("dot").className = "portal-dot ok";
-            document.getElementById("connText").textContent = "playing";
+            document.getElementById("connText").textContent =
+                (bleDevice && bleDevice.gatt && bleDevice.gatt.connected)
+                    ? "connected" : "playing";
             addSerialLog(`[HAL] Loaded library pattern: "${pat.name}"`);
             
             if (pat.isCustom && pat.code) {
                 ta.value = pat.code;
                 syncHL();
                 compileCustom();
+                if (rxCharacteristic) {
+                    bleEnqueue(() => bleSendCustomPattern({
+                        id: pat.id,
+                        name: pat.name || pat.id,
+                        code: pat.code
+                    }))
+                        .then(() => syncStateToESP32())
+                        .catch(err => addSerialLog(`[BLE] Custom upload failed: ${err.message}`));
+                } else {
+                    syncStateToESP32();
+                }
+            } else {
+                syncStateToESP32();
             }
-            syncStateToESP32();
 
             if (isMobileDevice && navigator.vibrate) {
                 phoneHaptics.setEnabled(true);
@@ -510,9 +529,7 @@ function deleteCustomPattern(id, event) {
     }
     
     if (rxCharacteristic) {
-        const payload = JSON.stringify({ type: "deletePattern", id: id });
-        const encoder = new TextEncoder();
-        rxCharacteristic.writeValueWithoutResponse(encoder.encode(payload))
+        bleEnqueue(() => bleWriteJson({ type: "custom-pattern-delete", id }))
             .then(() => addSerialLog(`[BLE] Sent delete custom pattern request for ${id}`))
             .catch(err => addSerialLog(`[BLE] [ERROR] Failed to send delete pattern: ${err.message}`));
     }
@@ -574,10 +591,11 @@ if (savePatternBtn) {
             addSerialLog(`[IDE] Saved new custom pattern: "${name}"`);
             
             if (rxCharacteristic) {
-                const payload = JSON.stringify({ type: "savePattern", id, name, code });
-                const encoder = new TextEncoder();
-                rxCharacteristic.writeValueWithoutResponse(encoder.encode(payload))
-                    .then(() => addSerialLog(`[BLE] Sent save custom pattern request for "${name}"`))
+                bleEnqueue(() => bleSendCustomPattern({ id, name, code }))
+                    .then(() => {
+                        addSerialLog(`[BLE] Uploaded custom pattern "${name}" to device`);
+                        syncStateToESP32();
+                    })
                     .catch(err => addSerialLog(`[BLE] [ERROR] Failed to send save pattern: ${err.message}`));
             }
             
@@ -735,10 +753,58 @@ renderBinRows();
 let bleDevice = null;
 let rxCharacteristic = null;
 let txCharacteristic = null;
+let bleWriteChain = Promise.resolve();
+let lastUploadedPatternKey = "";
 
 const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function patternUploadKey(id, code) {
+    return `${id}\n${code}`;
+}
+
+function bleEnqueue(task) {
+    bleWriteChain = bleWriteChain.then(task, task);
+    return bleWriteChain;
+}
+
+async function bleWriteJson(obj) {
+    if (!rxCharacteristic) throw new Error("BLE not connected");
+    const payload = JSON.stringify(obj);
+    const data = new TextEncoder().encode(payload);
+    // Prefer acknowledged writes — NR drops are silent when over MTU.
+    if (rxCharacteristic.properties && rxCharacteristic.properties.write) {
+        await rxCharacteristic.writeValue(data);
+    } else {
+        await rxCharacteristic.writeValueWithoutResponse(data);
+    }
+}
+
+async function bleSendCustomPattern({ id, name, code }) {
+    // Keep full JSON under ~120 bytes so default ATT MTUs still work.
+    const CODE_CHUNK = 48;
+    const total = Math.max(1, Math.ceil(code.length / CODE_CHUNK));
+    addSerialLog(`[BLE] Uploading pattern '${id}' (${code.length} chars, ${total} chunk(s))`);
+    for (let seq = 0; seq < total; seq++) {
+        const piece = code.slice(seq * CODE_CHUNK, (seq + 1) * CODE_CHUNK);
+        await bleWriteJson({
+            type: "custom-pattern",
+            id,
+            name: name || id,
+            code: piece,
+            seq,
+            total
+        });
+        if (seq + 1 < total) await delay(40);
+    }
+    lastUploadedPatternKey = patternUploadKey(id, code);
+    addSerialLog(`[BLE] Pattern '${id}' upload complete`);
+}
 
 // Bluetooth API Availability Check & UI Bindings
 const isBluetoothSupported = 'bluetooth' in navigator;
@@ -960,10 +1026,7 @@ function throttle(fn, ms) {
 const sendStateUpdate = throttle(async (patch) => {
     if (!rxCharacteristic) return;
     try {
-        const payload = JSON.stringify({ type: "state", patch: patch });
-        const encoder = new TextEncoder();
-        const data = encoder.encode(payload);
-        await rxCharacteristic.writeValueWithoutResponse(data);
+        await bleWriteJson({ type: "state", patch: patch });
     } catch (err) {
         console.error("BLE State Write Error:", err);
     }
@@ -972,10 +1035,7 @@ const sendStateUpdate = throttle(async (patch) => {
 async function sendConfigUpdate(configPatch) {
     if (!rxCharacteristic) return;
     try {
-        const payload = JSON.stringify({ type: "config", patch: configPatch });
-        const encoder = new TextEncoder();
-        const data = encoder.encode(payload);
-        await rxCharacteristic.writeValueWithoutResponse(data);
+        await bleWriteJson({ type: "config", patch: configPatch });
         addSerialLog(`[BLE] Sent config update to ESP32: ${JSON.stringify(configPatch)}`);
     } catch (err) {
         console.error("BLE Config Write Error:", err);
@@ -1723,14 +1783,18 @@ renderKnobs();
 
 // Hardware Calibration Form Submission
 document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
+    // Must match haxel::hal::DriverKind enum values.
     const drvKindMap = {
-        "MOSFET": 0,
-        "DRV8833": 1,
-        "DRV2605L": 2
+        "NONE": 0,
+        "L298N": 1,
+        "DRV8833": 2,
+        "DRV2605L": 3,
+        "MOSFET": 4,
+        "MINI_HBRIDGE": 5
     };
     const drvChip = document.getElementById("drvChip").value;
-    const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 0;
-    const pwmHz = parseInt(document.getElementById("pwmFreq").value) || 20000;
+    const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 4;
+    const pwmHz = parseInt(document.getElementById("pwmHz")?.value) || 20000;
     
     const sda = parseInt(document.getElementById("pinSDA").value) || 1;
     const scl = parseInt(document.getElementById("pinSCL").value) || 2;
@@ -1753,8 +1817,8 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     // Dynamic conflict validator
     const pinAllocations = [];
     
-    // Add I2C pins if using I2C driver
-    if (kind === 2) {
+    // Add I2C pins if using I2C driver (DRV2605L = 3)
+    if (kind === 3) {
         pinAllocations.push({ name: "I2C SDA", pin: sda });
         pinAllocations.push({ name: "I2C SCL", pin: scl });
     }

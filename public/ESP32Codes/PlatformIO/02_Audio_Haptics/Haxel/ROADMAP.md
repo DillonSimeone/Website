@@ -14,7 +14,7 @@ Phased plan from the original spec-locked skeleton through v2.0 (community-drive
 - [ ] `IHapticDriver` interface + `L298NDriver`.
 - [ ] `Engine` with 1 kHz tick + 1 hard-coded pattern (`Sine`).
 - [ ] Wi-Fi STA + AP fallback + DNS captive portal.
-- [ ] `AsyncWebServer` serving `index.html` + `app.js`.
+- [ ] `AsyncWebServer` serving `index.html` + `main.js` (portal SPA; legacy `app.js` removed).
 - [ ] `GET /json/state`, `POST /json/state` (subset: `on`, `intensity`, `pattern`).
 - [ ] Persistence of pin map in `/config.json`.
 
@@ -63,7 +63,7 @@ Out of scope for v0.1: audio, multi-channel, additional drivers, presets.
 
 **Gate:** Home Assistant can drive the device through the WLED-compat integration.
 
-- [ ] 16 user presets persisted to LittleFS with import/export.
+- [ ] 16 user presets persisted to LittleFS with import/export. *(Deferred — not in 1.2.0-dev; custom patterns + runtime.json cover persistence today.)*
 - [ ] `/win` shim + `_wled._tcp` mDNS advertisement.
 - [ ] `_haxel._tcp` native mDNS service.
 - [ ] WebSocket subprotocol negotiation (`haxel.v1`).

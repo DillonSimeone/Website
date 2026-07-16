@@ -714,6 +714,10 @@ function deleteCustomPattern(id, event) {
         }).catch(err => {
             addSerialLog(`[ESP32] [ERROR] Failed to delete from ESP32: ${err.message}`);
         });
+    } else if (isBleMode && rxCharacteristic) {
+        bleWriteJson({ type: "custom-pattern-delete", id }).catch(err => {
+            addSerialLog(`[ESP32] [ERROR] BLE delete failed: ${err.message}`);
+        });
     }
     
     activePattern = PATTERNS[0];

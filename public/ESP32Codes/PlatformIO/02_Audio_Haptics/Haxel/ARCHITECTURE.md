@@ -108,12 +108,15 @@ Selects + constructs the driver from the persisted `Config::driverKind` value. A
 ### `web::CaptivePortal`
 A `DNSServer` that resolves every name to the AP IP, plus 302 redirects from `/generate_204`, `/hotspot-detect.html`, `/connectivity-check.*` to `/`. This is what makes the phone auto-pop the UI on join.
 
-### `core::Config` + `core::Presets`
-Two LittleFS-backed JSON documents:
+### `core::Config` + runtime / custom patterns
+LittleFS-backed JSON documents:
 - `/config.json` — hardware setup, Wi-Fi, names, pin map.
-- `/presets.json` — array of up to 16 named user presets.
+- `/runtime.json` — last play state (on/mute/intensity/speed/pattern/audio bins).
+- `/custom_patterns.json` — user Pattern Studio expressions.
 
-Writes are debounced 1 s; flash wear is bounded by deduplication (don't write if equal).
+> Named `/presets.json` (16 slots) remains a future idea (`kMaxPresets`); it is **not** written by current firmware.
+
+Writes are debounced; flash wear is bounded by dirty flags / deduplication.
 
 ## 4. Boot sequence
 
@@ -174,7 +177,7 @@ The engine is always in one of `IDLE | PLAYING | AUDIO_REACTIVE | FAULT`. State 
 | Region                | Budget   | Notes                                                    |
 | --------------------- | -------- | -------------------------------------------------------- |
 | .text                 | ≤ 1.0 MB | App binary, includes patterns table.                     |
-| LittleFS partition    | 1.5 MB   | SPA assets + config + presets.                           |
+| LittleFS partition    | ~0.9 MB  | SPA assets + config + runtime + custom patterns.         |
 | OTA partition (×2)    | 1.5 MB   | A/B slots for safe OTA.                                  |
 | Heap free at idle     | ≥ 100 KB | Reserved for WebSocket buffers + FFT.                    |
 | FFT work buffer       | 8 KB     | 1024-sample float window + mag bins.                     |

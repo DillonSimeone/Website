@@ -59,7 +59,7 @@ This is the canonical structure. Most endpoints read or partially mutate it.
 ## 3. REST — `/json/*`
 
 ### 3.1 `GET /json`
-Returns `{ state, patterns, presets, info }` in one shot. Used by the portal on initial load. Heavy — clients should prefer the narrower endpoints below.
+Returns `{ state, patterns, info }` (and related metadata) for portal bootstrap. Prefer narrower endpoints for ongoing polls.
 
 ### 3.2 `GET /json/state`
 Returns just the state object (above).
@@ -75,15 +75,15 @@ Response: full updated state. Status 200 on success, 409 if a fault is active an
 
 Special fields:
 - `"clear": true` — clears a latched fault.
-- `"savePreset": { "slot": 3, "name": "Concert" }` — persists current state to that slot.
-- `"loadPreset": 3` — atomically loads preset slot 3.
 - `"reboot": true` — reboot after acknowledging.
 
-### 3.4 `GET /json/patterns`
-Returns the array of `PatternMeta` from [PATTERN_LIBRARY.md §8](PATTERN_LIBRARY.md).
+> **Note:** Named user preset slots (`savePreset` / `loadPreset` / `/json/presets`) are reserved in older specs and `kMaxPresets` but **not implemented**. Persist play state via `/runtime.json` and custom expressions via `/json/custom-patterns`.
 
-### 3.5 `GET /json/presets` / `POST /json/presets`
-List / replace user presets. Replace requires the full array (atomic).
+### 3.4 `GET /json/patterns`
+Pattern metadata is also embedded in `GET /json`. A standalone `/json/patterns` list may be added later; today clients use the bootstrap payload + built-in UI catalog.
+
+### 3.5 User presets (not shipped)
+`GET/POST /json/presets` is **not implemented**. Do not document it as available to integrators.
 
 ### 3.6 `GET /json/config`
 Returns hardware config (driver kind, pin map, Wi-Fi credentials redacted).
@@ -94,8 +94,8 @@ Mutate hardware config. **Requires reboot** for driver-kind changes; response in
 ### 3.8 `GET /json/diag`
 See [ARCHITECTURE.md §10](ARCHITECTURE.md).
 
-### 3.9 `POST /json/test`
-Run the wizard's "Test buzz" remotely. Useful for production line bring-up.
+### 3.9 `GET|POST /json/buzz`
+Short test buzz (`intensity`, `ms` query/body). Replaces the older `/json/test` wizard endpoint name.
 
 ```json
 { "ms": 500, "intensity": 0.3, "channels": "all" }
@@ -139,7 +139,7 @@ The `external` message is rate-limited to 100 Hz per channel server-side. Above 
 
 ## 5. WLED compatibility — `/win` and `/json/state`
 
-The goal is **not** full WLED API parity (we are not LED-shaped). The goal is: a WLED-aware client can toggle on/off, set "brightness" (intensity), and pick a "preset" (pattern) without rewriting any code.
+The goal is **not** full WLED API parity (we are not LED-shaped). The goal is: a WLED-aware client can toggle on/off, set "brightness" (intensity), and pick an effect/pattern without rewriting any code.
 
 ### 5.1 `/win` query-string commands
 
@@ -149,15 +149,16 @@ The goal is **not** full WLED API parity (we are not LED-shaped). The goal is: a
 | `?T=2`                 | Toggle on                           |
 | `?A=128`               | `intensity = 128/255`               |
 | `?FX=14`               | Set pattern by numeric index (in pattern registry order) |
-| `?PL=3`                | Load preset 3                       |
-| `?SX=192`              | `speed = 192/64` mapped to 0.25..4 (matches WLED FX speed convention) |
+| `?SX=192`              | `speed` mapped toward WLED FX speed convention |
 | `?RB=1`                | Reboot                              |
+
+> `?PL=` / preset-slot shims are **not** implemented (no user preset store yet).
 
 Response is the plain string `OK` (WLED parity).
 
 ### 5.2 `/json/state` payload aliases
 
-In addition to the native shape, the server accepts WLED's vocabulary:
+In addition to the native shape, the server accepts a subset of WLED's vocabulary:
 
 | WLED field            | Mapped to                  |
 | --------------------- | -------------------------- |
@@ -166,10 +167,10 @@ In addition to the native shape, the server accepts WLED's vocabulary:
 | `seg[0].fx`           | pattern by index           |
 | `seg[0].sx`           | `speed`                    |
 | `seg[0].ix`           | `params.intensity`         |
-| `ps`                  | load preset                |
-| `psave`               | save preset (slot=psave)   |
 
-We never *return* the WLED shape; clients that POST in WLED vocabulary get our native response. This is documented at `/api` in the portal.
+`ps` / `psave` (WLED presets) are **not** supported.
+
+We never *return* the WLED shape; clients that POST in WLED vocabulary get our native response.
 
 ### 5.3 What is **not** supported in `/win`
 

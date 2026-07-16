@@ -66,10 +66,8 @@ export function updateHardwarePins(activeAmp, isMotorStalled) {
 export function initBootLogs() {
     setTimeout(() => { addSerialLog("[SYS] Booting ESP32-C3 @ 160MHz..."); }, 100);
     setTimeout(() => { addSerialLog("[SYS] Free Heap: 284.2 KB"); }, 250);
-    setTimeout(() => { addSerialLog("[I2C] Scanning I2C bus..."); }, 400);
-    setTimeout(() => { addSerialLog("[I2C] Found DRV2605L haptic driver at address 0x5A!"); }, 550);
-    setTimeout(() => { addSerialLog("[HAL] Initialized DRV2605L (Mode: LRA Resonance tracking)"); }, 700);
-    setTimeout(() => { addSerialLog("[WIFI] Starting Captive Portal AP: \"HAXEL-ESP32\" (IP: 192.168.4.1)"); }, 850);
-    setTimeout(() => { addSerialLog("[HTTP] Listening on port 80..."); }, 1000);
-    setTimeout(() => { addSerialLog("[SYS] System ready. Client browser connected."); }, 1100);
+    setTimeout(() => { addSerialLog("[HAL] Default driver: MOSFET PWM (GPIO 6)"); }, 400);
+    setTimeout(() => { addSerialLog("[HAL] FastLED strip ready (GPIO 5, count 20)"); }, 550);
+    setTimeout(() => { addSerialLog("[NET] SoftAP / BLE identity: Haxel-XXXX (MAC suffix)"); }, 700);
+    setTimeout(() => { addSerialLog("[SYS] System ready."); }, 850);
 }

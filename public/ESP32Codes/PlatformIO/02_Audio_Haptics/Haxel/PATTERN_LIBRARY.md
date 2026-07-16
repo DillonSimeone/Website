@@ -1,6 +1,6 @@
 # Haxel — Pattern Library
 
-40+ built-in patterns across six categories. Each pattern is a pure function of time, parameters, and (optionally) the latest audio frame. Patterns advertise their parameters so the portal can render the right controls.
+~37 built-in patterns across pulse / rhythm / alert / ambient / music / time categories (plus `External`). Each pattern is a pure function of time, parameters, and (optionally) the latest audio frame. Music patterns need a mic (browser on the hosted UI, or `HAXEL_FEATURE_AUDIO` on device).
 
 **Conventions**
 - Output is a normalized 0..1 envelope per channel. The HAL handles polarity & duty mapping.

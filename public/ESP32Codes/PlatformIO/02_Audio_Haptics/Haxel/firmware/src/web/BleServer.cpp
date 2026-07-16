@@ -4,7 +4,6 @@
 #include "../core/PatternRegistry.h"
 #include "../core/RuntimeStore.h"
 #include <ArduinoJson.h>
-#include <esp_mac.h>
 
 namespace haxel::web {
 
@@ -16,25 +15,18 @@ bool BleServer::begin(core::Engine* engine, Config* config) {
     engine_ = engine;
     config_ = config;
 
-    String devName = config->hostname();
+    // Same identity as the WiFi SoftAP SSID (Config::generateApSsid_ / apSsid).
+    String devName = config->apSsid();
     if (devName.isEmpty()) {
         devName = "Haxel";
     }
-    
+
     // Web Bluetooth UI filters on namePrefix: 'Haxel' (case-sensitive).
-    // Ensure the advertised name starts with 'Haxel'.
     if (devName == "haxel") {
         devName = "Haxel";
     } else if (!devName.startsWith("Haxel")) {
         devName = "Haxel-" + devName;
     }
-
-    // Append ESP32 MAC address suffix for uniqueness
-    uint8_t mac[6];
-    esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    char macSuffix[8];
-    snprintf(macSuffix, sizeof(macSuffix), "-%02X%02X", mac[4], mac[5]);
-    devName += macSuffix;
 
     Serial.println("\n==============================================");
     Serial.println("[System] BLUETOOTH LOW ENERGY (BLE) MODE ENABLED");

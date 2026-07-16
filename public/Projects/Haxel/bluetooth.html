@@ -131,8 +131,8 @@
                             <canvas id="prev" width="400" height="180"></canvas>
                         </div>
                         <div class="strip-footer">
-                            <span>Driver: <b id="currentDriver">DRV2605L</b></span> | <span>Actuator: <b
-                                    id="currentActuator">ERM</b></span>
+<span>Driver: <b id="currentDriver">MOSFET</b></span> | <span>Actuator: <b
+                                id="currentActuator">ERM</b></span>
                         </div>
                     </div>
 
@@ -326,7 +326,7 @@ wave(t * (freq * 0.05))
                                         </div>
                                         <div class="row">
                                             <label>PWM Freq (Hz)</label>
-                                            <select id="pwmFreq">
+                                            <select id="pwmHz">
                                                 <option value="5000">5000 Hz</option>
                                                 <option value="10000">10000 Hz</option>
                                                 <option value="20000" selected>20000 Hz</option>
@@ -519,7 +519,7 @@ wave(t * (freq * 0.05))
                                     </div>
 
                                     <div class="diag-specs">
-                                        <div class="diag-line"><span>Firmware Version</span> <span>v1.0.0-haxel</span></div>
+                                        <div class="diag-line"><span>Firmware Version</span> <span id="fwVersionLabel">v1.2.0-dev</span></div>
                                         <div class="diag-line"><span>FreeRTOS Core Jitter</span> <span>&lt; 1.4 ms</span></div>
                                         <div class="diag-line"><span>ESP32-C3 Uptime</span> <span id="uptime">0s</span></div>
                                     </div>
