@@ -86,6 +86,21 @@ float Engine::getPatternValue(uint8_t ch) const {
     return v < 0.0f ? -v : v;
 }
 
+void Engine::detachPatternById(const char* id) {
+    if (!id || !id[0]) return;
+    portENTER_CRITICAL(&mux_);
+    auto detachIfMatch = [id](IPattern*& slot) {
+        if (slot && strcmp(slot->id(), id) == 0) slot = nullptr;
+    };
+    detachIfMatch(active_.pattern);
+    detachIfMatch(staged_.pattern);
+    for (int i = 0; i < 8; ++i) {
+        detachIfMatch(active_.channels[i].patternOverride);
+        detachIfMatch(staged_.channels[i].patternOverride);
+    }
+    portEXIT_CRITICAL(&mux_);
+}
+
 DiagSnapshot Engine::diag() const {
     DiagSnapshot d;
     d.tickCount    = tickCount_;
@@ -173,6 +188,10 @@ void Engine::tick() {
         portEXIT_CRITICAL(&mux_);
     }
 
+    if (active_.pattern && !PatternRegistry::instance().contains(active_.pattern)) {
+        active_.pattern = nullptr;
+    }
+
     if (state_ == EngineState::FAULT) return;
 
     // 3. Determine engine state.
@@ -227,6 +246,7 @@ void Engine::writeAllChannels(float tMs) {
         }
         ctx.channelIndex = ch;
         IPattern* p = cs.patternOverride ? cs.patternOverride : active_.pattern;
+        if (p && !PatternRegistry::instance().contains(p)) p = nullptr;
 
         float v = 0.0f;
         if (state_ == EngineState::AUDIO_REACTIVE && p && p->usesAudio()) {

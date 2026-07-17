@@ -95,6 +95,9 @@ public:
     // so motor calibration floor does not wash out visual dynamics.
     float getPatternValue(uint8_t ch) const;
 
+    // Drop registry-owned pattern pointers before unregister/delete (UAF guard).
+    void detachPatternById(const char* id);
+
     EngineState state() const { return state_; }
     void raiseFault(const char* code);
 

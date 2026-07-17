@@ -73,4 +73,12 @@ IPattern* PatternRegistry::at(size_t idx) const {
     return patterns_[idx];
 }
 
+bool PatternRegistry::contains(const IPattern* p) const {
+    if (!p) return false;
+    for (auto* reg : patterns_) {
+        if (reg == p) return true;
+    }
+    return false;
+}
+
 } // namespace haxel::core

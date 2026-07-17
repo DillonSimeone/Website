@@ -18,7 +18,8 @@ static void logIncomingJson_(const char* source, JsonObjectConst obj) {
     Serial.printf("[CTRL] %s <- %s\n", source, body.c_str());
 }
 
-bool upsertCustomPattern(const char* id, const char* name, const char* code, String& errOut) {
+bool upsertCustomPattern(const char* id, const char* name, const char* code, String& errOut,
+                         Engine* engine) {
     errOut = "";
     if (!id || !id[0] || !code || !code[0]) {
         errOut = "id and code are required";
@@ -31,6 +32,7 @@ bool upsertCustomPattern(const char* id, const char* name, const char* code, Str
         return false;
     }
 
+    if (engine) engine->detachPatternById(id);
     PatternRegistry::instance().unregisterPattern(id);
     patterns::CustomPattern* cp = new patterns::CustomPattern(
         id, name ? name : "", code);
@@ -45,12 +47,13 @@ bool upsertCustomPattern(const char* id, const char* name, const char* code, Str
     return true;
 }
 
-bool deleteCustomPattern(const char* id, String& errOut) {
+bool deleteCustomPattern(const char* id, String& errOut, Engine* engine) {
     errOut = "";
     if (!id || !id[0]) {
         errOut = "id is required";
         return false;
     }
+    if (engine) engine->detachPatternById(id);
     PatternRegistry::instance().unregisterPattern(id);
     patterns::saveCustomPatterns(PatternRegistry::instance());
     Serial.printf("[CTRL] custom-pattern deleted id='%s'\n", id);
@@ -139,7 +142,7 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine) {
             const char* pname = patch["name"].is<const char*>()
                 ? patch["name"].as<const char*>() : "Custom";
             String err;
-            if (upsertCustomPattern(pid, pname, patch["code"].as<const char*>(), err)) {
+            if (upsertCustomPattern(pid, pname, patch["code"].as<const char*>(), err, engine)) {
                 p = PatternRegistry::instance().find(pid);
             } else {
                 Serial.printf("[CTRL] inline custom-pattern failed: %s\n", err.c_str());

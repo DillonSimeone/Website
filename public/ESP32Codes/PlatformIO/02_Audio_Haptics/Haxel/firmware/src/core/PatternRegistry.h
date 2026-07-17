@@ -15,6 +15,7 @@ public:
     void unregisterPattern(const char* id);
     IPattern* find(const char* id) const;
     IPattern* at(size_t idx) const;
+    bool contains(const IPattern* p) const;
     size_t size() const { return patterns_.size(); }
 
     const std::vector<IPattern*>& all() const { return patterns_; }

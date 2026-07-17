@@ -16,8 +16,9 @@ void applyConfigPatch(ArduinoJson::JsonObjectConst patch, Config* config);
 
 // Compile + register a custom / studio pattern. empty errOut => success.
 // studio_draft* ids skip LittleFS persistence (ephemeral live draft).
-bool upsertCustomPattern(const char* id, const char* name, const char* code, String& errOut);
-bool deleteCustomPattern(const char* id, String& errOut);
+bool upsertCustomPattern(const char* id, const char* name, const char* code, String& errOut,
+                         core::Engine* engine = nullptr);
+bool deleteCustomPattern(const char* id, String& errOut, core::Engine* engine = nullptr);
 
 } // namespace web
 } // namespace haxel

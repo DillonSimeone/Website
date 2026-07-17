@@ -164,7 +164,7 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
         }
 
         String upsertErr;
-        if (!upsertCustomPattern(cpId.c_str(), cpName.c_str(), cpCode.c_str(), upsertErr)) {
+        if (!upsertCustomPattern(cpId.c_str(), cpName.c_str(), cpCode.c_str(), upsertErr, engine_)) {
             Serial.printf("[CTRL] BLE custom-pattern failed: %s\n", upsertErr.c_str());
         } else if (engine_) {
             // Activate the pattern we just uploaded (studio draft or saved custom_*).
@@ -187,7 +187,7 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
     } else if (strcmp(type, "custom-pattern-delete") == 0) {
         const char* id = doc["id"] | "";
         String delErr;
-        if (!deleteCustomPattern(id, delErr)) {
+        if (!deleteCustomPattern(id, delErr, engine_)) {
             Serial.printf("[CTRL] BLE custom-pattern-delete failed: %s\n", delErr.c_str());
         }
     } else {

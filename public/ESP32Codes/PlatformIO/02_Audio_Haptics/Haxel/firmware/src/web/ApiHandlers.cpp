@@ -243,7 +243,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
     });
 
     auto* customPatternPost = new AsyncCallbackJsonWebHandler("/json/custom-patterns",
-        [](AsyncWebServerRequest* req, JsonVariant& json) {
+        [engine](AsyncWebServerRequest* req, JsonVariant& json) {
             Serial.printf("[CTRL] HTTP %s %s from %s\n",
                           req->methodToString(), req->url().c_str(),
                           req->client() ? req->client()->remoteIP().toString().c_str() : "?");
@@ -257,7 +257,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
             std::string name = obj["name"] | "";
             std::string code = obj["code"] | "";
             String err;
-            if (!upsertCustomPattern(id.c_str(), name.c_str(), code.c_str(), err)) {
+            if (!upsertCustomPattern(id.c_str(), name.c_str(), code.c_str(), err, engine)) {
                 req->send(400, "application/json",
                           String("{\"ok\":false,\"error\":\"") + err + "\"}");
                 return;
@@ -267,7 +267,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
     customPatternPost->setMethod(HTTP_POST | HTTP_PUT);
     server.addHandler(customPatternPost);
 
-    server.on("/json/custom-patterns", HTTP_DELETE, [](AsyncWebServerRequest* req) {
+    server.on("/json/custom-patterns", HTTP_DELETE, [engine](AsyncWebServerRequest* req) {
         String id = "";
         if (req->hasParam("id")) {
             id = req->getParam("id")->value();
@@ -278,7 +278,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         }
 
         String err;
-        if (!deleteCustomPattern(id.c_str(), err)) {
+        if (!deleteCustomPattern(id.c_str(), err, engine)) {
             req->send(400, "application/json",
                       String("{\"ok\":false,\"error\":\"") + err + "\"}");
             return;
