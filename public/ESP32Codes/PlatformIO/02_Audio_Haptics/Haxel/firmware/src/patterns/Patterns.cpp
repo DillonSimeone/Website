@@ -131,15 +131,19 @@ public:
     float sample(const PatternContext& ctx) override {
         float period = 60000.0f / bpm_;
         float t = fmodf(ctx.tMs, period);
-        // Lub at 0..80ms, dub at 110..170ms, silence rest.
-        if (t < 80) {
-            float ph = t / 80.0f;
-            return intensity_ * sinf(ph * (float)M_PI);
-        } else if (t > 110 && t < 170) {
-            float ph = (t - 110) / 60.0f;
-            return intensity_ * 0.8f * sinf(ph * (float)M_PI);
-        }
-        return 0.0f;
+        // Instant attack + exponential decay per beat (like Tap). The old
+        // 80 ms haversine bumps ramped too gently for ERM rotors to spin up,
+        // so the pattern produced output the motor never turned into motion.
+        // Beat widths scale with BPM; hard cutoff keeps true silence between
+        // beats so the startup floor doesn't hold the motor at a constant hum.
+        float lub = expf(-t / (period * 0.075f));
+        float dubStart = period * 0.30f;
+        float dub = t >= dubStart
+                        ? 0.85f * expf(-(t - dubStart) / (period * 0.06f))
+                        : 0.0f;
+        float v = lub > dub ? lub : dub;
+        if (v < 0.05f) v = 0.0f;
+        return clamp01(intensity_ * v);
     }
 private:
     float bpm_ = 72.0f;

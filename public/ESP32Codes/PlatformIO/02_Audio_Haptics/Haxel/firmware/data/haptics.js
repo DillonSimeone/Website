@@ -37,8 +37,14 @@ export const PATTERNS = [
         name: "Heartbeat",
         category: "rhythm",
         desc: "Biometric lub-dub double pulse.",
-        code: "exp(-pow((t % 1.2) * 10 - 2, 2)) * 0.8 + exp(-pow((t % 1.2) * 10 - 4.5, 2)) * 0.5",
-        func: (t) => Math.exp(-Math.pow((t % 1.2) * 10 - 2, 2)) * 0.8 + Math.exp(-Math.pow((t % 1.2) * 10 - 4.5, 2)) * 0.5
+        code: "p = t % 0.833;\nlub = pow(2.718, -p / 0.062);\ndub = p < 0.25 ? 0 : 0.85 * pow(2.718, -(p - 0.25) / 0.05);\nv = max(lub, dub);\nv < 0.05 ? 0 : v",
+        func: (t) => {
+            const p = t % 0.833;
+            const lub = Math.exp(-p / 0.062);
+            const dub = p < 0.25 ? 0 : 0.85 * Math.exp(-(p - 0.25) / 0.05);
+            const v = Math.max(lub, dub);
+            return v < 0.05 ? 0 : v;
+        }
     },
     {
         id: "Rumble",

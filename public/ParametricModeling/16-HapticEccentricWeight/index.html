@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Haptic Weight Lab — Eccentric Rotor Configurator</title>
+  <meta name="description" content="Parametric glued hub and interchangeable eccentric weights for Minebea M1N10FB11G haptic experiments. PETG / Bambu A1 0.6mm nozzle.">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <div class="site-label">Parametric Suite</div>
+      <h1>HAPTIC WEIGHT LAB</h1>
+    </div>
+    <span class="tag accent">M1N10FB11G</span>
+    <span class="tag">HEX + SKIRT</span>
+    <span class="tag">PETG · 0.6 NOZZLE</span>
+    <span class="header-right">
+      <span class="live-dot"></span>
+      <span id="perf-badge">LOADING KERNEL…</span>
+    </span>
+  </header>
+
+  <div id="safety-banner" class="safety-banner info">
+    Ream hub pilot to Ø1.0 mm on the motor face, glue ≤4.25 mm deep, slide skirt weight onto hex until seated.
+  </div>
+
+  <main>
+    <!-- LEFT: Controls -->
+    <aside class="panel">
+      <div class="panel-header"><span class="panel-title">1. Hub &amp; Motor</span></div>
+      <div class="panel-content">
+        <div class="control-group">
+          <div class="control-group-title cyan">Shaft + Hex Adapter</div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Pilot Bore ⌀</span><span class="param-value" id="val-shaftPilotDiam">0.85</span></div>
+            <input type="range" id="input-shaftPilotDiam" min="0.70" max="1.00" step="0.05" value="0.85">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Max Insert Depth</span><span class="param-value" id="val-shaftInsertMax">4.25</span></div>
+            <input type="range" id="input-shaftInsertMax" min="3.0" max="4.25" step="0.05" value="4.25">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Hub OD</span><span class="param-value" id="val-hubOd">5.6</span></div>
+            <input type="range" id="input-hubOd" min="5.2" max="7.5" step="0.1" value="5.6">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Hub Height</span><span class="param-value" id="val-hubHeight">7.0</span></div>
+            <input type="range" id="input-hubHeight" min="6.5" max="9.5" step="0.1" value="7.0">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Hex AF</span><span class="param-value" id="val-hexAf">3.4</span></div>
+            <input type="range" id="input-hexAf" min="2.8" max="4.5" step="0.1" value="3.4">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Hex / Skirt Clearance</span><span class="param-value" id="val-hexClearance">0.22</span></div>
+            <input type="range" id="input-hexClearance" min="0.15" max="0.40" step="0.01" value="0.22">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Skirt Wall</span><span class="param-value" id="val-skirtWall">1.6</span></div>
+            <input type="range" id="input-skirtWall" min="1.6" max="2.4" step="0.1" value="1.6">
+          </div>
+          <p class="hint">Bore faces the motor. Stand with hole up, glue, press shaft in. Weights slide on from the hex end — skirt wraps the full hub height.</p>
+        </div>
+
+        <div class="control-group">
+          <div class="control-group-title lime">Eccentric Ladder</div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Rotor Count</span><span class="param-value" id="val-rotorCount">4</span></div>
+            <input type="range" id="input-rotorCount" min="2" max="8" step="1" value="4">
+          </div>
+          <div class="param-row">
+            <label class="param-label" for="input-shapeMix">Shape Mix</label>
+            <select id="input-shapeMix">
+              <option value="all" selected>All families</option>
+              <option value="offset">Offset disc only</option>
+              <option value="crescent">Crescent only</option>
+              <option value="lobe">Lobe only</option>
+            </select>
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Ecc Min</span><span class="param-value" id="val-eccMin">0.6</span></div>
+            <input type="range" id="input-eccMin" min="0.3" max="2.0" step="0.1" value="0.6">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Ecc Max</span><span class="param-value" id="val-eccMax">2.2</span></div>
+            <input type="range" id="input-eccMax" min="1.0" max="3.2" step="0.1" value="2.2">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Top Plate Thick</span><span class="param-value" id="val-rotorThickness">2.4</span></div>
+            <input type="range" id="input-rotorThickness" min="2.0" max="4.0" step="0.1" value="2.4">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Rotor OD Max</span><span class="param-value" id="val-rotorOdMax">8.0</span></div>
+            <input type="range" id="input-rotorOdMax" min="7.0" max="12.0" step="0.1" value="8.0">
+          </div>
+          <div class="btn-row">
+            <button id="btn-mutate" class="btn btn-accent">⚡ MUTATE KIT</button>
+            <button id="btn-clear" class="btn btn-danger">CLEAR</button>
+          </div>
+          <div id="count-badge" class="count-badge">—</div>
+          <div id="kit-status" class="kit-status ok">Kit empty — run mutation</div>
+        </div>
+
+        <div class="control-group">
+          <div class="control-group-title amber">Physics</div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">PETG Density</span><span class="param-value" id="val-petgDensity">1.27</span></div>
+            <input type="range" id="input-petgDensity" min="1.20" max="1.40" step="0.01" value="1.27">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Target RPM</span><span class="param-value" id="val-targetRpm">13740</span></div>
+            <input type="range" id="input-targetRpm" min="1000" max="16040" step="100" value="13740">
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: Viewport + gallery -->
+    <section class="viewport-wrap">
+      <div id="canvas3d"></div>
+      <div class="gallery-panel">
+        <div class="panel-header"><span class="panel-title">Rotor Gallery</span></div>
+        <div id="rotor-gallery" class="rotor-gallery"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Specs / display / export -->
+    <aside class="panel panel-right">
+      <div class="panel-header"><span class="panel-title">2. Assembly</span></div>
+      <div class="panel-content">
+        <div class="control-group">
+          <div class="control-group-title">Display</div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Explode</span><span class="param-value" id="val-explode">35</span></div>
+            <input type="range" id="input-explode" min="0" max="100" step="1" value="35">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Slide Off %</span><span class="param-value" id="val-slideAmount">0</span></div>
+            <input type="range" id="input-slideAmount" min="0" max="100" step="1" value="0">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Opacity</span><span class="param-value" id="val-opacity">90</span></div>
+            <input type="range" id="input-opacity" min="20" max="100" step="1" value="90">
+          </div>
+          <div class="btn-row">
+            <button id="btn-rendered" class="btn active">RENDERED</button>
+            <button id="btn-xray" class="btn">X-RAY</button>
+          </div>
+          <div class="toggle-list">
+            <label><input type="checkbox" id="show-motor" checked> Motor ghost</label>
+            <label><input type="checkbox" id="show-hub" checked> Glue hub</label>
+            <label><input type="checkbox" id="show-rotor" checked> Selected rotor</label>
+            <label><input type="checkbox" id="show-fitCoupon" checked> Fit coupon</label>
+            <label><input type="checkbox" id="show-guard"> Spin guard</label>
+            <label><input type="checkbox" id="show-envelope" checked> Kit envelope</label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="control-group-title cyan">Specs</div>
+          <div class="spec-grid">
+            <div class="spec"><span class="spec-k">Motor</span><span class="spec-v" id="spec-motor">—</span></div>
+            <div class="spec"><span class="spec-k">RPM rated / NL</span><span class="spec-v" id="spec-rpm">—</span></div>
+            <div class="spec"><span class="spec-k">Kit envelope</span><span class="spec-v" id="spec-envelope">41×19×10 mm</span></div>
+            <div class="spec"><span class="spec-k">Packed</span><span class="spec-v" id="spec-packed">—</span></div>
+            <div class="spec"><span class="spec-k">Rotor</span><span class="spec-v" id="spec-rotor">—</span></div>
+            <div class="spec"><span class="spec-k">Mass</span><span class="spec-v" id="spec-mass">—</span></div>
+            <div class="spec"><span class="spec-k">COM offset</span><span class="spec-v" id="spec-com">—</span></div>
+            <div class="spec"><span class="spec-k">m·r</span><span class="spec-v" id="spec-moment">—</span></div>
+            <div class="spec"><span class="spec-k">F @ target</span><span class="spec-v" id="spec-force-target">—</span></div>
+            <div class="spec"><span class="spec-k">F @ rated</span><span class="spec-v" id="spec-force-rated">—</span></div>
+            <div class="spec"><span class="spec-k">F @ no-load</span><span class="spec-v" id="spec-force-noload">—</span></div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="control-group-title lime">Export</div>
+          <button id="btn-export-kit" class="btn btn-accent btn-block">↓ PACKED KIT STL</button>
+          <button id="btn-export-hub" class="btn btn-block">↓ Hub STL</button>
+          <button id="btn-export-selected" class="btn btn-block">↓ Selected Rotor STL</button>
+          <button id="btn-export-fit" class="btn btn-block">↓ Fit Coupon STL</button>
+          <button id="btn-export-guard" class="btn btn-block">↓ Spin Guard STL</button>
+          <div class="btn-row" style="margin-top:8px;">
+            <button id="btn-export-json" class="btn">JSON</button>
+            <button id="btn-export-csv" class="btn">CSV</button>
+          </div>
+          <p class="hint warn">Guard is separate — not packed in the 41×19×10 kit. Always spin inside a rigid enclosure.</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

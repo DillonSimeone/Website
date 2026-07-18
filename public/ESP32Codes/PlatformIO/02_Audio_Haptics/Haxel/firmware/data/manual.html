@@ -99,6 +99,81 @@
             color: #dddddd;
             border-color: #333333;
         }
+
+        /* — Live coding examples — */
+        .ex-group-title {
+            font-family: var(--font-display);
+            font-size: 22px;
+            text-transform: uppercase;
+            margin: 45px 0 8px;
+            padding-top: 25px;
+            border-top: 3px solid var(--black);
+        }
+        .ex-group-blurb {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 20px;
+            max-width: 800px;
+        }
+        .example-card {
+            border: 3px solid var(--black);
+            background: #ffffff;
+            box-shadow: 6px 6px 0 var(--black);
+            margin: 25px 0;
+        }
+        .example-card .ex-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 3px solid var(--black);
+            background: var(--black);
+        }
+        .ex-title {
+            font-family: var(--font-display);
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #ffffff;
+        }
+        .ex-audio-badge {
+            font-family: var(--font-display);
+            font-size: 9px;
+            letter-spacing: 1px;
+            background: var(--bauhaus-yellow);
+            color: var(--black);
+            padding: 3px 8px;
+        }
+        .ex-desc {
+            padding: 15px 20px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .ex-code {
+            margin: 15px 20px;
+            background: #fbf9f1;
+            border: 2px solid var(--black);
+            padding: 14px 16px;
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .ex-code .num { color: #7a5c00; }
+        .ex-code .cmt { color: #8a8a7a; font-style: italic; }
+        .ex-canvas-frame {
+            margin: 0 20px 20px;
+            border: 3px solid var(--black);
+            background: #ffffff;
+            padding: 8px;
+        }
+        .ex-canvas {
+            display: block;
+            width: 100%;
+            height: 80px;
+            background: #f4ebd0;
+        }
     </style>
 </head>
 
@@ -252,22 +327,22 @@
                 </thead>
                 <tbody>
                     <tr style="border-bottom: 1px solid #333;">
-                        <td><code>t</code></td>
+                        <td><code>t</code> / <code>time</code></td>
                         <td><code>float</code></td>
                         <td>Seconds</td>
-                        <td>Global time counter. Loops at 3600 seconds to preserve float precision.</td>
+                        <td>Pattern time since boot, pre-multiplied by playback speed. Monotonic — wrap it yourself with <code>%</code> or <code>frac()</code> for cyclic patterns.</td>
                     </tr>
                     <tr style="border-bottom: 1px solid #333;">
-                        <td><code>dt</code></td>
+                        <td><code>dt</code> / <code>delta</code></td>
                         <td><code>float</code></td>
                         <td>Seconds</td>
-                        <td>Delta time slice since the last interpreter tick (consistently 0.001s).</td>
+                        <td>Time since the previous evaluation. One engine tick (0.001 s) on hardware, one animation frame (~0.016 s) in the browser simulator. Integrate with <code>dt</code> and both behave identically.</td>
                     </tr>
                     <tr style="border-bottom: 1px solid #333;">
                         <td><code>freq</code></td>
                         <td><code>float</code></td>
                         <td>Hertz</td>
-                        <td>The base frequency parameter configured for the active pattern channel.</td>
+                        <td>Reserved frequency-shift parameter (currently a constant 150.0).</td>
                     </tr>
                     <tr style="border-bottom: 1px solid #333;">
                         <td><code>speed</code></td>
@@ -276,13 +351,31 @@
                         <td>The global playback speed coefficient (default is 1.0).</td>
                     </tr>
                     <tr style="border-bottom: 1px solid #333;">
-                        <td><code>amp</code></td>
+                        <td><code>intensity</code></td>
                         <td><code>float</code></td>
                         <td>0.0 to 1.0</td>
-                        <td>The envelope magnitude parameter (mapped to raw volume in audio-reactive mode).</td>
+                        <td>The master intensity slider value. Applied to your output automatically — read it only if you want non-linear responses.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td><code>floor</code></td>
+                        <td><code>float</code></td>
+                        <td>0.0 to 1.0</td>
+                        <td>The motor startup-floor calibration value. Applied downstream by the engine; exposed for scripts that shape around it.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td><code>PI</code> / <code>TAU</code></td>
+                        <td><code>const</code></td>
+                        <td>Radians</td>
+                        <td>3.14159… and 6.28318…. <code>sin(t * TAU)</code> is exactly one cycle per second.</td>
                     </tr>
                 </tbody>
             </table>
+
+            <p class="callout" style="border-left-color: var(--bauhaus-yellow); background: #1e1e1e; color: #ccc; margin-top: 20px;">
+                <strong style="color: var(--bauhaus-yellow);">Persistent variables:</strong> any name you assign
+                (<code>env = env + ...</code>) survives between ticks and starts at 0. This is what makes envelopes,
+                filters, and physics possible — see the live examples in Section 05.
+            </p>
 
             <h3 style="color: #fff; margin-top: 30px;">Delta Time Scripting Techniques</h3>
             <p style="color: #ccc;">
@@ -293,22 +386,24 @@
             <div class="spec-grid" style="margin-top: 20px;">
                 <div class="spec-item" style="background: #1e1e1e; border: 1px solid #333; padding: 20px;">
                     <h4 style="color: var(--bauhaus-yellow);">01 // Delta-Time LFO Phase Accumulator</h4>
-                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Creates a sweep rate that accelerates over time regardless of global timeline offsets:</p>
+                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Integrates a changing rate into a phase so speed sweeps never click or jump:</p>
                     <code style="font-family: var(--mono); color: #dcdcdc; display: block; background: #000; padding: 10px;">
                         // Accumulate phase dynamically using dt<br>
-                        phase = (phase + dt * (freq + sin(t) * 10)) % 1.0;<br>
-                        wave(phase * 2 * PI) * amp
+                        rate = 2 + sin(t) * 1.5;<br>
+                        phase = frac(phase + dt * rate);<br>
+                        wave(phase)
                     </code>
                 </div>
                 <div class="spec-item" style="background: #1e1e1e; border: 1px solid #333; padding: 20px;">
                     <h4 style="color: var(--bauhaus-yellow);">02 // Simulated State-Variable Filter (SVF)</h4>
-                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Integrates state variables to filter noise at 1 kHz, creating a resonant physical sweep:</p>
+                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Integrates state variables to low-pass filter noise, creating a resonant physical sweep:</p>
                     <code style="font-family: var(--mono); color: #dcdcdc; display: block; background: #000; padding: 10px;">
                         // Low-pass filter loop via delta-time integration<br>
-                        f = freq * dt;<br>
-                        bp = bp + f * (noise(t) - lp - q * bp);<br>
+                        q = 0.4;<br>
+                        f = 6 * dt;<br>
+                        bp = bp + f * (noise(t * 3) - lp - q * bp);<br>
                         lp = lp + f * bp;<br>
-                        lp * amp
+                        clamp(lp, 0, 1)
                     </code>
                 </div>
             </div>
@@ -316,29 +411,84 @@
             <div class="spec-grid" style="margin-top: 15px;">
                 <div class="spec-item" style="background: #1e1e1e; border: 1px solid #333; padding: 20px;">
                     <h4 style="color: var(--bauhaus-yellow);">03 // Envelope Follower with Attack/Release</h4>
-                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Models physical inertia by lagging envelope responses using differential equations:</p>
+                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Models physical inertia by lagging a target signal at different rise/fall rates:</p>
                     <code style="font-family: var(--mono); color: #dcdcdc; display: block; background: #000; padding: 10px;">
-                        // Lag the input amplitude for smooth decay curves<br>
-                        decay = amp > env ? 0.95 : 0.999;<br>
-                        env = env * decay + amp * (1 - decay);<br>
-                        wave(t * freq) * env
+                        // Fast attack, slow release<br>
+                        target = square(t / 2, 0.5);<br>
+                        k = target > env ? 12 : 2.5;<br>
+                        env = env + (target - env) * min(1, dt * k);<br>
+                        env
                     </code>
                 </div>
                 <div class="spec-item" style="background: #1e1e1e; border: 1px solid #333; padding: 20px;">
-                    <h4 style="color: var(--bauhaus-yellow);">04 // Pseudo-random Pink Noise Burst</h4>
-                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Shapes raw white noise into organic, textured clicks using a decay envelope:</p>
+                    <h4 style="color: var(--bauhaus-yellow);">04 // Decaying Noise Burst</h4>
+                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">Shapes smooth noise into organic, textured pulses using an exponential decay envelope:</p>
                     <code style="font-family: var(--mono); color: #dcdcdc; display: block; background: #000; padding: 10px;">
-                        // Exponentially decaying noise burst<br>
-                        envelope = exp(-5 * (t % 1.5));<br>
-                        noise(t) * envelope * amp
+                        // pow(2.718, -x) is e^-x — a natural decay curve<br>
+                        envelope = pow(2.718, -5 * (t % 1.5));<br>
+                        noise(t * 20) * envelope
                     </code>
                 </div>
             </div>
+
+            <p style="color: #ccc; margin-top: 25px;">
+                Every one of these techniques — and every built-in function — is demonstrated with a
+                <strong style="color: var(--bauhaus-yellow);">live-rendered waveform</strong> in
+                <a href="#examples" style="color: var(--bauhaus-yellow);">Section 05: Live Coding Examples</a> below.
+            </p>
         </section>
 
-        <!-- SECTION 05: API SPECIFICATION -->
+        <!-- SECTION 05: LIVE CODING EXAMPLES -->
+        <section class="manual-section topic-examples" id="examples">
+            <span class="block-label">05 // LIVE CODING EXAMPLES</span>
+            <h2>Learn by Feel: The Live Pattern Cookbook</h2>
+            <p>
+                Every canvas below runs the code above it through the <strong>same expression compiler the firmware
+                uses</strong>, in real time, right now. What you see scrolling past is exactly the motor power the
+                ESP32 would output. Copy any snippet into the Pattern Studio, or use it as a starting point on the
+                device portal.
+            </p>
+            <p style="margin-top: 15px;">
+                The examples escalate: constants, then oscillators, then wave shaping, then rhythm and randomness,
+                then stateful <code>dt</code> patterns, then audio reactivity, and finally a full combination. One
+                rule holds throughout: <strong>layer one dominant voice over one quiet bed.</strong> Sum three loud
+                signals and skin stops reading them as anything — it all becomes white noise.
+            </p>
+
+            <h3 style="margin-top: 30px;">Function Cheat Sheet</h3>
+            <table class="spec-table">
+                <thead>
+                    <tr><th>Function</th><th>Returns</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>sin(x)</code> <code>cos(x)</code> <code>tan(x)</code></td><td>-1..1 (tan: ±∞)</td><td>Radians trig. <code>tan()</code> explodes near &pi;/2 — always <code>clamp()</code> it.</td></tr>
+                    <tr><td><code>wave(x)</code></td><td>0..1</td><td>Haptics-friendly sine: one full 0→1→0 cycle per whole number of <code>x</code>.</td></tr>
+                    <tr><td><code>triangle(x)</code></td><td>0..1</td><td>Linear rise then fall, one cycle per whole number of <code>x</code>.</td></tr>
+                    <tr><td><code>square(x, duty)</code></td><td>0 or 1</td><td>On for the first <code>duty</code> fraction of each cycle (default 0.5).</td></tr>
+                    <tr><td><code>frac(x)</code></td><td>0..1</td><td>Fractional part — a free sawtooth ramp.</td></tr>
+                    <tr><td><code>abs(x)</code> <code>sqrt(x)</code> <code>pow(x, y)</code></td><td>varies</td><td>Rectify, fatten (<code>sqrt</code>), or sharpen (<code>pow</code> with y &gt; 1) a wave.</td></tr>
+                    <tr><td><code>floor(x)</code> <code>ceil(x)</code> <code>round(x)</code></td><td>integer</td><td>Quantizers — turn ramps into staircases, times into beat indices.</td></tr>
+                    <tr><td><code>min(a, b)</code> <code>max(a, b)</code> <code>clamp(x, lo, hi)</code></td><td>varies</td><td>Limiters. <code>max()</code> is also the cleanest way to layer two voices.</td></tr>
+                    <tr><td><code>mix(a, b, k)</code> / <code>lerp(a, b, k)</code></td><td>varies</td><td>Blend from <code>a</code> to <code>b</code> as <code>k</code> goes 0→1.</td></tr>
+                    <tr><td><code>step(edge, x)</code></td><td>0 or 1</td><td>Hard gate: 1 when <code>x</code> ≥ <code>edge</code>.</td></tr>
+                    <tr><td><code>smoothstep(lo, hi, x)</code></td><td>0..1</td><td>Eased gate: fades from 0 to 1 between <code>lo</code> and <code>hi</code>.</td></tr>
+                    <tr><td><code>time(period)</code></td><td>0..1</td><td>A looping clock: ramps 0→1 every <code>period</code> seconds.</td></tr>
+                    <tr><td><code>random()</code></td><td>0..1</td><td>New value <em>every tick</em> — raw white noise. Always shape it.</td></tr>
+                    <tr><td><code>hash(n)</code></td><td>0..1</td><td>Deterministic pseudo-random: same <code>n</code> always gives the same value.</td></tr>
+                    <tr><td><code>noise(x)</code> / <code>perlin1d(x)</code></td><td>0..1</td><td>Smooth Perlin noise — organic drift instead of chaos.</td></tr>
+                    <tr><td><code>vu()</code> <code>peak()</code></td><td>0..1</td><td>Microphone volume envelope; <code>peak()</code> is <code>vu()</code> with a 1.2× boost.</td></tr>
+                    <tr><td><code>bass()</code> <code>mid()</code> <code>treble()</code></td><td>0..1</td><td>Averaged FFT energy in the low / middle / high bands.</td></tr>
+                    <tr><td><code>band(n)</code></td><td>0..1</td><td>A single FFT bin, <code>n</code> = 0 (deepest bass) … 31 (highest treble).</td></tr>
+                    <tr><td><code>beat()</code> <code>pitch()</code></td><td>0..1</td><td>Convenience helpers: a ready-made pulse train and a slowly wandering tone tracker.</td></tr>
+                </tbody>
+            </table>
+
+            <div id="example-groups"></div>
+        </section>
+
+        <!-- SECTION 06: API SPECIFICATION -->
         <section class="manual-section topic-prior card-reference">
-            <span class="block-label">05 // DATA SPECIFICATION</span>
+            <span class="block-label">06 // DATA SPECIFICATION</span>
             <h2>WebSocket & REST API Protocol</h2>
             <p>
                 The ESP32 hosts a JSON REST API and a WebSocket server at <code>ws:///ws</code>. Clients can query 
@@ -381,7 +531,347 @@
         </section>
     </div>
 
-    <!-- Page footer script if any layout stabilization is needed -->
+    <!-- Live coding examples: compiled and rendered with the same engine the firmware uses -->
+    <script type="module">
+        import { tokenize, Parser, Evaluator, highlight, updateAudioState } from './compiler.js';
+
+        const GROUPS = [
+            {
+                title: "A // First Steps",
+                blurb: "A script is a list of statements separated by semicolons or newlines. The last expression becomes motor power, clamped to 0\u20131. That's the whole model \u2014 everything else is math.",
+                examples: [
+                    {
+                        title: "A Constant Hum",
+                        desc: "The simplest possible pattern: a number. 0 is off, 1 is full power. Anything you write ultimately boils down to producing this one value, a thousand times per second.",
+                        code: "// The last line of a script is the output\n0.4"
+                    },
+                    {
+                        title: "The Sine Swell",
+                        desc: "<code>t</code> is time in seconds and <code>sin()</code> swings between -1 and 1, so we scale and shift it into the 0\u20131 range. <code>t * TAU</code> gives exactly one cycle per second. Swap <code>sin</code> for <code>cos</code> to start at full power instead of the midpoint.",
+                        code: "// One full cycle per second, breathing between 0 and 1\n0.5 + 0.5 * sin(t * TAU)"
+                    },
+                    {
+                        title: "wave(): Cycles Made Easy",
+                        desc: "<code>wave(x)</code> is the sine above with the bookkeeping done for you: one 0\u21921\u21920 bump per whole number of <code>x</code>. No TAU, no scaling. This is the workhorse of most patterns.",
+                        code: "// Two smooth bumps per second\nwave(t * 2)"
+                    },
+                    {
+                        title: "Sawtooth with frac()",
+                        desc: "<code>frac(x)</code> keeps only the fractional part, which turns steadily-growing time into a repeating 0\u21921 ramp. A slow rise with an instant drop feels like winding up and letting go.",
+                        code: "// Rise for two seconds, snap back to zero\nfrac(t / 2)"
+                    },
+                    {
+                        title: "Square Pulses",
+                        desc: "<code>square(x, duty)</code> is fully on for the first <code>duty</code> fraction of each cycle and silent for the rest. Hard edges kick motors much harder than smooth curves \u2014 remember this when a pattern feels weaker than it looks. Swap in <code>triangle(t)</code> for a linear rise-and-fall instead.",
+                        code: "// One pulse per second, on 25% of the time\nsquare(t, 0.25)"
+                    }
+                ]
+            },
+            {
+                title: "B // Shaping the Feel",
+                blurb: "The same wave can feel like a heartbeat or a doorbell depending on its curve. Shaping functions transform amplitude without touching timing.",
+                examples: [
+                    {
+                        title: "Sharpen and Fatten: pow() and sqrt()",
+                        desc: "Raising a 0\u20131 wave to a power above 1 presses it down into narrow, sharp peaks with long silences \u2014 great for taps. <code>sqrt()</code> (or <code>pow(x, 0.5)</code>) does the opposite: it fattens the wave so it spends most of its time near full power.",
+                        code: "// pow > 1 sharpens. Try sqrt(wave(t)) for the opposite.\npow(wave(t), 4)"
+                    },
+                    {
+                        title: "Rectify with abs()",
+                        desc: "<code>abs()</code> folds the negative half of a sine upward, doubling the bump rate and creating a sharp \u201cbounce\u201d at every zero crossing \u2014 a distinctly different texture from a plain sine at the same rate.",
+                        code: "// Two bumps per second with hard bounces at zero\nabs(sin(t * PI))"
+                    },
+                    {
+                        title: "Overdrive with clamp()",
+                        desc: "Multiply a wave past 1.0 and clamp it back: the peaks flatten into sustained plateaus, like an overdriven amplifier. <code>min(x, 1)</code> and <code>max(x, 0)</code> are the one-sided versions of the same idea.",
+                        code: "// The wave saturates at full power for part of each cycle\nclamp(1.8 * sin(t * TAU), 0, 1)"
+                    },
+                    {
+                        title: "Layer with max()",
+                        desc: "Adding two signals muddies both. <code>max()</code> instead lets the loudest voice win at each instant: here a fast ripple lives in the valleys of a slow swell, and the swell takes over cleanly as it rises. This is the core trick for rich-but-readable patterns.",
+                        code: "// A slow swell with a fast ripple underneath\nmax(wave(t / 3), 0.4 * wave(t * 5))"
+                    },
+                    {
+                        title: "Gates: step() and smoothstep()",
+                        desc: "A gate multiplies one signal by an on/off decision made from another. <code>step(edge, x)</code> switches hard; <code>smoothstep(lo, hi, x)</code> eases in and out so the buzz fades instead of slamming. Here a fast buzz is gated by a 5-second wave.",
+                        code: "// A buzz that fades in and out every 5 seconds\nwave(t * 8) * smoothstep(0.35, 0.65, wave(t / 5))"
+                    },
+                    {
+                        title: "Morph with mix()",
+                        desc: "<code>mix(a, b, k)</code> (alias <code>lerp</code>) blends between two entire patterns as <code>k</code> travels 0\u21921. Over eight seconds this drifts from a smooth wave into hard clicks and back \u2014 two textures, one output.",
+                        code: "// Crossfade: smooth wave <-> hard clicks, every 8 seconds\nmix(wave(t), square(t * 3, 0.5), wave(t / 8))"
+                    },
+                    {
+                        title: "Staircases with floor()",
+                        desc: "Quantizers turn continuous ramps into discrete steps. <code>floor(x * 6) / 5</code> gives six distinct power levels per cycle \u2014 skin is far better at counting steps than tracking a smooth ramp. <code>ceil()</code> and <code>round()</code> shift where the steps land.",
+                        code: "// Six distinct power steps, repeating every 4 seconds\nfloor(frac(t / 4) * 6) / 5"
+                    }
+                ]
+            },
+            {
+                title: "C // Rhythm, Time & Randomness",
+                blurb: "Time manipulation makes rhythm; controlled randomness makes life. The key word is controlled \u2014 raw chaos reads as numb mush on skin.",
+                examples: [
+                    {
+                        title: "The Built-in Clock: time()",
+                        desc: "<code>time(period)</code> ramps 0\u21921 every <code>period</code> seconds \u2014 the same as <code>frac(t / period)</code>, just easier to read. Use it as the master clock that other expressions feed on.",
+                        code: "// A 0-to-1 ramp every 4 seconds\ntime(4)"
+                    },
+                    {
+                        title: "Engine Rev: Frequency Ramps",
+                        desc: "Deriving cycle-local time with <code>%</code> lets the pulse rate climb within each cycle and reset cleanly. Multiplying <code>t</code> directly by a time-varying frequency drifts out of control \u2014 always modulate against a bounded, repeating clock (or use a <code>dt</code> phase accumulator, in group D).",
+                        code: "// Pulse rate climbs through each 4-second cycle, then resets\nc = t % 4;\nwave(c * (1 + c))"
+                    },
+                    {
+                        title: "Tremolo: Amplitude Modulation",
+                        desc: "A fast carrier multiplied by a slow envelope: the carrier provides texture, the envelope provides shape. Sharpening the envelope with <code>pow()</code> keeps real silence between swells \u2014 silence is what makes the next swell land.",
+                        code: "// A fast buzz living inside a slow, sharpened swell\n(0.5 + 0.5 * cos(t * 50)) * pow(wave(t / 3), 2)"
+                    },
+                    {
+                        title: "Repeatable Randomness: hash()",
+                        desc: "<code>hash(n)</code> returns a random-looking but deterministic value for each integer. Feed it a beat counter and every pulse gets its own strength \u2014 humanized, but identical on every loop and on every device.",
+                        code: "// Every beat has its own (repeatable) strength\nn = floor(t * 2);\nsquare(t * 2, 0.3) * (0.65 + 0.35 * hash(n))"
+                    },
+                    {
+                        title: "Chaos Control: noise() vs random()",
+                        desc: "<code>random()</code> produces a new value every tick \u2014 that is white noise, and skin reads it as numbness. <code>noise()</code> (Perlin) drifts smoothly between random values instead: organic wander, zero chaos. If you must use <code>random()</code>, gate it hard with an envelope.",
+                        code: "// Organic drift. Replace with random() to feel why you shouldn't.\nnoise(t * 2)"
+                    }
+                ]
+            },
+            {
+                title: "D // Stateful Patterns with dt",
+                blurb: "Variables persist between ticks and start at 0, and dt is the time since the last tick. Together they unlock integration: envelopes, filters, and physics that no closed formula of t can express.",
+                examples: [
+                    {
+                        title: "Phase Accumulators: Glitch-Free Speed Changes",
+                        desc: "Writing <code>wave(t * rate)</code> with a changing rate makes the wave jump, because old time gets re-scaled too. The fix: integrate the rate into a phase with <code>dt</code>. Only future time is affected, so sweeps stay perfectly smooth \u2014 the same trick synthesizers use.",
+                        code: "// Integrate the rate; the wave never jumps when speed changes\nrate = 1 + 4 * wave(t / 8);\nph = frac(ph + dt * rate);\nwave(ph)"
+                    },
+                    {
+                        title: "Attack & Release Envelopes",
+                        desc: "Chase a target at different speeds depending on direction: fast when rising (attack), slow when falling (release). This models physical inertia and turns harsh square switches into something that feels alive. <code>min(1, dt * k)</code> keeps it stable at any tick rate.",
+                        code: "// Snap on, fade off\ntarget = square(t / 2, 0.5);\nk = target > env ? 12 : 2.5;\nenv = env + (target - env) * min(1, dt * k);\nenv"
+                    },
+                    {
+                        title: "Case Study: Heartbeat",
+                        desc: "This is the actual firmware Heartbeat. Early versions used smooth 80 ms sine bumps \u2014 and the motor barely moved, because ERM rotors need an instant kick to overcome inertia. The fix: sharp attack + exponential decay per beat (like Tap), and a hard cutoff so there is true silence between beats.",
+                        code: "// Lub... dub... instant attacks, exponential decays, real silence\np = t % 0.833;\nlub = pow(2.718, -p / 0.062);\ndub = p < 0.25 ? 0 : 0.85 * pow(2.718, -(p - 0.25) / 0.05);\nv = max(lub, dub);\nv < 0.05 ? 0 : v"
+                    },
+                    {
+                        title: "Physics: The Bouncing Ball",
+                        desc: "Full simulation in five variables: gravity integrates into velocity, velocity into height. Each impact emits a thump proportional to impact speed, each bounce loses energy, and the ball relaunches when exhausted. The decaying rhythm this produces is impossible to write as a formula of <code>t</code>.",
+                        code: "// Gravity, bounces, and a thump on every impact\nvel = vel - dt * 8;\nh = h + dt * vel;\nhit = h <= 0 ? 1 : 0;\nvel = hit ? abs(vel) * 0.75 : vel;\nvel = hit ? (vel < 0.8 ? 3 : vel) : vel;\nh = hit ? 0.001 : h;\nimp = max(imp - dt * 6, hit * clamp(vel * 0.35, 0, 1));\nimp"
+                    }
+                ]
+            },
+            {
+                title: "E // Audio-Reactive Patterns",
+                blurb: "On hardware these functions read the I2S microphone in real time. On this page they are driven by a simulated music loop (kick drum, melody, hi-hats) so you can see the response shapes.",
+                examples: [
+                    {
+                        title: "vu(): Follow the Volume",
+                        desc: "<code>vu()</code> is the smoothed overall loudness. Raw microphone levels rarely reach 1.0, so multiply up and clamp. <code>peak()</code> is the same signal with a built-in 1.2\u00d7 boost for percussive material.",
+                        audio: true,
+                        code: "// Overall loudness, boosted into a usable range\nclamp(vu() * 2, 0, 1)"
+                    },
+                    {
+                        title: "bass(): Kick Punch",
+                        desc: "<code>bass()</code> averages the four lowest FFT bins \u2014 where kick drums live. Sharpening with <code>pow()</code> suppresses the quiet rumble between hits so only the actual kicks punch through.",
+                        audio: true,
+                        code: "// Only the kick drum gets through\npow(clamp(bass() * 2.5, 0, 1), 2)"
+                    },
+                    {
+                        title: "Splitting the Spectrum",
+                        desc: "Give different frequency ranges different jobs and layer them with <code>max()</code>: kicks as hard punches, hi-hats as a light tickle. <code>band(n)</code> (0 = deepest bass, 31 = highest treble) picks out a single FFT bin when you need surgical precision.",
+                        audio: true,
+                        code: "// Kicks punch, hi-hats tickle\nkick = pow(clamp(bass() * 2.5, 0, 1), 2);\nhats = treble() * 0.7;\nmax(kick, hats)"
+                    },
+                    {
+                        title: "Helpers: beat() and pitch()",
+                        desc: "<code>beat()</code> is a ready-made sharpened pulse train, and <code>pitch()</code> wanders slowly like a tone tracker. Here the beat gates a buzz whose speed follows the pitch \u2014 two helpers, one expressive result.",
+                        audio: true,
+                        code: "// A pulse train whose texture bends with pitch\nbeat() * (0.5 + 0.5 * sin(t * (20 + pitch() * 40)))"
+                    }
+                ]
+            },
+            {
+                title: "F // The Grand Combination",
+                blurb: "Everything at once \u2014 without becoming white noise. The rules: one dominant voice, one quiet bed, envelopes instead of sums, and silence treated as part of the pattern.",
+                examples: [
+                    {
+                        title: "Kick Engine with a Noise Bed",
+                        desc: "Four techniques in five lines: a sharpened <code>bass()</code> punch (group E), held by a <code>dt</code> release envelope (group D), textured by a fast carrier (group C), riding over a barely-there Perlin bed (group B/C). The kick always dominates; the bed only exists where the kick doesn't. That hierarchy is why this reads as music on skin instead of static.",
+                        audio: true,
+                        code: "// One loud voice + one quiet bed. Never two loud voices.\nkick = pow(clamp(bass() * 2.5, 0, 1), 2);\nenv = max(env - dt * 3, kick);\nbuzz = 0.5 + 0.5 * sin(t * 45);\nbed = 0.15 * noise(t * 1.5);\nclamp(max(env * buzz, bed), 0, 1)"
+                    }
+                ]
+            }
+        ];
+
+        // ── Build cards ─────────────────────────────────────────────────────
+        const root = document.getElementById("example-groups");
+        const cards = [];
+        let exNum = 0;
+
+        for (const g of GROUPS) {
+            const gEl = document.createElement("div");
+            gEl.className = "ex-group";
+            const h = document.createElement("h3");
+            h.className = "ex-group-title";
+            h.textContent = g.title;
+            const blurb = document.createElement("p");
+            blurb.className = "ex-group-blurb";
+            blurb.textContent = g.blurb;
+            gEl.appendChild(h);
+            gEl.appendChild(blurb);
+
+            for (const ex of g.examples) {
+                exNum++;
+                const card = document.createElement("div");
+                card.className = "example-card";
+                const num = String(exNum).padStart(2, "0");
+                card.innerHTML =
+                    '<div class="ex-head"><span class="ex-title"></span>' +
+                    (ex.audio ? '<span class="ex-audio-badge">SIMULATED MIC</span>' : '') +
+                    '</div>' +
+                    '<p class="ex-desc"></p>' +
+                    '<pre class="ex-code"></pre>' +
+                    '<div class="ex-canvas-frame"><canvas class="ex-canvas" height="80"></canvas></div>';
+                card.querySelector(".ex-title").textContent = num + " // " + ex.title;
+                card.querySelector(".ex-desc").innerHTML = ex.desc;
+                card.querySelector(".ex-code").innerHTML = highlight(ex.code);
+
+                let evaluator = null;
+                try {
+                    evaluator = new Evaluator(new Parser(tokenize(ex.code)).parseProgram());
+                } catch (err) {
+                    console.error("Example failed to compile:", ex.title, err);
+                }
+
+                gEl.appendChild(card);
+                cards.push({
+                    canvas: card.querySelector(".ex-canvas"),
+                    evaluator,
+                    vt: 0,
+                    hist: [],
+                    visible: false
+                });
+            }
+            root.appendChild(gEl);
+        }
+
+        // ── Only animate canvases that are on screen ────────────────────────
+        const io = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                const c = cards.find(x => x.canvas === entry.target);
+                if (c) c.visible = entry.isIntersecting;
+            }
+        }, { rootMargin: "100px" });
+        cards.forEach(c => io.observe(c.canvas));
+
+        // ── Simulated music loop for the audio-reactive examples ───────────
+        function simulateAudio(tSec) {
+            const mags = new Array(32).fill(0);
+            const kickPhase = (tSec % 0.5) / 0.5;
+            const kick = Math.exp(-kickPhase * 7) * (0.75 + 0.25 * Math.sin(tSec * 0.9));
+            for (let i = 0; i < 4; i++) mags[i] = kick * (1 - i * 0.18);
+            for (let i = 4; i < 16; i++) {
+                mags[i] = Math.max(0, 0.25 + 0.25 * Math.sin(tSec * 2.2 + i * 0.9)) *
+                          (0.5 + 0.5 * Math.sin(tSec * 0.6 + i * 0.35));
+            }
+            const hatPhase = ((tSec + 0.125) % 0.25) / 0.25;
+            const hat = Math.exp(-hatPhase * 11) * 0.55;
+            for (let i = 16; i < 32; i++) mags[i] = hat * (0.35 + 0.65 * Math.abs(Math.sin(i * 2.7 + tSec * 3)));
+            const amp = Math.min(1, kick * 0.6 + hat * 0.25 + 0.1);
+            updateAudioState(mags, amp);
+        }
+
+        // ── Hero-style waveform renderer (mirrors index.html's hero canvas) ─
+        const HIST = 90;
+        function drawWave(c, timeSec) {
+            const canvas = c.canvas;
+            const ctx = canvas.getContext("2d");
+            const dpr = window.devicePixelRatio || 1;
+            const cssW = canvas.clientWidth || 300;
+            const cssH = 80;
+            if (canvas.width !== Math.round(cssW * dpr)) {
+                canvas.width = Math.round(cssW * dpr);
+                canvas.height = Math.round(cssH * dpr);
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.fillStyle = "#f4ebd0";
+            ctx.fillRect(0, 0, cssW, cssH);
+            ctx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+            ctx.lineWidth = 1;
+            for (let x = 0; x < cssW; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, cssH);
+                ctx.stroke();
+            }
+            const hist = c.hist;
+            if (hist.length < 2) return;
+            const step = cssW / (HIST - 1);
+            for (let i = 0; i < hist.length - 1; i++) {
+                const h1 = hist[i] * (cssH - 15);
+                const h2 = hist[i + 1] * (cssH - 15);
+                const x1 = i * step, x2 = (i + 1) * step;
+                const w1 = Math.sin(timeSec * 5 + i * 0.05);
+                const w2 = Math.sin(timeSec * 5 + (i + 1) * 0.05);
+                const y1t = cssH / 2 - w1 * h1 * 0.4;
+                const y2t = cssH / 2 - w2 * h2 * 0.4;
+                const y1b = cssH / 2 + w1 * h1 * 0.4;
+                const y2b = cssH / 2 + w2 * h2 * 0.4;
+
+                ctx.fillStyle = "rgba(226, 59, 36, 0.35)";
+                ctx.beginPath();
+                ctx.moveTo(x1, y1t - h1 / 2);
+                ctx.lineTo(x2, y2t - h2 / 2);
+                ctx.lineTo(x2, y2b + h2 / 2);
+                ctx.lineTo(x1, y1b + h1 / 2);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.strokeStyle = "#111111";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1t - h1 / 2);
+                ctx.lineTo(x2, y2t - h2 / 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x2, y2b + h2 / 2);
+                ctx.lineTo(x1, y1b + h1 / 2);
+                ctx.stroke();
+            }
+        }
+
+        // ── Animation loop ──────────────────────────────────────────────────
+        let last = performance.now();
+        function frame(now) {
+            // Clamp dt so scrolling back to a card doesn't explode dt-integrating examples.
+            const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
+            last = now;
+            let audioUpdated = false;
+            for (const c of cards) {
+                if (!c.visible) continue;
+                if (!audioUpdated) {
+                    simulateAudio(now / 1000);
+                    audioUpdated = true;
+                }
+                c.vt += dt;
+                let out = 0;
+                if (c.evaluator) {
+                    try { out = c.evaluator.run(c.vt, 150, 1.0, 0.8, 0.15); } catch (e) { out = 0; }
+                }
+                c.hist.push(out);
+                if (c.hist.length > HIST) c.hist.shift();
+                drawWave(c, now / 1000);
+            }
+            requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+    </script>
 </body>
 
 </html>
