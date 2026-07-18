@@ -105,7 +105,12 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
     }
 
     const char* type = doc["type"] | "";
-    if (strcmp(type, "state") == 0) {
+    if (strcmp(type, "sync-request") == 0) {
+        Serial.println("[CTRL] BLE sync requested (config + state)");
+        broadcastConfig();
+        broadcastState();
+        return;
+    } else if (strcmp(type, "state") == 0) {
         if (doc["patch"].is<JsonObjectConst>()) {
             applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine_);
         }
@@ -198,7 +203,7 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
 }
 
 void BleServer::broadcastState() {
-    if (!deviceConnected_ || !pTxCharacteristic_ || !engine_) return;
+    if (!deviceConnected_ || !pTxCharacteristic_ || !engine_ || configSyncInProgress_) return;
 
     JsonDocument doc;
     doc["type"] = "state";
@@ -206,11 +211,111 @@ void BleServer::broadcastState() {
     serializeState(data, engine_);
     data.remove("info"); // Remove verbose info structure to stay under 253 bytes
 
+    notifyJson_(doc);
+}
+
+void BleServer::notifyJson_(JsonDocument& doc) {
+    if (!deviceConnected_ || !pTxCharacteristic_) return;
+
     String body;
     serializeJson(doc, body);
-
     pTxCharacteristic_->setValue(body.c_str());
     pTxCharacteristic_->notify();
+    const char* type = doc["type"] | "";
+    if (strncmp(type, "config", 6) == 0) {
+        delay(25); // Keep the multi-part config burst from overrunning BLE queues.
+    }
+}
+
+void BleServer::broadcastConfig() {
+    if (!deviceConnected_ || !pTxCharacteristic_ || !config_) return;
+    configSyncInProgress_ = true;
+
+    {
+        JsonDocument doc;
+        doc["type"] = "config-start";
+        notifyJson_(doc);
+    }
+    {
+        JsonDocument doc;
+        doc["type"] = "config";
+        doc["section"] = "identity";
+        auto data = doc["data"].to<JsonObject>();
+        data["apSsid"] = config_->apSsid();
+        data["hostname"] = config_->hostname();
+        notifyJson_(doc);
+    }
+    {
+        JsonDocument doc;
+        doc["type"] = "config";
+        doc["section"] = "driver";
+        auto data = doc["data"].to<JsonObject>();
+        const auto& dc = config_->driverConfig();
+        data["kind"] = (int)config_->driverKind();
+        auto pins = data["pins"].to<JsonArray>();
+        for (int i = 0; i < 8; ++i) pins.add(dc.pins[i]);
+        data["sda"] = dc.sda;
+        data["scl"] = dc.scl;
+        data["pwmHz"] = dc.pwmHz;
+        notifyJson_(doc);
+    }
+    {
+        JsonDocument doc;
+        doc["type"] = "config";
+        doc["section"] = "audio";
+        auto data = doc["data"].to<JsonObject>();
+        const auto& ac = config_->audioConfig();
+        data["enabled"] = config_->audioEnabled();
+        data["source"] = (int)ac.source;
+        data["bclk"] = ac.i2sBclk;
+        data["ws"] = ac.i2sWs;
+        data["sd"] = ac.i2sSd;
+        data["adc"] = ac.adcPin;
+        data["gain"] = ac.gain;
+        notifyJson_(doc);
+    }
+    {
+        JsonDocument doc;
+        doc["type"] = "config";
+        doc["section"] = "led";
+        auto data = doc["data"].to<JsonObject>();
+        data["enabled"] = config_->ledEnabled();
+        data["pin"] = config_->ledConfig().pin;
+        data["count"] = config_->ledConfig().count;
+        notifyJson_(doc);
+    }
+    for (size_t i = 0; i < config_->knobCount(); ++i) {
+        JsonDocument doc;
+        doc["type"] = "config";
+        doc["section"] = "knob";
+        auto data = doc["data"].to<JsonObject>();
+        const auto& knob = config_->knob(i);
+        data["enabled"] = knob.enabled;
+        data["pin"] = knob.pin;
+        data["param"] = knob.param;
+        notifyJson_(doc);
+    }
+    {
+        JsonDocument doc;
+        doc["type"] = "config";
+        doc["section"] = "oled";
+        auto data = doc["data"].to<JsonObject>();
+        const auto& oc = config_->oledConfig();
+        data["enabled"] = config_->oledEnabled();
+        data["sda"] = oc.sda;
+        data["scl"] = oc.scl;
+        data["i2cAddr"] = oc.i2cAddr;
+        data["width"] = oc.width;
+        data["height"] = oc.height;
+        data["eStopPin"] = config_->eStopPin();
+        notifyJson_(doc);
+    }
+    {
+        JsonDocument doc;
+        doc["type"] = "config-complete";
+        notifyJson_(doc);
+    }
+    configSyncInProgress_ = false;
 }
 
 } // namespace haxel::web

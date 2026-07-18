@@ -5,6 +5,7 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <ArduinoJson.h>
 #include "../core/Engine.h"
 #include "../core/Config.h"
 
@@ -15,6 +16,7 @@ public:
     bool begin(core::Engine* engine, Config* config);
     void stop();
     void broadcastState();
+    void broadcastConfig();
 
     // BLEServerCallbacks
     void onConnect(BLEServer* pServer) override;
@@ -30,6 +32,9 @@ private:
     BLECharacteristic* pTxCharacteristic_ = nullptr;
     BLECharacteristic* pRxCharacteristic_ = nullptr;
     bool deviceConnected_ = false;
+    volatile bool configSyncInProgress_ = false;
+
+    void notifyJson_(ArduinoJson::JsonDocument& doc);
 };
 
 } // namespace haxel::web

@@ -76,6 +76,7 @@ public:
         staSsid_ = ssid; staPass_ = pass; markDirty();
     }
     void setHostname(const String& h) { hostname_ = h; markDirty(); }
+    void setApSsid(const String& ssid);
     void setFirstRunComplete()        { firstRun_ = false; markDirty(); }
     void setAudioConfig(const AudioConfig& c) { audio_ = c; markDirty(); }
     void setLedConfig(const LedConfig& c) { led_ = c; markDirty(); }

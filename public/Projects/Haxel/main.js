@@ -2334,10 +2334,12 @@ function setSelectValue(id, value) {
 
 function applyDeviceConfig(cfg) {
     if (!cfg) return;
-    const KIND_TO_NAME = { 1: "DRV8833", 2: "DRV8833", 3: "DRV2605L", 4: "MOSFET", 5: "DRV8833" };
+    const ssidEl = document.getElementById("deviceSsid");
+    if (ssidEl && cfg.apSsid) ssidEl.value = cfg.apSsid;
+    const KIND_TO_NAME = { 0: "NONE", 1: "L298N", 2: "DRV8833", 3: "DRV2605L", 4: "MOSFET", 5: "MINI_HBRIDGE" };
     // Prefer exact MOSFET/DRV mapping from firmware enum.
     const kind = cfg.driver && cfg.driver.kind != null ? cfg.driver.kind : 4;
-    const drvName = kind === 4 ? "MOSFET" : (kind === 3 ? "DRV2605L" : (kind === 2 ? "DRV8833" : (KIND_TO_NAME[kind] || "MOSFET")));
+    const drvName = KIND_TO_NAME[kind] || "MOSFET";
     setSelectValue("drvChip", drvName);
 
     if (cfg.driver) {
@@ -2491,7 +2493,9 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         if (idx < 8) pinsPadded[idx] = pin;
     });
 
+    const requestedSsid = document.getElementById("deviceSsid")?.value.trim() || "Haxel";
     const configPatch = {
+        apSsid: requestedSsid,
         driver: {
             kind: kind,
             pins: pinsPadded,

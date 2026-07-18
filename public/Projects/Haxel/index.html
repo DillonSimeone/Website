@@ -315,6 +315,16 @@ wave(t * (freq * 0.05))
                                 <!-- DEVICE TAB -->
                                 <div class="tab-content" id="tab-device" style="display:none">
                                     <h3>Hardware Calibration</h3>
+                                    <div class="calib-section">
+                                        <h4>Device Identity</h4>
+                                        <div class="row">
+                                            <label>WiFi / BLE Name</label>
+                                            <input type="text" id="deviceSsid" maxlength="31" value="Haxel" placeholder="Haxel-MyDevice">
+                                        </div>
+                                        <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px;">
+                                            Used for both the WiFi SSID and Bluetooth device name after saving and rebooting. Names are kept under the Haxel prefix for browser discovery.
+                                        </p>
+                                    </div>
                                     
                                     <!-- Driver Section -->
                                     <div class="calib-section">
@@ -322,9 +332,11 @@ wave(t * (freq * 0.05))
                                         <div class="row">
                                             <label>Driver IC</label>
                                             <select id="drvChip">
+                                                <option value="L298N">L298N (Dual H-Bridge)</option>
                                                 <option value="DRV2605L">DRV2605L (I2C Low-Latency)</option>
                                                 <option value="DRV8833">DRV8833 (Dual PWM H-Bridge)</option>
                                                 <option value="MOSFET" selected>Raw MOSFET (Direct PWM Output)</option>
+                                                <option value="MINI_HBRIDGE">Mini H-Bridge (2-pin)</option>
                                             </select>
                                         </div>
                                         <div class="row">
@@ -338,11 +350,10 @@ wave(t * (freq * 0.05))
                                         <div class="row">
                                             <label>PWM Freq (Hz)</label>
                                             <select id="pwmHz">
-                                                <option value="5000">5000 Hz</option>
+                                                <option value="50">50 Hz (Solenoid default)</option>
+                                                <option value="1000">1000 Hz</option>
                                                 <option value="10000">10000 Hz</option>
-                                                <option value="20000" selected>20000 Hz</option>
-                                                <option value="30000">30000 Hz</option>
-                                                <option value="40000">40000 Hz</option>
+                                                <option value="20000" selected>20000 Hz (Ultrasonic / Silent)</option>
                                             </select>
                                         </div>
                                         
@@ -490,11 +501,7 @@ wave(t * (freq * 0.05))
                                         </div>
                                         <div class="row">
                                             <label>Feedback Count</label>
-                                            <select id="ledCount">
-                                                <option value="30">30 LEDs</option>
-                                                <option value="60" selected>60 LEDs</option>
-                                                <option value="120">120 LEDs</option>
-                                            </select>
+                                            <input type="number" id="ledCount" min="1" max="300" step="1" value="20">
                                         </div>
                                     </div>
                                     

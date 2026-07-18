@@ -64,6 +64,24 @@ String Config::generateApSsid_() {
     return String(buf);
 }
 
+void Config::setApSsid(const String& requested) {
+    String value;
+    value.reserve(32);
+    for (size_t i = 0; i < requested.length() && value.length() < 31; ++i) {
+        const char c = requested.charAt(i);
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+            (c >= '0' && c <= '9') || c == '-' || c == '_' || c == ' ') {
+            value += c;
+        }
+    }
+    value.trim();
+    if (value.isEmpty()) value = generateApSsid_();
+    if (!value.startsWith("Haxel")) value = "Haxel-" + value;
+    if (value.length() > 31) value.remove(31);
+    apSsid_ = value;
+    markDirty();
+}
+
 bool Config::load() {
     applyDefaults_();
     File f = LittleFS.open(kPath, "r");

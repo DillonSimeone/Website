@@ -252,12 +252,24 @@ wave(t * (freq * 0.05))
                             <!-- DEVICE TAB -->
                             <div class="tab-content" id="tab-device" style="display:none">
                                 <h3>Hardware Calibration</h3>
+                                <div class="calib-section">
+                                    <h4>Device Identity</h4>
+                                    <div class="row">
+                                        <label>WiFi / BLE Name</label>
+                                        <input type="text" id="deviceSsid" maxlength="31" value="Haxel" placeholder="Haxel-MyDevice">
+                                    </div>
+                                    <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px;">
+                                        Used for both the WiFi SSID and Bluetooth device name after saving and rebooting. Names are kept under the Haxel prefix for browser discovery.
+                                    </p>
+                                </div>
                                 <div class="row">
                                     <label>Driver IC</label>
                                     <select id="drvChip">
                                         <option value="MOSFET" selected>Raw MOSFET (Direct PWM Output)</option>
+                                        <option value="L298N">L298N (Dual H-Bridge)</option>
                                         <option value="DRV8833">DRV8833 (Dual PWM H-Bridge)</option>
                                         <option value="DRV2605L">DRV2605L (I2C Low-Latency)</option>
+                                        <option value="MINI_HBRIDGE">Mini H-Bridge (2-pin)</option>
                                     </select>
                                 </div>
                                 <div class="row">

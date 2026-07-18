@@ -379,8 +379,6 @@ drvSelect.addEventListener("change", (e) => {
     currentDriverText.textContent = e.target.value;
     addSerialLog(`[HAL] Driver reconfigured to: ${e.target.value}`);
     triggerI2CBlink();
-    // Save/Sync config
-    sendConfigUpdate({ driver: { kind: getDriverKindEnum(e.target.value) } });
 });
 
 actSelect.addEventListener("change", (e) => {
@@ -394,7 +392,6 @@ actSelect.addEventListener("change", (e) => {
     currentDriverText.textContent = drvSelect.value;
     addSerialLog(`[HAL] Actuator mapped to: ${act} (Driver: ${drvSelect.value})`);
     triggerI2CBlink();
-    sendConfigUpdate({ driver: { kind: getDriverKindEnum(drvSelect.value) } });
 });
 
 function getDriverKindEnum(kindStr) {
@@ -755,10 +752,48 @@ let rxCharacteristic = null;
 let txCharacteristic = null;
 let bleWriteChain = Promise.resolve();
 let lastUploadedPatternKey = "";
+let bleReady = false;
+let bleStateReceived = false;
+let bleConfigReceived = false;
+let pendingDeviceConfig = null;
+let bleSyncTimer = null;
+let bleSyncRetryCount = 0;
 
 const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+function setBlePortalLocked(locked, message = "") {
+    const portalBody = document.querySelector(".portal-body");
+    if (portalBody) {
+        portalBody.inert = locked;
+        portalBody.style.opacity = locked ? "0.55" : "";
+        portalBody.style.pointerEvents = locked ? "none" : "";
+        portalBody.setAttribute("aria-busy", locked ? "true" : "false");
+    }
+    const connText = document.getElementById("connText");
+    if (connText && message) connText.textContent = message;
+}
+
+function resetBleHydration(message = "connect BLE") {
+    bleReady = false;
+    bleStateReceived = false;
+    bleConfigReceived = false;
+    pendingDeviceConfig = null;
+    bleSyncRetryCount = 0;
+    clearTimeout(bleSyncTimer);
+    setBlePortalLocked(true, message);
+}
+
+function finishBleHydrationIfReady() {
+    if (!bleStateReceived || !bleConfigReceived) return;
+    bleReady = true;
+    clearTimeout(bleSyncTimer);
+    setBlePortalLocked(false, "connected");
+    const bleStatus = document.getElementById("bleStatusLabel");
+    if (bleStatus) bleStatus.textContent = "Connected · settings loaded";
+    addSerialLog("[SAFETY] Device state and hardware configuration loaded. Controls unlocked.");
+}
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -881,6 +916,7 @@ async function connectBLE() {
     const connText = document.getElementById("connText");
     const bleStatus = document.getElementById("bleStatusLabel");
     
+    resetBleHydration("connecting...");
     addSerialLog("[BLE] Requesting Bluetooth Device...");
     updateConnectButtonsState(false, true);
     
@@ -909,14 +945,22 @@ async function connectBLE() {
         await txCharacteristic.startNotifications();
         txCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
         
-        dot.className = "portal-dot ok";
-        connText.textContent = "connected";
-        if (bleStatus) bleStatus.textContent = "Connected";
+        dot.className = "portal-dot";
+        connText.textContent = "loading settings...";
+        if (bleStatus) bleStatus.textContent = "Connected · loading settings";
         updateConnectButtonsState(true);
-        addSerialLog("[BLE] Bluetooth connection fully established!");
+        addSerialLog("[BLE] Connected. Requesting authoritative state and configuration...");
         
-        // Request current status
-        sendStateUpdate({ getStatus: true });
+        // Read-only handshake. Never send portal defaults during connection.
+        await bleWriteJson({ type: "sync-request" });
+        bleSyncTimer = setTimeout(() => {
+            if (!bleReady) {
+                addSerialLog("[SAFETY] Sync timed out; controls remain locked. Disconnect and retry.");
+                connText.textContent = "sync failed";
+                if (bleStatus) bleStatus.textContent = "Settings sync failed";
+                dot.className = "portal-dot error";
+            }
+        }, 8000);
         
     } catch (err) {
         addSerialLog(`[BLE] [ERROR] Connection failed: ${err.message}`);
@@ -945,7 +989,81 @@ function onDisconnected() {
     updateConnectButtonsState(false);
     rxCharacteristic = null;
     txCharacteristic = null;
+    resetBleHydration("disconnected");
     addSerialLog("[BLE] Disconnected from device.");
+}
+
+function setDeviceControlValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el || value === undefined || value === null) return;
+    const str = String(value);
+    if (el.tagName === "SELECT" && !Array.from(el.options).some(option => option.value === str)) {
+        const option = document.createElement("option");
+        option.value = str;
+        option.textContent = str === "-1" ? "Unassigned (-1)" : `GPIO ${str}`;
+        el.appendChild(option);
+    }
+    el.value = str;
+}
+
+function applyDeviceConfig(cfg) {
+    if (!cfg) return;
+    const ssidEl = document.getElementById("deviceSsid");
+    if (ssidEl && cfg.apSsid) ssidEl.value = cfg.apSsid;
+
+    if (cfg.driver) {
+        const kindToName = {
+            0: "NONE", 1: "L298N", 2: "DRV8833",
+            3: "DRV2605L", 4: "MOSFET", 5: "MINI_HBRIDGE"
+        };
+        const driverName = kindToName[cfg.driver.kind] || "MOSFET";
+        setDeviceControlValue("drvChip", driverName);
+        currentDriverText.textContent = driverName;
+        setDeviceControlValue("pwmHz", cfg.driver.pwmHz);
+        setDeviceControlValue("pinSDA", cfg.driver.sda);
+        setDeviceControlValue("pinSCL", cfg.driver.scl);
+        if (Array.isArray(cfg.driver.pins)) {
+            activeMotors = cfg.driver.pins.filter(pin => Number.isFinite(pin) && pin >= 0);
+            renderMotors();
+        }
+    }
+
+    if (cfg.audio) {
+        const enabled = document.getElementById("audioEnabled");
+        if (enabled) enabled.checked = !!cfg.audio.enabled;
+        setDeviceControlValue("audioSource", cfg.audio.source);
+        setDeviceControlValue("audioBclk", cfg.audio.bclk);
+        setDeviceControlValue("audioWs", cfg.audio.ws);
+        setDeviceControlValue("audioSd", cfg.audio.sd);
+        setDeviceControlValue("audioAdc", cfg.audio.adc);
+        document.getElementById("audioSource")?.dispatchEvent(new Event("change"));
+    }
+
+    if (cfg.led) {
+        const enabled = document.getElementById("ledEnabled");
+        if (enabled) enabled.checked = cfg.led.enabled !== false;
+        setDeviceControlValue("ledPin", cfg.led.pin);
+        setDeviceControlValue("ledCount", cfg.led.count);
+    }
+
+    activeKnobs = Array.isArray(cfg.knobs)
+        ? cfg.knobs.filter(knob => knob.enabled !== false).map(knob => ({
+            pin: knob.pin ?? -1,
+            param: knob.param || "none"
+        }))
+        : [];
+    renderKnobs();
+
+    if (cfg.oled) {
+        const enabled = document.getElementById("oledEnabled");
+        if (enabled) enabled.checked = !!cfg.oled.enabled;
+        if (cfg.oled.enabled) {
+            setDeviceControlValue("pinSDA", cfg.oled.sda);
+            setDeviceControlValue("pinSCL", cfg.oled.scl);
+        }
+    }
+
+    addSerialLog(`[BLE] Loaded device config: ${cfg.apSsid || "Haxel"}, driver=${cfg.driver?.kind}, PWM=${cfg.driver?.pwmHz}Hz`);
 }
 
 function handleNotification(event) {
@@ -955,8 +1073,53 @@ function handleNotification(event) {
     
     try {
         const m = JSON.parse(str);
+        if (m.type === "config-start") {
+            pendingDeviceConfig = { knobs: [] };
+            return;
+        }
+        if (m.type === "config" && m.section && m.data) {
+            if (!pendingDeviceConfig) pendingDeviceConfig = { knobs: [] };
+            if (m.section === "identity") {
+                Object.assign(pendingDeviceConfig, m.data);
+            } else if (m.section === "knob") {
+                pendingDeviceConfig.knobs.push(m.data);
+            } else {
+                pendingDeviceConfig[m.section] = m.data;
+            }
+            return;
+        }
+        if (m.type === "config-complete") {
+            const missing = [];
+            if (!pendingDeviceConfig?.apSsid) missing.push("identity");
+            if (!pendingDeviceConfig?.driver) missing.push("driver");
+            if (pendingDeviceConfig?.driver?.kind === undefined) missing.push("driver.kind");
+            if (pendingDeviceConfig?.driver?.pwmHz === undefined) missing.push("driver.pwmHz");
+            if (!Array.isArray(pendingDeviceConfig?.driver?.pins)) missing.push("driver.pins");
+            if (!pendingDeviceConfig?.audio) missing.push("audio");
+            if (!pendingDeviceConfig?.led) missing.push("led");
+            if (!pendingDeviceConfig?.oled) missing.push("oled");
+            if (missing.length > 0) {
+                addSerialLog(`[SAFETY] Incomplete config (${missing.join(", ")} missing); controls remain locked.`);
+                if (bleSyncRetryCount < 2 && rxCharacteristic) {
+                    bleSyncRetryCount++;
+                    setTimeout(() => {
+                        bleWriteJson({ type: "sync-request" })
+                            .catch(err => addSerialLog(`[BLE] Config retry failed: ${err.message}`));
+                    }, 250);
+                }
+                return;
+            }
+            applyDeviceConfig(pendingDeviceConfig);
+            bleConfigReceived = true;
+            finishBleHydrationIfReady();
+            return;
+        }
         if (m.type === 'state' && m.data) {
             const s = m.data;
+            if (s.on !== undefined) {
+                isPlaying = !!s.on;
+                document.getElementById("dot").className = isPlaying ? "portal-dot ok" : "portal-dot";
+            }
             if (s.intensity !== undefined) {
                 masterIntensity = Math.round(s.intensity * 255);
                 const el = document.getElementById("bright");
@@ -988,14 +1151,24 @@ function handleNotification(event) {
                 numBins = s.numBins;
                 if (s.dividers) dividers = s.dividers.slice();
                 renderBinRows();
+                if (Array.isArray(s.binPatterns)) {
+                    s.binPatterns.forEach((pattern, index) => {
+                        const select = document.getElementById(`bin-${index}-pattern`);
+                        if (select) select.value = pattern;
+                    });
+                }
             }
             if (s.pattern) {
-                const p = PATTERNS.find(pat => pat.id === s.pattern);
-                if (p) {
-                    activePattern = p;
-                    const vLabel = document.getElementById("patternName");
-                    if (vLabel) vLabel.textContent = p.name;
-                }
+                const p = PATTERNS.find(pat => pat.id === s.pattern) || {
+                    id: s.pattern,
+                    name: s.pattern,
+                    category: "device",
+                    desc: "Pattern currently active on the connected device.",
+                    func: () => 0
+                };
+                activePattern = p;
+                const vLabel = document.getElementById("patternName");
+                if (vLabel) vLabel.textContent = p.name;
             }
             if (s.uptime_ms !== undefined) {
                 const uptimeText = document.getElementById("uptime");
@@ -1003,6 +1176,8 @@ function handleNotification(event) {
                     uptimeText.textContent = Math.floor(s.uptime_ms / 1000) + "s";
                 }
             }
+            bleStateReceived = true;
+            finishBleHydrationIfReady();
         }
     } catch (e) {
         console.error("BLE Notification Parse Error:", e);
@@ -1024,7 +1199,7 @@ function throttle(fn, ms) {
 }
 
 const sendStateUpdate = throttle(async (patch) => {
-    if (!rxCharacteristic) return;
+    if (!rxCharacteristic || !bleReady) return;
     try {
         await bleWriteJson({ type: "state", patch: patch });
     } catch (err) {
@@ -1033,7 +1208,9 @@ const sendStateUpdate = throttle(async (patch) => {
 }, 100);
 
 async function sendConfigUpdate(configPatch) {
-    if (!rxCharacteristic) return;
+    if (!rxCharacteristic || !bleReady) {
+        throw new Error("Device settings have not finished loading");
+    }
     try {
         await bleWriteJson({ type: "config", patch: configPatch });
         addSerialLog(`[BLE] Sent config update to ESP32: ${JSON.stringify(configPatch)}`);
@@ -1043,6 +1220,7 @@ async function sendConfigUpdate(configPatch) {
 }
 
 function syncStateToESP32() {
+    if (!bleReady) return;
     sendStateUpdate({
         on: isPlaying,
         intensity: masterIntensity / 255,
@@ -1796,8 +1974,8 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 4;
     const pwmHz = parseInt(document.getElementById("pwmHz")?.value) || 20000;
     
-    const sda = parseInt(document.getElementById("pinSDA").value) || 1;
-    const scl = parseInt(document.getElementById("pinSCL").value) || 2;
+    const sda = parseInt(document.getElementById("pinSDA").value);
+    const scl = parseInt(document.getElementById("pinSCL").value);
 
     const audioEnabled = document.getElementById("audioEnabled").checked;
     const audioSource = parseInt(document.getElementById("audioSource").value);
@@ -1808,11 +1986,15 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
 
     const ledEnabled = document.getElementById("ledEnabled").checked;
     const ledPin = parseInt(document.getElementById("ledPin").value);
-    const ledCount = parseInt(document.getElementById("ledCount").value);
+    const ledCountEl = document.getElementById("ledCount");
+    let ledCount = parseInt(ledCountEl?.value, 10);
+    if (!Number.isFinite(ledCount) || ledCount < 1) ledCount = 20;
+    if (ledCount > 300) ledCount = 300;
+    if (ledCountEl) ledCountEl.value = String(ledCount);
 
     const oledEnabled = document.getElementById("oledEnabled").checked;
-    const oledSda = parseInt(document.getElementById("oledSda").value);
-    const oledScl = parseInt(document.getElementById("oledScl").value);
+    const oledSda = sda;
+    const oledScl = scl;
 
     // Dynamic conflict validator
     const pinAllocations = [];
@@ -1849,12 +2031,6 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         pinAllocations.push({ name: `Knob ${idx}`, pin: k.pin });
     });
 
-    // Add OLED pins
-    if (oledEnabled) {
-        pinAllocations.push({ name: "OLED SDA", pin: oledSda });
-        pinAllocations.push({ name: "OLED SCL", pin: oledScl });
-    }
-
     // Check for duplicate assignments
     const pinCounts = {};
     let hasConflict = false;
@@ -1887,12 +2063,14 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         if (idx < 8) pinsPadded[idx] = pin;
     });
 
+    const requestedSsid = document.getElementById("deviceSsid")?.value.trim() || "Haxel";
     const configPatch = {
+        apSsid: requestedSsid,
         driver: {
             kind: kind,
             pins: pinsPadded,
-            sda: sda,
-            scl: scl,
+            sda: Number.isFinite(sda) ? sda : -1,
+            scl: Number.isFinite(scl) ? scl : -1,
             pwmHz: pwmHz
         },
         audio: {
@@ -1911,18 +2089,21 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         knobs: activeKnobs.map(k => ({ enabled: true, pin: k.pin, param: k.param })),
         oled: {
             enabled: oledEnabled,
-            sda: oledSda,
-            scl: oledScl
+            sda: Number.isFinite(oledSda) ? oledSda : -1,
+            scl: Number.isFinite(oledScl) ? oledScl : -1
         }
     };
     
     if (rxCharacteristic) {
-        sendConfigUpdate(configPatch);
+        sendConfigUpdate(configPatch)
+            .then(() => addSerialLog("[SAFETY] Configuration saved; device is rebooting with the new settings."))
+            .catch(err => addSerialLog(`[BLE] [ERROR] Configuration save failed: ${err.message}`));
     } else {
         addSerialLog(`[SIMULATOR] Saved config (offline): ${JSON.stringify(configPatch)}`);
     }
 });
 
+resetBleHydration("connect BLE");
 loadCustomPatterns(frequencyShift, playbackSpeed, masterIntensity, startupFloor);
 renderCards();
 syncHL();

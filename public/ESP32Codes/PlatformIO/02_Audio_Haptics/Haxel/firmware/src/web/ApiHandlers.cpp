@@ -53,6 +53,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         JsonDocument doc;
         doc["firstRun"] = config->firstRun();
         doc["hostname"] = config->hostname();
+        doc["apSsid"] = config->apSsid();
         auto drv = doc["driver"].to<JsonObject>();
         drv["kind"]  = (int)config->driverKind();
         const auto& dc = config->driverConfig();

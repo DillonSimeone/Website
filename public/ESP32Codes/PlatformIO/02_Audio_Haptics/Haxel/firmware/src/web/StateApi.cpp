@@ -201,6 +201,9 @@ void applyConfigPatch(JsonObjectConst patch, Config* config) {
     if (patch["hostname"].is<const char*>()) {
         config->setHostname(patch["hostname"].as<const char*>());
     }
+    if (patch["apSsid"].is<const char*>()) {
+        config->setApSsid(patch["apSsid"].as<const char*>());
+    }
     if (patch["knobs"].is<JsonArrayConst>()) {
         KnobConfig knobs[Config::kMaxKnobs];
         size_t count = 0;
