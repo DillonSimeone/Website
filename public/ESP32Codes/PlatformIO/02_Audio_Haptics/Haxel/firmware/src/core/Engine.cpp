@@ -64,6 +64,20 @@ void Engine::pushExternal(uint8_t channel, float value01) {
     externalValues_[channel] = value01;
 }
 
+void Engine::pushRemoteAudio(const AudioFrame& frame) {
+    portENTER_CRITICAL(&mux_);
+    remoteAudio_ = frame;
+    remoteAudioMs_ = millis();
+    portEXIT_CRITICAL(&mux_);
+}
+
+bool Engine::hasRemoteAudio(uint32_t maxAgeMs) const {
+    portENTER_CRITICAL(const_cast<portMUX_TYPE*>(&mux_));
+    const bool ok = remoteAudio_.valid && (millis() - remoteAudioMs_) <= maxAgeMs;
+    portEXIT_CRITICAL(const_cast<portMUX_TYPE*>(&mux_));
+    return ok;
+}
+
 void Engine::copyState(StagedState& out) const {
     portENTER_CRITICAL(const_cast<portMUX_TYPE*>(&mux_));
     out = active_;
@@ -208,9 +222,9 @@ void Engine::tick() {
         return;
     }
     wasIdle_ = false;
-    state_ = (active_.pattern && active_.pattern->usesAudio() && audio_ && audio_->ready())
-                 ? EngineState::AUDIO_REACTIVE
-                 : EngineState::PLAYING;
+    const bool audioOk = (active_.pattern && active_.pattern->usesAudio()) &&
+                         ((audio_ && audio_->ready()) || hasRemoteAudio());
+    state_ = audioOk ? EngineState::AUDIO_REACTIVE : EngineState::PLAYING;
 
     // 4. Evaluate + write.
     float patternTimeMs = (tickCount_) * active_.speed;
@@ -223,7 +237,14 @@ void Engine::writeAllChannels(float tMs) {
     ctx.intensityMaster = active_.intensity;
     ctx.speed = active_.speed;
     ctx.startupFloor = active_.startupFloor;
-    ctx.audio = audio_ ? audio_->latest() : AudioFrame{};
+    // Prefer fresh mesh audio (Follower) over local mic when present.
+    if (hasRemoteAudio()) {
+        portENTER_CRITICAL(&mux_);
+        ctx.audio = remoteAudio_;
+        portEXIT_CRITICAL(&mux_);
+    } else {
+        ctx.audio = audio_ ? audio_->latest() : AudioFrame{};
+    }
     ctx.externalValues = externalValues_;
 
     float maxDuty = 1.0f;

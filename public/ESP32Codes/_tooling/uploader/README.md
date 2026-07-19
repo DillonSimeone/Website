@@ -22,12 +22,30 @@ node start-wrapper.js
 | Control | What it does |
 |--------|----------------|
 | Project list | Scans `PlatformIO/` (+ MicroPython) for `platformio.ini` projects |
-| ENV dropdown | PlatformIO environments from that project's `platformio.ini` |
+| ENV dropdown | PlatformIO environments from that project's `platformio.ini`, with feature-flag labels when present (e.g. Haxel `c3WIFILED_MASTER — WiFi · LED · Audio · Mesh Master`) |
 | Port / Baud | Target serial port and monitor baud |
-| **BUILD & FLASH DEVICE** | `pio run -t upload` (and `-t uploadfs` when LittleFS is configured) |
+| **BUILD & FLASH DEVICE** | `pio run -t upload` (and `-t uploadfs` when that env needs LittleFS — WiFi/Master portals; skipped for BLE and mesh Followers) |
 | **QUICK FLASH** | Reuses an existing `.pio/build/<env>/` binary when present |
 | Serial monitor tab | Live `pio device monitor`; paused during flash, auto-resumes after |
 | Kill | Stops the active build/monitor process |
+
+### Haxel Command Mode (example)
+
+In the catalog pick **Haxel/firmware**, then:
+
+| ENV | Role | Flash notes |
+|-----|------|-------------|
+| `c3WIFILED_MASTER` | SoftAP portal + ESP-NOW fleet leader | upload + uploadfs |
+| `c3WIFILED_FOLLOWER` | ESP-NOW follower (no portal) | upload only |
+| `c3BLULED` | Standalone BLE (outside fleet) | upload only |
+| `c3WIFILED` | Single-unit WiFi portal | upload + uploadfs |
+
+```bat
+cd PlatformIO\02_Audio_Haptics\Haxel\firmware
+pio run -e c3WIFILED_MASTER -t upload
+pio run -e c3WIFILED_MASTER -t uploadfs
+pio run -e c3WIFILED_FOLLOWER -t upload
+```
 
 ## Manual PlatformIO (no uploader)
 
@@ -36,15 +54,6 @@ From any project directory that has a `platformio.ini`:
 ```bat
 pio run -e <env> -t upload
 pio run -e <env> -t uploadfs
-pio device monitor
-```
-
-Example (Haxel default WiFi + LED profile):
-
-```bat
-cd PlatformIO\02_Audio_Haptics\Haxel\firmware
-pio run -e c3WIFILED -t upload
-pio run -e c3WIFILED -t uploadfs
 pio device monitor
 ```
 

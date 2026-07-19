@@ -210,7 +210,12 @@ function renderProjects() {
       card.innerHTML = `
         <h3>${displayName}</h3>
         <span class="board-tag">${project.board}</span>
-        <p style="margin-top: 8px; opacity: 0.8; font-size: 0.8rem;">Envs: ${project.envs.join(', ')}</p>
+        <p style="margin-top: 8px; opacity: 0.8; font-size: 0.8rem;">Envs: ${project.envs.map(e => {
+          const m = project.envMeta && project.envMeta[e];
+          return m && m.flagLabels && m.flagLabels.length
+            ? `${e} (${m.flagLabels.join('+')})`
+            : e;
+        }).join(', ')}</p>
       `;
 
       card.addEventListener('click', (e) => {
@@ -251,19 +256,21 @@ function selectProject(project) {
   // Reset Add Env dropdown
   addEnvSelectEl.value = "";
 
-  // Populate Environments
+  // Populate Environments (with Haxel flag labels when available)
   envSelectEl.innerHTML = '';
   project.envs.forEach(env => {
     const opt = document.createElement('option');
     opt.value = env;
-    opt.textContent = env;
+    const meta = project.envMeta && project.envMeta[env];
+    opt.textContent = meta && meta.label ? meta.label : env;
     envSelectEl.appendChild(opt);
   });
 
-  // Verify firmware bin availability
+  // Verify firmware bin availability + show feature flags
   updateQuickFlashState();
-  envSelectEl.removeEventListener('change', updateQuickFlashState);
-  envSelectEl.addEventListener('change', updateQuickFlashState);
+  updateEnvFlags();
+  envSelectEl.removeEventListener('change', onEnvChanged);
+  envSelectEl.addEventListener('change', onEnvChanged);
 
   // Render Libraries
   libraryTagsEl.innerHTML = '';
@@ -286,6 +293,30 @@ function selectProject(project) {
 }
 
 // Check if pre-compiled bin exists for the active project env
+function onEnvChanged() {
+  updateQuickFlashState();
+  updateEnvFlags();
+}
+
+function updateEnvFlags() {
+  const flagsEl = document.getElementById('env-flags');
+  if (!flagsEl || !selectedProject) return;
+  const env = envSelectEl.value;
+  const meta = selectedProject.envMeta && selectedProject.envMeta[env];
+  if (!meta || !meta.flagLabels || meta.flagLabels.length === 0) {
+    flagsEl.style.display = 'none';
+    flagsEl.innerHTML = '';
+    return;
+  }
+  flagsEl.style.display = 'flex';
+  const fsHint = meta.needsUploadFs
+    ? '<span class="env-flag env-flag-fs">uploadfs</span>'
+    : '<span class="env-flag env-flag-muted">no uploadfs</span>';
+  flagsEl.innerHTML = meta.flagLabels
+    .map(l => `<span class="env-flag">${l}</span>`)
+    .join('') + fsHint;
+}
+
 function updateQuickFlashState() {
   if (!selectedProject) return;
   const env = envSelectEl.value;

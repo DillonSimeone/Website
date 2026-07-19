@@ -82,6 +82,10 @@ public:
     // Direct sample injection for the "External" pattern.
     void pushExternal(uint8_t channel, float value01);
 
+    // Remote AudioFrame from mesh Master (overrides local mic while fresh).
+    void pushRemoteAudio(const AudioFrame& frame);
+    bool hasRemoteAudio(uint32_t maxAgeMs = 250) const;
+
     // Snapshot for /json/diag. Lock-free read; values may be slightly stale.
     DiagSnapshot diag() const;
 
@@ -125,6 +129,10 @@ private:
 
     // Per-channel external sample latches (for "External" pseudo-pattern).
     float               externalValues_[8] = {0};
+
+    // Mesh-injected audio (Follower). Valid while within maxAge of last push.
+    AudioFrame          remoteAudio_{};
+    uint32_t            remoteAudioMs_ = 0;
 
     // Soft-start: per-channel last-written value, ramped toward target.
     float               lastWritten_[8] = {0};

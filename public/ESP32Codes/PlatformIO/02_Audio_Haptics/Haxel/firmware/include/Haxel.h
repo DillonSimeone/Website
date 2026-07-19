@@ -37,6 +37,12 @@
 #ifndef HAXEL_FEATURE_OLED
 #define HAXEL_FEATURE_OLED 0
 #endif
+#ifndef HAXEL_FEATURE_MESH_MASTER
+#define HAXEL_FEATURE_MESH_MASTER 0
+#endif
+#ifndef HAXEL_FEATURE_MESH_FOLLOWER
+#define HAXEL_FEATURE_MESH_FOLLOWER 0
+#endif
 
 namespace haxel {
 constexpr const char* kVersion = HAXEL_VERSION_STR;

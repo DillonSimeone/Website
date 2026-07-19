@@ -94,6 +94,157 @@ function projectHasLittleFS(projectDir) {
     || /littlefs/i.test(ini);
 }
 
+/** Feature flag → short UI label (Haxel modular builds and common ESP32 flags). */
+const FLAG_LABELS = {
+  HAXEL_WIFI: 'WiFi',
+  HAXEL_BLU: 'BLE',
+  HAXEL_FEATURE_LED: 'LED',
+  HAXEL_FEATURE_AUDIO: 'Audio',
+  HAXEL_FEATURE_KNOBS: 'Knobs',
+  HAXEL_FEATURE_OLED: 'OLED',
+  HAXEL_FEATURE_MESH_MASTER: 'Mesh Master',
+  HAXEL_FEATURE_MESH_FOLLOWER: 'Mesh Follower',
+  HAXEL_TARGET_C3: 'ESP32-C3',
+  HAXEL_TARGET_S3: 'ESP32-S3',
+  HAXEL_TARGET_CLASSIC: 'ESP32',
+};
+
+/**
+ * Parse platformio.ini into flashable env metadata.
+ * Returns { envs: string[], envMeta: { [name]: { label, flags, needsUploadFs, flashable } }, libs: string[] }
+ */
+function parsePlatformioIni(iniContent, projectDir) {
+  const lines = iniContent.split(/\r?\n/);
+  const sections = {};
+  let current = null;
+  let libs = [];
+  let inLibDeps = false;
+  let collectingFlags = false;
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      current = trimmed.slice(1, -1);
+      sections[current] = { lines: [], buildFlags: [] };
+      inLibDeps = false;
+      collectingFlags = false;
+      continue;
+    }
+    if (!current || !sections[current]) continue;
+    sections[current].lines.push(raw);
+
+    if (trimmed.startsWith('lib_deps')) {
+      inLibDeps = true;
+      collectingFlags = false;
+      const val = trimmed.substring(trimmed.indexOf('=') + 1).trim();
+      if (val) libs.push(val);
+      continue;
+    }
+    if (trimmed.startsWith('build_flags')) {
+      collectingFlags = true;
+      inLibDeps = false;
+      const val = trimmed.substring(trimmed.indexOf('=') + 1).trim();
+      if (val) sections[current].buildFlags.push(val);
+      continue;
+    }
+    if (inLibDeps) {
+      if (trimmed.startsWith(';') || trimmed.startsWith('#')) continue;
+      if (trimmed.includes('=') && !trimmed.startsWith('-')) {
+        inLibDeps = false;
+      } else if (trimmed) {
+        libs.push(trimmed);
+      }
+      continue;
+    }
+    if (collectingFlags) {
+      if (trimmed.startsWith(';') || trimmed.startsWith('#')) continue;
+      if (/^[a-zA-Z_][a-zA-Z0-9_]*\s*=/.test(trimmed) && !trimmed.startsWith('-')) {
+        collectingFlags = false;
+      } else if (trimmed) {
+        sections[current].buildFlags.push(trimmed);
+      }
+    }
+  }
+
+  function resolveFlags(sectionName, depth = 0) {
+    if (!sectionName || depth > 8 || !sections[sectionName]) return [];
+    const sec = sections[sectionName];
+    const out = [...sec.buildFlags];
+    for (const line of sec.lines) {
+      const m = line.trim().match(/^extends\s*=\s*(.+)$/);
+      if (!m) continue;
+      for (const part of m[1].split(',')) {
+        const parent = part.trim();
+        if (parent) out.unshift(...resolveFlags(parent, depth + 1));
+      }
+    }
+    return out;
+  }
+
+  function extractActiveFlags(flagLines) {
+    // Last assignment wins for -DNAME=0/1 and bare -DNAME
+    const values = {};
+    for (const line of flagLines) {
+      for (const tok of line.split(/\s+/)) {
+        const m = tok.match(/^-D([A-Za-z0-9_]+)(?:=(.*))?$/);
+        if (!m) continue;
+        const name = m[1];
+        const raw = m[2] !== undefined ? m[2].replace(/^"|"$/g, '') : '1';
+        values[name] = raw;
+      }
+    }
+    const active = [];
+    for (const [name, raw] of Object.entries(values)) {
+      if (!(name in FLAG_LABELS)) continue;
+      if (raw === '0' || raw === 'false' || raw === 'FALSE') continue;
+      active.push(name);
+    }
+    // Prefer transport exclusivity display order
+    const order = Object.keys(FLAG_LABELS);
+    active.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    return active;
+  }
+
+  const hasFs = projectHasLittleFS(projectDir);
+  const envs = [];
+  const envMeta = {};
+
+  for (const name of Object.keys(sections)) {
+    if (!name.startsWith('env:')) continue;
+    const envName = name.slice(4);
+    if (envName === 'native-test') continue; // host unit tests — not flashable
+
+    const flags = extractActiveFlags(resolveFlags(name));
+    const labels = flags.map(f => FLAG_LABELS[f]).filter(Boolean);
+    const hasWifi = flags.includes('HAXEL_WIFI') || flags.includes('HAXEL_FEATURE_MESH_MASTER');
+    // SoftAP / captive portal needs LittleFS upload; pure BLE or mesh-follower do not.
+    const needsUploadFs = hasFs && hasWifi;
+
+    envs.push(envName);
+    envMeta[envName] = {
+      label: labels.length ? `${envName} — ${labels.join(' · ')}` : envName,
+      flags,
+      flagLabels: labels,
+      needsUploadFs,
+      flashable: true
+    };
+  }
+
+  return {
+    envs,
+    envMeta,
+    libs: [...new Set(libs.filter(Boolean))]
+  };
+}
+
+function envNeedsUploadFs(projectDir, envName) {
+  const iniPath = path.join(projectDir, 'platformio.ini');
+  if (!fs.existsSync(iniPath)) return projectHasLittleFS(projectDir);
+  const parsed = parsePlatformioIni(fs.readFileSync(iniPath, 'utf8'), projectDir);
+  if (parsed.envMeta[envName]) return !!parsed.envMeta[envName].needsUploadFs;
+  return projectHasLittleFS(projectDir);
+}
+
 function attachBuildOutput(proc) {
   proc.stdout.on('data', data => {
     broadcast({ type: 'log', stream: 'build', text: data.toString('utf8') });
@@ -169,7 +320,7 @@ function runPioTargets(projectDir, env, port, targets, wasMonitoring) {
         });
         return;
       }
-      if (target === 'upload' && projectHasLittleFS(projectDir)) {
+      if (target === 'upload' && envNeedsUploadFs(projectDir, env)) {
         broadcast({ type: 'log', stream: 'build', text: '[System] Firmware OK — uploading LittleFS (data/)...\n' });
       }
       runNext();
@@ -287,7 +438,7 @@ function runQuickFlash(projectDir, env, port, wasMonitoring) {
   const chip = detectChipFromIni(iniContent);
   const appOffset = getAppPartitionOffset(projectDir);
   const binPath = path.join(projectDir, '.pio', 'build', env, 'firmware.bin');
-  const needFs = projectHasLittleFS(projectDir);
+  const needFs = envNeedsUploadFs(projectDir, env);
 
   if (!resolved || !fs.existsSync(binPath)) {
     broadcast({ type: 'log', stream: 'build', text: '[System] No firmware.bin — falling back to pio upload...\n' });
@@ -433,43 +584,19 @@ app.get('/api/projects', (req, res) => {
       logLines.push(`  -> Found project indicator in: ${dir} (Pio: ${hasPio}, MicroPython: ${hasMicroPython}, Arduino: ${hasArduino})`);
       
       let envs = [];
+      let envMeta = {};
       let libs = [];
       let board = 'esp32';
       let firmwareStatus = {};
 
       if (hasPio) {
-        // Parse platformio.ini for envs and libs
+        // Parse platformio.ini for envs, Haxel feature flags, and libs
         const iniPath = path.join(dir, 'platformio.ini');
         const iniContent = fs.readFileSync(iniPath, 'utf8');
-        const lines = iniContent.split(/\r?\n/);
-        let currentSection = null;
-        let inLibDeps = false;
-
-        lines.forEach(line => {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-            currentSection = trimmed.slice(1, -1);
-            inLibDeps = false;
-            if (currentSection.startsWith('env:')) {
-              envs.push(currentSection.replace('env:', ''));
-            }
-          } else if (currentSection && trimmed) {
-            if (trimmed.startsWith('lib_deps')) {
-              inLibDeps = true;
-              const val = trimmed.substring(trimmed.indexOf('=') + 1).trim();
-              if (val) libs.push(val);
-            } else if (inLibDeps) {
-              if (trimmed.startsWith(';') || trimmed.startsWith('#')) {
-                // Comment
-              } else if (trimmed.includes('=')) {
-                // Next setting
-                inLibDeps = false;
-              } else {
-                libs.push(trimmed);
-              }
-            }
-          }
-        });
+        const parsed = parsePlatformioIni(iniContent, dir);
+        envs = parsed.envs;
+        envMeta = parsed.envMeta;
+        libs = parsed.libs;
 
         // Look for generated firmware.bin files
         envs.forEach(env => {
@@ -510,6 +637,7 @@ app.get('/api/projects', (req, res) => {
         path: dir,
         folder,
         envs,
+        envMeta,
         libs: libs.filter(Boolean),
         board,
         firmwareStatus,
@@ -839,11 +967,11 @@ wss.on('connection', ws => {
           runQuickFlash(projectDir, env, port, wasMonitoring);
         } else {
           const targets = ['upload'];
-          if (projectHasLittleFS(projectDir)) targets.push('uploadfs');
+          if (envNeedsUploadFs(projectDir, env)) targets.push('uploadfs');
           broadcast({
             type: 'log',
             stream: 'build',
-            text: `[System] Build & upload (${targets.join(' → ')})...\n\n`
+            text: `[System] Build & upload (${targets.join(' → ')}) for env ${env}...\n\n`
           });
           runPioTargets(projectDir, env, port, targets, wasMonitoring);
         }

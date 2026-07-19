@@ -785,6 +785,7 @@ body {
 
 .serial-console-wrapper {
     flex: 2 1 300px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
 }
@@ -823,14 +824,19 @@ body {
     color: var(--black);
     font-family: var(--mono);
     font-size: 11px;
+    overflow-x: hidden;
     overflow-y: auto;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     line-height: 1.4;
 }
 
 .console-line {
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     padding: 3px 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 /* — Bottom Docs Column — */

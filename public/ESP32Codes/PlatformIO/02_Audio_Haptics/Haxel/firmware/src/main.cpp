@@ -26,6 +26,14 @@
 #ifdef HAXEL_BLU
 #include "web/BleServer.h"
 #endif
+#if HAXEL_FEATURE_MESH_MASTER
+#include "mesh/MeshMaster.h"
+#include "mesh/MeshProtocol.h"
+#endif
+#if HAXEL_FEATURE_MESH_FOLLOWER
+#include "mesh/MeshFollower.h"
+#include "mesh/MeshProtocol.h"
+#endif
 #include "core/LedController.h"
 #include "core/RuntimeStore.h"
 #if HAXEL_FEATURE_KNOBS
@@ -112,7 +120,9 @@ void housekeepingTask(void*) {
     TickType_t last = xTaskGetTickCount();
     uint8_t broadcastDiv = 0;
 #ifdef HAXEL_WIFI
+#if !HAXEL_FEATURE_MESH_MASTER
     uint32_t lastStaRetryMs = millis();
+#endif
 #endif
     bool eStopLatched = false;
     for (;;) {
@@ -145,6 +155,7 @@ void housekeepingTask(void*) {
 
 #ifdef HAXEL_WIFI
         gPortal.pump();
+#if !HAXEL_FEATURE_MESH_MASTER
         if (WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
             // STA dropped — raise AP fallback alongside.
             WiFi.mode(WIFI_AP_STA);
@@ -170,6 +181,13 @@ void housekeepingTask(void*) {
                 }
             }
         }
+#endif
+#endif
+#if HAXEL_FEATURE_MESH_MASTER
+        mesh::MeshMaster::instance().tick();
+#endif
+#if HAXEL_FEATURE_MESH_FOLLOWER
+        mesh::MeshFollower::instance().tick();
 #endif
         // Broadcast engine state to WebSocket/BLE clients every ~200ms (every 2nd tick).
         if (++broadcastDiv >= 2) {
@@ -212,8 +230,15 @@ bool bringUpWifi() {
     WiFi.setTxPower(WIFI_POWER_19_5dBm); // Restoring standard Tx Power so the AP signal is strong/visible
     IPAddress apIP(192, 168, 4, 1);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+#if HAXEL_FEATURE_MESH_MASTER
+    // Lock SoftAP to the mesh channel so ESP-NOW peers stay aligned.
+    WiFi.softAP(gConfig.apSsid().c_str(), nullptr, mesh::kMeshChannel);
+    Serial.printf("\n\n>>> MESH MASTER AP on channel %u. SSID: '%s' <<<\n\n",
+                  mesh::kMeshChannel, gConfig.apSsid().c_str());
+#else
     WiFi.softAP(gConfig.apSsid().c_str());
     Serial.printf("\n\n>>> Running in AP Mode. SSID: '%s', softAP IP: %s <<<\n\n", gConfig.apSsid().c_str(), WiFi.softAPIP().toString().c_str());
+#endif
     gStatusLed.apMode();
     return false;
 }
@@ -325,6 +350,21 @@ void setup() {
 #endif
 #ifdef HAXEL_WIFI
     bool staConnected = bringUpWifi();
+#if HAXEL_FEATURE_MESH_MASTER
+    // Command Mode Master must stay on SoftAP channel — skip STA for mesh.
+    if (staConnected) {
+        Serial.println("[MESH] STA connected; forcing SoftAP mesh channel for ESP-NOW");
+        WiFi.disconnect(true, true);
+        WiFi.mode(WIFI_AP);
+        IPAddress apIP(192, 168, 4, 1);
+        WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+        WiFi.softAP(gConfig.apSsid().c_str(), nullptr, mesh::kMeshChannel);
+        staConnected = false;
+        gStatusLed.apMode();
+    }
+    mesh::MeshMaster::instance().begin(&gEngine, &gConfig,
+                                       gConfig.audioEnabled() ? &gAudio : nullptr);
+#endif
     gWeb.begin(&gEngine, &gConfig, &gAudio);
     if (!staConnected) {
         gPortal.begin(WiFi.softAPIP());
@@ -336,7 +376,14 @@ void setup() {
         MDNS.addServiceTxt("haxel", "tcp", "version", kVersion);
         MDNS.addServiceTxt("haxel", "tcp", "driver",
                            gDriver ? gDriver->name() : "none");
+#if HAXEL_FEATURE_MESH_MASTER
+        MDNS.addServiceTxt("haxel", "tcp", "role", "master");
+#endif
     }
+#endif
+
+#if HAXEL_FEATURE_MESH_FOLLOWER
+    mesh::MeshFollower::instance().begin(&gEngine, &gConfig);
 #endif
 
     xTaskCreatePinnedToCore(engineTask, "engine", 4096, nullptr, 5, &hEngine, HB_CORE_RT);
@@ -360,8 +407,9 @@ void setup() {
     }
 #endif
 
-    log_i("Boot complete; features LED=%d AUDIO=%d KNOBS=%d OLED=%d",
-          HAXEL_FEATURE_LED, HAXEL_FEATURE_AUDIO, HAXEL_FEATURE_KNOBS, HAXEL_FEATURE_OLED);
+    log_i("Boot complete; features LED=%d AUDIO=%d KNOBS=%d OLED=%d MESH_M=%d MESH_F=%d",
+          HAXEL_FEATURE_LED, HAXEL_FEATURE_AUDIO, HAXEL_FEATURE_KNOBS, HAXEL_FEATURE_OLED,
+          HAXEL_FEATURE_MESH_MASTER, HAXEL_FEATURE_MESH_FOLLOWER);
 }
 
 void loop() {

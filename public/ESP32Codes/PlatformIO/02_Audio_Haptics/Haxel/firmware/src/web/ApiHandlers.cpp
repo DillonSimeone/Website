@@ -10,6 +10,9 @@
 #include "../core/RuntimeStore.h"
 #include "../patterns/CustomPattern.h"
 #include "../patterns/Patterns.h"
+#if HAXEL_FEATURE_MESH_MASTER
+#include "../mesh/MeshMaster.h"
+#endif
 #include <ArduinoJson.h>
 #include <AsyncJson.h>
 #include <Update.h>
@@ -287,6 +290,67 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
 
         req->send(200, "application/json", "{\"ok\":true}");
     });
+
+#if HAXEL_FEATURE_MESH_MASTER
+    server.on("/json/fleet", HTTP_GET, [](AsyncWebServerRequest* req) {
+        JsonDocument doc;
+        mesh::MeshMaster::instance().serializeFleet(doc.to<JsonObject>());
+        String body;
+        serializeJson(doc, body);
+        req->send(200, "application/json", body);
+    });
+
+    auto* fleetJson = new AsyncCallbackJsonWebHandler("/json/fleet",
+        [](AsyncWebServerRequest* req, JsonVariant& json) {
+            JsonObjectConst obj = json.as<JsonObjectConst>();
+            const char* action = obj["action"] | "";
+            auto& master = mesh::MeshMaster::instance();
+            bool ok = false;
+
+            auto parseMac = [](const char* s, uint8_t out[6]) -> bool {
+                if (!s) return false;
+                unsigned int b[6];
+                if (sscanf(s, "%02x:%02x:%02x:%02x:%02x:%02x",
+                           &b[0], &b[1], &b[2], &b[3], &b[4], &b[5]) != 6) return false;
+                for (int i = 0; i < 6; ++i) out[i] = (uint8_t)b[i];
+                return true;
+            };
+
+            if (!strcmp(action, "claim")) {
+                uint8_t mac[6];
+                if (obj["mac"].is<const char*>() && parseMac(obj["mac"], mac)) ok = master.claimMac(mac);
+                else ok = master.claimAll();
+            } else if (!strcmp(action, "release")) {
+                uint8_t mac[6];
+                if (obj["mac"].is<const char*>() && parseMac(obj["mac"], mac)) ok = master.releaseMac(mac);
+                else ok = master.releaseAll();
+            } else if (!strcmp(action, "estop")) {
+                ok = master.sendEstop();
+            } else if (!strcmp(action, "state")) {
+                uint8_t mac[6];
+                const uint8_t* target = nullptr;
+                if (obj["mac"].is<const char*>() && parseMac(obj["mac"], mac)) target = mac;
+                JsonObjectConst patch = obj["patch"].as<JsonObjectConst>();
+                ok = master.applyFleetStatePatch(patch, target);
+            } else if (!strcmp(action, "pushConfig")) {
+                uint8_t mac[6];
+                if (obj["mac"].is<const char*>() && parseMac(obj["mac"], mac)) {
+                    ok = master.pushConfigToNode(mac);
+                }
+            } else {
+                req->send(400, "application/json", "{\"ok\":false,\"error\":\"unknown action\"}");
+                return;
+            }
+            JsonDocument out;
+            out["ok"] = ok;
+            master.serializeFleet(out["fleet"].to<JsonObject>());
+            String body;
+            serializeJson(out, body);
+            req->send(200, "application/json", body);
+        });
+    fleetJson->setMethod(HTTP_POST | HTTP_PUT);
+    server.addHandler(fleetJson);
+#endif
 
     // ----- OTA -----
 

@@ -111,7 +111,7 @@ window.addEventListener("resize", () => {
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
     t.classList.add("active");
-    ["play", "lib", "studio", "audio", "device"].forEach(id => {
+    ["play", "lib", "studio", "audio", "fleet", "device"].forEach(id => {
         const el = document.getElementById("tab-" + id);
         if (el) el.style.display = (id === t.dataset.tab) ? "" : "none";
     });
@@ -121,6 +121,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
     } else {
         stopMicrophone();
     }
+    if (t.dataset.tab === "fleet") refreshFleet();
     // Setup visible canvases
     setupSharpCanvas(prevCanvas);
     setupSharpCanvas(heroCanvas);
@@ -2560,4 +2561,167 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         });
     }
 })();
+
+// ─── FLEET / COMMAND MODE (Master builds only) ───────────────────────────────
+let fleetEnabled = false;
+let fleetPollTimer = null;
+let lastFleetData = null;
+
+async function fleetPost(body) {
+    const r = await fetch("/json/fleet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+    if (!r.ok) throw new Error("fleet HTTP " + r.status);
+    return r.json();
+}
+
+function drawMiniWave(canvas, history) {
+    if (!canvas || !history || !history.length) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth || 160;
+    const h = canvas.clientHeight || 36;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = "#f4ebd0";
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "#111";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < history.length; i++) {
+        const x = (i / (history.length - 1)) * w;
+        const y = h - 2 - history[i] * (h - 4);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+}
+
+function renderFleetCards(data) {
+    const root = document.getElementById("fleetCards");
+    const summary = document.getElementById("fleetSummary");
+    if (!root) return;
+    const nodes = data.nodes || [];
+    const connected = data.connected || 0;
+    if (summary) {
+        const names = nodes.filter(n => n.online).map(n => n.name || n.mac).join(", ");
+        summary.textContent = `${connected} connected` + (names ? ` — ${names}` : "");
+    }
+    root.innerHTML = "";
+    nodes.forEach(n => {
+        const card = document.createElement("div");
+        card.className = "fleet-card";
+        card.style.cssText = "border:2px solid #111;padding:10px;background:#fff;";
+        const status = n.online ? (n.claimed ? "CLAIMED" : "ONLINE") : "OFFLINE";
+        const statusColor = n.online ? (n.claimed ? "#002f6c" : "#e23b24") : "#666";
+        card.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <strong style="font-family:var(--font-display);font-size:12px;text-transform:uppercase;">${n.name || "Haxel"}</strong>
+                <span style="font-family:var(--font-display);font-size:9px;background:${statusColor};color:#fff;padding:2px 6px;">${status}</span>
+            </div>
+            <div style="font-family:var(--mono);font-size:10px;color:#555;margin:4px 0;">${n.mac}</div>
+            <div style="font-size:11px;">${n.pattern || "—"} · ${Math.round((n.intensity || 0) * 100)}% · duty ${(n.duty || 0).toFixed(2)}</div>
+            <canvas class="fleet-wave" height="36" style="width:100%;height:36px;margin-top:6px;border:1px solid #111;"></canvas>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                <button class="btn" data-act="claim" style="padding:4px 8px;font-size:10px;">Claim</button>
+                <button class="btn" data-act="release" style="padding:4px 8px;font-size:10px;">Release</button>
+                <button class="btn" data-act="sync" style="padding:4px 8px;font-size:10px;">Push Config</button>
+            </div>`;
+        const canvas = card.querySelector(".fleet-wave");
+        drawMiniWave(canvas, n.waveHistory || []);
+        card.querySelectorAll("button[data-act]").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const act = btn.dataset.act;
+                try {
+                    if (act === "claim") await fleetPost({ action: "claim", mac: n.mac });
+                    else if (act === "release") await fleetPost({ action: "release", mac: n.mac });
+                    else if (act === "sync") await fleetPost({ action: "pushConfig", mac: n.mac });
+                    await refreshFleet();
+                } catch (e) {
+                    addSerialLog("[FLEET] " + e.message);
+                }
+            });
+        });
+        root.appendChild(card);
+    });
+}
+
+async function refreshFleet() {
+    if (!fleetEnabled) return;
+    try {
+        const r = await fetch("/json/fleet");
+        if (!r.ok) return;
+        lastFleetData = await r.json();
+        renderFleetCards(lastFleetData);
+        const sel = document.getElementById("fleetPatternSelect");
+        if (sel && sel.options.length === 0) {
+            PATTERNS.forEach(p => {
+                const opt = document.createElement("option");
+                opt.value = p.id;
+                opt.textContent = p.name;
+                sel.appendChild(opt);
+            });
+        }
+        if (sel && lastFleetData.fleetPattern) sel.value = lastFleetData.fleetPattern;
+        const fi = document.getElementById("fleetIntensity");
+        const fv = document.getElementById("fleetIntensityVal");
+        if (fi && typeof lastFleetData.fleetIntensity === "number") {
+            fi.value = Math.round(lastFleetData.fleetIntensity * 255);
+            if (fv) fv.textContent = Math.round(lastFleetData.fleetIntensity * 100) + "%";
+        }
+    } catch (_) { /* not a master */ }
+}
+
+async function initFleetUi() {
+    try {
+        const r = await fetch("/json/fleet");
+        if (!r.ok) return;
+        fleetEnabled = true;
+        const btn = document.getElementById("fleetTabBtn");
+        if (btn) btn.style.display = "";
+        lastFleetData = await r.json();
+        renderFleetCards(lastFleetData);
+
+        const fi = document.getElementById("fleetIntensity");
+        const fv = document.getElementById("fleetIntensityVal");
+        if (fi) {
+            fi.addEventListener("input", () => {
+                if (fv) fv.textContent = Math.round((fi.value / 255) * 100) + "%";
+            });
+        }
+        const claimAll = document.getElementById("fleetClaimAllBtn");
+        const releaseAll = document.getElementById("fleetReleaseAllBtn");
+        const estop = document.getElementById("fleetEstopBtn");
+        const apply = document.getElementById("fleetApplyBtn");
+        const play = document.getElementById("fleetPlayBtn");
+        const stop = document.getElementById("fleetStopBtn");
+        if (claimAll) claimAll.onclick = async () => { await fleetPost({ action: "claim" }); refreshFleet(); };
+        if (releaseAll) releaseAll.onclick = async () => { await fleetPost({ action: "release" }); refreshFleet(); };
+        if (estop) estop.onclick = async () => { await fleetPost({ action: "estop" }); refreshFleet(); };
+        const sendFleetState = async (extra = {}) => {
+            const intensity = (document.getElementById("fleetIntensity")?.value || 150) / 255;
+            const pattern = document.getElementById("fleetPatternSelect")?.value || "Breath";
+            await fleetPost({
+                action: "state",
+                patch: { intensity, pattern, ...extra }
+            });
+            refreshFleet();
+        };
+        if (apply) apply.onclick = () => sendFleetState();
+        if (play) play.onclick = () => sendFleetState({ on: true, mute: false });
+        if (stop) stop.onclick = () => sendFleetState({ on: false, mute: true });
+
+        clearInterval(fleetPollTimer);
+        fleetPollTimer = setInterval(refreshFleet, 750);
+        addSerialLog("[FLEET] Command Mode Master portal ready");
+    } catch (_) {
+        fleetEnabled = false;
+    }
+}
+
+// Kick fleet UI after portal boot (master builds only).
+setTimeout(() => { if (typeof isRealESP32 !== "undefined" && isRealESP32) initFleetUi(); }, 1200);
 

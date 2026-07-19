@@ -438,6 +438,35 @@ body {
   color: var(--tertiary-yellow);
 }
 
+.env-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.env-flag {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border: 2px solid #000;
+  background: var(--secondary-cyan);
+  color: #000;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.env-flag-fs {
+  background: var(--success-green);
+}
+
+.env-flag-muted {
+  background: #3a3a42;
+  color: #bbb;
+}
+
 .workspace-actions {
   display: flex;
   gap: 15px;

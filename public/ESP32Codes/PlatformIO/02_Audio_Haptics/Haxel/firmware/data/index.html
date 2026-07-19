@@ -130,6 +130,7 @@
                                 <button class="tab" data-tab="lib">Library</button>
                                 <button class="tab" data-tab="studio">Pattern Studio</button>
                                 <button class="tab" data-tab="audio">Audio-Reactive</button>
+                                <button class="tab" data-tab="fleet" id="fleetTabBtn" style="display:none">Fleet</button>
                                 <button class="tab" data-tab="device">Device</button>
                             </div>
 
@@ -247,6 +248,35 @@ wave(t * (freq * 0.05))
                                     </div>
                                 </div>
                                 <p class="hint">Maps acoustic audio frequencies into physical mechanical pulses for sensory substitution.</p>
+                            </div>
+
+                            <!-- FLEET / COMMAND MODE TAB -->
+                            <div class="tab-content" id="tab-fleet" style="display:none">
+                                <h3>Fleet Command</h3>
+                                <p class="hint">ESP-NOW followers claimed by this Master. Shared mic audio and state sync over the mesh.</p>
+                                <div class="row" style="margin-bottom: 12px;">
+                                    <span class="val" id="fleetSummary">0 connected</span>
+                                </div>
+                                <div class="control-actions" style="flex-wrap: wrap; margin-bottom: 16px;">
+                                    <button class="btn primary" id="fleetClaimAllBtn">Claim All</button>
+                                    <button class="btn" id="fleetReleaseAllBtn">Release All</button>
+                                    <button class="btn danger" id="fleetEstopBtn">Fleet E-Stop</button>
+                                </div>
+                                <div class="row">
+                                    <label>Fleet Intensity</label>
+                                    <input type="range" id="fleetIntensity" min="0" max="255" value="150">
+                                    <span class="val" id="fleetIntensityVal">59%</span>
+                                </div>
+                                <div class="row">
+                                    <label>Fleet Pattern</label>
+                                    <select id="fleetPatternSelect"></select>
+                                </div>
+                                <div class="control-actions">
+                                    <button class="btn primary" id="fleetApplyBtn">Apply To Fleet</button>
+                                    <button class="btn" id="fleetPlayBtn">Play</button>
+                                    <button class="btn danger" id="fleetStopBtn">Stop</button>
+                                </div>
+                                <div id="fleetCards" class="fleet-cards" style="margin-top: 18px; display: grid; gap: 12px;"></div>
                             </div>
 
                             <!-- DEVICE TAB -->

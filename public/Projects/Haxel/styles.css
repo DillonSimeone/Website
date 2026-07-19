@@ -191,19 +191,21 @@ body::-webkit-scrollbar-thumb:hover,
 .summary-sim-row {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     border-bottom: 4px solid var(--black);
 }
 
 .summary-column {
-    flex: 1 1 500px;
+    flex: 1 1 0;
+    min-width: 0;
     border-right: 4px solid var(--black);
     display: flex;
     flex-direction: column;
 }
 
 .simulator-column {
-    flex: 1 1 500px;
+    flex: 1 1 0;
+    min-width: 0;
     background: var(--bg-canvas);
     display: flex;
     flex-direction: column;
@@ -841,6 +843,7 @@ body::-webkit-scrollbar-thumb:hover,
 
 .serial-console-wrapper {
     flex: 2 1 300px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
 }
@@ -879,14 +882,19 @@ body::-webkit-scrollbar-thumb:hover,
     color: var(--black);
     font-family: var(--mono);
     font-size: 11px;
+    overflow-x: hidden;
     overflow-y: auto;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     line-height: 1.4;
 }
 
 .console-line {
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     padding: 3px 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 /* — Bottom Docs Column — */
@@ -1923,14 +1931,17 @@ body::-webkit-scrollbar-thumb:hover,
     }
     .summary-sim-row {
         flex-direction: column;
+        flex-wrap: wrap;
     }
     .summary-column {
         border-right: none;
         border-bottom: 4px solid var(--black);
         width: 100%;
+        flex: 1 1 auto;
     }
     .simulator-column {
         width: 100%;
+        flex: 1 1 auto;
     }
     .doc-card {
         padding: 20px;
