@@ -35,6 +35,19 @@ export function hexMountDims() {
 }
 
 /**
+ * CAD shaft-bore diameter for Bambu A1 0.6 mm nozzle.
+ * holeKerf compensates FDM undersize so as-printed ≈ shaft + glue clearance.
+ */
+export function shaftBoreCadDiam() {
+  const p = params;
+  const shaft = p.shaftDiam ?? MOTOR.shaftDiam;
+  const glue = p.shaftGlueClearance ?? 0.08;
+  const kerf = p.holeKerf ?? 0.45;
+  // Floor: 0.6 nozzle can't reliably open holes much under ~1.2 mm CAD
+  return Math.max(1.2, shaft + glue + kerf);
+}
+
+/**
  * Hub / adapter
  *  -Z face: blind shaft pilot (motor inserts here) — visible from motor side
  *  +Z face: hex SLOT for the weight peg
@@ -50,41 +63,49 @@ export function generateHub() {
 
   let hub = cyl(hubR, bodyH, 48);
 
-  // Height budget (from top): hex slot → separator wall → shaft bore.
-  // Hex gets priority so it is always a clear, usable socket.
+  // Height budget: shaft bore first (glue joint), then separator, remainder → hex.
   const separator = Math.max(floor, p.minWall);
-  const hexH = Math.min(hexDepth, bodyH - separator - 2.0);
-  const boreDepth = Math.min(p.shaftInsertMax, bodyH - separator - hexH);
+  const minHex = 2.0;
+  const boreDepth = Math.min(p.shaftInsertMax, bodyH - separator - minHex);
+  const hexH = Math.min(hexDepth, bodyH - boreDepth - separator);
 
-  // ── Shaft pilot bore, opens on -Z (motor / glue face) ──
-  const boreR = Math.max(0.4, p.shaftPilotDiam / 2);
+  // ── Shaft bore, opens on -Z (motor / glue face) ──
+  // Oversized in CAD for A1 0.6 mm nozzle kerf / hole shrinkage
+  const boreD = shaftBoreCadDiam();
+  const boreR = boreD / 2;
   const boreZ = -bodyH / 2 + boreDepth / 2 - 0.05;
-  let bore = cyl(boreR, boreDepth + 0.2, 32).translate([0, 0, boreZ]);
+  let bore = cyl(boreR, boreDepth + 0.2, 48).translate([0, 0, boreZ]);
   hub = hub.subtract(bore);
   bore.delete();
 
-  // Wide glue well / counterbore — makes the hole obvious and holds adhesive
-  const wellR = Math.max(1.1, boreR + 0.6);
-  let well = cyl(wellR, 1.2, 28).translate([0, 0, -bodyH / 2 + 0.5]);
+  // Funnel mouth + glue well — keeps the opening from bridging shut on first layers
+  const wellR = Math.max(boreR + 0.55, 1.4);
+  let well = cyl(wellR, 1.4, 36).translate([0, 0, -bodyH / 2 + 0.55]);
   hub = hub.subtract(well);
   well.delete();
-  let step = cyl(boreR + 0.3, 0.7, 24).translate([0, 0, -bodyH / 2 + 1.05]);
-  hub = hub.subtract(step);
-  step.delete();
 
-  // ── Hex SLOT on +Z (weight side) — deep, chamfered lead-in ──
-  let hexCut = hexPrism(slotAf, hexH + 0.1)
-    .translate([0, 0, bodyH / 2 - hexH / 2 + 0.05]);
-  hub = hub.subtract(hexCut);
-  hexCut.delete();
+  // Stepped lead-in (approx chamfer) so the shaft finds the bore
+  let step1 = cyl(boreR + 0.35, 0.8, 36).translate([0, 0, -bodyH / 2 + 1.15]);
+  hub = hub.subtract(step1);
+  step1.delete();
+  let step2 = cyl(boreR + 0.15, 0.6, 36).translate([0, 0, -bodyH / 2 + 1.7]);
+  hub = hub.subtract(step2);
+  step2.delete();
 
-  // Funnel lead-in so the peg self-centers when sliding down
-  const leadAf = slotAf + 1.0;
-  let lead = hexPrism(leadAf, 0.9).translate([0, 0, bodyH / 2 - 0.35]);
-  hub = hub.subtract(lead);
-  lead.delete();
+  // ── Hex SLOT on +Z (weight side) — chamfered lead-in ──
+  if (hexH >= 1.6) {
+    let hexCut = hexPrism(slotAf, hexH + 0.1)
+      .translate([0, 0, bodyH / 2 - hexH / 2 + 0.05]);
+    hub = hub.subtract(hexCut);
+    hexCut.delete();
 
-  // Small top-edge alignment nick (which hex flat = heavy side reference)
+    const leadAf = slotAf + 1.0;
+    let lead = hexPrism(leadAf, 0.9).translate([0, 0, bodyH / 2 - 0.35]);
+    hub = hub.subtract(lead);
+    lead.delete();
+  }
+
+  // Small top-edge alignment nick (heavy-side reference)
   let nick = box(1.0, 1.4, 1.2).translate([0, hubR - 0.4, bodyH / 2 - 0.6]);
   hub = hub.subtract(nick);
   nick.delete();

@@ -197,6 +197,17 @@ select {
 }
 .hint.warn { color: var(--amber); }
 
+.bore-readout {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--cyan, #00f2ff);
+  background: rgba(0, 242, 255, 0.06);
+  border: 1px solid rgba(0, 242, 255, 0.25);
+  padding: 6px 8px;
+  margin: 6px 0 10px;
+  line-height: 1.35;
+}
+
 .btn-row {
   display: flex;
   gap: 8px;

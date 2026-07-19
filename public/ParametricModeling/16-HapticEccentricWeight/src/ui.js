@@ -28,7 +28,9 @@ export function getExportModels() {
 
 export function setupUIListeners() {
   const sliderMap = {
-    'input-shaftPilotDiam': { param: 'shaftPilotDiam', label: 'val-shaftPilotDiam' },
+    'input-shaftDiam': { param: 'shaftDiam', label: 'val-shaftDiam' },
+    'input-holeKerf': { param: 'holeKerf', label: 'val-holeKerf' },
+    'input-shaftGlueClearance': { param: 'shaftGlueClearance', label: 'val-shaftGlueClearance' },
     'input-shaftInsertMax': { param: 'shaftInsertMax', label: 'val-shaftInsertMax' },
     'input-hubOd': { param: 'hubOd', label: 'val-hubOd' },
     'input-hubHeight': { param: 'hubHeight', label: 'val-hubHeight' },
@@ -55,9 +57,11 @@ export function setupUIListeners() {
     input.addEventListener('input', () => {
       params[cfg.param] = parseFloat(input.value);
       if (label) label.textContent = input.value;
+      updateBoreReadout();
       if (rebuildFn) rebuildFn();
     });
   }
+  updateBoreReadout();
 
   const shapeMix = document.getElementById('input-shapeMix');
   if (shapeMix) {
@@ -184,13 +188,24 @@ export function updateSpecsPanel() {
   }
 }
 
+export function updateBoreReadout() {
+  const el = document.getElementById('bore-readout');
+  if (!el) return;
+  const shaft = params.shaftDiam ?? MOTOR.shaftDiam;
+  const glue = params.shaftGlueClearance ?? 0.08;
+  const kerf = params.holeKerf ?? 0.45;
+  const cad = Math.max(1.2, shaft + glue + kerf);
+  const printed = Math.max(0.5, cad - kerf);
+  el.textContent = `CAD bore ⌀${cad.toFixed(2)} → prints ≈⌀${printed.toFixed(2)} (shaft ⌀${shaft.toFixed(2)} + glue ${glue.toFixed(2)})`;
+}
+
 export function updateSafetyBanner() {
   const el = document.getElementById('safety-banner');
   if (!el) return;
   const r = getSelectedRotor();
   const f = r ? r.forceNoLoadN : 0;
   let level = 'info';
-  let msg = 'Ream hub pilot to Ø1.0 mm on the motor face, glue ≤4.25 mm deep, slide skirt weight onto hex until seated.';
+  let msg = 'Print PETG on A1 0.6 mm: CAD bore includes hole kerf. Stand motor-face up, drop CA, press shaft ≤4.25 mm. Slide skirt weight onto hex until seated.';
   if (f > 2.5) {
     level = 'warn';
     msg = `⚠ Predicted ~${f.toFixed(1)} N at no-load RPM. Use guard, start at 1–2 V, PETG only.`;

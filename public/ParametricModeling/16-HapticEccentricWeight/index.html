@@ -31,7 +31,7 @@
   </header>
 
   <div id="safety-banner" class="safety-banner info">
-    Ream hub pilot to Ø1.0 mm on the motor face, glue ≤4.25 mm deep, slide skirt weight onto hex until seated.
+    Print PETG on A1 0.6 mm: CAD bore includes hole kerf. Stand motor-face up, drop CA, press shaft ≤4.25 mm. Slide skirt weight onto hex until seated.
   </div>
 
   <main>
@@ -42,20 +42,29 @@
         <div class="control-group">
           <div class="control-group-title cyan">Shaft + Hex Adapter</div>
           <div class="param-row">
-            <div class="param-info"><span class="param-label">Pilot Bore ⌀</span><span class="param-value" id="val-shaftPilotDiam">0.85</span></div>
-            <input type="range" id="input-shaftPilotDiam" min="0.70" max="1.00" step="0.05" value="0.85">
+            <div class="param-info"><span class="param-label">Shaft ⌀ (motor)</span><span class="param-value" id="val-shaftDiam">1.00</span></div>
+            <input type="range" id="input-shaftDiam" min="0.90" max="1.20" step="0.05" value="1.00">
           </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Hole Kerf (0.6 noz)</span><span class="param-value" id="val-holeKerf">0.45</span></div>
+            <input type="range" id="input-holeKerf" min="0.25" max="0.70" step="0.05" value="0.45">
+          </div>
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Glue Clearance</span><span class="param-value" id="val-shaftGlueClearance">0.08</span></div>
+            <input type="range" id="input-shaftGlueClearance" min="0.00" max="0.20" step="0.02" value="0.08">
+          </div>
+          <div class="bore-readout" id="bore-readout">CAD bore ⌀1.53 → prints ≈⌀1.08</div>
           <div class="param-row">
             <div class="param-info"><span class="param-label">Max Insert Depth</span><span class="param-value" id="val-shaftInsertMax">4.25</span></div>
             <input type="range" id="input-shaftInsertMax" min="3.0" max="4.25" step="0.05" value="4.25">
           </div>
           <div class="param-row">
-            <div class="param-info"><span class="param-label">Hub OD</span><span class="param-value" id="val-hubOd">5.6</span></div>
-            <input type="range" id="input-hubOd" min="5.2" max="7.5" step="0.1" value="5.6">
+            <div class="param-info"><span class="param-label">Hub OD</span><span class="param-value" id="val-hubOd">5.5</span></div>
+            <input type="range" id="input-hubOd" min="5.2" max="7.5" step="0.1" value="5.5">
           </div>
           <div class="param-row">
-            <div class="param-info"><span class="param-label">Hub Height</span><span class="param-value" id="val-hubHeight">7.0</span></div>
-            <input type="range" id="input-hubHeight" min="6.5" max="9.5" step="0.1" value="7.0">
+            <div class="param-info"><span class="param-label">Hub Height</span><span class="param-value" id="val-hubHeight">7.9</span></div>
+            <input type="range" id="input-hubHeight" min="6.5" max="9.5" step="0.1" value="7.9">
           </div>
           <div class="param-row">
             <div class="param-info"><span class="param-label">Hex AF</span><span class="param-value" id="val-hexAf">3.4</span></div>
@@ -69,14 +78,14 @@
             <div class="param-info"><span class="param-label">Skirt Wall</span><span class="param-value" id="val-skirtWall">1.6</span></div>
             <input type="range" id="input-skirtWall" min="1.6" max="2.4" step="0.1" value="1.6">
           </div>
-          <p class="hint">Bore faces the motor. Stand with hole up, glue, press shaft in. Weights slide on from the hex end — skirt wraps the full hub height.</p>
+          <p class="hint">A1 0.6 mm nozzle: CAD bore is oversized by Hole Kerf so the printed hole lands near shaft + glue clearance — no reaming required. Stand bore-up, drop CA, press shaft ≤4.25 mm. Weights slide onto the hex; skirt wraps full hub height.</p>
         </div>
 
         <div class="control-group">
           <div class="control-group-title lime">Eccentric Ladder</div>
           <div class="param-row">
-            <div class="param-info"><span class="param-label">Rotor Count</span><span class="param-value" id="val-rotorCount">4</span></div>
-            <input type="range" id="input-rotorCount" min="2" max="8" step="1" value="4">
+            <div class="param-info"><span class="param-label">Rotor Count</span><span class="param-value" id="val-rotorCount">5</span></div>
+            <input type="range" id="input-rotorCount" min="2" max="8" step="1" value="5">
           </div>
           <div class="param-row">
             <label class="param-label" for="input-shapeMix">Shape Mix</label>
@@ -92,16 +101,16 @@
             <input type="range" id="input-eccMin" min="0.3" max="2.0" step="0.1" value="0.6">
           </div>
           <div class="param-row">
-            <div class="param-info"><span class="param-label">Ecc Max</span><span class="param-value" id="val-eccMax">2.2</span></div>
-            <input type="range" id="input-eccMax" min="1.0" max="3.2" step="0.1" value="2.2">
+            <div class="param-info"><span class="param-label">Ecc Max</span><span class="param-value" id="val-eccMax">2.0</span></div>
+            <input type="range" id="input-eccMax" min="1.0" max="3.2" step="0.1" value="2.0">
           </div>
           <div class="param-row">
-            <div class="param-info"><span class="param-label">Top Plate Thick</span><span class="param-value" id="val-rotorThickness">2.4</span></div>
-            <input type="range" id="input-rotorThickness" min="2.0" max="4.0" step="0.1" value="2.4">
+            <div class="param-info"><span class="param-label">Top Plate Thick</span><span class="param-value" id="val-rotorThickness">2.2</span></div>
+            <input type="range" id="input-rotorThickness" min="2.0" max="4.0" step="0.1" value="2.2">
           </div>
           <div class="param-row">
-            <div class="param-info"><span class="param-label">Rotor OD Max</span><span class="param-value" id="val-rotorOdMax">8.0</span></div>
-            <input type="range" id="input-rotorOdMax" min="7.0" max="12.0" step="0.1" value="8.0">
+            <div class="param-info"><span class="param-label">Rotor OD Max</span><span class="param-value" id="val-rotorOdMax">7.6</span></div>
+            <input type="range" id="input-rotorOdMax" min="7.0" max="12.0" step="0.1" value="7.6">
           </div>
           <div class="btn-row">
             <button id="btn-mutate" class="btn btn-accent">⚡ MUTATE KIT</button>

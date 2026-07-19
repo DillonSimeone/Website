@@ -3,115 +3,118 @@ import { KIT_ENVELOPE } from './state.js';
 
 /**
  * Pack parts laid flat (smallest AABB axis → print height Z).
- * Single-floor shelf packer optimized for hub + coupon + small rotors.
+ * Exact corner-search packer for the small kit (normally seven parts).
+ * Unlike shelf packing, this can use the short spaces beside the hub/coupon.
  * Never silently scales — reports overflow if the kit cannot fit.
  */
 export function packKit(items, envelope = KIT_ENVELOPE) {
   const bin = { w: envelope.w, d: envelope.d, h: envelope.h };
   const gap = 0.5;
 
-  const normalized = items.map(item => {
-    const sorted = [...item.size].sort((x, y) => x - y);
-    return {
-      id: item.id,
-      // Prefer orientation: height = smallest, then try both footprint swaps
-      height: sorted[0],
-      footA: sorted[2],
-      footB: sorted[1],
-      rawSize: [...item.size]
-    };
-  });
+  const normalized = items.map(item => ({
+    id: item.id,
+    rawSize: [...item.size]
+  }));
 
-  // Reject anything taller than the envelope immediately
-  const rejected = [];
-  const placeable = [];
-  for (const item of normalized) {
-    if (item.height > bin.h + 1e-6) rejected.push(item.id);
-    else placeable.push(item);
+  const rejected = normalized
+    .filter(item => Math.min(...item.rawSize) > bin.h + 1e-6)
+    .map(item => item.id);
+  const placeable = normalized
+    .filter(item => Math.min(...item.rawSize) <= bin.h + 1e-6)
+    .sort((a, b) => minFootprintArea(b) - minFootprintArea(a));
+
+  let best = [];
+  const placed = [];
+  let searchNodes = 0;
+  const maxSearchNodes = 150000;
+
+  function minFootprintArea(item) {
+    const [x, y, z] = item.rawSize;
+    return Math.min(x * y, x * z, y * z);
   }
 
-  // Largest footprint first for denser shelves
-  placeable.sort((a, b) => (b.footA * b.footB) - (a.footA * a.footB));
-
-  const placements = [];
-  // shelves: { y, rowD, xCursor }
-  const shelves = [];
-  let layerZ = 0;
-  let layerH = 0;
-
-  function tryShelfPlace(item, allowNewShelf) {
-    const variants = [
-      { sx: item.footA, sy: item.footB, yaw: 0 },
-      { sx: item.footB, sy: item.footA, yaw: 90 }
-    ];
-
-    for (const v of variants) {
-      if (v.sx > bin.w + 1e-6 || v.sy > bin.d + 1e-6) continue;
-      if (layerZ + item.height > bin.h + 1e-6) continue;
-
-      for (const shelf of shelves) {
-        if (v.sy > shelf.rowD + 1e-6) continue;
-        if (shelf.xCursor + v.sx <= bin.w + 1e-6) {
-          const x = shelf.xCursor;
-          const y = shelf.y;
-          shelf.xCursor += v.sx + gap;
-          layerH = Math.max(layerH, item.height);
-          placements.push({
-            id: item.id,
-            position: [x + v.sx / 2, y + v.sy / 2, layerZ + item.height / 2],
-            size: [v.sx, v.sy, item.height],
-            yaw: v.yaw,
-            height: item.height
-          });
-          return true;
-        }
+  function variants(item) {
+    const [x, y, z] = item.rawSize;
+    const bases = [
+      { sx: x, sy: y, height: z, upAxis: 2 },
+      { sx: z, sy: y, height: x, upAxis: 0 },
+      { sx: x, sy: z, height: y, upAxis: 1 }
+    ].filter(v => v.height <= bin.h + 1e-6);
+    const out = [];
+    for (const base of bases) {
+      out.push({ ...base, yaw: 0 });
+      if (Math.abs(base.sx - base.sy) > 1e-6) {
+        out.push({ ...base, sx: base.sy, sy: base.sx, yaw: 90 });
       }
+    }
+    // Prefer low height, then smaller footprint; search still backtracks through all.
+    return out.sort((a, b) =>
+      a.height - b.height || (a.sx * a.sy) - (b.sx * b.sy)
+    );
+  }
 
-      if (!allowNewShelf) continue;
-      const usedY = shelves.reduce((m, s) => Math.max(m, s.y + s.rowD + gap), 0);
-      if (usedY + v.sy <= bin.d + 1e-6) {
-        shelves.push({ y: usedY, rowD: v.sy, xCursor: v.sx + gap });
-        layerH = Math.max(layerH, item.height);
-        placements.push({
-          id: item.id,
-          position: [v.sx / 2, usedY + v.sy / 2, layerZ + item.height / 2],
-          size: [v.sx, v.sy, item.height],
-          yaw: v.yaw,
-          height: item.height
-        });
-        return true;
+  function overlaps(x, y, sx, sy, p) {
+    return !(
+      x + sx + gap <= p.x + 1e-6 ||
+      p.x + p.sx + gap <= x + 1e-6 ||
+      y + sy + gap <= p.y + 1e-6 ||
+      p.y + p.sy + gap <= y + 1e-6
+    );
+  }
+
+  function candidateCoordinates() {
+    const xs = [0];
+    const ys = [0];
+    for (const p of placed) {
+      xs.push(p.x + p.sx + gap);
+      ys.push(p.y + p.sy + gap);
+    }
+    return {
+      xs: [...new Set(xs.map(v => +v.toFixed(6)))].sort((a, b) => a - b),
+      ys: [...new Set(ys.map(v => +v.toFixed(6)))].sort((a, b) => a - b)
+    };
+  }
+
+  function search(index) {
+    if (++searchNodes > maxSearchNodes) return false;
+    if (placed.length > best.length) best = placed.map(p => ({ ...p }));
+    if (index === placeable.length) return true;
+
+    const item = placeable[index];
+    const { xs, ys } = candidateCoordinates();
+    for (const v of variants(item)) {
+      for (const y of ys) {
+        if (y + v.sy > bin.d + 1e-6) continue;
+        for (const x of xs) {
+          if (x + v.sx > bin.w + 1e-6) continue;
+          if (placed.some(p => overlaps(x, y, v.sx, v.sy, p))) continue;
+
+          placed.push({ id: item.id, x, y, ...v });
+          if (search(index + 1)) return true;
+          placed.pop();
+        }
       }
     }
     return false;
   }
 
-  const deferred = [];
-  for (const item of placeable) {
-    if (!tryShelfPlace(item, true)) deferred.push(item);
-  }
-
-  // Second pass: try remaining into existing shelves only, then a stacked layer
-  if (deferred.length) {
-    const still = [];
-    for (const item of deferred) {
-      if (!tryShelfPlace(item, false)) still.push(item);
-    }
-
-    if (still.length) {
-      // New Z layer above current
-      const nextZ = layerZ + layerH + gap;
-      if (nextZ < bin.h) {
-        layerZ = nextZ;
-        layerH = 0;
-        shelves.length = 0;
-        for (const item of still) {
-          if (!tryShelfPlace(item, true)) rejected.push(item.id);
-        }
-      } else {
-        still.forEach(i => rejected.push(i.id));
-      }
+  const solved = rejected.length === 0 && search(0);
+  const packed = solved ? placed : best;
+  const packedIds = new Set(packed.map(p => p.id));
+  if (!solved) {
+    for (const item of placeable) {
+      if (!packedIds.has(item.id)) rejected.push(item.id);
     }
   }
+
+  const placements = packed.map(p => ({
+    id: p.id,
+    position: [p.x + p.sx / 2, p.y + p.sy / 2, p.height / 2],
+    size: [p.sx, p.sy, p.height],
+    yaw: p.yaw,
+    upAxis: p.upAxis,
+    height: p.height
+  }));
 
   let maxX = 0, maxY = 0, maxZ = 0;
   for (const p of placements) {
@@ -120,7 +123,7 @@ export function packKit(items, envelope = KIT_ENVELOPE) {
     maxZ = Math.max(maxZ, p.position[2] + p.size[2] / 2);
   }
 
-  const fits = rejected.length === 0 && placements.length === items.length;
+  const fits = solved && placements.length === items.length;
   return {
     fits,
     placements,
@@ -137,22 +140,16 @@ export function itemsFromKitParts(parts) {
   return parts.map(p => ({ id: p.id, size: [...p.size] }));
 }
 
-/** Lay centered part flat (min axis → Z), yaw, move to pack cell. Consumes model. */
+/** Orient part using the packer's selected up-axis, then move to its cell. Consumes model. */
 export function placeModel(model, placement) {
   let m = model;
-  const bb0 = m.boundingBox();
-  const size = [
-    bb0.max[0] - bb0.min[0],
-    bb0.max[1] - bb0.min[1],
-    bb0.max[2] - bb0.min[2]
-  ];
-  const minAxis = size.indexOf(Math.min(...size));
+  const upAxis = placement.upAxis ?? 2;
 
-  if (minAxis === 0) {
+  if (upAxis === 0) {
     const n = m.rotate([0, 90, 0]);
     m.delete();
     m = n;
-  } else if (minAxis === 1) {
+  } else if (upAxis === 1) {
     const n = m.rotate([90, 0, 0]);
     m.delete();
     m = n;

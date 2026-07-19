@@ -22,25 +22,29 @@ export const KIT_ENVELOPE = {
 };
 
 export const params = {
-  // Hub / shaft
-  shaftPilotDiam: 0.85,   // mm — ream to 1.0 after print
+  // Hub / shaft — Bambu A1 0.6 mm nozzle hole compensation
+  // Small FDM holes print undersize (~0.4–0.5 mm on ⌀ for PETG @ 0.6).
+  // CAD bore = shaft + glueClearance + holeKerf → as-printed ≈ shaft + glue.
+  shaftDiam: 1.0,         // mm — motor shaft (M1N10FB11G)
+  shaftGlueClearance: 0.08, // mm diam — loose enough for CA, still concentric
+  holeKerf: 0.45,         // mm diam — A1 0.6 mm nozzle hole undersize
   shaftInsertMax: 4.25,   // mm — half shaft, hard stop
-  hubOd: 5.6,             // mm — skirt OD ≈ 8.8 for 2-across in 19 mm
-  hubHeight: 7.0,         // mm — hex(3.0) + wall(1.6) + bore(2.4); skirt covers all
+  hubOd: 5.5,             // mm — wall ≈2.0; gives two skirt rows packing tolerance
+  hubHeight: 7.9,         // mm — keeps rotor stack <10 mm for two-row packing
   minWall: 1.6,           // mm — ≥2× 0.6 mm extrusion
 
   // Hex drive + skirt mount
   hexAf: 3.4,             // mm across-flats
-  hexDepth: 3.0,          // mm slot / peg engagement
+  hexDepth: 2.4,          // mm slot / peg engagement
   hexClearance: 0.22,     // mm per side (FDM)
   skirtWall: 1.6,         // mm retaining lip thickness
 
   // Rotor eccentric mass
-  rotorThickness: 2.4,    // mm top plate
-  rotorOdMax: 8.0,        // mm
+  rotorThickness: 2.2,    // mm top plate
+  rotorOdMax: 7.6,        // mm — five skirts pack in two rows
   eccMin: 0.6,
-  eccMax: 2.2,
-  rotorCount: 4,
+  eccMax: 2.0,
+  rotorCount: 5,
   shapeMix: 'all',
 
   // Physics

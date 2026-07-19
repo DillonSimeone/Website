@@ -5,7 +5,7 @@ export {
 } from './geometry/helpers.js';
 export {
   generateHub, generateFitCoupon, generateMotorGhost,
-  hexMountDims, hexPrism, hexVertexR, weightInterfaceSolid
+  hexMountDims, hexPrism, hexVertexR, weightInterfaceSolid, shaftBoreCadDiam
 } from './geometry/hub.js';
 export { generateEccentricRotor, buildLadderSpecs, shapeForIndex } from './geometry/rotors.js';
 export { generateGuard, generateEnvelopeGhost } from './geometry/guard.js';
