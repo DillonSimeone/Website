@@ -9,6 +9,7 @@ export function initViewport(onFrame) {
   frameCallback = onFrame;
   const container = document.getElementById('canvas3d');
   if (!container) return;
+  document.getElementById('startup-status')?.remove();
 
   context.scene = new THREE.Scene();
   context.scene.background = new THREE.Color(0x0a0a12);

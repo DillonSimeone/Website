@@ -11,56 +11,90 @@ import {
 } from './helpers.js';
 import { hexMountDims, hexPrism } from './hub.js';
 
-const SHAPES = ['offset', 'crescent', 'lobe'];
+const SHAPES = ['arrow', 'flat', 'twoflat', 'threeflat', 'crescent'];
 
 export function shapeForIndex(i, mix) {
-  if (mix === 'offset' || mix === 'crescent' || mix === 'lobe') return mix;
+  if (SHAPES.includes(mix)) return mix;
   return SHAPES[i % SHAPES.length];
 }
 
+/** Slice off everything beyond a chord at distance d from center, facing angleDeg. */
+function chordCut(body, d, angleDeg, R, t) {
+  let cut = box(R * 2.5, R * 3.2, t + 0.4)
+    .translate([d + R * 1.25, 0, 0])
+    .rotate([0, 0, angleDeg]);
+  const out = body.subtract(cut);
+  body.delete();
+  cut.delete();
+  return out;
+}
+
+/**
+ * Five visually unmistakable top silhouettes (heavy side = +X on all):
+ *  arrow     — round plate with a sharp spike
+ *  flat      — one straight chord on the light side (D-profile)
+ *  twoflat   — two angled chords meeting on the light side (shield)
+ *  threeflat — three chords, only the heavy side stays round
+ *  crescent  — circular bite out of the light edge
+ * Cuts never reach the skirt cavity, so the drive plate stays sealed.
+ */
 function buildEccentricCap(shape, od, thickness, ecc, skirtOuterR) {
   const R = Math.max(od / 2, skirtOuterR + 0.2);
   const t = thickness;
   const eccClamped = Math.min(ecc, R * 0.42);
+  const wall = Math.max(1.6, params.skirtWall);
+  // Deepest allowed cut: keep ≥0.4 mm of cap over the skirt cavity rim
+  const seal = skirtOuterR - wall + 0.4;
+  const dFlat = Math.max(seal, skirtOuterR - 0.35 - eccClamped * 0.45);
 
-  // Always include a solid drive plate covering the skirt OD
-  let plate = cyl(Math.max(R * 0.92, skirtOuterR), t, 48);
+  // Disc kept just past the skirt so two rotor rows still pack in 19 mm depth
+  const capR = Math.max(R * 0.92, skirtOuterR + 0.05);
+  let cap = cyl(capR, t, 48);
 
-  if (shape === 'offset') {
-    let heavy = cyl(R * 0.7, t, 36).translate([eccClamped, 0, 0]);
-    plate = plate.add(heavy);
-    heavy.delete();
-    return plate;
+  if (shape === 'arrow') {
+    // Triangular prism (3-segment cylinder) — vertex points along +X
+    const tip = Math.min(R + 1.1 + eccClamped * 0.5, 5.9);
+    const triR = R * 0.8;
+    let spike = cyl(triR, t, 3).translate([tip - triR, 0, 0]);
+    const merged = cap.add(spike);
+    cap.delete();
+    spike.delete();
+    return merged;
   }
 
-  if (shape === 'crescent') {
-    const cutR = R * 0.55;
-    const cutShift = R * 0.55 + eccClamped * 0.3;
-    // Keep cut away from center so hex/skirt stay solid
-    let cut = cyl(cutR, t + 0.4, 40).translate([-cutShift, 0, 0]);
-    let body = plate.subtract(cut);
-    plate.delete();
-    cut.delete();
-    // Reinforce center
-    let core = cyl(skirtOuterR + 0.4, t, 40);
-    body = body.add(core);
-    core.delete();
-    return body;
+  if (shape === 'flat') {
+    return chordCut(cap, dFlat, 180, R, t);
   }
 
-  // lobe
-  const lobeR = R * 0.5;
-  const lobeShift = Math.min(eccClamped + lobeR * 0.15, R - lobeR - 0.2);
-  let lobe = cyl(lobeR, t, 36).translate([lobeShift, 0, 0]);
-  plate = plate.add(lobe);
-  lobe.delete();
-  return plate;
+  if (shape === 'twoflat') {
+    cap = chordCut(cap, dFlat, 140, R, t);
+    return chordCut(cap, dFlat, 220, R, t);
+  }
+
+  if (shape === 'threeflat') {
+    cap = chordCut(cap, dFlat, 90, R, t);
+    cap = chordCut(cap, dFlat, 180, R, t);
+    return chordCut(cap, dFlat, 270, R, t);
+  }
+
+  // crescent — bite tangent to the seal radius on the light side
+  const cutR = R * 0.62 + eccClamped * 0.2;
+  let bite = cyl(cutR, t + 0.4, 40).translate([-(cutR + seal), 0, 0]);
+  const body = cap.subtract(bite);
+  cap.delete();
+  bite.delete();
+  return body;
 }
 
 function estimateComOffset(shape, od, ecc) {
-  if (shape === 'offset') return Math.min(ecc * 0.8, od * 0.32);
-  if (shape === 'crescent') return Math.min(ecc * 0.95, od * 0.34);
-  return Math.min(ecc * 0.88, od * 0.33);
+  const gain = {
+    arrow: 0.95,
+    flat: 0.6,
+    twoflat: 0.75,
+    threeflat: 0.85,
+    crescent: 0.8
+  }[shape] ?? 0.8;
+  return Math.min(ecc * gain, od * 0.34);
 }
 
 /**
@@ -69,7 +103,7 @@ function estimateComOffset(shape, od, ecc) {
  */
 export function generateEccentricRotor(spec) {
   const p = params;
-  const shape = spec.shape || 'offset';
+  const shape = spec.shape || 'arrow';
   const od = Math.min(spec.od ?? p.rotorOdMax, p.rotorOdMax);
   const thickness = Math.max(spec.thickness ?? p.rotorThickness, p.minWall + 0.6);
   const ecc = spec.ecc ?? 1.2;

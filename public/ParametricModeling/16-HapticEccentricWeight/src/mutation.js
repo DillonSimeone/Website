@@ -137,7 +137,7 @@ function makeRotorEntry(spec) {
   if (!result) {
     result = generateEccentricRotor({
       ...spec,
-      shape: 'offset',
+      shape: 'flat',
       ecc: Math.min(spec.ecc, 1.0),
       od: Math.min(spec.od, Math.min(params.rotorOdMax, 7.2)),
       thickness: Math.min(spec.thickness, params.minWall + 0.8)

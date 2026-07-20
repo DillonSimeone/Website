@@ -14,6 +14,24 @@
     }
   </script>
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Surface module-linking/CDN failures in the page instead of leaving a silent blank viewport.
+    console.info('Haptic Weight Lab: page loaded; resolving viewport modules…');
+    function showStartupError(error) {
+      const badge = document.getElementById('perf-badge');
+      const status = document.getElementById('startup-status');
+      if (badge) badge.textContent = '⚠ STARTUP ERROR';
+      if (status) status.textContent = `Startup failed: ${error?.message || error || 'unknown error'}`;
+    }
+    window.addEventListener('error', event => {
+      showStartupError(event.error || event.message);
+      console.error('Haptic Weight Lab startup error:', event.error || event.message);
+    });
+    window.addEventListener('unhandledrejection', event => {
+      showStartupError(event.reason);
+      console.error('Haptic Weight Lab startup rejection:', event.reason);
+    });
+  </script>
 </head>
 <body>
   <header>
@@ -91,9 +109,11 @@
             <label class="param-label" for="input-shapeMix">Shape Mix</label>
             <select id="input-shapeMix">
               <option value="all" selected>All families</option>
-              <option value="offset">Offset disc only</option>
-              <option value="crescent">Crescent only</option>
-              <option value="lobe">Lobe only</option>
+              <option value="arrow">Arrow spike only</option>
+              <option value="flat">One flat side only</option>
+              <option value="twoflat">Two flats only</option>
+              <option value="threeflat">Three flats only</option>
+              <option value="crescent">Crescent bite only</option>
             </select>
           </div>
           <div class="param-row">
@@ -136,7 +156,12 @@
 
     <!-- CENTER: Viewport + gallery -->
     <section class="viewport-wrap">
-      <div id="canvas3d"></div>
+      <div id="canvas3d">
+        <div id="startup-status" class="startup-status">
+          <span class="startup-spinner"></span>
+          <span>Loading Three.js viewport…</span>
+        </div>
+      </div>
       <div class="gallery-panel">
         <div class="panel-header"><span class="panel-title">Rotor Gallery</span></div>
         <div id="rotor-gallery" class="rotor-gallery"></div>
@@ -209,6 +234,6 @@
     </aside>
   </main>
 
-  <script type="module" src="./src/main.js"></script>
+  <script type="module" src="./src/main.js?v=20260719-2"></script>
 </body>
 </html>

@@ -1,0 +1,30 @@
+{
+  "name": "qrcode-hover-firefox",
+  "version": "1.0.0",
+  "description": "Firefox extension: Ctrl+Shift hover QR code panel with bundled qrcodejs",
+  "private": true,
+  "scripts": {
+    "build": "web-ext build --source-dir . --artifacts-dir web-ext-artifacts",
+    "run": "web-ext run --source-dir .",
+    "lint": "web-ext lint --source-dir .",
+    "publish": "web-ext sign --channel=listed --amo-metadata=amo-metadata.json"
+  },
+  "webExt": {
+    "sourceDir": ".",
+    "ignoreFiles": [
+      "node_modules/**",
+      "web-ext-artifacts/**",
+      "package.json",
+      "package-lock.json",
+      "README.md",
+      "index.html",
+      "styles.css",
+      "*.bat",
+      ".gitignore",
+      "amo-metadata.json"
+    ]
+  },
+  "devDependencies": {
+    "web-ext": "^10.5.0"
+  }
+}

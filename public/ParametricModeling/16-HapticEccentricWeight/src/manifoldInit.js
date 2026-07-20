@@ -1,9 +1,10 @@
 // Manifold WASM bootstrap
-import Module from 'https://unpkg.com/manifold-3d/manifold.js';
 import { context } from './state.js';
 
 export async function initManifold(onReady, onAnimate) {
   try {
+    // Dynamic import keeps viewport/UI startup observable if the CDN is unavailable.
+    const { default: Module } = await import('https://unpkg.com/manifold-3d/manifold.js');
     const wasm = await Module();
     wasm.setup();
     context.wasm = wasm;

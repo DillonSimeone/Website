@@ -1,5 +1,4 @@
 // STL + experiment manifest exporters
-import { modelToSTL } from '../../00-CommonParts/Exporter/stl.js';
 import { params, library, kitStatus, MOTOR, KIT_ENVELOPE, context } from './state.js';
 import {
   generateHub,
@@ -11,6 +10,42 @@ import {
 import { packKit, itemsFromKitParts, placeModel } from './packing.js';
 import { getSelectedRotor, updateKitPacking } from './mutation.js';
 
+let stlExporterPromise = null;
+
+/**
+ * Load the canonical shared exporter only when an STL button is clicked.
+ * A static parent-directory import prevents the entire app from booting when
+ * Live Server is rooted inside this project folder.
+ */
+function getModelToSTL() {
+  if (!stlExporterPromise) {
+    stlExporterPromise = import('../../00-CommonParts/Exporter/stl.js')
+      .then(module => module.modelToSTL)
+      .catch(() => {
+        console.warn('Shared STL exporter is outside this server root; using isolated-host fallback.');
+        return fallbackModelToSTL;
+      });
+  }
+  return stlExporterPromise;
+}
+
+// Same ASCII format as the shared exporter; used only for isolated project hosting.
+function fallbackModelToSTL(model, name) {
+  if (!model) return '';
+  const mesh = model.getMesh();
+  const vertices = mesh.vertProperties;
+  const triangles = mesh.triVerts;
+  let stl = `solid ${name}\n`;
+  for (let i = 0; i < triangles.length; i += 3) {
+    const points = [triangles[i], triangles[i + 1], triangles[i + 2]]
+      .map(index => `${vertices[index * 3]} ${vertices[index * 3 + 1]} ${vertices[index * 3 + 2]}`);
+    stl += `facet normal 0 0 0\n  outer loop\n`;
+    for (const point of points) stl += `    vertex ${point}\n`;
+    stl += `  endloop\nendfacet\n`;
+  }
+  return `${stl}endsolid ${name}`;
+}
+
 function dl(blob, name) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -19,34 +54,35 @@ function dl(blob, name) {
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
-function downloadSTL(model, name) {
+async function downloadSTL(model, name) {
+  const modelToSTL = await getModelToSTL();
   const stl = modelToSTL(model, name);
   dl(new Blob([stl], { type: 'text/plain' }), `${name}.stl`);
 }
 
-export function exportHubSTL() {
+export async function exportHubSTL() {
   const m = generateHub();
-  downloadSTL(m, 'HapticHub_M1N10FB11G');
+  await downloadSTL(m, 'HapticHub_M1N10FB11G');
   m.delete();
 }
 
-export function exportFitCouponSTL() {
+export async function exportFitCouponSTL() {
   const m = generateFitCoupon();
-  downloadSTL(m, 'HapticHex_FitCoupon');
+  await downloadSTL(m, 'HapticHex_FitCoupon');
   m.delete();
 }
 
-export function exportGuardSTL() {
+export async function exportGuardSTL() {
   const m = generateGuard();
-  downloadSTL(m, 'HapticSpinGuard');
+  await downloadSTL(m, 'HapticSpinGuard');
   m.delete();
 }
 
-export function exportSelectedSTL() {
+export async function exportSelectedSTL() {
   const r = getSelectedRotor();
   if (!r) return;
   const { model } = generateEccentricRotor(r);
-  downloadSTL(model, `${r.id}_${r.shape}`);
+  await downloadSTL(model, `${r.id}_${r.shape}`);
   model.delete();
 }
 
@@ -65,7 +101,7 @@ function makePart(id) {
   return { id, model: g.model, size: partBounds(g.model).size };
 }
 
-export function exportPackedKitSTL() {
+export async function exportPackedKitSTL() {
   if (!context.Manifold) return;
   const pack = updateKitPacking();
   if (!pack.fits) {
@@ -104,7 +140,7 @@ export function exportPackedKitSTL() {
   }
 
   if (combined) {
-    downloadSTL(combined, 'HapticWeightLab_Kit_41x19x10');
+    await downloadSTL(combined, 'HapticWeightLab_Kit_41x19x10');
     combined.delete();
   }
 }
