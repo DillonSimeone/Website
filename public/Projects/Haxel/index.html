@@ -1280,15 +1280,15 @@ wave(t * (freq * 0.05))
     </div>
 
     <!-- IFRAME MANUAL MODAL -->
-    <div id="manualModal" class="activation-overlay" style="display: none; justify-content: center; align-items: center; z-index: 2000; background: rgba(0,0,0,0.7); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;">
-        <div style="width: 90vw; height: 90vh; border: 4px solid var(--black); background: var(--bg-canvas); display: flex; flex-direction: column; box-shadow: 12px 12px 0 var(--black); position: relative;">
-            <div style="background: var(--black); color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
-                <span style="font-family: var(--font-display); font-size: 14px; letter-spacing: 1px;">HAXEL // REFERENCE MANUAL</span>
-                <button id="closeManualBtn" style="background: var(--bauhaus-red); color: #fff; border: 2px solid #fff; font-family: var(--font-display); font-size: 12px; cursor: pointer; padding: 4px 10px; text-transform: uppercase;">
+    <div id="manualModal" class="activation-overlay manual-modal-overlay" style="display: none;">
+        <div class="manual-modal-shell">
+            <div class="manual-modal-bar">
+                <span class="manual-modal-title">HAXEL // REFERENCE MANUAL</span>
+                <button id="closeManualBtn" class="manual-modal-close" type="button">
                     Close [X]
                 </button>
             </div>
-            <iframe src="manual.html" style="flex: 1; border: none; width: 100%; height: 100%;"></iframe>
+            <iframe src="manual.html" title="Haxel Reference Manual" class="manual-modal-frame"></iframe>
         </div>
     </div>
 

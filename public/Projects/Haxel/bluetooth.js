@@ -2111,3 +2111,20 @@ compileCustom();
 initBootLogs();
 animate();
 addSerialLog("[BLE Portal] Initialized. Click CONNECT BLE to link your hardware.");
+
+// Setup Iframe Reference Manual Modal Listeners
+(function() {
+    const openBtn = document.getElementById("openManualBtn");
+    const closeBtn = document.getElementById("closeManualBtn");
+    const modal = document.getElementById("manualModal");
+    if (openBtn && modal) {
+        openBtn.addEventListener("click", () => {
+            modal.style.display = "flex";
+        });
+    }
+    if (closeBtn && modal) {
+        closeBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+    }
+})();
