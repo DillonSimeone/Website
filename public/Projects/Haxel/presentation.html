@@ -3,1465 +3,586 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feel the Difference: A Haptic Petting Zoo — Teardown 2026</title>
-    <!-- Google Fonts -->
+    <title>Feel the Difference: A Haptic Petting Zoo, Teardown 2026</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        /* Bauhaus Theme Variables */
-        :root {
-            --bg-canvas: #f4ebd0;     /* Cream canvas */
-            --bauhaus-red: #e23b24;   /* Primary Red */
-            --bauhaus-blue: #002f6c;  /* Primary Blue */
-            --bauhaus-yellow: #f2b134;/* Primary Yellow */
-            --black: #111111;         /* Bold Solid Black */
-            --white: #ffffff;
-            
-            --border-width: 4px;
-            --font-display: "Archivo Black", sans-serif;
-            --font-sans: "Inter", sans-serif;
-            --font-mono: "JetBrains Mono", monospace;
-            
-            --transition-speed: 0.3s;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            border-radius: 0 !important; /* Force sharp geometric Bauhaus corners */
-        }
-
-        body {
-            background-color: var(--bg-canvas);
-            color: var(--black);
-            font-family: var(--font-sans);
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Presentation Wrapper */
-        .presentation-container {
-            flex: 1;
-            display: flex;
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Slides */
-        .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity var(--transition-speed) ease-in-out, transform var(--transition-speed) ease-in-out;
-            transform: translateX(50px);
-            padding: 60px 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .slide.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(0);
-        }
-
-        .slide.prev {
-            transform: translateX(-50px);
-        }
-
-        /* Bauhaus Layouts */
-        .slide-layout-hero {
-            background-color: var(--bauhaus-red);
-            color: var(--white);
-            border-right: 40px solid var(--black);
-            border-bottom: 40px solid var(--bauhaus-yellow);
-        }
-
-        .slide-layout-hero .badge {
-            background-color: var(--black);
-            color: var(--white);
-            align-self: flex-start;
-            padding: 8px 16px;
-            font-family: var(--font-mono);
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 30px;
-            border: 2px solid var(--white);
-        }
-
-        .slide-layout-hero h1 {
-            font-family: var(--font-display);
-            font-size: clamp(3rem, 5.5vw, 4.5rem);
-            line-height: 0.95;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-            letter-spacing: -3px;
-        }
-
-        .slide-layout-hero .subtitle {
-            font-family: var(--font-mono);
-            font-size: clamp(1.1rem, 2.2vw, 1.5rem);
-            margin-bottom: 50px;
-            text-transform: uppercase;
-            max-width: 800px;
-        }
-
-        .slide-layout-hero .presenters {
-            font-family: var(--font-sans);
-            font-size: 15px;
-            font-weight: 500;
-            display: flex;
-            gap: 40px;
-            flex-wrap: wrap;
-        }
-
-        .slide-layout-hero .presenters div {
-            border-left: var(--border-width) solid var(--black);
-            padding-left: 15px;
-        }
-
-        .slide-layout-split {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            padding: 0;
-        }
-
-        .split-left {
-            padding: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            border-right: var(--border-width) solid var(--black);
-            background-color: var(--white);
-            overflow-y: auto;
-        }
-
-        .split-right {
-            padding: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background-color: var(--bauhaus-yellow);
-            color: var(--black);
-            overflow-y: auto;
-        }
-
-        .split-right.blue-theme {
-            background-color: var(--bauhaus-blue);
-            color: var(--white);
-        }
-
-        .split-right.red-theme {
-            background-color: var(--bauhaus-red);
-            color: var(--white);
-        }
-
-        .slide-layout-standard {
-            background-color: var(--white);
-            border: 20px solid var(--black);
-            margin: 40px;
-            height: calc(100% - 80px);
-            width: calc(100% - 80px);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            padding: 60px;
-            overflow-y: auto;
-        }
-
-        /* Content Typography */
-        .slide h2 {
-            font-family: var(--font-display);
-            font-size: clamp(1.8rem, 3vw, 2.5rem);
-            line-height: 1.1;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-            letter-spacing: -1.5px;
-            border-bottom: var(--border-width) solid var(--black);
-            padding-bottom: 15px;
-            color: var(--black);
-        }
-
-        .slide h3 {
-            font-family: var(--font-mono);
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            color: var(--bauhaus-red);
-        }
-
-        .bullet-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 900px;
-        }
-
-        .bullet-list li {
-            font-size: clamp(0.95rem, 1.6vw, 1.15rem);
-            font-weight: 500;
-            line-height: 1.4;
-            position: relative;
-            padding-left: 30px;
-        }
-
-        .bullet-list li::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0.35em;
-            width: 12px;
-            height: 12px;
-            background-color: var(--bauhaus-red);
-            border: 2px solid var(--black);
-        }
-
-        .split-right.blue-theme .bullet-list li::before {
-            background-color: var(--bauhaus-yellow);
-        }
-
-        .split-right.red-theme .bullet-list li::before {
-            background-color: var(--bauhaus-blue);
-            border-color: var(--white);
-        }
-
-        .bullet-list li strong {
-            font-family: var(--font-mono);
-            background-color: rgba(0, 0, 0, 0.05);
-            padding: 2px 6px;
-            font-size: 0.95em;
-        }
-
-        /* Large blockquote/callout */
-        .callout-box {
-            border: var(--border-width) solid var(--black);
-            background-color: var(--white);
-            padding: 25px;
-            box-shadow: 8px 8px 0 var(--black);
-        }
-
-        .callout-box p {
-            font-family: var(--font-mono);
-            font-size: 1.05rem;
-            font-weight: 700;
-        }
-
-        /* Formula/Math Card */
-        .formula-card {
-            border: var(--border-width) solid var(--black);
-            background-color: var(--white);
-            padding: 30px;
-            text-align: center;
-            box-shadow: 12px 12px 0 var(--black);
-            margin: 20px 0;
-        }
-
-        .formula-card .label {
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 2px;
-            color: var(--black);
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .formula-card .expression {
-            font-family: var(--font-display);
-            font-size: clamp(1.2rem, 3vw, 1.8rem);
-            color: var(--bauhaus-blue);
-            letter-spacing: -1px;
-        }
-
-        /* Footer & Controls */
-        .presentation-footer {
-            height: 60px;
-            background-color: var(--black);
-            color: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 40px;
-            z-index: 100;
-        }
-
-        .footer-left {
-            font-family: var(--font-mono);
-            font-size: 14px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .footer-center {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .nav-btn {
-            background: transparent;
-            border: 2px solid var(--white);
-            color: var(--white);
-            padding: 6px 16px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .nav-btn:hover {
-            background-color: var(--white);
-            color: var(--black);
-        }
-
-        .slide-counter {
-            font-family: var(--font-mono);
-            font-weight: bold;
-            font-size: 16px;
-            min-width: 80px;
-            text-align: center;
-        }
-
-        .progress-bar-container {
-            position: absolute;
-            bottom: 60px;
-            left: 0;
-            width: 100%;
-            height: 6px;
-            background-color: rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background-color: var(--bauhaus-red);
-            transition: width 0.3s ease;
-        }
-
-        /* Menu Panel */
-        .menu-toggle {
-            background-color: var(--bauhaus-blue);
-            color: var(--white);
-            border: 2px solid var(--white);
-        }
-
-        .menu-toggle:hover {
-            background-color: var(--bauhaus-yellow);
-            color: var(--black);
-        }
-
-        .menu-panel {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 340px;
-            height: calc(100% - 60px);
-            background-color: var(--black);
-            color: var(--white);
-            border-left: var(--border-width) solid var(--white);
-            z-index: 99;
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.77,0.2,0.05,1.0);
-            padding: 40px 20px;
-            overflow-y: auto;
-        }
-
-        .menu-panel.open {
-            transform: translateX(0);
-        }
-
-        .menu-panel h3 {
-            font-family: var(--font-display);
-            color: var(--white);
-            margin-bottom: 25px;
-            border-bottom: 2px solid var(--white);
-            padding-bottom: 10px;
-            font-size: 1.2rem;
-            letter-spacing: -0.5px;
-        }
-
-        .menu-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .menu-item {
-            font-family: var(--font-mono);
-            font-size: 12px;
-            padding: 8px 12px;
-            border: 1px solid #333;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .menu-item:hover, .menu-item.active {
-            border-color: var(--bauhaus-yellow);
-            background-color: rgba(242, 177, 52, 0.15);
-            color: var(--bauhaus-yellow);
-        }
-
-        .graphic-container {
-            width: 100%;
-            max-width: 380px;
-            margin: 15px auto;
-        }
-
-        @media (max-width: 900px) {
-            .slide-layout-split {
-                grid-template-columns: 1fr;
-                grid-template-rows: 1fr 1fr;
-            }
-            .split-left, .split-right {
-                padding: 40px;
-            }
-            .slide {
-                padding: 30px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="presentation.css">
 </head>
 <body>
 
     <div class="presentation-container">
-        
-        <!-- SLIDE 1: Title Slide -->
-        <div class="slide slide-layout-hero active" data-title="Title Slide">
-            <canvas id="bauhausTitleCanvas" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none;"></canvas>
-            <div style="position: relative; z-index: 1;">
+
+        <!-- 1: Title -->
+        <div class="slide slide-layout-hero active" data-slide-id="title" data-title="Feel the Difference">
+            <canvas id="bauhausTitleCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+            <div style="position:relative;z-index:1;">
                 <div class="badge">Teardown 2026 // Portland Workshops</div>
-                <h1 style="text-shadow: 4px 4px 0px var(--black);">Feel the Difference</h1>
+                <h1>Feel the Difference</h1>
                 <div class="subtitle">A Haptic Petting Zoo // Designing Immersive Tactile Experiences</div>
                 <div class="presenters">
                     <div>
                         <strong>Dillon Simeone</strong>
-                        <p style="font-size: 13px; font-family: var(--font-mono); margin-top: 5px;">Deaf Lead Design Engineer</p>
-                        <p style="font-size: 12px; font-family: var(--font-sans); margin-top: 2px; color: var(--bauhaus-yellow);">Universal Music Design</p>
+                        <p style="font-size:15px;font-family:var(--font-mono);margin-top:5px;">Deaf Lead Design Engineer</p>
+                        <p style="font-size:14px;margin-top:2px;color:var(--bauhaus-yellow);">Universal Music Design</p>
                     </div>
-                    <div style="border-left: var(--border-width) solid var(--black); padding-left: 15px;">
+                    <div>
                         <strong>Location</strong>
-                        <p style="font-size: 13px; font-family: var(--font-mono); margin-top: 5px;">DreamTENT @ Jupiter Original</p>
+                        <p style="font-size:15px;font-family:var(--font-mono);margin-top:5px;">DreamTENT @ Jupiter Original</p>
+                        <p style="font-size:14px;margin-top:2px;">July 25, 2026 // 3:30 to 4:50 PM</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- SLIDE 2: Welcome to the Haptic Petting Zoo -->
-        <div class="slide slide-layout-standard" data-title="Welcome to the Haptic Petting Zoo">
+        <!-- 2: Welcome -->
+        <div class="slide slide-layout-standard" data-slide-id="welcome" data-title="Welcome to the Haptic Petting Zoo">
             <h2>Welcome to the Haptic Petting Zoo</h2>
-            <h3>Slide 2</h3>
-            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center;">
-                <div>
-                    <ul class="bullet-list">
-                        <li>Most people have only experienced one type of haptic: phone vibration motors.</li>
-                        <li>Interact with 10+ stations across different sensory modalities.</li>
-                        <li>Featured Actuators: Solenoid taps, servo pressure, thermal plates, audio reactive fans, piezo actuators, ERMs, LRAs, voice coil transducers, and haptic knobs.</li>
-                        <li>Goals: Learn sensor-to-haptic signal translation and cross-modal mapping.</li>
-                    </ul>
-                </div>
-                <div>
-                    <div class="callout-box">
-                        <p>Focusing on accessible hardware, digital signal processing, and biological limits to design wearable haptics.</p>
-                    </div>
-                </div>
+            <p class="slide-lead">Most people have only experienced one type of haptic: phone vibration motors. Today you will feel many more.</p>
+            <div class="actuator-showcase">
+                <div class="actuator-tile t-red">Solenoids<span>Sharp taps &amp; clicks</span></div>
+                <div class="actuator-tile t-yellow">Servos<span>Pressure &amp; stretch</span></div>
+                <div class="actuator-tile t-blue">Thermal Plates<span>Peltier hot/cold</span></div>
+                <div class="actuator-tile t-cream">Audio Fans<span>Airflow haptics</span></div>
+                <div class="actuator-tile t-yellow">Piezo Actuators<span>High-voltage bend</span></div>
+                <div class="actuator-tile t-red">ERMs<span>Rotary buzz</span></div>
+                <div class="actuator-tile t-blue">LRAs<span>Linear resonance</span></div>
+                <div class="actuator-tile t-cream">Voice Coil<span>Bass shaker / transducer</span></div>
+                <div class="actuator-tile t-red">Haptic Knobs<span>Detents &amp; ticks</span></div>
+            </div>
+            <div class="slide-bottom-bar">
+                <div class="bottom-bar-cell goals">Goals: sensor-to-haptic translation, cross-modal mapping, mechanoreceptor targeting</div>
+                <div class="bottom-bar-cell docs">Every station has QR codes linking to full BOMs, source code, and build guides. All off-the-shelf parts.</div>
             </div>
         </div>
 
-        <!-- SLIDE 3: Core Hardware: DFRobot Beetle ESP32-C6 -->
-        <div class="slide slide-layout-split" data-title="Core Hardware: DFRobot Beetle ESP32-C6">
-            <div class="split-left" style="padding: 40px 60px;">
-                <h2>Core Hardware: DFRobot Beetle ESP32-C6</h2>
-                <h3>Slide 3</h3>
-                <div style="display: flex; flex-direction: column; gap: 20px; height: 100%; justify-content: space-between;">
-                    <div style="display: flex; gap: 20px; justify-content: center; align-items: stretch; flex: 1;">
-                        <div style="flex: 1; text-align: center; display: flex; flex-direction: column; background: white; border: var(--border-width) solid var(--black); padding: 15px; box-shadow: 6px 6px 0 var(--black);">
-                            <div style="font-family: var(--font-mono); font-size: 13px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid var(--black); padding-bottom: 5px;">DFRobot Beetle ESP32-C6 ($4.90)</div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                <img src="./images/beetle_c6.jpg" alt="Beetle ESP32-C6" style="max-height: 220px; width: auto; max-width: 100%; object-fit: contain;">
-                            </div>
-                        </div>
-                        <div style="flex: 1; text-align: center; display: flex; flex-direction: column; background: white; border: var(--border-width) solid var(--black); padding: 15px; box-shadow: 6px 6px 0 var(--black);">
-                            <div style="font-family: var(--font-mono); font-size: 13px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid var(--black); padding-bottom: 5px;">ESP32-C3 Supermini ($1.75 - $2.75)</div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                <img src="./images/esp32_c3_supermini_aliexpress.jpg" alt="ESP32 C3 Supermini" style="max-height: 220px; width: auto; max-width: 100%; object-fit: contain;">
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 20px; align-items: center; background: var(--white); border: var(--border-width) solid var(--black); padding: 15px; box-shadow: 6px 6px 0 var(--black);">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https%3A%2F%2Fwww.aliexpress.us%2Fitem%2F3256808061811691.html%3Fspm%3Da2g0o.order_list.order_list_main.5.32dd1802YEwMWU%26gatewayAdapt%3Dglo2usa" alt="AliExpress QR Code" style="width: 100px; height: 100px; border: 2px solid var(--black); flex-shrink: 0;">
-                        <div style="font-family: var(--font-mono); font-size: 13px; font-weight: bold; line-height: 1.4;">
-                            <div style="font-size: 14px; text-transform: uppercase; color: var(--bauhaus-blue); margin-bottom: 4px;">Buy ESP32-C3 Supermini on AliExpress</div>
-                            In case you can't resist buying! I have gotten these for as low as <span style="color: var(--bauhaus-red); font-size: 15px; font-weight: 800;">$1.75 USD each</span>!
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="split-right yellow-theme">
+        <!-- 3: Mapping Accessibility -->
+        <div class="slide slide-layout-split" data-slide-id="accessibility" data-title="Mapping Accessibility to Haptics">
+            <div class="split-left">
+                <h2>Mapping Accessibility to Haptics</h2>
                 <ul class="bullet-list">
-                    <li>Our Microcontroller of Choice: DFRobot Beetle ESP32-C6 (only <strong>$4.90</strong>!).</li>
-                    <li>Ultra-compact: Tiny footprint, perfect for haptic rings, tags, and small wearables.</li>
-                    <li>LiPo Charger Inbuilt: Safe onboard lithium battery charging circuit.</li>
-                    <li>Specs: RISC-V CPU (WiFi 6, BLE 5, Zigbee / Thread / Matter).</li>
-                    <li>Runner Up: ESP32-C3 Supermini (extremely cheap, but lacks battery manager).</li>
+                    <li><strong>Universal Music Design</strong> bridges hearing and Deaf performance spaces through tactile overlays.</li>
+                    <li><em>GestoLumina</em> (Aalborg University Press): gesture-interpreted light, sound, and haptics framework.</li>
+                    <li><em>Sonic Agency</em> (ASSETS '25): technology-mediated performance by Deaf and Hard of Hearing musicians.</li>
+                    <li>Haptic and light interfaces powered by ESP32s, with open documentation for makers at all levels.</li>
                 </ul>
             </div>
-        </div>
-
-        <!-- SLIDE 4: Haxel: Open Haptic Development Environment -->
-        <div class="slide slide-layout-standard" data-title="Haxel: Open Haptic Development Environment">
-            <h2>Haxel: Open Haptic Development Environment</h2>
-            <h3>Slide 4</h3>
-            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center;">
-                <div>
-                    <ul class="bullet-list">
-                        <li>Main Software Interface: Haxel (F:\Github\Website\public\Projects\Haxel).</li>
-                        <li>Web Bluetooth Control: Connect and control your Firebeetle directly from a web browser.</li>
-                        <li>Real-Time Visualization: Monitor input sensors (audio, pressure) and map them to actuator outputs.</li>
-                        <li>Low-Friction Prototyping: Test signal mapping and synthesize sensations instantly.</li>
-                    </ul>
-                </div>
-                <div>
-                    <div class="graphic-container" style="display: flex; flex-direction: column; gap: 15px; align-items: center; justify-content: center; background: white; padding: 25px; border: var(--border-width) solid var(--black); box-shadow: 8px 8px 0 var(--black);">
-                        <div style="font-family: var(--font-mono); font-size: 12px; font-weight: bold; text-transform: uppercase;">Simulated Web Bluetooth Connection</div>
-                        <div class="radar-box" style="position: relative; width: 140px; height: 140px; border: 4px solid var(--black); display: flex; align-items: center; justify-content: center;">
-                            <div style="position: absolute; width: 10px; height: 10px; background: var(--bauhaus-red); border: 2px solid var(--black);"></div>
-                            <div class="radar-ping" style="position: absolute; width: 10px; height: 10px; border: 2px solid var(--bauhaus-blue); border-radius: 50% !important; animation: pingAnimation 2s infinite linear;"></div>
-                            <div class="radar-ping" style="position: absolute; width: 10px; height: 10px; border: 2px solid var(--bauhaus-yellow); border-radius: 50% !important; animation: pingAnimation 2s infinite linear; animation-delay: 1s;"></div>
-                        </div>
-                        <button class="nav-btn" style="background: var(--bauhaus-blue); color: white; width: 100%; border: 3px solid var(--black); font-family: var(--font-mono); font-weight: bold;" onclick="triggerTestRadar(this)">Start Connection Pulse</button>
-                    </div>
-                    <style>
-                        @keyframes pingAnimation {
-                            0% { width: 10px; height: 10px; opacity: 1; }
-                            100% { width: 130px; height: 130px; opacity: 0; }
-                        }
-                    </style>
+            <div class="split-right blue-theme quote-panel">
+                <div class="quote-block">
+                    <p class="quote-body">
+                        For the Deaf and Hard of Hearing community,<br>
+                        programmable audio-reactive haptics<br>
+                        are not a novelty.
+                    </p>
+                    <p class="quote-accent">They are a sensory bridge.</p>
                 </div>
             </div>
         </div>
 
-        <!-- SLIDE 5: Mechanoreceptors: How We Feel -->
-        <div class="slide slide-layout-split" data-title="Mechanoreceptors: How We Feel">
+        <!-- 4: Core Hardware -->
+        <div class="slide slide-layout-standard" data-slide-id="hardware" data-title="Core Hardware: Beetle ESP32-C6">
+            <h2>Core Hardware: DFRobot Beetle ESP32-C6</h2>
+            <div class="hw-esp32-row">
+                <figure class="hw-card hw-esp32-card">
+                    <div class="hw-label">Beetle ESP32-C6 ($4.90)</div>
+                    <img src="./images/beetle_c6.jpg" alt="Beetle ESP32-C6">
+                    <figcaption class="hw-figcaption">Ultra-compact for rings and wearables. LiPo charger inbuilt. RISC-V, WiFi 6, BLE 5, Zigbee / Thread / Matter.</figcaption>
+                </figure>
+                <figure class="hw-card hw-esp32-card">
+                    <div class="hw-label">ESP32-C3 Supermini ($1.75~)</div>
+                    <img src="./images/esp32_c3_supermini_aliexpress.jpg" alt="ESP32 C3 Supermini">
+                    <figcaption class="hw-figcaption">Great for ESP-NOW fleets, but no battery manager and single core.</figcaption>
+                </figure>
+            </div>
+            <div class="hw-ch32-row">
+                <figure class="hw-card hw-ch32-card">
+                    <div class="hw-label">CH32V003 ($0.50~)</div>
+                    <img src="./images/ch32v003_aliexpress.png" alt="CH32V003">
+                    <figcaption class="hw-figcaption">The "ten cent microcontroller." Under $0.50 each, pennies on a reel. 5V-only with no 3.3V rail, so sensor options are narrower, but for driving motors it does everything you need. A CH32FUN talk at last year's Teardown got me started, and the tooling is genuinely as smooth as ESP-IDF.</figcaption>
+                </figure>
+            </div>
+        </div>
+
+        <!-- 5: Software -->
+        <div class="slide slide-layout-standard" data-slide-id="software" data-title="Software: MicroPython vs PlatformIO">
+            <h2>Software: MicroPython vs PlatformIO</h2>
+            <div class="sw-compare">
+                <div class="sw-col">
+                    <div class="sw-logo-wrap">
+                        <img src="./images/micropython_logo.png" alt="MicroPython" class="sw-logo">
+                    </div>
+                    <h3 class="sw-col-title" style="color:var(--bauhaus-red);">MicroPython</h3>
+                    <ul class="sw-pros-cons">
+                        <li class="pro">Real-time compilation. Edit, save, run. No build step.</li>
+                        <li class="pro">Ideal for rapid prototyping and classroom workshops.</li>
+                        <li class="con">Higher power draw. The interpreter never sleeps as efficiently as compiled C.</li>
+                        <li class="con">Smaller library ecosystem. Many sensor drivers need manual porting.</li>
+                        <li class="con">Timing-critical code (I2S, precise PWM) is harder to get right.</li>
+                    </ul>
+                </div>
+                <div class="sw-divider"></div>
+                <div class="sw-col">
+                    <div class="sw-logo-wrap">
+                        <img src="./images/platformio_logo.png" alt="PlatformIO" class="sw-logo">
+                    </div>
+                    <h3 class="sw-col-title" style="color:var(--bauhaus-blue);">PlatformIO</h3>
+                    <ul class="sw-pros-cons">
+                        <li class="pro">Compiled C/C++. Maximum performance, minimum power draw.</li>
+                        <li class="pro">Massive library ecosystem. OTA, deep sleep, precise timing out of the box.</li>
+                        <li class="pro">CLI is outstanding. One command to build, flash, and monitor any board.</li>
+                        <li class="con">Longer compile cycles. A full rebuild on a large project can take minutes.</li>
+                        <li class="con">Steeper initial setup (toolchains, board definitions, platformio.ini).</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="sw-uploader-section">
+                <p class="sw-cli-note">
+                    <strong>PlatformIO's CLI is the real superpower.</strong>
+                    It is language-agnostic. Shell out to <code>pio run -t upload</code> from Python, Node, Electron, or anything else, and you have a custom flash toolchain in an afternoon.
+                    The uploader below is exactly that: a thin web GUI over the CLI.
+                </p>
+                <div class="sw-uploader-row">
+                    <div class="sw-uploader-mock">
+                        <canvas id="uploaderMockup"></canvas>
+                    </div>
+                    <div class="sw-esp32-mock">
+                        <canvas id="uploaderEsp32"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6: GestoLumina Journey -->
+        <div class="slide slide-layout-split" data-slide-id="gestolumina" data-title="GestoLumina & UMD Journey">
+            <div class="split-left">
+                <h2>GestoLumina &amp; UMD Journey</h2>
+                <ul class="bullet-list">
+                    <li><strong>GeLu 1:</strong> Felt Sound research to wireless ESP32-S3 and TensorFlow Lite gesture ML.</li>
+                    <li><strong>GeLu 2 to 3:</strong> iterative wearables, custom PCBs, Bambu Lab rapid enclosures.</li>
+                    <li><strong>Audio Reactive Masks:</strong> Jazz Prism Project, light and haptic sync for performers.</li>
+                    <li><strong>SynchroGlove:</strong> experimental datagloves for ensemble timing.</li>
+                </ul>
+            </div>
+            <div class="split-right" style="background:var(--white);padding:16px;">
+                <div class="img-grid-3">
+                    <img src="./PreziSlides/08-gestolumina-the-beginning.png" alt="GestoLumina origins">
+                    <img src="./PreziSlides/13-audio-reactive-masks.png" alt="Audio reactive masks">
+                    <img src="./PreziSlides/14-synchroglove-datagloves.png" alt="SynchroGlove datagloves">
+                </div>
+            </div>
+        </div>
+
+        <!-- 7: Mechanoreceptors -->
+        <div class="slide slide-layout-split" data-slide-id="mechanoreceptors" data-title="Mechanoreceptors: How We Feel">
             <div class="split-left">
                 <h2>Mechanoreceptors: How We Feel</h2>
-                <h3>Slide 5</h3>
-                <div class="graphic-container" style="background: white; padding: 20px; border: var(--border-width) solid var(--black); box-shadow: 8px 8px 0 var(--black);">
-                    <div style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; text-align: center;">Skin Modality Frequency Simulation</div>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button class="nav-btn" style="background: var(--bauhaus-blue); color: white; border: 2px solid var(--black);" onclick="playMechFreq(250, 'pacinian-wave')">Pacinian (250Hz - LRA/Transducer)</button>
-                        <button class="nav-btn" style="background: var(--bauhaus-yellow); color: var(--black); border: 2px solid var(--black);" onclick="playMechFreq(40, 'meissner-wave')">Meissner (40Hz - ERM Buzz)</button>
-                        <button class="nav-btn" style="background: var(--bauhaus-red); color: white; border: 2px solid var(--black);" onclick="playMechFreq(5, 'merkel-wave')">Merkel/Ruffini (5Hz - Click/Pressure)</button>
+                <div class="mech-waves-stack">
+                    <div class="mech-wave-row">
+                        <label>Pacinian (250 Hz, LRA / Transducer)</label>
+                        <canvas id="mechWave250"></canvas>
                     </div>
-                    <div style="margin-top: 15px; height: 60px; border: 2px solid var(--black); position: relative; background: var(--bg-canvas); overflow: hidden;">
-                        <canvas id="mechWaveCanvas" style="width: 100%; height: 100%;"></canvas>
+                    <div class="mech-wave-row">
+                        <label>Meissner (40 Hz, ERM Buzz)</label>
+                        <canvas id="mechWave40"></canvas>
+                    </div>
+                    <div class="mech-wave-row">
+                        <label>Merkel / Ruffini (5 Hz, Click / Pressure)</label>
+                        <canvas id="mechWave5"></canvas>
                     </div>
                 </div>
             </div>
             <div class="split-right red-theme">
                 <ul class="bullet-list">
-                    <li>Designing haptics requires targeting specific receptors in the skin:</li>
-                    <li>Pacinian Corpuscles: Target with high-frequency vibrations (200-300 Hz) using LRAs & transducers.</li>
-                    <li>Meissner Corpuscles: Target with low-frequency vibrations or slip (30-50 Hz) using ERM buzzers.</li>
-                    <li>Merkel Discs & Ruffini Endings: Target with static pressure and stretch using servos & solenoids.</li>
+                    <li>Pacinian Corpuscles: high-frequency vibrations (200 to 300 Hz), LRAs and transducers.</li>
+                    <li>Meissner Corpuscles: low-frequency vibrations or slip (30 to 50 Hz), ERM buzzers.</li>
+                    <li>Merkel Discs and Ruffini Endings: static pressure and stretch, servos and solenoids.</li>
                 </ul>
             </div>
         </div>
 
-        <!-- SLIDE 6: Actuator Modality 1: Solenoids & Servos -->
-        <div class="slide slide-layout-standard" data-title="Actuator Modality 1: Solenoids & Servos">
-            <h2>Actuator Modality 1: Solenoids & Servos</h2>
-            <h3>Slide 6</h3>
-            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center;">
-                <div>
-                    <ul class="bullet-list">
-                        <li>Merkel / Ruffini receptors respond to physical pressure and impact.</li>
-                        <li>Solenoids: Deliver high-impact sharp taps and clicks. Excellent for UI confirmations.</li>
-                        <li>Servos: Provide steady, continuous pressure patterns and stretch sensations.</li>
-                        <li>Pros: Simulates structural realism. Cons: Heavy, bulky, and power-hungry.</li>
-                    </ul>
-                </div>
-                <div>
-                    <div class="callout-box">
-                        <p>Focusing on accessible hardware, digital signal processing, and biological limits to design wearable haptics.</p>
-                    </div>
+        <!-- 8: Solenoids & Servos -->
+        <div class="slide slide-layout-split" data-slide-id="solenoids" data-title="Actuator Modality 1: Solenoids & Servos">
+            <div class="split-left">
+                <h2>Actuator Modality 1: Solenoids &amp; Servos</h2>
+                <ul class="bullet-list">
+                    <li>Merkel and Ruffini receptors respond to physical pressure and impact.</li>
+                    <li>Solenoids: high-impact sharp taps and clicks, excellent UI confirmations.</li>
+                    <li>Servos: steady, continuous pressure patterns and stretch sensations.</li>
+                    <li>Pros: structural realism. Cons: heavy, bulky, power-hungry.</li>
+                </ul>
+            </div>
+            <div class="split-right" style="background:var(--white);padding:16px;">
+                <div class="viz-canvas-box">
+                    <canvas id="solenoidServoCanvas" style="height:280px;"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- SLIDE 7: Actuator Modality 2: ERMs & LRAs -->
-        <div class="slide slide-layout-split" data-title="Actuator Modality 2: ERMs & LRAs">
-            <div class="split-left" style="padding: 40px 60px;">
-                <h2>Actuator Modality 2: ERMs & LRAs</h2>
-                <h3>Slide 7</h3>
-                <div class="graphic-container" style="background: white; padding: 30px; border: var(--border-width) solid var(--black); box-shadow: 8px 8px 0 var(--black); display: grid; grid-template-columns: 1fr 1fr; gap: 30px; text-align: center; max-width: 550px; width: 100%; height: auto; margin: 20px auto;">
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <div style="font-family: var(--font-display); font-size: 14px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">ERM (Rotary)</div>
-                        <div style="width: 150px; height: 150px; border: 4px solid var(--black); position: relative; overflow: hidden; background: var(--bg-canvas);" id="ermContainer">
-                            <div style="position: absolute; top: 25px; left: 25px; width: 92px; height: 92px; border-radius: 50% !important; border: 3px dashed var(--black);"></div>
-                            <div style="position: absolute; top: 35px; left: 35px; width: 72px; height: 72px; background: var(--bauhaus-yellow); border: 3px solid var(--black); border-radius: 50% !important; transform-origin: center; overflow: hidden;" id="ermWeight">
-                                <div style="width: 36px; height: 36px; background: var(--bauhaus-red); border-right: 3px solid var(--black); border-bottom: 3px solid var(--black);"></div>
-                            </div>
+        <!-- 9: ERMs & LRAs -->
+        <div class="slide slide-layout-split" data-slide-id="erm-lra" data-title="Actuator Modality 2: ERMs & LRAs">
+            <div class="split-left">
+                <h2>Actuator Modality 2: ERMs &amp; LRAs</h2>
+                <div class="erm-lra-stage">
+                    <div>
+                        <div style="font-family:var(--font-display);font-size:1rem;font-weight:bold;margin-bottom:10px;">ERM (Rotary)</div>
+                        <div class="erm-diagram" id="ermContainer">
+                            <div class="erm-disc" id="ermDisc"></div>
                         </div>
-                        <div style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; color: var(--bauhaus-red); margin-top: 15px; text-transform: uppercase; letter-spacing: 1px;">Rotation</div>
                     </div>
-                    <div style="border-left: 4px solid var(--black); display: flex; flex-direction: column; align-items: center; justify-content: center; padding-left: 20px;">
-                        <div style="font-family: var(--font-display); font-size: 14px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">LRA (Linear)</div>
-                        <div style="width: 150px; height: 150px; border: 4px solid var(--black); position: relative; background: var(--bg-canvas);" id="lraContainer">
-                            <div style="position: absolute; left: 69px; top: 15px; width: 12px; height: 60px; border: 3px solid var(--black); border-bottom: none;" id="lraSpring"></div>
-                            <div style="position: absolute; left: 37px; top: 75px; width: 76px; height: 38px; background: var(--bauhaus-blue); border: 3px solid var(--black);" id="lraMass"></div>
+                    <div>
+                        <div style="font-family:var(--font-display);font-size:1rem;font-weight:bold;margin-bottom:10px;">LRA (Linear)</div>
+                        <div class="lra-diagram" id="lraContainer">
+                            <div class="lra-spring" id="lraSpring"></div>
+                            <div class="lra-mass" id="lraMass"></div>
                         </div>
-                        <div style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; color: var(--bauhaus-blue); margin-top: 15px; text-transform: uppercase; letter-spacing: 1px;">Resonance</div>
                     </div>
                 </div>
             </div>
             <div class="split-right blue-theme">
                 <ul class="bullet-list">
-                    <li>Eccentric Rotating Mass (ERM): Asymmetric weight spinning on a DC motor.</li>
-                    <li>ERM Tip: Running at 100% feels like cheap buzzing; pulse forward-reverse to get sharp snaps.</li>
-                    <li>Linear Resonant Actuator (LRA): Magnetic mass mounted on a spring.</li>
-                    <li>LRA Tip: Extremely crisp clicks, but MUST be driven at its specific resonant frequency!</li>
+                    <li>ERM: asymmetric weight on DC motor. Pulse forward-reverse for sharp snaps, not 100% buzz.</li>
+                    <li>LRA: mass on spring, crisp clicks at resonant frequency.</li>
+                    <li><strong>LRA resonant frequency matters.</strong> Off-resonance still vibrates, but wastes watts as heat instead of motion.</li>
                 </ul>
             </div>
         </div>
 
-        <!-- SLIDE 8: Actuator Modality 3: Advanced Modalities -->
-        <div class="slide slide-layout-standard" data-title="Actuator Modality 3: Advanced Modalities">
+        <!-- 10: How motors work -->
+        <div class="slide slide-layout-split" data-slide-id="motor-internals" data-title="How Vibration Motors Work">
+            <div class="split-left">
+                <h2>How Vibration Motors Work</h2>
+                <ul class="bullet-list">
+                    <li>Wire wrapped around a coil on a shaft, surrounded by magnets or more wire windings.</li>
+                    <li>Current through the coil pushes the shaft against magnetic fields.</li>
+                    <li>ERM: offset mass spins and throws the whole motor off balance.</li>
+                    <li>LRA: mass shuttles back and forth on a spring at a tuned frequency.</li>
+                </ul>
+            </div>
+            <div class="split-right" style="background:var(--white);padding:16px;">
+                <div class="viz-canvas-box">
+                    <canvas id="motorInternalsCanvas" style="height:300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 11: Motor Construction -->
+        <div class="slide slide-layout-split" data-slide-id="motor-construction" data-title="How Motors Are Made">
+            <div class="split-left">
+                <h2>How Motors Are Made</h2>
+                <ul class="bullet-list">
+                    <li><strong>Brushed:</strong> coil on the rotor, magnets in the housing. Carbon brushes carry current to the spinning coil through a commutator. Simple, cheap, wears out.</li>
+                    <li><strong>Brushless (BLDC):</strong> magnets on the rotor, coils in the housing. An ESC switches coil phases electronically. No brushes to wear, but needs a driver IC.</li>
+                    <li><strong>The principle is the same:</strong> current through wire creates a magnetic field that pushes against another magnetic field, whether from permanent magnets or more wire windings.</li>
+                    <li><strong>PCB motors:</strong> coils etched directly onto a circuit board. Flat, ultra-thin, no mechanical winding. Limited torque, but ideal for coin-style haptic actuators.</li>
+                </ul>
+            </div>
+            <div class="split-right red-theme">
+                <ul class="bullet-list">
+                    <li><strong>Demagnetization:</strong> permanent magnets lose strength when heated past their Curie threshold. Ferrite starts fading at 80C. Neodymium handles more but is not immune.</li>
+                    <li>In a closed wearable with no airflow, continuous duty can reach those temperatures in minutes.</li>
+                    <li>Once demagnetized, the motor is permanently weaker. Cooling does not restore the field.</li>
+                    <li><strong>Takeaway:</strong> duty-cycle limits and thermal monitoring are not optional for wearable haptics.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 12: Advanced Modalities -->
+        <div class="slide slide-layout-standard" data-slide-id="advanced" data-title="Actuator Modality 3: Advanced Modalities">
             <h2>Actuator Modality 3: Advanced Modalities</h2>
-            <h3>Slide 8</h3>
-            <table style="width: 100%; flex: 1; border-collapse: collapse; border: var(--border-width) solid var(--black); box-shadow: 8px 8px 0 var(--black); background: white; margin-top: 15px;">
+            <table class="actuator-table">
                 <thead>
-                    <tr style="background: var(--bauhaus-blue); color: white; border-bottom: var(--border-width) solid var(--black); height: 45px;">
-                        <th style="padding: 8px 12px; font-family: var(--font-display); text-transform: uppercase; font-size: 14px; text-align: center; width: 35%; border-right: var(--border-width) solid var(--black);">Actuator</th>
-                        <th style="padding: 8px 12px; font-family: var(--font-display); text-transform: uppercase; font-size: 14px; text-align: left; width: 65%;">The Catch</th>
+                    <tr>
+                        <th style="width:38%;border-right:var(--border-width) solid var(--black);">Actuator</th>
+                        <th>The Catch</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr style="border-bottom: 2px solid var(--black); background: #ffffff; height: calc((100% - 45px) / 4);">
-                        <td style="padding: 10px 15px; border-right: var(--border-width) solid var(--black); vertical-align: middle;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; text-align: left; width: 100%;">
-                                <img src="./images/bass_shaker.jpg" alt="Mini Bass Shaker" style="width: 70px; height: 70px; border: 2.5px solid var(--black); object-fit: cover; flex-shrink: 0; box-shadow: 3px 3px 0 var(--black);">
-                                <strong style="font-family: var(--font-sans); font-size: 14px;">Mini Bass Shaker (8 Ohm)</strong>
+                    <tr>
+                        <td style="border-right:var(--border-width) solid var(--black);">
+                            <div class="actuator-cell">
+                                <img src="./images/bass_shaker.jpg" alt="Bass shaker" class="actuator-thumb">
+                                <strong>Mini Bass Shaker (8 Ohm)</strong>
                             </div>
                         </td>
-                        <td style="padding: 10px 20px; font-family: var(--font-mono); font-size: 13px; line-height: 1.4; vertical-align: middle;">
-                            Requires AC audio power (analog amplifier). Driving them with DC offset or clipping will cause them to overheat and eventually tear themselves apart!
-                        </td>
+                        <td style="font-family:var(--font-mono);">Requires AC audio power. DC offset or clipping causes overheating and self-destruction.</td>
                     </tr>
-                    <tr style="border-bottom: 2px solid var(--black); background: #fdfaf2; height: calc((100% - 45px) / 4);">
-                        <td style="padding: 10px 15px; border-right: var(--border-width) solid var(--black); vertical-align: middle;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; text-align: left; width: 100%;">
-                                <img src="./images/piezo_actuator.png" alt="Piezoelectric Actuator" style="width: 70px; height: 70px; border: 2.5px solid var(--black); object-fit: cover; flex-shrink: 0; box-shadow: 3px 3px 0 var(--black);">
-                                <strong style="font-family: var(--font-sans); font-size: 14px;">Piezoelectric Actuators</strong>
+                    <tr>
+                        <td style="border-right:var(--border-width) solid var(--black);">
+                            <div class="actuator-cell">
+                                <img src="./images/piezo_actuator.png" alt="Piezo" class="actuator-thumb">
+                                <strong>Piezoelectric Actuators</strong>
                             </div>
                         </td>
-                        <td style="padding: 10px 20px; font-family: var(--font-mono); font-size: 13px; line-height: 1.4; vertical-align: middle;">
-                            Extremely high voltage drive requirements (typically 60V to 150V+), requiring specialized boost converters and driver circuitry. Also very fragile to bending stress!
-                        </td>
+                        <td style="font-family:var(--font-mono);">60V to 150V+ drive, specialized boost converters. Fragile to bending stress.</td>
                     </tr>
-                    <tr style="border-bottom: 2px solid var(--black); background: #ffffff; height: calc((100% - 45px) / 4);">
-                        <td style="padding: 10px 15px; border-right: var(--border-width) solid var(--black); vertical-align: middle;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; text-align: left; width: 100%;">
-                                <img src="./images/peltier.jpg" alt="Peltier Cooler" style="width: 70px; height: 70px; border: 2.5px solid var(--black); object-fit: cover; flex-shrink: 0; box-shadow: 3px 3px 0 var(--black);">
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <strong style="font-family: var(--font-sans); font-size: 14px;">Thermal (Peltier)</strong>
-                                    <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-canvas); padding: 4px 6px; border: 1.5px solid var(--black); align-self: flex-start; width: max-content;">
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=https%3A%2F%2Fwww.amazon.com%2Fdp%2FB01IT8SAZG" alt="Amazon Peltier Link QR" style="width: 40px; height: 40px; border: 1px solid var(--black); flex-shrink: 0;">
-                                        <span style="font-family: var(--font-mono); font-size: 8.5px; font-weight: bold; color: var(--bauhaus-blue); line-height: 1.0;">TEC1-12706<br>Link QR</span>
-                                    </div>
-                                </div>
+                    <tr>
+                        <td style="border-right:var(--border-width) solid var(--black);">
+                            <div class="actuator-cell">
+                                <img src="./images/peltier.jpg" alt="Peltier" class="actuator-thumb">
+                                <strong>Thermal (Peltier)</strong>
                             </div>
                         </td>
-                        <td style="padding: 10px 20px; font-family: var(--font-mono); font-size: 13px; line-height: 1.4; vertical-align: middle;">
-                            Requires massive wattage (high current: 12V 5.8A) to heat/cool quickly. Must have large heat sinks or you will burn out the cell instantly!
-                        </td>
+                        <td style="font-family:var(--font-mono);">12V 5.8A, massive heat sinks required or instant burnout.</td>
                     </tr>
-                    <tr style="background: #fdfaf2; height: calc((100% - 45px) / 4);">
-                        <td style="padding: 10px 15px; border-right: var(--border-width) solid var(--black); vertical-align: middle;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; text-align: left; width: 100%;">
-                                <img src="./images/fan.jpg" alt="Air Fan Actuator" style="width: 70px; height: 70px; border: 2.5px solid var(--black); object-fit: cover; flex-shrink: 0; box-shadow: 3px 3px 0 var(--black);">
-                                <strong style="font-family: var(--font-sans); font-size: 14px;">Fans / Air Haptics</strong>
+                    <tr>
+                        <td style="border-right:var(--border-width) solid var(--black);">
+                            <div class="actuator-cell">
+                                <img src="./images/fan.jpg" alt="Fan" class="actuator-thumb">
+                                <strong>Fans / Air Haptics</strong>
                             </div>
                         </td>
-                        <td style="padding: 10px 20px; font-family: var(--font-mono); font-size: 13px; line-height: 1.4; vertical-align: middle;">
-                            They are deafeningly loud when pushed to their limits to simulate strong wind or airflow!
-                        </td>
+                        <td style="font-family:var(--font-mono);">Deafeningly loud when pushed to simulate strong wind.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- SLIDE 9: Haptic Circuits: MOSFETs & H-Bridges -->
-        <div class="slide slide-layout-split" data-title="Haptic Circuits: MOSFETs & H-Bridges">
-            <div class="split-left" style="padding: 40px 60px;">
-                <h2>Haptic Circuits: MOSFETs & H-Bridges</h2>
-                <h3>Slide 9</h3>
-                <div class="graphic-container" style="background: white; padding: 25px; border: var(--border-width) solid var(--black); box-shadow: 8px 8px 0 var(--black); display: flex; flex-direction: column; justify-content: center; gap: 15px; width: 100%; max-width: 480px; margin: 20px auto;">
-                    <div style="font-family: var(--font-display); font-size: 14px; font-weight: bold; text-transform: uppercase; text-align: center; border-bottom: 2px solid var(--black); padding-bottom: 5px;">PWM Duty Cycle Example</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 14px; font-weight: bold;">
-                        <span>DUTY CYCLE:</span>
-                        <span id="pwmVal" style="color: var(--bauhaus-red); font-size: 16px; font-weight: 800;">50%</span>
-                    </div>
-                    <div style="height: 100px; background: var(--bg-canvas); border: 3px solid var(--black); position: relative; overflow: hidden; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1);">
-                        <canvas id="pwmWaveCanvas" style="width:100%; height:100%;"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="split-right yellow-theme" style="padding: 25px 45px; display: flex; flex-direction: column; gap: 12px; justify-content: center; overflow: hidden;">
-                <ul class="bullet-list" style="margin-bottom: 2px; font-size: 12.5px; line-height: 1.3;">
-                    <li>Microcontroller GPIO pins output control signals, not high power.</li>
-                    <li>MOSFETs: Low cost, single direction. Ideal for ERMs, LRAs, and solenoids.</li>
-                    <li>H-Bridges (e.g., Mini L298N): Dual direction control. Required for active braking (ERMs) or dual-polarity actuators.</li>
-                    <li>PWM (Pulse Width Modulation): Map frequency/amplitude to duty cycle to control haptic intensity.</li>
-                </ul>
-                
-                <!-- MOSFET Card -->
-                <div style="background: white; border: var(--border-width) solid var(--black); padding: 10px 15px; box-shadow: 5px 5px 0 var(--black); display: flex; gap: 15px; align-items: center; color: var(--black); min-height: 100px;">
-                    <img src="./images/mosfet.jpg" alt="MOSFET Module" style="width: 65px; height: 65px; border: 2px solid var(--black); object-fit: cover; flex-shrink: 0; box-shadow: 1.5px 1.5px 0 var(--black);">
-                    <div style="font-family: var(--font-sans); font-size: 11px; line-height: 1.35;">
-                        <div style="font-family: var(--font-display); font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--bauhaus-blue); margin-bottom: 2px;">High-Power MOSFET Driver (~$1.00)</div>
-                        <span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: bold; background: #eee; padding: 1px 3px;">DC 5V-36V | 15A (Max 30A / 400W)</span>
-                        <div style="margin-top: 3px;">
-                            Perfect for high-power devices like Peltier thermal plates. 
-                            <strong style="color: var(--bauhaus-red);">Warning:</strong> Use correct wire gauge and attach a heatsink to the MOSFET!
-                        </div>
-                    </div>
-                </div>
-
-                <!-- H-Bridge Card -->
-                <div style="background: white; border: var(--border-width) solid var(--black); padding: 10px 15px; box-shadow: 5px 5px 0 var(--black); display: flex; gap: 15px; align-items: center; color: var(--black); min-height: 100px;">
-                    <img src="./images/hbridge.jpg" alt="H-Bridge Module" style="width: 65px; height: 65px; border: 2px solid var(--black); object-fit: cover; flex-shrink: 0; box-shadow: 1.5px 1.5px 0 var(--black);">
-                    <div style="font-family: var(--font-sans); font-size: 11px; line-height: 1.35;">
-                        <div style="font-family: var(--font-display); font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--bauhaus-blue); margin-bottom: 2px;">Mini Dual H-Bridge (~$0.50)</div>
-                        <span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: bold; background: #eee; padding: 1px 3px;">Mini L298N | 2V-10V | 1.5A</span>
-                        <div style="margin-top: 3px;">
-                            Replaces ancient, heavy L298Ns. Enables forward/backward polarity control (great for active motor braking) with minimal voltage drop.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SLIDE 10: Power Delivery: USB-C PD Decoy -->
-        <div class="slide slide-layout-standard" data-title="Power Delivery: USB-C PD Decoy">
-            <h2>Power Delivery: USB-C PD Decoy</h2>
-            <h3>Slide 10</h3>
-            <ul class="bullet-list" style="margin-bottom: 25px;">
-                <li>Heavy solenoids, Peltier plates, and transducers require more than 5V from the USB port.</li>
-                <li>USB-C Power Delivery (PD) Decoy: Configures voltage requests directly from chargers.</li>
-                <li>Adjustable: Request 9V, 12V, 15V, or 20V depending on actuator needs.</li>
-                <li>Safety: Ensures high current is negotiated safely without burning out controller boards.</li>
-                <li>Power delivery decoy: Requests 5, 9, 12, 15 or 20 voltage from USB-C chargers, configurable via switches on the top.</li>
-            </ul>
-            <div style="display: flex; gap: 30px; justify-content: center; align-items: center; width: 100%; margin-top: 15px;">
-                <div style="text-align: center;">
-                    <img src="./images/adeept_pd.jpg" alt="Adeept PD Module" style="max-height: 280px; width: auto; max-width: 100%; border: 4px solid var(--black); box-shadow: 6px 6px 0 var(--black);">
-                    <div style="font-family: var(--font-mono); font-size: 11px; margin-top: 6px; font-weight: bold;">Adeept PD Trigger Board</div>
-                </div>
-                <div style="text-align: center;">
-                    <img src="./images/pd_decoy_sharex.png" alt="PD Decoy Diagram" style="max-height: 280px; width: auto; max-width: 100%; border: 4px solid var(--black); box-shadow: 6px 6px 0 var(--black);">
-                    <div style="font-family: var(--font-mono); font-size: 11px; margin-top: 6px; font-weight: bold;">Voltage DIP Switch settings</div>
-                </div>
-            </div>
-            <div style="font-family: var(--font-mono); font-size: 15px; font-weight: 800; color: var(--bauhaus-red); text-align: center; line-height: 1.3; border-top: 2px solid var(--black); width: 100%; padding-top: 10px; margin-top: 15px;">
-                Cost: Less than one dollar each! Free yourself from the tyranny of batteries!
-            </div>
-        </div>
-
-        <!-- SLIDE 11: Digital Signal Processing: FFT & Smoothing -->
-        <div class="slide slide-layout-split" data-title="Digital Signal Processing: FFT & Smoothing">
+        <!-- 12: MOSFETs -->
+        <div class="slide slide-layout-split" data-slide-id="mosfet" data-title="Haptic Circuits: MOSFETs & H-Bridges">
             <div class="split-left">
-                <h2>Digital Signal Processing: FFT & Smoothing</h2>
-                <h3>Slide 11</h3>
-                <div class="graphic-container" style="background: white; padding: 20px; border: var(--border-width) solid var(--black); box-shadow: 8px 8px 0 var(--black); text-align: center;">
-                    <div style="font-family: var(--font-mono); font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Live Mic FFT to Haptic Bins</div>
-                    <div id="micStatusBtn" style="background: var(--bauhaus-red); color: white; border: 2px solid var(--black); font-family: var(--font-mono); width: 100%; margin-bottom: 10px; padding: 6px 12px; font-size: 13px; font-weight: bold; text-align: center; text-transform: uppercase;">Microphone Offline</div>
-                    <div style="height: 80px; background: var(--black); border: 2px solid var(--black); position: relative; display: flex; align-items: flex-end; gap: 4px; padding: 4px;" id="fftVisualizerContainer">
-                        <div style="flex:1; height: 10%; background: var(--bauhaus-yellow);"></div>
-                        <div style="flex:1; height: 20%; background: var(--bauhaus-blue);"></div>
-                        <div style="flex:1; height: 15%; background: var(--bauhaus-red);"></div>
-                        <div style="flex:1; height: 40%; background: var(--bauhaus-yellow);"></div>
-                        <div style="flex:1; height: 10%; background: var(--white);"></div>
+                <h2>Haptic Circuits: MOSFETs &amp; H-Bridges</h2>
+                <div class="graphic-container" style="background:white;padding:16px;border:var(--border-width) solid var(--black);box-shadow:8px 8px 0 var(--black);">
+                    <div style="font-family:var(--font-display);font-size:1rem;font-weight:bold;text-align:center;border-bottom:2px solid var(--black);padding-bottom:6px;margin-bottom:10px;">PWM Duty Cycle (audio-reactive ribbon)</div>
+                    <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:1.1rem;font-weight:bold;margin-bottom:8px;">
+                        <span>DUTY CYCLE:</span>
+                        <span id="pwmVal" style="color:var(--bauhaus-red);">50%</span>
+                    </div>
+                    <div style="height:110px;background:var(--bg-canvas);border:3px solid var(--black);overflow:hidden;">
+                        <canvas id="pwmWaveCanvas" style="width:100%;height:100%;display:block;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="split-right">
+                <ul class="bullet-list">
+                    <li>GPIO pins output control signals, not high power.</li>
+                    <li>MOSFETs: single direction for ERMs, LRAs, solenoids, Peltier.</li>
+                    <li>H-Bridges: dual direction for active braking and dual-polarity actuators.</li>
+                    <li>PWM maps frequency and amplitude to duty cycle for haptic intensity.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 13: USB-C PD -->
+        <div class="slide slide-layout-standard" data-slide-id="pd" data-title="Power Delivery: USB-C PD Decoy">
+            <h2>Power Delivery: USB-C PD Decoy</h2>
+            <div class="two-col">
+                <ul class="bullet-list">
+                    <li>Heavy solenoids, Peltier plates, and transducers need more than 5V USB.</li>
+                    <li>PD Decoy negotiates 9V, 12V, 15V, or 20V directly from USB-C chargers.</li>
+                    <li>Configurable via DIP switches, less than one dollar each.</li>
+                </ul>
+                <div class="pd-images">
+                    <img src="./images/adeept_pd.jpg" alt="PD Module">
+                    <img src="./images/pd_decoy_sharex.png" alt="PD DIP settings">
+                </div>
+            </div>
+            <p class="pd-tagline">Free yourself from the tyranny of batteries!</p>
+        </div>
+
+        <!-- 14: DSP FFT -->
+        <div class="slide slide-layout-split" data-slide-id="fft" data-title="DSP: FFT & Frequency Mapping">
+            <div class="split-left">
+                <h2>Digital Signal Processing: FFT &amp; Smoothing</h2>
+                <div class="fft-stack">
+                    <div class="graphic-container" style="background:white;padding:16px;border:var(--border-width) solid var(--black);box-shadow:8px 8px 0 var(--black);margin:0;">
+                        <div id="micStatusBtn" style="background:var(--bauhaus-red);color:white;border:2px solid var(--black);font-family:var(--font-mono);width:100%;margin-bottom:10px;padding:8px;font-size:12px;font-weight:bold;text-align:center;text-transform:uppercase;">CLICK OR PRESS ARROW TO ENABLE MIC</div>
+                        <div id="fftVisualizerContainer" style="height:90px;"></div>
+                    </div>
+                    <div class="viz-canvas-box">
+                        <canvas id="fftMotorSwarm"></canvas>
                     </div>
                 </div>
             </div>
             <div class="split-right red-theme">
                 <ul class="bullet-list">
-                    <li>Fast Fourier Transform (FFT): Separates incoming audio signals into distinct frequency bins.</li>
-                    <li>Frequency Mapping: Map low bins (bass) to body transducers, mid bins to LRAs on hands.</li>
-                    <li>Normalizing & Smoothing: Raw signals are jittery. Use delta smoothing and averaging in loops.</li>
-                    <li>Rule of Thumb: Stay within non-blocking millis() loops to keep response times under 15ms.</li>
+                    <li>FFT separates audio into frequency bins. Map bass to body transducers, mids to hand LRAs.</li>
+                    <li>Normalize and smooth: raw signals are jittery, use delta smoothing in non-blocking loops.</li>
+                    <li>Rule of thumb: keep response times under 15ms with <code>millis()</code> scheduling.</li>
+                    <li>Red, yellow, and blue motors below react to bass, mid, and treble bins in real time.</li>
                 </ul>
             </div>
         </div>
 
-        <!-- SLIDE 12: Sensation Synthesis: Illusion of Wetness -->
-        <div class="slide slide-layout-standard" data-title="Sensation Synthesis: Illusion of Wetness">
-            <h2>Sensation Synthesis: Illusion of Wetness</h2>
-            <h3>Slide 12</h3>
-            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center;">
-                <div>
-                    <ul class="bullet-list">
-                        <li>Humans have no hygroreceptors (wetness receptors). We perceive wetness by combining signals:</li>
-                        <li>We simulate wetness by combining a slick haptic vibration pattern with a Peltier plate cooling step.</li>
-                        <li>Many complex sensations can be synthesized using multi-modal haptics!</li>
-                    </ul>
+        <!-- 15: Fleet Command -->
+        <div class="slide slide-layout-standard" data-slide-id="fleet" data-title="Live Fleet Command">
+            <h2>Live Fleet Command</h2>
+            <div class="connection-box">
+                <strong>How this portal connects (not Bluetooth for fleet):</strong><br>
+                1. Flash a <strong>Mesh Master</strong> build on the leader Beetle (PlatformIO env <code>c3WIFILED_MASTER</code>).<br>
+                2. Leader broadcasts WiFi SoftAP at <code>192.168.4.1</code>. Join that network on the laptop WiFi radio only.<br>
+                3. Run <code>present.bat</code> on the laptop. Slides load from <code>localhost</code>.<br>
+                4. Fleet commands go over HTTP <code>POST /json/fleet</code> (proxied to the hub). Live telemetry uses WebSocket <code>ws://192.168.4.1/ws</code>.<br>
+                5. Followers receive haptics over <strong>ESP-NOW</strong>, not WiFi. Bluetooth is for single-device mode via <code>bluetooth.html</code>.
+            </div>
+            <table class="pinout-table">
+                <tr><td>GPIO 6</td><td>MOSFET gate (motor PWM output)</td></tr>
+                <tr><td>GPIO 5</td><td>WS2812 LED strip (optional status)</td></tr>
+                <tr><td>I2S BCLK / WS / SD</td><td>INMP441 mic (assign in Haxel portal after first boot)</td></tr>
+                <tr><td>Motor +</td><td>MOSFET drain. Motor GND to common ground.</td></tr>
+            </table>
+            <div class="fleet-panel" style="margin-top:12px;">
+                <div class="fleet-panel-header">
+                    <span id="fleetSlideSummary">DEMO MODE</span>
+                    <span id="fleetHubLabel">Hub: 192.168.4.1</span>
                 </div>
-                <div>
-                    <div class="formula-card">
-                        <div class="label">Sensation Synthesis Formula</div>
-                        <div class="expression">Wetness = Low Friction (Vibration) + Cooling (Thermal)</div>
-                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-                            <button class="nav-btn" style="background: var(--bauhaus-blue); color: white; border: 2px solid var(--black);" onclick="triggerWetnessSim(this)">Synthesize Sensation</button>
-                        </div>
-                    </div>
+                <div>Leader Mic Level</div>
+                <div class="fleet-meter"><div class="fleet-meter-fill" id="fleetMeterFill"></div></div>
+                <div class="fleet-controls">
+                    <button class="nav-btn" id="fleetClaimBtn" style="color:var(--black);background:white;border-color:var(--black);">Claim All</button>
+                    <button class="nav-btn" id="fleetPlayBtn" style="color:var(--black);background:white;border-color:var(--black);">Play</button>
+                    <button class="nav-btn" id="fleetStopBtn" style="color:var(--black);background:white;border-color:var(--black);">Stop</button>
+                    <button class="nav-btn danger" id="fleetEstopBtn">E-Stop</button>
+                    <button class="nav-btn" id="fleetReleaseBtn" style="color:var(--black);background:white;border-color:var(--black);">Release All</button>
                 </div>
+                <div class="fleet-row">
+                    <label>Intensity</label>
+                    <input type="range" id="fleetIntensity" min="0" max="255" value="150">
+                    <span id="fleetIntensityVal">59%</span>
+                </div>
+                <div class="fleet-row">
+                    <label>Pattern</label>
+                    <select id="fleetPattern"></select>
+                    <button class="btn-inline" id="fleetApplyBtn">Apply</button>
+                </div>
+                <div id="fleetCards" class="fleet-cards"></div>
             </div>
         </div>
 
-        <!-- SLIDE 13: Immersive Accessibility & Universal Music Design -->
-        <div class="slide slide-layout-split" data-title="Immersive Accessibility & Universal Music Design">
+        <!-- 16: Wetness -->
+        <div class="slide slide-layout-split" data-slide-id="wetness" data-title="Sensation Synthesis: Illusion of Wetness">
             <div class="split-left">
-                <h2>Immersive Accessibility & Universal Music Design</h2>
-                <h3>Slide 13</h3>
-                <div class="callout-box">
-                    <p>Universal Music Design leverages tactile overlays to build shared performance spaces for hearing and Deaf artists.</p>
-                </div>
-            </div>
-            <div class="split-right blue-theme">
+                <h2>Sensation Synthesis: Illusion of Wetness</h2>
                 <ul class="bullet-list">
-                    <li>Universal Music Design: Bridging the gap between the hearing and Deaf worlds.</li>
-                    <li>Sensory Substitution: Translating acoustic performance spaces into vibro-tactile and visual signals.</li>
-                    <li>Audio Reactive Masks: Keeps performers synchronized through real-time light pulses and frequency-mapped haptic straps.</li>
+                    <li>Humans have no hygroreceptors. Wetness is inferred from combined signals.</li>
+                    <li>Simulate with slick high-frequency vibration plus rapid Peltier cooling.</li>
+                    <li>Petting zoo station: feel vibration on skin while the thermal plate cools your palm.</li>
+                    <li>Many complex sensations can be synthesized with multi-modal haptics.</li>
                 </ul>
+                <div class="formula-card" style="margin-top:20px;">
+                    <div class="label">Sensation Synthesis Formula</div>
+                    <div class="expression">Wetness = Low Friction (Vibration) + Cooling (Thermal)</div>
+                </div>
+            </div>
+            <div class="split-right" style="background:var(--white);padding:16px;">
+                <img src="./PreziSlides/15-illusion-of-wetness.png" alt="Illusion of wetness" class="prezi-ref-img">
             </div>
         </div>
 
-        <!-- SLIDE 14: Responsibility & Safe Design Guidelines -->
-        <div class="slide slide-layout-standard" data-title="Responsibility & Safe Design Guidelines">
-            <h2>Responsibility & Safe Design Guidelines</h2>
-            <h3>Slide 14</h3>
-            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center;">
-                <div>
-                    <ul class="bullet-list">
-                        <li>Hand-Arm Vibration Syndrome (HAVS): Prolonged strong vibrations cause permanent nerve/vessel damage.</li>
-                        <li>Strobing Effects: Flashing lights can trigger seizures. Maintain frequencies outside photo-sensitive zones.</li>
-                        <li>Sensitive Zones: NEVER place active haptics directly on the eyeballs (immune-privileged area).</li>
-                        <li>Material Safety: Avoid nickel, latex, and cheap adhesives on wearable straps to prevent allergic dermatitis.</li>
-                    </ul>
-                </div>
-                <div>
-                    <div class="callout-box" style="border-color: var(--bauhaus-red);">
-                        <p style="color: var(--bauhaus-red);">SAFETY FIRST: Avoid permanent damage by using software timers and physical guards.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SLIDE 15: Petting Zoo Interactive Stations -->
-        <div class="slide slide-layout-split" data-title="Petting Zoo Interactive Stations">
+        <!-- 17: Immersive Accessibility -->
+        <div class="slide slide-layout-split" data-slide-id="immersive" data-title="Immersive Accessibility & UMD">
             <div class="split-left">
-                <h2>Petting Zoo Interactive Stations</h2>
-                <h3>Slide 15</h3>
-                <div class="callout-box">
-                    <p>Each station features a unique actuator profile, BOM code, and connection mapping.</p>
-                </div>
-            </div>
-            <div class="split-right yellow-theme">
+                <h2>Immersive Accessibility &amp; UMD</h2>
                 <ul class="bullet-list">
-                    <li>Walk around the DreamTENT stations to test the haptic petting zoo.</li>
-                    <li>QR Codes: Scan the QR code at each station to download full schematics, source code, and BOMs.</li>
-                    <li>Try it yourself: Open the Smartphone Haptics miniproject (Android Chrome) to test the Web Vibration API.</li>
+                    <li>Universal Music Design builds shared performance spaces for hearing and Deaf artists.</li>
+                    <li>Sensory substitution: acoustic performance becomes vibro-tactile and visual signals.</li>
+                    <li>Audio reactive masks: real-time light pulses and frequency-mapped haptic straps.</li>
                 </ul>
+            </div>
+            <div class="split-right" style="background:var(--white);padding:16px;">
+                <img src="./PreziSlides/13-audio-reactive-masks.png" alt="Audio reactive masks" class="prezi-ref-img">
             </div>
         </div>
 
-        <!-- SLIDE 16: Q&A & Discussion -->
-        <div class="slide slide-layout-standard" data-title="Q&A & Discussion">
-            <h2>Q&A & Discussion</h2>
-            <h3>Slide 16</h3>
-            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center;">
-                <div>
-                    <ul class="bullet-list">
-                        <li>Questions & Discussion.</li>
-                        <li>Collaborate: Universal Music Design pathways, open-source haptic setups, and maker resources.</li>
-                        <li>Thank you for attending Teardown 2026!</li>
-                        <li>Access Haxel workshop files on DillonSimeone/Website GitHub repository.</li>
-                    </ul>
-                </div>
-                <div>
-                    <div class="callout-box" style="background: var(--bauhaus-yellow);">
-                        <p>Thank You!</p>
+        <!-- 18: Wearables Lessons -->
+        <div class="slide slide-layout-standard" data-slide-id="wearables" data-title="Existing Wearables: Lessons Learned">
+            <h2>Existing Wearables: Success vs. Failure</h2>
+            <div class="wearable-grid">
+                <div class="wearable-card">
+                    <img src="./PreziSlides/21-existing-wearables.png" alt="Haptic shoes" style="object-position:left top;">
+                    <div class="wearable-body">
+                        <h4>Haptic Shoes</h4>
+                        Expensive, not easily shared, not easily washed.
                     </div>
                 </div>
+                <div class="wearable-card">
+                    <img src="./PreziSlides/21-existing-wearables.png" alt="Woojer vest" style="object-position:center center;">
+                    <div class="wearable-body">
+                        <h4>Woojer Vest</h4>
+                        Plug and play like headphones, but limited to 0 to 250 Hz, peaking near 42 Hz.
+                    </div>
+                </div>
+                <div class="wearable-card">
+                    <img src="./PreziSlides/21-existing-wearables.png" alt="Buttkicker" style="object-position:right bottom;">
+                    <div class="wearable-body">
+                        <h4>Buttkicker</h4>
+                        Powerful but stationary. Works with any chair. Your downstairs neighbor will hate you.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 19: Safe Design -->
+        <div class="slide slide-layout-split" data-slide-id="safety" data-title="Responsibility & Safe Design">
+            <div class="split-left">
+                <h2>Responsibility &amp; Safe Design</h2>
+                <ul class="bullet-list">
+                    <li><strong>HAVS:</strong> prolonged strong vibrations cause permanent nerve and vessel damage.</li>
+                    <li>Strobing effects can trigger seizures. Stay outside photosensitive frequency zones.</li>
+                    <li>Never place active haptics on eyeballs (immune-privileged area).</li>
+                    <li>Material safety: avoid nickel, latex, and cheap adhesives on wearable straps.</li>
+                </ul>
+            </div>
+            <div class="split-right stack-right">
+                <div class="callout-box fill-panel" style="border-color:var(--bauhaus-red);background:var(--white);">
+                    <p style="color:var(--bauhaus-red);font-size:clamp(1.3rem,2.2vw,1.75rem);">SAFETY FIRST: software timers, physical guards, and fleet E-stop before every demo.</p>
+                </div>
+                <div class="callout-box fill-panel" style="background:var(--bauhaus-yellow);">
+                    <p><strong>Thermal reality:</strong> motors heat up faster than speakers. A small ERM or LRA in a closed wearable can hit painful temperatures in minutes. Speakers shed heat through the cone and enclosure. Motors need airflow, duty-cycle limits, or heatsinks to go further without burning skin or demagnetizing the coil.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 20: Q&A -->
+        <div class="slide slide-layout-split" data-slide-id="qa" data-title="Petting Zoo Stations & Q&A">
+            <div class="split-left">
+                <h2>Petting Zoo Stations &amp; Q&amp;A</h2>
+                <ul class="bullet-list">
+                    <li>Walk the DreamTENT stations. Each has a unique actuator profile and QR code.</li>
+                    <li>Scan QR codes for schematics, source code, and BOMs.</li>
+                    <li>Try the Smartphone Haptics miniproject (Android Chrome, Web Vibration API).</li>
+                    <li>GitHub: DillonSimeone/Website, Haxel workshop files.</li>
+                </ul>
+            </div>
+            <div class="split-right qa-right">
+                <div class="callout-box fill-panel qr-panel">
+                    <p class="qr-label">Smartphone Haptics (Android)</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=https%3A%2F%2Fdillonsimeone.com%2FMiniProjects%2FsmartphoneHaptics%2F" alt="Smartphone Haptics QR" class="qr-image">
+                </div>
+                <p class="thank-you">Thank You!</p>
             </div>
         </div>
 
     </div>
 
-    <!-- Progress Bar -->
     <div class="progress-bar-container">
         <div class="progress-bar" id="progressBar"></div>
     </div>
 
-    <!-- Presentation Footer with Navigation Controls -->
     <footer class="presentation-footer">
-        <div class="footer-left">
-            Teardown 2026 — Feel the Difference: A Haptic Petting Zoo
+        <div class="footer-left">Teardown 2026, Feel the Difference</div>
+        <div class="footer-fleet">
+            <span class="fleet-status-label" id="fleetFooterStatus">FLEET: DEMO</span>
+            <button class="nav-btn danger" id="footerEstop">E-Stop</button>
+            <button class="nav-btn" id="fleetDisconnectBtn">Disconnect</button>
         </div>
         <div class="footer-center">
             <button class="nav-btn" onclick="prevSlide()">Prev</button>
-            <span class="slide-counter" id="slideCounter">1 / 16</span>
+            <span class="slide-counter" id="slideCounter">1 / 20</span>
             <button class="nav-btn" onclick="nextSlide()">Next</button>
             <button class="nav-btn menu-toggle" onclick="toggleMenu()">Menu</button>
         </div>
     </footer>
 
-    <!-- Slide Jump Menu Panel -->
     <div class="menu-panel" id="menuPanel">
         <h3>Jump to Slide</h3>
-        <ul class="menu-list" id="menuList">
-            <!-- Dynamically populated -->
-        </ul>
+        <ul class="menu-list" id="menuList"></ul>
     </div>
 
-    <script>
-        let currentSlideIndex = 0;
-        const slides = document.querySelectorAll('.slide');
-        const slideCounter = document.getElementById('slideCounter');
-        const progressBar = document.getElementById('progressBar');
-        const menuPanel = document.getElementById('menuPanel');
-        const menuList = document.getElementById('menuList');
+    <div class="notes-panel" id="notesPanel">
+        <h3>Speaker Notes <span style="font-size:11px;font-weight:normal;">(N to toggle)</span></h3>
+        <div class="notes-body" id="notesBody">Loading notes...</div>
+    </div>
 
-        // Populate Slide Selector Menu
-        slides.forEach((slide, idx) => {
-            const title = slide.getAttribute('data-title') || `Slide ${idx + 1}`;
-            const item = document.createElement('li');
-            item.className = `menu-item ${idx === 0 ? 'active' : ''}`;
-            item.textContent = `${String(idx + 1).padStart(2, '0')} — ${title}`;
-            item.onclick = () => {
-                goToSlide(idx);
-                toggleMenu(false);
-            };
-            menuList.appendChild(item);
-        });
-
-        function updatePresentation() {
-            slides.forEach((slide, idx) => {
-                slide.classList.remove('active', 'prev');
-                if (idx === currentSlideIndex) {
-                    slide.classList.add('active');
-                } else if (idx < currentSlideIndex) {
-                    slide.classList.add('prev');
-                }
-            });
-
-            // Update Counter
-            slideCounter.textContent = `${currentSlideIndex + 1} / ${slides.length}`;
-
-            // Update Progress Bar
-            const progressPct = (currentSlideIndex / (slides.length - 1)) * 100;
-            progressBar.style.width = `${progressPct}%`;
-
-            // Update Menu Active Item
-            const menuItems = document.querySelectorAll('.menu-item');
-            menuItems.forEach((item, idx) => {
-                if (idx === currentSlideIndex) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-
-            // Trigger canvas draws based on active slide
-            if (currentSlideIndex === 4) {
-                initMechWave();
-            } else if (currentSlideIndex === 8) {
-                drawPWM();
-            }
-
-            // Auto start/stop live audio on Slide 11 (index 10)
-            if (currentSlideIndex === 10) {
-                startLiveAudio();
-            } else {
-                stopLiveAudio();
-            }
-        }
-
-        function nextSlide() {
-            if (currentSlideIndex < slides.length - 1) {
-                currentSlideIndex++;
-                updatePresentation();
-            }
-        }
-
-        function prevSlide() {
-            if (currentSlideIndex > 0) {
-                currentSlideIndex--;
-                updatePresentation();
-            }
-        }
-
-        function goToSlide(idx) {
-            if (idx >= 0 && idx < slides.length) {
-                currentSlideIndex = idx;
-                updatePresentation();
-            }
-        }
-
-        function toggleMenu(forceState) {
-            if (typeof forceState === 'boolean') {
-                if (forceState) menuPanel.classList.add('open');
-                else menuPanel.classList.remove('open');
-            } else {
-                menuPanel.classList.toggle('open');
-            }
-        }
-
-        // Keyboard Controls
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
-                e.preventDefault();
-                nextSlide();
-            } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
-                e.preventDefault();
-                prevSlide();
-            } else if (e.key === 'Escape') {
-                toggleMenu(false);
-            }
-        });
-
-        /* --- TITLE SLIDE CANVAS ANIMATION --- */
-        const canvas = document.getElementById('bauhausTitleCanvas');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            let width = canvas.width = window.innerWidth;
-            let height = canvas.height = window.innerHeight;
-            
-            window.addEventListener('resize', () => {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-            });
-
-            let shapes = [
-                { type: 'circle', x: width * 0.2, y: height * 0.3, size: 120, color: '#002f6c', speedX: 0.5, speedY: 0.3 },
-                { type: 'rect', x: width * 0.75, y: height * 0.2, w: 180, h: 180, color: '#f2b134', speedX: -0.4, speedY: 0.2 },
-                { type: 'line', x1: 0, y1: height * 0.7, x2: width, y2: height * 0.8, color: '#111111', width: 8 }
-            ];
-
-            function drawBauhausTitle() {
-                if (currentSlideIndex !== 0) {
-                    requestAnimationFrame(drawBauhausTitle);
-                    return;
-                }
-                ctx.fillStyle = '#e23b24';
-                ctx.fillRect(0, 0, width, height);
-
-                // Grid background
-                ctx.strokeStyle = 'rgba(17, 17, 17, 0.08)';
-                ctx.lineWidth = 2;
-                for (let x = 0; x < width; x += 60) {
-                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
-                }
-                for (let y = 0; y < height; y += 60) {
-                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
-                }
-
-                // Render shapes
-                shapes.forEach(s => {
-                    ctx.fillStyle = s.color;
-                    ctx.strokeStyle = '#111111';
-                    ctx.lineWidth = 6;
-                    
-                    if (s.type === 'circle') {
-                        s.x += s.speedX; s.y += s.speedY;
-                        if (s.x - s.size < 0 || s.x + s.size > width) s.speedX *= -1;
-                        if (s.y - s.size < 0 || s.y + s.size > height) s.speedY *= -1;
-                        ctx.beginPath();
-                        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.stroke();
-                    } else if (s.type === 'rect') {
-                        s.x += s.speedX; s.y += s.speedY;
-                        if (s.x < 0 || s.x + s.w > width) s.speedX *= -1;
-                        if (s.y < 0 || s.y + s.h > height) s.speedY *= -1;
-                        ctx.fillRect(s.x, s.y, s.w, s.h);
-                        ctx.strokeRect(s.x, s.y, s.w, s.h);
-                    } else if (s.type === 'line') {
-                        ctx.strokeStyle = s.color;
-                        ctx.lineWidth = s.width;
-                        ctx.beginPath();
-                        ctx.moveTo(s.x1, s.y1);
-                        ctx.lineTo(s.x2, s.y2);
-                        ctx.stroke();
-                    }
-                });
-
-                requestAnimationFrame(drawBauhausTitle);
-            }
-            drawBauhausTitle();
-        }
-
-        /* --- RADAR CONNECTION --- */
-        function triggerTestRadar(btn) {
-            btn.textContent = "Connecting via Web Bluetooth...";
-            btn.style.background = "var(--bauhaus-yellow)";
-            btn.style.color = "var(--black)";
-            setTimeout(() => {
-                btn.textContent = "CONNECTED (ESP32-C6)";
-                btn.style.background = "#2d6a4f";
-                btn.style.color = "white";
-            }, 1800);
-        }
-
-        /* --- SKIN FREQUENCY SIMULATOR --- */
-        let mechWaveFreq = 5;
-        let mechWaveCanvas = document.getElementById('mechWaveCanvas');
-        let mechCtx = mechWaveCanvas ? mechWaveCanvas.getContext('2d') : null;
-        let mechAnimationId = null;
-        let offset = 0;
-
-        function playMechFreq(freq, styleClass) {
-            mechWaveFreq = freq;
-            if (window.navigator && window.navigator.vibrate) {
-                window.navigator.vibrate(30);
-            }
-        }
-
-        function initMechWave() {
-            if (!mechWaveCanvas) {
-                mechWaveCanvas = document.getElementById('mechWaveCanvas');
-                if (mechWaveCanvas) mechCtx = mechWaveCanvas.getContext('2d');
-            }
-            if (!mechCtx) return;
-
-            cancelAnimationFrame(mechAnimationId);
-            
-            function drawWave() {
-                if (currentSlideIndex !== 4) return;
-                
-                const w = mechWaveCanvas.width = mechWaveCanvas.offsetWidth;
-                const h = mechWaveCanvas.height = mechWaveCanvas.offsetHeight;
-                mechCtx.clearRect(0, 0, w, h);
-
-                // Grid background
-                mechCtx.strokeStyle = '#eee';
-                mechCtx.lineWidth = 1;
-                for (let i = 0; i < w; i += 20) {
-                    mechCtx.beginPath(); mechCtx.moveTo(i, 0); mechCtx.lineTo(i, h); mechCtx.stroke();
-                }
-
-                mechCtx.strokeStyle = 'var(--bauhaus-blue)';
-                mechCtx.lineWidth = 4;
-                mechCtx.beginPath();
-                
-                let step = mechWaveFreq > 100 ? 1 : 2;
-                for (let x = 0; x < w; x += step) {
-                    let y = h / 2 + Math.sin((x + offset) * (mechWaveFreq * 0.005)) * (h * 0.35);
-                    if (x === 0) mechCtx.moveTo(x, y);
-                    else mechCtx.lineTo(x, y);
-                }
-                mechCtx.stroke();
-                
-                offset -= 10;
-                mechAnimationId = requestAnimationFrame(drawWave);
-            }
-            drawWave();
-        }
-
-        /* --- ERM & LRA SIMULATORS (AUTO-ANIMATING GENTLY) --- */
-        let ermAngle = 0;
-        let lraPhase = 0;
-        let ermSpeed = 1.2;
-        let lraSpeed = 0.05;
-
-        function animateActuators() {
-            if (currentSlideIndex === 6) { // Slide 7
-                const weight = document.getElementById('ermWeight');
-                const ermContainer = document.getElementById('ermContainer');
-                if (weight && ermContainer) {
-                    ermSpeed += (Math.random() - 0.5) * 0.05;
-                    ermSpeed = Math.max(0.6, Math.min(2.0, ermSpeed));
-                    ermAngle += ermSpeed;
-                    weight.style.transform = `rotate(${ermAngle}deg)`;
-
-                    const dx = (Math.random() - 0.5) * 1.5;
-                    const dy = (Math.random() - 0.5) * 1.5;
-                    ermContainer.style.transform = `translate(${dx}px, ${dy}px)`;
-                }
-
-                const mass = document.getElementById('lraMass');
-                const spring = document.getElementById('lraSpring');
-                const lraContainer = document.getElementById('lraContainer');
-                if (mass && spring && lraContainer) {
-                    lraPhase += lraSpeed + (Math.random() - 0.5) * 0.004;
-                    const offset = Math.sin(lraPhase) * 12;
-                    mass.style.top = `${75 + offset}px`;
-                    spring.style.height = `${60 + offset}px`;
-
-                    lraContainer.style.transform = `translateY(${offset * 0.15}px)`;
-                }
-            }
-            requestAnimationFrame(animateActuators);
-        }
-        animateActuators();
-
-        /* --- PWM WAVE VISUALIZER (HAXEL HERO COPIED ALGORITHM) --- */
-        let pwmVal = 50;
-        let pwmDir = 1;
-        let timeSec = 0;
-        const historyLen = 220;
-        const waveHistory = [];
-        const colorHistory = [];
-        for (let i = 0; i < historyLen; i++) {
-            waveHistory.push(0.5);
-            colorHistory.push("rgba(226, 59, 36, 0.35)");
-        }
-
-        let smoothedTelemetry = 0.5;
-
-        function animatePWM() {
-            if (currentSlideIndex === 8) { // Slide 9 is index 8
-                pwmVal += pwmDir * 0.5;
-                if (pwmVal >= 100) {
-                    pwmVal = 100;
-                    pwmDir = -1;
-                } else if (pwmVal <= 0) {
-                    pwmVal = 0;
-                    pwmDir = 1;
-                }
-
-                const valText = document.getElementById('pwmVal');
-                if (valText) {
-                    valText.textContent = Math.round(pwmVal) + "%";
-                }
-
-                timeSec += 0.016; // step simulation
-
-                // Telemetry history displays the smoothed envelope of the duty cycle (no carrier wave spikes)
-                const rawVal = pwmVal / 100;
-
-                waveHistory.shift();
-                waveHistory.push(rawVal);
-
-                colorHistory.shift();
-                colorHistory.push(`rgba(226, 59, 36, ${0.15 + (pwmVal / 100) * 0.3})`);
-
-                drawPWM();
-            }
-            requestAnimationFrame(animatePWM);
-        }
-        animatePWM();
-
-        function drawPWM() {
-            const canvas = document.getElementById('pwmWaveCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width = canvas.offsetWidth;
-            const h = canvas.height = canvas.offsetHeight;
-            ctx.clearRect(0, 0, w, h);
-
-            // 1. Draw Haxel cream canvas background
-            ctx.fillStyle = "#f4ebd0";
-            ctx.fillRect(0, 0, w, h);
-
-            // 2. Draw Haxel grid lines (exactly like Haxel's hero)
-            ctx.strokeStyle = "rgba(17, 17, 17, 0.05)";
-            ctx.lineWidth = 1;
-            for (let x = 0; x < w; x += 50) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-            }
-
-            // 3. Draw identical hero ribbon geometry
-            if (waveHistory.length > 1) {
-                const step = w / (historyLen - 1);
-                
-                for (let i = 0; i < waveHistory.length - 1; i++) {
-                    const h1_val = waveHistory[i] * (h - 15);
-                    const h2_val = waveHistory[i + 1] * (h - 15);
-                    const x1 = i * step;
-                    const x2 = (i + 1) * step;
-                    
-                    const fillCol = colorHistory[i] || "rgba(226, 59, 36, 0.25)";
-                    ctx.fillStyle = fillCol;
-                    
-                    // Center line of the wave is fixed at h/2 (exactly like Haxel's hero)
-                    const baselineY = h / 2;
-
-                    // Replicate EXACT twisting ribbon math from Haxel main.js
-                    const y1_top = baselineY - Math.sin(timeSec * 5 + i * 0.05) * h1_val * 0.4;
-                    const y2_top = baselineY - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2_val * 0.4;
-                    
-                    const y1_bot = baselineY + Math.sin(timeSec * 5 + i * 0.05) * h1_val * 0.4;
-                    const y2_bot = baselineY + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2_val * 0.4;
-                    
-                    const final_y1_top = y1_top - h1_val / 2;
-                    const final_y2_top = y2_top - h2_val / 2;
-                    const final_y1_bot = y1_bot + h1_val / 2;
-                    const final_y2_bot = y2_bot + h2_val / 2;
-
-                    ctx.beginPath();
-                    ctx.moveTo(x1, final_y1_top);
-                    ctx.lineTo(x2, final_y2_top);
-                    ctx.lineTo(x2, final_y2_bot);
-                    ctx.lineTo(x1, final_y1_bot);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    ctx.strokeStyle = "#111111";
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.moveTo(x1, final_y1_top);
-                    ctx.lineTo(x2, final_y2_top);
-                    ctx.stroke();
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(x2, final_y2_bot);
-                    ctx.lineTo(x1, final_y1_bot);
-                    ctx.stroke();
-                }
-            }
-        }
-
-        /* --- LIVE MIC FFT VISUALIZER (AUTO START/STOP & PERSISTENT STREAM) --- */
-        let audioCtx = null;
-        let analyser = null;
-        let dataArray = null;
-        let micSource = null;
-        let globalMicStream = null;
-        let isAudioLive = false;
-        let fftAnimationId = null;
-
-        // Request and hold microphone permission on Slide 1 load
-        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-        .then(stream => {
-            console.log("Microphone access pre-authorized and held open globally.");
-            globalMicStream = stream;
-            const statusBtn = document.getElementById('micStatusBtn');
-            if (statusBtn) {
-                statusBtn.textContent = "Microphone Ready (Pre-Authorized)";
-                statusBtn.style.background = "#2d6a4f";
-            }
-        })
-        .catch(err => {
-            console.warn("Microphone pre-authorization failed/denied: ", err);
-        });
-
-        function startLiveAudio() {
-            if (isAudioLive) return;
-            if (globalMicStream) {
-                runFFTWithStream(globalMicStream);
-            } else {
-                navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-                .then(stream => {
-                    globalMicStream = stream;
-                    runFFTWithStream(stream);
-                })
-                .catch(err => {
-                    console.error("Failed to start live audio capture:", err);
-                });
-            }
-        }
-
-        function runFFTWithStream(stream) {
-            isAudioLive = true;
-            const statusBtn = document.getElementById('micStatusBtn');
-            if (statusBtn) {
-                statusBtn.textContent = "MICROPHONE ACTIVE (LIVE FFT)";
-                statusBtn.style.background = "#2d6a4f";
-            }
-            
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 32;
-            
-            micSource = audioCtx.createMediaStreamSource(stream);
-            micSource.connect(analyser);
-            
-            const bufferLength = analyser.frequencyBinCount;
-            dataArray = new Uint8Array(bufferLength);
-            
-            const container = document.getElementById('fftVisualizerContainer');
-            
-            function drawFFT() {
-                if (!isAudioLive) return;
-                analyser.getByteFrequencyData(dataArray);
-                
-                container.innerHTML = '';
-                for (let i = 0; i < bufferLength; i++) {
-                    const val = dataArray[i];
-                    const heightPct = Math.max(8, (val / 255) * 90);
-                    
-                    const bar = document.createElement('div');
-                    bar.style.flex = "1";
-                    bar.style.height = `${heightPct}%`;
-                    
-                    if (i < 4) bar.style.backgroundColor = "var(--bauhaus-red)";
-                    else if (i < 10) bar.style.backgroundColor = "var(--bauhaus-yellow)";
-                    else bar.style.backgroundColor = "var(--bauhaus-blue)";
-                    
-                    bar.style.border = "1px solid var(--black)";
-                    container.appendChild(bar);
-                }
-                fftAnimationId = requestAnimationFrame(drawFFT);
-            }
-            drawFFT();
-        }
-
-        function stopLiveAudio() {
-            if (!isAudioLive) return;
-            isAudioLive = false;
-            const statusBtn = document.getElementById('micStatusBtn');
-            if (statusBtn) {
-                statusBtn.textContent = "Microphone Ready (Pre-Authorized)";
-                statusBtn.style.background = "#2d6a4f";
-            }
-            if (micSource) {
-                try { micSource.disconnect(); } catch(e) {}
-            }
-            if (audioCtx) {
-                try { audioCtx.close(); } catch(e) {}
-                audioCtx = null;
-            }
-            cancelAnimationFrame(fftAnimationId);
-        }
-
-        /* --- SENSATION SYNTHESIS WETNESS SIMULATOR --- */
-        function triggerWetnessSim(btn) {
-            btn.textContent = "Simulating: Rapid Cooling (18°C) + High Frequency Slippage...";
-            btn.style.background = "var(--bauhaus-yellow)";
-            btn.style.color = "var(--black)";
-            
-            if (window.navigator && window.navigator.vibrate) {
-                window.navigator.vibrate([100, 50, 100, 50, 200]);
-            }
-            
-            setTimeout(() => {
-                btn.textContent = "SYNTHESIZED: Wetness Illusion Active";
-                btn.style.background = "var(--bauhaus-blue)";
-                btn.style.color = "white";
-            }, 2500);
-        }
-
-        // Initialize progress bar width
-        updatePresentation();
-    </script>
+    <script type="module" src="presentation.js"></script>
 </body>
 </html>

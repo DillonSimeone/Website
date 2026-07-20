@@ -1,98 +1,88 @@
-# Universal Music Design — Haptic Petting Zoo Workshop Slides
+# Feel the Difference: A Haptic Petting Zoo, Speaker Notes
 
-Slide 1: Title Slide
-- Feel the Difference: A Haptic Petting Zoo
-- Dillon Simeone
-- Deaf Lead Design Engineer @ Universal Music Design
-- Teardown 2026 // Portland, OR
-- Haptic & Light Interfaces Powered by ESP32s
+Slide 1: Feel the Difference (title)
+- Welcome attendees to Teardown 2026 DreamTENT workshop.
+- Press arrow or click once to authorize microphone for live audio-reactive visuals.
+- Title canvas: blue circle and yellow square bounce around the slide continuously.
 
 Slide 2: Welcome to the Haptic Petting Zoo
-- Most people have only experienced one type of haptic: phone vibration motors.
-- Interact with 10+ stations across different sensory modalities.
-- Featured Actuators: Solenoid taps, servo pressure, thermal plates, audio reactive fans, piezo actuators, ERMs, LRAs, voice coil transducers, and haptic knobs.
-- Goals: Learn sensor-to-haptic signal translation and cross-modal mapping.
+- Most people only know phone vibration. Today they feel many actuator types at the stations.
+- QR codes at every exhibit link to BOMs and source on GitHub.
 
-Slide 3: Core Hardware: DFRobot Beetle ESP32-C6
-- Our Microcontroller of Choice: DFRobot Beetle ESP32-C6 (only $4.90!).
-- Ultra-compact: Tiny footprint, perfect for haptic rings, tags, and small wearables.
-- LiPo Charger Inbuilt: Safe onboard lithium battery charging circuit.
-- Specs: RISC-V CPU (WiFi 6, BLE 5, Zigbee / Thread / Matter).
-- Runner Up: ESP32-C3 Supermini (extremely cheap, but lacks battery manager).
+Slide 3: Mapping Accessibility to Haptics
+- Universal Music Design mission: shared performance spaces for hearing and Deaf artists.
+- Reference GestoLumina and Sonic Agency (ASSETS '25) briefly.
 
-Slide 4: Haxel: Open Haptic Development Environment
-- Main Software Interface: Haxel (F:\Github\Website\public\Projects\Haxel).
-- Web Bluetooth Control: Connect and control your Firebeetle directly from a web browser.
-- Real-Time Visualization: Monitor input sensors (audio, pressure) and map them to actuator outputs.
-- Low-Friction Prototyping: Test signal mapping and synthesize sensations instantly.
+Slide 4: Core Hardware: Beetle ESP32-C6
+- Beetle C6 at $4.90: built-in LiPo charger is the killer feature for wearables.
+- Warn about cheap TP4056 modules. Safety story from Prezi.
 
-Slide 5: Mechanoreceptors: How We Feel
-- Designing haptics requires targeting specific receptors in the skin:
-- Pacinian Corpuscles: Target with high-frequency vibrations (200-300 Hz) using LRAs & transducers.
-- Meissner Corpuscles: Target with low-frequency vibrations or slip (30-50 Hz) using ERM buzzers.
-- Merkel Discs & Ruffini Endings: Target with static pressure and stretch using servos & solenoids.
+Slide 5: Software – MicroPython vs PlatformIO
+- Two-column comparison. MicroPython: instant REPL, great for workshops, but heavier on power and limited libraries.
+- PlatformIO: compiled C/C++, massive ecosystem, amazing CLI. This is the clear winner for production firmware and developing shims.
+- Emphasize that PlatformIO's CLI is language-agnostic: wrap it in Python, Node, Electron, or anything else and you get a custom GUI toolchain in an afternoon.
+- Bottom row: animated mockup of the PlatformIO Web Uploader — a thin web GUI over `pio run -t upload`. Walk through select project, flash, ESP32 blinks.
+- Mention the uploader lives in the ESP32Codes/_tooling/uploader directory.
 
-Slide 6: Actuator Modality 1: Solenoids & Servos
-- Merkel / Ruffini receptors respond to physical pressure and impact.
-- Solenoids: Deliver high-impact sharp taps and clicks. Excellent for UI confirmations.
-- Servos: Provide steady, continuous pressure patterns and stretch sensations.
-- Pros: Simulates structural realism. Cons: Heavy, bulky, and power-hungry.
+Slide 6: GestoLumina & UMD Journey
+- Use the three photos on the right as visual anchors while you walk the timeline.
+- GeLu research to masks to datagloves. Keep it quick.
 
-Slide 7: Actuator Modality 2: ERMs & LRAs
-- Eccentric Rotating Mass (ERM): Asymmetric weight spinning on a DC motor.
-- ERM Tip: Running at 100% feels like cheap buzzing; pulse forward-reverse to get sharp snaps.
-- Linear Resonant Actuator (LRA): Magnetic mass mounted on a spring.
-- LRA Tip: Extremely crisp clicks, but MUST be driven at its specific resonant frequency!
+Slide 7: Mechanoreceptors
+- All three frequency waves animate simultaneously. No clicking required.
+- Tie each band to actuator types at the petting zoo stations.
 
-Slide 8: Actuator Modality 3: Advanced Modalities
-- Mini Bass Shaker (8 Ohm) Catch: Requires AC audio power (analog amplifier). DC offset/clipping will cause overheating and tear them apart.
-- Piezoelectric Actuators Catch: Extremely high voltage drive requirements (60V to 150V+), requiring specialized boost converters/drivers. Fragile to bending.
-- Thermal Actuators (Peltier) Catch: Requires massive wattage (high current: 12V 5.8A). Must use large heat sinks to avoid instant burnout.
-- Fans / Air Haptics Catch: Deafeningly loud when pushed to their limits to simulate strong wind/airflow.
+Slide 8: Solenoids & Servos
+- Live animation on the right: solenoid tap and servo pressure arm.
+- Send attendees to physical stations after this slide.
 
-Slide 9: Haptic Circuits: MOSFETs & H-Bridges
-- PWM Duty Cycle Example: Sweeps duty cycle from 0% to 100% and back to demonstrate pulse width modulation power delivery.
-- High-Power MOSFET Driver (~$1.00): DC 5V-36V 15A driver. Perfect for high-power thermal plates. Remember right wire gauge & heatsink!
-- Mini Dual H-Bridge (~$0.50): L298N 2V-10V 1.5A driver. Provides forward/backward polarity control with minimal voltage drop.
+Slide 9: ERMs & LRAs
+- ERM disc spins with live mid energy. LRA mass shuttles with treble.
+- Correct LRA myth: off-resonance still vibrates, just inefficient (heat, not silence).
 
-Slide 10: Power Delivery: USB-C PD Decoy
-- Heavy solenoids, Peltier plates, and transducers require more than 5V from the USB port.
-- USB-C Power Delivery (PD) Decoy: Configures voltage requests directly from chargers.
-- Adjustable: Request 9V, 12V, 15V, or 20V depending on actuator needs.
-- Safety: Ensures high current is negotiated safely without burning out controller boards.
-- Power delivery decoy: Requests 5, 9, 12, 15 or 20 voltage from USB-C chargers, configurable via switches on the top.
+Slide 10: How Vibration Motors Work
+- Cross-section animation: coil, magnets, offset mass.
+- Plain language: wire around a shaft, magnetic fields push it. That oscillation is vibration.
 
-Slide 11: Digital Signal Processing: FFT & Smoothing
-- Fast Fourier Transform (FFT): Separates incoming audio signals into distinct frequency bins.
-- Frequency Mapping: Map low bins (bass) to body transducers, mid bins to LRAs on hands.
-- Normalizing & Smoothing: Raw signals are jittery. Use delta smoothing and averaging in loops.
-- Rule of Thumb: Stay within non-blocking millis() loops to keep response times under 15ms.
+Slide 11: Advanced Modalities
+- Full-size table with product photos restored.
+- Bass shaker AC requirement, piezo voltage, Peltier current, fan noise.
 
-Slide 12: Sensation Synthesis: Illusion of Wetness
-- Humans have no hygroreceptors (wetness receptors). We perceive wetness by combining signals:
-- Wetness = Low Friction (Mechanoreceptors) + Rapid Cooling (Thermoreceptors).
-- We simulate wetness by combining a slick haptic vibration pattern with a Peltier plate cooling step.
-- Many complex sensations can be synthesized using multi-modal haptics!
+Slide 12: MOSFETs & H-Bridges
+- PWM ribbon follows live audio envelope.
+- GPIO to MOSFET to motor power path.
 
-Slide 13: Immersive Accessibility & Universal Music Design
-- Universal Music Design: Bridging the gap between the hearing and Deaf worlds.
-- Sensory Substitution: Translating acoustic performance spaces into vibro-tactile and visual signals.
-- Audio Reactive Masks: Keeps performers synchronized through real-time light pulses and frequency-mapped haptic straps.
+Slide 13: USB-C PD Decoy
+- Under one dollar. Unlocks 9 to 20V for heavy actuators.
 
-Slide 14: Responsibility & Safe Design Guidelines
-- Hand-Arm Vibration Syndrome (HAVS): Prolonged strong vibrations cause permanent nerve/vessel damage.
-- Strobing Effects: Flashing lights can trigger seizures. Maintain frequencies outside photo-sensitive zones.
-- Sensitive Zones: NEVER place active haptics directly on the eyeballs (immune-privileged area).
-- Material Safety: Avoid nickel, latex, and cheap adhesives on wearable straps to prevent allergic dermatitis.
+Slide 14: DSP FFT & Frequency Mapping
+- Top: live mic bins. Bottom: floating ERM/LRA swarm colored by bass/mid/treble.
+- Red motors react to bass, yellow to mid, blue to treble.
 
-Slide 15: Petting Zoo Interactive Stations
-- Walk around the DreamTENT stations to test the haptic petting zoo.
-- QR Codes: Scan the QR code at each station to download full schematics, source code, and BOMs.
-- Try it yourself: Open the Smartphone Haptics miniproject (Android Chrome) to test the Web Vibration API.
+Slide 15: Live Fleet Command
+- CONNECTION (read the box on slide):
+  - Fleet master uses WiFi SoftAP at 192.168.4.1, NOT Bluetooth.
+  - Laptop runs presentation from localhost via present.bat.
+  - Fleet API: HTTP POST /json/fleet (proxied). Telemetry: WebSocket ws://192.168.4.1/ws.
+  - Followers use ESP-NOW from the leader. Bluetooth is only for single-device bluetooth.html.
+- Workshop pinout on slide: GPIO 6 motor PWM, GPIO 5 LEDs, I2S mic pins via portal.
+- Flash c3WIFILED_MASTER build before the show. Test E-stop first.
 
-Slide 16: Q&A & Discussion
-- Questions & Discussion.
-- Collaborate: Universal Music Design pathways, open-source haptic setups, and maker resources.
-- Thank you for attending Teardown 2026!
-- Access Haxel workshop files on DillonSimeone/Website GitHub repository.
+Slide 16: Illusion of Wetness
+- No demo button. Walk the formula and point to the Prezi visual.
+- Direct people to the thermal plus vibration station in the tent.
 
+Slide 17: Immersive Accessibility & UMD
+- Jazz Prism / audio reactive masks photo on the right.
+
+Slide 18: Existing Wearables
+- Three cards with Prezi crop images: shoes, vest, Buttkicker.
+- Form factor and receptor matching matter more than raw power.
+
+Slide 19: Safe Design & Thermals
+- HAVS, strobing, eye safety, materials.
+- Thermal section: motors heat faster than speakers. Duty limits, airflow, heatsinks.
+
+Slide 20: Petting Zoo Stations & Q&A
+- Station walkthrough. Smartphone Haptics QR for Android.
+- Thank Crowd Supply / Teardown.
