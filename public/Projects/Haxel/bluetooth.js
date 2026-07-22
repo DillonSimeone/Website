@@ -17,7 +17,7 @@ let frequencyShift = 150; // Hz
 let playbackSpeed = 1.0;
 let isPlaying = true;
 let smoothedAmp = 0;
-let startupFloor = 0.15; // default 15%
+let startupFloor = 0.35; // default 35%
 
 // Dynamic Audio Partitioning Bins Configuration
 const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -378,6 +378,7 @@ if (audioMaxFreqInput) {
 drvSelect.addEventListener("change", (e) => {
     currentDriverText.textContent = e.target.value;
     addSerialLog(`[HAL] Driver reconfigured to: ${e.target.value}`);
+    renderMotorOutputs();
     triggerI2CBlink();
 });
 
@@ -1026,6 +1027,12 @@ function applyDeviceConfig(cfg) {
             activeMotors = cfg.driver.pins.filter(pin => Number.isFinite(pin) && pin >= 0);
             renderMotors();
         }
+        if (Array.isArray(cfg.channelEnabled)) {
+            channelEnabled = cfg.channelEnabled.slice();
+        } else if (Array.isArray(cfg.driver?.channelEnabled)) {
+            channelEnabled = cfg.driver.channelEnabled.slice();
+        }
+        renderMotorOutputs();
     }
 
     if (cfg.audio) {
@@ -1175,6 +1182,12 @@ function handleNotification(event) {
                 if (uptimeText) {
                     uptimeText.textContent = Math.floor(s.uptime_ms / 1000) + "s";
                 }
+            }
+            if (Array.isArray(s.channels)) {
+                s.channels.forEach((ch, i) => {
+                    if (ch && typeof ch.on === "boolean") channelEnabled[i] = ch.on;
+                });
+                renderMotorOutputs();
             }
             bleStateReceived = true;
             finishBleHydrationIfReady();
@@ -1838,7 +1851,59 @@ let activeKnobs = [
     { pin: 3, param: "gain" },
     { pin: 4, param: "pattern" }
 ];
+let channelEnabled = [true, true, true, true, true, true, true, true];
 const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+const drvKindMap = {
+    "NONE": 0,
+    "L298N": 1,
+    "DRV8833": 2,
+    "DRV2605L": 3,
+    "MOSFET": 4,
+    "MINI_HBRIDGE": 5
+};
+
+function logicalChannelCount(kindOverride) {
+    const drvChip = document.getElementById("drvChip");
+    const kindName = kindOverride ?? (drvChip ? drvChip.value : "MOSFET");
+    const kind = drvKindMap[kindName] ?? 4;
+    if (kind === 1 || kind === 2 || kind === 5) return 2;
+    if (kind === 3) return 1;
+    const active = activeMotors.filter(p => Number.isFinite(p) && p >= 0);
+    return Math.max(1, active.length || 1);
+}
+
+function renderMotorOutputs() {
+    const container = document.getElementById("motorOutputContainer");
+    if (!container) return;
+    const count = logicalChannelCount();
+    while (channelEnabled.length < count) channelEnabled.push(true);
+    container.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+        const row = document.createElement("div");
+        row.className = "row motor-output-row";
+        row.style.marginBottom = "6px";
+        row.innerHTML = `
+            <label style="min-width:88px;">Channel ${i}</label>
+            <input type="checkbox" class="motor-output-enable" data-index="${i}" ${channelEnabled[i] !== false ? "checked" : ""} style="width:auto; margin:0;">
+            <span class="hint" style="margin:0; font-size:10px;">${channelEnabled[i] !== false ? "Enabled" : "Disabled"}</span>
+        `;
+        container.appendChild(row);
+    }
+}
+
+async function pushChannelEnabled() {
+    const count = logicalChannelCount();
+    const enabled = channelEnabled.slice(0, count);
+    const statePatch = { channels: enabled.map(on => ({ on: !!on })) };
+    const configPatch = { channelEnabled: enabled };
+    sendStateUpdate(statePatch);
+    addSerialLog(`[HAL] Motor outputs: ${enabled.map((on, i) => `Ch${i}=${on ? "ON" : "OFF"}`).join(", ")}`);
+    try {
+        await sendConfigUpdate(configPatch);
+    } catch (err) {
+        addSerialLog(`[BLE] channelEnabled save failed: ${err.message}`);
+    }
+}
 
 function renderMotors() {
     const container = document.getElementById("motorsContainer");
@@ -1926,6 +1991,17 @@ document.getElementById("motorsContainer")?.addEventListener("change", (e) => {
     if (e.target.classList.contains("motor-pin")) {
         const idx = parseInt(e.target.getAttribute("data-index"));
         activeMotors[idx] = parseInt(e.target.value);
+        renderMotorOutputs();
+    }
+});
+
+document.getElementById("motorOutputContainer")?.addEventListener("change", (e) => {
+    if (e.target.classList.contains("motor-output-enable")) {
+        const idx = parseInt(e.target.getAttribute("data-index"), 10);
+        channelEnabled[idx] = e.target.checked;
+        const hint = e.target.parentElement?.querySelector(".hint");
+        if (hint) hint.textContent = e.target.checked ? "Enabled" : "Disabled";
+        pushChannelEnabled();
     }
 });
 
@@ -1958,6 +2034,7 @@ document.getElementById("audioSource")?.addEventListener("change", (e) => {
 // Initialize dynamic lists
 renderMotors();
 renderKnobs();
+renderMotorOutputs();
 
 // Hardware Calibration Form Submission
 document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
@@ -2066,6 +2143,7 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     const requestedSsid = document.getElementById("deviceSsid")?.value.trim() || "Haxel";
     const configPatch = {
         apSsid: requestedSsid,
+        channelEnabled: channelEnabled.slice(0, logicalChannelCount()),
         driver: {
             kind: kind,
             pins: pinsPadded,

@@ -20,16 +20,41 @@ void Config::applyDefaults_() {
     driverConfig_ = {};
     driverConfig_.kind = driverKind_;
     for (int i = 0; i < 8; ++i) driverConfig_.pins[i] = -1;
-    driverConfig_.pins[0] = 6;  // MOSFET Motor Pin
+#ifdef HAXEL_TARGET_C6
+    // Mini L298N (sign-magnitude): coin pair on MOTOR-A, M1N10 on MOTOR-B.
+    // Jumper ENA/ENB to +5V on the module — speed PWM on INT pins.
+    driverKind_ = hal::DriverKind::L298N;
+    driverConfig_.kind = driverKind_;
+    driverConfig_.pins[0] = -1;   // ENA (jumpered high on module)
+    driverConfig_.pins[1] = 16;   // INT1
+    driverConfig_.pins[2] = 17;   // INT2  → MOTOR-A (both coin cells in parallel)
+    driverConfig_.pins[3] = -1;   // ENB (jumpered high)
+    driverConfig_.pins[4] = 19;   // INT3
+    driverConfig_.pins[5] = 20;   // INT4  → MOTOR-B (M1N10FB11G)
+#elif defined(HAXEL_DEFAULT_MOTOR_PIN)
+    driverConfig_.pins[0] = HAXEL_DEFAULT_MOTOR_PIN;
+#else
+    driverConfig_.pins[0] = 6;  // MOSFET Motor Pin (ESP32-C3 SuperMini default)
+#endif
     driverConfig_.pwmHz = 20000;
     driverConfig_.pwmBits = 10;
 
     audio_ = {};
 
     led_ = {};
+#if HAXEL_FEATURE_LED && !defined(HAXEL_TARGET_C6)
     led_.enabled = true;
+#ifdef HAXEL_DEFAULT_LED_PIN
+    led_.pin = HAXEL_DEFAULT_LED_PIN;
+#else
     led_.pin = 5;
+#endif
     led_.count = 20;
+#else
+    led_.enabled = false;
+    led_.pin = -1;
+    led_.count = 0;
+#endif
 
     knobCount_ = 0;
     for (size_t i = 0; i < kMaxKnobs; ++i) {
@@ -38,13 +63,25 @@ void Config::applyDefaults_() {
 
     oled_ = {};
     oled_.enabled = false;
+#ifdef HAXEL_TARGET_C6
+    oled_.sda = -1;
+    oled_.scl = -1;
+#else
     oled_.sda = 8;
     oled_.scl = 9;
+#endif
     oled_.i2cAddr = 0x3C;
     oled_.width = 128;
     oled_.height = 64;
 
     eStopPin_ = -1;
+}
+
+void Config::setChannelEnabled(const bool* enabled, size_t count) {
+    if (!enabled) return;
+    size_t n = count > kMaxChannels ? kMaxChannels : count;
+    for (size_t i = 0; i < n; ++i) channelEnabled_[i] = enabled[i];
+    markDirty();
 }
 
 void Config::setKnobs(const KnobConfig* knobs, size_t count) {
@@ -198,6 +235,15 @@ bool Config::load() {
 
     eStopPin_ = (int8_t)(doc["eStopPin"] | -1);
 
+    if (JsonArrayConst chEn = doc["channelEnabled"].as<JsonArrayConst>()) {
+        for (size_t i = 0; i < kMaxChannels; ++i) channelEnabled_[i] = true;
+        size_t i = 0;
+        for (JsonVariantConst v : chEn) {
+            if (i >= kMaxChannels) break;
+            channelEnabled_[i++] = v.as<bool>();
+        }
+    }
+
     // Persist migrated corrections so the portal sees them next load.
     if (migrated) save();
     return true;
@@ -253,6 +299,9 @@ bool Config::save() {
     ol["height"]   = oled_.height;
 
     doc["eStopPin"] = eStopPin_;
+
+    auto chEn = doc["channelEnabled"].to<JsonArray>();
+    for (size_t i = 0; i < kMaxChannels; ++i) chEn.add(channelEnabled_[i]);
 
     String serialized;
     serializeJson(doc, serialized);

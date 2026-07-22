@@ -45,7 +45,7 @@ struct StagedState {
     bool        clearFault = false;
 
     // Audio Partitioning and Calibration Config
-    float       startupFloor = 0.15f;
+    float       startupFloor = 0.35f;
     // Audio partition defaults: Bin0=NONE, Bin1/Bin2=library patterns.
     uint8_t     numBins = 3;
     uint8_t     dividers[4] = {8, 18, 24, 28};

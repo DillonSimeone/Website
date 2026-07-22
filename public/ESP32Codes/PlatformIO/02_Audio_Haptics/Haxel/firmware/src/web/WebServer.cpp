@@ -122,7 +122,7 @@ void WebServer::mountWlenApi_() {
 void WebServer::mountWebsocket_() {
     ws_->onEvent([this](AsyncWebSocket* server, AsyncWebSocketClient* client,
                         AwsEventType type, void* arg, uint8_t* data, size_t len) {
-        ApiHandlers::handleWebSocket(server, client, type, arg, data, len, engine_);
+        ApiHandlers::handleWebSocket(server, client, type, arg, data, len, engine_, config_);
     });
     server_->addHandler(ws_);
 }

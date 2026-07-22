@@ -45,7 +45,7 @@ bool loadRuntime(RuntimeSnapshot& out) {
     out.mute = doc["mute"] | false;
     out.intensity = doc["intensity"] | 0.6f;
     out.speed = doc["speed"] | 1.0f;
-    out.startupFloor = doc["startupFloor"] | 0.15f;
+    out.startupFloor = doc["startupFloor"] | 0.35f;
     out.numBins = (uint8_t)(doc["numBins"] | 3);
     const char* pid = doc["pattern"] | "Breath";
     strncpy(out.patternId, pid, sizeof(out.patternId) - 1);

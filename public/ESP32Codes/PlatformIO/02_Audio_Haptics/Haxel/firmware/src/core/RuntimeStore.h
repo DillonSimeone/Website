@@ -10,7 +10,7 @@ struct RuntimeSnapshot {
     bool        mute = false;
     float       intensity = 0.6f;
     float       speed = 1.0f;
-    float       startupFloor = 0.15f;
+    float       startupFloor = 0.35f;
     char        patternId[32] = "Breath";
     uint8_t     numBins = 3;
     uint8_t     dividers[4] = {8, 18, 24, 28};

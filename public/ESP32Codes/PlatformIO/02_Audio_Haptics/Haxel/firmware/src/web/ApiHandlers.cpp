@@ -30,6 +30,10 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
         doc["target"] = "esp32-c3";
         int safe[] = {0,1,2,3,4,5,6,7,8,9,10,20,21};
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+        doc["target"] = "esp32-c6";
+        // FireBeetle 2 ESP32-C6 Mini — user-routed haptic/LED pins
+        int safe[] = {8,16,17,19,20};
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         doc["target"] = "esp32-s3";
         int safe[] = {1,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,21,33,34,35,36,37,38,39,40,41,42,47,48};
@@ -99,6 +103,10 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         ol["width"]    = oc.width;
         ol["height"]   = oc.height;
         doc["eStopPin"] = config->eStopPin();
+        auto chEn = doc["channelEnabled"].to<JsonArray>();
+        for (size_t i = 0; i < Config::kMaxChannels; ++i) {
+            chEn.add(config->channelEnabled(i));
+        }
 
         String body; serializeJson(doc, body);
         req->send(200, "application/json", body);
@@ -176,7 +184,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
                 ESP.restart();
                 return;
             }
-            applyStatePatch(patch, engine);
+            applyStatePatch(patch, engine, config);
             JsonDocument out;
             serializeState(out.to<JsonObject>(), engine);
             String body; serializeJson(out, body);
@@ -186,16 +194,20 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
     server.addHandler(stateJson);
 
     auto* configJson = new AsyncCallbackJsonWebHandler("/json/config",
-        [config](AsyncWebServerRequest* req, JsonVariant& json) {
+        [config, engine](AsyncWebServerRequest* req, JsonVariant& json) {
             Serial.printf("[CTRL] HTTP %s %s from %s\n",
                           req->methodToString(), req->url().c_str(),
                           req->client() ? req->client()->remoteIP().toString().c_str() : "?");
-            applyConfigPatch(json.as<JsonObjectConst>(), config);
-            req->send(200, "application/json", "{\"ok\":true,\"reboot\":true}");
-            // Generous flush window before reboot — async send queues the
-            // response into AsyncTCP and we need the socket to drain.
-            delay(800);
-            ESP.restart();
+            JsonObjectConst patch = json.as<JsonObjectConst>();
+            applyConfigPatch(patch, config, engine);
+            const bool reboot = configPatchNeedsReboot(patch);
+            if (reboot) {
+                req->send(200, "application/json", "{\"ok\":true,\"reboot\":true}");
+                delay(800);
+                ESP.restart();
+            } else {
+                req->send(200, "application/json", "{\"ok\":true,\"reboot\":false}");
+            }
         });
     configJson->setMethod(HTTP_POST | HTTP_PUT);
     server.addHandler(configJson);
@@ -399,7 +411,7 @@ void ApiHandlers::handleWebSocket(AsyncWebSocket* /*server*/,
                                   AsyncWebSocketClient* client,
                                   AwsEventType type,
                                   void* arg, uint8_t* data, size_t len,
-                                  Engine* engine) {
+                                  Engine* engine, Config* config) {
     if (type != WS_EVT_DATA) return;
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
     if (!info->final || info->index != 0 || info->len != len) return;
@@ -413,7 +425,7 @@ void ApiHandlers::handleWebSocket(AsyncWebSocket* /*server*/,
     }
     const char* msgType = doc["type"] | "";
     if (!strcmp(msgType, "state")) {
-        applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine);
+        applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine, config);
     } else if (!strcmp(msgType, "external")) {
         uint8_t ch = doc["channel"] | 0;
         float v   = doc["value"]   | 0.0f;

@@ -112,16 +112,18 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
         return;
     } else if (strcmp(type, "state") == 0) {
         if (doc["patch"].is<JsonObjectConst>()) {
-            applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine_);
+            applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine_, config_);
         }
     } else if (strcmp(type, "config") == 0) {
         if (doc["patch"].is<JsonObjectConst>()) {
             JsonObjectConst patch = doc["patch"].as<JsonObjectConst>();
-            applyConfigPatch(patch, config_);
+            applyConfigPatch(patch, config_, engine_);
             config_->setFirstRunComplete();
             config_->save();
-            delay(800);
-            ESP.restart();
+            if (configPatchNeedsReboot(patch)) {
+                delay(800);
+                ESP.restart();
+            }
         }
     } else if (strcmp(type, "custom-pattern") == 0) {
         // Supports single-shot or chunked uploads:
@@ -257,6 +259,10 @@ void BleServer::broadcastConfig() {
         data["sda"] = dc.sda;
         data["scl"] = dc.scl;
         data["pwmHz"] = dc.pwmHz;
+        auto chEn = data["channelEnabled"].to<JsonArray>();
+        for (size_t i = 0; i < Config::kMaxChannels; ++i) {
+            chEn.add(config_->channelEnabled(i));
+        }
         notifyJson_(doc);
     }
     {

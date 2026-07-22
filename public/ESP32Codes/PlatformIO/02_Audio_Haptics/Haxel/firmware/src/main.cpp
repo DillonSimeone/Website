@@ -291,6 +291,11 @@ void setup() {
         boot.intensity = 0.6f;
         boot.speed = 1.0f;
         boot.channelCount = gDriver->channelCount();
+        for (uint8_t i = 0; i < boot.channelCount && i < 8; ++i) {
+            boot.channels[i].on = gConfig.channelEnabled(i);
+            boot.channels[i].intensity = 1.0f;
+        }
+        boot.startupFloor = 0.35f;
 
         core::RuntimeSnapshot rt;
         if (core::loadRuntime(rt)) {
@@ -340,10 +345,14 @@ void setup() {
     }
 #endif
 
-    // Initialize status LED on GPIO 8 (ESP32-C3 onboard LED), LEDC channel 5.
-    #ifdef HAXEL_TARGET_C3
+    // Onboard status LED (C3/C6 FireBeetle: GPIO8), LEDC channel 5.
+#if defined(HAXEL_TARGET_C3) || defined(HAXEL_TARGET_C6)
+#ifdef HAXEL_DEFAULT_STATUS_LED_PIN
+    gStatusLed.begin(HAXEL_DEFAULT_STATUS_LED_PIN, 5);
+#else
     gStatusLed.begin(8, 5);
-    #endif
+#endif
+#endif
 
 #ifdef HAXEL_BLU
     gBle.begin(&gEngine, &gConfig);

@@ -44,6 +44,13 @@ bool LedController::begin(Config* config, Engine* engine) {
         case 18: FastLED.addLeds<WS2812B, 18, GRB>(crgbLeds, count_); break;
         case 19: FastLED.addLeds<WS2812B, 19, GRB>(crgbLeds, count_); break;
         case 21: FastLED.addLeds<WS2812B, 21, GRB>(crgbLeds, count_); break;
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+        // FireBeetle 2 ESP32-C6 — avoid flash/UART pins (24–26 per FastLED mask)
+        case 8:  FastLED.addLeds<WS2812B, 8,  GRB>(crgbLeds, count_); break;
+        case 16: FastLED.addLeds<WS2812B, 16, GRB>(crgbLeds, count_); break;
+        case 17: FastLED.addLeds<WS2812B, 17, GRB>(crgbLeds, count_); break;
+        case 19: FastLED.addLeds<WS2812B, 19, GRB>(crgbLeds, count_); break;
+        case 20: FastLED.addLeds<WS2812B, 20, GRB>(crgbLeds, count_); break;
 #else
         case 2:  FastLED.addLeds<WS2812B, 2,  GRB>(crgbLeds, count_); break;
         case 4:  FastLED.addLeds<WS2812B, 4,  GRB>(crgbLeds, count_); break;
@@ -66,8 +73,16 @@ bool LedController::begin(Config* config, Engine* engine) {
         case 33: FastLED.addLeds<WS2812B, 33, GRB>(crgbLeds, count_); break;
 #endif
         default:
+#if defined(CONFIG_IDF_TARGET_ESP32C6)
+            FastLED.addLeds<WS2812B, 17, GRB>(crgbLeds, count_);
+            pin_ = 17;
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+            FastLED.addLeds<WS2812B, 5, GRB>(crgbLeds, count_);
+            pin_ = 5;
+#else
             FastLED.addLeds<WS2812B, 2, GRB>(crgbLeds, count_);
             pin_ = 2;
+#endif
             break;
     }
 

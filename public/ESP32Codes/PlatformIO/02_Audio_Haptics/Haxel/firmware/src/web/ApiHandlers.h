@@ -25,16 +25,17 @@ public:
                                 AsyncWebSocketClient* client,
                                 AwsEventType type,
                                 void* arg, uint8_t* data, size_t len,
-                                core::Engine* engine);
+                                core::Engine* engine,
+                                Config* config);
 
-    static void applyStatePatch(ArduinoJson::JsonObjectConst patch, core::Engine* engine) {
-        haxel::web::applyStatePatch(patch, engine);
+    static void applyStatePatch(ArduinoJson::JsonObjectConst patch, core::Engine* engine, Config* config = nullptr) {
+        haxel::web::applyStatePatch(patch, engine, config);
     }
     static void serializeState(ArduinoJson::JsonObject root, core::Engine* engine) {
         haxel::web::serializeState(root, engine);
     }
-    static void applyConfigPatch(ArduinoJson::JsonObjectConst patch, Config* config) {
-        haxel::web::applyConfigPatch(patch, config);
+    static void applyConfigPatch(ArduinoJson::JsonObjectConst patch, Config* config, core::Engine* engine = nullptr) {
+        haxel::web::applyConfigPatch(patch, config, engine);
     }
 };
 

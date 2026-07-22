@@ -37,6 +37,7 @@ struct OledConfig {
 class Config {
 public:
     static constexpr size_t kMaxKnobs = 8;
+    static constexpr size_t kMaxChannels = 8;
 
     bool load();   // From /config.json; falls back to defaults on missing/invalid.
     bool save();   // Atomic write via tmp + rename.
@@ -68,6 +69,11 @@ public:
     // Optional active-low E-stop GPIO. -1 = disabled.
     int8_t eStopPin() const { return eStopPin_; }
     void setEStopPin(int8_t pin) { eStopPin_ = pin; markDirty(); }
+
+    bool channelEnabled(size_t i) const {
+        return i < kMaxChannels ? channelEnabled_[i] : true;
+    }
+    void setChannelEnabled(const bool* enabled, size_t count);
 
     void setDriverKind(hal::DriverKind k) { driverKind_ = k; markDirty(); }
     void setDriverConfig(const hal::DriverConfig& c) { driverConfig_ = c; markDirty(); }
@@ -101,6 +107,9 @@ private:
     size_t      knobCount_ = 0;
     OledConfig  oled_;
     int8_t      eStopPin_ = -1;
+    bool        channelEnabled_[kMaxChannels] = {
+        true, true, true, true, true, true, true, true
+    };
 
     bool   dirty_ = false;
     uint32_t lastDirtyMs_ = 0;

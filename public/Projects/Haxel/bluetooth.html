@@ -180,8 +180,8 @@
                                     </div>
                                     <div class="row">
                                         <label>Motor Startup Floor</label>
-                                        <input type="range" id="startFloor" min="0" max="70" value="15">
-                                        <span class="val" id="floorVal">15%</span>
+                                        <input type="range" id="startFloor" min="0" max="70" value="35">
+                                        <span class="val" id="floorVal">35%</span>
                                     </div>
 
                                     <div class="motor-presets" style="display:flex; flex-wrap:wrap; gap:8px; margin: 10px 0 14px;">
@@ -346,6 +346,14 @@ wave(t * (freq * 0.05))
                                             </select>
                                         </div>
                                         
+                                        <div style="margin-top: 15px;">
+                                            <h5>Motor Outputs</h5>
+                                            <p class="hint" style="font-size: 10px; color: #555; margin-top: 0;">
+                                                Toggle channels off while experimenting — pin wiring is kept.
+                                            </p>
+                                            <div id="motorOutputContainer"></div>
+                                        </div>
+
                                         <!-- Active Motors list -->
                                         <div style="margin-top: 15px;">
                                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">

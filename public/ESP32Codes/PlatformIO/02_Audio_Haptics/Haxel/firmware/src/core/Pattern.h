@@ -16,7 +16,7 @@ struct PatternContext {
     float  tMs = 0.0f;
     float  intensityMaster = 1.0f;
     float  speed = 1.0f;
-    float  startupFloor = 0.15f;
+    float  startupFloor = 0.35f;
     uint8_t channelIndex = 0;
     AudioFrame audio;
     const float* externalValues = nullptr; // 8-slot array, see Engine::pushExternal

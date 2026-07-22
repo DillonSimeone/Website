@@ -60,6 +60,24 @@ bool deleteCustomPattern(const char* id, String& errOut, Engine* engine) {
     return true;
 }
 
+static void syncChannelEnablesToConfig_(Config* config, const StagedState& s) {
+    if (!config) return;
+    bool en[Config::kMaxChannels];
+    for (size_t i = 0; i < Config::kMaxChannels; ++i) {
+        en[i] = (i < s.channelCount) ? s.channels[i].on : config->channelEnabled(i);
+    }
+    config->setChannelEnabled(en, Config::kMaxChannels);
+}
+
+bool configPatchNeedsReboot(JsonObjectConst patch) {
+    return patch["driver"].is<JsonObjectConst>()
+        || patch["audio"].is<JsonObjectConst>()
+        || patch["led"].is<JsonObjectConst>()
+        || patch["oled"].is<JsonObjectConst>()
+        || patch["knobs"].is<JsonArrayConst>()
+        || patch["apSsid"].is<const char*>();
+}
+
 void serializeState(JsonObject root, Engine* engine) {
     StagedState s;
     engine->copyState(s);
@@ -93,7 +111,7 @@ void serializeState(JsonObject root, Engine* engine) {
     info["heap_free"] = ESP.getFreeHeap();
 }
 
-void applyStatePatch(JsonObjectConst patch, Engine* engine) {
+void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
     logIncomingJson_("state", patch);
 
     if (patch["estop"].is<bool>() && patch["estop"].as<bool>()) {
@@ -170,14 +188,34 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine) {
             Serial.printf("[CTRL] param %s=%g\n", kv.key().c_str(), kv.value().as<float>());
         }
     }
+
+    if (patch["channels"].is<JsonArrayConst>()) {
+        int i = 0;
+        for (JsonVariantConst v : patch["channels"].as<JsonArrayConst>()) {
+            if (i >= 8) break;
+            if (v.is<bool>()) {
+                s.channels[i].on = v.as<bool>();
+            } else if (v.is<JsonObjectConst>()) {
+                JsonObjectConst o = v.as<JsonObjectConst>();
+                if (o["on"].is<bool>()) s.channels[i].on = o["on"].as<bool>();
+                if (o["intensity"].is<float>()) s.channels[i].intensity = o["intensity"].as<float>();
+            }
+            ++i;
+        }
+    }
+
     engine->stageState(s);
     Serial.printf("[CTRL] staged on=%d intensity=%.2f speed=%.2f pattern=%s\n",
                   (int)s.on, s.intensity, s.speed,
                   s.pattern ? s.pattern->id() : "(none)");
+    if (config && patch["channels"].is<JsonArrayConst>()) {
+        syncChannelEnablesToConfig_(config, s);
+        config->save();
+    }
     markRuntimeDirty(s);
 }
 
-void applyConfigPatch(JsonObjectConst patch, Config* config) {
+void applyConfigPatch(JsonObjectConst patch, Config* config, Engine* engine) {
     logIncomingJson_("config", patch);
     if (patch["driver"].is<JsonObjectConst>()) {
         hal::DriverConfig dc = config->driverConfig();
@@ -229,6 +267,26 @@ void applyConfigPatch(JsonObjectConst patch, Config* config) {
     }
     if (patch["eStopPin"].is<int>()) {
         config->setEStopPin((int8_t)patch["eStopPin"].as<int>());
+    }
+    if (patch["channelEnabled"].is<JsonArrayConst>()) {
+        bool en[Config::kMaxChannels];
+        for (size_t i = 0; i < Config::kMaxChannels; ++i) {
+            en[i] = config->channelEnabled(i);
+        }
+        size_t i = 0;
+        for (JsonVariantConst v : patch["channelEnabled"].as<JsonArrayConst>()) {
+            if (i >= Config::kMaxChannels) break;
+            en[i++] = v.as<bool>();
+        }
+        config->setChannelEnabled(en, Config::kMaxChannels);
+        if (engine) {
+            StagedState s;
+            engine->copyState(s);
+            for (uint8_t c = 0; c < s.channelCount && c < Config::kMaxChannels; ++c) {
+                s.channels[c].on = en[c];
+            }
+            engine->stageState(s);
+        }
     }
     if (patch["led"].is<JsonObjectConst>()) {
         LedConfig lc = config->ledConfig();
