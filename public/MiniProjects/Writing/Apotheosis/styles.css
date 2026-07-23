@@ -232,19 +232,20 @@ body {
 
 .story-header h1 {
     font-family: var(--font-heading);
-    font-size: 4.2rem;
+    font-size: clamp(2rem, 8.5vw, 4.2rem);
     font-weight: 800;
-    letter-spacing: 5px;
+    letter-spacing: clamp(1px, 1.2vw, 5px);
     text-transform: uppercase;
     background: linear-gradient(135deg, #ffffff 30%, var(--accent-gold) 70%, var(--accent-soul) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 1rem;
+    overflow-wrap: break-word;
 }
 
 .story-subtitle {
     font-family: var(--font-sans);
-    font-size: 1.15rem;
+    font-size: clamp(0.95rem, 3.5vw, 1.15rem);
     color: var(--text-secondary);
     font-weight: 300;
     letter-spacing: 1px;
@@ -310,39 +311,92 @@ body {
     font-weight: 600;
 }
 
-/* Responsiveness */
+/* Mobile Responsiveness */
 @media (max-width: 1024px) {
+    /* Dock System HUD to fixed bottom bar on mobile */
     .system-hud {
-        position: static;
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
-        margin-bottom: 3rem;
+        border-radius: 14px 14px 0 0;
+        border-bottom: none;
+        border-left: none;
+        border-right: none;
+        padding: 0.6rem 1rem 0.8rem 1rem;
+        background: rgba(8, 6, 14, 0.92);
+        backdrop-filter: blur(18px);
+        z-index: 100;
+    }
+
+    .hud-header {
+        padding-bottom: 0.3rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .hud-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.4rem;
+    }
+
+    .hud-stat {
+        align-items: center;
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: 0.55rem;
+    }
+
+    .stat-value {
+        font-size: 0.9rem;
+    }
+
+    .hud-stat.full-width {
+        grid-column: span 4;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        padding-top: 0.3rem;
+        margin-top: 0.2rem;
     }
 }
 
 @media (max-width: 768px) {
     .story-nav {
-        padding: 1rem 1.2rem;
+        padding: 0.8rem 1.2rem;
     }
 
     .story-reader {
-        padding: 6rem 1rem 8rem 1rem;
+        padding: 5rem 1rem 8rem 1rem;
     }
 
     .story-section {
-        padding: 1.8rem 1.4rem;
+        padding: 1.6rem 1.2rem;
+        margin-bottom: 3rem;
     }
 
     .story-header {
-        padding: 2rem 1.4rem;
+        padding: 1.8rem 1.2rem;
+        margin-bottom: 3rem;
     }
 
-    .story-header h1 {
-        font-size: 2.8rem;
+    .section-lead {
+        font-size: 1.35rem !important;
+        line-height: 2rem !important;
     }
 
     .story-section p {
-        font-size: 1.18rem;
+        font-size: 1.15rem;
         line-height: 1.8rem;
         text-align: left;
+    }
+
+    .epigraph-quote {
+        padding: 1.2rem 1.2rem;
+    }
+
+    .epigraph-quote p {
+        font-size: 1.25rem !important;
     }
 }
