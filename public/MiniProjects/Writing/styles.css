@@ -311,6 +311,13 @@ h1 {
     gap: 6px;
 }
 
+/* 0. Apotheosis Card */
+.card-apotheosis {
+    --theme-primary-rgb: 255, 59, 92;
+    --theme-font: 'Cinzel', serif;
+    --theme-footer-color: #ff8800;
+}
+
 /* 4. Naruto Card */
 .card-naruto {
     --theme-primary-rgb: 239, 68, 68;
@@ -387,6 +394,11 @@ h1 {
 .btn-sundered {
     --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #8e7228);
     --btn-color: #0d0901;
+}
+
+.btn-apotheosis {
+    --btn-bg: linear-gradient(135deg, #ff3b5c, #e5b967);
+    --btn-color: #08070b;
 }
 
 .btn-optimizer {

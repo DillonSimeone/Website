@@ -1,0 +1,348 @@
+/* Modern Dark Aesthetic System for Apotheosis */
+:root {
+    --bg-dark: #040307;
+    --bg-surface: rgba(12, 10, 18, 0.85);
+    --bg-card: rgba(10, 8, 16, 0.82);
+    --text-primary: #e6e2f0;
+    --text-secondary: #a39cb5;
+    --text-muted: #6b647d;
+    --accent-gold: #e5b967;
+    --accent-crimson: #ff3b5c;
+    --accent-soul: #70d6ff;
+    --border-light: rgba(112, 214, 255, 0.18);
+    --font-heading: 'Cinzel', serif;
+    --font-body: 'Cormorant Garamond', Georgia, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: 'Outfit', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+}
+
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    line-height: 1.9;
+}
+
+/* Background Canvas */
+#story-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2;
+    pointer-events: none;
+}
+
+/* Vignette Overlay */
+.vignette {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(circle at center, transparent 15%, rgba(2, 2, 5, 0.92) 85%);
+}
+
+/* Progress Rail */
+.progress-rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.05);
+    z-index: 90;
+}
+
+.progress-fill {
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(to bottom, var(--accent-soul), var(--accent-gold), var(--accent-crimson));
+    box-shadow: 0 0 12px var(--accent-soul);
+    transition: height 0.05s linear;
+}
+
+/* Navigation Header */
+.story-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 2.5rem;
+    z-index: 80;
+    background: rgba(4, 3, 7, 0.88);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.back-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.back-link:hover {
+    color: var(--accent-soul);
+    transform: translateX(-4px);
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+}
+
+.nav-status {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent-gold);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+/* Sleek Floating System HUD */
+.system-hud {
+    position: fixed;
+    right: 2.5rem;
+    top: 5.5rem;
+    width: 270px;
+    padding: 1.2rem;
+    background: var(--bg-surface);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    z-index: 70;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+    font-family: var(--font-mono);
+}
+
+.hud-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding-bottom: 0.8rem;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hud-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent-soul);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-soul);
+    animation: soulPulse 2s infinite alternate;
+}
+
+@keyframes soulPulse {
+    from { opacity: 0.5; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1.3); }
+}
+
+.hud-title {
+    font-size: 0.68rem;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+}
+
+.hud-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+}
+
+.hud-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.hud-stat.full-width {
+    grid-column: span 2;
+}
+
+.stat-label {
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--accent-gold);
+    margin-top: 0.2rem;
+}
+
+.stat-value.soul-glow {
+    color: var(--accent-soul);
+    text-shadow: 0 0 10px rgba(112, 214, 255, 0.4);
+}
+
+/* Main Story Reader Container */
+.story-reader {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 8rem 2rem 14rem 2rem;
+    position: relative;
+    z-index: 10;
+}
+
+/* Header Section */
+.story-header {
+    text-align: center;
+    margin-bottom: 5rem;
+    padding: 3rem 2.5rem;
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.record-tag {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--accent-crimson);
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.story-header h1 {
+    font-family: var(--font-heading);
+    font-size: 4.2rem;
+    font-weight: 800;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #ffffff 30%, var(--accent-gold) 70%, var(--accent-soul) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.story-subtitle {
+    font-family: var(--font-sans);
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+/* Story Sections with Transparent Dark Panel Backdrops for High Contrast & Legibility */
+.story-section {
+    margin-bottom: 4.5rem;
+    padding: 2.8rem 3rem;
+    background: var(--bg-card);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+}
+
+.story-section p {
+    font-size: 1.4rem;
+    line-height: 2.25rem;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+    text-align: justify;
+}
+
+.story-section p:last-child {
+    margin-bottom: 0;
+}
+
+.section-lead {
+    font-size: 1.65rem !important;
+    line-height: 2.45rem !important;
+    font-weight: 600;
+    color: #ffffff !important;
+}
+
+.epigraph-quote {
+    background: rgba(112, 214, 255, 0.05);
+    border-left: 3px solid var(--accent-soul);
+    padding: 1.5rem 2rem;
+    margin: 1rem 0 2.5rem 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.epigraph-quote p {
+    font-family: var(--font-heading);
+    font-size: 1.55rem !important;
+    font-style: italic;
+    color: var(--accent-gold) !important;
+    margin-bottom: 0 !important;
+}
+
+.split-line {
+    font-weight: 600;
+    color: #ffffff;
+    border-left: 2px solid var(--accent-gold);
+    padding-left: 1.2rem;
+    margin: 2.2rem 0;
+}
+
+.emphasis {
+    color: var(--accent-gold);
+    font-size: 1.5rem !important;
+    font-weight: 600;
+}
+
+/* Responsiveness */
+@media (max-width: 1024px) {
+    .system-hud {
+        position: static;
+        width: 100%;
+        margin-bottom: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .story-nav {
+        padding: 1rem 1.2rem;
+    }
+
+    .story-reader {
+        padding: 6rem 1rem 8rem 1rem;
+    }
+
+    .story-section {
+        padding: 1.8rem 1.4rem;
+    }
+
+    .story-header {
+        padding: 2rem 1.4rem;
+    }
+
+    .story-header h1 {
+        font-size: 2.8rem;
+    }
+
+    .story-section p {
+        font-size: 1.18rem;
+        line-height: 1.8rem;
+        text-align: left;
+    }
+}
