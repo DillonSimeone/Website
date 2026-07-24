@@ -25,7 +25,7 @@ static void snapshotFromState_(const StagedState& s, RuntimeSnapshot& out) {
         strncpy(out.binPatterns[i], s.binPatterns[i], sizeof(out.binPatterns[i]) - 1);
         out.binPatterns[i][sizeof(out.binPatterns[i]) - 1] = '\0';
     }
-    const char* pid = (s.pattern && s.pattern->id()) ? s.pattern->id() : "Breath";
+    const char* pid = (s.pattern && s.pattern->id()) ? s.pattern->id() : "Heartbeat";
     strncpy(out.patternId, pid, sizeof(out.patternId) - 1);
     out.patternId[sizeof(out.patternId) - 1] = '\0';
 }
@@ -47,7 +47,7 @@ bool loadRuntime(RuntimeSnapshot& out) {
     out.speed = doc["speed"] | 1.0f;
     out.startupFloor = doc["startupFloor"] | 0.35f;
     out.numBins = (uint8_t)(doc["numBins"] | 3);
-    const char* pid = doc["pattern"] | "Breath";
+    const char* pid = doc["pattern"] | "Heartbeat";
     strncpy(out.patternId, pid, sizeof(out.patternId) - 1);
     out.patternId[sizeof(out.patternId) - 1] = '\0';
 

@@ -1,32 +1,29 @@
-# RP2040 Mid-Air Ultrasonic Haptic Display Demo Firmware
+# Waveshare RP2040-Zero Ultrasonic Haptic Display Demo Firmware
 
-Firmware for driving a mid-air ultrasonic haptic display demo array using a Raspberry Pi Pico (RP2040), TPA3118 Class-D Audio Amplifier Module, and SSD1306 OLED display.
+Firmware for driving a mid-air ultrasonic haptic display demo array using a Waveshare RP2040-Zero mini microcontroller, TPA3118 Class-D Audio Amplifier Module, and SSD1306 OLED display.
 
-## Hardware Connections
+## Pinout Mapping (Waveshare RP2040-Zero)
 
-| Device / Interface | Pico (RP2040) Pin | Notes |
-| :--- | :--- | :--- |
-| **TPA3118 IN+** | GPIO 15 | PWM Output (Drive strength explicitly set to 2mA in software) |
-| **TPA3118 IN-** | GND | Shared System Ground |
-| **Potentiometer 1** | ADC0 (GPIO 26) | Carrier Frequency (38.0 kHz to 42.0 kHz) |
-| **Potentiometer 2** | ADC1 (GPIO 27) | Modulation Frequency (50 Hz to 300 Hz) |
-| **Potentiometer 3** | ADC2 (GPIO 28) | Drive Level / Duty Cycle (1% to 20%) |
-| **OLED SDA** | GPIO 4 | I2C0 SDA |
-| **OLED SCL** | GPIO 5 | I2C0 SCL |
-| **OLED VCC / GND** | 3.3V / GND | Power & Ground |
+| RP2040-Zero Silk Pad | Signal / Function | Connected Hardware | Target Range / Notes |
+| :--- | :--- | :--- | :--- |
+| **15** (Top Right) | GPIO 15 (PWM) | TPA3118 IN+ | 40.0 kHz Carrier (2mA Drive Strength) |
+| **GND** (Right) | GND | TPA3118 IN-, Pots & OLED GND | Shared System Ground |
+| **26** (Right) | ADC0 (GPIO 26) | Potentiometer 1 | Carrier Frequency (38.0 kHz to 42.0 kHz) |
+| **27** (Right) | ADC1 (GPIO 27) | Potentiometer 2 | Modulation Rate (50 Hz to 300 Hz) |
+| **28** (Right) | ADC2 (GPIO 28) | Potentiometer 3 | Drive Level / Duty Cycle (1% to 20%) |
+| **4** (Left) | GPIO 4 (SDA) | SSD1306 OLED SDA | I2C0 Data @ 10 Hz Telemetry |
+| **5** (Left) | GPIO 5 (SCL) | SSD1306 OLED SCL | I2C0 Clock |
+| **3V3** (Right) | 3.3V Power | Pots & OLED VCC | 3.3V System Power Output |
 
-## Signal Generation & Architecture
+## Interactive Web Pinout & Signal Simulator
 
-- **Hardware PWM**: Driven directly via hardware registers (`hardware/pwm.h`) on GPIO 15.
-- **Drive Strength**: Limited to 2mA (`GPIO_DRIVE_STRENGTH_2MA`) to soften fast switching spikes at the TPA3118 input stage.
-- **AM Envelope Modulation**: The 40 kHz ultrasonic carrier is chopped ON/OFF at tactile modulation rates (50 Hz–300 Hz) using a 50% burst duty cycle envelope.
-- **EMA Filtering**: Potentiometer readings use Exponential Moving Average (EMA) smoothing for jitter-free real-time adjustment.
-- **OLED UI**: 10 Hz telemetry display rendered using Adafruit SSD1306 library.
+An interactive HTML visualizer is available in [`pinout.html`](pinout.html). Open `pinout.html` in your browser to view the board layout, connection matrix, and live oscilloscope signal simulator.
 
 ## Building & Flashing
 
-Use PlatformIO:
-```bash
-pio run --target upload
-```
-or double-click `upload.bat`.
+1. Connect your RP2040-Zero via USB-C while holding the **BOOT** button (or insert firmware when `D:\` / `RPI-RP2` is mounted).
+2. Run `upload.bat` or run:
+   ```bash
+   pio run
+   ```
+3. Copy `.pio/build/pico/firmware.uf2` into `D:\` (`RPI-RP2`).

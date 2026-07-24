@@ -1,4 +1,5 @@
 #include "StatusLed.h"
+#include "Engine.h"
 #include <esp32-hal-ledc.h>
 #include <math.h>
 
@@ -36,9 +37,30 @@ void StatusLed::tick() {
             break;
         }
 
-        case Mode::CONNECTED:
-            setDuty_(0.10f);  // Solid 10% dim
+        case Mode::CONNECTED: {
+            float target = 0.0f;
+            if (engine_) {
+                core::StagedState s;
+                engine_->copyState(s);
+                if (s.on && !s.mute) {
+                    for (uint8_t i = 0; i < s.channelCount; ++i) {
+                        float val = engine_->getPatternValue(i);
+                        if (val > target) target = val;
+                    }
+                }
+            }
+            if (target > smoothIntensity_) {
+                smoothIntensity_ += (target - smoothIntensity_) * 0.45f;
+            } else {
+                smoothIntensity_ += (target - smoothIntensity_) * 0.20f;
+            }
+            if (smoothIntensity_ < 0.002f) smoothIntensity_ = 0.0f;
+
+            // When active, flash from 10% base duty up to 100% full brightness in sync with haptics
+            float duty = 0.10f + 0.90f * smoothIntensity_;
+            setDuty_(duty);
             break;
+        }
 
         case Mode::AP_FLASH: {
             // 4 Hz square wave at 10 Hz tick: 2.5 ticks high, 2.5 ticks low → use bit 1 of tick/2

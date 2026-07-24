@@ -207,15 +207,20 @@ function renderProjects() {
         displayName = displayName.split('/').pop();
       }
 
+      const allEnvs = project.envs || [];
+      const visibleEnvs = allEnvs.slice(0, 3).map(e => {
+        const m = project.envMeta && project.envMeta[e];
+        return m && m.flagLabels && m.flagLabels.length
+          ? `${e} (${m.flagLabels.join('+')})`
+          : e;
+      });
+      const extraCount = allEnvs.length - 3;
+      const envsDisplay = visibleEnvs.join(', ') + (extraCount > 0 ? `, ... (${extraCount} more envs)` : '');
+
       card.innerHTML = `
         <h3>${displayName}</h3>
         <span class="board-tag">${project.board}</span>
-        <p style="margin-top: 8px; opacity: 0.8; font-size: 0.8rem;">Envs: ${project.envs.map(e => {
-          const m = project.envMeta && project.envMeta[e];
-          return m && m.flagLabels && m.flagLabels.length
-            ? `${e} (${m.flagLabels.join('+')})`
-            : e;
-        }).join(', ')}</p>
+        <p style="margin-top: 8px; opacity: 0.8; font-size: 0.8rem;">Envs: ${envsDisplay}</p>
       `;
 
       card.addEventListener('click', (e) => {
@@ -269,13 +274,25 @@ function selectProject(project) {
   // Verify firmware bin availability + show feature flags
   updateQuickFlashState();
   updateEnvFlags();
+  renderLibraries();
   envSelectEl.removeEventListener('change', onEnvChanged);
   envSelectEl.addEventListener('change', onEnvChanged);
 
-  // Render Libraries
+  // Load README
+  loadReadme(project);
+}
+
+// Render resolved library tags for the active env
+function renderLibraries() {
   libraryTagsEl.innerHTML = '';
-  if (project.libs && project.libs.length > 0) {
-    project.libs.forEach(lib => {
+  if (!selectedProject) return;
+  const env = envSelectEl.value;
+  const meta = selectedProject.envMeta && selectedProject.envMeta[env];
+  const rawLibs = (meta && meta.libs && meta.libs.length > 0) ? meta.libs : (selectedProject.libs || []);
+  const validLibs = rawLibs.filter(l => l && !l.includes('${'));
+
+  if (validLibs.length > 0) {
+    validLibs.forEach(lib => {
       const cleanName = lib.split('@')[0].trim();
       const tag = document.createElement('a');
       tag.className = 'lib-tag';
@@ -287,15 +304,13 @@ function selectProject(project) {
   } else {
     libraryTagsEl.innerHTML = '<span style="opacity: 0.6; font-size: 0.9rem;">No external libraries listed in platformio.ini</span>';
   }
-
-  // Load README
-  loadReadme(project);
 }
 
 // Check if pre-compiled bin exists for the active project env
 function onEnvChanged() {
   updateQuickFlashState();
   updateEnvFlags();
+  renderLibraries();
 }
 
 function updateEnvFlags() {

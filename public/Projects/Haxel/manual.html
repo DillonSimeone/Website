@@ -773,6 +773,55 @@
   }
 }
             </div>
+
+            <h3>Fleet & ESP-NOW Mesh Protocol</h3>
+            <p style="margin-bottom: 10px;">
+                When flashed with a <code>*MASTER</code> build environment, the master ESP32 controls a fleet of follower ESP32-C6 boards using low-latency ESP-NOW (&lt; 5 ms latency).
+            </p>
+
+            <h4>GET /json/fleet</h4>
+            <p style="margin-bottom: 10px;">Returns the status of all active follower nodes advertising over ESP-NOW:</p>
+            <div class="code-block">
+{
+  "count": 2,
+  "nodes": [
+    {
+      "mac": "24:ec:4a:12:34:56",
+      "name": "Haxel-3456",
+      "claimed": true,
+      "online": true,
+      "duty": 0.65
+    }
+  ]
+}
+            </div>
+
+            <h4>POST /json/fleet (Fleet Commands)</h4>
+            <p style="margin-bottom: 10px;">Executes global fleet membership actions across ESP-NOW mesh nodes:</p>
+            <div class="code-block">
+// Claim all discovered follower nodes into the active fleet
+{ "action": "claim" }
+
+// Claim a specific follower node by MAC address
+{ "action": "claim", "mac": "24:ec:4a:12:34:56" }
+
+// Release all followers back to standalone mode
+{ "action": "release" }
+
+// Instant emergency stop across all fleet units
+{ "action": "estop" }
+            </div>
+
+            <h4>Standalone Fleet Controller & Browser Mic Streamer (Offline Ready)</h4>
+            <p>
+                You can download <a href="fleet.html" style="color: var(--bauhaus-yellow); font-weight: bold;">fleet.html</a> in advance before heading into the field or workshop. 
+                Once connected to the Master node's Wi-Fi network (<code>Haxel-XXXX</code>), open <code>fleet.html</code> locally in any browser to:
+            </p>
+            <ul style="margin-top: 8px; margin-bottom: 12px; color: var(--text-dim);">
+                <li><strong>Claim & Release Mesh Nodes:</strong> View live ESP-NOW followers with MAC addresses and real-time duty cycle wave meters.</li>
+                <li><strong>Browser Mic Sound-Reactivity:</strong> Stream live audio from your laptop or smartphone microphone directly to the Master at 25 Hz. Includes configurable <em>Gain</em> and <em>Attack/Decay Smoothing Filter</em> controls to eliminate Wi-Fi network jitter and maintain smooth, punchy tactile feedback across the entire fleet without needing physical hardware microphones on each ESP32.</li>
+                <li><strong>Global Broadcast & E-STOP:</strong> Switch active patterns and adjust global intensity on the fly.</li>
+            </ul>
         </section>
     </div>
 

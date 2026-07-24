@@ -118,7 +118,6 @@ function parsePlatformioIni(iniContent, projectDir) {
   const lines = iniContent.split(/\r?\n/);
   const sections = {};
   let current = null;
-  let libs = [];
   let inLibDeps = false;
   let collectingFlags = false;
 
@@ -126,7 +125,7 @@ function parsePlatformioIni(iniContent, projectDir) {
     const trimmed = raw.trim();
     if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
       current = trimmed.slice(1, -1);
-      sections[current] = { lines: [], buildFlags: [] };
+      sections[current] = { lines: [], buildFlags: [], libDeps: [] };
       inLibDeps = false;
       collectingFlags = false;
       continue;
@@ -138,7 +137,7 @@ function parsePlatformioIni(iniContent, projectDir) {
       inLibDeps = true;
       collectingFlags = false;
       const val = trimmed.substring(trimmed.indexOf('=') + 1).trim();
-      if (val) libs.push(val);
+      if (val) sections[current].libDeps.push(val);
       continue;
     }
     if (trimmed.startsWith('build_flags')) {
@@ -153,7 +152,7 @@ function parsePlatformioIni(iniContent, projectDir) {
       if (trimmed.includes('=') && !trimmed.startsWith('-')) {
         inLibDeps = false;
       } else if (trimmed) {
-        libs.push(trimmed);
+        sections[current].libDeps.push(trimmed);
       }
       continue;
     }
@@ -177,6 +176,46 @@ function parsePlatformioIni(iniContent, projectDir) {
       for (const part of m[1].split(',')) {
         const parent = part.trim();
         if (parent) out.unshift(...resolveFlags(parent, depth + 1));
+      }
+    }
+    return out;
+  }
+
+  function resolveLibDeps(sectionName, depth = 0, visited = new Set()) {
+    if (!sectionName || depth > 8 || !sections[sectionName] || visited.has(sectionName)) return [];
+    visited.add(sectionName);
+    const sec = sections[sectionName];
+    const rawDeps = [...sec.libDeps];
+
+    // Check extends = ...
+    for (const line of sec.lines) {
+      const m = line.trim().match(/^extends\s*=\s*(.+)$/);
+      if (!m) continue;
+      for (const part of m[1].split(',')) {
+        const parent = part.trim();
+        if (parent && sections[parent]) {
+          rawDeps.unshift(...resolveLibDeps(parent, depth + 1, visited));
+        }
+      }
+    }
+
+    // Include base [env] section if this is [env:name] and env is not visited
+    if (sectionName.startsWith('env:') && sectionName !== 'env' && sections['env'] && !visited.has('env')) {
+      rawDeps.unshift(...resolveLibDeps('env', depth + 1, visited));
+    }
+
+    const out = [];
+    for (const dep of rawDeps) {
+      const m = dep.match(/\$\{([^}]+)\}/);
+      if (m) {
+        // e.g. wifi_libs.lib_deps or env.lib_deps
+        const varRef = m[1].trim();
+        const targetSec = varRef.split('.')[0];
+        if (targetSec && sections[targetSec]) {
+          out.push(...resolveLibDeps(targetSec, depth + 1, visited));
+        }
+      } else if (dep.trim()) {
+        out.push(dep.trim());
       }
     }
     return out;
@@ -209,6 +248,7 @@ function parsePlatformioIni(iniContent, projectDir) {
   const hasFs = projectHasLittleFS(projectDir);
   const envs = [];
   const envMeta = {};
+  let allLibs = [];
 
   for (const name of Object.keys(sections)) {
     if (!name.startsWith('env:')) continue;
@@ -218,8 +258,9 @@ function parsePlatformioIni(iniContent, projectDir) {
     const flags = extractActiveFlags(resolveFlags(name));
     const labels = flags.map(f => FLAG_LABELS[f]).filter(Boolean);
     const hasWifi = flags.includes('HAXEL_WIFI') || flags.includes('HAXEL_FEATURE_MESH_MASTER');
-    // SoftAP / captive portal needs LittleFS upload; pure BLE or mesh-follower do not.
     const needsUploadFs = hasFs && hasWifi;
+    const envLibs = [...new Set(resolveLibDeps(name).filter(l => l && !l.includes('${')))];
+    allLibs.push(...envLibs);
 
     envs.push(envName);
     envMeta[envName] = {
@@ -227,14 +268,15 @@ function parsePlatformioIni(iniContent, projectDir) {
       flags,
       flagLabels: labels,
       needsUploadFs,
-      flashable: true
+      flashable: true,
+      libs: envLibs
     };
   }
 
   return {
     envs,
     envMeta,
-    libs: [...new Set(libs.filter(Boolean))]
+    libs: [...new Set(allLibs.filter(Boolean))]
   };
 }
 
@@ -362,16 +404,103 @@ function buildEsptoolFlashArgs(resolved, chip, port, offset, binPath) {
   return args;
 }
 
-function detectChipFromIni(iniContent) {
-  const ini = iniContent.toLowerCase();
-  if (ini.includes('esp32-c3') || ini.includes('esp32c3')) return 'esp32c3';
-  if (ini.includes('esp32-s3') || ini.includes('esp32s3')) return 'esp32s3';
-  if (ini.includes('esp32-c6') || ini.includes('esp32c6')) return 'esp32c6';
+function detectChipFromEnv(iniContent, projectDir, envName) {
+  if (!iniContent) return 'esp32';
+
+  // 1. Check parsed envMeta flags if available (e.g., HAXEL_TARGET_*)
+  const parsed = parsePlatformioIni(iniContent, projectDir);
+  if (parsed.envMeta && parsed.envMeta[envName]) {
+    const flags = parsed.envMeta[envName].flags || [];
+    if (flags.includes('HAXEL_TARGET_C3')) return 'esp32c3';
+    if (flags.includes('HAXEL_TARGET_S3')) return 'esp32s3';
+    if (flags.includes('HAXEL_TARGET_C6')) return 'esp32c6';
+    if (flags.includes('HAXEL_TARGET_CLASSIC')) return 'esp32';
+  }
+
+  // 2. Parse section lines for target env, extended sections, or general env
+  const lines = iniContent.split(/\r?\n/);
+  const targetSections = new Set([`env:${envName}`, 'env']);
+  let inTargetSec = false;
+  let envLines = [];
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      const section = trimmed.slice(1, -1);
+      inTargetSec = targetSections.has(section);
+      continue;
+    }
+    if (inTargetSec && trimmed && !trimmed.startsWith(';') && !trimmed.startsWith('#')) {
+      envLines.push(trimmed);
+    }
+  }
+
+  const envText = envLines.join('\n').toLowerCase();
+
+  // Check board_build.mcu = ...
+  const mcuMatch = envText.match(/board_build\.mcu\s*=\s*([a-z0-9_-]+)/);
+  if (mcuMatch) {
+    const mcu = mcuMatch[1].replace(/[-_]/g, '');
+    if (['esp32c3', 'esp32s3', 'esp32c6', 'esp32s2', 'esp32h2', 'esp32'].includes(mcu)) {
+      return mcu;
+    }
+  }
+
+  // Check board = ...
+  const boardMatch = envText.match(/board\s*=\s*([a-z0-9_-]+)/);
+  if (boardMatch) {
+    const board = boardMatch[1];
+    if (board.includes('esp32-c3') || board.includes('esp32c3') || board.includes('xiao_esp32c3')) return 'esp32c3';
+    if (board.includes('esp32-s3') || board.includes('esp32s3')) return 'esp32s3';
+    if (board.includes('esp32-c6') || board.includes('esp32c6')) return 'esp32c6';
+    if (board.includes('esp32-s2') || board.includes('esp32s2')) return 'esp32s2';
+    if (board.includes('esp32dev') || board.includes('wrover') || board.includes('nodemcu') || board.includes('pico')) return 'esp32';
+  }
+
+  // Check env name itself
+  const lowerEnv = (envName || '').toLowerCase();
+  if (lowerEnv.includes('c3')) return 'esp32c3';
+  if (lowerEnv.includes('s3')) return 'esp32s3';
+  if (lowerEnv.includes('c6')) return 'esp32c6';
+  if (lowerEnv.includes('s2')) return 'esp32s2';
+
+  // Fallback to checking target section text
+  if (envText.includes('esp32-c3') || envText.includes('esp32c3')) return 'esp32c3';
+  if (envText.includes('esp32-s3') || envText.includes('esp32s3')) return 'esp32s3';
+  if (envText.includes('esp32-c6') || envText.includes('esp32c6')) return 'esp32c6';
+
   return 'esp32';
 }
 
-function parsePartitionOffset(projectDir, matcher) {
-  const csvPath = path.join(projectDir, 'partitions.csv');
+function getCustomPartitionCsvPath(projectDir, iniContent, envName) {
+  if (!iniContent) return null;
+  const lines = iniContent.split(/\r?\n/);
+  let inTarget = false;
+  const secName = `env:${envName}`;
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      const section = trimmed.slice(1, -1);
+      inTarget = (section === secName || section === 'env');
+      continue;
+    }
+    if (inTarget && trimmed.startsWith('board_build.partitions')) {
+      const parts = trimmed.split('=');
+      if (parts.length > 1) {
+        const val = parts[1].trim();
+        const csvPath = path.join(projectDir, val);
+        if (fs.existsSync(csvPath)) return csvPath;
+      }
+    }
+  }
+  return null;
+}
+
+function parsePartitionOffset(projectDir, matcher, iniContent, envName) {
+  let csvPath = getCustomPartitionCsvPath(projectDir, iniContent, envName);
+  if (!csvPath) {
+    csvPath = path.join(projectDir, 'partitions.csv');
+  }
   if (!fs.existsSync(csvPath)) return null;
   for (const line of fs.readFileSync(csvPath, 'utf8').split(/\r?\n/)) {
     const t = line.trim();
@@ -383,21 +512,21 @@ function parsePartitionOffset(projectDir, matcher) {
   return null;
 }
 
-function getAppPartitionOffset(projectDir) {
+function getAppPartitionOffset(projectDir, iniContent, envName) {
   return parsePartitionOffset(projectDir, parts => {
     const type = (parts[1] || '').toLowerCase();
     const subtype = (parts[2] || '').toLowerCase();
     return type === 'app' && (subtype.startsWith('ota_') || subtype === 'factory');
-  }) || '0x10000';
+  }, iniContent, envName) || '0x10000';
 }
 
-function getFilesystemPartitionOffset(projectDir) {
+function getFilesystemPartitionOffset(projectDir, iniContent, envName) {
   return parsePartitionOffset(projectDir, parts => {
     const name = (parts[0] || '').toLowerCase();
     const subtype = (parts[2] || '').toLowerCase();
     return name.includes('spiffs') || name.includes('littlefs') || name.includes('fat')
       || subtype === 'spiffs' || subtype === 'fat' || subtype === 'littlefs';
-  });
+  }, iniContent, envName);
 }
 
 function spawnEsptoolFlash(resolved, chip, port, offset, binPath, onClose) {
@@ -436,13 +565,13 @@ function runQuickFlash(projectDir, env, port, wasMonitoring) {
   const resolved = resolveEsptool();
   const iniPath = path.join(projectDir, 'platformio.ini');
   const iniContent = fs.existsSync(iniPath) ? fs.readFileSync(iniPath, 'utf8') : '';
-  const chip = detectChipFromIni(iniContent);
-  const appOffset = getAppPartitionOffset(projectDir);
+  const chip = detectChipFromEnv(iniContent, projectDir, env);
+  const appOffset = getAppPartitionOffset(projectDir, iniContent, env);
   const binPath = path.join(projectDir, '.pio', 'build', env, 'firmware.bin');
   const needFs = envNeedsUploadFs(projectDir, env);
 
   if (!resolved || !fs.existsSync(binPath)) {
-    broadcast({ type: 'log', stream: 'build', text: '[System] No firmware.bin — falling back to pio upload...\n' });
+    broadcast({ type: 'log', stream: 'build', text: `[System] No firmware.bin for env "${env}" — falling back to pio upload...\n` });
     const targets = ['upload'];
     if (needFs) targets.push('uploadfs');
     runPioTargets(projectDir, env, port, targets, wasMonitoring);
@@ -452,7 +581,7 @@ function runQuickFlash(projectDir, env, port, wasMonitoring) {
   broadcast({
     type: 'log',
     stream: 'build',
-    text: `[System] Quick flash firmware${needFs ? ' + LittleFS (data/)' : ''}...\n\n`
+    text: `[System] Quick flash firmware (${chip}, env: ${env})${needFs ? ' + LittleFS (data/)' : ''}...\n\n`
   });
 
   spawnEsptoolFlash(resolved, chip, port, appOffset, binPath, (fwCode) => {
@@ -473,8 +602,12 @@ function runQuickFlash(projectDir, env, port, wasMonitoring) {
         return;
       }
 
-      const fsBin = path.join(projectDir, '.pio', 'build', env, 'littlefs.bin');
-      const fsOffset = getFilesystemPartitionOffset(projectDir);
+      let fsBin = path.join(projectDir, '.pio', 'build', env, 'littlefs.bin');
+      if (!fs.existsSync(fsBin)) {
+        const spiffsBin = path.join(projectDir, '.pio', 'build', env, 'spiffs.bin');
+        if (fs.existsSync(spiffsBin)) fsBin = spiffsBin;
+      }
+      const fsOffset = getFilesystemPartitionOffset(projectDir, iniContent, env);
 
       if (fs.existsSync(fsBin) && fsOffset) {
         broadcast({ type: 'log', stream: 'build', text: `[System] Flashing LittleFS @ ${fsOffset}...\n` });

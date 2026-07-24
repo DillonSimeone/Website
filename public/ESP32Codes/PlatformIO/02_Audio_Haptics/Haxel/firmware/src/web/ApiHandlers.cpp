@@ -172,7 +172,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
     // JsonVariant and is responsible only for the response.
 
     auto* stateJson = new AsyncCallbackJsonWebHandler("/json/state",
-        [engine](AsyncWebServerRequest* req, JsonVariant& json) {
+        [engine, config](AsyncWebServerRequest* req, JsonVariant& json) {
             Serial.printf("[CTRL] HTTP %s %s from %s\n",
                           req->methodToString(), req->url().c_str(),
                           req->client() ? req->client()->remoteIP().toString().c_str() : "?");

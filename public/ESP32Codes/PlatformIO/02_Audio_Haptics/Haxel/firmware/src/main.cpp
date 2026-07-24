@@ -311,12 +311,12 @@ void setup() {
                 boot.binPatterns[i][sizeof(boot.binPatterns[i]) - 1] = '\0';
             }
             core::IPattern* p = core::PatternRegistry::instance().find(rt.patternId);
-            if (!p) p = core::PatternRegistry::instance().find("Breath");
+            if (!p) p = core::PatternRegistry::instance().find("Heartbeat");
             if (!p) p = core::PatternRegistry::instance().at(0);
             boot.pattern = p;
             log_i("Restored runtime: %s on=%d", p ? p->id() : "(none)", (int)boot.on);
         } else {
-            core::IPattern* p = core::PatternRegistry::instance().find("Breath");
+            core::IPattern* p = core::PatternRegistry::instance().find("Heartbeat");
             if (!p) p = core::PatternRegistry::instance().at(0);
             boot.pattern = p;
             log_i("Boot autoplay: %s", p ? p->id() : "(none)");
@@ -345,14 +345,15 @@ void setup() {
     }
 #endif
 
-    // Onboard status LED (C3/C6 FireBeetle: GPIO8), LEDC channel 5.
-#if defined(HAXEL_TARGET_C3) || defined(HAXEL_TARGET_C6)
+    // Onboard status LED (C3/C6 FireBeetle: GPIO8, Classic/S3: GPIO2/GPIO8), LEDC channel 5.
 #ifdef HAXEL_DEFAULT_STATUS_LED_PIN
     gStatusLed.begin(HAXEL_DEFAULT_STATUS_LED_PIN, 5);
-#else
+#elif defined(HAXEL_TARGET_C3) || defined(HAXEL_TARGET_C6)
     gStatusLed.begin(8, 5);
+#else
+    gStatusLed.begin(2, 5);
 #endif
-#endif
+    gStatusLed.attachEngine(&gEngine);
 
 #ifdef HAXEL_BLU
     gBle.begin(&gEngine, &gConfig);

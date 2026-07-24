@@ -1,13 +1,49 @@
 #include "DisplayManager.h"
 
 DisplayManager::DisplayManager()
-    : m_display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET) {}
+    : m_wire0(p0, p1),
+      m_display(SCREEN_WIDTH, SCREEN_HEIGHT, &m_wire0, OLED_RESET),
+      m_initialized(false),
+      m_detectedAddress(0) {}
+
+void DisplayManager::scanI2CBus() {
+    Serial.println(F("\n--- Scanning I2C Bus on Wire0 (SDA=GP0, SCL=GP1) ---"));
+    uint8_t count = 0;
+    for (uint8_t address = 1; address < 127; address++) {
+        m_wire0.beginTransmission(address);
+        uint8_t error = m_wire0.endTransmission();
+        if (error == 0) {
+            Serial.print(F("[I2C FOUND] Device detected at 0x"));
+            if (address < 16) Serial.print(F("0"));
+            Serial.println(address, HEX);
+            count++;
+        }
+    }
+    if (count == 0) {
+        Serial.println(F("[I2C WARNING] No devices found on Wire0 (GP0/GP1)."));
+    }
+    Serial.println(F("---------------------------------------------------\n"));
+}
 
 bool DisplayManager::begin() {
-    // Initialize Wire I2C (GPIO 4 SDA, GPIO 5 SCL are standard RP2040 I2C0 pins)
-    Wire.begin();
+    // Initialize MbedI2C on GPIO 0 (SDA) and GPIO 1 (SCL)
+    m_wire0.begin();
 
-    if (!m_display.begin(SSD1306_SWITCHCAPVCC, I2C_ADDRESS)) {
+    // Scan bus and report detected addresses to Serial
+    scanI2CBus();
+
+    // Try primary address 0x3C
+    if (m_display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+        m_initialized = true;
+        m_detectedAddress = 0x3C;
+    } 
+    // Fallback to secondary address 0x3D
+    else if (m_display.begin(SSD1306_SWITCHCAPVCC, 0x3D)) {
+        m_initialized = true;
+        m_detectedAddress = 0x3D;
+    } else {
+        m_initialized = false;
+        m_detectedAddress = 0;
         return false;
     }
 
@@ -15,13 +51,15 @@ bool DisplayManager::begin() {
     m_display.setTextColor(SSD1306_WHITE);
     m_display.setTextSize(1);
     m_display.setCursor(0, 0);
-    m_display.println("ULTRASONIC HAPTIC");
-    m_display.println("Initializing...");
+    m_display.println(F("ULTRASONIC HAPTIC"));
+    m_display.println(F("Initializing..."));
     m_display.display();
     return true;
 }
 
 void DisplayManager::render(float carrierKHz, float modHz, float drivePercent) {
+    if (!m_initialized) return;
+
     m_display.clearDisplay();
 
     // Line 1: Header
