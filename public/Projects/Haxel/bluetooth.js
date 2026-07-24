@@ -1014,7 +1014,10 @@ function setDeviceControlValue(id, value) {
 function applyDeviceConfig(cfg) {
     if (!cfg) return;
     const ssidEl = document.getElementById("deviceSsid");
-    if (ssidEl && cfg.apSsid) ssidEl.value = cfg.apSsid;
+    if (ssidEl && cfg.apSsid) {
+        // Show clean user suffix in text input (e.g., "Shrek" instead of "Haxel-Shrek")
+        ssidEl.value = cfg.apSsid.replace(/^Haxel-?/i, "");
+    }
 
     if (cfg.driver) {
         const kindToName = {
@@ -1125,6 +1128,43 @@ function handleNotification(event) {
             finishBleHydrationIfReady();
             return;
         }
+
+function drawSpectrum(mags) {
+    if (!specCanvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = specCanvas.width / dpr;
+    const cssH = specCanvas.height / dpr;
+
+    specCtx.fillStyle = "#f4ebd0"; // Cream background
+    specCtx.fillRect(0, 0, cssW, cssH);
+    const barWidth = (cssW / 32);
+    const audioGainInput = document.getElementById("audioGain");
+    const gain = parseFloat(audioGainInput ? audioGainInput.value : 15) / 10;
+    
+    specCtx.strokeStyle = "#111111";
+    specCtx.lineWidth = 1.5;
+
+    for (let i = 0; i < 32; i++) {
+        const val = Math.min(1.0, (mags ? mags[i] : 0) * (gain * 0.25));
+        const barHeight = val * (cssH - 10);
+        
+        const hue = (i / 31) * 280;
+        specCtx.fillStyle = `hsl(${hue}, 85%, 45%)`;
+        specCtx.fillRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
+        specCtx.strokeRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
+    }
+
+    // Draw Dividers
+    dividers.forEach((divVal) => {
+        const x = divVal * barWidth;
+        specCtx.strokeStyle = "#e23b24"; // Bauhaus Red
+        specCtx.lineWidth = 2.5;
+        specCtx.beginPath();
+        specCtx.moveTo(x, 0);
+        specCtx.lineTo(x, cssH);
+        specCtx.stroke();
+    });
+}
         if (m.type === 'state' && m.data) {
             const s = m.data;
             if (s.on !== undefined) {
@@ -1229,6 +1269,13 @@ async function sendConfigUpdate(configPatch) {
         throw new Error("Device settings have not finished loading");
     }
     try {
+        if (configPatch && configPatch.apSsid) {
+            let name = configPatch.apSsid.trim();
+            if (!name.startsWith("Haxel")) {
+                name = "Haxel-" + name;
+            }
+            configPatch.apSsid = name;
+        }
         await bleWriteJson({ type: "config", patch: configPatch });
         addSerialLog(`[BLE] Sent config update to ESP32: ${JSON.stringify(configPatch)}`);
     } catch (err) {
@@ -1482,6 +1529,8 @@ function animate() {
         } else {
             amp = finalAudioAmp;
         }
+
+        drawSpectrum(mags);
     }
     
     smoothedAmp += (amp - smoothedAmp) * 0.22;

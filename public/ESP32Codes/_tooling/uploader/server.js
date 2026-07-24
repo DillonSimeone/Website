@@ -394,13 +394,19 @@ function resolveEsptool() {
   return null;
 }
 
-function buildEsptoolFlashArgs(resolved, chip, port, offset, binPath) {
+function buildEsptoolFlashArgs(resolved, chip, port, flashTargets) {
   const args = [...resolved.baseArgs];
   args.push('--chip', chip);
   if (port) args.push('--port', port);
   args.push('--baud', '921600');
-  // esptool v5: write-flash subcommand; --no-progress is per-subcommand, not global
-  args.push('write-flash', '--no-progress', offset, binPath);
+  args.push('write-flash', '--no-progress');
+  if (Array.isArray(flashTargets)) {
+    for (const item of flashTargets) {
+      args.push(item.offset, item.path);
+    }
+  } else {
+    args.push(arguments[3], arguments[4]);
+  }
   return args;
 }
 
@@ -529,8 +535,8 @@ function getFilesystemPartitionOffset(projectDir, iniContent, envName) {
   }, iniContent, envName);
 }
 
-function spawnEsptoolFlash(resolved, chip, port, offset, binPath, onClose) {
-  const args = buildEsptoolFlashArgs(resolved, chip, port, offset, binPath);
+function spawnEsptoolFlash(resolved, chip, port, flashTargets, onClose) {
+  const args = buildEsptoolFlashArgs(resolved, chip, port, flashTargets);
   broadcast({
     type: 'log',
     stream: 'build',
@@ -584,7 +590,18 @@ function runQuickFlash(projectDir, env, port, wasMonitoring) {
     text: `[System] Quick flash firmware (${chip}, env: ${env})${needFs ? ' + LittleFS (data/)' : ''}...\n\n`
   });
 
-  spawnEsptoolFlash(resolved, chip, port, appOffset, binPath, (fwCode) => {
+  const buildDir = path.join(projectDir, '.pio', 'build', env);
+  const flashTargets = [];
+
+  const bootloaderBin = path.join(buildDir, 'bootloader.bin');
+  if (fs.existsSync(bootloaderBin)) flashTargets.push({ offset: '0x0000', path: bootloaderBin });
+
+  const partitionsBin = path.join(buildDir, 'partitions.bin');
+  if (fs.existsSync(partitionsBin)) flashTargets.push({ offset: '0x8000', path: partitionsBin });
+
+  flashTargets.push({ offset: appOffset, path: binPath });
+
+  spawnEsptoolFlash(resolved, chip, port, flashTargets, (fwCode) => {
     if (fwCode !== 0) {
       finishBuildJob(wasMonitoring, false, `\n[System] Quick flash FAILED at firmware (exit ${fwCode}).\n`);
       return;
@@ -611,7 +628,7 @@ function runQuickFlash(projectDir, env, port, wasMonitoring) {
 
       if (fs.existsSync(fsBin) && fsOffset) {
         broadcast({ type: 'log', stream: 'build', text: `[System] Flashing LittleFS @ ${fsOffset}...\n` });
-        spawnEsptoolFlash(resolved, chip, port, fsOffset, fsBin, (fsCode) => {
+        spawnEsptoolFlash(resolved, chip, port, [{ offset: fsOffset, path: fsBin }], (fsCode) => {
           if (fsCode !== 0) {
             finishBuildJob(wasMonitoring, false, `\n[System] LittleFS flash FAILED (exit ${fsCode}).\n`);
             return;
