@@ -150,7 +150,7 @@ header {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 4px;
+  padding: 4px 2px 5px 2px;
   background: #ffffff;
   box-sizing: border-box;
   transition: border-color 0.2s;
@@ -161,11 +161,12 @@ header {
 }
 
 .qr-canvas-container {
-  width: 84px;
-  height: 84px;
+  width: 98px;
+  height: 98px;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 1px;
 }
 
 .qr-canvas-container img, .qr-canvas-container canvas {
@@ -175,19 +176,23 @@ header {
 
 .tag-title {
   font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  margin: 3px 0 2px 0;
+  font-weight: 800;
+  font-size: 13px;
+  margin: 2px 0 1px 0;
   text-align: center;
   color: #000000;
   letter-spacing: 0.5px;
+  width: 90%;
+  border-bottom: 1.5px solid #000000;
+  padding-bottom: 2px;
 }
 
 .tag-instructions {
-  font-size: 6.5px;
-  line-height: 1.15;
+  font-size: 8.5px;
+  line-height: 1.12;
   text-align: center;
-  color: #111111;
-  font-weight: 600;
+  color: #000000;
+  font-weight: 800;
   padding: 0 2px;
+  width: 100%;
 }
