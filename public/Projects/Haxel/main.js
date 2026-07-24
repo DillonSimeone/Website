@@ -1965,7 +1965,11 @@ async function connectBLE() {
     
     try {
         bleDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ namePrefix: 'Haxel' }],
+            filters: [
+                { services: [HAXEL_SERVICE_UUID] },
+                { namePrefix: 'Haxel' },
+                { namePrefix: 'haxel' }
+            ],
             optionalServices: [HAXEL_SERVICE_UUID]
         });
         
