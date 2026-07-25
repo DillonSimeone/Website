@@ -25,8 +25,8 @@ Slide 5: Software – MicroPython vs PlatformIO
 - Mention the uploader lives in the ESP32Codes/_tooling/uploader directory.
 
 Slide 6: GestoLumina & UMD Journey
-- Use the three photos on the right as visual anchors while you walk the timeline.
-- GeLu research to masks to datagloves. Keep it quick.
+- Use the four photo cards below as visual anchors: Gelu 1, Gelu 2, Gelu 3, and Haptic Gloves.
+- Walk through the timeline from research to datagloves, concluding with the pocketables solution at the bottom.
 
 Slide 7: Mechanoreceptors
 - All three frequency waves animate simultaneously. No clicking required.
@@ -44,46 +44,45 @@ Slide 10: How Vibration Motors Work
 - Cross-section animation: coil, magnets, offset mass.
 - Plain language: wire around a shaft, magnetic fields push it. That oscillation is vibration.
 
-Slide 11: Advanced Modalities
+Slide 11: How Motors Are Made
+- Brushed vs brushless (BLDC) motors. Commutator wear vs electronic switching.
+- Demagnetization: Curie threshold details. Continuous duty thermal risks in wearables.
+
+Slide 12: Advanced Modalities
 - Full-size table with product photos restored.
 - Bass shaker AC requirement, piezo voltage, Peltier current, fan noise.
 
-Slide 12: MOSFETs & H-Bridges
+Slide 13: MOSFETs & H-Bridges
 - PWM ribbon follows live audio envelope.
 - GPIO to MOSFET to motor power path.
 
-Slide 13: USB-C PD Decoy
+Slide 14: USB-C PD Decoy
 - Under one dollar. Unlocks 9 to 20V for heavy actuators.
 
-Slide 14: DSP FFT & Frequency Mapping
+Slide 15: DSP FFT & Frequency Mapping
 - Top: live mic bins. Bottom: floating ERM/LRA swarm colored by bass/mid/treble.
 - Red motors react to bass, yellow to mid, blue to treble.
-
-Slide 15: Live Fleet Command
-- CONNECTION (read the box on slide):
-  - Fleet master uses WiFi SoftAP at 192.168.4.1, NOT Bluetooth.
-  - Laptop runs presentation from localhost via present.bat.
-  - Fleet API: HTTP POST /json/fleet (proxied). Telemetry: WebSocket ws://192.168.4.1/ws.
-  - Followers use ESP-NOW from the leader. Bluetooth is only for single-device bluetooth.html.
-- Workshop pinout on slide: GPIO 6 motor PWM, GPIO 5 LEDs, I2S mic pins via portal.
-- Flash c3WIFILED_MASTER build before the show. Test E-stop first.
 
 Slide 16: Audio-Reactive Sensing: MAX4466 & Telemetry
 - Demonstrate the real-time tactile telemetry stream (toggle between Classic, Symmetric, Waterfall, and Orbit modes).
 - Emphasize MAX4466 simplicity for workshops: zero protocol overhead compared to I2S, 3 wires only (3.3V, GND, GPIO 6).
 - Walk through device registry provisioning: select Analog Mic, assign Pin 6, save, and telemetry streams immediately.
 
-Slide 17: Immersive Accessibility & UMD
-- Jazz Prism / audio reactive masks photo on the right.
+Slide 17: Haxel Live Coding Cookbook
+- Show the four live coding examples: LFO phase, SVF filter, Attack/Release envelope follower, and Natural decay.
+- Demonstrate real-time compilation and visual canvas responses.
 
-Slide 18: Existing Wearables
-- Three cards with Prezi crop images: shoes, vest, Buttkicker.
-- Form factor and receptor matching matter more than raw power.
+Slide 18: Existing Wearables: Lessons Learned
+- Woojer Vest (top): dynamic audio-tactile vest but limited frequency response.
+- Haptic Shoes (bottom-left): expensive, hard to size and wash.
+- Buttkicker (bottom-right): powerful, stationary, neighbor-unfriendly.
 
-Slide 19: Safe Design & Thermals
-- HAVS, strobing, eye safety, materials.
-- Thermal section: motors heat faster than speakers. Duty limits, airflow, heatsinks.
+Slide 19: Safe Wearable Design & Thermal Reality
+- HAVS, photosensitivity, eye safety, latex/nickel allergies.
+- Emphasize thermals: closed wearables heat up fast, demagnetize, or burn skin. Duty cycles and design limits.
 
 Slide 20: Petting Zoo Stations & Q&A
-- Station walkthrough. Smartphone Haptics QR for Android.
-- Thank Crowd Supply / Teardown.
+- Thank audience for attending the petting zoo workshop.
+- Reference the three QR codes displayed: HAXEL Portal (left), Venmo Support (center), and Smartphone Haptics (right).
+- Remind people that Venmo verification needs the last 4 digits of the phone number: 7082.
+- Direct audience to step up, test the stations, scan codes, and play with Smartphone haptics.

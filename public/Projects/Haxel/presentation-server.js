@@ -112,6 +112,4 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
     console.log(`Haxel presentation server: http://localhost:${PORT}/presentation.html`);
-    console.log(`Fleet proxy → http://${HUB}/json/fleet`);
-    console.log('Join laptop WiFi to leader Haxel SoftAP before fleet commands.');
 });

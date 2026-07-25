@@ -176,27 +176,41 @@
         </div>
 
         <!-- 6: GestoLumina Journey -->
-        <div class="slide slide-layout-split" data-slide-id="gestolumina" data-title="GestoLumina & UMD Journey">
-            <div class="split-left">
-                <h2>GestoLumina &amp; UMD Journey</h2>
-                <ul class="bullet-list">
-                    <li><strong>GeLu 1:</strong> Felt Sound research to wireless ESP32-S3 and TensorFlow Lite gesture
-                        ML.</li>
-                    <li><strong>GeLu 2 to 3:</strong> Iterative wearables, custom PCBs, and Bambu Lab rapid enclosures.</li>
-                    <li><strong>Haptic Gloves:</strong> Direct tactile feedback integrated into the knuckles.</li>
-                    <li><strong>GeLu 3+ Insight:</strong> Realized wearables are deeply flawed due to diverse body sizes.</li>
-                </ul>
-                <div class="solution-banner">
-                    <div class="solution-title">SOLUTION: POCKETABLES</div>
-                    <div class="solution-tagline">No shirt, no shoes, no service!</div>
-                </div>
+        <div class="slide slide-layout-standard" data-slide-id="gestolumina" data-title="GestoLumina & UMD Journey">
+            <h2>GestoLumina &amp; UMD Journey</h2>
+            <div class="journey-grid">
+                <figure class="journey-card">
+                    <img src="./images/GELU1.png" alt="GELU 1">
+                    <figcaption>
+                        <strong>GELU 1</strong>
+                        Felt Sound research to wireless ESP32-S3 and TensorFlow Lite gesture ML.
+                    </figcaption>
+                </figure>
+                <figure class="journey-card">
+                    <img src="./images/Gelu2.jpg" alt="GELU 2">
+                    <figcaption>
+                        <strong>GELU 2</strong>
+                        Iterative wearables, custom PCBs, and Bambu Lab rapid enclosures.
+                    </figcaption>
+                </figure>
+                <figure class="journey-card">
+                    <img src="./images/GeLu3.jpg" alt="GELU 3">
+                    <figcaption>
+                        <strong>GELU 3</strong>
+                        Scaling, commercialization, and recognizing wearable sizing challenges.
+                    </figcaption>
+                </figure>
+                <figure class="journey-card">
+                    <img src="./images/hapticGloves.jpg" alt="Haptic Gloves">
+                    <figcaption>
+                        <strong>Haptic Gloves</strong>
+                        Direct tactile feedback integrated into the knuckles.
+                    </figcaption>
+                </figure>
             </div>
-            <div class="split-right gestolumina-img-panel">
-                <div class="img-grid-3">
-                    <img src="./PreziSlides/08-gestolumina-the-beginning.png" alt="GestoLumina origins">
-                    <img src="./PreziSlides/09-gelu-2-iterative-improvements.png" alt="GeLu 2 iterative improvements">
-                    <img src="./PreziSlides/14-synchroglove-datagloves.png" alt="Haptic gloves">
-                </div>
+            <div class="solution-banner">
+                <div class="solution-title">SOLUTION: POCKETABLES</div>
+                <div class="solution-tagline">No shirt, no shoes, no service!</div>
             </div>
         </div>
 
@@ -445,7 +459,7 @@
                 <h2>Digital Signal Processing: FFT &amp; Smoothing</h2>
                 <div class="fft-stack">
                     <div class="graphic-container"
-                        style="background:white;padding:16px;border:var(--border-width) solid var(--black);box-shadow:8px 8px 0 var(--black);margin:0;">
+                        style="background:white;padding:16px;border:var(--border-width) solid var(--black);box-shadow:8px 8px 0 var(--black);margin:0 auto;">
                         <div id="micStatusBtn"
                             style="background:var(--bauhaus-red);color:white;border:2px solid var(--black);font-family:var(--font-mono);width:100%;margin-bottom:10px;padding:8px;font-size:12px;font-weight:bold;text-align:center;text-transform:uppercase;">
                             CLICK OR PRESS ARROW TO ENABLE MIC</div>
@@ -658,54 +672,36 @@ noise(t * 20) * envelope</code></pre>
             </div>
         </div>
 
-        <!-- 18: Immersive Accessibility -->
-        <div class="slide slide-layout-split" data-slide-id="immersive" data-title="Immersive Accessibility & UMD">
-            <div class="split-left">
-                <h2>Immersive Accessibility &amp; UMD</h2>
-                <ul class="bullet-list">
-                    <li>Universal Music Design builds shared performance spaces for hearing and Deaf artists.</li>
-                    <li>Sensory substitution: acoustic performance becomes vibro-tactile and visual signals.</li>
-                    <li>Audio reactive masks: real-time light pulses and frequency-mapped haptic straps.</li>
-                </ul>
-            </div>
-            <div class="split-right" style="background:var(--white);padding:16px;">
-                <img src="./PreziSlides/13-audio-reactive-masks.png" alt="Audio reactive masks" class="prezi-ref-img">
-            </div>
-        </div>
-
-        <!-- 19: Wearables Lessons -->
+        <!-- 18: Wearables Lessons -->
         <div class="slide slide-layout-standard" data-slide-id="wearables"
             data-title="Existing Wearables: Lessons Learned">
             <h2>Existing Wearables: Success vs. Failure</h2>
             <div class="wearable-grid">
-                <div class="wearable-card">
-                    <img src="./PreziSlides/21-existing-wearables.png" alt="Haptic shoes"
-                        style="object-position:left top;">
-                    <div class="wearable-body">
-                        <h4>Haptic Shoes</h4>
-                        Expensive, not easily shared, not easily washed.
-                    </div>
-                </div>
-                <div class="wearable-card">
-                    <img src="./PreziSlides/21-existing-wearables.png" alt="Woojer vest"
-                        style="object-position:center center;">
+                <div class="wearable-card woojer-card">
+                    <img src="https://www.woojer.com/cdn/shop/files/WJRV4BHNV-101-B.png?v=1758094506&width=600" alt="Woojer Vest">
                     <div class="wearable-body">
                         <h4>Woojer Vest</h4>
-                        Plug and play like headphones, but limited to 0 to 250 Hz, peaking near 42 Hz.
+                        <p>Plug and play like headphones, but limited to 0 to 250 Hz, peaking near 42 Hz.</p>
                     </div>
                 </div>
-                <div class="wearable-card">
-                    <img src="./PreziSlides/21-existing-wearables.png" alt="Buttkicker"
-                        style="object-position:right bottom;">
+                <div class="wearable-card shoes-card">
+                    <img src="https://i.ytimg.com/vi/-g9KcUALaPU/maxresdefault.jpg" alt="Haptic Shoes">
+                    <div class="wearable-body">
+                        <h4>Haptic Shoes</h4>
+                        <p>Expensive, not easily shared, not easily washed.</p>
+                    </div>
+                </div>
+                <div class="wearable-card buttkicker-card">
+                    <img src="https://thebuttkicker.com/cdn/shop/files/125355779_208825717350698_1609144877283606204_n_2048x2048.jpg?v=1635536152" alt="Buttkicker">
                     <div class="wearable-body">
                         <h4>Buttkicker</h4>
-                        Powerful but stationary. Works with any chair. Your downstairs neighbor will hate you.
+                        <p>Powerful but stationary. Works with any chair. Your downstairs neighbor will hate you.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 20: Safe Wearable Design -->
+        <!-- 19: Safe Wearable Design -->
         <div class="slide slide-layout-split" data-slide-id="safety" data-title="Safe Wearable Design">
             <div class="split-left">
                 <h2>Safe Wearable Design &amp; Thermal Reality</h2>
@@ -722,33 +718,34 @@ noise(t * 20) * envelope</code></pre>
                         timers, physical guards, and fleet E-stop before every demo.</p>
                 </div>
                 <div class="callout-box fill-panel" style="background:var(--bauhaus-yellow);">
-                    <p><strong>Thermal reality:</strong> motors heat up faster than speakers. A small ERM or LRA in a
-                        closed wearable can hit painful temperatures in minutes. Speakers shed heat through the cone and
-                        enclosure. Motors need airflow, duty-cycle limits, or heatsinks to go further without burning
-                        skin or demagnetizing the coil.</p>
+                    <p><strong>Thermal Reality:</strong> Motors heat up fast. Closed wearables can demagnetize or burn skin in minutes. Always enforce duty limits, active cooling, or heatsinks.</p>
                 </div>
             </div>
         </div>
 
-        <!-- 21: Petting Zoo Stations & Q&A -->
-        <div class="slide slide-layout-split" data-slide-id="qa" data-title="Petting Zoo Stations & Q&A">
-            <div class="split-left">
-                <h2>Petting Zoo Stations &amp; Q&amp;A</h2>
-                <ul class="bullet-list">
-                    <li>Walk the DreamTENT stations. Each has a unique actuator profile and QR code.</li>
-                    <li>Scan QR codes for schematics, source code, and BOMs.</li>
-                    <li>Try the Smartphone Haptics miniproject (Android Chrome, Web Vibration API).</li>
-                    <li>GitHub: DillonSimeone/Website, Haxel workshop files.</li>
-                </ul>
-            </div>
-            <div class="split-right qa-right">
+        <!-- 20: Petting Zoo Stations & Q&A -->
+        <div class="slide slide-layout-standard" data-slide-id="qa" data-title="Petting Zoo Stations & Q&A">
+            <h2>Petting Zoo Stations &amp; Q&amp;A</h2>
+            <div class="qa-grid">
                 <div class="callout-box fill-panel qr-panel">
-                    <p class="qr-label">Smartphone Haptics (Android)</p>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=https%3A%2F%2Fdillonsimeone.com%2FMiniProjects%2FsmartphoneHaptics%2F"
-                        alt="Smartphone Haptics QR" class="qr-image">
+                    <p class="qr-label">HAXEL</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fdillonsimeone.com%2FProjects%2FHaxel%2Findex.html&margin=1"
+                        alt="HAXEL Portal QR" class="qr-image">
+                    <p class="qr-sub">dillonsimeone.com/Projects/Haxel/index.html</p>
                 </div>
-                <p class="thank-you">Thank You!</p>
+                <div class="callout-box fill-panel qr-panel venmo-panel">
+                    <p class="qr-label">Support Dillon (Venmo)</p>
+                    <img src="./images/venmo_qrcode.svg" alt="Venmo QR Code" class="qr-image">
+                    <p class="qr-sub">Verification (last 4 digits): <strong>7082</strong></p>
+                </div>
+                <div class="callout-box fill-panel qr-panel">
+                    <p class="qr-label">Smartphone Haptics</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fdillonsimeone.com%2FMiniProjects%2FsmartphoneHaptics%2Findex.html&margin=1"
+                        alt="Smartphone Haptics QR" class="qr-image">
+                    <p class="qr-sub">dillonsimeone.com/MiniProjects/smartphoneHaptics/index.html</p>
+                </div>
             </div>
+            <p class="thank-you">Thank You!</p>
         </div>
 
     </div>

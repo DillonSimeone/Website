@@ -1,72 +1,38 @@
 # CH32V003 Thermal Haptics
 
-An experimental dry-wetness illusion: music produces synchronized vibration
-and cooling so a dry touch surface can feel wet. A MAX4466 detects beats, a
-coin vibration motor supplies tactile transients, and a Peltier supplies the
-slow thermal cue.
-
-## Important limitation
-
-This prototype has **no surface or hot-side temperature sensor**. Firmware
-timers cannot detect a stalled fan, detached heatsink, hot room, blocked
-airflow, or unexpectedly cold touch plate. The limits in this code reduce
-risk; they do not make unsupervised skin contact safe.
-
-- Use only as a supervised, short-touch prototype.
-- Never strap, clamp, or hold a body part against the cold plate.
-- Stop on pain, numbness, whitening skin, or persistent tingling.
-- Test the assembly before each session with an external thermometer if one is
-  available. Do not rely on the AHT20/BMP280: it measures nearby air, not the
-  Peltier junction or touch plate.
-- Keep water/condensation away from exposed electronics and mains-powered
-  connections. A wet finger also transfers heat faster, increasing cold-injury
-  risk.
-
-The fan must run whenever the 12 V supply is on. Do not place the fan under
-software control.
+An experimental thermal response project: ambient sound/music volume sampled by a MAX4466 directly controls the cooling PWM power of a TEC1-12706 Peltier element via high-current MOSFET module.
 
 ## Architecture
 
 ```text
-MAX4466 OUT -> PC4 ADC -> adaptive onset detector -> BPM estimate
-                                      |                |
-                                      v                v
-                               vibration pulse    guarded TEC duty
-                                      |                |
-                               mini L298N          MOSFET switch
-                                      |                |
-                                coin motor         TEC1-12706
+MAX4466 OUT -> PC4 ADC (Ch 2) -> Mean Absolute Deviation -> Direct Duty Mapping -> PD4 TIM2_CH1 PWM -> MOSFET Switch -> TEC1-12706
 ```
-
-The mini L298N drives only the small vibration motor. It cannot safely drive a
-TEC1-12706. The Peltier uses the separate high-current MOSFET switch.
 
 ## Pin map
 
+> 🎨 **[View HTML Visual Pinout & Hardware Map](pinout.html)**
+
 | CH32V003 pin | Connection | Function |
 |---|---|---|
-| PC4 | MAX4466 OUT | ADC channel 2 |
-| PD2 | MOSFET module PWM/trigger | TIM1_CH1, Peltier power |
-| PD3 | Mini L298N channel A IN1 | TIM2_CH2, vibration PWM |
-| PC3 | Mini L298N channel A IN2 | Held LOW |
-| PD1 | WCH-LinkE SWIO | Programming only |
-| V | MAX4466 VCC / driver logic as appropriate | Board USB rail |
-| G | All low-voltage grounds | Common reference |
+| PC4 | MAX4466 OUT | ADC Channel 2 (Audio input) |
+| PD4 | MOSFET Module PWM/Trigger | TIM2_CH1 (Peltier cooling PWM) |
+| PD1 | WCH-LinkE SWIO | Programming / Debug only |
+| V | MAX4466 VCC / Logic Power | Board USB / 3.3V-5V rail |
+| G | All grounds | Shared common GND reference |
 
-PD2 and PD3 are logic signals only. They never carry motor or Peltier current.
+PD4 is a 3.3V logic signal only. It drives the MOSFET gate trigger and never carries Peltier load current directly.
 
 ## Power wiring
 
 ### Peltier path
 
-1. Connect the 12 V/4 A supply to the MOSFET module's power input, observing
-   its printed `+` and `-` labels.
-2. Connect the TEC1-12706 to the module's switched output.
-3. Connect PD2 to the module's PWM/trigger input.
-4. Connect the module signal ground to CH32V003 ground.
-5. Connect the 12 V fan directly across the supply, before the MOSFET switch.
-6. Mount the fan and a substantial heatsink to the Peltier hot side before
-   enabling power. Use thermal paste and firm, even clamping pressure.
+1. Connect the 12 V / 4 A supply to the MOSFET module's power input (`+` and `-`).
+2. Connect the TEC1-12706 Peltier to the module's switched output terminals.
+3. Connect **PD4** to the module's PWM/trigger input.
+4. Connect the MOSFET module signal ground to the CH32V003 GND rail.
+5. Connect the 12 V cooling fan directly across the 12 V power supply (always-on).
+6. Mount the heatsink + fan assembly to the Peltier hot side with thermal paste before powering on.
+
 
 MOSFET modules vary. Follow the labels printed on the exact board; do not infer
 input/output screw terminals from product photos.
