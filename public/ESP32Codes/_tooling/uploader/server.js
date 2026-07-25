@@ -35,13 +35,25 @@ let monitorConfig = {
   baud: 115200
 };
 
-// Helper: Find PlatformIO executable path
-function getPioCommand() {
-  // Prepend common Windows user folders to path
-  const homeDir = os.homedir();
+// Resolve PlatformIO core dir once (follow junctions like C:\Users\…\.platformio → F:\.platformio).
+function getPlatformioCoreDir() {
+  const configured = process.env.PLATFORMIO_CORE_DIR || path.join(os.homedir(), '.platformio');
+  try {
+    return fs.realpathSync(configured);
+  } catch {
+    return configured;
+  }
+}
+
+const PLATFORMIO_CORE_DIR = getPlatformioCoreDir();
+
+// Helper: Find PlatformIO executable path (prefer the core-dir venv over pip/global pio).
+function getPioCommand(coreDir) {
   const possiblePaths = [
-    path.join(homeDir, '.platformio/penv/Scripts/pio.exe'),
-    path.join(homeDir, '.platformio/penv/bin/pio'),
+    path.join(coreDir, 'penv/Scripts/pio.exe'),
+    path.join(coreDir, 'penv/bin/pio'),
+    path.join(os.homedir(), '.platformio/penv/Scripts/pio.exe'),
+    path.join(os.homedir(), '.platformio/penv/bin/pio'),
     path.join(os.homedir(), 'AppData/Local/Programs/Python/Python314/Scripts/pio.exe'),
     path.join(os.homedir(), 'AppData/Local/Programs/Python/Python313/Scripts/pio.exe'),
     path.join(os.homedir(), 'AppData/Local/Programs/Python/Python312/Scripts/pio.exe'),
@@ -69,18 +81,51 @@ function getPioCommand() {
   }
 }
 
-const PIO_PATH = getPioCommand();
+const PIO_PATH = getPioCommand(PLATFORMIO_CORE_DIR);
+console.log(`[Uploader Backend] PlatformIO core: ${PLATFORMIO_CORE_DIR}`);
 console.log(`[Uploader Backend] Resolved pio path: ${PIO_PATH}`);
 
 // Windows cp932 consoles crash PlatformIO when esptool prints Unicode progress bars.
 function childEnv() {
+  const pioBinDir = PIO_PATH.includes(path.sep) ? path.dirname(PIO_PATH) : '';
+  const pathPrefix = pioBinDir ? `${pioBinDir}${path.delimiter}` : '';
   return {
     ...process.env,
+    PLATFORMIO_CORE_DIR,
     PYTHONIOENCODING: 'utf-8',
     PYTHONUTF8: '1',
     PYTHONLEGACYWINDOWSSTDIO: 'utf-8',
-    PATH: `${path.dirname(PIO_PATH)}${path.delimiter}${process.env.PATH}`
+    PATH: `${pathPrefix}${process.env.PATH}`
   };
+}
+
+/** Preflight: install platform/framework/toolchain before first build (avoids FRAMEWORK_DIR=None races). */
+function ensureEnvPackages(projectDir, env, onDone) {
+  const args = ['pkg', 'install', '-e', env, '-d', projectDir];
+  broadcast({
+    type: 'log',
+    stream: 'build',
+    text: `[System] Ensuring PlatformIO packages: pio ${args.join(' ')}\n\n`
+  });
+
+  const proc = spawn(PIO_PATH, args, { cwd: projectDir, env: childEnv() });
+  activeProcesses.build = proc;
+  attachBuildOutput(proc);
+
+  proc.on('close', code => {
+    if (code !== 0) {
+      activeProcesses.build = null;
+      broadcast({ type: 'status', stream: 'build', active: false });
+      broadcast({
+        type: 'log',
+        stream: 'build',
+        text: `\n[System] Package install failed (exit ${code}). Check network/disk space and retry.\n`
+      });
+      onDone(false);
+      return;
+    }
+    onDone(true);
+  });
 }
 
 function projectHasLittleFS(projectDir) {
@@ -327,6 +372,13 @@ function resumeMonitor(wasMonitoring) {
 }
 
 function runPioTargets(projectDir, env, port, targets, wasMonitoring) {
+  ensureEnvPackages(projectDir, env, ok => {
+    if (!ok) return;
+    runPioTargetsAfterPackages(projectDir, env, port, targets, wasMonitoring);
+  });
+}
+
+function runPioTargetsAfterPackages(projectDir, env, port, targets, wasMonitoring) {
   let step = 0;
 
   const runNext = () => {
@@ -375,11 +427,10 @@ function runPioTargets(projectDir, env, port, targets, wasMonitoring) {
 
 // Helper: resolve esptool executable (prefer v5 `esptool` over deprecated `esptool.py`)
 function resolveEsptool() {
-  const homeDir = os.homedir();
-  const pioPython = path.join(homeDir, '.platformio/penv/Scripts/python.exe');
+  const pioPython = path.join(PLATFORMIO_CORE_DIR, 'penv/Scripts/python.exe');
   const candidates = [
-    path.join(homeDir, '.platformio/penv/Scripts/esptool.exe'),
-    path.join(homeDir, '.platformio/packages/tool-esptoolpy/esptool.exe'),
+    path.join(PLATFORMIO_CORE_DIR, 'penv/Scripts/esptool.exe'),
+    path.join(PLATFORMIO_CORE_DIR, 'packages/tool-esptoolpy/esptool.exe'),
   ];
   for (const exe of candidates) {
     if (fs.existsSync(exe)) return { cmd: exe, baseArgs: [] };
@@ -387,7 +438,7 @@ function resolveEsptool() {
   if (fs.existsSync(pioPython)) {
     return { cmd: pioPython, baseArgs: ['-m', 'esptool'] };
   }
-  const legacyPy = path.join(homeDir, '.platformio/packages/tool-esptoolpy/esptool.py');
+  const legacyPy = path.join(PLATFORMIO_CORE_DIR, 'packages/tool-esptoolpy/esptool.py');
   if (fs.existsSync(legacyPy) && fs.existsSync(pioPython)) {
     return { cmd: pioPython, baseArgs: [legacyPy] };
   }

@@ -33,6 +33,8 @@ private:
     BLECharacteristic* pRxCharacteristic_ = nullptr;
     bool deviceConnected_ = false;
     volatile bool configSyncInProgress_ = false;
+    bool configWriteInProgress_ = false;
+    bool configWriteNeedsReboot_ = false;
 
     void notifyJson_(ArduinoJson::JsonDocument& doc);
 };

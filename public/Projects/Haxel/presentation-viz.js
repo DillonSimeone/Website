@@ -6,6 +6,17 @@ import {
     isAudioLive,
     applyBassPulseToDocument
 } from './presentation-audio.js';
+import { Parser, tokenize, Evaluator, updateAudioState } from './compiler.js';
+
+// Live coding cookbook simulator state
+let liveCodingInitialised = false;
+const liveCodingCards = [];
+const LIVE_CODING_CODES = [
+    "rate = 2 + sin(t) * 1.5;\nphase = frac(phase + dt * rate);\nwave(phase)",
+    "q = 0.4;\nf = 6 * dt;\nbp = bp + f * (noise(t * 3) - lp - q * bp);\nlp = lp + f * bp;\nclamp(lp, 0, 1)",
+    "target = square(t / 2, 0.5);\nk = target > env ? 12 : 2.5;\nenv = env + (target - env) * min(1, dt * k);\nenv",
+    "envelope = pow(2.718, -5 * (t % 1.5));\nnoise(t * 20) * envelope"
+];
 
 const HISTORY_LEN = 220;
 const waveHistory = [];
@@ -1102,6 +1113,129 @@ function drawSlideSpectrum(canvas) {
     });
 }
 
+function initLiveCodingSimulators() {
+    if (liveCodingInitialised) return;
+    for (let i = 0; i < 4; i++) {
+        const canvas = document.getElementById(`liveCodingCanvas${i}`);
+        if (!canvas) continue;
+        let evaluator = null;
+        try {
+            evaluator = new Evaluator(new Parser(tokenize(LIVE_CODING_CODES[i])).parseProgram());
+        } catch (err) {
+            console.error("Cookbook example failed to compile:", i, err);
+        }
+        liveCodingCards.push({
+            canvas,
+            evaluator,
+            vt: 0,
+            hist: []
+        });
+    }
+    liveCodingInitialised = true;
+}
+
+function simulateCookbookAudio(tSec) {
+    const mags = new Array(32).fill(0);
+    const kickPhase = (tSec % 0.5) / 0.5;
+    const kick = Math.exp(-kickPhase * 7) * (0.75 + 0.25 * Math.sin(tSec * 0.9));
+    for (let i = 0; i < 4; i++) mags[i] = kick * (1 - i * 0.18);
+    for (let i = 4; i < 16; i++) {
+        mags[i] = Math.max(0, 0.25 + 0.25 * Math.sin(tSec * 2.2 + i * 0.9)) *
+                  (0.5 + 0.5 * Math.sin(tSec * 0.6 + i * 0.35));
+    }
+    const hatPhase = ((tSec + 0.125) % 0.25) / 0.25;
+    const hat = Math.exp(-hatPhase * 11) * 0.55;
+    for (let i = 16; i < 32; i++) mags[i] = hat * (0.35 + 0.65 * Math.abs(Math.sin(i * 2.7 + tSec * 3)));
+    const amp = Math.min(1, kick * 0.6 + hat * 0.25 + 0.1);
+    updateAudioState(mags, amp);
+}
+
+function drawCookbookWave(c, timeSec) {
+    const canvas = c.canvas;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.clientWidth || 300;
+    const cssH = canvas.clientHeight || 80;
+    if (canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)) {
+        canvas.width = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.fillStyle = "#f4ebd0";
+    ctx.fillRect(0, 0, cssW, cssH);
+    ctx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < cssW; x += 50) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, cssH);
+        ctx.stroke();
+    }
+
+    const hist = c.hist;
+    if (hist.length < 2) return;
+    const HIST = 90;
+    const step = cssW / (HIST - 1);
+
+    for (let i = 0; i < hist.length - 1; i++) {
+        const h1 = hist[i] * (cssH - 15);
+        const h2 = hist[i + 1] * (cssH - 15);
+        const x1 = i * step, x2 = (i + 1) * step;
+        const w1 = Math.sin(timeSec * 5 + i * 0.05);
+        const w2 = Math.sin(timeSec * 5 + (i + 1) * 0.05);
+        const y1t = cssH / 2 - w1 * h1 * 0.4;
+        const y2t = cssH / 2 - w2 * h2 * 0.4;
+        const y1b = cssH / 2 + w1 * h1 * 0.4;
+        const y2b = cssH / 2 + w2 * h2 * 0.4;
+
+        ctx.fillStyle = "rgba(226, 59, 36, 0.35)";
+        ctx.beginPath();
+        ctx.moveTo(x1, y1t - h1 / 2);
+        ctx.lineTo(x2, y2t - h2 / 2);
+        ctx.lineTo(x2, y2b + h2 / 2);
+        ctx.lineTo(x1, y1b + h1 / 2);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1t - h1 / 2);
+        ctx.lineTo(x2, y2t - h2 / 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x2, y2b + h2 / 2);
+        ctx.lineTo(x1, y1b + h1 / 2);
+        ctx.stroke();
+    }
+}
+
+function drawLiveCodingCookbook() {
+    if (activeSlideIndex !== 16) return;
+    initLiveCodingSimulators();
+
+    simulateCookbookAudio(timeSec);
+
+    const dt = 0.016;
+    const HIST = 90;
+
+    liveCodingCards.forEach(c => {
+        c.vt += dt;
+        let out = 0;
+        if (c.evaluator) {
+            try {
+                out = c.evaluator.run(c.vt, 150, 1.0, 0.8, 0.15);
+            } catch (e) {
+                out = 0;
+            }
+        }
+        c.hist.push(out);
+        if (c.hist.length > HIST) c.hist.shift();
+        drawCookbookWave(c, timeSec);
+    });
+}
+
 function tick() {
     timeSec += 0.016;
     applyBassPulseToDocument();
@@ -1118,6 +1252,7 @@ function tick() {
     drawUploaderEsp32(document.getElementById('uploaderEsp32'));
     drawSlideTelemetry(document.getElementById('telemetrySlideCanvas'));
     drawSlideSpectrum(document.getElementById('spectrumSlideCanvas'));
+    drawLiveCodingCookbook();
     updateMicStatusBtn();
 
     rafId = requestAnimationFrame(tick);

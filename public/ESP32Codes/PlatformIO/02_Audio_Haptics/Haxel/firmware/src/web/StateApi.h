@@ -12,7 +12,8 @@ namespace web {
 // Transport-agnostic JSON state/config helpers shared by WiFi + BLE.
 void serializeState(ArduinoJson::JsonObject root, core::Engine* engine);
 void applyStatePatch(JsonObjectConst patch, core::Engine* engine, Config* config = nullptr);
-void applyConfigPatch(ArduinoJson::JsonObjectConst patch, Config* config, core::Engine* engine = nullptr);
+void applyConfigPatch(ArduinoJson::JsonObjectConst patch, Config* config, core::Engine* engine = nullptr,
+                      bool persist = true);
 
 bool configPatchNeedsReboot(ArduinoJson::JsonObjectConst patch);
 

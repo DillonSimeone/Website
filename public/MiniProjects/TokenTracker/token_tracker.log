@@ -3529,3 +3529,11 @@ OSError: [Errno 22] Invalid argument: 'F:\\Github\\Website\\public\\MiniProjects
 2026-07-25 03:08:13,562 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
 2026-07-25 03:08:14,411 [INFO] token_tracker: Saved 15048 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
 2026-07-25 03:08:14,416 [INFO] token_tracker: Scan complete: 15048 entries in 0.9s
+2026-07-25 04:08:14,484 [INFO] token_tracker: Auto-refreshing data...
+2026-07-25 04:08:14,484 [INFO] token_tracker: Scanning all data sources...
+2026-07-25 04:08:14,491 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1784093787)
+2026-07-25 04:08:14,495 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-07-25 04:08:14,505 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1784977635)
+2026-07-25 04:08:14,515 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-07-25 04:08:15,293 [INFO] token_tracker: Saved 15204 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-07-25 04:08:15,297 [INFO] token_tracker: Scan complete: 15204 entries in 0.8s

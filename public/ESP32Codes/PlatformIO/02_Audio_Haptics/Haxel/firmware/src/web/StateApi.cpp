@@ -215,7 +215,7 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
     markRuntimeDirty(s);
 }
 
-void applyConfigPatch(JsonObjectConst patch, Config* config, Engine* engine) {
+void applyConfigPatch(JsonObjectConst patch, Config* config, Engine* engine, bool persist) {
     logIncomingJson_("config", patch);
     if (patch["driver"].is<JsonObjectConst>()) {
         hal::DriverConfig dc = config->driverConfig();
@@ -307,8 +307,10 @@ void applyConfigPatch(JsonObjectConst patch, Config* config, Engine* engine) {
         if (a["adc"].is<int>())      ac.adcPin  = a["adc"];
         config->setAudioConfig(ac);
     }
-    config->setFirstRunComplete();
-    config->save();
+    if (persist) {
+        config->setFirstRunComplete();
+        config->save();
+    }
 }
 
 } // namespace haxel::web

@@ -1268,19 +1268,50 @@ async function sendConfigUpdate(configPatch) {
     if (!rxCharacteristic || !bleReady) {
         throw new Error("Device settings have not finished loading");
     }
-    try {
-        if (configPatch && configPatch.apSsid) {
+    return bleEnqueue(async () => {
+        if (configPatch?.apSsid) {
             let name = configPatch.apSsid.trim();
             if (!name.startsWith("Haxel")) {
                 name = "Haxel-" + name;
             }
             configPatch.apSsid = name;
         }
-        await bleWriteJson({ type: "config", patch: configPatch });
-        addSerialLog(`[BLE] Sent config update to ESP32: ${JSON.stringify(configPatch)}`);
-    } catch (err) {
-        console.error("BLE Config Write Error:", err);
-    }
+
+        const sections = [];
+        const identity = {};
+        if (configPatch.apSsid !== undefined) identity.apSsid = configPatch.apSsid;
+        if (configPatch.hostname !== undefined) identity.hostname = configPatch.hostname;
+        if (Object.keys(identity).length) sections.push({ section: "identity", data: identity });
+
+        if (configPatch.driver || configPatch.channelEnabled) {
+            const data = { ...(configPatch.driver || {}) };
+            if (configPatch.channelEnabled) data.channelEnabled = configPatch.channelEnabled;
+            sections.push({ section: "driver", data });
+        }
+        if (configPatch.audio) sections.push({ section: "audio", data: configPatch.audio });
+        if (configPatch.led) sections.push({ section: "led", data: configPatch.led });
+        if (configPatch.knobs?.length) sections.push({ section: "knobs", data: configPatch.knobs });
+        if (configPatch.oled) sections.push({ section: "oled", data: configPatch.oled });
+
+        if (!sections.length) return;
+
+        // Small single-field patches still fit in one legacy write.
+        const legacyPayload = JSON.stringify({ type: "config", patch: configPatch });
+        if (sections.length === 1 && legacyPayload.length <= 200) {
+            await bleWriteJson({ type: "config", patch: configPatch });
+            addSerialLog(`[BLE] Sent config update (${legacyPayload.length} bytes)`);
+            return;
+        }
+
+        await bleWriteJson({ type: "config-start" });
+        await delay(30);
+        for (const s of sections) {
+            await bleWriteJson({ type: "config", section: s.section, data: s.data });
+            await delay(30);
+        }
+        await bleWriteJson({ type: "config-complete" });
+        addSerialLog(`[BLE] Sent config update (${sections.length} sections)`);
+    });
 }
 
 function syncStateToESP32() {

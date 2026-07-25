@@ -7,24 +7,6 @@ import {
     setSlideTelemetryMode,
     initSlideSpectrumInteractions
 } from './presentation-viz.js';
-import {
-    initFleet,
-    refreshFleet,
-    fleetEstop,
-    fleetClaimAll,
-    fleetReleaseAll,
-    sendFleetState,
-    fleetPlay,
-    fleetStop,
-    renderFleetCards,
-    onFleetStatusChange,
-    formatFleetSummary,
-    isDemoMode,
-    getDemoPatterns,
-    setFleetPollInterval,
-    disconnectFleet,
-    getHubIp
-} from './presentation-fleet.js';
 
 let currentSlideIndex = 0;
 let slides = [];
@@ -35,10 +17,6 @@ const slideCounter = () => document.getElementById('slideCounter');
 const progressBar = () => document.getElementById('progressBar');
 const menuPanel = () => document.getElementById('menuPanel');
 const menuList = () => document.getElementById('menuList');
-const fleetStatusEl = () => document.getElementById('fleetFooterStatus');
-const fleetMeterFill = () => document.getElementById('fleetMeterFill');
-
-const FLEET_SLIDE_INDEX = 16;
 
 export function goToSlide(idx) {
     if (idx < 0 || idx >= slides.length) return;
@@ -47,9 +25,6 @@ export function goToSlide(idx) {
     setActiveSlideIndex(idx);
     updatePresentation();
     onSlideEnter(idx);
-
-    if (idx === FLEET_SLIDE_INDEX) setFleetPollInterval(2000);
-    else setFleetPollInterval(10000);
 
     if (notesPanelOpen) updateNotesPanel();
 }
@@ -145,62 +120,6 @@ function populateMenu() {
     });
 }
 
-function updateFleetFooter({ summary, telemetryAmp }) {
-    const el = fleetStatusEl();
-    if (el) {
-        const mode = isDemoMode() ? 'DEMO' : 'LIVE';
-        el.textContent = `FLEET [${mode}]: ${summary}`;
-    }
-    const meter = fleetMeterFill();
-    if (meter) {
-        const amp = telemetryAmp || 0;
-        meter.style.width = `${Math.min(100, amp * 100)}%`;
-    }
-}
-
-function wireFleetSlide() {
-    const patternSelect = document.getElementById('fleetPattern');
-    if (patternSelect && !patternSelect.options.length) {
-        getDemoPatterns().forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = p.label;
-            patternSelect.appendChild(opt);
-        });
-    }
-
-    const intensity = document.getElementById('fleetIntensity');
-    const intensityVal = document.getElementById('fleetIntensityVal');
-    if (intensity && intensityVal) {
-        intensity.addEventListener('input', () => {
-            intensityVal.textContent = Math.round((intensity.value / 255) * 100) + '%';
-        });
-    }
-
-    document.getElementById('fleetClaimBtn')?.addEventListener('click', () => fleetClaimAll().then(refreshFleetUI));
-    document.getElementById('fleetReleaseBtn')?.addEventListener('click', () => fleetReleaseAll().then(refreshFleetUI));
-    document.getElementById('fleetPlayBtn')?.addEventListener('click', () => fleetPlay());
-    document.getElementById('fleetStopBtn')?.addEventListener('click', () => fleetStop());
-    document.getElementById('fleetApplyBtn')?.addEventListener('click', () => sendFleetState().then(refreshFleetUI));
-    document.getElementById('footerEstop')?.addEventListener('click', () => fleetEstop());
-    document.getElementById('fleetEstopBtn')?.addEventListener('click', () => fleetEstop());
-    document.getElementById('fleetDisconnectBtn')?.addEventListener('click', () => disconnectFleet());
-
-    onFleetStatusChange((status) => {
-        updateFleetFooter(status);
-        if (currentSlideIndex === FLEET_SLIDE_INDEX) refreshFleetUI();
-    });
-}
-
-async function refreshFleetUI() {
-    const data = await refreshFleet();
-    const summary = document.getElementById('fleetSlideSummary');
-    if (summary) summary.textContent = formatFleetSummary();
-    renderFleetCards(document.getElementById('fleetCards'), data);
-    const hubLabel = document.getElementById('fleetHubLabel');
-    if (hubLabel) hubLabel.textContent = `Hub: ${getHubIp()} (SoftAP)`;
-}
-
 async function ensureAudio() {
     await initAudioOnGesture();
 }
@@ -258,12 +177,10 @@ async function init() {
     exposeGlobals();
     populateMenu();
     initKeyboard();
-    wireFleetSlide();
     wireTelemetrySlide();
     initSlideSpectrumInteractions();
 
     await loadSpeakerNotes();
-    initFleet();
     startVizLoop();
 
     document.body.addEventListener('click', ensureAudio, { once: true });
@@ -271,7 +188,6 @@ async function init() {
     updatePresentation();
     onSlideEnter(0);
     parseDeepLink();
-    refreshFleetUI();
 
     let resizeTimer = null;
     window.addEventListener('resize', () => {

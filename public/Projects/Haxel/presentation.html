@@ -597,74 +597,68 @@
             </div>
         </div>
 
-        <!-- 17: Fleet Command -->
-        <div class="slide slide-layout-standard" data-slide-id="fleet" data-title="Live Fleet Command">
-            <h2>Live Fleet Command</h2>
-            <div class="connection-box">
-                <strong>How this portal connects (not Bluetooth for fleet):</strong><br>
-                1. Flash a <strong>Mesh Master</strong> build on the leader Beetle (PlatformIO env
-                <code>c3WIFILED_MASTER</code>).<br>
-                2. Leader broadcasts WiFi SoftAP at <code>192.168.4.1</code>. Join that network on the laptop WiFi radio
-                only.<br>
-                3. Run <code>present.bat</code> on the laptop. Slides load from <code>localhost</code>.<br>
-                4. Fleet commands go over HTTP <code>POST /json/fleet</code> (proxied to the hub). Live telemetry uses
-                WebSocket <code>ws://192.168.4.1/ws</code>.<br>
-                5. Followers receive haptics over <strong>ESP-NOW</strong>, not WiFi. Bluetooth is for single-device
-                mode via <code>bluetooth.html</code>.
-            </div>
-            <table class="pinout-table">
-                <tr>
-                    <td>GPIO 6</td>
-                    <td>MOSFET gate (motor PWM output)</td>
-                </tr>
-                <tr>
-                    <td>GPIO 5</td>
-                    <td>WS2812 LED strip (optional status)</td>
-                </tr>
-                <tr>
-                    <td>I2S BCLK / WS / SD</td>
-                    <td>INMP441 mic (assign in Haxel portal after first boot)</td>
-                </tr>
-                <tr>
-                    <td>Motor +</td>
-                    <td>MOSFET drain. Motor GND to common ground.</td>
-                </tr>
-            </table>
-            <div class="fleet-panel" style="margin-top:12px;">
-                <div class="fleet-panel-header">
-                    <span id="fleetSlideSummary">DEMO MODE</span>
-                    <span id="fleetHubLabel">Hub: 192.168.4.1</span>
+        <!-- 17: Haxel Live Coding Cookbook -->
+        <div class="slide slide-layout-standard" data-slide-id="scripting-examples" data-title="Haxel Expression Engine Cookbook">
+            <h2>Haxel Expression Engine Cookbook</h2>
+            <div class="live-coding-grid">
+                <div class="live-coding-card">
+                    <div class="card-header">
+                        <span class="card-num">01</span>
+                        <h4>LFO Phase Accumulator</h4>
+                    </div>
+                    <pre><code>// Accumulate phase dynamically using dt
+rate = 2 + sin(t) * 1.5;
+phase = frac(phase + dt * rate);
+wave(phase)</code></pre>
+                    <div class="live-coding-viz">
+                        <canvas class="live-coding-canvas" id="liveCodingCanvas0"></canvas>
+                    </div>
                 </div>
-                <div>Leader Mic Level</div>
-                <div class="fleet-meter">
-                    <div class="fleet-meter-fill" id="fleetMeterFill"></div>
+                <div class="live-coding-card">
+                    <div class="card-header">
+                        <span class="card-num">02</span>
+                        <h4>State-Variable Filter (SVF)</h4>
+                    </div>
+                    <pre><code>// Low-pass filter loop via dt integration
+q = 0.4;
+f = 6 * dt;
+bp = bp + f * (noise(t * 3) - lp - q * bp);
+lp = lp + f * bp;
+clamp(lp, 0, 1)</code></pre>
+                    <div class="live-coding-viz">
+                        <canvas class="live-coding-canvas" id="liveCodingCanvas1"></canvas>
+                    </div>
                 </div>
-                <div class="fleet-controls">
-                    <button class="nav-btn" id="fleetClaimBtn"
-                        style="color:var(--black);background:white;border-color:var(--black);">Claim All</button>
-                    <button class="nav-btn" id="fleetPlayBtn"
-                        style="color:var(--black);background:white;border-color:var(--black);">Play</button>
-                    <button class="nav-btn" id="fleetStopBtn"
-                        style="color:var(--black);background:white;border-color:var(--black);">Stop</button>
-                    <button class="nav-btn danger" id="fleetEstopBtn">E-Stop</button>
-                    <button class="nav-btn" id="fleetReleaseBtn"
-                        style="color:var(--black);background:white;border-color:var(--black);">Release All</button>
+                <div class="live-coding-card">
+                    <div class="card-header">
+                        <span class="card-num">03</span>
+                        <h4>Attack/Release Follower</h4>
+                    </div>
+                    <pre><code>// Fast attack, slow release
+target = square(t / 2, 0.5);
+k = target > env ? 12 : 2.5;
+env = env + (target - env) * min(1, dt * k);
+env</code></pre>
+                    <div class="live-coding-viz">
+                        <canvas class="live-coding-canvas" id="liveCodingCanvas2"></canvas>
+                    </div>
                 </div>
-                <div class="fleet-row">
-                    <label>Intensity</label>
-                    <input type="range" id="fleetIntensity" min="0" max="255" value="150">
-                    <span id="fleetIntensityVal">59%</span>
+                <div class="live-coding-card">
+                    <div class="card-header">
+                        <span class="card-num">04</span>
+                        <h4>Decaying Noise Burst</h4>
+                    </div>
+                    <pre><code>// pow(2.718, -x) is e^-x: natural decay
+envelope = pow(2.718, -5 * (t % 1.5));
+noise(t * 20) * envelope</code></pre>
+                    <div class="live-coding-viz">
+                        <canvas class="live-coding-canvas" id="liveCodingCanvas3"></canvas>
+                    </div>
                 </div>
-                <div class="fleet-row">
-                    <label>Pattern</label>
-                    <select id="fleetPattern"></select>
-                    <button class="btn-inline" id="fleetApplyBtn">Apply</button>
-                </div>
-                <div id="fleetCards" class="fleet-cards"></div>
             </div>
         </div>
 
-        <!-- 17: Immersive Accessibility -->
+        <!-- 18: Immersive Accessibility -->
         <div class="slide slide-layout-split" data-slide-id="immersive" data-title="Immersive Accessibility & UMD">
             <div class="split-left">
                 <h2>Immersive Accessibility &amp; UMD</h2>
@@ -679,7 +673,7 @@
             </div>
         </div>
 
-        <!-- 18: Wearables Lessons -->
+        <!-- 19: Wearables Lessons -->
         <div class="slide slide-layout-standard" data-slide-id="wearables"
             data-title="Existing Wearables: Lessons Learned">
             <h2>Existing Wearables: Success vs. Failure</h2>
@@ -711,10 +705,10 @@
             </div>
         </div>
 
-        <!-- 19: Safe Design -->
-        <div class="slide slide-layout-split" data-slide-id="safety" data-title="Responsibility & Safe Design">
+        <!-- 20: Safe Wearable Design -->
+        <div class="slide slide-layout-split" data-slide-id="safety" data-title="Safe Wearable Design">
             <div class="split-left">
-                <h2>Responsibility &amp; Safe Design</h2>
+                <h2>Safe Wearable Design &amp; Thermal Reality</h2>
                 <ul class="bullet-list">
                     <li><strong>HAVS:</strong> prolonged strong vibrations cause permanent nerve and vessel damage.</li>
                     <li>Strobing effects can trigger seizures. Stay outside photosensitive frequency zones.</li>
@@ -736,7 +730,7 @@
             </div>
         </div>
 
-        <!-- 20: Q&A -->
+        <!-- 21: Petting Zoo Stations & Q&A -->
         <div class="slide slide-layout-split" data-slide-id="qa" data-title="Petting Zoo Stations & Q&A">
             <div class="split-left">
                 <h2>Petting Zoo Stations &amp; Q&amp;A</h2>
@@ -765,11 +759,6 @@
 
     <footer class="presentation-footer">
         <div class="footer-left">Teardown 2026, Feel the Difference</div>
-        <div class="footer-fleet">
-            <span class="fleet-status-label" id="fleetFooterStatus">FLEET: DEMO</span>
-            <button class="nav-btn danger" id="footerEstop">E-Stop</button>
-            <button class="nav-btn" id="fleetDisconnectBtn">Disconnect</button>
-        </div>
         <div class="footer-center">
             <button class="nav-btn" onclick="prevSlide()">Prev</button>
             <span class="slide-counter" id="slideCounter">1 / 20</span>

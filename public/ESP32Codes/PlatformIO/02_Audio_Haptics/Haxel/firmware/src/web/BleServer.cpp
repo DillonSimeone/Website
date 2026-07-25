@@ -110,6 +110,60 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
         broadcastConfig();
         broadcastState();
         return;
+    } else if (strcmp(type, "config-start") == 0) {
+        configWriteInProgress_ = true;
+        configWriteNeedsReboot_ = false;
+        Serial.println("[CTRL] BLE config upload started");
+        return;
+    } else if (strcmp(type, "config-complete") == 0) {
+        if (configWriteInProgress_) {
+            config_->setFirstRunComplete();
+            config_->save();
+            Serial.println("[CTRL] BLE config upload complete");
+            if (configWriteNeedsReboot_) {
+                delay(800);
+                ESP.restart();
+            }
+            configWriteInProgress_ = false;
+        }
+        return;
+    } else if (strcmp(type, "config") == 0 && doc["section"].is<const char*>()) {
+        const char* section = doc["section"];
+        JsonDocument patchDoc;
+        JsonObject patch = patchDoc.to<JsonObject>();
+
+        if (strcmp(section, "identity") == 0 && doc["data"].is<JsonObjectConst>()) {
+            JsonObjectConst data = doc["data"].as<JsonObjectConst>();
+            if (data["apSsid"].is<const char*>()) patch["apSsid"] = data["apSsid"];
+            if (data["hostname"].is<const char*>()) patch["hostname"] = data["hostname"];
+        } else if (strcmp(section, "driver") == 0 && doc["data"].is<JsonObjectConst>()) {
+            JsonObjectConst data = doc["data"].as<JsonObjectConst>();
+            JsonObject d = patch["driver"].to<JsonObject>();
+            if (data["kind"].is<int>()) d["kind"] = data["kind"];
+            if (data["pins"].is<JsonArrayConst>()) d["pins"] = data["pins"];
+            if (data["sda"].is<int>()) d["sda"] = data["sda"];
+            if (data["scl"].is<int>()) d["scl"] = data["scl"];
+            if (data["pwmHz"].is<int>()) d["pwmHz"] = data["pwmHz"];
+            if (data["channelEnabled"].is<JsonArrayConst>()) {
+                patch["channelEnabled"] = data["channelEnabled"];
+            }
+        } else if (strcmp(section, "knobs") == 0 && doc["data"].is<JsonArrayConst>()) {
+            patch["knobs"] = doc["data"];
+        } else if (doc["data"].is<JsonObjectConst>()) {
+            patch[section] = doc["data"];
+        } else {
+            Serial.printf("[CTRL] BLE config section '%s' rejected: bad data\n", section);
+            return;
+        }
+
+        if (!configWriteInProgress_) configWriteInProgress_ = true;
+        JsonObjectConst patchConst = patch;
+        applyConfigPatch(patchConst, config_, engine_, false);
+        if (configPatchNeedsReboot(patchConst)) {
+            configWriteNeedsReboot_ = true;
+        }
+        Serial.printf("[CTRL] BLE config section '%s' applied\n", section);
+        return;
     } else if (strcmp(type, "state") == 0) {
         if (doc["patch"].is<JsonObjectConst>()) {
             applyStatePatch(doc["patch"].as<JsonObjectConst>(), engine_, config_);
@@ -117,9 +171,7 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
     } else if (strcmp(type, "config") == 0) {
         if (doc["patch"].is<JsonObjectConst>()) {
             JsonObjectConst patch = doc["patch"].as<JsonObjectConst>();
-            applyConfigPatch(patch, config_, engine_);
-            config_->setFirstRunComplete();
-            config_->save();
+            applyConfigPatch(patch, config_, engine_, true);
             if (configPatchNeedsReboot(patch)) {
                 delay(800);
                 ESP.restart();
