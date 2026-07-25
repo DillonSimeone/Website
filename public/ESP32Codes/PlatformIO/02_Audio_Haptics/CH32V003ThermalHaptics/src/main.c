@@ -122,8 +122,8 @@ int main(void)
 		uint32_t duty = 0;
 
 		/* Sensitivity scaling */
-		if (volume > 2u) {
-			duty = (uint32_t)(volume - 2u) * 6u; /* 6x gain multiplier */
+		if (volume > 10u) {
+			duty = (uint32_t)(volume - 10u) * 1u; /* 1x gain multiplier */
 			if (duty > PWM_ARR) duty = PWM_ARR;
 		}
 
