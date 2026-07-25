@@ -1,4 +1,5 @@
 #include "AdcControls.h"
+#include "Config.h"
 
 AdcControls::AdcControls(float alpha)
     : m_alpha(alpha),
@@ -45,6 +46,7 @@ void AdcControls::update() {
     // 2. Modulation Frequency: 50 Hz to 300 Hz
     m_modFreqHz = 50.0f + (m_emaModNormalized * 250.0f);
 
-    // 3. Drive Level Duty Cycle: 1.0% to 20.0%
-    m_driveLevelPercent = 1.0f + (m_emaDriveNormalized * 19.0f);
+    // 3. Drive Level Duty Cycle (range set in Config.h)
+    const float driveSpan = DRIVE_MAX_PERCENT - DRIVE_MIN_PERCENT;
+    m_driveLevelPercent = DRIVE_MIN_PERCENT + (m_emaDriveNormalized * driveSpan);
 }

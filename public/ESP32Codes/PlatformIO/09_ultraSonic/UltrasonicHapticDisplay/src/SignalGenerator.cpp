@@ -1,4 +1,5 @@
 #include "SignalGenerator.h"
+#include "Config.h"
 
 SignalGenerator::SignalGenerator()
     : sliceNum(0),
@@ -9,8 +10,11 @@ SignalGenerator::SignalGenerator()
       m_envelopeActive(true) {}
 
 void SignalGenerator::begin() {
-    // 1. Explicitly set drive strength to 2mA on GPIO 15 to reduce switching spikes into TPA3118 input
-    gpio_set_drive_strength(PWM_PIN, GPIO_DRIVE_STRENGTH_2MA);
+    // 1. GPIO drive strength into TPA3118 IN+ (2mA conservative, 12mA bench)
+    gpio_set_drive_strength(
+        PWM_PIN,
+        USE_STRONG_GPIO_DRIVE ? GPIO_DRIVE_STRENGTH_12MA : GPIO_DRIVE_STRENGTH_2MA
+    );
 
     // 2. Set pin function to PWM
     gpio_set_function(PWM_PIN, GPIO_FUNC_PWM);
@@ -36,7 +40,7 @@ void SignalGenerator::setParameters(float carrierFreqHz, float dutyCyclePercent)
     if (carrierFreqHz < 10000.0f) carrierFreqHz = 10000.0f;
     if (carrierFreqHz > 100000.0f) carrierFreqHz = 100000.0f;
     if (dutyCyclePercent < 0.1f) dutyCyclePercent = 0.1f;
-    if (dutyCyclePercent > 50.0f) dutyCyclePercent = 50.0f;
+    if (dutyCyclePercent > DUTY_HARD_LIMIT_PERCENT) dutyCyclePercent = DUTY_HARD_LIMIT_PERCENT;
 
     m_carrierFreqHz = carrierFreqHz;
     m_dutyCyclePercent = dutyCyclePercent;
@@ -60,6 +64,14 @@ void SignalGenerator::updatePwmHardware() {
 }
 
 void SignalGenerator::processModulation(uint32_t nowMicros, float modFreqHz) {
+    if (!AM_MODULATION_ENABLED) {
+        if (!m_envelopeActive) {
+            m_envelopeActive = true;
+            pwm_set_enabled(sliceNum, true);
+        }
+        return;
+    }
+
     if (modFreqHz <= 0.0f) return;
 
     // Calculate half-period in microseconds (50% burst duty cycle envelope)

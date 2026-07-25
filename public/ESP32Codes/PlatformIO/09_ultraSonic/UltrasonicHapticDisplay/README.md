@@ -10,10 +10,22 @@ Firmware for driving a mid-air ultrasonic haptic display demo array using a Wave
 | **GND** (Right) | GND | TPA3118 IN-, Pots & OLED GND | Shared System Ground |
 | **26** (Right) | ADC0 (GPIO 26) | Potentiometer 1 | Carrier Frequency (38.0 kHz to 42.0 kHz) |
 | **27** (Right) | ADC1 (GPIO 27) | Potentiometer 2 | Modulation Rate (50 Hz to 300 Hz) |
-| **28** (Right) | ADC2 (GPIO 28) | Potentiometer 3 | Drive Level / Duty Cycle (1% to 20%) |
+| **28** (Right) | ADC2 (GPIO 28) | Potentiometer 3 | Drive Level / Duty Cycle (see **BENCH_TEST** below) |
 | **4** (Left) | GPIO 4 (SDA) | SSD1306 OLED SDA | I2C0 Data @ 10 Hz Telemetry |
 | **5** (Left) | GPIO 5 (SCL) | SSD1306 OLED SCL | I2C0 Clock |
 | **3V3** (Right) | 3.3V Power | Pots & OLED VCC | 3.3V System Power Output |
+
+## BENCH_TEST mode (default)
+
+`src/Config.h` enables **BENCH_TEST** by default for hardware bring-up:
+
+| Setting | Normal (`BENCH_TEST=0`) | Bench (`BENCH_TEST=1`) |
+| :--- | :--- | :--- |
+| Drive duty (Pot 3) | 1% – 20% | **25% – 50%** |
+| AM envelope | 50% burst @ mod rate | **Off** (continuous 40 kHz) |
+| GPIO 15 drive | 2 mA | **12 mA** |
+
+To restore conservative limits, set `BENCH_TEST=0` in `Config.h` or add `build_flags = -DBENCH_TEST=0` in `platformio.ini`.
 
 ## Interactive Web Pinout & Signal Simulator
 

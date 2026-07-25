@@ -358,12 +358,15 @@ wave(t * (freq * 0.05))
                                             </select>
                                         </div>
                                         
-                                        <!-- Active Motors list -->
+                                        <!-- Motor channels: enable toggle + GPIO pin per row -->
                                         <div style="margin-top: 15px;">
                                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                                <h5>Motor Channels (Pins)</h5>
+                                                <h5>Motor Channels</h5>
                                                 <button class="btn" id="addMotorBtn" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">+ Add Motor</button>
                                             </div>
+                                            <p class="hint" style="font-size: 10px; color: #555; margin-top: 0;">
+                                                Enable/disable each channel and assign GPIO pins. Values load from the device on connect.
+                                            </p>
                                             <div id="motorsContainer">
                                                 <!-- Dynamically rendered motor rows -->
                                             </div>

@@ -378,7 +378,7 @@ if (audioMaxFreqInput) {
 drvSelect.addEventListener("change", (e) => {
     currentDriverText.textContent = e.target.value;
     addSerialLog(`[HAL] Driver reconfigured to: ${e.target.value}`);
-    renderMotorOutputs();
+    renderMotors();
     triggerI2CBlink();
 });
 
@@ -1031,15 +1031,19 @@ function applyDeviceConfig(cfg) {
         setDeviceControlValue("pinSDA", cfg.driver.sda);
         setDeviceControlValue("pinSCL", cfg.driver.scl);
         if (Array.isArray(cfg.driver.pins)) {
-            activeMotors = cfg.driver.pins.filter(pin => Number.isFinite(pin) && pin >= 0);
-            renderMotors();
+            activeMotors = cfg.driver.pins
+                .map(p => Number(p))
+                .filter(pin => Number.isFinite(pin) && pin >= 0);
         }
-        if (Array.isArray(cfg.channelEnabled)) {
-            channelEnabled = cfg.channelEnabled.slice();
-        } else if (Array.isArray(cfg.driver?.channelEnabled)) {
-            channelEnabled = cfg.driver.channelEnabled.slice();
+        const enabledSrc = Array.isArray(cfg.channelEnabled)
+            ? cfg.channelEnabled
+            : (Array.isArray(cfg.driver?.channelEnabled) ? cfg.driver.channelEnabled : null);
+        if (enabledSrc) {
+            channelEnabled = expandChannelEnabledForRows(
+                enabledSrc, Math.max(1, activeMotors.length), cfg.driver.kind
+            );
         }
-        renderMotorOutputs();
+        renderMotors();
     }
 
     if (cfg.audio) {
@@ -1077,7 +1081,7 @@ function applyDeviceConfig(cfg) {
         }
     }
 
-    addSerialLog(`[BLE] Loaded device config: ${cfg.apSsid || "Haxel"}, driver=${cfg.driver?.kind}, PWM=${cfg.driver?.pwmHz}Hz`);
+    addSerialLog(`[BLE] Loaded device config: ${cfg.apSsid || "Haxel"}, driver=${cfg.driver?.kind}, pins=[${activeMotors.join(",")}], PWM=${cfg.driver?.pwmHz}Hz`);
 }
 
 function handleNotification(event) {
@@ -1231,7 +1235,7 @@ function drawSpectrum(mags) {
                 s.channels.forEach((ch, i) => {
                     if (ch && typeof ch.on === "boolean") channelEnabled[i] = ch.on;
                 });
-                renderMotorOutputs();
+                renderMotors();
             }
             bleStateReceived = true;
             finishBleHydrationIfReady();
@@ -1936,7 +1940,8 @@ let activeKnobs = [
     { pin: 4, param: "pattern" }
 ];
 let channelEnabled = [true, true, true, true, true, true, true, true];
-const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+// C3/C6/common GPIOs; device-assigned pins are merged in at render time.
+const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 17, 18, 19, 20, 21, 22, 23];
 const drvKindMap = {
     "NONE": 0,
     "L298N": 1,
@@ -1946,38 +1951,64 @@ const drvKindMap = {
     "MINI_HBRIDGE": 5
 };
 
+function motorPinSelectOptions(currentPin) {
+    const pins = new Set(pinOptions);
+    const p = Number(currentPin);
+    if (Number.isFinite(p) && p >= 0) pins.add(p);
+    return [...pins].sort((a, b) => a - b);
+}
+
+function motorRowCount() {
+    return Math.max(1, activeMotors.length);
+}
+
+/** Map firmware logical channels onto one toggle per motor pin row (e.g. L298N: 2 ch → 4 rows). */
+function expandChannelEnabledForRows(enabled, rowCount, driverKind) {
+    const logical = logicalChannelCount(driverKind);
+    const src = Array.isArray(enabled) ? enabled : [];
+    const out = [];
+    for (let i = 0; i < rowCount; i++) {
+        if (logical < rowCount) {
+            const ch = Math.min(logical - 1, Math.floor(i * logical / rowCount));
+            out.push(src[ch] !== false);
+        } else {
+            out.push(src[i] !== false);
+        }
+    }
+    return out;
+}
+
+function collapseChannelEnabledForSave(rowCount, driverKind) {
+    const logical = logicalChannelCount(driverKind);
+    if (logical >= rowCount) return channelEnabled.slice(0, rowCount).map(v => v !== false);
+    const out = [];
+    for (let c = 0; c < logical; c++) {
+        const row = Math.floor(c * rowCount / logical);
+        out.push(channelEnabled[row] !== false);
+    }
+    return out;
+}
+
 function logicalChannelCount(kindOverride) {
-    const drvChip = document.getElementById("drvChip");
-    const kindName = kindOverride ?? (drvChip ? drvChip.value : "MOSFET");
-    const kind = drvKindMap[kindName] ?? 4;
+    let kind;
+    if (typeof kindOverride === "number") {
+        kind = kindOverride;
+    } else {
+        const drvChip = document.getElementById("drvChip");
+        const kindName = kindOverride ?? (drvChip ? drvChip.value : "MOSFET");
+        kind = drvKindMap[kindName] ?? 4;
+    }
     if (kind === 1 || kind === 2 || kind === 5) return 2;
     if (kind === 3) return 1;
     const active = activeMotors.filter(p => Number.isFinite(p) && p >= 0);
     return Math.max(1, active.length || 1);
 }
 
-function renderMotorOutputs() {
-    const container = document.getElementById("motorOutputContainer");
-    if (!container) return;
-    const count = logicalChannelCount();
-    while (channelEnabled.length < count) channelEnabled.push(true);
-    container.innerHTML = "";
-    for (let i = 0; i < count; i++) {
-        const row = document.createElement("div");
-        row.className = "row motor-output-row";
-        row.style.marginBottom = "6px";
-        row.innerHTML = `
-            <label style="min-width:88px;">Channel ${i}</label>
-            <input type="checkbox" class="motor-output-enable" data-index="${i}" ${channelEnabled[i] !== false ? "checked" : ""} style="width:auto; margin:0;">
-            <span class="hint" style="margin:0; font-size:10px;">${channelEnabled[i] !== false ? "Enabled" : "Disabled"}</span>
-        `;
-        container.appendChild(row);
-    }
-}
-
 async function pushChannelEnabled() {
-    const count = logicalChannelCount();
-    const enabled = channelEnabled.slice(0, count);
+    const drvChip = document.getElementById("drvChip");
+    const kind = drvKindMap[drvChip?.value] ?? 4;
+    const rowCount = motorRowCount();
+    const enabled = collapseChannelEnabledForSave(rowCount, kind);
     const statePatch = { channels: enabled.map(on => ({ on: !!on })) };
     const configPatch = { channelEnabled: enabled };
     sendStateUpdate(statePatch);
@@ -1992,14 +2023,23 @@ async function pushChannelEnabled() {
 function renderMotors() {
     const container = document.getElementById("motorsContainer");
     if (!container) return;
+    const rowCount = motorRowCount();
+    while (channelEnabled.length < rowCount) channelEnabled.push(true);
     container.innerHTML = "";
     activeMotors.forEach((pin, idx) => {
+        const pinNum = Number(pin);
+        const opts = motorPinSelectOptions(pinNum);
         const row = document.createElement("div");
         row.className = "motor-row";
+        row.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;";
         row.innerHTML = `
-            <span style="font-size: 11px;">Ch ${idx}:</span>
-            <select class="motor-pin" data-index="${idx}">
-                ${pinOptions.map(p => `<option value="${p}" ${p === pin ? 'selected' : ''}>GPIO ${p}</option>`).join('')}
+            <span style="font-size: 11px; min-width: 36px;">Ch ${idx}:</span>
+            <label style="display:flex; align-items:center; gap:4px; font-size:11px; margin:0; min-width:52px;">
+                <input type="checkbox" class="motor-output-enable" data-index="${idx}" ${channelEnabled[idx] !== false ? "checked" : ""} style="width:auto; margin:0;">
+                <span class="hint">${channelEnabled[idx] !== false ? "On" : "Off"}</span>
+            </label>
+            <select class="motor-pin" data-index="${idx}" style="flex:1; min-width:100px;">
+                ${opts.map(p => `<option value="${p}" ${p === pinNum ? "selected" : ""}>GPIO ${p}</option>`).join("")}
             </select>
             <button class="btn btn-remove-row remove-motor" data-index="${idx}" style="cursor:pointer;">&times;</button>
         `;
@@ -2041,6 +2081,7 @@ document.getElementById("addMotorBtn")?.addEventListener("click", () => {
     const used = new Set(activeMotors);
     const nextPin = pinOptions.find(p => !used.has(p)) || 0;
     activeMotors.push(nextPin);
+    channelEnabled.push(true);
     renderMotors();
 });
 
@@ -2059,6 +2100,7 @@ document.getElementById("motorsContainer")?.addEventListener("click", (e) => {
     if (e.target.classList.contains("remove-motor")) {
         const idx = parseInt(e.target.getAttribute("data-index"));
         activeMotors.splice(idx, 1);
+        channelEnabled.splice(idx, 1);
         renderMotors();
     }
 });
@@ -2073,18 +2115,14 @@ document.getElementById("knobsContainer")?.addEventListener("click", (e) => {
 
 document.getElementById("motorsContainer")?.addEventListener("change", (e) => {
     if (e.target.classList.contains("motor-pin")) {
-        const idx = parseInt(e.target.getAttribute("data-index"));
-        activeMotors[idx] = parseInt(e.target.value);
-        renderMotorOutputs();
-    }
-});
-
-document.getElementById("motorOutputContainer")?.addEventListener("change", (e) => {
-    if (e.target.classList.contains("motor-output-enable")) {
+        const idx = parseInt(e.target.getAttribute("data-index"), 10);
+        activeMotors[idx] = parseInt(e.target.value, 10);
+        renderMotors();
+    } else if (e.target.classList.contains("motor-output-enable")) {
         const idx = parseInt(e.target.getAttribute("data-index"), 10);
         channelEnabled[idx] = e.target.checked;
         const hint = e.target.parentElement?.querySelector(".hint");
-        if (hint) hint.textContent = e.target.checked ? "Enabled" : "Disabled";
+        if (hint) hint.textContent = e.target.checked ? "On" : "Off";
         pushChannelEnabled();
     }
 });
@@ -2118,7 +2156,6 @@ document.getElementById("audioSource")?.addEventListener("change", (e) => {
 // Initialize dynamic lists
 renderMotors();
 renderKnobs();
-renderMotorOutputs();
 
 // Hardware Calibration Form Submission
 document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
@@ -2227,7 +2264,7 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     const requestedSsid = document.getElementById("deviceSsid")?.value.trim() || "Haxel";
     const configPatch = {
         apSsid: requestedSsid,
-        channelEnabled: channelEnabled.slice(0, logicalChannelCount()),
+        channelEnabled: collapseChannelEnabledForSave(motorRowCount(), kind),
         driver: {
             kind: kind,
             pins: pinsPadded,

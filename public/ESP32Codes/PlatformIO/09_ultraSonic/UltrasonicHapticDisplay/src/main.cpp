@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "Config.h"
 #include "AdcControls.h"
 #include "SignalGenerator.h"
 #include "DisplayManager.h"
@@ -28,16 +29,22 @@ void setup() {
 
     Serial.println(F("\n======================================================="));
     Serial.println(F("  RP2040-Zero Ultrasonic Haptic Display Demo Array"));
-    Serial.println(F("=======================================================\n"));
+    Serial.println(F("======================================================="));
+#if BENCH_TEST
+    Serial.println(F("[MODE] BENCH_TEST — continuous carrier, 25-50% duty, 12mA drive"));
+#else
+    Serial.println(F("[MODE] Normal — AM envelope, 1-20% duty, 2mA drive"));
+#endif
+    Serial.println();
 
     // Initialize ADC controls (GPIO 26, 27, 28)
     adcControls.begin();
     Serial.println(F("[INFO] ADC Potentiometers initialized on GP26, GP27, GP28."));
 
-    // Initialize Hardware PWM on GPIO 15 (2mA drive strength, 40kHz default)
+    // Initialize Hardware PWM on GPIO 15 (40 kHz default carrier)
     signalGen.begin();
     signalGen.setParameters(adcControls.getCarrierFreqHz(), adcControls.getDriveLevelPercent());
-    Serial.println(F("[INFO] Hardware PWM initialized on GPIO 15 (2mA drive strength)."));
+    Serial.println(F("[INFO] Hardware PWM initialized on GPIO 15."));
 
     // Initialize OLED Display (GPIO 0 SDA, GPIO 1 SCL) with I2C Scanner
     if (!displayMgr.begin()) {
@@ -55,7 +62,7 @@ void loop() {
     unsigned long currentMs = millis();
     uint32_t currentMicros = micros();
 
-    // 1. Microsecond-accurate modulation envelope chopper (50% duty AM signal)
+    // 1. AM envelope chopper (disabled in BENCH_TEST — carrier runs continuously)
     signalGen.processModulation(currentMicros, adcControls.getModFreqHz());
 
     // 2. Periodic ADC sampling & smooth PWM parameter updates (100 Hz)
@@ -89,7 +96,11 @@ void loop() {
         Serial.print(adcControls.getModFreqHz(), 1);
         Serial.print(F(" Hz | Drive Level: "));
         Serial.print(adcControls.getDriveLevelPercent(), 1);
-        Serial.print(F(" % | OLED: "));
+        Serial.print(F(" %"));
+#if BENCH_TEST
+        Serial.print(F(" | AM: OFF (bench)"));
+#endif
+        Serial.print(F(" | OLED: "));
         if (displayMgr.isConnected()) {
             Serial.print(F("OK (0x"));
             Serial.print(displayMgr.getDetectedAddress(), HEX);

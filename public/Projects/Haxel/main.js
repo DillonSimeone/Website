@@ -573,6 +573,7 @@ if (audioMaxFreqInput) {
 drvSelect.addEventListener("change", (e) => {
     currentDriverText.textContent = e.target.value;
     addSerialLog(`[HAL] Driver reconfigured to: ${e.target.value}`);
+    renderMotors();
     triggerI2CBlink();
 });
 
@@ -1878,6 +1879,12 @@ function applyStateUpdate(s) {
             uptimeText.textContent = Math.floor(s.uptime_ms / 1000) + "s";
         }
     }
+    if (Array.isArray(s.channels)) {
+        s.channels.forEach((ch, i) => {
+            if (ch && typeof ch.on === "boolean") channelEnabled[i] = ch.on;
+        });
+        renderMotors();
+    }
 }
 
 // Send State Updates
@@ -2200,19 +2207,106 @@ if (isBleMode) {
 // --- Dynamic Hardware Calibration Logic ---
 let activeMotors = [6];
 let activeKnobs = [];
-const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+let channelEnabled = [true, true, true, true, true, true, true, true];
+// C3/C6/common GPIOs; device-assigned pins are merged in at render time.
+const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 17, 18, 19, 20, 21, 22, 23];
+const drvKindMap = {
+    "NONE": 0,
+    "L298N": 1,
+    "DRV8833": 2,
+    "DRV2605L": 3,
+    "MOSFET": 4,
+    "MINI_HBRIDGE": 5
+};
+
+function motorPinSelectOptions(currentPin) {
+    const pins = new Set(pinOptions);
+    const p = Number(currentPin);
+    if (Number.isFinite(p) && p >= 0) pins.add(p);
+    return [...pins].sort((a, b) => a - b);
+}
+
+function motorRowCount() {
+    return Math.max(1, activeMotors.length);
+}
+
+function expandChannelEnabledForRows(enabled, rowCount, driverKind) {
+    const logical = logicalChannelCount(driverKind);
+    const src = Array.isArray(enabled) ? enabled : [];
+    const out = [];
+    for (let i = 0; i < rowCount; i++) {
+        if (logical < rowCount) {
+            const ch = Math.min(logical - 1, Math.floor(i * logical / rowCount));
+            out.push(src[ch] !== false);
+        } else {
+            out.push(src[i] !== false);
+        }
+    }
+    return out;
+}
+
+function collapseChannelEnabledForSave(rowCount, driverKind) {
+    const logical = logicalChannelCount(driverKind);
+    if (logical >= rowCount) return channelEnabled.slice(0, rowCount).map(v => v !== false);
+    const out = [];
+    for (let c = 0; c < logical; c++) {
+        const row = Math.floor(c * rowCount / logical);
+        out.push(channelEnabled[row] !== false);
+    }
+    return out;
+}
+
+function logicalChannelCount(kindOverride) {
+    let kind;
+    if (typeof kindOverride === "number") {
+        kind = kindOverride;
+    } else {
+        const drvChip = document.getElementById("drvChip");
+        const kindName = kindOverride ?? (drvChip ? drvChip.value : "MOSFET");
+        kind = drvKindMap[kindName] ?? 4;
+    }
+    if (kind === 1 || kind === 2 || kind === 5) return 2;
+    if (kind === 3) return 1;
+    const active = activeMotors.filter(p => Number.isFinite(p) && p >= 0);
+    return Math.max(1, active.length || 1);
+}
+
+async function pushChannelEnabled() {
+    const drvChip = document.getElementById("drvChip");
+    const kind = drvKindMap[drvChip?.value] ?? 4;
+    const rowCount = motorRowCount();
+    const enabled = collapseChannelEnabledForSave(rowCount, kind);
+    sendStateUpdate({ channels: enabled.map(on => ({ on: !!on })) });
+    addSerialLog(`[HAL] Motor outputs: ${enabled.map((on, i) => `Ch${i}=${on ? "ON" : "OFF"}`).join(", ")}`);
+    if (isRealESP32) {
+        fetch('/json/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channelEnabled: enabled })
+        }).catch(err => addSerialLog(`[CTRL] channelEnabled save failed: ${err.message}`));
+    }
+}
 
 function renderMotors() {
     const container = document.getElementById("motorsContainer");
     if (!container) return;
+    const rowCount = motorRowCount();
+    while (channelEnabled.length < rowCount) channelEnabled.push(true);
     container.innerHTML = "";
     activeMotors.forEach((pin, idx) => {
+        const pinNum = Number(pin);
+        const opts = motorPinSelectOptions(pinNum);
         const row = document.createElement("div");
         row.className = "motor-row";
+        row.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;";
         row.innerHTML = `
-            <span style="font-size: 11px;">Ch ${idx}:</span>
-            <select class="motor-pin" data-index="${idx}">
-                ${pinOptions.map(p => `<option value="${p}" ${p === pin ? 'selected' : ''}>GPIO ${p}</option>`).join('')}
+            <span style="font-size: 11px; min-width: 36px;">Ch ${idx}:</span>
+            <label style="display:flex; align-items:center; gap:4px; font-size:11px; margin:0; min-width:52px;">
+                <input type="checkbox" class="motor-output-enable" data-index="${idx}" ${channelEnabled[idx] !== false ? "checked" : ""} style="width:auto; margin:0;">
+                <span class="hint">${channelEnabled[idx] !== false ? "On" : "Off"}</span>
+            </label>
+            <select class="motor-pin" data-index="${idx}" style="flex:1; min-width:100px;">
+                ${opts.map(p => `<option value="${p}" ${p === pinNum ? "selected" : ""}>GPIO ${p}</option>`).join("")}
             </select>
             <button class="btn btn-remove-row remove-motor" data-index="${idx}" style="cursor:pointer;">&times;</button>
         `;
@@ -2255,6 +2349,7 @@ document.getElementById("addMotorBtn")?.addEventListener("click", () => {
     const used = new Set(activeMotors);
     const nextPin = pinOptions.find(p => !used.has(p)) || 0;
     activeMotors.push(nextPin);
+    channelEnabled.push(true);
     renderMotors();
 });
 
@@ -2273,6 +2368,7 @@ document.getElementById("motorsContainer")?.addEventListener("click", (e) => {
     if (e.target.classList.contains("remove-motor")) {
         const idx = parseInt(e.target.getAttribute("data-index"));
         activeMotors.splice(idx, 1);
+        channelEnabled.splice(idx, 1);
         renderMotors();
     }
 });
@@ -2287,8 +2383,15 @@ document.getElementById("knobsContainer")?.addEventListener("click", (e) => {
 
 document.getElementById("motorsContainer")?.addEventListener("change", (e) => {
     if (e.target.classList.contains("motor-pin")) {
-        const idx = parseInt(e.target.getAttribute("data-index"));
-        activeMotors[idx] = parseInt(e.target.value);
+        const idx = parseInt(e.target.getAttribute("data-index"), 10);
+        activeMotors[idx] = parseInt(e.target.value, 10);
+        renderMotors();
+    } else if (e.target.classList.contains("motor-output-enable")) {
+        const idx = parseInt(e.target.getAttribute("data-index"), 10);
+        channelEnabled[idx] = e.target.checked;
+        const hint = e.target.parentElement?.querySelector(".hint");
+        if (hint) hint.textContent = e.target.checked ? "On" : "Off";
+        pushChannelEnabled();
     }
 });
 
@@ -2351,10 +2454,20 @@ function applyDeviceConfig(cfg) {
         if (cfg.driver.sda != null) setSelectValue("pinSDA", cfg.driver.sda);
         if (cfg.driver.scl != null) setSelectValue("pinSCL", cfg.driver.scl);
         if (Array.isArray(cfg.driver.pins)) {
-            activeMotors = cfg.driver.pins.filter(p => p != null && p >= 0);
+            activeMotors = cfg.driver.pins
+                .map(p => Number(p))
+                .filter(pin => Number.isFinite(pin) && pin >= 0);
             if (activeMotors.length === 0) activeMotors = [6];
-            renderMotors();
         }
+        const enabledSrc = Array.isArray(cfg.channelEnabled)
+            ? cfg.channelEnabled
+            : (Array.isArray(cfg.driver?.channelEnabled) ? cfg.driver.channelEnabled : null);
+        if (enabledSrc) {
+            channelEnabled = expandChannelEnabledForRows(
+                enabledSrc, Math.max(1, activeMotors.length), kind
+            );
+        }
+        renderMotors();
     }
 
     if (cfg.audio) {
@@ -2389,7 +2502,7 @@ function applyDeviceConfig(cfg) {
         renderKnobs();
     }
 
-    addSerialLog(`[CTRL] Device config loaded (driver=${drvName}, led pin=${cfg.led?.pin}, count=${cfg.led?.count})`);
+    addSerialLog(`[CTRL] Device config loaded (driver=${drvName}, pins=[${activeMotors.join(",")}], led pin=${cfg.led?.pin}, count=${cfg.led?.count})`);
 }
 
 function populateDeviceConfigFromESP() {
@@ -2500,6 +2613,7 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     const requestedSsid = document.getElementById("deviceSsid")?.value.trim() || "Haxel";
     const configPatch = {
         apSsid: requestedSsid,
+        channelEnabled: collapseChannelEnabledForSave(motorRowCount(), kind),
         driver: {
             kind: kind,
             pins: pinsPadded,

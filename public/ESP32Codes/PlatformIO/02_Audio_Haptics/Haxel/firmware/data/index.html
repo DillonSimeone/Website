@@ -320,21 +320,15 @@ wave(t * (freq * 0.05))
                                     </select>
                                 </div>
                                 
-                                <!-- Motor output enables (pins stay assigned when off) -->
-                                <div class="calib-section">
-                                    <h4>Motor Outputs</h4>
-                                    <p class="hint" style="font-size: 10px; color: #555; margin-top: 0;">
-                                        Toggle channels off while experimenting — pin wiring is kept.
-                                    </p>
-                                    <div id="motorOutputContainer"></div>
-                                </div>
-
-                                <!-- Motor Channels Section -->
+                                <!-- Motor channels: enable toggle + GPIO pin per row -->
                                 <div class="calib-section">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                        <h4>Motor Channels (Pins)</h4>
+                                        <h4>Motor Channels</h4>
                                         <button class="btn" id="addMotorBtn" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">+ Add Motor</button>
                                     </div>
+                                    <p class="hint" style="font-size: 10px; color: #555; margin-top: 0;">
+                                        Enable/disable each channel and assign GPIO pins. Values load from the device on connect.
+                                    </p>
                                     <div id="motorsContainer">
                                         <!-- Dynamically rendered motor pin selectors -->
                                     </div>
