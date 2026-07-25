@@ -444,6 +444,664 @@ function updateMicStatusBtn() {
     }
 }
 
+/* ── Audio-Reactive Telemetry for Slide 16 (matches Haxel website main.js) ── */
+let slideTelemetryMode = 'classic';
+const SLIDE_TELEMETRY_LEN = 120;
+const slideWaveHistory = new Array(SLIDE_TELEMETRY_LEN).fill(0.1);
+const slideColorHistory = new Array(SLIDE_TELEMETRY_LEN).fill('rgba(0, 47, 108, 0.25)');
+const slideSpecHistory = [];
+
+for (let i = 0; i < SLIDE_TELEMETRY_LEN; i++) {
+    slideSpecHistory.push(new Array(32).fill(0.05));
+}
+
+export function setSlideTelemetryMode(mode) {
+    slideTelemetryMode = mode;
+}
+
+function drawSlideVirtualActuator(ctx, cx, cy, radius, activeAmp) {
+    if (activeAmp > 0.02) {
+        ctx.lineWidth = 3;
+        const numWaves = 3;
+        for (let i = 0; i < numWaves; i++) {
+            const phase = (timeSec * 4 + i / numWaves) % 1.0;
+            const currentR = radius + phase * 50;
+            const alpha = (1.0 - phase) * 0.8 * activeAmp;
+            ctx.strokeStyle = `rgba(0, 47, 108, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
+    let dx = 0;
+    let dy = 0;
+    if (activeAmp > 0.01) {
+        dx = (Math.random() - 0.5) * 6 * activeAmp * (1.0 + Math.sin(timeSec * 25) * 0.2);
+        dy = (Math.random() - 0.5) * 6 * activeAmp * (1.0 + Math.cos(timeSec * 25) * 0.2);
+    }
+
+    const ax = cx + dx;
+    const ay = cy + dy;
+
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(17,17,17,0.2)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ax, ay, radius * 0.75, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const rotationSpeed = activeAmp * 25;
+    const angle = timeSec * rotationSpeed;
+    ctx.fillStyle = "#e23b24";
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.arc(ax, ay, radius * 0.7, angle, angle + Math.PI, false);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#111111";
+    ctx.beginPath();
+    ctx.arc(ax, ay, 4, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function getSlideAudioActiveAmp(mags) {
+    const gain = parseFloat(document.getElementById("slideAudioGain")?.value || 4.0);
+    let maxAmp = 0;
+
+    for (let i = 0; i < slideNumBins; i++) {
+        const startIdx = i === 0 ? 0 : slideDividers[i - 1];
+        const endIdx = i === slideNumBins - 1 ? 32 : slideDividers[i];
+        const len = Math.max(1, endIdx - startIdx);
+
+        let sum = 0;
+        for (let b = startIdx; b < endIdx && b < 32; b++) {
+            sum += mags[b] || 0;
+        }
+        const vol = (sum / len) * (gain * 0.45);
+
+        const selectEl = document.getElementById(`slide-bin-${i}-pattern`);
+        const patternId = selectEl ? selectEl.value : "none";
+
+        if (patternId !== "none") {
+            let patVal = 1.0;
+            if (patternId === "Pulse") {
+                patVal = Math.pow(Math.max(0, Math.sin(timeSec * 6)), 3);
+            } else if (patternId === "Rumble") {
+                patVal = 0.5 + Math.sin(timeSec * 25) * 0.5;
+            } else if (patternId === "Staccato") {
+                patVal = (Math.sin(timeSec * 12) > 0.5) ? 1.0 : 0.0;
+            } else if (patternId === "Ocean") {
+                patVal = Math.sin(timeSec * 2) * 0.5 + 0.5;
+            } else if (patternId === "Saw") {
+                patVal = (timeSec * 2) % 1.0;
+            } else if (patternId === "Sine") {
+                patVal = Math.sin(timeSec * 5) * 0.5 + 0.5;
+            } else if (patternId === "Square") {
+                patVal = Math.sin(timeSec * 8) > 0 ? 1.0 : 0.0;
+            } else if (patternId === "Noise") {
+                patVal = Math.random();
+            }
+
+            const out = vol * patVal;
+            if (out > maxAmp) maxAmp = out;
+        }
+    }
+    return maxAmp;
+}
+
+function drawSlideTelemetry(canvas) {
+    if (!canvas || !canvas.offsetParent) return;
+    const setup = setupCanvas(canvas);
+    if (!setup) return;
+    const { ctx, w, h } = setup;
+
+    // Get 32-bin frequency magnitudes
+    let mags = getFrequencyBins();
+    if (!isAudioLive() || !mags) {
+        mags = new Array(32);
+        for (let b = 0; b < 32; b++) {
+            const wave1 = Math.sin(timeSec * 4 + b * 0.25) * 0.4 + 0.5;
+            const wave2 = Math.sin(timeSec * 10 - b * 0.15) * 0.3;
+            mags[b] = Math.max(0.05, Math.min(1.0, (wave1 + wave2) * 0.6));
+        }
+    }
+
+    // Evaluate active amplitude strictly based on frequency bin pattern mappings
+    let amp = getSlideAudioActiveAmp(mags);
+
+    slideWaveHistory.push(Math.min(1.0, Math.max(0, amp)));
+    slideWaveHistory.shift();
+
+    let activeColor = "rgba(0, 47, 108, 0.25)";
+    const specBin = mags;
+    slideSpecHistory.push(specBin);
+    slideSpecHistory.shift();
+
+    // HSL Spectrum Color mapping from top bins
+    const sortedBins = Array.from({ length: 32 }, (_, idx) => ({ index: idx, val: specBin[idx] }))
+        .sort((a, b) => b.val - a.val);
+    const top3 = sortedBins.slice(0, 3);
+    const hue1 = (top3[0].index / 31) * 280;
+    const hue2 = (top3[1].index / 31) * 280;
+    const hue3 = (top3[2].index / 31) * 280;
+    const avgHue = (hue1 + hue2 + hue3) / 3;
+    activeColor = `hsl(${avgHue}, 85%, 45%)`;
+
+    slideColorHistory.push(activeColor);
+    slideColorHistory.shift();
+
+    // 1. Base Bauhaus Cream Background
+    ctx.fillStyle = "#f4ebd0";
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. Draw Virtual Physical Actuator Motor Chassis on left (0 to 120)
+    const actX = Math.min(60, w * 0.18);
+    drawSlideVirtualActuator(ctx, actX, h / 2, Math.min(36, h * 0.22), amp);
+
+    const startX = Math.min(120, w * 0.35);
+
+    // Clear and fill graph viewport right of divider
+    ctx.fillStyle = "#f4ebd0";
+    ctx.fillRect(startX, 0, w - startX, h);
+
+    // Vertical Divider Line
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(startX, 0);
+    ctx.lineTo(startX, h);
+    ctx.stroke();
+
+    // Subtle grid lines
+    ctx.strokeStyle = "rgba(17, 17, 17, 0.08)";
+    ctx.lineWidth = 1;
+    for (let x = startX; x < w; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (let y = 30; y < h; y += 30) {
+        ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    const width = w - startX;
+    const step = width / (SLIDE_TELEMETRY_LEN - 1);
+
+    if (slideTelemetryMode === "classic") {
+        for (let i = 0; i < slideWaveHistory.length - 1; i++) {
+            const h1 = slideWaveHistory[i] * (h - 20);
+            const h2 = slideWaveHistory[i + 1] * (h - 20);
+            const x1 = startX + i * step;
+            const x2 = startX + (i + 1) * step;
+
+            let fillCol = slideColorHistory[i] || "rgba(0, 47, 108, 0.25)";
+            if (fillCol.startsWith("hsl")) {
+                fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+            }
+            ctx.fillStyle = fillCol;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, h - 10);
+            ctx.lineTo(x1, h - 10 - h1);
+            ctx.lineTo(x2, h - 10 - h2);
+            ctx.lineTo(x2, h - 10);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = "#111111";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x1, h - 10 - h1);
+            ctx.lineTo(x2, h - 10 - h2);
+            ctx.stroke();
+        }
+    } else if (slideTelemetryMode === "symmetric") {
+        for (let i = 0; i < slideWaveHistory.length - 1; i++) {
+            const h1 = slideWaveHistory[i] * (h - 20);
+            const h2 = slideWaveHistory[i + 1] * (h - 20);
+            const x1 = startX + i * step;
+            const x2 = startX + (i + 1) * step;
+
+            let fillCol = slideColorHistory[i] || "rgba(0, 47, 108, 0.25)";
+            if (fillCol.startsWith("hsl")) {
+                fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+            }
+            ctx.fillStyle = fillCol;
+
+            const y1_top = h / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+            const y2_top = h / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+            const y1_bot = h / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+            const y2_bot = h / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1_top - h1 / 2);
+            ctx.lineTo(x2, y2_top - h2 / 2);
+            ctx.lineTo(x2, y2_bot + h2 / 2);
+            ctx.lineTo(x1, y1_bot + h1 / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = "#111111";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1_top - h1 / 2);
+            ctx.lineTo(x2, y2_top - h2 / 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x2, y2_bot + h2 / 2);
+            ctx.lineTo(x1, y1_bot + h1 / 2);
+            ctx.stroke();
+        }
+    } else if (slideTelemetryMode === "waterfall") {
+        const cellH = (h - 20) / 32;
+        for (let i = 0; i < slideSpecHistory.length; i++) {
+            const x = startX + i * step;
+            const spec = slideSpecHistory[i];
+            for (let j = 0; j < 32; j++) {
+                const val = spec ? spec[j] : 0;
+                if (val > 0.01) {
+                    const hue = (j / 31) * 280;
+                    ctx.fillStyle = `hsla(${hue}, 85%, 45%, ${val * 0.75})`;
+                    ctx.fillRect(x, h - 10 - (j + 1) * cellH, step + 1, cellH + 0.5);
+                }
+            }
+        }
+    } else if (slideTelemetryMode === "orbit") {
+        const cx = startX + width / 2;
+        const cy = h / 2;
+
+        ctx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, (h - 30) * 0.25, 0, Math.PI * 2);
+        ctx.stroke();
+
+        for (let i = 0; i < slideWaveHistory.length - 1; i++) {
+            const amp1 = slideWaveHistory[i];
+            const amp2 = slideWaveHistory[i + 1];
+
+            const angle1 = (i / SLIDE_TELEMETRY_LEN) * Math.PI * 2 * 4 + timeSec * 3;
+            const angle2 = ((i + 1) / SLIDE_TELEMETRY_LEN) * Math.PI * 2 * 4 + timeSec * 3;
+
+            const baseR = (h - 30) * 0.28;
+            const r1 = baseR + amp1 * baseR * 0.8;
+            const r2 = baseR + amp2 * baseR * 0.8;
+
+            const x1 = cx + Math.cos(angle1) * r1;
+            const y1 = cy + Math.sin(angle1) * r1;
+            const x2 = cx + Math.cos(angle2) * r2;
+            const y2 = cy + Math.sin(angle2) * r2;
+
+            let strokeCol = slideColorHistory[i] || "rgba(0, 47, 108, 0.25)";
+            const alpha = (i / (slideWaveHistory.length - 1)) * 0.8;
+            if (strokeCol.startsWith("hsl")) {
+                strokeCol = strokeCol.replace("hsl", "hsla").replace(")", `, ${alpha})`);
+            } else {
+                strokeCol = `rgba(0, 47, 108, ${alpha})`;
+            }
+
+            ctx.strokeStyle = strokeCol;
+            ctx.lineWidth = 2 + (i / slideWaveHistory.length) * 3;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+
+        if (slideWaveHistory.length > 0) {
+            const latestAmp = slideWaveHistory[slideWaveHistory.length - 1];
+            const latestAngle = Math.PI * 2 * 4 + timeSec * 3;
+            const baseR = (h - 30) * 0.28;
+            const latestR = baseR + latestAmp * baseR * 0.8;
+            const lx = cx + Math.cos(latestAngle) * latestR;
+            const ly = cy + Math.sin(latestAngle) * latestR;
+
+            ctx.fillStyle = slideColorHistory[slideColorHistory.length - 1] || "#111111";
+            ctx.strokeStyle = "#111111";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(lx, ly, 6 + latestAmp * 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.strokeStyle = "rgba(17, 17, 17, 0.25)";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(lx, ly);
+            ctx.stroke();
+        }
+    }
+}
+
+/* ── Interactive Spectrum Partitioning & Dividers for Slide 16 ── */
+let slideDividers = [0, 29];
+let slideNumBins = 3;
+let draggingSlideDividerIdx = -1;
+
+const SLIDE_PATTERNS = [
+    { id: "none", name: "NONE (No Reactivity)" },
+    { id: "Pulse", name: "Pulse Wave" },
+    { id: "Rumble", name: "Rumble" },
+    { id: "Staccato", name: "Staccato Tap" },
+    { id: "Ocean", name: "Ocean Wave" },
+    { id: "Saw", name: "Sawtooth Sweep" },
+    { id: "Sine", name: "Sine Wave" },
+    { id: "Square", name: "Square Wave" },
+    { id: "Noise", name: "Chaos Noise" }
+];
+
+export function recalculateSlideDividers() {
+    const minFreqInput = document.getElementById("slideAudioMinFreq");
+    const maxFreqInput = document.getElementById("slideAudioMaxFreq");
+    const minFreq = parseFloat(minFreqInput ? minFreqInput.value : 40);
+    const maxFreq = parseFloat(maxFreqInput ? maxFreqInput.value : 16000);
+
+    const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+    const minBandIdx = getBandAtFreq(minFreq);
+    const maxBandIdx = getBandAtFreq(maxFreq);
+
+    const numDividers = slideNumBins - 1;
+    if (numDividers >= 1) {
+        slideDividers = new Array(numDividers);
+        slideDividers[0] = minBandIdx;
+        if (numDividers > 1) {
+            slideDividers[numDividers - 1] = maxBandIdx;
+            for (let i = 1; i < numDividers - 1; i++) {
+                const ratio = i / (numDividers - 1);
+                slideDividers[i] = Math.round(minBandIdx + ratio * (maxBandIdx - minBandIdx));
+            }
+        }
+    }
+
+    for (let i = 0; i < slideDividers.length; i++) {
+        if (i > 0 && slideDividers[i] <= slideDividers[i - 1]) {
+            slideDividers[i] = slideDividers[i - 1] + 1;
+        }
+    }
+    for (let i = slideDividers.length - 1; i >= 0; i--) {
+        if (slideDividers[i] >= 32) slideDividers[i] = 31;
+        if (i < slideDividers.length - 1 && slideDividers[i] >= slideDividers[i + 1]) {
+            slideDividers[i] = slideDividers[i + 1] - 1;
+        }
+    }
+
+    renderSlideBinRows();
+}
+
+export function updateSlideBinRangeLabels() {
+    const getFreqAtBand = (b) => {
+        if (b === 0) return 0;
+        if (b === 32) return 20000;
+        return Math.round(40 * Math.pow(20000 / 40, b / 32));
+    };
+    for (let i = 0; i < slideNumBins; i++) {
+        const startVal = i === 0 ? 0 : slideDividers[i - 1];
+        const endVal = i === slideNumBins - 1 ? 32 : slideDividers[i];
+
+        const fStart = getFreqAtBand(startVal);
+        const fEnd = getFreqAtBand(endVal);
+
+        const label = document.getElementById(`slide-bin-${i}-range`);
+        if (label) {
+            label.textContent = `${fStart} - ${fEnd} Hz`;
+        }
+    }
+}
+
+export function renderSlideBinRows() {
+    const container = document.getElementById("slideBinsContainer");
+    if (!container) return;
+
+    const savedValues = [];
+    for (let i = 0; i < slideNumBins; i++) {
+        const el = document.getElementById(`slide-bin-${i}-pattern`);
+        savedValues.push(el ? el.value : null);
+    }
+
+    container.innerHTML = "";
+    const defaults = ["none", "Pulse", "Rumble", "Staccato", "Ocean"];
+
+    const minFreq = parseFloat(document.getElementById("slideAudioMinFreq")?.value || 40);
+    const maxFreq = parseFloat(document.getElementById("slideAudioMaxFreq")?.value || 16000);
+    const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+    const minBandIdx = getBandAtFreq(minFreq);
+    const maxBandIdx = getBandAtFreq(maxFreq);
+
+    for (let i = 0; i < slideNumBins; i++) {
+        const row = document.createElement("div");
+        row.className = "bin-row";
+
+        let labelName = `Bin ${i}`;
+        if (i === 0 && minBandIdx > 0) {
+            labelName += ` (Anti-Loop / Low Cut)`;
+        } else if (i === slideNumBins - 1 && maxBandIdx < 32) {
+            labelName += ` (High Cut / End Bin)`;
+        } else {
+            const activeIdx = (minBandIdx > 0) ? (i - 1) : i;
+            const activeCount = slideNumBins - (minBandIdx > 0 ? 1 : 0) - (maxBandIdx < 32 ? 1 : 0);
+            if (activeCount === 3) {
+                const labels = ["Bass", "Mids", "Treble"];
+                labelName += ` (${labels[activeIdx]})`;
+            } else if (activeCount === 2) {
+                const labels = ["Bass/Mids", "Treble"];
+                labelName += ` (${labels[activeIdx]})`;
+            } else {
+                labelName += ` (Active ${activeIdx + 1})`;
+            }
+        }
+
+        row.innerHTML = `
+            <span class="bin-title">${labelName}:</span>
+            <span class="bin-range" id="slide-bin-${i}-range">-</span>
+            <select class="bin-pattern-select" id="slide-bin-${i}-pattern">
+            </select>
+        `;
+        container.appendChild(row);
+
+        const select = row.querySelector(".bin-pattern-select");
+        SLIDE_PATTERNS.forEach(pat => {
+            const opt = document.createElement("option");
+            opt.value = pat.id;
+            opt.textContent = pat.name;
+            select.appendChild(opt);
+        });
+
+        const prevVal = savedValues[i];
+        if (prevVal) {
+            select.value = prevVal;
+        } else {
+            select.value = defaults[i] || "none";
+        }
+    }
+
+    updateSlideBinRangeLabels();
+}
+
+export function initSlideSpectrumInteractions() {
+    const canvas = document.getElementById("spectrumSlideCanvas");
+    if (!canvas) return;
+
+    const getMouseX = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        return clientX - rect.left;
+    };
+
+    const handleStart = (e) => {
+        const mx = getMouseX(e);
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = canvas.width / dpr;
+        let closestIdx = -1;
+        let minDist = 20;
+
+        slideDividers.forEach((divVal, idx) => {
+            const x = divVal * (cssW / 32);
+            const dist = Math.abs(mx - x);
+            if (dist < minDist) {
+                minDist = dist;
+                closestIdx = idx;
+            }
+        });
+
+        if (closestIdx >= 0) {
+            draggingSlideDividerIdx = closestIdx;
+            e.preventDefault();
+        }
+    };
+
+    const handleMove = (e) => {
+        if (draggingSlideDividerIdx < 0) return;
+        const mx = getMouseX(e);
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = canvas.width / dpr;
+        const band = Math.round((mx / cssW) * 32);
+
+        const minVal = draggingSlideDividerIdx === 0 ? 1 : slideDividers[draggingSlideDividerIdx - 1] + 1;
+        const maxVal = draggingSlideDividerIdx === slideDividers.length - 1 ? 31 : slideDividers[draggingSlideDividerIdx + 1] - 1;
+
+        slideDividers[draggingSlideDividerIdx] = Math.max(minVal, Math.min(maxVal, band));
+        updateSlideBinRangeLabels();
+        e.preventDefault();
+    };
+
+    const handleEnd = () => {
+        draggingSlideDividerIdx = -1;
+    };
+
+    canvas.addEventListener("mousedown", handleStart);
+    canvas.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleEnd);
+    canvas.addEventListener("touchstart", handleStart, { passive: false });
+    canvas.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("touchend", handleEnd);
+
+    // + ADD BIN / - SUBTRACT BIN buttons
+    document.getElementById("slideAddBinBtn")?.addEventListener("click", () => {
+        if (slideNumBins >= 5) return;
+        slideNumBins++;
+        recalculateSlideDividers();
+    });
+
+    document.getElementById("slideSubBinBtn")?.addEventListener("click", () => {
+        if (slideNumBins <= 1) return;
+        slideNumBins--;
+        recalculateSlideDividers();
+    });
+
+    // Sliders
+    const gainSlider = document.getElementById("slideAudioGain");
+    if (gainSlider) {
+        gainSlider.addEventListener("input", () => {
+            const label = document.getElementById("slideGainVal");
+            if (label) label.textContent = `${parseFloat(gainSlider.value).toFixed(1)}x`;
+        });
+    }
+
+    const minFreqSlider = document.getElementById("slideAudioMinFreq");
+    if (minFreqSlider) {
+        minFreqSlider.addEventListener("input", (e) => {
+            const label = document.getElementById("slideMinFreqVal");
+            if (label) label.textContent = `${e.target.value} Hz`;
+        });
+        minFreqSlider.addEventListener("change", () => {
+            recalculateSlideDividers();
+        });
+    }
+
+    const maxFreqSlider = document.getElementById("slideAudioMaxFreq");
+    if (maxFreqSlider) {
+        maxFreqSlider.addEventListener("input", (e) => {
+            const label = document.getElementById("slideMaxFreqVal");
+            if (label) label.textContent = `${e.target.value} Hz`;
+        });
+        maxFreqSlider.addEventListener("change", () => {
+            recalculateSlideDividers();
+        });
+    }
+
+    // Telemetry Source Dropdown (Browser Mic Web Audio integration)
+    const micSelect = document.getElementById("slideMicSrc");
+    if (micSelect) {
+        micSelect.addEventListener("change", async (e) => {
+            if (e.target.value === "1") {
+                try {
+                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                } catch (err) {
+                    console.warn("Browser mic access denied:", err);
+                    micSelect.value = "0";
+                }
+            }
+        });
+    }
+
+    recalculateSlideDividers();
+}
+
+function drawSlideSpectrum(canvas) {
+    if (!canvas || !canvas.offsetParent) return;
+    const setup = setupCanvas(canvas);
+    if (!setup) return;
+    const { ctx, w, h } = setup;
+
+    ctx.fillStyle = "#f4ebd0";
+    ctx.fillRect(0, 0, w, h);
+
+    const barWidth = w / 32;
+    const mags = getFrequencyBins();
+    const gainVal = parseFloat(document.getElementById("slideAudioGain")?.value || 4.0);
+
+    for (let i = 0; i < 32; i++) {
+        let val;
+        if (isAudioLive() && mags) {
+            val = (mags[Math.floor((i / 32) * mags.length)] || 0.05) * (gainVal * 0.25);
+        } else {
+            const p1 = Math.pow(Math.max(0, Math.sin(timeSec * 4.5 + i * 0.1)), 3);
+            const p2 = Math.sin(timeSec * 12 + i * 0.3) * 0.2 + 0.2;
+            val = Math.min(1.0, (p1 * 0.7 + p2) * (gainVal * 0.2));
+        }
+
+        const barHeight = Math.max(4, Math.min(1.0, val) * (h - 10));
+        const hue = (i / 31) * 280;
+        ctx.fillStyle = `hsl(${hue}, 85%, 45%)`;
+        ctx.fillRect(i * barWidth + 1, h - barHeight, barWidth - 2, barHeight);
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(i * barWidth + 1, h - barHeight, barWidth - 2, barHeight);
+    }
+
+    // Draw Frequency Dividers (Red, Yellow, Blue Pins)
+    const pinColors = ["#e23b24", "#f2b134", "#002f6c", "#9b59b6"];
+    slideDividers.forEach((divVal, idx) => {
+        const x = divVal * barWidth;
+        const color = pinColors[idx % pinColors.length];
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, 12, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    });
+}
+
 function tick() {
     timeSec += 0.016;
     applyBassPulseToDocument();
@@ -458,6 +1116,8 @@ function tick() {
     drawMotorSwarm(document.getElementById('fftMotorSwarm'), energies);
     drawUploaderMockup(document.getElementById('uploaderMockup'));
     drawUploaderEsp32(document.getElementById('uploaderEsp32'));
+    drawSlideTelemetry(document.getElementById('telemetrySlideCanvas'));
+    drawSlideSpectrum(document.getElementById('spectrumSlideCanvas'));
     updateMicStatusBtn();
 
     rafId = requestAnimationFrame(tick);

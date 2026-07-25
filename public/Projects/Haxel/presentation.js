@@ -3,7 +3,9 @@ import {
     startVizLoop,
     onSlideEnter,
     onSlideLeave,
-    setActiveSlideIndex
+    setActiveSlideIndex,
+    setSlideTelemetryMode,
+    initSlideSpectrumInteractions
 } from './presentation-viz.js';
 import {
     initFleet,
@@ -36,7 +38,7 @@ const menuList = () => document.getElementById('menuList');
 const fleetStatusEl = () => document.getElementById('fleetFooterStatus');
 const fleetMeterFill = () => document.getElementById('fleetMeterFill');
 
-const FLEET_SLIDE_INDEX = 15;
+const FLEET_SLIDE_INDEX = 16;
 
 export function goToSlide(idx) {
     if (idx < 0 || idx >= slides.length) return;
@@ -238,12 +240,27 @@ function exposeGlobals() {
     window.toggleMenu = toggleMenu;
 }
 
+function wireTelemetrySlide() {
+    document.querySelectorAll('#slideTelemetryToggles .telemetry-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#slideTelemetryToggles .telemetry-toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const mode = btn.dataset.mode;
+            setSlideTelemetryMode(mode);
+            const label = document.getElementById('telemetrySlideModeLabel');
+            if (label) label.textContent = mode.toUpperCase();
+        });
+    });
+}
+
 async function init() {
     slides = [...document.querySelectorAll('.slide')];
     exposeGlobals();
     populateMenu();
     initKeyboard();
     wireFleetSlide();
+    wireTelemetrySlide();
+    initSlideSpectrumInteractions();
 
     await loadSpeakerNotes();
     initFleet();

@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Feel the Difference: A Haptic Petting Zoo, Teardown 2026</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="presentation.css">
 </head>
+
 <body>
 
     <div class="presentation-container">
 
         <!-- 1: Title -->
         <div class="slide slide-layout-hero active" data-slide-id="title" data-title="Feel the Difference">
-            <canvas id="bauhausTitleCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+            <canvas id="bauhausTitleCanvas"
+                style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
             <div style="position:relative;z-index:1;">
                 <div class="badge">Teardown 2026 // Portland Workshops</div>
                 <h1>Feel the Difference</h1>
@@ -23,12 +28,14 @@
                 <div class="presenters">
                     <div>
                         <strong>Dillon Simeone</strong>
-                        <p style="font-size:15px;font-family:var(--font-mono);margin-top:5px;">Deaf Lead Design Engineer</p>
+                        <p style="font-size:15px;font-family:var(--font-mono);margin-top:5px;">Deaf Lead Design Engineer
+                        </p>
                         <p style="font-size:14px;margin-top:2px;color:var(--bauhaus-yellow);">Universal Music Design</p>
                     </div>
                     <div>
                         <strong>Location</strong>
-                        <p style="font-size:15px;font-family:var(--font-mono);margin-top:5px;">DreamTENT @ Jupiter Original</p>
+                        <p style="font-size:15px;font-family:var(--font-mono);margin-top:5px;">DreamTENT @ Jupiter
+                            Original</p>
                         <p style="font-size:14px;margin-top:2px;">July 25, 2026 // 3:30 to 4:50 PM</p>
                     </div>
                 </div>
@@ -38,7 +45,8 @@
         <!-- 2: Welcome -->
         <div class="slide slide-layout-standard" data-slide-id="welcome" data-title="Welcome to the Haptic Petting Zoo">
             <h2>Welcome to the Haptic Petting Zoo</h2>
-            <p class="slide-lead">Most people have only experienced one type of haptic: phone vibration motors. Today you will feel many more.</p>
+            <p class="slide-lead">Most people have only experienced one type of haptic: phone vibration motors. Today
+                you will feel many more.</p>
             <div class="actuator-showcase">
                 <div class="actuator-tile t-red">Solenoids<span>Sharp taps &amp; clicks</span></div>
                 <div class="actuator-tile t-yellow">Servos<span>Pressure &amp; stretch</span></div>
@@ -51,20 +59,27 @@
                 <div class="actuator-tile t-red">Haptic Knobs<span>Detents &amp; ticks</span></div>
             </div>
             <div class="slide-bottom-bar">
-                <div class="bottom-bar-cell goals">Goals: sensor-to-haptic translation, cross-modal mapping, mechanoreceptor targeting</div>
-                <div class="bottom-bar-cell docs">Every station has QR codes linking to full BOMs, source code, and build guides. All off-the-shelf parts.</div>
+                <div class="bottom-bar-cell goals">Goals: sensor-to-haptic translation, cross-modal mapping,
+                    mechanoreceptor targeting</div>
+                <div class="bottom-bar-cell docs">Every station has QR codes linking to full BOMs, source code, and
+                    build guides. All off-the-shelf parts.</div>
             </div>
         </div>
 
         <!-- 3: Mapping Accessibility -->
-        <div class="slide slide-layout-split" data-slide-id="accessibility" data-title="Mapping Accessibility to Haptics">
+        <div class="slide slide-layout-split" data-slide-id="accessibility"
+            data-title="Mapping Accessibility to Haptics">
             <div class="split-left">
                 <h2>Mapping Accessibility to Haptics</h2>
                 <ul class="bullet-list">
-                    <li><strong>Universal Music Design</strong> bridges hearing and Deaf performance spaces through tactile overlays.</li>
-                    <li><em>GestoLumina</em> (Aalborg University Press): gesture-interpreted light, sound, and haptics framework.</li>
-                    <li><em>Sonic Agency</em> (ASSETS '25): technology-mediated performance by Deaf and Hard of Hearing musicians.</li>
-                    <li>Haptic and light interfaces powered by ESP32s, with open documentation for makers at all levels.</li>
+                    <li><strong>Universal Music Design</strong> bridges hearing and Deaf performance spaces through
+                        tactile overlays.</li>
+                    <li><em>GestoLumina</em> (Aalborg University Press): gesture-interpreted light, sound, and haptics
+                        framework.</li>
+                    <li><em>Sonic Agency</em> (ASSETS '25): technology-mediated performance by Deaf and Hard of Hearing
+                        musicians.</li>
+                    <li>Haptic and light interfaces powered by ESP32s, with open documentation for makers at all levels.
+                    </li>
                 </ul>
             </div>
             <div class="split-right blue-theme quote-panel">
@@ -86,25 +101,31 @@
                 <figure class="hw-card hw-esp32-card">
                     <div class="hw-label">Beetle ESP32-C6 ($4.90)</div>
                     <img src="./images/beetle_c6.jpg" alt="Beetle ESP32-C6">
-                    <figcaption class="hw-figcaption">Ultra-compact for rings and wearables. LiPo charger inbuilt. RISC-V, WiFi 6, BLE 5, Zigbee / Thread / Matter.</figcaption>
+                    <figcaption class="hw-figcaption">Ultra-compact for rings and wearables. LiPo charger inbuilt.
+                        RISC-V, WiFi 6, BLE 5, Zigbee / Thread / Matter.</figcaption>
                 </figure>
                 <figure class="hw-card hw-esp32-card">
                     <div class="hw-label">ESP32-C3 Supermini ($1.75~)</div>
                     <img src="./images/esp32_c3_supermini_aliexpress.jpg" alt="ESP32 C3 Supermini">
-                    <figcaption class="hw-figcaption">Great for ESP-NOW fleets, but no battery manager and single core.</figcaption>
+                    <figcaption class="hw-figcaption">Great for ESP-NOW fleets, but no battery manager and single core.
+                    </figcaption>
                 </figure>
             </div>
             <div class="hw-ch32-row">
                 <figure class="hw-card hw-ch32-card">
                     <div class="hw-label">CH32V003 ($0.50~)</div>
                     <img src="./images/ch32v003_aliexpress.png" alt="CH32V003">
-                    <figcaption class="hw-figcaption">The "ten cent microcontroller." Under $0.50 each, pennies on a reel. 5V-only with no 3.3V rail, so sensor options are narrower, but for driving motors it does everything you need. A CH32FUN talk at last year's Teardown got me started, and the tooling is genuinely as smooth as ESP-IDF.</figcaption>
+                    <figcaption class="hw-figcaption">The "ten cent microcontroller." Under $0.50 each, pennies on a
+                        reel. 5V-only with no 3.3V rail, so sensor options are narrower, but for driving motors it does
+                        everything you need. A CH32FUN talk at last year's Teardown got me started, and the tooling is
+                        genuinely as smooth as ESP-IDF.</figcaption>
                 </figure>
             </div>
         </div>
 
         <!-- 5: Software -->
-        <div class="slide slide-layout-standard" data-slide-id="software" data-title="Software: MicroPython vs PlatformIO">
+        <div class="slide slide-layout-standard" data-slide-id="software"
+            data-title="Software: MicroPython vs PlatformIO">
             <h2>Software: MicroPython vs PlatformIO</h2>
             <div class="sw-compare">
                 <div class="sw-col">
@@ -115,7 +136,8 @@
                     <ul class="sw-pros-cons">
                         <li class="pro">Real-time compilation. Edit, save, run. No build step.</li>
                         <li class="pro">Ideal for rapid prototyping and classroom workshops.</li>
-                        <li class="con">Higher power draw. The interpreter never sleeps as efficiently as compiled C.</li>
+                        <li class="con">Higher power draw. The interpreter never sleeps as efficiently as compiled C.
+                        </li>
                         <li class="con">Smaller library ecosystem. Many sensor drivers need manual porting.</li>
                         <li class="con">Timing-critical code (I2S, precise PWM) is harder to get right.</li>
                     </ul>
@@ -138,7 +160,8 @@
             <div class="sw-uploader-section">
                 <p class="sw-cli-note">
                     <strong>PlatformIO's CLI is the real superpower.</strong>
-                    It is language-agnostic. Shell out to <code>pio run -t upload</code> from Python, Node, Electron, or anything else, and you have a custom flash toolchain in an afternoon.
+                    It is language-agnostic. Shell out to <code>pio run -t upload</code> from Python, Node, Electron, or
+                    anything else, and you have a custom flash toolchain in an afternoon.
                     The uploader below is exactly that: a thin web GUI over the CLI.
                 </p>
                 <div class="sw-uploader-row">
@@ -157,23 +180,29 @@
             <div class="split-left">
                 <h2>GestoLumina &amp; UMD Journey</h2>
                 <ul class="bullet-list">
-                    <li><strong>GeLu 1:</strong> Felt Sound research to wireless ESP32-S3 and TensorFlow Lite gesture ML.</li>
-                    <li><strong>GeLu 2 to 3:</strong> iterative wearables, custom PCBs, Bambu Lab rapid enclosures.</li>
-                    <li><strong>Audio Reactive Masks:</strong> Jazz Prism Project, light and haptic sync for performers.</li>
-                    <li><strong>SynchroGlove:</strong> experimental datagloves for ensemble timing.</li>
+                    <li><strong>GeLu 1:</strong> Felt Sound research to wireless ESP32-S3 and TensorFlow Lite gesture
+                        ML.</li>
+                    <li><strong>GeLu 2 to 3:</strong> Iterative wearables, custom PCBs, and Bambu Lab rapid enclosures.</li>
+                    <li><strong>Haptic Gloves:</strong> Direct tactile feedback integrated into the knuckles.</li>
+                    <li><strong>GeLu 3+ Insight:</strong> Realized wearables are deeply flawed due to diverse body sizes.</li>
                 </ul>
+                <div class="solution-banner">
+                    <div class="solution-title">SOLUTION: POCKETABLES</div>
+                    <div class="solution-tagline">No shirt, no shoes, no service!</div>
+                </div>
             </div>
-            <div class="split-right" style="background:var(--white);padding:16px;">
+            <div class="split-right gestolumina-img-panel">
                 <div class="img-grid-3">
                     <img src="./PreziSlides/08-gestolumina-the-beginning.png" alt="GestoLumina origins">
-                    <img src="./PreziSlides/13-audio-reactive-masks.png" alt="Audio reactive masks">
-                    <img src="./PreziSlides/14-synchroglove-datagloves.png" alt="SynchroGlove datagloves">
+                    <img src="./PreziSlides/09-gelu-2-iterative-improvements.png" alt="GeLu 2 iterative improvements">
+                    <img src="./PreziSlides/14-synchroglove-datagloves.png" alt="Haptic gloves">
                 </div>
             </div>
         </div>
 
         <!-- 7: Mechanoreceptors -->
-        <div class="slide slide-layout-split" data-slide-id="mechanoreceptors" data-title="Mechanoreceptors: How We Feel">
+        <div class="slide slide-layout-split" data-slide-id="mechanoreceptors"
+            data-title="Mechanoreceptors: How We Feel">
             <div class="split-left">
                 <h2>Mechanoreceptors: How We Feel</h2>
                 <div class="mech-waves-stack">
@@ -201,7 +230,8 @@
         </div>
 
         <!-- 8: Solenoids & Servos -->
-        <div class="slide slide-layout-split" data-slide-id="solenoids" data-title="Actuator Modality 1: Solenoids & Servos">
+        <div class="slide slide-layout-split" data-slide-id="solenoids"
+            data-title="Actuator Modality 1: Solenoids & Servos">
             <div class="split-left">
                 <h2>Actuator Modality 1: Solenoids &amp; Servos</h2>
                 <ul class="bullet-list">
@@ -224,13 +254,17 @@
                 <h2>Actuator Modality 2: ERMs &amp; LRAs</h2>
                 <div class="erm-lra-stage">
                     <div>
-                        <div style="font-family:var(--font-display);font-size:1rem;font-weight:bold;margin-bottom:10px;">ERM (Rotary)</div>
+                        <div
+                            style="font-family:var(--font-display);font-size:1rem;font-weight:bold;margin-bottom:10px;">
+                            ERM (Rotary)</div>
                         <div class="erm-diagram" id="ermContainer">
                             <div class="erm-disc" id="ermDisc"></div>
                         </div>
                     </div>
                     <div>
-                        <div style="font-family:var(--font-display);font-size:1rem;font-weight:bold;margin-bottom:10px;">LRA (Linear)</div>
+                        <div
+                            style="font-family:var(--font-display);font-size:1rem;font-weight:bold;margin-bottom:10px;">
+                            LRA (Linear)</div>
                         <div class="lra-diagram" id="lraContainer">
                             <div class="lra-spring" id="lraSpring"></div>
                             <div class="lra-mass" id="lraMass"></div>
@@ -242,7 +276,7 @@
                 <ul class="bullet-list">
                     <li>ERM: asymmetric weight on DC motor. Pulse forward-reverse for sharp snaps, not 100% buzz.</li>
                     <li>LRA: mass on spring, crisp clicks at resonant frequency.</li>
-                    <li><strong>LRA resonant frequency matters.</strong> Off-resonance still vibrates, but wastes watts as heat instead of motion.</li>
+                    <li>Resonant Frequency: driving off-resonance still vibrates, but wastes watts as heat instead of motion.</li>
                 </ul>
             </div>
         </div>
@@ -258,9 +292,17 @@
                     <li>LRA: mass shuttles back and forth on a spring at a tuned frequency.</li>
                 </ul>
             </div>
-            <div class="split-right" style="background:var(--white);padding:16px;">
-                <div class="viz-canvas-box">
-                    <canvas id="motorInternalsCanvas" style="height:300px;"></canvas>
+            <div class="split-right motor-internals-panel">
+                <div class="motor-diagram-box">
+                    <img src="./images/DC_motor_rotor_labels.jpg" alt="DC Motor Rotor Diagram" class="motor-diagram-img">
+                    <div class="motor-caption">Example of a 3-Phase DC Motor Rotor</div>
+                </div>
+                <div class="motor-gif-box">
+                    <img src="./images/motor_3d_rotation.gif" alt="DC Motor 3D Rotation Animation" class="motor-gif-img">
+                </div>
+                <div class="motor-qr-box">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D1AaUK6pT_cE" alt="How does an Electric Motor work QR" class="motor-qr-img">
+                    <div class="motor-qr-label">Watch: How does an Electric Motor work? (DC Motor)</div>
                 </div>
             </div>
         </div>
@@ -270,24 +312,33 @@
             <div class="split-left">
                 <h2>How Motors Are Made</h2>
                 <ul class="bullet-list">
-                    <li><strong>Brushed:</strong> coil on the rotor, magnets in the housing. Carbon brushes carry current to the spinning coil through a commutator. Simple, cheap, wears out.</li>
-                    <li><strong>Brushless (BLDC):</strong> magnets on the rotor, coils in the housing. An ESC switches coil phases electronically. No brushes to wear, but needs a driver IC.</li>
-                    <li><strong>The principle is the same:</strong> current through wire creates a magnetic field that pushes against another magnetic field, whether from permanent magnets or more wire windings.</li>
-                    <li><strong>PCB motors:</strong> coils etched directly onto a circuit board. Flat, ultra-thin, no mechanical winding. Limited torque, but ideal for coin-style haptic actuators.</li>
+                    <li><strong>Brushed:</strong> coil on the rotor, magnets in the housing. Carbon brushes carry
+                        current to the spinning coil through a commutator. Simple, cheap, wears out.</li>
+                    <li><strong>Brushless (BLDC):</strong> magnets on the rotor, coils in the housing. An ESC switches
+                        coil phases electronically. No brushes to wear, but needs a driver IC.</li>
+                    <li><strong>The principle is the same:</strong> current through wire creates a magnetic field that
+                        pushes against another magnetic field, whether from permanent magnets or more wire windings.
+                    </li>
+                    <li><strong>PCB motors:</strong> coils etched directly onto a circuit board. Flat, ultra-thin, no
+                        mechanical winding. Limited torque, but ideal for coin-style haptic actuators.</li>
                 </ul>
             </div>
             <div class="split-right red-theme">
                 <ul class="bullet-list">
-                    <li><strong>Demagnetization:</strong> permanent magnets lose strength when heated past their Curie threshold. Ferrite starts fading at 80C. Neodymium handles more but is not immune.</li>
-                    <li>In a closed wearable with no airflow, continuous duty can reach those temperatures in minutes.</li>
+                    <li><strong>Demagnetization:</strong> permanent magnets lose strength when heated past their Curie
+                        threshold. Ferrite starts fading at 80C. Neodymium handles more but is not immune.</li>
+                    <li>In a closed wearable with no airflow, continuous duty can reach those temperatures in minutes.
+                    </li>
                     <li>Once demagnetized, the motor is permanently weaker. Cooling does not restore the field.</li>
-                    <li><strong>Takeaway:</strong> duty-cycle limits and thermal monitoring are not optional for wearable haptics.</li>
+                    <li><strong>Takeaway:</strong> duty-cycle limits and thermal monitoring are not optional for
+                        wearable haptics.</li>
                 </ul>
             </div>
         </div>
 
         <!-- 12: Advanced Modalities -->
-        <div class="slide slide-layout-standard" data-slide-id="advanced" data-title="Actuator Modality 3: Advanced Modalities">
+        <div class="slide slide-layout-standard" data-slide-id="advanced"
+            data-title="Actuator Modality 3: Advanced Modalities">
             <h2>Actuator Modality 3: Advanced Modalities</h2>
             <table class="actuator-table">
                 <thead>
@@ -304,7 +355,8 @@
                                 <strong>Mini Bass Shaker (8 Ohm)</strong>
                             </div>
                         </td>
-                        <td style="font-family:var(--font-mono);">Requires AC audio power. DC offset or clipping causes overheating and self-destruction.</td>
+                        <td style="font-family:var(--font-mono);">Requires AC audio power. DC offset or clipping causes
+                            overheating and self-destruction.</td>
                     </tr>
                     <tr>
                         <td style="border-right:var(--border-width) solid var(--black);">
@@ -313,7 +365,8 @@
                                 <strong>Piezoelectric Actuators</strong>
                             </div>
                         </td>
-                        <td style="font-family:var(--font-mono);">60V to 150V+ drive, specialized boost converters. Fragile to bending stress.</td>
+                        <td style="font-family:var(--font-mono);">60V to 150V+ drive, specialized boost converters.
+                            Fragile to bending stress.</td>
                     </tr>
                     <tr>
                         <td style="border-right:var(--border-width) solid var(--black);">
@@ -322,7 +375,8 @@
                                 <strong>Thermal (Peltier)</strong>
                             </div>
                         </td>
-                        <td style="font-family:var(--font-mono);">12V 5.8A, massive heat sinks required or instant burnout.</td>
+                        <td style="font-family:var(--font-mono);">12V 5.8A, massive heat sinks required or instant
+                            burnout.</td>
                     </tr>
                     <tr>
                         <td style="border-right:var(--border-width) solid var(--black);">
@@ -331,7 +385,8 @@
                                 <strong>Fans / Air Haptics</strong>
                             </div>
                         </td>
-                        <td style="font-family:var(--font-mono);">Deafeningly loud when pushed to simulate strong wind.</td>
+                        <td style="font-family:var(--font-mono);">Deafeningly loud when pushed to simulate strong wind.
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -341,13 +396,18 @@
         <div class="slide slide-layout-split" data-slide-id="mosfet" data-title="Haptic Circuits: MOSFETs & H-Bridges">
             <div class="split-left">
                 <h2>Haptic Circuits: MOSFETs &amp; H-Bridges</h2>
-                <div class="graphic-container" style="background:white;padding:16px;border:var(--border-width) solid var(--black);box-shadow:8px 8px 0 var(--black);">
-                    <div style="font-family:var(--font-display);font-size:1rem;font-weight:bold;text-align:center;border-bottom:2px solid var(--black);padding-bottom:6px;margin-bottom:10px;">PWM Duty Cycle (audio-reactive ribbon)</div>
-                    <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:1.1rem;font-weight:bold;margin-bottom:8px;">
+                <div class="graphic-container"
+                    style="background:white;padding:16px;border:var(--border-width) solid var(--black);box-shadow:8px 8px 0 var(--black);">
+                    <div
+                        style="font-family:var(--font-display);font-size:1rem;font-weight:bold;text-align:center;border-bottom:2px solid var(--black);padding-bottom:6px;margin-bottom:10px;">
+                        PWM Duty Cycle (audio-reactive ribbon)</div>
+                    <div
+                        style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:1.1rem;font-weight:bold;margin-bottom:8px;">
                         <span>DUTY CYCLE:</span>
                         <span id="pwmVal" style="color:var(--bauhaus-red);">50%</span>
                     </div>
-                    <div style="height:110px;background:var(--bg-canvas);border:3px solid var(--black);overflow:hidden;">
+                    <div
+                        style="height:110px;background:var(--bg-canvas);border:3px solid var(--black);overflow:hidden;">
                         <canvas id="pwmWaveCanvas" style="width:100%;height:100%;display:block;"></canvas>
                     </div>
                 </div>
@@ -384,8 +444,11 @@
             <div class="split-left">
                 <h2>Digital Signal Processing: FFT &amp; Smoothing</h2>
                 <div class="fft-stack">
-                    <div class="graphic-container" style="background:white;padding:16px;border:var(--border-width) solid var(--black);box-shadow:8px 8px 0 var(--black);margin:0;">
-                        <div id="micStatusBtn" style="background:var(--bauhaus-red);color:white;border:2px solid var(--black);font-family:var(--font-mono);width:100%;margin-bottom:10px;padding:8px;font-size:12px;font-weight:bold;text-align:center;text-transform:uppercase;">CLICK OR PRESS ARROW TO ENABLE MIC</div>
+                    <div class="graphic-container"
+                        style="background:white;padding:16px;border:var(--border-width) solid var(--black);box-shadow:8px 8px 0 var(--black);margin:0;">
+                        <div id="micStatusBtn"
+                            style="background:var(--bauhaus-red);color:white;border:2px solid var(--black);font-family:var(--font-mono);width:100%;margin-bottom:10px;padding:8px;font-size:12px;font-weight:bold;text-align:center;text-transform:uppercase;">
+                            CLICK OR PRESS ARROW TO ENABLE MIC</div>
                         <div id="fftVisualizerContainer" style="height:90px;"></div>
                     </div>
                     <div class="viz-canvas-box">
@@ -403,22 +466,169 @@
             </div>
         </div>
 
-        <!-- 15: Fleet Command -->
+        <!-- 16: Telemetry & MAX4466 -->
+        <div class="slide slide-layout-split" data-slide-id="telemetry" data-title="Audio-Reactive Sensing & MAX4466">
+            <div class="split-left">
+                <h2>Audio-Reactive Sensing: MAX4466 &amp; Telemetry</h2>
+                <ul class="bullet-list">
+                    <li><strong>Low-Latency Transduction:</strong> The MAX4466 electret microphone module provides
+                        instant analog envelope extraction without I2S protocol overhead.</li>
+                    <li><strong>3-Wire Workshop Interface:</strong> 3-pin hookup designed for rapid assembly on all
+                        Teardown Workshop Kits.</li>
+                    <li><strong>Direct ADC Pinout:</strong> Connect <code>3.3V</code> and <code>GND</code> rails, then
+                        route the signal <code>OUT</code> pin directly to <code>GPIO 6</code>.</li>
+                    <li><strong>Single-Step Provisioning:</strong> In the Haxel device registry, select <em>Analog
+                            Mic</em> on <code>Pin 6</code>, hit save, and live telemetry stream begins immediately.</li>
+                </ul>
+                <div class="formula-card pinout-card">
+                    <div class="label">TEARDOWN WORKSHOP KIT PINOUT</div>
+                    <table class="pinout-table">
+                        <tr>
+                            <td class="pin-name">VCC</td>
+                            <td>3.3V Power Rail</td>
+                        </tr>
+                        <tr>
+                            <td class="pin-name">GND</td>
+                            <td>Common Ground Reference</td>
+                        </tr>
+                        <tr>
+                            <td class="pin-name">OUT</td>
+                            <td>GPIO 6 (Analog ADC Pin)</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="split-right telemetry-panel">
+                <!-- 1. Tactile Actuator Behavior Telemetry Chassis -->
+                <div class="virtual-actuator-chassis">
+                    <div class="strip-header">
+                        <span class="strip-title">TACTILE ACTUATOR TELEMETRY</span>
+                        <div class="telemetry-toggles" id="slideTelemetryToggles">
+                            <button class="telemetry-toggle-btn active" data-mode="classic">Classic</button>
+                            <button class="telemetry-toggle-btn" data-mode="symmetric">Symmetric</button>
+                            <button class="telemetry-toggle-btn" data-mode="waterfall">Waterfall</button>
+                            <button class="telemetry-toggle-btn" data-mode="orbit">Orbit</button>
+                        </div>
+                    </div>
+                    <div class="telemetry-viewport">
+                        <canvas id="telemetrySlideCanvas"></canvas>
+                    </div>
+                    <div class="strip-footer">
+                        <span>Driver: <b class="val-white">MOSFET</b> | Actuator: <b class="val-white">ERM</b></span>
+                        <span>Mode: <b id="telemetrySlideModeLabel" class="val-yellow">CLASSIC</b></span>
+                    </div>
+                </div>
+
+                <!-- 2. Full Haxel Portal AUDIO-REACTIVE UI Component -->
+                <div class="portal-container">
+                    <!-- Portal Header Bar -->
+                    <div class="portal-header">
+                        <div class="portal-logo">HAXEL</div>
+                        <div class="portal-crumb">Active: <b id="slideActivePatternName">My Waveform (Studio)</b></div>
+                        <div class="portal-status">
+                            <span class="portal-dot ok"></span>
+                            <span>CONNECTED</span>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Tabs -->
+                    <div class="tabbar">
+                        <button class="tab">PLAY</button>
+                        <button class="tab">LIBRARY</button>
+                        <button class="tab">PATTERN STUDIO</button>
+                        <button class="tab active">AUDIO-REACTIVE</button>
+                        <button class="tab">DEVICE</button>
+                    </div>
+
+                    <!-- AUDIO TAB Content (Identical to Haxel Website index.html) -->
+                    <div class="tab-content" id="slide-tab-audio">
+                        <h3>AUDIO-REACTIVE TELEMETRY</h3>
+
+                        <div class="row">
+                            <label>Telemetry Source</label>
+                            <select id="slideMicSrc">
+                                <option value="0">Simulated Synthesizer</option>
+                                <option value="1">Browser Microphone (Web Audio)</option>
+                                <option value="2" selected>Analog Mic (Pin 6 / MAX4466)</option>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <label>Reactive Gain</label>
+                            <input type="range" id="slideAudioGain" min="1" max="10" value="4">
+                            <span class="val" id="slideGainVal">4.0x</span>
+                        </div>
+
+                        <div class="row">
+                            <label>Min Active Freq</label>
+                            <input type="range" id="slideAudioMinFreq" min="40" max="2000" step="10" value="40">
+                            <span class="val" id="slideMinFreqVal">40 Hz</span>
+                        </div>
+
+                        <div class="row">
+                            <label>Max Active Freq</label>
+                            <input type="range" id="slideAudioMaxFreq" min="2000" max="20000" step="100" value="16000">
+                            <span class="val" id="slideMaxFreqVal">16000 Hz</span>
+                        </div>
+
+                        <div class="spectrum-visualizer">
+                            <canvas id="spectrumSlideCanvas"></canvas>
+                        </div>
+
+                        <div class="audio-bins-list">
+                            <div class="audio-bins-header">
+                                <h4>Frequency Band Partitioning</h4>
+                                <div class="audio-bins-actions">
+                                    <button class="btn" id="slideAddBinBtn">+ Add Bin</button>
+                                    <button class="btn" id="slideSubBinBtn">- Subtract Bin</button>
+                                </div>
+                            </div>
+                            <div id="slideBinsContainer">
+                                <!-- Dynamically rendered bin rows -->
+                            </div>
+                        </div>
+
+                        <p class="hint">
+                            Maps acoustic audio frequencies into physical mechanical pulses for sensory substitution.
+                            Drag pins to resize frequency bands.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 17: Fleet Command -->
         <div class="slide slide-layout-standard" data-slide-id="fleet" data-title="Live Fleet Command">
             <h2>Live Fleet Command</h2>
             <div class="connection-box">
                 <strong>How this portal connects (not Bluetooth for fleet):</strong><br>
-                1. Flash a <strong>Mesh Master</strong> build on the leader Beetle (PlatformIO env <code>c3WIFILED_MASTER</code>).<br>
-                2. Leader broadcasts WiFi SoftAP at <code>192.168.4.1</code>. Join that network on the laptop WiFi radio only.<br>
+                1. Flash a <strong>Mesh Master</strong> build on the leader Beetle (PlatformIO env
+                <code>c3WIFILED_MASTER</code>).<br>
+                2. Leader broadcasts WiFi SoftAP at <code>192.168.4.1</code>. Join that network on the laptop WiFi radio
+                only.<br>
                 3. Run <code>present.bat</code> on the laptop. Slides load from <code>localhost</code>.<br>
-                4. Fleet commands go over HTTP <code>POST /json/fleet</code> (proxied to the hub). Live telemetry uses WebSocket <code>ws://192.168.4.1/ws</code>.<br>
-                5. Followers receive haptics over <strong>ESP-NOW</strong>, not WiFi. Bluetooth is for single-device mode via <code>bluetooth.html</code>.
+                4. Fleet commands go over HTTP <code>POST /json/fleet</code> (proxied to the hub). Live telemetry uses
+                WebSocket <code>ws://192.168.4.1/ws</code>.<br>
+                5. Followers receive haptics over <strong>ESP-NOW</strong>, not WiFi. Bluetooth is for single-device
+                mode via <code>bluetooth.html</code>.
             </div>
             <table class="pinout-table">
-                <tr><td>GPIO 6</td><td>MOSFET gate (motor PWM output)</td></tr>
-                <tr><td>GPIO 5</td><td>WS2812 LED strip (optional status)</td></tr>
-                <tr><td>I2S BCLK / WS / SD</td><td>INMP441 mic (assign in Haxel portal after first boot)</td></tr>
-                <tr><td>Motor +</td><td>MOSFET drain. Motor GND to common ground.</td></tr>
+                <tr>
+                    <td>GPIO 6</td>
+                    <td>MOSFET gate (motor PWM output)</td>
+                </tr>
+                <tr>
+                    <td>GPIO 5</td>
+                    <td>WS2812 LED strip (optional status)</td>
+                </tr>
+                <tr>
+                    <td>I2S BCLK / WS / SD</td>
+                    <td>INMP441 mic (assign in Haxel portal after first boot)</td>
+                </tr>
+                <tr>
+                    <td>Motor +</td>
+                    <td>MOSFET drain. Motor GND to common ground.</td>
+                </tr>
             </table>
             <div class="fleet-panel" style="margin-top:12px;">
                 <div class="fleet-panel-header">
@@ -426,13 +636,19 @@
                     <span id="fleetHubLabel">Hub: 192.168.4.1</span>
                 </div>
                 <div>Leader Mic Level</div>
-                <div class="fleet-meter"><div class="fleet-meter-fill" id="fleetMeterFill"></div></div>
+                <div class="fleet-meter">
+                    <div class="fleet-meter-fill" id="fleetMeterFill"></div>
+                </div>
                 <div class="fleet-controls">
-                    <button class="nav-btn" id="fleetClaimBtn" style="color:var(--black);background:white;border-color:var(--black);">Claim All</button>
-                    <button class="nav-btn" id="fleetPlayBtn" style="color:var(--black);background:white;border-color:var(--black);">Play</button>
-                    <button class="nav-btn" id="fleetStopBtn" style="color:var(--black);background:white;border-color:var(--black);">Stop</button>
+                    <button class="nav-btn" id="fleetClaimBtn"
+                        style="color:var(--black);background:white;border-color:var(--black);">Claim All</button>
+                    <button class="nav-btn" id="fleetPlayBtn"
+                        style="color:var(--black);background:white;border-color:var(--black);">Play</button>
+                    <button class="nav-btn" id="fleetStopBtn"
+                        style="color:var(--black);background:white;border-color:var(--black);">Stop</button>
                     <button class="nav-btn danger" id="fleetEstopBtn">E-Stop</button>
-                    <button class="nav-btn" id="fleetReleaseBtn" style="color:var(--black);background:white;border-color:var(--black);">Release All</button>
+                    <button class="nav-btn" id="fleetReleaseBtn"
+                        style="color:var(--black);background:white;border-color:var(--black);">Release All</button>
                 </div>
                 <div class="fleet-row">
                     <label>Intensity</label>
@@ -445,26 +661,6 @@
                     <button class="btn-inline" id="fleetApplyBtn">Apply</button>
                 </div>
                 <div id="fleetCards" class="fleet-cards"></div>
-            </div>
-        </div>
-
-        <!-- 16: Wetness -->
-        <div class="slide slide-layout-split" data-slide-id="wetness" data-title="Sensation Synthesis: Illusion of Wetness">
-            <div class="split-left">
-                <h2>Sensation Synthesis: Illusion of Wetness</h2>
-                <ul class="bullet-list">
-                    <li>Humans have no hygroreceptors. Wetness is inferred from combined signals.</li>
-                    <li>Simulate with slick high-frequency vibration plus rapid Peltier cooling.</li>
-                    <li>Petting zoo station: feel vibration on skin while the thermal plate cools your palm.</li>
-                    <li>Many complex sensations can be synthesized with multi-modal haptics.</li>
-                </ul>
-                <div class="formula-card" style="margin-top:20px;">
-                    <div class="label">Sensation Synthesis Formula</div>
-                    <div class="expression">Wetness = Low Friction (Vibration) + Cooling (Thermal)</div>
-                </div>
-            </div>
-            <div class="split-right" style="background:var(--white);padding:16px;">
-                <img src="./PreziSlides/15-illusion-of-wetness.png" alt="Illusion of wetness" class="prezi-ref-img">
             </div>
         </div>
 
@@ -484,25 +680,29 @@
         </div>
 
         <!-- 18: Wearables Lessons -->
-        <div class="slide slide-layout-standard" data-slide-id="wearables" data-title="Existing Wearables: Lessons Learned">
+        <div class="slide slide-layout-standard" data-slide-id="wearables"
+            data-title="Existing Wearables: Lessons Learned">
             <h2>Existing Wearables: Success vs. Failure</h2>
             <div class="wearable-grid">
                 <div class="wearable-card">
-                    <img src="./PreziSlides/21-existing-wearables.png" alt="Haptic shoes" style="object-position:left top;">
+                    <img src="./PreziSlides/21-existing-wearables.png" alt="Haptic shoes"
+                        style="object-position:left top;">
                     <div class="wearable-body">
                         <h4>Haptic Shoes</h4>
                         Expensive, not easily shared, not easily washed.
                     </div>
                 </div>
                 <div class="wearable-card">
-                    <img src="./PreziSlides/21-existing-wearables.png" alt="Woojer vest" style="object-position:center center;">
+                    <img src="./PreziSlides/21-existing-wearables.png" alt="Woojer vest"
+                        style="object-position:center center;">
                     <div class="wearable-body">
                         <h4>Woojer Vest</h4>
                         Plug and play like headphones, but limited to 0 to 250 Hz, peaking near 42 Hz.
                     </div>
                 </div>
                 <div class="wearable-card">
-                    <img src="./PreziSlides/21-existing-wearables.png" alt="Buttkicker" style="object-position:right bottom;">
+                    <img src="./PreziSlides/21-existing-wearables.png" alt="Buttkicker"
+                        style="object-position:right bottom;">
                     <div class="wearable-body">
                         <h4>Buttkicker</h4>
                         Powerful but stationary. Works with any chair. Your downstairs neighbor will hate you.
@@ -524,10 +724,14 @@
             </div>
             <div class="split-right stack-right">
                 <div class="callout-box fill-panel" style="border-color:var(--bauhaus-red);background:var(--white);">
-                    <p style="color:var(--bauhaus-red);font-size:clamp(1.3rem,2.2vw,1.75rem);">SAFETY FIRST: software timers, physical guards, and fleet E-stop before every demo.</p>
+                    <p style="color:var(--bauhaus-red);font-size:clamp(1.3rem,2.2vw,1.75rem);">SAFETY FIRST: software
+                        timers, physical guards, and fleet E-stop before every demo.</p>
                 </div>
                 <div class="callout-box fill-panel" style="background:var(--bauhaus-yellow);">
-                    <p><strong>Thermal reality:</strong> motors heat up faster than speakers. A small ERM or LRA in a closed wearable can hit painful temperatures in minutes. Speakers shed heat through the cone and enclosure. Motors need airflow, duty-cycle limits, or heatsinks to go further without burning skin or demagnetizing the coil.</p>
+                    <p><strong>Thermal reality:</strong> motors heat up faster than speakers. A small ERM or LRA in a
+                        closed wearable can hit painful temperatures in minutes. Speakers shed heat through the cone and
+                        enclosure. Motors need airflow, duty-cycle limits, or heatsinks to go further without burning
+                        skin or demagnetizing the coil.</p>
                 </div>
             </div>
         </div>
@@ -546,7 +750,8 @@
             <div class="split-right qa-right">
                 <div class="callout-box fill-panel qr-panel">
                     <p class="qr-label">Smartphone Haptics (Android)</p>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=https%3A%2F%2Fdillonsimeone.com%2FMiniProjects%2FsmartphoneHaptics%2F" alt="Smartphone Haptics QR" class="qr-image">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=https%3A%2F%2Fdillonsimeone.com%2FMiniProjects%2FsmartphoneHaptics%2F"
+                        alt="Smartphone Haptics QR" class="qr-image">
                 </div>
                 <p class="thank-you">Thank You!</p>
             </div>
@@ -585,4 +790,5 @@
 
     <script type="module" src="presentation.js"></script>
 </body>
+
 </html>

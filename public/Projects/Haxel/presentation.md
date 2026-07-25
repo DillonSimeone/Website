@@ -68,9 +68,10 @@ Slide 15: Live Fleet Command
 - Workshop pinout on slide: GPIO 6 motor PWM, GPIO 5 LEDs, I2S mic pins via portal.
 - Flash c3WIFILED_MASTER build before the show. Test E-stop first.
 
-Slide 16: Illusion of Wetness
-- No demo button. Walk the formula and point to the Prezi visual.
-- Direct people to the thermal plus vibration station in the tent.
+Slide 16: Audio-Reactive Sensing: MAX4466 & Telemetry
+- Demonstrate the real-time tactile telemetry stream (toggle between Classic, Symmetric, Waterfall, and Orbit modes).
+- Emphasize MAX4466 simplicity for workshops: zero protocol overhead compared to I2S, 3 wires only (3.3V, GND, GPIO 6).
+- Walk through device registry provisioning: select Analog Mic, assign Pin 6, save, and telemetry streams immediately.
 
 Slide 17: Immersive Accessibility & UMD
 - Jazz Prism / audio reactive masks photo on the right.

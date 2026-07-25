@@ -2,15 +2,18 @@
 
 This project contains two ESP32-C3 firmware applications that communicate via **ESP-NOW** (a fast, low-latency connectionless protocol) to link a motion-reactive handle device with an external LED strip follower.
 
+The handle also supports **Web Bluetooth** configuration (Haxel-style) without disabling ESP-NOW. See [`public/Projects/LightBaton/bluetooth.html`](../../../Projects/LightBaton/bluetooth.html).
+
 ---
 
 ## How It Works
 
 1. **Handle Device (`reactiveHandleLightMotion`)**:
- - Reads accelerometer and gyroscope data from the **MPU6050** sensor.
- - Computes an `energyLevel` (0.0 to 1.0) based on motion intensity.
- - Updates local LEDs and controls a vibration motor with complex haptic patterns (heartbeat, gallop, buzz) depending on the charge.
+ - Reads accelerometer and gyroscope data from the **MPU6050/6500** sensor.
+ - Computes X/Y motion speed bins and an `energyLevel` (0.0 to 1.0) charge value.
+ - Updates local LEDs and controls a vibration motor via configurable motion-reactive patterns (bin routing similar to Haxel audio bins).
  - Broadcasts the float `energyLevel` every 30ms via ESP-NOW to all listening devices (`FF:FF:FF:FF:FF:FF`).
+ - Exposes BLE tuning (pattern, bins, intensity, charge/decay) over Nordic UART JSON.
  - Automatically enters deep sleep on inactivity, turning off the radio and waking up on motion.
 
 2. **Follower Device (`reactiveFollowerLightMotion`)**:

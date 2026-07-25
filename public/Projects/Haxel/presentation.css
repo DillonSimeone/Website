@@ -1302,3 +1302,509 @@ body::before {
     .two-col { grid-template-columns: 1fr; }
     .notes-panel { width: 100%; }
 }
+
+/* Telemetry Toggle Buttons for Presentation */
+.telemetry-toggle-btn {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 3px 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+.telemetry-toggle-btn:hover {
+    background: #444;
+}
+.telemetry-toggle-btn.active {
+    background: var(--bauhaus-yellow);
+    color: var(--black);
+    border-color: var(--black);
+}
+
+/* ── Haxel Portal Component Styles ── */
+.portal-container {
+    border: var(--border-width) solid var(--black);
+    background: #ffffff;
+    box-shadow: 6px 6px 0 var(--black);
+}
+
+.portal-header {
+    background: var(--bauhaus-blue);
+    color: #ffffff;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: var(--border-width) solid var(--black);
+}
+
+.portal-logo {
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.portal-crumb {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.portal-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-display);
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.portal-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--bauhaus-yellow);
+    border: 1px solid var(--black);
+    display: inline-block;
+}
+
+.portal-dot.ok {
+    background: var(--bauhaus-red);
+}
+
+.tabbar {
+    display: flex;
+    border-bottom: var(--border-width) solid var(--black);
+    background: var(--black);
+}
+
+.tab {
+    flex: 1;
+    background: var(--black);
+    color: #888888;
+    border: none;
+    border-right: 1px solid #333333;
+    padding: 8px 4px;
+    font-family: var(--font-display);
+    font-size: 10px;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-align: center;
+}
+
+.tab:hover {
+    background: #222222;
+}
+
+.tab.active {
+    background: #ffffff;
+    color: var(--black);
+    border-bottom: var(--border-width) solid #ffffff;
+    margin-bottom: -3px;
+    font-weight: bold;
+}
+
+.tab-content {
+    padding: 16px;
+    background: #ffffff;
+    color: var(--black);
+}
+
+.tab-content h3 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    color: var(--black);
+}
+
+.tab-content .row {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.tab-content label {
+    flex: 1 1 120px;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.tab-content input[type="range"] {
+    flex: 2 1 150px;
+    height: 8px;
+    background: var(--bg-canvas);
+    border: 2px solid var(--black);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.tab-content input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--bauhaus-red);
+    border: 2px solid var(--black);
+    cursor: pointer;
+}
+
+.tab-content select {
+    flex: 2 1 180px;
+    padding: 4px 8px;
+    border: var(--border-width) solid var(--black);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: bold;
+    outline: none;
+    background: #ffffff;
+}
+
+.val {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: bold;
+    width: 45px;
+    text-align: right;
+}
+
+.spectrum-visualizer {
+    border: var(--border-width) solid var(--black);
+    background: var(--bg-canvas);
+}
+
+/* ── Buttons (Bauhaus 3D Shadow Style) ── */
+.btn {
+    background: #ffffff;
+    color: var(--black);
+    border: 2px solid var(--black);
+    padding: 4px 10px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 3px 3px 0 var(--black);
+}
+
+.btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--black);
+}
+
+.btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 0px 0px 0 var(--black);
+}
+
+.hint {
+    font-size: 10px;
+    color: #666;
+    margin-top: 8px;
+    line-height: 1.3;
+}
+
+/* ── Slide 16 Telemetry & Portal Layout ── */
+.slide[data-slide-id="telemetry"] .telemetry-panel {
+    background: var(--white);
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: 16px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.pinout-card {
+    margin-top: 16px;
+    background: var(--bauhaus-yellow);
+    border-color: var(--black);
+    padding: 12px 16px;
+}
+
+.pinout-card .label {
+    color: var(--black);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.pinout-card .pinout-table {
+    margin-top: 8px;
+    font-size: 13px;
+    background: #ffffff;
+    color: var(--black);
+    border: 2px solid var(--black);
+}
+
+.pinout-card .pin-name {
+    font-weight: bold;
+    width: 30%;
+}
+
+.virtual-actuator-chassis {
+    background: var(--black);
+    color: #ffffff;
+    padding: 12px 16px;
+    border: 4px solid var(--black);
+    box-shadow: 6px 6px 0 var(--black);
+    flex-shrink: 0;
+}
+
+.strip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+.strip-title {
+    color: var(--bauhaus-yellow);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.telemetry-toggles {
+    display: flex;
+    gap: 6px;
+}
+
+.telemetry-viewport {
+    height: 130px;
+    background: #f4ebd0;
+    border: 2px solid #111111;
+    position: relative;
+    overflow: hidden;
+}
+
+.telemetry-viewport canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.strip-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #bbbbbb;
+}
+
+.val-white {
+    color: #ffffff;
+}
+
+.val-yellow {
+    color: var(--bauhaus-yellow);
+}
+
+.spectrum-visualizer {
+    border: var(--border-width) solid var(--black);
+    background: var(--bg-canvas);
+    height: 80px;
+    margin: 12px 0;
+}
+
+.spectrum-visualizer canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.audio-bins-list {
+    margin-top: 12px;
+    border-top: 2px solid var(--black);
+    padding-top: 12px;
+}
+
+.audio-bins-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.audio-bins-header h4 {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.audio-bins-actions {
+    display: flex;
+    gap: 6px;
+}
+
+#slideBinsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bin-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    gap: 10px;
+}
+
+.bin-title {
+    font-weight: bold;
+    width: 110px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+}
+
+.bin-range {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    width: 110px;
+    color: #555555;
+}
+
+.bin-pattern-select {
+    flex: 1;
+    padding: 4px 6px;
+    border: 2px solid var(--black);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: #ffffff;
+    outline: none;
+}
+
+.gestolumina-img-panel {
+    background: var(--white);
+    padding: 16px;
+}
+
+/* ── Centered Solution Banner ── */
+.solution-banner {
+    margin-top: 24px;
+    padding: 18px 20px;
+    background: var(--bauhaus-yellow);
+    border: 3px solid var(--black);
+    box-shadow: 5px 5px 0 var(--black);
+    text-align: center;
+}
+
+.solution-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 2vw, 1.6rem);
+    font-weight: bold;
+    color: var(--black);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.solution-tagline {
+    font-family: var(--font-mono);
+    font-size: clamp(1rem, 1.4vw, 1.2rem);
+    font-weight: bold;
+    color: var(--bauhaus-red);
+    margin-top: 6px;
+    text-transform: uppercase;
+}
+
+/* ── Slide 10 Motor Internals Panel ── */
+.motor-internals-panel {
+    background: var(--white);
+    padding: 20px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 20px;
+    height: 100%;
+}
+
+.motor-diagram-box {
+    text-align: center;
+    border: 2px solid var(--black);
+    padding: 16px;
+    background: var(--bg-canvas);
+    box-shadow: 6px 6px 0 var(--black);
+    width: 100%;
+    max-width: 680px;
+}
+
+.motor-diagram-img {
+    width: 100%;
+    height: auto;
+    max-height: 25vh;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.motor-caption {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 12px;
+    color: var(--black);
+    letter-spacing: 0.5px;
+}
+
+.motor-gif-box {
+    text-align: center;
+    border: 2px solid var(--black);
+    padding: 10px;
+    background: #ffffff;
+    box-shadow: 6px 6px 0 var(--black);
+    width: 100%;
+    max-width: 680px;
+}
+
+.motor-gif-img {
+    width: 100%;
+    height: auto;
+    max-height: 25vh;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.motor-qr-box {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: var(--bauhaus-yellow);
+    border: 2px solid var(--black);
+    box-shadow: 6px 6px 0 var(--black);
+    padding: 16px 24px;
+    width: 100%;
+    max-width: 680px;
+}
+
+.motor-qr-img {
+    width: 110px;
+    height: 110px;
+    border: 2px solid var(--black);
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.motor-qr-label {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--black);
+    line-height: 1.35;
+}
