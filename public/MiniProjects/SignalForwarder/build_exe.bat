@@ -18,10 +18,15 @@ echo Building Standalone Executable...
 :: --hidden-import=PyQt6: Ensure PyQt6 is included
 :: --hidden-import=PyQt6.QtWebEngineWidgets: Explicitly include QtWebEngine
 :: --hidden-import=PyQt6.QtWebEngineCore: Explicitly include QtWebEngineCore
-pyinstaller --noconsole --onefile --add-data "web;web" --hidden-import=webview.platforms.qt --hidden-import=PyQt6 --hidden-import=PyQt6.QtWebEngineWidgets --hidden-import=PyQt6.QtWebEngineCore --name "OSC_Monitor" app.py
+:: --hidden-import=bleak: BLE client
+:: --hidden-import=mido: MIDI support
+:: --hidden-import=rtmidi: MIDI backend
+:: --hidden-import=sounddevice: Audio capture
+:: --hidden-import=numpy: Math calculations for audio RMS
+:: --hidden-import=serial: Serial scan
+pyinstaller --noconsole --onefile --add-data "web;web" --hidden-import=webview.platforms.qt --hidden-import=PyQt6 --hidden-import=PyQt6.QtWebEngineWidgets --hidden-import=PyQt6.QtWebEngineCore --hidden-import=bleak --hidden-import=mido --hidden-import=rtmidi --hidden-import=sounddevice --hidden-import=numpy --hidden-import=serial --name "SignalForwarder" app.py
 
 echo.
 echo Build Complete!
 echo You can find your app in the "dist" folder.
 pause
- 
