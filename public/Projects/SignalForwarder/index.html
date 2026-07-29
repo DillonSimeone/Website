@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Signal Forwarder Tutorial | Art Deco Edition</title>
-  <meta name="description" content="Guide for the Signal Forwarder desktop app — route MIDI, OSC, Art-Net/DMX, and audio signals over Bluetooth BLE to ESP32 devices and other endpoints.">
+  <meta name="description" content="Guide for the Signal Forwarder desktop app: route MIDI, OSC, Art-Net/DMX, and audio signals over Bluetooth BLE to ESP32 devices and other endpoints.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@
         <h2>THE ARCHITECTURE</h2>
         <p class="deco-intro">
           Signal Forwarder is a cross-platform desktop application that discovers, captures, and routes
-          live signals — <strong>MIDI</strong>, <strong>OSC</strong>, <strong>Art-Net/DMX</strong>, and <strong>audio levels</strong> —
+          live signals: <strong>MIDI</strong>, <strong>OSC</strong>, <strong>Art-Net/DMX</strong>, and <strong>audio levels</strong>,
           over <strong>Bluetooth Low Energy (BLE)</strong> to ESP32 microcontrollers and other network endpoints.
           Use it to trigger physical actuators, haptics, and lights directly from VR headsets, instruments, DAWs, or live audio.
         </p>
@@ -45,7 +45,7 @@
         <div style="max-width: 900px; margin: 30px auto 10px auto; border: 1px solid var(--gold-primary); box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);">
           <img src="signal_forwarder_screenshot.png" alt="Signal Forwarder Dashboard Screenshot" style="width: 100%; display: block;">
         </div>
-        <p style="text-align: center; font-size: 0.75rem; opacity: 0.6; margin-top: 5px; font-style: italic;">The Signal Forwarder dashboard — MIDI inputs, BLE control, signal routing matrix, and simulator.</p>
+        <p style="text-align: center; font-size: 0.75rem; opacity: 0.6; margin-top: 5px; font-style: italic;">The Signal Forwarder dashboard: MIDI inputs, BLE control, signal routing matrix, and simulator.</p>
 
         <div class="video-container">
           <iframe src="https://www.youtube.com/embed/hvzQyc9-7xk" title="OSC System in Action" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
@@ -58,7 +58,7 @@
         <div class="deco-steps" style="margin-bottom: 25px;">
           <div class="step">
             <span class="step-icon">♦</span>
-            <strong>Windows:</strong> Download and double-click <code>SignalForwarder.exe</code>. Fully standalone — no Python needed.
+            <strong>Windows:</strong> Download and double-click <code>SignalForwarder.exe</code>. Fully standalone; no Python needed.
           </div>
         </div>
         <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-bottom: 35px;">
@@ -81,7 +81,7 @@
           <div class="step">
             <span class="step-icon">♦</span>
             <strong>To run again:</strong> The installer creates a <code>SignalForwarder.command</code> file inside <code>~/SignalForwarder/</code>.
-            Double-click it in Finder to relaunch — no Terminal needed. You can also drag it to your Dock for quick access.
+            Double-click it in Finder to relaunch. No Terminal needed. You can also drag it to your Dock for quick access.
           </div>
         </div>
         <p style="text-align: center; margin-top: 20px; font-size: 0.8rem; opacity: 0.6;">
@@ -150,10 +150,10 @@
           <div>
             <h3>SIMULATOR MODES</h3>
             <ol>
-              <li><strong>MIDI Note</strong> — Set note number (0–127), velocity (0–127), and duration (ms). Default: Note 60, Velocity 50, 500ms.</li>
-              <li><strong>PWM Raw GPIO</strong> — Send a raw pin + value (0–255) command.</li>
-              <li><strong>OSC Packet</strong> — Specify an OSC path and float value.</li>
-              <li><strong>DMX (Art-Net)</strong> — Set a DMX channel and level.</li>
+              <li><strong>MIDI Note:</strong> Set note number (0–127), velocity (0–127), and duration (ms). Default: Note 60, Velocity 50, 500ms.</li>
+              <li><strong>PWM Raw GPIO:</strong> Send a raw pin + value (0–255) command.</li>
+              <li><strong>OSC Packet:</strong> Specify an OSC path and float value.</li>
+              <li><strong>DMX (Art-Net):</strong> Set a DMX channel and level.</li>
             </ol>
           </div>
           <div class="divider-vertical"></div>
@@ -161,7 +161,7 @@
             <h3>WORKFLOW</h3>
             <ul>
               <li><strong>Ping Once:</strong> Sends a single simulated signal through the routing matrix.</li>
-              <li><strong>Auto-Ping (1s):</strong> Continuously sends signals once per second — leave it running while configuring hardware until the LED starts responding.</li>
+              <li><strong>Auto-Ping (1s):</strong> Continuously sends signals once per second. Leave it running while configuring hardware until the LED starts responding.</li>
               <li><strong>Important:</strong> Simulated signals only reach devices if you link <code>Simulated Signal / Simulator</code> to a target in the routing matrix. No hardcoded shortcuts.</li>
             </ul>
           </div>
@@ -200,7 +200,7 @@
         <blockquote>
           "The transition from virtual gestures to physical illumination completes the loop of spatial presence."
         </blockquote>
-        <cite>— Signal Forwarder Integration Guide</cite>
+        <cite>Signal Forwarder Integration Guide</cite>
       </section>
     </main>
   </div>
