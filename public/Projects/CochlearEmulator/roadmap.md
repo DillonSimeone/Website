@@ -21,7 +21,7 @@ To deliver a high-fidelity simulation of subjective CI hearing, we will redesign
 ## 2. Dynamic Electrode Pairing & Frequency Redistribution
 
 ### Clinical Context
-In clinical audiologist settings, if a patient has specific electrode dropouts or nerve sensitivities (e.g., deactivating the highest high-frequency electrode at the cochlear base), the CI processor automatically pairs down and redistributes the sound spectrum bandwidth across the remaining active electrodes.
+In clinical audiologist settings, if a patient has specific electrode dropouts or nerve sensitivities, the CI processor automatically pairs down and redistributes the sound spectrum bandwidth across the remaining active electrodes. For example, Sean has his 16th electrode (the highest high-frequency electrode at the cochlear base) manually disabled to prevent cross-signal interference (channel interaction) with adjacent lines, which improves overall speech and pitch accuracy by shifting those high frequency ranges down to active channels.
 
 ### Implementation Goals
 * **Electrode Toggles**: Add UI checkboxes to manually deactivate/mute specific frequency bands.
