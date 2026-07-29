@@ -86,10 +86,33 @@ else
     source venv/bin/activate
 fi
 
-# 4. Launch
+# 4. Create a double-clickable launcher for future runs
+LAUNCHER="$INSTALL_DIR/SignalForwarder.command"
+if [ ! -f "$LAUNCHER" ]; then
+    cat > "$LAUNCHER" << 'LAUNCHER_EOF'
+#!/bin/bash
+cd "$(dirname "$0")"
+source venv/bin/activate
+python3 app.py
+LAUNCHER_EOF
+    chmod +x "$LAUNCHER"
+    echo "  ✔  Created launcher: ~/SignalForwarder/SignalForwarder.command"
+fi
+
+# 5. Launch
 echo ""
 echo "═══════════════════════════════════════════════"
 echo "  Launching Signal Forwarder..."
 echo "═══════════════════════════════════════════════"
 echo ""
 python3 app.py
+
+# 6. Post-close: show re-launch instructions
+echo ""
+echo "═══════════════════════════════════════════════"
+echo "  Signal Forwarder closed."
+echo ""
+echo "  To run again, either:"
+echo "    • Double-click:  ~/SignalForwarder/SignalForwarder.command"
+echo "    • Terminal:       cd ~/SignalForwarder && source venv/bin/activate && python3 app.py"
+echo "═══════════════════════════════════════════════"
