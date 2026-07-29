@@ -1,0 +1,83 @@
+name: Test macOS Installer
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'public/MiniProjects/SignalForwarder/install.sh'
+      - 'public/MiniProjects/SignalForwarder/release/SignalForwarder-macOS.zip'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'public/MiniProjects/SignalForwarder/install.sh'
+  workflow_dispatch:
+
+jobs:
+  test-installer:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Installer Script (Dry Run / Verify Setup)
+        run: |
+          # Since this runner has Xcode CLT pre-installed, xcode-select -p will succeed.
+          # We want to run install.sh but prevent it from launching python3 app.py (which requires a display server and would block/fail).
+          # We can override python3 to just print the version and exit during the launch phase by using a wrapper.
+          
+          echo "=== Patching python3 launcher check for headless execution ==="
+          mkdir -p bin
+          cat << 'EOF' > bin/python3
+          #!/bin/bash
+          # If called with app.py, mock the launch so the runner exits successfully
+          if [[ "$@" == *"app.py"* ]]; then
+            echo "Mocking app.py execution for CI test!"
+            exit 0
+          fi
+          # Otherwise run actual python3
+          exec /usr/bin/python3 "$@"
+          EOF
+          chmod +x bin/python3
+          
+          # Put our mock python3 ahead in PATH so when install.sh runs "python3 app.py" at the end, it exits successfully.
+          export PATH="$PWD/bin:$PATH"
+          
+          # Since the zip hasn't been uploaded to the live URL yet in this branch/commit,
+          # we modify the ZIP_URL inside the script to point to the local file to test the extraction/setup logic.
+          sed -i '' 's|ZIP_URL=.*|ZIP_URL="file://'"$PWD"'/public/MiniProjects/SignalForwarder/release/SignalForwarder-macOS.zip"|' public/MiniProjects/SignalForwarder/install.sh
+          
+          echo "=== Executing installer ==="
+          bash public/MiniProjects/SignalForwarder/install.sh
+          
+      - name: Verify Installation Directory Structure
+        run: |
+          INSTALL_DIR="$HOME/SignalForwarder"
+          echo "Checking directory: $INSTALL_DIR"
+          
+          if [ ! -d "$INSTALL_DIR" ]; then
+            echo "Error: Installation directory does not exist!"
+            exit 1
+          fi
+          
+          if [ ! -f "$INSTALL_DIR/app.py" ]; then
+            echo "Error: app.py not found in install root!"
+            exit 1
+          fi
+          
+          if [ ! -d "$INSTALL_DIR/venv" ]; then
+            echo "Error: venv directory not created!"
+            exit 1
+          fi
+          
+          if [ ! -f "$INSTALL_DIR/SignalForwarder.command" ]; then
+            echo "Error: Launcher file not created!"
+            exit 1
+          fi
+          
+          echo "All checks passed successfully!"
