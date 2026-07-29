@@ -1,7 +1,7 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════
-#  Signal Forwarder — macOS One-Click Launcher
-#  Double-click this file to download, install, & run.
+#  Signal Forwarder — macOS Remote Installer
+#  Usage:  curl -fsSL https://dillonsimeone.com/MiniProjects/SignalForwarder/install.sh | bash
 # ═══════════════════════════════════════════════════
 
 APPNAME="SignalForwarder"
@@ -10,7 +10,7 @@ INSTALL_DIR="$HOME/SignalForwarder"
 
 clear
 echo "═══════════════════════════════════════════════"
-echo "  Signal Forwarder — macOS Launcher"
+echo "  Signal Forwarder — macOS Installer"
 echo "═══════════════════════════════════════════════"
 echo ""
 
@@ -24,7 +24,6 @@ if ! command -v python3 &> /dev/null; then
     echo ""
     echo "  Or download from: https://www.python.org/downloads/"
     echo ""
-    read -p "Press Enter to close..."
     exit 1
 fi
 
@@ -47,7 +46,13 @@ if [ ! -f "$INSTALL_DIR/app.py" ]; then
         wget -O "/tmp/$APPNAME.zip" "$ZIP_URL"
     else
         echo "  ✖  Neither curl nor wget found. Cannot download."
-        read -p "Press Enter to close..."
+        exit 1
+    fi
+
+    # Verify download succeeded
+    if [ $? -ne 0 ]; then
+        echo "  ✖  Download failed. Check your internet connection."
+        rm -f "/tmp/$APPNAME.zip"
         exit 1
     fi
 
@@ -59,7 +64,6 @@ if [ ! -f "$INSTALL_DIR/app.py" ]; then
         echo "  ✔  Download complete."
     else
         echo "  ✖  Download failed."
-        read -p "Press Enter to close..."
         exit 1
     fi
 else

@@ -55,24 +55,34 @@
       <!-- Section 2: Downloads -->
       <section class="deco-card full-width">
         <h2>DOWNLOAD</h2>
-        <p style="text-align: center; margin-bottom: 25px;">One file per platform. Download, double-click, done.</p>
-        <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
-          <a href="/MiniProjects/SignalForwarder/dist/SignalForwarder.exe" class="deco-btn-link" download>♦ WINDOWS (.EXE) ♦</a>
-          <a href="/MiniProjects/SignalForwarder/SignalForwarder.command" class="deco-btn-link" download>♦ macOS (.COMMAND) ♦</a>
-          <a href="https://github.com/DillonSimeone/Website/tree/main/public/MiniProjects/SignalForwarder/" class="deco-btn-link" target="_blank">♦ SOURCE CODE ♦</a>
-        </div>
-        <div class="deco-steps" style="margin-top: 25px;">
+        <div class="deco-steps" style="margin-bottom: 25px;">
           <div class="step">
             <span class="step-icon">♦</span>
             <strong>Windows:</strong> Download and double-click <code>SignalForwarder.exe</code>. Fully standalone — no Python needed.
           </div>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-bottom: 35px;">
+          <a href="/MiniProjects/SignalForwarder/dist/SignalForwarder.exe" class="deco-btn-link" download>♦ WINDOWS (.EXE) ♦</a>
+          <a href="https://github.com/DillonSimeone/Website/tree/main/public/MiniProjects/SignalForwarder/" class="deco-btn-link" target="_blank">♦ SOURCE CODE ♦</a>
+        </div>
+
+        <h3 style="text-align: center; margin-bottom: 5px;">macOS</h3>
+        <p style="text-align: center; margin-bottom: 15px;">Open Terminal and paste this command:</p>
+        <div style="max-width: 720px; margin: 0 auto 20px auto; background: rgba(0,0,0,0.4); border: 1px solid var(--gold-primary); border-radius: 4px; padding: 15px 20px; font-family: monospace; font-size: 0.85rem; word-break: break-all; position: relative;">
+          <code>curl -fsSL https://dillonsimeone.com/MiniProjects/SignalForwarder/install.sh | bash</code>
+        </div>
+        <div class="deco-steps">
           <div class="step">
             <span class="step-icon">♦</span>
-            <strong>macOS:</strong> Download and double-click <code>SignalForwarder.command</code>. It automatically downloads the source code,
-            creates a virtual environment, installs all dependencies, and launches the app. Subsequent runs skip straight to launch.
-            Requires Python 3.10+ (install via <a href="https://brew.sh" target="_blank">Homebrew</a>: <code>brew install python</code>).
+            This single command downloads the source code, creates a virtual environment, installs all dependencies, and launches the app.
+            Subsequent runs re-use the existing install. Requires Python 3.10+ (install via <a href="https://brew.sh" target="_blank">Homebrew</a>: <code>brew install python</code>).
           </div>
         </div>
+        <p style="text-align: center; margin-top: 20px; font-size: 0.8rem; opacity: 0.6;">
+          Prefer a downloadable file?
+          <a href="/MiniProjects/SignalForwarder/SignalForwarder.command" download style="color: var(--gold-primary);">Download SignalForwarder.command</a>
+          (may require <code>chmod +x</code> and clearing the quarantine flag).
+        </p>
       </section>
 
       <!-- Section 3: ESP32 Setup -->
