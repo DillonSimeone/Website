@@ -31,7 +31,19 @@ fi
 PYVER=$(python3 --version 2>&1)
 echo "  ✔  Found $PYVER"
 
-# 2. Download & extract if the app folder doesn't exist yet
+# 2. Ensure Xcode Command Line Tools are installed
+if ! xcode-select -p > /dev/null 2>&1; then
+    echo ""
+    echo "  Xcode Command Line Tools are required."
+    echo "  Installing now (this may take a few minutes)..."
+    xcode-select --install
+    echo ""
+    echo "  ✖  Please re-run this launcher after the installation finishes."
+    read -p "Press Enter to close..."
+    exit 1
+fi
+
+# 3. Download & extract if the app folder doesn't exist yet
 if [ ! -f "$INSTALL_DIR/app.py" ]; then
     echo ""
     echo "  First-time setup: Downloading Signal Forwarder..."
@@ -51,11 +63,38 @@ if [ ! -f "$INSTALL_DIR/app.py" ]; then
         exit 1
     fi
 
+    # Verify download succeeded
+    if [ $? -ne 0 ]; then
+        echo "  ✖  Download failed. Check your internet connection."
+        rm -f "/tmp/$APPNAME.zip"
+        read -p "Press Enter to close..."
+        exit 1
+    fi
+
     # Extract
     if [ -f "/tmp/$APPNAME.zip" ]; then
         echo "  Extracting to $INSTALL_DIR ..."
         unzip -o "/tmp/$APPNAME.zip" -d "$INSTALL_DIR"
         rm -f "/tmp/$APPNAME.zip"
+
+        # Fix nested directory: if zip contained an enclosing folder, flatten it
+        if [ ! -f "$INSTALL_DIR/app.py" ]; then
+            NESTED=$(find "$INSTALL_DIR" -maxdepth 2 -name "app.py" -print -quit)
+            if [ -n "$NESTED" ]; then
+                NESTED_DIR=$(dirname "$NESTED")
+                echo "  Flattening nested directory..."
+                mv "$NESTED_DIR"/* "$INSTALL_DIR/" 2>/dev/null
+                mv "$NESTED_DIR"/.* "$INSTALL_DIR/" 2>/dev/null
+                rmdir "$NESTED_DIR" 2>/dev/null
+            fi
+        fi
+
+        if [ ! -f "$INSTALL_DIR/app.py" ]; then
+            echo "  ✖  Extraction failed — app.py not found."
+            read -p "Press Enter to close..."
+            exit 1
+        fi
+
         echo "  ✔  Download complete."
     else
         echo "  ✖  Download failed."
@@ -68,7 +107,7 @@ fi
 
 cd "$INSTALL_DIR"
 
-# 3. Create venv & install dependencies if needed
+# 4. Create venv & install dependencies if needed
 if [ ! -d "venv" ]; then
     echo ""
     echo "  Setting up Python virtual environment..."
@@ -76,13 +115,19 @@ if [ ! -d "venv" ]; then
     source venv/bin/activate
     echo "  Installing dependencies (this may take a minute)..."
     pip install --upgrade pip > /dev/null 2>&1
-    pip install -r requirements.txt
+    if ! pip install -r requirements.txt; then
+        echo ""
+        echo "  ✖  Dependency installation failed."
+        echo "  Check your internet connection and try again."
+        read -p "Press Enter to close..."
+        exit 1
+    fi
     echo "  ✔  Dependencies installed."
 else
     source venv/bin/activate
 fi
 
-# 4. Launch
+# 5. Launch
 echo ""
 echo "═══════════════════════════════════════════════"
 echo "  Launching Signal Forwarder..."

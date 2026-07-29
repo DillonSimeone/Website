@@ -30,7 +30,20 @@ fi
 PYVER=$(python3 --version 2>&1)
 echo "  ✔  Found $PYVER"
 
-# 2. Download & extract if the app folder doesn't exist yet
+# 2. Ensure Xcode Command Line Tools are installed
+#    macOS ships a stub python3 that triggers a CLT install dialog.
+#    venv creation will fail without the real tools present.
+if ! xcode-select -p > /dev/null 2>&1; then
+    echo ""
+    echo "  Xcode Command Line Tools are required."
+    echo "  Installing now (this may take a few minutes)..."
+    xcode-select --install
+    echo ""
+    echo "  ✖  Please re-run this command after the installation finishes."
+    exit 1
+fi
+
+# 3. Download & extract if the app folder doesn't exist yet
 if [ ! -f "$INSTALL_DIR/app.py" ]; then
     echo ""
     echo "  First-time setup: Downloading Signal Forwarder..."
@@ -61,6 +74,24 @@ if [ ! -f "$INSTALL_DIR/app.py" ]; then
         echo "  Extracting to $INSTALL_DIR ..."
         unzip -o "/tmp/$APPNAME.zip" -d "$INSTALL_DIR"
         rm -f "/tmp/$APPNAME.zip"
+
+        # Fix nested directory: if zip contained an enclosing folder, flatten it
+        if [ ! -f "$INSTALL_DIR/app.py" ]; then
+            NESTED=$(find "$INSTALL_DIR" -maxdepth 2 -name "app.py" -print -quit)
+            if [ -n "$NESTED" ]; then
+                NESTED_DIR=$(dirname "$NESTED")
+                echo "  Flattening nested directory..."
+                mv "$NESTED_DIR"/* "$INSTALL_DIR/" 2>/dev/null
+                mv "$NESTED_DIR"/.* "$INSTALL_DIR/" 2>/dev/null
+                rmdir "$NESTED_DIR" 2>/dev/null
+            fi
+        fi
+
+        if [ ! -f "$INSTALL_DIR/app.py" ]; then
+            echo "  ✖  Extraction failed — app.py not found."
+            exit 1
+        fi
+
         echo "  ✔  Download complete."
     else
         echo "  ✖  Download failed."
@@ -72,7 +103,7 @@ fi
 
 cd "$INSTALL_DIR"
 
-# 3. Create venv & install dependencies if needed
+# 4. Create venv & install dependencies if needed
 if [ ! -d "venv" ]; then
     echo ""
     echo "  Setting up Python virtual environment..."
@@ -80,13 +111,21 @@ if [ ! -d "venv" ]; then
     source venv/bin/activate
     echo "  Installing dependencies (this may take a minute)..."
     pip install --upgrade pip > /dev/null 2>&1
-    pip install -r requirements.txt
+    if ! pip install -r requirements.txt; then
+        echo ""
+        echo "  ✖  Dependency installation failed."
+        echo "  Check your internet connection and try again."
+        exit 1
+    fi
     echo "  ✔  Dependencies installed."
 else
     source venv/bin/activate
 fi
 
-# 4. Create a double-clickable launcher for future runs
+# 5. Create a double-clickable launcher for future runs
+#    Note: On macOS Sonoma+, launching GUI apps via .command files may trigger
+#    permission prompts (Local Network, etc.) attributed to Terminal rather than
+#    the app itself. This is expected macOS behavior and not avoidable from a script.
 LAUNCHER="$INSTALL_DIR/SignalForwarder.command"
 if [ ! -f "$LAUNCHER" ]; then
     cat > "$LAUNCHER" << 'LAUNCHER_EOF'
@@ -99,7 +138,7 @@ LAUNCHER_EOF
     echo "  ✔  Created launcher: ~/SignalForwarder/SignalForwarder.command"
 fi
 
-# 5. Launch
+# 6. Launch
 echo ""
 echo "═══════════════════════════════════════════════"
 echo "  Launching Signal Forwarder..."
@@ -107,7 +146,7 @@ echo "════════════════════════�
 echo ""
 python3 app.py
 
-# 6. Post-close: show re-launch instructions
+# 7. Post-close: show re-launch instructions
 echo ""
 echo "═══════════════════════════════════════════════"
 echo "  Signal Forwarder closed."
