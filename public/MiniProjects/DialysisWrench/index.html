@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcana of Access — Dialysis Wrench & Pliers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Bangers&family=Outfit:wght@400;600;800;900&family=Fira+Code:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-void: #09090e;
+            --gold-primary: #f59e0b;
+            --gold-light: #fbbf24;
+            --gold-glow: rgba(245, 158, 11, 0.4);
+            --comic-cyan: #06b6d4;
+            --comic-pink: #ec4899;
+            --comic-yellow: #facc15;
+            --card-bg: #11131e;
+            --border-gold: rgba(245, 158, 11, 0.35);
+            --font-tarot: 'Cinzel Decorative', serif;
+            --font-comic: 'Bangers', cursive, sans-serif;
+            --font-body: 'Outfit', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-void);
+            color: #f3f4f6;
+            font-family: var(--font-body);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(var(--gold-glow) 1px, transparent 1px),
+                radial-gradient(rgba(6, 182, 212, 0.2) 1px, var(--bg-void) 1px);
+            background-size: 30px 30px, 15px 15px;
+            background-position: 0 0, 7.5px 7.5px;
+        }
+
+        /* Halftone overlay pattern */
+        .halftone-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            background: radial-gradient(rgba(0,0,0,0) 50%, #000 100%),
+                        repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 2px, transparent 4px);
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 45px 20px 25px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .tarot-badge {
+            display: inline-block;
+            font-family: var(--font-tarot);
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            color: var(--gold-primary);
+            text-transform: uppercase;
+            border: 1px solid var(--border-gold);
+            padding: 6px 18px;
+            border-radius: 20px;
+            background: rgba(17, 19, 30, 0.8);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 15px var(--gold-glow);
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-family: var(--font-tarot);
+            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            color: #ffffff;
+            text-shadow: 3px 3px 0px #000, 0 0 25px var(--gold-glow);
+            margin-bottom: 8px;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-family: var(--font-comic);
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            color: var(--comic-cyan);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        /* Main Container */
+        main {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 20px 80px;
+        }
+
+        /* Top Action Banner (Bambu A1 Highlight) */
+        .bambu-banner {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(6, 182, 212, 0.15));
+            border: 2px solid var(--gold-primary);
+            border-radius: 16px;
+            padding: 20px 28px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 15px var(--gold-glow);
+            backdrop-filter: blur(10px);
+        }
+
+        .bambu-info h2 {
+            font-family: var(--font-comic);
+            font-size: 1.8rem;
+            color: var(--comic-yellow);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .bambu-info p {
+            font-size: 0.95rem;
+            color: #d1d5db;
+            max-width: 650px;
+        }
+
+        .btn-download-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-light));
+            color: #000;
+            font-family: var(--font-comic);
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+            padding: 12px 28px;
+            border-radius: 12px;
+            text-decoration: none;
+            box-shadow: 4px 4px 0px #000, 0 0 20px var(--gold-glow);
+            transition: all 0.2s ease;
+        }
+
+        .btn-download-primary:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #000, 0 0 30px var(--gold-glow);
+            background: linear-gradient(135deg, var(--gold-light), #fde047);
+        }
+
+        /* Tarot Card Grid */
+        .tarot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        /* Tarot Card Element */
+        .tarot-card {
+            background: var(--card-bg);
+            border: 3px solid var(--border-gold);
+            border-radius: 20px;
+            padding: 24px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        .tarot-card::before {
+            content: '';
+            position: absolute;
+            top: 8px; left: 8px; right: 8px; bottom: 8px;
+            border: 1px dashed var(--border-gold);
+            border-radius: 14px;
+            pointer-events: none;
+        }
+
+        .tarot-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--gold-light);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 25px var(--gold-glow);
+        }
+
+        .card-header-num {
+            font-family: var(--font-tarot);
+            font-size: 1.1rem;
+            color: var(--gold-primary);
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            background: var(--comic-pink);
+            color: #fff;
+            font-family: var(--font-comic);
+            font-size: 0.9rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            box-shadow: 2px 2px 0 #000;
+            transform: rotate(4deg);
+        }
+
+        .card-title {
+            font-family: var(--font-tarot);
+            font-size: 1.4rem;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 16px;
+            line-height: 1.25;
+        }
+
+        .card-illustration {
+            width: 100%;
+            height: 190px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-illustration svg {
+            width: 80px;
+            height: 80px;
+            fill: none;
+            stroke: var(--gold-primary);
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 8px var(--gold-glow));
+        }
+
+        .card-illustration .bg-symbol {
+            position: absolute;
+            font-family: var(--font-tarot);
+            font-size: 8rem;
+            color: rgba(255,255,255,0.03);
+            user-select: none;
+        }
+
+        .card-body {
+            font-size: 0.92rem;
+            color: #9ca3af;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .card-specs {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 18px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--comic-cyan);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-family: var(--font-comic);
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 2px 2px 0 #000;
+        }
+
+        .btn-gold {
+            background: var(--gold-primary);
+            color: #000;
+        }
+        .btn-gold:hover {
+            background: var(--gold-light);
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-gold);
+            color: var(--gold-primary);
+        }
+        .btn-outline:hover {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fff;
+        }
+
+        /* Research Section Highlight */
+        .research-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #131221 0%, #1e152a 100%);
+            border-color: var(--comic-pink);
+        }
+
+        .research-card:hover {
+            border-color: var(--comic-pink);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(236, 72, 153, 0.4);
+        }
+
+        .research-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .research-grid {
+                grid-template-columns: 1fr;
+            }
+            .bambu-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+            .btn-download-primary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        footer {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        footer a {
+            color: var(--gold-primary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="halftone-overlay"></div>
+
+    <header>
+        <div class="tarot-badge">MAJOR ARCANA IX • ASSISTIVE ENGINEERING</div>
+        <h1>ARCANA OF ACCESS</h1>
+        <div class="hero-subtitle">Peritoneal Dialysis Wrenches, Pliers & Tactile Knobs</div>
+    </header>
+
+    <main>
+
+        <!-- Bambu A1 Download Hero Banner -->
+        <div class="bambu-banner">
+            <div class="bambu-info">
+                <h2>⚡ BAMBU LAB A1 PRESET READY</h2>
+                <p>Includes complete print profiles (`allWrenchPliers.3mf`) optimized for dual-color PETG/PLA strength, zero-support orientation, and perfect mechanical tolerances.</p>
+            </div>
+            <a href="./allWrenchPliers.3mf" download class="btn-download-primary">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 2 0 0 1-2 2H5a2 2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                DOWNLOAD ALL (3MF)
+            </a>
+        </div>
+
+        <!-- Tarot Cards Grid -->
+        <div class="tarot-grid">
+
+            <!-- Card I: Universal Cable Wrench -->
+            <div class="tarot-card">
+                <div class="card-header-num">I</div>
+                <div class="card-badge">BAMBU READY</div>
+                <h3 class="card-title">THE UNIVERSAL WRENCH</h3>
+                <div class="card-illustration">
+                    <div class="bg-symbol">I</div>
+                    <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                </div>
+                <div class="card-body">
+                    Engineered for high-leverage grip on Baxter PD dialysis tubing connectors. Eliminates tight finger twisting requirements for patients with neuropathy or limited hand strength.
+                </div>
+                <div class="card-specs">
+                    <span>• Material: PETG / Tough PLA</span>
+                    <span>• Infill: 35% Gyroid</span>
+                    <span>• Supports: None required</span>
+                </div>
+                <div class="card-actions">
+                    <a href="../../ParametricModeling/08-WenchPeritonealDialysis/index.html?tool=universal" class="btn-card btn-gold">Customize in 3D Studio</a>
+                </div>
+            </div>
+
+            <!-- Card II: High-Leverage Pliers -->
+            <div class="tarot-card">
+                <div class="card-header-num">II</div>
+                <div class="card-badge">STATIC 3MF</div>
+                <h3 class="card-title">THE LEVERAGE PLIERS</h3>
+                <div class="card-illustration">
+                    <div class="bg-symbol">II</div>
+                    <svg viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2z"/><path d="M7 10V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5"/></svg>
+                </div>
+                <div class="card-body">
+                    A heavy-duty non-parametric hinged tool providing maximum mechanical advantage when gripping resistant dialysis caps and line locks.
+                    <br><br>
+                    <strong>💡 Post-Processing Grip Tip:</strong> Once printed, apply a thin layer of hot glue to the inner ridges/teeth. Hot glue deforms slightly under pressure while staying firm, creating an ultra-grippy high-friction surface that won't slip or scratch delicate plastic caps.
+                </div>
+                <div class="card-specs">
+                    <span>• File: static print profile (`pliers.3mf`)</span>
+                    <span>• Material: PETG / Tough PLA</span>
+                    <span>• Grip Modification: Hot glue teeth lining</span>
+                </div>
+                <div class="card-actions">
+                    <a href="./pliers.3mf" download class="btn-card btn-gold">Download Pliers (3MF)</a>
+                </div>
+            </div>
+
+            <!-- Card III: Cap & Socket Wrenches -->
+            <div class="tarot-card">
+                <div class="card-header-num">III</div>
+                <div class="card-badge">PRECISION</div>
+                <h3 class="card-title">CAP & SOCKET WRENCHES</h3>
+                <div class="card-illustration">
+                    <div class="bg-symbol">III</div>
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M12 3v3m0 12v3m9-9h-3M6 12H3"/></svg>
+                </div>
+                <div class="card-body">
+                    Specialized socket attachments designed to securely enclose mini-caps and disconnect valves without puncturing fragile tubing lines.
+                </div>
+                <div class="card-specs">
+                    <span>• Socket Wrench STL included</span>
+                    <span>• Funnel Wrench STL included</span>
+                    <span>• Fits standard Baxter PD sets</span>
+                </div>
+                <div class="card-actions">
+                    <a href="../../ParametricModeling/08-WenchPeritonealDialysis/index.html?tool=socket" class="btn-card btn-gold">Customize in 3D Studio</a>
+                </div>
+            </div>
+
+            <!-- Card IV: Research Paper Integration (Access Knobs) -->
+            <div class="tarot-card research-card">
+                <div class="card-header-num">IV • THE ARCANA OF RESEARCH</div>
+                <div class="research-grid">
+                    <div class="card-illustration" style="height: 100%; min-height: 180px; margin-bottom: 0;">
+                        <div class="bg-symbol">IV</div>
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="card-title" style="text-align: left; color: var(--comic-pink);">TACTILE ACCESS KNOBS RESEARCH</h3>
+                        <div class="card-body" style="margin-bottom: 14px;">
+                            Working directly with clients to solve real-world dexterity limitations for these peritoneal dialysis wrenches led directly to our research paper on <b>Parametric Tactile Access Knobs</b> (currently under peer review).
+                        </div>
+                        <div class="card-actions" style="flex-direction: row; flex-wrap: wrap;">
+                            <a href="../../ParametricModeling/06-SythKnobs/AccessKnobs.pdf" download class="btn-card btn-gold" style="width: auto; flex: 1; min-width: 200px;">
+                                Download Paper (.PDF)
+                            </a>
+                            <a href="../../ParametricModeling/06-SythKnobs/knob-parametric.html" class="btn-card btn-outline" style="width: auto; flex: 1; min-width: 200px;">
+                                Explore Knob Studio
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer>
+        <p>Designed & Developed for Accessibility • <a href="../../index.html">Return to Portfolio Main</a></p>
+    </footer>
+
+</body>
+</html>

@@ -371,6 +371,47 @@ function initParameters() {
     param("Card Guide Lip", 1.0, { min: 0.0, max: 3.0, step: 0.2 }, "socket");
 }
 
+function applyURLParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tool = urlParams.get('tool');
+    const preset = urlParams.get('preset');
+    
+    // Process preset or tool queries
+    if (tool === 'universal' || preset === 'universal') {
+        if (PARAMS['show-cable-reference']) PARAMS['show-cable-reference'].value = 1;
+        if (PARAMS['show-socket-slots']) PARAMS['show-socket-slots'].value = 1;
+        if (PARAMS['show-solid-templates']) PARAMS['show-solid-templates'].value = 0;
+    } else if (tool === 'socket' || tool === 'cap' || preset === 'socket') {
+        if (PARAMS['show-cable-reference']) PARAMS['show-cable-reference'].value = 0;
+        if (PARAMS['show-socket-slots']) PARAMS['show-socket-slots'].value = 0;
+        if (PARAMS['show-solid-templates']) PARAMS['show-solid-templates'].value = 0;
+    }
+
+    // Process any explicit parameter overrides in URL (e.g. ?socket-inner-diam=12.5)
+    for (const [key, value] of urlParams.entries()) {
+        if (PARAMS[key] !== undefined) {
+            const parsed = PARAMS[key].type === 'checkbox' ? (value === '1' || value === 'true' ? 1 : 0) : parseFloat(value);
+            if (!isNaN(parsed)) {
+                PARAMS[key].value = parsed;
+            }
+        }
+    }
+
+    // Sync UI elements with loaded parameter values
+    for (const id in PARAMS) {
+        const input = document.getElementById(`input-${id}`);
+        const display = document.getElementById(`val-${id}`);
+        if (input) {
+            if (PARAMS[id].type === 'checkbox') {
+                input.checked = !!PARAMS[id].value;
+            } else {
+                input.value = PARAMS[id].value;
+            }
+        }
+        if (display) display.innerText = PARAMS[id].value;
+    }
+}
+
 async function init() {
     wasm = await Module();
     wasm.setup();
@@ -378,6 +419,7 @@ async function init() {
 
     viewer = initThreeViewer('viewer');
     initParameters();
+    applyURLParams();
     setViewMode('blueprint');
     viewer.animate();
 }

@@ -52,7 +52,7 @@ from popup_ui import TokenPopup
 
 logger = logging.getLogger('token_tracker')
 
-CACHE_VERSION = 3
+CACHE_VERSION = 4
 
 
 class TokenTrackerApp:

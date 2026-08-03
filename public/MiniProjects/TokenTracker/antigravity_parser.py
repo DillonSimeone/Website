@@ -98,6 +98,36 @@ def _extract_gen_metadata(data_blob: bytes) -> dict[str, Any] | None:
     }
 
 
+def _extract_last_step_index(data_blob: bytes) -> int | None:
+    try:
+        root = decode_message(data_blob)
+        f1_bytes = get_nested(root, 1)
+        if not isinstance(f1_bytes, bytes):
+            return None
+        f1 = decode_message(f1_bytes)
+        for fn, wt, val in f1:
+            if fn == 20 and isinstance(val, bytes):
+                try:
+                    f20 = decode_message(val)
+                    key = None
+                    value = None
+                    for f20_fn, f20_wt, f20_val in f20:
+                        if f20_fn == 1 and isinstance(f20_val, bytes):
+                            key = f20_val.decode('utf-8', errors='replace')
+                        elif f20_fn == 2:
+                            if isinstance(f20_val, bytes):
+                                value = f20_val.decode('utf-8', errors='replace')
+                            else:
+                                value = str(f20_val)
+                    if key == "last_step_index" and value is not None:
+                        return int(value)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    return None
+
+
 def _resolve_timestamp(idx: int, step_timestamps: dict[int, datetime]) -> datetime:
     for offset in (0, 1, -1, 2, -2):
         ts = step_timestamps.get(idx + offset)
@@ -158,7 +188,8 @@ def _parse_db_file(db_path: Path, source: DataSource) -> list[TokenEntry]:
             parsed = _extract_gen_metadata(data_blob)
             if parsed is None:
                 continue
-            timestamp = _resolve_timestamp(idx, step_timestamps)
+            step_idx = _extract_last_step_index(data_blob) or idx
+            timestamp = _resolve_timestamp(step_idx, step_timestamps)
             entry = TokenEntry(
                 timestamp=timestamp,
                 model=parsed["model"],
