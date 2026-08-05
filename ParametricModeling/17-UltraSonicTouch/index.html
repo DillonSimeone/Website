@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>17-UltraSonicTouch — Focused Haptic Ultrasonic Dish</title>
+  <meta name="description"
+    content="Parametric focused 40kHz ultrasonic haptic dish configurator for 20x 16mm TCT40 transmitters powered by Pi Pico + TPA3118.">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header>
+    <div>
+      <div class="site-label">Parametric CAD Suite</div>
+      <h1>ULTRASONIC TOUCH LAB</h1>
+    </div>
+    <span class="tag accent">20× TCT40-16T</span>
+    <span class="tag">40KHz ACOUSTIC HAPTIC</span>
+    <span class="tag">RP2040 + TPA3118</span>
+    <span class="header-right">
+      <span class="live-dot"></span>
+      <span id="perf-badge">FORGECAD ACTIVE</span>
+    </span>
+  </header>
+
+  <div id="safety-banner" class="safety-banner info">
+    Acoustic Radiation Pressure: All 20× 16mm 40kHz transmitters aimed at a common focal point. Powered via TPA3118
+    amplifier &amp; Pico AM signal modulation (150Hz).
+  </div>
+
+  <main>
+    <!-- LEFT PANEL: Parametric Controls -->
+    <aside class="panel">
+      <div class="panel-header"><span class="panel-title">1. Array &amp; Dish Geometry</span></div>
+      <div class="panel-content">
+        <div class="control-group">
+          <div class="control-group-title cyan">Transducers &amp; Focus</div>
+
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Transducer Count</span><span class="param-value"
+                id="val-transducerCount">20</span></div>
+            <input type="range" id="input-transducerCount" min="4" max="20" step="1" value="20">
+          </div>
+
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Focal Distance (mm)</span><span class="param-value"
+                id="val-focalDistance">100</span></div>
+            <input type="range" id="input-focalDistance" min="40" max="200" step="5" value="100">
+          </div>
+
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Transducer OD (mm)</span><span class="param-value"
+                id="val-transducerDiam">16.0</span></div>
+            <input type="range" id="input-transducerDiam" min="10.0" max="16.5" step="0.1" value="16.0">
+          </div>
+
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Hole Tolerancing Kerf (mm)</span><span class="param-value"
+                id="val-transducerKerf">0.20</span></div>
+            <input type="range" id="input-transducerKerf" min="0.00" max="0.50" step="0.05" value="0.20">
+          </div>
+
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Dish Wall Thickness (mm)</span><span class="param-value"
+                id="val-dishThickness">5.0</span></div>
+            <input type="range" id="input-dishThickness" min="3.0" max="8.0" step="0.5" value="5.0">
+          </div>
+
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Rim Buffer Margin (mm)</span><span class="param-value"
+                id="val-dishRimMargin">18.0</span></div>
+            <input type="range" id="input-dishRimMargin" min="8.0" max="30.0" step="1.0" value="18.0">
+          </div>
+
+          <div class="param-row">
+            <div class="param-info"><span class="param-label">Frame Architecture (Print Optimization)</span></div>
+            <select id="select-frameTopology" class="select-input" style="width: 100%; margin-top: 4px; padding: 6px 10px; background: rgba(8,12,24,0.9); border: 1px solid rgba(0,242,255,0.4); color: #00f2ff; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer;">
+              <option value="spider" selected>🕸 Spider Truss Web (0% Support, -65% Plastic)</option>
+              <option value="dish">🥣 Solid Dish Shell</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="control-group-title">Presets &amp; Display</div>
+          <div class="preset-buttons">
+            <button class="btn" id="btn-preset-20">Full 20 (100mm)</button>
+            <button class="btn" id="btn-preset-tight">Tight Focus (60mm)</button>
+            <button class="btn" id="btn-preset-long">Long Focus (160mm)</button>
+            <button class="btn primary" id="btn-export-stl">Export STL</button>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 6px; font-size: 12px; color: var(--text-dim);">
+            <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" id="check-showRays" checked> Focal Rays
+            </label>
+            <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" id="check-showWaves" checked> Wavefronts
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="control-group-title cyan">Acoustic Field Estimate</div>
+          <div id="acoustic-readout" class="readout-box">
+            Loading pressure calculations...
+          </div>
+          <p class="hint">150Hz AM envelope on 40kHz carrier produces optimal Meissner nerve response for mid-air
+            tactile sensation.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT: Viewport -->
+    <div id="viewport-container">
+      <div class="overlay-stats">
+        <div>ARRAY: <span id="stat-count">20 × TCT40-16T</span></div>
+        <div>FOCAL DISTANCE: <span id="stat-focal">100 mm</span></div>
+        <div>EST. FOCAL PRESSURE: <span id="stat-spl">136.2 dB</span></div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initUI } from './src/ui.js';
+    window.addEventListener('DOMContentLoaded', async () => {
+      await initUI();
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codafest - Production & Haptic Sound Service Tiers</title>
+    
+    <!-- Google Fonts for Art Deco Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- External Modular Styles -->
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+    <div class="deco-wrapper">
+        <!-- Header -->
+        <header>
+            <div class="deco-badge">Codafest Interactive Overview</div>
+            <h1>Production & Haptic Sound</h1>
+            <div class="art-deco-divider">
+                <div class="line"></div>
+                <div class="diamond"></div>
+                <div class="line"></div>
+            </div>
+            <p class="subtitle">
+                Explore setup packages tailored for live festival performances, audio-reactive visual projection mapping, high-power WLED lighting, Starlink livestreaming, and immersive Woojer haptic vests.
+            </p>
+        </header>
+
+        <!-- Tier Pricing Cards Section -->
+        <div class="section-title">
+            <span>◆ Production Service Tiers ◆</span>
+        </div>
+
+        <div class="tiers-grid">
+            <!-- Tier 0 -->
+            <div class="tier-card" id="card-tier-0">
+                <div class="tier-header">
+                    <div class="tier-name">Tier 0: Base</div>
+                    <div class="tier-price-tag">$500</div>
+                    <div class="tier-price-subtitle">Essential Stage Setup</div>
+                </div>
+                <ul class="tier-features">
+                    <li>Nate as live VJ / DJ</li>
+                    <li>Managed Starlink Satellite Livestream <span class="badge-tag">Included</span></li>
+                    <li>Transportation & Gas Coverage</li>
+                    <li>6kW Power Generator Base</li>
+                    <li>Husky DJ Table with Front TV Clamp</li>
+                    <li>2x Giant Display TVs</li>
+                    <li>Subwoofer + High-Output Speaker</li>
+                    <li>4x Grid LED Panels</li>
+                    <li>Automated Motorized Lighting Heads</li>
+                    <li>Woojer Vests <span class="badge-tag">$10 Rent / Attendee</span></li>
+                </ul>
+                <button class="select-tier-btn" onclick="selectTier(0)">Select Tier 0</button>
+            </div>
+
+            <!-- Tier 1 -->
+            <div class="tier-card" id="card-tier-1">
+                <div class="tier-header">
+                    <div class="tier-name">Tier 1: Essential</div>
+                    <div class="tier-price-tag">$1,350</div>
+                    <div class="tier-price-subtitle">Standard Production Package</div>
+                </div>
+                <ul class="tier-features">
+                    <li>Everything in Tier 0 Base</li>
+                    <li>3x Projection Mapping Systems</li>
+                </ul>
+                <button class="select-tier-btn active" onclick="selectTier(1)">Select Tier 1</button>
+            </div>
+
+            <!-- Tier 2 -->
+            <div class="tier-card" id="card-tier-2">
+                <div class="tier-header">
+                    <div class="tier-name">Tier 2: Ultra Festival</div>
+                    <div class="tier-price-tag">$2,800</div>
+                    <div class="tier-price-subtitle">Full Production & Haptics</div>
+                </div>
+                <ul class="tier-features">
+                    <li>Everything in Tier 1</li>
+                    <li>5x Full Projection Mapping Rig</li>
+                    <li>Heavy Stage Trusses + ArtNet Lighting</li>
+                    <li>WLED Light Stands (Battery Powered)</li>
+                    <li>Full WLED LED Integration</li>
+                    <li>Full Woojer Vests Included <span class="badge-tag">Up to 40 Units</span></li>
+                </ul>
+                <button class="select-tier-btn" onclick="selectTier(2)">Select Tier 2</button>
+            </div>
+        </div>
+
+        <!-- Interactive Package Estimator -->
+        <div class="section-title">
+            <span>◆ Custom Package Estimator ◆</span>
+        </div>
+
+        <div class="estimator-section">
+            <div class="estimator-grid">
+                <!-- Add-On Options -->
+                <div>
+                    <div class="estimator-group-title">Optional Production Add-Ons</div>
+                    
+                    <div class="toggle-option included" id="opt-livestream" onclick="toggleAddon('livestream')">
+                        <label>
+                            <span>Managed Starlink Livestreaming</span>
+                            <span class="toggle-subtext">Included in all tiers at cost with dedicated operator feed</span>
+                        </label>
+                        <span class="toggle-price">INCLUDED</span>
+                        <input type="checkbox" id="chk-livestream" class="toggle-checkbox" checked disabled onchange="updateSummary()">
+                    </div>
+
+                    <div class="toggle-option" id="opt-extra-proj" onclick="toggleAddon('extra-proj')">
+                        <label>
+                            <span>Extra Projection Mapping (+2 Nodes)</span>
+                            <span class="toggle-subtext">Expands visual mapping coverage</span>
+                        </label>
+                        <span class="toggle-price">+$400</span>
+                        <input type="checkbox" id="chk-extra-proj" class="toggle-checkbox" onchange="updateSummary()">
+                    </div>
+
+                    <div class="toggle-option included" id="opt-husky-table" onclick="toggleAddon('husky-table')">
+                        <label>
+                            <span>Husky DJ Stage Table + Front TV Clamp</span>
+                            <span class="toggle-subtext">Custom DJ booth aesthetic with video display</span>
+                        </label>
+                        <span class="toggle-price">INCLUDED</span>
+                        <input type="checkbox" id="chk-husky-table" class="toggle-checkbox" checked disabled onchange="updateSummary()">
+                    </div>
+
+                    <div class="toggle-option" id="opt-battery-wled" onclick="toggleAddon('battery-wled')">
+                        <label>
+                            <span>Portable Battery WLED Stands</span>
+                            <span class="toggle-subtext">Wireless perimeter ambient lighting</span>
+                        </label>
+                        <span class="toggle-price">+$200</span>
+                        <input type="checkbox" id="chk-battery-wled" class="toggle-checkbox" onchange="updateSummary()">
+                    </div>
+
+                    <div class="toggle-option" id="opt-extra-tvs" onclick="toggleAddon('extra-tvs')">
+                        <label>
+                            <span>Extra Giant Display TVs (+2)</span>
+                            <span class="toggle-subtext">Additional large screens for crowd visibility</span>
+                        </label>
+                        <span class="toggle-price">+$200</span>
+                        <input type="checkbox" id="chk-extra-tvs" class="toggle-checkbox" onchange="updateSummary()">
+                    </div>
+                </div>
+
+                <!-- Live Summary Receipt Box -->
+                <div class="summary-box">
+                    <div class="summary-title">Estimate Summary</div>
+                    <ul class="summary-items-list" id="summary-list">
+                        <!-- Populated by JavaScript -->
+                    </ul>
+                    <div class="summary-total">
+                        <span class="summary-total-label">Estimated Total</span>
+                        <span class="summary-total-price" id="summary-total-price">$1,350</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Specs Summary -->
+        <div class="specs-bar">
+            <div class="spec-item">
+                <div class="spec-value">40 Vests</div>
+                <div class="spec-label">Haptic Woojers Available</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-value">6,000 W</div>
+                <div class="spec-label">Generator Capacity Base</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-value">Starlink</div>
+                <div class="spec-label">High-Speed Satellite WiFi</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-value">1x to 5x</div>
+                <div class="spec-label">Projection Mapping Scale</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <div class="art-deco-divider" style="margin-top:20px;">
+                <div class="line"></div>
+                <div class="diamond"></div>
+                <div class="line"></div>
+            </div>
+            <p>Codafest Production & Live Haptic Sound Overview &bull; Mobile-Friendly Forest Art Deco Interface</p>
+        </footer>
+    </div>
+
+    <!-- External Modular Script -->
+    <script src="./scripts.js"></script>
+</body>
+</html>

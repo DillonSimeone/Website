@@ -1,0 +1,2902 @@
+import { Parser, tokenize, Evaluator, highlight, updateAudioState, pnoise1 } from './compiler.js';
+import { addSerialLog, triggerI2CBlink, updateHardwarePins, initBootLogs, serialConsole } from './emulator.js';
+import { PATTERNS, loadCustomPatterns, initPhoneHaptics } from './haptics.js';
+
+// ─── CANVAS REFS ────────────────────────────────────────────────────────────
+const prevCanvas = document.getElementById("prev");
+const prevCtx = prevCanvas.getContext("2d");
+const heroCanvas = document.getElementById("hero-canvas");
+const heroCtx = heroCanvas ? heroCanvas.getContext("2d") : null;
+const specCanvas = document.getElementById("spectrum-canvas");
+const specCtx = specCanvas.getContext("2d");
+
+// ─── MAIN VARIABLES ─────────────────────────────────────────────────────────
+let activePattern = PATTERNS[0];
+let masterIntensity = 180; // 0-255
+let frequencyShift = 150; // Hz
+let playbackSpeed = 1.0;
+let isPlaying = true;
+let smoothedAmp = 0;
+let startupFloor = 0.35; // default 35%
+
+// Dynamic Audio Partitioning Bins Configuration
+const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+// Declared early so Pattern Studio compile-on-type can live-push.
+const isBleMode = window.location.pathname.includes("bluetooth.html");
+const isRealESP32 = (
+    window.location.hostname !== 'localhost'
+    && window.location.hostname !== '127.0.0.1'
+    && window.location.hostname !== 'dillonsimeone.com'
+    && window.location.hostname !== ''
+);
+let bleDevice = null;
+let rxCharacteristic = null;
+let txCharacteristic = null;
+const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const RX_CHAR_UUID       = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const TX_CHAR_UUID       = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const isBluetoothSupported = 'bluetooth' in navigator;
+
+let numBins = 3;
+let dividers = [8, 18];
+let draggingDividerIdx = -1;
+
+let timeSec = 0;
+const waveHistory = [];
+const colorHistory = [];
+const specHistory = [];
+const historyLen = 220;
+let telemetryMode = "classic";
+let isMotorStalled = false;
+let stallLogThrottle = 0;
+
+let audioCtx = null;
+let analyser = null;
+let micStream = null;
+let micSource = null;
+let dataArray = null;
+let useLiveMic = false;
+let smoothedAudioAmp = 0;
+
+// Phone haptics controller
+const phoneHaptics = initPhoneHaptics(addSerialLog);
+let lastPhoneVibrateTime = 0;
+
+function showMobileHapticGuide() {
+    const guide = document.getElementById("mobile-haptic-guide");
+    if (guide && isMobileDevice && navigator.vibrate) {
+        guide.style.display = "flex";
+        // Force reflow
+        guide.offsetHeight;
+        guide.style.transform = "translateY(0)";
+        guide.style.opacity = "1";
+        
+        // Hide after 3.5 seconds
+        clearTimeout(window.mobileGuideTimeout);
+        window.mobileGuideTimeout = setTimeout(() => {
+            guide.style.transform = "translateY(-100px)";
+            guide.style.opacity = "0";
+            setTimeout(() => {
+                guide.style.display = "none";
+            }, 400);
+        }, 3500);
+    }
+}
+
+// ─── HIGH-DPI CANVAS SHARPNESS HELPER ───────────────────────────────────────
+function setupSharpCanvas(canvas) {
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scale
+    ctx.scale(dpr, dpr);
+}
+
+// Initialize sharp canvases on load
+setupSharpCanvas(prevCanvas);
+setupSharpCanvas(heroCanvas);
+setupSharpCanvas(specCanvas);
+
+window.addEventListener("resize", () => {
+    setupSharpCanvas(prevCanvas);
+    setupSharpCanvas(heroCanvas);
+    setupSharpCanvas(specCanvas);
+});
+
+// Tab switching
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    ["play", "lib", "studio", "audio", "fleet", "device"].forEach(id => {
+        const el = document.getElementById("tab-" + id);
+        if (el) el.style.display = (id === t.dataset.tab) ? "" : "none";
+    });
+    if (t.dataset.tab === "audio") {
+        setupSharpCanvas(specCanvas);
+        setupMicrophone();
+    } else {
+        stopMicrophone();
+    }
+    if (t.dataset.tab === "fleet") refreshFleet();
+    // Setup visible canvases
+    setupSharpCanvas(prevCanvas);
+    setupSharpCanvas(heroCanvas);
+}));
+
+// ─── EDITOR WIRING ──────────────────────────────────────────────────────────
+const ta = document.getElementById("ta");
+const hl = document.getElementById("hl");
+const gutter = document.getElementById("gutter");
+const compilerStatus = document.getElementById("compiler-status");
+const customPatternNameInput = document.getElementById("customPatternName");
+
+function syncHL() {
+    if (!ta) return;
+    const v = ta.value;
+    hl.innerHTML = highlight(v);
+    const lines = v.split("\n").length;
+    let g = ""; for (let i = 1; i <= lines; i++) g += i + "\n";
+    gutter.textContent = g;
+    hl.scrollTop  = ta.scrollTop;
+    hl.scrollLeft = ta.scrollLeft;
+}
+
+if (ta) {
+    ta.addEventListener("input", () => { 
+        syncHL(); 
+        compileCustom(); 
+        localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+    });
+    ta.addEventListener("scroll", () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; });
+    ta.addEventListener("keydown", (e) => {
+        if (e.key === "Tab") {
+            e.preventDefault();
+            const s = ta.selectionStart, en = ta.selectionEnd;
+            ta.value = ta.value.slice(0, s) + "    " + ta.value.slice(en);
+            ta.selectionStart = ta.selectionEnd = s + 4;
+            syncHL(); 
+            compileCustom();
+            localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+        }
+    });
+}
+
+// Presets
+const PRESETS = {
+    pulse: `/* Pulse Click preset */\nsquare(t * 5, 0.2)`,
+    saw: `/* Sawtooth Sweep preset */\nfrac(t * 1.8) * (intensity / 255)`,
+    pwm: `/* PWM Buzz preset */\nsin(t * 60) * 0.4 + 0.6`,
+    chaos: `/* Chaos Noise preset */\nnoise(t * 22) * wave(t * 3)`
+};
+document.querySelectorAll(".chip-preset").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const code = PRESETS[btn.dataset.template];
+        if (code) {
+            const start = ta.selectionStart;
+            const end = ta.selectionEnd;
+            const text = ta.value;
+            const separator = text.length > 0 && !text.endsWith("\n") ? "\n\n" : "";
+            ta.value = text.substring(0, start) + separator + code + "\n" + text.substring(end);
+            
+            const newCursorPos = start + separator.length + code.length + 1;
+            ta.selectionStart = ta.selectionEnd = newCursorPos;
+            
+            syncHL();
+            compileCustom();
+            isPlaying = true;
+            document.getElementById("dot").className = "portal-dot ok";
+            document.getElementById("connText").textContent = "playing";
+            localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+            
+            if (isMobileDevice && navigator.vibrate) {
+                phoneHaptics.setEnabled(true);
+                showMobileHapticGuide();
+            }
+        }
+    });
+});
+
+let customEvaluator = null;
+const STUDIO_DRAFT_ID = "studio_draft";
+let studioDraftTimer = null;
+let bleWriteChain = Promise.resolve();
+let lastUploadedPatternKey = "";
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function patternUploadKey(id, code) {
+    return `${id}\n${code}`;
+}
+
+function bleEnqueue(task) {
+    bleWriteChain = bleWriteChain.then(task, task);
+    return bleWriteChain;
+}
+
+async function bleWriteJson(obj) {
+    if (!rxCharacteristic) throw new Error("BLE not connected");
+    const payload = JSON.stringify(obj);
+    const data = new TextEncoder().encode(payload);
+    // Prefer acknowledged writes — NR drops are silent when over MTU.
+    if (rxCharacteristic.properties && rxCharacteristic.properties.write) {
+        await rxCharacteristic.writeValue(data);
+    } else {
+        await rxCharacteristic.writeValueWithoutResponse(data);
+    }
+}
+
+async function bleSendCustomPattern({ id, name, code }) {
+    // Keep full JSON under ~120 bytes so default ATT MTUs still work.
+    const CODE_CHUNK = 48;
+    const total = Math.max(1, Math.ceil(code.length / CODE_CHUNK));
+    addSerialLog(`[BLE] Uploading pattern '${id}' (${code.length} chars, ${total} chunk(s))`);
+    for (let seq = 0; seq < total; seq++) {
+        const piece = code.slice(seq * CODE_CHUNK, (seq + 1) * CODE_CHUNK);
+        await bleWriteJson({
+            type: "custom-pattern",
+            id,
+            name: name || id,
+            code: piece,
+            seq,
+            total
+        });
+        if (seq + 1 < total) await delay(40);
+    }
+    lastUploadedPatternKey = patternUploadKey(id, code);
+    addSerialLog(`[BLE] Pattern '${id}' upload complete`);
+}
+
+async function ensurePatternUploaded(pat) {
+    if (!pat || !pat.code) return false;
+    if (!isBleMode || !rxCharacteristic) {
+        if (isRealESP32) {
+            const res = await fetch('/json/custom-patterns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: pat.id, name: pat.name || pat.id, code: pat.code })
+            });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || "upload rejected");
+            lastUploadedPatternKey = patternUploadKey(pat.id, pat.code);
+            return true;
+        }
+        return false;
+    }
+    const key = patternUploadKey(pat.id, pat.code);
+    if (key === lastUploadedPatternKey) return true;
+    await bleEnqueue(() => bleSendCustomPattern({
+        id: pat.id,
+        name: pat.name || pat.id,
+        code: pat.code
+    }));
+    return true;
+}
+
+function pushStudioDraftToDevice(code, playAfter = true) {
+    if (!isRealESP32 && !(isBleMode && rxCharacteristic)) {
+        return Promise.resolve(false);
+    }
+    const name = (customPatternNameInput && customPatternNameInput.value.trim()) || "Studio Draft";
+    addSerialLog(`[CTRL→ESP] Pushing studio draft (${code.length} chars)`);
+
+    const afterOk = () => {
+        let draft = PATTERNS.find(p => p.id === STUDIO_DRAFT_ID);
+        if (!draft) {
+            draft = {
+                id: STUDIO_DRAFT_ID,
+                name: name + " (Live)",
+                category: "custom",
+                desc: "Live Pattern Studio draft on device.",
+                isCustom: true,
+                code,
+                func: (t) => customEvaluator
+                    ? customEvaluator.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+                    : 0
+            };
+            PATTERNS.push(draft);
+        } else {
+            draft.name = name + " (Live)";
+            draft.code = code;
+            draft.func = (t) => customEvaluator
+                ? customEvaluator.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+                : 0;
+        }
+        activePattern = draft;
+        const label = document.getElementById("patternName");
+        if (label) label.textContent = `${name} (Studio)`;
+        if (playAfter) {
+            isPlaying = true;
+            const dot = document.getElementById("dot");
+            if (dot) dot.className = "portal-dot ok";
+        }
+        // State sync without re-uploading (we just uploaded studio_draft).
+        sendStateUpdate({
+            on: isPlaying,
+            intensity: masterIntensity / 255,
+            speed: playbackSpeed,
+            startupFloor: startupFloor,
+            pattern: STUDIO_DRAFT_ID,
+            name,
+            numBins: numBins,
+            dividers: dividers,
+            binPatterns: Array.from({ length: numBins }).map((_, i) => {
+                const el = document.getElementById(`bin-${i}-pattern`);
+                return el ? el.value : "none";
+            })
+        });
+        return true;
+    };
+
+    if (isBleMode) {
+        return bleEnqueue(() => bleSendCustomPattern({ id: STUDIO_DRAFT_ID, name, code }))
+            .then(() => afterOk())
+            .catch(err => {
+                addSerialLog(`[CTRL→ESP] Studio draft BLE failed: ${err.message}`);
+                return false;
+            });
+    }
+
+    return fetch('/json/custom-patterns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: STUDIO_DRAFT_ID, name, code })
+    }).then(res => res.json())
+      .then(data => {
+          if (!data.ok) {
+              addSerialLog(`[CTRL→ESP] Studio draft rejected: ${data.error || 'unknown'}`);
+              return false;
+          }
+          lastUploadedPatternKey = patternUploadKey(STUDIO_DRAFT_ID, code);
+          return afterOk();
+      }).catch(err => {
+          addSerialLog(`[CTRL→ESP] Studio draft failed: ${err.message}`);
+          return false;
+      });
+}
+
+function pushStudioDraftDebounced(code) {
+    clearTimeout(studioDraftTimer);
+    studioDraftTimer = setTimeout(() => {
+        if (customEvaluator) pushStudioDraftToDevice(code, true);
+    }, 350);
+}
+
+function compileCustom() {
+    if (!ta) return;
+    const src = ta.value;
+    try {
+        const ast = new Parser(tokenize(src)).parseProgram();
+        customEvaluator = new Evaluator(ast);
+        compilerStatus.textContent = "compiled ✓";
+        compilerStatus.className = "compilation-status ok";
+        addSerialLog("[IDE] Compiled custom pattern successfully!");
+        // Pixelblaze-style: successful compile live-pushes without Save.
+        if (isRealESP32 || (isBleMode && rxCharacteristic)) {
+            pushStudioDraftDebounced(src);
+        } else if (isBleMode) {
+            addSerialLog("[IDE] Compiled locally — connect BLE to live-push to device");
+        }
+    } catch (e) {
+        customEvaluator = null;
+        compilerStatus.textContent = "Error: " + e.message;
+        compilerStatus.className = "compilation-status err";
+    }
+}
+
+// ─── CONTROL BINDINGS ───────────────────────────────────────────────────────
+const brightInput = document.getElementById("bright");
+const brightVal = document.getElementById("brightVal");
+const freqInput = document.getElementById("freqShift");
+const freqVal = document.getElementById("freqVal");
+const speedInput = document.getElementById("speed");
+const speedVal = document.getElementById("speedVal");
+const floorSlider = document.getElementById("startFloor");
+const floorValLabel = document.getElementById("floorVal");
+
+const playBtn = document.getElementById("playBtn");
+const stopBtn = document.getElementById("stopBtn");
+const currentDriverText = document.getElementById("currentDriver");
+const currentActuatorText = document.getElementById("currentActuator");
+const drvSelect = document.getElementById("drvChip");
+const actSelect = document.getElementById("actuatorType");
+
+if (floorSlider) {
+    floorSlider.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        startupFloor = val / 100;
+        if (floorValLabel) floorValLabel.textContent = val + "%";
+        addSerialLog(`[HAL] Startup floor adjusted to ${val}% (${Math.round(val * 2.55)}/255)`);
+        triggerI2CBlink();
+        syncStateToESP32();
+    });
+}
+
+document.querySelectorAll(".motor-preset").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-motor");
+        if (id === "130") {
+            startupFloor = 0.50;
+            masterIntensity = 255;
+            addSerialLog("[HAL] Preset: Type 130 Motor (floor 50%, intensity 100%)");
+        } else if (id === "gentle") {
+            startupFloor = 0.15;
+            masterIntensity = Math.round(0.70 * 255);
+            addSerialLog("[HAL] Preset: Gentle / LRA (floor 15%, intensity 70%)");
+        } else {
+            return;
+        }
+        if (floorSlider) {
+            floorSlider.value = Math.round(startupFloor * 100);
+            if (floorValLabel) floorValLabel.textContent = Math.round(startupFloor * 100) + "%";
+        }
+        if (brightInput) {
+            brightInput.value = masterIntensity;
+            if (brightVal) brightVal.textContent = Math.round((masterIntensity / 255) * 100) + "%";
+        }
+        triggerI2CBlink();
+        syncStateToESP32();
+    });
+});
+
+brightInput.addEventListener("input", (e) => {
+    masterIntensity = parseInt(e.target.value);
+    brightVal.textContent = Math.round((masterIntensity / 255) * 100) + "%";
+});
+brightInput.addEventListener("change", (e) => {
+    addSerialLog(`[HTTP] Set Master Intensity to ${e.target.value} / 255`);
+    triggerI2CBlink();
+    syncStateToESP32();
+});
+
+freqInput.addEventListener("input", (e) => {
+    frequencyShift = parseInt(e.target.value);
+    freqVal.textContent = frequencyShift + " Hz";
+});
+freqInput.addEventListener("change", (e) => {
+    addSerialLog(`[HTTP] Set Frequency Shift to ${e.target.value} Hz`);
+    triggerI2CBlink();
+    syncStateToESP32();
+});
+
+speedInput.addEventListener("input", (e) => {
+    playbackSpeed = parseFloat(e.target.value) / 10;
+    speedVal.textContent = playbackSpeed.toFixed(1) + "x";
+});
+speedInput.addEventListener("change", (e) => {
+    addSerialLog(`[HTTP] Set Playback Speed to ${playbackSpeed.toFixed(1)}x`);
+    triggerI2CBlink();
+    syncStateToESP32();
+});
+
+playBtn.addEventListener("click", () => {
+    isPlaying = true;
+    document.getElementById("dot").className = "portal-dot ok";
+    document.getElementById("connText").textContent = "playing";
+    addSerialLog("[HTTP] API Command: START pattern playback");
+    // If Studio has compiled code in focus, push that live draft first.
+    const studioTab = document.getElementById("tab-studio");
+    if (studioTab && studioTab.style.display !== "none" && customEvaluator && ta) {
+        pushStudioDraftToDevice(ta.value, true);
+    } else {
+        syncStateToESP32();
+    }
+    
+    if (isMobileDevice && navigator.vibrate) {
+        phoneHaptics.setEnabled(true);
+        showMobileHapticGuide();
+    }
+});
+
+stopBtn.addEventListener("click", () => {
+    isPlaying = false;
+    document.getElementById("dot").className = "portal-dot";
+    document.getElementById("connText").textContent = "idle";
+    addSerialLog("[HTTP] API Command: STOP pattern playback");
+    syncStateToESP32();
+});
+
+const audioMinFreqInput = document.getElementById("audioMinFreq");
+const minFreqValLabel = document.getElementById("minFreqVal");
+const audioMaxFreqInput = document.getElementById("audioMaxFreq");
+const maxFreqValLabel = document.getElementById("maxFreqVal");
+const audioGainInput = document.getElementById("audioGain");
+const gainValLabel = document.getElementById("gainVal");
+
+if (audioGainInput) {
+    audioGainInput.addEventListener("input", (e) => {
+        if (gainValLabel) gainValLabel.textContent = parseFloat(e.target.value).toFixed(1) + "x";
+    });
+}
+
+function recalculateDividers() {
+    const minFreq = parseFloat(audioMinFreqInput ? audioMinFreqInput.value : 40);
+    const maxFreq = parseFloat(audioMaxFreqInput ? audioMaxFreqInput.value : 16000);
+    
+    const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+    const minBandIdx = getBandAtFreq(minFreq);
+    const maxBandIdx = getBandAtFreq(maxFreq);
+    
+    const numDividers = numBins - 1;
+    if (numDividers >= 1) {
+        dividers = new Array(numDividers);
+        dividers[0] = minBandIdx;
+        if (numDividers > 1) {
+            dividers[numDividers - 1] = maxBandIdx;
+            for (let i = 1; i < numDividers - 1; i++) {
+                const ratio = i / (numDividers - 1);
+                dividers[i] = Math.round(minBandIdx + ratio * (maxBandIdx - minBandIdx));
+            }
+        }
+    }
+    
+    for (let i = 0; i < dividers.length; i++) {
+        if (i > 0 && dividers[i] <= dividers[i - 1]) {
+            dividers[i] = dividers[i - 1] + 1;
+        }
+    }
+    for (let i = dividers.length - 1; i >= 0; i--) {
+        if (dividers[i] >= 32) dividers[i] = 31;
+        if (i < dividers.length - 1 && dividers[i] >= dividers[i + 1]) {
+            dividers[i] = dividers[i + 1] - 1;
+        }
+    }
+    
+    renderBinRows();
+    syncStateToESP32();
+}
+
+if (audioMinFreqInput) {
+    audioMinFreqInput.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        if (minFreqValLabel) minFreqValLabel.textContent = val + " Hz";
+    });
+    audioMinFreqInput.addEventListener("change", () => {
+        recalculateDividers();
+    });
+}
+
+if (audioMaxFreqInput) {
+    audioMaxFreqInput.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value);
+        if (maxFreqValLabel) maxFreqValLabel.textContent = val + " Hz";
+    });
+    audioMaxFreqInput.addEventListener("change", () => {
+        recalculateDividers();
+    });
+}
+
+drvSelect.addEventListener("change", (e) => {
+    currentDriverText.textContent = e.target.value;
+    addSerialLog(`[HAL] Driver reconfigured to: ${e.target.value}`);
+    renderMotors();
+    triggerI2CBlink();
+});
+
+actSelect.addEventListener("change", (e) => {
+    const act = e.target.value;
+    currentActuatorText.textContent = act;
+    if (act === "LRA" || act === "ERM") {
+        drvSelect.value = "DRV2605L";
+    } else if (act === "Solenoid") {
+        drvSelect.value = "DRV8833";
+    }
+    currentDriverText.textContent = drvSelect.value;
+    addSerialLog(`[HAL] Actuator mapped to: ${act} (Driver: ${drvSelect.value})`);
+    triggerI2CBlink();
+});
+
+// ─── PATTERN LIBRARY CARD RENDER ─────────────────────────────────────────────
+const libCards = document.getElementById("libCards");
+const chips = document.querySelectorAll(".chip");
+
+function renderCards(filterTag = "all") {
+    if (!libCards) return;
+    libCards.innerHTML = "";
+    PATTERNS.forEach(pat => {
+        if (filterTag !== "all" && pat.category !== filterTag) return;
+        
+        const card = document.createElement("div");
+        card.className = `card-item ${pat.id === activePattern.id ? "active" : ""}`;
+        
+        let actionsHtml = "";
+        if (pat.isCustom) {
+            actionsHtml += `<button class="btn-delete-pat" title="Delete custom pattern">&times;</button>`;
+        }
+        if (pat.code) {
+            actionsHtml += `<button class="btn-edit-pat" title="Edit in Studio">EDIT</button>`;
+        }
+        
+        card.innerHTML = `
+            <div>
+                <h4>${pat.name} ${pat.isCustom ? '<span class="badge-custom">Custom</span>' : ''}</h4>
+                <p>${pat.desc}</p>
+            </div>
+            <div class="card-actions-row">
+                ${actionsHtml}
+            </div>
+        `;
+        
+        card.addEventListener("click", () => {
+            activePattern = pat;
+            document.querySelectorAll(".card-item").forEach(c => c.classList.remove("active"));
+            card.classList.add("active");
+            document.getElementById("patternName").textContent = pat.name;
+            isPlaying = true;
+            document.getElementById("dot").className = "portal-dot ok";
+            document.getElementById("connText").textContent =
+                (isBleMode && bleDevice && bleDevice.gatt && bleDevice.gatt.connected)
+                    ? "connected" : "playing";
+            addSerialLog(`[HAL] Loaded library pattern: "${pat.name}"`);
+            
+            if (pat.isCustom && pat.code) {
+                ta.value = pat.code;
+                syncHL();
+                try {
+                    const ast = new Parser(tokenize(pat.code)).parseProgram();
+                    customEvaluator = new Evaluator(ast);
+                    compilerStatus.textContent = "compiled ✓";
+                    compilerStatus.className = "compilation-status ok";
+                } catch (e) {
+                    customEvaluator = null;
+                }
+                ensurePatternUploaded(pat)
+                    .then(() => syncStateToESP32())
+                    .catch(err => addSerialLog(`[CTRL→ESP] Custom upload failed: ${err.message}`));
+            } else {
+                syncStateToESP32();
+            }
+
+            if (isMobileDevice && navigator.vibrate) {
+                phoneHaptics.setEnabled(true);
+                showMobileHapticGuide();
+            }
+        });
+        
+        const editBtn = card.querySelector(".btn-edit-pat");
+        if (editBtn) {
+            editBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                ta.value = pat.code;
+                customPatternNameInput.value = pat.name;
+                syncHL();
+                compileCustom();
+                document.querySelector('.tab[data-tab="studio"]').click();
+                isPlaying = true;
+                document.getElementById("dot").className = "portal-dot ok";
+                document.getElementById("connText").textContent = "playing";
+                document.getElementById("patternName").textContent = `${pat.name} (Studio)`;
+                localStorage.setItem("HAXEL_EDITOR_DRAFT", ta.value);
+
+                if (isMobileDevice && navigator.vibrate) {
+                    phoneHaptics.setEnabled(true);
+                    showMobileHapticGuide();
+                }
+            });
+        }
+        
+        const del = card.querySelector(".btn-delete-pat");
+        if (del) {
+            del.addEventListener("click", (e) => {
+                deleteCustomPattern(pat.id, e);
+            });
+        }
+        
+        libCards.appendChild(card);
+    });
+    populateBinPatternSelects();
+}
+
+function deleteCustomPattern(id, event) {
+    event.stopPropagation();
+    if (!confirm("Delete this custom pattern?")) return;
+    
+    const idx = PATTERNS.findIndex(p => p.id === id);
+    if (idx >= 0) PATTERNS.splice(idx, 1);
+    
+    const raw = localStorage.getItem("HAXEL_CUSTOM_PATTERNS");
+    if (raw) {
+        try {
+            let list = JSON.parse(raw);
+            list = list.filter(p => p.id !== id);
+            localStorage.setItem("HAXEL_CUSTOM_PATTERNS", JSON.stringify(list));
+        } catch (e) {}
+    }
+    
+    if (isRealESP32) {
+        fetch(`/json/custom-patterns?id=${id}`, {
+            method: 'DELETE'
+        }).then(() => {
+            addSerialLog(`[ESP32] Deleted custom pattern ${id} from ESP32`);
+        }).catch(err => {
+            addSerialLog(`[ESP32] [ERROR] Failed to delete from ESP32: ${err.message}`);
+        });
+    } else if (isBleMode && rxCharacteristic) {
+        bleWriteJson({ type: "custom-pattern-delete", id }).catch(err => {
+            addSerialLog(`[ESP32] [ERROR] BLE delete failed: ${err.message}`);
+        });
+    }
+    
+    activePattern = PATTERNS[0];
+    document.getElementById("patternName").textContent = activePattern.name;
+    addSerialLog(`[IDE] Deleted custom pattern ${id}`);
+    renderCards();
+}
+
+chips.forEach(chip => chip.addEventListener("click", () => {
+    chips.forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    renderCards(chip.dataset.tag);
+}));
+
+document.querySelectorAll(".telemetry-toggle-btn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".telemetry-toggle-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    telemetryMode = btn.dataset.mode;
+    addSerialLog(`[IDE] Telemetry mode switched to: ${telemetryMode.toUpperCase()}`);
+    
+    if (telemetryMode === "waterfall") {
+        const audioTab = document.querySelector('.tab[data-tab="audio"]');
+        if (audioTab) audioTab.click();
+    }
+}));
+
+// LocalStorage Custom Patterns Save Handler
+const savePatternBtn = document.getElementById("savePatternBtn");
+if (savePatternBtn) {
+    savePatternBtn.addEventListener("click", () => {
+        const name = customPatternNameInput.value.trim() || "My Waveform";
+        const code = ta.value;
+        const id = "custom_" + Date.now();
+        
+        try {
+            const ast = new Parser(tokenize(code)).parseProgram();
+            const evalr = new Evaluator(ast);
+            
+            const raw = localStorage.getItem("HAXEL_CUSTOM_PATTERNS");
+            const list = raw ? JSON.parse(raw) : [];
+            list.push({ id, name, code });
+            localStorage.setItem("HAXEL_CUSTOM_PATTERNS", JSON.stringify(list));
+            
+            const newPat = {
+                id,
+                name,
+                category: "custom",
+                desc: "User defined JavaScript math pattern.",
+                isCustom: true,
+                code,
+                func: (t) => evalr.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+            };
+            PATTERNS.push(newPat);
+            activePattern = newPat;
+            document.getElementById("patternName").textContent = name;
+            
+            addSerialLog(`[IDE] Saved new custom pattern: "${name}"`);
+            
+            ensurePatternUploaded(newPat)
+                .then(() => {
+                    addSerialLog(`[ESP32] Custom pattern on device: "${name}"`);
+                    syncStateToESP32();
+                })
+                .catch(err => {
+                    addSerialLog(`[ESP32] [ERROR] Failed to save to device: ${err.message}`);
+                    if (isRealESP32 || isBleMode) {
+                        alert("Device upload failed: " + err.message);
+                    }
+                });
+            
+            renderCards();
+            document.querySelector('.tab[data-tab="lib"]').click();
+        } catch (e) {
+            alert("Cannot save pattern. Code has compilation errors!");
+        }
+    });
+}
+
+// ─── AUDIO SYSTEM ───────────────────────────────────────────────────────────
+async function setupMicrophone() {
+    if (useLiveMic) return;
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256; // 128 bands
+        
+        micStream = stream;
+        micSource = audioCtx.createMediaStreamSource(stream);
+        micSource.connect(analyser);
+        
+        const bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+        
+        useLiveMic = true;
+        document.getElementById("micSrc").value = "1";
+        setupSharpCanvas(specCanvas);
+        addSerialLog("[AUDIO] I2S Microphone Stream Connected");
+    } catch (err) {
+        console.warn("Microphone access denied:", err);
+        document.getElementById("micSrc").value = "0";
+        addSerialLog("[AUDIO] [ERROR] Failed to bind I2S Microphone");
+    }
+}
+
+function stopMicrophone() {
+    if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+        micStream = null;
+    }
+    if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+    }
+    useLiveMic = false;
+    document.getElementById("micSrc").value = "0";
+}
+
+document.getElementById("micSrc").addEventListener("change", (e) => {
+    if (e.target.value === "1" && !useLiveMic) {
+        setupMicrophone();
+    } else if (e.target.value === "0" && useLiveMic) {
+        stopMicrophone();
+        addSerialLog("[AUDIO] Switched to simulated synthesizer");
+    }
+});
+
+// ─── AUDIO REACTIVE BINS DRAG INTERACTIVES ──────────────────────────────────
+function updateBinRangeLabels() {
+    const getFreqAtBand = (b) => {
+        if (b === 0) return 0;
+        if (b === 32) return 20000;
+        return Math.round(40 * Math.pow(20000 / 40, b / 32));
+    };
+    for (let i = 0; i < numBins; i++) {
+        const startVal = i === 0 ? 0 : dividers[i - 1];
+        const endVal = i === numBins - 1 ? 32 : dividers[i];
+        
+        const fStart = getFreqAtBand(startVal);
+        const fEnd = getFreqAtBand(endVal);
+        
+        const label = document.getElementById(`bin-${i}-range`);
+        if (label) {
+            label.textContent = `${fStart} - ${fEnd} Hz`;
+        }
+    }
+}
+
+export function populateBinPatternSelects() {
+    // Handled in renderBinRows to ensure options are always clean
+}
+
+function renderBinRows() {
+    const container = document.getElementById("bins-container");
+    if (!container) return;
+    
+    // Save current values of selects
+    const savedValues = [];
+    for (let i = 0; i < numBins; i++) {
+        const el = document.getElementById(`bin-${i}-pattern`);
+        savedValues.push(el ? el.value : null);
+    }
+    
+    container.innerHTML = "";
+    
+    // Defaults must match firmware IDs. Bin 0 = NONE; Bin 1 & 2 = library.
+    const defaults = ["none", "Pulse", "Rumble", "Staccato", "Ocean"];
+    
+    for (let i = 0; i < numBins; i++) {
+        const row = document.createElement("div");
+        row.className = "bin-row";
+        row.style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px;";
+        
+        const minFreq = parseFloat(document.getElementById("audioMinFreq")?.value || 40);
+        const maxFreq = parseFloat(document.getElementById("audioMaxFreq")?.value || 16000);
+        const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+        const minBandIdx = getBandAtFreq(minFreq);
+        const maxBandIdx = getBandAtFreq(maxFreq);
+
+        let labelName = `Bin ${i}`;
+        if (i === 0 && minBandIdx > 0) {
+            labelName += ` (Anti-Loop / Low Cut)`;
+        } else if (i === numBins - 1 && maxBandIdx < 32) {
+            labelName += ` (High Cut / End Bin)`;
+        } else {
+            const activeIdx = (minBandIdx > 0) ? (i - 1) : i;
+            const activeCount = numBins - (minBandIdx > 0 ? 1 : 0) - (maxBandIdx < 32 ? 1 : 0);
+            if (activeCount === 3) {
+                const labels = ["Bass", "Mids", "Treble"];
+                labelName += ` (${labels[activeIdx]})`;
+            } else if (activeCount === 2) {
+                const labels = ["Bass/Mids", "Treble"];
+                labelName += ` (${labels[activeIdx]})`;
+            } else {
+                labelName += ` (Active ${activeIdx + 1})`;
+            }
+        }
+        
+        row.innerHTML = `
+            <span class="bin-title" style="font-weight: bold; width: 110px;">${labelName}:</span>
+            <span class="bin-range" id="bin-${i}-range" style="font-family: var(--mono); font-size: 11px; width: 110px;">-</span>
+            <select class="bin-pattern-select" id="bin-${i}-pattern" style="flex: 1; padding: 4px; border: 2px solid #111; font-family: var(--mono); font-size: 11px;">
+                <option value="none">NONE (No Reactivity)</option>
+            </select>
+        `;
+        container.appendChild(row);
+        
+        // Populate select options
+        const select = row.querySelector(".bin-pattern-select");
+        select.addEventListener("change", () => {
+            syncStateToESP32();
+        });
+        PATTERNS.forEach(pat => {
+            const opt = document.createElement("option");
+            opt.value = pat.id;
+            opt.textContent = pat.name;
+            select.appendChild(opt);
+        });
+        
+        // Restore value or set default (Bin0=none, Bin1=Pulse, Bin2=Rumble…)
+        const prevVal = savedValues[i];
+        const pickDefault = () => {
+            if (i === 0) return "none";
+            if (i === 1) return Array.from(select.options).some(o => o.value === "Pulse") ? "Pulse" : (PATTERNS[0]?.id || "none");
+            if (i === 2) return Array.from(select.options).some(o => o.value === "Rumble") ? "Rumble" : (PATTERNS[1]?.id || PATTERNS[0]?.id || "none");
+            const cand = defaults[i] || "none";
+            return Array.from(select.options).some(o => o.value === cand) ? cand : "none";
+        };
+        if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
+            select.value = prevVal;
+        } else {
+            select.value = pickDefault();
+        }
+    }
+    
+    updateBinRangeLabels();
+}
+
+function initSpectrumDividers() {
+    if (!specCanvas) return;
+    
+    const getMouseX = (e) => {
+        const rect = specCanvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        return clientX - rect.left;
+    };
+
+    const handleStart = (e) => {
+        const mx = getMouseX(e);
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = specCanvas.width / dpr;
+        
+        // Find which divider is clicked/touched
+        let closestIdx = -1;
+        let minDist = 15;
+        dividers.forEach((divVal, idx) => {
+            const x = divVal * (cssW / 32);
+            const dist = Math.abs(mx - x);
+            if (dist < minDist) {
+                minDist = dist;
+                closestIdx = idx;
+            }
+        });
+        
+        if (closestIdx >= 0) {
+            draggingDividerIdx = closestIdx;
+            e.preventDefault();
+        }
+    };
+
+    const handleMove = (e) => {
+        if (draggingDividerIdx < 0) return;
+        const mx = getMouseX(e);
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = specCanvas.width / dpr;
+        
+        const band = Math.round((mx / cssW) * 32);
+        
+        // Constraints
+        const minVal = draggingDividerIdx === 0 ? 1 : dividers[draggingDividerIdx - 1] + 1;
+        const maxVal = draggingDividerIdx === dividers.length - 1 ? 31 : dividers[draggingDividerIdx + 1] - 1;
+        
+        dividers[draggingDividerIdx] = Math.max(minVal, Math.min(maxVal, band));
+        
+        updateBinRangeLabels();
+        e.preventDefault();
+    };
+
+    const handleEnd = () => {
+        if (draggingDividerIdx >= 0) {
+            syncStateToESP32();
+        }
+        draggingDividerIdx = -1;
+    };
+
+    specCanvas.addEventListener("mousedown", handleStart);
+    specCanvas.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleEnd);
+
+    specCanvas.addEventListener("touchstart", handleStart, { passive: false });
+    specCanvas.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("touchend", handleEnd);
+
+    // Wire buttons
+    const addBtn = document.getElementById("addBinBtn");
+    const subBtn = document.getElementById("subBinBtn");
+    
+    if (addBtn) {
+        addBtn.addEventListener("click", () => {
+            if (numBins >= 5) {
+                addSerialLog("[WARN] Max bin partition limit (5) reached.");
+                return;
+            }
+            numBins++;
+            let newDivVal = 16;
+            if (dividers.length > 0) {
+                const lastVal = dividers[dividers.length - 1];
+                newDivVal = Math.min(31, Math.round(lastVal + (32 - lastVal) / 2));
+            }
+            dividers.push(newDivVal);
+            dividers.sort((a,b)=>a-b);
+            
+            addSerialLog(`[AUDIO] Added bin partition. Total bins: ${numBins}`);
+            renderBinRows();
+            triggerI2CBlink();
+            syncStateToESP32();
+        });
+    }
+    
+    if (subBtn) {
+        subBtn.addEventListener("click", () => {
+            if (numBins <= 1) {
+                addSerialLog("[WARN] Min bin partition limit (1) reached.");
+                return;
+            }
+            numBins--;
+            dividers.pop();
+            
+            addSerialLog(`[AUDIO] Subtracted bin partition. Total bins: ${numBins}`);
+            renderBinRows();
+            triggerI2CBlink();
+            syncStateToESP32();
+        });
+    }
+}
+
+// Initialize dividers and bin rows on startup
+initSpectrumDividers();
+renderBinRows();
+
+function getAudioData() {
+    if (useLiveMic && analyser) {
+        analyser.getByteFrequencyData(dataArray);
+        const rawMags = Array.from(dataArray).map(v => v / 255);
+        const mags = new Array(32).fill(0);
+        
+        const kWindow = analyser.fftSize;
+        const sampleRate = audioCtx.sampleRate;
+        const minFreq = 40;
+        const maxFreq = 20000;
+        let maxMag = 1e-9;
+        
+        for (let b = 0; b < 32; ++b) {
+            const lo = minFreq * Math.pow(maxFreq / minFreq, b / 32);
+            const hi = minFreq * Math.pow(maxFreq / minFreq, (b + 1) / 32);
+            let loBin = Math.floor(lo * kWindow / sampleRate);
+            let hiBin = Math.floor(hi * kWindow / sampleRate);
+            if (hiBin <= loBin) hiBin = loBin + 1;
+            
+            let sum = 0;
+            let count = 0;
+            for (let k = loBin; k < hiBin && k < rawMags.length; ++k) {
+                sum += rawMags[k];
+                count++;
+            }
+            mags[b] = count > 0 ? (sum / count) : 0;
+            if (mags[b] > maxMag) maxMag = mags[b];
+        }
+        for (let b = 0; b < 32; ++b) {
+            mags[b] = Math.min(1.0, mags[b] / (maxMag * 1.2));
+        }
+        
+        smoothedAudioAmp += (mags.slice(0, 4).reduce((a,b)=>a+b,0)/4 - smoothedAudioAmp) * 0.2;
+        updateAudioState(mags, smoothedAudioAmp);
+        return mags;
+    }
+    const mags = new Array(32).fill(0);
+    const pulse1 = Math.pow(Math.max(0, Math.sin(timeSec * 4.5)), 4);
+    const pulse2 = Math.pow(Math.max(0, Math.cos(timeSec * 2.2)), 8);
+    
+    for (let i = 0; i < 32; i++) {
+        if (i < 4) {
+            mags[i] = pulse1 * 0.95 + Math.random() * 0.05;
+        } else if (i < 12) {
+            mags[i] = pulse2 * 0.65 + Math.sin(timeSec * 8 + i) * 0.15 + Math.random() * 0.05;
+        } else {
+            mags[i] = Math.max(0, Math.sin(timeSec * 15 + i) * 0.25) + Math.random() * 0.08;
+        }
+    }
+    smoothedAudioAmp += (mags.slice(0, 4).reduce((a,b)=>a+b,0)/4 - smoothedAudioAmp) * 0.2;
+    updateAudioState(mags, smoothedAudioAmp);
+    return mags;
+}
+
+function drawSpectrum(mags) {
+    if (!specCanvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = specCanvas.width / dpr;
+    const cssH = specCanvas.height / dpr;
+
+    specCtx.fillStyle = "#f4ebd0"; // Cream background
+    specCtx.fillRect(0, 0, cssW, cssH);
+    const barWidth = (cssW / 32);
+    const gain = parseFloat(document.getElementById("audioGain").value);
+    
+    specCtx.strokeStyle = "#111111";
+    specCtx.lineWidth = 1.5;
+
+    for (let i = 0; i < 32; i++) {
+        const val = Math.min(1.0, mags[i] * (gain * 0.25));
+        const barHeight = val * (cssH - 10);
+        
+        // Map 0-31 frequency bands to HSL color wheel (Hue 0 for Red, shifting to Hue 280 for Purple)
+        const hue = (i / 31) * 280;
+        specCtx.fillStyle = `hsl(${hue}, 85%, 45%)`;
+        specCtx.fillRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
+        specCtx.strokeRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
+    }
+
+    // Draw Dividers
+    dividers.forEach((divVal, idx) => {
+        const x = divVal * barWidth;
+        const color = ["#e23b24", "#f2b134", "#002f6c", "#9b59b6"][idx % 4];
+        
+        specCtx.strokeStyle = color;
+        specCtx.lineWidth = 3;
+        specCtx.beginPath();
+        specCtx.moveTo(x, 0);
+        specCtx.lineTo(x, cssH);
+        specCtx.stroke();
+
+        specCtx.fillStyle = color;
+        specCtx.strokeStyle = "#111111";
+        specCtx.lineWidth = 2;
+        specCtx.beginPath();
+        specCtx.arc(x, 15, 7, 0, Math.PI * 2);
+        specCtx.fill();
+        specCtx.stroke();
+    });
+}
+
+// ─── PHYSICAL ACTUATOR DRAWING ──────────────────────────────────────────────
+function drawVirtualActuator(ctx, cx, cy, radius, activeAmp) {
+    const isLRA = actSelect.value === "LRA";
+    const isSolenoid = actSelect.value === "Solenoid";
+    
+    if (activeAmp > 0.02 && !isMotorStalled) {
+        ctx.lineWidth = 3;
+        const numWaves = 3;
+        for (let i = 0; i < numWaves; i++) {
+            const phase = (timeSec * 4 + i / numWaves) % 1.0;
+            const currentR = radius + phase * 50;
+            const alpha = (1.0 - phase) * 0.8 * activeAmp;
+            ctx.strokeStyle = `rgba(0, 47, 108, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
+    let dx = 0;
+    let dy = 0;
+    if (activeAmp > 0.01 && !isMotorStalled) {
+        const vibrationFreq = isLRA ? frequencyShift : 25;
+        dx = (Math.random() - 0.5) * 6 * activeAmp * (1.0 + Math.sin(timeSec * vibrationFreq) * 0.2);
+        dy = (Math.random() - 0.5) * 6 * activeAmp * (1.0 + Math.cos(timeSec * vibrationFreq) * 0.2);
+    }
+
+    const ax = cx + dx;
+    const ay = cy + dy;
+
+    ctx.fillStyle = isMotorStalled ? "#e23b24" : "#ffffff";
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    if (isLRA) {
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = -15; i <= 15; i += 5) {
+            const sx = ax + i;
+            const sy = ay + Math.sin(i * 0.4) * 8;
+            if (i === -15) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.5)" : "#f2b134";
+        ctx.beginPath();
+        ctx.arc(ax, ay, radius * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.fillStyle = "#111111";
+        ctx.font = "bold 8px Inter";
+        ctx.textAlign = "center";
+        ctx.fillText(isMotorStalled ? "STALL" : "LRA", ax, ay + 3);
+    } else if (isSolenoid) {
+        ctx.fillStyle = "#002f6c";
+        ctx.fillRect(ax - 20, ay - 10, 40, 20);
+        ctx.strokeRect(ax - 20, ay - 10, 40, 20);
+
+        const stroke = isMotorStalled ? 0 : activeAmp * 12;
+        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.8)" : "#e23b24";
+        ctx.fillRect(ax - 5 + stroke, ay - 6, 20, 12);
+        ctx.strokeRect(ax - 5 + stroke, ay - 6, 20, 12);
+    } else {
+        ctx.strokeStyle = "rgba(17,17,17,0.2)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ax, ay, radius * 0.75, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const rotationSpeed = isMotorStalled ? 0 : activeAmp * 25;
+        const angle = timeSec * rotationSpeed;
+        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.5)" : "#e23b24";
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.arc(ax, ay, radius * 0.7, angle, angle + Math.PI, false);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#111111";
+        ctx.beginPath();
+        ctx.arc(ax, ay, 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// ─── TICK LOOP ──────────────────────────────────────────────────────────────
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Render dynamic spikes on mobile float canvas button
+    const floatBtn = document.getElementById("mobile-haptic-float-btn");
+    const hapticCanvas = document.getElementById("mobile-haptic-canvas");
+    if (floatBtn && floatBtn.style.display !== "none" && hapticCanvas) {
+        const ctx = hapticCanvas.getContext("2d");
+        const w = hapticCanvas.width;
+        const h = hapticCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const centerX = w / 2;
+        const centerY = h / 2;
+        const baseRadius = 35; // 17.5px CSS radius (matches 35px diameter circle)
+        
+        // Draw spikes radiating outward
+        const numSpikes = 28;
+        const maxSpikeLength = 18;
+        const amp = smoothedAmp; // ranges smoothly from 0.0 to 1.0
+        
+        ctx.strokeStyle = isPlaying ? "#e23b24" : "#f2b134"; // Bauhaus Red or Yellow
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = "round";
+        
+        for (let i = 0; i < numSpikes; i++) {
+            // Give them a slow rotation for a very premium feel
+            const angle = (i / numSpikes) * Math.PI * 2 + timeSec * 0.4;
+            // Generate micro-movement for secondary smoothness
+            const noiseVal = Math.sin(timeSec * 8 + i * 1.5) * 0.12 + 0.88;
+            const spikeLen = (amp * 0.85 + 0.15 * noiseVal) * maxSpikeLength;
+            
+            const startX = centerX + Math.cos(angle) * baseRadius;
+            const startY = centerY + Math.sin(angle) * baseRadius;
+            const endX = centerX + Math.cos(angle) * (baseRadius + spikeLen);
+            const endY = centerY + Math.sin(angle) * (baseRadius + spikeLen);
+            
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+        }
+        
+        // Draw inner circular button background
+        ctx.fillStyle = isPlaying ? "#e23b24" : "#f2b134";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Circular button border
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Draw Play / Pause icon in the center
+        ctx.fillStyle = "#111111";
+        if (isPlaying) {
+            // Pause icon: two vertical bars
+            const barW = 5;
+            const barH = 15;
+            const gap = 5;
+            ctx.fillRect(centerX - barW - gap / 2, centerY - barH / 2, barW, barH);
+            ctx.fillRect(centerX + gap / 2, centerY - barH / 2, barW, barH);
+        } else {
+            // Play icon: triangle pointing right
+            ctx.beginPath();
+            const triSize = 9;
+            ctx.moveTo(centerX - triSize * 0.7 + 1.5, centerY - triSize);
+            ctx.lineTo(centerX + triSize * 1.3 + 1.5, centerY);
+            ctx.lineTo(centerX - triSize * 0.7 + 1.5, centerY + triSize);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+    
+    timeSec += 0.016 * playbackSpeed;
+    const isAudioTab = document.getElementById("tab-audio").style.display !== "none";
+    const isStudioTab = document.getElementById("tab-studio").style.display !== "none";
+    const mags = getAudioData();
+    
+    if (isAudioTab) {
+        drawSpectrum(mags);
+    }
+
+    let activeAmp = 0;
+    if (isPlaying) {
+        if (isAudioTab) {
+            const gain = parseFloat(document.getElementById("audioGain").value);
+            let maxAmp = 0;
+            
+            for (let i = 0; i < numBins; i++) {
+                const startIdx = i === 0 ? 0 : dividers[i - 1];
+                const endIdx = i === numBins - 1 ? 32 : dividers[i];
+                const len = Math.max(1, endIdx - startIdx);
+                
+                const vol = mags.slice(startIdx, endIdx).reduce((a,b)=>a+b, 0) / len * (gain * 0.45);
+                
+                const selectEl = document.getElementById(`bin-${i}-pattern`);
+                const patternId = selectEl ? selectEl.value : "none";
+                
+                if (patternId !== "none") {
+                    const pat = PATTERNS.find(p => p.id === patternId);
+                    if (pat) {
+                        const out = vol * pat.func(timeSec);
+                        if (out > maxAmp) maxAmp = out;
+                    }
+                }
+            }
+            activeAmp = maxAmp;
+        } else if (isStudioTab && customEvaluator) {
+            activeAmp = customEvaluator.run(timeSec, frequencyShift, playbackSpeed, masterIntensity, startupFloor);
+            const customName = customPatternNameInput.value.trim() || "Pattern Studio";
+            document.getElementById("patternName").textContent = `${customName} (Studio)`;
+        } else {
+            activeAmp = activePattern.func(timeSec);
+        }
+    }
+
+    // ── Motor Startup Floor Calibration Math Correction ──
+    const targetAmp = activeAmp;
+    const scaledAmp = targetAmp * (masterIntensity / 255);
+    
+    if (scaledAmp > 0.001) {
+        // Boost target power by floor offset. This ensures the output is always >= startupFloor
+        activeAmp = startupFloor + scaledAmp * (1.0 - startupFloor);
+        
+        // Physics Stall Condition
+        if (startupFloor < 0.08 && scaledAmp < 0.18) {
+            isMotorStalled = true;
+            activeAmp = 0.02;
+            stallLogThrottle++;
+            if (stallLogThrottle % 180 === 1) {
+                addSerialLog("[WARN] Motor STALLED! Cold start friction locked rotor. Increase Startup Floor.");
+            }
+        } else {
+            isMotorStalled = false;
+        }
+    } else {
+        isMotorStalled = false;
+        activeAmp = 0.0;
+    }
+
+    smoothedAmp += (activeAmp - smoothedAmp) * 0.2;
+    
+    // Trigger browser haptics
+    if (phoneHaptics.isEnabled() && isPlaying && !isMotorStalled) {
+        const now = Date.now();
+        const hapticThreshold = 0.15;
+        if (activeAmp > hapticThreshold) {
+            if (now - lastPhoneVibrateTime > 60) {
+                navigator.vibrate(50);
+                lastPhoneVibrateTime = now;
+                phoneHaptics.setVibrateActive(true);
+            }
+        } else {
+            if (phoneHaptics.isVibrateActive()) {
+                navigator.vibrate(0);
+                phoneHaptics.setVibrateActive(false);
+            }
+        }
+    } else {
+        if (phoneHaptics.isVibrateActive()) {
+            navigator.vibrate(0);
+            phoneHaptics.setVibrateActive(false);
+        }
+    }
+    
+    waveHistory.push(smoothedAmp);
+    if (waveHistory.length > historyLen) waveHistory.shift();
+    
+    let activeColor = "rgba(0, 47, 108, 0.25)";
+    if (isAudioTab && mags) {
+        const sortedBins = Array.from({length: 32}, (_, idx) => ({index: idx, val: mags[idx]}))
+            .sort((a, b) => b.val - a.val);
+        const top3 = sortedBins.slice(0, 3);
+        const hue1 = (top3[0].index / 31) * 280;
+        const hue2 = (top3[1].index / 31) * 280;
+        const hue3 = (top3[2].index / 31) * 280;
+        const avgHue = (hue1 + hue2 + hue3) / 3;
+        activeColor = `hsl(${avgHue}, 85%, 45%)`;
+    }
+    colorHistory.push(activeColor);
+    if (colorHistory.length > historyLen) colorHistory.shift();
+    
+    specHistory.push(mags ? [...mags] : new Array(32).fill(0));
+    if (specHistory.length > historyLen) specHistory.shift();
+    
+    updateHardwarePins(smoothedAmp, isMotorStalled);
+
+    // 1. Draw telemetry
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = prevCanvas.width / dpr;
+    const cssH = prevCanvas.height / dpr;
+
+    prevCtx.fillStyle = "#f4ebd0";
+    prevCtx.fillRect(0, 0, cssW, cssH);
+    
+    drawVirtualActuator(prevCtx, 60, cssH / 2, 36, smoothedAmp);
+    
+    prevCtx.fillStyle = "#f4ebd0";
+    prevCtx.fillRect(120, 0, cssW - 120, cssH);
+    
+    prevCtx.strokeStyle = "#111111";
+    prevCtx.lineWidth = 4;
+    prevCtx.beginPath();
+    prevCtx.moveTo(120, 0);
+    prevCtx.lineTo(120, cssH);
+    prevCtx.stroke();
+
+    prevCtx.strokeStyle = "rgba(17, 17, 17, 0.08)";
+    prevCtx.lineWidth = 1;
+    for (let x = 120; x < cssW; x += 40) {
+        prevCtx.beginPath();
+        prevCtx.moveTo(x, 0);
+        prevCtx.lineTo(x, cssH);
+        prevCtx.stroke();
+    }
+    for (let y = 30; y < cssH; y += 30) {
+        prevCtx.beginPath();
+        prevCtx.moveTo(120, y);
+        prevCtx.lineTo(cssW, y);
+        prevCtx.stroke();
+    }
+    
+    if (isMotorStalled) {
+        prevCtx.fillStyle = "#e23b24";
+        prevCtx.font = "bold 11px Inter";
+        prevCtx.textAlign = "center";
+        prevCtx.fillText("MOTOR STALLED", 180, 25);
+    }
+
+    if (waveHistory.length > 1) {
+        const startX = 120;
+        const width = cssW - startX;
+        const step = width / (historyLen - 1);
+        
+        if (telemetryMode === "classic") {
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (cssH - 20);
+                const h2 = waveHistory[i + 1] * (cssH - 20);
+                const x1 = startX + i * step;
+                const x2 = startX + (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                }
+                prevCtx.fillStyle = fillCol;
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, cssH - 10);
+                prevCtx.lineTo(x1, cssH - 10 - h1);
+                prevCtx.lineTo(x2, cssH - 10 - h2);
+                prevCtx.lineTo(x2, cssH - 10);
+                prevCtx.closePath();
+                prevCtx.fill();
+                
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, cssH - 10 - h1);
+                prevCtx.lineTo(x2, cssH - 10 - h2);
+                prevCtx.stroke();
+            }
+        } else if (telemetryMode === "symmetric") {
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (cssH - 20);
+                const h2 = waveHistory[i + 1] * (cssH - 20);
+                const x1 = startX + i * step;
+                const x2 = startX + (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                }
+                prevCtx.fillStyle = fillCol;
+                
+                const y1_top = cssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_top = cssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                const y1_bot = cssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_bot = cssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1_top - h1 / 2);
+                prevCtx.lineTo(x2, y2_top - h2 / 2);
+                prevCtx.lineTo(x2, y2_bot + h2 / 2);
+                prevCtx.lineTo(x1, y1_bot + h1 / 2);
+                prevCtx.closePath();
+                prevCtx.fill();
+                
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1_top - h1 / 2);
+                prevCtx.lineTo(x2, y2_top - h2 / 2);
+                prevCtx.stroke();
+                
+                prevCtx.beginPath();
+                prevCtx.moveTo(x2, y2_bot + h2 / 2);
+                prevCtx.lineTo(x1, y1_bot + h1 / 2);
+                prevCtx.stroke();
+            }
+        } else if (telemetryMode === "waterfall") {
+            const cellH = (cssH - 20) / 32;
+            for (let i = 0; i < specHistory.length; i++) {
+                const x = startX + i * step;
+                const spec = specHistory[i];
+                for (let j = 0; j < 32; j++) {
+                    const val = spec ? spec[j] : 0;
+                    if (val > 0.01) {
+                        const hue = (j / 31) * 280;
+                        prevCtx.fillStyle = `hsla(${hue}, 85%, 45%, ${val * 0.75})`;
+                        prevCtx.fillRect(x, cssH - 10 - (j + 1) * cellH, step + 1, cellH + 0.5);
+                    }
+                }
+            }
+        } else if (telemetryMode === "orbit") {
+            const cx = startX + width / 2;
+            const cy = cssH / 2;
+            
+            prevCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+            prevCtx.lineWidth = 2;
+            prevCtx.beginPath();
+            prevCtx.arc(cx, cy, (cssH - 30) * 0.25, 0, Math.PI * 2);
+            prevCtx.stroke();
+            
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const amp1 = waveHistory[i];
+                const amp2 = waveHistory[i + 1];
+                
+                const angle1 = (i / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
+                const angle2 = ((i + 1) / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
+                
+                const baseR = (cssH - 30) * 0.28;
+                const r1 = baseR + amp1 * baseR * 0.8;
+                const r2 = baseR + amp2 * baseR * 0.8;
+                
+                const x1 = cx + Math.cos(angle1) * r1;
+                const y1 = cy + Math.sin(angle1) * r1;
+                const x2 = cx + Math.cos(angle2) * r2;
+                const y2 = cy + Math.sin(angle2) * r2;
+                
+                let strokeCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
+                const alpha = (i / (waveHistory.length - 1)) * 0.8;
+                if (strokeCol.startsWith("hsl")) {
+                    strokeCol = strokeCol.replace("hsl", "hsla").replace(")", `, ${alpha})`);
+                } else {
+                    strokeCol = `rgba(0, 47, 108, ${alpha})`;
+                }
+                
+                prevCtx.strokeStyle = strokeCol;
+                prevCtx.lineWidth = 2 + (i / waveHistory.length) * 3;
+                prevCtx.beginPath();
+                prevCtx.moveTo(x1, y1);
+                prevCtx.lineTo(x2, y2);
+                prevCtx.stroke();
+            }
+            
+            if (waveHistory.length > 0) {
+                const latestAmp = waveHistory[waveHistory.length - 1];
+                const latestAngle = Math.PI * 2 * 4 + timeSec * 3;
+                const baseR = (cssH - 30) * 0.28;
+                const latestR = baseR + latestAmp * baseR * 0.8;
+                const lx = cx + Math.cos(latestAngle) * latestR;
+                const ly = cy + Math.sin(latestAngle) * latestR;
+                
+                prevCtx.fillStyle = colorHistory[colorHistory.length - 1] || "#111111";
+                prevCtx.strokeStyle = "#111111";
+                prevCtx.lineWidth = 2;
+                prevCtx.beginPath();
+                prevCtx.arc(lx, ly, 6 + latestAmp * 5, 0, Math.PI * 2);
+                prevCtx.fill();
+                prevCtx.stroke();
+                
+                prevCtx.strokeStyle = "rgba(17, 17, 17, 0.25)";
+                prevCtx.lineWidth = 1.5;
+                prevCtx.beginPath();
+                prevCtx.moveTo(cx, cy);
+                prevCtx.lineTo(lx, ly);
+                prevCtx.stroke();
+            }
+        }
+    }
+    
+    // 2. Draw Hero banner
+    if (heroCanvas && heroCtx) {
+        const heroCssW = heroCanvas.width / dpr;
+        const heroCssH = heroCanvas.height / dpr;
+
+        heroCtx.fillStyle = "#f4ebd0";
+        heroCtx.fillRect(0, 0, heroCssW, heroCssH);
+        
+        heroCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
+        heroCtx.lineWidth = 1;
+        for (let x = 0; x < heroCssW; x += 50) {
+            heroCtx.beginPath();
+            heroCtx.moveTo(x, 0);
+            heroCtx.lineTo(x, heroCssH);
+            heroCtx.stroke();
+        }
+        
+        if (waveHistory.length > 1) {
+            const step = heroCssW / (historyLen - 1);
+            
+            for (let i = 0; i < waveHistory.length - 1; i++) {
+                const h1 = waveHistory[i] * (heroCssH - 15);
+                const h2 = waveHistory[i + 1] * (heroCssH - 15);
+                const x1 = i * step;
+                const x2 = (i + 1) * step;
+                
+                let fillCol = colorHistory[i] || "rgba(226, 59, 36, 0.25)";
+                if (fillCol.startsWith("hsl")) {
+                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
+                } else if (fillCol.startsWith("rgba(0, 47, 108")) {
+                    fillCol = "rgba(226, 59, 36, 0.35)"; // default red for hero
+                }
+                heroCtx.fillStyle = fillCol;
+                
+                const y1_top = heroCssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_top = heroCssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                const y1_bot = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
+                const y2_bot = heroCssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
+                
+                heroCtx.beginPath();
+                heroCtx.moveTo(x1, y1_top - h1 / 2);
+                heroCtx.lineTo(x2, y2_top - h2 / 2);
+                heroCtx.lineTo(x2, y2_bot + h2 / 2);
+                heroCtx.lineTo(x1, y1_bot + h1 / 2);
+                heroCtx.closePath();
+                heroCtx.fill();
+                
+                heroCtx.strokeStyle = "#111111";
+                heroCtx.lineWidth = 3;
+                heroCtx.beginPath();
+                heroCtx.moveTo(x1, y1_top - h1 / 2);
+                heroCtx.lineTo(x2, y2_top - h2 / 2);
+                heroCtx.stroke();
+                
+                heroCtx.beginPath();
+                heroCtx.moveTo(x2, y2_bot + h2 / 2);
+                heroCtx.lineTo(x1, y1_bot + h1 / 2);
+                heroCtx.stroke();
+            }
+        }
+    }
+
+    const uptimeText = document.getElementById("uptime");
+    if (uptimeText) {
+        uptimeText.textContent = Math.floor(timeSec) + "s";
+    }
+}
+
+// ─── INITIALIZATION BOOT ─────────────────────────────────────────────────────
+const draft = localStorage.getItem("HAXEL_EDITOR_DRAFT");
+if (draft && ta) {
+    ta.value = draft;
+}
+
+if (isMobileDevice) {
+    const noteEl = document.getElementById("mobile-feedback-note");
+    if (noteEl) {
+        noteEl.style.display = "block";
+    }
+    
+    if (navigator.vibrate) {
+        const floatBtn = document.getElementById("mobile-haptic-float-btn");
+        if (floatBtn) {
+            floatBtn.style.display = "flex";
+            floatBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (!phoneHaptics.isEnabled()) {
+                    phoneHaptics.setEnabled(true);
+                    try {
+                        navigator.vibrate(50);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Mobile haptics engaged via float button click.");
+                }
+                isPlaying = !isPlaying;
+                const dot = document.getElementById("dot");
+                const connText = document.getElementById("connText");
+                if (isPlaying) {
+                    if (dot) dot.className = "portal-dot ok";
+                    if (connText) connText.textContent = "playing";
+                    addSerialLog("[PORTAL] Mobile action: START pattern playback");
+                } else {
+                    if (dot) dot.className = "portal-dot";
+                    if (connText) connText.textContent = "idle";
+                    addSerialLog("[PORTAL] Mobile action: STOP pattern playback");
+                }
+                syncStateToESP32();
+            });
+        }
+
+        const overlay = document.getElementById("haptic-activation-overlay");
+        const enableBtn = document.getElementById("enable-haptics-btn");
+        const testBtn = document.getElementById("test-haptics-btn");
+        const disableBtn = document.getElementById("disable-haptics-btn");
+        if (overlay) {
+            overlay.style.display = "flex";
+            if (enableBtn) {
+                enableBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    overlay.style.display = "none";
+                    phoneHaptics.setEnabled(true);
+                    try {
+                        navigator.vibrate(50);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Mobile haptics enabled by user choice.");
+                });
+            }
+            if (testBtn) {
+                testBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    try {
+                        // Sample vibration: short burst sequence
+                        navigator.vibrate([80, 40, 80, 40, 150]);
+                    } catch (err) {}
+                    addSerialLog("[PORTAL] Mobile haptics test vibration triggered.");
+                });
+            }
+            if (disableBtn) {
+                disableBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    overlay.style.display = "none";
+                    phoneHaptics.setEnabled(false);
+                    addSerialLog("[PORTAL] Mobile haptics disabled by user choice.");
+                });
+            }
+        }
+    }
+}
+
+loadCustomPatterns(frequencyShift, playbackSpeed, masterIntensity, startupFloor);
+renderCards();
+syncHL();
+compileCustom();
+initBootLogs();
+animate();
+
+// ─── REAL TIME ESP32 BRIDGE & WEB BLUETOOTH UNIFICATION ─────────────────────
+// isRealESP32 / isBleMode / BLE handles are declared near the top of this file.
+
+function throttle(fn, ms) {
+    let last = 0, timer = null;
+    return function(...args) {
+        const now = Date.now();
+        if (now - last >= ms) {
+            last = now;
+            fn.apply(this, args);
+        } else {
+            clearTimeout(timer);
+            timer = setTimeout(() => { last = Date.now(); fn.apply(this, args); }, ms - (now - last));
+        }
+    };
+}
+
+// Common state applier
+function applyStateUpdate(s) {
+    if (s.intensity !== undefined) {
+        masterIntensity = Math.round(s.intensity * 255);
+        const el = document.getElementById("bright");
+        if (el && !el.matches(':active')) {
+            el.value = masterIntensity;
+            const vLabel = document.getElementById("brightVal");
+            if (vLabel) vLabel.textContent = Math.round((masterIntensity/255)*100) + "%";
+        }
+    }
+    if (s.speed !== undefined) {
+        playbackSpeed = s.speed;
+        const el = document.getElementById("speed");
+        if (el && !el.matches(':active')) {
+            el.value = Math.round(playbackSpeed * 10);
+            const vLabel = document.getElementById("speedVal");
+            if (vLabel) vLabel.textContent = playbackSpeed.toFixed(1) + "x";
+        }
+    }
+    if (s.startupFloor !== undefined) {
+        startupFloor = s.startupFloor;
+        const el = document.getElementById("startFloor");
+        if (el && !el.matches(':active')) {
+            el.value = Math.round(startupFloor * 100);
+            const vLabel = document.getElementById("floorVal");
+            if (vLabel) vLabel.textContent = Math.round(startupFloor * 100) + "%";
+        }
+    }
+    if (s.numBins !== undefined) {
+        numBins = s.numBins;
+        if (s.dividers) dividers = s.dividers.slice();
+        renderBinRows();
+    }
+    if (Array.isArray(s.binPatterns)) {
+        for (let i = 0; i < s.binPatterns.length && i < numBins; i++) {
+            const el = document.getElementById(`bin-${i}-pattern`);
+            const val = s.binPatterns[i];
+            if (el && val && Array.from(el.options).some(o => o.value === val)) {
+                el.value = val;
+            }
+        }
+    }
+    if (s.pattern) {
+        const p = PATTERNS.find(pat => pat.id === s.pattern);
+        if (p) {
+            activePattern = p;
+            const vLabel = document.getElementById("patternName");
+            if (vLabel) vLabel.textContent = p.name;
+        }
+    }
+    if (s.uptime_ms !== undefined) {
+        const uptimeText = document.getElementById("uptime");
+        if (uptimeText) {
+            uptimeText.textContent = Math.floor(s.uptime_ms / 1000) + "s";
+        }
+    }
+    if (Array.isArray(s.channels)) {
+        s.channels.forEach((ch, i) => {
+            if (ch && typeof ch.on === "boolean") channelEnabled[i] = ch.on;
+        });
+        renderMotors();
+    }
+}
+
+// Send State Updates
+const sendStateUpdate = throttle(async (patch) => {
+    addSerialLog(`[CTRL→ESP] ${JSON.stringify(patch)}`);
+    if (isBleMode) {
+        if (!rxCharacteristic) return;
+        try {
+            await bleEnqueue(() => bleWriteJson({ type: "state", patch }));
+        } catch (err) {
+            console.error("BLE State Write Error:", err);
+            addSerialLog(`[BLE] State write failed: ${err.message}`);
+        }
+    } else {
+        if (!isRealESP32) return;
+        fetch('/json/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch)
+        }).catch((err) => {
+            addSerialLog(`[CTRL→ESP] HTTP state failed: ${err.message}`);
+        });
+    }
+}, 100);
+
+async function sendConfigUpdate(configPatch) {
+    if (!isBleMode || !rxCharacteristic) {
+        throw new Error("Device settings have not finished loading");
+    }
+    return bleEnqueue(async () => {
+        if (configPatch?.apSsid) {
+            let name = configPatch.apSsid.trim();
+            if (!name.startsWith("Haxel")) name = "Haxel-" + name;
+            configPatch.apSsid = name;
+        }
+
+        const sections = [];
+        const identity = {};
+        if (configPatch.apSsid !== undefined) identity.apSsid = configPatch.apSsid;
+        if (configPatch.hostname !== undefined) identity.hostname = configPatch.hostname;
+        if (Object.keys(identity).length) sections.push({ section: "identity", data: identity });
+
+        if (configPatch.driver || configPatch.channelEnabled) {
+            const data = { ...(configPatch.driver || {}) };
+            if (configPatch.channelEnabled) data.channelEnabled = configPatch.channelEnabled;
+            sections.push({ section: "driver", data });
+        }
+        if (configPatch.audio) sections.push({ section: "audio", data: configPatch.audio });
+        if (configPatch.led) sections.push({ section: "led", data: configPatch.led });
+        if (configPatch.knobs?.length) sections.push({ section: "knobs", data: configPatch.knobs });
+        if (configPatch.oled) sections.push({ section: "oled", data: configPatch.oled });
+
+        if (!sections.length) return;
+
+        const legacyPayload = JSON.stringify({ type: "config", patch: configPatch });
+        if (sections.length === 1 && legacyPayload.length <= 200) {
+            await bleWriteJson({ type: "config", patch: configPatch });
+            addSerialLog(`[BLE] Sent config update (${legacyPayload.length} bytes)`);
+            return;
+        }
+
+        await bleWriteJson({ type: "config-start" });
+        await delay(30);
+        for (const s of sections) {
+            await bleWriteJson({ type: "config", section: s.section, data: s.data });
+            await delay(30);
+        }
+        await bleWriteJson({ type: "config-complete" });
+        addSerialLog(`[BLE] Sent config update (${sections.length} sections)`);
+    });
+}
+
+async function syncStateToESP32() {
+    const patch = {
+        on: isPlaying,
+        intensity: masterIntensity / 255,
+        speed: playbackSpeed,
+        startupFloor: startupFloor,
+        pattern: activePattern ? activePattern.id : "",
+        numBins: numBins,
+        dividers: dividers,
+        binPatterns: Array.from({length: numBins}).map((_, i) => {
+            const el = document.getElementById(`bin-${i}-pattern`);
+            return el ? el.value : "none";
+        })
+    };
+
+    if (activePattern && activePattern.code && (isBleMode || isRealESP32)) {
+        try {
+            await ensurePatternUploaded(activePattern);
+        } catch (err) {
+            addSerialLog(`[CTRL→ESP] ensure upload failed: ${err.message}`);
+        }
+    }
+    sendStateUpdate(patch);
+}
+
+// BLE Connect Button Handlers
+function updateConnectButtonsState(connected, connecting = false) {
+    const connectBtn = document.getElementById("connectBleBtn") || document.getElementById("bleConnectBtn");
+    const connectBtnDoc = document.getElementById("connectBleBtnDoc") || document.getElementById("bleConnectBtnDoc");
+    const buttons = [connectBtn, connectBtnDoc].filter(Boolean);
+    
+    buttons.forEach(btn => {
+        if (!isBluetoothSupported) {
+            btn.textContent = "BLE UNSUPPORTED";
+            btn.disabled = true;
+            btn.style.cursor = "not-allowed";
+            btn.style.opacity = "0.6";
+        } else if (connecting) {
+            btn.textContent = "CONNECTING...";
+            btn.disabled = true;
+        } else if (connected) {
+            btn.textContent = "DISCONNECT BLE";
+            btn.disabled = false;
+            btn.style.backgroundColor = "var(--bauhaus-red)";
+        } else {
+            btn.textContent = "CONNECT BLE";
+            btn.disabled = false;
+            btn.style.backgroundColor = "";
+        }
+    });
+}
+
+async function connectBLE() {
+    const dot = document.getElementById("dot");
+    const connText = document.getElementById("connText");
+    const bleStatus = document.getElementById("bleStatusLabel");
+    
+    addSerialLog("[BLE] Requesting Bluetooth Device...");
+    updateConnectButtonsState(false, true);
+    
+    try {
+        bleDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'Haxel' }],
+            optionalServices: [HAXEL_SERVICE_UUID]
+        });
+        
+        addSerialLog(`[BLE] Found: ${bleDevice.name}. Connecting to GATT Server...`);
+        if (dot) dot.className = "portal-dot";
+        if (connText) connText.textContent = "connecting...";
+        
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+        
+        const server = await bleDevice.gatt.connect();
+        addSerialLog("[BLE] Connected! Getting Service...");
+        
+        const service = await server.getPrimaryService(HAXEL_SERVICE_UUID);
+        addSerialLog("[BLE] Service found. Getting Characteristics...");
+        
+        rxCharacteristic = await service.getCharacteristic(RX_CHAR_UUID);
+        txCharacteristic = await service.getCharacteristic(TX_CHAR_UUID);
+        
+        addSerialLog("[BLE] Starting Notifications...");
+        await txCharacteristic.startNotifications();
+        txCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
+        
+        if (dot) dot.className = "portal-dot ok";
+        if (connText) connText.textContent = "connected";
+        if (bleStatus) bleStatus.textContent = "Connected";
+        updateConnectButtonsState(true);
+        addSerialLog("[BLE] Bluetooth connection fully established!");
+        
+        sendStateUpdate({ getStatus: true });
+        if (customEvaluator && ta && ta.value.trim()) {
+            pushStudioDraftToDevice(ta.value, true);
+        }
+        
+    } catch (err) {
+        addSerialLog(`[BLE] [ERROR] Connection failed: ${err.message}`);
+        if (dot) dot.className = "portal-dot error";
+        if (connText) connText.textContent = "error";
+        if (bleStatus) bleStatus.textContent = "Failed";
+        updateConnectButtonsState(false);
+    }
+}
+
+function disconnectBLE() {
+    if (bleDevice) {
+        addSerialLog("[BLE] Disconnecting...");
+        bleDevice.gatt.disconnect();
+    }
+}
+
+function onDisconnected() {
+    const dot = document.getElementById("dot");
+    const connText = document.getElementById("connText");
+    const bleStatus = document.getElementById("bleStatusLabel");
+    
+    if (dot) dot.className = "portal-dot";
+    if (connText) connText.textContent = "disconnected";
+    if (bleStatus) bleStatus.textContent = "Disconnected";
+    updateConnectButtonsState(false);
+    rxCharacteristic = null;
+    txCharacteristic = null;
+    addSerialLog("[BLE] Disconnected from device.");
+}
+
+function handleNotification(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder();
+    const str = decoder.decode(value);
+    try {
+        const m = JSON.parse(str);
+        if (m.type === 'state' && m.data) {
+            applyStateUpdate(m.data);
+        }
+    } catch (e) {
+        console.error("BLE Notification Parse Error:", e);
+    }
+}
+
+// WebSocket connection
+function openWebSocket() {
+    if (isBleMode) return;
+    let ws;
+    const dot = document.getElementById("dot");
+    const connText = document.getElementById("connText");
+    
+    try {
+        ws = new WebSocket(`ws://${window.location.host}/ws`, 'haxel.v1');
+    } catch (e) {
+        if (dot) dot.className = "portal-dot error";
+        if (connText) connText.textContent = "error";
+        setTimeout(openWebSocket, 2000);
+        return;
+    }
+    
+    ws.addEventListener('open', () => {
+        if (dot) dot.className = "portal-dot ok";
+        if (connText) connText.textContent = "connected";
+    });
+    
+    ws.addEventListener('close', () => {
+        if (dot) dot.className = "portal-dot";
+        if (connText) connText.textContent = "disconnected";
+        setTimeout(openWebSocket, 1500);
+    });
+    
+    ws.addEventListener('message', ev => {
+        try {
+            const m = JSON.parse(ev.data);
+            if (m.type === 'state' && m.data) {
+                applyStateUpdate(m.data);
+            }
+        } catch (e) {}
+    });
+}
+
+// BLE initialization or WiFi init
+if (isBleMode) {
+    // Show BLE connect buttons and hide emulator status status text
+    const connectBtn = document.getElementById("connectBleBtn") || document.getElementById("bleConnectBtn");
+    const connectBtnDoc = document.getElementById("connectBleBtnDoc") || document.getElementById("bleConnectBtnDoc");
+    if (connectBtn) connectBtn.style.display = "inline-block";
+    if (connectBtnDoc) connectBtnDoc.style.display = "inline-block";
+    
+    [connectBtn, connectBtnDoc].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', async () => {
+                if (!isBluetoothSupported) return;
+                if (bleDevice && bleDevice.gatt.connected) {
+                    disconnectBLE();
+                    return;
+                }
+                await connectBLE();
+            });
+        }
+    });
+    
+    if (!isBluetoothSupported) {
+        updateConnectButtonsState(false);
+        const docCard = document.querySelector(".doc-card");
+        if (docCard) {
+            const warningAlert = document.createElement("div");
+            warningAlert.style.background = "var(--bauhaus-red)";
+            warningAlert.style.color = "#ffffff";
+            warningAlert.style.border = "var(--border-width) solid var(--black)";
+            warningAlert.style.padding = "20px";
+            warningAlert.style.fontWeight = "bold";
+            warningAlert.style.marginTop = "20px";
+            warningAlert.style.boxShadow = "6px 6px 0 var(--black)";
+            warningAlert.innerHTML = `
+                <div style="font-size: 14px; text-transform: uppercase; margin-bottom: 8px; font-family: var(--font-display);">⚠️ Web Bluetooth API Unsupported</div>
+                <div style="font-size: 13px; font-weight: normal; line-height: 1.4;">
+                    This browser does not support the Web Bluetooth API. Please open this page in <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, or another Chromium-based browser to connect to Haxel devices.
+                </div>
+            `;
+            docCard.appendChild(warningAlert);
+        }
+    } else {
+        updateConnectButtonsState(false);
+    }
+    
+    addSerialLog("[BLE Portal] Initialized. Click CONNECT BLE to link your hardware.");
+} else if (isRealESP32) {
+    (async function initRealESP32() {
+        try {
+            // Prefer firmware pattern catalog so IDs always match PatternRegistry.
+            const r = await fetch('/json');
+            const data = await r.json();
+            if (Array.isArray(data.patterns) && data.patterns.length) {
+                const byId = new Map(PATTERNS.map(p => [p.id, p]));
+                // Keep only customs locally, then rebuild builtins from device.
+                const customs = PATTERNS.filter(p => p.isCustom);
+                PATTERNS.length = 0;
+                data.patterns.forEach(meta => {
+                    const prev = byId.get(meta.id);
+                    PATTERNS.push({
+                        id: meta.id,
+                        name: meta.id,
+                        category: meta.category || "pulse",
+                        desc: meta.description || "",
+                        usesAudio: !!meta.usesAudio,
+                        code: prev?.code || "",
+                        func: prev?.func || ((t) => 0.5 + 0.5 * Math.sin(t * 6))
+                    });
+                });
+                customs.forEach(c => {
+                    if (!PATTERNS.some(p => p.id === c.id)) PATTERNS.push(c);
+                });
+                activePattern = PATTERNS.find(p => p.id === (data.state && data.state.pattern)) || PATTERNS[0];
+                addSerialLog(`[CTRL] Synced ${data.patterns.length} firmware patterns`);
+            }
+
+            // Fetch custom patterns first
+            const cpRes = await fetch('/json/custom-patterns');
+            const cpList = await cpRes.json();
+            cpList.forEach(p => {
+                if (!PATTERNS.some(x => x.id === p.id)) {
+                    try {
+                        const ast = new Parser(tokenize(p.code)).parseProgram();
+                        const evalr = new Evaluator(ast);
+                        PATTERNS.push({
+                            id: p.id,
+                            name: p.name,
+                            category: "custom",
+                            desc: "User defined C++ haptic expression.",
+                            isCustom: true,
+                            code: p.code,
+                            func: (t) => evalr.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+                        });
+                    } catch(e) {}
+                }
+            });
+            renderCards();
+
+            if (data.state) {
+                applyStateUpdate(data.state);
+                isPlaying = !!data.state.on;
+                document.getElementById("dot").className = isPlaying ? "portal-dot ok" : "portal-dot";
+                document.getElementById("connText").textContent = isPlaying ? "playing" : "idle";
+            }
+
+            await populateDeviceConfigFromESP();
+        } catch (e) {
+            addSerialLog(`[CTRL] Init fetch failed: ${e.message}`);
+        }
+        openWebSocket();
+    })();
+}
+
+// --- Dynamic Hardware Calibration Logic ---
+let activeMotors = [6];
+let activeKnobs = [];
+let channelEnabled = [true, true, true, true, true, true, true, true];
+// C3/C6/common GPIOs; device-assigned pins are merged in at render time.
+const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 17, 18, 19, 20, 21, 22, 23];
+const drvKindMap = {
+    "NONE": 0,
+    "L298N": 1,
+    "DRV8833": 2,
+    "DRV2605L": 3,
+    "MOSFET": 4,
+    "MINI_HBRIDGE": 5
+};
+
+function motorPinSelectOptions(currentPin) {
+    const pins = new Set(pinOptions);
+    const p = Number(currentPin);
+    if (Number.isFinite(p) && p >= 0) pins.add(p);
+    return [...pins].sort((a, b) => a - b);
+}
+
+function motorRowCount() {
+    return Math.max(1, activeMotors.length);
+}
+
+function expandChannelEnabledForRows(enabled, rowCount, driverKind) {
+    const logical = logicalChannelCount(driverKind);
+    const src = Array.isArray(enabled) ? enabled : [];
+    const out = [];
+    for (let i = 0; i < rowCount; i++) {
+        if (logical < rowCount) {
+            const ch = Math.min(logical - 1, Math.floor(i * logical / rowCount));
+            out.push(src[ch] !== false);
+        } else {
+            out.push(src[i] !== false);
+        }
+    }
+    return out;
+}
+
+function collapseChannelEnabledForSave(rowCount, driverKind) {
+    const logical = logicalChannelCount(driverKind);
+    if (logical >= rowCount) return channelEnabled.slice(0, rowCount).map(v => v !== false);
+    const out = [];
+    for (let c = 0; c < logical; c++) {
+        const row = Math.floor(c * rowCount / logical);
+        out.push(channelEnabled[row] !== false);
+    }
+    return out;
+}
+
+function logicalChannelCount(kindOverride) {
+    let kind;
+    if (typeof kindOverride === "number") {
+        kind = kindOverride;
+    } else {
+        const drvChip = document.getElementById("drvChip");
+        const kindName = kindOverride ?? (drvChip ? drvChip.value : "MOSFET");
+        kind = drvKindMap[kindName] ?? 4;
+    }
+    if (kind === 1 || kind === 2 || kind === 5) return 2;
+    if (kind === 3) return 1;
+    const active = activeMotors.filter(p => Number.isFinite(p) && p >= 0);
+    return Math.max(1, active.length || 1);
+}
+
+async function pushChannelEnabled() {
+    const drvChip = document.getElementById("drvChip");
+    const kind = drvKindMap[drvChip?.value] ?? 4;
+    const rowCount = motorRowCount();
+    const enabled = collapseChannelEnabledForSave(rowCount, kind);
+    const statePatch = { channels: enabled.map(on => ({ on: !!on })) };
+    const configPatch = { channelEnabled: enabled };
+    sendStateUpdate(statePatch);
+    addSerialLog(`[HAL] Motor outputs: ${enabled.map((on, i) => `Ch${i}=${on ? "ON" : "OFF"}`).join(", ")}`);
+    if (isBleMode) {
+        try {
+            await sendConfigUpdate(configPatch);
+        } catch (err) {
+            addSerialLog(`[BLE] channelEnabled save failed: ${err.message}`);
+        }
+        return;
+    }
+    if (isRealESP32) {
+        fetch('/json/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(configPatch)
+        }).catch(err => addSerialLog(`[CTRL] channelEnabled save failed: ${err.message}`));
+    }
+}
+
+function renderMotors() {
+    const container = document.getElementById("motorsContainer");
+    if (!container) return;
+    const rowCount = motorRowCount();
+    while (channelEnabled.length < rowCount) channelEnabled.push(true);
+    container.innerHTML = "";
+    activeMotors.forEach((pin, idx) => {
+        const pinNum = Number(pin);
+        const opts = motorPinSelectOptions(pinNum);
+        const row = document.createElement("div");
+        row.className = "motor-row";
+        row.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;";
+        row.innerHTML = `
+            <span style="font-size: 11px; min-width: 36px;">Ch ${idx}:</span>
+            <label style="display:flex; align-items:center; gap:4px; font-size:11px; margin:0; min-width:52px;">
+                <input type="checkbox" class="motor-output-enable" data-index="${idx}" ${channelEnabled[idx] !== false ? "checked" : ""} style="width:auto; margin:0;">
+                <span class="hint">${channelEnabled[idx] !== false ? "On" : "Off"}</span>
+            </label>
+            <select class="motor-pin" data-index="${idx}" style="flex:1; min-width:100px;">
+                ${opts.map(p => `<option value="${p}" ${p === pinNum ? "selected" : ""}>GPIO ${p}</option>`).join("")}
+            </select>
+            <button class="btn btn-remove-row remove-motor" data-index="${idx}" style="cursor:pointer;">&times;</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function renderKnobs() {
+    const container = document.getElementById("knobsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    activeKnobs.forEach((knob, idx) => {
+        const row = document.createElement("div");
+        row.className = "knob-row";
+        row.innerHTML = `
+            <span style="font-size: 11px;">Knob ${idx}:</span>
+            <select class="knob-pin" data-index="${idx}">
+                ${pinOptions.map(p => `<option value="${p}" ${p === knob.pin ? 'selected' : ''}>GPIO ${p}</option>`).join('')}
+            </select>
+            <select class="knob-param" data-index="${idx}">
+                <option value="speed" ${knob.param === 'speed' ? 'selected' : ''}>Speed</option>
+                <option value="intensity" ${knob.param === 'intensity' ? 'selected' : ''}>Intensity</option>
+                <option value="gain" ${knob.param === 'gain' ? 'selected' : ''}>Gain</option>
+                <option value="pattern" ${knob.param === 'pattern' ? 'selected' : ''}>Pattern</option>
+                <option value="none" ${knob.param === 'none' ? 'selected' : ''}>None</option>
+            </select>
+            <button class="btn btn-remove-row remove-knob" data-index="${idx}" style="cursor:pointer;">&times;</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// Event Listeners for Dynamic Setup
+document.getElementById("addMotorBtn")?.addEventListener("click", () => {
+    if (activeMotors.length >= 8) {
+        alert("Maximum of 8 motor channels supported.");
+        return;
+    }
+    // Find first unused pin to prevent immediate conflict
+    const used = new Set(activeMotors);
+    const nextPin = pinOptions.find(p => !used.has(p)) || 0;
+    activeMotors.push(nextPin);
+    channelEnabled.push(true);
+    renderMotors();
+});
+
+document.getElementById("addKnobBtn")?.addEventListener("click", () => {
+    if (activeKnobs.length >= 8) {
+        alert("Maximum of 8 analog knob controllers supported.");
+        return;
+    }
+    const used = new Set(activeKnobs.map(k => k.pin));
+    const nextPin = pinOptions.find(p => !used.has(p)) || 0;
+    activeKnobs.push({ pin: nextPin, param: "none" });
+    renderKnobs();
+});
+
+document.getElementById("motorsContainer")?.addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-motor")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeMotors.splice(idx, 1);
+        channelEnabled.splice(idx, 1);
+        renderMotors();
+    }
+});
+
+document.getElementById("knobsContainer")?.addEventListener("click", (e) => {
+    if (e.target.classList.contains("remove-knob")) {
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        activeKnobs.splice(idx, 1);
+        renderKnobs();
+    }
+});
+
+document.getElementById("motorsContainer")?.addEventListener("change", (e) => {
+    if (e.target.classList.contains("motor-pin")) {
+        const idx = parseInt(e.target.getAttribute("data-index"), 10);
+        activeMotors[idx] = parseInt(e.target.value, 10);
+        renderMotors();
+    } else if (e.target.classList.contains("motor-output-enable")) {
+        const idx = parseInt(e.target.getAttribute("data-index"), 10);
+        channelEnabled[idx] = e.target.checked;
+        const hint = e.target.parentElement?.querySelector(".hint");
+        if (hint) hint.textContent = e.target.checked ? "On" : "Off";
+        pushChannelEnabled();
+    }
+});
+
+document.getElementById("knobsContainer")?.addEventListener("change", (e) => {
+    const idx = parseInt(e.target.getAttribute("data-index"));
+    if (e.target.classList.contains("knob-pin")) {
+        activeKnobs[idx].pin = parseInt(e.target.value);
+    } else if (e.target.classList.contains("knob-param")) {
+        activeKnobs[idx].param = e.target.value;
+    }
+});
+
+// Audio source switch handler
+document.getElementById("audioSource")?.addEventListener("change", (e) => {
+    const src = parseInt(e.target.value);
+    const i2sContainer = document.getElementById("i2sPinsContainer");
+    const adcContainer = document.getElementById("adcPinsContainer");
+    if (src === 2) { // I2S
+        if (i2sContainer) i2sContainer.style.display = "block";
+        if (adcContainer) adcContainer.style.display = "none";
+    } else if (src === 1) { // ADC
+        if (i2sContainer) i2sContainer.style.display = "none";
+        if (adcContainer) adcContainer.style.display = "block";
+    } else { // None/Simulated
+        if (i2sContainer) i2sContainer.style.display = "none";
+        if (adcContainer) adcContainer.style.display = "none";
+    }
+});
+
+function setSelectValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const str = String(value);
+    if (Array.from(el.options).some(o => o.value === str)) {
+        el.value = str;
+    } else if (el.tagName === "SELECT") {
+        // Inject missing option (e.g. GPIO 8/9) so the live device value shows.
+        const opt = document.createElement("option");
+        opt.value = str;
+        opt.textContent = str === "-1" ? "Unassigned (-1)" : `GPIO ${str}`;
+        el.appendChild(opt);
+        el.value = str;
+    } else {
+        el.value = str;
+    }
+}
+
+function applyDeviceConfig(cfg) {
+    if (!cfg) return;
+    const ssidEl = document.getElementById("deviceSsid");
+    if (ssidEl && cfg.apSsid) ssidEl.value = cfg.apSsid;
+    const KIND_TO_NAME = { 0: "NONE", 1: "L298N", 2: "DRV8833", 3: "DRV2605L", 4: "MOSFET", 5: "MINI_HBRIDGE" };
+    // Prefer exact MOSFET/DRV mapping from firmware enum.
+    const kind = cfg.driver && cfg.driver.kind != null ? cfg.driver.kind : 4;
+    const drvName = KIND_TO_NAME[kind] || "MOSFET";
+    setSelectValue("drvChip", drvName);
+
+    if (cfg.driver) {
+        if (cfg.driver.pwmHz != null) setSelectValue("pwmHz", cfg.driver.pwmHz);
+        if (cfg.driver.sda != null) setSelectValue("pinSDA", cfg.driver.sda);
+        if (cfg.driver.scl != null) setSelectValue("pinSCL", cfg.driver.scl);
+        if (Array.isArray(cfg.driver.pins)) {
+            activeMotors = cfg.driver.pins
+                .map(p => Number(p))
+                .filter(pin => Number.isFinite(pin) && pin >= 0);
+            if (activeMotors.length === 0) activeMotors = [6];
+        }
+        const enabledSrc = Array.isArray(cfg.channelEnabled)
+            ? cfg.channelEnabled
+            : (Array.isArray(cfg.driver?.channelEnabled) ? cfg.driver.channelEnabled : null);
+        if (enabledSrc) {
+            channelEnabled = expandChannelEnabledForRows(
+                enabledSrc, Math.max(1, activeMotors.length), kind
+            );
+        }
+        renderMotors();
+    }
+
+    if (cfg.audio) {
+        const ae = document.getElementById("audioEnabled");
+        if (ae) ae.checked = !!cfg.audio.enabled;
+        if (cfg.audio.source != null) setSelectValue("audioSource", cfg.audio.source);
+        if (cfg.audio.bclk != null) setSelectValue("audioBclk", cfg.audio.bclk);
+        if (cfg.audio.ws != null) setSelectValue("audioWs", cfg.audio.ws);
+        if (cfg.audio.sd != null) setSelectValue("audioSd", cfg.audio.sd);
+        if (cfg.audio.adc != null) setSelectValue("audioAdc", cfg.audio.adc);
+        document.getElementById("audioSource")?.dispatchEvent(new Event("change"));
+    }
+
+    if (cfg.led) {
+        const le = document.getElementById("ledEnabled");
+        if (le) le.checked = cfg.led.enabled !== false;
+        if (cfg.led.pin != null) setSelectValue("ledPin", cfg.led.pin);
+        const lc = document.getElementById("ledCount");
+        if (lc && cfg.led.count != null) lc.value = String(cfg.led.count);
+    }
+
+    if (cfg.oled) {
+        const oe = document.getElementById("oledEnabled");
+        if (oe) oe.checked = !!cfg.oled.enabled;
+    }
+
+    if (Array.isArray(cfg.knobs) && cfg.knobs.length) {
+        activeKnobs = cfg.knobs.map(k => ({
+            pin: k.pin ?? -1,
+            param: k.param || "none"
+        }));
+        renderKnobs();
+    }
+
+    addSerialLog(`[CTRL] Device config loaded (driver=${drvName}, pins=[${activeMotors.join(",")}], led pin=${cfg.led?.pin}, count=${cfg.led?.count})`);
+}
+
+function populateDeviceConfigFromESP() {
+    return fetch('/json/config')
+        .then(r => r.json())
+        .then(cfg => {
+            applyDeviceConfig(cfg);
+            return cfg;
+        })
+        .catch(err => {
+            addSerialLog(`[CTRL] /json/config failed: ${err.message}`);
+        });
+}
+
+// Initialize dynamic lists (overwritten once /json/config arrives).
+renderMotors();
+renderKnobs();
+
+// Hardware Calibration Form Submission
+document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
+    // Must match haxel::hal::DriverKind enum values.
+    const drvKindMapLocal = {
+        "NONE": 0,
+        "L298N": 1,
+        "DRV8833": 2,
+        "DRV2605L": 3,
+        "MOSFET": 4,
+        "MINI_HBRIDGE": 5
+    };
+    const drvChip = document.getElementById("drvChip").value;
+    const kind = drvKindMapLocal[drvChip] !== undefined ? drvKindMapLocal[drvChip] : 4;
+    const pwmHz = parseInt(document.getElementById("pwmHz")?.value) || 20000;
+
+    const sda = parseInt(document.getElementById("pinSDA").value);
+    const scl = parseInt(document.getElementById("pinSCL").value);
+
+    const audioEnabled = document.getElementById("audioEnabled").checked;
+    const audioSource = parseInt(document.getElementById("audioSource").value);
+    const audioBclk = parseInt(document.getElementById("audioBclk").value);
+    const audioWs = parseInt(document.getElementById("audioWs").value);
+    const audioSd = parseInt(document.getElementById("audioSd").value);
+    const audioAdc = parseInt(document.getElementById("audioAdc").value);
+
+    const ledEnabled = document.getElementById("ledEnabled").checked;
+    const ledPin = parseInt(document.getElementById("ledPin").value);
+    const ledCountEl = document.getElementById("ledCount");
+    let ledCount = parseInt(ledCountEl?.value, 10);
+    if (!Number.isFinite(ledCount) || ledCount < 1) ledCount = 20;
+    if (ledCount > 300) ledCount = 300;
+    if (ledCountEl) ledCountEl.value = String(ledCount);
+
+    const oledEnabled = document.getElementById("oledEnabled").checked;
+    const oledSda = Number.isFinite(sda) ? sda : 8;
+    const oledScl = Number.isFinite(scl) ? scl : 9;
+
+    // Dynamic conflict validator
+    const pinAllocations = [];
+
+    pinAllocations.push({ name: "I2C SDA", pin: Number.isFinite(sda) ? sda : -1 });
+    pinAllocations.push({ name: "I2C SCL", pin: Number.isFinite(scl) ? scl : -1 });
+
+    activeMotors.forEach((pin, idx) => {
+        pinAllocations.push({ name: `Motor Ch ${idx}`, pin });
+    });
+
+    if (audioSource === 2) {
+        pinAllocations.push({ name: "I2S BCLK", pin: audioBclk });
+        pinAllocations.push({ name: "I2S WS", pin: audioWs });
+        pinAllocations.push({ name: "I2S SD", pin: audioSd });
+    } else if (audioSource === 1) {
+        pinAllocations.push({ name: "ADC Analog Mic", pin: audioAdc });
+    }
+
+    pinAllocations.push({ name: "Status LED", pin: ledPin });
+
+    activeKnobs.forEach((k, idx) => {
+        pinAllocations.push({ name: `Knob ${idx}`, pin: k.pin });
+    });
+
+    const pinCounts = {};
+    let hasConflict = false;
+    let conflictMsg = "";
+
+    pinAllocations.forEach(alloc => {
+        if (alloc.pin === -1 || !Number.isFinite(alloc.pin)) return;
+        if (!pinCounts[alloc.pin]) pinCounts[alloc.pin] = [];
+        pinCounts[alloc.pin].push(alloc.name);
+    });
+
+    for (const [pin, names] of Object.entries(pinCounts)) {
+        if (names.length > 1) {
+            hasConflict = true;
+            conflictMsg += `\n- GPIO ${pin} is assigned to: ${names.join(", ")}`;
+        }
+    }
+
+    if (hasConflict) {
+        alert("Pin Conflict Detected! You cannot assign the same GPIO pin to multiple hardware peripherals." + conflictMsg);
+        addSerialLog("[ERROR] Hardware Configuration aborted: Duplicate pin assignments detected." + conflictMsg.replace(/\n/g, " "));
+        return;
+    }
+
+    const pinsPadded = Array(8).fill(-1);
+    activeMotors.forEach((pin, idx) => {
+        if (idx < 8) pinsPadded[idx] = pin;
+    });
+
+    const requestedSsid = document.getElementById("deviceSsid")?.value.trim() || "Haxel";
+    const configPatch = {
+        apSsid: requestedSsid,
+        channelEnabled: collapseChannelEnabledForSave(motorRowCount(), kind),
+        driver: {
+            kind: kind,
+            pins: pinsPadded,
+            sda: Number.isFinite(sda) ? sda : -1,
+            scl: Number.isFinite(scl) ? scl : -1,
+            pwmHz: pwmHz
+        },
+        audio: {
+            enabled: audioEnabled,
+            source: audioSource,
+            bclk: audioBclk,
+            ws: audioWs,
+            sd: audioSd,
+            adc: audioAdc
+        },
+        led: {
+            enabled: ledEnabled,
+            pin: ledPin,
+            count: ledCount
+        },
+        knobs: activeKnobs.map(k => ({ enabled: true, pin: k.pin, param: k.param })),
+        oled: {
+            enabled: oledEnabled,
+            sda: oledSda,
+            scl: oledScl
+        }
+    };
+
+    addSerialLog(`[CTRL→ESP] Saving config: ${JSON.stringify(configPatch)}`);
+
+    if (isBleMode) {
+        sendConfigUpdate(configPatch)
+            .then(() => addSerialLog("[BLE] Configuration saved; device is rebooting with the new settings."))
+            .catch(err => addSerialLog(`[BLE] Config save failed: ${err.message}`));
+    } else if (isRealESP32) {
+        fetch('/json/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(configPatch)
+        })
+        .then(() => {
+            addSerialLog("[PORTAL] Sent configuration patch successfully. Rebooting ESP32...");
+        })
+        .catch(err => {
+            console.error("Config save error:", err);
+            addSerialLog(`[PORTAL] Config save failed: ${err.message}`);
+        });
+    } else {
+        addSerialLog(`[SIMULATOR] Saved config (offline): ${JSON.stringify(configPatch)}`);
+    }
+});
+
+// Setup Iframe Reference Manual Modal Listeners
+(function() {
+    const openBtn = document.getElementById("openManualBtn");
+    const closeBtn = document.getElementById("closeManualBtn");
+    const modal = document.getElementById("manualModal");
+    if (openBtn && modal) {
+        openBtn.addEventListener("click", () => {
+            modal.style.display = "flex";
+        });
+    }
+    if (closeBtn && modal) {
+        closeBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+    }
+})();
+
+// ─── FLEET / COMMAND MODE (Master builds only) ───────────────────────────────
+let fleetEnabled = false;
+let fleetPollTimer = null;
+let lastFleetData = null;
+
+async function fleetPost(body) {
+    const r = await fetch("/json/fleet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+    if (!r.ok) throw new Error("fleet HTTP " + r.status);
+    return r.json();
+}
+
+function drawMiniWave(canvas, history) {
+    if (!canvas || !history || !history.length) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth || 160;
+    const h = canvas.clientHeight || 36;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = "#f4ebd0";
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "#111";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < history.length; i++) {
+        const x = (i / (history.length - 1)) * w;
+        const y = h - 2 - history[i] * (h - 4);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+}
+
+function renderFleetCards(data) {
+    const root = document.getElementById("fleetCards");
+    const summary = document.getElementById("fleetSummary");
+    if (!root) return;
+    const nodes = data.nodes || [];
+    const connected = data.connected || 0;
+    if (summary) {
+        const names = nodes.filter(n => n.online).map(n => n.name || n.mac).join(", ");
+        summary.textContent = `${connected} connected` + (names ? ` — ${names}` : "");
+    }
+    root.innerHTML = "";
+    nodes.forEach(n => {
+        const card = document.createElement("div");
+        card.className = "fleet-card";
+        card.style.cssText = "border:2px solid #111;padding:10px;background:#fff;";
+        const status = n.online ? (n.claimed ? "CLAIMED" : "ONLINE") : "OFFLINE";
+        const statusColor = n.online ? (n.claimed ? "#002f6c" : "#e23b24") : "#666";
+        card.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <strong style="font-family:var(--font-display);font-size:12px;text-transform:uppercase;">${n.name || "Haxel"}</strong>
+                <span style="font-family:var(--font-display);font-size:9px;background:${statusColor};color:#fff;padding:2px 6px;">${status}</span>
+            </div>
+            <div style="font-family:var(--mono);font-size:10px;color:#555;margin:4px 0;">${n.mac}</div>
+            <div style="font-size:11px;">${n.pattern || "—"} · ${Math.round((n.intensity || 0) * 100)}% · duty ${(n.duty || 0).toFixed(2)}</div>
+            <canvas class="fleet-wave" height="36" style="width:100%;height:36px;margin-top:6px;border:1px solid #111;"></canvas>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                <button class="btn" data-act="claim" style="padding:4px 8px;font-size:10px;">Claim</button>
+                <button class="btn" data-act="release" style="padding:4px 8px;font-size:10px;">Release</button>
+                <button class="btn" data-act="sync" style="padding:4px 8px;font-size:10px;">Push Config</button>
+            </div>`;
+        const canvas = card.querySelector(".fleet-wave");
+        drawMiniWave(canvas, n.waveHistory || []);
+        card.querySelectorAll("button[data-act]").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const act = btn.dataset.act;
+                try {
+                    if (act === "claim") await fleetPost({ action: "claim", mac: n.mac });
+                    else if (act === "release") await fleetPost({ action: "release", mac: n.mac });
+                    else if (act === "sync") await fleetPost({ action: "pushConfig", mac: n.mac });
+                    await refreshFleet();
+                } catch (e) {
+                    addSerialLog("[FLEET] " + e.message);
+                }
+            });
+        });
+        root.appendChild(card);
+    });
+}
+
+async function refreshFleet() {
+    if (!fleetEnabled) return;
+    try {
+        const r = await fetch("/json/fleet");
+        if (!r.ok) return;
+        lastFleetData = await r.json();
+        renderFleetCards(lastFleetData);
+        const sel = document.getElementById("fleetPatternSelect");
+        if (sel && sel.options.length === 0) {
+            PATTERNS.forEach(p => {
+                const opt = document.createElement("option");
+                opt.value = p.id;
+                opt.textContent = p.name;
+                sel.appendChild(opt);
+            });
+        }
+        if (sel && lastFleetData.fleetPattern) sel.value = lastFleetData.fleetPattern;
+        const fi = document.getElementById("fleetIntensity");
+        const fv = document.getElementById("fleetIntensityVal");
+        if (fi && typeof lastFleetData.fleetIntensity === "number") {
+            fi.value = Math.round(lastFleetData.fleetIntensity * 255);
+            if (fv) fv.textContent = Math.round(lastFleetData.fleetIntensity * 100) + "%";
+        }
+    } catch (_) { /* not a master */ }
+}
+
+async function initFleetUi() {
+    try {
+        const r = await fetch("/json/fleet");
+        if (!r.ok) return;
+        fleetEnabled = true;
+        const btn = document.getElementById("fleetTabBtn");
+        if (btn) btn.style.display = "";
+        lastFleetData = await r.json();
+        renderFleetCards(lastFleetData);
+
+        const fi = document.getElementById("fleetIntensity");
+        const fv = document.getElementById("fleetIntensityVal");
+        if (fi) {
+            fi.addEventListener("input", () => {
+                if (fv) fv.textContent = Math.round((fi.value / 255) * 100) + "%";
+            });
+        }
+        const claimAll = document.getElementById("fleetClaimAllBtn");
+        const releaseAll = document.getElementById("fleetReleaseAllBtn");
+        const estop = document.getElementById("fleetEstopBtn");
+        const apply = document.getElementById("fleetApplyBtn");
+        const play = document.getElementById("fleetPlayBtn");
+        const stop = document.getElementById("fleetStopBtn");
+        if (claimAll) claimAll.onclick = async () => { await fleetPost({ action: "claim" }); refreshFleet(); };
+        if (releaseAll) releaseAll.onclick = async () => { await fleetPost({ action: "release" }); refreshFleet(); };
+        if (estop) estop.onclick = async () => { await fleetPost({ action: "estop" }); refreshFleet(); };
+        const sendFleetState = async (extra = {}) => {
+            const intensity = (document.getElementById("fleetIntensity")?.value || 150) / 255;
+            const pattern = document.getElementById("fleetPatternSelect")?.value || "Breath";
+            await fleetPost({
+                action: "state",
+                patch: { intensity, pattern, ...extra }
+            });
+            refreshFleet();
+        };
+        if (apply) apply.onclick = () => sendFleetState();
+        if (play) play.onclick = () => sendFleetState({ on: true, mute: false });
+        if (stop) stop.onclick = () => sendFleetState({ on: false, mute: true });
+
+        clearInterval(fleetPollTimer);
+        fleetPollTimer = setInterval(refreshFleet, 750);
+        addSerialLog("[FLEET] Command Mode Master portal ready");
+    } catch (_) {
+        fleetEnabled = false;
+    }
+}
+
+// Kick fleet UI after portal boot (master builds only).
+setTimeout(() => { if (typeof isRealESP32 !== "undefined" && isRealESP32) initFleetUi(); }, 1200);
+

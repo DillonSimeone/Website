@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Live Caption Trigger</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --accent-color: #00d2ff;
+            --secondary-accent: #3a7bd5;
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #0a0a12;
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            padding: 40px 20px;
+        }
+
+        /* Abstract background elements */
+        .background-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+            filter: blur(100px);
+            border-radius: 50%;
+            opacity: 0.15;
+            animation: move 25s infinite alternate ease-in-out;
+        }
+
+        .blob:nth-child(2) {
+            bottom: -100px;
+            right: -100px;
+            background: linear-gradient(135deg, #ff0080, #7928ca);
+            animation-delay: -5s;
+        }
+
+        @keyframes move {
+            from {
+                transform: translate(-10%, -10%) rotate(0deg);
+            }
+
+            to {
+                transform: translate(10%, 10%) rotate(360deg);
+            }
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            letter-spacing: -2px;
+            background: linear-gradient(to right, #fff, var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.7;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        .main-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .info-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 25px;
+            transition: transform 0.3s ease;
+        }
+
+        .info-section:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .info-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--accent-color);
+        }
+
+        .info-section p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .info-section ul {
+            list-style: none;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        .info-section li {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .info-section li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+        }
+
+        .info-section a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0, 210, 255, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .info-section a:hover {
+            border-bottom-color: var(--accent-color);
+            background: rgba(0, 210, 255, 0.1);
+        }
+
+        .or-divider {
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            opacity: 0.4;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background: var(--glass-border);
+        }
+
+        .or-divider::before {
+            left: 0;
+        }
+
+        .or-divider::after {
+            right: 0;
+        }
+
+        /* Browser Warning Modal */
+        #browserWarning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .warning-card {
+            background: #1a1a2e;
+            border: 2px solid #ff4d4d;
+            border-radius: 32px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(255, 77, 77, 0.2);
+            animation: modalScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalScale {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .warning-card h2 {
+            color: #ff4d4d;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .warning-card p {
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .warning-card .chrome-btn {
+            display: inline-block;
+            background: white;
+            color: #000;
+            padding: 12px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.2s ease;
+        }
+
+        .warning-card .chrome-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .visualizer-container {
+            width: 100%;
+            height: 60px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        #visualizer {
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select,
+        input[type="range"] {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        select:focus {
+            border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+        }
+
+        #startBtn {
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+            color: #0a0a12;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        }
+
+        #startBtn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.5);
+        }
+
+        #stopBtn {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid var(--glass-border);
+        }
+
+        #stopBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #status {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--accent-color);
+            min-height: 1.4em;
+        }
+
+        .step-badge {
+            background: var(--accent-color);
+            color: #0a0a12;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 800;
+            margin-right: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob"></div>
+        <div class="blob"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Live Caption Pro</h1>
+            <p class="subtitle">Bypass hardware limits. Reroute any audio and video into Chrome's native machine
+                learning captions.</p>
+        </header>
+
+        <div class="grid-layout">
+            <div class="main-card">
+                <div class="video-wrapper">
+                    <video id="webcam" autoplay playsinline muted></video>
+                </div>
+
+                <div class="visualizer-container">
+                    <canvas id="visualizer"></canvas>
+                </div>
+
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label for="videoSource">Video Device</label>
+                        <select id="videoSource"></select>
+                    </div>
+                    <div class="control-group">
+                        <label for="audioSource">Audio Input</label>
+                        <select id="audioSource"></select>
+                    </div>
+                    <div class="control-group" style="grid-column: span 2;">
+                        <label for="monitorVolume">Monitor Volume (Gain for Chrome)</label>
+                        <input type="range" id="monitorVolume" min="0" max="2" step="0.01" value="0.1">
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="startBtn">Initialize Stream</button>
+                    <button id="stopBtn">Stop</button>
+                </div>
+
+                <div id="status">Ready to initialize.</div>
+            </div>
+
+            <div class="info-sidebar">
+                <div class="info-section">
+                    <h2><span class="step-badge">1</span> Chrome Config</h2>
+                    <p>Enable the secret accessibility feature to see captions on ANY media.</p>
+                    <ul>
+                        <li>Open <b>Settings</b> &rarr; <b>Accessibility</b></li>
+                        <li>Toggle <b>Live Caption</b> to ON</li>
+                        <li><a href="https://support.google.com/chrome/answer/10538231" target="_blank">Official
+                                Documentation &rarr;</a></li>
+                    </ul>
+                </div>
+
+                <div class="or-divider">Choose your route</div>
+
+                <div class="info-section">
+                    <h2>Option A: OBS Production</h2>
+                    <p>The all-in-one route. Use <a href="https://obsproject.com/" target="_blank">OBS Studio</a> to
+                        route your entire scene (Video + Audio) directly into this page.</p>
+                    <ul>
+                        <li><b>Setup:</b> Build your scene with Camera and Mic sources in OBS.</li>
+                        <li><b>Link:</b> Click <b>Start Virtual Camera</b> in the OBS controls.</li>
+                        <li><b>Select:</b> Choose the <b>OBS Virtual Camera</b> in the dropdowns below.</li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <h2>Option B: Virtual Loopback</h2>
+                    <p>Ideal for Discord, Zoom, or (non-chrome) Browser audio. Uses a virtual bridge to send system
+                        sound into a microphone.</p>
+                    <ul>
+                        <li><b>Tools:</b> Use <a href="https://vb-audio.com/Cable/" target="_blank">VB-Cable</a> or your
+                            existing <b>Virtual Desktop Audio</b>.</li>
+                        <li><b>Workflow:</b> In Windows Sound Settings, use <b>Listen to this device</b> to route your
+                            source into the Cable Input.</li>
+                        <li><b>Benefit:</b> Chrome can now subtitle your meetings or system audio in real-time.</li>
+                    </ul>
+                </div>
+
+                <div class="info-section" style="border-color: rgba(255, 215, 0, 0.2);">
+                    <p style="font-size: 0.75rem; color: #ffd700; margin-bottom: 5px;"><b>The Diagnostic Trick:</b></p>
+                    <p style="font-size: 0.8rem; opacity: 0.8;">Play audio and cycle through your <b>Audio Input</b>
+                        list. When the bars below start wiggling, you've found the active source!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="browserWarning">
+        <div class="warning-card">
+            <h2>Chrome Required</h2>
+            <p>This tool relies on Google Chrome's exclusive on-device machine learning for live captioning. It will not
+                function in other browsers.</p>
+            <a href="https://www.google.com/chrome/" target="_blank" class="chrome-btn">Get Google Chrome</a>
+            <button onclick="document.getElementById('browserWarning').style.display='none'"
+                style="background:transparent; color:rgba(255,255,255,0.4); border:none; margin-top:15px; font-size:0.8rem; cursor:pointer; width:auto; flex:none;">Dismiss</button>
+        </div>
+    </div>
+
+    <script>
+        // Browser Check
+        function checkBrowser() {
+            const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+            if (!isChrome) {
+                document.getElementById('browserWarning').style.display = 'flex';
+            }
+        }
+        checkBrowser();
+
+        const video = document.getElementById('webcam');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        const canvas = document.getElementById('visualizer');
+        const canvasCtx = canvas.getContext('2d');
+        const videoSelect = document.getElementById('videoSource');
+        const audioSelect = document.getElementById('audioSource');
+        const volumeSlider = document.getElementById('monitorVolume');
+
+        let stream = null;
+        let audioCtx = null;
+        let source = null;
+        let analyser = null;
+        let gainNode = null;
+        let animationId = null;
+
+        async function getDevices() {
+            try {
+                // Request temporary permission to get device names
+                const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                const devices = await navigator.mediaDevices.enumerateDevices();
+
+                // Clear existing
+                videoSelect.innerHTML = '';
+                audioSelect.innerHTML = '';
+
+                devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    if (device.kind === 'videoinput') {
+                        option.text = device.label || `Camera ${videoSelect.length + 1}`;
+                        videoSelect.appendChild(option);
+                    } else if (device.kind === 'audioinput') {
+                        option.text = device.label || `Mic ${audioSelect.length + 1}`;
+                        audioSelect.appendChild(option);
+                    }
+                });
+
+                // Stop the temp stream
+                tempStream.getTracks().forEach(track => track.stop());
+            } catch (err) {
+                status.textContent = "Error listing devices: " + err.message;
+            }
+        }
+
+        getDevices();
+
+        function draw() {
+            animationId = requestAnimationFrame(draw);
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+
+            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let barHeight;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] / 2;
+                canvasCtx.fillStyle = `rgb(0, ${barHeight + 100}, 255)`;
+                canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+        }
+
+        volumeSlider.addEventListener('input', () => {
+            if (gainNode) {
+                gainNode.gain.value = volumeSlider.value;
+            }
+        });
+
+        startBtn.addEventListener('click', async () => {
+            try {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                status.textContent = "Connecting sources...";
+
+                const constraints = {
+                    video: { deviceId: videoSelect.value ? { exact: videoSelect.value } : undefined },
+                    audio: {
+                        deviceId: audioSelect.value ? { exact: audioSelect.value } : undefined,
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                source = audioCtx.createMediaStreamSource(stream);
+                source.connect(analyser);
+
+                gainNode = audioCtx.createGain();
+                gainNode.gain.value = volumeSlider.value;
+
+                analyser.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+
+                draw();
+
+                status.textContent = "Stream active. Chrome should now show Live Captions if enabled.";
+
+            } catch (err) {
+                console.error("Error accessing media: ", err);
+                status.textContent = "Error: " + err.message;
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            if (audioCtx) {
+                audioCtx.close();
+            }
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            status.textContent = "Stream stopped.";
+
+            // Clear visualizer
+            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+    </script>
+</body>
+
+</html>

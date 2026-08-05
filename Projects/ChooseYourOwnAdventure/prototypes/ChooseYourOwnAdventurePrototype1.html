@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style type="text/css">
+			.lw { font-size: 60px; }
+		</style>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+		<title>Project 2 - Client Programming</title>
+	</head>
+	<body onload='startUp();'> 
+
+		<form method="post" action="" id="superform">
+		</form>
+
+		<script>
+
+		
+			//This is where the magic happens!
+			// First, it checks the name of the select, which is determined by the first arg in newSelect.
+			// It 
+			function magic(e)
+			{
+				if(e.name === "1")
+				{
+					console.log("First option selected! Option is " + e.value);
+					if(e.value === "1")
+					{
+						newSelect
+						(
+							"2", 
+							'You say, "I will go inside." He says, "I want to watch you." You start up the stone steps of the old haunted house. You open the door and step inside and suddenly a sharp arrow streaks across in front of you! But it misses you.', 
+							"Do you go up the staircase?", 
+							"Do you go through the swinging doors?"
+						);
+					}	
+					if(e.value === "2")
+					{
+						newSelect
+						(
+							"2", 
+							"You stay there. Then you decide to go home, have an ice cream, and go to bed.",
+							"THE END"
+						);
+					}	
+				}
+				else if(e.name === "2")
+				{
+					console.log("Second option selected! Option is " + e.value);
+					if(e.value === "1")
+						newSelect
+						(
+							"3",
+							"You go up the stairs. You lean against the railing and it breaks. You fall and that's the end of you.",
+							"THE END"
+						);	
+					if(e.value === "2")
+						newSelect
+						(
+							"3",
+							"You go through the swinging doors. You walk through the room",
+							"Do you go into the closet?", 
+							"Do you go into a passageway under the house?"
+						);
+				}
+				else if(e.name === "3")
+				{
+					if(e.value === "1")
+						newSelect
+						(
+							"4",
+							"You go into the closet. You fall through a trapdoor and break your leg. The walls are too smooth to climb. There is no other way up.",
+							"THE END"
+						);
+					if(e.value === "2")
+						newSelect
+						(
+							"4",
+							"You go into a pasaageway under the house. You make your way along and it leads to a trapdoor that takes you back to where you started from. You meet a policeman at the top and he says to you, 'You were lucky to get out of there. Don't ever go in there again!' You go home and have some ice cream.",
+							"THE END"
+						);
+				}
+				//If you want to add more options, add else if(e.id === "4"), then check the values of whatever and so on.
+			}
+		
+			//id, text, options. No limit on options. IE; 1, "A sad tale", "Jump", "Back off", "Scream".
+			function newSelect()
+			{
+				//This bit of code allows users to reset easily by removing all of the selects after the one the user just changed.
+				//IE; if 2 already exists, 2 will be removed, then a new 2 is spawned. If there's other selects after 2, those will be removed.
+				var loop = true;
+				var i = 0;
+				do
+				{
+					if(exists((parseInt(arguments[0]) + i)))	
+						remove((parseInt(arguments[0]) + i));
+					else
+						loop = false;
+						
+					console.log("Loop ran " + i + " times!");
+					i++;
+				}while(loop)
+			
+				//Creates the select element, and sets the ID and onchange event.
+				var div = document.createElement("div");
+				div.id = arguments[0];
+			
+			
+				console.log("Arg 1: " + arguments[1] + " Arg 2: " + arguments[0] + " Arg 3: " + arguments[2]);
+			
+				if(arguments[2] != "THE END")
+				{
+					var selection = document.createElement("select");
+					selection.name = arguments[0];
+					selection.onchange = function(){magic(this)};
+			
+					//Creates the first option, which will always display the text, Select and have a value of zero.
+					var option = document.createElement("option");
+					option.value = 0;
+					var node = document.createTextNode("Select");
+					option.appendChild(node);
+			
+					selection.appendChild(option);
+					console.log("Option 0 appended!");
+					var k = 1;
+					for (var i = 2; i < arguments.length; i++) 
+					{
+						option = document.createElement("option");
+						option.value = k; // 1...2...3...4...
+						k++;
+						node = document.createTextNode(arguments[i]); //"Blah blah"
+						option.appendChild(node);
+						selection.appendChild(option);
+					}
+					div.appendChild(selection);
+					document.getElementById("superform").appendChild(div);
+					newText(arguments[1], arguments[0]);
+				}
+				else
+				{
+					document.getElementById("superform").appendChild(div);
+					newText(arguments[1], arguments[0]);
+				}
+			}
+		
+			function newText(text, id)
+			{
+				var para = document.createElement("p");
+				var node = document.createTextNode(text);
+				para.appendChild(node);
+			
+				var elem = document.getElementById(id);
+			
+				if(elem)
+					if(elem.firstChild)
+						elem.insertBefore(para, elem.firstChild); //Mwhahaha....I'm a genius!
+					else
+						elem.appendChild(para);
+					console.log(elem);
+		}
+		
+			function startUp()
+			{
+				newSelect
+				(
+					"1", 
+					"It is summertime again, vacation time. You go to your uncle's house. He takes you on a tour around the city. There are many old buildings, but the oldest of all is on Main Street. The address is 880. He says that it is haunted, but you don't believe him. ", 
+					"Do you go inside?", 
+					"Do you stay there?"
+				);
+			}
+		
+		
+			//This is to be used to remove newer selects when the user changes something in the older selects. It's faster than typing parentNode over and over.
+			function remove(id)
+			{
+				var elem = document.getElementById(id);
+				if(elem)
+					return elem.parentNode.removeChild(elem);
+			}
+		
+			//Checks if an element exists or not.
+			function exists(id)
+			{
+				var elem = document.getElementById(id);
+				if(elem === null)
+					return false;
+				else
+					return true;
+			}
+	</script>
+	</body>
+</html>

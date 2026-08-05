@@ -1,0 +1,81 @@
+:root {
+    --accent: #00ffff;
+    --bg: #050510;
+}
+body {
+    margin: 0;
+    background: var(--bg);
+    color: white;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+}
+.container {
+    max-width: 800px;
+    padding: 2rem;
+}
+h1 {
+    font-size: 3rem;
+    letter-spacing: -2px;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    border-bottom: 4px solid var(--accent);
+    display: inline-block;
+}
+p {
+    color: #8899aa;
+    font-size: 1.1rem;
+    margin-bottom: 3rem;
+}
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    width: 100%;
+}
+.card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    text-decoration: none;
+    color: white;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+}
+.card:hover {
+    background: rgba(0, 255, 255, 0.05);
+    border-color: var(--accent);
+    transform: translateY(-5px);
+}
+.card h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--accent);
+}
+.card .number {
+    font-size: 4rem;
+    font-weight: 900;
+    position: absolute;
+    right: -10px;
+    bottom: -20px;
+    opacity: 0.05;
+}
+.card p {
+    margin: 1rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #aabbcc;
+}
+.footer {
+    margin-top: 4rem;
+    font-size: 0.8rem;
+    color: #445566;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}

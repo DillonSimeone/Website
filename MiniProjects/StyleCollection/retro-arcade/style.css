@@ -1,0 +1,299 @@
+:root {
+  --neon-magenta: #ff00ff;
+  --neon-cyan: #00ffff;
+  --neon-yellow: #ffff00;
+  --neon-red: #ff3333;
+  --dark-grey: #22222b;
+  --arcade-gold: #ffb700;
+  
+  --font-arcade: 'Press Start 2P', monospace;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0b0b10;
+  background-image: radial-gradient(rgba(255, 0, 255, 0.15) 1px, transparent 0),
+                    radial-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 0);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  color: #fff;
+  font-family: var(--font-mono);
+}
+
+/* Cabinet Container */
+.arcade-cabinet {
+  width: 90%;
+  max-width: 580px;
+  background: linear-gradient(180deg, #151520 0%, #08080c 100%);
+  border: 8px solid var(--dark-grey);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8),
+              0 0 20px rgba(0, 255, 255, 0.2),
+              0 0 40px rgba(255, 0, 255, 0.15);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cabinet Header - Marquee */
+.marquee {
+  background: #000;
+  padding: 25px 10px;
+  border-bottom: 6px solid var(--neon-magenta);
+  text-align: center;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(255, 0, 255, 0.4);
+}
+
+.marquee-text {
+  font-family: var(--font-arcade);
+  font-size: 2rem;
+  color: #fff;
+  text-shadow: 0 0 5px #fff,
+               0 0 10px var(--neon-cyan),
+               0 0 20px var(--neon-magenta),
+               0 0 40px var(--neon-magenta);
+  animation: marquee-pulse 2s infinite alternate;
+  letter-spacing: 2px;
+}
+
+@keyframes marquee-pulse {
+  0% { opacity: 0.9; text-shadow: 0 0 5px #fff, 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-magenta); }
+  100% { opacity: 1; text-shadow: 0 0 10px #fff, 0 0 20px var(--neon-cyan), 0 0 35px var(--neon-magenta), 0 0 50px var(--neon-magenta); }
+}
+
+/* Curved CRT Screen Container */
+.screen-container {
+  padding: 30px;
+  background: #111;
+  border-bottom: 6px solid var(--neon-cyan);
+  position: relative;
+}
+
+.screen-content {
+  background: #050a10;
+  border: 4px solid #333;
+  border-radius: 15px;
+  padding: 25px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  height: 280px;
+  justify-content: space-between;
+}
+
+/* CRT Overlay Effect */
+.crt-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%),
+              linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+  background-size: 100% 4px, 6px 100%;
+  z-index: 10;
+  pointer-events: none;
+  animation: crt-flicker 0.15s infinite;
+}
+
+@keyframes crt-flicker {
+  0% { opacity: 0.97; }
+  50% { opacity: 1; }
+  100% { opacity: 0.98; }
+}
+
+/* Screen Typography & Layout */
+.screen-header {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-arcade);
+  font-size: 0.75rem;
+  color: var(--neon-yellow);
+}
+
+.screen-body {
+  text-align: center;
+  z-index: 2;
+}
+
+.glitch-title {
+  font-family: var(--font-arcade);
+  font-size: 1.8rem;
+  color: var(--neon-cyan);
+  text-shadow: 2px 2px 0 var(--neon-magenta);
+  margin-bottom: 15px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.desc-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #a4b4c4;
+  margin: 10px 0;
+}
+
+.status-msg {
+  font-family: var(--font-arcade);
+  font-size: 0.75rem;
+  color: var(--neon-red);
+  margin-top: 15px;
+  letter-spacing: 1px;
+}
+
+.screen-footer {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-arcade);
+  font-size: 0.6rem;
+  color: #557788;
+}
+
+/* Controller / Controls Panel */
+.control-panel {
+  background: #1e1e24;
+  padding: 30px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 30px;
+  position: relative;
+}
+
+/* Nav Back Button */
+.nav-back {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-family: var(--font-arcade);
+  font-size: 0.7rem;
+  color: #fff;
+  text-decoration: none;
+  background: #444;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 2px solid #555;
+  transition: background-color 0.2s;
+}
+
+.nav-back:hover {
+  background: var(--neon-red);
+  border-color: #fff;
+}
+
+/* Joystick Style */
+.joystick-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.joystick-base {
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(circle, #333 40%, #111 70%);
+  border-radius: 50%;
+  border: 4px solid #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset 0 5px 10px rgba(0,0,0,0.6);
+}
+
+.joystick-shaft {
+  width: 14px;
+  height: 45px;
+  background: linear-gradient(90deg, #999, #bbb, #777);
+  border-radius: 7px;
+  position: relative;
+  transform-origin: bottom center;
+  transition: transform 0.15s ease;
+  transform: rotate(0deg);
+  display: flex;
+  justify-content: center;
+}
+
+.joystick-knob {
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle at 10px 10px, #ff3333, #880000);
+  border-radius: 50%;
+  position: absolute;
+  top: -20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5), 0 0 10px var(--neon-red);
+}
+
+.joystick-label {
+  font-family: var(--font-arcade);
+  font-size: 0.6rem;
+  margin-top: 10px;
+  color: #888;
+}
+
+/* Arcade Buttons */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 15px;
+  justify-content: space-around;
+}
+
+.arcade-btn {
+  font-family: var(--font-arcade);
+  font-size: 0.7rem;
+  padding: 12px 20px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  color: #fff;
+  transition: transform 0.05s, box-shadow 0.1s;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  min-width: 90px;
+}
+
+.btn-fire {
+  background: radial-gradient(circle, #ff00ff 20%, #990099 80%);
+  border: 3px solid #ff77ff;
+  box-shadow: 0 5px 0 #660066, 0 5px 10px rgba(255,0,255,0.4);
+}
+.btn-jump {
+  background: radial-gradient(circle, #00ffff 20%, #009999 80%);
+  border: 3px solid #77ffff;
+  box-shadow: 0 5px 0 #006666, 0 5px 10px rgba(0,255,255,0.4);
+}
+.btn-coin {
+  background: radial-gradient(circle, #ffff00 20%, #999900 80%);
+  border: 3px solid #ffff77;
+  box-shadow: 0 5px 0 #666600, 0 5px 10px rgba(255,255,0,0.4);
+  color: #000;
+  text-shadow: none;
+}
+.btn-start {
+  background: radial-gradient(circle, #33ff33 20%, #008800 80%);
+  border: 3px solid #77ff77;
+  box-shadow: 0 5px 0 #005500, 0 5px 10px rgba(0,255,0,0.4);
+}
+
+.arcade-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.8), 0 2px 5px rgba(0,0,0,0.2);
+}

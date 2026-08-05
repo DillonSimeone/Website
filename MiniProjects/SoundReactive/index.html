@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sound-Reactive Arts HUD</title>
+  
+  <!-- Google Fonts for Neo-Noir / Typewriter theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Special+Elite&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="hud-style.css">
+</head>
+<body>
+  <!-- Gritty Newspaper Halftone Grid background -->
+  <div class="halftone-screen"></div>
+
+  <div class="noir-container">
+    <header class="noir-header">
+      <a href="../../../index.html" class="nav-back">/// RETURN_TO_PORTFOLIO</a>
+      <h1 class="noir-title">SOUND_REACTIVE_ARTS</h1>
+      <div class="noir-metadata">
+        <p>CASE FILE ID: #SR-9082 // STATUS: ACTIVE</p>
+        <p>SYSTEM LOG: ALL FREQUENCY ANALYZERS STABLE</p>
+      </div>
+    </header>
+
+    <main class="noir-grid">
+      <!-- Card 1: Sonic Sphere (Ripple) -->
+      <a href="./ripple/ripple.html" class="noir-card project-card">
+        <div class="card-tag">CASE_01 // ACTIVE</div>
+        <h2 class="card-title">SONIC SPHERE</h2>
+        <p class="card-desc">
+          A real-time WebGL/Three.js installation driven by live microphone or audio input. Feeds custom audio frequency data to dynamically warp an icosahedron sphere using Noise Bubble, Plasma Pulse, and Digital Glitch shaders.
+        </p>
+        <div class="card-footer">
+          <span>SPECTRUM: 0-20kHz</span>
+          <span class="launch-btn">LAUNCH_ART -></span>
+        </div>
+      </a>
+
+      <!-- Card 2: Sound Tunnels -->
+      <a href="./tunnel/index.html" class="noir-card project-card">
+        <div class="card-tag">CASE_02 // ACTIVE</div>
+        <h2 class="card-title">THE TUNNELS</h2>
+        <p class="card-desc">
+          A dual raymarching procedural tunnel engine. Uses dynamic weaving geometries governed by audio frequency and amplitude. High energy audio causes the two tunnels to collapse into a third, star-shaped wormhole.
+        </p>
+        <div class="card-footer">
+          <span>SPECTRUM: 0-20kHz</span>
+          <span class="launch-btn">LAUNCH_ART -></span>
+        </div>
+      </a>
+    </main>
+
+    <footer class="noir-footer">
+      <p>SYS.LOC: public/MiniProjects/SoundReactive/ // ANTIGRAVITY CODESET 2026</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Steampunk Brass Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="steampunk-container">
+    <header class="steam-header">
+      <a href="../index.html" class="nav-back">[ ESCAPE_TO_HUB ]</a>
+      <h1 class="steam-title">STEAMPUNK</h1>
+      <p class="steam-subtitle">MECHANICAL GEARS & VALVES // CHRONICLES</p>
+    </header>
+
+    <main class="steam-grid">
+      <!-- Info block -->
+      <section class="steam-card spec-card">
+        <h2>THE MACHINE</h2>
+        <p>A subgenre of science fiction inspired by 19th-century industrial steam-powered machinery. Aesthetics emphasize exposed brass pipes, copper gears, rivets, and dark leather backings.</p>
+      </section>
+
+      <!-- Interactive Gear station -->
+      <section class="steam-card gear-station">
+        <h2>VALVE PRESSURE</h2>
+        <p>Click the pressure valve to release steam, activating and spinning the brass cog system.</p>
+        
+        <div class="engine-bay">
+          <!-- Steam Gauge -->
+          <div class="steam-gauge">
+            <div class="gauge-face">
+              <div class="gauge-hand" id="gauge-needle"></div>
+            </div>
+            <div class="gauge-label">PSI</div>
+          </div>
+
+          <!-- Rotating Gears -->
+          <div class="gears-link">
+            <div class="gear-cog gear-large" id="gear-lg">⚙️</div>
+            <div class="gear-cog gear-small" id="gear-sm">⚙️</div>
+          </div>
+        </div>
+
+        <button class="valve-btn" id="btn-valve">OPEN VALVE</button>
+      </section>
+
+      <!-- Victorian literature card -->
+      <section class="steam-card quote-card">
+        <h2>LOGS</h2>
+        <p class="steam-quote">“We are all cogs in a great machine, but some of us are built to spin faster.”</p>
+        <cite>— Victorian Chronicles</cite>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

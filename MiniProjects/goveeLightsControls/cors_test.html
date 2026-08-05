@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>CORS Test</h1>
+    <p>Check console for results.</p>
+    <script>
+        const apiKey = 'YOUR_API_KEY_HERE'; // User would need to input this
+        // Using a dummy key for the structure test, the server response (401 vs Network Error) tells us about CORS
+        fetch('https://openapi.api.govee.com/router/api/v1/user/devices', {
+            method: 'GET',
+            headers: {
+                'Govee-API-Key': '00000000-0000-0000-0000-000000000000',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => console.log('Response:', response))
+        .catch(error => console.error('Error:', error));
+    </script>
+</body>
+</html>

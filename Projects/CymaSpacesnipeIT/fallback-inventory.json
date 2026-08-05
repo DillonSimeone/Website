@@ -1,0 +1,77 @@
+{
+  "total": 8,
+  "rows": [
+    {
+      "id": 1,
+      "name": "Audio-Reactive LED Panel v2",
+      "image": "",
+      "category": { "id": 1, "name": "LED Visuals" },
+      "rtd_location": { "id": 1, "name": "Main Lab - Shelf A" },
+      "status_label": { "id": 1, "name": "Deployable" },
+      "user_can_checkout": true
+    },
+    {
+      "id": 2,
+      "name": "Woojer Haptic Strap Edge",
+      "image": "",
+      "category": { "id": 2, "name": "Haptics" },
+      "rtd_location": { "id": 1, "name": "Main Lab - Haptic Bin" },
+      "status_label": { "id": 1, "name": "Deployable" },
+      "user_can_checkout": true
+    },
+    {
+      "id": 3,
+      "name": "ESP32 DevKitC v4",
+      "image": "",
+      "category": { "id": 3, "name": "Microcontrollers" },
+      "rtd_location": { "id": 2, "name": "Electronics Desk" },
+      "status_label": { "id": 1, "name": "Deployable" },
+      "user_can_checkout": true
+    },
+    {
+      "id": 4,
+      "name": "WS2812B LED Strip (5m, 60/m)",
+      "image": "",
+      "category": { "id": 1, "name": "LED Visuals" },
+      "rtd_location": { "id": 3, "name": "LED Storage Bin" },
+      "status_label": { "id": 1, "name": "Deployable" },
+      "user_can_checkout": true
+    },
+    {
+      "id": 5,
+      "name": "INMP441 I2S Microphone Module",
+      "image": "",
+      "category": { "id": 4, "name": "Audio Sensors" },
+      "rtd_location": { "id": 2, "name": "Electronics Desk" },
+      "status_label": { "id": 1, "name": "Deployable" },
+      "user_can_checkout": true
+    },
+    {
+      "id": 6,
+      "name": "Subpac M2 Haptic Vest",
+      "image": "",
+      "category": { "id": 2, "name": "Haptics" },
+      "rtd_location": { "id": 1, "name": "Main Lab - Haptic Bin" },
+      "status_label": { "id": 2, "name": "Archived" },
+      "user_can_checkout": false
+    },
+    {
+      "id": 7,
+      "name": "MSGEQ7 Graphic Equalizer Display",
+      "image": "",
+      "category": { "id": 1, "name": "LED Visuals" },
+      "rtd_location": { "id": 1, "name": "Main Lab - Shelf B" },
+      "status_label": { "id": 1, "name": "Deployable" },
+      "user_can_checkout": true
+    },
+    {
+      "id": 8,
+      "name": "Haptic Driver PCB (DRV2605L)",
+      "image": "",
+      "category": { "id": 2, "name": "Haptics" },
+      "rtd_location": { "id": 2, "name": "Electronics Desk" },
+      "status_label": { "id": 1, "name": "Deployable" },
+      "user_can_checkout": true
+    }
+  ]
+}

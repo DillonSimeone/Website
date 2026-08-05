@@ -1,0 +1,46 @@
+node,ref,part,manufacturer,lcsc,qty,unit_usd,ext_usd,notes
+bar_pad,U1,AT42QT1070-SSU 5-ch cap touch,Microchip,C?????,2,1.05,2.10,verify-before-order
+bar_pad,U2,TPD4E004 ESD array,TI,C?????,2,0.18,0.36,verify-before-order
+bar_pad,PCB,Flex PCB 8x95x0.4mm polyimide 2L,JLCFlex,—,2,2.50,5.00,verify-before-order
+bar_pad,J1,Molex Pico-EZmate 2-pin pwr,Molex,C?????,2,0.22,0.44,verify-before-order
+bar_pad,J2,Molex Pico-EZmate 2-pin I2C,Molex,C?????,2,0.22,0.44,verify-before-order
+bar_pad,MISC,conformal urethane + Scotch 33+ wrap,3M,—,1,0.50,0.50,verify-before-order
+hub,U10,nRF52840-QIAA SoC,Nordic,C?????,1,5.40,5.40,verify-before-order
+hub,U11,MX25R6435F 8MB flash,Macronix,C?????,1,0.85,0.85,verify-before-order
+hub,U12,DRV2605L haptic driver,TI,C?????,1,1.85,1.85,verify-before-order
+hub,LRA1,Vybronics VLV101040A LRA 235Hz,Vybronics,C?????,1,2.40,2.40,verify-before-order
+hub,U13,u-blox MAX-M10S GNSS,u-blox,C?????,1,8.80,8.80,verify-before-order
+hub,U14,LSM6DSO32 IMU +/-32g,ST,C?????,1,2.95,2.95,verify-before-order
+hub,U15,BQ25180 PMIC,TI,C?????,1,0.95,0.95,verify-before-order
+hub,BAT,LiPo 850mAh 50x30x4mm,generic,C?????,1,3.80,3.80,verify-before-order
+hub,J10,GCT USB4105 USB-C,GCT,C?????,1,0.55,0.55,verify-before-order
+hub,ANT1,Johanson 2450AT43A100 chip ant,Johanson,C?????,1,0.42,0.42,verify-before-order
+hub,LED1,WS2812B side-fire,Worldsemi,C?????,1,0.12,0.12,verify-before-order
+hub,PCB,4L FR4 60x28mm ENIG,JLCPCB,—,1,3.20,3.20,verify-before-order
+hub,ENCL,machined Al shell + ASA top + magnet mount,—,—,1,11.00,11.00,verify-before-order
+hub,MISC,gaskets / o-ring IPX7,—,—,1,0.80,0.80,verify-before-order
+saddle,U20,ESP32-C3-MINI-1,Espressif,C?????,1,1.95,1.95,verify-before-order
+saddle,U21,DRV2605L,TI,C?????,1,1.85,1.85,verify-before-order
+saddle,LRA2,TDK PowerHap 1313H013,TDK,C?????,1,9.50,9.50,verify-before-order
+saddle,U22,BQ25180 PMIC,TI,C?????,1,0.95,0.95,verify-before-order
+saddle,BAT2,LiPo 350mAh,generic,C?????,1,2.10,2.10,verify-before-order
+saddle,J20,GCT USB4105 USB-C,GCT,C?????,1,0.55,0.55,verify-before-order
+saddle,PCB,2L FR4 40x18mm,JLCPCB,—,1,1.10,1.10,verify-before-order
+saddle,ENCL,ASA 3D print + TPU shock collar + Ti rail clip,—,—,1,4.80,4.80,verify-before-order
+collar,U30,nRF52840-QIAA (LE Audio),Nordic,C?????,1,5.40,5.40,verify-before-order
+collar,U31,TAS2563 amp,TI,C?????,1,2.30,2.30,verify-before-order
+collar,BC1,Bone-conduction transducer (Sonion BCA-30 class),Sonion,C?????,2,7.50,15.00,verify-before-order
+collar,BAT3,LiPo 300mAh,generic,C?????,1,1.95,1.95,verify-before-order
+collar,U32,BQ25180,TI,C?????,1,0.95,0.95,verify-before-order
+collar,ENCL,silicone overmolded clip + back-pod,—,—,1,6.00,6.00,verify-before-order
+collar,WIRE,internal-jersey routed 4-cond shielded,—,—,1,1.20,1.20,verify-before-order
+ds_dongle,U40,nRF52840-QIAA,Nordic,C?????,1,5.40,5.40,verify-before-order
+ds_dongle,U41,Skyworks SE2438T PA/LNA,Skyworks,C?????,1,2.85,2.85,verify-before-order
+ds_dongle,U42,RP2040 (USB HID/audio bridge),RPi,C?????,1,1.10,1.10,verify-before-order
+ds_dongle,ANT2,SMA to 3 dBi mag-mount whip,generic,—,1,8.50,8.50,verify-before-order
+ds_dongle,J40,GCT USB4105 USB-C,GCT,C?????,1,0.55,0.55,verify-before-order
+ds_dongle,PCB,4L FR4 95x55mm,JLCPCB,—,1,4.20,4.20,verify-before-order
+ds_dongle,ENCL,machined Al + ASA top + mag mount,—,—,1,14.00,14.00,verify-before-order
+assy,LABOR,SMT + flex assy + IPX7 sealing + test,—,—,1,38.00,38.00,verify-before-order
+assy,PACK,team kit case (8 riders), foam-cut,—,—,0.125,40.00,5.00,verify-before-order
+assy,DOSSIER,UCI compliance dossier per federation (amortized),—,—,1,15.00,15.00,verify-before-order

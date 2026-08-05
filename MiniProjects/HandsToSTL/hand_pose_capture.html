@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constrained Hand Pose STL</title>
+    <!-- The main three.js library is loaded here as it is a core dependency -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            overflow-x: hidden;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            flex: 1;
+            min-width: 300px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .sub-controls {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .sub-controls label {
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover:not(:disabled) {
+            background: #357abd;
+        }
+        button:disabled {
+            background: #555;
+            color: #999;
+            cursor: not-allowed;
+        }
+        .capture-btn {
+            background: #e74c3c;
+            font-size: 18px;
+            padding: 15px 30px;
+            font-weight: bold;
+        }
+        .capture-btn:hover:not(:disabled) {
+            background: #c0392b;
+        }
+        #videoElement, #canvasElement, #preview3D {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #000;
+        }
+        .status {
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #333;
+            min-height: 20px;
+        }
+        .hand-detected {
+            background: #27ae60 !important;
+        }
+        .info, .model-controls {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #4a90e2;
+            margin-bottom: 30px;
+        }
+        h2, h3 {
+            color: #e67e22;
+            margin-bottom: 15px;
+        }
+
+        /* Slider Styles */
+        .control-group { margin-bottom: 15px; }
+        .control-group label { display: block; margin-bottom: 5px; font-size: 14px; }
+        .control-group input[type="range"] { width: 100%; cursor: pointer; }
+        .control-group span { font-family: monospace; background: #2a2a2a; padding: 2px 6px; border-radius: 4px; }
+
+        /* Radio/Toggle Styles */
+        .radio-group label { margin-right: 15px; font-size: 14px; }
+        
+        /* Data Readout Styles */
+        #data-readouts table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        #data-readouts th, #data-readouts td {
+            text-align: left;
+            padding: 4px 8px;
+            border-bottom: 1px solid #444;
+        }
+        #data-readouts th { color: #aaa; }
+        #data-readouts td { background-color: #2c2c2c; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+        }
+        .modal-content h2 { color: #e67e22; }
+        .modal-buttons { margin-top: 20px; }
+        #file-checklist {
+            list-style: none;
+            padding: 10px;
+            text-align: left;
+            max-height: 250px;
+            overflow-y: auto;
+            background: #1e1e1e;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        #file-checklist li { padding: 4px 8px; }
+        #file-checklist li:nth-child(odd) { background: #252525; }
+    </style>
+</head>
+<body>
+    <h1>🖐️ Constrained Hand Pose STL</h1>
+    <div class="container">
+        <div class="panel camera-panel">
+            <h2>Camera Feed</h2>
+            <div class="controls">
+                <button id="startBtn">Start Camera</button>
+                <button id="captureBtn" class="capture-btn" disabled>📸 Capture Hand (SPACE)</button>
+            </div>
+            <video id="videoElement" autoplay muted playsinline style="display: none;"></video>
+            <canvas id="canvasElement"></canvas>
+            <div class="sub-controls">
+                <label><input type="checkbox" id="overlayToggle" checked> Show Overlay</label>
+            </div>
+            <div id="status" class="status">Waiting for scripts...</div>
+            <div class="model-controls">
+                 <h3>Accuracy Settings</h3>
+                <div class="control-group">
+                    <label for="detectionConfidence">Detection Confidence: <span id="detectionConfidenceValue">0.6</span></label>
+                    <input type="range" id="detectionConfidence" min="0.1" max="1.0" step="0.1" value="0.6">
+                </div>
+                <div class="control-group">
+                    <label for="trackingConfidence">Tracking Confidence: <span id="trackingConfidenceValue">0.6</span></label>
+                    <input type="range" id="trackingConfidence" min="0.1" max="1.0" step="0.1" value="0.6">
+                </div>
+            </div>
+            <div class="model-controls" id="data-readouts">
+                <h3>Live Data</h3>
+                <p>Tracking Confidence: <span id="liveTrackingConfidence">N/A</span></p>
+                <table>
+                    <thead>
+                        <tr><th>Finger</th><th>X</th><th>Y</th><th>Z</th></tr>
+                    </thead>
+                    <tbody id="coords-table-body">
+                        <tr><td>Thumb</td><td id="thumb-x">-</td><td id="thumb-y">-</td><td id="thumb-z">-</td></tr>
+                        <tr><td>Index</td><td id="index-x">-</td><td id="index-y">-</td><td id="index-z">-</td></tr>
+                        <tr><td>Middle</td><td id="middle-x">-</td><td id="middle-y">-</td><td id="middle-z">-</td></tr>
+                        <tr><td>Ring</td><td id="ring-x">-</td><td id="ring-y">-</td><td id="ring-z">-</td></tr>
+                        <tr><td>Pinky</td><td id="pinky-x">-</td><td id="pinky-y">-</td><td id="pinky-z">-</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="panel preview-panel">
+            <h2>3D Hand Model</h2>
+             <div class="controls">
+                <button id="downloadBtn" disabled>⬇️ Download STL</button>
+                <button id="clearBtn" disabled>🗑️ Clear Model</button>
+            </div>
+            <div id="preview3D"></div>
+            <div class="model-controls">
+                <h3>Model Controls</h3>
+                 <div class="control-group">
+                    <label><input type="checkbox" id="constantRefreshToggle"> Constant Refresh</label>
+                </div>
+                <hr style="border-color: #444; margin: 20px 0;">
+                <div id="palm-style-controls" class="control-group radio-group">
+                    <label>Palm Style:</label>
+                    <label><input type="radio" name="palmStyle" value="cylinders" checked> Cylinders</label>
+                    <label><input type="radio" name="palmStyle" value="triangles"> Triangles</label>
+                </div>
+                <hr style="border-color: #444; margin: 20px 0;">
+                <div class="control-group radio-group">
+                    <label>Finger Style:</label>
+                    <label><input type="radio" name="fingerStyle" value="solid" checked> Solid</label>
+                    <label><input type="radio" name="fingerStyle" value="ribbon"> Winding Ribbons</label>
+                    <label><input type="radio" name="fingerStyle" value="crystalline"> Crystalline</label>
+                    <label><input type="radio" name="fingerStyle" value="metaball"> Metaball</label>
+                </div>
+
+                <div id="solid-controls">
+                    <div class="control-group">
+                        <label for="fingerThickness">Finger Thickness: <span id="fingerThicknessValue">0.100</span></label>
+                        <input type="range" id="fingerThickness" min="0.1" max="0.5" step="0.001" value="0.1">
+                    </div>
+                    <div class="control-group">
+                        <label for="jointSize">Joint Size: <span id="jointSizeValue">0.100</span></label>
+                        <input type="range" id="jointSize" min="0.1" max="0.5" step="0.001" value="0.1">
+                    </div>
+                     <div class="control-group">
+                        <label><input type="checkbox" id="showJointsToggle" checked> Show Joints</label>
+                    </div>
+                </div>
+
+                <div id="ribbon-controls" style="display: none;">
+                    <div class="control-group">
+                        <label for="cylinderRadius">Cylinder Radius: <span id="cylinderRadiusValue">0.015</span></label>
+                        <input type="range" id="cylinderRadius" min="0.0" max="0.05" step="0.001" value="0.015">
+                    </div>
+                     <div class="control-group">
+                        <label for="ribbonThickness">Ribbon Thickness: <span id="ribbonThicknessValue">0.005</span></label>
+                        <input type="range" id="ribbonThickness" min="0.001" max="0.02" step="0.001" value="0.005">
+                    </div>
+                     <div class="control-group">
+                        <label for="widthVariation">Width Variation: <span id="widthVariationValue">0.5</span></label>
+                        <input type="range" id="widthVariation" min="0.0" max="1.0" step="0.05" value="0.5">
+                    </div>
+                     <div class="control-group">
+                        <label for="strandCount">Strand Count: <span id="strandCountValue">3</span></label>
+                        <input type="range" id="strandCount" min="1" max="5" step="1" value="3">
+                    </div>
+                    <div class="control-group">
+                        <label for="twistSpeed">Twist Speed: <span id="twistSpeedValue">4</span></label>
+                        <input type="range" id="twistSpeed" min="0.0" max="10.0" step="0.1" value="4">
+                    </div>
+                    <div class="control-group">
+                        <label for="smoothness">Smoothness: <span id="smoothnessValue">20</span></label>
+                        <input type="range" id="smoothness" min="10" max="100" step="1" value="20">
+                    </div>
+                </div>
+                
+                <div id="crystalline-controls" style="display: none;">
+                    <div class="control-group">
+                        <label for="crystalDensity">Crystal Density: <span id="crystalDensityValue">2</span></label>
+                        <input type="range" id="crystalDensity" min="1" max="10" step="1" value="2">
+                    </div>
+                     <div class="control-group">
+                        <label for="crystalSize">Base Crystal Size: <span id="crystalSizeValue">0.02</span></label>
+                        <input type="range" id="crystalSize" min="0.005" max="0.05" step="0.001" value="0.02">
+                    </div>
+                     <div class="control-group">
+                        <label for="crystalSharpness">Base Crystal Sharpness: <span id="crystalSharpnessValue">2.0</span></label>
+                        <input type="range" id="crystalSharpness" min="0.5" max="5.0" step="0.1" value="2.0">
+                    </div>
+                    <div class="control-group">
+                        <label for="crystalSizeVariation">Size Variation: <span id="crystalSizeVariationValue">0.5</span></label>
+                        <input type="range" id="crystalSizeVariation" min="0.0" max="1.0" step="0.05" value="0.5">
+                    </div>
+                     <div class="control-group">
+                        <label for="crystalSharpnessVariation">Sharpness Variation: <span id="crystalSharpnessVariationValue">0.5</span></label>
+                        <input type="range" id="crystalSharpnessVariation" min="0.0" max="1.0" step="0.05" value="0.5">
+                    </div>
+                    <div class="control-group">
+                        <label for="crystalChaos">Direction Chaos: <span id="crystalChaosValue">0.25</span></label>
+                        <input type="range" id="crystalChaos" min="0.0" max="1.0" step="0.05" value="0.25">
+                    </div>
+                </div>
+
+                <div id="metaball-controls" style="display: none;">
+                    <div class="control-group">
+                        <label for="metaballResolution">Resolution: <span id="metaballResolutionValue">28</span></label>
+                        <input type="range" id="metaballResolution" min="10" max="60" step="1" value="28">
+                    </div>
+                     <div class="control-group">
+                        <label for="metaballSize">Blob Strength: <span id="metaballSizeValue">0.3</span></label>
+                        <input type="range" id="metaballSize" min="0.1" max="1.0" step="0.05" value="0.3">
+                    </div>
+                </div>
+
+                 <hr style="border-color: #444; margin: 20px 0;">
+                <div class="control-group">
+                    <label><input type="checkbox" id="addWristBaseToggle"> Add Wrist & Base</label>
+                </div>
+                <div id="wrist-base-controls" style="display: none;">
+                    <div class="control-group">
+                        <label for="wristLength">Wrist Length: <span id="wristLengthValue">0.2</span></label>
+                        <input type="range" id="wristLength" min="0.0" max="0.5" step="0.01" value="0.2">
+                    </div>
+                     <div class="control-group">
+                        <label for="baseWidth">Base Width: <span id="baseWidthValue">0.5</span></label>
+                        <input type="range" id="baseWidth" min="0.1" max="1.0" step="0.01" value="0.5">
+                    </div>
+                     <div class="control-group">
+                        <label for="baseHeight">Base Thickness: <span id="baseHeightValue">0.05</span></label>
+                        <input type="range" id="baseHeight" min="0.01" max="0.2" step="0.005" value="0.05">
+                    </div>
+                    <div class="control-group radio-group">
+                        <label>Base Shape:</label>
+                        <label><input type="radio" name="baseShape" value="cylinder" checked> Cylinder</label>
+                        <label><input type="radio" name="baseShape" value="box"> Box</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for script download permission -->
+    <div id="permissionModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="modalTitle">Offline File Status</h2>
+            <p id="modalText"></p>
+            <div id="server-instructions" style="background: #1a1a1a; padding: 15px; border-radius: 5px; text-align: left; margin: 15px 0; display: none;">
+                <p><strong>To Run From Local Files:</strong></p>
+                <ol>
+                    <li>Open a terminal/command prompt in this folder and run: <br><code style="background: #000; padding: 3px 6px; border-radius: 3px; font-family: monospace;">python -m http.server</code></li>
+                    <li>Then, open your browser to <a href="http://localhost:8000" target="_blank" rel="noopener noreferrer" style="color: #4a90e2;">http://localhost:8000</a> and click on this HTML file.</li>
+                </ol>
+            </div>
+            <ul id="file-checklist"></ul>
+            <div class="modal-buttons"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- SCRIPT LOADING AND INITIALIZATION ---
+        
+        const REQUIRED_FILES = {
+            'camera_utils.js': 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js',
+            'control_utils.js': 'https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js',
+            'drawing_utils.js': 'https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js',
+            'hands.js': 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js',
+            'STLExporter.js': 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js',
+            'BufferGeometryUtils.js': 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js',
+            'hand_landmark_full.tflite': 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hand_landmark_full.tflite',
+            'hands.binarypb': 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.binarypb',
+            'hands_solution_packed_assets_loader.js': 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands_solution_packed_assets_loader.js',
+            'hands_solution_packed_assets.data': 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands_solution_packed_assets.data',
+            'hands_solution_simd_wasm_bin.js': 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands_solution_simd_wasm_bin.js',
+            'hands_solution_simd_wasm_bin.wasm': 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands_solution_simd_wasm_bin.wasm'
+        };
+
+        const statusDiv = document.getElementById('status');
+        let showOverlay = true;
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+                document.head.appendChild(script);
+            });
+        }
+        
+        async function showChecklistModal() {
+            return new Promise(async (resolve) => {
+                const modal = document.getElementById('permissionModal');
+                const modalText = document.getElementById('modalText');
+                const checklist = document.getElementById('file-checklist');
+                const buttonsDiv = document.querySelector('.modal-buttons');
+                const instructions = document.getElementById('server-instructions');
+                const isLocalServer = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+                checklist.innerHTML = '<li>Checking files...</li>';
+                modal.style.display = 'flex';
+                let missingFiles = [];
+                if (isLocalServer) {
+                    for (const file of Object.keys(REQUIRED_FILES)) {
+                        try {
+                            const res = await fetch(file, { method: 'HEAD', cache: 'no-store' });
+                            if (!res.ok) missingFiles.push(file);
+                        } catch { missingFiles.push(file); }
+                    }
+                } else {
+                    missingFiles = Object.keys(REQUIRED_FILES);
+                }
+                let checklistHTML = '';
+                for (const file in REQUIRED_FILES) {
+                    const isMissing = missingFiles.includes(file);
+                    const statusIcon = isMissing ? '❌' : '✅';
+                    const cdnUrl = REQUIRED_FILES[file];
+                    const downloadLink = `<a href="${cdnUrl}" download="${file}" style="margin-left: 10px; color: #4a90e2;">Download</a>`;
+                    checklistHTML += `<li>${statusIcon} ${file} ${isMissing && isLocalServer ? downloadLink : ''}</li>`;
+                }
+                checklist.innerHTML = checklistHTML;
+                buttonsDiv.innerHTML = '';
+                if (!isLocalServer) {
+                    modalText.innerHTML = `<strong>Warning:</strong> You must run a local server to use local files. The checklist below shows what you will need to download.`;
+                    instructions.style.display = 'block';
+                } else if (missingFiles.length > 0) {
+                     modalText.textContent = `Please download any missing files (❌), save them in the same folder as this HTML file, then click "Check Again".`;
+                }
+                if (isLocalServer) {
+                    const checkAgainBtn = document.createElement('button');
+                    checkAgainBtn.textContent = '🔄 Check Again';
+                    checkAgainBtn.onclick = () => location.reload();
+                    buttonsDiv.appendChild(checkAgainBtn);
+                }
+                const loadWebBtn = document.createElement('button');
+                loadWebBtn.textContent = '🌐 Load from Web Instead';
+                loadWebBtn.onclick = () => {
+                    modal.style.display = 'none';
+                    resolve('loadFromWeb');
+                };
+                buttonsDiv.appendChild(loadWebBtn);
+            });
+        }
+
+        window.addEventListener('load', async () => {
+            const isLocalServer = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+            if (isLocalServer) {
+                let allFound = true;
+                for (const file of Object.keys(REQUIRED_FILES)) {
+                    try {
+                        const res = await fetch(file, { method: 'HEAD', cache: 'no-store' });
+                        if (!res.ok) { allFound = false; break; }
+                    } catch { allFound = false; break; }
+                }
+                if (allFound) {
+                    console.log("All required files found locally. Bypassing modal.");
+                    statusDiv.textContent = 'Loading from local files...';
+                    const scriptsToLoad = Object.keys(REQUIRED_FILES).filter(f => f.endsWith('.js'));
+                    for (const script of scriptsToLoad) await loadScript(`./${script}`);
+                    initializeApp('local');
+                    return;
+                }
+            }
+            const userAction = await showChecklistModal();
+            if (userAction === 'loadFromWeb') {
+                statusDiv.textContent = 'Loading required files from web...';
+                try {
+                    const scriptsToLoad = Object.keys(REQUIRED_FILES).filter(f => f.endsWith('.js'));
+                    for (const script of scriptsToLoad) await loadScript(REQUIRED_FILES[script]);
+                    initializeApp('web');
+                } catch (webError) {
+                     statusDiv.textContent = `Error loading scripts from web. See console.`;
+                     statusDiv.style.backgroundColor = '#c0392b';
+                     console.error(webError);
+                }
+            }
+        });
+
+        // --- MODULE SCOPE VARIABLES AND CONSTANTS ---
+        
+        // Mediapipe and Three.js instances
+        let camera, hands, scene, renderer, handMesh, handGeometry;
+        let latestHandLandmarks = null;
+        
+        // Bone connection definitions for the hand skeleton
+        const FINGER_CONNECTIONS = [
+            [0, 1, 2, 3, 4],    // Thumb
+            [0, 5, 6, 7, 8],    // Index
+            [5, 9, 10, 11, 12], // Middle
+            [9, 13, 14, 15, 16], // Ring
+            [13, 17, 18, 19, 20] // Pinky
+        ];
+        const PALM_CONNECTIONS = [ [0, 5], [5, 9], [9, 13], [13, 17], [17, 0] ];
+        const ALL_SKELETON_CONNECTIONS = [...FINGER_CONNECTIONS, ...PALM_CONNECTIONS];
+
+        // UI Control State Object
+        const modelSettings = {
+            fingerThickness: 0.1,
+            jointSize: 0.1,
+            showJoints: true,
+            palmStyle: 'cylinders',
+            detectionConfidence: 0.6,
+            trackingConfidence: 0.6,
+            fingerStyle: 'solid',
+            constantRefresh: false,
+            // Winding Ribbon Settings
+            cylinderRadius: 0.015,
+            ribbonThickness: 0.005,
+            widthVariation: 0.5,
+            strandCount: 3,
+            twistSpeed: 4,
+            smoothness: 20,
+            // Crystalline Settings
+            crystalDensity: 2,
+            crystalSize: 0.02,
+            crystalSharpness: 2.0,
+            crystalSizeVariation: 0.5,
+            crystalSharpnessVariation: 0.5,
+            crystalChaos: 0.25,
+            // Metaball Settings
+            metaballResolution: 28,
+            metaballSize: 0.3,
+            // Wrist & Base Settings
+            addWristBase: false,
+            wristLength: 0.2,
+            baseWidth: 0.5,
+            baseHeight: 0.05,
+            baseShape: 'cylinder',
+        };
+        
+        // --- INITIALIZATION ---
+
+        function initializeApp(mode) {
+            statusDiv.textContent = 'Ready. Click "Start Camera".';
+            init3D();
+            initHandTracking(mode);
+            setupEventListeners();
+        }
+
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x222222);
+            const container = document.getElementById('preview3D');
+            const camera3D = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera3D.position.set(0, 0, 1.5);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            window.addEventListener('resize', () => {
+                camera3D.aspect = container.clientWidth / container.clientHeight;
+                camera3D.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }, false);
+            scene.add(new THREE.AmbientLight(0x404040, 2));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(5, 5, 5);
+            scene.add(dirLight);
+            
+            // Camera controls
+            let isMouseDown = false, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0, rotX = 0, rotY = 0;
+            const onPointerDown = e => { isMouseDown = true; mouseX = e.clientX; mouseY = e.clientY; };
+            const onPointerMove = e => { if (!isMouseDown) return; targetY += (e.clientX - mouseX) * 0.01; targetX += (e.clientY - mouseY) * 0.01; mouseX = e.clientX; mouseY = e.clientY; };
+            const onPointerUp = () => { isMouseDown = false; };
+            renderer.domElement.addEventListener('pointerdown', onPointerDown);
+            document.addEventListener('pointermove', onPointerMove);
+            document.addEventListener('pointerup', onPointerUp);
+
+            // Animation loop
+            const animate = () => {
+                requestAnimationFrame(animate);
+                rotX += (targetX - rotX) * 0.1;
+                rotY += (targetY - rotY) * 0.1;
+                if (handMesh) { handMesh.rotation.x = rotX; handMesh.rotation.y = rotY; }
+                renderer.render(scene, camera3D);
+            };
+            animate();
+        }
+
+        function initHandTracking(mode) {
+            hands = new Hands({
+                locateFile: (file) => mode === 'local' ? `./${file}` : `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+            updateHandOptions();
+            hands.onResults(onHandResults);
+        }
+        
+        // --- MEDIAPIPE HAND TRACKING ---
+
+        function updateHandOptions() {
+            if (hands) {
+                hands.setOptions({ 
+                    maxNumHands: 1, 
+                    modelComplexity: 1, 
+                    minDetectionConfidence: modelSettings.detectionConfidence, 
+                    minTrackingConfidence: modelSettings.trackingConfidence
+                });
+            }
+        }
+
+        function onHandResults(results) {
+            const canvas = document.getElementById('canvasElement');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = results.image.width;
+            canvas.height = results.image.height;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                statusDiv.textContent = 'Hand detected - Ready to capture!';
+                statusDiv.className = 'status hand-detected';
+                document.getElementById('captureBtn').disabled = false;
+                latestHandLandmarks = results.multiHandLandmarks[0];
+                
+                if (modelSettings.constantRefresh) {
+                    create3DHandFromLandmarks(latestHandLandmarks);
+                }
+                updateDataReadouts(results);
+                if (showOverlay) {
+                    drawConnectors(ctx, latestHandLandmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
+                    drawLandmarks(ctx, latestHandLandmarks, { color: '#FF0000', radius: 3 });
+                }
+            } else {
+                statusDiv.textContent = 'No hand detected';
+                statusDiv.className = 'status';
+                document.getElementById('captureBtn').disabled = true;
+                latestHandLandmarks = null;
+                clearDataReadouts();
+            }
+        }
+        
+        // --- 3D GEOMETRY GENERATION ---
+
+        function create3DHandFromLandmarks(landmarks) {
+            if (!landmarks || landmarks.length < 21) return;
+            if (handMesh) scene.remove(handMesh);
+
+            const wrist = new THREE.Vector3(landmarks[0].x, landmarks[0].y, landmarks[0].z);
+            const mcp = new THREE.Vector3(landmarks[9].x, landmarks[9].y, landmarks[9].z);
+            const handSize = wrist.distanceTo(mcp);
+            const scale = 1.0 / handSize; // Normalization factor
+
+            const vertices = landmarks.map(l => new THREE.Vector3(-(l.x - 0.5) * scale, -(l.y - 0.5) * scale, l.z * scale));
+            
+            let geometries = [];
+            switch (modelSettings.fingerStyle) {
+                case 'solid':       geometries = generateSolidGeometry(vertices, landmarks); break;
+                case 'ribbon':      geometries = generateRibbonGeometry(vertices); break;
+                case 'crystalline': geometries = generateCrystallineGeometry(vertices); break;
+                case 'metaball':    geometries = generateMetaballGeometry(vertices); break;
+            }
+            
+            if (modelSettings.addWristBase) {
+                geometries.push(...generateWristAndBaseGeometry(vertices));
+            }
+
+            try {
+                if(geometries.length === 0) return;
+                const compatibleGeometries = geometries.map(g => g.index ? g.toNonIndexed() : g);
+                handGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries(compatibleGeometries);
+                
+                if (handGeometry) {
+                    handMesh = new THREE.Mesh(handGeometry, new THREE.MeshStandardMaterial({ color: 0xfdbcb4, metalness: 0.2, roughness: 0.5, side: THREE.DoubleSide }));
+                    handMesh.rotation.y = Math.PI; // Rotate 180 degrees to face the camera correctly
+                    scene.add(handMesh);
+                    document.getElementById('downloadBtn').disabled = false;
+                    document.getElementById('clearBtn').disabled = false;
+                } else {
+                     console.error("Failed to merge geometries, result is null.");
+                     statusDiv.textContent = 'Error merging 3D model.';
+                }
+            } catch(e) {
+                console.error("Failed to create hand geometry.", e);
+                statusDiv.textContent = 'Error creating 3D model.';
+            }
+        }
+
+        function generateSolidGeometry(vertices, landmarks) {
+            const geometries = [];
+            // PALM
+            switch (modelSettings.palmStyle) {
+                case 'triangles':
+                    const uniqueVertexIndices = [0, 1, 5, 9, 13, 17];
+                    const palmUniqueVertices = uniqueVertexIndices.map(i => vertices[i]);
+                    const indexMap = new Map(uniqueVertexIndices.map((val, i) => [val, i]));
+                    const palmFaces = [
+                        indexMap.get(0), indexMap.get(1), indexMap.get(5), indexMap.get(0), indexMap.get(5), indexMap.get(9),
+                        indexMap.get(0), indexMap.get(9), indexMap.get(13), indexMap.get(0), indexMap.get(13), indexMap.get(17),
+                        indexMap.get(0), indexMap.get(17), indexMap.get(1)
+                    ];
+                    const palmGeometry = new THREE.BufferGeometry();
+                    palmGeometry.setAttribute('position', new THREE.Float32BufferAttribute(palmUniqueVertices.flatMap(v => [v.x, v.y, v.z]), 3));
+                    palmGeometry.setIndex(palmFaces);
+                    palmGeometry.computeVertexNormals();
+                    geometries.push(palmGeometry);
+                    break;
+                case 'cylinders':
+                    const palmAndSupportConnections = [...PALM_CONNECTIONS, [9,0], [13,0]];
+                    palmAndSupportConnections.forEach(conn => {
+                        geometries.push(createCylinderBetweenPoints(vertices[conn[0]], vertices[conn[1]], modelSettings.fingerThickness));
+                    });
+                    break;
+            }
+            // FINGERS
+            FINGER_CONNECTIONS.forEach(finger => {
+                for (let j = 0; j < finger.length - 1; j++) {
+                    geometries.push(createCylinderBetweenPoints(vertices[finger[j]], vertices[finger[j+1]], modelSettings.fingerThickness));
+                }
+            });
+            // JOINTS
+            if (modelSettings.showJoints && modelSettings.jointSize > 0) {
+                landmarks.forEach((l, i) => {
+                    const sphere = new THREE.SphereGeometry(modelSettings.jointSize, 12, 12);
+                    sphere.translate(vertices[i].x, vertices[i].y, vertices[i].z);
+                    sphere.deleteAttribute('uv');
+                    geometries.push(sphere);
+                });
+            }
+            return geometries;
+        }
+
+        function generateRibbonGeometry(vertices) {
+            const ribbonGeometries = [];
+            ALL_SKELETON_CONNECTIONS.forEach(path => {
+                for (let s = 0; s < modelSettings.strandCount; s++) {
+                    const randomThickness = modelSettings.ribbonThickness * (1 - modelSettings.widthVariation + (Math.random() * modelSettings.widthVariation * 2));
+                    const randomStartAngle = Math.random() * Math.PI * 2;
+                    const strandPoints = [];
+                    for (let j = 0; j < path.length - 1; j++) {
+                        const p1 = vertices[path[j]];
+                        const p2 = vertices[path[j+1]];
+                        const axis = new THREE.Vector3().subVectors(p2, p1);
+                        const length = axis.length();
+                        axis.normalize();
+                        let perp = new THREE.Vector3(0, 1, 0);
+                        if (Math.abs(axis.y) > 0.99) perp.set(1, 0, 0);
+                        perp.cross(axis).normalize();
+                        const segmentSteps = Math.ceil(length * modelSettings.smoothness * 10);
+                        for (let i = 0; i <= segmentSteps; i++) {
+                            const t = i / segmentSteps;
+                            const axisPoint = p1.clone().lerp(p2, t);
+                            const angle = (t * length * modelSettings.twistSpeed * 5) + randomStartAngle + (j * Math.PI);
+                            const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+                            const radialVec = perp.clone().applyQuaternion(q).multiplyScalar(modelSettings.cylinderRadius);
+                            strandPoints.push(axisPoint.clone().add(radialVec));
+                        }
+                    }
+                    if (strandPoints.length < 2) continue;
+                    const ribbonCurve = new THREE.CatmullRomCurve3(strandPoints);
+                    const ribbonGeom = new THREE.TubeGeometry(ribbonCurve, Math.max(10, modelSettings.smoothness * path.length), randomThickness, 8, false);
+                    ribbonGeom.deleteAttribute('uv');
+                    ribbonGeometries.push(ribbonGeom);
+                }
+            });
+            return ribbonGeometries.length > 0 ? [THREE.BufferGeometryUtils.mergeBufferGeometries(ribbonGeometries)] : [];
+        }
+
+        function generateCrystallineGeometry(vertices) {
+            const crystalGeometries = [];
+            ALL_SKELETON_CONNECTIONS.forEach(path => {
+                const p1_path = vertices[path[0]];
+                const p2_path = vertices[path[Math.floor(path.length / 2)]];
+                const p3_path = vertices[path[path.length - 1]];
+                const normal = new THREE.Vector3().subVectors(p2_path, p1_path).cross(new THREE.Vector3().subVectors(p3_path, p1_path)).normalize();
+
+                for (let j = 0; j < path.length - 1; j++) {
+                    const start = vertices[path[j]];
+                    const end = vertices[path[j+1]];
+                    for (let i = 1; i <= modelSettings.crystalDensity; i++) {
+                        const t = i / (modelSettings.crystalDensity + 1);
+                        const point = start.clone().lerp(end, t);
+                        const size = modelSettings.crystalSize * (1 - modelSettings.crystalSizeVariation + (Math.random() * modelSettings.crystalSizeVariation * 2));
+                        const sharpness = modelSettings.crystalSharpness * (1 - modelSettings.crystalSharpnessVariation + (Math.random() * modelSettings.crystalSharpnessVariation * 2));
+                        const height = size * sharpness;
+                        const cone = new THREE.ConeGeometry(size, height, 8);
+                        cone.translate(0, height / 2, 0);
+                        cone.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+                        const randomAxis = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+                        const chaosAngle = (Math.random() - 0.5) * Math.PI * modelSettings.crystalChaos;
+                        const coneDirection = normal.clone().applyAxisAngle(randomAxis, chaosAngle);
+                        const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), coneDirection);
+                        cone.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(q).setPosition(point));
+                        cone.deleteAttribute('uv');
+                        crystalGeometries.push(cone);
+                    }
+                }
+            });
+            return crystalGeometries.length > 0 ? [THREE.BufferGeometryUtils.mergeBufferGeometries(crystalGeometries)] : [];
+        }
+
+        function generateMetaballGeometry(vertices) {
+            const effect = new MarchingCubes(modelSettings.metaballResolution, null, true, true);
+            effect.init(modelSettings.metaballResolution);
+            
+            const boundingBox = new THREE.Box3().setFromPoints(vertices);
+            const center = new THREE.Vector3();
+            boundingBox.getCenter(center);
+            const size = new THREE.Vector3();
+            boundingBox.getSize(size);
+            const maxDim = Math.max(size.x, size.y, size.z);
+            
+            effect.position.copy(center);
+            effect.scale.set(maxDim, maxDim, maxDim);
+            
+            effect.reset();
+
+            const ball_pos = new THREE.Vector3();
+            ALL_SKELETON_CONNECTIONS.forEach(path => {
+                for (let j = 0; j < path.length - 1; j++) {
+                    const start = vertices[path[j]];
+                    const end = vertices[path[j+1]];
+                    const dist = start.distanceTo(end);
+                    const numBalls = Math.ceil(dist / 0.1) || 1;
+                    for(let i = 0; i <= numBalls; i++) {
+                        ball_pos.lerpVectors(start, end, i / numBalls);
+                        effect.addBall(ball_pos, modelSettings.metaballSize, 0.2); 
+                    }
+                }
+            });
+            
+            const geometry = effect.generateBufferGeometry();
+            return [geometry];
+        }
+        
+        function generateWristAndBaseGeometry(vertices) {
+            const wristGeometries = [];
+            const wristDirection = new THREE.Vector3().subVectors(vertices[0], vertices[9]).normalize();
+            const wristStart = vertices[0].clone();
+            const wristEnd = wristStart.clone().add(wristDirection.clone().multiplyScalar(modelSettings.wristLength));
+            const wristRadius = vertices[5].distanceTo(vertices[17]) / 2.5;
+            
+            wristGeometries.push(createCylinderBetweenPoints(wristStart, wristEnd, wristRadius));
+            
+            let baseGeom;
+            if (modelSettings.baseShape === 'cylinder') {
+                baseGeom = new THREE.CylinderGeometry(modelSettings.baseWidth / 2, modelSettings.baseWidth / 2, modelSettings.baseHeight, 32);
+            } else { // Box
+                baseGeom = new THREE.BoxGeometry(modelSettings.baseWidth, modelSettings.baseHeight, modelSettings.baseWidth);
+            }
+            
+            const basePosition = wristEnd.clone().add(wristDirection.clone().multiplyScalar(modelSettings.baseHeight / 2));
+            const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), wristDirection);
+            baseGeom.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(q).setPosition(basePosition));
+            baseGeom.deleteAttribute('uv');
+            wristGeometries.push(baseGeom);
+            
+            return wristGeometries;
+        }
+
+        function createCylinderBetweenPoints(p1, p2, radius) {
+            const length = p1.distanceTo(p2);
+            const cyl = new THREE.CylinderGeometry(radius, radius, length, 12);
+            const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+            const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3().subVectors(p2, p1).normalize());
+            cyl.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(q).setPosition(mid));
+            cyl.deleteAttribute('uv');
+            return cyl;
+        }
+
+        // --- UI AND EVENT LISTENERS ---
+
+        function updateDataReadouts(results) {
+            const liveConfidenceSpan = document.getElementById('liveTrackingConfidence');
+            const fingerTips = { 'thumb': 4, 'index': 8, 'middle': 12, 'ring': 16, 'pinky': 20 };
+            if (results.multiHandedness && results.multiHandedness[0] && results.multiHandedness[0].score) {
+                liveConfidenceSpan.textContent = results.multiHandedness[0].score.toFixed(3);
+            }
+            for (const [fingerName, index] of Object.entries(fingerTips)) {
+                const landmark = latestHandLandmarks[index];
+                document.getElementById(`${fingerName}-x`).textContent = landmark.x.toFixed(3);
+                document.getElementById(`${fingerName}-y`).textContent = landmark.y.toFixed(3);
+                document.getElementById(`${fingerName}-z`).textContent = landmark.z.toFixed(3);
+            }
+        }
+
+        function clearDataReadouts() {
+            document.getElementById('liveTrackingConfidence').textContent = 'N/A';
+            const fingerTips = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+            for (const fingerName of fingerTips) {
+                document.getElementById(`${fingerName}-x`).textContent = '-';
+                document.getElementById(`${fingerName}-y`).textContent = '-';
+                document.getElementById(`${fingerName}-z`).textContent = '-';
+            }
+        }
+        
+        function setupEventListeners() {
+            // Main Controls
+            document.getElementById('startBtn').addEventListener('click', async () => {
+                const button = document.getElementById('startBtn');
+                button.disabled = true;
+                button.textContent = 'Starting...';
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                    const video = document.getElementById('videoElement');
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                         camera = new Camera(video, {
+                            onFrame: async () => { await hands.send({ image: video }); },
+                            width: 640,
+                            height: 480
+                        });
+                        camera.start();
+                        statusDiv.textContent = 'Camera started - Show your hand!';
+                    };
+                } catch (err) {
+                    statusDiv.textContent = 'Could not access camera.';
+                    statusDiv.style.backgroundColor = '#c0392b';
+                    console.error('Camera Error:', err);
+                    button.disabled = false;
+                    button.textContent = 'Start Camera';
+                }
+            });
+
+            document.getElementById('captureBtn').addEventListener('click', () => { if (latestHandLandmarks) create3DHandFromLandmarks(latestHandLandmarks); });
+            
+            document.getElementById('downloadBtn').addEventListener('click', () => {
+                 if (!handMesh) return;
+                const exporter = new THREE.STLExporter();
+                const stlString = exporter.parse(handMesh, { binary: true });
+                const blob = new Blob([stlString], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `hand_pose_${Date.now()}.stl`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            document.getElementById('clearBtn').addEventListener('click', () => {
+                if (handMesh) {
+                    scene.remove(handMesh);
+                    handMesh = null;
+                    handGeometry = null;
+                    document.getElementById('downloadBtn').disabled = true;
+                    document.getElementById('clearBtn').disabled = true;
+                }
+            });
+
+            document.addEventListener('keydown', e => {
+                if (e.code === 'Space' && !document.getElementById('captureBtn').disabled) {
+                    e.preventDefault();
+                    create3DHandFromLandmarks(latestHandLandmarks);
+                }
+            });
+            
+            // Model Control Panel
+            document.getElementById('overlayToggle').addEventListener('change', (e) => { showOverlay = e.target.checked; });
+            document.getElementById('constantRefreshToggle').addEventListener('change', (e) => { modelSettings.constantRefresh = e.target.checked; });
+            document.getElementById('addWristBaseToggle').addEventListener('change', (e) => { 
+                modelSettings.addWristBase = e.target.checked;
+                document.getElementById('wrist-base-controls').style.display = e.target.checked ? 'block' : 'none';
+            });
+
+
+            const createSliderListener = (sliderId, valueId, settingKey, isConfidence, isInt = false) => {
+                 const slider = document.getElementById(sliderId);
+                 const valueSpan = document.getElementById(valueId);
+                 const updateValue = () => {
+                     let value = isInt ? parseInt(slider.value) : parseFloat(slider.value);
+                     modelSettings[settingKey] = value;
+                     
+                     let displayValue = value;
+                     if (!isInt) {
+                         displayValue = isConfidence ? value.toFixed(1) : value.toFixed(3);
+                     }
+                     if (['crystalChaos', 'crystalSizeVariation', 'crystalSharpnessVariation', 'widthVariation', 'metaballSize', 'metaballInfluence'].includes(sliderId)) {
+                         displayValue = value.toFixed(2);
+                     }
+                     if(sliderId === 'wristLength' || sliderId === 'baseWidth' || sliderId === 'baseHeight' || sliderId.includes('palmScale')) {
+                         displayValue = value.toFixed(3);
+                     }
+
+                     valueSpan.textContent = displayValue;
+                 };
+                 slider.addEventListener('input', updateValue);
+                 slider.addEventListener('change', () => { if (isConfidence) updateHandOptions(); });
+                 updateValue();
+            };
+            
+            // Accuracy Sliders
+            createSliderListener('detectionConfidence', 'detectionConfidenceValue', 'detectionConfidence', true);
+            createSliderListener('trackingConfidence', 'trackingConfidenceValue', 'trackingConfidence', true);
+            
+            // Solid Style Sliders
+            createSliderListener('fingerThickness', 'fingerThicknessValue', 'fingerThickness', false);
+            createSliderListener('jointSize', 'jointSizeValue', 'jointSize', false);
+            
+            // Ribbon Style Sliders
+            createSliderListener('cylinderRadius', 'cylinderRadiusValue', 'cylinderRadius', false);
+            createSliderListener('ribbonThickness', 'ribbonThicknessValue', 'ribbonThickness', false);
+            createSliderListener('widthVariation', 'widthVariationValue', 'widthVariation', false);
+            createSliderListener('strandCount', 'strandCountValue', 'strandCount', false, true);
+            createSliderListener('twistSpeed', 'twistSpeedValue', 'twistSpeed', true);
+            createSliderListener('smoothness', 'smoothnessValue', 'smoothness', false, true);
+            
+            // Crystalline Style Sliders
+            createSliderListener('crystalDensity', 'crystalDensityValue', 'crystalDensity', false, true);
+            createSliderListener('crystalSize', 'crystalSizeValue', 'crystalSize', false);
+            createSliderListener('crystalSharpness', 'crystalSharpnessValue', 'crystalSharpness', true);
+            createSliderListener('crystalSizeVariation', 'crystalSizeVariationValue', 'crystalSizeVariation', false);
+            createSliderListener('crystalSharpnessVariation', 'crystalSharpnessVariationValue', 'crystalSharpnessVariation', false);
+            createSliderListener('crystalChaos', 'crystalChaosValue', 'crystalChaos', false);
+            
+            // Metaball Sliders
+            createSliderListener('metaballResolution', 'metaballResolutionValue', 'metaballResolution', false, true);
+            createSliderListener('metaballSize', 'metaballSizeValue', 'metaballSize', false);
+
+            // Wrist & Base Sliders
+            createSliderListener('wristLength', 'wristLengthValue', 'wristLength', false);
+            createSliderListener('baseWidth', 'baseWidthValue', 'baseWidth', false);
+            createSliderListener('baseHeight', 'baseHeightValue', 'baseHeight', false);
+
+
+            // Toggles and Radios
+            document.getElementById('showJointsToggle').addEventListener('change', (e) => { modelSettings.showJoints = e.target.checked; });
+            document.querySelectorAll('input[name="palmStyle"]').forEach(radio => {
+                radio.addEventListener('change', (e) => { 
+                    modelSettings.palmStyle = e.target.value;
+                });
+            });
+
+            document.querySelectorAll('input[name="fingerStyle"]').forEach(radio => {
+                radio.addEventListener('change', (e) => { 
+                    modelSettings.fingerStyle = e.target.value;
+                    const style = e.target.value;
+                    document.getElementById('solid-controls').style.display = (style === 'solid') ? 'block' : 'none';
+                    document.getElementById('ribbon-controls').style.display = (style === 'ribbon') ? 'block' : 'none';
+                    document.getElementById('crystalline-controls').style.display = (style === 'crystalline') ? 'block' : 'none';
+                    document.getElementById('metaball-controls').style.display = (style === 'metaball') ? 'block' : 'none';
+                    document.getElementById('palm-style-controls').style.display = (style === 'solid') ? 'block' : 'none';
+                });
+            });
+
+            document.querySelectorAll('input[name="baseShape"]').forEach(radio => {
+                radio.addEventListener('change', (e) => { modelSettings.baseShape = e.target.value; });
+            });
+        }
+
+        /**
+         * Marching Cubes Algorithm to create a single, fused mesh (Metaballs).
+         * Full, self-contained implementation from the official Three.js examples.
+         */
+        const MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
+            this.resolution = ( resolution !== undefined ) ? resolution : 28;
+            this.enableUvs = ( enableUvs !== undefined ) ? enableUvs : false;
+            this.enableColors = ( enableColors !== undefined ) ? enableColors : false;
+            this.maxPolyCount = 100000;
+            this.edgeTable = [0x0,0x109,0x203,0x30a,0x406,0x50f,0x605,0x70c,0x80c,0x905,0xa0f,0xb06,0xc0a,0xd03,0xe09,0xf00,0x190,0x99,0x393,0x29a,0x596,0x49f,0x795,0x69c,0x99c,0x895,0xb9f,0xa96,0xd9a,0xc93,0xf99,0xe90,0x230,0x339,0x33,0x13a,0x636,0x73f,0x435,0x53c,0xa3c,0xb35,0x83f,0x936,0xe3a,0xf33,0xc39,0xd30,0x3a0,0x2a9,0x1a3,0xaa,0x7a6,0x6af,0x5a5,0x4ac,0xbac,0xaa5,0x9af,0x8a6,0xfaa,0xea3,0xda9,0xca0,0x460,0x569,0x663,0x76a,0x66,0x16f,0x265,0x36c,0xc6c,0xd65,0xe6f,0xf66,0x86a,0x963,0xa69,0xb60,0x5f0,0x4f9,0x7f3,0x6fa,0x1f6,0xff,0x3f5,0x2fc,0xdfc,0xcf5,0xfff,0xef6,0x9fa,0x8f3,0xbf9,0xaf0,0x650,0x759,0x453,0x55a,0x256,0x35f,0x55,0x15c,0xe5c,0xf55,0xc5f,0xd56,0xa5a,0xb53,0x859,0x950,0x7c0,0x6c9,0x5c3,0x4ca,0x3c6,0x2cf,0x1c5,0xcc,0xfcc,0xec5,0xdcf,0xcc6,0xbca,0xac3,0x9c9,0x8c0,0x8c0,0x9c9,0xac3,0xbca,0xcc6,0xdcf,0xec5,0xfcc,0xcc,0x1c5,0x2cf,0x3c6,0x4ca,0x5c3,0x6c9,0x7c0,0x950,0x859,0xb53,0xa5a,0xd56,0xc5f,0xf55,0xe5c,0x15c,0x55,0x35f,0x256,0x55a,0x453,0x759,0x650,0xaf0,0xbf9,0x8f3,0x9fa,0xef6,0xfff,0xcf5,0xdfc,0x2fc,0x3f5,0xff,0x1f6,0x6fa,0x7f3,0x4f9,0x5f0,0xb60,0xa69,0x963,0x86a,0xf66,0xe6f,0xd65,0xc6c,0x36c,0x265,0x16f,0x66,0x76a,0x663,0x569,0x460,0xca0,0xda9,0xea3,0xfaa,0x8a6,0x9af,0xaa5,0xbac,0x4ac,0x5a5,0x6af,0x7a6,0xaa,0x1a3,0x2a9,0x3a0,0xd30,0xc39,0xf33,0xe3a,0x936,0x83f,0xb35,0xa3c,0x53c,0x435,0x73f,0x636,0x13a,0x33,0x339,0x230,0xe90,0xf99,0xc93,0xd9a,0xa96,0xb9f,0x895,0x99c,0x69c,0x795,0x49f,0x596,0x29a,0x393,0x99,0x190,0xf00,0xe09,0xd03,0xc0a,0xb06,0xa0f,0x905,0x80c,0x70c,0x605,0x50f,0x406,0x30a,0x203,0x109,0x0];
+            this.triTable = [[-1,-1,-1,-1,-1,-1], [0,8,3,-1,-1,-1], [0,1,9,-1,-1,-1], [1,8,3,9,8,1], [1,2,10,-1,-1,-1], [0,8,3,1,2,10], [9,2,10,0,2,9], [2,8,3,2,10,8,10,9,8], [2,3,11,-1,-1,-1], [0,11,8,-1,-1,-1], [0,1,9,2,3,11], [1,11,8,1,9,11,9,2,11], [3,11,1,2,1,-1], [0,11,8,3,11,2,2,1,11], [9,0,11,9,11,2,2,10,11], [2,11,8,2,10,11,10,9,11], [4,7,8,-1,-1,-1], [4,3,0,7,3,4], [0,1,9,8,4,7], [4,1,9,4,7,1,7,3,1], [1,2,10,4,7,8], [3,4,7,3,0,4,1,2,10], [9,2,10,9,0,2,8,4,7], [2,10,9,2,9,7,2,7,3,3,7,4], [2,3,11,4,7,8], [0,11,8,0,8,7,0,7,4], [9,0,1,9,1,7,9,7,8,2,3,11], [1,11,8,1,8,7,1,7,4,2,11,7], [1,2,4,1,4,7,1,7,3,3,11,7], [0,11,2,0,2,1,0,1,4,4,7,0], [9,0,11,9,11,7,9,7,8,2,11,7], [11,7,4,11,4,2,10,9,2,10,2,4], [4,5,9,-1,-1,-1], [4,5,9,8,3,4,4,3,0], [0,5,9,0,1,5,-1,-1,-1], [8,3,0,8,0,5,8,5,1,1,5,9], [1,2,10,4,5,9], [3,0,8,1,2,10,4,5,9], [0,5,9,0,5,2,0,2,10,10,5,2], [8,3,0,8,0,5,8,5,2,2,10,8], [2,3,11,4,5,9], [3,11,8,0,4,5,5,9,3], [0,1,5,0,5,11,0,11,2,2,3,11], [1,5,9,1,9,11,1,11,8,2,11,9], [4,5,9,3,11,4,1,2,4,2,11,4], [0,11,8,0,8,5,0,5,1,1,2,0], [9,10,11,0,1,2,2,5,9,5,11,9], [5,10,2,5,2,11,5,11,8,8,9,5], [4,7,8,5,9,4,-1,-1,-1], [4,3,0,4,0,9,4,9,5,7,3,9], [1,5,9,1,9,8,1,8,4,4,7,1], [1,5,9,1,9,7,1,7,3,3,4,1], [1,2,10,5,9,4,4,7,8,8,5,4], [3,9,5,3,5,0,3,0,8,1,2,10], [0,5,9,0,5,10,0,10,2,4,7,8], [3,9,5,3,5,10,3,10,2,3,2,8,8,7,3], [2,3,11,5,9,4,7,8,4,7,5,4], [3,11,8,3,8,9,3,9,5,0,4,9], [1,5,9,1,5,11,1,11,2,7,8,11], [1,5,9,1,9,11,1,11,8,3,4,11], [4,7,8,4,8,2,4,2,1,1,5,4], [0,1,5,0,5,8,0,8,7,2,1,8], [10,9,0,10,0,11,10,11,2,7,8,11], [5,10,9,5,9,7,5,7,4,3,11,7], [5,6,10,-1,-1,-1], [4,3,0,4,0,10,4,10,5,5,10,6], [0,1,9,5,6,10], [1,9,0,1,0,6,1,6,10,3,4,0], [1,6,10,1,2,6,-1,-1,-1], [3,0,8,3,0,6,3,6,2,2,6,10], [9,5,6,9,6,0,0,6,2,2,6,10], [2,6,10,2,10,3,2,3,8,8,10,3], [2,3,11,5,6,10], [3,11,8,0,6,5,5,10,3], [0,1,9,2,3,11,5,6,10], [1,9,0,1,0,11,1,11,2,8,11,0], [6,10,5,1,2,3,3,11,6,11,5,6], [0,11,8,0,8,1,0,1,5,5,6,0], [9,5,6,9,6,2,9,2,11,11,0,9], [11,8,0,11,0,5,11,5,6,6,10,11], [4,7,8,5,6,10], [4,3,0,4,0,10,4,10,6,6,5,4], [1,9,0,1,0,8,1,8,7,7,4,1], [1,9,5,1,5,6,1,6,3,3,4,1], [6,10,5,6,5,8,6,8,7,2,1,8], [3,0,8,3,0,10,3,10,5,5,6,3], [0,1,9,0,9,5,0,5,6,6,10,0], [8,3,0,8,0,6,8,6,10,10,5,8], [6,10,5,2,3,11,7,8,4], [3,11,8,3,8,10,3,10,6,6,5,3], [0,1,9,0,9,5,0,5,11,11,2,0], [1,9,8,1,8,2,1,2,11,11,6,1], [1,2,6,1,6,4,1,4,7,7,3,1], [0,1,5,0,5,6,0,6,7,7,8,0], [9,5,6,9,6,7,9,7,0,0,11,9], [7,4,1,7,1,6,7,6,11,11,8,7], [6,7,11,-1,-1,-1], [3,11,6,0,8,3,3,8,6], [0,1,9,11,6,7,-1,-1,-1], [11,6,7,1,9,11,11,9,8,8,3,11], [1,2,10,7,11,6,-1,-1,-1], [1,2,10,0,8,3,11,6,7], [0,2,9,0,9,11,0,11,6,6,7,0], [2,9,1,2,1,6,2,6,11,8,3,1], [2,7,11,2,3,7,-1,-1,-1], [0,8,3,7,11,6], [1,9,0,1,0,2,7,11,6], [1,9,8,1,8,3,6,7,11], [1,10,6,1,6,3,1,3,11,11,2,1], [1,10,6,1,6,7,1,7,8,8,0,1], [10,6,7,10,7,11,10,11,0,0,9,10], [6,7,8,6,8,9,6,9,1,1,10,6], [4,7,6,4,6,5,-1,-1,-1], [4,3,0,5,6,4,-1,-1,-1], [0,1,9,4,7,6,6,5,0], [1,9,8,1,8,3,5,6,4], [1,2,10,4,7,6,6,5,1], [3,0,8,1,2,10,4,7,6], [9,5,6,9,6,7,9,7,2,2,10,9], [6,10,2,6,2,3,6,3,4,4,7,6], [3,11,2,7,6,5,5,4,3], [0,8,3,4,5,6,6,7,0], [9,0,1,9,1,2,9,2,6,6,5,9], [1,9,8,1,8,2,5,6,4], [3,11,2,1,5,4,4,6,3], [0,8,3,1,5,6,6,4,0], [9,5,6,9,6,0,2,11,0,11,6,0], [3,11,8,2,10,5,5,6,2], [5,6,7,4,-1,-1,-1,-1,-1], [4,3,0,4,0,7,7,6,4], [1,9,0,1,0,5,7,6,4], [1,9,8,1,8,3,7,6,4], [4,7,6,1,2,10], [3,0,8,1,2,10,7,6,4], [9,5,6,9,6,7,2,10,9,10,7,9], [6,10,2,6,2,3,7,4,3,4,6,3], [5,4,7,5,7,6,2,3,11], [0,8,3,4,5,6,7,0,6], [9,0,1,9,1,2,5,6,2,6,11,2], [1,9,8,1,8,2,4,5,2,5,6,2], [3,11,2,1,5,4,6,3,4], [0,8,3,1,5,6,4,0,6], [9,5,6,9,6,0,11,2,0,2,6,0], [3,11,8,2,10,5,6,2,5], [7,8,10,7,10,6,-1,-1,-1,-1], [3,8,0,3,0,10,3,10,6,6,7,3], [0,1,9,7,8,10,10,6,0], [1,9,8,1,8,10,1,10,6,6,7,1], [1,8,10,1,2,8,7,6,8,8,6,2], [3,0,8,3,0,6,2,1,6,6,10,2], [0,1,9,0,9,6,0,6,7,7,10,0], [1,9,8,1,8,6,10,2,6,2,8,6], [6,7,3,6,3,2,-1,-1,-1,-1], [0,8,6,0,6,7,-1,-1,-1,-1], [0,1,9,7,6,2], [1,9,8,3,6,2], [1,6,7,1,7,8,1,8,10,10,0,1], [1,6,7,1,7,3,3,0,1], [0,9,1,0,1,7,0,7,6,6,2,7], [8,3,2,8,2,6,8,6,7,7,1,8]];
+            this.size = 1.0; this.size2 = 0.5; this.resolution = 28; this.field = []; this.balls = []; this.isolation = 1.0;
+            this.position = new THREE.Vector3(); this.scale = new THREE.Vector3(1,1,1);
+            this.init = s => { this.resolution = s; this.field = []; for(let z=0; z<s; z++) { this.field[z]=[]; for(let y=0; y<s; y++) { this.field[z][y]=[]; for(let x=0; x<s; x++) this.field[z][y][x]=0; } } };
+            this.reset = () => { this.balls = []; };
+            this.addBall = (p,s,u)=>{ this.balls.push({pos: p.clone(), strength: s, subtract: u}); };
+            this.update = () => {
+                this.reset();
+                for (let i = 0; i < this.balls.length; i++) {
+                    const ball = this.balls[i];
+                    const pos = ball.pos;
+                    const strength = ball.strength;
+                    const subtract = ball.subtract;
+                    let ballx = this.resolution * (pos.x - this.position.x) / this.scale.x + this.resolution / 2;
+                    let bally = this.resolution * (pos.y - this.position.y) / this.scale.y + this.resolution / 2;
+                    let ballz = this.resolution * (pos.z - this.position.z) / this.scale.z + this.resolution / 2;
+                    for (let z = 0; z < this.resolution; z++) for (let y = 0; y < this.resolution; y++) for (let x = 0; x < this.resolution; x++) {
+                        const dx = x - ballx, dy = y - bally, dz = z - ballz;
+                        this.field[z][y][x] += strength * strength / (dx * dx + dy * dy + dz * dz);
+                    }
+                }
+            };
+            this.generateBufferGeometry = function() {
+                this.update();
+                const verts = [];
+                let p = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+                for (let z = 0; z < this.resolution - 1; z++) {
+                    for (let y = 0; y < this.resolution - 1; y++) {
+                        for (let x = 0; x < this.resolution - 1; x++) {
+                            let fx = this.position.x + (x - this.resolution/2) * this.scale.x / this.resolution;
+                            let fy = this.position.y + (y - this.resolution/2) * this.scale.y / this.resolution;
+                            let fz = this.position.z + (z - this.resolution/2) * this.scale.z / this.resolution;
+                            let d = 1.0 / (this.resolution-1);
+                            p[0].set(fx, fy, fz); p[1].set(fx + this.scale.x * d, fy, fz); p[2].set(fx + this.scale.x * d, fy, fz + this.scale.z * d); p[3].set(fx, fy, fz + this.scale.z * d);
+                            p[4].set(fx, fy + this.scale.y * d, fz); p[5].set(fx + this.scale.x * d, fy + this.scale.y * d, fz); p[6].set(fx + this.scale.x * d, fy + this.scale.y * d, fz + this.scale.z * d); p[7].set(fx, fy + this.scale.y * d, fz + this.scale.z * d);
+                            let f = [this.field[z][y][x], this.field[z][y][x+1], this.field[z+1][y][x+1], this.field[z+1][y][x], this.field[z][y+1][x], this.field[z][y+1][x+1], this.field[z+1][y+1][x+1], this.field[z+1][y+1][x]];
+                            let cubeindex = 0; if (f[0] > this.isolation) cubeindex |= 1; if (f[1] > this.isolation) cubeindex |= 2; if (f[2] > this.isolation) cubeindex |= 4; if (f[3] > this.isolation) cubeindex |= 8;
+                            if (f[4] > this.isolation) cubeindex |= 16; if (f[5] > this.isolation) cubeindex |= 32; if (f[6] > this.isolation) cubeindex |= 64; if (f[7] > this.isolation) cubeindex |= 128;
+                            let bits = this.edgeTable[cubeindex];
+                            if (bits === 0) continue;
+                            let vertlist = new Array(12);
+                            if (bits & 1) vertlist[0] = p[0].clone().lerp(p[1], (this.isolation - f[0]) / (f[1] - f[0]));
+                            if (bits & 2) vertlist[1] = p[1].clone().lerp(p[2], (this.isolation - f[1]) / (f[2] - f[1]));
+                            if (bits & 4) vertlist[2] = p[2].clone().lerp(p[3], (this.isolation - f[2]) / (f[3] - f[2]));
+                            if (bits & 8) vertlist[3] = p[3].clone().lerp(p[0], (this.isolation - f[3]) / (f[0] - f[3]));
+                            if (bits & 16) vertlist[4] = p[4].clone().lerp(p[5], (this.isolation - f[4]) / (f[5] - f[4]));
+                            if (bits & 32) vertlist[5] = p[5].clone().lerp(p[6], (this.isolation - f[5]) / (f[6] - f[5]));
+                            if (bits & 64) vertlist[6] = p[6].clone().lerp(p[7], (this.isolation - f[6]) / (f[7] - f[6]));
+                            if (bits & 128) vertlist[7] = p[7].clone().lerp(p[4], (this.isolation - f[7]) / (f[4] - f[7]));
+                            if (bits & 256) vertlist[8] = p[0].clone().lerp(p[4], (this.isolation - f[0]) / (f[4] - f[0]));
+                            if (bits & 512) vertlist[9] = p[1].clone().lerp(p[5], (this.isolation - f[1]) / (f[5] - f[1]));
+                            if (bits & 1024) vertlist[10] = p[2].clone().lerp(p[6], (this.isolation - f[2]) / (f[6] - f[2]));
+                            if (bits & 2048) vertlist[11] = p[3].clone().lerp(p[7], (this.isolation - f[3]) / (f[7] - f[3]));
+                            let tri = this.triTable[cubeindex];
+                            for (let i = 0; tri[i] !== -1; i += 3) {
+                                verts.push(vertlist[tri[i]].x, vertlist[tri[i]].y, vertlist[tri[i]].z);
+                                verts.push(vertlist[tri[i+1]].x, vertlist[tri[i+1]].y, vertlist[tri[i+1]].z);
+                                verts.push(vertlist[tri[i+2]].x, vertlist[tri[i+2]].y, vertlist[tri[i+2]].z);
+                            }
+                        }
+                    }
+                }
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+                geometry.computeVertexNormals();
+                this.balls = [];
+                return geometry;
+            };
+        };
+    </script>
+</body>
+</html>
+

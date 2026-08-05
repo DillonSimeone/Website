@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamGovSpider - Comic Book File Explorer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <h1>SAM.gov Data Spider</h1>
+            <div class="subtitle">Public Contract Opportunities Bulk Extract Browser</div>
+        </div>
+        <div class="stat-burst">
+            <div>FILES</div>
+            <div class="num" id="total-count">7,541</div>
+            <div>SPIDERED</div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Back Button Bubble (hidden at root) -->
+        <div id="back-button" class="back-bubble" style="display: none;">
+            &larr; GO BACK TO PARENT PANEL!
+        </div>
+
+        <div class="control-panel">
+            <div id="breadcrumbs" class="breadcrumb-container">
+                <!-- Breadcrumbs injected by JS -->
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="search-input" class="search-input" placeholder="SEARCH FOR solicitation, feed, csv...">
+            </div>
+        </div>
+
+        <main id="comic-grid" class="comic-grid">
+            <!-- Panels injected by JS -->
+            <div class="no-results">
+                <div class="no-results-title">LOADING CRAWLED DATA...</div>
+                <p>Decoding the encrypted database, standby hero!</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="explorer.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+qty,reference,description,manufacturer,mfg_pn,lcsc_pn,jlcpcb_pn,unit_cost_usd,extended_cost_usd,notes
+1,U1,ESP32-S3-WROOM-1-N16R8 module 16MB flash 8MB PSRAM,Espressif,ESP32-S3-WROOM-1-N16R8,C2913204,JLC: ???,3.85,3.85,estimate; verify-before-order; std module
+1,U2,LoRa transceiver SX1262 SoC 150-960MHz,Semtech,SX1262IMLTRT,C2680320,JLC: ???,4.20,4.20,estimate; verify-before-order
+1,U3,Haptic driver LRA/ERM I2C,Texas Instruments,DRV2605LDGSR,C92482,JLC: ???,2.95,2.95,estimate; second IC for stereo on rev-B
+1,U4,Haptic driver #2 (right channel),Texas Instruments,DRV2605LDGSR,C92482,JLC: ???,2.95,2.95,estimate
+1,U5,Class-D audio amp 2.5W mono,Diodes Inc,PAM8302AASCR,C?????,JLC: ???,0.42,0.42,verify-before-order; std part
+1,U6,Class-D audio amp #2 (right ear),Diodes Inc,PAM8302AASCR,C?????,JLC: ???,0.42,0.42,verify-before-order
+1,U7,Fuel gauge IC I2C li-ion,Maxim/ADI,MAX17048G+T10,C?????,JLC: ???,1.85,1.85,verify-before-order; std part
+1,U8,Battery charger 5A USB-PD,Texas Instruments,BQ25895RTWR,C?????,JLC: ???,3.40,3.40,verify-before-order
+1,U9,Boost converter 5V 1.5A,Texas Instruments,TPS61088RHLR,C?????,JLC: ???,2.10,2.10,verify-before-order
+1,U10,LDO 3.3V 250mA quiet (MCU),Microchip,MCP1700T-3302E/TT,C?????,JLC: ???,0.32,0.32,verify-before-order
+1,U11,LDO 3.3V 150mA ultra-low-noise (RF),Torex,XC6210B332MR-G,C?????,JLC: ???,0.65,0.65,verify-before-order
+1,U12,Buck 1.8V (PSRAM rail spare),Texas Instruments,TLV62568DBVR,C?????,JLC: ???,0.78,0.78,verify-before-order
+1,U13,MEMS digital microphone I2S,InvenSense,INMP441,C?????,JLC: ???,1.85,1.85,verify-before-order; std part
+1,U14,6-axis IMU BMI270,Bosch,BMI270,C?????,JLC: ???,2.95,2.95,verify-before-order; fall detect
+1,U15,T/RH/Pressure sensor BME280,Bosch,BME280,C?????,JLC: ???,3.10,3.10,verify-before-order
+1,U16,USB-C TVS / ESD,STMicro,USBLC6-2SC6,C?????,JLC: ???,0.18,0.18,verify-before-order
+1,U17,Crystal 32.768 kHz,Abracon,ABS07-32.768KHZ-T,C?????,JLC: ???,0.22,0.22,verify-before-order; for RTC
+1,Y1,Crystal 32 MHz SX1262 ref,Abracon,ABM8-32.000MHZ-B2T,C?????,JLC: ???,0.28,0.28,verify-before-order
+1,M1,Depth ToF camera 240x180 4m,Arducam,B0410,N/A (Arducam direct),N/A,48.00,48.00,estimate; sourced from Arducam not LCSC
+1,M2,Camera lens IR-pass + bandpass filter,various,940nm BPF 12mm,N/A,N/A,3.20,3.20,estimate
+1,J1,USB-C receptacle 16P,JAE,DX07S016JA3R1500,C?????,JLC: ???,0.55,0.55,verify-before-order
+2,J2-3,JST-GH 1.25mm 6P R/A,JST,SM06B-GHS-TB,C?????,JLC: ???,0.42,0.84,verify-before-order
+2,J4-5,MX-1.25 4P board connector haptic/audio,Molex,0530470410,C?????,JLC: ???,0.35,0.70,verify-before-order
+1,J6,uFL coax connector LoRa antenna,Hirose,U.FL-R-SMT-1(10),C?????,JLC: ???,0.45,0.45,verify-before-order
+1,ANT1,LoRa helical antenna 915 MHz R/A,Linx,ANT-916-CW-RAH-RPS,N/A,N/A,3.85,3.85,estimate; off-PCB
+1,BAT1,Li-Ion 18650 3500 mAh,Panasonic,NCR18650GA,N/A,N/A,7.25,7.25,estimate; cell only; verify-before-order
+1,BH1,18650 cell holder PC mount vib-rated,Keystone,1042,C?????,JLC: ???,1.80,1.80,verify-before-order
+2,HAP1-2,LRA 10x4mm 175Hz,Vybronics,VLV101040A,N/A,N/A,2.40,4.80,estimate
+2,BC1-2,Bone-conduction transducer 8R 0.5W,Sanwa,BTV-2008,N/A,N/A,9.50,19.00,estimate
+1,SOLAR1,Flex PV 50x70 mm 250mW (optional SKU),PowerFilm,SP3-37,N/A,N/A,8.40,8.40,optional SKU; estimate
+1,MPPT1,MPPT buck-boost (optional),STMicro,SPV1040T,C?????,JLC: ???,1.25,1.25,optional SKU; verify-before-order
+1,LED1,RGB indicator 0603,Kingbright,APTF1616LSEEZGQBDC,C?????,JLC: ???,0.18,0.18,verify-before-order
+1,SW1,Capacitive chinstrap switch / touch IC,Microchip,AT42QT1010-TSHR,C?????,JLC: ???,0.45,0.45,verify-before-order
+1,SHIELD1,RF shielding can SX1262 16x16mm,Wurth,3635016,N/A,N/A,0.60,0.60,estimate; hand-installed
+40,RES_CAP,Passives R/C/L 0402/0603 (BOM-summed),various,various,various,N/A,0.04,1.60,estimate; summed pack
+6,FERR,Ferrite beads 600R 100MHz 0603,Murata,BLM18PG600SN1D,C?????,JLC: ???,0.05,0.30,verify-before-order
+2,FUSE,PTC resettable 0.5A,Bourns,MF-MSMF050-2,C?????,JLC: ???,0.18,0.36,verify-before-order
+1,PCB1,4L FR-4 ENIG 95x60mm + 45x35 daughter,JLCPCB,custom,N/A,JLC standard,4.20,4.20,estimate at 1k panel
+1,SMT,JLCPCB SMT assembly (top + select bottom),JLCPCB,assembly service,N/A,JLC service,8.50,8.50,estimate at 1k; includes feeder/setup amortized
+1,ENC1,Crown enclosure ABS+PC IP65 injection-mold,custom mfg,SCR-CRWN-A,N/A,N/A,6.20,6.20,estimate; tool amortized over 5k units
+1,ENC2,Camera pod 6061 aluminum CNC,custom mfg,SCR-CAM-A,N/A,N/A,8.50,8.50,estimate; smaller volume
+1,MOUNT1,GoPro 3-prong + ratchet mount + VHB,3M / generic,VHB-5952 + mount,N/A,N/A,2.40,2.40,estimate
+1,CABLE1,TPU 6-cond crown-to-brim assembly,custom,SCR-HRN-A,N/A,N/A,1.85,1.85,estimate; CM-built harness
+1,CABLE2,Temple ribbon 4-cond haptic+audio,custom,SCR-HRN-B,N/A,N/A,1.10,1.10,estimate
+1,GEL,Temple silicone gel pads (pair),custom,SCR-PAD-A,N/A,N/A,0.80,0.80,estimate
+1,PACK,Retail box + foam + QSG,custom,SCR-BOX-A,N/A,N/A,3.20,3.20,estimate at 1k
+1,LBL,Compliance + serial label set,custom,SCR-LBL-A,N/A,N/A,0.35,0.35,estimate
+1,FW,Firmware flash + provisioning labor,internal,N/A,N/A,N/A,1.50,1.50,estimate; per-unit allocation
+TOTAL,,,,,,,,182.18,All prices ESTIMATES; verify-before-order with live LCSC/JLCPCB quotes
