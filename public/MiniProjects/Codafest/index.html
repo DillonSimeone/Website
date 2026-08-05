@@ -10,511 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     
-    <style>
-        :root {
-            --bg-dark: #04120c;
-            --bg-card: rgba(8, 32, 23, 0.85);
-            --bg-card-hover: rgba(14, 48, 35, 0.95);
-            --emerald-deep: #07271b;
-            --emerald-glow: #104933;
-            --gold-primary: #D4AF37;
-            --gold-light: #F3E5AB;
-            --gold-dark: #AA771C;
-            --gold-gradient: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #AA771C 100%);
-            --gold-gradient-soft: linear-gradient(135deg, rgba(243,229,171,0.15) 0%, rgba(212,175,55,0.05) 100%);
-            --text-main: #EAEAEA;
-            --text-muted: #A3B8B0;
-            --border-gold: rgba(212, 175, 55, 0.35);
-            --border-gold-bright: rgba(212, 175, 55, 0.8);
-            --shadow-gold: 0 8px 32px rgba(212, 175, 55, 0.15);
-            --font-title: 'Cinzel', serif;
-            --font-body: 'Outfit', sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: var(--font-body);
-            line-height: 1.6;
-            min-height: 100vh;
-            padding: 20px 12px;
-            /* Forest Art Deco geometric fan & diamond background pattern */
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(16, 73, 51, 0.35) 0%, transparent 70%),
-                repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.03) 0, rgba(212, 175, 55, 0.03) 1px, transparent 0, transparent 50px),
-                repeating-linear-gradient(-45deg, rgba(212, 175, 55, 0.03) 0, rgba(212, 175, 55, 0.03) 1px, transparent 0, transparent 50px);
-            background-attachment: fixed;
-        }
-
-        /* Art Deco Border Container */
-        .deco-wrapper {
-            max-width: 1200px;
-            margin: 0 auto;
-            border: 1px solid var(--border-gold);
-            padding: 24px 16px;
-            position: relative;
-            background: rgba(4, 18, 12, 0.7);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
-        }
-
-        /* Art Deco Corner Ornaments */
-        .deco-wrapper::before,
-        .deco-wrapper::after {
-            content: '';
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--gold-primary);
-            pointer-events: none;
-        }
-
-        .deco-wrapper::before {
-            top: -2px;
-            left: -2px;
-            border-right: none;
-            border-bottom: none;
-        }
-
-        .deco-wrapper::after {
-            bottom: -2px;
-            right: -2px;
-            border-left: none;
-            border-top: none;
-        }
-
-        /* Header Styling */
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border-gold);
-            position: relative;
-        }
-
-        .deco-badge {
-            display: inline-block;
-            font-family: var(--font-title);
-            font-size: 0.85rem;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--gold-light);
-            background: var(--gold-gradient-soft);
-            border: 1px solid var(--border-gold);
-            padding: 6px 20px;
-            margin-bottom: 12px;
-            position: relative;
-        }
-
-        h1 {
-            font-family: var(--font-title);
-            font-size: clamp(2rem, 5vw, 3.2rem);
-            font-weight: 900;
-            letter-spacing: 2px;
-            background: var(--gold-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-            margin-bottom: 12px;
-            text-shadow: 0 4px 20px rgba(212, 175, 55, 0.2);
-        }
-
-        .subtitle {
-            font-size: 1.05rem;
-            color: var(--text-muted);
-            max-width: 720px;
-            margin: 0 auto;
-            font-weight: 300;
-        }
-
-        .art-deco-divider {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 20px 0;
-            gap: 12px;
-        }
-
-        .art-deco-divider .line {
-            height: 1px;
-            width: 80px;
-            background: var(--gold-gradient);
-        }
-
-        .art-deco-divider .diamond {
-            width: 10px;
-            height: 10px;
-            background: var(--gold-primary);
-            transform: rotate(45deg);
-            box-shadow: 0 0 10px var(--gold-primary);
-        }
-
-        /* Section Titles */
-        .section-title {
-            font-family: var(--font-title);
-            font-size: 1.6rem;
-            color: var(--gold-light);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 24px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        /* Cards Layout */
-        .tiers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-            gap: 20px;
-            margin-bottom: 48px;
-        }
-
-        .tier-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-gold);
-            padding: 24px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            overflow: hidden;
-        }
-
-        .tier-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: var(--gold-gradient);
-            opacity: 0.5;
-            transition: opacity 0.3s ease;
-        }
-
-        .tier-card:hover {
-            background: var(--bg-card-hover);
-            transform: translateY(-4px);
-            border-color: var(--border-gold-bright);
-            box-shadow: var(--shadow-gold);
-        }
-
-        .tier-card:hover::before {
-            opacity: 1;
-        }
-
-        .tier-header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px dashed var(--border-gold);
-        }
-
-        .tier-name {
-            font-family: var(--font-title);
-            font-size: 1.4rem;
-            color: var(--gold-light);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-        }
-
-        .tier-price-tag {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #FFFFFF;
-            font-family: var(--font-title);
-        }
-
-        .tier-price-subtitle {
-            font-size: 0.8rem;
-            color: var(--gold-primary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 2px;
-        }
-
-        .tier-features {
-            list-style: none;
-            margin-bottom: 24px;
-            flex-grow: 1;
-        }
-
-        .tier-features li {
-            font-size: 0.95rem;
-            color: var(--text-main);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .tier-features li::before {
-            content: '◆';
-            color: var(--gold-primary);
-            font-size: 0.7rem;
-            margin-top: 4px;
-            flex-shrink: 0;
-        }
-
-        .badge-tag {
-            display: inline-block;
-            background: rgba(212, 175, 55, 0.15);
-            border: 1px solid var(--border-gold);
-            color: var(--gold-light);
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 2px;
-            margin-left: auto;
-            white-space: nowrap;
-        }
-
-        .select-tier-btn {
-            display: block;
-            width: 100%;
-            background: transparent;
-            color: var(--gold-light);
-            border: 1px solid var(--gold-primary);
-            padding: 12px;
-            font-family: var(--font-title);
-            font-size: 0.9rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .select-tier-btn:hover, .select-tier-btn.active {
-            background: var(--gold-gradient);
-            color: var(--bg-dark);
-            font-weight: 700;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
-        }
-
-        /* Interactive Estimator Panel */
-        .estimator-section {
-            background: var(--emerald-deep);
-            border: 1px solid var(--border-gold);
-            padding: 30px 24px;
-            margin-bottom: 40px;
-            position: relative;
-        }
-
-        .estimator-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        @media (max-width: 768px) {
-            .estimator-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .estimator-group-title {
-            font-family: var(--font-title);
-            color: var(--gold-light);
-            font-size: 1.1rem;
-            margin-bottom: 16px;
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--border-gold);
-            padding-bottom: 6px;
-        }
-
-        .toggle-option {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(4, 18, 12, 0.6);
-            border: 1px solid var(--border-gold);
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            position: relative;
-            cursor: pointer;
-            transition: border-color 0.2s ease;
-        }
-
-        .toggle-option:hover {
-            border-color: var(--gold-primary);
-        }
-
-        .toggle-option.included {
-            border-color: var(--emerald-glow);
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        .toggle-option.included::after {
-            content: 'INCLUDED';
-            font-family: var(--font-title);
-            font-size: 0.7rem;
-            letter-spacing: 2px;
-            color: var(--emerald-glow);
-            border: 1px solid var(--emerald-glow);
-            padding: 2px 8px;
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .toggle-option label {
-            cursor: pointer;
-            font-size: 0.95rem;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .toggle-subtext {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .toggle-price {
-            font-family: var(--font-title);
-            font-size: 0.85rem;
-            color: var(--gold-primary);
-            white-space: nowrap;
-            margin-left: 12px;
-            min-width: 60px;
-            text-align: right;
-        }
-
-        .toggle-checkbox {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border: 1px solid var(--gold-primary);
-            background: transparent;
-            cursor: pointer;
-            position: relative;
-            outline: none;
-        }
-
-        .toggle-checkbox:checked {
-            background: var(--gold-primary);
-        }
-
-        .toggle-checkbox:checked::after {
-            content: '✓';
-            position: absolute;
-            color: var(--bg-dark);
-            font-weight: bold;
-            font-size: 14px;
-            top: -2px;
-            left: 3px;
-        }
-
-        /* Summary Receipt Box */
-        .summary-box {
-            background: rgba(4, 18, 12, 0.9);
-            border: 2px solid var(--gold-primary);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-        }
-
-        .summary-title {
-            font-family: var(--font-title);
-            font-size: 1.3rem;
-            color: var(--gold-light);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        .summary-items-list {
-            list-style: none;
-            margin-bottom: 20px;
-            max-height: 200px;
-            overflow-y: auto;
-            padding-right: 8px;
-        }
-
-        .summary-items-list li {
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px rgba(163, 184, 176, 0.2) solid;
-        }
-
-        .summary-total {
-            border-top: 2px solid var(--gold-primary);
-            padding-top: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: var(--font-title);
-        }
-
-        .summary-total-label {
-            font-size: 1.1rem;
-            color: var(--gold-light);
-            letter-spacing: 1px;
-        }
-
-        .summary-total-price {
-            font-size: 2rem;
-            color: #FFFFFF;
-            font-weight: 700;
-        }
-
-        /* Highlights / Key Specs Footer */
-        .specs-bar {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-top: 30px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-gold);
-        }
-
-        .spec-item {
-            text-align: center;
-            background: rgba(8, 32, 23, 0.6);
-            border: 1px solid var(--border-gold);
-            padding: 16px;
-        }
-
-        .spec-value {
-            font-family: var(--font-title);
-            font-size: 1.3rem;
-            color: var(--gold-light);
-            margin-bottom: 4px;
-        }
-
-        .spec-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-    </style>
+    <!-- External Modular Styles -->
+    <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
@@ -529,7 +26,7 @@
                 <div class="line"></div>
             </div>
             <p class="subtitle">
-                Explore setup packages tailored for live festival performances, audio-reactive visual projection mapping, high-power WLED lighting, and immersive Woojer haptic vests.
+                Explore setup packages tailored for live festival performances, audio-reactive visual projection mapping, high-power WLED lighting, Starlink livestreaming, and immersive Woojer haptic vests.
             </p>
         </header>
 
@@ -544,14 +41,19 @@
                 <div class="tier-header">
                     <div class="tier-name">Tier 0: Base</div>
                     <div class="tier-price-tag">$500</div>
-                    <div class="tier-price-subtitle">Ultra-Light Setup</div>
+                    <div class="tier-price-subtitle">Essential Stage Setup</div>
                 </div>
                 <ul class="tier-features">
                     <li>Nate as live VJ / DJ</li>
-                    <li>Starlink Satellite Internet Connection</li>
+                    <li>Managed Starlink Satellite Livestream <span class="badge-tag">Included</span></li>
                     <li>Transportation & Gas Coverage</li>
                     <li>6kW Power Generator Base</li>
-                    <li>Ultra-portable equipment (backpack setup)</li>
+                    <li>Husky DJ Table with Front TV Clamp</li>
+                    <li>2x Giant Display TVs</li>
+                    <li>Subwoofer + High-Output Speaker</li>
+                    <li>4x Grid LED Panels</li>
+                    <li>Automated Motorized Lighting Heads</li>
+                    <li>Woojer Vests <span class="badge-tag">$10 Rent / Attendee</span></li>
                 </ul>
                 <button class="select-tier-btn" onclick="selectTier(0)">Select Tier 0</button>
             </div>
@@ -561,16 +63,11 @@
                 <div class="tier-header">
                     <div class="tier-name">Tier 1: Essential</div>
                     <div class="tier-price-tag">$1,350</div>
-                    <div class="tier-price-subtitle">Standard Stage Package</div>
+                    <div class="tier-price-subtitle">Standard Production Package</div>
                 </div>
                 <ul class="tier-features">
                     <li>Everything in Tier 0 Base</li>
-                    <li>1x Projection Mapping System</li>
-                    <li>2x Giant Display TVs</li>
-                    <li>Subwoofer + High-Output Speaker</li>
-                    <li>3x Grid LED Panels</li>
-                    <li>Automated Motorized Lighting Heads</li>
-                    <li>Woojer Vests <span class="badge-tag">$20 Rent / Attendee</span></li>
+                    <li>3x Projection Mapping Systems</li>
                 </ul>
                 <button class="select-tier-btn active" onclick="selectTier(1)">Select Tier 1</button>
             </div>
@@ -578,35 +75,19 @@
             <!-- Tier 2 -->
             <div class="tier-card" id="card-tier-2">
                 <div class="tier-header">
-                    <div class="tier-name">Tier 2: Enhanced</div>
+                    <div class="tier-name">Tier 2: Ultra Festival</div>
                     <div class="tier-price-tag">$2,800</div>
-                    <div class="tier-price-subtitle">Haptic Included</div>
+                    <div class="tier-price-subtitle">Full Production & Haptics</div>
                 </div>
                 <ul class="tier-features">
                     <li>Everything in Tier 1</li>
-                    <li>3x Projection Mapping Systems</li>
+                    <li>5x Full Projection Mapping Rig</li>
+                    <li>Heavy Stage Trusses + ArtNet Lighting</li>
                     <li>WLED Light Stands (Battery Powered)</li>
-                    <li>Husky DJ Table with Front TV Clamp</li>
+                    <li>Full WLED LED Integration</li>
                     <li>Full Woojer Vests Included <span class="badge-tag">Up to 40 Units</span></li>
                 </ul>
                 <button class="select-tier-btn" onclick="selectTier(2)">Select Tier 2</button>
-            </div>
-
-            <!-- Tier 3 -->
-            <div class="tier-card" id="card-tier-3">
-                <div class="tier-header">
-                    <div class="tier-name">Tier 3: Ultra</div>
-                    <div class="tier-price-tag">$5,500</div>
-                    <div class="tier-price-subtitle">Full Festival Rig</div>
-                </div>
-                <ul class="tier-features">
-                    <li>Everything in Tier 2</li>
-                    <li>5x Full Projection Mapping Rig</li>
-                    <li>Heavy Stage Trusses + ArtNet Lighting</li>
-                    <li>Full WLED LED Integration</li>
-                    <li>Full Woojer Vests Included <span class="badge-tag">40 Units Ready</span></li>
-                </ul>
-                <button class="select-tier-btn" onclick="selectTier(3)">Select Tier 3</button>
             </div>
         </div>
 
@@ -621,13 +102,13 @@
                 <div>
                     <div class="estimator-group-title">Optional Production Add-Ons</div>
                     
-                    <div class="toggle-option" id="opt-livestream" onclick="toggleAddon('livestream')">
+                    <div class="toggle-option included" id="opt-livestream" onclick="toggleAddon('livestream')">
                         <label>
-                            <span>Managed Livestreaming Package</span>
-                            <span class="toggle-subtext">Dedicated setup & operator with Starlink feed</span>
+                            <span>Managed Starlink Livestreaming</span>
+                            <span class="toggle-subtext">Included in all tiers at cost with dedicated operator feed</span>
                         </label>
-                        <span class="toggle-price">+$250</span>
-                        <input type="checkbox" id="chk-livestream" class="toggle-checkbox" onchange="updateSummary()">
+                        <span class="toggle-price">INCLUDED</span>
+                        <input type="checkbox" id="chk-livestream" class="toggle-checkbox" checked disabled onchange="updateSummary()">
                     </div>
 
                     <div class="toggle-option" id="opt-extra-proj" onclick="toggleAddon('extra-proj')">
@@ -639,13 +120,13 @@
                         <input type="checkbox" id="chk-extra-proj" class="toggle-checkbox" onchange="updateSummary()">
                     </div>
 
-                    <div class="toggle-option" id="opt-husky-table" onclick="toggleAddon('husky-table')">
+                    <div class="toggle-option included" id="opt-husky-table" onclick="toggleAddon('husky-table')">
                         <label>
                             <span>Husky DJ Stage Table + Front TV Clamp</span>
                             <span class="toggle-subtext">Custom DJ booth aesthetic with video display</span>
                         </label>
-                        <span class="toggle-price">+$200</span>
-                        <input type="checkbox" id="chk-husky-table" class="toggle-checkbox" onchange="updateSummary()">
+                        <span class="toggle-price">INCLUDED</span>
+                        <input type="checkbox" id="chk-husky-table" class="toggle-checkbox" checked disabled onchange="updateSummary()">
                     </div>
 
                     <div class="toggle-option" id="opt-battery-wled" onclick="toggleAddon('battery-wled')">
@@ -675,7 +156,7 @@
                     </ul>
                     <div class="summary-total">
                         <span class="summary-total-label">Estimated Total</span>
-                        <span class="summary-total-price" id="summary-total-price">$550</span>
+                        <span class="summary-total-price" id="summary-total-price">$1,350</span>
                     </div>
                 </div>
             </div>
@@ -712,129 +193,7 @@
         </footer>
     </div>
 
-    <!-- Interactive Script -->
-    <script>
-        const tiers = [
-            {
-                name: "Tier 0: Base Ultra-Light",
-                price: 500,
-                includes: [] // No add-ons bundled
-            },
-            {
-                name: "Tier 1: Essential Production",
-                price: 1350,
-                includes: [] // Add-ons available separately
-            },
-            {
-                name: "Tier 2: Enhanced Haptic",
-                price: 2800,
-                includes: ['husky-table', 'battery-wled'] // Bundled into tier price
-            },
-            {
-                name: "Tier 3: Ultra Festival Rig",
-                price: 5500,
-                includes: ['husky-table', 'battery-wled', 'extra-proj'] // All bundled
-            }
-        ];
-
-        const addons = [
-            { id: 'livestream',  label: 'Managed Livestreaming',            price: 250 },
-            { id: 'extra-proj',  label: 'Extra Projection Mapping (+2)',    price: 400 },
-            { id: 'husky-table', label: 'Husky DJ Table + Front TV Clamp',  price: 200 },
-            { id: 'battery-wled',label: 'Portable Battery WLED Stands',     price: 200 },
-            { id: 'extra-tvs',   label: 'Extra Giant Display TVs (+2)',     price: 200 }
-        ];
-
-        let selectedTierIndex = 1;
-
-        function selectTier(index) {
-            selectedTierIndex = index;
-
-            // Update card button styles
-            for (let i = 0; i <= 3; i++) {
-                const card = document.getElementById(`card-tier-${i}`);
-                const btn = card.querySelector('.select-tier-btn');
-                if (i === index) {
-                    btn.classList.add('active');
-                    btn.innerText = 'Selected';
-                } else {
-                    btn.classList.remove('active');
-                    btn.innerText = `Select Tier ${i}`;
-                }
-            }
-
-            const currentTier = tiers[index];
-
-            // Update add-on toggle states: included items get locked, others unlocked
-            addons.forEach(addon => {
-                const optEl = document.getElementById(`opt-${addon.id}`);
-                const chkEl = document.getElementById(`chk-${addon.id}`);
-                if (!optEl || !chkEl) return;
-
-                if (currentTier.includes.includes(addon.id)) {
-                    // Bundled in this tier — lock on and grey out
-                    optEl.classList.add('included');
-                    chkEl.checked = true;
-                    chkEl.disabled = true;
-                } else {
-                    // Available as paid add-on
-                    optEl.classList.remove('included');
-                    chkEl.disabled = false;
-                    // Uncheck when switching down to a tier that doesn't include it
-                    chkEl.checked = false;
-                }
-            });
-
-            updateSummary();
-        }
-
-        function toggleAddon(addonId) {
-            const optEl = document.getElementById(`opt-${addonId}`);
-            if (optEl && optEl.classList.contains('included')) return; // Can't toggle bundled items
-
-            const checkbox = document.getElementById(`chk-${addonId}`);
-            if (event.target !== checkbox) {
-                checkbox.checked = !checkbox.checked;
-            }
-            updateSummary();
-        }
-
-        function updateSummary() {
-            const listEl = document.getElementById('summary-list');
-            listEl.innerHTML = '';
-
-            const currentTier = tiers[selectedTierIndex];
-            let total = currentTier.price;
-
-            // Base tier line item
-            const tierLi = document.createElement('li');
-            tierLi.innerHTML = `<span>${currentTier.name}</span><span>$${currentTier.price.toLocaleString()}</span>`;
-            listEl.appendChild(tierLi);
-
-            // Process each add-on
-            addons.forEach(addon => {
-                const chkEl = document.getElementById(`chk-${addon.id}`);
-                if (!chkEl || !chkEl.checked) return;
-
-                const li = document.createElement('li');
-                if (currentTier.includes.includes(addon.id)) {
-                    // Bundled — show as included, no extra cost
-                    li.innerHTML = `<span>${addon.label}</span><span style="color:var(--emerald-glow)">Included</span>`;
-                } else {
-                    // Paid add-on
-                    total += addon.price;
-                    li.innerHTML = `<span>${addon.label}</span><span>+$${addon.price}</span>`;
-                }
-                listEl.appendChild(li);
-            });
-
-            document.getElementById('summary-total-price').innerText = `$${total.toLocaleString()}`;
-        }
-
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', () => {
-            selectTier(1);
-        });
-    </script>
+    <!-- External Modular Script -->
+    <script src="./scripts.js"></script>
 </body>
 </html>
