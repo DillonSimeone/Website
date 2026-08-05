@@ -598,7 +598,7 @@
         }
 
         // --- Load scene ---
-        viewer.addSplatScene('./splat.ply', {
+        viewer.addSplatScene('./splat.ksplat', {
             'rotation': DEFAULT_ROTATION_QUAT,
             'splatAlphaRemovalThreshold': 5,
             'showLoadingUI': false,
@@ -636,7 +636,7 @@
         })
         .catch((err) => {
             console.error(err);
-            loaderText.innerText = 'Error loading splat.ply: ' + err.message;
+            loaderText.innerText = 'Error loading splat scene: ' + err.message;
         });
 
         // --- Copy Camera Config ---
