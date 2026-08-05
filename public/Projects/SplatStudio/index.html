@@ -215,6 +215,36 @@
             transition: width 0.3s ease;
         }
 
+        /* Video Preview Window */
+        .video-panel {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .video-panel video {
+            width: 100%;
+            border-radius: 8px;
+            display: block;
+            object-fit: cover;
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .video-panel figcaption {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.3;
+            text-align: center;
+        }
+
         /* Mobile hint */
         .mobile-hint {
             display: none;
@@ -234,6 +264,7 @@
         @media (hover: none) and (pointer: coarse) {
             .controls-panel { display: none; }
             .mobile-hint { display: block; }
+            .video-panel { width: 160px; top: 0.5rem; right: 0.5rem; }
         }
     </style>
     <!-- Import Three.js & GaussianSplats3D -->
@@ -316,6 +347,12 @@
                 </div>
             </div>
         </div>
+
+        <!-- Source Video Preview Window -->
+        <figure class="video-panel glass-panel interactive">
+            <video src="./Studio.mp4" autoplay loop muted playsinline></video>
+            <figcaption>Source capture video used to generate this 3D Gaussian Splat</figcaption>
+        </figure>
     </div>
 
     <!-- Mobile touch hint -->
