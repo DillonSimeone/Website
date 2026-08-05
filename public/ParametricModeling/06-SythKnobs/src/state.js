@@ -70,11 +70,28 @@ export function saveKnobs() {
 
 export function loadKnobs() {
   try {
+    if (typeof window !== 'undefined' && window.location && window.location.search) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('batch')) {
+        const decoded = decodeBatch(urlParams.get('batch'));
+        if (decoded && decoded.length > 0) {
+          return decoded.map((k, i) => ({
+            ...k,
+            id: k.id || ('K' + (i + 1).toString(16).padStart(2, '0').toUpperCase())
+          }));
+        }
+      } else if (urlParams.has('cfg')) {
+        const single = decodeParams(urlParams.get('cfg'));
+        if (single) {
+          return [{ ...single, id: single.id || 'K_URL' }];
+        }
+      }
+    }
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch (e) {
-    console.warn('Failed to load knobs from localStorage:', e);
+    console.warn('Failed to load knobs:', e);
     return null;
   }
 }
@@ -254,6 +271,34 @@ export function decodeParams(b64) {
     };
   } catch (e) {
     console.error("Failed to decode parameters", e);
+    return null;
+  }
+}
+
+export function encodeBatch(knobsList) {
+  try {
+    const encodedList = knobsList.map(k => encodeParams(k));
+    const json = JSON.stringify(encodedList);
+    let b64 = btoa(json);
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  } catch (e) {
+    console.error("Failed to encode batch parameters", e);
+    return '';
+  }
+}
+
+export function decodeBatch(b64) {
+  try {
+    let str = b64.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4) {
+      str += '=';
+    }
+    const json = atob(str);
+    const arr = JSON.parse(json);
+    if (!Array.isArray(arr)) return null;
+    return arr.map(cfgStr => decodeParams(cfgStr)).filter(Boolean);
+  } catch (e) {
+    console.error("Failed to decode batch parameters", e);
     return null;
   }
 }

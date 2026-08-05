@@ -10,8 +10,14 @@ import {
   triggerHapticFeedback,
   toggleMountMode,
   saveKnobs,
-  loadKnobs
+  loadKnobs,
+  applyParamsToSliders,
+  setMountMode
 } from './state.js';
+import {
+  generateKnobManifold,
+  manifoldToThreeMesh
+} from './geometry.js';
 import {
   initThree,
   setRenderMode
@@ -209,8 +215,37 @@ async function init() {
   initDragAndDrop();
   initKeyboardNav();
 
-  // ─── Restore knobs from localStorage ───
-  await loadKnobs();
+  // ─── Restore knobs from URL or localStorage ───
+  const loaded = loadKnobs();
+  if (loaded && loaded.length > 0) {
+    const badge = document.getElementById('countBadge');
+    if (badge) badge.textContent = "BUILDING 3D MODELS...";
+    for (const k of loaded) {
+      const shp = SHAPES.find(x => x.id === k.shape) || SHAPES[0];
+      k.sides = k.sides ?? shp.sides;
+      k.star = k.star ?? (shp.star || false);
+      k.wave = k.wave ?? (shp.wave || false);
+      try {
+        let model = await generateKnobManifold(k);
+        if (model) {
+          k.mesh = manifoldToThreeMesh(model, 0xc8ff00, k);
+          k.mesh.rotation.x = -Math.PI / 2;
+          model.delete();
+          state.knobs.push(k);
+        }
+      } catch (err) {
+        console.warn("Failed to build 3D mesh for loaded knob:", k, err);
+      }
+    }
+    if (state.knobs.length > 0) {
+      state.selectedId = state.knobs[0].id;
+      applyParamsToSliders(state.knobs[0]);
+      if (state.knobs[0].mountMode) {
+        setMountMode(state.knobs[0].mountMode);
+      }
+    }
+    renderGrid();
+  }
 
   // Wire global haptics for interactive elements
   document.body.addEventListener('click', (e) => {
