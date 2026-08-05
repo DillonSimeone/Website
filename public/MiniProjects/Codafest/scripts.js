@@ -2,26 +2,23 @@ const tiers = [
     {
         name: "Tier 0: Base Setup",
         price: 500,
-        includes: ['livestream', 'husky-table']
+        includes: []
     },
     {
         name: "Tier 1: Essential Production",
         price: 1350,
-        includes: ['livestream', 'husky-table']
+        includes: []
     },
     {
         name: "Tier 2: Ultra Festival Production",
         price: 2800,
-        includes: ['livestream', 'husky-table', 'battery-wled', 'extra-proj']
+        includes: ['battery-wled', 'extra-proj']
     }
 ];
 
 const addons = [
-    { id: 'livestream',  label: 'Managed Starlink Livestreaming',   price: 0 },
-    { id: 'extra-proj',  label: 'Extra Projection Mapping (+2)',    price: 400 },
-    { id: 'husky-table', label: 'Husky DJ Table + Front TV Clamp',  price: 200 },
-    { id: 'battery-wled',label: 'Portable Battery WLED Stands',     price: 200 },
-    { id: 'extra-tvs',   label: 'Extra Giant Display TVs (+2)',     price: 200 }
+    { id: 'extra-proj',  label: 'Extra Projection Mapping (+2 Nodes)', price: 400 },
+    { id: 'battery-wled',label: 'Portable Battery WLED Stands',        price: 200 }
 ];
 
 let selectedTierIndex = 1;
@@ -48,19 +45,27 @@ function selectTier(index) {
     addons.forEach(addon => {
         const optEl = document.getElementById(`opt-${addon.id}`);
         const chkEl = document.getElementById(`chk-${addon.id}`);
+        const priceEl = optEl ? optEl.querySelector('.toggle-price') : null;
         if (!optEl || !chkEl) return;
 
         if (currentTier.includes.includes(addon.id)) {
-            // Bundled in this tier — lock on and grey out
+            // Bundled in this tier — lock on and show INCLUDED price
             optEl.classList.add('included');
             chkEl.checked = true;
             chkEl.disabled = true;
+            if (priceEl) {
+                priceEl.innerText = 'INCLUDED';
+                priceEl.style.color = '#A3B8B0';
+            }
         } else {
             // Available as paid add-on
             optEl.classList.remove('included');
             chkEl.disabled = false;
-            // Uncheck when switching down to a tier that doesn't include it
             chkEl.checked = false;
+            if (priceEl) {
+                priceEl.innerText = `+$${addon.price}`;
+                priceEl.style.color = 'var(--gold-primary)';
+            }
         }
     });
 

@@ -341,22 +341,9 @@ h1 {
 
 .toggle-option.included {
     border-color: var(--emerald-glow);
-    opacity: 0.6;
+    background: rgba(7, 39, 27, 0.4);
+    opacity: 0.8;
     pointer-events: none;
-}
-
-.toggle-option.included::after {
-    content: 'INCLUDED';
-    font-family: var(--font-title);
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    color: var(--emerald-glow);
-    border: 1px solid var(--emerald-glow);
-    padding: 2px 8px;
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
 }
 
 .toggle-option label {

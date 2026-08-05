@@ -46,13 +46,13 @@
                 <ul class="tier-features">
                     <li>Nate as live VJ / DJ</li>
                     <li>Managed Starlink Satellite Livestream <span class="badge-tag">Included</span></li>
-                    <li>Transportation & Gas Coverage</li>
-                    <li>6kW Power Generator Base</li>
                     <li>Husky DJ Table with Front TV Clamp</li>
                     <li>2x Giant Display TVs</li>
                     <li>Subwoofer + High-Output Speaker</li>
                     <li>4x Grid LED Panels</li>
                     <li>Automated Motorized Lighting Heads</li>
+                    <li>Transportation & Gas Coverage</li>
+                    <li>6kW Power Generator Base</li>
                     <li>Woojer Vests <span class="badge-tag">$10 Rent / Attendee</span></li>
                 </ul>
                 <button class="select-tier-btn" onclick="selectTier(0)">Select Tier 0</button>
@@ -101,15 +101,6 @@
                 <!-- Add-On Options -->
                 <div>
                     <div class="estimator-group-title">Optional Production Add-Ons</div>
-                    
-                    <div class="toggle-option included" id="opt-livestream" onclick="toggleAddon('livestream')">
-                        <label>
-                            <span>Managed Starlink Livestreaming</span>
-                            <span class="toggle-subtext">Included in all tiers at cost with dedicated operator feed</span>
-                        </label>
-                        <span class="toggle-price">INCLUDED</span>
-                        <input type="checkbox" id="chk-livestream" class="toggle-checkbox" checked disabled onchange="updateSummary()">
-                    </div>
 
                     <div class="toggle-option" id="opt-extra-proj" onclick="toggleAddon('extra-proj')">
                         <label>
@@ -120,15 +111,6 @@
                         <input type="checkbox" id="chk-extra-proj" class="toggle-checkbox" onchange="updateSummary()">
                     </div>
 
-                    <div class="toggle-option included" id="opt-husky-table" onclick="toggleAddon('husky-table')">
-                        <label>
-                            <span>Husky DJ Stage Table + Front TV Clamp</span>
-                            <span class="toggle-subtext">Custom DJ booth aesthetic with video display</span>
-                        </label>
-                        <span class="toggle-price">INCLUDED</span>
-                        <input type="checkbox" id="chk-husky-table" class="toggle-checkbox" checked disabled onchange="updateSummary()">
-                    </div>
-
                     <div class="toggle-option" id="opt-battery-wled" onclick="toggleAddon('battery-wled')">
                         <label>
                             <span>Portable Battery WLED Stands</span>
@@ -136,15 +118,6 @@
                         </label>
                         <span class="toggle-price">+$200</span>
                         <input type="checkbox" id="chk-battery-wled" class="toggle-checkbox" onchange="updateSummary()">
-                    </div>
-
-                    <div class="toggle-option" id="opt-extra-tvs" onclick="toggleAddon('extra-tvs')">
-                        <label>
-                            <span>Extra Giant Display TVs (+2)</span>
-                            <span class="toggle-subtext">Additional large screens for crowd visibility</span>
-                        </label>
-                        <span class="toggle-price">+$200</span>
-                        <input type="checkbox" id="chk-extra-tvs" class="toggle-checkbox" onchange="updateSummary()">
                     </div>
                 </div>
 
