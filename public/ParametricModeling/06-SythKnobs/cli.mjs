@@ -321,15 +321,17 @@ function main() {
     fs.mkdirSync(outDir, { recursive: true });
   }
 
-  let selectedPresets = [];
-  if (mode === 'slide') {
-    selectedPresets = buildSlideOverPresets();
-  } else if (mode === 'swap') {
-    selectedPresets = buildSwapInPresets();
-  } else {
-    selectedPresets = [...buildSlideOverPresets(), ...buildSwapInPresets()];
-  }
+  // Snug fit presets (+0.3mm clearance)
+  const snugPresets = buildSlideOverPresets(RAW_STUDIO_MEASUREMENTS);
+  // Loose 5% / +0.6mm clearance presets
+  const loosePresets = RAW_STUDIO_MEASUREMENTS.map(m => ({
+    ...buildSlideOverPresets([m])[0],
+    id: `${m.id}_slipon_loose5pct`,
+    name: `${m.name} (Slip-On Sleeve +5% Loose)`,
+    clearance: 0.6 // +0.6mm clearance compensation for printer inner-hole shrinkage
+  }));
 
+  const selectedPresets = mode === 'swap' ? buildSwapInPresets() : (mode === 'both' ? [...snugPresets, ...buildSwapInPresets()] : snugPresets);
   const batchUrlParam = encodeBatch(selectedPresets);
   const baseUrl = 'knob-parametric.html';
   const webAppUrl = `${baseUrl}?batch=${batchUrlParam}`;
@@ -350,20 +352,96 @@ function main() {
   const manifestPath = path.join(outDir, 'manifest.json');
   fs.writeFileSync(manifestPath, JSON.stringify(manifestData, null, 2), 'utf8');
 
-  // Write individual STL and OpenSCAD files & summary SCAD
-  let combinedScad = `// Studio Knobs Collection OpenSCAD Export (${mode.toUpperCase()} MODE)\n// Generated ${new Date().toISOString()}\n\n`;
-  selectedPresets.forEach((k, idx) => {
-    // Generate .stl
+  // Create dedicated folders for 3D printing export
+  const snugStlDir = path.join(outDir, 'slipon_stls_snug');
+  const looseStlDir = path.join(outDir, 'slipon_stls_loose_5pct');
+  fs.mkdirSync(snugStlDir, { recursive: true });
+  fs.mkdirSync(looseStlDir, { recursive: true });
+
+  // Generate Snug STLs
+  snugPresets.forEach(k => {
     const stlContent = generateSTL(k);
     fs.writeFileSync(path.join(outDir, `${k.id}.stl`), stlContent, 'utf8');
-
-    // Generate .scad
+    fs.writeFileSync(path.join(snugStlDir, `${k.id}.stl`), stlContent, 'utf8');
     const scadContent = generateOpenSCAD(k);
     fs.writeFileSync(path.join(outDir, `${k.id}.scad`), scadContent, 'utf8');
+  });
+
+  // Generate Loose 5% STLs
+  loosePresets.forEach(k => {
+    const stlContent = generateSTL(k);
+    fs.writeFileSync(path.join(looseStlDir, `${k.id}.stl`), stlContent, 'utf8');
+  });
+
+  let combinedScad = `// Studio Knobs Collection OpenSCAD Export (${mode.toUpperCase()} MODE)\n// Generated ${new Date().toISOString()}\n\n`;
+  selectedPresets.forEach((k, idx) => {
+    const scadContent = generateOpenSCAD(k);
     combinedScad += `// --- ${k.name} (${k.outerD}mm Outer / ${k.boreD}mm Inner) ---\ntranslate([${idx * 45}, 0, 0])\n${scadContent}\n\n`;
   });
 
   fs.writeFileSync(path.join(outDir, `studio_knobs_batch.scad`), combinedScad, 'utf8');
+
+  fs.writeFileSync(path.join(outDir, `studio_knobs_batch.scad`), combinedScad, 'utf8');
+
+  // Helper to populate plate subfolders with duplicated STL files
+  function populatePlateFolders(baseStlDir, isLoose = false) {
+    const suffix = isLoose ? '_loose5pct' : '';
+
+    const plates = [
+      {
+        folder: 'Plate1_Elektron',
+        items: [
+          { file: `elektron_master_slipon${suffix}`, count: 1 },
+          { file: `elektron_tempo_slipon${suffix}`, count: 8 }
+        ]
+      },
+      {
+        folder: 'Plate2_RE303',
+        items: [
+          { file: `re303_vol_slipon${suffix}`, count: 1 },
+          { file: `re303_param_slipon${suffix}`, count: 6 }
+        ]
+      },
+      {
+        folder: 'Plate3_ShruthiXT',
+        items: [
+          { file: `shruthi_xt_slipon${suffix}`, count: 16 }
+        ]
+      },
+      {
+        folder: 'Plate4_Eurorack',
+        items: [
+          { file: `mi_frames_center_slipon${suffix}`, count: 1 },
+          { file: `mi_small_slipon${suffix}`, count: 8 },
+          { file: `intellijel_micro_slipon${suffix}`, count: 6 },
+          { file: `makenoise_euro_slipon${suffix}`, count: 8 },
+          { file: `eurorack_std_slipon${suffix}`, count: 10 },
+          { file: `xor_synth_slipon${suffix}`, count: 6 },
+          { file: `arp_slider_knob_slipon${suffix}`, count: 6 }
+        ]
+      }
+    ];
+
+    plates.forEach(p => {
+      const pDir = path.join(baseStlDir, p.folder);
+      if (!fs.existsSync(pDir)) fs.mkdirSync(pDir, { recursive: true });
+
+      p.items.forEach(item => {
+        const srcFile = path.join(baseStlDir, `${item.file}.stl`);
+        if (!fs.existsSync(srcFile)) return;
+        const content = fs.readFileSync(srcFile);
+
+        for (let i = 1; i <= item.count; i++) {
+          const numStr = String(i).padStart(2, '0');
+          const destName = `${item.file}_${numStr}.stl`;
+          fs.writeFileSync(path.join(pDir, destName), content);
+        }
+      });
+    });
+  }
+
+  populatePlateFolders(snugStlDir, false);
+  populatePlateFolders(looseStlDir, true);
 
   // Write summary README in studioKnobs
   const readmeContent = `# Studio Knobs Parametric Catalog (${mode.toUpperCase()} SLIP-ON MODE)
@@ -374,6 +452,19 @@ Mounting Mode: \`${mode}\`
 
 ## 🔗 Open All Studio Knobs in Web Interface:
 [**Launch AccessKnobs Web App with Studio Presets**](${webAppUrl})
+
+## 🖨️ Slicer Ready Build Plate Folders:
+Each folder below contains the full pre-duplicated set of STLs ready to drag into your slicer and click **Auto Arrange**:
+- **Snug Fit (+0.3mm)**:
+  - \`slipon_stls_snug/Plate1_Elektron/\` (9 knobs)
+  - \`slipon_stls_snug/Plate2_RE303/\` (7 knobs)
+  - \`slipon_stls_snug/Plate3_ShruthiXT/\` (16 knobs)
+  - \`slipon_stls_snug/Plate4_Eurorack/\` (45 knobs)
+- **Loose Fit 5% (+0.6mm)**:
+  - \`slipon_stls_loose_5pct/Plate1_Elektron/\`
+  - \`slipon_stls_loose_5pct/Plate2_RE303/\`
+  - \`slipon_stls_loose_5pct/Plate3_ShruthiXT/\`
+  - \`slipon_stls_loose_5pct/Plate4_Eurorack/\`
 
 ## Studio Knob Measurements & Slip-On Specifications List:
 ${selectedPresets.map(k => `- **${k.name}**
@@ -392,6 +483,7 @@ ${selectedPresets.map(k => `- **${k.name}**
   console.log(`📁 Studio Knobs folder updated: ${outDir}`);
   console.log(`📄 Manifest written: studioKnobs/manifest.json`);
   console.log(`📄 STL files written: studioKnobs/*.stl (${selectedPresets.length} files)`);
+  console.log(`📄 Plate Subfolders created: Plate1_Elektron, Plate2_RE303, Plate3_ShruthiXT, Plate4_Eurorack`);
   console.log(`📄 SCAD files written: studioKnobs/*.scad`);
   console.log(`📄 Catalog documentation written: studioKnobs/README.md`);
   console.log(`\n🌐 Open All Studio Knobs URL:`);

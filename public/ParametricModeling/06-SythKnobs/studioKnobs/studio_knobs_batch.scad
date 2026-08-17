@@ -1,5 +1,5 @@
 // Studio Knobs Collection OpenSCAD Export (SLIDE MODE)
-// Generated 2026-08-05T21:23:47.728Z
+// Generated 2026-08-16T23:46:04.770Z
 
 // --- Elektron Machinedrum / Monomachine Master & Vol Knob (Slip-On Sleeve) (20.3mm Outer / 12.3mm Inner) ---
 translate([0, 0, 0])
