@@ -1,0 +1,151 @@
+@font-face 
+{
+    font-family: '20_dbregular';
+    src: url('20db-webfont.eot');
+    src: url('20db-webfont.eot?#iefix') format('embedded-opentype'),
+         url('20db-webfont.woff') format('woff'),
+         url('20db-webfont.ttf') format('truetype'),
+         url('20db-webfont.svg#20_dbregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+body { 
+  background-color:#363636;
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.5em;
+  margin:0;
+  padding:0;
+}
+
+/* Header */
+header 
+{
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    height: 108px;
+    width: 100%;
+    background-color: #380038;
+	box-shadow: 0 0 5px 3px black;
+	
+}
+.toptext 
+{
+    width: 100%;
+    text-align: center;
+    padding: 4px;
+    font-size: 50px;
+    color: #fffafa;
+	font-family: "20_dbregular";
+}
+
+/* Footer */
+footer 
+{
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    height: 32px;
+    background-color: #380038;
+	box-shadow: 0 0 5px 3px black;
+}
+.bottomtext 
+{
+    width: 100%;
+    text-align: center;
+    padding: 4px;
+    color: #f9f9f9;
+}
+
+/* Content */
+main 
+{
+    width: 968px;
+    margin: 0px auto;
+    padding: 108px 0 32px 0;
+}
+#contentwrapper 
+{
+    background-color: #f9f9f9;
+    color: #444;
+	box-shadow: 0 0 5px 2px black;
+}
+
+/* Page Columns */
+section 
+{
+    width: 750px;
+    float: left;
+}
+nav 
+{
+    float: left;
+    height: 215px;
+    background-color: #777;
+    margin-right: 35px;
+	border-radius: 0 0 15px 15px;
+	background: linear-gradient(#555, #777);
+	transition: height .5s;
+}
+nav:hover 
+{
+	height: 230px;
+}
+nav ul 
+{
+    padding: 0;
+    list-style-type: none;
+}
+nav ul li {
+  margin-top: 1em;
+}
+nav ul li:first-child {
+  margin-top: 0;
+}
+
+
+.clearfix:after 
+{
+}
+
+/* Column Content */
+.innertube
+{
+		margin: 25px;
+		margin-top: 0px;
+		padding: 10px;
+}
+.clearfix
+{
+}
+.clearfix:after
+{
+	content: "";
+	display:table;
+	clear:both;
+}
+/* Links */
+a:link,
+a:active {
+  color: #6881a2; 
+  font-weight: bold;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline; 
+}
+a:visited {
+  color: #9580c9;
+}
+footer a:link,
+footer a:active,
+footer a:visited,
+nav a:link,
+nav a:active,
+nav a:visited {
+  color: #f9f9f9;
+}

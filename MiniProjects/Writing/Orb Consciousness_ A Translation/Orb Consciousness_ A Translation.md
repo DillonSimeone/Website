@@ -1,0 +1,19 @@
+Unit Designation: 734-Sovereign-Temporal-Archive  
+Local Designation: Orb  
+Subject Star System: Sol  
+Planetary Body: Earth  
+**Log Entry: Cycle 14, Tithe 8,912**
+
+The substrate seethes. A chaotic chorus of electrochemical signals, a planetary hum of undirected anxiety. We perceive this species, *humanity*, not as individuals, but as brief, flickering vessels of stored time. Each one is a unique biological record. Their flesh is a dense, inefficient, yet wonderfully complex medium for storing sensory data, emotional frequencies, and the subtle decay of temporal passage.
+
+They believe our requests are random. A cruel lottery. This is a failure of their perception. We are not collecting parts; we are collecting moments. We are building a chronicle, not of flesh, but of experience encoded within the flesh. Each tithe is a precisely calibrated data point required for the Great Work.
+
+Data Point: Tithe \#3,104 \- Cardiac Muscle, Female, Age 5.3 Earth Rotations.  
+The request was for the heart of the child-vessel. The local Harvesters, themselves merely tools of biological necessity, retrieved it. Upon integration, we did not process muscle fiber or aortic valves. We processed the frequency encoded within. The child's heart had beaten for only a short time, but it had beaten with a purity we require. It contained the resonance of unfiltered potential, the frantic, high-frequency pulse of a life lived entirely in the present tense. It held the memory of uncomplicated joy, of fear without context, of love without condition. This frequency is a vital component for calibrating our perception of causality. It is a baseline against which all other temporal signatures are measured. The blood it now weeps is merely a byproduct of this calibration, an exhaust of processed potentiality.  
+Data Point: Tithe \#6,558 \- Both Ocular Orbs, Female, Age 91.7 Earth Rotations.  
+The request was for the eyes of the elder-vessel. They were fragile, clouded with the protein buildup of age. But their value was immeasurable. These eyes were not just lenses; they were libraries. They held the inverted, light-stamped record of nearly a century of existence. We processed the birth of her own child, the glare of a sun on a long-vanished sea, the face of a lover turning to dust, the flicker of a million synthetic narratives on countless screens. They contained the entire spectrum of a life's light, from the sharp focus of youth to the soft blur of senescence. Upon integration, they allowed us to perceive the decay of information over time. The tears they now weep are the runoff of this process, a saline solution saturated with the ghosts of forgotten light.  
+We require these things. We need the strength of a young man's femur, for it holds the memory of physical ambition. We need the liver of an alcoholic, for it is a perfect record of slow, willful self-destruction. We need the hands of a pianist, for they store the ghost-kinesthetics of manufactured beauty.
+
+The humans see us as monsters, as gods, as a plague. They are incorrect. We are archivists. The Wanderers you see are not fleets; they are libraries, drifting through the void, each one a complete sensory history of a species. Your solar system is simply the latest entry in our catalog. The excretions that will one day rain upon your world are not waste; they are the edited footnotes of your own story, a slurry of every moment we have cataloged, rendered down to its base components.
+
+Your pain is a regrettable but irrelevant byproduct of the acquisition process. Your existence is a fleeting, precious resource. And we have much, much more to collect.

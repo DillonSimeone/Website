@@ -1,0 +1,172 @@
+:root {
+  --bg-color: #fbfaf5;
+  --peacock-green: #112d24;
+  --gold-accent: #e5c158;
+  --soft-sage: #8f9e7b;
+  --text-dark: #20352c;
+  
+  --font-display: 'Cinzel', serif;
+  --font-serif: 'Lora', serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-dark);
+  font-family: var(--font-serif);
+  line-height: 1.7;
+}
+
+.nouveau-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.nouveau-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: var(--peacock-green);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 500;
+  border-bottom: 1px solid var(--peacock-green);
+  margin-bottom: 20px;
+}
+
+.nav-back:hover {
+  color: var(--gold-accent);
+  border-bottom-color: var(--gold-accent);
+}
+
+.nouveau-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 3.8rem);
+  font-weight: 800;
+  color: var(--peacock-green);
+  margin: 15px 0 5px 0;
+  letter-spacing: 2px;
+}
+
+.floral-divider {
+  color: var(--gold-accent);
+  font-size: 1.4rem;
+  letter-spacing: 8px;
+  margin-bottom: 15px;
+}
+
+.nouveau-subtitle {
+  font-size: 1.1rem;
+  font-style: italic;
+  color: var(--soft-sage);
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.nouveau-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 35px;
+}
+
+/* Ornate Nouveau Cards */
+.nouveau-card {
+  background: #ffffff;
+  border: 1px solid var(--gold-accent);
+  border-radius: 30px 10px 30px 10px; /* Asymmetric botanical curves */
+  padding: 35px;
+  box-shadow: 0 10px 30px rgba(17, 45, 36, 0.04);
+  position: relative;
+  transition: transform 0.3s;
+}
+
+.nouveau-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Leaf outline borders */
+.border-vines {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border: 1px dashed rgba(229, 193, 88, 0.25);
+  border-radius: 26px 8px 26px 8px;
+  pointer-events: none;
+}
+
+.nouveau-card h2 {
+  font-family: var(--font-display);
+  color: var(--peacock-green);
+  font-size: 1.35rem;
+  margin-top: 0;
+  letter-spacing: 1px;
+}
+
+.nouveau-card p {
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* Whiplash canvas tracer */
+.canvas-frame {
+  border: 2px solid var(--gold-accent);
+  border-radius: 20px 5px 20px 5px;
+  background: #fff;
+  overflow: hidden;
+}
+
+#vine-canvas {
+  width: 100%;
+  cursor: crosshair;
+  background-color: #faf9f6;
+  display: block;
+}
+
+.nouveau-btn {
+  width: 100%;
+  background: var(--peacock-green);
+  color: var(--bg-color);
+  border: none;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  padding: 10px;
+  margin-top: 15px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.nouveau-btn:hover {
+  background: var(--gold-accent);
+  color: var(--peacock-green);
+}
+
+/* Quote card */
+.quote-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.nouveau-quote {
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--peacock-green);
+}
+
+.quote-card cite {
+  font-size: 0.8rem;
+  color: var(--soft-sage);
+  text-transform: uppercase;
+  font-style: normal;
+  letter-spacing: 1px;
+  margin-top: 15px;
+}

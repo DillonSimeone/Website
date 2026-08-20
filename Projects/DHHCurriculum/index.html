@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Sonic Agency — K-12 Deaf Haptic STEAM Curriculum</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- SIDEBAR INDEX -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="badge">CymaSpace Research</div>
+                <h1>SONIC AGENCY</h1>
+                <p class="subtitle">STEAM Curriculum Catalog</p>
+            </div>
+
+            <nav class="nav-sections">
+                <div class="nav-group">
+                    <h3>Foundational Framework</h3>
+                    <a href="#" class="nav-item active" data-file="CURRICULUM_MAP.md">
+                        <span class="num">00</span>
+                        <span class="label">Curriculum Map</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="RESEARCH_AUDIT.md">
+                        <span class="num">00</span>
+                        <span class="label">Research Audit</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="GRANT_ALIGNMENT.md">
+                        <span class="num">00</span>
+                        <span class="label">NEA Grant Alignment</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="TECHNICAL_SPEC.md">
+                        <span class="num">00</span>
+                        <span class="label">Technical Specifications</span>
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <h3>K-12 Syllabus Lesson Plans</h3>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-01_Heartbeat_and_Pulse.md">
+                        <span class="num">01</span>
+                        <span class="label">Heartbeat & Pulse</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-02_Sounds_and_Shapes.md">
+                        <span class="num">02</span>
+                        <span class="label">Sounds & Shapes</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-03_Color_of_the_Sound.md">
+                        <span class="num">03</span>
+                        <span class="label">Color of the Sound</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-04_Stem_to_Body_Mapping.md">
+                        <span class="num">04</span>
+                        <span class="label">Stem-to-Body Mapping</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-05_Graphic_Composition_Studio.md">
+                        <span class="num">05</span>
+                        <span class="label">Graphic Composition</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-06_Visual_Vernacular_Pulse_Piece.md">
+                        <span class="num">06</span>
+                        <span class="label">Visual Vernacular Pulse</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-07_Sign_to_Beat_I.md">
+                        <span class="num">07</span>
+                        <span class="label">Sign-to-Beat I</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-08_Motion_to_Synth.md">
+                        <span class="num">08</span>
+                        <span class="label">Motion-to-Synth</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-09_Euclidean_Rhythm_Circle.md">
+                        <span class="num">09</span>
+                        <span class="label">Euclidean Rhythm Circle</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-10_Firmware_Hack.md">
+                        <span class="num">10</span>
+                        <span class="label">Firmware Hack</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-11_CV_Pipeline.md">
+                        <span class="num">11</span>
+                        <span class="label">CV Pipeline Training</span>
+                    </a>
+                    <a href="#" class="nav-item" data-file="LESSON_PLANS/LP-12_Capstone_Composition.md">
+                        <span class="num">12</span>
+                        <span class="label">Capstone Composition</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- MONOGRAPH VIEWER CONTAINER -->
+        <main class="viewer-container">
+            <!-- MOBILE NAVIGATION BAR -->
+            <header class="mobile-header">
+                <button class="menu-btn" id="menu-btn" aria-label="Open Navigation">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="mobile-title">SONIC AGENCY</div>
+            </header>
+
+            <!-- CORE DOCUMENT READER WELL -->
+            <div class="reading-well">
+                <article class="page-content" id="document-content">
+                    <!-- Markdown content renders here dynamically -->
+                </article>
+            </div>
+
+            <!-- READER CONTROLS FOOTER -->
+            <div class="reader-footer">
+                <button class="btn" id="prev-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    <span>Previous Section</span>
+                </button>
+                <div class="progress-indicator">
+                    <span>Active Section: </span>
+                    <strong id="section-badge">00 / 12</strong>
+                </div>
+                <button class="btn" id="next-btn">
+                    <span>Next Section</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="scripts.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,550 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Share+Tech+Mono&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0805;
+    color: #c8b89a;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.85;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .page {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 4rem 2rem 8rem;
+    position: relative;
+  }
+
+  .epigraph {
+    font-style: italic;
+    color: #7a6a54;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 4rem;
+    letter-spacing: 0.03em;
+    line-height: 2;
+    border-top: 0.5px solid #2a2218;
+    border-bottom: 0.5px solid #2a2218;
+    padding: 1.5rem 0;
+  }
+
+  h1 {
+    font-family: 'IM Fell English', serif;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #4a3f30;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .title {
+    font-family: 'IM Fell English', serif;
+    font-size: 28px;
+    font-weight: 400;
+    text-align: center;
+    color: #d4c4a8;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .section-break {
+    text-align: center;
+    color: #3a3028;
+    margin: 2.5rem 0;
+    font-size: 20px;
+    letter-spacing: 0.5em;
+  }
+
+  p {
+    margin-bottom: 1.2em;
+    color: #b8a888;
+  }
+
+  p.em {
+    color: #c8b89a;
+  }
+
+  .indent {
+    text-indent: 2em;
+  }
+
+  .centered {
+    text-align: center;
+    color: #7a6a54;
+    font-style: italic;
+  }
+
+  .report {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: #5a7060;
+    border-left: 2px solid #1a2a1a;
+    padding: 1rem 1.5rem;
+    margin: 2rem 0;
+    line-height: 1.7;
+    background: #0d120d;
+  }
+
+  .report .label {
+    color: #3a5a3a;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+
+  .report .value {
+    color: #7ab07a;
+  }
+
+  .report .redacted {
+    background: #1a2a1a;
+    color: #1a2a1a;
+    user-select: none;
+    border-radius: 2px;
+  }
+
+  .chapter-head {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #3a3028;
+    margin: 4rem 0 2rem;
+    text-align: center;
+  }
+
+  .drop-cap::first-letter {
+    font-size: 4.5em;
+    float: left;
+    line-height: 0.7;
+    margin-right: 0.08em;
+    margin-top: 0.1em;
+    color: #7a6a54;
+    font-family: 'IM Fell English', serif;
+  }
+
+  em {
+    color: #c8b89a;
+    font-style: italic;
+  }
+
+  strong {
+    color: #d4c4a8;
+    font-weight: 400;
+  }
+
+  .again {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: #2a2218;
+    text-align: center;
+    margin: 0.3rem 0;
+    letter-spacing: 0.2em;
+  }
+
+  .again.louder {
+    color: #3a3228;
+    font-size: 12px;
+  }
+
+  .again.louder2 {
+    color: #5a4a38;
+    font-size: 13px;
+  }
+
+  .again.louder3 {
+    color: #8a7a60;
+    font-size: 14px;
+  }
+
+  .shadow-line {
+    width: 100%;
+    height: 0.5px;
+    background: linear-gradient(90deg, transparent, #2a2218, transparent);
+    margin: 3rem 0;
+  }
+
+  .tally {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: #3a3028;
+    text-align: right;
+    margin-top: -0.8rem;
+    margin-bottom: 1rem;
+    letter-spacing: 0.15em;
+  }
+
+  .witness {
+    border: 0.5px solid #1a1510;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: #7a6a54;
+    font-size: 15px;
+    line-height: 1.9;
+    position: relative;
+  }
+
+  .witness::before {
+    content: 'WITNESS STATEMENT';
+    position: absolute;
+    top: -8px;
+    left: 12px;
+    background: #0a0805;
+    padding: 0 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: #2a2218;
+    font-style: normal;
+  }
+
+  .mountain-counter {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 42px;
+    text-align: center;
+    color: #1e1a14;
+    margin: 1.5rem 0;
+    letter-spacing: 0.05em;
+  }
+
+  .mountain-counter span {
+    color: #3a3028;
+  }
+
+  .scroll-fade {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .scroll-fade.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .end-mark {
+    text-align: center;
+    color: #2a2218;
+    font-size: 24px;
+    margin-top: 5rem;
+    letter-spacing: 1em;
+  }
+
+  .footnote {
+    font-size: 12px;
+    color: #4a3f30;
+    border-top: 0.5px solid #1a1510;
+    margin-top: 4rem;
+    padding-top: 1rem;
+    line-height: 1.7;
+  }
+
+  .footnote a {
+    color: #3a3028;
+  }
+
+  blockquote {
+    border-left: 2px solid #2a2218;
+    padding-left: 1.2rem;
+    margin: 1.5rem 0 1.5rem 1rem;
+    color: #7a6a54;
+    font-style: italic;
+  }
+
+  .page-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: #2a2218;
+    text-align: center;
+    margin-top: 3rem;
+    letter-spacing: 0.2em;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Konoha Archive · Classified</h1>
+  <div class="title">The Mountain</div>
+  <div class="epigraph">
+    There is a theorem, attributed to no one,<br>
+    that states every possible outcome already exists.<br>
+    The shadow clone jutsu does not create copies.<br>
+    It <em>finds</em> them.
+  </div>
+
+  <div class="chapter-head">I · The Scroll</div>
+
+  <p class="drop-cap indent">The Forbidden Scroll smelled wrong. Naruto noticed this before he read a single word — a smell like wet stone and old copper, like the inside of a clock that had been running since before anyone was born. He opened it anyway because he was Naruto, and opening things was what Naruto did.</p>
+
+  <p class="indent">The Shadow Clone technique occupied the third page. He had expected difficulty. He had expected failure, and then success, the clean arc of effort he knew so well. What he had not expected was the silence.</p>
+
+  <p class="indent">Not the silence of an empty training ground at midnight.</p>
+
+  <p class="indent">The silence of a room after a very loud sound has stopped.</p>
+
+  <div class="report">
+    <div class="label">Anbu Field Report · Initial Incident</div>
+    <br>
+    SUBJECT: Uzumaki, Naruto · Age 12
+    TIME: 0341 hrs
+    LOCATION: Training Ground 7 (outer perimeter)
+    <br>
+    <br>
+    Subject was found unresponsive at coordinates [<span class="redacted">REDACTED</span>]. Vital signs: present but anomalous. Pulse: <span class="value">irregular</span>. Breathing: <span class="value">present</span>. Chakra signature: <span class="redacted">INSTRUMENT FAILURE</span>
+    <br>
+    <br>
+    No signs of external injury. The scroll was present but unopened when we arrived. We cannot account for this. Mizuki-sensei, who reported the subject's location, states he witnessed the subject perform <span class="value">an unknown number</span> of hand seals. When asked to specify, Mizuki-sensei was unable to confirm any number between zero and <span class="redacted">REDACTED</span>.
+    <br>
+    <br>
+    Mizuki-sensei is currently undergoing psychological evaluation.
+    <div style="margin-top:1rem; color:#3a5a3a; font-size:10px;">END REPORT — FILED: CONFIDENTIAL</div>
+  </div>
+
+  <div class="chapter-head">II · Seasons</div>
+
+  <p class="drop-cap indent">Spring came. The hospital room accumulated cards from classmates who could not explain why they felt they should send them. Iruka came every day. He graded papers at the bedside and did not speak much, because there was nothing useful to say, and Iruka was a man who understood that silence could be the kindest sentence.</p>
+
+  <p class="indent">Summer. The body had not deteriorated. The medical staff found this notable, then alarming, then — after enough committee meetings — officially unremarkable. They wrote the word <em>stable</em> in their reports with the practiced ease of people who have decided to stop looking closely at something.</p>
+
+  <p class="indent">Autumn. Iruka stopped coming every day. He would not be able to explain, later, why. Something about the room had begun to feel incorrect. Not dangerous. Incorrectly <em>shaped</em>, somehow. As if the space inside it was slightly more than the space outside should have allowed.</p>
+
+  <p class="indent">Winter. The body was gone.</p>
+
+  <p class="indent">Not stolen. Not moved. The monitors still showed their last readings, the needle still on the same line. The impression in the mattress. His orange jacket folded on the chair. Everything left as if he had only stepped out for a moment, which he had, in a sense, if you were willing to interpret <em>moment</em> very loosely, and <em>stepped</em> more loosely still.</p>
+
+  <div class="section-break">· · ·</div>
+
+  <div class="chapter-head">III · The First Return</div>
+
+  <p class="drop-cap indent em">They found him in the east quarter, between the dumpling shop and the wall where the cats slept. He was sitting on the ground with his knees drawn up, looking at his hands.</p>
+
+  <p class="indent">He had not eaten in a very long time. The medic-nin who found him could see this in his face and neck and hands — the particular hollowness of months of not eating, not the sharpness of days. But his chakra burned with perfect, undiminished intensity, as if the body had simply forgotten to be hungry in the way that some machines forget to stop running after the operator leaves.</p>
+
+  <div class="witness">
+    "He looked up at me and said, very calmly: <em>'I think I did something wrong.'</em>
+    <br><br>
+    I asked him what he meant. He looked back at his hands. He said: <em>'I was only trying to make a copy of myself. But I think I made — I think I made too many. I think I went too far and then too far again and I don't know — I don't know where I —'</em>
+    <br><br>
+    He stopped. He stared at his hands for a long time. Then he said, very quietly, as if hoping I wouldn't hear:
+    <br><br>
+    <em>'There are so many of me. They're all so far away. Some of them are — they're not quite right anymore.'</em>"
+    <br><br>
+    — Medic-nin Ōtsuki, First Response Division
+  </div>
+
+  <p class="indent">He was taken to the hospital. He ate. He answered questions. He seemed, essentially, like Naruto — brash and warm and embarrassingly sincere, with a quality of attention that made you feel briefly that you were the most interesting thing in the room. But there were small wrongnesses. He knew certain things he should not have known yet. He did not know certain things he absolutely should have. When Iruka showed him a photo of team seven, he identified everyone correctly but described a memory of a mission that had not happened.</p>
+
+  <p class="indent">"Wrong me," he said, after a long silence. "That's a wrong me's memory. Sorry, sensei."</p>
+
+  <p class="indent">He was alive for eleven days. On the morning of the twelfth, he was found dead in his bed — no cause, no struggle, no sign. The expression on his face was one of mild surprise, as if he had expected more time but found the news acceptable.</p>
+
+  <div class="report">
+    <div class="label">ANBU Report · Subject Status</div>
+    <br>
+    NOTE: The subject's corpse from the initial incident has been located in the morgue.
+    It remains present.
+    It has not moved.
+    <br><br>
+    We now have two (2) Uzumaki, Naruto.
+    <br>
+    Both are confirmed as Uzumaki, Naruto.
+    <br><br>
+    <span class="redacted">We do not know what to do with this information.</span>
+    <span style="color:#3a5a3a"> [SECTION REMOVED BY ORDER OF HOKAGE]</span>
+  </div>
+
+  <div class="chapter-head">IV · Accumulation</div>
+
+  <p class="drop-cap indent">The third Naruto arrived three weeks later, found unconscious outside the academy. The fourth was awake and walking and deeply upset about something he refused to describe. The fifth arrived already dead, sprawled neatly in the road outside the north gate as if he had lain down deliberately to rest.</p>
+
+  <p class="indent">The Hokage called a quiet meeting. The notes of that meeting are still classified at the highest available level, but those who attended it have described, in later years, a particular quality to the Hokage's expression. Not fear. Not confusion. Something closer to the face a very old clockmaker might make upon discovering that a mechanism she built has been running, all along, much faster than she intended.</p>
+
+  <p class="indent">She assigned three ANBU teams. She designated a site. She issued the first of what would eventually become a very long series of orders about the mountain.</p>
+
+  <div class="mountain-counter"><span>5</span></div>
+  <div class="tally">CONFIRMED INSTANCES · WEEK 3</div>
+
+  <p class="indent">They arrived irregularly, without pattern. Some came awake, some came sleeping, some came dead. The living ones lasted between one hour and three weeks. They all, in the end, climbed the mountain.</p>
+
+  <p class="indent">This is the part that no report fully explains and no witness has satisfactorily described: the climbing was voluntary. The Narutos who arrived alive were told, clearly, about the mountain. They were shown it from a distance. They were asked if they understood what it was. They all said yes. They were asked if they wanted to go to it. They all, eventually, said yes.</p>
+
+  <p class="indent">"I can feel them," said the seventh Naruto, the day before he made the climb. He was sitting on the steps of the observation post that ANBU had built on the north ridge, watching the plain below where the pile was beginning to truly accumulate. "All those versions of me. They're not scared. They're just — " He turned his hands over. He was always looking at his hands. "They're tired. I think we're all just very tired. I think we walked a really long way to get here."</p>
+
+  <p class="indent">He paused.</p>
+
+  <p class="indent">"I think we're coming home."</p>
+
+  <div class="chapter-head">V · The Shadow</div>
+
+  <p class="drop-cap indent em">On the forty-fourth day, a crow landed on the peak of the mountain and died. Nothing had touched it. Afterward, the ANBU at the observation post began reporting headaches. Standard reassignments were ordered, rotation every six hours. The headaches persisted despite the rotation. One ANBU member transferred off the rotation and was transferred to standard duty; the headaches resolved within three days.</p>
+
+  <p class="indent">An experiment was conducted. A leaf was placed in the mountain's shadow at 0900 hours. By noon it was ash, but cold ash, dry and unburned, simply very old.</p>
+
+  <p class="indent">A second experiment. An older leaf.</p>
+
+  <p class="indent">Faster.</p>
+
+  <p class="indent">A third experiment. They did not repeat it.</p>
+
+  <div class="witness">
+    "I was standing too close. I didn't know — the shadow moved, you understand, the sun was going behind a cloud and the shadow stretched, and it touched the edge of my sandal. Just the edge. Just for a moment.
+    <br><br>
+    I am fine. I want to be clear that I am fine. But — I would like to report that for approximately four seconds, I remembered dying. Correctly, I think. In detail. Every version. All at once."
+    <br><br>
+    — ANBU Operative [NAME REDACTED], rotation 7
+  </div>
+
+  <div class="mountain-counter"><span>89</span></div>
+  <div class="tally">CONFIRMED INSTANCES · MONTH 3</div>
+
+  <div class="chapter-head">VI · Divergence</div>
+
+  <p class="drop-cap indent">The changes, initially, were small. The forty-first Naruto was perhaps a centimeter taller. The forty-seventh had a slightly different voice — not wrong, just shifted, a quarter-tone lower, as if he had spent years in a cold climate. The fifty-third had a scar above his left eyebrow that none of the others had, and could not explain it, and seemed mildly embarrassed to be asked.</p>
+
+  <p class="indent">By the sixtieth, they had stopped trying to explain the divergences. The records shifted to simple documentation: measurements, chakra signatures, catalogued memories, a slowly expanding list of attributes marked as <em>nonstandard</em>. The list grew faster than the records could accommodate.</p>
+
+  <p class="indent">The eighty-second Naruto remembered Konoha with five gates instead of four. He had attended a school that had a different name. His team was named correctly but he associated Sakura with a particular laugh that none of them had ever heard her make. He stared at the sky for a long time, the afternoon he arrived, and when asked what he was looking at, he said he was counting stars.</p>
+
+  <p class="indent">It was midday. There were no stars.</p>
+
+  <p class="indent">"There are where I'm from," he said simply, and did not elaborate.</p>
+
+  <div class="section-break">· · ·</div>
+
+  <p class="indent">The hundredth Naruto arrived with an extra finger on his left hand. He seemed unaware of this. He used the hand normally. No one mentioned it to him. There had been a quiet consensus, by this point, that there were certain things you did not mention.</p>
+
+  <p class="indent">The hundred-and-thirteenth wore clothes no one could identify. Not the style of any village. Not the style of any era. The fabric seemed to have no seams. When a medic-nin attempted to take a sample for analysis, she found she could not remember having done so, despite the sample sitting in her hand.</p>
+
+  <p class="indent">He was warm, and funny, and ate three bowls of ramen with an enthusiasm that made Ayame cry without knowing why. He thanked her very sincerely. He climbed the mountain at dusk, moving with perfect confidence along a path that hadn't existed that morning.</p>
+
+  <div class="mountain-counter"><span>247</span></div>
+  <div class="tally">CONFIRMED INSTANCES · MONTH 7</div>
+
+  <div class="chapter-head">VII · The Distressed</div>
+
+  <p class="drop-cap indent em">The first Naruto to arrive with wounds arrived on the hundred-and-ninetieth day. His wounds were not fresh. He was not in pain, or did not seem to be. He walked on a leg that should not have been able to bear weight with the steadiness of someone who had been walking on it, compromised, for a very long time.</p>
+
+  <p class="indent">He sat down outside the observation post. He was handed tea. He held it in both hands and looked at the mountain for a long time before he spoke.</p>
+
+  <p class="indent">"Things went wrong for us," he said. "On the other side. I don't know how to explain what the other side is. I don't think you have language for it yet. But — things went wrong. And I thought — we thought — if we could find our way back to where the split started, maybe there was still a — "  He stopped. He looked at his tea. "Never mind."</p>
+
+  <p class="indent">He came back the next day with twelve more.</p>
+
+  <p class="indent">They were all carrying something. Most were carrying nothing unusual — packs, weapons, things a shinobi carries. Two were carrying Naruto corpses, wrapped carefully in cloth, held with the deliberate gentleness of men transporting someone important home.</p>
+
+  <p class="indent">When asked who the bodies were, both couriers gave the same answer: <em>us.</em></p>
+
+  <div class="witness">
+    "I have been on a hundred and sixty missions. I have seen things that ended my sleep for months. I am not a person who is easily — <em>affected.</em>
+    <br><br>
+    But I need to state for the record that the two hundred and eighth, when he came into the observation post and put down what he was carrying, he looked at me with this expression that I can only describe as —
+    <br><br>
+    He looked at me the way you look at someone when you want to tell them something important but you know that the words for it haven't been invented yet.
+    <br><br>
+    Then he said: <em>'We tried everything.'</em>
+    <br><br>
+    Then he climbed the mountain."
+    <br><br>
+    — ANBU Captain Yuhi, rotation command
+  </div>
+
+  <div class="chapter-head">VIII · The Sky</div>
+
+  <p class="drop-cap indent">The three hundred and fourth Naruto was the last one to arrive alive.</p>
+
+  <p class="indent">No one realized this at the time. There was no announcement. He arrived at midday, sat for two hours, ate ramen, and walked to the mountain. He was indistinguishable from the others except that he said, standing at the base of the climb, looking up at what had accumulated there:</p>
+
+  <p class="indent">"There's no one left."</p>
+
+  <p class="indent">Yuhi asked him what he meant.</p>
+
+  <p class="indent">"On the other side," he said. "All the other sides. However many there were. We all — we all found our way here eventually. Every version." He turned around and looked at her. He had the eyes of someone who had traveled an enormous distance in a very short time, or a short distance in an enormous time, and could no longer tell the difference. "I think this is where it ends. I think there's only the one left now."</p>
+
+  <p class="indent">He looked at the mountain, and at his hands, and then he began to climb.</p>
+
+  <div class="section-break">· · ·</div>
+
+  <p class="indent">After that, they arrived dead.</p>
+
+  <p class="indent">They appeared only when no one was looking. A momentary distraction — a sound from the other direction, a need to consult a document — and when you turned back, one more. The ANBU learned to stop watching for the arrival. You would never see it. You would only ever see the after.</p>
+
+  <p class="indent">Then they began falling.</p>
+
+  <p class="indent">This is the part the official records describe in the most clinical language, the part that takes the most words to say very little. Beyond the cloud line, at altitudes that should not have been survivable even before the fall, Narutos arrived in the sky above the village and came down. One at a time, at irregular intervals, without sound. The ANBU reported this in measured, careful sentences that contained no adjectives whatsoever, which is, perhaps, the most frightening thing in any of the documents.</p>
+
+  <div class="mountain-counter"><span style="color:#5a4a38">∞</span></div>
+  <div class="tally">CONFIRMED INSTANCES · UNKNOWN</div>
+
+  <div class="chapter-head">IX · What Remains</div>
+
+  <p class="drop-cap indent em">The mountain stopped growing on a morning in early spring, three seasons after it began. There was no ceremony to this. The last body arrived the way all the late ones arrived — unobserved, suddenly simply present on the slope, small against the scale of what had accumulated.</p>
+
+  <p class="indent">The shadow remained problematic for eleven years. The Hokage commissioned a wall, eventually, which was itself eventually replaced by a specialized seal that three generations of Uzumaki specialists took turns maintaining. The original site is not on any public map. The designation in the classified archive is a string of numbers that, when read aloud, sounds like a word in a language no one has been able to identify.</p>
+
+  <p class="indent">The bodies never rotted.</p>
+
+  <p class="indent">The records eventually stopped counting.</p>
+
+  <div class="section-break">· · ·</div>
+
+  <p class="centered">There is a room, below the Hokage tower, that contains a single sheet of paper.</p>
+  <p class="centered">The paper has one sentence on it:</p>
+  <p class="centered" style="margin-top:1.5rem; font-size:15px; color: #c8b89a;"><em>The technique was not forbidden because it failed.</em></p>
+
+  <div class="shadow-line"></div>
+
+  <div class="chapter-head">X · Iruka</div>
+
+  <p class="drop-cap indent">Iruka Umino retired from active teaching at forty-three. He kept a clean apartment in the east quarter, not far from where the first one had been found. He graded papers for private students and grew tomatoes on his windowsill with the focused attention of a man who has decided that what matters, in the end, is the small things you can put your hands on and know are real.</p>
+
+  <p class="indent">He visited the wall once a year. He didn't know why. He had spoken with three of them in total, over the course of that long strange spring — the seventh, the forty-fourth, and the one hundred and ninth. They had all been Naruto. Completely and unmistakably Naruto, despite everything.</p>
+
+  <p class="indent">This was the part that stayed with him. Not the horror of the accumulation, not the impossible arithmetic of the bodies, not the shadow or the sky or the silence that had lived in that hospital room. What stayed with him was that every single one of them, however far the divergence had taken them, whatever worlds they had crossed or broken or burned to find their way here — had still looked at their hands with the same expression.</p>
+
+  <p class="indent">Puzzled. A little embarrassed. Like a boy who had tried to do something very ordinary and discovered too late that he was not, in fact, ordinary. Not even remotely.</p>
+
+  <p class="indent">Like a boy who had been trying, his whole life, to make enough of himself to go around.</p>
+
+  <p class="indent">And had, in the end, just made rather too many.</p>
+
+  <div class="end-mark">· · · · ·</div>
+
+  <div class="footnote">
+    <div class="label" style="font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:0.2em; color:#2a2218; margin-bottom:0.5rem;">ARCHIVAL NOTE</div>
+    This document is classified at the highest available level. Transcription errors may exist in sections VIII–IX due to the documented effect of extended proximity to the designated site on short-term memory consolidation. Readers experiencing persistent visual artifacts, inappropriate certainty about events they did not witness, or awareness of their own hands, are advised to report to the medical division.
+  </div>
+
+  <div class="page-num">KONOHA ARCHIVE · RESTRICTED ACCESS · FILE 0001-NR</div>
+
+</div>
+
+<script>
+  const elements = document.querySelectorAll('p, .report, .witness, .mountain-counter, blockquote');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  elements.forEach(el => {
+    el.classList.add('scroll-fade');
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>

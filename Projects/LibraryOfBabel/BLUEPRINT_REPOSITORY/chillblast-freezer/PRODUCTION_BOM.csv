@@ -1,0 +1,51 @@
+ref_des,part_description,manufacturer,mfg_part_number,lcsc_part_number,jlcpcb_part_number,qty_per_unit,unit_price_usd_qty1k,source_notes
+U1,77-81GHz mmWave Radar SoC 3TX/4RX industrial,Texas Instruments,IWR1443BOOST / IWR1443QABLR,C2987612,C2987612,1,32.50,verify-before-order — industrial -40C bin
+U2,ESP32-S3 module 8MB PSRAM ext-antenna industrial,Espressif,ESP32-S3-WROOM-1U-N16R8,C2913203,C2913203,1,4.40,verify-before-order
+U3,8x8 Multizone ToF Distance Sensor cold-rated,STMicroelectronics,VL53L8CX,C5409829,C5409829,1,7.10,verify-before-order
+U4,Sub-GHz/2.4GHz SoC EFR32MG24 -40C industrial,Silicon Labs,EFR32MG24B210F1536IM48-B,C?????,C?????,1,5.20,verify-before-order
+U5,ESP32-C6 mitt MCU WiFi6 BLE5.3 802.15.4,Espressif,ESP32-C6-MINI-1-N8,C5736265,C5736265,1,2.80,verify-before-order — mitt BOM
+U6,4-ch Haptic Driver LRA I2C autocal,Texas Instruments,DRV2605LYZFR,C2677639,C2677639,4,1.95,verify-before-order — mitt BOM (one per LRA)
+U7,Medical-grade I2C Skin Temp Sensor 0.1C,Maxim Integrated,MAX30205MTA+T,C509413,C509413,2,3.40,verify-before-order — mitt BOM
+U8,Buck Converter 3.3V 2A wide-Vin -40C bin,Texas Instruments,TPS62933DRLR,C2980715,C2980715,3,1.20,verify-before-order
+U9,Li-ion Charger w/ NTC heated-cell guard,Texas Instruments,BQ25798RTWR,C?????,C?????,1,4.10,verify-before-order — LiH SKU only
+U10,PoE+ PD Module 802.3bt 35W isolated,Silvertel,Ag9800MT,C3014872,C3014872,1,12.40,verify-before-order — forklift cluster
+U11,Ethernet PHY 10/100/1000 industrial,Microchip,KSZ9031RNXIC,C147047,C147047,1,4.60,verify-before-order — forklift cluster
+U12,LDO 3.3V 300mA -40C bin,Texas Instruments,TLV70233DBVR,C144017,C144017,3,0.32,verify-before-order
+U13,Buck Converter 5V 3A 60V input -40C,Texas Instruments,TPS54360BDDAR,C16543,C16543,1,1.85,verify-before-order — forklift cluster
+U14,ESD Protection USB-C 4-line,STMicroelectronics,USBLC6-2SC6,C7519,C7519,2,0.18,verify-before-order
+U15,Crypto Co-processor ECC/AES audit log,Microchip,ATECC608B-SSHDA-T,C2839110,C2839110,1,0.95,verify-before-order — signed OSHA log
+U16,NOR Flash 16Mbit SPI -40C bin,Winbond,W25Q16JVSSIQ,C46019,C46019,1,0.22,verify-before-order
+U17,RTC w/ TCXO -40C industrial,Epson,RX8900SAAJ,C2878912,C2878912,1,1.95,verify-before-order
+U18,Supervisory Reset IC,Maxim,MAX809STRG,C12662,C12662,3,0.22,verify-before-order
+U19,NTC Thermistor 10k 1% glass-bead -55..150,TDK,B57861S0103F040,C25758,C25758,3,0.18,verify-before-order — heater loop + cell temp
+U20,Op-amp dual rail-to-rail -40C,Texas Instruments,LMV358IDR,C12200,C12200,1,0.18,verify-before-order — NTC sense
+U21,2.4GHz chip antenna ceramic SMD,Johanson,2450AT43A100E,C211368,C211368,2,0.42,verify-before-order
+LRA1-4,LRA Vibration Motor 10x10x4mm 175Hz -40C,Vybronics,VLV101040A,C?????,C?????,4,1.85,verify-before-order — mitt
+C1-C30,MLCC 100nF 0402 X7R 25V (-55..125),Yageo,CC0402KRX7R9BB104,C307331,C307331,30,0.01,verify-before-order — X7R required for low temp
+C31-C45,MLCC 10uF 0805 X7R 16V cold-rated,Murata,GRM21BR71C106KE15L,C13418,C13418,15,0.09,verify-before-order
+C46-C50,Tantalum 47uF 16V low-ESR -55C,KEMET,T520B476M016ATE070,C?????,C?????,5,0.55,verify-before-order — bulk on cold rails
+R1-R30,Resistor 0402 1% thin-film assortment,Yageo,RC0402FR series,C137885,C137885,30,0.01,verify-before-order
+L1-L4,Power Inductor 4.7uH 3A shielded -40C,TDK,SPM6530T-4R7M,C408743,C408743,4,0.32,verify-before-order
+D1-D4,Schottky Diode 40V 1A SOD-123,Nexperia,PMEG4010EJ,C460782,C460782,4,0.06,verify-before-order
+D5-D8,TVS Diode bidirectional 5V SOD-323,Nexperia,PESD5V0S1BL,C2828,C2828,4,0.05,verify-before-order
+Q1-Q4,MOSFET N-CH 30V 8A SOT-23 -55C bin,Alpha & Omega,AO3400A,C20917,C20917,4,0.05,verify-before-order
+J1,RJ45 PoE Magjack -40C industrial,Bel Fuse,0826-1G1T-MN-F,C381910,C381910,1,2.40,verify-before-order — forklift cluster
+J2,USB-C Receptacle 2.0 mid-mount sealed,Korean Hroparts,TYPE-C-31-M-12,C165948,C165948,1,0.18,verify-before-order — LiH SKU dock-charge
+J3,Cell Pod Connector 4P sealed bayonet,Amphenol,AT04-4P,C?????,C?????,2,2.20,verify-before-order — mitt cell pod
+J4,JST-SH 8P FFC flex-to-mitt,JST,SM08B-SRSS-TB,C160404,C160404,1,0.32,verify-before-order
+X1,Crystal 40MHz 10pF SMD 3225 -40C,TXC,7M-40.000MEEQ-T,C?????,C?????,2,0.32,verify-before-order
+BAT1,LiSOCl2 C-cell 3.6V 5.8Ah -60C rated,Saft,LSH14,C?????,C?????,1,7.40,verify-before-order — mitt primary
+BAT2,LiSOCl2 AA 3.6V 2.4Ah -55C rated,Tadiran,TL-5104,C?????,C?????,2,4.20,verify-before-order — shoulder puck LSL SKU
+BAT3,18650 Li-ion 2800mAh -20..60C cold-rated,Molicel,INR18650-P28A,N/A,N/A,1,4.80,verify-before-order — LiH SKU alt
+HTR1,Kapton Resistive Heater Foil 8W 24V,Minco,HK5572R26.7L24A,N/A,N/A,1,6.40,verify-before-order — LiH SKU cell warmer + cluster
+HTR2,ITO Heated Lens Window 12mm 1.2W,Custom (Heated Window),Custom,N/A,N/A,1,4.90,verify-before-order — shoulder puck ToF aperture
+DESC1,Desiccant Cartridge serviceable 5g,Multisorb,Stabilox,N/A,N/A,1,0.45,verify-before-order
+VENT1,IP66 Pressure Vent Gore PMF200505,W.L. Gore,PMF200505,N/A,N/A,2,1.20,verify-before-order
+PCB1,Shoulder puck PCB 4-layer ENIG 60x45mm,JLCPCB,Custom,N/A,N/A,1,9.50,verify with fab @1k
+PCB2,Mitt flex-rigid PCB 4-layer ENIG glove-shaped,JLCPCB,Custom,N/A,N/A,1,18.00,verify with fab @1k — flex-rigid premium
+PCB3,Forklift cluster PCB 4-layer ENIG 110x80mm,JLCPCB,Custom,N/A,N/A,1,12.50,verify with fab @1k
+ENC1,Shoulder puck TPU 95A low-temp shell IP66,Custom,Custom (BASF Elastollan C95A12),N/A,N/A,1,8.40,verify-before-order — tooled-mold amortized @1k
+ENC2,Mitt outer Cordura 1000D + Thinsulate composite,Custom (CMT),N/A,N/A,N/A,1,22.00,verify-before-order — sewn-goods cost @1k
+ENC3,Forklift cluster aluminum housing IP66 cold-rated,Custom (Hammond equiv),1554NGYCL,N/A,N/A,1,14.00,verify-before-order
+GASK1,Silicone gasket Parker S0383-70 -60C,Parker,S0383-70,N/A,N/A,3,0.85,verify-before-order
+MISC1,Isolator Lord LM-series vibration mount,Lord,LM003-1,N/A,N/A,4,2.80,verify-before-order — forklift cluster mount

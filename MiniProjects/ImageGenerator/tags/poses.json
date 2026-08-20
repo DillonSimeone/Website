@@ -1,0 +1,123 @@
+{
+    "id": "poses",
+    "title": "Poses",
+    "tags": [
+        {
+            "id": "standing",
+            "label": "standing",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "sitting",
+            "label": "sitting",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "kneeling",
+            "label": "kneeling",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "lying",
+            "label": "lying",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "squatting",
+            "label": "squatting",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "crossed_arms",
+            "label": "crossed arms",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "hands_on_own_hips",
+            "label": "hands on hips",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "hands_behind_head",
+            "label": "hands behind head",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "all_fours",
+            "label": "all fours",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "bent_over",
+            "label": "bent over",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "spread_legs",
+            "label": "spread legs",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "looking_at_viewer",
+            "label": "looking at viewer",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "dynamic_pose",
+            "label": "dynamic pose",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "arms_behind_back",
+            "label": "arms behind back",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "legs_crossed",
+            "label": "legs crossed",
+            "classes": []
+        },
+        {
+            "id": "fetal_position",
+            "label": "fetal position",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "stretching",
+            "label": "stretching",
+            "classes": [
+                "tag-uncommon"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Prevent indexing of backup files to avoid duplicate content penalties
+Disallow: /*/backups/*
+Disallow: /*/backup/*
+
+# Provide the sitemap location for search engines
+Sitemap: https://dillonsimeone.com/sitemap.xml

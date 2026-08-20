@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Dillon Simeone</title>
+    <link href="./style.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="randomColors.js"></script>
+    <script src="trianglify.min.js"></script>
+    <script src="background.js"></script>
+    <style>
+        .assets {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            height: 100vh;
+            overflow-y: scroll;
+        }
+
+        .asset {
+            width: 10vw;
+            margin: 10px;
+            border: solid 1px black;
+            padding: 10px;
+            box-shadow: 10px 10px 10px black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 1200px) {
+            .asset {
+                width: 40vw;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .asset {
+                width: 90vw;
+            }
+        }
+
+        .asset img {
+            aspect-ratio: 1/1;
+            width: 100%;
+            max-width: 25vw;
+            margin: auto;
+
+        }
+
+        .asset p,
+        .asset h3 {
+            margin: 10px;
+            font-size: 1rem;
+            width: 100%;
+            text-align: left;
+        }
+
+        .asset h3 {
+            text-align: center;
+            margin: 20px;
+        }
+
+        .offline-banner {
+            width: 100%;
+            background-color: #e67e22;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            font-weight: bold;
+            font-family: sans-serif;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+
+<body onresize="redraw();">
+    <div class="assets"></div>
+
+    <div class="trianglify">
+        <div class="circle"></div>
+    </div>
+
+    <script>
+        draw() //Draws the background.
+
+        function renderAssets(assets, isFallback = false) {
+            const assetsContainer = document.querySelector('.assets');
+            assetsContainer.innerHTML = ''; // Clear container
+
+            if (isFallback) {
+                const banner = document.createElement('div');
+                banner.className = 'offline-banner';
+                banner.textContent = '⚠️ Live Inventory System Offline - Displaying Cached Backup';
+                document.body.insertBefore(banner, assetsContainer);
+            }
+
+            assets.rows.forEach(row => {
+                const item = document.createElement('div');
+                item.classList.add('asset');
+
+                const img = document.createElement('img');
+                if (row.image) {
+                    img.src = row.image;
+                    img.alt = row.name || 'asset image';
+                    item.appendChild(img);
+                }
+
+                const title = document.createElement('h3');
+                title.textContent = `${row.category.name}: ${row.name}`;
+                item.appendChild(title);
+
+                const location = document.createElement('p');
+                if (row.rtd_location && row.rtd_location.name) {
+                    location.innerHTML = `<strong>Default location:</strong> ${row.rtd_location.name}`;
+                } else {
+                    location.innerHTML = `<strong>Default location:</strong> Not available`;
+                }
+                item.appendChild(location);
+
+                const status = document.createElement('p');
+                status.innerHTML = `<strong>Status:</strong> ${row.status_label.name.toUpperCase()}`;
+
+                if (row.status_label.name === "Deployable") {
+                    status.style.backgroundColor = 'lightgreen';
+                } else {
+                    status.style.backgroundColor = 'lightcoral';
+                }
+
+                status.style.padding = '10px';
+                status.style.borderRadius = '100px';
+
+                item.appendChild(status);
+
+                const checkout = document.createElement('p');
+                checkout.innerHTML =
+                    `<strong>Users can checkout:</strong> ${row.user_can_checkout.toString().toUpperCase()}`;
+
+                if (row.user_can_checkout) {
+                    checkout.style.backgroundColor = 'lightgreen';
+                } else {
+                    checkout.style.backgroundColor = 'lightcoral';
+                }
+
+                checkout.style.padding = '10px';
+                checkout.style.borderRadius = '100px';
+
+                item.appendChild(checkout);
+
+                assetsContainer.appendChild(item);
+            });
+        }
+
+        fetch('https://cymaspacesnipeitinventoryextractor.dillonsimeone-bd8.workers.dev/', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(assets => {
+                renderAssets(assets, false);
+            })
+            .catch(error => {
+                console.error("Live fetch failed, using fallback:", error);
+                fetch('fallback-inventory.json')
+                    .then(response => response.json())
+                    .then(assets => {
+                        renderAssets(assets, true);
+                    })
+                    .catch(fallbackError => {
+                        console.error("Fallback load failed:", fallbackError);
+                        const assetsContainer = document.querySelector('.assets');
+                        assetsContainer.innerHTML = `<div style="color: white; font-family: sans-serif; text-align: center; padding: 20px; width: 100vw; margin-top: 100px;">
+                            <h2>Unable to load inventory data</h2>
+                            <p>The Snipe-IT server returned a 402 payment required error, and the offline fallback could not be loaded.</p>
+                        </div>`;
+                    });
+            });
+    </script>
+</body>
+
+</html>

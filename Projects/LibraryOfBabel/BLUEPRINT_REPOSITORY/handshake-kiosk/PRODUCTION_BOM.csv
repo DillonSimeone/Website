@@ -1,0 +1,39 @@
+ref_des,part_description,manufacturer,mfg_part_number,lcsc_part_number,jlcpcb_part_number,qty_per_unit,unit_price_usd_qty1k,source_notes
+U1,NVIDIA Jetson Orin Nano 8GB System-on-Module,NVIDIA,P3767-0005,N/A,N/A,1,199.00,training-data reference (verify) — industrial channel pricing; check Arrow/Mouser for volume tiers
+U2,Jetson Orin Nano Developer Carrier Board (or custom),Seeed Studio,114992622,N/A,N/A,1,79.00,training-data reference (verify) — custom carrier board in production reduces cost ~30%
+CAM1,RGB Camera Module Sony IMX415 1080p/60fps USB3,Leopard Imaging,LI-USB30-IMX415,N/A,N/A,1,65.00,training-data reference (verify) — industrial USB3 uCAM; verify lead time
+CAM2,Intel RealSense Depth Camera D435i,Intel,82635DSD435IK,N/A,N/A,1,179.00,training-data reference (verify) — available Arrow/Mouser; check RoHS cert
+LCD1,13.3in FHD IPS LCD Panel 1000nit Sunlight-Readable,Innolux,M133NWF4-R3,N/A,N/A,1,95.00,training-data reference (verify) — AUO G133HAN01.0 as alternative; verify brightness spec
+LCD2,LCD Controller Board HDMI/LVDS for 13.3in FHD,generic/Geekworm,N/A,C2678903,C2678903,1,18.00,best-guess (verify) — LCSC stocked LVDS controller boards; confirm panel compatibility
+LCD3,6mm AR-Coated Tempered Cover Glass 13.5in,Corning/custom fab,N/A,N/A,N/A,1,42.00,training-data reference (verify) — custom cut; supplier: Dongguan glass fabricators or local glazier
+LCD4,Optical Clear Adhesive (OCA) Film 13.5in sheet,3M,8171CL,N/A,N/A,1,8.00,training-data reference (verify) — 3M industrial adhesives; verify UV cure compatibility
+SPK1,Class-D Audio Amplifier IC 10W Mono TPA3110D2,Texas Instruments,TPA3110D2PWPR,C527688,C527688,1,1.85,best-guess (verify) — LCSC C-number; check JLCPCB stock for PCBA
+SPK2,Directional Speaker Array 60deg beam 4-ohm,Focusound / custom,FS-16A,N/A,N/A,1,35.00,training-data reference (verify) — parametric directional speaker; Holosonics Audio Spotlight as premium alt
+SPK3,USB DAC PCM2704 Audio Interface,Texas Instruments,PCM2704CDBR,C148833,C148833,1,3.20,best-guess (verify) — LCSC C-number for PCM2704 SSOP; verify JLCPCB assembly availability
+NET1,Gigabit Ethernet Controller (onboard Orin Nano),NVIDIA/Marvell,88Q2112 (onboard),N/A,N/A,0,0.00,included in Jetson Orin Nano SoM — no separate part needed
+NET2,Sierra Wireless / Quectel LTE Cat-20 M.2 Module,Quectel,RM502Q-AE,N/A,N/A,1,89.00,training-data reference (verify) — M.2 B+M key; check carrier approval per region
+NET3,Nano-SIM Tray Push-Pull SMD,Molex,5033980190,C278193,C278193,1,0.45,best-guess (verify) — LCSC/JLCPCB common SIM tray; confirm form factor
+NET4,LTE Antenna 698-2700MHz SMA connector,Taoglas,FXP73.07.0100A,N/A,N/A,2,4.50,training-data reference (verify) — dual-MIMO antenna pair; route through SS enclosure via SMA bulkhead
+PWR1,AC-DC Power Supply 80W 24VDC 3.3A DIN-Rail,Mean Well,HDR-100-24,N/A,N/A,1,28.00,training-data reference (verify) — Mean Well industrial PSU; verify UL/CE rating for healthcare
+PWR2,DC-DC Buck Converter 24V to 5V 3A,XLSEMI,XL4016E1,C212247,C212247,1,0.85,best-guess (verify) — LCSC stock; verify thermal derating at 50C ambient
+PWR3,Schottky Diode Reverse Polarity Protection 3A 40V,Vishay,SS3P4-M3/84A,C441808,C441808,2,0.18,best-guess (verify) — LCSC C-number; SOD-323 package
+PWR4,Electrolytic Capacitor 1000uF 35V bulk input filter,Panasonic,EEUFR1V102,C128568,C128568,2,0.55,best-guess (verify) — verify ESR for switching supply input stage
+PWR5,IEC C14 Power Inlet with Fuse 10A hospital-grade,Schurter,4301.1012,N/A,N/A,1,6.20,training-data reference (verify) — hospital-grade inlet; verify UL approval for healthcare enviro
+ENC1,316 Stainless Steel Sheet 2mm 400x300mm front panel,custom fab,N/A,N/A,N/A,1,48.00,training-data reference (verify) — local sheet metal shop; laser cut + TIG weld; electropolish extra ~$20
+ENC2,316 Stainless Steel Sheet 2mm 400x100mm side panels x2,custom fab,N/A,N/A,N/A,2,18.00,training-data reference (verify) — same fab run as front panel; economies of scale
+ENC3,316 Stainless Steel Sheet 2mm 400x300mm rear panel,custom fab,N/A,N/A,N/A,1,36.00,training-data reference (verify) — includes cable gland knockout patterns
+ENC4,EPDM Gasket 3mm Cross-Section IP65 Perimeter Seal,Freudenberg,N/A (custom cut),N/A,N/A,1,9.00,training-data reference (verify) — cut-to-length EPDM cord 70 Shore A; verify IP65 crush spec
+ENC5,IP68 Cable Gland M20 Stainless Steel,Lapp Kabel,SKINTOP MS-M20,N/A,N/A,3,4.80,training-data reference (verify) — 3x glands: AC power, Ethernet, spare; verify M20 thread depth
+ENC6,M6 A4 Stainless Steel Security Captive Screw Torx T20,Tr-Fastenings,TFC M6x16 T20,N/A,N/A,16,0.55,training-data reference (verify) — tamper-resistant fasteners; verify captive nut plate
+ENC7,Anti-microbial Vinyl Wrap Sheet (front face graphic),3M,IJ180mC-10,N/A,N/A,1,12.00,training-data reference (verify) — Microban-treated wrap; custom print for UI labels
+ENC8,Wall-Mount Bracket Adjustable 316 SS,custom fab,N/A,N/A,N/A,1,22.00,training-data reference (verify) — custom bracket; ADA height adjustment; M12 through-bolts not included
+MISC1,UV-C LED Strip 265nm 100mW 300mm,Seoul Viosys,CUN6AF4A,N/A,N/A,1,14.00,training-data reference (verify) — for idle sanitization cycle; verify UV-C safety compliance EN 62471
+MISC2,PIR Occupancy Sensor Module 5m range,Panasonic,EKMC1603111,C258623,C258623,1,3.40,best-guess (verify) — LCSC stock; used for camera wake trigger
+MISC3,Ambient Light Sensor I2C VEML7700,Vishay,VEML7700-TT,C78927,C78927,1,0.95,best-guess (verify) — LCSC stock; for backlight auto-brightness control
+MISC4,RTC Module DS3231 with battery backup,Maxim,DS3231MZ+,C60863,C60863,1,2.80,best-guess (verify) — LCSC C-number; I2C interface; for offline log timestamping
+MISC5,Tamper Microswitch SPDT 0.1A 30V,Omron,SS-5GL,C258919,C258919,2,0.75,best-guess (verify) — rear panel + hinge tamper detection; verify actuation force
+MISC6,64GB eMMC Module for Jetson Orin Nano,Kingston / Swissbit,N/A (OEM),N/A,N/A,1,18.00,training-data reference (verify) — Jetson Orin Nano has onboard eMMC; external SD card for logs only
+MISC7,32GB Industrial MicroSD Card (log storage),Western Digital,SDSQQVR-032G,N/A,N/A,1,9.00,training-data reference (verify) — industrial temp rating -40 to +85C; verify write endurance rating
+MISC8,Thermal Interface Pad 3W/mK 100x100x1mm,Bergquist / Laird,GP3000,N/A,N/A,2,3.50,training-data reference (verify) — between Jetson module and SS rear panel heat spreader; verify clamping pressure
+MISC9,Fan (NONE — fanless design passive cooling),N/A,N/A,N/A,N/A,0,0.00,fanless design — Jetson Orin Nano passive thermal via SS enclosure rear panel heatsink
+MISC10,Custom PCBA (power distribution + IO breakout),in-house design,N/A,N/A,N/A,1,35.00,training-data reference (verify) — 4-layer PCB ~80x60mm; includes DC rails, audio amp, SIM tray, ALS, PIR; JLCPCB PCBA estimate

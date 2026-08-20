@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shattered Prism Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Moving gradient background lights -->
+  <div class="prism-light-layer" id="light-bg"></div>
+
+  <div class="prism-container">
+    <header class="prism-header">
+      <a href="../index.html" class="nav-back">← Back to Overview</a>
+      <h1 class="prism-title">Shattered Prism</h1>
+      <p class="prism-subtitle">Iridescent light refraction, translucent layering, and glass angles.</p>
+    </header>
+
+    <main class="prism-grid">
+      <!-- Info Card -->
+      <section class="prism-card info-card">
+        <h2>Light Refraction</h2>
+        <p>A style centered around the physics of glass prisms. It utilizes high-transparency panels layered over floating iridescent light gradients that shift and bend as layers overlay.</p>
+      </section>
+
+      <!-- Interactive Prism Card -->
+      <section class="prism-card interactive-card" id="prism-glass">
+        <h2>Refractive Window</h2>
+        <p>Hover and move your cursor over this glass pane to warp the underlying light spectrum coordinates.</p>
+        <div class="glass-pane-effect">
+          <div class="glass-glare"></div>
+        </div>
+      </section>
+
+      <!-- Structure card -->
+      <section class="prism-card list-card">
+        <h2>Prism Scheme</h2>
+        <ul class="prism-list">
+          <li>- Layered glassmorphic blur</li>
+          <li>- Diagonal shattered angle cuts</li>
+          <li>- Shifting color spectrums</li>
+          <li>- Glossy glass highlights</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

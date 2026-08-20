@@ -1,0 +1,42 @@
+qty,reference,description,manufacturer,mfg_pn,lcsc_pn,jlcpcb_pn,unit_cost_usd,extended_cost_usd,notes
+1,U1,"MCU module, Xtensa LX7 dual-core, 16MB flash + 8MB PSRAM, Wi-Fi/BLE",Espressif,ESP32-S3-WROOM-1-N16R8,C2913203,C2913203,3.40,3.40,verify-before-order; price assumes >1k reel
+4,U2/U3/U4/U5,"9-axis IMU, ±32g / ±4000dps, SPI/I2C",TDK InvenSense,ICM-42688-P,C2655085,C2655085,4.85,19.40,verify-before-order; arm constellation; consider ICM-45686 reroll later
+1,U6,"6-axis IMU, low-power torso reference",Bosch,BMI270,C2655086,C?????,2.95,2.95,verify-before-order
+2,U7/U8,"3-axis magnetometer, 18-bit",MEMSIC,MMC5983MA,C?????,C?????,1.85,3.70,verify-before-order; one per wrist
+1,U9,"Barometric pressure + temp sensor",Bosch,BMP390,C?????,C?????,2.40,2.40,verify-before-order; logging only
+1,U10,"LoRa transceiver 150-960MHz, +22dBm",Semtech,SX1262IMLTRT,C497338,C497338,3.20,3.20,verify-before-order
+1,U11,"BLE 5.4 SoC, fallback link",Nordic,nRF52833-QIAA,C?????,C?????,3.80,3.80,verify-before-order; optional if S3 BLE sufficient
+1,U12,"USB-PD buck-boost charger, I2C",Texas Instruments,BQ25798RQMR,C?????,C?????,4.10,4.10,verify-before-order
+1,U13,"Battery fuel gauge, 1S",Texas Instruments,BQ27441-G1A,C?????,C?????,2.05,2.05,verify-before-order
+1,U14,"Battery protection, dual-FET + DW01",Mixed,DW01A+8205A,C8898,C8898,0.16,0.16,verify-before-order
+4,U15-U18,"Haptic driver, LRA / ERM, I2C",Texas Instruments,DRV2605LDGSR,C92529,C92529,1.95,7.80,verify-before-order; 4× LRAs
+1,U19,"I2C multiplexer / level-shift, 4-ch",Texas Instruments,TCA9546APWR,C129975,C129975,0.85,0.85,verify-before-order; bus-A vs bus-B separation
+1,U20,"LDO 3.3V 600mA, low-noise, for analog rail",Diodes Inc,AP2127K-3.3,C90233,C90233,0.18,0.18,verify-before-order
+1,U21,"3V3 buck for digital, 1A",MPS,MP2315,C108607,C108607,0.42,0.42,verify-before-order
+1,U22,"USB ESD/CC protector, USB-C",ON Semi,NCP360,C?????,C?????,0.55,0.55,verify-before-order
+1,U23,"USB-C receptacle, 16-pin, SMD, IP-rated optional flap",GCT,USB4105-GF-A,C2988369,C?????,0.62,0.62,verify-before-order
+4,L1-L4,"Linear resonant actuator, 10mm, 235Hz",Vybronics / Jinlong,VG1040003D,C?????,C?????,1.40,5.60,verify-before-order; sealed for wash-cycle
+1,B1,"Li-poly cell pack, 5000mAh 1S with PCM",Generic / EVE,LP605068-5000-PCM,C?????,C?????,9.50,9.50,verify-before-order; UN38.3 tested cell required
+1,ANT1,"915MHz LoRa antenna, flex PCB, IPEX",Linx / Pulse,ANT-915-FPC-UFL,C?????,C?????,1.45,1.45,verify-before-order
+1,ANT2,"2.4GHz BLE chip antenna",Yageo / Johanson,2450AT18A100E,C?????,C?????,0.42,0.42,verify-before-order
+1,FUSE1,"Polyfuse 3A trip + 30A pulse fuse",Littelfuse,1812L300,C115603,C115603,0.22,0.22,verify-before-order
+1,SW1,"Tactile pushbutton, IP67, side-actuated",E-Switch,RP3502MA,C?????,C?????,1.10,1.10,verify-before-order; chest hub power/menu
+1,LED1,"RGB LED 0805, status",Everlight,EAST1010RGBA0,C?????,C?????,0.28,0.28,verify-before-order
+1,XTAL1,"32.768kHz crystal, RTC",Abracon,ABS07-32.768KHZ,C32346,C32346,0.18,0.18,verify-before-order
+1,XTAL2,"32MHz TCXO, LoRa reference",Abracon,ASTX-H11-32.000MHZ,C?????,C?????,0.95,0.95,verify-before-order
+40,R+C,"Passives — 0402 resistors and MLCCs (kitted)",Yageo / Samsung,Mixed,C?????,C?????,0.012,0.48,verify-before-order; ~40 parts kitted by JLC
+1,PCB1,"Hub PCB, 6-layer, IP-grade ENIG, 60x40mm",JLCPCB,Custom,n/a,JLCPCB,2.20,2.20,verify-before-order; @1k panelized
+4,PCB2,"IMU pod sub-board, 2-layer, 18x12mm",JLCPCB,Custom,n/a,JLCPCB,0.35,1.40,verify-before-order
+1,FFC1,"Flat-flex cable kit, silicone-jacket, 28AWG, custom 8-cond",Würth / custom,Custom,C?????,C?????,4.50,4.50,verify-before-order; sleeve-routed
+4,POD,"IMU pod housing, ABS injection mold, snap-on",Custom mold,Custom-POD-v1,n/a,n/a,1.20,4.80,verify-before-order; tooling amortized
+1,HUB-ENC,"Hub housing, IP66 PU over-mold, FR",Custom mold,Custom-HUB-v1,n/a,n/a,3.40,3.40,verify-before-order; tooling amortized
+1,VEST,"ANSI/ISEA 107 Type R Class 3 FR vest, with sewn liner",Radians + CMT,SV59-LINER,n/a,n/a,28.00,28.00,verify-before-order; sourced + modified
+1,VEL,"Velcro / hook-loop kit + retention straps",3M,SJ3526N,C?????,C?????,1.60,1.60,verify-before-order
+1,LBL,"FCC / ISED / serial label, polyimide",Brady,Custom,n/a,n/a,0.30,0.30,verify-before-order
+1,PKG,"Retail box + foam insert + quickstart card",Custom,Custom-PKG-v1,n/a,n/a,2.80,2.80,verify-before-order
+1,CABLE,"USB-C to USB-C charging cable, 1m, IP54",Generic,USB-C-1M-IP54,C?????,C?????,1.95,1.95,verify-before-order
+1,ASSY,"PCBA assembly labor (JLC SMT @ qty 1k, both PCBs)",JLCPCB,n/a,n/a,n/a,6.50,6.50,verify-before-order
+1,INTG,"Final integration: stitch liner, route FFC, fit pods, QA",Internal / CM,n/a,n/a,n/a,9.00,9.00,labor estimate @ 1k qty
+1,TEST,"Functional test + RF cal + 30-min burn-in",Internal,n/a,n/a,n/a,2.40,2.40,test fixture amortized
+1,SHIP,"Inbound logistics + duty allocation",n/a,n/a,n/a,n/a,1.80,1.80,verify-before-order
+TOTAL,,,,,,,,141.45,"BOM @ qty 1k; verify-before-order across all lines"

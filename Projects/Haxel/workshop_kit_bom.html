@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HAXEL Workshop Kit - Bill of Materials & Assembly Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --panel-bg: rgba(22, 30, 46, 0.85);
+      --accent-cyan: #00f2fe;
+      --accent-blue: #4facfe;
+      --accent-orange: #ff7e5f;
+      --text-main: #f0f4f8;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 0;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-bottom: 30px;
+    }
+
+    .kit-image-container {
+      margin-bottom: 30px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .kit-image-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .info-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 4px solid var(--accent-cyan);
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .info-card h3 {
+      margin-top: 0;
+      color: var(--accent-cyan);
+    }
+
+    .warning-box {
+      background: rgba(255, 126, 95, 0.1);
+      border: 1px solid var(--accent-orange);
+      color: #ffb199;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .btn-link {
+      display: inline-block;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      color: #000;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+    }
+
+    .disabled-tag {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>HAXEL Workshop Kit</h1>
+    <div class="subtitle">Bill of Materials (BOM) & Assembly Guide</div>
+
+    <div class="kit-image-container">
+      <img src="images/workshopKIT.jpg" alt="HAXEL Workshop Kit Assembly Preview">
+    </div>
+
+    <div class="info-card">
+      <h3>Kit Description & Notes</h3>
+      <p>The DFRobot FireBeetle ESP32-C6 Mini was specifically selected for this workshop kit because it features an onboard LiPo charger circuit.</p>
+      <p>Each kit includes 5 custom weighted haptic heads designed to fit directly over the brass adapter that is superglued to the motor shafts.</p>
+
+      <div class="warning-box">
+        <span>⚡ Recharging Note:</span>
+        <span>To recharge when a LiPo battery is attached, toggle the power switch to ON, then plug in the USB-C cable.</span>
+      </div>
+    </div>
+
+    <h2>Bill of Materials (BOM)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Description</th>
+          <th>Link / Reference</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Microcontroller</strong></td>
+          <td>ESP32-C6 FireBeetle Mini (Built-in LiPo Charger)</td>
+          <td><a href="https://www.dfrobot.com/product-2778.html" target="_blank" class="btn-link">DFRobot Store</a></td>
+        </tr>
+        <tr>
+          <td><strong>Vibration Motor</strong></td>
+          <td>Coin Vibration Cells</td>
+          <td><a href="https://www.aliexpress.us/item/3256807364342330.html" target="_blank" class="btn-link">AliExpress</a></td>
+        </tr>
+        <tr>
+          <td><strong>Coreless Motor</strong></td>
+          <td>MIN10FB11G Haptic Motor</td>
+          <td><a href="https://nmbtc.com/parts/m1n10fb11g/" target="_blank" class="btn-link">NMB Spec Sheet</a></td>
+        </tr>
+        <tr>
+          <td><strong>Eccentric Weights</strong></td>
+          <td>5x 3D Printed Weighted Heads & Adapter</td>
+          <td><a href="https://dillonsimeone.com/ParametricModeling/16-HapticEccentricWeight/" target="_blank" class="btn-link">Parametric Models</a></td>
+        </tr>
+        <tr>
+          <td><strong>Power Switch</strong></td>
+          <td>Mini Toggle Switch</td>
+          <td><a href="https://www.aliexpress.us/item/3256809135893055.html" target="_blank" class="btn-link">AliExpress</a></td>
+        </tr>
+        <tr>
+          <td><strong>LiPo Battery</strong></td>
+          <td>602540 Polymer Li-ion Battery (Fits 3D Frame)</td>
+          <td><a href="https://www.alibaba.com/product-detail/Polymer-li-ion-polymer-battery-602540_1601333501205.html" target="_blank" class="btn-link">Alibaba Supplier</a></td>
+        </tr>
+        <tr>
+          <td><strong>3D Printed Frame</strong></td>
+          <td>Enclosure & Motor Mount STL File</td>
+          <td><span class="disabled-tag">(STL model to be added later)</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      HAXEL Open-Source Haptic Pattern Engine & Fleet System
+    </div>
+  </div>
+</body>
+</html>

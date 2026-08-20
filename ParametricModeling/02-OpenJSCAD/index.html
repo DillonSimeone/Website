@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenJSCAD V2 - Parametric CAD</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --accent-cyan: #22d3ee;
+            --accent-pink: #f472b6;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-dark);
+            color: white;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        #viewer {
+            flex: 1;
+            height: 100%;
+        }
+
+        #controls {
+            width: 320px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin: 0;
+            background: linear-gradient(to right, var(--accent-cyan), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .category {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-cyan);
+        }
+
+        .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            float: right;
+        }
+
+        .description {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.5;
+        }
+
+        .badge {
+            background: var(--accent-pink);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: bold;
+        }
+
+        /* Loading Spinner */
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h1>Parametric OpenJSCAD</h1>
+        <div class="category">Approach 02: Functional CSG</div>
+        
+        <div class="description">
+            OpenJSCAD V2 uses a functional approach. The design is a pure function that returns geometry.
+        </div>
+
+        <div class="control-group">
+            <label>Radius <span class="value" id="radiusVal">10</span></label>
+            <input type="range" id="radius" min="5" max="30" step="1" value="10">
+        </div>
+
+        <div class="control-group">
+            <label>Height <span class="value" id="heightVal">40</span></label>
+            <input type="range" id="height" min="10" max="100" step="1" value="40">
+        </div>
+
+        <div class="control-group">
+            <label>Twist <span class="value" id="twistVal">90</span>°</label>
+            <input type="range" id="twist" min="0" max="360" step="1" value="90">
+        </div>
+
+        <div class="control-group">
+            <label>Sides <span class="value" id="sidesVal">6</span></label>
+            <input type="range" id="sides" min="3" max="50" step="1" value="6">
+        </div>
+
+        <div style="margin-top: auto;">
+            <div class="category">Powered by</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="badge">JSCAD V2</span>
+                <span style="font-size: 0.8rem; opacity: 0.5;">REGL Renderer</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "@jscad/modeling": "https://esm.sh/@jscad/modeling@2.12.0",
+                "three": "https://esm.sh/three@0.136.0",
+                "three-orbitcontrols": "https://esm.sh/three@0.136.0/examples/jsm/controls/OrbitControls.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as modeling from '@jscad/modeling';
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three-orbitcontrols';
+
+        const { primitives, booleans, transforms, extrusions } = modeling;
+
+        // --- Viewport Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth - 320, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(50, 50, 50);
+        controls.update();
+
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(100, 100, 100);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        let currentMesh = null;
+
+        // --- Modeling Logic ---
+        function generateModel(params) {
+            const { radius, height, twist, sides } = params;
+
+            // Simplified modeling in JSCAD
+            // Create a polygon base
+            const baseShape = primitives.polygon({
+                points: Array.from({ length: sides }, (_, i) => {
+                    const angle = (i / sides) * Math.PI * 2;
+                    return [Math.cos(angle) * radius, Math.sin(angle) * radius];
+                })
+            });
+
+            // Extrude with twist (linear_extrude)
+            const solid = extrusions.extrudeLinear({
+                height: height,
+                twistAngle: (twist * Math.PI) / 180,
+                twistSteps: 30
+            }, baseShape);
+
+            // Hollow it out?
+            const hollow = transforms.translate([0, 0, 2], extrusions.extrudeLinear({
+                height: height,
+                twistAngle: (twist * Math.PI) / 180,
+                twistSteps: 30
+            }, transforms.scale([0.8, 0.8, 1], baseShape)));
+
+            const result = booleans.subtract(solid, hollow);
+            
+            return result;
+        }
+
+        // --- Bridge: JSCAD to Three.js ---
+        // This is a simplified function to convert JSCAD geometry to Three.js
+        function jscadToThree(jscadGeom) {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            
+            // Extract triangles from JSCAD geometry
+            jscadGeom.polygons.forEach(polygon => {
+                // JSCAD uses CSG polygons, we need to triangulate them
+                // For simplicity, we assume they are already triangles or simple convex quads
+                const pts = polygon.vertices;
+                for (let i = 1; i < pts.length - 1; i++) {
+                    vertices.push(...pts[0], ...pts[i], ...pts[i+1]);
+                }
+            });
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.computeVertexNormals();
+            
+            const material = new THREE.MeshPhysicalMaterial({
+                color: 0x00f2ff,
+                emissive: 0x002233,
+                metalness: 0.2,
+                roughness: 0.1,
+                transmission: 0.6,
+                thickness: 2,
+                transparent: true,
+                opacity: 0.9,
+                side: THREE.DoubleSide
+            });
+
+            return new THREE.Mesh(geometry, material);
+        }
+
+        function update() {
+            const params = {
+                radius: parseFloat(document.getElementById('radius').value),
+                height: parseFloat(document.getElementById('height').value),
+                twist: parseFloat(document.getElementById('twist').value),
+                sides: parseInt(document.getElementById('sides').value)
+            };
+
+            // Update UI
+            document.getElementById('radiusVal').innerText = params.radius;
+            document.getElementById('heightVal').innerText = params.height;
+            document.getElementById('twistVal').innerText = params.twist;
+            document.getElementById('sidesVal').innerText = params.sides;
+
+            if (currentMesh) scene.remove(currentMesh);
+
+            try {
+                const jscadModel = generateModel(params);
+                currentMesh = jscadToThree(jscadModel);
+                scene.add(currentMesh);
+            } catch (e) {
+                console.error("Modeling error:", e);
+            }
+        }
+
+        // --- Event Listeners ---
+        ['radius', 'height', 'twist', 'sides'].forEach(id => {
+            document.getElementById(id).addEventListener('input', update);
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 320) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 320, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentMesh) currentMesh.rotation.z += 0.005;
+            renderer.render(scene, camera);
+        }
+
+        update();
+        animate();
+
+    </script>
+</body>
+</html>

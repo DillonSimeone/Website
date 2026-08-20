@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro Terminal Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="crt-overlay"></div>
+  <div class="terminal-container">
+    <header class="terminal-header">
+      <a href="../index.html" class="nav-back">[ESC] ESCAPE_TO_HUB</a>
+      <h1 class="term-title">RETRO-OS V1.0</h1>
+      <p class="term-desc">PHOSPHOR CRT SIMULATION RUNNING ON CORE 0.</p>
+    </header>
+
+    <main class="terminal-grid">
+      <section class="term-box">
+        <div class="box-title">┌── SYSTEM INFO ──┐</div>
+        <div class="box-content">
+          <p>ROM SIZE: 640KB RAM</p>
+          <p>COLOR: MONOCHROME GREEN</p>
+          <p>DISPLAY: 50HZ CRT DECK</p>
+          <p>AUDIO: 1-BIT SYNTHESIZER</p>
+        </div>
+        <div class="box-footer">└─────────────────┘</div>
+      </section>
+
+      <section class="term-box">
+        <div class="box-title">┌── LIVE SHELL ──┐</div>
+        <div class="box-content shell-logs" id="shell-logs">
+          <p class="log-line">BOOTING RETRO-OS...</p>
+          <p class="log-line">LOADING DRIVERS... OK</p>
+          <p class="log-line">MOUNTING A:\ ... OK</p>
+        </div>
+        <div class="input-line">
+          <span>A:\></span>
+          <input type="text" class="shell-input" id="shell-input" autocomplete="off" autofocus>
+          <span class="cursor">█</span>
+        </div>
+        <div class="box-footer">└────────────────┘</div>
+      </section>
+
+      <section class="term-box">
+        <div class="box-title">┌── DISPLAY CTRL ──┐</div>
+        <div class="box-content settings-box">
+          <p>CRT NOISE DECK:</p>
+          <button class="term-btn" id="toggle-scanlines">TOGGLE SCANLINES</button>
+          <button class="term-btn" id="toggle-flicker">TOGGLE CRT FLICKER</button>
+        </div>
+        <div class="box-footer">└──────────────────┘</div>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

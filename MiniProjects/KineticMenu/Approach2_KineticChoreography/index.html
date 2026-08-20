@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinetic Lattice Menu</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #ui-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            pointer-events: none;
+        }
+        #ui-layer .menu {
+            pointer-events: auto;
+        }
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 10px;
+            opacity: 0.3;
+            color: white;
+            z-index: 30;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="canvas-mount"></div>
+
+    <div id="ui-layer" class="ui-overlay">
+        <div class="header">
+            <div class="header-left">
+                <h1>Lattice_Protocol</h1>
+                <p id="pose-label">Navigating_Maze...</p>
+            </div>
+            <div class="header-right">
+                <p>Raymarched_Environment</p>
+                <p>Active_Nodes: 64</p>
+            </div>
+        </div>
+
+        <nav class="menu">
+            <button class="menu-btn" data-pose="0">
+                <span class="number">01</span>
+                <span class="label">About Me</span>
+            </button>
+            <button class="menu-btn" data-pose="1">
+                <span class="number">02</span>
+                <span class="label">My Works</span>
+            </button>
+            <button class="menu-btn" data-pose="2">
+                <span class="number">03</span>
+                <span class="label">My Miniprojects</span>
+            </button>
+        </nav>
+    </div>
+
+    <div class="debug-info" id="fps">FPS: --</div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
