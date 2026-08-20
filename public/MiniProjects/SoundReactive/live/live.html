@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deaf DJ Live Sound-Reactive Shader Suite</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Special+Elite&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="live.css">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="halftone-screen"></div>
+
+  <!-- Main Projection & Shader Canvas Target -->
+  <div id="canvas-projection-wrapper">
+    <div id="canvas-container"></div>
+  </div>
+
+  <!-- Top DJ HUD Overlay -->
+  <header class="dj-top-hud">
+    <!-- Left/Center Deaf DJ FFT Spectrum Telemetry -->
+    <div class="hud-col center">
+      <div class="telemetry-box">
+        <div class="spectrum-mini-bars">
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-sub" class="bar-fill sub"></div></div>
+            <span class="freq-tag">SUB</span>
+            <span class="freq-sub">20-60Hz</span>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-bass" class="bar-fill bass"></div></div>
+            <span class="freq-tag">BASS</span>
+            <span class="freq-sub">250Hz</span>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-mid" class="bar-fill mid"></div></div>
+            <span class="freq-tag">MID</span>
+            <span class="freq-sub">1kHz</span>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-high" class="bar-fill high"></div></div>
+            <span class="freq-tag">HIGH</span>
+            <span class="freq-sub">6kHz</span>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-air" class="bar-fill air"></div></div>
+            <span class="freq-tag">AIR</span>
+            <span class="freq-sub">20kHz</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="hud-col right">
+      <div class="audio-source-controls">
+        <button id="btn-mic" class="hud-btn active">MIC_IN</button>
+        <button id="btn-demo" class="hud-btn">TEST_BEAT</button>
+        <label for="audio-file-input" class="hud-btn file-upload-label">LOAD_FILE</label>
+        <input type="file" id="audio-file-input" accept="audio/*" style="display:none;">
+      </div>
+      <div class="hud-divider"></div>
+      <div class="system-tools">
+        <button id="btn-tweak" class="hud-btn" title="Press [T] to toggle Shader Tweaker">TWEAK [T]</button>
+        <button id="btn-calibrate" class="hud-btn alt" title="Press [C] to toggle Projector Mapping">MAPPING [C]</button>
+        <button id="btn-fullscreen" class="hud-btn alt" title="Press [F] for Fullscreen">FULLSCREEN [F]</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Slide-Out DJ Tweak Drawer -->
+  <aside id="dj-tweak-drawer" class="dj-tweak-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <span class="case-badge">DSP // LIVE TUNER</span>
+        <h2>REAL-TIME SHADER PARAMS</h2>
+      </div>
+      <button id="btn-close-drawer" class="drawer-close-btn" title="Close [T]">&times;</button>
+    </div>
+
+    <div class="drawer-content">
+      <!-- Section 1: Global Acoustics & Synesthesia -->
+      <div class="tweak-section">
+        <div class="section-title">GLOBAL ACOUSTICS & COLOR</div>
+        
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">BASS PUNCH (SUB & KICK)</span>
+            <span id="val-bass-punch" class="tweak-val">1.0x</span>
+          </div>
+          <input type="range" id="param-bass-punch" min="0.2" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">TREBLE SPARKLE (AIR & HI-HATS)</span>
+            <span id="val-treble-sparkle" class="tweak-val">1.0x</span>
+          </div>
+          <input type="range" id="param-treble-sparkle" min="0.2" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">FFT SMOOTHING (RESPONSE)</span>
+            <span id="val-smoothing" class="tweak-val">0.22</span>
+          </div>
+          <input type="range" id="param-smoothing" min="0.05" max="0.55" step="0.01" value="0.22">
+        </div>
+
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">PALETTE HUE SHIFT</span>
+            <span id="val-hue-shift" class="tweak-val">+0°</span>
+          </div>
+          <input type="range" id="param-hue-shift" min="0.0" max="1.0" step="0.02" value="0.0">
+        </div>
+
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">GLOW & BLOOM MULTIPLIER</span>
+            <span id="val-glow-mult" class="tweak-val">1.0x</span>
+          </div>
+          <input type="range" id="param-glow-mult" min="0.3" max="2.5" step="0.1" value="1.0">
+        </div>
+      </div>
+
+      <!-- Section 2: Active Shader Specific Controls -->
+      <div class="tweak-section">
+        <div class="section-title" id="active-shader-section-title">ACTIVE SHADER TUNER</div>
+        <div id="shader-custom-controls">
+          <!-- Populated dynamically based on active shader -->
+        </div>
+      </div>
+
+      <!-- Section 3: Persistence & Defaults -->
+      <div class="tweak-section storage-section">
+        <div class="section-title">PRESETS & PERSISTENCE</div>
+        <div class="storage-btn-group">
+          <button id="btn-save-settings" class="tweak-btn primary">SAVE TO STORAGE</button>
+          <button id="btn-reset-settings" class="tweak-btn danger">RESTORE DEFAULTS</button>
+        </div>
+        <div id="storage-status-msg" class="storage-status">ALL SETTINGS AUTOSAVED</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Bottom DJ Deck / Shader Switcher -->
+  <footer class="dj-bottom-deck">
+    <div class="deck-controls-row">
+      <div class="gain-meter-container">
+        <span class="ctrl-label">MIC GAIN</span>
+        <input type="range" id="slider-gain" min="0.2" max="3.0" step="0.1" value="1.2">
+        <span id="gain-val">1.2x</span>
+        <div id="clipping-warning" class="clip-badge">CLIP +0dB</div>
+      </div>
+
+      <div class="shader-quick-dock" id="shader-dock">
+        <!-- Buttons 1-10 populated dynamically by live.js -->
+      </div>
+    </div>
+  </footer>
+
+  <!-- Start Audio Splash Modal -->
+  <div id="start-modal" class="modal-overlay">
+    <div class="noir-modal-card">
+      <div class="case-badge">DEAF_DJ // SYSTEM INITIALIZATION</div>
+      <h2>SOUND-REACTIVE PROJECTION SHADERS</h2>
+      <p>
+        Real-time synesthetic GLSL visual engine with 20Hz (Crimson Red) to 20,000Hz (Violet/Air) FFT spectrum mapping, tactile beat telemetry, and 4-point corner pinning for live projection mapping.
+      </p>
+      <div class="modal-actions">
+        <button id="modal-btn-mic" class="noir-btn primary">START WITH LIVE MICROPHONE</button>
+        <button id="modal-btn-demo" class="noir-btn">PLAY BUILT-IN TEST BEAT</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="live.js"></script>
+</body>
+</html>

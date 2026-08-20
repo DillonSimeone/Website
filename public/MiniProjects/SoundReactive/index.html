@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sound-Reactive Arts HUD</title>
+  <title>Sound-Reactive Arts HUD // Deaf DJ Projection Suite</title>
   
   <!-- Google Fonts for Neo-Noir / Typewriter theme -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +11,42 @@
   <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Special+Elite&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="hud-style.css">
+  <style>
+    .hero-card {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, rgba(255, 0, 85, 0.12) 0%, rgba(15, 15, 26, 0.95) 100%);
+      border: 2px solid #ff0055;
+      box-shadow: 0 0 25px rgba(255, 0, 85, 0.25);
+    }
+    .hero-card:hover {
+      box-shadow: 0 0 35px rgba(255, 0, 85, 0.5);
+      border-color: #ff3377;
+    }
+    .hero-tag {
+      background: #ff0055;
+      color: #fff;
+      padding: 3px 8px;
+      font-weight: bold;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .features-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .feat-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      border-radius: 2px;
+      color: #00e5ff;
+    }
+  </style>
 </head>
 <body>
   <!-- Gritty Newspaper Halftone Grid background -->
@@ -21,18 +57,168 @@
       <a href="../../../index.html" class="nav-back">/// RETURN_TO_PORTFOLIO</a>
       <h1 class="noir-title">SOUND_REACTIVE_ARTS</h1>
       <div class="noir-metadata">
-        <p>CASE FILE ID: #SR-9082 // STATUS: ACTIVE</p>
-        <p>SYSTEM LOG: ALL FREQUENCY ANALYZERS STABLE</p>
+        <p>CASE FILE ID: #SR-9082 // STATUS: DEAF DJ LIVE READY</p>
+        <p>SPECTRUM CALIBRATION: 20Hz (Crimson Red) $\to$ 20,000Hz (Violet/Air)</p>
       </div>
     </header>
 
     <main class="noir-grid">
-      <!-- Card 1: Sonic Sphere (Ripple) -->
+      <!-- FEATURED MASTER SUITE: LIVE DEAF DJ PROJECTION DECK -->
+      <a href="./live/live.html" class="noir-card project-card hero-card">
+        <span class="hero-tag">FEATURED // MASTER PERFORMANCE SUITE</span>
+        <h2 class="card-title">DEAF DJ LIVE PROJECTION SUITE</h2>
+        <p class="card-desc">
+          The all-in-one live performance console engineered for deaf DJs and stage projection mapping. Integrates all 10 sound-reactive shaders with hotkey switching [1-0], tactile beat metronome pulse rings, 7-band frequency telemetry, transient flash alerts, and interactive 4-point corner pinning for angled stage facades.
+        </p>
+        <div class="features-list">
+          <span class="feat-chip">10 GLSL Shaders</span>
+          <span class="feat-chip">20Hz-20kHz FFT</span>
+          <span class="feat-chip">Red-to-Purple Color Synesthesia</span>
+          <span class="feat-chip">Tactile Beat Metronome</span>
+          <span class="feat-chip">Corner Pinning [C]</span>
+        </div>
+        <div class="card-footer">
+          <span>SOURCE: MIC / TEST BEAT / FILE</span>
+          <span class="launch-btn" style="color:#ff0055; font-weight:bold;">LAUNCH LIVE DECK -></span>
+        </div>
+      </a>
+
+      <!-- Shader 1: Cymatics Resonance Matrix -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">ACOUSTIC CYMATICS</div>
+        <h2 class="card-title">CYMATICS RESONANCE MATRIX</h2>
+        <p class="card-desc">
+          Procedural Chladni plate wave interference. Low frequencies carve bold red nodal rings, subdividing into intricate violet geometric mandalas as treble sweeps up to 20kHz.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: CIRCULAR / FLOOR</span>
+          <span class="launch-btn">LAUNCH [1] -></span>
+        </div>
+      </a>
+
+      <!-- Shader 2: Chromatic Sub-Bass Shockwave -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">VOLUMETRIC TORUS</div>
+        <h2 class="card-title">CHROMATIC SUB-BASS SHOCKWAVE</h2>
+        <p class="card-desc">
+          Raymarched sonic compression cannon. 808 sub-bass triggers violent toroidal expansion with chromatic aberration; highs discharge purple electric filaments.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: PROSCENIUM / COLUMNS</span>
+          <span class="launch-btn">LAUNCH [2] -></span>
+        </div>
+      </a>
+
+      <!-- Shader 3: Architectural Isometric Voxel Grid -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">BOX STAGE WARPER</div>
+        <h2 class="card-title">ARCHITECTURAL VOXEL GRID</h2>
+        <p class="card-desc">
+          Designed for physical 3D projection-mapped box stages. Sub-bass extrudes central voxel columns in glowing magma; mid & treble ripple across facet wireframes in electric violet.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: 3D CUBES / BOOTH</span>
+          <span class="launch-btn">LAUNCH [3] -></span>
+        </div>
+      </a>
+
+      <!-- Shader 4: Synesthetic Spectral Nebula -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">INTERSTELLAR PLASMA</div>
+        <h2 class="card-title">SYNESTHETIC SPECTRAL NEBULA</h2>
+        <p class="card-desc">
+          Atmospheric fluid volumetric cloud. Bass stokes a deep crimson core fire while treble vocals and synth leads carve swirling ultraviolet cosmic filaments.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: BACKDROP / SCRIM</span>
+          <span class="launch-btn">LAUNCH [4] -></span>
+        </div>
+      </a>
+
+      <!-- Shader 5: Visual Metronome & Dual Phase Helix -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">BEAT-SYNC TELEMETRY</div>
+        <h2 class="card-title">DUAL PHASE HELIX & METRONOME</h2>
+        <p class="card-desc">
+          Provides high-contrast visual rhythm markers and Left/Right dual-deck track phasing. BPM pulse rings and downbeat markers give tactile visual tempo tracking.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: VERTICAL TOTEMS</span>
+          <span class="launch-btn">LAUNCH [5] -></span>
+        </div>
+      </a>
+
+      <!-- Shader 6: Cybernetic Geodesic Dome -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">VORONOI HEX SHIELD</div>
+        <h2 class="card-title">CYBERNETIC GEODESIC DOME</h2>
+        <p class="card-desc">
+          Hexagonal forcefield wrapping around curved surfaces. Cells radiate frequency energy from red epicenter outwards to laser-violet shield edges.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: DOMES / CEILINGS</span>
+          <span class="launch-btn">LAUNCH [6] -></span>
+        </div>
+      </a>
+
+      <!-- Shader 7: Audio-Reactive Mandelbulb -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">FRACTAL ABYSS</div>
+        <h2 class="card-title">AUDIO-REACTIVE MANDELBULB</h2>
+        <p class="card-desc">
+          3D fractal Mandelbulb whose geometric power and folding dimensions oscillate with sound complexity. Low bass delves into the core, treble crystallizes outer edges.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: PORTAL / WALLS</span>
+          <span class="launch-btn">LAUNCH [7] -></span>
+        </div>
+      </a>
+
+      <!-- Shader 8: Overdrive Glitch & Transient Matrix -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">AUDIO OVERDRIVE</div>
+        <h2 class="card-title">OVERDRIVE GLITCH & TRANSIENT MATRIX</h2>
+        <p class="card-desc">
+          Visual clipping & transient alarm. Snare hits trigger instantaneous RGB chromatic shear, CRT roll, and datamosh; alerts DJ to +0dB clipping visually.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: DROP PANELS</span>
+          <span class="launch-btn">LAUNCH [8] -></span>
+        </div>
+      </a>
+
+      <!-- Shader 9: Liquid Mercury Audio Caustics -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">FLUID SURFACE OPTICS</div>
+        <h2 class="card-title">LIQUID MERCURY AUDIO CAUSTICS</h2>
+        <p class="card-desc">
+          Molten reflective chrome pool bouncing light caustics. Sub-bass drives deep ocean swells, 10k-20kHz frequencies create shimmering prismatic ripples.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: FLOOR / SCULPTURES</span>
+          <span class="launch-btn">LAUNCH [9] -></span>
+        </div>
+      </a>
+
+      <!-- Shader 10: Infinite Hyperspace Warp Tunnel -->
+      <a href="./live/live.html" class="noir-card project-card">
+        <div class="card-tag">SPEED WARP WORMHOLE</div>
+        <h2 class="card-title">INFINITE HYPERSPACE TUNNEL</h2>
+        <p class="card-desc">
+          Multi-lane velocity warp grid. Bass energy bends the tunnel curvature in deep scarlet; high frequencies accelerate warp star speed lines in neon ultraviolet.
+        </p>
+        <div class="card-footer">
+          <span>SURFACE: CORRIDORS / TUNNELS</span>
+          <span class="launch-btn">LAUNCH [0] -></span>
+        </div>
+      </a>
+
+      <!-- Existing Classic 1: Sonic Sphere (Ripple) -->
       <a href="./ripple/ripple.html" class="noir-card project-card">
-        <div class="card-tag">CASE_01 // ACTIVE</div>
+        <div class="card-tag">CLASSIC // ACTIVE</div>
         <h2 class="card-title">SONIC SPHERE</h2>
         <p class="card-desc">
-          A real-time WebGL/Three.js installation driven by live microphone or audio input. Feeds custom audio frequency data to dynamically warp an icosahedron sphere using Noise Bubble, Plasma Pulse, and Digital Glitch shaders.
+          A real-time WebGL/Three.js installation driven by live microphone or audio input. Feeds custom audio frequency data to dynamically warp an icosahedron sphere.
         </p>
         <div class="card-footer">
           <span>SPECTRUM: 0-20kHz</span>
@@ -40,12 +226,12 @@
         </div>
       </a>
 
-      <!-- Card 2: Sound Tunnels -->
+      <!-- Existing Classic 2: Sound Tunnels -->
       <a href="./tunnel/index.html" class="noir-card project-card">
-        <div class="card-tag">CASE_02 // ACTIVE</div>
+        <div class="card-tag">CLASSIC // ACTIVE</div>
         <h2 class="card-title">THE TUNNELS</h2>
         <p class="card-desc">
-          A dual raymarching procedural tunnel engine. Uses dynamic weaving geometries governed by audio frequency and amplitude. High energy audio causes the two tunnels to collapse into a third, star-shaped wormhole.
+          A dual raymarching procedural tunnel engine. Uses dynamic weaving geometries governed by audio frequency and amplitude.
         </p>
         <div class="card-footer">
           <span>SPECTRUM: 0-20kHz</span>
