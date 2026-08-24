@@ -405,4 +405,23 @@ document.addEventListener('DOMContentLoaded', () => {
     drawHaxelTelemetry();
   }
 
+  // =================================================================
+  // 5. LETTER OF INTENT MANIFESTO VIEWER TOGGLE
+  // =================================================================
+  const toggleLoiBtn = document.getElementById('toggle-loi-btn');
+  const loiBox = document.getElementById('loi-full-text-box');
+
+  if (toggleLoiBtn && loiBox) {
+    toggleLoiBtn.addEventListener('click', () => {
+      if (loiBox.style.display === 'none' || !loiBox.style.display) {
+        loiBox.style.display = 'block';
+        toggleLoiBtn.textContent = '📖 Hide Full Text Manifesto';
+        loiBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        loiBox.style.display = 'none';
+        toggleLoiBtn.textContent = '📜 Read Full Text Manifesto (Interactive Gazette)';
+      }
+    });
+  }
+
 });
