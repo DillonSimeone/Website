@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=1280, initial-scale=0.35, maximum-scale=3.0, user-scalable=yes">
   <title>The Portland Tactile Dispatch // The Haptic Petting Zoo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -823,6 +823,63 @@
               an event for the human brain to fuse them into a single perceptual event. Delays exceeding 50ms destroy
               the illusion of touch. Our firmware utilizes bare-metal FreeRTOS queues on the ESP32-S3 and zero-overhead
               ESP-NOW packets to achieve round-trip latency under <strong>12ms</strong>.</p>
+
+            <!-- HAXEL FIRMWARE CORE ENGINE & INTERACTIVE TELEMETRY -->
+            <h4 class="sub-heading">✦ HAXEL ENGINE: THE "WLED FOR HAPTICS" ARCHITECTURE ✦</h4>
+            <p>
+              At the core of the Haptic Petting Zoo is <strong>HAXEL</strong> (Haptic Pixel Engine)—open-source ESP32 firmware created by Dillon Simeone.
+              Just as a <em>pixel</em> merges RGB values into one unit of visible light, a <strong>haxel</strong> collapses amplitude, carrier frequency, and transient phase into a single addressable unit of tactile sensation. Haxel serves as the unified firmware engine across all physical installations, suits, and workshop kits.
+            </p>
+
+            <div class="haxel-feature-grid">
+              <div class="haxel-spec-card">
+                <div class="haxel-spec-badge">FREERTOS DUAL CORE</div>
+                <h5>Core-Isolated DSP Engine</h5>
+                <p>Core 0 processes 32-band real-time I2S FFT binning and envelope followers; Core 1 handles WebSocket telemetry and captive portal web hosting.</p>
+              </div>
+
+              <div class="haxel-spec-card">
+                <div class="haxel-spec-badge">ZERO OVERHEAD</div>
+                <h5>ESP-NOW Mesh Synchronization</h5>
+                <p>Peer-to-peer wireless packet synchronization allowing multiple haptic suits, floorboards, and smart dials to pulse in sub-12ms lockstep.</p>
+              </div>
+
+              <div class="haxel-spec-card">
+                <div class="haxel-spec-badge">HAL ENGINE</div>
+                <h5>Universal Actuator Driver Abstraction</h5>
+                <p>Abstraction layers across ERMs, LRAs, Solenoid Tappers, Peltier Cells, and Brushless Motor Detents without hardware register lock-in.</p>
+              </div>
+
+              <div class="haxel-spec-card">
+                <div class="haxel-spec-badge">NO APP REQUIRED</div>
+                <h5>Captive Portal Web IDE</h5>
+                <p>Every ESP32 running Haxel broadcasts a mobile-first Web GUI with interactive visualizers, frequency sweepers, and pattern studio presets.</p>
+              </div>
+            </div>
+
+            <!-- INTERACTIVE HAXEL TELEMETRY CANVAS & MODE SELECTOR -->
+            <div class="haxel-interactive-chassis">
+              <div class="chassis-header">
+                <div class="chassis-title">
+                  <span class="live-pulse-dot"></span>
+                  <strong>HAXEL TELEMETRY OSCILLOSCOPE SIMULATOR</strong>
+                </div>
+                <div class="chassis-mode-buttons">
+                  <button type="button" class="haxel-mode-btn active" data-haxel-mode="fft">32-Band FFT</button>
+                  <button type="button" class="haxel-mode-btn" data-haxel-mode="pulse">Solenoid Recoil</button>
+                  <button type="button" class="haxel-mode-btn" data-haxel-mode="lra">LRA Resonant</button>
+                  <button type="button" class="haxel-mode-btn" data-haxel-mode="thermal">Peltier Thermal</button>
+                </div>
+              </div>
+
+              <canvas id="haxel-telemetry-canvas" width="600" height="150"></canvas>
+
+              <div class="chassis-footer">
+                <div><strong>Active Mode:</strong> <span id="haxel-mode-name" class="highlight-text">32-Band FFT Audio Reactivity</span></div>
+                <div><strong>Telemetry Stream:</strong> <span id="haxel-signal-readout">4-Channel Addressable Haxel Waveform (120 FPS)</span></div>
+                <div><a href="https://dillonsimeone.com/Projects/Haxel/index.html" target="_blank" class="haxel-inline-link">🚀 Open Full Haxel Web IDE &rarr;</a></div>
+              </div>
+            </div>
           </div>
         </article>
 
@@ -859,10 +916,10 @@
             </p>
           </div>
 
-          <!-- Teardown 2026 Workshop Video & HAXEL Hub -->
+          <!-- Recorded Media & Live Showcase -->
           <div class="gazette-box highlight-box flex-fill-box">
-            <h4 class="box-title">✦ TEARDOWN 2026 WORKSHOP TALK ✦</h4>
-            <p class="box-text">Watch Dillon's recorded masterclass from Portland's Teardown 2026 hardware conference:
+            <h4 class="box-title">✦ RECORDED MEDIA & TALKS ✦</h4>
+            <p class="box-text">Explore live performances and recorded masterclasses demonstrating the haptic engine in action:
             </p>
 
             <div class="video-preview-card" style="margin-bottom: 12px;">
@@ -874,7 +931,7 @@
                 </div>
               </a>
               <div class="video-meta-title">"Jazz Road Trip: Multisensory Live Performance"</div>
-              <small class="video-meta-sub">Universal Music Design &bull; Live Haptic Showcase</small>
+              <small class="video-meta-sub">Universal Music Design &bull; Live Haptic Showcase (Project Roots)</small>
             </div>
 
             <div class="video-preview-card">
@@ -885,7 +942,7 @@
                 </div>
               </a>
               <div class="video-meta-title">"Feel the Difference: A Haptic Petting Zoo"</div>
-              <small class="video-meta-sub">Crowd Supply Teardown 2026 &bull; Portland, OR</small>
+              <small class="video-meta-sub">Crowd Supply Teardown 2026 Workshop Talk &bull; Portland, OR</small>
             </div>
 
             <div class="download-links" style="margin-top: 12px;">

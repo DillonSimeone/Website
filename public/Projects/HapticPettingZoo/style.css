@@ -32,6 +32,7 @@ body {
   font-size: 1.05rem;
   line-height: 1.65;
   min-height: 100vh;
+  min-width: 1280px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -46,6 +47,7 @@ body {
   position: sticky;
   top: 0;
   width: 100%;
+  min-width: 1280px;
   background-color: #12100e;
   border-bottom: 2px solid var(--accent-gold);
   z-index: 1000;
@@ -54,7 +56,7 @@ body {
 }
 
 .edition-bar-inner {
-  max-width: 1400px;
+  width: 1240px;
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
@@ -129,8 +131,8 @@ body {
 /* NEWSPAPER CONTAINER */
 /* ================================================================= */
 .newspaper-container {
-  width: 95%;
-  max-width: 1400px;
+  width: 1280px;
+  min-width: 1280px;
   background-color: var(--paper-bg);
   border: 2px solid #3d352b;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 0 60px rgba(160, 130, 80, 0.12);
@@ -310,23 +312,9 @@ body {
   align-items: stretch;
 }
 
-@media (max-width: 1024px) {
-  .broadsheet-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-}
-
 .main-story-col {
   border-right: 1px solid var(--rule-color);
   padding-right: 36px;
-}
-
-@media (max-width: 1024px) {
-  .main-story-col {
-    border-right: none;
-    padding-right: 0;
-  }
 }
 
 .story-headline {
@@ -364,13 +352,6 @@ body {
   column-gap: 28px;
   column-rule: 1px solid var(--paper-dark);
   text-align: justify;
-}
-
-@media (max-width: 768px) {
-  .multi-col-text {
-    column-count: 1;
-    text-align: left;
-  }
 }
 
 .multi-col-text p {
@@ -1169,8 +1150,9 @@ body {
   font-family: var(--font-headline);
   font-size: 1.15rem;
   font-weight: 800;
-  margin: 20px 0 8px 0;
+  margin: 24px 0 12px 0;
   letter-spacing: 1px;
+  text-align: center;
 }
 
 .interactive-synth-box {
@@ -1179,17 +1161,19 @@ body {
   border: 2px solid var(--accent-gold);
   padding: 18px;
   margin: 18px 0 24px 0;
+  text-align: center;
 }
 
 .synth-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 12px;
   font-family: var(--font-mono);
   font-size: 0.9rem;
+  text-align: center;
 }
 
 .synth-controls input[type="range"] {
@@ -1208,9 +1192,12 @@ body {
 }
 
 .synth-readout {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
   margin-top: 14px;
   font-family: var(--font-mono);
   font-size: 0.8rem;
@@ -1229,6 +1216,174 @@ body {
   padding-bottom: 8px;
   margin-bottom: 8px;
   font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ================================================================= */
+/* HAXEL ENGINE & INTERACTIVE TELEMETRY CHASSIS */
+/* ================================================================= */
+.haxel-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0 20px 0;
+  justify-content: center;
+}
+
+.haxel-spec-card {
+  background-color: var(--paper-card);
+  border: 1px solid var(--lead-border);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.06);
+}
+
+.haxel-spec-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  background-color: var(--lead-border);
+  color: var(--paper-bg);
+  padding: 2px 6px;
+  border-radius: 2px;
+  align-self: center;
+}
+
+.haxel-spec-card h5 {
+  font-family: var(--font-headline);
+  font-size: 0.88rem;
+  margin: 2px 0 0 0;
+  color: var(--ink-black);
+  text-align: center;
+}
+
+.haxel-spec-card p {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  line-height: 1.35;
+  margin: 0;
+  text-align: center;
+}
+
+.haxel-interactive-chassis {
+  background-color: #12100e;
+  border: 2px solid var(--lead-border);
+  color: #e6dfd5;
+  padding: 16px;
+  margin-top: 16px;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.chassis-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #332d27;
+  padding-bottom: 8px;
+  text-align: center;
+}
+
+.chassis-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: #f7c967;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #52c41a;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #52c41a;
+  animation: pulseGlow 1.5s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; transform: scale(1.25); }
+}
+
+.chassis-mode-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.haxel-mode-btn {
+  background-color: #24201c;
+  border: 1px solid #4a4238;
+  color: #d1c7b8;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 2px;
+}
+
+.haxel-mode-btn:hover {
+  background-color: #38322c;
+  border-color: #f7c967;
+  color: #fff;
+}
+
+.haxel-mode-btn.active {
+  background-color: #b3822a;
+  border-color: #f7c967;
+  color: #000;
+  font-weight: bold;
+}
+
+#haxel-telemetry-canvas {
+  width: 100%;
+  height: 150px;
+  background-color: #080706;
+  border: 1px solid #2d2720;
+  display: block;
+  border-radius: 2px;
+}
+
+.chassis-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: #a89f91;
+  text-align: center;
+}
+
+.haxel-inline-link {
+  color: #f7c967;
+  text-decoration: none;
+  font-weight: bold;
+  border-bottom: 1px dashed #f7c967;
+}
+
+.haxel-inline-link:hover {
+  color: #ffffff;
+  border-bottom-style: solid;
 }
 
 /* ================================================================= */

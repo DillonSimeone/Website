@@ -246,4 +246,163 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // =================================================================
+  // 4. HAXEL TELEMETRY OSCILLOSCOPE SIMULATOR
+  // =================================================================
+  const haxelCanvas = document.getElementById('haxel-telemetry-canvas');
+  const haxelModeButtons = document.querySelectorAll('.haxel-mode-btn');
+  const haxelModeName = document.getElementById('haxel-mode-name');
+  const haxelSignalReadout = document.getElementById('haxel-signal-readout');
+
+  if (haxelCanvas) {
+    const hctx = haxelCanvas.getContext('2d');
+    let haxelMode = 'fft';
+    let hPhase = 0;
+    const binPeaks = new Array(32).fill(0);
+
+    const modeConfigs = {
+      fft: {
+        title: '32-Band Real-Time Audio FFT',
+        readout: 'Core 0 I2S DSP & Envelope Stream (120 FPS)'
+      },
+      pulse: {
+        title: 'Solenoid Transient Impact Recoil',
+        readout: 'High-Impact Recoil Duty Cycle (PWM 100% -> Ringdown)'
+      },
+      lra: {
+        title: 'LRA 175Hz Resonant Frequency Burst',
+        readout: 'Sine Drive at Resonant Peak (Auto-Tuned Phase)'
+      },
+      thermal: {
+        title: 'Peltier Thermoelectric Temperature Ramp',
+        readout: 'Solid-State Heat Pump Gradient (15°C - 42°C Control)'
+      }
+    };
+
+    haxelModeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        haxelModeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        haxelMode = btn.getAttribute('data-haxel-mode');
+
+        if (modeConfigs[haxelMode]) {
+          haxelModeName.textContent = modeConfigs[haxelMode].title;
+          haxelSignalReadout.textContent = modeConfigs[haxelMode].readout;
+        }
+      });
+    });
+
+    function drawHaxelTelemetry() {
+      const w = haxelCanvas.width;
+      const h = haxelCanvas.height;
+      hctx.clearRect(0, 0, w, h);
+
+      // Oscilloscope background grid
+      hctx.strokeStyle = '#221c17';
+      hctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        hctx.beginPath();
+        hctx.moveTo(x, 0);
+        hctx.lineTo(x, h);
+        hctx.stroke();
+      }
+      for (let y = 0; y < h; y += 30) {
+        hctx.beginPath();
+        hctx.moveTo(0, y);
+        hctx.lineTo(w, y);
+        hctx.stroke();
+      }
+
+      hPhase += 0.08;
+
+      if (haxelMode === 'fft') {
+        // Draw 32 spectral FFT bars
+        const numBars = 32;
+        const barWidth = (w - 40) / numBars;
+        const startX = 20;
+
+        for (let i = 0; i < numBars; i++) {
+          const targetVal = Math.abs(Math.sin(hPhase * 1.5 + i * 0.3) * Math.cos(hPhase * 0.7 - i * 0.15)) * (h - 40);
+          if (targetVal > binPeaks[i]) {
+            binPeaks[i] = targetVal;
+          } else {
+            binPeaks[i] = Math.max(2, binPeaks[i] * 0.92);
+          }
+
+          const barH = binPeaks[i];
+          const x = startX + i * barWidth;
+          const y = h - 20 - barH;
+
+          // Spectrum gradient
+          const hue = (i / numBars) * 200 + 10;
+          hctx.fillStyle = `hsla(${hue}, 85%, 55%, 0.85)`;
+          hctx.fillRect(x + 1, y, barWidth - 3, barH);
+
+          // Peak indicator line
+          hctx.fillStyle = '#ffffff';
+          hctx.fillRect(x + 1, Math.max(10, y - 2), barWidth - 3, 2);
+        }
+      } else if (haxelMode === 'pulse') {
+        // Solenoid recoil transients
+        hctx.strokeStyle = '#ff4d4f';
+        hctx.lineWidth = 2.5;
+        hctx.beginPath();
+
+        for (let x = 0; x < w; x++) {
+          const cycle = (x + hPhase * 120) % 150;
+          let y = h / 2;
+          if (cycle < 10) {
+            y -= (cycle / 10) * 55;
+          } else if (cycle < 40) {
+            y += Math.sin((cycle - 10) * 0.4) * 25 * Math.exp(-(cycle - 10) * 0.08);
+          }
+          if (x === 0) hctx.moveTo(x, y);
+          else hctx.lineTo(x, y);
+        }
+        hctx.stroke();
+
+      } else if (haxelMode === 'lra') {
+        // LRA Resonant burst envelope
+        hctx.strokeStyle = '#f7c967';
+        hctx.lineWidth = 2;
+        hctx.beginPath();
+
+        for (let x = 0; x < w; x++) {
+          const envelope = Math.sin((x / w) * Math.PI) * Math.abs(Math.sin(hPhase * 0.5));
+          const carrier = Math.sin((x / 4) + hPhase * 4);
+          const y = (h / 2) + carrier * envelope * 50;
+
+          if (x === 0) hctx.moveTo(x, y);
+          else hctx.lineTo(x, y);
+        }
+        hctx.stroke();
+
+      } else if (haxelMode === 'thermal') {
+        // Peltier thermal gradient curve
+        hctx.strokeStyle = '#7bc6ff';
+        hctx.lineWidth = 3;
+        hctx.beginPath();
+
+        for (let x = 0; x < w; x++) {
+          const y = (h / 2) + Math.sin((x / w) * Math.PI * 2 + hPhase * 0.5) * 35;
+          if (x === 0) hctx.moveTo(x, y);
+          else hctx.lineTo(x, y);
+        }
+        hctx.stroke();
+
+        // Warmth gradient fill
+        const gradient = hctx.createLinearGradient(0, 0, w, 0);
+        gradient.addColorStop(0, 'rgba(123, 198, 255, 0.2)');
+        gradient.addColorStop(0.5, 'rgba(247, 201, 103, 0.3)');
+        gradient.addColorStop(1, 'rgba(255, 121, 117, 0.2)');
+        hctx.fillStyle = gradient;
+        hctx.fillRect(0, 0, w, h);
+      }
+
+      requestAnimationFrame(drawHaxelTelemetry);
+    }
+
+    drawHaxelTelemetry();
+  }
+
 });
