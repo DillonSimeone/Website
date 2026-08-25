@@ -5,17 +5,17 @@ import { SHADER_DEFINITIONS } from '../shaders/shader-defs.js';
 
 let renderer, scene, camera, mesh, material;
 let audioEngine, projectionMapper;
-let currentShaderIndex = 0;
+let currentShaderIndex = 6;
 let uniforms = {};
 
 // Default Settings Blueprint
 const DEFAULT_SETTINGS = {
   global: {
-    bassPunch: 1.0,
-    trebleSparkle: 1.0,
-    smoothing: 0.22,
-    hueShift: 0.0,
-    glowMult: 1.0
+    bassPunch: 0.4,
+    trebleSparkle: 1.5,
+    smoothing: 0.11,
+    hueShift: 8 / 360,
+    glowMult: 0.3
   },
   shaders: {}
 };
@@ -293,7 +293,7 @@ function initThree() {
   const geometry = new THREE.PlaneGeometry(2, 2);
   material = new THREE.ShaderMaterial({
     vertexShader,
-    fragmentShader: SHADER_DEFINITIONS[0].fragmentShader,
+    fragmentShader: SHADER_DEFINITIONS[currentShaderIndex].fragmentShader,
     uniforms
   });
 
@@ -340,7 +340,7 @@ function buildShaderDock() {
   shaderDock.innerHTML = '';
   SHADER_DEFINITIONS.forEach((def, index) => {
     const btn = document.createElement('button');
-    btn.className = `shader-tab-btn ${index === 0 ? 'active' : ''}`;
+    btn.className = `shader-tab-btn ${index === currentShaderIndex ? 'active' : ''}`;
     const hotkeyNum = (index + 1) % 10; // 1 to 9, then 0 for 10
     btn.innerHTML = `
       <span class="hotkey">[${hotkeyNum}]</span>
@@ -565,7 +565,7 @@ window.addEventListener('DOMContentLoaded', () => {
     btnCalibrate.classList.toggle('active', active);
   };
   buildShaderDock();
-  renderActiveShaderControls();
+  setShader(currentShaderIndex);
   bindInputEvents();
   animate(0);
 });

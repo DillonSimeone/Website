@@ -570,8 +570,8 @@ export const SHADER_DEFINITIONS = [
     caseTag: 'CASE_07 // FRACTAL ABYSS',
     description: '3D fractal Mandelbulb whose geometric power and folding dimensions oscillate with sound complexity. Low bass delves into the core, treble crystallizes outer edges.',
     customParams: [
-      { id: 'fractalPower', name: 'BASE FRACTAL POWER', min: 4.0, max: 12.0, step: 0.5, default: 6.0, unit: '' },
-      { id: 'orbitSpeed', name: 'ORBIT ROTATION SPEED', min: 0.0, max: 2.5, step: 0.1, default: 1.0, unit: 'x' }
+      { id: 'fractalPower', name: 'BASE FRACTAL POWER', min: 4.0, max: 12.0, step: 0.5, default: 8.0, unit: '' },
+      { id: 'orbitSpeed', name: 'ORBIT ROTATION SPEED', min: 0.0, max: 2.5, step: 0.1, default: 2.5, unit: 'x' }
     ],
     fragmentShader: `
       uniform float u_time;
