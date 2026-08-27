@@ -1,0 +1,17 @@
+/* monolith.css - Specific theme tweaks for Monolith */
+
+.hud-title {
+  color: #ffaa00;
+  text-shadow: 0 0 12px rgba(255, 170, 0, 0.6);
+}
+
+.hud-badge {
+  background: rgba(255, 170, 0, 0.15);
+  color: #ffaa00;
+  border-color: rgba(255, 170, 0, 0.5);
+}
+
+.hud-timeline-fill {
+  background: linear-gradient(90deg, #ff5500 0%, #ffaa00 50%, #00e5ff 100%);
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+}

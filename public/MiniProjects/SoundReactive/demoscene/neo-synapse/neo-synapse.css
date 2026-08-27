@@ -1,0 +1,17 @@
+/* neo-synapse.css - Specific theme tweaks for Neo Synapse */
+
+.hud-title {
+  color: #00ffaa;
+  text-shadow: 0 0 12px rgba(0, 255, 170, 0.6);
+}
+
+.hud-badge {
+  background: rgba(0, 255, 170, 0.15);
+  color: #00ffaa;
+  border-color: rgba(0, 255, 170, 0.5);
+}
+
+.hud-timeline-fill {
+  background: linear-gradient(90deg, #00ffaa 0%, #00e5ff 50%, #aa00ff 100%);
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+}
