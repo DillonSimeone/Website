@@ -9,10 +9,10 @@ export class ProjectionMapper {
     this.isActive = false;
     this.isGridVisible = false;
     this.corners = [
-      { x: 0, y: 0 },       // Top-Left
-      { x: 1, y: 0 },       // Top-Right
-      { x: 1, y: 1 },       // Bottom-Right
-      { x: 0, y: 1 }        // Bottom-Left
+      { x: 0, y: 0 },       // Top-Left (0)
+      { x: 1, y: 0 },       // Top-Right (1)
+      { x: 1, y: 1 },       // Bottom-Right (2)
+      { x: 0, y: 1 }        // Bottom-Left (3)
     ];
     this.activePoint = null;
     this.overlay = null;
@@ -41,17 +41,24 @@ export class ProjectionMapper {
     const statusBox = document.createElement('div');
     statusBox.className = 'proj-status-bar';
     statusBox.innerHTML = `
-      <span>MAPPING ACTIVE — DRAG CORNERS</span>
-      <button id="btn-proj-reset" class="proj-mini-btn">RESET [R]</button>
-      <button id="btn-proj-close" class="proj-mini-btn primary">DONE [C]</button>
+      <span class="proj-status-title">STAGE MAPPING // PIN CORNERS</span>
+      <button id="btn-proj-inset" class="proj-mini-btn" title="Inset corners 5% inside viewport">INSET 5%</button>
+      <button id="btn-proj-reset" class="proj-mini-btn" title="Reset corners to full screen [R]">RESET [R]</button>
+      <button id="btn-proj-grid" class="proj-mini-btn" title="Toggle 3x3 Calibration Grid [G]">GRID [G]</button>
+      <button id="btn-proj-close" class="proj-mini-btn primary" title="Exit Mapping Mode [C]">DONE [C]</button>
     `;
     this.overlay.appendChild(statusBox);
 
-    // 4 Corner Handles
+    // 4 Corner Handles with Badges and extended hitboxes
+    const CORNER_NAMES = ['TL', 'TR', 'BR', 'BL'];
     for (let i = 0; i < 4; i++) {
       const handle = document.createElement('div');
       handle.className = `proj-handle handle-${i}`;
       handle.dataset.index = i;
+      handle.innerHTML = `
+        <span class="proj-handle-tag">${CORNER_NAMES[i]}</span>
+        <span class="proj-handle-coords"></span>
+      `;
       this.overlay.appendChild(handle);
       this.handles.push(handle);
     }
@@ -60,9 +67,17 @@ export class ProjectionMapper {
     this.updateHandlesUI();
 
     // Hook mini buttons
+    statusBox.querySelector('#btn-proj-inset').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.inset(0.05);
+    });
     statusBox.querySelector('#btn-proj-reset').addEventListener('click', (e) => {
       e.stopPropagation();
       this.reset();
+    });
+    statusBox.querySelector('#btn-proj-grid').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleGrid();
     });
     statusBox.querySelector('#btn-proj-close').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -73,22 +88,27 @@ export class ProjectionMapper {
 
   bindEvents() {
     window.addEventListener('keydown', (e) => {
+      if (e.target.matches('input, textarea')) return;
+
       // Key 'C' toggles Calibration Mode
       if (e.key === 'c' || e.key === 'C') {
-        if (!e.target.matches('input, textarea')) {
-          this.toggleCalibration();
-        }
+        this.toggleCalibration();
       }
       // Key 'R' resets calibration when in calibration mode
       if ((e.key === 'r' || e.key === 'R') && this.isActive) {
         this.reset();
+      }
+      // Key 'G' toggles grid when in calibration mode
+      if ((e.key === 'g' || e.key === 'G') && this.isActive) {
+        this.toggleGrid();
       }
     });
 
     this.handles.forEach(handle => {
       handle.addEventListener('pointerdown', (e) => {
         this.activePoint = parseInt(handle.dataset.index, 10);
-        handle.setPointerCapture(e.pointerId);
+        handle.classList.add('dragging');
+        try { handle.setPointerCapture(e.pointerId); } catch (_) {}
       });
 
       handle.addEventListener('pointermove', (e) => {
@@ -103,6 +123,7 @@ export class ProjectionMapper {
 
       const release = (e) => {
         if (this.activePoint !== null) {
+          handle.classList.remove('dragging');
           try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
           this.activePoint = null;
           this.saveState();
@@ -121,6 +142,7 @@ export class ProjectionMapper {
   toggleCalibration() {
     this.isActive = !this.isActive;
     this.overlay.style.display = this.isActive ? 'block' : 'none';
+    document.body.classList.toggle('mapping-mode-active', this.isActive);
     if (this.isActive) {
       this.updateHandlesUI();
     }
@@ -128,6 +150,23 @@ export class ProjectionMapper {
       this.onToggleCallback(this.isActive);
     }
     return this.isActive;
+  }
+
+  toggleGrid() {
+    this.isGridVisible = !this.isGridVisible;
+    this.updateHandlesUI();
+  }
+
+  inset(amount = 0.05) {
+    this.corners = [
+      { x: amount, y: amount },             // Top-Left
+      { x: 1.0 - amount, y: amount },       // Top-Right
+      { x: 1.0 - amount, y: 1.0 - amount }, // Bottom-Right
+      { x: amount, y: 1.0 - amount }        // Bottom-Left
+    ];
+    this.saveState();
+    this.updateHandlesUI();
+    this.applyTransform();
   }
 
   reset() {
@@ -151,14 +190,52 @@ export class ProjectionMapper {
       const px = pt.x * w;
       const py = pt.y * h;
       this.handles[i].style.transform = `translate(${px}px, ${py}px)`;
+      
+      const coordEl = this.handles[i].querySelector('.proj-handle-coords');
+      if (coordEl) {
+        coordEl.textContent = `${Math.round(pt.x * 100)}%, ${Math.round(pt.y * 100)}%`;
+      }
     }
 
-    // Render Grid Lines inside SVG
+    // Render Grid & Calibration Lines inside SVG
     const pts = this.corners.map(c => `${c.x * w},${c.y * h}`).join(' ');
+    
+    let gridLinesSvg = '';
+    if (this.isGridVisible) {
+      // 3x3 subdivided quad lines
+      for (let step = 1; step <= 2; step++) {
+        const u = step / 3.0;
+        // Top to bottom curve line
+        const tx = (1 - u) * (this.corners[0].x * w) + u * (this.corners[1].x * w);
+        const ty = (1 - u) * (this.corners[0].y * h) + u * (this.corners[1].y * h);
+        const bx = (1 - u) * (this.corners[3].x * w) + u * (this.corners[2].x * w);
+        const by = (1 - u) * (this.corners[3].y * h) + u * (this.corners[2].y * h);
+        gridLinesSvg += `<line x1="${tx}" y1="${ty}" x2="${bx}" y2="${by}" class="proj-subgrid" />`;
+
+        // Left to right curve line
+        const lx = (1 - u) * (this.corners[0].x * w) + u * (this.corners[3].x * w);
+        const ly = (1 - u) * (this.corners[0].y * h) + u * (this.corners[3].y * h);
+        const rx = (1 - u) * (this.corners[1].x * w) + u * (this.corners[2].x * w);
+        const ry = (1 - u) * (this.corners[1].y * h) + u * (this.corners[2].y * h);
+        gridLinesSvg += `<line x1="${lx}" y1="${ly}" x2="${rx}" y2="${ry}" class="proj-subgrid" />`;
+      }
+    }
+
+    // Bulls-eye rings for all 4 corners
+    let targetRingsSvg = '';
+    this.corners.forEach(c => {
+      targetRingsSvg += `
+        <circle cx="${c.x * w}" cy="${c.y * h}" r="22" class="proj-target-ring" />
+        <circle cx="${c.x * w}" cy="${c.y * h}" r="6" class="proj-target-center" />
+      `;
+    });
+
     this.svg.innerHTML = `
       <polygon points="${pts}" class="proj-quad-outline" />
+      ${gridLinesSvg}
       <line x1="${this.corners[0].x * w}" y1="${this.corners[0].y * h}" x2="${this.corners[2].x * w}" y2="${this.corners[2].y * h}" class="proj-crosshair" />
       <line x1="${this.corners[1].x * w}" y1="${this.corners[1].y * h}" x2="${this.corners[3].x * w}" y2="${this.corners[3].y * h}" class="proj-crosshair" />
+      ${targetRingsSvg}
     `;
   }
 

@@ -391,7 +391,7 @@ body, html {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 50;
+  z-index: 1000;
   pointer-events: none !important;
 }
 
@@ -406,40 +406,48 @@ body, html {
 
 .proj-status-bar {
   position: absolute;
-  top: 90px;
+  top: 80px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(14, 14, 24, 0.95);
+  background: rgba(10, 10, 20, 0.95);
   border: 1px solid #00e5ff;
-  box-shadow: 0 0 25px rgba(0, 229, 255, 0.3);
-  padding: 10px 20px;
-  border-radius: 4px;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.4);
+  padding: 10px 18px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   pointer-events: auto;
-  z-index: 60;
+  z-index: 1020;
   font-size: 0.8rem;
   color: #00e5ff;
   font-weight: bold;
   letter-spacing: 1px;
+  backdrop-filter: blur(8px);
+}
+
+.proj-status-title {
+  white-space: nowrap;
+  font-size: 0.75rem;
+  margin-right: 6px;
 }
 
 .proj-mini-btn {
-  background: #1c1c2e;
+  background: #18182c;
   color: #ddd;
   border: 1px solid #3d3d5c;
   padding: 6px 12px;
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: bold;
   cursor: pointer;
   border-radius: 3px;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .proj-mini-btn:hover {
-  background: #2b2b45;
+  background: #2b2b48;
   color: #fff;
   border-color: #00e5ff;
 }
@@ -452,6 +460,7 @@ body, html {
 
 .proj-mini-btn.primary:hover {
   background: #33eeff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
 }
 
 .proj-quad-outline {
@@ -462,31 +471,129 @@ body, html {
 }
 
 .proj-crosshair {
-  stroke: rgba(255, 170, 0, 0.5);
+  stroke: rgba(255, 170, 0, 0.45);
   stroke-width: 1.5px;
   stroke-dasharray: 4 4;
 }
 
+.proj-subgrid {
+  stroke: rgba(0, 229, 255, 0.3);
+  stroke-width: 1px;
+  stroke-dasharray: 3 3;
+}
+
+.proj-target-ring {
+  fill: none;
+  stroke: #ff0055;
+  stroke-width: 1.5px;
+  stroke-dasharray: 4 2;
+  opacity: 0.75;
+}
+
+.proj-target-center {
+  fill: #00e5ff;
+  opacity: 0.8;
+}
+
 .proj-handle {
   position: absolute;
-  top: -16px;
-  left: -16px;
-  width: 32px;
-  height: 32px;
+  top: 0;
+  left: 0;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  margin-left: -18px;
   border-radius: 50%;
   background: #ff0055;
   border: 3px solid #fff;
   cursor: grab;
-  box-shadow: 0 0 15px #ff0055;
-  z-index: 60;
+  box-shadow: 0 0 20px #ff0055, 0 0 35px rgba(255, 0, 85, 0.6);
+  z-index: 1010;
   touch-action: none;
   pointer-events: auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* Expanded invisible grab target for easy grabbing even at edge of screen */
+.proj-handle::before {
+  content: '';
+  position: absolute;
+  top: -24px;
+  left: -24px;
+  right: -24px;
+  bottom: -24px;
+  border-radius: 50%;
+  pointer-events: auto;
+}
+
+.proj-handle-tag {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #fff;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.proj-handle-coords {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-weight: bold;
+  background: rgba(10, 10, 18, 0.92);
+  border: 1px solid #00e5ff;
+  color: #00e5ff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+/* Invert coordinates label for bottom handles so they stay inside the screen */
+.handle-2 .proj-handle-coords,
+.handle-3 .proj-handle-coords {
+  top: -28px;
+}
+
+.proj-handle:hover {
+  background: #ff3377;
+  box-shadow: 0 0 25px #ff3377, 0 0 45px rgba(255, 51, 119, 0.8);
+}
+
+.proj-handle.dragging,
 .proj-handle:active {
   cursor: grabbing;
-  transform: scale(1.2);
   background: #00ff88;
+  border-color: #ffffff;
+  box-shadow: 0 0 30px #00ff88, 0 0 50px rgba(0, 255, 136, 0.8);
+}
+
+.proj-handle.dragging .proj-handle-tag,
+.proj-handle:active .proj-handle-tag {
+  color: #000;
+}
+
+/* Dim HUD and deck during Mapping Mode to prevent obstruction */
+body.mapping-mode-active .dj-top-hud,
+body.mapping-mode-active .dj-bottom-deck {
+  opacity: 0.15;
+  pointer-events: none;
+  filter: blur(0.5px);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+body.mapping-mode-active .dj-top-hud:hover,
+body.mapping-mode-active .dj-bottom-deck:hover {
+  opacity: 0.85;
+  pointer-events: auto;
+  filter: none;
 }
 
 /* ==========================================================================
