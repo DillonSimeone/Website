@@ -19,10 +19,10 @@ const ACTS = [
     startTime: 0,
     endTime: 25,
     cameraKeyframes: [
-      { t: 0,  pos: [0.0, 32.0, -30.0], target: [0.0, 2.0, 40.0],  roll: 0.0,  fov: 75 },
-      { t: 8,  pos: [4.0, 18.0, -5.0],  target: [0.0, 1.5, 45.0],  roll: 0.15, fov: 72 },
-      { t: 16, pos: [-2.5, 7.0, 20.0],  target: [0.0, 1.0, 55.0],  roll: -0.2, fov: 68 },
-      { t: 25, pos: [0.0, 1.5, 45.0],   target: [0.0, 0.8, 75.0],  roll: 0.0,  fov: 62 }
+      { t: 0,  pos: [0.0, 30.0, -25.0], target: [0.0, 4.0, 35.0],  roll: 0.0,   fov: 75 },
+      { t: 8,  pos: [2.5, 18.0, -5.0],  target: [0.0, 2.0, 45.0],  roll: 0.15,  fov: 72 },
+      { t: 16, pos: [-1.8, 7.0, 18.0],  target: [0.0, 1.5, 55.0],  roll: -0.18, fov: 68 },
+      { t: 25, pos: [0.0, 1.2, 42.0],   target: [0.0, 0.8, 75.0],  roll: 0.0,   fov: 62 }
     ]
   },
   {
@@ -108,46 +108,72 @@ const FRAGMENT_SHADER = `
   // SDF SCENE ESTIMATORS (Cyber-Brutalist Architecture & Landscapes)
   // -------------------------------------------------------------
 
-  // Act 0: The Descent (Sprawling Skyscraper City Landscape Far Below)
+  // Act 0: The Descent (Colossal Brutalist Metropolis with Extruded Towers)
   float mapAct0(vec3 p, out vec3 glowCol) {
-    // 1. Endless Ground Floor at y = 0
+    // 1. Ground floor at y = 0
     float ground = p.y;
 
-    // 2. City Skyscraper Grid on the ground
-    vec2 gridPos = p.xz / 5.0;
-    vec2 cell = floor(gridPos);
-    vec2 uvCell = (fract(gridPos) - 0.5) * 5.0;
-    float hRand = hash21(cell);
+    // 2. Medium Skyscraper City Grid (4x4m grid)
+    vec2 grid4 = p.xz / 4.0;
+    vec2 cell4 = floor(grid4);
+    vec2 uv4 = (fract(grid4) - 0.5) * 4.0;
+    float hRand4 = hash21(cell4);
 
-    // Height of each building on the ground (ranges from 1.0 to 10.0)
-    float h = (hRand * 7.5 + 1.5) * (1.0 + u_subBass * 0.3);
+    // Height of towers: 3m to 16m
+    float h4 = hRand4 * 12.0 + 3.0;
     
-    // Central flight corridor clearing
-    if (abs(cell.x) < 1.0) {
-      h = 0.4; // Low roadway plaza
+    // Central flight corridor boulevard clearing (|p.x| < 3.0)
+    if (abs(p.x) < 3.0) {
+      h4 = 0.2; // Low roadway plaza
     }
 
-    // Individual skyscraper box
-    float tower = sdBox(vec3(uvCell.x, p.y - h * 0.5, uvCell.y), vec3(1.7, h * 0.5, 1.7));
+    // Extruded tower box from ground to h4
+    vec3 tower4P = vec3(uv4.x, p.y - h4 * 0.5, uv4.y);
+    float tower4 = sdBox(tower4P, vec3(1.45, h4 * 0.5, 1.45));
 
-    // Standalone monolithic towers flanking the horizon
-    vec2 flankUV = mod(p.xz + 10.0, 20.0) - 10.0;
-    float flankTower = sdBox(vec3(flankUV.x, p.y - 12.0, flankUV.y), vec3(2.5, 12.0, 2.5));
+    // Rooftop antenna spires on top of tall towers
+    if (h4 > 7.0) {
+      float antenna = sdCappedCylinder(vec3(uv4.x, p.y - (h4 + 1.2), uv4.y).xzy, 1.2, 0.05);
+      tower4 = min(tower4, antenna);
+    }
 
-    // Combine scene
-    float d = min(ground, tower);
-    d = min(d, flankTower);
-
-    // Glow and Material
-    float isTop = step(h - 0.5, p.y);
-    vec3 baseCol = vec3(0.06, 0.08, 0.1);
-    vec3 roofBeacon = mix(vec3(1.0, 0.35, 0.0), vec3(0.0, 0.85, 1.0), hRand + u_high * 0.4);
+    // 3. Mega-Monolith Skyscraper Grid (16x16m grid flanking the boulevard)
+    vec2 grid16 = (p.xz + vec2(8.0, 0.0)) / 16.0;
+    vec2 cell16 = floor(grid16);
+    vec2 uv16 = (fract(grid16) - 0.5) * 16.0;
+    float hRand16 = hash21(cell16 + 77.3);
     
-    glowCol = mix(baseCol, roofBeacon, isTop);
+    float h16 = 0.0;
+    // Place mega-spires only on outer flanks (|p.x| > 6.0)
+    if (abs(p.x) > 6.0) {
+      h16 = hRand16 * 14.0 + 14.0; // 14m to 28m mega spires!
+    }
+    
+    vec3 megaP = vec3(uv16.x, p.y - h16 * 0.5, uv16.y);
+    float megaTower = sdBox(megaP, vec3(3.2, h16 * 0.5, 3.2));
+
+    // Combine terrain & towers
+    float d = min(ground, tower4);
+    if (h16 > 1.0) {
+      d = min(d, megaTower);
+    }
+
+    // Material & Glow Coloring
+    float isRoof = step(h4 - 0.3, p.y) * step(1.0, h4);
+    float isMega = step(h16 - 0.4, p.y) * step(10.0, h16);
+    
+    vec3 darkTitanium = vec3(0.04, 0.05, 0.07);
+    vec3 neonRoof = mix(vec3(1.0, 0.4, 0.0), vec3(0.0, 0.9, 1.0), hRand4);
+    vec3 megaGlow = mix(vec3(1.0, 0.1, 0.3), vec3(1.0, 0.8, 0.2), u_subBass);
+
+    glowCol = darkTitanium;
+    if (isRoof > 0.5) glowCol = neonRoof;
+    if (isMega > 0.5) glowCol = megaGlow;
+
     return d;
   }
 
-  // Act 1: The Conduits (Subterranean Power Tunnels)
+  // Act 1: The Conduits (Subterranean Power Tunnels with Wriggling Pipes)
   float mapAct1(vec3 p, out vec3 glowCol) {
     vec3 q = p;
     float zCoord = q.z;
@@ -156,9 +182,12 @@ const FRAGMENT_SHADER = `
     // Floor and ceiling bounds
     float tunnel = max(abs(q.x) - 2.5, abs(q.y) - 2.0);
 
-    // Floor conduits
-    float pipe1 = sdCappedCylinder(q.xzy - vec3(1.0, 0.0, -1.8), 2.0, 0.25);
-    float pipe2 = sdCappedCylinder(q.xzy - vec3(-1.0, 0.0, -1.8), 2.0, 0.25);
+    // Conduits snake and undulate with audio
+    vec3 pipeQ1 = applyWriggle(q - vec3(1.0, 0.0, -1.8), u_time, u_subBass * 0.3, u_mid * 0.8, u_air * 1.5);
+    vec3 pipeQ2 = applyWriggle(q - vec3(-1.0, 0.0, -1.8), u_time * 1.1, u_subBass * 0.3, u_mid * 0.8, u_air * 1.5);
+
+    float pipe1 = sdCappedCylinder(pipeQ1.xzy, 2.0, 0.25);
+    float pipe2 = sdCappedCylinder(pipeQ2.xzy, 2.0, 0.25);
     float laserBeam = sdCylinder(q - vec3(0.0, -1.8, 0.0), vec3(0.0, 0.0, 0.06));
 
     float d = max(-tunnel, min(pipe1, pipe2));
@@ -169,40 +198,57 @@ const FRAGMENT_SHADER = `
     return d;
   }
 
-  // Act 2: The Reactor Core (Gyroscopic Hyper-Torus)
+  // Act 2: The Reactor Core (Gyroscopic Hyper-Torus with Morphing Ring Profiles)
   float mapAct2(vec3 p, out vec3 glowCol) {
     vec3 q = p;
     float tRot = u_time * 0.6 + u_subBass * 0.8;
     
     vec3 r1 = q;
     r1.xy = rot2D(tRot) * r1.xy;
-    float ring1 = sdTorus(r1, vec2(3.2, 0.18 + u_bass * 0.1));
+    float ring1 = sdTorus(r1, vec2(3.2, 0.18 + u_bass * 0.15));
 
     vec3 r2 = q;
     r2.yz = rot2D(tRot * 0.7) * r2.yz;
-    float ring2 = sdTorus(r2, vec2(2.4, 0.14));
+    float ring2 = sdTorus(r2, vec2(2.4, 0.14 + u_mid * 0.1));
 
     vec3 r3 = q;
     r3.xz = rot2D(tRot * 1.3) * r3.xz;
-    float ring3 = sdTorus(r3, vec2(1.6, 0.12));
+    float ring3 = sdTorus(r3, vec2(1.6, 0.12 + u_high * 0.1));
 
-    float core = sdSphere(p, 0.9 + u_subBass * 0.6);
+    // Core cleaves on transients and morphs between pulsating sphere and faceted star
+    vec3 coreP = applyGeodeFracture(p, u_transient * 1.1, vec3(0.0, 1.0, 0.0));
+    float core = sdMorphGeom(
+      coreP, 
+      0.9 + u_subBass * 0.7, 
+      0.7 + u_subBass * 2.0, 
+      0.1 + u_mid * 1.5, 
+      0.4 + u_high * 3.0, 
+      0.2
+    );
+
+    // Abyss pit walls
+    float pit = abs(length(p.xz) - 5.0) - 0.3;
 
     float d = min(min(ring1, ring2), min(ring3, core));
+    d = min(d, pit);
 
     float freq = clamp(length(p) * 0.2 + u_energy * 0.5, 0.0, 1.0);
     glowCol = mix(vec3(1.0, 0.4, 0.0), vec3(1.0, 0.0, 0.5), freq);
     return d;
   }
 
-  // Act 3: Hyper-Velocity Evacuation (Monorail Grid)
+  // Act 3: Hyper-Velocity Evacuation (Monorail Grid & Acoustic Chatter)
   float mapAct3(vec3 p, out vec3 glowCol) {
     vec3 q = p;
     float zCoord = q.z;
     pMod1(q.z, 2.0);
 
-    float rail1 = sdBox(q - vec3(0.7, 0.0, 0.0), vec3(0.09, 0.09, 1.0));
-    float rail2 = sdBox(q - vec3(-0.7, 0.0, 0.0), vec3(0.09, 0.09, 1.0));
+    // Rails chatter with high-frequency flutter
+    vec3 railQ1 = applyWriggle(q - vec3(0.7, 0.0, 0.0), u_time, 0.0, 0.0, u_air * 1.2);
+    vec3 railQ2 = applyWriggle(q - vec3(-0.7, 0.0, 0.0), u_time, 0.0, 0.0, u_air * 1.2);
+
+    float rail1 = sdBox(railQ1, vec3(0.09, 0.09, 1.0));
+    float rail2 = sdBox(railQ2, vec3(0.09, 0.09, 1.0));
     float floorP = p.y + 0.3;
 
     float pillars = sdBox(q - vec3(0.0, -0.4, 0.0), vec3(1.1, 0.1, 0.15));
@@ -216,13 +262,23 @@ const FRAGMENT_SHADER = `
     return d;
   }
 
-  // Act 4: Monolith Overlook (Colossal Spire at Dawn)
+  // Act 4: Monolith Overlook (Colossal Spire with Morphing Crown)
   float mapAct4(vec3 p, out vec3 glowCol) {
     vec3 q = p;
     
-    // Colossal Monolith Spire
+    // Colossal Monolith Spire Body
     float spire = sdBox(q - vec3(0.0, 8.0, 0.0), vec3(1.8, 10.0, 1.8));
-    float spireTop = sdOctahedron(q - vec3(0.0, 18.0, 0.0), 2.2);
+    
+    // Crown morphs dynamically from diamond octahedron to faceted pyramid and beacon
+    vec3 crownP = q - vec3(0.0, 18.0, 0.0);
+    float spireTop = sdMorphGeom(
+      crownP,
+      2.2,
+      0.1 + u_subBass * 1.5,
+      0.3 + u_mid * 2.0,
+      0.6 + u_high * 3.0,
+      0.4 + u_air * 2.5
+    );
     spire = min(spire, spireTop);
 
     // Sprawling Cloud Deck at the Horizon
@@ -277,18 +333,18 @@ const FRAGMENT_SHADER = `
 
     // Dynamic Atmospheric Cyberpunk Sky Gradient
     vec3 skyTop = vec3(0.03, 0.02, 0.06);
-    vec3 skyHorizon = vec3(0.4, 0.15, 0.03) * (1.0 + u_subBass * 0.4);
+    vec3 skyHorizon = vec3(0.35, 0.12, 0.03) * (1.0 + u_subBass * 0.4);
     vec3 sky = mix(skyHorizon, skyTop, clamp(rd.y * 0.8 + 0.3, 0.0, 1.0));
 
     // March with safe near-plane offset
     float t = 0.25;
-    float maxDist = 80.0;
+    float maxDist = 90.0;
     vec3 hitPos = vec3(0.0);
     bool hit = false;
     vec3 accumGlow = vec3(0.0);
     vec3 glowCol = vec3(1.0);
 
-    for (int i = 0; i < 75; i++) {
+    for (int i = 0; i < 80; i++) {
       vec3 p = ro + rd * t;
       float d = map(p, glowCol);
 
@@ -308,43 +364,53 @@ const FRAGMENT_SHADER = `
 
     if (hit) {
       vec3 n = calcNormal(hitPos);
-      vec3 lightDir = normalize(vec3(1.2, 2.8, -1.2));
+      vec3 lightDir = normalize(vec3(1.2, 2.5, -1.2));
       
       float diff = max(0.0, dot(n, lightDir));
-      float ao = clamp(map(hitPos + n * 0.2, glowCol) / 0.2, 0.2, 1.0);
+      float ao = clamp(map(hitPos + n * 0.25, glowCol) / 0.25, 0.15, 1.0);
       
       vec3 ref = reflect(rd, n);
-      float spec = pow(max(0.0, dot(ref, lightDir)), 24.0);
+      float spec = pow(max(0.0, dot(ref, lightDir)), 32.0);
 
-      // Dark brushed titanium/concrete base
-      vec3 baseMat = vec3(0.07, 0.08, 0.11);
+      // Base Brutalist Dark Metal / Concrete Material
+      vec3 baseMat = vec3(0.06, 0.07, 0.09);
       
-      // Illuminated cyber window slits on tower walls
-      float winX = step(0.4, fract(hitPos.x * 1.5));
-      float winZ = step(0.4, fract(hitPos.z * 1.5));
-      float winY = step(0.6, fract(hitPos.y * 1.2));
-      float isWindow = winY * (winX + winZ) * step(1.0, hitPos.y);
-      vec3 winCol = mix(vec3(1.0, 0.65, 0.1), vec3(0.0, 0.85, 1.0), hash21(floor(hitPos.xz / 5.0)));
+      // Vertical concrete facade ribs
+      float ribs = abs(sin(hitPos.x * 3.0)) * abs(sin(hitPos.z * 3.0));
+      baseMat += vec3(0.03) * ribs;
 
-      // Street grid lines on ground (hitPos.y < 0.3)
-      float isStreet = step(hitPos.y, 0.3);
-      float gridLine = step(0.92, fract(hitPos.x * 0.2)) + step(0.92, fract(hitPos.z * 0.2));
-      vec3 streetCol = mix(vec3(1.0, 0.3, 0.0), vec3(0.0, 0.8, 1.0), u_subBass) * gridLine * 2.5;
+      // Illuminated Window Matrix on buildings (when above ground y > 0.5)
+      float winX = step(0.3, fract(hitPos.x * 1.8));
+      float winZ = step(0.3, fract(hitPos.z * 1.8));
+      float winY = step(0.55, fract(hitPos.y * 1.4));
+      float isWindow = winY * (winX + winZ) * step(0.8, hitPos.y);
+      
+      // Random window color palette per building block
+      vec3 winCol = mix(vec3(1.0, 0.7, 0.2), vec3(0.0, 0.85, 1.0), hash21(floor(hitPos.xz / 4.0)));
 
-      vec3 surfaceCol = baseMat * (diff * 0.6 + 0.25) * ao;
-      surfaceCol += winCol * isWindow * 0.7 * (1.0 + u_high * 1.5);
-      surfaceCol += streetCol * isStreet;
-      surfaceCol += glowCol * 0.3;
-      surfaceCol += vec3(1.0, 0.95, 0.8) * spec * (0.4 + u_air * 1.2);
+      // Highway / Street light conduits on ground (y <= 0.4)
+      float isGround = step(hitPos.y, 0.4);
+      float streetGrid = step(0.9, fract(hitPos.x * 0.25)) + step(0.9, fract(hitPos.z * 0.25));
+      float highway = smoothstep(0.8, 0.0, abs(hitPos.x)) * (sin(hitPos.z * 0.6 - u_time * 6.0) * 0.5 + 0.5);
+      vec3 groundLight = vec3(0.0, 0.7, 1.0) * streetGrid * 1.5 + vec3(1.0, 0.5, 0.0) * highway * 3.0;
+
+      // Rooftop edge neon glow
+      float roofEdge = smoothstep(0.3, 0.0, abs(fract(hitPos.y * 1.4) - 0.95)) * step(2.0, hitPos.y);
+
+      vec3 surfaceCol = baseMat * (diff * 0.7 + 0.2) * ao;
+      surfaceCol += winCol * isWindow * (0.8 + u_high * 2.0);
+      surfaceCol += groundLight * isGround;
+      surfaceCol += glowCol * roofEdge * 2.0;
+      surfaceCol += vec3(1.0, 0.95, 0.85) * spec * (0.5 + u_air * 1.5);
 
       // Atmospheric Fog blending into sky
-      float fog = 1.0 - exp(-t * 0.022);
+      float fog = 1.0 - exp(-t * 0.018);
       surfaceCol = mix(surfaceCol, sky, fog);
 
       // Proximity Transparency Fade
       float camDist = length(hitPos - ro);
-      float nearFade = smoothstep(0.3, 0.9, camDist);
-      col = mix(sky + accumGlow * 0.4, surfaceCol, nearFade);
+      float nearFade = smoothstep(0.35, 1.0, camDist);
+      col = mix(sky + accumGlow * 0.35, surfaceCol, nearFade);
     }
 
     col += accumGlow * 0.35;
@@ -397,8 +463,8 @@ function init() {
       u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
       u_actIndex: { value: 0 },
       u_actProgress: { value: 0 },
-      u_camPos: { value: new THREE.Vector3(0, 32, -30) },
-      u_camTarget: { value: new THREE.Vector3(0, 2, 40) },
+      u_camPos: { value: new THREE.Vector3(0, 30, -25) },
+      u_camTarget: { value: new THREE.Vector3(0, 4, 35) },
       u_camUp: { value: new THREE.Vector3(0, 1, 0) },
       u_camFov: { value: 75.0 },
       u_subBass: { value: 0 },

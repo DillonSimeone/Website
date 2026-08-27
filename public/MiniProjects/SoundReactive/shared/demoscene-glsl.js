@@ -195,6 +195,53 @@ export const DemosceneGLSL = `
     return c;
   }
 
+  // -------------------------------------------------------------
+  // ADVANCED AUDIO-REACTIVE GEOMETRIC MORPHING & WRIGGLING
+  // -------------------------------------------------------------
+  // Frequency-driven continuous topological morph: Sphere (Bass) <-> Box (Mids) <-> Octahedron/Triangle (Highs) <-> Hex (Air)
+  float sdMorphGeom(vec3 p, float r, float wSphere, float wBox, float wOcta, float wHex) {
+    float total = wSphere + wBox + wOcta + wHex + 0.0001;
+    float nSphere = wSphere / total;
+    float nBox = wBox / total;
+    float nOcta = wOcta / total;
+    float nHex = wHex / total;
+
+    float dSph = sdSphere(p, r);
+    float dBox = sdBox(p, vec3(r * 0.85));
+    float dOct = sdOctahedron(p, r * 1.1);
+    float dHex = sdHexPrism(p, vec2(r * 0.8, r * 0.9));
+
+    return dSph * nSphere + dBox * nBox + dOct * nOcta + dHex * nHex;
+  }
+
+  // Harmonic spatial wriggler: Sub-bass breathing, mid-frequency undulation, high-frequency flutter
+  vec3 applyWriggle(vec3 p, float time, float bassSwirl, float midWave, float highFlutter) {
+    vec3 q = p;
+    // Sub-bass slow planetary swirl
+    if (bassSwirl > 0.001) {
+      float angle = sin(q.z * 0.2 + time * 1.2) * bassSwirl * 0.8;
+      q.xy = rot2D(angle) * q.xy;
+    }
+    // Mid-range harmonic snake undulation
+    if (midWave > 0.001) {
+      q.x += sin(q.y * 2.0 + time * 3.5) * midWave * 0.25;
+      q.z += cos(q.y * 2.5 - time * 2.8) * midWave * 0.25;
+    }
+    // High-frequency acoustic surface flutter/tremble
+    if (highFlutter > 0.001) {
+      float flutter = sin(q.x * 12.0 + time * 18.0) * cos(q.y * 14.0 - time * 15.0) * sin(q.z * 16.0 + time * 22.0);
+      q += normalize(q + 0.01) * flutter * highFlutter * 0.08;
+    }
+    return q;
+  }
+
+  // Geode fracture separation on transient beat attacks
+  vec3 applyGeodeFracture(vec3 p, float transientAmp, vec3 axis) {
+    if (transientAmp < 0.01) return p;
+    float side = sign(dot(p, axis));
+    return p + axis * side * transientAmp * 0.45;
+  }
+
   // Polar / Radial Symmetry Repetition
   float pModPolar(inout vec2 p, float repetitions) {
     float angle = TWO_PI / repetitions;

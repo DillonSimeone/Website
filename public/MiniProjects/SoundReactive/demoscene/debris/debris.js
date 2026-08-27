@@ -108,34 +108,52 @@ const FRAGMENT_SHADER = `
   // SDF SCENE ESTIMATORS
   // -------------------------------------------------------------
 
-  // Act 0: Micro Genesis (Interlocking Crystal Plates)
+  // Act 0: Micro Genesis (Topological Shape Morphing & Geode Cleavage)
   float mapAct0(vec3 p, out vec3 glowCol) {
     vec3 q = p;
-    float c = pMod1(q.z, 2.0);
+    // Transient kick cleaves the central crystal lattice apart
+    q = applyGeodeFracture(q, u_transient * 1.5, vec3(0.707, 0.707, 0.0));
+    
+    // High-frequency surface wriggle
+    q = applyWriggle(q, u_time, u_subBass * 0.4, u_mid * 0.6, u_air * 1.8);
+
+    pMod1(q.z, 2.2);
     pModPolar(q.xy, 6.0);
-    q.x -= 0.8 + u_subBass * 0.4;
+    q.x -= 0.9 + u_subBass * 0.5;
 
-    float crystal = sdOctahedron(q, 0.6 + u_bass * 0.3);
-    float box = sdBoxFrame(q, vec3(0.5, 0.5, 0.5), 0.04);
-    float d = min(crystal, box);
+    // Creative Morph: Sphere (Bass) <-> Cube (Mids) <-> Octahedron (Highs) <-> Hex (Air)
+    float morphCrystal = sdMorphGeom(
+      q, 
+      0.65, 
+      0.2 + u_subBass * 2.5, // Sphere on bass
+      0.2 + u_mid * 2.5,     // Cube on mids
+      0.2 + u_high * 3.0,    // Triangle/Octa on highs
+      0.1 + u_air * 2.0      // Hex prism on air
+    );
 
-    float glow = 0.02 / (abs(d) + 0.03);
-    glowCol = freqToColor(clamp(length(p) * 0.2 + u_high * 0.4, 0.0, 1.0), 1.2);
+    float boxFrame = sdBoxFrame(q, vec3(0.6), 0.035);
+    float d = min(morphCrystal, boxFrame);
+
+    float glow = 0.025 / (abs(d) + 0.03);
+    glowCol = freqToColor(clamp(length(p) * 0.2 + u_high * 0.5, 0.0, 1.0), 1.3);
 
     return d;
   }
 
-  // Act 1: Fractal Caverns (Mandelbox Folding)
+  // Act 1: Fractal Caverns (Mandelbox with Harmonic Acoustic Wriggle)
   float mapAct1(vec3 p, out vec3 glowCol) {
-    vec3 z = p;
-    float scale = 2.4 + u_subBass * 0.3;
+    // Harmonic cave acoustic breathing
+    vec3 z = applyWriggle(p, u_time * 0.7, u_subBass * 0.8, u_mid * 1.2, u_air * 2.2);
+    
+    float scale = 2.4 + u_subBass * 0.4;
     float dr = 1.0;
     float r = 0.0;
     float trap = 1e10;
 
     for (int i = 0; i < 6; i++) {
-      // Box fold
-      z = clamp(z, -1.0, 1.0) * 2.0 - z;
+      // Box fold influenced by mid frequencies
+      vec2 boxLimit = vec2(1.0 + u_mid * 0.3, 1.0 - u_high * 0.2);
+      z = clamp(z, -boxLimit.x, boxLimit.x) * 2.0 - z;
       
       // Sphere fold
       r = dot(z, z);
@@ -154,61 +172,87 @@ const FRAGMENT_SHADER = `
       dr = dr * abs(scale) + 1.0;
     }
 
-    float d = (length(z) - 1.2) / abs(dr);
-    float freq = clamp(trap * 0.3 + u_high * 0.5, 0.0, 1.0);
-    glowCol = freqToColor(freq, 1.0);
+    float d = (length(z) - (1.1 + u_bass * 0.3)) / abs(dr);
+    float freq = clamp(trap * 0.3 + u_high * 0.6, 0.0, 1.0);
+    glowCol = freqToColor(freq, 1.1);
     return d;
   }
 
-  // Act 2: Geometry Storm (Instanced Polyhedral Matrix)
+  // Act 2: Geometry Storm (Instanced Polyhedral Matrix with Frequency Morphing)
   float mapAct2(vec3 p, out vec3 glowCol) {
     vec3 q = p;
-    vec3 cell = pMod3(q, vec3(3.0, 3.0, 3.0));
+    vec3 cell = pMod3(q, vec3(3.2, 3.2, 3.2));
     
-    // Rotate individual polyhedra
-    float rotA = u_time * 0.8 + hash31(cell) * 6.28 + u_mid * 1.5;
+    // Rotate individual units with speed modulated by pitch
+    float cellPitch = hash31(cell);
+    float rotA = u_time * (0.8 + cellPitch * 1.2) + u_mid * 2.5;
     q.xy = rot2D(rotA) * q.xy;
-    q.yz = rot2D(rotA * 0.7) * q.yz;
+    q.yz = rot2D(rotA * 0.6) * q.yz;
 
-    float oct = sdOctahedron(q, 0.6 + u_bass * 0.4);
-    float frame = sdBoxFrame(q, vec3(0.7, 0.7, 0.7), 0.03);
-    float d = min(oct, frame);
+    // Each floating unit morphs shape: Round on bass kicks, square on mids, sharp faceted on synth leads
+    float morphUnit = sdMorphGeom(
+      q,
+      0.7,
+      0.3 + u_subBass * 3.0,
+      0.2 + u_mid * 2.5,
+      0.2 + u_high * 3.0,
+      0.1 + u_air * 2.0
+    );
 
-    float freq = clamp(hash31(cell) * 0.6 + u_high * 0.4, 0.0, 1.0);
-    glowCol = freqToColor(freq, 1.5);
+    float frame = sdBoxFrame(q, vec3(0.75), 0.03);
+    float d = min(morphUnit, frame);
+
+    float freq = clamp(cellPitch * 0.6 + u_high * 0.45, 0.0, 1.0);
+    glowCol = freqToColor(freq, 1.6);
     return d;
   }
 
-  // Act 3: Supernova Apex (Volumetric Twisted Vortex)
+  // Act 3: Supernova Apex (Volumetric Twisted Vortex & Core Cleavage)
   float mapAct3(vec3 p, out vec3 glowCol) {
     vec3 q = p;
-    q = opTwistY(q, 0.4 + u_subBass * 0.3);
+    // Dynamic acoustic twist
+    q = opTwistY(q, 0.35 + u_subBass * 0.4 + u_mid * 0.5);
     
-    float torus1 = sdTorus(q, vec2(2.5, 0.3 + u_bass * 0.2));
-    float torus2 = sdTorus(q.xzy, vec2(1.8, 0.2));
-    float sphere = sdSphere(p, 1.0 + u_subBass * 0.8);
-    
-    float d = smin(torus1, torus2, 0.4);
-    d = smin(d, sphere, 0.5);
+    // Snare hit transient cleavage
+    q = applyGeodeFracture(q, u_transient * 1.2, vec3(0.0, 1.0, 0.0));
 
-    float freq = clamp(length(p) * 0.15 + u_energy * 0.5, 0.0, 1.0);
-    glowCol = freqToColor(freq, 2.0);
+    float torus1 = sdTorus(q, vec2(2.8, 0.25 + u_bass * 0.2));
+    float torus2 = sdTorus(q.xzy, vec2(2.0, 0.18 + u_high * 0.15));
+    
+    // Center Core morphs from pulsating sphere to spinning diamond octahedron
+    float core = sdMorphGeom(p, 1.0 + u_subBass * 0.9, 0.8 + u_subBass * 2.0, 0.1, 0.5 + u_high * 3.0, 0.1);
+    
+    float d = smin(torus1, torus2, 0.45);
+    d = smin(d, core, 0.5);
+
+    float freq = clamp(length(p) * 0.15 + u_energy * 0.6, 0.0, 1.0);
+    glowCol = freqToColor(freq, 2.2);
     return d;
   }
 
-  // Act 4: Crystalline Epilogue (Deep Space Shards)
+  // Act 4: Crystalline Epilogue (Deep Space Shards & Acoustic Flutter)
   float mapAct4(vec3 p, out vec3 glowCol) {
     vec3 q = p;
-    pModPolar(q.xz, 8.0);
-    q.x -= 2.0;
-    q.y += sin(u_time * 0.5 + q.x) * 0.5;
+    q = applyWriggle(q, u_time * 0.4, 0.0, u_mid * 0.4, u_air * 1.5);
 
-    float prism = sdHexPrism(q, vec2(0.4, 1.5));
-    float sph = sdSphere(p, 0.6);
-    float d = min(prism, sph);
+    pModPolar(q.xz, 8.0);
+    q.x -= 2.2;
+    q.y += sin(u_time * 0.4 + q.x) * 0.4;
+
+    float morphShard = sdMorphGeom(
+      q,
+      0.6,
+      0.1 + u_subBass * 1.5,
+      0.2 + u_mid * 2.0,
+      0.4 + u_high * 2.5,
+      0.3 + u_air * 2.0
+    );
+
+    float sph = sdSphere(p, 0.7);
+    float d = min(morphShard, sph);
 
     float freq = clamp(length(p) * 0.1 + u_air * 0.5, 0.0, 1.0);
-    glowCol = freqToColor(freq, 0.9);
+    glowCol = freqToColor(freq, 1.0);
     return d;
   }
 

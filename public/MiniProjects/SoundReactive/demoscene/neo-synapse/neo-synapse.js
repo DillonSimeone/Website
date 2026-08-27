@@ -108,63 +108,90 @@ const FRAGMENT_SHADER = `
   // SDF SCENE ESTIMATORS (Synthetic Biosphere)
   // -------------------------------------------------------------
 
-  // Act 0: Neural Awakening (Axon Dendrites & Synapses)
+  // Act 0: Neural Awakening (Axon Dendrites with Biological Wriggling & Synapse Morphing)
   float mapAct0(vec3 p, out vec3 glowCol) {
     vec3 q = p;
+    // Nerve fiber wriggles like living neural tissue
+    q = applyWriggle(q, u_time * 0.8, u_subBass * 0.4, u_mid * 0.9, u_air * 1.5);
+    
     float zC = q.z;
-    pMod1(q.z, 3.0);
+    pMod1(q.z, 3.2);
 
     // Central axon nerve tube
-    float axon = sdCylinder(q, vec3(0.0, 0.0, 0.25 + u_subBass * 0.15));
+    float axon = sdCylinder(q, vec3(0.0, 0.0, 0.22 + u_subBass * 0.15));
 
-    // Branching synaptic nodes
+    // Branching synaptic nodes morph shape on treble chords
     vec3 nQ = q;
     pModPolar(nQ.xy, 4.0);
-    nQ.x -= 0.6;
-    float synapse = sdSphere(nQ, 0.2 + u_bass * 0.1);
+    nQ.x -= 0.65;
+    
+    float synapse = sdMorphGeom(
+      nQ,
+      0.25,
+      0.6 + u_subBass * 2.0, // Vesicle sphere on bass
+      0.1 + u_mid * 1.5,
+      0.4 + u_high * 3.0,    // Receptor crystal on highs
+      0.2
+    );
 
-    float d = smin(axon, synapse, 0.3);
+    float d = smin(axon, synapse, 0.28);
 
     float freq = clamp(fract(zC * 0.2 - u_time * 0.5) + u_high * 0.4, 0.0, 1.0);
     glowCol = mix(vec3(0.0, 1.0, 0.6), vec3(0.1, 0.4, 1.0), freq);
     return d;
   }
 
-  // Act 1: Bioluminescent Trench (Floating Translucent Jellyfish)
+  // Act 1: Bioluminescent Trench (Jellyfish with Muscular Contraction & Cilia Flutter)
   float mapAct1(vec3 p, out vec3 glowCol) {
     vec3 q = p;
     pModPolar(q.xz, 6.0);
     q.x -= 1.8;
 
-    // Jellyfish bell cap
-    float bell = sdSphere(q - vec3(0.0, 0.5, 0.0), 0.9 + u_subBass * 0.3);
-    float hollow = sdSphere(q - vec3(0.0, 0.2, 0.0), 0.85);
+    // Muscular bell contraction on sub-bass kick
+    float contraction = u_subBass * 0.45;
+    float bellR = 0.9 + 0.15 * sin(u_time * 2.0);
+    vec3 bellP = q - vec3(0.0, 0.5, 0.0);
+    bellP.y *= (1.0 + contraction);
+    bellP.xz *= (1.0 - contraction * 0.5);
+
+    float bell = sdSphere(bellP, bellR);
+    float hollow = sdSphere(bellP + vec3(0.0, 0.2, 0.0), bellR * 0.92);
     float cap = max(bell, -hollow);
 
-    // Tendril strands
-    float tendril = sdCylinder(q.xzy - vec3(0.2 * sin(u_time * 2.0 + q.y), 0.0, 0.0), vec3(0.0, 0.0, 0.04));
+    // Tendril strands with high-frequency acoustic wriggle
+    vec3 tendrilP = applyWriggle(q, u_time * 1.2, 0.0, u_mid * 0.8, u_air * 2.2);
+    float tendril = sdCylinder(tendrilP.xzy - vec3(0.15 * sin(u_time * 2.5 + q.y * 3.0), 0.0, 0.0), vec3(0.0, 0.0, 0.035));
 
     float d = min(cap, tendril);
 
     float freq = clamp(length(p) * 0.15 + u_air * 0.5, 0.0, 1.0);
-    glowCol = mix(vec3(0.0, 0.8, 1.0), vec3(0.8, 0.0, 1.0), freq);
+    glowCol = mix(vec3(0.0, 0.85, 1.0), vec3(0.85, 0.0, 1.0), freq);
     return d;
   }
 
-  // Act 2: DNA Synthesis (Dual Helix Ascent)
+  // Act 2: DNA Synthesis (Dual Helix with Morphing Base-Pairs)
   float mapAct3D(vec3 p, out vec3 glowCol) {
     vec3 q = p;
-    float twistRate = 0.5 + u_subBass * 0.2;
+    float twistRate = 0.5 + u_subBass * 0.25;
     q = opTwistY(q, twistRate);
 
     // Two parallel vertical strands
-    float s1 = sdCylinder(q - vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.15));
-    float s2 = sdCylinder(q - vec3(-1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.15));
+    float s1 = sdCylinder(q - vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.14));
+    float s2 = sdCylinder(q - vec3(-1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.14));
 
-    // Base pair crossbars
+    // Base pair crossbars morph shape from rods to diamond nodes on high frequencies
     vec3 bQ = q;
     pMod1(bQ.y, 0.8);
-    float rungs = sdBox(bQ, vec3(1.0, 0.06, 0.06));
+    
+    float rungs = sdMorphGeom(
+      bQ,
+      0.2,
+      0.1 + u_subBass * 1.5,
+      0.5 + u_mid * 2.0,     // Bar on mids
+      0.5 + u_high * 3.0,    // Diamond on highs
+      0.2
+    );
+    rungs = min(rungs, sdBox(bQ, vec3(1.0, 0.05, 0.05)));
 
     float d = min(min(s1, s2), rungs);
 
@@ -173,31 +200,48 @@ const FRAGMENT_SHADER = `
     return d;
   }
 
-  // Act 3: Cellular Hivemind (Breathing Voronoi Cells)
+  // Act 3: Cellular Hivemind (Frequency-Driven Voronoi Honeycomb Morphing)
   float mapAct3(vec3 p, out vec3 glowCol) {
     vec3 q = p;
-    vec3 cell = pMod3(q, vec3(2.0, 2.0, 2.0));
+    vec3 cell = pMod3(q, vec3(2.2, 2.2, 2.2));
 
-    float cellRadius = 0.7 + u_subBass * 0.35 + 0.1 * sin(u_time * 2.0 + hash31(cell) * 6.28);
-    float sph = sdSphere(q, cellRadius);
-    float inner = sdSphere(q, cellRadius * 0.6);
+    // Morph cells: Round bubbles on bass <-> Cubic tissue on mids <-> Hexagonal honeycombs on highs
+    float cellUnit = sdMorphGeom(
+      q,
+      0.75,
+      0.5 + u_subBass * 3.0, // Bubble sphere on bass
+      0.3 + u_mid * 2.5,     // Square cell on mids
+      0.4 + u_high * 3.0,    // Faceted honeycomb on highs
+      0.3 + u_air * 2.0      // Hex prism
+    );
 
-    float d = max(sph, -inner);
+    float inner = sdSphere(q, 0.5);
+    float d = max(cellUnit, -inner);
 
     float freq = clamp(hash31(cell) * 0.5 + u_high * 0.5, 0.0, 1.0);
     glowCol = freqToColor(freq, 1.6);
     return d;
   }
 
-  // Act 4: Dissolution into Photons (Stardust Dispersion)
+  // Act 4: Dissolution into Photons (Stardust Halos & Harmonic Flutter)
   float mapAct4(vec3 p, out vec3 glowCol) {
     vec3 q = p;
+    q = applyWriggle(q, u_time * 0.5, u_subBass * 0.3, u_mid * 0.5, u_air * 2.0);
+
     pModPolar(q.xy, 8.0);
     q.x -= 2.5;
 
-    float orb = sdSphere(q, 0.4 + u_air * 0.3);
-    float halo = sdTorus(q, vec2(0.8, 0.05));
-    float d = min(orb, halo);
+    float morphDust = sdMorphGeom(
+      q,
+      0.45,
+      0.4 + u_subBass * 1.5,
+      0.1 + u_mid * 1.5,
+      0.6 + u_high * 3.0,
+      0.3 + u_air * 2.0
+    );
+
+    float halo = sdTorus(q, vec2(0.8, 0.04));
+    float d = min(morphDust, halo);
 
     float freq = clamp(length(p) * 0.1 + u_energy * 0.5, 0.0, 1.0);
     glowCol = mix(vec3(0.1, 1.0, 0.9), vec3(1.0, 0.9, 0.4), freq);
