@@ -173,6 +173,12 @@ export const DemosceneGLSL = `
     return mix(b, a, h) + k * h * (1.0 - h);
   }
 
+  // Smooth Camera Clearance Sphere (carves a transparent safety sphere around the lens)
+  float applyCameraClearance(float sceneDist, vec3 p, vec3 camPos, float radius, float smoothness) {
+    float camSphereDist = -(length(p - camPos) - radius);
+    return smax(sceneDist, camSphereDist, smoothness);
+  }
+
   // 1D Domain Repetition
   float pMod1(inout float p, float size) {
     float halfsize = size * 0.5;

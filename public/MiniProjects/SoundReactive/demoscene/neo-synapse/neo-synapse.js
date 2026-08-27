@@ -204,13 +204,17 @@ const FRAGMENT_SHADER = `
     return d;
   }
 
-  // Master Scene Dispatcher
+  // Master Scene Dispatcher with Camera Clearance Sphere
   float map(vec3 p, out vec3 glowCol) {
-    if (u_actIndex == 0) return mapAct0(p, glowCol);
-    if (u_actIndex == 1) return mapAct1(p, glowCol);
-    if (u_actIndex == 2) return mapAct3D(p, glowCol);
-    if (u_actIndex == 3) return mapAct3(p, glowCol);
-    return mapAct4(p, glowCol);
+    float d = 0.0;
+    if (u_actIndex == 0) d = mapAct0(p, glowCol);
+    else if (u_actIndex == 1) d = mapAct1(p, glowCol);
+    else if (u_actIndex == 2) d = mapAct3D(p, glowCol);
+    else if (u_actIndex == 3) d = mapAct3(p, glowCol);
+    else d = mapAct4(p, glowCol);
+
+    // Carve smooth transparent clearance sphere around camera to prevent near-plane clipping
+    return applyCameraClearance(d, p, u_camPos, 0.5, 0.3);
   }
 
   vec3 calcNormal(vec3 p) {
@@ -241,8 +245,8 @@ const FRAGMENT_SHADER = `
     float fovScale = tan(fovRad * 0.5);
     vec3 rd = normalize(uv.x * cu * fovScale + uv.y * cv * fovScale + cw);
 
-    // March
-    float t = 0.0;
+    // March with safe near-plane offset
+    float t = 0.25;
     float maxDist = 35.0;
     vec3 hitPos = vec3(0.0);
     bool hit = false;
@@ -265,7 +269,16 @@ const FRAGMENT_SHADER = `
       t += d * 0.85;
     }
 
-    vec3 col = vec3(0.01, 0.03, 0.03);
+    // Bioluminescent Deep Ocean / Neural Void Background
+    float plankton = hash21(floor(rd.xy * 200.0 + fract(u_time * 0.03)));
+    float sparks = smoothstep(0.95 - u_air * 0.05, 1.0, plankton) * (1.0 + u_high * 2.5);
+    
+    vec3 deepWater = vec3(0.01, 0.03, 0.05);
+    vec3 bioGlow = vec3(0.0, 0.25, 0.3) * (1.0 + u_subBass * 0.5);
+    vec3 sky = mix(deepWater, bioGlow, clamp(sin(rd.y * 1.5 + rd.x * 2.0) * 0.5 + 0.5, 0.0, 1.0));
+    sky += vec3(0.2, 1.0, 0.8) * sparks * 1.4;
+
+    vec3 col = sky;
 
     if (hit) {
       vec3 n = calcNormal(hitPos);
@@ -278,11 +291,16 @@ const FRAGMENT_SHADER = `
       float spec = pow(max(0.0, dot(ref, lightDir)), 20.0);
 
       vec3 baseCol = glowCol * 0.6;
-      col = baseCol * (diff * 0.75 + 0.25) * ao + vec3(0.7, 1.0, 0.9) * spec * (0.5 + u_air * 1.5);
+      vec3 surfaceCol = baseCol * (diff * 0.75 + 0.25) * ao + vec3(0.7, 1.0, 0.9) * spec * (0.5 + u_air * 1.5);
 
       // Organic Bioluminescent Fog
-      float fog = 1.0 - exp(-t * 0.055);
-      col = mix(col, vec3(0.01, 0.02, 0.04), fog);
+      float fog = 1.0 - exp(-t * 0.04);
+      surfaceCol = mix(surfaceCol, sky, fog);
+
+      // Proximity Transparency Fade (smooth x-ray ghosting as objects approach lens)
+      float camDist = length(hitPos - ro);
+      float nearFade = smoothstep(0.3, 0.9, camDist);
+      col = mix(sky + accumGlow * 0.45, surfaceCol, nearFade);
     }
 
     col += accumGlow * 0.45;
