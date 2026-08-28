@@ -57,7 +57,9 @@ bool MpuSensor::detectAndConfigure() {
     if (!readRegister(kRegWhoAmI, whoAmI)) {
         return false;
     }
+    Serial.printf(" [IMU @ 0x%02X responded with WHO_AM_I: 0x%02X]\n", address_, whoAmI);
     if (!isExpectedWhoAmI(whoAmI)) {
+        Serial.printf(" [WARNING] Expected WHO_AM_I for %s, but got 0x%02X\n", sensorName(), whoAmI);
         return false;
     }
 

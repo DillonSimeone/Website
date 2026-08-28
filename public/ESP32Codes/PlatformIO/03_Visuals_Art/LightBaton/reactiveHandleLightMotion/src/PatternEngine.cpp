@@ -7,6 +7,9 @@ bool PatternEngine::usesMotionRouting() const {
 }
 
 float PatternEngine::evaluateBinRouting(const MotionFrame& motion, const PatternContext& ctx) const {
+    // If there is negligible motion RMS, produce 0 output
+    if (motion.rms < 0.015f) return 0.0f;
+
     float maxAmp = 0.0f;
     const int numBins = constrain(state_.numBins, 1, kMaxBins);
 
@@ -20,7 +23,8 @@ float PatternEngine::evaluateBinRouting(const MotionFrame& motion, const Pattern
         for (int b = startIdx; b < endIdx && b < MOTION_BIN_COUNT; ++b) {
             sum += motion.bins[b];
         }
-        float vol = (sum / static_cast<float>(len)) * (motion.rms * 1.35f + 0.05f);
+        // Purely motion-driven volume without static baseline offset
+        float vol = (sum / static_cast<float>(len)) * (motion.rms * 1.4f);
 
         const char* patId = state_.binPatterns[i];
         if (!patId || strcmp(patId, "none") == 0 || patId[0] == '\0') {
@@ -49,24 +53,34 @@ float PatternEngine::evaluateMotor(const MotionFrame& motion, float energyLevel,
         return 0.0f;
     }
 
+    // Motion deadband: If device is at rest and no energy accumulated, motor is completely off
+    if (motion.rms < 0.015f && motion.magnitude < 0.3f && energyLevel < 0.02f) {
+        lastMotorDuty_ = 0.0f;
+        return 0.0f;
+    }
+
+    // Scale energy so 3/4 (75%) LED fill reaches 100% (1.0) PWM duty
+    const float energyScaled = constrain(energyLevel / 0.75f, 0.0f, 1.0f);
+
     PatternContext ctx;
     ctx.tMs = tMs;
     ctx.intensity = state_.intensity;
     ctx.speed = state_.speed;
     ctx.startupFloor = state_.startupFloor;
     ctx.motion = &motion;
-    ctx.energyLevel = energyLevel;
+    ctx.energyLevel = energyScaled;
 
     float v = 0.0f;
     if (usesMotionRouting()) {
         v = evaluateBinRouting(motion, ctx);
-        if (v < 0.01f) {
-            v = evaluateDirectPattern(ctx);
+        // Energy charge drives motor PWM up to 100% in sync with the LEDs
+        if (energyScaled > v) {
+            v = energyScaled;
         }
     } else {
         v = evaluateDirectPattern(ctx);
-        if (v < 0.05f && energyLevel > 0.05f) {
-            v = energyLevel;
+        if (v < 0.05f && energyScaled > 0.05f) {
+            v = energyScaled;
         }
     }
 
@@ -74,9 +88,14 @@ float PatternEngine::evaluateMotor(const MotionFrame& motion, float energyLevel,
     if (v < 0.0f) v = 0.0f;
     if (v > 1.0f) v = 1.0f;
 
-    if (v > 0.001f && state_.startupFloor > 0.0f) {
+    // Apply startup floor only if there is intentional output (above 5%)
+    if (v >= 0.05f && state_.startupFloor > 0.0f) {
         v = state_.startupFloor + v * (1.0f - state_.startupFloor);
+    } else if (v < 0.05f) {
+        v = 0.0f;
     }
+
+    if (v > 1.0f) v = 1.0f;
 
     lastMotorDuty_ = v;
     return v;

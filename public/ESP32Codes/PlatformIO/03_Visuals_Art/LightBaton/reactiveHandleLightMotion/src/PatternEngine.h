@@ -10,7 +10,7 @@ static constexpr int kMaxDividers = kMaxBins - 1;
 struct DeviceState {
     bool on = true;
     bool mute = false;
-    float intensity = 0.85f;
+    float intensity = 1.0f;
     float speed = 1.0f;
     float startupFloor = 0.15f;
     char patternId[24] = "DualAxis";

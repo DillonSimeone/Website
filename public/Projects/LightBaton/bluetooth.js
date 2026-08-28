@@ -94,7 +94,7 @@ async function bleWriteJson(obj) {
     if (!rxCharacteristic) throw new Error("BLE not connected");
     const data = new TextEncoder().encode(JSON.stringify(obj));
     if (rxCharacteristic.properties?.write) {
-        await rxCharacteristic.writeValue(data);
+        await rxCharacteristic.writeValueWithResponse(data);
     } else {
         await rxCharacteristic.writeValueWithoutResponse(data);
     }

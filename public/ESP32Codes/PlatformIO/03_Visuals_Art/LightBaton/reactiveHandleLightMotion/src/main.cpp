@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
+#include <esp_coexist.h>
 
 #include "MpuSensor.h"
 #include "MotionAnalyzer.h"
@@ -32,7 +33,7 @@ constexpr int LED_PIN = 6;
 constexpr int NUM_LEDS = 76;
 constexpr unsigned long INACTIVITY_TIMEOUT_MS = 10000;
 
-constexpr bool CHANNEL_HOPPING = true;
+constexpr bool CHANNEL_HOPPING = false;
 constexpr uint8_t FIXED_CHANNEL = 1;
 constexpr uint8_t HOP_CHANNEL_MIN = 1;
 constexpr uint8_t HOP_CHANNEL_MAX = 11;
@@ -59,6 +60,21 @@ void updateMotor(uint32_t nowMs);
 void goToSleep();
 void sendMotionEspNow();
 
+int scanI2CBus(TwoWire& wire) {
+    int count = 0;
+    for (uint8_t addr = 1; addr < 127; addr++) {
+        wire.beginTransmission(addr);
+        if (wire.endTransmission() == 0) {
+            Serial.printf("   -> Found active I2C device at 0x%02X\n", addr);
+            count++;
+        }
+    }
+    if (count == 0) {
+        Serial.println("   -> No I2C devices responded on this bus/pin mapping.");
+    }
+    return count;
+}
+
 void setup() {
     Serial.begin(115200);
     delay(1000);
@@ -71,14 +87,34 @@ void setup() {
     pinMode(MOTOR_PIN, OUTPUT);
     analogWrite(MOTOR_PIN, 0);
 
+    Serial.println("Probing IMU with Primary Pins (SDA=GPIO 2, SCL=GPIO 3)...");
     Wire.begin(SDA_PIN, SCL_PIN);
+    Wire.setTimeOut(50);
 
-    Serial.print("Finding IMU...");
-    if (!mpu.begin(Wire, ACTIVE_SENSOR)) {
-        Serial.println(" FAILED!");
-        while (1) delay(500);
+    bool imuFound = mpu.begin(Wire, ACTIVE_SENSOR);
+    if (!imuFound) {
+        Serial.println(" [FAIL] Primary pinout failed. Running I2C scan on GPIO 2/3:");
+        scanI2CBus(Wire);
+
+        Serial.println("\nProbing IMU with Flipped Pins (SDA=GPIO 3, SCL=GPIO 2)...");
+        Wire.end();
+        delay(50);
+        Wire.begin(SCL_PIN, SDA_PIN);
+        Wire.setTimeOut(50);
+
+        imuFound = mpu.begin(Wire, ACTIVE_SENSOR);
+        if (!imuFound) {
+            Serial.println(" [FAIL] Flipped pinout failed. Running I2C scan on GPIO 3/2:");
+            scanI2CBus(Wire);
+            Serial.println("\n[ERROR] IMU initialization failed on both pin configurations.");
+            Serial.println("Please check: 1) True GND instead of GPIO 4, 2) 5V to VCC (if GY-521), 3) Loose connections.");
+            while (1) delay(500);
+        } else {
+            Serial.printf(" [OK] IMU (%s) initialized on flipped pins (SDA=GPIO 3, SCL=GPIO 2)!\n", mpu.sensorName());
+        }
+    } else {
+        Serial.printf(" [OK] IMU (%s) initialized on primary pins (SDA=GPIO 2, SCL=GPIO 3)!\n", mpu.sensorName());
     }
-    Serial.printf(" OK (%s)\n", mpu.sensorName());
     mpu.setMotionInterrupt(true);
 
     FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -91,8 +127,17 @@ void setup() {
     deviceConfig.load(state);
     patternEngine.setState(state);
 
+    // ESP32-C3 radio init order: WiFi driver first, then coexistence, then BLE.
+    // Espressif requires WiFi to be initialized before BLE on single-radio chips.
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
+    esp_coex_preference_set(ESP_COEX_PREFER_BT);
+    delay(100);
+
+    if (!bleServer.begin(&patternEngine, &deviceConfig)) {
+        Serial.println("BLE init failed!");
+    }
+    delay(100);
 
     if (esp_now_init() != ESP_OK) {
         Serial.println("ESP-NOW init failed!");
@@ -110,10 +155,6 @@ void setup() {
             Serial.printf("ESP-NOW ready (%s)\n",
                           CHANNEL_HOPPING ? "channel hopping" : "fixed channel");
         }
-    }
-
-    if (!bleServer.begin(&patternEngine, &deviceConfig)) {
-        Serial.println("BLE init failed!");
     }
 
     lastUpdate = millis();
@@ -152,8 +193,8 @@ void loop() {
 
     EVERY_N_MILLISECONDS(500) {
         const MotionFrame& frame = motionAnalyzer.frame();
-        Serial.printf("Motion: %.2f | Energy: %.2f | X: %.2f Y: %.2f | BLE: %s\n",
-                      motionMag, energyLevel, frame.speedX, frame.speedY,
+        Serial.printf("Motion: %.2f | Energy: %.2f | Motor: %.2f | X: %.2f Y: %.2f | BLE: %s\n",
+                      motionMag, energyLevel, patternEngine.lastMotorDuty(), frame.speedX, frame.speedY,
                       bleServer.isConnected() ? "connected" : "advertising");
     }
 

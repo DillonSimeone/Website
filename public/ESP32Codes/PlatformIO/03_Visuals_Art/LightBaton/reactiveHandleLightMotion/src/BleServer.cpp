@@ -22,6 +22,7 @@ bool BleServer::begin(PatternEngine* engine, DeviceConfig* config) {
     Serial.println("==============================================\n");
 
     BLEDevice::init(devName.c_str());
+    BLEDevice::setMTU(517);
     pServer_ = BLEDevice::createServer();
     if (!pServer_) return false;
     pServer_->setCallbacks(this);
@@ -53,16 +54,21 @@ bool BleServer::begin(PatternEngine* engine, DeviceConfig* config) {
 void BleServer::onConnect(BLEServer* pServer) {
     (void)pServer;
     deviceConnected_ = true;
-    Serial.println("[BLE] Client connected");
-    broadcastState();
+    Serial.println("\n[BLE] *** Client CONNECTED ***");
+    // Do NOT send any notifications here. Chrome is still performing
+    // GATT service/characteristic discovery. The JS client will send
+    // a "sync-request" once it has subscribed to notifications.
 }
 
 void BleServer::onDisconnect(BLEServer* pServer) {
     (void)pServer;
     deviceConnected_ = false;
-    Serial.println("[BLE] Client disconnected");
+    Serial.println("[BLE] *** Client DISCONNECTED ***");
     delay(500);
-    if (pServer_) pServer_->startAdvertising();
+    if (pServer_) {
+        pServer_->startAdvertising();
+        Serial.println("[BLE] Re-advertising started.");
+    }
 }
 
 void BleServer::notifyJson_(const char* json) {

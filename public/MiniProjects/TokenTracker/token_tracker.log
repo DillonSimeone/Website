@@ -8004,3 +8004,249 @@ OSError: [Errno 22] Invalid argument: 'F:\\Github\\Website\\public\\MiniProjects
 2026-08-26 21:41:15,644 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
 2026-08-26 21:41:16,373 [INFO] token_tracker: Saved 18937 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
 2026-08-26 21:41:16,375 [INFO] token_tracker: Scan complete: 18937 entries in 0.8s
+2026-08-26 22:41:18,764 [INFO] token_tracker: Auto-refreshing data...
+2026-08-26 22:41:18,764 [INFO] token_tracker: Scanning all data sources...
+2026-08-26 22:41:18,780 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-26 22:41:18,780 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-26 22:41:18,794 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787808161)
+2026-08-26 22:41:18,794 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-26 22:41:19,585 [INFO] token_tracker: Saved 19002 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-26 22:41:19,586 [INFO] token_tracker: Scan complete: 19002 entries in 0.8s
+2026-08-26 23:41:19,641 [INFO] token_tracker: Auto-refreshing data...
+2026-08-26 23:41:19,643 [INFO] token_tracker: Scanning all data sources...
+2026-08-26 23:41:19,653 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-26 23:41:19,657 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-26 23:41:19,667 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-26 23:41:19,674 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-26 23:41:20,483 [INFO] token_tracker: Saved 19040 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-26 23:41:20,488 [INFO] token_tracker: Scan complete: 19040 entries in 0.8s
+2026-08-27 01:26:18,201 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 01:26:18,270 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 01:26:18,440 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 01:26:18,455 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 01:26:18,524 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 01:26:18,540 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 01:26:18,555 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 01:26:18,571 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,506 [INFO] token_tracker: Starting LLM Token Tracker...
+2026-08-27 01:26:21,506 [INFO] token_tracker: Providers: antigravity, cursor
+2026-08-27 01:26:21,506 [INFO] token_tracker: Data dir: F:\Github\Website\public\MiniProjects\TokenTracker
+2026-08-27 01:26:21,506 [INFO] token_tracker: Discovered 21 data sources
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [antigravity] C:\Users\DoctorNightmares\.gemini\antigravity\conversations (antigravity@1787348125)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [antigravity] C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (antigravity-backup@1779158214)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [antigravity] C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (antigravity-ide@1787811422)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\10743a669343903cdd2e406838d5759e\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\1e1a8d35ee0cd5bacea4d4d15646d479\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\2ea6c867554538346d999300537e4044\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\365c1c8ad9f55101eb9a6d8273160368\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\414a3994d6cf14eec40cc7fb72dad279\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\462c0a81ab33f5fccdfd88e4d8118a50\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\65fa20a243ef7ab9f0ba3d718d329637\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\66e23ec6ac5c4e32c1123e3917ff803c\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\8189400db010c8abbf740c9971a35649\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\849e4ebf7b677dea62973b1943fa6350\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\a7c76f88a5c3bc384a02ad60f4ac7cc1\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\b3a16af3841777b15a4123567c4d0525\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\b685c871518315abbbedbe3400c2046c\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\c1602f467721d838406fe973f27d807a\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,507 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\d96e9ec38df0b365770787d609c2abea\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,508 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\empty-window\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,508 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\fc9468ba7beb841d815eca286060f017\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 01:26:21,508 [INFO] token_tracker: Refresh interval: 60 minutes
+2026-08-27 01:26:22,768 [INFO] token_tracker: Loaded 19040 cached entries from v2 cache. Last scan: 2026-08-27 06:41:20.118177+00:00
+2026-08-27 01:26:22,768 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 01:26:22,783 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 01:26:22,785 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 01:26:22,785 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 01:26:22,801 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 01:26:26,571 [INFO] token_tracker: Saved 19040 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 01:26:26,579 [INFO] token_tracker: Scan complete: 19040 entries in 3.8s
+2026-08-27 01:26:26,735 [INFO] token_tracker: Starting main Tkinter event loop...
+2026-08-27 11:07:41,865 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 11:07:41,901 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 11:07:42,048 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 11:07:42,067 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 11:07:42,083 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 11:07:42,088 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 11:07:42,100 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 11:07:42,107 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker: Starting LLM Token Tracker...
+2026-08-27 11:07:43,098 [INFO] token_tracker: Providers: antigravity, cursor
+2026-08-27 11:07:43,098 [INFO] token_tracker: Data dir: F:\Github\Website\public\MiniProjects\TokenTracker
+2026-08-27 11:07:43,098 [INFO] token_tracker: Discovered 21 data sources
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [antigravity] C:\Users\DoctorNightmares\.gemini\antigravity\conversations (antigravity@1787348125)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [antigravity] C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (antigravity-backup@1779158214)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [antigravity] C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (antigravity-ide@1787811422)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\10743a669343903cdd2e406838d5759e\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\1e1a8d35ee0cd5bacea4d4d15646d479\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\2ea6c867554538346d999300537e4044\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\365c1c8ad9f55101eb9a6d8273160368\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\414a3994d6cf14eec40cc7fb72dad279\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\462c0a81ab33f5fccdfd88e4d8118a50\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\65fa20a243ef7ab9f0ba3d718d329637\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\66e23ec6ac5c4e32c1123e3917ff803c\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\8189400db010c8abbf740c9971a35649\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\849e4ebf7b677dea62973b1943fa6350\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\a7c76f88a5c3bc384a02ad60f4ac7cc1\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\b3a16af3841777b15a4123567c4d0525\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,098 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\b685c871518315abbbedbe3400c2046c\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,099 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\c1602f467721d838406fe973f27d807a\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,099 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\d96e9ec38df0b365770787d609c2abea\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,099 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\empty-window\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,099 [INFO] token_tracker:   [cursor] C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\workspaceStorage\fc9468ba7beb841d815eca286060f017\state.vscdb (dillon.simeone@pcc.edu)
+2026-08-27 11:07:43,099 [INFO] token_tracker: Refresh interval: 60 minutes
+2026-08-27 11:07:43,957 [INFO] token_tracker: Loaded 19040 cached entries from v2 cache. Last scan: 2026-08-27 08:26:26.220390+00:00
+2026-08-27 11:07:43,957 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 11:07:43,957 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 11:07:43,957 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 11:07:43,980 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 11:07:43,986 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 11:07:47,686 [INFO] token_tracker: Saved 19040 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 11:07:47,691 [INFO] token_tracker: Scan complete: 19040 entries in 3.7s
+2026-08-27 11:07:47,757 [INFO] token_tracker: Starting main Tkinter event loop...
+2026-08-27 12:07:47,774 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 12:07:47,774 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 12:07:47,788 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 12:07:47,788 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 12:07:47,809 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 12:07:47,825 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 12:07:48,595 [INFO] token_tracker: Saved 19040 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 12:07:48,597 [INFO] token_tracker: Scan complete: 19040 entries in 0.8s
+2026-08-27 13:07:48,659 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 13:07:48,659 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 13:07:48,663 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 13:07:48,663 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 13:07:48,668 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 13:07:48,676 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 13:07:49,407 [INFO] token_tracker: Saved 19040 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 13:07:49,410 [INFO] token_tracker: Scan complete: 19040 entries in 0.8s
+2026-08-27 14:07:49,458 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 14:07:49,458 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 14:07:49,473 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 14:07:49,473 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 14:07:49,498 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 14:07:49,506 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 14:07:50,290 [INFO] token_tracker: Saved 19040 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 14:07:50,293 [INFO] token_tracker: Scan complete: 19040 entries in 0.8s
+2026-08-27 15:07:50,352 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 15:07:50,352 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 15:07:50,352 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 15:07:50,352 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 15:07:50,361 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 15:07:50,370 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 15:07:51,067 [INFO] token_tracker: Saved 19040 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 15:07:51,077 [INFO] token_tracker: Scan complete: 19040 entries in 0.7s
+2026-08-27 16:07:51,116 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 16:07:51,116 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 16:07:51,121 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 16:07:51,125 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 16:07:51,133 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 16:07:51,141 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 16:07:51,869 [INFO] token_tracker: Saved 19040 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 16:07:51,874 [INFO] token_tracker: Scan complete: 19040 entries in 0.8s
+2026-08-27 17:07:51,920 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 17:07:51,920 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 17:07:51,920 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 17:07:51,920 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 17:07:51,936 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787811422)
+2026-08-27 17:07:51,947 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 17:07:52,651 [INFO] token_tracker: Saved 19040 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 17:07:52,651 [INFO] token_tracker: Scan complete: 19040 entries in 0.7s
+2026-08-27 18:07:52,694 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 18:07:52,694 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 18:07:52,713 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 18:07:52,717 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 18:07:52,728 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787877251)
+2026-08-27 18:07:52,737 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 18:07:53,639 [INFO] token_tracker: Saved 19065 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 18:07:53,644 [INFO] token_tracker: Scan complete: 19065 entries in 1.0s
+2026-08-27 19:07:53,716 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 19:07:53,716 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 19:07:53,721 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 19:07:53,725 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 19:07:53,734 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787877251)
+2026-08-27 19:07:53,741 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 19:07:54,456 [INFO] token_tracker: Saved 19065 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 19:07:54,461 [INFO] token_tracker: Scan complete: 19065 entries in 0.7s
+2026-08-27 20:07:54,503 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 20:07:54,503 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 20:07:54,508 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 20:07:54,511 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 20:07:54,520 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787877251)
+2026-08-27 20:07:54,529 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 20:07:55,248 [INFO] token_tracker: Saved 19065 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 20:07:55,252 [INFO] token_tracker: Scan complete: 19065 entries in 0.7s
+2026-08-27 21:07:55,291 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 21:07:55,291 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 21:07:55,296 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 21:07:55,299 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 21:07:55,308 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787877251)
+2026-08-27 21:07:55,315 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 21:07:56,035 [INFO] token_tracker: Saved 19065 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 21:07:56,040 [INFO] token_tracker: Scan complete: 19065 entries in 0.7s
+2026-08-27 22:07:56,073 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 22:07:56,073 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 22:07:56,079 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 22:07:56,082 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 22:07:56,091 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787877251)
+2026-08-27 22:07:56,100 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 22:07:56,807 [INFO] token_tracker: Saved 19065 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 22:07:56,812 [INFO] token_tracker: Scan complete: 19065 entries in 0.7s
+2026-08-27 23:07:56,918 [INFO] token_tracker: Auto-refreshing data...
+2026-08-27 23:07:56,960 [INFO] token_tracker: Scanning all data sources...
+2026-08-27 23:07:57,227 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-27 23:07:57,227 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-27 23:07:57,234 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787877251)
+2026-08-27 23:07:57,253 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-27 23:08:00,801 [INFO] token_tracker: Saved 19065 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-27 23:08:00,801 [INFO] token_tracker: Scan complete: 19065 entries in 3.8s
+2026-08-28 00:08:01,027 [INFO] token_tracker: Auto-refreshing data...
+2026-08-28 00:08:01,027 [INFO] token_tracker: Scanning all data sources...
+2026-08-28 00:08:01,033 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-28 00:08:01,036 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-28 00:08:01,045 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787897820)
+2026-08-28 00:08:01,053 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-28 00:08:01,789 [INFO] token_tracker: Saved 19075 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-28 00:08:01,794 [INFO] token_tracker: Scan complete: 19075 entries in 0.8s
+2026-08-28 01:08:01,847 [INFO] token_tracker: Auto-refreshing data...
+2026-08-28 01:08:01,847 [INFO] token_tracker: Scanning all data sources...
+2026-08-28 01:08:01,851 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-28 01:08:01,856 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-28 01:08:01,865 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787897820)
+2026-08-28 01:08:01,871 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-28 01:08:02,601 [INFO] token_tracker: Saved 19075 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-28 01:08:02,609 [INFO] token_tracker: Scan complete: 19075 entries in 0.8s
+2026-08-28 02:08:02,641 [INFO] token_tracker: Auto-refreshing data...
+2026-08-28 02:08:02,641 [INFO] token_tracker: Scanning all data sources...
+2026-08-28 02:08:02,645 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-28 02:08:02,655 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-28 02:08:02,662 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787905769)
+2026-08-28 02:08:02,674 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-28 02:08:05,978 [INFO] token_tracker: Saved 19084 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-28 02:08:05,978 [INFO] token_tracker: Scan complete: 19084 entries in 3.3s
+2026-08-28 03:08:06,040 [INFO] token_tracker: Auto-refreshing data...
+2026-08-28 03:08:06,040 [INFO] token_tracker: Scanning all data sources...
+2026-08-28 03:08:06,050 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-28 03:08:06,053 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-28 03:08:06,063 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787910861)
+2026-08-28 03:08:06,071 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-28 03:08:06,799 [INFO] token_tracker: Saved 19098 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-28 03:08:06,804 [INFO] token_tracker: Scan complete: 19098 entries in 0.8s
+2026-08-28 04:08:06,853 [INFO] token_tracker: Auto-refreshing data...
+2026-08-28 04:08:06,853 [INFO] token_tracker: Scanning all data sources...
+2026-08-28 04:08:06,876 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-28 04:08:06,886 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-28 04:08:06,906 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787910861)
+2026-08-28 04:08:06,915 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-28 04:08:07,652 [INFO] token_tracker: Saved 19098 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-28 04:08:07,657 [INFO] token_tracker: Scan complete: 19098 entries in 0.8s
+2026-08-28 05:08:07,701 [INFO] token_tracker: Auto-refreshing data...
+2026-08-28 05:08:07,701 [INFO] token_tracker: Scanning all data sources...
+2026-08-28 05:08:07,710 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1787348125)
+2026-08-28 05:08:07,714 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-08-28 05:08:07,725 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1787918885)
+2026-08-28 05:08:07,733 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-08-28 05:08:08,530 [INFO] token_tracker: Saved 19140 entries to F:\Github\Website\public\MiniProjects\TokenTracker\cache.json
+2026-08-28 05:08:08,535 [INFO] token_tracker: Scan complete: 19140 entries in 0.8s

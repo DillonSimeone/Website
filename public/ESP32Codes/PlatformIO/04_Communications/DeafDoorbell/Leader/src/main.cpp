@@ -11,11 +11,14 @@
 #include <Preferences.h>
 
 // ============================================================
-//  DeafDoorbell — Master Node (Streaming Audio Engine & Security Monitor)
-//  Ultra-low latency I2S audio detection (based on WirelessHaptic)
-//  Continuous ESP-NOW alert broadcasting while above threshold
-//  Over-The-Air (OTA) Updates & Network Discoverability
-//  ESP-NOW Traffic Monitoring & Sound History Graph
+//  DeafDoorbell — Master Node (Refactored & Hardened Firmware)
+//  - 32-bit I2S audio with 6-buffer DMA depth (prevents dropouts)
+//  - IIR DC-blocking filter (cuts <80Hz rumble & 60Hz hum)
+//  - Multi-chunk acoustic debounce (rejects transient pops/clicks)
+//  - Single-color 4-packet burst (eliminates follower red-flicker bug)
+//  - Real-time audio-reactive LED feedback for mic positioning
+//  - Zero-heap-allocation JSON endpoints for rock-solid stability
+//  - Over-The-Air (OTA) Updates & ESP-NOW Traffic Inspector
 // ============================================================
 
 #define DEBUG_ENABLED
@@ -42,10 +45,10 @@
 // ===== I2S & AUDIO SETTINGS =====
 #define I2S_PORT        I2S_NUM_0
 #define SAMPLE_RATE     16000
-#define SAMPLES         128 // 8ms rolling window for ultra-tight sync
-#define CHUNK_SIZE      64  // 4ms read window
+#define SAMPLES         128 // Rolling window for level calculation
+#define CHUNK_SIZE      64  // 4ms read window (64 samples @ 16kHz)
 
-// ===== ESP-NOW PROTOCOL (Original 6-byte follower compatible struct) =====
+// ===== ESP-NOW PROTOCOL (Must match Follower struct exactly) =====
 uint8_t broadcastAddr[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 typedef struct {
@@ -73,9 +76,7 @@ uint32_t totalEspNowPackets = 0;
 uint32_t validDoorbellPackets = 0;
 uint32_t unknownPackets = 0;
 
-// ===== WIFI & OTA CREDENTIALS =====
-const char* STA_SSID     = "Dolphin";
-const char* STA_PASS     = "alexander85";
+// ===== WIFI & NETWORK CONFIGURATION =====
 const char* AP_SSID      = "MayanSusanDoorbell";
 const char* AP_PASS      = "shrek!1234";
 const char* HOSTNAME_MDNS = "deafdoorbell";
@@ -85,30 +86,34 @@ Preferences prefs;
 int     threshold   = 2500;   // Audio trigger level (MAD)
 int     duration    = 3000;   // Flash duration (ms)
 int     brightness  = 100;    // Global Brightness (10-100%)
-bool    partyMode   = true;   // Party Mode: Randomized vibrant colors per message
+bool    partyMode   = true;   // Party Mode: Randomized vibrant color per alert
 uint8_t colorR      = 0;      // Default static color: Cyan (#00D2FF)
 uint8_t colorG      = 210;
 uint8_t colorB      = 255;
 float   micGain     = 1.5f;
 float   motorSmooth = 0.35f;
 
-// ===== AUDIO & RUNTIME STATE =====
+// ===== AUDIO FILTER & RUNTIME STATE =====
 float rawSamples[SAMPLES] = {0.0f};
 float currentMAD  = 0.0f;
 float levelLP     = 0.0f;
 bool  uiTriggered = false;
 
-// Continuous transmission spamming state
-unsigned long sustainUntilMs   = 0;
-unsigned long lastPacketSendMs = 0;
-#define SPAM_INTERVAL_MS 25   // Broadcast packet every ~25ms while active
-#define SUSTAIN_TIME_MS  3000 // 3 second default sustain
+// DC-blocking filter state
+float lastInputSample  = 0.0f;
+float lastOutputSample = 0.0f;
+const float DC_FILTER_R = 0.985f; // ~80Hz high-pass cutoff at 16kHz
+
+// Alert execution state
+unsigned long alertCooldownUntilMs = 0;
+int burstPacketsRemaining = 0;
+unsigned long nextBurstPacketMs = 0;
+DoorbellMsg activeAlertMsg;
 
 // ===== WEB SERVER & DNS =====
 DNSServer dnsServer;
 WebServer server(80);
 const byte DNS_PORT = 53;
-unsigned long lastWiFiCheckMs = 0;
 
 // ============================================================
 //  Color Conversion Helpers
@@ -156,14 +161,12 @@ void parseHexColor(const String& hex) {
     }
 }
 
-String colorToHex() {
-    char buf[8];
-    snprintf(buf, sizeof(buf), "#%02X%02X%02X", colorR, colorG, colorB);
-    return String(buf);
+void colorToHexBuf(char* outBuf, size_t bufSize, uint8_t r, uint8_t g, uint8_t b) {
+    snprintf(outBuf, bufSize, "#%02X%02X%02X", r, g, b);
 }
 
 // ============================================================
-//  I2S Audio Setup (WirelessHaptic 32-bit Architecture)
+//  I2S Audio Setup (Deep DMA Queue & Low-Latency 32-bit Frame)
 // ============================================================
 void setupI2S() {
     pinMode(MIC_GND_PIN, OUTPUT);
@@ -175,11 +178,11 @@ void setupI2S() {
     i2s_config_t i2s_config = {
         .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
         .sample_rate = SAMPLE_RATE,
-        .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT, // 32-bit alignment
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
         .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
         .communication_format = (i2s_comm_format_t)I2S_COMM_FORMAT_STAND_I2S,
         .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
-        .dma_buf_count = 2,  // Ultra-low latency DMA buffers
+        .dma_buf_count = 6,     // 6 buffers x 128 samples = 48ms queue headroom
         .dma_buf_len = SAMPLES,
         .use_apll = false,
         .tx_desc_auto_clear = false,
@@ -234,7 +237,7 @@ void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len) {
     #ifdef DEBUG_ENABLED
     DEBUG_PRINTF("[ESP-NOW REC] Len: %d | MAC: %02X:%02X:%02X:%02X:%02X:%02X | %s\n",
         len, entry.mac[0], entry.mac[1], entry.mac[2], entry.mac[3], entry.mac[4], entry.mac[5],
-        entry.isDoorbell ? "DOORBELL MSG (0x01)" : "UNKNOWN/OTHER");
+        entry.isDoorbell ? "DOORBELL MSG (0x01)" : "OTHER ESPNOW");
     #endif
 }
 
@@ -244,7 +247,7 @@ void setupESPNow() {
         return;
     }
 
-    // Register receive callback on Master to log incoming traffic
+    // Register receive callback to log background RF traffic
     esp_now_register_recv_cb(esp_now_recv_cb_t(onMasterEspNowRecv));
 
     esp_now_peer_info_t peerInfo = {};
@@ -258,10 +261,12 @@ void setupESPNow() {
     }
 }
 
-void sendEspNowPacket(bool isTest = false) {
-    DoorbellMsg msg;
-    msg.msgType    = 0x01;
-    msg.durationMs = (uint16_t)duration;
+// ============================================================
+//  Alert Broadcasting Engine (Consistent Single-Color Bursts)
+// ============================================================
+void triggerAlert(bool isTest = false) {
+    activeAlertMsg.msgType    = 0x01;
+    activeAlertMsg.durationMs = (uint16_t)duration;
 
     uint8_t r = 0, g = 0, b = 0;
     if (partyMode && !isTest) {
@@ -273,11 +278,26 @@ void sendEspNowPacket(bool isTest = false) {
     }
 
     float bScale = constrain(brightness, 10, 100) / 100.0f;
-    msg.r = (uint8_t)(r * bScale);
-    msg.g = (uint8_t)(g * bScale);
-    msg.b = (uint8_t)(b * bScale);
+    activeAlertMsg.r = (uint8_t)(r * bScale);
+    activeAlertMsg.g = (uint8_t)(g * bScale);
+    activeAlertMsg.b = (uint8_t)(b * bScale);
 
-    esp_now_send(broadcastAddr, (uint8_t*)&msg, sizeof(msg));
+    // Schedule a 4-packet burst spaced 10ms apart to guarantee RF delivery
+    burstPacketsRemaining = 4;
+    nextBurstPacketMs = millis();
+    alertCooldownUntilMs = millis() + (unsigned long)duration;
+    uiTriggered = true;
+
+    DEBUG_PRINTF(">>> ALERT FIRED! Duration: %dms | Color: #%02X%02X%02X\n",
+                 activeAlertMsg.durationMs, activeAlertMsg.r, activeAlertMsg.g, activeAlertMsg.b);
+}
+
+void serviceAlertBursts() {
+    if (burstPacketsRemaining > 0 && millis() >= nextBurstPacketMs) {
+        esp_now_send(broadcastAddr, (uint8_t*)&activeAlertMsg, sizeof(activeAlertMsg));
+        burstPacketsRemaining--;
+        nextBurstPacketMs = millis() + 10; // 10ms burst interval
+    }
 }
 
 // ============================================================
@@ -630,10 +650,10 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
     <div class="card party-card">
       <div class="card-title">
         <span>Party Mode</span>
-        <span class="party-badge">STREAM RANDOM COLORS</span>
+        <span class="party-badge">RANDOM VIBRANT ALERTS</span>
       </div>
       <div class="flex-row">
-        <label style="margin:0;">Randomize follower colors on every broadcasted message</label>
+        <label style="margin:0;">Pick a vibrant random color for each alert chime</label>
         <label class="switch">
           <input type="checkbox" id="partyToggle" onchange="togglePartyMode(this.checked)">
           <span class="slider"></span>
@@ -698,8 +718,8 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         <span>Network & Discoverability</span>
       </div>
       <div class="net-info">
-        <div><strong>WiFi:</strong> <span id="wifiStatus">Connecting...</span></div>
-        <div><strong>Local IP:</strong> <span id="localIp">---</span></div>
+        <div><strong>WiFi:</strong> <span id="wifiStatus">AP Mode (Channel 1)</span></div>
+        <div><strong>Local IP:</strong> <span id="localIp">192.168.4.1</span></div>
         <div><strong>mDNS URL:</strong> <a id="mdnsLink" href="http://deafdoorbell.local" target="_blank">http://deafdoorbell.local</a></div>
         <div><strong>OTA Update:</strong> <a href="/update" target="_blank">Web Firmware Update (/update)</a></div>
       </div>
@@ -711,11 +731,11 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
 
     // --- Sound History Graph Data & Engine ---
     const MAX_GRAPH_POINTS = 50;
-    const historyBuffer = []; // [{time: 'HH:MM:SS', mad: number, threshold: number, triggered: boolean}]
+    const historyBuffer = [];
 
     function getTimeStamp() {
       const now = new Date();
-      return now.toTimeString().split(' ')[0]; // "HH:MM:SS"
+      return now.toTimeString().split(' ')[0];
     }
 
     function renderSoundGraph() {
@@ -744,7 +764,7 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         if (p.mad > maxMad) maxMad = p.mad;
         if (p.threshold > maxMad) maxMad = p.threshold;
       }
-      maxMad = Math.ceil(maxMad / 5000) * 5000; // Round to 5k steps
+      maxMad = Math.ceil(maxMad / 5000) * 5000;
 
       // Grid lines & Y Axis Labels
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
@@ -858,7 +878,6 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         const pct = Math.min(100, (d.mad / 30000) * 100);
         document.getElementById('bar').style.width = pct + '%';
 
-        // Push to sound history buffer
         historyBuffer.push({
           time: getTimeStamp(),
           mad: d.mad,
@@ -870,7 +889,6 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         }
         renderSoundGraph();
 
-        // Update ESP-NOW counters
         if (d.espTotal !== undefined) {
           document.getElementById('espTotal').innerText = d.espTotal;
           document.getElementById('espValid').innerText = d.espValid;
@@ -890,9 +908,6 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
           fetchEspNowLog();
           initialized = true;
         }
-
-        document.getElementById('wifiStatus').innerText = d.wifiConnected ? ('Connected (' + d.rssi + ' dBm)') : 'AP Mode Only';
-        document.getElementById('localIp').innerText = d.ip;
 
         if (d.triggered) {
           document.getElementById('liveCard').classList.add('triggered-flash');
@@ -1036,68 +1051,72 @@ const char UPDATE_HTML[] PROGMEM = R"rawliteral(
 )rawliteral";
 
 // ============================================================
-//  Web Server Handlers
+//  Web Server Handlers (Zero-Heap Buffer Optimization)
 // ============================================================
 void handleRoot() {
     server.send(200, "text/html", PORTAL_HTML);
 }
 
 void handleData() {
-    String json = "{";
-    json += "\"mad\":" + String(currentMAD) + ",";
-    json += "\"level\":" + String(levelLP) + ",";
-    json += "\"threshold\":" + String(threshold) + ",";
-    json += "\"duration\":" + String(duration) + ",";
-    json += "\"brightness\":" + String(brightness) + ",";
-    json += "\"party\":" + String(partyMode ? "true" : "false") + ",";
-    json += "\"color\":\"" + colorToHex() + "\",";
-    json += "\"triggered\":" + String(uiTriggered ? "true" : "false") + ",";
-    json += "\"wifiConnected\":" + String(WiFi.status() == WL_CONNECTED ? "true" : "false") + ",";
-    json += "\"rssi\":" + String(WiFi.RSSI()) + ",";
-    json += "\"ip\":\"" + (WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : WiFi.softAPIP().toString()) + "\",";
-    json += "\"espTotal\":" + String(totalEspNowPackets) + ",";
-    json += "\"espValid\":" + String(validDoorbellPackets) + ",";
-    json += "\"espUnknown\":" + String(unknownPackets);
-    json += "}";
-    server.send(200, "application/json", json);
+    char colorHex[8];
+    colorToHexBuf(colorHex, sizeof(colorHex), colorR, colorG, colorB);
+
+    char jsonBuf[384];
+    snprintf(jsonBuf, sizeof(jsonBuf),
+        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"triggered\":%s,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u}",
+        currentMAD,
+        levelLP,
+        threshold,
+        duration,
+        brightness,
+        partyMode ? "true" : "false",
+        colorHex,
+        uiTriggered ? "true" : "false",
+        totalEspNowPackets,
+        validDoorbellPackets,
+        unknownPackets
+    );
+    server.send(200, "application/json", jsonBuf);
     uiTriggered = false;
 }
 
 void handleEspNowLog() {
     unsigned long now = millis();
-    String json = "{";
-    json += "\"total\":" + String(totalEspNowPackets) + ",";
-    json += "\"doorbell\":" + String(validDoorbellPackets) + ",";
-    json += "\"unknown\":" + String(unknownPackets) + ",";
-    json += "\"logs\":[";
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "application/json", "{\"total\":");
+    
+    char headerBuf[128];
+    snprintf(headerBuf, sizeof(headerBuf), "%u,\"doorbell\":%u,\"unknown\":%u,\"logs\":[",
+             totalEspNowPackets, validDoorbellPackets, unknownPackets);
+    server.sendContent(headerBuf);
 
     for (int i = 0; i < espNowLogCount; i++) {
         int idx = (espNowLogHead - 1 - i + MAX_ESPNOW_LOGS) % MAX_ESPNOW_LOGS;
         EspNowLogEntry &e = espNowLog[idx];
 
-        if (i > 0) json += ",";
-        json += "{";
-        
         char macStr[18];
         snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
                  e.mac[0], e.mac[1], e.mac[2], e.mac[3], e.mac[4], e.mac[5]);
-        json += "\"mac\":\"" + String(macStr) + "\",";
-        json += "\"len\":" + String(e.len) + ",";
 
-        String hexPayload = "";
-        for (int p = 0; p < min((int)e.len, 16); p++) {
-            char bHex[3];
-            snprintf(bHex, sizeof(bHex), "%02X", e.payload[p]);
-            hexPayload += String(bHex);
+        char hexPayload[34] = {0};
+        int pLen = min((int)e.len, 16);
+        for (int p = 0; p < pLen; p++) {
+            snprintf(hexPayload + (p * 2), 3, "%02X", e.payload[p]);
         }
-        json += "\"payload\":\"" + hexPayload + "\",";
-        json += "\"timeAgoSec\":" + String((now - e.timestampMs) / 1000) + ",";
-        json += "\"isDoorbell\":" + String(e.isDoorbell ? "true" : "false");
-        json += "}";
+
+        char entryBuf[200];
+        snprintf(entryBuf, sizeof(entryBuf),
+                 "%s{\"mac\":\"%s\",\"len\":%d,\"payload\":\"%s\",\"timeAgoSec\":%lu,\"isDoorbell\":%s}",
+                 (i > 0) ? "," : "",
+                 macStr,
+                 e.len,
+                 hexPayload,
+                 (now - e.timestampMs) / 1000,
+                 e.isDoorbell ? "true" : "false");
+        server.sendContent(entryBuf);
     }
 
-    json += "]}";
-    server.send(200, "application/json", json);
+    server.sendContent("]}");
 }
 
 void handleClearEspNowLog() {
@@ -1117,18 +1136,15 @@ void handleSet() {
     if (server.hasArg("color"))     parseHexColor(server.arg("color"));
 
     saveSettings();
+    char colorHex[8];
+    colorToHexBuf(colorHex, sizeof(colorHex), colorR, colorG, colorB);
     DEBUG_PRINTF("Settings saved: thresh=%d dur=%d bright=%d party=%d color=%s\n",
-                  threshold, duration, brightness, partyMode ? 1 : 0, colorToHex().c_str());
+                  threshold, duration, brightness, partyMode ? 1 : 0, colorHex);
     server.send(200, "text/plain", "OK");
 }
 
 void handleTest() {
-    sustainUntilMs = millis() + (unsigned long)duration;
-    uiTriggered = true;
-    for (int i = 0; i < 5; i++) {
-        sendEspNowPacket(true);
-        delay(15);
-    }
+    triggerAlert(true);
     server.send(200, "text/plain", "TEST_SENT");
 }
 
@@ -1137,12 +1153,12 @@ void handleUpdatePage() {
 }
 
 void handleNotFound() {
-    server.sendHeader("Location", "http://" + WiFi.softAPIP().toString(), true);
+    server.sendHeader("Location", "http://192.168.4.1", true);
     server.send(302, "text/plain", "");
 }
 
 // ============================================================
-//  Network & OTA Setup  (AP-Only on Channel 1)
+//  Network & OTA Setup (SoftAP Dedicated on Channel 1)
 // ============================================================
 void setupNetworking() {
     WiFi.disconnect(true, true);
@@ -1197,6 +1213,9 @@ void setupNetworking() {
     server.onNotFound(handleNotFound);
     server.begin();
 
+    MDNS.begin(HOSTNAME_MDNS);
+    MDNS.addService("http", "tcp", 80);
+
     ArduinoOTA.setHostname("deafdoorbell-master");
     ArduinoOTA.setPort(3232);
     ArduinoOTA.onStart([]() {
@@ -1212,17 +1231,23 @@ void setupNetworking() {
 }
 
 // ============================================================
-//  LED PWM Setup & Audio Reactivity
+//  LED PWM Setup & Audio-Reactive Positioning Feedback
 // ============================================================
 void setupLED() {
     ledcSetup(LED_CHANNEL, 5000, 8);
     ledcAttachPin(ONBOARD_LED_PIN, LED_CHANNEL);
-    ledcWrite(LED_CHANNEL, 255); // Start OFF (inverted logic: 255=OFF)
+    ledcWrite(LED_CHANNEL, 255); // Start OFF (inverted: 255=OFF, 0=MAX)
 }
 
-void updateLED(float mad) {
-    int brightness = map(constrain((int)mad, 100, 5000), 100, 5000, 0, 255);
-    ledcWrite(LED_CHANNEL, 255 - brightness);
+void updateLED(float madLevel, bool alertActive) {
+    if (alertActive) {
+        // Full On during active alert
+        ledcWrite(LED_CHANNEL, 0); // Solid ON
+    } else {
+        // Smooth proportional audio reactivity for positioning next to chime
+        int brightnessVal = map(constrain((int)madLevel, 200, 4000), 200, 4000, 0, 255);
+        ledcWrite(LED_CHANNEL, 255 - brightnessVal); // Inverted logic
+    }
 }
 
 // ============================================================
@@ -1232,19 +1257,21 @@ void setup() {
     Serial.begin(115200);
     delay(500);
     DEBUG_PRINTLN("\n==============================================");
-    DEBUG_PRINTLN("   DeafDoorbell Master Node (Audio & Monitor)");
+    DEBUG_PRINTLN("   DeafDoorbell Master Node (Audio Engine)");
     DEBUG_PRINTLN("==============================================");
 
     loadSettings();
+    char colorHex[8];
+    colorToHexBuf(colorHex, sizeof(colorHex), colorR, colorG, colorB);
     DEBUG_PRINTF("Loaded Settings: Threshold=%d, Duration=%dms, Party=%d, Color=%s\n",
-                  threshold, duration, partyMode ? 1 : 0, colorToHex().c_str());
+                  threshold, duration, partyMode ? 1 : 0, colorHex);
 
     setupLED();
     setupI2S();
     setupNetworking();
     setupESPNow();
 
-    DEBUG_PRINTLN("Master ready. Audio engine streaming & listening for ESP-NOW...");
+    DEBUG_PRINTLN("Master ready. Clean audio engine & ESP-NOW running.");
 }
 
 // ============================================================
@@ -1253,7 +1280,10 @@ void setup() {
 void loop() {
     unsigned long now = millis();
 
-    // 1. Handle Network Requests (Gated for low latency audio)
+    // 1. Handle Alert Burst Transmissions (Non-blocking burst)
+    serviceAlertBursts();
+
+    // 2. Handle Network Requests (Gated for clean audio processing)
     static unsigned long lastNetHandle = 0;
     if (now - lastNetHandle >= 20) {
         dnsServer.processNextRequest();
@@ -1262,7 +1292,7 @@ void loop() {
         lastNetHandle = now;
     }
 
-    // 2. Audio Capture & Processing (32-bit I2S)
+    // 3. Audio Capture & Processing (32-bit I2S)
     int32_t samples[CHUNK_SIZE];
     size_t bytesRead = 0;
     i2s_read(I2S_PORT, samples, sizeof(samples), &bytesRead, portMAX_DELAY);
@@ -1272,70 +1302,61 @@ void loop() {
         for (int i = 0; i < SAMPLES - CHUNK_SIZE; i++) {
             rawSamples[i] = rawSamples[i + CHUNK_SIZE];
         }
-        // Downscale and append new 64 samples
+
+        // Apply IIR DC-blocking High-Pass filter & append new chunk
         for (int i = 0; i < CHUNK_SIZE; i++) {
-            rawSamples[SAMPLES - CHUNK_SIZE + i] = (float)(samples[i] >> 14);
+            float inSample = (float)(samples[i] >> 14);
+            // y[n] = x[n] - x[n-1] + R * y[n-1]
+            float outSample = inSample - lastInputSample + (DC_FILTER_R * lastOutputSample);
+            lastInputSample = inSample;
+            lastOutputSample = outSample;
+
+            rawSamples[SAMPLES - CHUNK_SIZE + i] = outSample;
         }
 
-        // Compute DC offset over 128-sample rolling window
-        float dcSum = 0;
+        // Compute MAD (Mean Absolute Deviation) on filtered signal
+        float madSum = 0.0f;
         for (int i = 0; i < SAMPLES; i++) {
-            dcSum += rawSamples[i];
+            madSum += fabsf(rawSamples[i]);
         }
-        float dc = dcSum / SAMPLES;
-
-        // Compute MAD (Mean Absolute Deviation)
-        float mad = 0;
-        for (int i = 0; i < SAMPLES; i++) {
-            mad += fabsf(rawSamples[i] - dc);
-        }
-        mad /= SAMPLES;
-        mad *= micGain;
+        float mad = (madSum / SAMPLES) * micGain;
         currentMAD = mad;
 
         // Exponential smoothing envelope
         levelLP += motorSmooth * (currentMAD - levelLP);
 
-        // 3. Noise Glitch & Warmup Protection (Master side fix for random follower triggers)
-        // Warmup: Ignore audio triggers for 2000ms after power-on while I2S DMA stabilizes.
-        // Multi-chunk debounce: Require MAD >= threshold for at least 2 consecutive 4ms chunks.
+        // 4. Acoustic Debounce & Warmup Protection
+        // Warmup: 2500ms startup settling guard
+        // Persistence Debounce: Require sustained chime energy for at least 8 chunks (~32ms)
         static int consecutiveOverThresh = 0;
-        #define WARMUP_MS 2000
-        #define MIN_TRIGGER_CHUNKS 2
+        #define WARMUP_MS 2500
+        #define MIN_TRIGGER_CHUNKS 8
+
+        bool alertActive = (now < alertCooldownUntilMs);
 
         if (now > WARMUP_MS) {
             if (currentMAD >= threshold) {
                 consecutiveOverThresh++;
-                if (consecutiveOverThresh >= MIN_TRIGGER_CHUNKS) {
-                    sustainUntilMs = now + (unsigned long)duration;
-                    uiTriggered = true;
+                if (consecutiveOverThresh >= MIN_TRIGGER_CHUNKS && !alertActive) {
+                    triggerAlert(false);
+                    consecutiveOverThresh = 0;
                 }
             } else {
-                consecutiveOverThresh = 0;
+                if (consecutiveOverThresh > 0) consecutiveOverThresh--;
             }
         }
 
-        bool isSustained = (now < sustainUntilMs);
+        // 5. Update Audio-Reactive Onboard LED
+        updateLED(levelLP, now < alertCooldownUntilMs);
 
-        // Update onboard LED (ON during active alert sustain, OFF when silent)
-        ledcWrite(LED_CHANNEL, isSustained ? 0 : 255);
-
-        // 4. Doorbell Alert Protocol (Spammed continuously ONLY during active sustain)
-        if (isSustained) {
-            if (now - lastPacketSendMs >= SPAM_INTERVAL_MS) {
-                sendEspNowPacket();
-                lastPacketSendMs = now;
-            }
-        }
-
-        // 5. Diagnostic Serial Log (~5Hz)
+        // 6. Diagnostic Serial Log (~5Hz)
         static unsigned long lastLogTime = 0;
         if (now - lastLogTime > 200) {
             #ifdef DEBUG_ENABLED
                 DEBUG_PRINTF("[MAD: %5.0f | LP: %5.0f | Thresh: %d] ", currentMAD, levelLP, threshold);
                 int barLen = map(constrain((int)currentMAD, 0, 4000), 0, 4000, 0, 30);
                 for (int i = 0; i < barLen; i++) DEBUG_PRINT("=");
-                if (now < sustainUntilMs) DEBUG_PRINT(" >>> BROADCASTING ALERTS <<<");
+                if (now < alertCooldownUntilMs) DEBUG_PRINT(" >>> ALERT ACTIVE <<<");
                 DEBUG_PRINTLN("");
             #endif
             lastLogTime = now;
