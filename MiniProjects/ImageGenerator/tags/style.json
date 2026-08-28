@@ -1,0 +1,121 @@
+{
+    "id": "style",
+    "title": "Style & Medium",
+    "tags": [
+        {
+            "id": "highres",
+            "label": "highres",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "absurdres",
+            "label": "absurdres",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "sketch",
+            "label": "sketch",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "monochrome",
+            "label": "monochrome",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "traditional_media",
+            "label": "traditional",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "oil_painting_(medium)",
+            "label": "oil painting",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "watercolor_(medium)",
+            "label": "watercolor",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "ink_(medium)",
+            "label": "ink",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "pixel_art",
+            "label": "pixel art",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "depth_of_field",
+            "label": "bokeh/dof",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "greyscale",
+            "label": "greyscale",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "3d",
+            "label": "3d",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "render",
+            "label": "render",
+            "classes": []
+        },
+        {
+            "id": "comic",
+            "label": "comic",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "lineart",
+            "label": "lineart",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "vector",
+            "label": "vector",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "cell_shading",
+            "label": "cell shading",
+            "classes": []
+        }
+    ]
+}

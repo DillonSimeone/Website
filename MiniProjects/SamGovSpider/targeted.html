@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamGovSpider - Active Contract Opportunities Explorer</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Extra styles for targeted page */
+        .opp-meta {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            border-bottom: 2px dashed var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .opp-meta div {
+            margin-bottom: 4px;
+        }
+        .badge-sol {
+            background: #fff;
+            border: 2px solid var(--border-color);
+            padding: 2px 6px;
+            font-family: var(--font-header);
+            font-size: 0.95rem;
+            display: inline-block;
+            box-shadow: 2px 2px 0px var(--border-color);
+            margin-bottom: 5px;
+        }
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .btn-page {
+            font-family: var(--font-header);
+            font-size: 1.2rem;
+            padding: 8px 15px;
+            border: 3px solid var(--border-color);
+            box-shadow: 3px 3px 0px var(--border-color);
+            cursor: pointer;
+            background: #fff;
+        }
+        .btn-page:hover:not(:disabled) {
+            background: var(--primary-yellow);
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px var(--border-color);
+        }
+        .btn-page:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .page-info {
+            font-family: var(--font-header);
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+        }
+        /* Top Navigation Link */
+        .nav-link {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: var(--primary-yellow);
+            border: 3px solid var(--border-color);
+            box-shadow: 3px 3px 0px var(--border-color);
+            padding: 6px 12px;
+            font-family: var(--font-header);
+            font-size: 1.1rem;
+            text-decoration: none;
+            color: #000;
+            z-index: 10;
+        }
+        .nav-link:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px var(--border-color);
+            background: var(--primary-cyan);
+        }
+        /* Filters */
+        .filter-select {
+            padding: 8px 12px;
+            font-family: var(--font-body);
+            font-weight: bold;
+            font-size: 1rem;
+            border: 3px solid var(--border-color);
+            box-shadow: 3px 3px 0px var(--border-color);
+            outline: none;
+            background: #fff;
+            cursor: pointer;
+        }
+        .filter-select:focus {
+            box-shadow: 5px 5px 0px var(--border-color);
+        }
+        /* Modal Details */
+        .comic-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #fff;
+            border: 4px solid var(--border-color);
+            box-shadow: 10px 10px 0px #000;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            padding: 30px;
+        }
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border: 1px dashed var(--border-color);
+            pointer-events: none;
+        }
+        .btn-close {
+            position: absolute;
+            top: 15px; right: 15px;
+            background: var(--comic-red);
+            color: #fff;
+            font-family: var(--font-header);
+            font-size: 1.2rem;
+            width: 35px; height: 35px;
+            border: 3px solid var(--border-color);
+            box-shadow: 2px 2px 0px var(--border-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn-close:hover {
+            background: var(--primary-yellow);
+            color: #000;
+        }
+        .modal-title {
+            font-family: var(--font-header);
+            font-size: 2.2rem;
+            color: #000;
+            margin-bottom: 15px;
+            line-height: 1.2;
+            border-bottom: 4px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        .modal-body {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: #222;
+        }
+        .modal-body p {
+            margin-bottom: 15px;
+        }
+        .modal-field {
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--comic-red);
+            font-family: var(--font-header);
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            margin-top: 15px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="nav-link">&larr; FILE EXTRACTS</a>
+
+    <header>
+        <div class="logo-container">
+            <h1>Targeted Opportunities</h1>
+            <div class="subtitle">Searchable Live Contract Opportunities from datagov CSV</div>
+        </div>
+        <div class="stat-burst">
+            <div>TOTAL</div>
+            <div class="num" id="total-count">0</div>
+            <div>RECORDS</div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="control-panel">
+            <div class="search-box" style="max-width: 500px;">
+                <input type="text" id="search-input" class="search-input" placeholder="SEARCH title, solicitation #, agency, office...">
+            </div>
+
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <select id="filter-type" class="filter-select">
+                    <option value="">ALL TYPES</option>
+                    <option value="Solicitation">SOLICITATION</option>
+                    <option value="Pre-solicitation">PRE-SOLICITATION</option>
+                    <option value="Award Notice">AWARD NOTICE</option>
+                    <option value="Sources Sought">SOURCES SOUGHT</option>
+                    <option value="Special Notice">SPECIAL NOTICE</option>
+                    <option value="Justification and Approval">J&amp;A</option>
+                    <option value="Sale of Surplus Property">SURPLUS PROPERTY</option>
+                </select>
+
+                <select id="filter-date" class="filter-select">
+                    <option value="">ALL DATES</option>
+                    <option value="7">LAST 7 DAYS</option>
+                    <option value="30">LAST 30 DAYS</option>
+                    <option value="90">LAST 90 DAYS</option>
+                </select>
+            </div>
+        </div>
+
+        <main id="comic-grid" class="comic-grid">
+            <div class="no-results">
+                <div class="no-results-title">LOADING CSV EXTRACTS...</div>
+                <p>Retrieving active opportunities snapshot, standby hero!</p>
+            </div>
+        </main>
+
+        <div class="pagination" id="pagination">
+            <button class="btn-page" id="btn-prev" disabled>PREV PAGE</button>
+            <span class="page-info" id="page-info">PAGE 1 OF 1</span>
+            <button class="btn-page" id="btn-next" disabled>NEXT PAGE</button>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="comic-modal" id="detail-modal">
+        <div class="modal-content">
+            <button class="btn-close" id="btn-close-modal">X</button>
+            <div class="modal-title" id="modal-title">Opportunity Title</div>
+            <div class="modal-body" id="modal-body">
+                <!-- Modal content injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="targeted.js"></script>
+</body>
+</html>

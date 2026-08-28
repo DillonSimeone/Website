@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro RPG Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="rpg-container">
+    <header class="rpg-header">
+      <a href="../index.html" class="nav-back">[ ESC_HUB ]</a>
+      <h1 class="rpg-title">RETRO QUEST</h1>
+      <p class="rpg-subtitle">* 8-BIT DIALOGUE OVERLORD *</p>
+    </header>
+
+    <main class="rpg-grid">
+      <!-- Character Frame -->
+      <section class="rpg-card item-box">
+        <div class="card-header">PORTRAIT</div>
+        <div class="portrait-wrapper">
+          <div class="pixel-avatar" id="avatar-face">🧙‍♂️</div>
+          <div class="char-name" id="char-name">MAGE MERLIN</div>
+        </div>
+      </section>
+
+      <!-- Dialogue Frame -->
+      <section class="rpg-card dialogue-box">
+        <div class="card-header">MESSAGE</div>
+        <div class="dialogue-text" id="dialogue-screen">
+          Hello traveler... I have been waiting for your arrival.
+        </div>
+        <div class="dialogue-footer">
+          <button class="rpg-btn" id="btn-next">NEXT [A]</button>
+        </div>
+      </section>
+
+      <!-- Stats Frame -->
+      <section class="rpg-card stats-box">
+        <div class="card-header">STATUS</div>
+        <div class="stats-row">
+          <span>HP:</span>
+          <div class="stat-bar"><div class="bar-fill hp-fill"></div></div>
+        </div>
+        <div class="stats-row">
+          <span>MP:</span>
+          <div class="stat-bar"><div class="bar-fill mp-fill"></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

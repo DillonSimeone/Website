@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CH32V003 // HAPTIC CORE</title>
+  <meta name="description" content="Frictionless field guide to the CH32V003 RISC-V microcontroller: toolchain, flashing, gotchas, pinout, and a sound-reactive haptics build with full BOM.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="acid-wrapper">
+    <div class="grid-backdrop" id="strobe-grid"></div>
+
+    <div class="acid-container">
+
+      <!-- ============ HEADER ============ -->
+      <header class="acid-header">
+        <p class="acid-subtitle">✧ 10-CENT RISC-V FIELD GUIDE ✧</p>
+        <h1 class="acid-title">CH32V003</h1>
+        <p class="acid-subtitle">48 MHZ · 16KB FLASH · 2KB RAM · ONE WIRE TO RULE IT</p>
+        <div class="control-row center">
+          <button class="acid-btn" id="btn-slow">SLOW</button>
+          <button class="acid-btn active" id="btn-rave">RAVE</button>
+          <button class="acid-btn" id="btn-off">OFF</button>
+        </div>
+      </header>
+
+      <!-- ============ NAV ============ -->
+      <nav class="acid-nav">
+        <a href="#specs">SPECS</a>
+        <a href="#bom">BOM</a>
+        <a href="#toolchain">TOOLCHAIN</a>
+        <a href="#flash">FLASH</a>
+        <a href="#pinout">PINOUT</a>
+        <a href="#gotchas">GOTCHAS</a>
+        <a href="#haptics">HAPTICS</a>
+        <a href="#power">POWER</a>
+      </nav>
+
+      <!-- ============ WHY ============ -->
+      <section class="acid-card card-cyan">
+        <div class="card-icon">✦</div>
+        <h2 id="specs">WHY THIS CHIP</h2>
+        <p>The CH32V003 is WCH's famously cheap 32-bit RISC-V microcontroller. Ten-ish cents for the bare chip, a couple bucks for a dev board. It is the "just enough computer" — perfect for haptics, LEDs, sensors, and dedicated single-job electronics where an ESP32 is overkill.</p>
+        <div class="spec-grid">
+          <div class="spec"><span class="spec-num">48 MHz</span><span class="spec-label">QingKe V2A RISC-V core (RV32EC)</span></div>
+          <div class="spec"><span class="spec-num">16 KB</span><span class="spec-label">Flash — small; write lean C</span></div>
+          <div class="spec"><span class="spec-num">2 KB</span><span class="spec-label">SRAM — no room for bloat</span></div>
+          <div class="spec"><span class="spec-num">10-bit</span><span class="spec-label">ADC, 8 external channels</span></div>
+          <div class="spec"><span class="spec-num">2×</span><span class="spec-label">16-bit timers with hardware PWM</span></div>
+          <div class="spec"><span class="spec-num">1× each</span><span class="spec-label">USART · I²C · SPI</span></div>
+          <div class="spec"><span class="spec-num">2.7–5.5 V</span><span class="spec-label">VDD range — runs on 3.3 V or 5 V</span></div>
+          <div class="spec"><span class="spec-num">1 wire</span><span class="spec-label">SWIO debug/flash via WCH-LinkE</span></div>
+        </div>
+        <p class="fine-print">No USB, no WiFi, no Bluetooth on-chip. That is the point. It does one job, costs nothing, and boots instantly.</p>
+      </section>
+
+      <!-- ============ BOM ============ -->
+      <section class="acid-card card-magenta">
+        <div class="card-icon">✦</div>
+        <h2 id="bom">BILL OF MATERIALS</h2>
+        <p>Everything used in the haptic build on this page. Prices are typical AliExpress/eBay singles — buying multi-packs cuts them roughly in half.</p>
+        <div class="table-scroll">
+          <table class="bom-table" id="bom-table">
+            <thead>
+              <tr><th>PART</th><th>ROLE</th><th>NOTES</th><th class="num">EST. USD</th></tr>
+            </thead>
+            <tbody>
+              <tr data-price="1.50">
+                <td>CH32V003F4P6 dev board (TENSTAR style)</td>
+                <td>The brain</td>
+                <td>USB-C powered minimum system board. All V pads = one rail (~5 V on USB-C). No user LED on this revision.</td>
+                <td class="num">$1.50</td>
+              </tr>
+              <tr data-price="5.00">
+                <td>WCH-LinkE programmer</td>
+                <td>Flash + debug + UART</td>
+                <td>Must be the <strong>E</strong> version — plain WCH-Link cannot speak the '003's 1-wire SDI. One-time buy, reused forever.</td>
+                <td class="num">$5.00</td>
+              </tr>
+              <tr data-price="1.50">
+                <td>MAX4466 electret mic module</td>
+                <td>Ears</td>
+                <td>Analog out, adjustable gain pot on the back. Powered from the board's V rail so its output always stays within ADC range.</td>
+                <td class="num">$1.50</td>
+              </tr>
+              <tr data-price="1.00">
+                <td>Mini H-bridge module (L9110S / DRV8833 class)</td>
+                <td>Muscle driver</td>
+                <td>Two direction inputs (IN1/IN2). Drives the vibration motor both ways for tap and spin patterns.</td>
+                <td class="num">$1.00</td>
+              </tr>
+              <tr data-price="0.80">
+                <td>Coin vibration motor (10 mm ERM)</td>
+                <td>The haptics</td>
+                <td>~70–100 mA draw. Never wire it straight to a GPIO — always through the H-bridge.</td>
+                <td class="num">$0.80</td>
+              </tr>
+              <tr data-price="0.10">
+                <td>3 mm LED + 220 Ω–1 kΩ resistor</td>
+                <td>Volume meter</td>
+                <td>Hardware-PWM'd on PC3. The resistor is not optional.</td>
+                <td class="num">$0.10</td>
+              </tr>
+              <tr data-price="0.50">
+                <td>CR2032 coin cell + holder</td>
+                <td>Untethered power (optional)</td>
+                <td>3 V, ~220 mAh. Fine for MCU + LED. Motor spikes will sag it — see POWER section for the honest math.</td>
+                <td class="num">$0.50</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr><td colspan="3">TOTAL (with programmer)</td><td class="num" id="bom-total">$0.00</td></tr>
+              <tr><td colspan="3">TOTAL (programmer already owned)</td><td class="num" id="bom-total-no-probe">$0.00</td></tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ TOOLCHAIN ============ -->
+      <section class="acid-card card-lime">
+        <div class="card-icon">✧</div>
+        <h2 id="toolchain">TOOLCHAIN SETUP (WINDOWS)</h2>
+        <p>One-time setup. After this, every CH32V003 project is just <span class="inline-code">pio run -t upload</span>.</p>
+        <ol class="step-list">
+          <li>
+            <strong>Install PlatformIO</strong> — VS Code extension, or <span class="inline-code">pip install platformio</span>.
+          </li>
+          <li>
+            <strong>Install the community CH32V platform:</strong>
+            <div class="code-block" data-copy>
+              <pre>pio pkg install -g -p https://github.com/Community-PIO-CH32V/platform-ch32v.git</pre>
+              <button class="copy-btn">COPY</button>
+            </div>
+            This pulls the RISC-V GCC toolchain, OpenOCD, minichlink and wlink automatically.
+          </li>
+          <li>
+            <strong>Install the WCH-LinkE USB drivers</strong> — download the
+            <a href="https://github.com/Community-PIO-CH32V/wchlink-driver-windows/archive/refs/heads/main.zip">WCHLink driver package</a>,
+            unzip, then run <em>both</em> installers: <span class="inline-code">WCHLink\SETUP.EXE</span> (debug interface) and
+            <span class="inline-code">WCHLinkSER\SETUP.EXE</span> (serial port).
+          </li>
+          <li>
+            <strong>Verify LinkE mode</strong> — plug it in and check Device Manager. It must enumerate as
+            <span class="inline-code">VID 1A86 / PID 8010</span> (RISC-V mode).
+            If you see <span class="inline-code">8012</span> it is stuck in ARM mode: hold the <strong>ModeS</strong> button while plugging in, or flip it with WCH-LinkUtility.
+          </li>
+        </ol>
+        <p>Minimal <span class="inline-code">platformio.ini</span> for any '003 project:</p>
+        <div class="code-block" data-copy>
+<pre>[env:genericCH32V003F4P6]
+platform = ch32v
+board = genericCH32V003F4P6
+framework = ch32v003fun
+upload_protocol = wch-link</pre>
+          <button class="copy-btn">COPY</button>
+        </div>
+        <p class="fine-print">Framework pick: <strong>ch32v003fun</strong> (register-level, tiny, fast) fits this chip best. Arduino cores exist but eat the 16 KB flash alarmingly fast.</p>
+      </section>
+
+      <!-- ============ FLASH ============ -->
+      <section class="acid-card card-cyan">
+        <div class="card-icon">✦</div>
+        <h2 id="flash">FLASHING: THREE WIRES</h2>
+        <p>The CH32V003 uses a <strong>1-wire</strong> debug interface (SDI). No SWCLK. On the TENSTAR board the programming header is the three center pads on the underside:</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>WCH-LINKE</th><th>BOARD PAD</th><th>WHAT IT IS</th></tr></thead>
+            <tbody>
+              <tr><td>SWDIO / TMS</td><td class="hl">SWD</td><td>Internally the MCU's PD1/SWIO pin</td></tr>
+              <tr><td>3V3</td><td class="hl">V</td><td>Power — ONLY when USB-C is unplugged</td></tr>
+              <tr><td>GND</td><td class="hl">G</td><td>Common ground — always connected</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The LinkE's RX/TX pins are a bonus USB-serial adapter (wire LinkE RX → PD5 for printf), not programming pins.</p>
+        <p>Then from the project folder:</p>
+        <div class="code-block" data-copy>
+<pre>pio run            # build
+pio run -t upload  # flash via LinkE</pre>
+          <button class="copy-btn">COPY</button>
+        </div>
+        <h3>RECOVERY</h3>
+        <ul class="tight-list">
+          <li>Upload fails → recheck the three wires, then try <span class="inline-code">upload_protocol = minichlink</span>.</li>
+          <li>Chip seems bricked (SWIO reused as GPIO) → WCH-LinkUtility → "Clear All Code Flash By Pin NRST".</li>
+          <li>Probe invisible → reinstall both driver SETUP.EXEs, replug.</li>
+        </ul>
+      </section>
+
+      <!-- ============ PINOUT ============ -->
+      <section class="acid-card card-magenta">
+        <div class="card-icon">✦</div>
+        <h2 id="pinout">PINOUT (TSSOP-20 BOARD)</h2>
+        <p>Every pin, what it multiplexes to, and whether it has a trap. The two <strong>trap pins</strong> are highlighted.</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>PIN</th><th>ANALOG</th><th>TIMER PWM</th><th>SERIAL</th><th>NOTES</th></tr></thead>
+            <tbody>
+              <tr><td>PA1</td><td>A1</td><td>T1CH2</td><td>—</td><td>Also crystal OSCI</td></tr>
+              <tr><td>PA2</td><td>A0</td><td>T1CH2N</td><td>—</td><td>Also crystal OSCO</td></tr>
+              <tr><td>PC0</td><td>—</td><td>T2CH3</td><td>—</td><td>Free</td></tr>
+              <tr><td>PC1</td><td>—</td><td>T2CH4</td><td>I²C SDA</td><td>Free</td></tr>
+              <tr><td>PC2</td><td>—</td><td>T2CH2</td><td>I²C SCL</td><td>Free</td></tr>
+              <tr><td>PC3</td><td>—</td><td>T1CH3</td><td>—</td><td class="good">Volume LED in this build</td></tr>
+              <tr><td>PC4</td><td>A2</td><td>T1CH4</td><td>—</td><td class="good">MAX4466 mic in this build</td></tr>
+              <tr><td>PC5</td><td>—</td><td>T1ETR</td><td>SPI SCK</td><td>5V-tolerant (FT)</td></tr>
+              <tr><td>PC6</td><td>—</td><td>—</td><td>SPI MOSI</td><td>5V-tolerant (FT)</td></tr>
+              <tr><td>PC7</td><td>—</td><td>T1CH2_</td><td>SPI MISO</td><td>Free</td></tr>
+              <tr><td>PD0</td><td>—</td><td>T1CH1N</td><td>—</td><td>Free</td></tr>
+              <tr class="trap"><td>PD1</td><td>—</td><td>T1CH3N</td><td>—</td><td>⚠ SWIO — the programming pin. Leave it alone.</td></tr>
+              <tr><td>PD2</td><td>A3</td><td>T1CH1</td><td>—</td><td class="good">H-bridge IN1 (forward) in this build</td></tr>
+              <tr><td>PD3</td><td>A4</td><td>T2CH2</td><td>—</td><td class="good">H-bridge IN2 (reverse) in this build</td></tr>
+              <tr><td>PD4</td><td>A7</td><td>T2CH1ETR</td><td>—</td><td>Free</td></tr>
+              <tr><td>PD5</td><td>A5</td><td>—</td><td>UART TX</td><td>printf output → LinkE RX</td></tr>
+              <tr><td>PD6</td><td>A6</td><td>—</td><td>UART RX</td><td>Free / serial in</td></tr>
+              <tr class="trap"><td>PD7</td><td>—</td><td>T2CH4</td><td>—</td><td>⚠ NRST — drive it low and the chip RESETS. Found out the hard way.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>PD VS PC — WHAT'S THE DIFFERENCE?</h3>
+        <p>Nothing mystical. They are just two GPIO banks (Port C, Port D) with their own registers. What differs per pin is (1) which peripherals it routes to, (2) 5 V tolerance — only PC5/PC6 are FT, and (3) special roles, which both live on Port D: PD1 = SWIO, PD7 = NRST. Pick pins by peripheral, not by letter.</p>
+      </section>
+
+      <!-- ============ GOTCHAS ============ -->
+      <section class="acid-card card-lime">
+        <div class="card-icon">✧</div>
+        <h2 id="gotchas">GOTCHAS — LEARNED LIVE</h2>
+        <p>Every one of these was hit while building this project. Read them and skip the pain.</p>
+        <div class="gotcha" data-open>
+          <button class="gotcha-head">1 // "MY LED IS STUCK ON" — PD7 IS RESET</button>
+          <div class="gotcha-body">
+            <p>Wired a blink LED to PD7. It turned on… and never off. Why: PD7 doubles as <strong>NRST</strong>. Driving it low to turn the LED off yanks reset, the chip reboots, sets the pin high again, forever. Looks exactly like a hang with the LED lit. Use PC3 (or any non-trap pin) instead.</p>
+          </div>
+        </div>
+        <div class="gotcha">
+          <button class="gotcha-head">2 // THE "3.3V" PROGRAMMING PAD OUTPUTS 5V ON USB-C</button>
+          <div class="gotcha-body">
+            <p>Confirmed with a meter: every pad marked <strong>V</strong> on this board — including the center programming-header V — is one shared rail, and it sits at ~5 V whenever USB-C is plugged in. If the LinkE's 3V3 output were connected at the same time, 5 V would be backfed into the programmer. <strong>Rule: one power source at a time.</strong> USB-C powered → connect only SWD + GND to the LinkE.</p>
+          </div>
+        </div>
+        <div class="gotcha">
+          <button class="gotcha-head">3 // "A 5V MIC WILL FRY THE ADC" — NO, THE ADC REFERENCE IS VDD</button>
+          <div class="gotcha-body">
+            <p>The CH32V003's ADC full-scale reference is VDD itself. Run the whole board at 5 V and the ADC range is 0–5 V; power the MAX4466 from the same rail and its output physically cannot exceed VDD. The danger case is only a <em>mixed</em>-rail setup (5 V mic into a 3.3 V-powered chip). Single rail = automatically safe.</p>
+          </div>
+        </div>
+        <div class="gotcha">
+          <button class="gotcha-head">4 // WRONG PROGRAMMER MODE: 8012 VS 8010</button>
+          <div class="gotcha-body">
+            <p>The WCH-LinkE has two personalities. USB PID <span class="inline-code">8010</span> = RISC-V mode (what you want). <span class="inline-code">8012</span> = ARM/DAP mode (uploads silently fail). Hold ModeS while plugging in to switch back.</p>
+          </div>
+        </div>
+        <div class="gotcha">
+          <button class="gotcha-head">5 // ONLY THE LINKE WORKS — NOT WCH-LINK</button>
+          <div class="gotcha-body">
+            <p>The '003 introduced a 1-wire SDI interface. The older WCH-Link (no E) does not support it. When ordering, the E matters.</p>
+          </div>
+        </div>
+        <div class="gotcha">
+          <button class="gotcha-head">6 // 2KB RAM MEANS FIXED-POINT EVERYTHING</button>
+          <div class="gotcha-body">
+            <p>The haptics FFT is a 64-point radix-2 in Q15 fixed-point: int16 buffers, a 17-entry quarter-wave sine table, zero heap, zero floats. Whole firmware: ~3 KB flash, ~280 bytes RAM. Write like it's 1985 and the chip rewards you.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ HAPTICS BUILD ============ -->
+      <section class="acid-card card-cyan">
+        <div class="card-icon">✦</div>
+        <h2 id="haptics">THE HAPTIC BUILD</h2>
+        <p>Mic in → tiny FFT → three frequency bands → different motor pattern per band, plus an LED that breathes with volume. All hardware PWM.</p>
+        <div class="flow">
+          <span>MAX4466 → PC4/ADC</span><span class="arrow">→</span>
+          <span>64-pt Q15 FFT @ 8 kHz</span><span class="arrow">→</span>
+          <span>LOW / MID / HIGH</span><span class="arrow">→</span>
+          <span>H-BRIDGE PATTERNS</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>BAND</th><th>RANGE</th><th>MOTOR PATTERN</th></tr></thead>
+            <tbody>
+              <tr><td>LOW</td><td>~125–375 Hz</td><td>tap tap (two short forward pulses)</td></tr>
+              <tr><td>MID</td><td>~500–1125 Hz</td><td>continuous spin, duty tracks energy</td></tr>
+              <tr><td>HIGH</td><td>~1250–3000 Hz</td><td>tap taaaap tap taaaap (reversing)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>WIRE</th><th>FROM</th><th>TO</th></tr></thead>
+            <tbody>
+              <tr><td>Mic signal</td><td>MAX4466 OUT</td><td>PC4</td></tr>
+              <tr><td>Mic power</td><td>MAX4466 VCC/GND</td><td>Board V / G (same rail!)</td></tr>
+              <tr><td>Motor fwd</td><td>PD2 (TIM1_CH1)</td><td>H-bridge IN1</td></tr>
+              <tr><td>Motor rev</td><td>PD3 (TIM2_CH2)</td><td>H-bridge IN2</td></tr>
+              <tr><td>Motor</td><td>H-bridge OUT A/B</td><td>Vibration motor</td></tr>
+              <tr><td>Volume LED</td><td>PC3 → resistor</td><td>LED+ … LED− → GND</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Firmware lives in <span class="inline-code">src/main.c</span> next to this page. Key tuning knobs at the top of the file: <span class="inline-code">ENERGY_GATE</span> (noise floor), <span class="inline-code">BAND_MARGIN</span> (band separation), <span class="inline-code">PWM_DUTY_FLOOR/MAX</span> (motor kick and ceiling), <span class="inline-code">LED_VOLUME_GATE/MAX</span> (LED range), <span class="inline-code">TAP_*_MS</span> (rhythm), <span class="inline-code">BIN_*</span> (band edges).</p>
+        <p class="fine-print">Firmware guarantees only one H-bridge input is PWM'd at a time and coasts between direction flips — no shoot-through.</p>
+      </section>
+
+      <!-- ============ POWER ============ -->
+      <section class="acid-card card-magenta">
+        <div class="card-icon">✦</div>
+        <h2 id="power">POWER: USB-C, LINKE, COIN CELL</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>SOURCE</th><th>V RAIL</th><th>VERDICT</th></tr></thead>
+            <tbody>
+              <tr><td>USB-C</td><td>~5 V</td><td>Best for the full haptic rig. Disconnect LinkE 3V3 first.</td></tr>
+              <tr><td>WCH-LinkE 3V3</td><td>~3.3 V</td><td>Fine for flashing + mic + LED dev. Marginal for the motor.</td></tr>
+              <tr><td>CR2032 coin cell</td><td>3 V nominal</td><td>MCU + LED: yes. Motor: short bursts only — see below.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>THE COIN CELL TRUTH</h3>
+        <p>A CR2032 stores ~220 mAh but has high internal resistance (~10–30 Ω). The CH32V003 idles in single-digit mA — weeks of runtime. But an ERM vibration motor pulls 70–100 mA spikes, which sag a CR2032 below the MCU's brown-out and cause resets. If you want untethered haptics:</p>
+        <ul class="tight-list">
+          <li>Add a big electrolytic (220–470 µF) across the H-bridge supply to soak up spikes, and keep patterns short — the tap patterns here help.</li>
+          <li>Better: a rechargeable <strong>LIR2032</strong> (3.6–3.7 V, lower ESR) or two CR2032 in parallel.</li>
+          <li>Best: a small LiPo (3.7 V, 100+ mAh) — same voltage class, none of the sag.</li>
+        </ul>
+        <p class="fine-print">Whatever the source: motor power goes through the H-bridge, grounds are shared, and a motor never ever touches a GPIO directly.</p>
+      </section>
+
+      <!-- ============ FOOTER ============ -->
+      <footer class="acid-footer">
+        <p>✦ CH32V003 HAPTIC CORE ✦</p>
+        <p>
+          <a href="README.md">FIRMWARE README</a> ·
+          <a href="board-guide.html">BOARD GUIDE</a> ·
+          <a href="https://www.wch-ic.com/products/CH32V003.html">OFFICIAL WCH DOCS</a> ·
+          <a href="https://github.com/cnlohr/ch32v003fun">CH32V003FUN</a> ·
+          <a href="https://github.com/Community-PIO-CH32V/platform-ch32v">PLATFORM-CH32V</a>
+        </p>
+      </footer>
+
+    </div>
+  </div>
+  <script src="scripts.js"></script>
+</body>
+</html>

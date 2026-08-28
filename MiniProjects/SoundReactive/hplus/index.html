@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hplus by halcyon // Audio-Reactive Demoscene Re-imagining</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="hplus.css">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="halftone-screen"></div>
+
+  <div id="canvas-container"></div>
+
+  <!-- HUD navigation overlay -->
+  <div class="hud-overlay top-left">
+    <a href="../index.html" class="nav-back">/// RETURN_TO_HUD</a>
+  </div>
+
+  <!-- Stats & Audio Controls Panel -->
+  <div class="hud-overlay top-right">
+    <div class="stats-panel">
+      <div>DEMO: HPLUS // HALCYON 1998</div>
+      <div>SCENE: <span id="scene-name">—</span></div>
+      <div>ENERGY: <span id="energy-val">0.00</span></div>
+      <div>BASS: <span id="bass-val">0.00</span></div>
+      <div class="divider"></div>
+      <div class="audio-controls">
+        <div class="ctrl-label">AUDIO SOURCE</div>
+        <button id="btn-mic" class="ctrl-btn">MIC</button>
+        <button id="btn-demo" class="ctrl-btn">DEMO BEAT</button>
+        <label class="ctrl-btn file-label">
+          FILE
+          <input type="file" id="audio-file" accept="audio/*" hidden>
+        </label>
+      </div>
+      <div class="gain-row">
+        <span>GAIN</span>
+        <input type="range" id="gain-slider" min="0.2" max="3.0" step="0.1" value="1.2">
+        <span id="gain-val">1.2x</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom HUD -->
+  <div class="hud-overlay bottom-center">
+    <div id="scene-progress-bar">
+      <div id="scene-progress-fill"></div>
+    </div>
+    <div id="scene-label">WAITING FOR AUDIO...</div>
+  </div>
+
+  <!-- Retro intro modal overlay -->
+  <div id="intro-overlay">
+    <div class="intro-box">
+      <div class="case-tag">DEMOSCENE RE-IMAGINED // 64K CLASSIC</div>
+      <h1>hplus</h1>
+      <div class="byline">BY HALCYON (1998)</div>
+      <p class="desc">
+        A sound-reactive 3D homage to Halcyon's legendary 64k intro.
+        Flat-shaded polygon solids, morphing mesh fields, and particle swarms driven by live audio.
+      </p>
+      <div class="modal-btns">
+        <button id="start-mic">START WITH MICROPHONE</button>
+        <button id="start-demo">START WITH DEMO BEAT</button>
+      </div>
+      <p class="instruction">[F] FULLSCREEN &bull; [SPACE] SKIP SCENE &bull; DROP AUDIO FILE ANYWHERE</p>
+    </div>
+  </div>
+
+  <script type="module" src="hplus.js"></script>
+</body>
+</html>

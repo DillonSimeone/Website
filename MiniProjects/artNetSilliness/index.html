@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Art-Net Chronicles: Audio-Reactive LED Warlock</title>
+  <meta name="description" content="A gothic dark mode web showcase and live interactive simulator for an audio-reactive Art-Net LED pixel driver sending DMX packets over Ethernet. Downloadable project code included.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="halftone-overlay"></div>
+
+  <main class="container">
+    <a href="../index.html" class="back-link">← RETURN TO MINI-PROJECTS</a>
+
+    <!-- Hero Banner -->
+    <header class="hero-banner">
+      <h1 class="site-title">THE ART-NET CHRONICLES</h1>
+      <p class="site-subtitle">BEHOLD THE NEON SORCERY OF RAW DMX OVER ETHERNET!</p>
+    </header>
+
+    <!-- Comic Grid Layout -->
+    <div class="comic-grid">
+
+      <!-- Panel 1: Story & Hero Art -->
+      <section class="comic-panel span-12">
+        <h2 class="panel-title">
+          <span>CHAPTER I: THE AUDIO-REACTIVE WARLOCK</span>
+          <span class="panel-badge">RAW DMX SPELLWORK</span>
+        </h2>
+        <div class="hero-graphic-box">
+          <img src="artnet_gothic_hero.png" alt="Gothic Warlock controlling glowing Art-Net light streams" class="hero-img">
+          <div class="hero-story">
+            <p style="font-size: 1.15rem; margin-bottom: 1rem;">
+              Deep in the obsidian workshop, raw system audio is harvested in real-time using fast Fourier transform (FFT) analysis. Frequencies are forged into high-speed DMX universe packets and broadcast via UDP across standard Ethernet interfaces to drive thousands of addressable LED pixels without lag!
+            </p>
+            <div class="speech-bubble">
+              <p class="speech-text">
+                "By the ancient protocols of Art-Net! 32 Universes bend to my command—1,250 addressable pixels pulsating to every bass drop and synth scream!"
+              </p>
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 10px; flex-wrap: wrap;">
+              <span class="sfx-badge">BZZZT! 45 FPS</span>
+              <span class="sfx-badge" style="background: var(--blood-red); color: #fff;">1,250 PIXELS/PORT</span>
+              <span class="sfx-badge" style="background: var(--arcane-purple); color: #fff;">UDP PORT 9999</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: Interactive Light Simulator -->
+      <section class="comic-panel span-12" id="simulator">
+        <h2 class="panel-title">
+          <span>CHAPTER II: LIVE ART-NET LIGHTING SIMULATOR</span>
+          <span class="panel-badge">BROWSER PREVIEW</span>
+        </h2>
+        <p style="margin-bottom: 1.25rem;">
+          Experience how the Python FFT backend transforms sound into high-speed LED pixel frames. Select visualizer modes, adjust gain & noise thresholds, or enable live microphone audio!
+        </p>
+
+        <div class="simulator-container">
+          <div class="canvas-wrapper">
+            <canvas id="artnetCanvas"></canvas>
+            <div class="sim-overlay-tag">ART-NET DMX STREAM: ACTIVE (SIMULATED PORT 1)</div>
+          </div>
+
+          <div class="sim-controls">
+            <!-- Mode Switcher -->
+            <div class="control-group">
+              <label class="control-label">ANIMATION PRESETS:</label>
+              <div class="comic-btn-group">
+                <button class="mode-btn active" data-mode="spectrum" id="btnModeSpectrum">SPECTRUM</button>
+                <button class="mode-btn" data-mode="bass" id="btnModeBass">BASS PULSE</button>
+                <button class="mode-btn" data-mode="vu" id="btnModeVU">VU METER</button>
+                <button class="mode-btn" data-mode="wave" id="btnModeWave">COLOR WAVE</button>
+                <button class="mode-btn" data-mode="rainbow" id="btnModeRainbow">RAINBOW</button>
+                <button class="mode-btn" data-mode="fire" id="btnModeFire">FIRE</button>
+                <button class="mode-btn" data-mode="sparkle" id="btnModeSparkle">SPARKLE</button>
+              </div>
+            </div>
+
+            <!-- Gain Slider -->
+            <div class="control-group">
+              <label class="control-label">AUDIO GAIN (<span id="gainVal">5.0</span>x):</label>
+              <input type="range" id="gainInput" class="slider-input" min="0.5" max="15.0" step="0.5" value="5.0">
+            </div>
+
+            <!-- Threshold Slider -->
+            <div class="control-group">
+              <label class="control-label">NOISE THRESHOLD (<span id="thresholdVal">0.001</span>):</label>
+              <input type="range" id="thresholdInput" class="slider-input" min="0.000" max="0.050" step="0.001" value="0.001">
+            </div>
+
+            <!-- Mic Input Toggle -->
+            <div class="control-group" style="align-items: flex-start;">
+              <label class="control-label">INPUT SOURCE:</label>
+              <button class="toggle-btn" id="toggleAudioBtn">🎤 ENABLE LIVE MIC AUDIO</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 3: Download Station -->
+      <section class="comic-panel span-12">
+        <div class="download-box">
+          <h2 class="download-title">CLAIM THE ART-NET ARCHIVE!</h2>
+          <p class="download-desc">
+            Download the complete production-ready source package including Python FFT driver (<code>audio_artnet.py</code>), Node.js Express control dashboard (<code>server.js</code>), HTML web controller, and automatic network restore utilities.
+          </p>
+          <a href="artnet.zip" download="artnet.zip" class="download-btn" id="artnetDownloadBtn">
+            <span>⚡ DOWNLOAD ARTNET.ZIP</span>
+          </a>
+          <div class="file-meta">
+            <span>📦 FILE: artnet.zip</span>
+            <span>⚡ SIZE: ~891 KB</span>
+            <span>📜 INCLUDES: Python Driver, Express Web Server, Network Batch Tools</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 4: Setup Grimoire -->
+      <section class="comic-panel span-12">
+        <h2 class="panel-title">
+          <span>CHAPTER III: THE GRIMOIRE OF SETUP</span>
+          <span class="panel-badge">INSTRUCTIONS & CODE</span>
+        </h2>
+
+        <!-- Grimoire Tabs -->
+        <div class="grimoire-tabs">
+          <button class="tab-btn active" data-tab="tab-overview" id="tabBtnOverview">1. ARCHITECTURE OVERVIEW</button>
+          <button class="tab-btn" data-tab="tab-hardware" id="tabBtnHardware">2. ETHERNET & HARDWARE</button>
+          <button class="tab-btn" data-tab="tab-python" id="tabBtnPython">3. PYTHON BACKEND</button>
+          <button class="tab-btn" data-tab="tab-express" id="tabBtnExpress">4. EXPRESS WEB CONTROL</button>
+          <button class="tab-btn" data-tab="tab-restore" id="tabBtnRestore">5. EMERGENCY RESTORE</button>
+        </div>
+
+        <!-- Tab 1: Overview -->
+        <div class="tab-content active" id="tab-overview">
+          <h3>How the System Works</h3>
+          <p style="margin-top: 0.5rem;">
+            The project operates via a two-tier hybrid architecture for ultra-low-latency LED driving and easy web control:
+          </p>
+          <ul style="margin: 1rem 0 1rem 1.5rem; line-height: 1.8;">
+            <td><strong>Python Engine (audio_artnet.py):</strong> Handles system audio recording, FFT spectral analysis, UDP control listening (Port 9999), and multi-universe DMX packet transmission over Ethernet via <code>stupidArtnet</code>.</td>
+            <td><strong>Express Dashboard (server.js):</strong> Hosts an interactive web interface on <code>http://localhost:3000</code>. Changing sliders sends real-time JSON commands over internal UDP socket (Port 9999) to Python.</td>
+          </ul>
+        </div>
+
+        <!-- Tab 2: Hardware Setup -->
+        <div class="tab-content" id="tab-hardware">
+          <h3>Configuring the Ethernet Adapter</h3>
+          <p style="margin-top: 0.5rem;">
+            Art-Net controllers (such as Advatek PixLite, SanDevices, or DIY ESP32 Art-Net nodes) usually listen on static IP subnets (e.g. <code>192.168.0.100</code>).
+          </p>
+          <p style="margin-top: 0.5rem;">
+            When launched with Administrator privileges, <code>audio_artnet.py</code> auto-detects your physical Windows Ethernet adapter and configures static IP <code>192.168.0.200</code> so your computer can immediately transmit Art-Net packets directly to your lights!
+          </p>
+        </div>
+
+        <!-- Tab 3: Python Setup -->
+        <div class="tab-content" id="tab-python">
+          <h3>Python Environment Setup</h3>
+          <p style="margin-top: 0.5rem;">Install required audio processing and Art-Net modules:</p>
+          <div class="code-block">
+            <button class="copy-btn" id="copyPythonCmd">COPY</button>
+            <code>pip install stupidArtnet sounddevice numpy</code>
+          </div>
+          <p style="margin-top: 0.5rem;">Run the Python backend (starts network configuration, spawns Node server automatically, and launches web control panel):</p>
+          <div class="code-block">
+            <button class="copy-btn" id="copyRunPyCmd">COPY</button>
+            <code>python audio_artnet.py</code>
+          </div>
+        </div>
+
+        <!-- Tab 4: Express Setup -->
+        <div class="tab-content" id="tab-express">
+          <h3>Node.js Web Dashboard Setup</h3>
+          <p style="margin-top: 0.5rem;">If running standalone without Python:</p>
+          <div class="code-block">
+            <button class="copy-btn" id="copyNodeInstall">COPY</button>
+            <code>npm install express</code>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" id="copyNodeStart">COPY</button>
+            <code>npm start</code>
+          </div>
+          <p style="margin-top: 0.5rem;">Open your browser to <code>http://localhost:3000</code> to control gain, threshold, pixel counts, and animations remotely!</p>
+        </div>
+
+        <!-- Tab 5: Restore Script -->
+        <div class="tab-content" id="tab-restore">
+          <h3>Restoring Network Settings</h3>
+          <p style="margin-top: 0.5rem;">
+            Done playing with lights? Simply run <code>restore_network.bat</code> with admin privileges to instantly reset your physical Ethernet adapter back to standard DHCP auto-addressing!
+          </p>
+          <div class="code-block">
+            <button class="copy-btn" id="copyBatCmd">COPY</button>
+            <code>.\restore_network.bat</code>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>THE ART-NET CHRONICLES • CREATED WITH GOTHIC COMIC MAGICK</p>
+      <p style="margin-top: 6px;"><a href="../index.html">RETURN TO MINI-PROJECTS DIRECTORY</a></p>
+    </footer>
+  </main>
+
+  <script src="scripts.js"></script>
+</body>
+</html>

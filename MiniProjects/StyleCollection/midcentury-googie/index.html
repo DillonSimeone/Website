@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mid-Century Googie Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Starburst backgrounds -->
+  <div class="starburst sb-1" id="sb-1">★</div>
+  <div class="starburst sb-2" id="sb-2">✦</div>
+  <div class="starburst sb-3" id="sb-3">✸</div>
+
+  <div class="googie-layout">
+    <!-- Header with Boomerang Badge -->
+    <header class="googie-header">
+      <div class="boomerang-badge">
+        <span class="badge-year">EST 1956</span>
+      </div>
+      <h1 class="googie-title">GOOGIE</h1>
+      <p class="googie-tagline">SPACE-AGE DINER & FUTURISTIC SHAPES</p>
+      <a href="../index.html" class="back-link">Return to Hub</a>
+    </header>
+
+    <!-- Main diner cards -->
+    <main class="googie-grid">
+      <section class="googie-card shape-kidney">
+        <div class="card-star">✦</div>
+        <h2>THE DESIGN</h2>
+        <p>Googie style features bold geometric angles, sweeping curves, kidney shapes, starbursts, and space-age architectural optimism.</p>
+      </section>
+
+      <section class="googie-card shape-tilt">
+        <div class="card-star">★</div>
+        <h2>INTERACTIVE</h2>
+        <p>Move your mouse or hover on the starbursts to watch them rotate dynamically in 3D orbit offsets!</p>
+        <button class="googie-btn" id="btn-spin">SPIN STARS</button>
+      </section>
+
+      <section class="googie-card shape-boomerang">
+        <div class="card-star">✸</div>
+        <h2>PALETTE</h2>
+        <p>Vibrant teal, atomic coral, retro peach, and golden cream. A high-energy, nostalgic future.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

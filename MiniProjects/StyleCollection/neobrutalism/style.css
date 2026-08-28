@@ -1,0 +1,227 @@
+:root {
+  --bg-color: #f3f0ea;
+  --text-color: #000000;
+  --primary: #ff5e97;
+  --secondary: #24d6ff;
+  --tertiary: #ffe600;
+  --border-width: 4px;
+  --card-shadow: 6px 6px 0px #000000;
+  --btn-shadow: 4px 4px 0px #000000;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  line-height: 1.4;
+  transition: background-color 0.2s ease;
+}
+
+.neo-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.neo-header {
+  border: var(--border-width) solid #000;
+  background-color: var(--primary);
+  padding: 30px;
+  margin-bottom: 40px;
+  box-shadow: var(--card-shadow);
+  position: relative;
+}
+
+.back-btn {
+  display: inline-block;
+  text-decoration: none;
+  color: #000;
+  font-weight: bold;
+  border: 2px solid #000;
+  padding: 5px 12px;
+  background: #fff;
+  box-shadow: 2px 2px 0px #000;
+  margin-bottom: 20px;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.back-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px #000;
+}
+
+.back-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000;
+}
+
+.neo-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+}
+
+.neo-subtitle {
+  font-size: 1.25rem;
+  margin: 0;
+  background: #fff;
+  display: inline-block;
+  padding: 5px 10px;
+  border: 2px solid #000;
+}
+
+.neo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.neo-card {
+  border: var(--border-width) solid #000;
+  background-color: #ffffff;
+  padding: 30px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.neo-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0px #000000;
+}
+
+.brand-card {
+  background-color: #fff;
+}
+
+.brand-card h2 {
+  background-color: var(--secondary);
+  display: inline-block;
+  padding: 4px 12px;
+  border: 2px solid #000;
+  margin-top: 0;
+}
+
+.brand-card ul {
+  padding-left: 20px;
+}
+
+.brand-card li {
+  margin-bottom: 8px;
+}
+
+.interactive-card {
+  background-color: var(--tertiary);
+}
+
+.interactive-card h2 {
+  margin-top: 0;
+}
+
+.button-group {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.neo-btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 12px 24px;
+  border: var(--border-width) solid #000;
+  cursor: pointer;
+  box-shadow: var(--btn-shadow);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.neo-btn-cyan {
+  background-color: var(--secondary);
+}
+
+.neo-btn-yellow {
+  background-color: #fff;
+}
+
+.neo-btn-pink {
+  background-color: var(--primary);
+}
+
+.neo-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #000000;
+}
+
+.neo-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px #000000;
+}
+
+.feedback-card h2 {
+  margin-top: 0;
+}
+
+.input-wrapper {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.neo-input {
+  flex-grow: 1;
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 10px 15px;
+  border: 3px solid #000;
+  outline: none;
+  box-shadow: 3px 3px 0px #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.neo-input:focus {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #000;
+  background-color: #fffde6;
+}
+
+.live-preview {
+  background: #eee;
+  padding: 10px;
+  border: 2px solid #000;
+  font-style: italic;
+  min-height: 20px;
+}
+
+.stat-card {
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 5rem;
+  line-height: 1;
+  margin: 0;
+  text-shadow: 4px 4px 0px var(--secondary);
+  -webkit-text-stroke: 2px #000;
+}
+
+.stat-label {
+  font-weight: 700;
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .button-group, .input-wrapper {
+    flex-direction: column;
+  }
+}

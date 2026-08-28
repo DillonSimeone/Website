@@ -1,0 +1,62 @@
+{
+    "id": "weapons",
+    "title": "Weapons & Action",
+    "tags": [
+        {
+            "id": "sword",
+            "label": "sword",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "katana",
+            "label": "katana",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "bow_(weapon)",
+            "label": "bow",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "gun",
+            "label": "gun",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "staff",
+            "label": "staff",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "magic",
+            "label": "magic",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "fire",
+            "label": "fire",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "water",
+            "label": "water",
+            "classes": [
+                "tag-popular"
+            ]
+        }
+    ]
+}

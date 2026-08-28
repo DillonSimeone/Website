@@ -1,0 +1,1008 @@
+:root {
+  --bg-dark: #09090b;
+  --text-light: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --border-color: rgba(255, 255, 255, 0.08);
+  
+  --font-display: 'Outfit', sans-serif;
+  --font-sans: 'Space Grotesk', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(120, 119, 198, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(244, 63, 94, 0.06) 0%, transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.hub-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.hub-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.subtitle-badge {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.06);
+  padding: 6px 16px;
+  border-radius: 99px;
+  margin-bottom: 20px;
+}
+
+.hub-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 20px 0;
+  background: linear-gradient(to right, #ffffff 30%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hub-description {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Hub Cards Grid */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 30px;
+}
+
+.hub-card {
+  position: relative;
+  text-decoration: none;
+  color: var(--theme-color, inherit);
+  background: var(--theme-bg, rgba(255, 255, 255, 0.02));
+  border: var(--theme-border, 1px solid var(--border-color));
+  border-radius: var(--theme-radius, 20px);
+  font-family: var(--theme-font, inherit);
+  box-shadow: var(--theme-shadow, none);
+  padding: 40px 30px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 200px;
+  transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.card-bg-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 120%, rgba(255, 255, 255, 0.05), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  z-index: 1;
+}
+
+.card-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.style-number {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  opacity: 0.3;
+  margin-bottom: 25px;
+  transition: opacity 0.35s ease;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  transition: transform 0.35s ease;
+}
+
+.card-desc {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin: 0 0 30px 0;
+  flex-grow: 1;
+}
+
+.card-tag {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Card Hover Animations & Presets */
+.hub-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.hub-card:hover .card-bg-effect {
+  opacity: 1;
+}
+
+.hub-card:hover .style-number {
+  opacity: 0.8;
+}
+
+/* 1. Neobrutalist Hover Style */
+.c-neobrutal:hover {
+  background: #ff5e97;
+  border: 3px solid #000;
+  box-shadow: 6px 6px 0px #000;
+  transform: translate(-3px, -9px);
+  color: #000;
+}
+.c-neobrutal:hover .card-tag {
+  background: #24d6ff;
+  border-color: #000;
+  color: #000;
+}
+.c-neobrutal:hover .style-number {
+  color: #000;
+}
+
+/* 2. Cyberpunk Hover Style */
+.c-cyberpunk:hover {
+  background: #0d0d1d;
+  border-color: #ff007f;
+  box-shadow: 0 0 20px rgba(255, 0, 127, 0.4);
+}
+.c-cyberpunk:hover .style-number {
+  color: #00f0ff;
+}
+.c-cyberpunk:hover .card-title {
+  color: #fff;
+  text-shadow: 0 0 8px #ff007f;
+}
+.c-cyberpunk:hover .card-tag {
+  background: transparent;
+  border-color: #00f0ff;
+  color: #00f0ff;
+  box-shadow: inset 0 0 5px rgba(0, 240, 255, 0.2);
+}
+
+/* 3. Swiss Editorial Hover Style */
+.c-editorial:hover {
+  background: #faf9f6;
+  color: #111;
+  border-color: #111;
+}
+.c-editorial:hover .style-number {
+  color: #111;
+}
+.c-editorial:hover .card-tag {
+  background: #7d8471;
+  border-color: #7d8471;
+  color: #fff;
+}
+
+/* 4. Claymorphism Hover Style */
+.c-clay:hover {
+  background: #fbfcdb;
+  color: #6a578a;
+  border-color: #e9defa;
+  box-shadow: 10px 15px 30px rgba(135, 120, 160, 0.15), inset 4px 4px 8px #fff, inset -4px -4px 8px rgba(0,0,0,0.05);
+}
+.c-clay:hover .style-number {
+  color: #6a578a;
+}
+.c-clay:hover .card-tag {
+  background: #f0ecfa;
+  border-color: #8c73b0;
+  color: #8c73b0;
+}
+
+/* 5. Retro Hover Style */
+.c-retro:hover {
+  background: #030803;
+  color: #33ff33;
+  border-color: #33ff33;
+  box-shadow: 0 0 15px rgba(51, 255, 51, 0.3);
+}
+.c-retro:hover .style-number {
+  color: #33ff33;
+}
+.c-retro:hover .card-tag {
+  background: transparent;
+  border-color: #33ff33;
+  color: #33ff33;
+}
+
+/* 6. Art Deco Hover Style */
+.c-artdeco:hover {
+  background: #0b0f19;
+  border-color: #d4af37;
+  color: #d4af37;
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);
+}
+.c-artdeco:hover .style-number {
+  color: #d4af37;
+}
+.c-artdeco:hover .card-tag {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: #d4af37;
+  color: #d4af37;
+}
+
+/* 7. Y2K Hover Style */
+.c-y2k:hover {
+  background: #000;
+  border-color: #39ff14;
+  box-shadow: 5px 5px 0px #ff007f;
+}
+.c-y2k:hover .style-number {
+  color: #ff007f;
+}
+.c-y2k:hover .card-title {
+  color: #39ff14;
+}
+.c-y2k:hover .card-tag {
+  background: #ff007f;
+  border-color: #ff007f;
+  color: #fff;
+}
+
+/* 8. Botanical Hover Style */
+.c-botanical:hover {
+  background: #efebe4;
+  color: #2d4a3e;
+  border-color: #c88a6d;
+}
+.c-botanical:hover .style-number {
+  color: #c88a6d;
+}
+.c-botanical:hover .card-tag {
+  background: #c88a6d;
+  border-color: #c88a6d;
+  color: #fff;
+}
+
+/* 9. Win95 Hover Style */
+.c-win95:hover {
+  background: #c0c0c0;
+  color: #000000;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+  border-radius: 0;
+}
+.c-win95:hover .style-number {
+  color: #808080;
+}
+.c-win95:hover .card-tag {
+  background: #000080;
+  color: #fff;
+  border-color: #000080;
+  border-radius: 0;
+}
+
+/* 10. Bauhaus Hover Style */
+.c-bauhaus:hover {
+  background: #e23b24; /* Bauhaus red */
+  color: #fff;
+  border: 4px solid #000;
+  border-radius: 0;
+}
+.c-bauhaus:hover .style-number {
+  color: #fff;
+}
+.c-bauhaus:hover .card-tag {
+  background: #002f6c; /* Bauhaus blue */
+  border-color: #002f6c;
+  color: #fff;
+}
+
+/* 11. Synth Hover Style */
+.c-synth:hover {
+  background: #23272a;
+  border-color: #ff5500;
+  box-shadow: 0 10px 25px rgba(255, 85, 0, 0.25);
+}
+.c-synth:hover .style-number {
+  color: #ff5500;
+}
+.c-synth:hover .card-tag {
+  background: #111;
+  border-color: #333;
+  color: #ff5500;
+}
+
+/* 12. Solarpunk Hover Style */
+.c-solarpunk:hover {
+  background: #eaf5e0;
+  color: #2b5c2b;
+  border-color: #d4a337;
+  box-shadow: 0 10px 25px rgba(43, 92, 43, 0.15);
+}
+.c-solarpunk:hover .style-number {
+  color: #d4a337;
+}
+.c-solarpunk:hover .card-tag {
+  background: #d4a337;
+  border-color: #d4a337;
+  color: #fff;
+}
+
+/* 13. Retro RPG Hover Style */
+.c-rpg:hover {
+  background: #181010;
+  color: #f8e8c0;
+  border: 4px double #f8e8c0;
+  border-radius: 0;
+  box-shadow: 0 0 15px rgba(248, 232, 192, 0.2);
+}
+.c-rpg:hover .style-number {
+  color: #ff5533;
+}
+.c-rpg:hover .card-tag {
+  background: #ff5533;
+  border-color: #ff5533;
+  color: #fff;
+  border-radius: 0;
+}
+
+/* 14. Frutiger Aero Hover Style */
+.c-frutiger:hover {
+  background: linear-gradient(135deg, #a1e2fc 0%, #dcf0d0 100%);
+  color: #005a70;
+  border-color: #00a8cc;
+  box-shadow: 0 10px 30px rgba(0, 168, 204, 0.3);
+}
+.c-frutiger:hover .style-number {
+  color: #00a8cc;
+}
+.c-frutiger:hover .card-tag {
+  background: rgba(255,255,255,0.7);
+  border-color: #00a8cc;
+  color: #00a8cc;
+}
+
+/* 15. Gothic Hover Style */
+.c-gothic:hover {
+  background: #110815;
+  border-color: #c4a45a;
+  color: #c4a45a;
+  box-shadow: 0 0 20px rgba(196, 164, 90, 0.25);
+}
+.c-gothic:hover .style-number {
+  color: #c4a45a;
+}
+.c-gothic:hover .card-tag {
+  background: transparent;
+  border-color: #c4a45a;
+  color: #c4a45a;
+}
+
+/* 16. Noir Hover Style */
+.c-neonoir:hover {
+  background: #181818;
+  color: #ddd;
+  border-color: #555;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
+  background-image: radial-gradient(rgba(0,0,0,0.15) 15%, transparent 16%);
+  background-size: 8px 8px;
+}
+.c-neonoir:hover .style-number {
+  color: #999;
+}
+.c-neonoir:hover .card-tag {
+  background: #333;
+  border-color: #444;
+  color: #aaa;
+}
+
+/* 17. Memphis Hover Style */
+.c-memphis:hover {
+  background: #fdf6e2;
+  color: #000;
+  border: 3px solid #000;
+  box-shadow: 5px 5px 0px #39f;
+}
+.c-memphis:hover .style-number {
+  color: #ff007f;
+}
+.c-memphis:hover .card-tag {
+  background: #ff007f;
+  color: #fff;
+  border-color: #000;
+}
+
+/* 18. Zen Hover Style */
+.c-zen:hover {
+  background: #fcf9f2;
+  color: #2b2b2b;
+  border-color: #8c7255;
+  box-shadow: 0 10px 30px rgba(140, 114, 85, 0.08);
+}
+.c-zen:hover .style-number {
+  color: #b18c65;
+}
+.c-zen:hover .card-tag {
+  background: #8c7255;
+  color: #fff;
+  border-color: #8c7255;
+}
+
+/* 19. Blueprint Hover Style */
+.c-blueprint:hover {
+  background: #003366;
+  color: #00f0ff;
+  border-color: #00f0ff;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+  background-image: 
+    linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,240,255,0.06) 1px, transparent 1px);
+  background-size: 15px 15px;
+}
+.c-blueprint:hover .style-number {
+  color: #fff;
+}
+.c-blueprint:hover .card-tag {
+  background: transparent;
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+
+/* 20. Steampunk Hover Style */
+.c-steampunk:hover {
+  background: #2b1f14;
+  color: #d4af37;
+  border-color: #d4af37;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+.c-steampunk:hover .style-number {
+  color: #c88a3e;
+}
+.c-steampunk:hover .card-tag {
+  background: #c88a3e;
+  color: #fff;
+  border-color: #c88a3e;
+}
+
+/* 21. Art Nouveau Hover Style */
+.c-nouveau:hover {
+  background: #112d24;
+  color: #e5c158;
+  border-color: #e5c158;
+  box-shadow: 0 0 20px rgba(229, 193, 88, 0.2);
+}
+.c-nouveau:hover .style-number {
+  color: #e5c158;
+}
+.c-nouveau:hover .card-tag {
+  background: rgba(229, 193, 88, 0.1);
+  color: #e5c158;
+  border-color: #e5c158;
+}
+
+/* 22. Vaporwave Hover Style */
+.c-vaporwave:hover {
+  background: linear-gradient(180deg, #ff007f 0%, #ff7b00 100%);
+  color: #fff;
+  border-color: #00f0ff;
+  box-shadow: 0 10px 25px rgba(255, 0, 127, 0.35);
+}
+.c-vaporwave:hover .style-number {
+  color: #00f0ff;
+}
+.c-vaporwave:hover .card-tag {
+  background: #00f0ff;
+  color: #000;
+  border-color: #00f0ff;
+}
+
+/* 23. Shattered Prism Hover Style */
+.c-prism:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #ff00ff;
+  color: #00ffff;
+  box-shadow: inset 0 0 15px rgba(255, 0, 255, 0.3), 0 0 25px rgba(0, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+}
+.c-prism:hover .style-number {
+  color: #ff00ff;
+}
+.c-prism:hover .card-tag {
+  background: #00ffff;
+  color: #000;
+  border-color: #00ffff;
+}
+
+/* 24. Pop Art Hover Style */
+.c-popart:hover {
+  background: #ffcc00;
+  color: #000;
+  border: 4px solid #000;
+  box-shadow: 6px 6px 0px #000;
+  background-image: radial-gradient(#000 12%, transparent 13%);
+  background-size: 10px 10px;
+}
+.c-popart:hover .style-number {
+  color: #ff3333;
+}
+.c-popart:hover .card-tag {
+  background: #ff3333;
+  color: #fff;
+  border-color: #000;
+}
+
+/* 25. Academic Hover Style */
+.c-academic:hover {
+  background: #fffff8;
+  color: #111;
+  border: 1px solid #111;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+.c-academic:hover .style-number {
+  color: #555;
+}
+.c-academic:hover .card-tag {
+  background: transparent;
+  color: #111;
+  border-color: #111;
+}
+
+/* 26. Geocities Hover Style */
+.c-geocities:hover {
+  background: #000080;
+  color: #ffff00;
+  border: 2px outset #c0c0c0;
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h4v4H0V0zm4 4h4v4H4V4z' fill='%23000040' fill-opacity='.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+  border-radius: 0;
+  text-decoration: underline;
+}
+.c-geocities:hover .style-number {
+  color: #fff;
+}
+.c-geocities:hover .card-tag {
+  background: #ff0000;
+  color: #fff;
+  border-color: #ff0000;
+  border-radius: 0;
+  text-decoration: none;
+}
+
+/* 27. Notebook Hover Style */
+.c-notebook:hover {
+  background: #fdfdfd;
+  color: #000;
+  border-left: 15px double #a1a1aa; /* Ring spiral look */
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-radius: 4px;
+}
+.c-notebook:hover .style-number {
+  color: #c084fc;
+}
+.c-notebook:hover .card-tag {
+  background: #a1a1aa;
+  color: #fff;
+  border-color: #a1a1aa;
+}
+
+/* 28. HUD Hover Style */
+.c-hud:hover {
+  background: #021115;
+  color: #00ff66;
+  border-color: #00ff66;
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.25);
+}
+.c-hud:hover .style-number {
+  color: #00ff66;
+}
+.c-hud:hover .card-tag {
+  background: transparent;
+  color: #00ff66;
+  border-color: #00ff66;
+}
+
+/* 29. Cottagecore Hover Style */
+.c-cottagecore:hover {
+  background: #dfc1a4;
+  color: #5b3e2b;
+  border-color: #b2583b;
+  box-shadow: 0 10px 20px rgba(178, 88, 59, 0.15);
+}
+.c-cottagecore:hover .style-number {
+  color: #b2583b;
+}
+.c-cottagecore:hover .card-tag {
+  background: #b2583b;
+  color: #fff;
+  border-color: #b2583b;
+}
+
+/* 30. Damask Hover Style */
+.c-damask:hover {
+  background: #0b2f21;
+  color: #dfb15b;
+  border-color: #dfb15b;
+  box-shadow: 0 0 25px rgba(223, 177, 91, 0.2);
+}
+.c-damask:hover .style-number {
+  color: #dfb15b;
+}
+.c-damask:hover .card-tag {
+  background: rgba(223, 177, 91, 0.1);
+  color: #dfb15b;
+  border-color: #dfb15b;
+}
+
+/* 31. Glitch Hover Style */
+.c-glitch:hover {
+  background: #111;
+  color: #fff;
+  border-color: #ff3333;
+  box-shadow: -3px 0px 0px #ff3333, 3px 0px 0px #33ff33;
+}
+.c-glitch:hover .style-number {
+  color: #33ff33;
+}
+.c-glitch:hover .card-tag {
+  background: #ff3333;
+  color: #fff;
+  border-color: #ff3333;
+}
+
+/* 32. Groovy Hover Style */
+.c-groovy:hover {
+  background: #ff7b00; /* Burnt orange */
+  color: #ffd000; /* Yellow bubble text */
+  border: 4px solid #3d6a45; /* Avocado border */
+  border-radius: 40px;
+}
+.c-groovy:hover .style-number {
+  color: #3d6a45;
+}
+.c-groovy:hover .card-tag {
+  background: #3d6a45;
+  color: #fff;
+  border-color: #3d6a45;
+}
+
+/* 33. Arcade Hover Style */
+.c-arcade:hover {
+  background: #000;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  color: #00ffff;
+}
+.c-arcade:hover .style-number {
+  color: #ff00ff;
+}
+.c-arcade:hover .card-tag {
+  background: #ff0000;
+  color: #fff;
+  border-color: #ff0000;
+}
+
+/* 34. Chalkboard Hover Style */
+.c-chalkboard:hover {
+  background: #1e2c26; /* Slate green */
+  color: #fff;
+  border: 5px solid #8b5a2b; /* Wooden frame */
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+.c-chalkboard:hover .style-number {
+  color: #fce473; /* Yellow chalk */
+}
+.c-chalkboard:hover .card-tag {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  border-color: #fff;
+}
+
+/* 35. Googie Hover Style */
+.c-googie:hover {
+  background: #008080; /* Teal background */
+  color: #ffd3b6; /* Peach text */
+  border-radius: 50% 20% 50% 20%;
+  border-color: #ffaaa5;
+}
+.c-googie:hover .style-number {
+  color: #ffaaa5;
+}
+.c-googie:hover .card-tag {
+  background: #ffaaa5;
+  color: #008080;
+  border-color: #ffaaa5;
+}
+
+/* 36. Collage Hover Style */
+.c-collage:hover {
+  background: #fbf9f4;
+  color: #333;
+  border-top: 10px solid #ecdcc4; /* Tape strip */
+  border-left: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+}
+.c-collage:hover .style-number {
+  color: #999;
+}
+.c-collage:hover .card-tag {
+  background: #888;
+  color: #fff;
+  border-color: #888;
+}
+
+/* 37. Monolithic Concrete Hover Style */
+.c-concrete:hover {
+  background: #2a2a2a;
+  color: #e0e0e0;
+  border: 4px solid #1a1a1a;
+  box-shadow: 8px 8px 0px #ff3333;
+}
+.c-concrete:hover .style-number {
+  color: #ff3333;
+}
+.c-concrete:hover .card-tag {
+  background: #ff3333;
+  color: #fff;
+  border-color: #ff3333;
+}
+
+/* 38. Stained Glass Hover Style */
+.c-stained:hover {
+  background: linear-gradient(135deg, rgba(255,0,128,0.2) 0%, rgba(0,128,255,0.2) 100%), #111;
+  color: #fff;
+  border: 2px solid #ff0080;
+  box-shadow: 0 0 15px rgba(255, 0, 128, 0.4), inset 0 0 10px rgba(0, 128, 255, 0.3);
+}
+.c-stained:hover .style-number {
+  color: #ff0080;
+  text-shadow: 0 0 5px #ff0080;
+}
+.c-stained:hover .card-tag {
+  background: transparent;
+  color: #00ffff;
+  border-color: #00ffff;
+}
+
+/* 39. Retro Ticket Hover Style */
+.c-ticket:hover {
+  background: #fdf5e6;
+  color: #443322;
+  border: 2px dashed #8b5a2b;
+  border-left: 6px double #8b5a2b;
+}
+.c-ticket:hover .style-number {
+  color: #8b5a2b;
+}
+.c-ticket:hover .card-tag {
+  background: #8b5a2b;
+  color: #fff;
+  border-color: #8b5a2b;
+}
+
+/* 40. Holographic Hover Style */
+.c-holo:hover {
+  background: linear-gradient(120deg, #ff9a9e 0%, #fecfef 20%, #a1c4fd 60%, #c2e9fb 100%);
+  color: #333;
+  border-color: #fff;
+  box-shadow: 0 10px 30px rgba(161, 196, 253, 0.5);
+  text-shadow: 0 0 1px rgba(255,255,255,0.5);
+}
+.c-holo:hover .style-number {
+  color: #a1c4fd;
+}
+.c-holo:hover .card-tag {
+  background: rgba(255,255,255,0.6);
+  color: #333;
+  border-color: #fff;
+}
+
+/* 41. City Pop Hover Style */
+.c-citypop:hover {
+  background: #ff758f;
+  background-image: linear-gradient(0deg, #ff758f 0%, #ff7eb3 100%);
+  color: #fff;
+  border: 4px solid #38006b;
+  box-shadow: 6px 6px 0px #38006b;
+}
+.c-citypop:hover .style-number {
+  color: #ffff00;
+}
+.c-citypop:hover .card-tag {
+  background: #38006b;
+  color: #fff;
+  border-color: #38006b;
+}
+
+/* 42. Linocut Print Hover Style */
+.c-linocut:hover {
+  background: #ecdcc4;
+  color: #5a3e2b;
+  border: 5px solid #2b1f1d;
+  box-shadow: 4px 4px 0px #2b1f1d;
+}
+.c-linocut:hover .style-number {
+  color: #b84a39;
+}
+.c-linocut:hover .card-tag {
+  background: #b84a39;
+  color: #fff;
+  border-color: #2b1f1d;
+}
+
+/* 43. Bubblegum Glitter Hover Style */
+.c-bubblegum:hover {
+  background: #ff85a2;
+  color: #fff;
+  border: 3px solid #ff007f;
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.6);
+  border-radius: 25px;
+}
+.c-bubblegum:hover .style-number {
+  color: #ff007f;
+}
+.c-bubblegum:hover .card-tag {
+  background: #ff007f;
+  color: #fff;
+  border-color: #ff007f;
+}
+
+/* 44. Pressed Herbarium Hover Style */
+.c-herbarium:hover {
+  background: #eae3d2;
+  color: #3d4a3e;
+  border: 1px solid #7d8e7c;
+  box-shadow: 0 4px 15px rgba(61,74,62,0.12);
+}
+.c-herbarium:hover .style-number {
+  color: #7d8e7c;
+}
+.c-herbarium:hover .card-tag {
+  background: #7d8e7c;
+  color: #fff;
+  border-color: #7d8e7c;
+}
+
+/* 45. Vintage Cartography Hover Style */
+.c-map:hover {
+  background: #eedcb3;
+  color: #43331a;
+  border: 1px solid #8c7355;
+  box-shadow: inset 0 0 20px rgba(132, 100, 60, 0.15);
+}
+.c-map:hover .style-number {
+  color: #a05a2c;
+}
+.c-map:hover .card-tag {
+  background: #a05a2c;
+  color: #fff;
+  border-color: #8c7355;
+}
+
+/* 46. Industrial Warning HUD Hover Style */
+.c-hazard:hover {
+  background: #fcb900;
+  color: #000;
+  border: 6px solid #000;
+  box-shadow: 8px 8px 0px #000;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px);
+}
+.c-hazard:hover .style-number {
+  color: #000;
+}
+.c-hazard:hover .card-tag {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+/* 47. Aura Tarot Hover Style */
+.c-tarot:hover {
+  background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+  color: #2b3a4a;
+  border: 2px solid #dfb15b;
+  box-shadow: 0 10px 25px rgba(161,196,253,0.35);
+}
+.c-tarot:hover .style-number {
+  color: #dfb15b;
+}
+.c-tarot:hover .card-tag {
+  background: #dfb15b;
+  color: #fff;
+  border-color: #dfb15b;
+}
+
+/* 48. News Gazette Hover Style */
+.c-newspaper:hover {
+  background: #eedeb0;
+  color: #111;
+  border-top: 3px double #111;
+  border-bottom: 3px double #111;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.c-newspaper:hover .style-number {
+  color: #333;
+}
+.c-newspaper:hover .card-tag {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+/* 49. Tiki Bamboo Bar Hover Style */
+.c-tiki:hover {
+  background: #ecc599;
+  color: #503114;
+  border: 4px solid #8b5a2b;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(80, 49, 20, 0.2);
+}
+.c-tiki:hover .style-number {
+  color: #b2583b;
+}
+.c-tiki:hover .card-tag {
+  background: #b2583b;
+  color: #fff;
+  border-color: #8b5a2b;
+}
+
+/* 50. Mercury Chrome Hover Style */
+.c-mercury:hover {
+  background: #1a1a24;
+  color: #d3d3d8;
+  border: 2px solid #88939b;
+  box-shadow: 0 0 25px rgba(136, 147, 155, 0.4), inset 0 0 10px rgba(255,255,255,0.05);
+}
+.c-mercury:hover .style-number {
+  color: #ffffff;
+  text-shadow: 0 0 8px #ffffff;
+}
+.c-mercury:hover .card-tag {
+  background: #ffffff;
+  color: #111;
+  border-color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .hub-container {
+    padding: 40px 16px;
+  }
+}

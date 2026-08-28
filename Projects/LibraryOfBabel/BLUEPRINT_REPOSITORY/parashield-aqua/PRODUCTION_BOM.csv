@@ -1,0 +1,36 @@
+ref_des,part_description,manufacturer,mfg_part_number,lcsc_part_number,jlcpcb_part_number,qty_per_unit,unit_price_usd_qty1k,source_notes
+U1,MCU PIC18LF47Q10 QFN-40 1.8-5.5V 35uA/MHz,Microchip,PIC18LF47Q10-I/MV,C496113,C496113,1,1.85,training-data reference (verify)
+U2,NXP NTAG I2C Plus 1KB NFC/I2C tag SOP-8,NXP,NT3H2111W0FHKH,C2687317,C2687317,1,0.62,training-data reference (verify)
+U3,TI TPA2005D1 Class-D mono amp 1.4W CSP-8,Texas Instruments,TPA2005D1DRBR,C91418,C91418,1,0.44,training-data reference (verify)
+U4,TI BQ51003 Qi WPT receiver 5V 1A SON-8,Texas Instruments,BQ51003YFPR,C131240,C131240,1,1.20,training-data reference (verify)
+U5,Microchip MCP73831T LiPo charge IC 500mA SOT-23-5,Microchip,MCP73831T-2ACI/OT,C14879,C14879,1,0.28,training-data reference (verify)
+U6,Seiko S-8261ABJMD LiPo protection IC SOT-23-6,Seiko Instruments,S-8261ABJMD-G3JT2G,C388748,C388748,1,0.35,best-guess (verify)
+U7,TI TPS62840 buck converter 1.8-6.5V 50mA SOT-583,Texas Instruments,TPS62840DLCR,C522727,C522727,1,0.55,training-data reference (verify)
+Y1,BCT-2 class bone-conduction transducer 16ohm 150mW,PUI Audio,BCT-03-2M,N/A — through-hole/wire,N/A,1,8.50,best-guess (verify); order direct from PUI Audio or equivalent distributor
+Y2,LRA temple haptic actuator 10mm dia Jinlong,Jinlong Machinery,FF-M10-04,C458199,C458199,1,1.10,best-guess (verify)
+L1,Wurth WR483030-3M3 planar Qi receiver coil 15mm OD,Wurth Elektronik,760308101213,N/A — Wurth direct,N/A,1,2.40,best-guess (verify); order via Digi-Key/Mouser
+BT1,Renata ICP-06230-H LiPo 3.7V 60mAh flex strip,Renata,ICP-06230-H,N/A — specialty cell,N/A,1,4.20,best-guess (verify); order direct from Renata or battery distributor
+C1,Cap 100nF X5R 0402 10V,YAGEO,CC0402KRX5R9BB104,C307331,C307331,6,0.005,training-data reference (verify)
+C2,Cap 10uF X5R 0402 6.3V,Samsung Electro,CL05A106MQ5NUNC,C15525,C15525,4,0.012,training-data reference (verify)
+C3,Cap 1uF X5R 0402 10V,YAGEO,CC0402KRX7R9BB105,C52923,C52923,4,0.006,training-data reference (verify)
+C4,Cap 4.7uF X5R 0603 10V (WPT filter),Samsung Electro,CL10A475KQ8NNNC,C19666,C19666,2,0.018,training-data reference (verify)
+R1,Resistor 10k 0402 1%,YAGEO,RC0402FR-0710KL,C98220,C98220,8,0.002,training-data reference (verify)
+R2,Resistor 2k 0402 1% (RPROG charge current set),YAGEO,RC0402FR-072KL,C105583,C105583,1,0.002,training-data reference (verify)
+R3,Resistor 100 0402 1% (amp gain),YAGEO,RC0402FR-07100RL,C22775,C22775,2,0.002,training-data reference (verify)
+R4,Resistor 1M 0402 5% (pull-down),YAGEO,RC0402JR-071ML,C211591,C211591,2,0.002,training-data reference (verify)
+RT1,NTC thermistor 100k 0402 B=4250K Murata,Murata,NCP15WF104E03RC,C90654,C90654,1,0.035,training-data reference (verify)
+D1,Schottky diode 40V 200mA SOD-323 (reverse polarity),NEXPERIA,BAT54S315,C52523,C52523,1,0.018,training-data reference (verify)
+D2,Zener 3.3V 200mW SOD-323 (clamping),YAGEO,ZMY3V3-GS18,C141986,C141986,1,0.012,training-data reference (verify)
+LED1,LED red 0402 1.8V 2mA (charge indicator visible at gasket),YAGEO,YESL0402CR1C0C2B,C2290,C2290,1,0.012,training-data reference (verify)
+TP1-6,Test point 1mm dia SMD (6 total),Keystone,5016,C5143804,C5143804,6,0.008,best-guess (verify)
+J1,2-pin header 1.25mm pitch (umbilical conductor pair),JST,BM02B-SRSS-TB,C160390,C160390,1,0.085,training-data reference (verify)
+PCB,2-layer flex-rigid PCB 30x15mm 1oz Cu ENIG,JLCPCB,custom gerber,N/A,N/A,1,3.20,Estimate for 1k qty at JLCPCB; flex adds cost vs standard FR4
+SHELL,BioMed Amber SLA shell per-user custom,Formlabs,BioMed Amber Resin,N/A — per-user print,N/A,1,18.00,Per-unit resin+print cost estimate on Form 3B+; excludes wash/cure labor; best-guess (verify)
+SILICONE_GASKET,Custom silicone gasket 3mm wall pressure-compensation diaphragm,Custom molded,N/A,N/A,N/A,1,2.80,best-guess (verify); injection-molded silicone at 1k qty
+OIL_FILL,DC-200 PDMS 5cSt silicone oil 1.5mL per unit,Dow Corning,DC-200 Fluid 5cSt,N/A — bulk fluid,N/A,1,0.18,best-guess (verify); bulk pricing at ~$12/L
+CONFORMAL,Dymax 9008 UV conformal coat 0.5mL per unit,Dymax,9008,N/A — bulk,N/A,1,0.22,best-guess (verify)
+CABLE_UMBI,Umbilical conductor pair 2-core 28AWG 1m pigtail (commercial diver variant),Generic,N/A,N/A,N/A,1,0.85,best-guess (verify); included only in commercial variant BOM
+FOAM_RETENTION,Silicone foam retention pad 5mm BCT interface,Rogers Corp,PORON 4701-30,N/A,N/A,1,0.35,best-guess (verify)
+LOCTITE_565,Loctite 565 PST thread sealant 0.05mL per unit,Henkel,Loctite 565,N/A — bulk,N/A,1,0.04,best-guess (verify)
+UNDERFILL,Loctite 3621 underfill epoxy MCU + BQ51003 0.05mL,Henkel,Loctite 3621,N/A — bulk,N/A,1,0.08,best-guess (verify)
+LABEL,Laser-etched serial + user-ID label on shell,In-house,N/A,N/A,N/A,1,0.05,best-guess (verify)

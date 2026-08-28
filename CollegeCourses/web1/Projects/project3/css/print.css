@@ -1,0 +1,63 @@
+body
+{
+    background-color: white;
+    color: black;
+    width: 80%;
+    margin: auto;
+    font-family: cursive, sans-serif;
+}
+a
+{
+    color: black;
+}
+nav
+{
+    display: none;
+}
+div
+{
+    text-align: center;
+    padding: 10px;
+    border: 5px solid black;
+    border-radius: 60px;
+    margin-bottom: 20px;
+    margin-top: 10px;
+}
+div dt
+{
+    font-weight: bold;
+}
+div dl
+{
+    font-style: italic;
+}
+div dl, dt, dd
+{
+    text-align: left;
+}
+div p
+{
+    text-align: left;
+    font-size: 2em;
+}
+div figcaption
+{
+    font-size: 1.25em;
+    text-align: center;
+}
+div table
+{
+    margin: 0 10%;
+    width: 80%;
+}
+table, th, td 
+{
+    font-size: 1.25em;
+    border: 5px solid black;
+    border-collapse: collapse;
+}
+.rainbowText
+{
+    color: black;
+}
+

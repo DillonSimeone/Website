@@ -1,0 +1,214 @@
+:root {
+  --leather-dark: #20140b;
+  --leather-light: #302014;
+  --brass-color: #d4af37;
+  --copper-color: #c88a3e;
+  --paper-cream: #ecdcc4;
+  
+  --font-serif: 'Cinzel', serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--leather-dark);
+  background-image: 
+    radial-gradient(circle at 30% 30%, var(--leather-light) 0%, transparent 60%),
+    linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
+  background-size: 100% 100%, 15px 15px;
+  color: var(--paper-cream);
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  line-height: 1.6;
+}
+
+.steampunk-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.steam-header {
+  border-bottom: 3px double var(--brass-color);
+  padding-bottom: 25px;
+  margin-bottom: 45px;
+  text-align: center;
+}
+
+.nav-back {
+  display: inline-block;
+  color: var(--brass-color);
+  text-decoration: none;
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  border: 1px solid var(--brass-color);
+  padding: 5px 15px;
+  background: rgba(0,0,0,0.4);
+}
+
+.nav-back:hover {
+  background: var(--brass-color);
+  color: var(--leather-dark);
+}
+
+.steam-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  letter-spacing: 4px;
+  color: var(--brass-color);
+  margin: 20px 0 10px 0;
+  text-shadow: 2px 2px 0px #000;
+}
+
+.steam-subtitle {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  letter-spacing: 2px;
+  color: var(--copper-color);
+}
+
+.steam-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 35px;
+}
+
+/* Brass Rivet Cards */
+.steam-card {
+  background-color: var(--leather-light);
+  border: 2px solid var(--brass-color);
+  border-radius: 4px;
+  padding: 35px;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 15px 30px rgba(0,0,0,0.6);
+  position: relative;
+}
+
+/* Rivet details on card corners */
+.steam-card::before {
+  content: "●";
+  position: absolute;
+  top: 5px;
+  left: 8px;
+  color: var(--brass-color);
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.steam-card::after {
+  content: "●";
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  color: var(--brass-color);
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.steam-card h2 {
+  font-family: var(--font-serif);
+  color: var(--brass-color);
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  margin-top: 0;
+}
+
+.steam-card p {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Engine bay components */
+.engine-bay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 35px;
+  margin: 25px 0;
+  height: 120px;
+}
+
+/* Circular Steam Gauge */
+.steam-gauge {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 3px solid var(--brass-color);
+  background: var(--paper-cream);
+  position: relative;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.gauge-face {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.gauge-hand {
+  width: 2px;
+  height: 28px;
+  background-color: #ff3333;
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(-60deg); /* -60deg to +60deg range */
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gauge-label {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: #666;
+}
+
+/* Cog gears */
+.gears-link {
+  display: flex;
+  align-items: center;
+  gap: 0; /* overlap cogs */
+}
+
+.gear-cog {
+  color: var(--brass-color);
+  line-height: 1;
+  user-select: none;
+  transition: transform 0.1s linear;
+}
+
+.gear-large {
+  font-size: 6rem;
+  margin-right: -25px;
+}
+
+.gear-small {
+  font-size: 4rem;
+  color: var(--copper-color);
+}
+
+/* Steam Valve button */
+.valve-btn {
+  width: 100%;
+  background: linear-gradient(180deg, var(--brass-color) 0%, #a28220 100%);
+  color: var(--leather-dark);
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 0.95rem;
+  padding: 12px;
+  border: 1px solid #000;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+}
+
+.valve-btn:active {
+  transform: translateY(2px);
+}
+
+.steam-quote {
+  font-style: italic;
+  font-size: 1.15rem;
+}

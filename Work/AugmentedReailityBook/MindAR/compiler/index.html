@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>MindAR Local Compiler</title>
+    <!-- Load the Local MindAR Bundle (v1.1.5 works standalone) -->
+    <script src="mindar-image.prod.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #111;
+            color: #eee;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #6ee7b7;
+        }
+
+        progress {
+            width: 100%;
+            height: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>MindAR Target Compiler</h1>
+    <div id="status" class="status">Initializing...</div>
+    <progress id="progress" value="0" max="100"></progress>
+    <div id="details" style="margin-top: 20px; font-size: 0.8rem; opacity: 0.6;"></div>
+
+    <script>
+        async function run(imagePaths) {
+            const status = document.getElementById('status');
+            const progress = document.getElementById('progress');
+            const details = document.getElementById('details');
+
+            const log = (msg) => {
+                console.log(msg);
+                details.innerText = msg;
+                // Send log to python server terminal
+                fetch('/log', { method: 'POST', body: msg });
+            };
+
+
+            log(`Loading ${imagePaths.length} images...`);
+
+            const images = [];
+            for (let i = 0; i < imagePaths.length; i++) {
+                const img = await loadImage(imagePaths[i]);
+                images.push(img);
+                progress.value = ((i + 1) / imagePaths.length) * 30;
+                log(`Loaded: ${imagePaths[i]} (${img.width}x${img.height})`);
+            }
+
+            log("Initializing Compiler...");
+
+            // MindAR can expose the compiler in different places depending on version
+            let CompilerClass = null;
+            if (window.MINDAR && window.MINDAR.IMAGE && window.MINDAR.IMAGE.Compiler) {
+                CompilerClass = window.MINDAR.IMAGE.Compiler;
+            } else if (window.MINDAR && window.MINDAR.Compiler) {
+                CompilerClass = window.MINDAR.Compiler;
+            }
+
+            if (!CompilerClass) {
+                status.innerText = "Error: MindAR Compiler class not found.";
+                log("Double check that mindar-image.prod.js is the correct bundle version.");
+                return;
+            }
+
+            const compiler = new CompilerClass();
+
+
+            status.innerText = "Compiling... (Check Console if this takes > 30s)";
+            log("Starting feature detection loop...");
+
+            try {
+                // Run compilation
+                const data = await compiler.compileImageTargets(images, (percent) => {
+                    progress.value = 30 + (percent * 0.7);
+                    status.innerText = `Compiling: ${Math.round(percent)}%`;
+                });
+
+                log("Compilation successful. Exporting dataset...");
+                const exportedData = compiler.exportData();
+
+                status.innerText = "Saving to disk...";
+                const response = await fetch('/save', {
+                    method: 'POST',
+                    body: exportedData
+                });
+
+                if (response.ok) {
+                    status.innerText = "COMPLETE!";
+                    log("Targets saved to app/targets/book_targets.mind");
+                    setTimeout(() => window.close(), 3000);
+                } else {
+                    status.innerText = "Error saving file.";
+                }
+            } catch (err) {
+                status.innerText = "Compilation Failed";
+                log("Error: " + err.message);
+                console.error(err);
+            }
+        }
+
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        // This will be called by the Python server script via window.location.hash or a global var
+        window.startCompilation = (paths) => run(paths);
+
+        // Auto-start when page loads
+        window.onload = async () => {
+            try {
+                const response = await fetch('/get_image_list');
+                const images = await response.json();
+                if (images.length > 0) {
+                    run(images);
+                } else {
+                    document.getElementById('status').innerText = "No images found in /trainingImages";
+                }
+            } catch (err) {
+                document.getElementById('status').innerText = "Failed to connect to server.";
+            }
+        };
+    </script>
+</body>
+
+</html>

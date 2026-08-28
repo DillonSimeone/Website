@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spiral Notebook Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="notebook-container">
+    <header class="notebook-header">
+      <a href="../index.html" class="nav-back">← Back to Hub</a>
+      <h1 class="notebook-title">Spiral Notebook</h1>
+      <p class="notebook-subtitle">- Lined binder sheets & pencil sketching -</p>
+    </header>
+
+    <main class="notebook-grid">
+      <!-- Spiral Paper Card -->
+      <section class="notebook-card paper-sheet">
+        <div class="spiral-spine"></div>
+        <div class="red-margin"></div>
+        <h2>01. Ruled Paper</h2>
+        <p>This template simulates a classic binder notebook page. It utilizes a cardboard background texture, lined paper styling, margin guides, and handwriting fonts.</p>
+      </section>
+
+      <!-- Sketchpad Card -->
+      <section class="notebook-card paper-sheet drawing-sheet">
+        <div class="spiral-spine"></div>
+        <div class="red-margin"></div>
+        <h2>02. Ruled Sketchpad</h2>
+        <p>Draw on the notepad below with a gray charcoal pencil brush.</p>
+        <div class="sketch-wrapper">
+          <canvas id="sketch-canvas" width="300" height="150"></canvas>
+        </div>
+        <button class="sketch-btn" id="btn-clear-sketch">Erase Sheet</button>
+      </section>
+
+      <!-- Checkbox Card -->
+      <section class="notebook-card paper-sheet list-sheet">
+        <div class="spiral-spine"></div>
+        <div class="red-margin"></div>
+        <h2>03. Notebook Checklist</h2>
+        <ul class="task-list">
+          <li>[x] Cardboard bindings</li>
+          <li>[x] Ruled blue margins</li>
+          <li>[x] Architects Daughter type</li>
+          <li>[ ] Spiral wire rings</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
