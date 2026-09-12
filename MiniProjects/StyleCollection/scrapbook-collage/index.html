@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrapbook Collage Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="scrapbook-canvas" id="scrapbook-board">
+    
+    <!-- Header Polaroid -->
+    <header class="scrapbook-header polaroid">
+      <a href="../index.html" class="hub-link">← HUB</a>
+      <h1 class="scrapbook-title">SCRAPBOOK</h1>
+      <p class="scrapbook-subtitle">Torn paper, tape stamps & collage layouts</p>
+    </header>
+
+    <!-- Main Grid / Elements -->
+    <main class="scrapbook-main">
+      
+      <!-- Torn paper card -->
+      <section class="scrapbook-card torn-paper" style="--rot: -2deg;">
+        <div class="tape tape-top-left"></div>
+        <h2>HANDMADE DIY</h2>
+        <p>This layout explores a realistic tactile notebook atmosphere. It blends physical overlays, tape textures, paper tears, tilted coordinates, and handwritten journals.</p>
+      </section>
+
+      <!-- Polaroid Image mock -->
+      <section class="scrapbook-card polaroid" style="--rot: 3deg;">
+        <div class="polaroid-photo">
+          <div class="photo-placeholder"></div>
+        </div>
+        <div class="polaroid-caption">CAMPING TRIP 2026 ⛺</div>
+      </section>
+
+      <!-- Tape Stamp Card -->
+      <section class="scrapbook-card lined-paper" style="--rot: -1.5deg;">
+        <div class="pin">📌</div>
+        <h2>STICKY TAPES</h2>
+        <p>Interactive script enabled! Click anywhere on this board to stamp down a new piece of semi-transparent adhesive tape.</p>
+        <button class="clear-btn" id="btn-clear-tape">Clear Tapes</button>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

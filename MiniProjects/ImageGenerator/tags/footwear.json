@@ -1,0 +1,111 @@
+{
+    "id": "footwear",
+    "title": "Footwear",
+    "tags": [
+        {
+            "id": "shoes",
+            "label": "shoes",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "boots",
+            "label": "boots",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "sneakers",
+            "label": "sneakers",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "high_heels",
+            "label": "high heels",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "sandals",
+            "label": "sandals",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "barefoot",
+            "label": "barefoot",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "mary_janes",
+            "label": "mary janes",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "loafers",
+            "label": "loafers",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "thigh_boots",
+            "label": "thigh boots",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "knee_boots",
+            "label": "knee boots",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "ankle_boots",
+            "label": "ankle boots",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "combat_boots",
+            "label": "combat boots",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "slippers",
+            "label": "slippers",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "roller_skates",
+            "label": "roller skates",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "ice_skates",
+            "label": "ice skates",
+            "classes": [
+                "tag-rare"
+            ]
+        }
+    ]
+}

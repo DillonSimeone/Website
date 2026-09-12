@@ -1,0 +1,48 @@
+section,ref,part_number,description,manufacturer,qty,unit_cost_usd,ext_cost_usd,lcsc,notes
+ROOF,U1,IWR6843AOPEVM-class,60-64GHz mmWave radar SoC w/ on-pkg antenna,Texas Instruments,1,38.50,38.50,C?????,verify-before-order
+ROOF,U2,MCIMX8MP-A53,i.MX 8M Plus quad A53 + NPU SoM,NXP,1,72.00,72.00,C?????,verify-before-order
+ROOF,U3,Hailo-8L M.2 2230,13 TOPS edge AI accelerator,Hailo,1,99.00,99.00,C?????,verify-before-order; Coral M.2 fallback ~45 USD
+ROOF,U4,OV9281,1MP global-shutter mono image sensor,OmniVision,2,12.40,24.80,C?????,verify-before-order
+ROOF,LNS1,M12-4mm-F2.0,4mm M12 IR-corrected lens,Generic,2,4.80,9.60,C?????,verify-before-order
+ROOF,U5,BMI270,6-axis IMU,Bosch Sensortec,1,2.85,2.85,C2855120,verify-before-order
+ROOF,U6,NEO-M9N-00B,GNSS module L1/L5,u-blox,1,28.50,28.50,C?????,verify-before-order
+ROOF,U7,SX1262IMLTRT,LoRa transceiver 868/915MHz,Semtech,1,5.40,5.40,C404789,verify-before-order
+ROOF,U8,HL7800-M,LTE-M / NB-IoT module (optional),Sierra Wireless,1,42.00,42.00,C?????,verify-before-order; can ship w/o
+ROOF,U9,TPS54360DDA,3.5A 60V step-down,Texas Instruments,1,2.10,2.10,C76014,verify-before-order
+ROOF,U10,TPS65219,multi-rail PMIC,Texas Instruments,1,4.60,4.60,C?????,verify-before-order
+ROOF,U11,SMBJ24CA,TVS 24V bidir load-dump,Littelfuse,4,0.18,0.72,C8489,verify-before-order
+ROOF,U12,W25Q256JVEIQ,32MB SPI NOR boot,Winbond,1,2.40,2.40,C82317,verify-before-order
+ROOF,MEM1,MT53D512M32D2-LPDDR4,4GB LPDDR4,Micron,1,11.20,11.20,C?????,verify-before-order
+ROOF,MEM2,eMMC-32GB-153B,32GB eMMC 5.1,Kingston,1,6.80,6.80,C?????,verify-before-order
+ROOF,LED1,SFH4716AS,850nm 3W IR LED,Osram,2,2.15,4.30,C?????,verify-before-order
+ROOF,ANT1,WCL-LoRa-915-SMA,915MHz 2dBi SMA antenna,Linx,1,3.20,3.20,C?????,verify-before-order
+ROOF,ANT2,LTE-M-MIMO-stub,LTE-M dual stub antenna,Taoglas,1,9.40,9.40,C?????,verify-before-order
+ROOF,MEC1,AL-CAST-ROOF-V1,Cast Al enclosure IP6K9K powdercoat,Custom CM,1,38.00,38.00,N/A,tooling amort. excl.
+ROOF,MEC2,BOROSIL-WINDOW-50,50mm borosilicate hydrophobic window,Custom,1,6.40,6.40,N/A,verify-before-order
+ROOF,MEC3,ISO-MOUNT-SORB-70,Sorbothane 70 isolator x4,Sorbothane,4,1.80,7.20,N/A,
+ROOF,PCB1,RIGID-FR4-6L-ENIG,6-layer FR4 ENIG 100x80mm,JLCPCB,1,9.50,9.50,N/A,verify-before-order
+ROOF,MISC,passives-roof,R/C/L + connectors + harness,Various,1,12.40,12.40,N/A,
+ROOF,CABLE1,DEUTSCH-DT04-4P,Deutsch DT 4-pin power+CAN,TE Connectivity,1,7.20,7.20,C?????,verify-before-order
+PUCK,U20,ESP32-S3-WROOM-1-N16R8,Wi-Fi/BLE SoC w/ 16MB flash 8MB PSRAM,Espressif,1,3.80,3.80,C2913203,verify-before-order
+PUCK,U21,DRV2605LDGSR,haptic driver w/ library,Texas Instruments,1,2.20,2.20,C92482,verify-before-order
+PUCK,HAP1,ERM-1027-COIN,10x2.7mm ERM coin motor,Jinlong,1,0.85,0.85,C?????,verify-before-order
+PUCK,HAP2,G1040003D-LRA,10mm LRA 175Hz,Jinlong,1,1.40,1.40,C?????,verify-before-order
+PUCK,LCD1,GC9A01-1.3in-240,1.3in 240x240 round SPI LCD,DisplayCo,1,4.60,4.60,C?????,verify-before-order
+PUCK,BAT1,LP503562-1500mAh,1500mAh LiPo w/ protection,Generic,1,3.80,3.80,N/A,verify-before-order
+PUCK,U22,TP4056+DW01,USB-C charge + protect,NanJing,1,0.42,0.42,C16581,verify-before-order
+PUCK,U23,MP1584EN,5V to 3.3V buck,MPS,1,0.38,0.38,C89358,verify-before-order
+PUCK,SW1,silicone-dome-12mm,silicone dome switch,Generic,4,0.18,0.72,N/A,
+PUCK,MEC10,TPU-PUCK-SHELL,TPU overmould shell 90mm,Custom CM,1,3.40,3.40,N/A,verify-before-order
+PUCK,PCB2,RIGID-FR4-4L-HASL,4L FR4 60x60mm,JLCPCB,1,1.80,1.80,N/A,
+PUCK,MISC2,passives-puck,R/C/L + USB-C jack + magnets,Various,1,2.20,2.20,N/A,
+WRIST,U30,ESP32-C3-MINI-1,Wi-Fi/BLE SoC,Espressif,1,1.60,1.60,C2934569,verify-before-order
+WRIST,U31,SX1262IMLTRT,LoRa transceiver,Semtech,1,5.40,5.40,C404789,verify-before-order
+WRIST,U32,DRV2605LDGSR,haptic driver,Texas Instruments,1,2.20,2.20,C92482,verify-before-order
+WRIST,HAP3,G1040003D-LRA,10mm LRA,Jinlong,1,1.40,1.40,C?????,verify-before-order
+WRIST,BAT2,LP402030-350mAh,350mAh LiPo,Generic,1,1.80,1.80,N/A,verify-before-order
+WRIST,U33,TP4056+DW01,USB-C charge+protect,NanJing,1,0.42,0.42,C16581,verify-before-order
+WRIST,ANT3,915MHz-chip-ant,915MHz chip antenna + matching,Johanson,1,1.20,1.20,C?????,verify-before-order
+WRIST,MEC20,SILICONE-WRIST-SHELL,Hi-vis silicone shell + strap,Custom CM,1,2.80,2.80,N/A,verify-before-order
+WRIST,PCB3,RIGID-FR4-4L-FLEX-RIGID,small 4L flex-rigid 38x30mm,JLCPCB,1,2.40,2.40,N/A,
+WRIST,MISC3,passives-wrist,R/C/L + LEDs + button,Various,1,1.10,1.10,N/A,
+TOTAL,,,,,, ,498.40,,verify-before-order; roof ~448 + puck ~25.57 + wrist ~20.32

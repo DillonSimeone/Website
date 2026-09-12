@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Light Baton - Parametric LED Baton Configurator</title>
+    <!-- Browser Import Map for resolving 'three' bare specifiers -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+      }
+    </script>
+    <!-- Google Fonts for Blueprint/Engineering Aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="scanline"></div>
+    <div class="blueprint-border"></div>
+
+    <!-- Drawing Title Block -->
+    <header>
+        <div class="title-block">
+            <div class="drawing-number">DWG-2026-LBAT-01</div>
+            <h1>LIGHT BATON PARAMETRIC CONFIGURATOR</h1>
+        </div>
+        <div style="font-size: 0.75rem; text-align: right; line-height: 1.4;">
+            <div>SCALE: <span style="color: var(--bp-accent);">1.00 : 1</span></div>
+            <div>UNIT: <span style="color: var(--bp-accent);">METRIC (MM)</span></div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+        <!-- Left Panel: Component Parameters -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">1. Component Parameters</span>
+            </div>
+            <div class="panel-content">
+                <!-- Piece Navigation Tabs -->
+                <div class="tab-container">
+                    <button class="tab-btn active" id="tab-btn-rod" onclick="switchTab('rod')">ROD</button>
+                    <button class="tab-btn" id="tab-btn-guard" onclick="switchTab('guard')">GUARD</button>
+                    <button class="tab-btn" id="tab-btn-cylinder" onclick="switchTab('cylinder')">CYLINDER</button>
+                    <button class="tab-btn" id="tab-btn-rings" onclick="switchTab('rings')">RINGS</button>
+                    <button class="tab-btn" id="tab-btn-led" onclick="switchTab('led')">LED</button>
+                    <button class="tab-btn" id="tab-btn-screws" onclick="switchTab('screws')">SCREWS</button>
+                    <button class="tab-btn" id="tab-btn-handle" onclick="switchTab('handle')">HANDLE</button>
+                </div>
+
+                <!-- ROD TAB -->
+                <div id="tab-rod" class="tab-content-panel active">
+                    <div class="control-group">
+                        <div class="control-group-title">Central Rod Geometry</div>
+                        <div class="param-row" data-param="rodOD">
+                            <div class="param-info"><span class="param-label">Rod Outer Diameter</span><span
+                                    class="param-value"><input type="number" id="val-rodOD" class="param-num-input"
+                                        step="any" value="27.0"> mm</span></div>
+                            <input type="range" id="input-rodOD" min="15" max="30" step="0.5" value="27.0">
+                        </div>
+                        <div class="param-row" data-param="rodWall">
+                            <div class="param-info"><span class="param-label">Rod Wall Thickness</span><span
+                                    class="param-value"><input type="number" id="val-rodWall" class="param-num-input"
+                                        step="any" value="3.0"> mm</span></div>
+                            <input type="range" id="input-rodWall" min="1.0" max="5.0" step="0.5" value="3.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GUARD TAB -->
+                <div id="tab-guard" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">Guard / Sled Housing</div>
+                        <div class="param-row" data-param="guardWall">
+                            <div class="param-info"><span class="param-label">Guard Wall Thickness</span><span
+                                    class="param-value"><input type="number" id="val-guardWall" class="param-num-input"
+                                         step="any" value="3.0"> mm</span></div>
+                            <input type="range" id="input-guardWall" min="2.0" max="6.0" step="0.5" value="3.0">
+                        </div>
+                        <div class="param-row" data-param="guardLength">
+                            <div class="param-info"><span class="param-label">Guard Length</span><span
+                                    class="param-value"><input type="number" id="val-guardLength"
+                                         class="param-num-input" step="any" value="115.0"> mm</span></div>
+                            <input type="range" id="input-guardLength" min="90" max="180" step="1" value="115">
+                        </div>
+                    </div>
+                    <div class="control-group" style="margin-top: 15px;">
+                        <div class="control-group-title">Packaged Electronics (Fixed Size)</div>
+                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); line-height: 1.5; padding: 5px;">
+                            <div style="margin-bottom: 4px;">• <strong>18650 Battery Holder</strong>: 22 &times; 75 &times; 24 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>LIPO USB-C Charger</strong>: 17 &times; 28 &times; 4 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>ESP32 C3 Supermini</strong>: 19 &times; 23 &times; 4 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>Motor Driver Board</strong>: 25 &times; 22 &times; 8 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>MPU 6500 IMU</strong>: 16 &times; 27 &times; 4 mm</div>
+                            <div style="margin-bottom: 4px;">• <strong>Coin Vibration Cells (x2)</strong>: 11 mm &Oslash; &times; 3 mm</div>
+                            <div>• <strong>Power Switch</strong>: 9 &times; 15 &times; 20 mm</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CYLINDER TAB -->
+                <div id="tab-cylinder" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">Transparent Cylinders</div>
+                        <div class="param-row" data-param="cylLedGap">
+                            <div class="param-info"><span class="param-label">Cylinder-LED Radial Gap</span><span
+                                    class="param-value"><input type="number" id="val-cylLedGap" class="param-num-input"
+                                        step="any" value="2.0"> mm</span></div>
+                            <input type="range" id="input-cylLedGap" min="1.5" max="5.0" step="0.1" value="2.0">
+                        </div>
+                        <div class="param-row" data-param="cylWall">
+                            <div class="param-info"><span class="param-label">Cylinder Wall Thickness</span><span
+                                    class="param-value"><input type="number" id="val-cylWall" class="param-num-input"
+                                        step="any" value="1.0"> mm</span></div>
+                            <input type="range" id="input-cylWall" min="1.0" max="4.0" step="0.5" value="1.0">
+                        </div>
+                        <div class="param-row" data-param="ledSectionLen">
+                            <div class="param-info"><span class="param-label">Max LED Strip Length</span><span
+                                    class="param-value"><input type="number" id="val-ledSectionLen"
+                                        class="param-num-input" step="any" min="300" value="304.8"> mm</span></div>
+                        </div>
+                        <div class="param-row" data-param="maxCylLen">
+                            <div class="param-info"><span class="param-label">Max Cylinder Section Length</span><span
+                                    class="param-value" style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="val-maxCylLen" class="param-num-input"
+                                        step="any" min="10" value="120.0"> mm
+                                    <button class="btn btn-accent" id="btn-update-cylinder" style="padding: 2px 8px; font-size: 0.65rem; margin: 0; height: 20px; line-height: 14px;">UPDATE</button>
+                                </span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RINGS TAB -->
+                <div id="tab-rings" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">Connector Ring Profile</div>
+                        <div class="param-row" data-param="ringHeight">
+                            <div class="param-info"><span class="param-label">Ring Height</span><span
+                                    class="param-value"><input type="number" id="val-ringHeight" class="param-num-input"
+                                        step="any" value="28.0"> mm</span></div>
+                            <input type="range" id="input-ringHeight" min="10" max="40" step="1" value="28.0">
+                        </div>
+                        <div class="param-row" data-param="ringCenterOD">
+                            <div class="param-info"><span class="param-label">Ring Center Flange OD</span><span
+                                    class="param-value"><input type="number" id="val-ringCenterOD"
+                                        class="param-num-input" step="any" value="42.0"> mm</span></div>
+                            <input type="range" id="input-ringCenterOD" min="38" max="55" step="0.5" value="42.0">
+                        </div>
+                        <div class="param-row" data-param="ringEndOD">
+                            <div class="param-info"><span class="param-label">Ring End Flange OD</span><span
+                                    class="param-value"><input type="number" id="val-ringEndOD" class="param-num-input"
+                                        step="any" value="34.0"> mm</span></div>
+                            <input type="range" id="input-ringEndOD" min="30" max="45" step="0.5" value="34.0">
+                        </div>
+                    </div>
+                    <div class="control-group" style="margin-top: 15px;">
+                        <div class="control-group-title">Decorative Ridges</div>
+                        <div class="param-row" data-param="ridgeWidth">
+                            <div class="param-info"><span class="param-label">Ridge Width</span><span
+                                    class="param-value"><input type="number" id="val-ridgeWidth" class="param-num-input"
+                                        step="any" value="6.0"> mm</span></div>
+                            <input type="range" id="input-ridgeWidth" min="1.0" max="6.0" step="0.5" value="6.0">
+                        </div>
+                        <div class="param-row" data-param="ridgeHeight">
+                            <div class="param-info"><span class="param-label">Ridge Height (Protrusion)</span><span
+                                    class="param-value"><input type="number" id="val-ridgeHeight"
+                                        class="param-num-input" step="any" value="1.5"> mm</span></div>
+                            <input type="range" id="input-ridgeHeight" min="0.5" max="4.0" step="0.5" value="1.5">
+                        </div>
+                        <div class="param-row" data-param="ridgeRamp">
+                            <div class="param-info"><span class="param-label">Ridge Ramp (Slope)</span><span
+                                    class="param-value"><input type="number" id="val-ridgeRamp" class="param-num-input"
+                                        step="any" value="2.0"> mm</span></div>
+                            <input type="range" id="input-ridgeRamp" min="0.0" max="2.0" step="0.1" value="2.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LED TAB -->
+                <div id="tab-led" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">LED Strip Dimensions (×4)</div>
+                        <div class="param-row" data-param="ledWidth">
+                            <div class="param-info"><span class="param-label">Strip Width</span><span
+                                    class="param-value"><input type="number" id="val-ledWidth" class="param-num-input"
+                                        step="any" value="12.0"> mm</span></div>
+                            <input type="range" id="input-ledWidth" min="8" max="16" step="0.5" value="12.0">
+                        </div>
+                        <div class="param-row" data-param="ledHeight">
+                            <div class="param-info"><span class="param-label">Strip Height (Thickness)</span><span
+                                    class="param-value"><input type="number" id="val-ledHeight" class="param-num-input"
+                                        step="any" value="4.0"> mm</span></div>
+                            <input type="range" id="input-ledHeight" min="2" max="6" step="0.5" value="4.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCREWS TAB -->
+                <div id="tab-screws" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">Fastener Configuration</div>
+                        <div class="param-row" data-param="m3Diam">
+                            <div class="param-info"><span class="param-label">M3 Hole Diameter</span><span
+                                    class="param-value"><input type="number" id="val-m3Diam" class="param-num-input"
+                                        step="any" value="3.0"> mm</span></div>
+                            <input type="range" id="input-m3Diam" min="2.8" max="3.6" step="0.1" value="3.0">
+                        </div>
+                        <div class="param-row" data-param="screwDepth">
+                            <div class="param-info"><span class="param-label">Screw Thread Depth</span><span
+                                    class="param-value"><input type="number" id="val-screwDepth" class="param-num-input"
+                                        step="any" value="5.0"> mm</span></div>
+                            <input type="range" id="input-screwDepth" min="3" max="10" step="0.5" value="5.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HANDLE TAB -->
+                <div id="tab-handle" class="tab-content-panel">
+                    <div class="control-group">
+                        <div class="control-group-title">Handle & Pommel</div>
+                        <div class="param-row" data-param="handleLength">
+                            <div class="param-info"><span class="param-label">Handle Length</span><span
+                                    class="param-value"><input type="number" id="val-handleLength" class="param-num-input"
+                                        step="any" value="110.0"> mm</span></div>
+                            <input type="range" id="input-handleLength" min="50" max="300" step="5" value="110.0">
+                        </div>
+                        <div class="param-row" data-param="lanyardHoleDiam">
+                            <div class="param-info"><span class="param-label">Lanyard Hole Diameter</span><span
+                                    class="param-value"><input type="number" id="val-lanyardHoleDiam" class="param-num-input"
+                                        step="any" value="5.0"> mm</span></div>
+                            <input type="range" id="input-lanyardHoleDiam" min="3.0" max="8.0" step="0.5" value="5.0">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Middle Panel: Viewport -->
+        <div id="viewport-container">
+            <div id="canvas3d"></div>
+            <svg id="dimensions-overlay"></svg>
+        </div>
+
+        <!-- Right Panel: Diagnostics, Visibility & Export -->
+        <div class="panel panel-right">
+            <div class="panel-header">
+                <span class="panel-title">2. Draw & Spec Sheet</span>
+            </div>
+            <div class="panel-content">
+                <!-- Visibilities -->
+                <div class="control-group">
+                    <div class="control-group-title">Assembly Elements</div>
+                    <div class="toggle-row">
+                        <span>Central Rod</span>
+                        <input type="checkbox" id="show-rod" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Guard / Housing</span>
+                        <input type="checkbox" id="show-guard" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Electronics Sled</span>
+                        <input type="checkbox" id="show-sled" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Transparent Cylinders</span>
+                        <input type="checkbox" id="show-cylinders" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Connector Rings</span>
+                        <input type="checkbox" id="show-rings" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Decorative Ridges</span>
+                        <input type="checkbox" id="show-ridges" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>LED Strips</span>
+                        <input type="checkbox" id="show-leds" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Handle & Pommel</span>
+                        <input type="checkbox" id="show-handle" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Screw Holes (Amber)</span>
+                        <input type="checkbox" id="show-screwholes">
+                    </div>
+                </div>
+
+                <!-- Display settings -->
+                <div class="control-group">
+                    <div class="control-group-title">Display Settings</div>
+                    <div class="param-row" data-param="explode">
+                        <div class="param-info"><span class="param-label">Explode Assembly</span><span
+                                class="param-value"><input type="number" id="val-explode" class="param-num-input"
+                                    step="any" value="0">%</span></div>
+                        <input type="range" id="input-explode" min="0" max="100" step="5" value="0">
+                    </div>
+                    <div class="param-row" data-param="opacity">
+                        <div class="param-info"><span class="param-label">Shell Opacity</span><span
+                                class="param-value"><input type="number" id="val-opacity" class="param-num-input"
+                                    step="any" value="80">%</span></div>
+                        <input type="range" id="input-opacity" min="10" max="100" step="5" value="80">
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Render
+                            Mode</span>
+                        <div class="btn-group">
+                            <button class="btn" id="btn-render-mode">Neon Render</button>
+                            <button class="btn active" id="btn-blueprint-mode">Blueprint</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specs -->
+                <div class="control-group">
+                    <div class="control-group-title">Calculated Dimensions</div>
+                    <div class="spec-item">
+                        <span class="spec-label">Total Length:</span>
+                        <span class="spec-val" id="spec-total-length">533.4 mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">LED Section:</span>
+                        <span class="spec-val" id="spec-led-section">304.8 mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Handle Length:</span>
+                        <span class="spec-val" id="spec-handle-length">--- mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Guard OD:</span>
+                        <span class="spec-val" id="spec-guard-od">--- mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Cylinder Section:</span>
+                        <span class="spec-val" id="spec-cyl-section">--- mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Total Screws:</span>
+                        <span class="spec-val" id="spec-total-screws"
+                            style="color: var(--bp-accent); text-shadow: 0 0 5px var(--bp-accent);">28× M3</span>
+                    </div>
+
+                    <button class="btn btn-accent" id="btn-export-all"
+                        style="margin-bottom: 12px; font-weight: bold; background: linear-gradient(135deg, var(--bp-accent), #00f2ff); color: #000; border: none; box-shadow: 0 0 10px rgba(191, 0, 255, 0.4);">Download All (Bed Layout)</button>
+                    <button class="btn btn-accent" id="btn-export-guard"
+                        style="margin-bottom: 8px; margin-top: 0;">Export Guard STL</button>
+                    <button class="btn btn-accent" id="btn-export-covers"
+                        style="margin-bottom: 8px; margin-top: 0;">Export Covers STL</button>
+                    <button class="btn btn-accent" id="btn-export-cylinder"
+                        style="margin-bottom: 8px; margin-top: 0;">Export Cylinder STL</button>
+                    <button class="btn btn-accent" id="btn-export-ring"
+                        style="margin-bottom: 8px; margin-top: 0;">Export Ring STL</button>
+                    <button class="btn btn-accent" id="btn-export-ridges"
+                        style="margin-bottom: 8px; margin-top: 0;">Export Ridges STL</button>
+                    <button class="btn btn-accent" id="btn-export-handle" style="margin-top: 0;">Export Handle STL</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Status -->
+    <footer>
+        <div class="status-left">
+            <div class="status-dot"></div>
+            <span>CAD SYSTEM ENGAGED</span>
+            <span>|</span>
+            <span>MANIFOLD KERNEL LOADED</span>
+        </div>
+        <div style="text-align: center; color: var(--bp-accent);">LIGHT BATON CONFIGURATOR v2026.1</div>
+        <div style="text-align: right;">COORDINATES: LOCAL GRID</div>
+    </footer>
+
+    <!-- Inline Tab Navigation -->
+    <script>
+        let currentTab = 'rod';
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            updateTabVisibility();
+        }
+
+        function updateTabVisibility() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                const btnId = btn.id.replace('tab-btn-', '');
+                if (btnId === currentTab) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            document.querySelectorAll('.tab-content-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            const activePanel = document.getElementById(`tab-${currentTab}`);
+            if (activePanel) {
+                activePanel.classList.add('active');
+            }
+        }
+
+        updateTabVisibility();
+    </script>
+
+    <!-- JavaScript Module -->
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>

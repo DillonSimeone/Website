@@ -1,0 +1,39 @@
+ref_des,part_description,manufacturer,mfg_part_number,lcsc_part_number,jlcpcb_part_number,qty_per_unit,unit_price_usd_qty1k,source_notes
+U1,STM32L432KC MCU Cortex-M4 256KB flash UFQFPN32,STMicroelectronics,STM32L432KCU6,C94784,C94784,1,3.20,training-data reference (verify)
+U2,WirelessHART Module MGM210L 2.4GHz IS-rated,Silicon Labs,MGM210LA22JNF3,C2678231,C2678231,1,28.50,training-data reference (verify)
+U3,LT3571 HV Boost Converter Electrotactile Driver,Analog Devices,LT3571EDD#PBF,C2827451,C2827451,1,6.80,training-data reference (verify)
+U4,MAX14661 16-Ch Analog Switch ±50V SPI,Maxim/Analog Devices,MAX14661ETJ+T,C1570382,C1570382,1,4.10,training-data reference (verify)
+U5,MAX14661 16-Ch Analog Switch ±50V SPI (2nd),Maxim/Analog Devices,MAX14661ETJ+T,C1570382,C1570382,1,4.10,training-data reference (verify)
+U6,MAX17048 LiPo Fuel Gauge I2C SOT23-5,Maxim/Analog Devices,MAX17048G+T10,C82510,C82510,1,1.45,training-data reference (verify)
+U7,STWD100 Independent Watchdog Timer SOT323,STMicroelectronics,STWD100YNWX,C431829,C431829,1,0.55,training-data reference (verify)
+U8,MTL787+ IS Zener Safety Barrier (4-ch module),Eaton MTL,MTL787+,N/A-DISTRIB,N/A,1,42.00,best-guess (verify); distributor item not on LCSC/JLCPCB
+U9,SPI NOR Flash 2MB 3.3V SOP8,Winbond,W25Q16JVSSIQ,C179171,C179171,1,0.38,training-data reference (verify)
+U10,3.3V LDO 300mA SOT223 low-dropout,Torex,XC6210B332MR-G,C9055,C9055,1,0.22,training-data reference (verify)
+U11,IS 868MHz Sub-GHz Transceiver (alt RF),STMicroelectronics,SPIRIT1QTR,C2156789,C2156789,1,3.60,training-data reference (verify)
+C1-C10,100nF MLCC 0402 X7R 25V decoupling (×10),Murata,GRM155R71E104KA87D,C14663,C14663,10,0.02,training-data reference (verify)
+C11-C16,10µF MLCC 0805 X5R 10V bulk (×6),Samsung,CL21A106KAYNNNE,C15850,C15850,6,0.08,training-data reference (verify)
+C17-C18,100µF 10V electrolytic SMD 6.3mm (×2),Panasonic,EEE-FC1A101P,C84516,C84516,2,0.18,training-data reference (verify)
+C19,4.7µF 100V boost output ceramic X7S 1210,TDK,C3225X7S2A475K200AC,C77836,C77836,1,0.65,training-data reference (verify)
+R1-R16,2kΩ IS current-limit resistor 0603 1% 200mW (×16),Vishay,CRCW06032K00FKEA,C22976,C22976,16,0.03,training-data reference (verify)
+R17-R20,10kΩ pull-up 0402 1% (×4),Yageo,RC0402FR-0710KL,C25744,C25744,4,0.01,training-data reference (verify)
+R21,0.1Ω current-sense shunt 0603 1% 250mW,Bourns,CRS0603-FX-R100ELF,C114877,C114877,1,0.12,training-data reference (verify)
+L1,10µH shielded inductor 1.5A 3.8mohm 4040,Bourns,SRR4028-100Y,C408476,C408476,1,0.55,training-data reference (verify)
+D1-D4,Zener 5.1V 500mW SOD123 IS clamp (×4),ON Semi,BZT52C5V1-7-F,C8050,C8050,4,0.04,training-data reference (verify)
+D5,Schottky rectifier 100V 1A SOD123 boost catch,Vishay,SS1H10-E3/61T,C22452,C22452,1,0.09,training-data reference (verify)
+D6,TVS bidirectional 5V SOD323 RF line protect,Littelfuse,PRTR5V0U2X,C12333,C12333,1,0.14,training-data reference (verify)
+F1,PTC resettable fuse 200mA hold 1812 IS,Bourns,MF-MSMF200/24X-2,C115362,C115362,1,0.28,training-data reference (verify)
+J1,Omnetics 9-pin nano circular IS connector (PCB half),Omnetics,NPD-9-AA-GS,N/A-DISTRIB,N/A,1,38.00,best-guess (verify); Omnetics direct; not on LCSC/JLCPCB
+J2,IS magnetic pogo-pin charge port 4-pin,Harwin,M50-3900542R,C470193,C470193,1,2.80,training-data reference (verify)
+J3,Micro-USB debug port (safe-area only, gland-sealed),Amphenol,10118194-0001LF,C132563,C132563,1,0.35,training-data reference (verify)
+BAT1,Ultralife UBBL10-I IS Li-Ion 26650 4.9Ah ATEX cell,Ultralife,UBBL10-I,N/A-DISTRIB,N/A,1,48.00,best-guess (verify); IS-certified cell; distributor item
+SW1,IS-rated coin vibration motor 3V 10mm (glove-worn alert),Jinlong,Z10SC2B2820001,C381091,C381091,1,0.75,training-data reference (verify)
+PCB1,Belt-pack IS controller PCB 4-layer HASL FR4 (belt-side),Custom,GRIPLOGIC-BLT-01,N/A-CUSTOM,N/A,1,8.50,best-guess (verify); JLCPCB 4-layer quote
+FLEX1,Glove flex PCB Kapton 1-layer ENIG AgCl pads,Custom,GRIPLOGIC-GLV-01,N/A-CUSTOM,N/A,1,18.00,best-guess (verify); flex PCB quote; AgCl plating adder
+ENC1,GRP ATEX IP67 enclosure belt-mount 120×80×50mm,Weidmuller,KLIPPON TBK-2 modified,N/A-DISTRIB,N/A,1,32.00,best-guess (verify); modified enclosure quote
+GLOVE1,FR Nomex IIIA glove shell size M (cut-sewn),Lakeland,N8F8,N/A-DISTRIB,N/A,1,22.00,best-guess (verify); Lakeland industrial distributor
+CABLE1,9-conductor IS flex loom 1m shielded 28AWG,Alpha Wire,5380/9 SL001,N/A-DISTRIB,N/A,1,9.50,best-guess (verify); Alpha Wire distributor
+GLAND1,IS cable gland M20 brass ATEX certified,Hawke,501/453/A2/M20,N/A-DISTRIB,N/A,2,7.20,best-guess (verify); Hawke distributor; qty 2 per unit
+MISC1,SMD passives bag (caps/res not itemized above) lot,Various,VARIOUS,N/A,N/A,1,1.50,best-guess (verify); consolidated passives cost estimate
+MISC2,Conformal coating Humiseal 1A33 per-board alloc,Chase,1A33,N/A,N/A,1,0.80,best-guess (verify); per-unit material cost allocation
+MISC3,Nomex thread + assembly consumables per unit,Various,VARIOUS,N/A,N/A,1,1.20,best-guess (verify); glove assembly consumables
+MISC4,Retroreflective safety label + silkscreen,Brady,THT-14-423,N/A,N/A,1,0.45,best-guess (verify)

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Gaussian Splat Studio | Interactive xRweb Experience</title>
+    <meta name="description"
+        content="Interactive 3D Gaussian Splatting scene viewer powered by Three.js and WebGL. Explore radiance fields and photorealistic volumetric 3D captures directly in the browser.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030407;
+            --accent-primary: #00f2ff;
+            --accent-secondary: #a855f7;
+            --glass-bg: rgba(12, 16, 28, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --text-main: #f3f4f6;
+            --text-dim: #9ca3af;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Overlay UI */
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 1rem;
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            align-self: flex-start;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            opacity: 0.4;
+            transform: translateX(-4px);
+        }
+
+        .controls-panel:hover {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-row span {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+
+        .control-row strong {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.04em;
+        }
+
+        .debug-section {
+            margin-top: 0.4rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        #cam-debug-info {
+            font-size: 0.7rem;
+            color: var(--accent-primary);
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.5;
+            opacity: 0.85;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, rgba(0, 242, 255, 0.15), rgba(168, 85, 247, 0.15));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, rgba(0, 242, 255, 0.35), rgba(168, 85, 247, 0.35));
+            border-color: var(--accent-primary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 242, 255, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .btn-row .btn {
+            flex: 1;
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #030407;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            transition: opacity 0.6s ease;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-primary);
+            border-right-color: var(--accent-secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #loader-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        .progress-bar-container {
+            width: 240px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transition: width 0.3s ease;
+        }
+
+        /* Video Preview Window */
+        .video-panel {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .video-panel video {
+            width: 100%;
+            border-radius: 8px;
+            display: block;
+            object-fit: cover;
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .video-panel figcaption {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+        /* Mobile hint */
+        .mobile-hint {
+            display: none;
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            pointer-events: none;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+            opacity: 0.6;
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .controls-panel { display: none; }
+            .mobile-hint { display: block; }
+            .video-panel { width: 160px; top: 0.5rem; right: 0.5rem; }
+        }
+    </style>
+    <!-- Import Three.js & GaussianSplats3D -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.157.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/",
+            "@mkkellogg/gaussian-splats-3d": "https://unpkg.com/@mkkellogg/gaussian-splats-3d@0.4.6/build/gaussian-splats-3d.module.js"
+        }
+    }
+    </script>
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <div id="loader-text">Initializing Gaussian Radiance Field...</div>
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div class="ui-overlay">
+        <div class="controls-panel glass-panel interactive">
+            <div class="control-row">
+                <span>Move</span>
+                <strong>W A S D</strong>
+            </div>
+            <div class="control-row">
+                <span>Look L / R</span>
+                <strong>Q &nbsp; E</strong>
+            </div>
+            <div class="control-row">
+                <span>Look Up / Dn</span>
+                <strong>R &nbsp; F</strong>
+            </div>
+            <div class="control-row">
+                <span>Fly Up / Dn</span>
+                <strong>Space &nbsp; Shift</strong>
+            </div>
+            <div class="control-row">
+                <span>Orbit</span>
+                <strong>Mouse Drag</strong>
+            </div>
+            <div class="control-row">
+                <span>Zoom</span>
+                <strong>Scroll</strong>
+            </div>
+            <div class="debug-section">
+                <div id="cam-debug-info">
+                    Pos: [-0.13, -0.75, 0.34]<br>LookAt: [0.12, 2.26, -0.57]
+                </div>
+                <div class="btn-row">
+                    <button class="btn" id="copy-cam-btn">Copy Cam</button>
+                    <button class="btn" id="reset-cam-btn">Reset Cam</button>
+                </div>
+            </div>
+            <div class="debug-section">
+                <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.2rem;">Scene Rotation (Step 15°)</div>
+                <div class="btn-row" style="margin-bottom: 0.3rem;">
+                    <button class="btn" id="rot-x-minus">-X</button>
+                    <button class="btn" id="rot-x-plus">+X</button>
+                    <button class="btn" id="rot-y-minus">-Y</button>
+                    <button class="btn" id="rot-y-plus">+Y</button>
+                    <button class="btn" id="rot-z-minus">-Z</button>
+                    <button class="btn" id="rot-z-plus">+Z</button>
+                </div>
+                <div id="rot-debug-info" style="font-size: 0.7rem; color: var(--accent-secondary); font-family: 'JetBrains Mono', monospace; line-height: 1.5; margin-bottom: 0.3rem;">
+                    Rot: [0, 0, 180]°<br>Quat: [0.00, 0.00, 1.00, 0.00]
+                </div>
+                <div class="btn-row">
+                    <button class="btn" id="copy-rot-btn">Copy Rot Config</button>
+                    <button class="btn" id="reset-rot-btn">Reset Rot</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Source Video Preview Window -->
+        <figure class="video-panel glass-panel interactive">
+            <video src="./Studio.mp4" autoplay loop muted playsinline></video>
+            <figcaption>Source capture video used to generate this 3D Gaussian Splat</figcaption>
+        </figure>
+    </div>
+
+    <!-- Mobile touch hint -->
+    <div class="mobile-hint">Pinch to zoom · Drag to orbit</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d';
+
+        // --- Config ---
+        const DEFAULT_CAM_POS = [-0.34, 0.57, 0.9];
+        const DEFAULT_CAM_LOOK = [0.68, -0.64, -1.48];
+        const DEFAULT_ROTATION_QUAT = [-0.5, 0.5, 0.5, -0.5];
+        const MOVE_SPEED = 3.0;   // units per second
+        const ROT_SPEED  = 1.5;   // radians per second
+
+        // Convert default quaternion to initial Euler angles for GUI
+        const _defaultQ = new THREE.Quaternion(...DEFAULT_ROTATION_QUAT);
+        const _defaultEuler = new THREE.Euler().setFromQuaternion(_defaultQ, 'XYZ');
+        let sceneRotEuler = {
+            x: Math.round(THREE.MathUtils.radToDeg(_defaultEuler.x)),
+            y: Math.round(THREE.MathUtils.radToDeg(_defaultEuler.y)),
+            z: Math.round(THREE.MathUtils.radToDeg(_defaultEuler.z))
+        };
+
+        // --- DOM refs ---
+        const loader      = document.getElementById('loader');
+        const loaderText  = document.getElementById('loader-text');
+        const progressBar = document.getElementById('progress-bar');
+        const resetBtn    = document.getElementById('reset-cam-btn');
+        const copyCamBtn  = document.getElementById('copy-cam-btn');
+        const camDebugInfo = document.getElementById('cam-debug-info');
+
+        const rotDebugInfo = document.getElementById('rot-debug-info');
+        const copyRotBtn   = document.getElementById('copy-rot-btn');
+        const resetRotBtn   = document.getElementById('reset-rot-btn');
+
+        // --- Viewer ---
+        const viewer = new GaussianSplats3D.Viewer({
+            'initialCameraPosition': DEFAULT_CAM_POS,
+            'initialCameraLookAt': DEFAULT_CAM_LOOK,
+            'rootElement': document.getElementById('canvas-container'),
+            'halfPrecisionCovariancesOnGPU': true,
+            'sphericalHarmonicsDegree': 0,
+            'sharedMemoryForWorkers': false
+        });
+
+        // Helper to convert Euler (degrees) to Quaternion [x, y, z, w]
+        function eulerToQuaternion(rx, ry, rz) {
+            const euler = new THREE.Euler(
+                THREE.MathUtils.degToRad(rx),
+                THREE.MathUtils.degToRad(ry),
+                THREE.MathUtils.degToRad(rz),
+                'XYZ'
+            );
+            const q = new THREE.Quaternion().setFromEuler(euler);
+            return [q.x, q.y, q.z, q.w];
+        }
+
+        function updateSceneRotation() {
+            const qArray = eulerToQuaternion(sceneRotEuler.x, sceneRotEuler.y, sceneRotEuler.z);
+            const q = new THREE.Quaternion(...qArray);
+            if (viewer.splatMesh) {
+                viewer.splatMesh.quaternion.copy(q);
+            } else if (viewer.splatMeshGroup) {
+                viewer.splatMeshGroup.quaternion.copy(q);
+            }
+            rotDebugInfo.innerHTML =
+                `Rot: [${sceneRotEuler.x}, ${sceneRotEuler.y}, ${sceneRotEuler.z}]°<br>` +
+                `Quat: [${qArray.map(v => v.toFixed(2)).join(', ')}]`;
+        }
+
+        // Attach scene rotation button listeners
+        document.getElementById('rot-x-minus').addEventListener('click', () => { sceneRotEuler.x = (sceneRotEuler.x - 15 + 360) % 360; updateSceneRotation(); });
+        document.getElementById('rot-x-plus').addEventListener('click',  () => { sceneRotEuler.x = (sceneRotEuler.x + 15) % 360; updateSceneRotation(); });
+        document.getElementById('rot-y-minus').addEventListener('click', () => { sceneRotEuler.y = (sceneRotEuler.y - 15 + 360) % 360; updateSceneRotation(); });
+        document.getElementById('rot-y-plus').addEventListener('click',  () => { sceneRotEuler.y = (sceneRotEuler.y + 15) % 360; updateSceneRotation(); });
+        document.getElementById('rot-z-minus').addEventListener('click', () => { sceneRotEuler.z = (sceneRotEuler.z - 15 + 360) % 360; updateSceneRotation(); });
+        document.getElementById('rot-z-plus').addEventListener('click',  () => { sceneRotEuler.z = (sceneRotEuler.z + 15) % 360; updateSceneRotation(); });
+
+        resetRotBtn.addEventListener('click', () => {
+            const q = new THREE.Quaternion(...DEFAULT_ROTATION_QUAT);
+            const e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
+            sceneRotEuler = {
+                x: Math.round(THREE.MathUtils.radToDeg(e.x)),
+                y: Math.round(THREE.MathUtils.radToDeg(e.y)),
+                z: Math.round(THREE.MathUtils.radToDeg(e.z))
+            };
+            if (viewer.splatMesh) {
+                viewer.splatMesh.quaternion.copy(q);
+            }
+            updateSceneRotation();
+        });
+
+        copyRotBtn.addEventListener('click', () => {
+            const qArray = eulerToQuaternion(sceneRotEuler.x, sceneRotEuler.y, sceneRotEuler.z);
+            const fmtQ = qArray.map(v => Number(v.toFixed(4)));
+            const str = `'rotation': [${fmtQ.join(', ')}]`;
+            navigator.clipboard.writeText(str).then(() => {
+                copyRotBtn.innerText = 'Copied!';
+                setTimeout(() => { copyRotBtn.innerText = 'Copy Rot Config'; }, 1500);
+            });
+        });
+
+        // --- Particle Convergence Animation on Load ---
+        function animateParticlesFlyIn() {
+            const targetObj = viewer.splatMesh || viewer.splatMeshGroup;
+            if (!targetObj) return;
+
+            const targetPos = targetObj.position.clone();
+            const targetScale = targetObj.scale.clone();
+
+            // Set initial scattered offset and scale down
+            const randomOffset = new THREE.Vector3(
+                (Math.random() - 0.5) * 8.0,
+                (Math.random() - 0.5) * 6.0 + 3.0,
+                (Math.random() - 0.5) * 8.0
+            );
+
+            targetObj.position.add(randomOffset);
+            targetObj.scale.set(0.001, 0.001, 0.001);
+
+            const startTime = performance.now();
+            const duration = 1800; // 1.8 seconds transition
+
+            function step(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1.0);
+
+                // Smooth cubic ease-out curve
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+
+                targetObj.position.lerpVectors(targetPos.clone().add(randomOffset), targetPos, easeOut);
+                targetObj.scale.lerpVectors(new THREE.Vector3(0.001, 0.001, 0.001), targetScale, easeOut);
+
+                if (progress < 1.0) {
+                    requestAnimationFrame(step);
+                } else {
+                    targetObj.position.copy(targetPos);
+                    targetObj.scale.copy(targetScale);
+                }
+            }
+
+            requestAnimationFrame(step);
+        }
+
+        // --- Keyboard state ---
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            keys[e.key.toLowerCase()] = true;
+            // Prevent spacebar scroll
+            if (e.key === ' ') e.preventDefault();
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+        window.addEventListener('blur', () => {
+            for (const k in keys) keys[k] = false;
+        });
+
+        // --- Unlock OrbitControls limits ---
+        function unlockControls() {
+            if (!viewer.controls) return;
+            viewer.controls.minPolarAngle = 0;
+            viewer.controls.maxPolarAngle = Math.PI;
+            viewer.controls.minAzimuthAngle = -Infinity;
+            viewer.controls.maxAzimuthAngle = Infinity;
+            viewer.controls.minDistance = 0.01;
+            viewer.controls.maxDistance = Infinity;
+        }
+
+        // --- Camera update loop (delta-time based) ---
+        let lastTime = performance.now();
+
+        function updateCamera(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+
+            if (viewer && viewer.camera && viewer.controls) {
+                unlockControls();
+
+                const moveStep = MOVE_SPEED * dt;
+                const rotStep  = ROT_SPEED * dt;
+                const target = viewer.controls.target;
+
+                // --- ROTATION (Q/E = yaw, R/F = pitch) ---
+                const offset = viewer.camera.position.clone().sub(target);
+                const spherical = new THREE.Spherical().setFromVector3(offset);
+
+                // Q / E: Rotate left/right (azimuthal angle = theta)
+                if (keys['q']) spherical.theta += rotStep;
+                if (keys['e']) spherical.theta -= rotStep;
+
+                // R / F: Tilt up/down (polar angle = phi)
+                if (keys['r']) spherical.phi -= rotStep;
+                if (keys['f']) spherical.phi += rotStep;
+
+                // Clamp phi to avoid flipping (tiny epsilon from poles)
+                spherical.phi = Math.max(0.01, Math.min(Math.PI - 0.01, spherical.phi));
+                spherical.makeSafe();
+
+                // Apply rotation back to camera position
+                offset.setFromSpherical(spherical);
+                viewer.camera.position.copy(target).add(offset);
+                viewer.camera.lookAt(target);
+
+                // --- TRANSLATION (WASD + Space/Shift) ---
+                const forward = new THREE.Vector3();
+                viewer.camera.getWorldDirection(forward);
+                forward.y = 0;
+                forward.normalize();
+
+                const right = new THREE.Vector3();
+                right.crossVectors(forward, viewer.camera.up).normalize();
+
+                const worldUp = new THREE.Vector3(0, 1, 0);
+                const delta = new THREE.Vector3();
+
+                if (keys['w']) delta.addScaledVector(forward, moveStep);
+                if (keys['s']) delta.addScaledVector(forward, -moveStep);
+                if (keys['a']) delta.addScaledVector(right, -moveStep);
+                if (keys['d']) delta.addScaledVector(right, moveStep);
+                if (keys[' ']) delta.addScaledVector(worldUp, moveStep);
+                if (keys['shift']) delta.addScaledVector(worldUp, -moveStep);
+
+                // Move camera AND target together (rig translation)
+                if (delta.lengthSq() > 0) {
+                    viewer.camera.position.add(delta);
+                    target.add(delta);
+                }
+
+                viewer.controls.update();
+
+                // --- Debug HUD ---
+                const p = viewer.camera.position;
+                camDebugInfo.innerHTML =
+                    `Pos: [${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}]<br>` +
+                    `LookAt: [${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)}]`;
+            }
+
+            requestAnimationFrame(updateCamera);
+        }
+
+        // --- Load scene ---
+        viewer.addSplatScene('./splat.ksplat', {
+            'rotation': DEFAULT_ROTATION_QUAT,
+            'splatAlphaRemovalThreshold': 5,
+            'showLoadingUI': false,
+            'progressiveLoad': true,
+            'onProgress': (percent, _text) => {
+                const p = Math.round(percent);
+                progressBar.style.width = p + '%';
+                loaderText.innerText = `Loading Splat Scene: ${p}%`;
+            }
+        })
+        .then(() => {
+            viewer.start();
+            unlockControls();
+
+            // Explicitly sync camera position and lookAt target on load
+            if (viewer.camera && viewer.controls) {
+                viewer.camera.position.set(...DEFAULT_CAM_POS);
+                viewer.controls.target.set(...DEFAULT_CAM_LOOK);
+                viewer.camera.lookAt(...DEFAULT_CAM_LOOK);
+                viewer.controls.update();
+            }
+
+            // Sync rotation from default quaternion
+            const q = new THREE.Quaternion(...DEFAULT_ROTATION_QUAT);
+            const targetObj = viewer.splatMesh || viewer.splatMeshGroup;
+            if (targetObj) {
+                targetObj.quaternion.copy(q);
+            }
+
+            animateParticlesFlyIn();
+            lastTime = performance.now();
+            requestAnimationFrame(updateCamera);
+            loader.style.opacity = '0';
+            setTimeout(() => { loader.style.display = 'none'; }, 600);
+        })
+        .catch((err) => {
+            console.error(err);
+            loaderText.innerText = 'Error loading splat scene: ' + err.message;
+        });
+
+        // --- Copy Camera Config ---
+        copyCamBtn.addEventListener('click', () => {
+            if (!viewer || !viewer.camera) return;
+            const p = viewer.camera.position;
+            const t = viewer.controls.target || { x: 0, y: 0, z: 0 };
+            const fmt = (v) => Number(v.toFixed(2));
+            const str = `'initialCameraPosition': [${fmt(p.x)}, ${fmt(p.y)}, ${fmt(p.z)}],\n'initialCameraLookAt': [${fmt(t.x)}, ${fmt(t.y)}, ${fmt(t.z)}]`;
+            navigator.clipboard.writeText(str).then(() => {
+                copyCamBtn.innerText = 'Copied!';
+                setTimeout(() => { copyCamBtn.innerText = 'Copy Cam'; }, 1500);
+            });
+        });
+
+        // --- Reset Camera ---
+        resetBtn.addEventListener('click', () => {
+            if (!viewer) return;
+            viewer.camera.position.set(...DEFAULT_CAM_POS);
+            if (viewer.controls.target) viewer.controls.target.set(...DEFAULT_CAM_LOOK);
+            viewer.camera.lookAt(...DEFAULT_CAM_LOOK);
+        });
+    </script>
+</body>
+
+</html>

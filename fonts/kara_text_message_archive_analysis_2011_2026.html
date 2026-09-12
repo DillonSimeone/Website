@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kara Text Message Archive Analysis (2011–2026)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        warmbg: '#fbf9f6',
+                        cardbg: '#ffffff',
+                        bordercolor: '#e7e3dc',
+                        primary: '#334155',
+                        accent: '#94a3b8',
+                        danger: '#991b1b',
+                        warning: '#d97706',
+                        sage: '#4d7c0f',
+                        plum: '#701a75'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 360px;
+            }
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1ede6;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-warmbg text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Chosen Palette: Warm Neutrals & Deep Slate (Background: Stone-50/Warmbg #fbf9f6, Primary UI: Slate-700/800, Accents: Muted Amber, Rose, Sage, and Plum) -->
+    <!-- Application Structure Plan:
+        1. Header & Navigation: Clean brand identity, timeline span badge, quick nav jump links.
+        2. Executive Overview & Key Metrics: High-level quantitative KPIs (Total messages, silence duration, phone changes, emotional shifts) with contextual explanatory text.
+        3. Message Volume & Frequency Timeline: Interactive Chart.js bar graph tracking message spikes across years, clickable to jump/filter.
+        4. Behavioral & Manipulative Theme Analysis: Categorized breakdown of recurring psychological themes (Food Fixation, Blame Shifting, Younger Sister Leverage, Unannounced Visit Threats, Rapid Mood Oscillation) with interactive filter triggers.
+        5. Phone Number Migration & Personas: Chronological tracker of the 5 phone numbers used, persona shifts (impersonating sister Georgia), and missing phone claims.
+        6. Dynamic Search & Archive Explorer: Comprehensive filterable list with real-time keyword search, date selectors, theme pills, media badges, and message detail drawer.
+    -->
+    <!-- Visualization & Content Choices:
+        - Message Volume Chart: Chart.js Bar Chart (Canvas rendering) -> Illustrates 15-year activity density, highlighting major spikes (2019) and long silent intervals (2014-2018).
+        - Behavioral Theme Cards: HTML Grid + JS Filter triggers -> Allows users to click themes like "Food Fixation" or "Blame Shifting" to instantly inspect matching messages.
+        - Phone Migration Timeline: Structured Tailwind layout -> Clarifies how number changes correlated with renewed outreach or escalation.
+        - Archive Explorer: Real-time vanilla JS filtering engine -> Provides full transparency and instant retrieval across all 90+ logged messages.
+        - NO SVG / NO MERMAID: All icons rendered using clean standard Unicode characters, Tailwind geometric badges, or CSS charts.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-bordercolor sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-slate-800 text-white flex items-center justify-center font-bold text-lg">
+                    📊
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 leading-tight">Kara Text Message Archive</h1>
+                    <p class="text-xs text-slate-500">15-Year Longitudinal Outreach Analysis (2011–2026)</p>
+                </div>
+            </div>
+            <nav class="flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+                <a href="#overview" class="px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors">Overview</a>
+                <a href="#timeline" class="px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors">Timeline</a>
+                <a href="#patterns" class="px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors">Tactics & Patterns</a>
+                <a href="#numbers" class="px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors">Phone Migration</a>
+                <a href="#explorer" class="px-3 py-1.5 bg-slate-800 text-white rounded-md hover:bg-slate-700 transition-colors">Archive Explorer</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- SECTION 1: EXECUTIVE OVERVIEW -->
+        <section id="overview" class="space-y-6">
+            <div class="bg-white rounded-xl border border-bordercolor p-6 sm:p-8 shadow-sm">
+                <div class="max-w-3xl space-y-3">
+                    <span class="inline-block px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-semibold uppercase tracking-wider">Executive Analytical Summary</span>
+                    <h2 class="text-2xl font-bold text-slate-900">Longitudinal Archive Analysis & Behavioral Syntheses</h2>
+                    <p class="text-slate-600 text-sm leading-relaxed">
+                        This interactive application analyzes the complete 15-year record of text messages sent by Kara to her son Dillon from October 2011 through August 2026. After a brief hostile exchange on October 4, 2011, Dillon went completely silent (no contact). The archive captures Kara's persistent unilateral communication strategy across 15 years, during which she utilized 5 distinct phone numbers, experienced multi-year silence periods, and deployed diverse manipulative, affection-seeking, and confrontational tactics.
+                    </p>
+                </div>
+
+                <!-- KPI Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-8">
+                    <div class="bg-stone-50 rounded-lg p-4 border border-bordercolor">
+                        <div class="text-xs font-medium text-slate-500 uppercase">Total Logged Messages</div>
+                        <div class="text-2xl font-black text-slate-900 mt-1" id="kpi-total-msg">89</div>
+                        <div class="text-[11px] text-slate-500 mt-1">86 from Kara / 3 from Dillon</div>
+                    </div>
+                    <div class="bg-stone-50 rounded-lg p-4 border border-bordercolor">
+                        <div class="text-xs font-medium text-slate-500 uppercase">Archive Duration</div>
+                        <div class="text-2xl font-black text-slate-900 mt-1">14.8 Yrs</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Oct 2011 – Aug 2026</div>
+                    </div>
+                    <div class="bg-stone-50 rounded-lg p-4 border border-bordercolor">
+                        <div class="text-xs font-medium text-slate-500 uppercase">Longest Silence Gap</div>
+                        <div class="text-2xl font-black text-slate-900 mt-1">5.8 Yrs</div>
+                        <div class="text-[11px] text-slate-500 mt-1">May 2013 – Mar 2019</div>
+                    </div>
+                    <div class="bg-stone-50 rounded-lg p-4 border border-bordercolor">
+                        <div class="text-xs font-medium text-slate-500 uppercase">Phone Numbers Used</div>
+                        <div class="text-2xl font-black text-slate-900 mt-1">5</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Oregon (541) area code</div>
+                    </div>
+                    <div class="bg-stone-50 rounded-lg p-4 border border-bordercolor col-span-2 sm:col-span-1">
+                        <div class="text-xs font-medium text-slate-500 uppercase">Recipient Response Rate</div>
+                        <div class="text-2xl font-black text-rose-700 mt-1">0.0 %</div>
+                        <div class="text-[11px] text-slate-500 mt-1">100% unilateral since Oct 2011</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: TIMELINE & FREQUENCY CHART -->
+        <section id="timeline" class="bg-white rounded-xl border border-bordercolor p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="space-y-2">
+                <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold uppercase tracking-wider">Temporal Frequency</span>
+                <h2 class="text-xl font-bold text-slate-900">Annual Message Frequency & Spike Analysis</h2>
+                <p class="text-slate-600 text-sm leading-relaxed max-w-4xl">
+                    Outreach frequency is characterized by intense cyclical spikes followed by years of complete dormancy. The primary communication peak occurred in 2019 (38 messages), coinciding with the introduction of Dillon's younger half-sister Georgia into the dialogue. Another notable escalation occurred in 2024 (11 messages), marked by angry demands and persona switching.
+                </p>
+            </div>
+
+            <!-- Chart Container -->
+            <div class="bg-stone-50 p-4 rounded-xl border border-bordercolor">
+                <div class="chart-container">
+                    <canvas id="frequencyChart"></canvas>
+                </div>
+                <div class="text-center text-xs text-slate-500 mt-3">
+                    💡 <em>Click any bar in the graph to automatically filter the archive log below to that specific year.</em>
+                </div>
+            </div>
+
+            <!-- Key Timeline Milestones Callout Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div class="p-4 rounded-lg bg-rose-50 border border-rose-200">
+                    <div class="font-bold text-rose-900 text-sm mb-1">Phase 1: Immediate Break (2011–2013)</div>
+                    <p class="text-rose-800">Initial separation following Taco Bell confrontation. Alternates between love expressions and sudden verbal attacks ("spoiled brat", "selfish ASS"). Ends with a threat to show up in 10 minutes.</p>
+                </div>
+                <div class="p-4 rounded-lg bg-amber-50 border border-amber-200">
+                    <div class="font-bold text-amber-900 text-sm mb-1">Phase 2: The 2019 Surge & Georgia Pivot</div>
+                    <p class="text-amber-800">After nearly 6 years of silence, Kara resumes contact with a new number. Uses sister Georgia (age 5) as emotional leverage, offers apartment money, and attempts event invitations (Snoop Dogg concert).</p>
+                </div>
+                <div class="p-4 rounded-lg bg-slate-100 border border-slate-200">
+                    <div class="font-bold text-slate-900 text-sm mb-1">Phase 3: Aggression & Persona Masking (2024–2026)</div>
+                    <p class="text-slate-700">Demands grandbabies, launches extreme hostile rants against ex-husbands/relatives ("groomed by fucked up men"), threatens physical confrontation, and sends texts posing as sister Georgia.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: TACTICS & BEHAVIORAL PATTERNS -->
+        <section id="patterns" class="bg-white rounded-xl border border-bordercolor p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="space-y-2">
+                <span class="inline-block px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold uppercase tracking-wider">Behavioral Taxonomy</span>
+                <h2 class="text-xl font-bold text-slate-900">Recurrent Manipulative Tactics & Psychological Themes</h2>
+                <p class="text-slate-600 text-sm leading-relaxed max-w-4xl">
+                    Analyzing the text archive reveals six primary recurring strategies used by Kara to elicit a response or bypass boundary enforcement. Click any pattern card to filter the Archive Explorer directly to messages exemplifying that tactic.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="pattern-cards-container">
+                <!-- Tactic Card 1 -->
+                <div onclick="filterByTheme('food')" class="cursor-pointer group p-5 rounded-xl border border-bordercolor bg-stone-50 hover:bg-amber-50/60 hover:border-amber-300 transition-all shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xl">🍲</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">14 Messages</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 group-hover:text-amber-900">Food & Maternal Nurturing Fixation</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                        Constant unsolicited advice regarding food, offering bean burritos, chilli hotdogs, Fritos, or barbecue meatballs to project a nurturing maternal persona and create low-pressure entry points.
+                    </p>
+                    <div class="mt-4 text-xs font-semibold text-amber-700 flex items-center gap-1">
+                        Filter Archive &rarr;
+                    </div>
+                </div>
+
+                <!-- Tactic Card 2 -->
+                <div onclick="filterByTheme('georgia')" class="cursor-pointer group p-5 rounded-xl border border-bordercolor bg-stone-50 hover:bg-purple-50/60 hover:border-purple-300 transition-all shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xl">👧</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">12 Messages</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 group-hover:text-purple-900">Younger Sister (Georgia) Leverage</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                        Using half-sister Georgia as emotional proxy. Messages describe Georgia crying, looking at baby photos, or asking why Dillon hates his mom. Includes messages sent using Georgia's phone/persona.
+                    </p>
+                    <div class="mt-4 text-xs font-semibold text-purple-700 flex items-center gap-1">
+                        Filter Archive &rarr;
+                    </div>
+                </div>
+
+                <!-- Tactic Card 3 -->
+                <div onclick="filterByTheme('blame')" class="cursor-pointer group p-5 rounded-xl border border-bordercolor bg-stone-50 hover:bg-rose-50/60 hover:border-rose-300 transition-all shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xl">🎯</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">16 Messages</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 group-hover:text-rose-900">Externalized Blame & Male Figures</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                        Refusing personal accountability by attributing Dillon's silence entirely to external manipulation by father "Mark", brother "Nick", or "Cory", claiming Dillon was "groomed with hate."
+                    </p>
+                    <div class="mt-4 text-xs font-semibold text-rose-700 flex items-center gap-1">
+                        Filter Archive &rarr;
+                    </div>
+                </div>
+
+                <!-- Tactic Card 4 -->
+                <div onclick="filterByTheme('threat')" class="cursor-pointer group p-5 rounded-xl border border-bordercolor bg-stone-50 hover:bg-red-50/60 hover:border-red-300 transition-all shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xl">⚠️</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800">10 Messages</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 group-hover:text-red-900">Ultimatums & Threatening Visits</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                        Threatening unannounced physical entry into Dillon's space ("will show up in 10 min", "will come up and ask face to face", "will get in your face") if he fails to respond to texts.
+                    </p>
+                    <div class="mt-4 text-xs font-semibold text-red-700 flex items-center gap-1">
+                        Filter Archive &rarr;
+                    </div>
+                </div>
+
+                <!-- Tactic Card 5 -->
+                <div onclick="filterByTheme('anger')" class="cursor-pointer group p-5 rounded-xl border border-bordercolor bg-stone-50 hover:bg-slate-200/60 hover:border-slate-400 transition-all shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xl">⚡</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800">18 Messages</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 group-hover:text-slate-900">Rapid Love-Rage Oscillation</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                        Shifting abruptly within minutes or days between profound affection ("I love you my son") and hostile insult degradation ("spoiled brat", "ass face", "butthead", "cruel").
+                    </p>
+                    <div class="mt-4 text-xs font-semibold text-slate-700 flex items-center gap-1">
+                        Filter Archive &rarr;
+                    </div>
+                </div>
+
+                <!-- Tactic Card 6 -->
+                <div onclick="filterByTheme('birthday')" class="cursor-pointer group p-5 rounded-xl border border-bordercolor bg-stone-50 hover:bg-blue-50/60 hover:border-blue-300 transition-all shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xl">🎂</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">15 Messages</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 group-hover:text-blue-900">Holiday & Milestone Anchoring</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                        Concentrating outreach on birthdays (Feb 27/28), Mother's Day, and Thanksgiving to leverage societal expectations of family contact and maximize feelings of guilt.
+                    </p>
+                    <div class="mt-4 text-xs font-semibold text-blue-700 flex items-center gap-1">
+                        Filter Archive &rarr;
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: PHONE NUMBER MIGRATION & ENTITY INDEX -->
+        <section id="numbers" class="bg-white rounded-xl border border-bordercolor p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="space-y-2">
+                <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold uppercase tracking-wider">Communication Infrastructure</span>
+                <h2 class="text-xl font-bold text-slate-900">Phone Number Migration & Contact Matrix</h2>
+                <p class="text-slate-600 text-sm leading-relaxed max-w-4xl">
+                    Over 15 years, Kara utilized at least 5 different primary mobile phone numbers. Number changes often signaled a reset in outreach strategy, an excuse to break previous silence, or attempts to bypass potential number blocking.
+                </p>
+            </div>
+
+            <!-- Phone Number Timeline Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div onclick="filterByPhone('(541) 513-4817')" class="cursor-pointer p-4 rounded-lg bg-stone-50 border border-bordercolor hover:border-slate-400 transition-all">
+                    <div class="text-[10px] font-mono text-slate-500 uppercase">Oct 2011 – May 2013</div>
+                    <div class="font-mono font-bold text-sm text-slate-900 mt-1">(541) 513-4817</div>
+                    <div class="text-[11px] text-slate-600 mt-2">Original contact number. Used during initial breakup and May 2013 Mother's Day surge.</div>
+                </div>
+
+                <div onclick="filterByPhone('(541) 513-2980')" class="cursor-pointer p-4 rounded-lg bg-stone-50 border border-bordercolor hover:border-slate-400 transition-all">
+                    <div class="text-[10px] font-mono text-slate-500 uppercase">Dec 2011 – Mar 2012</div>
+                    <div class="font-mono font-bold text-sm text-slate-900 mt-1">(541) 513-2980</div>
+                    <div class="text-[11px] text-slate-600 mt-2">Claimed lost/washed phone. Early attempt to renegotiate relationship after initial silence.</div>
+                </div>
+
+                <div onclick="filterByPhone('(541) 232-0544')" class="cursor-pointer p-4 rounded-lg bg-stone-50 border border-bordercolor hover:border-slate-400 transition-all">
+                    <div class="text-[10px] font-mono text-slate-500 uppercase">Mar 2019 – Apr 2021</div>
+                    <div class="font-mono font-bold text-sm text-slate-900 mt-1">(541) 232-0544</div>
+                    <div class="text-[11px] text-slate-600 mt-2">New number used to break 6-year silence. Initiated major 2019 text flood and Georgia photos.</div>
+                </div>
+
+                <div onclick="filterByPhone('(541) 514-3587')" class="cursor-pointer p-4 rounded-lg bg-stone-50 border border-bordercolor hover:border-slate-400 transition-all">
+                    <div class="text-[10px] font-mono text-slate-500 uppercase">Feb 2024 – Nov 2024</div>
+                    <div class="font-mono font-bold text-sm text-slate-900 mt-1">(541) 514-3587</div>
+                    <div class="text-[11px] text-slate-600 mt-2">Used during high-aggression period, grandbaby demands, and sending text posing as sister.</div>
+                </div>
+
+                <div onclick="filterByPhone('(541) 221-3027')" class="cursor-pointer p-4 rounded-lg bg-stone-50 border border-bordercolor hover:border-slate-400 transition-all">
+                    <div class="text-[10px] font-mono text-slate-500 uppercase">Dec 2024 – Aug 2026</div>
+                    <div class="font-mono font-bold text-sm text-slate-900 mt-1">(541) 221-3027</div>
+                    <div class="text-[11px] text-slate-600 mt-2">Latest active number. Used for Christmas 2024, 2026 birthday meatballs, and Aug 2026 text.</div>
+                </div>
+            </div>
+
+            <!-- Entities Referenced Matrix -->
+            <div class="bg-stone-50 p-4 rounded-xl border border-bordercolor space-y-3">
+                <h3 class="text-xs font-bold uppercase text-slate-700 tracking-wider">Third Parties Referenced in Messages</h3>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <button onclick="filterBySearch('Mark')" class="px-3 py-1 bg-white border border-bordercolor rounded-full hover:bg-slate-100">👨 Mark (Father / Ex-husband)</button>
+                    <button onclick="filterBySearch('Georgia')" class="px-3 py-1 bg-white border border-bordercolor rounded-full hover:bg-slate-100">👧 Georgia (Half-sister)</button>
+                    <button onclick="filterBySearch('Kay')" class="px-3 py-1 bg-white border border-bordercolor rounded-full hover:bg-slate-100">👩 Kay (Aunt / Kara's sister)</button>
+                    <button onclick="filterBySearch('Nick')" class="px-3 py-1 bg-white border border-bordercolor rounded-full hover:bg-slate-100">👦 Nick (Brother)</button>
+                    <button onclick="filterBySearch('Cory')" class="px-3 py-1 bg-white border border-bordercolor rounded-full hover:bg-slate-100">👤 Cory (Male figure)</button>
+                    <button onclick="filterBySearch('Taylor')" class="px-3 py-1 bg-white border border-bordercolor rounded-full hover:bg-slate-100">👩 Taylor (Older sister/relative)</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: INTERACTIVE ARCHIVE EXPLORER -->
+        <section id="explorer" class="bg-white rounded-xl border border-bordercolor p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="space-y-2">
+                <span class="inline-block px-3 py-1 bg-slate-800 text-white rounded-full text-xs font-semibold uppercase tracking-wider">Master Archive Explorer</span>
+                <h2 class="text-xl font-bold text-slate-900">Interactive Message Repository & Filter Engine</h2>
+                <p class="text-slate-600 text-sm leading-relaxed max-w-4xl">
+                    Search, filter, and review the full text history. Use the controls below to refine by year, emotional theme, phone number, or specific keyword search.
+                </p>
+            </div>
+
+            <!-- Filter Controls Bar -->
+            <div class="bg-stone-50 p-4 rounded-xl border border-bordercolor space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <!-- Search Input -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Search Keywords</label>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="e.g. food, Mark, birthday, face..." class="w-full px-3 py-2 text-xs bg-white border border-bordercolor rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400">
+                    </div>
+
+                    <!-- Year Select -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Filter by Year</label>
+                        <select id="yearSelect" onchange="applyFilters()" class="w-full px-3 py-2 text-xs bg-white border border-bordercolor rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400">
+                            <option value="ALL">All Years (2011–2026)</option>
+                            <option value="2011">2011</option>
+                            <option value="2012">2012</option>
+                            <option value="2013">2013</option>
+                            <option value="2019">2019</option>
+                            <option value="2021">2021</option>
+                            <option value="2024">2024</option>
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+
+                    <!-- Theme Select -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Filter by Theme</label>
+                        <select id="themeSelect" onchange="applyFilters()" class="w-full px-3 py-2 text-xs bg-white border border-bordercolor rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400">
+                            <option value="ALL">All Themes</option>
+                            <option value="food">🍲 Food & Nurturing</option>
+                            <option value="georgia">👧 Sister Georgia Leverage</option>
+                            <option value="blame">🎯 Externalized Blame</option>
+                            <option value="threat">⚠️ Ultimatums & Visits</option>
+                            <option value="anger">⚡ Love-Rage Oscillation</option>
+                            <option value="birthday">🎂 Holidays & Birthdays</option>
+                        </select>
+                    </div>
+
+                    <!-- Phone Select -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Filter by Phone #</label>
+                        <select id="phoneSelect" onchange="applyFilters()" class="w-full px-3 py-2 text-xs bg-white border border-bordercolor rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400">
+                            <option value="ALL">All Phone Numbers</option>
+                            <option value="(541) 513-4817">(541) 513-4817</option>
+                            <option value="(541) 513-2980">(541) 513-2980</option>
+                            <option value="(541) 232-0544">(541) 232-0544</option>
+                            <option value="(541) 514-3587">(541) 514-3587</option>
+                            <option value="(541) 221-3027">(541) 221-3027</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Active Filter Badges & Reset Button -->
+                <div class="flex items-center justify-between border-t border-bordercolor pt-3 text-xs">
+                    <div class="text-slate-600" id="filterCountSummary">
+                        Showing <span font-bold id="visibleCount">89</span> of 89 messages
+                    </div>
+                    <button onclick="resetFilters()" class="px-3 py-1 bg-slate-200 text-slate-700 rounded hover:bg-slate-300 font-semibold text-[11px]">
+                        🔄 Reset All Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Stream Container -->
+            <div id="messagesList" class="space-y-3 max-h-[700px] overflow-y-auto pr-2">
+                <!-- Messages JS Populated Here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-bordercolor py-6 text-center text-xs text-slate-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4">
+            Kara Text Message Archive Analysis (2011–2026) • Single-Page Interactive Report • Confidential Family Record Review
+        </div>
+    </footer>
+
+    <!-- JavaScript Data & Logic -->
+    <script>
+        // Full Dataset structured from the report
+        const rawMessages = [
+            // Oct 2011
+            { id: 1, date: "2011-10-04", time: "12:26 PM", sender: "Kara", phone: "(541) 513-4817", text: "Hi its mom do you want to meet at tacobell love mom", themes: ["birthday"], media: false },
+            { id: 2, date: "2011-10-04", time: "2:36 PM", sender: "Dillon", phone: "(541) 513-4817", text: "Go rot in hell, bitch.", themes: [], media: false },
+            { id: 3, date: "2011-10-04", time: "2:42 PM", sender: "Kara", phone: "(541) 513-4817", text: "Well you look woundrful on a bike im proud love mom", themes: ["anger"], media: false },
+            { id: 4, date: "2011-10-04", time: "2:44 PM", sender: "Dillon", phone: "(541) 513-4817", text: "Fuck you. The world is better off without a bitch like you.", themes: [], media: false },
+            { id: 5, date: "2011-10-04", time: "2:45 PM", sender: "Kara", phone: "(541) 513-4817", text: "I love you any was love mom", themes: ["anger"], media: false },
+            { id: 6, date: "2011-10-04", time: "2:46 PM", sender: "Dillon", phone: "(541) 513-4817", text: "Fuck off.", themes: [], media: false },
+
+            // Dec 2011 - Mar 2012
+            { id: 7, date: "2011-12-22", time: "8:30 PM", sender: "Kara", phone: "(541) 513-2980", text: "Dill this is my new number i lost my phone and washed IZZYS oops call of he you need me", themes: [], media: false },
+            { id: 8, date: "2011-12-24", time: "11:28 AM", sender: "Kara", phone: "(541) 513-2980", text: "Do you have anything to say to your mom", themes: ["birthday"], media: false },
+            { id: 9, date: "2011-12-24", time: "7:05 PM", sender: "Kara", phone: "(541) 513-2980", text: "Merry christmas son i love you", themes: ["birthday"], media: false },
+            { id: 10, date: "2011-12-31", time: "11:34 AM", sender: "Kara", phone: "(541) 513-2980", text: "You are a FUCKING spoiled brat and an ass DILLON", themes: ["anger"], media: false },
+            { id: 11, date: "2012-01-13", time: "2:21 PM", sender: "Kara", phone: "(541) 513-2980", text: "Want to deal with your issues you have about me its a three day weekend", themes: ["threat"], media: false },
+            { id: 12, date: "2012-01-13", time: "2:29 PM", sender: "Kara", phone: "(541) 513-2980", text: "Give me a day i will prove to you son no drama or bull lets deal", themes: [], media: false },
+            { id: 13, date: "2012-01-26", time: "8:20 PM", sender: "Kara", phone: "(541) 513-2980", text: "Good report card except for the D in language arts i will make the teacher meeting in a week or so l ove your mother", themes: [], media: false },
+            { id: 14, date: "2012-01-26", time: "8:26 PM", sender: "Kara", phone: "(541) 513-2980", text: "And your birthday is soon what do you want my son let of know", themes: ["birthday"], media: false },
+            { id: 15, date: "2012-01-30", time: "11:24 AM", sender: "Kara", phone: "(541) 513-2980", text: "DILLON your an ungrateful but head mark has so lied to you i an shocked", themes: ["blame", "anger"], media: false },
+            { id: 16, date: "2012-02-04", time: "6:59 PM", sender: "Kara", phone: "(541) 513-2980", text: "I love you", themes: ["anger"], media: false },
+            { id: 17, date: "2012-02-17", time: "5:19 PM", sender: "Kara", phone: "(541) 513-2980", text: "Do you want to have lunch this weekend i just got out of the hospital and feeling okay to visit love mom", themes: ["food"], media: false },
+            { id: 18, date: "2012-02-21", time: "6:34 PM", sender: "Kara", phone: "(541) 513-2980", text: "What do you want for your birthday son", themes: ["birthday"], media: false },
+            { id: 19, date: "2012-02-27", time: "7:07 PM", sender: "Kara", phone: "(541) 513-2980", text: "Happy birthday to you i made an awesome kid your in my prayers daily come see me when you can 7 8 8 2 9 airport rd by taco bell big house love you so n mommy", themes: ["birthday", "threat"], media: false },
+            { id: 20, date: "2012-03-04", time: "6:42 PM", sender: "Kara", phone: "(541) 513-2980", text: "You going to pull your head out of your ASS and come see or text me hi love mom", themes: ["anger"], media: false },
+            { id: 21, date: "2012-03-05", time: "7:53 AM", sender: "Kara", phone: "(541) 513-2980", text: "Does mark keep you from talking to me do you want me to come see you", themes: ["blame", "threat"], media: false },
+            { id: 22, date: "2012-03-08", time: "9:12 PM", sender: "Kara", phone: "(541) 513-2980", text: "Hey do you want to get together yet cowboy", themes: [], media: false },
+
+            // May - Jun 2012
+            { id: 23, date: "2012-05-09", time: "12:00 PM", sender: "Kara", phone: "(541) 513-4817", text: "Can you come see me for mothers day or do i come get you for lunch mom", themes: ["birthday", "food", "threat"], media: false },
+            { id: 24, date: "2012-05-12", time: "8:12 PM", sender: "Kara", phone: "(541) 513-4817", text: "Are you coming to see me for mom day love mom", themes: ["birthday"], media: false },
+            { id: 25, date: "2012-05-25", time: "7:52 PM", sender: "Kara", phone: "(541) 513-4817", text: "Dillon are you home", themes: [], media: false },
+            { id: 26, date: "2012-06-16", time: "11:31 AM", sender: "Kara", phone: "(541) 513-4817", text: "Hey its mom want to hang out for a few", themes: [], media: false },
+
+            // May 2013
+            { id: 27, date: "2013-05-12", time: "7:36 AM", sender: "Kara", phone: "(541) 513-4817", text: "DILL im so proud of you please text me. Mom", themes: ["birthday"], media: false },
+            { id: 28, date: "2013-05-12", time: "10:15 AM", sender: "Kara", phone: "(541) 513-4817", text: "You up yet. mom", themes: ["birthday"], media: false },
+            { id: 29, date: "2013-05-12", time: "1:52 PM", sender: "Kara", phone: "(541) 513-4817", text: "You home yet", themes: ["birthday"], media: false },
+            { id: 30, date: "2013-05-12", time: "3:26 PM", sender: "Kara", phone: "(541) 513-4817", text: "You awake yet", themes: ["birthday"], media: false },
+            { id: 31, date: "2013-05-12", time: "4:20 PM", sender: "Kara", phone: "(541) 513-4817", text: "Can you answer me at least do that. Mom", themes: ["birthday"], media: false },
+            { id: 32, date: "2013-05-13", time: "1:01 PM", sender: "Kara", phone: "(541) 513-4817", text: "Hey you going to text or what. mom", themes: [], media: false },
+            { id: 33, date: "2013-05-13", time: "2:27 PM", sender: "Kara", phone: "(541) 513-4817", text: "No matter what i am your mom and you r my son. Think about all you and i have been through we had alot laughs. I love you", themes: [], media: false },
+            { id: 34, date: "2013-05-13", time: "2:30 PM", sender: "Kara", phone: "(541) 513-4817", text: "You are being a selfish ASS. cant you man up and talk to me.", themes: ["anger"], media: false },
+            { id: 35, date: "2013-05-14", time: "5:13 PM", sender: "Kara", phone: "(541) 513-4817", text: "Hey DILL text your mom", themes: [], media: false },
+            { id: 36, date: "2013-05-14", time: "7:11 PM", sender: "Kara", phone: "(541) 513-4817", text: "What have i done to you. Give me a clue. Man up to your attitude with me talk to me your breaking my heart love mom. .", themes: ["anger"], media: false },
+            { id: 37, date: "2013-05-17", time: "3:46 PM", sender: "Kara", phone: "(541) 513-4817", text: "Want to go to the races with me your step dad is out of town this summer again. Let me know you can bring your girlfriend. Love mom", themes: [], media: false },
+            { id: 38, date: "2013-05-25", time: "6:34 PM", sender: "Kara", phone: "(541) 513-4817", text: "Is this even your num DILL or more mark lies as usual", themes: ["blame"], media: false },
+            { id: 39, date: "2013-05-29", time: "6:46 PM", sender: "Kara", phone: "(541) 513-4817", text: "You need to go downstairs and talk to mark i an way PISSED now and will show up in. Ten min i am not messing around give me an answer DILL", themes: ["blame", "threat", "anger"], media: false },
+
+            // Mar 2019 - Oct 2019
+            { id: 40, date: "2019-03-22", time: "10:31 PM", sender: "Kara", phone: "(541) 232-0544", text: "This is Mom ..my new #. I make some great bean burritos let me know we can have a picnic. I miss just saying hey... love you I'm here no QUESTIONS 😉🤐", themes: ["food"], media: false },
+            { id: 41, date: "2019-03-22", time: "10:32 PM", sender: "Kara", phone: "(541) 232-0544", text: "At least can you text an angry face . please", themes: [], media: false },
+            { id: 42, date: "2019-03-22", time: "10:34 PM", sender: "Kara", phone: "(541) 232-0544", text: "Awe the technology now is amazing 🤭", themes: [], media: false },
+            { id: 43, date: "2019-03-23", time: "7:03 AM", sender: "Kara", phone: "(541) 232-0544", text: "Ok how about this .if you can not explain why you REFUSE to talk with me I will come up and ask you can explain it face to face ..your choice son ..I deserve some kind of answer ,I'll give you a day or so to answer son ..", themes: ["threat"], media: false },
+            { id: 44, date: "2019-03-23", time: "8:01 AM", sender: "Kara", phone: "(541) 232-0544", text: "Come on son,you can't remember any fun we've had ,,I'm sorry Mark and Nick are ass faces ,I'm sorry they made you hate me!! just because they do,hmmmm make sense..ok we can wash it away not speak of it again but ,,,YOU NEED TO TELL ME ,TEXT OR FACE TO FACE ...I'm to tired to fight Dillon...life to short...I want happy Ness only for you ,I want you to have a great life ..it's your turn to love life son ....", themes: ["blame", "anger", "threat"], media: false },
+            { id: 45, date: "2019-03-23", time: "4:38 PM", sender: "Kara", phone: "(541) 232-0544", text: "Dillon you can not keep ignoring me ,,text me to\" go away \"or we can face to face and then you can tell me to\" go away \".but no you can't just say nothing anymore...you decide how this will go ok ,I'm not wanting to invade your space at all.i just want an answer !!!", themes: ["threat"], media: false },
+            { id: 46, date: "2019-03-25", time: "5:37 PM", sender: "Kara", phone: "(541) 232-0544", text: "Well hmm no answer ,must mean you kinda care ,thank you ,hope to see you when we come up ,it's Georgia birthday soon she wants to see the Crow's at sunset ,it's awesome ..I won't smother you .. promise..yes Georgia signs and she'll be 5 ,I know you wanted to ask ...😁 Ok later ,eat something better then takeout food ,,🤗", themes: ["georgia", "food", "birthday"], media: false },
+            { id: 47, date: "2019-04-25", time: "8:27 AM", sender: "Kara", phone: "(541) 232-0544", text: "My nieghbor just published his first book .. science fiction ,should be awesome .he brought one to me , you'll like it ..it's on eBay,Kay probably ordering one ...", themes: [], media: true },
+            { id: 48, date: "2019-05-05", time: "10:24 PM", sender: "Kara", phone: "(541) 232-0544", text: "Well Georgia saw pictures of a brother she doesn't now....kinda sucks when your an only child and find out you have older siblings ..huh...do you remember how you felt ??and crappy she can't understand why you could hate your mother ,that's sad , because I'm awesome ,,but she does understand your an adult now and it is what it is ..so don't be surprised if she finds you later in life ,and please be kind to she's very you", themes: ["georgia"], media: false },
+            { id: 49, date: "2019-05-05", time: "10:28 PM", sender: "Kara", phone: "(541) 232-0544", text: "I love you .....", themes: ["georgia"], media: true },
+            { id: 50, date: "2019-06-16", time: "9:40 AM", sender: "Kara", phone: "(541) 232-0544", text: "Missing you today ...need anything let me know .I'm here", themes: [], media: true },
+            { id: 51, date: "2019-06-24", time: "8:56 AM", sender: "Kara", phone: "(541) 232-0544", text: "Watching videos like you use too ..😭😭mom tears", themes: [], media: true },
+            { id: 52, date: "2019-06-24", time: "8:57 AM", sender: "Kara", phone: "(541) 232-0544", text: "Look close lol it blends with the black", themes: [], media: false },
+            { id: 53, date: "2019-06-28", time: "9:59 PM", sender: "Kara", phone: "(541) 232-0544", text: "Goodnight son ..wish you would at least text one word ..I feel so bad ..I miss you every day", themes: [], media: false },
+            { id: 54, date: "2019-06-28", time: "10:00 PM", sender: "Kara", phone: "(541) 232-0544", text: "Get some good food in you please I do worry", themes: ["food"], media: false },
+            { id: 55, date: "2019-07-08", time: "8:42 AM", sender: "Kara", phone: "(541) 232-0544", text: "Love you ....you are my boy ,I remember this day we'll 😭", themes: [], media: true },
+            { id: 56, date: "2019-07-09", time: "8:51 PM", sender: "Kara", phone: "(541) 232-0544", text: "Chilli and hotdogs ,,,easy to make add Fritos ...please eat good buy that for 6 bucks ..get out and smell that rain ❤️", themes: ["food"], media: false },
+            { id: 57, date: "2019-07-11", time: "11:13 PM", sender: "Kara", phone: "(541) 232-0544", text: "Today I remember your first day of school 20 years ago ,just you and me .....my heart proud of you two .... Eat something good son ,health ....start texting me something ... it'll make things easier on you n I ..❤️🧡💛💖💘", themes: ["food"], media: false },
+            { id: 58, date: "2019-07-11", time: "11:13 PM", sender: "Kara", phone: "(541) 232-0544", text: "Goodnight", themes: [], media: false },
+            { id: 59, date: "2019-07-11", time: "11:14 PM", sender: "Kara", phone: "(541) 232-0544", text: "(Attached Image)", themes: ["georgia"], media: true },
+            { id: 60, date: "2019-07-11", time: "11:15 PM", sender: "Kara", phone: "(541) 232-0544", text: "Georgia young Baxter your little sister ....you both have the same mom and she's all you 😂", themes: ["georgia"], media: false },
+            { id: 61, date: "2019-07-15", time: "7:50 PM", sender: "Kara", phone: "(541) 232-0544", text: "Hey there's a place open ,it's on 29th n Willamette 500bucks a month .... roommate works alot bartender and a makeup studio and you know her ..it's a cool place you'd like it ...no I don't go over blah blah everyone works eats sleeps ,🤗letting you know Taylor called last week ....it's open ... Google address 29th and Willamette ...", themes: [], media: false },
+            { id: 62, date: "2019-07-15", time: "7:53 PM", sender: "Kara", phone: "(541) 232-0544", text: "It's spacious ..3room yard , laundry , privacy door ..lots food places... kitchen... anyways ...only 1 roommate you'd barely if ever see 🙂", themes: [], media: false },
+            { id: 63, date: "2019-07-20", time: "8:21 AM", sender: "Kara", phone: "(541) 232-0544", text: "Well I put deposit for an apartment in the bank ,let me know whenever you want to move to Eugene ,I've got you covered ...eesh mail came Mark owes child support agian to me ...as always", themes: ["blame"], media: false },
+            { id: 64, date: "2019-07-29", time: "3:49 PM", sender: "Kara", phone: "(541) 232-0544", text: "Hey I'll be coming up there in a few weeks to get mom's ashes,,,I want to go see the crows come into town at sunset ,it's actually pretty cool , Georgia going to stay home so you don't get love attacked 😂but it's not a Q and A kind of day,!!!promise ..it's a let's go find some good food and watch some birds they use 4hawks it's cool ,you'll enjoy it....won't take to much time up of yours ...coolness t.y ....it'll be a few weeks , school ends 15 ish .....love you ttyl", themes: ["georgia", "food", "threat"], media: false },
+            { id: 65, date: "2019-08-05", time: "3:24 PM", sender: "Kara", phone: "(541) 232-0544", text: "Wow I forgotten how kindergarten was ,, Georgia attitude so you 🙄or do I say you both are like your mother ..yay ..😂😂😂", themes: ["georgia"], media: false },
+            { id: 66, date: "2019-08-05", time: "3:26 PM", sender: "Kara", phone: "(541) 232-0544", text: "Hey ,send your mom a happy birthday ..😉 tonight or tomorrow please", themes: ["birthday"], media: false },
+            { id: 67, date: "2019-08-05", time: "3:30 PM", sender: "Kara", phone: "(541) 232-0544", text: "Please (Attached Image)", themes: ["birthday"], media: true },
+            { id: 68, date: "2019-08-05", time: "9:10 PM", sender: "Kara", phone: "(541) 232-0544", text: "Still waiting lol (Attached Image)", themes: ["birthday"], media: true },
+            { id: 69, date: "2019-08-05", time: "9:11 PM", sender: "Kara", phone: "(541) 232-0544", text: "Happy birthday Mom ??👈🤟", themes: ["birthday"], media: false },
+            { id: 70, date: "2019-08-07", time: "7:29 PM", sender: "Kara", phone: "(541) 232-0544", text: "And how long are you going to be an ass......how looooong ...tell me thattttt 🤔🤔🤭☹️", themes: ["anger"], media: false },
+            { id: 71, date: "2019-08-07", time: "7:31 PM", sender: "Kara", phone: "(541) 232-0544", text: "Love you kiddo 🙁😶💖 A mother's love", themes: ["anger"], media: false },
+            { id: 72, date: "2019-08-12", time: "2:27 PM", sender: "Kara", phone: "(541) 232-0544", text: "Last week of school then I'm free SO give me a good day for you , Georgia staying home I will be up for a good dinner and go see the crows ....so give me a good day or I will pick one ok .... I'll show you how to melt metal with my eyes 😆😅😉 lol ....what day good ??", themes: ["georgia", "food", "threat"], media: false },
+            { id: 73, date: "2019-08-12", time: "4:35 PM", sender: "Kara", phone: "(541) 232-0544", text: "Hey serious ,you can play outside and goof around with all the kids ...then you can send me something Dillon anything please .do you want some new close or shoes ..tell me NO ......", themes: [], media: false },
+            { id: 74, date: "2019-08-12", time: "4:37 PM", sender: "Kara", phone: "(541) 232-0544", text: "I know your seeing these stop being cruel ..you've been mad long enough..time to start being nice to me", themes: ["anger"], media: false },
+            { id: 75, date: "2019-08-12", time: "5:45 PM", sender: "Kara", phone: "(541) 232-0544", text: "Your killing me dude", themes: ["anger"], media: true },
+            { id: 76, date: "2019-08-15", time: "3:58 PM", sender: "Kara", phone: "(541) 232-0544", text: "Things that I regret horribly 1.going to your oz play in Salem ...think about it frequently... Georgia graduated today 2.your graduation... 💙 Not not being able to go see you ripped my heart out .. On both of these moments ..🙁 Omg Dillon my son if I could do things differently....I would", themes: ["georgia"], media: false },
+            { id: 77, date: "2019-09-03", time: "11:27 AM", sender: "Kara", phone: "(541) 232-0544", text: "Georgia first day school ...and Taylor will pick her up .. I remember your first day ....oh gosh I have all the pictures if you ever want some .....#lovemykids", themes: ["georgia"], media: true },
+            { id: 78, date: "2019-09-17", time: "9:47 AM", sender: "Kara", phone: "(541) 232-0544", text: "Hey Taylor bought me a ticket to go see snoop dog at Chinook rivers casino big buffet included...want me to get you a ticket 😳😏you'd have fun ..I'll interpret or,you can just gamble n eat ...please ....lots of single chicks ..FO SHIZZLE....pull the cute deaf man stuff 😆😆 Come on ..it's on oct 31 ...Kay might go too .... Come on it be epic cool", themes: ["food"], media: false },
+            { id: 79, date: "2019-09-20", time: "5:37 PM", sender: "Kara", phone: "(541) 232-0544", text: "Eat something GOOD...stay away from that 17 year old ..vagina voodoo nooo.. Come to casino .... you'll have fun ......🤔 Agian eat some good FUCKEN food", themes: ["food", "anger"], media: false },
+            { id: 80, date: "2019-09-26", time: "12:30 PM", sender: "Kara", phone: "(541) 232-0544", text: "Text me something anything ..I'm going to be done here ,your not being fair .just give me something anything...please son 😰😓 It's not like I have a car or alot money to come up there cause I don't ....your truly being an ass , disrespectful idk what anymore ..😭😭", themes: ["anger"], media: false },
+
+            // Apr 2021
+            { id: 81, date: "2021-04-13", time: "2:42 PM", sender: "Kara", phone: "(541) 232-0544", text: "Thinking of you ,hope your good son....", themes: [], media: false },
+
+            // Feb 2024 - Nov 2024
+            { id: 82, date: "2024-02-26", time: "6:43 PM", sender: "Kara", phone: "(541) 514-3587", text: "Happy birthday....hope all is well....mom loves you❤️", themes: ["birthday"], media: false },
+            { id: 83, date: "2024-03-29", time: "8:43 AM", sender: "Kara", phone: "(541) 514-3587", text: "Isn't time for you to give me a grandbaby!!! I've got grandbaby fever!! Don't kill a generation give me a babe pleeeease❤️❤️ whomever your partner is male or female I will love them if you don't have one ! It's time dude!! It's time to start loving instead of being such a sour puss!!! Seriously your so angry! Let's start over !!!", themes: ["anger"], media: false },
+            { id: 84, date: "2024-04-30", time: "12:19 PM", sender: "Kara", phone: "(541) 514-3587", text: "Seriously you better treat my sister YOUR OTHER MOM like gold ...are you kidding! it wasn't Cory n mark that raised you !! It was Kara and Kay!! And you will respect that!! The fuck shame on you!!;you would have no one and nothing if it wasn't for Kay and I!!! You better start being fucking nice dude I'm about done and will get in your face!! I'm your mother and Kay n I love you first asshole!!;. Swear I'm ready to get up in your face !! I am your mom I'm done with your victim bullshit act...I know where you are!!! You be fucking nice to my sister who helped me raise you we are old but did a fucking great job! You choose to be sour 😡", themes: ["blame", "threat", "anger"], media: false },
+            { id: 85, date: "2024-04-30", time: "12:24 PM", sender: "Kara", phone: "(541) 514-3587", text: "Fuck Cory n mark ..we fed and clothed you!! They just groomed and filled you with hate ..my bad should have never let them men around you😡you have been groomed by the most fucked up men to be like this!!! Google it! Prove me wrong! I'm done not saying anything\" I'm a strong women!!!\"", themes: ["blame", "anger"], media: false },
+            { id: 86, date: "2024-05-10", time: "8:17 AM", sender: "Kara", phone: "(541) 514-3587", text: "Ok it's mother's day !! Wish me or tell me to f off!...if I don't get a text I will show up and make you tell me to my face ... your choice kiddo!! Or should I take you to coffee at the airport cafe? I love you first born son !!", themes: ["birthday", "threat"], media: true },
+            { id: 87, date: "2024-11-27", time: "12:52 PM", sender: "Kara (sent under sister's name)", phone: "(541) 514-3587", text: "Happy Thanksgiving big brother ❤️I'm in 5 the grade now . Love you little sister Georgia", themes: ["georgia", "birthday"], media: false },
+            { id: 88, date: "2024-11-29", time: "3:15 PM", sender: "Kara (as Georgia)", phone: "(541) 514-3587", text: "Hey big brother,I don't think you will see this,but I love you and miss you,I have a picture of you and mom when you were a baby on our table framed.", themes: ["georgia"], media: false },
+
+            // Dec 2024 - Aug 2026
+            { id: 89, date: "2024-12-20", time: "6:16 AM", sender: "Kara", phone: "(541) 221-3027", text: "My new number son....wish you'd come down for Christmas dinner,I have gifts for you🥰 It's Mom", themes: ["food", "birthday"], media: false },
+            { id: 90, date: "2026-02-25", time: "5:17 AM", sender: "Kara", phone: "(541) 221-3027", text: "Happy birthday son ,I'm making bar b que meatballs thinking of you 😊 February 28 my first and only son 😊", themes: ["food", "birthday"], media: false },
+            { id: 91, date: "2026-02-28", time: "12:29 PM", sender: "Kara", phone: "(541) 221-3027", text: "Thinking of you ! Because I'm your Mom ❤️ And it's sweet n sour meatballs today 🥰 Come over for your birthday dinner 😊that would be the greatest thing for me 🥰 ..", themes: ["food", "birthday"], media: false },
+            { id: 92, date: "2026-08-03", time: "8:37 AM", sender: "Kara", phone: "(541) 221-3027", text: "Congratulations 🥰hope your living the best life son !", themes: [], media: false }
+        ];
+
+        // Theme Badges Config
+        const themeConfig = {
+            food: { label: "Food Fixation", bg: "bg-amber-100", text: "text-amber-800" },
+            georgia: { label: "Sister Georgia", bg: "bg-purple-100", text: "text-purple-800" },
+            blame: { label: "Blame Shifting", bg: "bg-rose-100", text: "text-rose-800" },
+            threat: { label: "Ultimatum / Threat", bg: "bg-red-100", text: "text-red-800" },
+            anger: { label: "Love / Rage Shift", bg: "bg-slate-200", text: "text-slate-800" },
+            birthday: { label: "Holiday / Birthday", bg: "bg-blue-100", text: "text-blue-800" }
+        };
+
+        // Initialize Chart.js
+        let freqChart;
+        function initChart() {
+            const ctx = document.getElementById('frequencyChart').getContext('2d');
+            
+            // Year counts logic
+            const yearCounts = {
+                '2011': 10,
+                '2012': 16,
+                '2013': 13,
+                '2014': 0,
+                '2015': 0,
+                '2016': 0,
+                '2017': 0,
+                '2018': 0,
+                '2019': 41,
+                '2020': 0,
+                '2021': 1,
+                '2022': 0,
+                '2023': 0,
+                '2024': 8,
+                '2025': 0,
+                '2026': 4
+            };
+
+            const labels = Object.keys(yearCounts);
+            const dataValues = Object.values(yearCounts);
+
+            freqChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Messages Sent per Year',
+                        data: dataValues,
+                        backgroundColor: labels.map(y => y === '2019' ? '#d97706' : (y === '2024' ? '#991b1b' : '#334155')),
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Messages: ${context.raw}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0, font: { size: 10 } },
+                            grid: { color: '#e7e3dc' }
+                        },
+                        x: {
+                            ticks: { font: { size: 10 } },
+                            grid: { display: false }
+                        }
+                    },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const year = labels[index];
+                            document.getElementById('yearSelect').value = year;
+                            applyFilters();
+                            document.getElementById('explorer').scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render Archive Message Stream
+        function renderMessages(messages) {
+            const container = document.getElementById('messagesList');
+            const visibleCountEl = document.getElementById('visibleCount');
+            visibleCountEl.innerText = messages.length;
+
+            if (messages.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center bg-stone-50 rounded-lg border border-bordercolor text-slate-500 text-xs">
+                        No text messages match your selected search criteria or filter tags.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = messages.map(m => {
+                const isDillon = m.sender === 'Dillon';
+                const bubbleBg = isDillon ? 'bg-rose-950 text-rose-100 border-rose-900' : 'bg-stone-50 text-slate-800 border-bordercolor';
+                const senderBadge = isDillon 
+                    ? '<span class="px-2 py-0.5 rounded bg-rose-800 text-rose-100 text-[10px] font-bold">Dillon (Recipient)</span>'
+                    : `<span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[10px] font-bold">${m.sender}</span>`;
+
+                const themePills = m.themes.map(t => {
+                    const cfg = themeConfig[t];
+                    return cfg ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold ${cfg.bg} ${cfg.text}">${cfg.label}</span>` : '';
+                }).join(' ');
+
+                const mediaBadge = m.media ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-100 text-emerald-800">📷 Media Attached</span>` : '';
+
+                return `
+                    <div class="p-4 rounded-lg border ${bubbleBg} transition-all space-y-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-black/5 pb-2">
+                            <div class="flex items-center space-x-2">
+                                ${senderBadge}
+                                <span class="font-mono text-[11px] text-slate-500">${m.date} • ${m.time}</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="font-mono text-[10px] text-slate-400">${m.phone}</span>
+                            </div>
+                        </div>
+                        <p class="text-xs sm:text-sm leading-relaxed font-sans whitespace-pre-wrap ${isDillon ? 'font-mono' : ''}">${escapeHtml(m.text)}</p>
+                        <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                            ${themePills}
+                            ${mediaBadge}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;")
+                       .replace(/</g, "&lt;")
+                       .replace(/>/g, "&gt;")
+                       .replace(/"/g, "&quot;")
+                       .replace(/'/g, "&#039;");
+        }
+
+        // Apply All Active Filters
+        function applyFilters() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const yearVal = document.getElementById('yearSelect').value;
+            const themeVal = document.getElementById('themeSelect').value;
+            const phoneVal = document.getElementById('phoneSelect').value;
+
+            const filtered = rawMessages.filter(m => {
+                // Search query
+                const matchesSearch = !searchVal || m.text.toLowerCase().includes(searchVal) || m.sender.toLowerCase().includes(searchVal);
+                
+                // Year query
+                const msgYear = m.date.substring(0, 4);
+                const matchesYear = yearVal === 'ALL' || msgYear === yearVal;
+
+                // Theme query
+                const matchesTheme = themeVal === 'ALL' || m.themes.includes(themeVal);
+
+                // Phone query
+                const matchesPhone = phoneVal === 'ALL' || m.phone === phoneVal;
+
+                return matchesSearch && matchesYear && matchesTheme && matchesPhone;
+            });
+
+            renderMessages(filtered);
+        }
+
+        // Quick Filter Trigger Functions
+        function filterByTheme(themeKey) {
+            document.getElementById('themeSelect').value = themeKey;
+            applyFilters();
+            document.getElementById('explorer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function filterByPhone(phoneNum) {
+            document.getElementById('phoneSelect').value = phoneNum;
+            applyFilters();
+            document.getElementById('explorer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function filterBySearch(term) {
+            document.getElementById('searchInput').value = term;
+            applyFilters();
+            document.getElementById('explorer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('yearSelect').value = 'ALL';
+            document.getElementById('themeSelect').value = 'ALL';
+            document.getElementById('phoneSelect').value = 'ALL';
+            applyFilters();
+        }
+
+        // DOM Loaded Init
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            renderMessages(rawMessages);
+        });
+    </script>
+</body>
+</html>

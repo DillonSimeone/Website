@@ -1,0 +1,312 @@
+{
+    "id": "clothing",
+    "title": "Clothing & Outfits",
+    "tags": [
+        {
+            "id": "shirt",
+            "label": "shirt",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "t-shirt",
+            "label": "t-shirt",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "crop_top",
+            "label": "crop top",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "sweater",
+            "label": "sweater",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "hoodie",
+            "label": "hoodie",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "jacket",
+            "label": "jacket",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "coat",
+            "label": "coat",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "dress",
+            "label": "dress",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "sundress",
+            "label": "sundress",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "wedding_dress",
+            "label": "wedding dress",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "strapless",
+            "label": "strapless",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "skirt",
+            "label": "skirt",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "miniskirt",
+            "label": "miniskirt",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "pleated_skirt",
+            "label": "pleated skirt",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "shorts",
+            "label": "shorts",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "jeans",
+            "label": "jeans",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "thighhighs",
+            "label": "thighhighs",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "pantyhose",
+            "label": "pantyhose",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "leggings",
+            "label": "leggings",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "bodysuit",
+            "label": "bodysuit",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "suit",
+            "label": "suit",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "armor",
+            "label": "armor",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "swimsuit",
+            "label": "swimsuit",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "bikini",
+            "label": "bikini",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "school_uniform",
+            "label": "school uniform",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "military_uniform",
+            "label": "military uniform",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "maid",
+            "label": "maid",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "leotard",
+            "label": "leotard",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "playboy_bunny",
+            "label": "playboy bunny",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "kimono",
+            "label": "kimono",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "yukata",
+            "label": "yukata",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "sailor_fuku",
+            "label": "sailor fuku",
+            "classes": []
+        },
+        {
+            "id": "turtleneck_sweater",
+            "label": "turtleneck",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "oversized_shirt",
+            "label": "oversized shirt",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "pajamas",
+            "label": "pajamas",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "garter_straps",
+            "label": "garter straps",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "pantyhose_under_shorts",
+            "label": "pantyhose under shorts",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "tank_top",
+            "label": "tank top",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "underwear",
+            "label": "underwear",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "lingerie",
+            "label": "lingerie",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "stockings",
+            "label": "stockings",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "fishnets",
+            "label": "fishnets",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "panties",
+            "label": "panties",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "bra",
+            "label": "bra",
+            "classes": [
+                "tag-popular"
+            ]
+        }
+    ]
+}

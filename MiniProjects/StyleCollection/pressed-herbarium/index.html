@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pressed Herbarium Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Mr+De+Haviland&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="herbarium-container">
+    <header class="herbarium-header">
+      <a href="../index.html" class="nav-back">← HUB HUB</a>
+      <h1 class="herbarium-title">Herbarium</h1>
+      <p class="herbarium-subtitle">PRESERVED BOTANICAL SPECIMENS & PARCHMENT SHEETS</p>
+    </header>
+
+    <!-- Main specimen sheets -->
+    <main class="herbarium-grid">
+      
+      <!-- Specimen Sheet 1 -->
+      <section class="specimen-sheet" data-genus="Acer rubrum" data-family="Sapindaceae" data-loc="Vermont Valley, USA">
+        <div class="specimen-vector">
+          <!-- Maple leaf style outline inside CSS -->
+          <div class="leaf-branch"></div>
+        </div>
+        <div class="botanical-label">
+          <div class="handwritten-title">Acer rubrum</div>
+          <div class="sheet-number">Sheet No. 042</div>
+        </div>
+      </section>
+
+      <!-- Specimen Sheet 2 -->
+      <section class="specimen-sheet" data-genus="Fern Adiantum" data-family="Pteridaceae" data-loc="Kyoto Foothills, JP">
+        <div class="specimen-vector">
+          <div class="fern-frond"></div>
+        </div>
+        <div class="botanical-label">
+          <div class="handwritten-title">Adiantum pedatum</div>
+          <div class="sheet-number">Sheet No. 089</div>
+        </div>
+      </section>
+
+      <!-- Specimen Sheet 3 -->
+      <section class="specimen-sheet" data-genus="Quercus alba" data-family="Fagaceae" data-loc="Bavarian Forest, DE">
+        <div class="specimen-vector">
+          <div class="oak-cluster"></div>
+        </div>
+        <div class="botanical-label">
+          <div class="handwritten-title">Quercus alba</div>
+          <div class="sheet-number">Sheet No. 115</div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Interactive info modal -->
+    <div class="botanical-modal" id="specimen-modal">
+      <div class="modal-content">
+        <span class="close-modal" id="btn-close-modal">×</span>
+        <h2 id="modal-genus">Genus Specimen</h2>
+        <table class="specimen-table">
+          <tr>
+            <td>FAMILY:</td>
+            <td id="modal-family">-</td>
+          </tr>
+          <tr>
+            <td>LOCATION:</td>
+            <td id="modal-loc">-</td>
+          </tr>
+          <tr>
+            <td>STATUS:</td>
+            <td>PRESERVED // DRIED</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

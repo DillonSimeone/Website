@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drill to Haptics Laser QR Codes (xTool F1 Layout)</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+  
+  <!-- Libraries: QRCode.js & JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  
+  <!-- External CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-title">
+      <h1>Drill to Haptics - Laser Cut QR Tags</h1>
+      <div class="info">xTool F1 Grid Layout • 30mm x 40mm Tags</div>
+    </div>
+    <div class="controls">
+      <button class="btn-primary" onclick="exportZipSVG()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        EXPORT ALL WORKSPACES (.ZIP)
+      </button>
+    </div>
+  </header>
+
+  <div class="workspaces-container" id="workspaces-root">
+    <!-- Workspaces dynamically generated here -->
+  </div>
+
+  <!-- Kit Configuration -->
+  <script>
+    window.KIT_CONFIG = {
+      bomUrl: "https://dillonsimeone.com/Projects/Haxel/drill_to_haptics_bom.html",
+      totalTags: 12,
+      tagsPerWorkspace: 6,
+      instructionText: "Drill Haptics Kit\n0.75A Current Limiter\nPD 12V/20V Input\nControl+H Hackerspace",
+      tagPrefix: "DRILL",
+      zipFilename: "HAXEL_DrillToHaptics_Laser_xTool_Package.zip"
+    };
+  </script>
+
+  <!-- External Script -->
+  <script src="script.js"></script>
+</body>
+</html>
