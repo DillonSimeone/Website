@@ -11,14 +11,16 @@
 #include <Preferences.h>
 
 // ============================================================
-//  DeafDoorbell — Master Node (Refactored & Hardened Firmware)
-//  - 32-bit I2S audio with 6-buffer DMA depth (prevents dropouts)
-//  - IIR DC-blocking filter (cuts <80Hz rumble & 60Hz hum)
-//  - Multi-chunk acoustic debounce (rejects transient pops/clicks)
-//  - Single-color 4-packet burst (eliminates follower red-flicker bug)
-//  - Real-time audio-reactive LED feedback for mic positioning
-//  - Zero-heap-allocation JSON endpoints for rock-solid stability
-//  - Over-The-Air (OTA) Updates & ESP-NOW Traffic Inspector
+//  DeafDoorbell — Master Node (Hardened Firmware v2.0)
+//  - 32-bit I2S audio with DMA backlog drain & bit-slip guard
+//  - Strict acoustic debounce with zero-leaky reset & cooldown isolation
+//  - Peak-envelope tracking for UI graph (eliminates sub-threshold illusion)
+//  - 24-Hour continuous audio history timeline (1440 points in RAM ring buffer)
+//  - Trigger History Log with circular overwrite of oldest entries
+//  - Non-blocking ESP-NOW traffic inspector with safe age formatting
+//  - Single-color 4-packet burst (guaranteed RF delivery)
+//  - Zero-heap chunked JSON endpoints for 24h & trigger logs
+//  - Over-The-Air (OTA) Updates & Captive Portal
 // ============================================================
 
 #define DEBUG_ENABLED
@@ -47,6 +49,7 @@
 #define SAMPLE_RATE     16000
 #define SAMPLES         128 // Rolling window for level calculation
 #define CHUNK_SIZE      64  // 4ms read window (64 samples @ 16kHz)
+#define MAX_PLAUSIBLE_MAD 120000.0f // Filter rail-to-rail DMA bit-slips
 
 // ===== ESP-NOW PROTOCOL (Must match Follower struct exactly) =====
 uint8_t broadcastAddr[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -59,7 +62,7 @@ typedef struct {
     uint8_t  b;             // LED color — Blue
 } __attribute__((packed)) DoorbellMsg;
 
-// ===== ESP-NOW TRAFFIC MONITORING LOG =====
+// ===== ESP-NOW TRAFFIC MONITORING LOG (Circular Buffer) =====
 struct EspNowLogEntry {
     uint8_t  mac[6];
     uint8_t  len;
@@ -68,7 +71,7 @@ struct EspNowLogEntry {
     bool     isDoorbell;
 };
 
-#define MAX_ESPNOW_LOGS 30
+#define MAX_ESPNOW_LOGS 40
 EspNowLogEntry espNowLog[MAX_ESPNOW_LOGS];
 int espNowLogHead = 0;
 int espNowLogCount = 0;
@@ -76,9 +79,38 @@ uint32_t totalEspNowPackets = 0;
 uint32_t validDoorbellPackets = 0;
 uint32_t unknownPackets = 0;
 
+// ===== TRIGGER HISTORY LOG (Circular Buffer) =====
+#define MAX_TRIGGER_LOGS 40
+struct TriggerLogEntry {
+    uint32_t timestampMs;
+    uint16_t peakMad;
+    uint16_t threshold;
+    uint8_t  r;
+    uint8_t  g;
+    uint8_t  b;
+    bool     isTest;
+};
+TriggerLogEntry triggerLog[MAX_TRIGGER_LOGS];
+int triggerLogHead = 0;
+int triggerLogCount = 0;
+uint32_t totalTriggerCount = 0;
+
+// ===== 24-HOUR AUDIO HISTORY (1-Minute Buckets = 1440 Points) =====
+#define HISTORY_24H_POINTS 1440
+struct HistoryEntry {
+    uint16_t peakMad;
+    uint8_t  triggers;
+};
+HistoryEntry history24h[HISTORY_24H_POINTS];
+int historyHead = 0;
+int historyCount = 0;
+unsigned long lastHistoryBucketMs = 0;
+uint16_t currentBucketPeakMad = 0;
+uint8_t  currentBucketTriggers = 0;
+
 // ===== WIFI & NETWORK CONFIGURATION =====
-const char* AP_SSID      = "MayanSusanDoorbell";
-const char* AP_PASS      = "shrek!1234";
+const char* AP_SSID       = "MayanSusanDoorbell";
+const char* AP_PASS       = "shrek!1234";
 const char* HOSTNAME_MDNS = "deafdoorbell";
 
 // ===== CONFIGURABLE STATE (NVS-backed) =====
@@ -95,9 +127,11 @@ float   motorSmooth = 0.35f;
 
 // ===== AUDIO FILTER & RUNTIME STATE =====
 float rawSamples[SAMPLES] = {0.0f};
-float currentMAD  = 0.0f;
-float levelLP     = 0.0f;
-bool  uiTriggered = false;
+float currentMAD         = 0.0f;
+float peakMADSincePoll   = 0.0f;
+float lastTriggerMAD     = 0.0f;
+float levelLP            = 0.0f;
+bool  uiTriggered        = false;
 
 // DC-blocking filter state
 float lastInputSample  = 0.0f;
@@ -202,7 +236,7 @@ void setupI2S() {
 }
 
 // ============================================================
-//  ESP-NOW Setup & Traffic Logging
+//  ESP-NOW Setup & Traffic Logging (Fast & Non-Blocking)
 // ============================================================
 void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len) {
     totalEspNowPackets++;
@@ -230,15 +264,10 @@ void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len) {
         unknownPackets++;
     }
 
+    // Circular overwrite: oldest entry is overwritten when buffer is full
     espNowLog[espNowLogHead] = entry;
     espNowLogHead = (espNowLogHead + 1) % MAX_ESPNOW_LOGS;
     if (espNowLogCount < MAX_ESPNOW_LOGS) espNowLogCount++;
-
-    #ifdef DEBUG_ENABLED
-    DEBUG_PRINTF("[ESP-NOW REC] Len: %d | MAC: %02X:%02X:%02X:%02X:%02X:%02X | %s\n",
-        len, entry.mac[0], entry.mac[1], entry.mac[2], entry.mac[3], entry.mac[4], entry.mac[5],
-        entry.isDoorbell ? "DOORBELL MSG (0x01)" : "OTHER ESPNOW");
-    #endif
 }
 
 void setupESPNow() {
@@ -258,6 +287,44 @@ void setupESPNow() {
 
     if (esp_now_add_peer(&peerInfo) != ESP_OK) {
         DEBUG_PRINTLN("Failed to add broadcast peer");
+    }
+}
+
+// ============================================================
+//  Trigger History Logging (Circular Buffer)
+// ============================================================
+void recordTrigger(float mad, bool isTest) {
+    TriggerLogEntry entry;
+    entry.timestampMs = millis();
+    entry.peakMad     = (uint16_t)min((float)65535, mad);
+    entry.threshold   = (uint16_t)min(65535, threshold);
+    entry.r           = activeAlertMsg.r;
+    entry.g           = activeAlertMsg.g;
+    entry.b           = activeAlertMsg.b;
+    entry.isTest      = isTest;
+
+    triggerLog[triggerLogHead] = entry;
+    triggerLogHead = (triggerLogHead + 1) % MAX_TRIGGER_LOGS;
+    if (triggerLogCount < MAX_TRIGGER_LOGS) triggerLogCount++;
+    totalTriggerCount++;
+
+    currentBucketTriggers++;
+}
+
+// ============================================================
+//  24-Hour History Timeline Service (1-minute buckets)
+// ============================================================
+void serviceHistory24h(unsigned long now) {
+    if (lastHistoryBucketMs == 0) lastHistoryBucketMs = now;
+    if (now - lastHistoryBucketMs >= 60000) { // 60s bucket
+        history24h[historyHead].peakMad  = currentBucketPeakMad;
+        history24h[historyHead].triggers = currentBucketTriggers;
+        historyHead = (historyHead + 1) % HISTORY_24H_POINTS;
+        if (historyCount < HISTORY_24H_POINTS) historyCount++;
+
+        currentBucketPeakMad = (uint16_t)min((float)65535, currentMAD);
+        currentBucketTriggers = 0;
+        lastHistoryBucketMs = now;
     }
 }
 
@@ -282,14 +349,18 @@ void triggerAlert(bool isTest = false) {
     activeAlertMsg.g = (uint8_t)(g * bScale);
     activeAlertMsg.b = (uint8_t)(b * bScale);
 
+    // Record to persistent trigger history log
+    recordTrigger(isTest ? 0.0f : lastTriggerMAD, isTest);
+
     // Schedule a 4-packet burst spaced 10ms apart to guarantee RF delivery
     burstPacketsRemaining = 4;
     nextBurstPacketMs = millis();
     alertCooldownUntilMs = millis() + (unsigned long)duration;
     uiTriggered = true;
 
-    DEBUG_PRINTF(">>> ALERT FIRED! Duration: %dms | Color: #%02X%02X%02X\n",
-                 activeAlertMsg.durationMs, activeAlertMsg.r, activeAlertMsg.g, activeAlertMsg.b);
+    DEBUG_PRINTF(">>> ALERT FIRED! Duration: %dms | Color: #%02X%02X%02X | MAD: %.0f\n",
+                 activeAlertMsg.durationMs, activeAlertMsg.r, activeAlertMsg.g, activeAlertMsg.b,
+                 isTest ? 0.0f : lastTriggerMAD);
 }
 
 void serviceAlertBursts() {
@@ -390,6 +461,7 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 8px;
     }
     label { display: block; margin-bottom: 6px; font-size: 0.85em; color: var(--text-dim); }
     input[type=range] {
@@ -504,9 +576,26 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       border: 1px solid var(--border);
     }
     .btn-sm {
-      padding: 6px 12px;
+      padding: 5px 10px;
       font-size: 0.75em;
       border-radius: 6px;
+    }
+    .view-btn {
+      padding: 4px 10px;
+      font-size: 0.75em;
+      border-radius: 6px;
+      background: #21262d;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .view-btn.active {
+      background: linear-gradient(135deg, #00d2ff, #007aff);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 2px 10px rgba(0, 210, 255, 0.4);
     }
     .net-info {
       font-size: 0.8em;
@@ -539,9 +628,9 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       display: block;
     }
 
-    /* ESP-NOW Monitor Table */
+    /* Tables & Log Styling */
     .log-table-wrap {
-      max-height: 200px;
+      max-height: 210px;
       overflow-y: auto;
       margin-top: 10px;
       border: 1px solid var(--border);
@@ -574,26 +663,41 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
     }
     .badge-ok { background: rgba(63,185,80,0.2); color: var(--success); }
     .badge-warn { background: rgba(255,77,77,0.2); color: var(--warn); }
+    .badge-party { background: rgba(255,0,127,0.2); color: #ff007f; }
+    .badge-info { background: rgba(0,210,255,0.2); color: var(--accent); }
+    .color-swatch {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.4);
+      vertical-align: middle;
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>DeafDoorbell</h1>
-      <div class="subtitle">Ultra-Responsive Master Node & Traffic Monitor</div>
+      <div class="subtitle">Ultra-Responsive Master Node & 24h Audio Telemetry</div>
     </header>
 
-    <!-- Sound History Graph -->
+    <!-- Sound History Graph with 24h Timeline Toggle -->
     <div class="card" id="graphCard">
       <div class="card-title">
         <span>Sound History Graph</span>
-        <span class="val-display" id="graphCurrentMad">MAD: 0</span>
+        <div style="display:flex; gap:6px;">
+          <button id="btnViewLive" class="view-btn active" onclick="setGraphView('live')">Live (60s)</button>
+          <button id="btnView24h" class="view-btn" onclick="setGraphView('24h')">24h Timeline</button>
+        </div>
+        <span class="val-display" id="graphCurrentMad" style="font-size:0.9em;">MAD: 0</span>
       </div>
       <div class="graph-container">
         <canvas id="soundCanvas" width="480" height="190"></canvas>
       </div>
       <div style="display: flex; justify-content: space-between; font-size: 0.75em; color: var(--text-dim); margin-top: 6px;">
-        <span>X: Time Stamps</span>
+        <span id="graphXLabel">X: Time Stamps</span>
         <span>Y: MAD Level | Gold Line: Threshold</span>
       </div>
     </div>
@@ -611,6 +715,37 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       <div style="display: flex; justify-content: space-between; font-size: 0.75em; color: var(--text-dim);">
         <span>Silence</span>
         <span>Peak / Chime</span>
+      </div>
+    </div>
+
+    <!-- Trigger History Log (New Div displaying past triggers with circular overwrite) -->
+    <div class="card" id="triggerCard">
+      <div class="card-title">
+        <span>Trigger History Log</span>
+        <span class="badge badge-ok" id="triggerCountBadge">0 Recorded</span>
+      </div>
+      <div style="font-size: 0.8em; color: var(--text-dim);">
+        Chronological log of recent alerts (Max 40 &bull; Oldest auto-overwritten)
+      </div>
+      <div class="log-table-wrap" style="max-height: 200px;">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Peak Audio</th>
+              <th>Threshold</th>
+              <th>Color</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="triggerLogBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No alerts triggered yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+        <button class="btn-test btn-sm" onclick="fetchTriggerLog()" style="flex:0; width:auto;">Refresh</button>
+        <button class="btn-test btn-sm" onclick="clearTriggerLog()" style="flex:0; width:auto;">Clear History</button>
       </div>
     </div>
 
@@ -728,6 +863,9 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
 
   <script>
     let initialized = false;
+    let graphView = 'live'; // 'live' or '24h'
+    let history24hPoints = [];
+    let last24hFetchMs = 0;
 
     // --- Sound History Graph Data & Engine ---
     const MAX_GRAPH_POINTS = 50;
@@ -736,6 +874,27 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
     function getTimeStamp() {
       const now = new Date();
       return now.toTimeString().split(' ')[0];
+    }
+
+    function formatAge(sec) {
+      if (sec < 60) return sec + 's ago';
+      const min = Math.floor(sec / 60);
+      if (min < 60) return min + 'm ago';
+      const hr = Math.floor(min / 60);
+      const remMin = min % 60;
+      return hr + 'h ' + remMin + 'm ago';
+    }
+
+    function setGraphView(view) {
+      graphView = view;
+      document.getElementById('btnViewLive').classList.toggle('active', view === 'live');
+      document.getElementById('btnView24h').classList.toggle('active', view === '24h');
+      document.getElementById('graphXLabel').innerText = (view === 'live') ? 'X: Real-Time Audio (Last 60s)' : 'X: 24-Hour Timeline (Minutes Ago)';
+      if (view === '24h') {
+        fetch24hHistory();
+      } else {
+        renderSoundGraph();
+      }
     }
 
     function renderSoundGraph() {
@@ -756,109 +915,226 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       ctx.fillStyle = '#0f141c';
       ctx.fillRect(0, 0, w, h);
 
-      if (historyBuffer.length === 0) return;
+      if (graphView === 'live') {
+        if (historyBuffer.length === 0) return;
 
-      // Calculate Y max scale
-      let maxMad = 10000;
-      for (const p of historyBuffer) {
-        if (p.mad > maxMad) maxMad = p.mad;
-        if (p.threshold > maxMad) maxMad = p.threshold;
-      }
-      maxMad = Math.ceil(maxMad / 5000) * 5000;
+        let maxMad = 10000;
+        for (const p of historyBuffer) {
+          if (p.mad > maxMad) maxMad = p.mad;
+          if (p.threshold > maxMad) maxMad = p.threshold;
+        }
+        maxMad = Math.ceil(maxMad / 5000) * 5000;
 
-      // Grid lines & Y Axis Labels
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
-      ctx.fillStyle = '#8b949e';
-      ctx.font = '10px -apple-system, sans-serif';
-      ctx.textAlign = 'right';
+        // Grid lines & Y Axis Labels
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '10px -apple-system, sans-serif';
+        ctx.textAlign = 'right';
 
-      const ySteps = 4;
-      for (let i = 0; i <= ySteps; i++) {
-        const val = (maxMad / ySteps) * i;
-        const y = h - pBottom - (plotH * (i / ySteps));
-        
+        const ySteps = 4;
+        for (let i = 0; i <= ySteps; i++) {
+          const val = (maxMad / ySteps) * i;
+          const y = h - pBottom - (plotH * (i / ySteps));
+          ctx.beginPath();
+          ctx.moveTo(pLeft, y);
+          ctx.lineTo(w - pRight, y);
+          ctx.stroke();
+
+          let label = val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val;
+          ctx.fillText(label, pLeft - 6, y + 3);
+        }
+
+        // X Axis Labels (Timestamps)
+        ctx.textAlign = 'center';
+        const pointCount = historyBuffer.length;
+        const stepX = plotW / Math.max(1, pointCount - 1);
+        const labelInterval = Math.max(1, Math.floor(pointCount / 5));
+        for (let i = 0; i < pointCount; i += labelInterval) {
+          const x = pLeft + (i * stepX);
+          ctx.fillText(historyBuffer[i].time, x, h - 10);
+        }
+
+        // Draw Threshold Line (Dashed Gold)
+        const currentThresh = historyBuffer[historyBuffer.length - 1].threshold;
+        const threshY = h - pBottom - (plotH * Math.min(1.0, currentThresh / maxMad));
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(pLeft, y);
-        ctx.lineTo(w - pRight, y);
+        ctx.moveTo(pLeft, threshY);
+        ctx.lineTo(w - pRight, threshY);
         ctx.stroke();
+        ctx.restore();
 
-        let label = val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val;
-        ctx.fillText(label, pLeft - 6, y + 3);
-      }
+        // Draw MAD Filled Gradient Area & Curve
+        const fillGrad = ctx.createLinearGradient(0, pTop, 0, h - pBottom);
+        fillGrad.addColorStop(0, 'rgba(0, 210, 255, 0.45)');
+        fillGrad.addColorStop(0.6, 'rgba(168, 85, 247, 0.25)');
+        fillGrad.addColorStop(1, 'rgba(15, 20, 28, 0.0)');
 
-      // X Axis Labels (Timestamps)
-      ctx.textAlign = 'center';
-      const pointCount = historyBuffer.length;
-      const stepX = plotW / Math.max(1, pointCount - 1);
-      
-      const labelInterval = Math.max(1, Math.floor(pointCount / 5));
-      for (let i = 0; i < pointCount; i += labelInterval) {
-        const x = pLeft + (i * stepX);
-        ctx.fillText(historyBuffer[i].time, x, h - 10);
-      }
-
-      // Draw Threshold Line (Dashed Gold)
-      const currentThresh = historyBuffer[historyBuffer.length - 1].threshold;
-      const threshY = h - pBottom - (plotH * Math.min(1.0, currentThresh / maxMad));
-      ctx.save();
-      ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = '#eab308';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(pLeft, threshY);
-      ctx.lineTo(w - pRight, threshY);
-      ctx.stroke();
-      ctx.restore();
-
-      // Draw MAD Filled Gradient Area & Curve
-      const fillGrad = ctx.createLinearGradient(0, pTop, 0, h - pBottom);
-      fillGrad.addColorStop(0, 'rgba(0, 210, 255, 0.45)');
-      fillGrad.addColorStop(0.6, 'rgba(168, 85, 247, 0.25)');
-      fillGrad.addColorStop(1, 'rgba(15, 20, 28, 0.0)');
-
-      ctx.beginPath();
-      ctx.moveTo(pLeft, h - pBottom);
-
-      for (let i = 0; i < pointCount; i++) {
-        const x = pLeft + (i * stepX);
-        const yRatio = Math.min(1.0, historyBuffer[i].mad / maxMad);
-        const y = h - pBottom - (plotH * yRatio);
-        if (i === 0) ctx.lineTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-
-      ctx.lineTo(pLeft + ((pointCount - 1) * stepX), h - pBottom);
-      ctx.closePath();
-      ctx.fillStyle = fillGrad;
-      ctx.fill();
-
-      // Draw Line Path
-      ctx.beginPath();
-      for (let i = 0; i < pointCount; i++) {
-        const x = pLeft + (i * stepX);
-        const yRatio = Math.min(1.0, historyBuffer[i].mad / maxMad);
-        const y = h - pBottom - (plotH * yRatio);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.strokeStyle = '#00d2ff';
-      ctx.lineWidth = 2.2;
-      ctx.stroke();
-
-      // Draw Trigger Glow Markers
-      for (let i = 0; i < pointCount; i++) {
-        if (historyBuffer[i].triggered || historyBuffer[i].mad >= historyBuffer[i].threshold) {
+        ctx.beginPath();
+        ctx.moveTo(pLeft, h - pBottom);
+        for (let i = 0; i < pointCount; i++) {
           const x = pLeft + (i * stepX);
           const yRatio = Math.min(1.0, historyBuffer[i].mad / maxMad);
           const y = h - pBottom - (plotH * yRatio);
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(pLeft + ((pointCount - 1) * stepX), h - pBottom);
+        ctx.closePath();
+        ctx.fillStyle = fillGrad;
+        ctx.fill();
 
+        // Draw Line Path
+        ctx.beginPath();
+        for (let i = 0; i < pointCount; i++) {
+          const x = pLeft + (i * stepX);
+          const yRatio = Math.min(1.0, historyBuffer[i].mad / maxMad);
+          const y = h - pBottom - (plotH * yRatio);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#00d2ff';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        // Draw Trigger Glow Markers
+        for (let i = 0; i < pointCount; i++) {
+          if (historyBuffer[i].triggered || historyBuffer[i].mad >= historyBuffer[i].threshold) {
+            const x = pLeft + (i * stepX);
+            const yRatio = Math.min(1.0, historyBuffer[i].mad / maxMad);
+            const y = h - pBottom - (plotH * yRatio);
+
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff007f';
+            ctx.shadowColor = '#ff007f';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        }
+      } else {
+        // --- 24-Hour Timeline Rendering ---
+        let currentThresh = parseInt(document.getElementById('threshSlider').value) || 2500;
+        let maxMad = Math.max(10000, currentThresh);
+        for (const pt of history24hPoints) {
+          const pVal = pt[1];
+          if (pVal > maxMad) maxMad = pVal;
+        }
+        maxMad = Math.ceil(maxMad / 5000) * 5000;
+
+        // Grid lines & Y Axis Labels
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '10px -apple-system, sans-serif';
+        ctx.textAlign = 'right';
+
+        const ySteps = 4;
+        for (let i = 0; i <= ySteps; i++) {
+          const val = (maxMad / ySteps) * i;
+          const y = h - pBottom - (plotH * (i / ySteps));
           ctx.beginPath();
-          ctx.arc(x, y, 4.5, 0, Math.PI * 2);
-          ctx.fillStyle = '#ff007f';
-          ctx.shadowColor = '#ff007f';
-          ctx.shadowBlur = 10;
-          ctx.fill();
-          ctx.shadowBlur = 0;
+          ctx.moveTo(pLeft, y);
+          ctx.lineTo(w - pRight, y);
+          ctx.stroke();
+
+          let label = val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val;
+          ctx.fillText(label, pLeft - 6, y + 3);
+        }
+
+        // 24h Timeline X Labels
+        ctx.textAlign = 'center';
+        const xTicks = [
+          { label: '24h ago', frac: 0.0 },
+          { label: '18h ago', frac: 0.25 },
+          { label: '12h ago', frac: 0.50 },
+          { label: '6h ago',  frac: 0.75 },
+          { label: 'Now',     frac: 1.0 }
+        ];
+        xTicks.forEach(t => {
+          const x = pLeft + (t.frac * plotW);
+          ctx.fillText(t.label, x, h - 10);
+        });
+
+        // Threshold line
+        const threshY = h - pBottom - (plotH * Math.min(1.0, currentThresh / maxMad));
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(pLeft, threshY);
+        ctx.lineTo(w - pRight, threshY);
+        ctx.stroke();
+        ctx.restore();
+
+        if (history24hPoints.length === 0) {
+          ctx.fillStyle = '#8b949e';
+          ctx.textAlign = 'center';
+          ctx.fillText('Collecting 24-hour audio history... Check back shortly.', w / 2, h / 2);
+          return;
+        }
+
+        // Draw 24-hour peak envelope
+        const fillGrad = ctx.createLinearGradient(0, pTop, 0, h - pBottom);
+        fillGrad.addColorStop(0, 'rgba(0, 210, 255, 0.40)');
+        fillGrad.addColorStop(0.6, 'rgba(168, 85, 247, 0.20)');
+        fillGrad.addColorStop(1, 'rgba(15, 20, 28, 0.0)');
+
+        const count = history24hPoints.length;
+        const totalSpan = 1440; // 1440 minutes in 24h
+
+        ctx.beginPath();
+        ctx.moveTo(pLeft, h - pBottom);
+        for (let i = 0; i < count; i++) {
+          const minsAgo = history24hPoints[i][0];
+          const peakVal = history24hPoints[i][1];
+          // minsAgo = 0 is Now (right edge), minsAgo = 1440 is 24h ago (left edge)
+          const fracX = Math.max(0, Math.min(1.0, (1440 - minsAgo) / totalSpan));
+          const x = pLeft + (fracX * plotW);
+          const y = h - pBottom - (plotH * Math.min(1.0, peakVal / maxMad));
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(w - pRight, h - pBottom);
+        ctx.closePath();
+        ctx.fillStyle = fillGrad;
+        ctx.fill();
+
+        // Draw Line
+        ctx.beginPath();
+        for (let i = 0; i < count; i++) {
+          const minsAgo = history24hPoints[i][0];
+          const peakVal = history24hPoints[i][1];
+          const fracX = Math.max(0, Math.min(1.0, (1440 - minsAgo) / totalSpan));
+          const x = pLeft + (fracX * plotW);
+          const y = h - pBottom - (plotH * Math.min(1.0, peakVal / maxMad));
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#00d2ff';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        // Draw 24h Trigger Glow Markers
+        for (let i = 0; i < count; i++) {
+          const minsAgo = history24hPoints[i][0];
+          const peakVal = history24hPoints[i][1];
+          const trigs   = history24hPoints[i][2];
+          if (trigs > 0 || peakVal >= currentThresh) {
+            const fracX = Math.max(0, Math.min(1.0, (1440 - minsAgo) / totalSpan));
+            const x = pLeft + (fracX * plotW);
+            const y = h - pBottom - (plotH * Math.min(1.0, peakVal / maxMad));
+
+            ctx.beginPath();
+            ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff007f';
+            ctx.shadowColor = '#ff007f';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
         }
       }
     }
@@ -867,6 +1143,77 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       const t = parseInt(document.getElementById('threshSlider').value);
       const pct = Math.min(100, (t / 30000) * 100);
       document.getElementById('threshLine').style.left = pct + '%';
+      if (graphView === '24h') renderSoundGraph();
+    }
+
+    function fetch24hHistory() {
+      fetch('/history').then(r => r.json()).then(d => {
+        history24hPoints = d.points || [];
+        renderSoundGraph();
+        last24hFetchMs = Date.now();
+      }).catch(() => {});
+    }
+
+    function fetchTriggerLog() {
+      fetch('/triggers').then(r => r.json()).then(d => {
+        const total = d.total || 0;
+        document.getElementById('triggerCountBadge').innerText = total + ' Recorded';
+        const tbody = document.getElementById('triggerLogBody');
+        if (!d.triggers || d.triggers.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No alerts triggered yet</td></tr>';
+          return;
+        }
+
+        let html = '';
+        d.triggers.forEach(t => {
+          const badgeClass = t.isTest ? 'badge-info' : 'badge-party';
+          const badgeText = t.isTest ? 'MANUAL TEST' : 'DOORBELL CHIME';
+          html += `<tr>
+            <td>${formatAge(t.ageSec)}</td>
+            <td><strong>${t.mad}</strong></td>
+            <td style="color:var(--text-dim);">${t.thresh}</td>
+            <td><span class="color-swatch" style="background:${t.color};"></span><code>${t.color}</code></td>
+            <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+          </tr>`;
+        });
+        tbody.innerHTML = html;
+      }).catch(() => {});
+    }
+
+    function clearTriggerLog() {
+      fetch('/triggers/clear').then(() => fetchTriggerLog());
+    }
+
+    function fetchEspNowLog() {
+      fetch('/espnow').then(r => r.json()).then(d => {
+        document.getElementById('espTotal').innerText = d.total;
+        document.getElementById('espValid').innerText = d.doorbell;
+        document.getElementById('espUnknown').innerText = d.unknown;
+
+        const tbody = document.getElementById('espLogBody');
+        if (!d.logs || d.logs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No ESP-NOW packets logged yet</td></tr>';
+          return;
+        }
+
+        let html = '';
+        d.logs.forEach(l => {
+          const badgeClass = l.isDoorbell ? 'badge-ok' : 'badge-warn';
+          const badgeText = l.isDoorbell ? 'DOORBELL 0x01' : 'OTHER ESPNOW';
+          html += `<tr>
+            <td>${formatAge(l.timeAgoSec)}</td>
+            <td><code>${l.mac}</code></td>
+            <td>${l.len} B</td>
+            <td><code>${l.payload}</code></td>
+            <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+          </tr>`;
+        });
+        tbody.innerHTML = html;
+      }).catch(() => {});
+    }
+
+    function clearEspNowLog() {
+      fetch('/espnow/clear').then(() => fetchEspNowLog());
     }
 
     function pollData() {
@@ -887,7 +1234,12 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         if (historyBuffer.length > MAX_GRAPH_POINTS) {
           historyBuffer.shift();
         }
-        renderSoundGraph();
+
+        if (graphView === 'live') {
+          renderSoundGraph();
+        } else if (Date.now() - last24hFetchMs > 30000) {
+          fetch24hHistory();
+        }
 
         if (d.espTotal !== undefined) {
           document.getElementById('espTotal').innerText = d.espTotal;
@@ -906,47 +1258,18 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
           document.getElementById('colorPicker').value = d.color;
           updateThreshLine();
           fetchEspNowLog();
+          fetchTriggerLog();
           initialized = true;
         }
 
         if (d.triggered) {
           document.getElementById('liveCard').classList.add('triggered-flash');
           setTimeout(() => document.getElementById('liveCard').classList.remove('triggered-flash'), 400);
+          fetchTriggerLog(); // Immediately display new trigger in the table
+          if (graphView === '24h') fetch24hHistory();
         }
       }).catch(() => {});
       setTimeout(pollData, 120);
-    }
-
-    function fetchEspNowLog() {
-      fetch('/espnow').then(r => r.json()).then(d => {
-        document.getElementById('espTotal').innerText = d.total;
-        document.getElementById('espValid').innerText = d.doorbell;
-        document.getElementById('espUnknown').innerText = d.unknown;
-
-        const tbody = document.getElementById('espLogBody');
-        if (!d.logs || d.logs.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No ESP-NOW packets logged yet</td></tr>';
-          return;
-        }
-
-        let html = '';
-        d.logs.forEach(l => {
-          const badgeClass = l.isDoorbell ? 'badge-ok' : 'badge-warn';
-          const badgeText = l.isDoorbell ? 'DOORBELL 0x01' : 'OTHER ESPNOW';
-          html += `<tr>
-            <td>${l.timeAgoSec}s ago</td>
-            <td><code>${l.mac}</code></td>
-            <td>${l.len} B</td>
-            <td><code>${l.payload}</code></td>
-            <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-          </tr>`;
-        });
-        tbody.innerHTML = html;
-      }).catch(() => {});
-    }
-
-    function clearEspNowLog() {
-      fetch('/espnow/clear').then(() => fetchEspNowLog());
     }
 
     function togglePartyMode(checked) {
@@ -1061,10 +1384,14 @@ void handleData() {
     char colorHex[8];
     colorToHexBuf(colorHex, sizeof(colorHex), colorR, colorG, colorB);
 
+    // Report peak audio level observed since last poll interval so spikes are never missed
+    float reportedMad = max(currentMAD, peakMADSincePoll);
+    peakMADSincePoll = currentMAD; // Reset peak tracking
+
     char jsonBuf[384];
     snprintf(jsonBuf, sizeof(jsonBuf),
         "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"triggered\":%s,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u}",
-        currentMAD,
+        reportedMad,
         levelLP,
         threshold,
         duration,
@@ -1080,6 +1407,67 @@ void handleData() {
     uiTriggered = false;
 }
 
+// 24-Hour continuous audio history streaming
+void handleHistory() {
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "application/json", "{\"points\":[");
+
+    int startIdx = (historyHead - historyCount + HISTORY_24H_POINTS) % HISTORY_24H_POINTS;
+    char ptBuf[32];
+    for (int i = 0; i < historyCount; i++) {
+        int idx = (startIdx + i) % HISTORY_24H_POINTS;
+        int minsAgo = historyCount - 1 - i;
+        snprintf(ptBuf, sizeof(ptBuf), "%s[%d,%u,%u]",
+                 (i > 0) ? "," : "",
+                 minsAgo,
+                 history24h[idx].peakMad,
+                 history24h[idx].triggers);
+        server.sendContent(ptBuf);
+    }
+    server.sendContent("]}");
+}
+
+// Trigger history log streaming
+void handleTriggers() {
+    unsigned long now = millis();
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "application/json", "{\"total\":");
+
+    char headerBuf[64];
+    snprintf(headerBuf, sizeof(headerBuf), "%u,\"triggers\":[", totalTriggerCount);
+    server.sendContent(headerBuf);
+
+    for (int i = 0; i < triggerLogCount; i++) {
+        int idx = (triggerLogHead - 1 - i + MAX_TRIGGER_LOGS) % MAX_TRIGGER_LOGS;
+        TriggerLogEntry &t = triggerLog[idx];
+
+        uint32_t ageSec = (now >= t.timestampMs) ? ((now - t.timestampMs) / 1000) : 0;
+        char hexCol[8];
+        colorToHexBuf(hexCol, sizeof(hexCol), t.r, t.g, t.b);
+
+        char entryBuf[128];
+        snprintf(entryBuf, sizeof(entryBuf),
+                 "%s{\"ageSec\":%u,\"mad\":%u,\"thresh\":%u,\"color\":\"%s\",\"isTest\":%s}",
+                 (i > 0) ? "," : "",
+                 ageSec,
+                 t.peakMad,
+                 t.threshold,
+                 hexCol,
+                 t.isTest ? "true" : "false");
+        server.sendContent(entryBuf);
+    }
+
+    server.sendContent("]}");
+}
+
+void handleClearTriggers() {
+    triggerLogHead = 0;
+    triggerLogCount = 0;
+    totalTriggerCount = 0;
+    server.send(200, "text/plain", "OK");
+}
+
+// ESP-NOW traffic inspector log streaming
 void handleEspNowLog() {
     unsigned long now = millis();
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
@@ -1104,14 +1492,16 @@ void handleEspNowLog() {
             snprintf(hexPayload + (p * 2), 3, "%02X", e.payload[p]);
         }
 
+        uint32_t ageSec = (now >= e.timestampMs) ? ((now - e.timestampMs) / 1000) : 0;
+
         char entryBuf[200];
         snprintf(entryBuf, sizeof(entryBuf),
-                 "%s{\"mac\":\"%s\",\"len\":%d,\"payload\":\"%s\",\"timeAgoSec\":%lu,\"isDoorbell\":%s}",
+                 "%s{\"mac\":\"%s\",\"len\":%d,\"payload\":\"%s\",\"timeAgoSec\":%u,\"isDoorbell\":%s}",
                  (i > 0) ? "," : "",
                  macStr,
                  e.len,
                  hexPayload,
-                 (now - e.timestampMs) / 1000,
+                 ageSec,
                  e.isDoorbell ? "true" : "false");
         server.sendContent(entryBuf);
     }
@@ -1181,6 +1571,9 @@ void setupNetworking() {
     // Web Server endpoints
     server.on("/", handleRoot);
     server.on("/data", handleData);
+    server.on("/history", handleHistory);
+    server.on("/triggers", handleTriggers);
+    server.on("/triggers/clear", handleClearTriggers);
     server.on("/espnow", handleEspNowLog);
     server.on("/espnow/clear", handleClearEspNowLog);
     server.on("/set", handleSet);
@@ -1257,7 +1650,7 @@ void setup() {
     Serial.begin(115200);
     delay(500);
     DEBUG_PRINTLN("\n==============================================");
-    DEBUG_PRINTLN("   DeafDoorbell Master Node (Audio Engine)");
+    DEBUG_PRINTLN("   DeafDoorbell Master Node (Hardened v2.0)");
     DEBUG_PRINTLN("==============================================");
 
     loadSettings();
@@ -1271,7 +1664,7 @@ void setup() {
     setupNetworking();
     setupESPNow();
 
-    DEBUG_PRINTLN("Master ready. Clean audio engine & ESP-NOW running.");
+    DEBUG_PRINTLN("Master ready. Audio engine streaming & listening for ESP-NOW...");
 }
 
 // ============================================================
@@ -1283,7 +1676,10 @@ void loop() {
     // 1. Handle Alert Burst Transmissions (Non-blocking burst)
     serviceAlertBursts();
 
-    // 2. Handle Network Requests (Gated for clean audio processing)
+    // 2. 24-Hour History Timeline Service (Rolls 1-minute buckets)
+    serviceHistory24h(now);
+
+    // 3. Handle Network Requests (Gated for clean audio processing)
     static unsigned long lastNetHandle = 0;
     if (now - lastNetHandle >= 20) {
         dnsServer.processNextRequest();
@@ -1292,12 +1688,18 @@ void loop() {
         lastNetHandle = now;
     }
 
-    // 3. Audio Capture & Processing (32-bit I2S)
+    // 4. Audio Capture & Processing (32-bit I2S with DMA Backlog Drain)
     int32_t samples[CHUNK_SIZE];
     size_t bytesRead = 0;
-    i2s_read(I2S_PORT, samples, sizeof(samples), &bytesRead, portMAX_DELAY);
+    
+    // First read blocks up to 10ms until audio chunk is ready
+    esp_err_t err = i2s_read(I2S_PORT, samples, sizeof(samples), &bytesRead, pdMS_TO_TICKS(10));
+    int chunksProcessed = 0;
 
-    if (bytesRead > 0) {
+    // Drain up to 4 pending DMA chunks so network handling never causes DMA queue overflow
+    while (err == ESP_OK && bytesRead == sizeof(samples) && chunksProcessed < 4) {
+        chunksProcessed++;
+
         // Shift raw history buffer
         for (int i = 0; i < SAMPLES - CHUNK_SIZE; i++) {
             rawSamples[i] = rawSamples[i + CHUNK_SIZE];
@@ -1322,12 +1724,21 @@ void loop() {
         float mad = (madSum / SAMPLES) * micGain;
         currentMAD = mad;
 
+        // Peak tracking: track maximum MAD seen since last poll and in 1-min history bucket
+        if (currentMAD > peakMADSincePoll) {
+            peakMADSincePoll = currentMAD;
+        }
+        if ((uint16_t)currentMAD > currentBucketPeakMad) {
+            currentBucketPeakMad = (uint16_t)min((float)65535, currentMAD);
+        }
+
         // Exponential smoothing envelope
         levelLP += motorSmooth * (currentMAD - levelLP);
 
-        // 4. Acoustic Debounce & Warmup Protection
+        // 5. Hardened Acoustic Debounce & Warmup Protection
         // Warmup: 2500ms startup settling guard
-        // Persistence Debounce: Require sustained chime energy for at least 8 chunks (~32ms)
+        // Persistence: Require sustained chime energy for at least 8 chunks (~32ms)
+        // Strict reset: any chunk below threshold IMMEDIATELY resets debounce counter to 0!
         static int consecutiveOverThresh = 0;
         #define WARMUP_MS 2500
         #define MIN_TRIGGER_CHUNKS 8
@@ -1335,31 +1746,48 @@ void loop() {
         bool alertActive = (now < alertCooldownUntilMs);
 
         if (now > WARMUP_MS) {
-            if (currentMAD >= threshold) {
-                consecutiveOverThresh++;
-                if (consecutiveOverThresh >= MIN_TRIGGER_CHUNKS && !alertActive) {
-                    triggerAlert(false);
+            if (currentMAD > MAX_PLAUSIBLE_MAD) {
+                // Reject rail-to-rail DMA bit-slip anomalies & re-sync
+                i2s_zero_dma_buffer(I2S_PORT);
+                consecutiveOverThresh = 0;
+            } else if (currentMAD >= threshold) {
+                if (!alertActive) {
+                    consecutiveOverThresh++;
+                    if (consecutiveOverThresh >= MIN_TRIGGER_CHUNKS) {
+                        lastTriggerMAD = currentMAD;
+                        triggerAlert(false);
+                        consecutiveOverThresh = 0;
+                    }
+                } else {
                     consecutiveOverThresh = 0;
                 }
             } else {
-                if (consecutiveOverThresh > 0) consecutiveOverThresh--;
+                // Strict reset on sub-threshold chunks: prevents leaky accumulation of noise
+                consecutiveOverThresh = 0;
             }
         }
-
-        // 5. Update Audio-Reactive Onboard LED
-        updateLED(levelLP, now < alertCooldownUntilMs);
-
-        // 6. Diagnostic Serial Log (~5Hz)
-        static unsigned long lastLogTime = 0;
-        if (now - lastLogTime > 200) {
-            #ifdef DEBUG_ENABLED
-                DEBUG_PRINTF("[MAD: %5.0f | LP: %5.0f | Thresh: %d] ", currentMAD, levelLP, threshold);
-                int barLen = map(constrain((int)currentMAD, 0, 4000), 0, 4000, 0, 30);
-                for (int i = 0; i < barLen; i++) DEBUG_PRINT("=");
-                if (now < alertCooldownUntilMs) DEBUG_PRINT(" >>> ALERT ACTIVE <<<");
-                DEBUG_PRINTLN("");
-            #endif
-            lastLogTime = now;
+        if (alertActive) {
+            // Keep debounce counter zeroed during cooldown to prevent delayed triggers on exit
+            consecutiveOverThresh = 0;
         }
+
+        // Non-blocking drain check for next chunk in DMA
+        err = i2s_read(I2S_PORT, samples, sizeof(samples), &bytesRead, 0);
+    }
+
+    // 6. Update Audio-Reactive Onboard LED
+    updateLED(levelLP, now < alertCooldownUntilMs);
+
+    // 7. Diagnostic Serial Log (~5Hz)
+    static unsigned long lastLogTime = 0;
+    if (now - lastLogTime > 200) {
+        #ifdef DEBUG_ENABLED
+            DEBUG_PRINTF("[MAD: %5.0f | LP: %5.0f | Thresh: %d] ", currentMAD, levelLP, threshold);
+            int barLen = map(constrain((int)currentMAD, 0, 4000), 0, 4000, 0, 30);
+            for (int i = 0; i < barLen; i++) DEBUG_PRINT("=");
+            if (now < alertCooldownUntilMs) DEBUG_PRINT(" >>> ALERT ACTIVE <<<");
+            DEBUG_PRINTLN("");
+        #endif
+        lastLogTime = now;
     }
 }
