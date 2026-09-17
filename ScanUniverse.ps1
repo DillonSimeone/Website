@@ -52,7 +52,7 @@ $urls += "  <url><loc>$baseUrl/</loc><changefreq>weekly</changefreq><priority>1.
 
 # Find all HTML files in public/ and root src/
 # We ignore source content fragments and partials
-$excludePattern = "([\\/]\.git[\\/]|[\\/]node_modules[\\/]|[\\/]dist[\\/]|[\\/]src[\\/](content|partials|_includes)[\\/])"
+$excludePattern = "([\\/]\.git[\\/]|[\\/]node_modules[\\/]|[\\/]dist[\\/]|[\\/]src[\\/](content|partials|_includes)[\\/]|[\\/]Projects[\\/]DHHCurriculum)"
 $htmlFiles = Get-ChildItem -Path $root -Recurse -Filter "*.html" | Where-Object {
     $_.FullName -notmatch $excludePattern
 }

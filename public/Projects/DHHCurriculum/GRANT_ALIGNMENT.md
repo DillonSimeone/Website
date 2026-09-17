@@ -1,15 +1,15 @@
 # GRANT ALIGNMENT — NEA Supplement
 
-**Submitted in support of:** NEA Research Grants in the Arts Application #1949260 — CymaSpace, "Universal Music Design Curriculum" project (PI Nate Hergert, Project Director Shawn Trail, PhD).
+**Submitted in support of:** NEA Research Grants in the Arts Application #1949260 — CymaSpace, "Universal Music Design Curriculum" project (Project Leader Shawn Trail, PhD).
 **Submitted by:** CymaSpace Universal Music Design Team.
-**Subject:** Curricular efficacy supplement — pre-pilot evidence that a Deaf-centered STEAM music curriculum, hosted on the CyberDeck and grounded in the Sonic Agency framework, will produce measurable improvements in K-12 DHH student engagement, learning, and creative expression.
+**Subject:** Curricular efficacy supplement — pre-pilot evidence that a Deaf-centered STEAM music curriculum, grounded in the Sonic Agency framework, will produce measurable improvements in K-12 DHH student engagement, learning, and creative expression.
 **Target length:** ~2,000 words.
 
 ---
 
 ## Executive Summary
 
-This supplement documents the curricular foundation that the NEA-funded research will validate. Phase 1 of the grant (Jan–Jun 2026) explicitly calls for the concurrent development of laboratory perception studies and a learning-module prototype. Twelve detailed lesson plans, a K-12 scope-and-sequence, a research audit, and a hardware-software technical specification have been authored against the four NEA research questions and the project's three goals. The curriculum operationalizes Brandon LaBelle's *sonic agency* construct through three Deaf-led practices identified in the ASSETS 2025 group autoethnography ("Sonic Agency," Cavdir et al.): bespoke design, hacking-as-resilience, and performance-as-visibility. Where prior accessibility work has framed DHH learners as recipients, this curriculum frames them as composers, engineers, and publishers. The CyberDeck — a rugged, field-deployable, off-grid hub — gives that framing teeth. We argue below that the pedagogical design is positioned to deliver the qualitative and quantitative signals the NEA's mixed-methods evaluation requires.
+This supplement documents the curricular foundation that the NEA-funded research will validate. Phase 1 of the grant (Jan–Jun 2026) explicitly calls for the concurrent development of laboratory perception studies and a learning-module prototype. Twelve detailed lesson plans, a K-12 scope-and-sequence, a research audit, and a hardware-software technical specification have been authored against the four NEA research questions and the project's three goals. The curriculum operationalizes Brandon LaBelle's *sonic agency* construct through three Deaf-led practices identified in the ASSETS 2025 group autoethnography ("Sonic Agency," Cavdir et al.): bespoke design, hacking-as-resilience, and performance-as-visibility. Where prior accessibility work has framed DHH learners as recipients, this curriculum frames them as composers, engineers, and publishers. We argue below that the pedagogical design is positioned to deliver the qualitative and quantitative signals the NEA's mixed-methods evaluation requires.
 
 ---
 
@@ -19,7 +19,7 @@ This supplement documents the curricular foundation that the NEA-funded research
 
 The curriculum produces three classes of tool, each documented and reproducible.
 
-The first class is the **CyberDeck hub**. It is the "omnivorous black box" Simeone described in the CyberDeck residency application — a portable computer that runs off solar, thermoelectric, handcrank, or scavenged DC. Its pedagogical value is not portability for its own sake; it is the fact that Deaf schools, often without dedicated music rooms or treated studios, can deploy a curriculum unit anywhere with no infrastructure assumptions. Hergert's reflection in the autoethnography that "many Deaf schools don't have a music program" (Sonic Agency, §5.1.1) is the design constraint the CyberDeck answers directly.
+The first class is the **CyberDeck hub**. It is the "omnivorous black box" Simeone described in the CyberDeck residency application — a portable computer that runs off solar, thermoelectric, handcrank, or scavenged DC. Its pedagogical value is not portability for its own sake; it is the fact that Deaf schools, often without dedicated music rooms or treated studios, can deploy a curriculum unit anywhere with no infrastructure assumptions. The reflection in the autoethnography that "many Deaf schools don't have a music program" (Sonic Agency, §5.1.1) is the design constraint the CyberDeck answers directly.
 
 The second class is **wearable interfaces**: the PULSE haptic vest and the GestoLumina (GeLu) wristware. Both have NIME-published pedigrees and are already proven in mixed-hearing performance (NIME 2024 paper; ASSETS 2025 case study, §4). The curriculum requires nothing new at the hardware level — it requires a teachable scaffolding around what already works.
 
