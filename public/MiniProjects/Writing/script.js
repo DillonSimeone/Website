@@ -122,6 +122,24 @@ const themes = {
         glowRadius: 400,
         connections: { maxDistance: 120 }
     },
+    ffx: {
+        particleColor: 'rgba(0, 240, 255, 0.4)',
+        lineColor: 'rgba(212, 154, 61, 0.15)',
+        glowColor: 'rgba(0, 240, 255, 0.22)',
+        speedFactor: 0.9,
+        count: 140,
+        behavior: 'vortex',
+        glowRadius: 420,
+        connections: { maxDistance: 120 },
+        vortex: {
+            minDist: 35,
+            orbitAngleStep: 0.02,
+            orbitDecay: 0.992,
+            orbitPull: 0.07,
+            centerAngleStep: 0.004,
+            centerPull: 0.08
+        }
+    },
     harvester: {
         particleColor: 'rgba(126, 184, 212, 0.3)',
         lineColor: 'rgba(126, 184, 212, 0.08)',

@@ -332,6 +332,13 @@ h1 {
     --theme-footer-color: #1e5a38;
 }
 
+/* 5b. Final Fanstery X Card */
+.card-ffx {
+    --theme-primary-rgb: 0, 240, 255;
+    --theme-font: 'Cinzel', serif;
+    --theme-footer-color: #d49a3d;
+}
+
 /* 6. Harvester's Toll Card */
 .card-harvester {
     --theme-primary-rgb: 126, 184, 212;
@@ -442,6 +449,11 @@ h1 {
 .btn-ff7 {
     --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #1b5e3a);
     --btn-color: #05160c;
+}
+
+.btn-ffx {
+    --btn-bg: linear-gradient(135deg, rgb(var(--theme-primary-rgb)), #d49a3d);
+    --btn-color: #040810;
 }
 
 .btn-harvester {
