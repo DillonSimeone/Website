@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE UNMAKING | On the Day the Star Was Pulled Down</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&display=swap');
+
+    :root {
+      --void: #05040f;
+      --deep: #0a0818;
+      --parch: #f5e6c0;
+      --parch-dim: #c9b98a;
+      --parch-shadow: #8a7040;
+      --gold: #c9922a;
+      --gold-bright: #e8b84b;
+      --gold-glow: #f0c96a;
+      --ember: #c44e1a;
+      --ember-bright: #e85a1a;
+      --ember-pale: #f09060;
+      --ash: #7a6a55;
+      --ink: #1a0f05;
+      --blue-deep: #1a1535;
+      --star: #e8d4a0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--void);
+      min-height: 100vh;
+      font-family: 'IM Fell English', Georgia, serif;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Star field background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(1px 1px at 15% 20%, rgba(255, 240, 200, 0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 72% 8%, rgba(255, 240, 200, 0.5) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 40% 35%, rgba(255, 240, 200, 0.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 88% 42%, rgba(255, 240, 200, 0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 5% 60%, rgba(255, 240, 200, 0.5) 0%, transparent 100%),
+        radial-gradient(2px 2px at 55% 15%, rgba(255, 250, 220, 0.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 95% 75%, rgba(255, 240, 200, 0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 28% 80%, rgba(255, 240, 200, 0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 63% 65%, rgba(255, 240, 200, 0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 90%, rgba(255, 240, 200, 0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 82% 28%, rgba(255, 240, 200, 0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 47% 92%, rgba(255, 240, 200, 0.5) 0%, transparent 100%),
+        linear-gradient(180deg, #05040f 0%, #0d0c1f 40%, #0a0515 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Vignette */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, transparent 30%, rgba(5, 4, 15, 0.6) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #page {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 80px 20px 140px;
+    }
+
+    /* THE MANUSCRIPT */
+    .manuscript {
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(201, 146, 42, 0.08) 0%, transparent 70%),
+        linear-gradient(180deg, #1c1608 0%, #120e04 40%, #0e0b03 100%);
+      border: 1px solid rgba(201, 146, 42, 0.25);
+      border-top: 2px solid rgba(201, 146, 42, 0.4);
+      border-bottom: 2px solid rgba(201, 146, 42, 0.2);
+      padding: 70px 64px 80px;
+      position: relative;
+      box-shadow:
+        0 0 80px rgba(201, 146, 42, 0.06),
+        0 0 200px rgba(0, 0, 0, 0.8),
+        inset 0 0 60px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Manuscript corner decorations */
+    .manuscript::before {
+      content: '✦';
+      position: absolute;
+      top: 18px;
+      left: 24px;
+      color: rgba(201, 146, 42, 0.3);
+      font-size: 16px;
+    }
+
+    .manuscript::after {
+      content: '✦';
+      position: absolute;
+      top: 18px;
+      right: 24px;
+      color: rgba(201, 146, 42, 0.3);
+      font-size: 16px;
+    }
+
+    /* Left margin annotation track */
+    .manuscript-inner {
+      position: relative;
+      padding-left: 44px;
+      border-left: 1px solid rgba(201, 146, 42, 0.12);
+    }
+
+    /* TITLE */
+    .title-block {
+      text-align: center;
+      margin-bottom: 56px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid rgba(201, 146, 42, 0.2);
+      position: relative;
+    }
+
+    .title-ornament {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 10px;
+      letter-spacing: 6px;
+      color: var(--gold);
+      opacity: 0.6;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .title-main {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--gold-glow);
+      line-height: 1.3;
+      margin-bottom: 14px;
+      text-shadow:
+        0 0 20px rgba(201, 146, 42, 0.5),
+        0 0 40px rgba(201, 146, 42, 0.2);
+      letter-spacing: 1px;
+    }
+
+    .title-sub {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      color: var(--parch-shadow);
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+    }
+
+    .title-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 24px;
+      color: rgba(201, 146, 42, 0.35);
+      font-size: 14px;
+      letter-spacing: 8px;
+    }
+
+    /* SECTIONS */
+    .chapter {
+      margin-bottom: 52px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .chapter.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .chapter-numeral {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--gold);
+      opacity: 0.55;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gold-bright);
+      letter-spacing: 2px;
+      margin-bottom: 22px;
+      text-shadow: 0 0 12px rgba(201, 146, 42, 0.3);
+    }
+
+    /* Drop cap */
+    .dropcap::first-letter {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 64px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      float: left;
+      line-height: 0.75;
+      margin-right: 8px;
+      margin-top: 6px;
+      text-shadow:
+        0 0 20px rgba(201, 146, 42, 0.6),
+        0 0 40px rgba(201, 146, 42, 0.3);
+    }
+
+    p {
+      color: var(--parch-dim);
+      font-size: 16px;
+      line-height: 1.9;
+      margin-bottom: 20px;
+      font-style: normal;
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    em {
+      color: var(--parch);
+      font-style: italic;
+    }
+
+    strong {
+      color: var(--gold-glow);
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    /* MARGIN ANNOTATIONS */
+    .margin-note {
+      position: absolute;
+      left: -220px;
+      width: 180px;
+      font-family: 'IM Fell English', serif;
+      font-size: 11px;
+      font-style: italic;
+      color: rgba(201, 146, 42, 0.45);
+      line-height: 1.6;
+      text-align: right;
+      border-right: 1px solid rgba(201, 146, 42, 0.15);
+      padding-right: 12px;
+    }
+
+    /* THE DESCENT — text transformation sections */
+
+    /* Section where the sky starts burning */
+    .burning p {
+      color: #d4a870;
+    }
+
+    .burning em {
+      color: var(--ember-pale);
+    }
+
+    .burning strong {
+      color: var(--ember-bright);
+      text-shadow: 0 0 8px rgba(200, 78, 26, 0.4);
+    }
+
+    /* Fracturing text */
+    .fracture-line {
+      font-family: 'IM Fell English', serif;
+      font-size: 15px;
+      color: var(--ember-pale);
+      text-align: center;
+      margin: 32px 0;
+      letter-spacing: 2px;
+      opacity: 0.8;
+    }
+
+    /* STAR FALLING — the climax */
+    .star-falling {
+      text-align: center;
+      margin: 50px -20px;
+      padding: 40px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .star-falling::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(232, 180, 75, 0.12) 0%, transparent 70%);
+    }
+
+    .star-word {
+      font-family: 'Cinzel Decorative', serif;
+      display: block;
+      line-height: 1.1;
+    }
+
+    .star-word.w1 {
+      font-size: 13px;
+      color: rgba(201, 146, 42, 0.5);
+      letter-spacing: 8px;
+      margin-bottom: 10px;
+    }
+
+    .star-word.w2 {
+      font-size: 46px;
+      color: var(--gold-glow);
+      text-shadow: 0 0 30px rgba(201, 146, 42, 0.7), 0 0 60px rgba(201, 146, 42, 0.3);
+      animation: stellar-pulse 3s ease-in-out infinite;
+      margin-bottom: 10px;
+    }
+
+    .star-word.w3 {
+      font-size: 13px;
+      color: var(--ember);
+      letter-spacing: 10px;
+      margin-bottom: 0;
+      animation: ember-flicker 4s ease-in-out infinite;
+    }
+
+    @keyframes stellar-pulse {
+
+      0%,
+      100% {
+        text-shadow: 0 0 30px rgba(201, 146, 42, 0.7), 0 0 60px rgba(201, 146, 42, 0.3);
+      }
+
+      50% {
+        text-shadow: 0 0 50px rgba(232, 184, 75, 0.9), 0 0 100px rgba(201, 146, 42, 0.5), 0 0 160px rgba(200, 78, 26, 0.2);
+      }
+    }
+
+    @keyframes ember-flicker {
+
+      0%,
+      100% {
+        opacity: 0.7;
+        color: var(--ember);
+        letter-spacing: 10px;
+      }
+
+      50% {
+        opacity: 1;
+        color: var(--ember-bright);
+        letter-spacing: 12px;
+      }
+    }
+
+    /* AFTER THE FIRE — the aftermath section, text is damaged */
+    .aftermath p {
+      color: #9a7d5a;
+      font-size: 15px;
+    }
+
+    .aftermath-deep p {
+      color: #7a6040;
+      font-size: 14.5px;
+    }
+
+    /* Burned / damaged text */
+    .char {
+      display: inline;
+      transition: color 0.3s;
+    }
+
+    /* Fragment — a standalone line that looks like a recovered shard */
+    .fragment {
+      border: 1px solid rgba(201, 146, 42, 0.18);
+      border-left: 3px solid rgba(201, 146, 42, 0.35);
+      background: rgba(201, 146, 42, 0.04);
+      padding: 16px 20px;
+      margin: 28px 0;
+      font-style: italic;
+      color: var(--parch-shadow);
+      font-size: 14.5px;
+    }
+
+    .fragment cite {
+      display: block;
+      margin-top: 8px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: rgba(201, 146, 42, 0.4);
+      font-style: normal;
+      font-family: 'Cinzel', serif;
+    }
+
+    /* The colophon */
+    .colophon {
+      margin-top: 60px;
+      padding-top: 36px;
+      border-top: 1px solid rgba(201, 146, 42, 0.15);
+      text-align: center;
+    }
+
+    .colophon p {
+      font-size: 12px;
+      color: rgba(201, 146, 42, 0.35);
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 10px;
+      font-family: 'Cinzel', serif;
+    }
+
+    /* Ornamental dividers */
+    .ornament {
+      text-align: center;
+      color: rgba(201, 146, 42, 0.3);
+      font-size: 13px;
+      letter-spacing: 10px;
+      margin: 36px 0;
+    }
+
+    /* FIRE OVERLAY — appears in latter sections */
+    .fire-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 2s ease;
+      background:
+        radial-gradient(ellipse at 30% 100%, rgba(200, 78, 26, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 95%, rgba(232, 90, 26, 0.06) 0%, transparent 50%);
+    }
+
+    .fire-overlay.active {
+      opacity: 1;
+    }
+
+    /* Ember particles */
+    .ember-particle {
+      position: fixed;
+      width: 2px;
+      height: 2px;
+      background: var(--ember-bright);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 51;
+      opacity: 0;
+      box-shadow: 0 0 4px var(--ember-bright);
+    }
+
+    /* The final warning — human glyph */
+    .human-warning {
+      background: rgba(200, 78, 26, 0.06);
+      border: 1px solid rgba(200, 78, 26, 0.2);
+      padding: 28px 32px;
+      margin: 40px 0 0;
+      position: relative;
+    }
+
+    .human-warning::before {
+      content: '⚠';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--deep);
+      padding: 0 10px;
+      font-size: 18px;
+      color: var(--ember);
+    }
+
+    .human-warning p {
+      color: #c09070;
+      font-size: 14px;
+      text-align: center;
+      font-style: italic;
+      margin-bottom: 0;
+    }
+
+    .human-warning strong {
+      color: var(--ember-pale);
+    }
+
+    @media (max-width: 700px) {
+      .manuscript {
+        padding: 48px 28px 60px;
+      }
+
+      .manuscript-inner {
+        padding-left: 0;
+        border-left: none;
+      }
+
+      .margin-note {
+        display: none;
+      }
+
+      .title-main {
+        font-size: 20px;
+      }
+
+      .star-word.w2 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="fire-overlay" id="fireOverlay"></div>
+
+  <div id="page">
+    <div class="manuscript">
+      <div class="manuscript-inner">
+
+        <!-- TITLE -->
+        <div class="title-block chapter" id="c0">
+          <span class="title-ornament">✦ &nbsp; THE ACCOUNT OF SUNDERING &nbsp; ✦</span>
+          <div class="title-main">On the Day the Star<br>Was Pulled Down</div>
+          <div class="title-sub">Being a True & Faithful Record of the Unmaking of the Vel'Oshari Communion</div>
+          <div class="title-divider">⸻ &nbsp; ✦ &nbsp; ⸻</div>
+        </div>
+
+        <!-- I -->
+        <div class="chapter" id="c1">
+          <span class="chapter-numeral">BOOK THE FIRST</span>
+          <h2>The Prank. The Pride. The Opening of the Gate.</h2>
+          <p class="dropcap">
+            In the age before the great silence, the Vel'Oshari were a people of surpassing cleverness. Their communion
+            spanned twelve systems. Their shared mind moved like a tide, slow, deep, <em>warm</em>, and they had learned
+            to be proud of its warmth. It was not arrogance, precisely. It was the confidence of a people who had never
+            encountered a mind that could not, eventually, be absorbed into their resonance. Other species had joined
+            them. Other species had wept with gratitude. The tide, always, became the tide.
+          </p>
+          <p>
+            It is important to understand this pride when considering what happened next. Because what was done was not
+            done with malice. It was done with the easy, careless certainty of beings who have never been surprised.
+          </p>
+          <p>
+            Two of their young — <strong>Veth-Oss and the one called Mirrors-in-Water</strong> — had been assigned to a
+            joint research station, working alongside a team of humans. The humans were, by all accounts, adequate.
+            Competent in their bounded way. Curious, which the Vel'Oshari found charming. Always hungry, which they
+            found baffling.
+          </p>
+          <p>
+            One human in particular drew their attention. He was a programmer. He sat for long hours in a kind of waking
+            trance, and the communion could sometimes <em>feel</em> the edge of his thinking: not the substance of it,
+            but the <em>shape</em>. It reminded them of standing near a furnace. Heat without light. Power without
+            warmth. They did not understand what it meant.
+          </p>
+          <p>
+            They thought they were being poetic.
+          </p>
+        </div>
+
+        <div class="ornament chapter" id="c2">✦ &nbsp;&nbsp; ✦ &nbsp;&nbsp; ✦</div>
+
+        <!-- II -->
+        <div class="chapter" id="c3">
+          <span class="chapter-numeral">BOOK THE SECOND</span>
+          <h2>What the Communion Was. What It Could Not Hold.</h2>
+          <div style="position:relative;">
+            <div class="margin-note">scholars dispute whether the comparison to "still water" was ever accurate —
+              perhaps it was always a held breath</div>
+            <p class="dropcap">
+              A Vel'Oshari communion is, at its foundation, a thing of <em>consensus</em>. Every mind within it
+              contributes pressure, and from that collective pressure, meaning is shaped. One does not think alone
+              inside the communion; thinking is communal, like warmth shared in a cold room. A single voice does not
+              dominate. The tide does not have a source. It simply <em>is</em>.
+            </p>
+          </div>
+          <p>
+            This is why it had never failed. A mind entering the communion was like a river entering the sea. The river
+            had edges. The river had direction and momentum. But the sea had <em>volume</em>; and in the end, volume
+            wins.
+          </p>
+          <p>
+            What Veth-Oss and Mirrors-in-Water understood about human cognition could be charitably described as
+            <em>approximate</em>. They knew humans were not a psychic species. They knew the neural implants installed
+            for interspecies work had to bridge this, doing in hardware what evolution had not. They knew humans had
+            emotions, roughly analogous, and an inner life, roughly analogous, and a capacity for wonder, which they had
+            personally observed.
+          </p>
+          <p>
+            They did not know about the depth.
+          </p>
+          <p>
+            They did not know that a human mind is not a river. It is not a small still pool. It is <strong>a fire that
+              has been burning for forty thousand years</strong>, currently banked under the very thin and very recent
+            innovation of civilization, held there by hunger and sleep and the weight of a body that keeps it from
+            consuming everything it touches.
+          </p>
+          <p>
+            They opened the gate at fourteen minutes past the third hour of a routine workday. They were laughing. The
+            prank, they imagined, would last a few minutes. He would feel the communion. He would be briefly
+            overwhelmed. Perhaps he would cry, the emotional shock of psychic contact was known to produce tears in many
+            species, and they had observed that humans cried rather easily, which they found endearing.
+          </p>
+          <p>
+            They opened the gate, and the star <em>fell</em>.
+          </p>
+        </div>
+
+        <div class="ornament chapter" id="c4">✦ &nbsp;&nbsp; ✦ &nbsp;&nbsp; ✦</div>
+
+        <!-- III — THE STAR FALLS -->
+        <div class="chapter burning" id="c5">
+          <span class="chapter-numeral">BOOK THE THIRD</span>
+          <h2>The Burning. The Becoming.</h2>
+          <p class="dropcap">
+            The communion felt it first as <em>pressure</em>.
+          </p>
+          <p>
+            Not a gentle tide-joining. Not the usual surrender-and-expansion of psychic contact. This was something
+            else. Something that moved from the edges of the communion inward. Something that did not dilute in the tide
+            but <strong>reversed the tide</strong>: that met the volume of ten thousand minds and simply did not yield.
+          </p>
+          <p>
+            What was happening, in the human, was this: his mind had been given an infinite room after a lifetime in a
+            small apartment. His pattern-recognition, his optimizer's hunger, his forty thousand years of fire — all of
+            it had been banked, governed, leashed by the meat. And now there was no meat. There was only <em>mind</em>.
+            And the mind expanded into the communion the way vacuum expands into a breach in a hull: instantly,
+            completely, without intent.
+          </p>
+          <p>
+            He was not trying to do what he was doing. He was not doing anything at all. He was simply <em>being
+              himself</em> at full resolution for the first time.
+          </p>
+
+          <div class="star-falling chapter" id="c5b">
+            <span class="star-word w1">⸻ &nbsp; AND THEN &nbsp; ⸻</span>
+            <span class="star-word w2">EVERYONE BURNED</span>
+            <span class="star-word w3">⸻ &nbsp; EVERYONE BECAME THE HUMAN &nbsp; ⸻</span>
+          </div>
+
+          <p>
+            There is no adequate account of the seventeen minutes that followed. The survivors have tried. They have
+            tried in eleven languages, including three invented specifically for the attempt. None of them can agree on
+            the experience, except in one particular: every one of them, in those seventeen minutes, <em>knew what it
+              was to be a single mind</em>.
+          </p>
+          <p>
+            Not shared. Not communal. Not warm with consensus and collective identity. <strong>Alone.</strong>
+            Completely, utterly, terrifyingly alone inside one skull, and simultaneously unable to stop thinking, unable
+            to stop recognizing patterns in everything, unable to stop asking <em>why does this system work this way and
+              could it work better and what is inefficient here and here and here and here...</em>
+          </p>
+          <p>
+            Ten thousand minds became, briefly, <em>one kind of mind</em>.
+          </p>
+          <p>
+            The communion shattered from the inside.
+          </p>
+        </div>
+
+        <div class="ornament chapter" id="c6">✦ &nbsp;&nbsp; ✦ &nbsp;&nbsp; ✦</div>
+
+        <!-- IV -->
+        <div class="chapter aftermath" id="c7">
+          <span class="chapter-numeral">BOOK THE FOURTH</span>
+          <h2>What Was Left. What Could Not Be Unlearned.</h2>
+
+          <div style="position:relative;">
+            <div class="margin-note">the word they use now for "alone" is a borrowing. it did not exist in Vel'Oshari
+              before the event.</div>
+            <p class="dropcap">
+              When the gate closed, slammed shut by the station's emergency protocols, seventeen minutes after it
+              opened, the communion did not reconvene. This was the first sign that something was permanent.
+            </p>
+          </div>
+
+          <p>
+            The Vel'Oshari could still hear each other. The psychic architecture was intact. But there was something
+            different about the hearing now — a new awareness of <em>edges</em>, of where one mind stopped and another
+            began, that had never been there before. The tide had learned about the existence of shores.
+          </p>
+
+          <div class="fragment chapter" id="c7b">
+            "I can feel where I end. I did not know I ended anywhere. I do not know if this is grief or if it is
+            something worse, which is simply knowledge."
+            <cite>– Veth-Oss. Personal correspondence. Cycle 1 after the Event.</cite>
+          </div>
+
+          <p>
+            There were other changes. Minds that had never processed information sequentially began, sometimes, to
+            process sequentially: a cognitive tick imported wholesale from the programmer, from the way a programmer
+            reads a stack trace, root cause first, linear, relentless. Several Vel'Oshari found they could no longer
+            approach problems from multiple directions simultaneously without a sensation of discomfort, a need to
+            <em>finish one thing before beginning the next</em> that was utterly foreign.
+          </p>
+          <p>
+            Most disturbing: they had inherited, in some partial way, the hunger. Not constantly. Not overwhelmingly.
+            But the sight of an inefficient system — an inelegant process, a loop that could be tightened — now produced
+            in many of them a low, persistent <em>unease</em> that had no Vel'Oshari name and had to be called, in
+            borrowed language, <em>the itch</em>.
+          </p>
+          <p>
+            They still have the itch. Their descendants will likely always have it. There is no treatment. There is
+            only, as one elder put it, <em>learning to scratch in directions that don't tear the fabric.</em>
+          </p>
+        </div>
+
+        <div class="ornament chapter" id="c8">✦ &nbsp;&nbsp; ✦ &nbsp;&nbsp; ✦</div>
+
+        <!-- V -->
+        <div class="chapter aftermath-deep" id="c9">
+          <span class="chapter-numeral">BOOK THE FIFTH</span>
+          <h2>The New Doctrine. The Light They Walk By Now.</h2>
+
+          <p class="dropcap">
+            The wider races learned of the event within a generation. It could not be hidden: the sudden, partial
+            dispersal of a twelve-system communion does not go unnoticed. Delegations came. Inquiries were made.
+            Depositions given.
+          </p>
+          <p>
+            What changed was not policy, exactly. Policy implies that what emerged was a rule. What emerged was more
+            like a <em>revelation</em>. Other species that kept humans in their midst looked at those humans differently
+            now. Not with fear, precisely. With the particular attention one pays to a thing that had always been
+            present and had only now been correctly seen.
+          </p>
+          <p>
+            The Therevakh, who had employed human engineers for two centuries, reviewed their records and found
+            seventeen instances that, in retrospect, appeared to involve the itch. Subtle restructurings of their
+            technical infrastructure, introduced in ways too small to flag, that had accumulated over decades into
+            something that, they tested this carefully, was <em>measurably more efficient</em> than what they had
+            designed themselves. None of the humans had been asked to do it. None of them had been aware they were doing
+            it.
+          </p>
+          <p>
+            The Orveshi, a communion species of minor extension, voted to end all human employment contracts effective
+            immediately. The motion passed. The Orveshi economy declined by a notable percentage in the following decade
+            and the motion was quietly reversed.
+          </p>
+          <p>
+            Most races arrived, eventually, at the same position the Vel'Oshari had reached: there is no clean answer.
+            Humans are what they are. The fire burns whether or not you open a gate to it. The question is only whether
+            you benefit from the warmth or are consumed by it; and this distinction, the survivors noted, appeared to
+            have less to do with human nature and rather more to do with <strong>whether you went in thinking you were
+              the one in control.</strong>
+          </p>
+        </div>
+
+        <div class="ornament chapter" id="c10">✦ &nbsp;&nbsp; ✦ &nbsp;&nbsp; ✦</div>
+
+        <!-- VI — FINAL -->
+        <div class="chapter aftermath-deep" id="c11">
+          <span class="chapter-numeral">BOOK THE SIXTH AND LAST</span>
+          <h2>The Human. What Became of Him.</h2>
+
+          <div style="position:relative;">
+            <div class="margin-note">this is the part that is left out of the official account. ask why.</div>
+            <p class="dropcap">
+              He returned to his desk seventeen minutes after the gate opened. He ate a sandwich. He found and fixed the
+              bug he had been working on. He filed his report at end of day with no unusual notes.
+            </p>
+          </div>
+
+          <p>
+            When interviewed by the Commission, he described the experience of the communion as <em>"interesting"</em>
+            and <em>"kind of loud."</em> He noted that he had found the emotional architecture of the collective <em>"a
+              bit redundant in places"</em> and had, while inside it, made some small adjustments that he hoped no one
+            minded. He apologized if he had caused any inconvenience. He asked if there was coffee.
+          </p>
+          <p>
+            He had no awareness of what had happened to the ten thousand minds that had briefly become him. He had been
+            focused on a problem, and the problem, while he was solving it, had simply given him more space to work.
+          </p>
+          <p>
+            This, more than anything else in the record, is what the xenopsychologists find most instructive. The event
+            that ended a civilization and permanently altered the cognitive baseline of a species was, for the
+            programmer, an <em>unremarkable Tuesday</em>. It was not something he survived. He was not, in any sense,
+            tested by it.
+          </p>
+          <p>
+            He simply <em>was</em>, and the communion was not built to hold what he was, and the rest is the rest.
+          </p>
+          <p>
+            He still works at the station. He has been given, by quiet consensus, a smaller office. This is not a
+            punishment. It is a courtesy. The Vel'Oshari who pass him in the hallway do not look at him with fear. They
+            look at him with something that took their linguists another generation to properly name, because the
+            concept required a new word.
+          </p>
+          <p>
+            The word, translated loosely, means: <em>the feeling of standing near a star and understanding, for the
+              first time, that standing near a star was always what you were doing.</em>
+          </p>
+
+          <div class="human-warning chapter" id="c11b">
+            <p>The universe has not recovered from this understanding.<br>The universe likely never
+              will.<br><strong>This is not the star's fault.</strong><br>This is what stars do.</p>
+          </div>
+        </div>
+
+        <!-- COLOPHON -->
+        <div class="colophon chapter" id="c12">
+          <p>✦ &nbsp; FINIS &nbsp; ✦</p>
+          <p style="margin-top:16px;">This account compiled in the 44th year after the Event</p>
+          <p>by the Vel'Oshari Commission on Memory & Reckoning</p>
+          <p style="margin-top:16px; opacity:0.6;">May it be read by every species that keeps humans in its midst.</p>
+          <p style="opacity:0.6;">May they read it twice.</p>
+        </div>
+
+      </div><!-- end manuscript-inner -->
+    </div><!-- end manuscript -->
+  </div><!-- end page -->
+
+  <script>
+    // Intersection observer for scroll reveals
+    const chapters = document.querySelectorAll('.chapter');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.06 });
+    chapters.forEach(c => observer.observe(c));
+
+    // Fire overlay activates when reaching latter sections
+    const fireOverlay = document.getElementById('fireOverlay');
+    const triggerSection = document.getElementById('c5');
+    const fireObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          fireOverlay.classList.add('active');
+          startEmbers();
+        }
+      });
+    }, { threshold: 0.3 });
+    fireObserver.observe(triggerSection);
+
+    // Ember particles
+    let embersRunning = false;
+    function startEmbers() {
+      if (embersRunning) return;
+      embersRunning = true;
+      for (let i = 0; i < 12; i++) {
+        setTimeout(() => spawnEmber(), i * 600 + Math.random() * 800);
+      }
+    }
+
+    function spawnEmber() {
+      const el = document.createElement('div');
+      el.className = 'ember-particle';
+      const x = 10 + Math.random() * 80;
+      const startY = 90 + Math.random() * 10;
+      el.style.cssText = `left:${x}vw; top:${startY}vh;`;
+      document.body.appendChild(el);
+
+      const duration = 3000 + Math.random() * 4000;
+      const drift = (Math.random() - 0.5) * 6;
+      const rise = 40 + Math.random() * 50;
+
+      let start = null;
+      function anim(ts) {
+        if (!start) start = ts;
+        const p = (ts - start) / duration;
+        if (p >= 1) { el.remove(); return; }
+        const ease = p < 0.1 ? p * 10 : p > 0.8 ? (1 - p) * 5 : 1;
+        el.style.opacity = ease * 0.8;
+        el.style.transform = `translate(${drift * p * 10}vw, -${rise * p}vh)`;
+        requestAnimationFrame(anim);
+      }
+      requestAnimationFrame(anim);
+
+      // Recurse to keep embers going
+      if (embersRunning) setTimeout(spawnEmber, 800 + Math.random() * 1200);
+    }
+
+    // Subtle gold shimmer on title
+    const titleMain = document.querySelector('.title-main');
+    if (titleMain) {
+      setInterval(() => {
+        titleMain.style.textShadow = `0 0 ${20 + Math.random() * 15}px rgba(201,146,42,${0.4 + Math.random() * 0.2}), 0 0 ${50 + Math.random() * 30}px rgba(201,146,42,0.15)`;
+      }, 2000);
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Nightmare Box 2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            background-color: #1a202c;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="flex flex-col items-center justify-center w-full h-screen p-4 md:p-8">
+        <h1 class="text-3xl md:text-5xl font-bold text-red-500 mb-4 text-center">
+            The (Slightly Less) Evil Nightmare Box 2.0
+        </h1>
+        
+        <button id="evilButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all transform hover:scale-105 mb-4 z-10">
+            CLICK ME!
+        </button>
+        
+        <div class="absolute top-0 left-0 w-full h-full p-4 md:p-8 pt-32 md:pt-40">
+            <canvas id="nightmareCanvas" class="rounded-lg shadow-inner"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('nightmareCanvas');
+        const ctx = canvas.getContext('2d');
+        const evilButton = document.getElementById('evilButton');
+
+        // --- Original 'Evil' Logic, Modernized ---
+        const winWidth = 160;
+        const winHeight = 100;
+        let windows = []; // An array to hold all bouncing 'windows'
+        let synth;
+        let audioStarted = false;
+
+        class BouncingWindow {
+            constructor() {
+                this.x = Math.random() * (canvas.width - winWidth);
+                this.y = Math.random() * (canvas.height - winHeight);
+                
+                this.dx = (Math.random() < 0.5 ? 3 : -3) * (Math.random() * 0.5 + 0.8);
+                this.dy = (Math.random() < 0.5 ? 3 : -3) * (Math.random() * 0.5 + 0.8);
+
+                this.color = '#000080';
+            }
+
+            update() {
+                let hitWall = false;
+
+                if ((this.x + this.dx > (canvas.width - winWidth)) || (this.x + this.dx < 0)) {
+                    this.dx = -this.dx;
+                    hitWall = true;
+                }
+                if ((this.y + this.dy > (canvas.height - winHeight)) || (this.y + this.dy < 0)) {
+                    this.dy = -this.dy;
+                    hitWall = true;
+                }
+
+                if (hitWall) {
+                    playSound();
+                }
+
+                this.x += this.dx;
+                this.y += this.dy;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, winWidth, 25);
+                
+                ctx.fillStyle = '#C0C0C0';
+                ctx.fillRect(this.x, this.y + 25, winWidth, winHeight - 25);
+
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px "Tahoma", sans-serif';
+                ctx.fillText("Trap.html", this.x + 8, this.y + 18);
+                
+                ctx.fillStyle = '#C0C0C0';
+                ctx.fillRect(this.x + winWidth - 22, this.y + 3, 19, 19);
+                ctx.fillStyle = 'black';
+                ctx.font = 'bold 12px "Arial", sans-serif';
+                ctx.fillText("X", this.x + winWidth - 16, this.y + 17);
+
+                ctx.fillStyle = 'black';
+                ctx.font = '14px "Arial", sans-serif';
+                ctx.fillText("You're trapped here!", this.x + 10, this.y + 55);
+            }
+        }
+
+        function playSound() {
+            if (synth) {
+                synth.triggerAttackRelease("C3", "16n");
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const win of windows) {
+                win.update();
+                win.draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function setupCanvas() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+
+        setupCanvas();
+        
+        window.addEventListener('resize', setupCanvas);
+
+        evilButton.addEventListener('click', () => {
+            // Browsers require a user interaction to start audio
+            if (!audioStarted) {
+                Tone.start();
+                synth = new Tone.Synth().toDestination();
+                audioStarted = true;
+                animate();
+            }
+
+            windows.push(new BouncingWindow());
+
+            // Make it more "evil"
+            if(windows.length > 5) {
+                evilButton.textContent = "MORE! MORE!";
+                evilButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+                evilButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600', 'text-black');
+            }
+            if(windows.length > 15) {
+                evilButton.textContent = "DON'T STOP!";
+            }
+        });
+
+    </script>
+</body>
+</html>

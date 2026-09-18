@@ -1,0 +1,151 @@
+:root {
+  --binder-bg: #ab8d6f; /* Cardboard */
+  --paper-white: #fafafa;
+  --blue-rule: #a5c3ff;
+  --margin-red: #ff8b8b;
+  --text-ink: #1e1e24;
+  
+  --font-hand: 'Architects Daughter', cursive;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--binder-bg);
+  background-image: radial-gradient(rgba(0,0,0,0.15) 12%, transparent 13%);
+  background-size: 16px 16px;
+  color: var(--text-ink);
+  font-family: var(--font-hand);
+  line-height: 24px; /* Matches ruled lines */
+}
+
+.notebook-container {
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.notebook-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: var(--text-ink);
+  text-decoration: underline;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.notebook-title {
+  font-size: clamp(2.5rem, 5vw, 3.8rem);
+  margin: 0 0 10px 0;
+}
+
+.notebook-subtitle {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.notebook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 35px;
+}
+
+/* Lined Binder Paper sheet */
+.paper-sheet {
+  background-color: var(--paper-white);
+  /* 24px lines repeating */
+  background-image: linear-gradient(var(--blue-rule) 1px, transparent 1px);
+  background-size: 100% 24px;
+  border-radius: 4px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  padding: 30px 30px 30px 55px; /* Offset for spiral spine */
+  position: relative;
+  min-height: 240px;
+  box-sizing: border-box;
+  transition: transform 0.3s;
+}
+
+.paper-sheet:hover {
+  transform: translateY(-4px);
+}
+
+/* Ruled Red Margin */
+.red-margin {
+  position: absolute;
+  top: 0;
+  left: 45px;
+  width: 1px;
+  height: 100%;
+  border-left: 1.5px solid var(--margin-red);
+}
+
+/* Repeating Spiral spine rings */
+.spiral-spine {
+  position: absolute;
+  top: 0;
+  left: 10px;
+  width: 25px;
+  height: 100%;
+  background-image: 
+    radial-gradient(#444 35%, transparent 35%),
+    linear-gradient(90deg, #999, #bbb 40%, #555 70%, #999 100%);
+  background-size: 10px 24px, 4px 100%;
+  background-repeat: repeat-y, no-repeat;
+  background-position: center top, 5px center;
+  border-right: 1.5px dashed #ccc;
+  opacity: 0.85;
+}
+
+.paper-sheet h2 {
+  font-size: 1.45rem;
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.paper-sheet p {
+  margin: 0 0 24px 0;
+  font-size: 0.95rem;
+}
+
+/* Drawing sketchpad */
+.sketch-wrapper {
+  border: 1px solid #ddd;
+  background-color: #fff;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+#sketch-canvas {
+  width: 100%;
+  cursor: pointer;
+  display: block;
+}
+
+.sketch-btn {
+  background: transparent;
+  border: 1.5px dashed var(--text-ink);
+  color: var(--text-ink);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+.sketch-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* List checkbox */
+.task-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.task-list li {
+  margin-bottom: 0px; /* spacing fits lined height */
+}

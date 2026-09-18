@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bauhaus Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bauhaus-container">
+    <header class="bauhaus-header">
+      <a href="../index.html" class="nav-back">NAV_BACK</a>
+      <h1 class="bauhaus-title">BAUHAUS</h1>
+      <p class="bauhaus-subtitle">FORM FOLLOWS FUNCTION. RED. BLUE. YELLOW.</p>
+    </header>
+
+    <main class="bauhaus-grid">
+      <!-- Info block -->
+      <section class="bauhaus-card card-yellow-block">
+        <span class="block-label">01 / CONCEPT</span>
+        <h2>STRUCTURE & REASON</h2>
+        <p>Founded by Walter Gropius in 1919, Bauhaus unified crafts and fine arts. It emphasized geometric purity and rejection of unnecessary decoration.</p>
+      </section>
+
+      <!-- Dynamic Pattern block -->
+      <section class="bauhaus-card card-interactive">
+        <span class="block-label">02 / INTERACTION</span>
+        <h2>SHAPE COMPOSER</h2>
+        <p>Click inside the square canvas below to generate random primary Bauhaus geometry elements.</p>
+        <div class="composer-canvas" id="shape-canvas">
+          <!-- Elements generated here -->
+        </div>
+        <button class="bauhaus-btn" id="btn-clear-canvas">RESET CANVAS</button>
+      </section>
+
+      <!-- Diagonal accent block -->
+      <section class="bauhaus-card card-blue-block">
+        <span class="block-label">03 / GEOMETRY</span>
+        <div class="diagonal-box">
+          <span class="diagonal-text">FORM</span>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

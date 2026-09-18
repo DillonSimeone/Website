@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style type="text/css">
+		div
+		{
+			margin: auto;
+			width: 60%;
+			display: flex;
+			flex-direction: column;
+		}
+		div select
+		{
+			width: 300px;
+			margin: 50px auto 50px auto;
+		}
+		div p
+		{
+			transition all 1s;
+		}
+	</style>
+<title>Project 2 - Client Programming</title>
+</head>
+<body> 
+
+	<form method="post" action="" id="superform">
+	</form>
+
+	<script>
+		var activePages = [];
+		var pages = [];
+		var id = 1;
+		var form = document.getElementById('superform');
+		
+		
+		p1 =
+		{
+			story: 'It is summertime again, vacation time. You go to your uncle\'s house. He takes you on a tour around the city. There are many old buildings, but the oldest of all is on Main Street. The address is 880. He says that it is haunted, but you don\'t believe him. ',
+			choices: ['Do you go inside?', 'Do you stay there? '],
+			goTo: [2, 3]
+		};
+		pages.push(p1);
+		
+		p2 =
+		{
+			story: 'You say, "I will go inside." He says, "I want to watch you." You start up the stone steps of the old haunted house. You open the door and step inside and suddenly a sharp arrow streaks across in front of you! But it misses you.',
+			choices: ['Do you go up the staircase?', 'Do you go through the swinging doors?'],
+			goTo: [4, 5]
+		};
+		pages.push(p2);
+		
+		p3 =
+		{
+			story: 'You stay there. Then you decide to go home, have an ice cream, and go to bed.',
+			choices: [],
+			goTo: []
+		};
+		pages.push(p3);
+		
+		p4 = 
+		{
+			story: "You go up the stairs. You lean against the railing and it breaks. You fall and that's the end of you.",
+			choices: [],
+			goTo: []
+		};
+		pages.push(p4);
+		
+		p5 =
+		{
+			story: 'You go through the swinging doors. You walk through the room.',
+			choices: ['Do you go into the closet?', 'Do you go into a passageway under the house?'],
+			goTo: [6, 7]
+		};
+		pages.push(p5);
+		
+		p6 =
+		{
+			story: 'You go into the closet. You fall through a trapdoor and break your leg. The walls are too smooth to climb. There is no other way up.',
+			choices: [],
+			goTo: []
+		};
+		pages.push(p6);
+		
+		p7 =
+		{
+			story: 'You go into a pasaageway under the house. You make your way along and it leads to a trapdoor that takes you back to where you started from. You meet a policeman at the top and he says to you, "You were lucky to get out of there. Don\'t ever go in there again!" You go home and have some ice cream.',
+			choices: [],
+			goTo: []
+		};
+		pages.push(p7);
+		
+		function loadPage(num, name)
+		{
+			var loop = true;
+				var i = (num);
+				do
+				{
+					console.log("do while running");
+					if(exists(i))
+					{
+						remove(i);
+						id -= 1;
+						console.log("New id: " + id);
+					}
+					else
+						loop = false;
+					
+					console.log("Checking " + i);
+					
+					i++;
+				}while(loop)
+				
+			console.log("Num: " + num + " Name: " + name);
+			//This is a dirty hack... Fix later.
+			if(num !== 0)
+				num = num - 1;
+				
+			var div;
+			var p;
+			var select;
+			var option;
+			var node;
+			
+			console.log("Loading page " + (num));
+			
+			div = document.createElement("div");
+			div.id = id;
+			
+			
+			p = document.createElement("p");
+			node = document.createTextNode(pages[num].story);
+			
+			p.appendChild(node);
+			
+			div.appendChild(p);
+			
+			select = document.createElement("select");
+			select.name = id;
+			select.onchange = function(){loadPage(this.value, this.name)};
+			
+			option = document.createElement("option");
+			option.value = 0;
+			node = document.createTextNode("Select");
+			option.appendChild(node);
+			select.appendChild(option);
+			
+			for(var i = 0; i < pages[num].choices.length; i++)
+			{
+				option = document.createElement("option");
+				option.value = pages[num].goTo[i];
+				
+				node = document.createTextNode(pages[num].choices[i]);
+				option.appendChild(node);
+				option.className = id;
+				select.appendChild(option);
+			}
+			//div.appendChild(document.createTextNode(""));
+			if(pages[num].choices.length != 0)
+				div.appendChild(select);
+				
+			form.appendChild(div);
+			id++;
+		}
+		loadPage(0, "0");
+		
+		function remove(id)
+			{
+				var elem = document.getElementById(id);
+				console.log(elem);
+				if(elem)
+				{
+					return elem.parentNode.removeChild(elem);
+				}
+			}
+		
+			//Checks if an element exists or not.
+			function exists(id)
+			{
+				var elem = document.getElementById(id);
+				console.log("Removing something. " + elem);
+				if(elem === null)
+					return false;
+				else
+					return true;
+			}
+		
+	</script>
+	</body>
+<html>

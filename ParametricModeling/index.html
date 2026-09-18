@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametric Modeling Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="scanline"></div>
+
+    <div class="container">
+        <header>
+            <h1>ForgeCAD Studio</h1>
+            <div class="subtitle">Parametric Geometry Explorations</div>
+        </header>
+
+        <div class="grid">
+            <a href="./00-CommonParts/" class="card" style="border-color: rgba(0, 255, 170, 0.3); --neon-blue: #00ffaa;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00ffaa; box-shadow: 0 0 15px #00ffaa; color: #000;">📦</div>
+                        Common Parts Library
+                    </div>
+                    <p class="card-desc">
+                        A repository of reusable ForgeCAD parametric parts. Includes battery holders, ESP32 cradles, TP4056 slots, and motor clamps. Customize dimensions in real-time and export production-ready STL models.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #00ffaa; border-color: #00ffaa; background: rgba(0, 255, 170, 0.1);">Reusable</div>
+                    <div class="btn-launch" style="color: #00ffaa;">
+                        Open Library
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./04-Pulse/" class="card" style="border-color: rgba(255, 0, 255, 0.3); --neon-blue: var(--neon-pink);">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: var(--neon-pink); box-shadow: 0 0 15px var(--neon-pink); color: #fff;">💓</div>
+                        PULSE Haptics
+                    </div>
+                    <p class="card-desc">
+                        Advanced haptic device assembly. Precision parametric housing for ESP32 digital cores, L298N drivers, and vibration motors. Modular sled architecture with integrated cooling vents.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: var(--neon-pink); border-color: var(--neon-pink); background: rgba(255, 0, 255, 0.1);">Cyberware</div>
+                    <div class="btn-launch" style="color: var(--neon-pink);">
+                        Visit Project Site
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./05-FanDuctWorks/" class="card" style="border-color: rgba(0, 243, 255, 0.3); --neon-blue: #00f3ff;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00f3ff; box-shadow: 0 0 15px #00f3ff; color: #000;">🌀</div>
+                        Fan Duct Works
+                    </div>
+                    <p class="card-desc">
+                        State-of-the-art airflow adapters. Create organic circle-to-square transitions with parametric "Bell Curve" curvature. Supports independent duct sizing for universal hardware bridging.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #00f3ff; border-color: #00f3ff; background: rgba(0, 243, 255, 0.1);">Aerospace Grade</div>
+                    <div class="btn-launch" style="color: #00f3ff;">
+                        Launch Engine
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./06-SythKnobs/knob-parametric.html" class="card" style="border-color: rgba(200, 255, 0, 0.3); --neon-blue: #c8ff00;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #c8ff00; box-shadow: 0 0 15px #c8ff00; color: #000;">🎛️</div>
+                        Synth Knobs
+                    </div>
+                    <p class="card-desc">
+                        Precision parametric synthesizer and accessibility control knobs. Customize outer diameter, height, flutes, diamond knurling, and shaft clearance with real-time WASM CSG rendering.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #c8ff00; border-color: #c8ff00; background: rgba(200, 255, 0, 0.1);">Interface Design</div>
+                    <div class="btn-launch" style="color: #c8ff00;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./07-TableKnocker/" class="card" style="border-color: rgba(251, 191, 36, 0.3); --neon-blue: #fbbf24;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #fbbf24; box-shadow: 0 0 15px #fbbf24; color: #000;">🔨</div>
+                        Table Knocker
+                    </div>
+                    <p class="card-desc">
+                        A solenoid-actuated tactile feedback haptic module. Features a parametric casing, slide-in sled rails, rocker switch mounts, solenoid sleeves, and 18650 power bank retention channels.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #fbbf24; border-color: #fbbf24; background: rgba(251, 191, 36, 0.1);">Tactile Haptics</div>
+                    <div class="btn-launch" style="color: #fbbf24;">
+                        Launch Engine
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./08-WenchPeritonealDialysis/" class="card" style="border-color: rgba(0, 243, 255, 0.3); --neon-blue: var(--neon-blue);">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); color: #000;">🔧</div>
+                        Dialysis Cable Joint
+                    </div>
+                    <p class="card-desc">
+                        Parametric model of twist-coupling peritoneal dialysis cable joints. Features precision multi-fin tolerances, real-time kinematic explosion separation, and customized mating surfaces for hand-strength assistance design.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: var(--neon-blue); border-color: var(--neon-blue); background: rgba(0, 243, 255, 0.1);">Medical Assist</div>
+                    <div class="btn-launch" style="color: var(--neon-blue);">
+                        Launch Engine
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./09-SheetToTube/" class="card" style="border-color: rgba(0, 243, 255, 0.3); --neon-blue: #00f3ff;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00f3ff; box-shadow: 0 0 15px #00f3ff; color: #000;">🧪</div>
+                        Sheet to Tube Cap
+                    </div>
+                    <p class="card-desc">
+                        Precision parametric caps for rolled sheet cylinder assemblies. Enter sheet dimensions, choose the rolling direction, and customize tolerances, lip depths, and wall thicknesses for 3D printed caps.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #00f3ff; border-color: #00f3ff; background: rgba(0, 243, 255, 0.1);">Sheet Rolling</div>
+                    <div class="btn-launch" style="color: #00f3ff;">
+                        Launch Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./10-knuckledusters/" class="card" style="border-color: rgba(255, 0, 60, 0.3); --neon-blue: #ff003c;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #ff003c; box-shadow: 0 0 15px #ff003c; color: #fff;">🥊</div>
+                        Tactical Punch Enforcer
+                    </div>
+                    <p class="card-desc">
+                        Parametric biometric duster and tactical protective gear. Adjust finger hole spacing, outer guard armor thickness, core height, and customize with multi-font tactical engraving.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #ff003c; border-color: #ff003c; background: rgba(255, 0, 60, 0.1);">Biometric Fit</div>
+                    <div class="btn-launch" style="color: #ff003c;">
+                        Launch Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./11-LightBaton/" class="card" style="border-color: rgba(191, 0, 255, 0.3); --neon-blue: #bf00ff;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #bf00ff; box-shadow: 0 0 15px #bf00ff; color: #fff;">🪄</div>
+                        Light Baton
+                    </div>
+                    <p class="card-desc">
+                        A motion-reactive LED baton configurator with haptic feedback channels. Features parametric transparent cylinder segments, dynamic LED clearance, mounting rings with M3 fasteners, and custom-angled decorative ridge ramps.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #bf00ff; border-color: #bf00ff; background: rgba(191, 0, 255, 0.1);">Haptic Reactive</div>
+                    <div class="btn-launch" style="color: #bf00ff;">
+                        Launch Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./12-Potentiometer/" class="card" style="border-color: rgba(255, 119, 0, 0.3); --neon-blue: #ff7700;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #ff7700; box-shadow: 0 0 15px #ff7700; color: #fff;">📟</div>
+                        Potentiometer Box
+                    </div>
+                    <p class="card-desc">
+                        Parametric grid-based enclosure box for multi-potentiometer control panels. Customize pitch, columns, rows, wall thickness, internal mounting margins, and lid snap tolerances.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #ff7700; border-color: #ff7700; background: rgba(255, 119, 0, 0.1);">Device Housing</div>
+                    <div class="btn-launch" style="color: #ff7700;">
+                        Launch Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./13-LightMounts/" class="card" style="border-color: rgba(0, 255, 204, 0.3); --neon-blue: #00ffcc;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00ffcc; box-shadow: 0 0 15px #00ffcc; color: #000;">💡</div>
+                        Light Mount Bracket
+                    </div>
+                    <p class="card-desc">
+                        Heavy-duty wall plate mount and parametric bracket for 30W studio light assemblies. Customize pivot knuckles, pin diameters, plate widths, screw spacing, and countersink clearance.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #00ffcc; border-color: #00ffcc; background: rgba(0, 255, 204, 0.1);">Utility Bracket</div>
+                    <div class="btn-launch" style="color: #00ffcc;">
+                        Launch Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./14-Hook/" class="card" style="border-color: rgba(255, 0, 127, 0.3); --neon-blue: #ff007f;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #ff007f; box-shadow: 0 0 15px #ff007f; color: #fff;">🪝</div>
+                        Drywall Flat Bar Hook
+                    </div>
+                    <p class="card-desc">
+                        Parametric heavy-duty wall hook for holding flat metal bars. Customize bar dimensions, tolerances, screw spacing, screw sizes, and lower support ramp size to print sturdy brackets.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #ff007f; border-color: #ff007f; background: rgba(255, 0, 127, 0.1);">Wall Mount</div>
+                    <div class="btn-launch" style="color: #ff007f;">
+                        Launch Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./15-HAXEL/" class="card" style="border-color: rgba(57, 255, 20, 0.3); --neon-blue: #39ff14;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #39ff14; box-shadow: 0 0 15px #39ff14; color: #000;">⬡</div>
+                        HAXEL Enclosure
+                    </div>
+                    <p class="card-desc">
+                        Dense Borg-cube electronics enclosure configurator. Integrates parametric slots for ESP32-C3, TP4056 chargers, L298N drivers, LiPo batteries, and Type 130 motors with custom half-ring clamps.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #39ff14; border-color: #39ff14; background: rgba(57, 255, 20, 0.1);">Borg Enclosure</div>
+                    <div class="btn-launch" style="color: #39ff14;">
+                        Launch Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./16-HapticEccentricWeight/" class="card" style="border-color: rgba(255, 0, 191, 0.3); --neon-blue: #ff00bf;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #ff00bf; box-shadow: 0 0 15px #ff00bf; color: #fff;">📳</div>
+                        Haptic Weight Lab
+                    </div>
+                    <p class="card-desc">
+                        Glued hub and interchangeable eccentric weights configurator for Minebea haptic motors. Optimizes hole kerf, shaft diameters, hex clearance, and skirt wall width for 0.6mm PETG prints.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #ff00bf; border-color: #ff00bf; background: rgba(255, 0, 191, 0.1);">Haptic Rotor</div>
+                    <div class="btn-launch" style="color: #ff00bf;">
+                        Launch Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./17-UltraSonicTouch/" class="card" style="border-color: rgba(0, 242, 255, 0.3); --neon-blue: #00f2ff;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00f2ff; box-shadow: 0 0 15px #00f2ff; color: #000;">🔊</div>
+                        UltraSonic Touch Lab
+                    </div>
+                    <p class="card-desc">
+                        Parametric focused 40kHz ultrasonic haptic array configurator for 20× 16mm TCT40-16T transmitters aimed at a single focal point. Integrates acoustic radiation pressure field estimation &amp; STL export.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #00f2ff; border-color: #00f2ff; background: rgba(0, 242, 255, 0.1);">Acoustic Haptics</div>
+                    <div class="btn-launch" style="color: #00f2ff;">
+                        Launch Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="secondary-section">
+            <div class="secondary-title">Core Kernels</div>
+            <div class="secondary-grid">
+                <a href="./01-ForgeCAD/" class="s-card">
+                    <span class="s-card-title">ForgeCAD Base</span>
+                    <span class="s-card-tag">High Level</span>
+                </a>
+                <a href="./02-OpenJSCAD/" class="s-card">
+                    <span class="s-card-title">OpenJSCAD V2</span>
+                    <span class="s-card-tag">Functional</span>
+                </a>
+                <a href="./03-Manifold/" class="s-card">
+                    <span class="s-card-title">Manifold WASM</span>
+                    <span class="s-card-tag">Low Level</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

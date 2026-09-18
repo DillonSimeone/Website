@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Amazing Title</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head> 
+	<body>
+        <svg width="300" height="300" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    
+            <defs>      
+                <filter id="linear">
+                    <feColorMatrix
+                    type="matrix"
+                    values="1 0 0 0 0
+                            0 1 0 0 0
+                            0 0 3 1 0
+                            0 0 0 1 0 " />
+                    </feColorMatrix>
+                </filter>
+            </defs> 
+            <image xlink:href="https://media.istockphoto.com/photos/making-time-to-reconnect-as-a-couple-picture-id525025496?k=6&m=525025496&s=612x612&w=0&h=u4WJq6wf9SA6PZmiNSsJh3o5emyrNlniTJDu0KrQAPk=" id="image" x="0" y="0" width="200" height="200" preserveAspectRatio="xMidYMid slice" filter="url(#linear)"/>  
+        </svg>
+    <script>
+        var filter = document.getElementsByTagName('svg')[0].getElementsByTagName('feColorMatrix')[0];
+        function random(){
+            let values = "";
+            for(let i = 0; i < 15; i++){
+                if(Math.random() < 0.3)
+                    values += " " + Math.random();
+                else
+                    values += " 0";
+            }
+            for(let i = 0; i < 5; i++){
+                values += " 1";
+            }
+            filter.setAttributeNS(null, "values", values);
+            
+            setTimeout(function(){random()}, Math.random() * 1000);
+        };
+        random();
+    </script>
+	</body>
+</html>

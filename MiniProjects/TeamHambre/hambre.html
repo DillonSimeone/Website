@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAMBRE!!!!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid white;
+            background-color: black;
+        }
+        #gameContainer {
+            text-align: center;
+        }
+        #instructions {
+            color: white;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1200" height="800"></canvas>
+        <div id="instructions">
+            Player One: WASD/Arrow keys to move, Space/Ctrl to fire<br>
+            Player Two: Numpad 8/5/4/6 to move, Numpad 0 to fire<br>
+            ESC to exit
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

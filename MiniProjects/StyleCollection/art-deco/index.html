@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Art Deco Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="deco-container border-style-classic" id="main-frame">
+    <header class="deco-header">
+      <a href="../index.html" class="nav-back">← Hub Navigation</a>
+      <h1 class="deco-title">ART DECO</h1>
+      <div class="header-divider">
+        <span class="diamond">♦</span>
+        <span class="line"></span>
+        <span class="diamond">♦</span>
+      </div>
+      <p class="deco-subtitle">Symmetry, gold gilding, and geometric grandeur.</p>
+    </header>
+
+    <main class="deco-grid">
+      <section class="deco-card">
+        <h2>THE ESTABLISHMENT</h2>
+        <p>Originating in the 1920s, Art Deco represented luxury, glamour, and technological progress. It features clean geometric patterns combined with expensive materials.</p>
+      </section>
+
+      <section class="deco-card frame-picker">
+        <h2>FRAME SELECTION</h2>
+        <p>Toggle between visual border frames to change the geometric frame outline.</p>
+        <div class="btn-group">
+          <button class="deco-btn active" id="btn-classic">CLASSIC BORDER</button>
+          <button class="deco-btn" id="btn-bold">MODERN BOLD</button>
+          <button class="deco-btn" id="btn-minimal">MINIMALIST</button>
+        </div>
+      </section>
+
+      <section class="deco-card quote-card">
+        <div class="quote-symbol">♦ ♦ ♦</div>
+        <blockquote>
+          “I love her, and that’s the beginning and end of everything.”
+        </blockquote>
+        <cite>— F. Scott Fitzgerald</cite>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,422 @@
+
+===== PAGE 1 =====
+GestoLumina: Gesture interpreted Light, Sound and
+Haptics. Towards a Framework for Universal Music Design
+Nate Hergert
+∗
+CymaSpace
+www.universalmusicdesign.org
+Portland, Oregon
+nate@cymaspace.org
+Dillon Simeone
+†
+CymaSpace
+www.universalmusicdesign.org
+Portland, Oregon
+dillonsimeone@gmail.com
+Doga Cavdir
+Multisensory Experience Lab
+Aalborg University CPH
+Copenhagen, Denmark
+cavdir@ccrma.stanford.edu
+Duncan MacConnell
+Avid
+www.avid.com
+Montreal, CA
+duncanmacconnell@gmail.com
+Shawn T rail
+Conﬂuence Recording Co.
+www.conﬂuencerecording.org
+Portland, Oregon
+shawntrail@gmail.com
+Myles de Bastion
+‡
+CymaSpace
+www.cymaspace.org
+Portland, Oregon
+myles@cymaspace.org
+ABSTRACT
+Introducing GestoLumina (GeLu), a novel interface by the
+Universal Music Design (UMD) team at CymaSpace, whose
+mission is to enhance arts and culture accessibility for the
+Deaf and Hard of Hearing (DHH). UMD is a program that
+applies principals taken from theUniversal Designcon-
+cept towards music accessibility and inclusion for the DHH.
+The primary goal of UMD is to create experiential, edu-
+cational pathways for the DHH to interact with music in
+a meaningful way. GeLu is therst UMD interface in the
+framework and is modular in its feature set allowing the user
+to choose, based on use case, between visual and/or hap-
+tic feedback along with gestural sensing. GeLu combines
+two bracelets: a ring system with gesture sensing and hap-
+tic feedback; and an audio-reactive LED color feedback ar-
+ray. The ring system captures tactile input through sensors
+and provides haptic feedback on thengertips. The audio-
+reactive LED color feedback bracelet visualizes audio data,
+creating dynamic visualizations synchronized with sound.
+Author Keywords
+Deaf/DHH, inclusion, audio-visualization, haptic, interface
+CCS Concepts
+•Applied computing→Sound and music computing;•Human
+centered computing→User centered design;•Social and
+professional topics→People with disabilities;
+∗Deaf Principal Investigator - UMD
+†Deaf Lead Design Engineer - UMD
+‡Deaf Founder/President - CymaSpace
+Licensed under a Creative Commons Attribution
+4.0 International License (CC BY 4.0). Copyright
+remains with the author(s).
+NIME’24,4–6 September, Utrecht, The Netherlands.
+1. INTRODUCTION
+Universal Design is the design of buildings, products or en-
+vironments to make them accessible, regardless of age, dis-
+ability or other factors [10]. In contemporary society, music
+is exclusionary to DHH individuals. Unquestionably, Music
+has an indelible presence, shaping emotions, culture, and
+experiences. However, for the DHH, this profound avenue
+of human expression remains largely inaccessible, creating
+a disparity in the enjoyment and engagement with auditory
+stimuli. UMD seeks to investigate the universal properties
+of music to adopt a universal design towards new interfaces
+for musical expression for the DHH, by the DHH.
+Figure 1: CymaSpace Founder, Myles, GeLu/guitar session
+
+===== PAGE 2 =====
+Sound is a part of a DHH individuals world, but, without
+technology, DHH people are excluded from many sound-
+based experiences. In his book,Sonic Agency,Brandon
+Labelle exploressonic thought and imagination,[7] a theme
+explicitly relevant to the DHH. UMD advocates for the
+DHH communitys sonic agency by increasing scientic ex-
+ploration and artistic application of alternative ways to en-
+gage with sound and music, while empowering artists and
+designers to adapt current technologies for increased acces-
+sibility and inclusion.
+Music not only entertains but also serves as a conduit for
+emotional resonance, political resistance, and social con-
+nection within the hearing-able world, aording one sonic
+agency. Yet, the concept ofSonic Agencytranscends mere
+auditory perception; it delves into the realm of sensory in-
+clusivity, advocating for the expansion of avenues through
+which all individuals, regardless of auditory ability, can en-
+gage with and experience musics profound impact on the
+human psyche [1]. In this context, the notion of increased
+accessibility to music takes on paramount signicance for
+the DHH community. Enabling accessibility extends beyond
+aurally perceiving the sound to feeling the vibrations; un-
+derstanding rhythms through touch, and experiencing the
+emotive power of music through alternative sensory path-
+ways. This forms the crux of our research. We aim to imbue
+DHH participants with a novel means to tangibly experi-
+ence the essence of music, thus fostering a more inclusive
+and vibrant musical landscape.
+Similarly, accessibility research reects an underrepresen-
+tation of DHH designers, musicians, composers, and per-
+formers as active participants [4]. We address this by con-
+structing collaborations across DHH, Cochlear Implant users,
+and hearing-able researchers where DHH designers and per-
+formers take the forefront. This participatory approach not
+only increases visibility of DHH researchers but also pro-
+vides examples for the DHH community who wish to engage
+in music research and performance [3].
+2. RELATED WORK
+GeLu takes inspiration and builds directly from [5], while
+incorporating the authorsbackgrounds in complex non-
+invasive, idiomatic music 3D gesture tracking [15], and ASL
+gesture recognition [12]. Previous authors explore simi-
+lar frameworks with myo-electric and nerve sensing gesture
+recognition techniques [9] [17]. The MiMu gloves 1 sensing
+framework directly informs GeLu design considerations [11].
+3. MOTIV ATION
+For much of the DHH community, the experience of mu-
+sic has long been a source of curiosity and intrigue, despite
+its elusive nature. By understanding theory, science and
+physics, and relevant contextual/cultural information re-
+lated to sound and music, a DHH individual can understand
+their environment more intimately. Music holds a profound
+signicance in society, evoking emotions, memories, and
+connections that transcend language and culture. However,
+for DHH individuals, the traditional auditory components
+of music remain largely inaccessible, leaving many to won-
+der what it might be like to fully engage with this art form.
+The impact of music on the hearing-able is undeniable,
+with its ability to evoke powerful emotions and elicit phys-
+ical responses. Yet, the sensation of music as vibrations,
+harmony and rhythmic patterns remains a curious mystery,
+prompting many within the DHH community to explore al-
+1https://www.mimugloves.com/gloves/
+Table 1: Cost Breakdown
+Light Bracelet Price
+Pixelblaze ESP32 39.00
+Pixelblaze Sensor Extension Board 29.00
+Basswood lasered into living hinges .50
+Duct Tape attached to bottom of living hinges .05
+USB cable 1.00
+WS2812B LED Strip (8x 1.5sections) 1.00
+Power Bank 17.00
+Total 87.55
+Haptic Bracelet Price
+LILYGO T-Display-S3 21.98
+Lithium Polymer Battery 3.7V 9.70
+Basswood lasered into chassis .50
+Velcro Strip 3 .05
+USB cable 1.00
+MEMs micophone 2.60
+L298N Motor Driver 2.5
+10mmx3mm Mini Vibration Motors 1.40
+MPU6050 3 Axis Accelerometer Gyroscope Module 3.30
+DF9-16 FSR 9.12
+Total 52.70
+ternative avenues for experiencing and interacting with mu-
+sical content. An example being that DHH individuals of-
+ten augment their experience with sound by over-amplifying
+the bass frequencies in the music using subwoofers for the
+increased haptic feel 2.
+One phenomenon that occurs due to lack of early music
+training is that a DHH individual does not develop equilib-
+rium or proprioception in the same manner as a hearing-able
+child [16]. One author relates that they potentially cannot
+ride a bicycle due to this [6]. Our goals are to develop sym-
+metrical, multi-model musical interfaces for the hands [8],
+as well as incorporate dance 3.
+4. SYSTEM DESCRIPTION
+GeLu is a Low-cost (Table 1), open source, easily replicable
+gesture interface with audio visualization. It featuresnger-
+tip rings equipped with a single LED diode, haptic feedback
+mechanisms and force sensor resistors (FSRs). The system
+isexible and modular (Figure 1).
+4.1 Analog Sensor Input
+Functionally, the gesture sensing and haptic portion of GeLus
+sensor/haptic control data is transmitted and received via
+Bluetooth Low Energy (BLE) MIDI technology for wire-
+less networking with compatible devices. GeLu utilizes the
+MPU6050 Accelerometer for gesture data acquisition. The
+sensor data is scaled into control data (MIDI). The MPU-
+6050 accelerometer senses inertial and orientation changes
+that are converted to wireless MIDI Note/CC messages to-
+wards triggering of sounds or modulation of musical pa-
+rameters. DF9-16 FSRs, on thengertips, are used to trig-
+ger MIDI notes by squeezing thengertips to the thumb.
+Tactile feedback from embedded haptic feedback actuators
+within the rings are driven by selected MIDI note feeds
+(sender and/or receiver).
+2https://djmag.com/news/deaf-rave-collective-and-
+founder-dj-troi-lee-are-subject-new-netix-documentary
+3https://www.nytimes.com/2023/08/20/style/haptic-
+suits-deaf-music.html
+
+===== PAGE 3 =====
+4.2 Audio Visualization
+The LED array portion of GeLu incorporates the SPW2430
+MEMS microphone built into the Pixelblaze ESP32 micro-
+controllers sensor extension board. That audio input is vi-
+sualized in real-time on the bracelet LED array programmed
+to convey the frequency and BPM of audio sources. This
+visual representation oers users an indication of the music
+being created (Figure 2).
+Figure 2: Modular GeLu System [Top: mic input/LED array;
+Bottom: Rings- sound control/haptic feedback]
+4.3 Hardware, Software and Latency
+Gelu uses a 3.7V lithium rechargeable battery for power.
+Average power usage of the ESP32 tech draws about 95-
+240mA while active. Max activity will last four hours and
+low activity is closer to 11 hours of charge. This provides the
+necessary energy for extended use in mobile applications,
+ensuring portability andexibility.
+Sensing/Haptics: GeLus sensor/haptic platform is built
+on the LilyGo T-Display-S3 microcontroller, oering WiFi
+and Bluetooth capabilities. With a dual-core XTensa LX7
+processor running at 240MHz, it ensures ecient processing
+with low latency. The inclusion of a full-color TFT screen on
+the T-Display-S3 facilitates rapid prototyping by allowing
+developers to visualize sensor data in real-time (Figure 3).
+Figure 3: full-color TFT screen with realtime sensor readings
+This feature streamlines the development process by en-
+ablingne-tuning of values based on observations during
+use. Additionally, compatibility with the Arduino IDE sim-
+plies programming. Haptic feedback is facilitated by Mikoke
+3V ERM vibration motors controlled by an L298N H-bridge.
+LEDs illuminate when haptic feedback is engaged (Figure 4).
+Light: GeLus audio input processing and lighting control
+platform is built on the Pixelblaze WiFi LED controller and
+the Pixelblaze Sensor Extension Board. The ESP32 dual-
+core processor eciently controls WS2812B LED strips.
+Figure 4: Laser cut rings with FSR, haptic acuator and LED
+By processing sensor data locally and using ecient com-
+munication protocols, the device achieves low-latency inter-
+action (approx. less than 2.3ms based on testing- LED/haptic
+feedback, round-trip).
+5. ETUDE STUDY
+A musical etude study is described with two GeLu users-
+a Cochlear Implant user (GeLu composer/end user) and a
+fully Deaf music student (GeLu Lead Design Engineer) in
+duet performing an experimental musical excerpt.
+In Toussaints book,” The Geometry of Musical Rhythm”,
+rhythms are statistically analyzed as being innately musical
+vs. chaotic. Its shown, eschewing a cultural lens, that
+humans adopt specic rhythms worldwide while rejecting
+others. When viewed in a euclidean sequence the adopted
+rhythms present a symmetrical shape when connecting the
+time points [14]. This symmetry isnt visible via a linear
+step sequencer or notation and we believe there is value in
+visualizing musical content this way to a DHH musician.
+Weve chosen a preset group of rhythms that a DHH musi-
+cian can trust (being an adopted symmetrical andinnate
+rhythm) as a platform for pattern building using haptics
+and light 4. Using GeLu, a DHH musician performs basic
+percussive patterns while the other DHH musician receives
+the sensation of that pattern on onenger. In duet, the sec-
+ond DHH musician can perform back a polyrhythm using
+anothernger. This technique is akin to multi-track record-
+ing with headphones, rather with haptics. Meanwhile, by
+selecting contrasting enough sounds that each DHH musi-
+cian triggers, both GeLus are able to convey each players
+respective pattern,polyphonically, with an independent
+color that includes trigger time point, decay over time and
+BPM information. These experiments are towards the de-
+velopment of a large-scale 3D-spatial, immersivehaptic-
+acousticmusical work featuring hybrid DHH/hearing-able
+musicians, while concurrently informing the development of
+a DHH Music Curriculum[13].
+6. CONCLUSIONS AND FUTURE WORK
+GeLu is versatile and compatibile with smartphones and
+Bluetooth-enabled computers. Prototyping with PureData
+and Ableton Live has been trivial across OS platforms, un-
+derscoring the devices seamless integration into diverse dig-
+ital music creation setups [GeLu Video Portfolio 5].
+4https://amy-alexander.com/pigs
+5GeLu demo:https://www.youtube.com/playlist?list=
+PLTDFu1P8i7yb2SjZbE5K3kKBOBn99Y1hs
+
+===== PAGE 4 =====
+We will incorporate American Sign Language (ASL) and
+DHH art form Visual Vernacular (VV) to create visible/multi-
+sensory low-frequency haptic vibrations for participants in
+a way that merges universal musical expression with propri-
+etary DHH forms of visual communication towards a bur-
+geoning novel art form.
+Currently, the ergonomics of thengertip rings present a
+notable limitation being tailort. Future iterations of GeLu
+could implement a more universally adaptable design ensur-
+ing a one-size-ts-all solution, accommodating users with
+varyingnger sizes while maintaining comfort andexibil-
+ity without compromising sensing accuracy.
+Scaling down the size of the components is possible, re-
+ducing the overall footprint. Custom PCBs will stream-
+line assembly and improve connectivity. This integration
+will reduce clutter, enhancing functionality and portabil-
+ity, making GeLu more ecient, robust and user-friendly.
+We intend to include haptics inside the bracelet armband
+to provide multi-channel audio, while additionally exploring
+newly emerging actuators for high-frequency response.
+Porting the framework to the Nano 33 BLE Sense will
+enhance the projects capabilities with an array of built-in
+sensors: IMU, microphone, gesture, light, proximity, baro-
+metric pressure, temperature, humidity. Integrated Blue-
+tooth functionality simplies wireless communication with
+external devices. Compatibility with machine learning ap-
+plications aords advanced gesture recognition and musical
+interaction. The Nano 33 BLE Senses sensor suite and ma-
+chine learning capabilities will allow us to design a smarter,
+more ecient platform for DHH music creation and inter-
+action.
+Beyond music, we envision GeLu in multiple social use
+cases: providingspeech-to-textcapabilities for DHH and
+hearing-able individuals to communicateuidly in social,
+work, or institutional settings; or MIR source-separation
+and recognition for environmental sound level monitoring
+to become more familiar with the sonic energy of a space.
+As the work progresses, we plan to conduct user-surveys
+of GeLu in deployment with members from our regional
+DHH community in-order to meaningfuly further our user-
+centered design iterations.
+Moreover, there is a growing aspiration within the DHH
+community to not only experience music but also to ac-
+tively contribute to its creation. DHH individuals envi-
+sion a future where they can create music that both DHH
+and hearing-able individuals can enjoy, that celebrates the
+unique perspectives and experiences of the DHH commu-
+nity while captivating audiences of all backgrounds. This
+desire to create an entirely new genre of music, reects a
+deep-seated longing for there to be more accessibly in the
+musical landscape for the DHH [2]. GeLu emerges as a
+response to this curiosity for a more inclusive musical expe-
+rience, by providing an open-source, multi-modal platform
+for experimentation that can be adopted and adapted 6.
+7. ACKNOWLEDGMENTS
+This work was graciously funded by the Oregon Creative
+FoundationCreative Heights Award 7. We would also like
+to credit the CymaSpace Board of Directors for ongoing
+guidance and support for this research and the Universal
+Music Design project. The Universal Music Design Team
+also thanks Brandon Swords, Stefania Seran, Daniel Bel-
+quer/Music Not Impossible, RIT/NTID and Woojer for all
+of their feedback, support and contributions to this research.
+6https://github.com/DillonSimeone/Gestolumina
+7www.universalmusicdesign.org
+8. REFERENCES
+[1] W. Benzon.Beethoven ’s anvil: Music in mind and
+culture. Oxford University Press, 2002.
+[2] S. Br´ et´ ech´ e. The deaf musical experience: Bodily and
+visual specicities: Corpaurality and vusicality. In
+Perception, Representations, Image, Sound, Music:
+14th International Symposium, CMMR 2019,
+Marseille, France, October 14–18, 2019, Revised
+Selected Papers 14, pages 422–448. Springer, 2021.
+[3] S. Burgstahler. Increasing the representation of
+people with disabilities in science, engineering, and
+mathematics.Information Technology and Disability,
+1(4):4, 1994.
+[4] F. Castro, E. Stuart, J. Deal, V. Varadaraj, and B. K.
+Swenor. Disability disparities in stem: Gaps in
+salaries and representation for doctorate recipients
+with disabilities in the us, 2019.medRxiv, pages
+2022–12, 2022.
+[5] D. Cavdir and G. Wang. Felt sound: A shared
+musical experience for the deaf and hard of hearing.
+InProceedings of the 20th international conference on
+new interfaces for musical expression (nime-20), 2020.
+[6] M. Erkili¸ c. Conceptual challenges between universal
+design and disability in relation to the body,
+impairment, and the environment.METU Journal of
+the Faculty of Architecture, 28(2), 2011.
+[7] B. LaBelle.Sonic agency: Sound and emergent forms
+of resistance. Goldsmiths Press, London, England,
+2018.
+[8] J. Lane-Smith, D. Chow, S. Ajami, and J. R.
+Cooperstock. The hapstrument: A bimanual haptic
+interface for musical expression. InProceedings of the
+International Conference on New Interfaces for
+Musical Expression. NIME, 2023.
+[9] L. May and P. Larsson. Nerve sensors in inclusive
+musical performance. InNIME 2021. PubPub, 2021.
+[10] E. A. Miendlarzewska and W. J. Trost. How musical
+training aects cognitive development: rhythm,
+reward and other modulating variables.Frontiers in
+neuroscience, 7:63292, 2014.
+[11] S. Seran, S. Trento, F. Grani, H. Perner-Wilson,
+S. Madgwick, and T. Mitchell. Controlling physically
+based virtual musical instruments using the gloves. In
+Proceedings of the International Conference on New
+Interfaces for Musical Expression. NIME, 2014.
+[12] M. Shahinur Alam, J. Lamberton, J. Wang,
+C. Leannah, S. Miller, J. Palagano, M. de Bastion,
+H. L. Smith, M. Malzkuhn, and L. C. Quandt. Asl
+champ!: A virtual reality game with deep-learning
+driven sign recognition.arXiv e-prints, pages
+arXiv–2401, 2023.
+[13] N. M. d. Silva, J. F. Alves, A. B. C. d. Castro, and
+J. H. d. S. Varela. Music education for the deaf:
+characteristics, barriers and successful practices.
+Educa¸ c˜ ao e Pesquisa, 46, 2020.
+[14] G. T. Toussaint.The geometry of musical rhythm:
+what makes a” good” rhythm good?CRC Press, 2019.
+[15] S. Trail, M. Dean, W. A. Schloss, and G. Tzanetakis.
+Non-invasive sensing and gesture control for pitched
+percussion hyper-instruments using the kinect.
+[16] M. E. Wink. Current balance levels in deaf and
+hearing impaired children, 2018.
+[17] Q. Zhang, D. Wang, R. Zhao, and Y. Yu. Myosign:
+enabling end-to-end sign language recognition with
+wearables. InProceedings of the 24th international
+conference on intelligent user interfaces, 2019.

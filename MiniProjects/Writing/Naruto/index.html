@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konohagakure Intelligence Division — Anomalous Event Log</title>
+    <meta name="description" content="Classified logs concerning the anomalous events of the Forbidden Shadow Clone technique in Konohagakure.">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Share+Tech+Mono&family=Outfit:wght@300;400;600&display=swap');
+
+        :root {
+            --bg-color: #060608;
+            --terminal-dark: #0f0f15;
+            --crimson: #a82020;
+            --crimson-glow: rgba(168, 32, 32, 0.25);
+            --text-primary: #e2e8f0;
+            --text-dim: #64748b;
+            --accent-orange: #d97706;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 4px, 6px 100%;
+            z-index: 2;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+            padding: 60px 0 80px;
+        }
+
+        /* Nav Back Link */
+        .nav-back {
+            display: inline-flex;
+            align-items: center;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            transition: color 0.3s ease;
+            gap: 8px;
+        }
+
+        .nav-back:hover {
+            color: var(--crimson);
+        }
+
+        .nav-back svg {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-back:hover svg {
+            transform: translateX(-4px);
+        }
+
+        /* Header block */
+        header {
+            border-bottom: 1px solid rgba(168, 32, 32, 0.3);
+            padding-bottom: 25px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 30%;
+            height: 1px;
+            background: var(--crimson);
+            box-shadow: 0 0 10px var(--crimson);
+        }
+
+        .classification {
+            color: var(--crimson);
+            font-size: 0.75rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        h1 {
+            font-family: 'Noto Serif JP', serif;
+            font-weight: 300;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            letter-spacing: 0.1em;
+            color: var(--text-primary);
+            line-height: 1.3;
+            margin-bottom: 12px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .meta-item {
+            border-left: 2px solid rgba(168, 32, 32, 0.2);
+            padding-left: 10px;
+        }
+
+        .meta-label {
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 1.5px;
+            color: var(--crimson);
+            margin-bottom: 4px;
+        }
+
+        /* Warnings box */
+        .warning-banner {
+            background: rgba(168, 32, 32, 0.06);
+            border: 1px solid rgba(168, 32, 32, 0.3);
+            border-left: 4px solid var(--crimson);
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .warning-title {
+            color: var(--crimson);
+            font-weight: bold;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .warning-banner p {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 0.85rem;
+            color: #bfa3a3;
+            font-weight: 300;
+        }
+
+        /* Document list */
+        .document-list {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .doc-card {
+            background: var(--terminal-dark);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .doc-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .doc-card:hover {
+            border-color: rgba(168, 32, 32, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .doc-card:hover::before {
+            background: var(--crimson);
+            box-shadow: 0 0 10px var(--crimson);
+        }
+
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .doc-id {
+            font-size: 0.75rem;
+            color: var(--crimson);
+            letter-spacing: 2px;
+        }
+
+        .doc-status {
+            font-size: 0.75rem;
+            color: var(--accent-orange);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .doc-title {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .doc-description {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-dim);
+            font-weight: 300;
+            margin-bottom: 25px;
+        }
+
+        .doc-btn {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 18px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .doc-btn:hover {
+            background: rgba(168, 32, 32, 0.15);
+            border-color: var(--crimson);
+            color: #ffffff;
+            box-shadow: 0 0 10px var(--crimson-glow);
+        }
+
+        /* Drafts Grid section */
+        .drafts-section {
+            margin-top: 50px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 40px;
+        }
+
+        .drafts-title {
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--crimson);
+            margin-bottom: 25px;
+        }
+
+        .drafts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .draft-link {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            padding: 20px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .draft-link:hover {
+            border-color: rgba(217, 119, 6, 0.3);
+            background: rgba(217, 119, 6, 0.02);
+            transform: translateY(-2px);
+        }
+
+        .draft-meta {
+            font-size: 0.7rem;
+            color: var(--accent-orange);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .draft-name {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+            font-weight: 400;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <nav>
+            <a href="../index.html" class="nav-back">
+                <svg viewBox="0 0 24 24">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Writing Archive
+            </a>
+        </nav>
+
+        <header>
+            <div class="classification">✦ RESTRICTED ARCHIVE // COGNITIVE HAZARD ✦</div>
+            <h1>The Naruto Anomalies</h1>
+            
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <div class="meta-label">Location</div>
+                    <div>Konohagakure (North Clearance)</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Core Anomaly</div>
+                    <div>Recursive Identity Multiplicity</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Technique Origin</div>
+                    <div>Sealed Taju Kage Bunshin</div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <section class="warning-banner">
+                <div class="warning-title">▲ SECURITY ADVISORY</div>
+                <p>The documentation below references events surrounding the unauthorized reading of the Forbidden Scroll. Readers are advised that the narrative structures themselves demonstrate mathematical anomalies. Do not attempt to recompile or iterate the code blocks contained within the ciphers.</p>
+            </section>
+
+            <div class="document-list">
+                
+                <!-- DOC 1: The Scroll, the Mountain, the Many -->
+                <article class="doc-card">
+                    <div class="doc-header">
+                        <span class="doc-id">DOC-REF // NT-08-F</span>
+                        <span class="doc-status">Primary Record</span>
+                    </div>
+                    <h2 class="doc-title">The Scroll, the Mountain, the Many</h2>
+                    <p class="doc-description">A structured report chronicling the wake of the incident. Naruto wakes from a 371-day coma displaying altered speech and begins writing mathematical logs of concepts that do not exist, preceding a sudden physical accumulation in Training Ground Two.</p>
+                    <a href="naruto_forbidden_scroll.html" class="doc-btn">Read Document</a>
+                </article>
+
+                <!-- DOC 2: The Scroll He Should Not Have Read -->
+                <article class="doc-card">
+                    <div class="doc-header">
+                        <span class="doc-id">DOC-REF // NT-01-A</span>
+                        <span class="doc-status">Incidence log</span>
+                    </div>
+                    <h2 class="doc-title">The Scroll He Should Not Have Read</h2>
+                    <p class="doc-description">An alternate account detailing the seasons of the return. Naruto runs from the north road in a configuration between a smile and a scream, dying at the exact center of the village, repeated in iterations that eventually replace the northern forest.</p>
+                    <a href="naruto_shadow_clone_horror.html" class="doc-btn">Read Document</a>
+                </article>
+
+            </div>
+
+            <!-- Draft Versions Section -->
+            <section class="drafts-section">
+                <h2 class="drafts-title">Alternative Drafts & Sequence Logs</h2>
+                <div class="drafts-grid">
+                    
+                    <a href="naruto_shadow_horror_Mountain.html" class="draft-link">
+                        <span class="draft-meta">DRAFT v4.0</span>
+                        <span class="draft-name">The Shadow Horror: Mountain Log</span>
+                    </a>
+
+                    <a href="naruto_forbidden_mountain_v3.html" class="draft-link">
+                        <span class="draft-meta">DRAFT v3.0</span>
+                        <span class="draft-name">The Forbidden Mountain (V3)</span>
+                    </a>
+
+                    <a href="naruto_forbidden_mountain_v2.html" class="draft-link">
+                        <span class="draft-meta">DRAFT v2.0</span>
+                        <span class="draft-name">The Forbidden Mountain (V2)</span>
+                    </a>
+
+                    <a href="naruto_forbidden_mountain.html" class="draft-link">
+                        <span class="draft-meta">DRAFT v1.0</span>
+                        <span class="draft-name">The Forbidden Mountain (Initial)</span>
+                    </a>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // High performance background canvas drawing red floating chakra nodes
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        const particles = [];
+        const count = 60;
+
+        class ChakraParticle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = height + Math.random() * 50;
+                this.size = Math.random() * 2.5 + 0.5;
+                this.speed = Math.random() * 1.2 + 0.3;
+                this.alpha = Math.random() * 0.4 + 0.1;
+                this.wobble = Math.random() * 0.02;
+                this.wobbleSpeed = Math.random() * 0.05;
+                this.phase = Math.random() * 100;
+            }
+
+            update() {
+                this.y -= this.speed;
+                this.x += Math.sin((this.y * this.wobble) + this.phase) * 0.4;
+                
+                if (this.y < -20) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(168, 32, 32, ${this.alpha})`;
+                ctx.shadowColor = 'rgba(168, 32, 32, 0.8)';
+                ctx.shadowBlur = this.size * 3;
+                ctx.fill();
+                ctx.shadowBlur = 0; // reset
+            }
+        }
+
+        for (let i = 0; i < count; i++) {
+            particles.push(new ChakraParticle());
+        }
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Subtle background dark-red pulse
+            const pulse = 0.02 + Math.sin(Date.now() * 0.001) * 0.01;
+            ctx.fillStyle = `rgba(168, 32, 32, ${pulse})`;
+            ctx.fillRect(0, 0, width, height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+
+</html>

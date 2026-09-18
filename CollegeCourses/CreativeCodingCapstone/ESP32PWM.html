@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: black;
+      color: yellow;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    .btn-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    .button {
+      background: black;
+      color: yellow;
+      border: 2px solid yellow;
+      padding: 20px;
+      margin: 10px;
+      font-size: 1.2em;
+      width: 80%;
+      text-align: center;
+      user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+    }
+    .slider {
+      width: 80%;
+      margin: 5px 0 10px 0;
+    }
+    .audio-container {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .audio-circle {
+      width: 50px;
+      height: 50px;
+      border: 2px solid yellow;
+      border-radius: 50%;
+      background: black;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="btn-container">
+    %BUTTON_SLIDERS%
+  </div>
+  <div class="audio-container">
+    <label class="button">
+      <input type="checkbox" id="audioToggle"> Sound Reactive Mode
+    </label>
+    <div id="audioReadout">Level: 0.00</div>
+    <input type="range" id="thresholdSlider" class="slider" min="0" max="100" value="10">
+    <div id="audioCircle" class="audio-circle"></div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const btnCount = 4;
+    const sliders = [];
+    const buttons = [];
+    const audioEn = [];
+    const pressed = [];
+    const audioPressed = [];
+    let audioCtx, analyser, dataArray, raf;
+    const audioToggle     = document.getElementById('audioToggle');
+    const thresholdSlider = document.getElementById('thresholdSlider');
+    const audioReadout    = document.getElementById('audioReadout');
+    const audioCircle     = document.getElementById('audioCircle');
+
+    // set up buttons, sliders, checkboxes
+    for(let i=0; i<btnCount; i++){
+      sliders[i]      = document.getElementById('slider'+i);
+      buttons[i]      = document.getElementById('btn'+i);
+      audioEn[i]      = document.getElementById('audioEn'+i);
+      pressed[i]      = false;
+      audioPressed[i] = false;
+
+      // manual press logic
+      buttons[i].addEventListener('mousedown', ()=>{ pressed[i]=true; sendPWM(i, sliders[i].value); });
+      buttons[i].addEventListener('touchstart', e=>{ e.preventDefault(); pressed[i]=true; sendPWM(i, sliders[i].value); });
+      ['mouseup','mouseleave','touchend'].forEach(evt=>{
+        buttons[i].addEventListener(evt, e=>{
+          if(evt=='touchend') e.preventDefault();
+          if(pressed[i]){ pressed[i]=false; sendPWM(i, 0); }
+        });
+      });
+      sliders[i].addEventListener('input', ()=>{
+        if(pressed[i]) sendPWM(i, sliders[i].value);
+      });
+    }
+
+    // audio toggle on/off
+    audioToggle.addEventListener('change', async ()=>{
+      if(audioToggle.checked){
+        if(!audioCtx) await setupAudio();
+        audioCtx.resume();
+        tick();
+      } else {
+        if(raf) cancelAnimationFrame(raf);
+        audioCtx && audioCtx.suspend();
+        // release any held channels
+        for(let i=0; i<btnCount; i++){
+          if(audioPressed[i]){
+            audioPressed[i]=false;
+            sendPWM(i, 0);
+          }
+        }
+        audioCircle.style.background='black';
+      }
+    });
+
+    // get mic access
+    async function setupAudio(){
+      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const src    = audioCtx.createMediaStreamSource(stream);
+      analyser     = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      src.connect(analyser);
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+    }
+
+    // main loop
+    function tick(){
+      analyser.getByteTimeDomainData(dataArray);
+      let sum=0;
+      dataArray.forEach(v=>{
+        let n=(v-128)/128;
+        sum+=n*n;
+      });
+      const rms = Math.sqrt(sum/dataArray.length);
+      const level = Math.min(1, rms*10);
+      audioReadout.textContent = 'Level: '+level.toFixed(2);
+
+      const th = thresholdSlider.value/100;
+      audioCircle.style.background = (level>th)?'yellow':'black';
+
+      // hold/release each PWM channel based on sound
+      for(let i=0; i<btnCount; i++){
+        if(audioToggle.checked && audioEn[i].checked && level>th){
+          if(!audioPressed[i]){
+            audioPressed[i]=true;
+            sendPWM(i, sliders[i].value);
+          }
+        } else {
+          if(audioPressed[i]){
+            audioPressed[i]=false;
+            sendPWM(i, 0);
+          }
+        }
+      }
+
+      raf = requestAnimationFrame(tick);
+    }
+
+    // send PWM command
+    function sendPWM(pin, val){
+      fetch(`/pwm?pin=${pin}&value=${val}`).catch(console.error);
+    }
+  });
+  </script>
+</body>
+</html>

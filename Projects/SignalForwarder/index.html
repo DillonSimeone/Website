@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signal Forwarder Tutorial | Art Deco Edition</title>
+  <meta name="description" content="Guide for the Signal Forwarder desktop app: route MIDI, OSC, Art-Net/DMX, and audio signals over Bluetooth BLE to ESP32 devices and other endpoints.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="deco-container border-style-classic">
+    <header class="deco-header">
+      <a href="/" class="nav-back">← Back to Website</a>
+      <h1 class="deco-title">SIGNAL FORWARDER</h1>
+      <div class="header-divider">
+        <span class="diamond">♦</span>
+        <span class="line"></span>
+        <span class="diamond">♦</span>
+      </div>
+      <p class="deco-subtitle">Multi-Protocol Signal Router for Physical Computing</p>
+    </header>
+
+    <main class="deco-grid">
+      <!-- Section 1: Overview -->
+      <section class="deco-card full-width">
+        <h2>THE ARCHITECTURE</h2>
+        <p class="deco-intro">
+          Signal Forwarder is a cross-platform desktop application that discovers, captures, and routes
+          live signals: <strong>MIDI</strong>, <strong>OSC</strong>, <strong>Art-Net/DMX</strong>, and <strong>audio levels</strong>,
+          over <strong>Bluetooth Low Energy (BLE)</strong> to ESP32 microcontrollers and other network endpoints.
+          Use it to trigger physical actuators, haptics, and lights directly from VR headsets, instruments, DAWs, or live audio.
+        </p>
+        <div class="deco-diagram">
+          <div class="node">SIGNAL SOURCE<br><small>(MIDI / OSC / DMX / Audio)</small></div>
+          <div class="arrow">♦ ───►</div>
+          <div class="node highlight">SIGNAL FORWARDER<br><small>(Routing Matrix)</small></div>
+          <div class="arrow">♦ ───►</div>
+          <div class="node">ESP32 / ENDPOINT<br><small>(BLE / Network)</small></div>
+        </div>
+
+        <!-- Screenshot -->
+        <div style="max-width: 900px; margin: 30px auto 10px auto; border: 1px solid var(--gold-primary); box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);">
+          <img src="signal_forwarder_screenshot.png" alt="Signal Forwarder Dashboard Screenshot" style="width: 100%; display: block;">
+        </div>
+        <p style="text-align: center; font-size: 0.75rem; opacity: 0.6; margin-top: 5px; font-style: italic;">The Signal Forwarder dashboard: MIDI inputs, BLE control, signal routing matrix, and simulator.</p>
+
+        <div class="video-container">
+          <iframe src="https://www.youtube.com/embed/hvzQyc9-7xk" title="OSC System in Action" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+      </section>
+
+      <!-- Section 2: Downloads -->
+      <section class="deco-card full-width">
+        <h2>DOWNLOAD</h2>
+        <div class="deco-steps" style="margin-bottom: 25px;">
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Windows:</strong> Download and double-click <code>SignalForwarder.exe</code>. Fully standalone; no Python needed.
+          </div>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-bottom: 35px;">
+          <a href="/MiniProjects/SignalForwarder/dist/SignalForwarder.exe" class="deco-btn-link" download>♦ WINDOWS (.EXE) ♦</a>
+          <a href="https://github.com/DillonSimeone/Website/tree/main/public/MiniProjects/SignalForwarder/" class="deco-btn-link" target="_blank">♦ SOURCE CODE ♦</a>
+        </div>
+
+        <h3 style="text-align: center; margin-bottom: 5px;">macOS</h3>
+        <p style="text-align: center; margin-bottom: 15px;">Open Terminal and paste this command:</p>
+        <div style="max-width: 720px; margin: 0 auto 20px auto; background: rgba(0,0,0,0.4); border: 1px solid var(--gold-primary); border-radius: 4px; padding: 15px 20px; font-family: monospace; font-size: 0.85rem; word-break: break-all; position: relative;">
+          <code>curl -fsSL https://dillonsimeone.com/MiniProjects/SignalForwarder/install.sh | bash</code>
+        </div>
+        <div class="deco-steps">
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>What it does:</strong> Downloads the source code to <code>~/SignalForwarder/</code> (your home folder),
+            creates a Python virtual environment, installs all dependencies, and launches the app.
+            Requires Python 3.10+ (install via <a href="https://brew.sh" target="_blank">Homebrew</a>: <code>brew install python</code>).
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>To run again:</strong> The installer creates a <code>SignalForwarder.command</code> file inside <code>~/SignalForwarder/</code>.
+            Double-click it in Finder to relaunch. No Terminal needed. You can also drag it to your Dock for quick access.
+          </div>
+        </div>
+        <p style="text-align: center; margin-top: 20px; font-size: 0.8rem; opacity: 0.6;">
+          Prefer a downloadable file?
+          <a href="/MiniProjects/SignalForwarder/SignalForwarder.command" download style="color: var(--gold-primary);">Download SignalForwarder.command</a>
+          (may require <code>chmod +x</code> and clearing the quarantine flag).
+        </p>
+      </section>
+
+      <!-- Section 3: ESP32 Setup -->
+      <section class="deco-card">
+        <h2>I. THE HARDWARE</h2>
+        <p>The companion ESP32-C3 Supermini firmware advertises over BLE and accepts PWM, MIDI note, and binary control commands in real time.</p>
+        <div class="deco-steps">
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>BLE Auto-Discovery:</strong> The ESP32 advertises as <code>SignalForwarderESP32</code> with a custom Service UUID. Signal Forwarder highlights it with a green tint in the scan list.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Dynamic Pin Config:</strong> The device stores a JSON configuration in flash memory. Read and write pin mappings (GPIO, PWM frequency, resolution) directly from the app's config editor panel.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Binary Control Protocol:</strong> The control characteristic accepts low-latency binary packets: <code>[0x01, pin, pwm_val]</code> for instant PWM writes, or <code>[0x02, pin, note, velocity, dur_hi, dur_lo]</code> for timed note-on/off events.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Wiring:</strong> Connect a MOSFET gate to GPIO 1 with a noodle LED on the drain. The default config drives PWM at 5000 Hz / 8-bit resolution.
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 25px;">
+          <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/04_Communications/SignalForwarder/" class="deco-btn-link" target="_blank">♦ ESP32 FIRMWARE (PlatformIO) ♦</a>
+        </div>
+      </section>
+
+      <!-- Section 4: Signal Routing -->
+      <section class="deco-card">
+        <h2>II. THE SIGNAL ROUTER</h2>
+        <p>The desktop app discovers all available signal sources and output targets, then lets you wire them together in a visual routing matrix.</p>
+        <div class="deco-steps">
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Input Sources:</strong> MIDI ports (auto-detected), OSC senders (discovered on the network), Art-Net/DMX nodes, audio capture devices (microphone / line-in RMS), and a built-in multi-protocol signal simulator.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Output Targets:</strong> Connected ESP32 BLE devices, custom OSC endpoints (IP:Port), and discovered network clients. The dropdown only shows targets that are actually online and reachable.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Link Source → Target:</strong> Select a source signal and an output target, then click <strong>Link Source to Target</strong>. Toggle links on/off or delete them. All routes persist across app restarts.
+          </div>
+          <div class="step">
+            <span class="step-icon">♦</span>
+            <strong>Wildcards:</strong> Use <code>All MIDI Inputs</code>, <code>All OSC Senders</code>, or <code>All DMX Senders</code> to catch every signal of that protocol from any device.
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Simulator & Testing -->
+      <section class="deco-card full-width">
+        <h2>III. TESTING & SIMULATION</h2>
+        <p>Use the built-in Signal Simulator to test your routing and hardware without needing external sources.</p>
+        <div class="deco-two-col">
+          <div>
+            <h3>SIMULATOR MODES</h3>
+            <ol>
+              <li><strong>MIDI Note:</strong> Set note number (0–127), velocity (0–127), and duration (ms). Default: Note 60, Velocity 50, 500ms.</li>
+              <li><strong>PWM Raw GPIO:</strong> Send a raw pin + value (0–255) command.</li>
+              <li><strong>OSC Packet:</strong> Specify an OSC path and float value.</li>
+              <li><strong>DMX (Art-Net):</strong> Set a DMX channel and level.</li>
+            </ol>
+          </div>
+          <div class="divider-vertical"></div>
+          <div>
+            <h3>WORKFLOW</h3>
+            <ul>
+              <li><strong>Ping Once:</strong> Sends a single simulated signal through the routing matrix.</li>
+              <li><strong>Auto-Ping (1s):</strong> Continuously sends signals once per second. Leave it running while configuring hardware until the LED starts responding.</li>
+              <li><strong>Important:</strong> Simulated signals only reach devices if you link <code>Simulated Signal / Simulator</code> to a target in the routing matrix. No hardcoded shortcuts.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 6: VR Integration -->
+      <section class="deco-card full-width">
+        <h2>IV. BRIDGING THE VR GAP</h2>
+        <p>To integrate physical LEDs or haptics with your virtual instruments in Patchworld:</p>
+        <div class="deco-two-col">
+          <div>
+            <h3>PATCHWORLD SETUP</h3>
+            <ol>
+              <li>Create an <code>execute</code> block or sound-trigger node.</li>
+              <li>Add a <code>port_out 3330</code> action node.</li>
+              <li>Direct the payload to your computer's local IP address.</li>
+              <li>Bind the action to an interactive object like a virtual drum or button.</li>
+            </ol>
+          </div>
+          <div class="divider-vertical"></div>
+          <div>
+            <h3>ADDRESS MAPPINGS</h3>
+            <ul>
+              <li><strong>Toggle:</strong> Flip the pin state on each trigger. Perfect for room lamps.</li>
+              <li><strong>Pulse:</strong> Quick pulse (e.g., 50ms) to actuate relays or solenoids.</li>
+              <li><strong>PWM Fader:</strong> Maps 0.0–1.0 float values to LED brightness or motor speed.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Decorative Footer card -->
+      <section class="deco-card quote-card full-width">
+        <div class="quote-symbol">♦ ♦ ♦</div>
+        <blockquote>
+          "The transition from virtual gestures to physical illumination completes the loop of spatial presence."
+        </blockquote>
+        <cite>Signal Forwarder Integration Guide</cite>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
