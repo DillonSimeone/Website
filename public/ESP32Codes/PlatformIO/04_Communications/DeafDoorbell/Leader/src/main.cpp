@@ -50,6 +50,7 @@
 #define SAMPLES         128 // Rolling window for level calculation
 #define CHUNK_SIZE      64  // 4ms read window (64 samples @ 16kHz)
 #define MAX_PLAUSIBLE_MAD 120000.0f // Filter rail-to-rail DMA bit-slips
+#define MIN_COOLDOWN_MS   10000      // Minimum 10s between alerts (prevents noise-storm rapid-fire)
 
 // ===== ESP-NOW PROTOCOL (Must match Follower struct exactly) =====
 uint8_t broadcastAddr[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -355,7 +356,8 @@ void triggerAlert(bool isTest = false) {
     // Schedule a 4-packet burst spaced 10ms apart to guarantee RF delivery
     burstPacketsRemaining = 4;
     nextBurstPacketMs = millis();
-    alertCooldownUntilMs = millis() + (unsigned long)duration;
+    unsigned long cooldownLen = max((unsigned long)duration, (unsigned long)MIN_COOLDOWN_MS);
+    alertCooldownUntilMs = millis() + cooldownLen;
     uiTriggered = true;
 
     DEBUG_PRINTF(">>> ALERT FIRED! Duration: %dms | Color: #%02X%02X%02X | MAD: %.0f\n",
