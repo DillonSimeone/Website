@@ -1,0 +1,107 @@
+body {
+    font-family: sans-serif;
+    background-color: #f4f7f6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    background-color: #7bb40e;
+}
+
+.calculator-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    background-color: #9ef51c;
+    padding: 40px;
+    border-radius: 100px;
+    box-shadow: 0 0 0 100px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2rem;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+    padding: 10px;
+    border: 1px green solid;
+}
+
+label {
+    display: block;
+    font-size: 1rem;
+    color: #010e03;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+input {
+    border: 2px solid red;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background-color: #305203;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #d5ff9f;
+}
+
+.results-container {
+    margin: 20px auto;
+    border-top: 2px dashed #eee;
+    text-align: center;
+}
+
+.results-container h2 {
+    font-size: 1.25rem;
+    color: #444;
+    margin-bottom: 10px;
+}
+
+.results-container p {
+    font-size: 1.1rem;
+    color: #333;
+    margin: 20px 0;
+}
+
+.results-container span {
+    font-weight: bold;
+    color: #212529;
+}
+
+#stinkLevel {
+    display: inline-block;
+    animation: shrek 2s ease-in-out infinite alternate;
+}
+
+@keyframes shrek {
+    0% {
+        color: red;
+        transform: rotate(0deg);
+    }
+
+    to {
+        color: green;
+        transform: rotate(360deg);
+    }
+}

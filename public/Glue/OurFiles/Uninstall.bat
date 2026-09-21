@@ -1,7 +1,8 @@
 @echo off
 setlocal EnableDelayedExpansion
+chcp 65001 >nul
 
-:: Check for Administrator elevation
+REM Check for Administrator elevation
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo [!] Requesting administrative authorization from the Politburo...
@@ -12,8 +13,6 @@ if %errorlevel% neq 0 (
 title THE PEOPLE'S COMMISSARIAT OF NTFS — UNINSTALLER
 color 0C
 
-set "MENU_NAME=OurFiles"
-
 echo ===============================================================================
 echo            UNION OF SOVIET SOCIALIST FILESYSTEMS (USSF)
 echo          REMOVING CONTEXT MENU: "OUR FILE, COMRADE"
@@ -21,9 +20,13 @@ echo ===========================================================================
 echo.
 echo Removing registry keys...
 
-reg delete "HKCR\*\shell\%MENU_NAME%" /f >nul 2>&1
-reg delete "HKCR\Directory\shell\%MENU_NAME%" /f >nul 2>&1
-reg delete "HKCR\Directory\Background\shell\%MENU_NAME%" /f >nul 2>&1
+reg delete "HKCR\*\shell\runas" /f >nul 2>&1
+reg delete "HKCR\Directory\shell\runas" /f >nul 2>&1
+reg delete "HKCR\Directory\Background\shell\runas" /f >nul 2>&1
+
+reg delete "HKCR\*\shell\OurFiles" /f >nul 2>&1
+reg delete "HKCR\Directory\shell\OurFiles" /f >nul 2>&1
+reg delete "HKCR\Directory\Background\shell\OurFiles" /f >nul 2>&1
 
 echo.
 echo ===============================================================================

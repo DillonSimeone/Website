@@ -1,7 +1,8 @@
 @echo off
 setlocal EnableDelayedExpansion
+chcp 65001 >nul
 
-:: Check for Administrator elevation
+REM Check for Administrator elevation
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo [!] Requesting administrative authorization from the Politburo...
@@ -29,35 +30,39 @@ echo          REGISTERING CONTEXT MENU: "OUR FILE, COMRADE"
 echo ===============================================================================
 echo.
 echo Installing right-click context menu:
-echo Label:  [ ⚒️ Seize the Means of Production (Take Ownership) ]
+echo Label:  [ Seize the Means of Production (Take Ownership) ]
 echo Worker: %WORKER%
 echo.
 
-set "MENU_NAME=OurFiles"
-set "MENU_LABEL=⚒️ Seize the Means of Production (Take Ownership)"
+:: Clean up legacy keys if present
+reg delete "HKCR\*\shell\OurFiles" /f >nul 2>&1
+reg delete "HKCR\Directory\shell\OurFiles" /f >nul 2>&1
+reg delete "HKCR\Directory\Background\shell\OurFiles" /f >nul 2>&1
+
+set "MENU_LABEL=Seize the Means of Production (Take Ownership)"
 set "ICON=imageres.dll,-5323"
 
-:: 1. Individual Files (*)
-reg add "HKCR\*\shell\%MENU_NAME%" /ve /d "%MENU_LABEL%" /f >nul
-reg add "HKCR\*\shell\%MENU_NAME%" /v "HasLUAShield" /t REG_SZ /d "" /f >nul
-reg add "HKCR\*\shell\%MENU_NAME%" /v "Icon" /t REG_SZ /d "%ICON%" /f >nul
-reg add "HKCR\*\shell\%MENU_NAME%\command" /ve /d "cmd.exe /c call \"%WORKER%\" \"%%1\"" /f >nul
+:: 1. Individual Files (*) - runas verb guarantees elevated execution
+reg add "HKCR\*\shell\runas" /ve /d "%MENU_LABEL%" /f >nul
+reg add "HKCR\*\shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f >nul
+reg add "HKCR\*\shell\runas" /v "Icon" /t REG_SZ /d "%ICON%" /f >nul
+reg add "HKCR\*\shell\runas\command" /ve /d "cmd.exe /c \"\"%WORKER%\" \"%%1\"\"" /f >nul
 
 :: 2. Folders / Directories
-reg add "HKCR\Directory\shell\%MENU_NAME%" /ve /d "%MENU_LABEL%" /f >nul
-reg add "HKCR\Directory\shell\%MENU_NAME%" /v "HasLUAShield" /t REG_SZ /d "" /f >nul
-reg add "HKCR\Directory\shell\%MENU_NAME%" /v "Icon" /t REG_SZ /d "%ICON%" /f >nul
-reg add "HKCR\Directory\shell\%MENU_NAME%\command" /ve /d "cmd.exe /c call \"%WORKER%\" \"%%1\"" /f >nul
+reg add "HKCR\Directory\shell\runas" /ve /d "%MENU_LABEL%" /f >nul
+reg add "HKCR\Directory\shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f >nul
+reg add "HKCR\Directory\shell\runas" /v "Icon" /t REG_SZ /d "%ICON%" /f >nul
+reg add "HKCR\Directory\shell\runas\command" /ve /d "cmd.exe /c \"\"%WORKER%\" \"%%1\"\"" /f >nul
 
-:: 3. Directory Background (Right-clicking inside an open folder)
-reg add "HKCR\Directory\Background\shell\%MENU_NAME%" /ve /d "%MENU_LABEL%" /f >nul
-reg add "HKCR\Directory\Background\shell\%MENU_NAME%" /v "HasLUAShield" /t REG_SZ /d "" /f >nul
-reg add "HKCR\Directory\Background\shell\%MENU_NAME%" /v "Icon" /t REG_SZ /d "%ICON%" /f >nul
-reg add "HKCR\Directory\Background\shell\%MENU_NAME%\command" /ve /d "cmd.exe /c call \"%WORKER%\" \"%%V\"" /f >nul
+:: 3. Directory Background (Empty space inside open folder)
+reg add "HKCR\Directory\Background\shell\runas" /ve /d "%MENU_LABEL%" /f >nul
+reg add "HKCR\Directory\Background\shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f >nul
+reg add "HKCR\Directory\Background\shell\runas" /v "Icon" /t REG_SZ /d "%ICON%" /f >nul
+reg add "HKCR\Directory\Background\shell\runas\command" /ve /d "cmd.exe /c \"\"%WORKER%\" \"%%V\"\"" /f >nul
 
 echo.
 echo ===============================================================================
-echo [SUCCESS] Context menu installed successfully across all files and folders!
+echo [SUCCESS] Context menu installed with native Administrator elevation!
 echo Right-click any file or folder to seize ownership and liberate permissions.
 echo ===============================================================================
 echo.

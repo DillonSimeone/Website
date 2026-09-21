@@ -1,10 +1,12 @@
 @echo off
 setlocal EnableDelayedExpansion
+chcp 65001 >nul
 
-:: Elevate to Administrator if not already elevated
+REM Check for Administrator elevation
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c `\"%~f0`\" %*' -Verb RunAs"
+    set "SEIZE_TARGET=%~1"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList ('/c """"""%~f0"""" """"""' + $env:SEIZE_TARGET + '""""""') -Verb RunAs"
     exit /b
 )
 
@@ -46,10 +48,8 @@ if not exist "!TARGET!" (
 
 echo [1/3] Expropriating ownership from bourgeois user tokens...
 if exist "!TARGET!\*" (
-    :: Target is a directory
     takeown /f "!TARGET!" /r /d y >nul 2>&1
 ) else (
-    :: Target is a file
     takeown /f "!TARGET!" >nul 2>&1
 )
 echo       ^> Ownership successfully declared property of the Proletariat.
