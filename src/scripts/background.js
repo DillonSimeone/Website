@@ -13,7 +13,49 @@ window.mobilecheck = function () {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
-function draw() {
+/**
+ * Mobile path: Inject a static, palette-colored SVG directly.
+ * No Web Worker needed — color replacement is a fast regex (<1ms).
+ * The real savings come from skipping:
+ *   - mousemove handler (no mouse on mobile)
+ *   - 300× getBoundingClientRect() loop
+ *   - CSS path transitions (disabled via media query)
+ * Result: ~300 static paint-only paths with zero JS overhead.
+ */
+function drawMobile() {
+    const container = document.querySelector('.trianglify');
+    if (!container) return;
+
+    // Apply random palette colors to the SVG string
+    const coloredSvg = mobileSVGData.replace(/fill="[^"]*"/g, () => {
+        const c = randomRgb(min, max);
+        return `fill="${c}"`;
+    }).replace(/stroke="[^"]*"/g, () => {
+        const c = randomRgb(min, max);
+        return `stroke="${c}"`;
+    });
+
+    // Start invisible, then fade in
+    container.style.opacity = '0';
+    container.style.transition = 'opacity 1.2s ease';
+
+    // Inject the static SVG — no event handlers, no layout queries
+    container.innerHTML = coloredSvg;
+
+    // Fade in on next frame
+    requestAnimationFrame(() => {
+        container.style.opacity = '';
+    });
+
+    // No mousemove handler, no getBoundingClientRect loop, no circle element.
+    // CSS media query already disables transitions on the paths.
+}
+
+/**
+ * Desktop path: Full interactive SVG with mousemove reveal circle.
+ * Preserved exactly as before for desktop users.
+ */
+function drawDesktop() {
     const container = document.querySelector('.trianglify');
     if (!container) return;
 
@@ -88,6 +130,17 @@ function draw() {
             }
         });
     });
+}
+
+/**
+ * Route to mobile or desktop path based on viewport width.
+ */
+function draw() {
+    if (window.innerWidth < 800) {
+        drawMobile();
+    } else {
+        drawDesktop();
+    }
 }
 
 function detectPointInCircle(point, radius, center) {

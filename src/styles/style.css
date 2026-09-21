@@ -91,6 +91,13 @@ body.dark-mode .trianglify path {
     transition: opacity 0.3s, fill 0.3s, transform 1s;
 }
 
+/* Mobile: disable per-path transitions (300+ elements) */
+@media (max-width: 800px) {
+    body.dark-mode .trianglify path {
+        transition: none;
+    }
+}
+
 body.dark-mode .trianglify .fade {
     opacity: 0.2;
 }
@@ -158,6 +165,17 @@ body.dark-mode #work section>div {
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     transition: transform 0.3s, border-color 0.3s;
+}
+
+/* Mobile: disable backdrop-filter (very expensive on mobile GPUs) */
+@media (max-width: 800px) {
+    body.dark-mode .grid-item,
+    body.dark-mode .artwork,
+    body.dark-mode #work section>div {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(15, 15, 25, 0.92);
+    }
 }
 
 body.dark-mode .grid-item:hover,
@@ -551,7 +569,7 @@ nav svg:hover {
     height: 100vh;
     /* Fill entire viewport */
     color: black;
-    transition: all 0.5s;
+    transition: left 0.5s, transform 0.5s, opacity 0.5s;
     overflow-y: auto;
     /* Allow vertical scrolling */
     overflow-x: hidden;
@@ -1079,6 +1097,7 @@ body.dark-mode .gallery-thumbnail img {
     transform: none !important;
     /* Critical: allows fixed children to stay truly fixed */
     z-index: 20;
+    will-change: transform;
 }
 
 .hide {

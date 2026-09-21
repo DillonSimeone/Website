@@ -77,6 +77,17 @@ window.addEventListener('popstate', (e) => {
 /**
  * Main reveal function for page transitions.
  */
+// Track which sections have had their galleries initialized
+const _galleriesInitialized = new Set();
+
+// Gallery config — applied lazily on first section reveal
+const _galleriesConfig = [
+    { id: 'hobby', selector: '.artwork, .headers + .images', minSize: 0 },
+    { id: 'work', selector: '.medias, .images, .videos', minSize: 1 },
+    { id: 'embedded', selector: '.grid-item', minSize: 0 },
+    { id: 'shop', selector: '.grid-item', minSize: 0 }
+];
+
 function reveal(targetID, buttonID, timedelay = 60, historyAPI = false) {
     const button = buttonID ? document.getElementById(buttonID) : null;
 
@@ -86,6 +97,16 @@ function reveal(targetID, buttonID, timedelay = 60, historyAPI = false) {
 
         const target = document.getElementById(targetID);
         target.className = "item reveal";
+
+        // Lazy gallery init: only process galleries the first time a section is shown
+        if (!_galleriesInitialized.has(targetID)) {
+            _galleriesInitialized.add(targetID);
+            _galleriesConfig.forEach(cfg => {
+                if (cfg.id === targetID) {
+                    initSectionGalleries(cfg.id, cfg.selector, cfg.minSize);
+                }
+            });
+        }
 
         // UI Reset
         const globalToggle = document.getElementById('globalNavToggle');
@@ -254,21 +275,24 @@ function setUp() {
     generateDynamicNavs();
     injectFooters();
 
-    // Data-driven Section Gallery Initialization
-    const galleriesConfig = [
-        { id: 'hobby', selector: '.artwork, .headers + .images', minSize: 0 },
-        { id: 'work', selector: '.medias, .images, .videos', minSize: 1 },
-        { id: 'embedded', selector: '.grid-item', minSize: 0 },
-        { id: 'shop', selector: '.grid-item', minSize: 0 }
-    ];
-    galleriesConfig.forEach(cfg => initSectionGalleries(cfg.id, cfg.selector, cfg.minSize));
+    // Gallery initialization is now deferred — see reveal() function.
+    // Galleries are only processed the first time each section is shown.
 
     initYouTubeFacades();
     
-    // Start dynamic favicon cycle
+    // Start dynamic favicon cycle (pauses when tab is hidden to save CPU)
     if (document.getElementById('dynamic-favicon')) {
-        setInterval(updateDynamicFavicon, 1000);
+        let faviconInterval = setInterval(updateDynamicFavicon, 1000);
         updateDynamicFavicon();
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(faviconInterval);
+                faviconInterval = null;
+            } else if (!faviconInterval) {
+                faviconInterval = setInterval(updateDynamicFavicon, 1000);
+            }
+        });
     }
 }
 
