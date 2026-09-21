@@ -1,0 +1,32 @@
+Windows Registry Editor Version 5.00
+
+; =======================================================================
+; ☭ OUR FILES, COMRADE — Seize the Means of Production (Take Ownership)
+; =======================================================================
+
+; 1. Individual Files
+[HKEY_CLASSES_ROOT\*\shell\OurFiles]
+@="⚒️ Seize the Means of Production (Take Ownership)"
+"HasLUAShield"=""
+"Icon"="imageres.dll,-5323"
+
+[HKEY_CLASSES_ROOT\*\shell\OurFiles\command]
+@="cmd.exe /c call \"F:\\Github\\Website\\public\\Glue\\OurFiles\\SeizeTheMeans.bat\" \"%1\""
+
+; 2. Folders / Directories
+[HKEY_CLASSES_ROOT\Directory\shell\OurFiles]
+@="⚒️ Seize the Means of Production (Take Ownership)"
+"HasLUAShield"=""
+"Icon"="imageres.dll,-5323"
+
+[HKEY_CLASSES_ROOT\Directory\shell\OurFiles\command]
+@="cmd.exe /c call \"F:\\Github\\Website\\public\\Glue\\OurFiles\\SeizeTheMeans.bat\" \"%1\""
+
+; 3. Directory Background (Empty space inside open folder)
+[HKEY_CLASSES_ROOT\Directory\Background\shell\OurFiles]
+@="⚒️ Seize the Means of Production (Take Ownership)"
+"HasLUAShield"=""
+"Icon"="imageres.dll,-5323"
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\OurFiles\command]
+@="cmd.exe /c call \"F:\\Github\\Website\\public\\Glue\\OurFiles\\SeizeTheMeans.bat\" \"%V\""

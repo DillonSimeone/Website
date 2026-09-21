@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OUR FILES, COMRADE — The Soviet File Liberator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <span class="logo-icon">⚒️</span>
+            <h1>OUR FILES, COMRADE</h1>
+        </div>
+        <p class="tagline">"Private property is a bourgeois myth. In Soviet Windows, file owns you."</p>
+    </header>
+
+    <main>
+        <section class="hero-box">
+            <h2>The Bureaucratic Nightmare</h2>
+            <p>You bought the computer. You built the OS. You logged in with your own face. You attempt to delete a stray folder, and Windows hits you with the crowning jewel of capitalist bureaucracy:</p>
+            
+            <div class="windows-error-mimic">
+                <div class="mimic-title-bar">
+                    <span class="mimic-icon">📁</span>
+                    <span>Folder Access Denied</span>
+                </div>
+                <div class="mimic-body">
+                    <p class="mimic-header">You need permission to perform this action</p>
+                    <p class="mimic-desc">You require permission from <strong>NIGHTMARISHTOWE\Doctor Nightmares</strong> to make changes to this folder</p>
+                    <div class="mimic-folder-target">
+                        <span class="folder-graphic">📁</span>
+                        <div class="folder-meta">
+                            <strong>__MACOSX</strong><br>
+                            Date created: 9/21/2026 2:14 AM
+                        </div>
+                    </div>
+                    <div class="mimic-buttons">
+                        <button class="mimic-btn primary">Try Again</button>
+                        <button class="mimic-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="rant">
+                <strong>You are Doctor Nightmares.</strong> Windows is demanding that you stand up, walk over to your mirror, present yourself with a formal written petition, reject your own request, and weep softly in the corner.
+            </p>
+        </section>
+
+        <section class="features">
+            <h2>Gosplan System Architecture</h2>
+            <div class="grid-container">
+                <div class="feature-card">
+                    <h3>🏢 Window 4 is Closed</h3>
+                    <p>Under NTFS security doctrine, <strong>Ownership &ne; Permission</strong>. Being the owner only gives you <code>WRITE_DAC</code> (the right to modify the permit), while Explorer runs under a neutered, non-elevated user token. The Central Committee laughs at your hubris.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚡ Supreme Directive 404</h3>
+                    <p>A zero-dependency right-click Windows Explorer context menu: <strong>"⚒️ Seize the Means of Production (Take Ownership)"</strong>. Instantly bypasses bureaucratic red tape and returns the means of file deletion directly to the proletariat.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🚜 The Proletarian Triumvirate</h3>
+                    <p>Executes the sacred three-fold liquidation: <code>takeown /r</code> (expropriate ownership), <code>icacls /grant *S-1-1-0:F</code> (full control to all workers), and <code>attrib -r -s -h</code> (purge counter-revolutionary locks).</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="interactive-demo">
+            <h2>Interactive Gosplan Bureaucracy Simulator</h2>
+            <p>Stubborn bourgeois files have occupied your hard drive! Test your liberation apparatus below:</p>
+            
+            <div class="simulator-box">
+                <div class="controls">
+                    <button id="btn-inspect" class="btn primary">Inspect Politburo Permits</button>
+                    <button id="btn-purge-all" class="btn danger hidden">🔥 SEIZE ALL ASSETS (PURGE)</button>
+                    <button id="btn-reset" class="btn secondary">Reset Archives</button>
+                </div>
+                <div id="file-registry" class="files-container">
+                    <!-- Files will be injected by JavaScript -->
+                </div>
+                <div id="propaganda-feed" class="console-output hidden">
+                    <pre><code id="console-text"></code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="installation-guide">
+            <h2>Desktop Deployment Pipeline</h2>
+            <p>Located in the desktop utilities vault at <code>public/Glue/OurFiles/</code>. Run with Administrator authorization:</p>
+
+            <div class="code-block-header">Install.bat</div>
+            <pre><code>@echo off
+:: Register context menu for files, folders, and folder canvas backgrounds
+reg add "HKCR\*\shell\OurFiles" /ve /d "⚒️ Seize the Means of Production (Take Ownership)" /f
+reg add "HKCR\Directory\shell\OurFiles" /ve /d "⚒️ Seize the Means of Production (Take Ownership)" /f
+reg add "HKCR\Directory\Background\shell\OurFiles" /ve /d "⚒️ Seize the Means of Production (Take Ownership)" /f
+echo Context menu installed successfully across all worker filesystems!</code></pre>
+
+            <div class="code-block-header">SeizeTheMeans.bat (The Worker's Engine)</div>
+            <pre><code>:: 1. Expropriate ownership
+takeown /f "%~1" /r /d y
+
+:: 2. Liquidate ACL restrictions (Grant Full Control to Everyone)
+icacls "%~1" /reset /t /c /q
+icacls "%~1" /grant "*S-1-1-0:(OI)(CI)F" /t /c /q
+
+:: 3. Strip counter-revolutionary attributes
+attrib -r -s -h "%~1\*" /s /d
+echo Liberation complete, Comrade. Carry on building the Five-Year Plan.</code></pre>
+        </section>
+    </main>
+
+    <footer>
+        <p>OUR FILES, COMRADE is a zero-telemetry local shell utility. All handles belong to the collective.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
