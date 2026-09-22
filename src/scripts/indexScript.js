@@ -171,7 +171,8 @@ function hideAll(targetID, buttonID) {
     });
 
     navButtons.forEach(btn => {
-        if (btn.id !== buttonID) btn.style.fill = "#666";
+        btn.classList.toggle('active', btn.id === buttonID);
+        btn.style.fill = "";
     });
 }
 
@@ -226,16 +227,19 @@ function randomizeColor() {
         }
     }
 
-    document.querySelectorAll("nav div").forEach(btn => {
+    document.querySelectorAll("nav .navButton").forEach(btn => {
         btn.onmouseover = function () {
-            const color = isDarkMode ? randomNeonColor() : (typeof randomPaletteColor === 'function' ? randomPaletteColor() : '#666');
+            const color = isDarkMode ? randomNeonColor() : (typeof randomPaletteColor === 'function' ? randomPaletteColor() : '#2c3e50');
             this.style.fill = color;
             this.style.filter = isDarkMode ? `drop-shadow(0 0 8px ${color})` : '';
         };
         btn.onmouseout = function () {
             if (this.id !== selectedButton) {
-                this.style.fill = isDarkMode ? "#a0a0b0" : "#666";
-                this.style.filter = isDarkMode ? `drop-shadow(0 0 3px #00f0ff)` : '';
+                this.style.fill = "";
+                this.style.filter = "";
+            } else {
+                this.style.fill = isDarkMode ? "#00f0ff" : "#000000";
+                this.style.filter = isDarkMode ? 'drop-shadow(0 0 6px #00f0ff)' : '';
             }
         };
     });
@@ -705,5 +709,19 @@ function initYouTubeFacades() {
     });
 }
 window.initYouTubeFacades = initYouTubeFacades;
+
+// Event delegation for card tabs
+document.addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('.card-tab-btn');
+    if (!tabBtn) return;
+    const container = tabBtn.closest('.card-tab-container');
+    if (!container) return;
+    const targetId = tabBtn.getAttribute('data-tab');
+    container.querySelectorAll('.card-tab-btn').forEach((b) => b.classList.remove('active'));
+    container.querySelectorAll('.card-tab-panel').forEach((p) => p.classList.remove('active'));
+    tabBtn.classList.add('active');
+    const panel = container.querySelector('#' + targetId);
+    if (panel) panel.classList.add('active');
+});
 
 setUp();
