@@ -68,6 +68,15 @@ let selectedButton = "";
 const HistoryAPIControlsEnable = true;
 let shattered = false;
 
+/* Phones/tablets: stacked fade. Desktops: side slide. Matches the CSS breakpoint. */
+const stackedFadeQuery = window.matchMedia('(max-width: 1024px)');
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+let mobileFadeToken = 0;
+
+function usesStackedFade() {
+    return stackedFadeQuery.matches;
+}
+
 window.addEventListener('popstate', (e) => {
     if (e.state) {
         reveal(e.state.previousPage, e.state.previousButton, 30, true);
@@ -90,21 +99,41 @@ const _galleriesConfig = [
 
 function reveal(targetID, buttonID, timedelay = 60, historyAPI = false) {
     const button = buttonID ? document.getElementById(buttonID) : null;
+    const stacked = usesStackedFade();
 
     setTimeout(() => {
+        const target = document.getElementById(targetID);
+        if (!target) return;
+
+        // Already on screen: skip the fade so the first paint doesn't flash.
+        const fadeIn = stacked && !reducedMotionQuery.matches && !target.classList.contains('reveal');
+
         hideAll(targetID, buttonID);
         if (button) selectedButton = buttonID;
 
-        const target = document.getElementById(targetID);
-        target.className = "item reveal";
+        target.className = fadeIn ? 'item reveal mobile-fade' : 'item reveal';
 
-        // Lazy gallery init: only process galleries the first time a section is shown
+        // Lazy gallery init: only process galleries the first time a section is shown.
+        // On phones this runs while the page is still opacity 0.
         if (!_galleriesInitialized.has(targetID)) {
             _galleriesInitialized.add(targetID);
             _galleriesConfig.forEach(cfg => {
                 if (cfg.id === targetID) {
                     initSectionGalleries(cfg.id, cfg.selector, cfg.minSize);
                 }
+            });
+        }
+
+        if (fadeIn) {
+            const token = mobileFadeToken;
+            // Two frames: the first paints opacity 0 after display:none is
+            // lifted, the second starts the ramp to 1. One frame is not enough;
+            // the browser would skip the transition.
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (token !== mobileFadeToken) return;
+                    target.classList.remove('mobile-fade');
+                });
             });
         }
 
@@ -116,7 +145,7 @@ function reveal(targetID, buttonID, timedelay = 60, historyAPI = false) {
         }
 
         document.querySelectorAll('.section-nav').forEach(nav => nav.classList.remove('active'));
-    }, timedelay);
+    }, stacked ? 0 : timedelay);
 
     if (HistoryAPIControlsEnable && !historyAPI) {
         if (!buttonID) {
@@ -166,8 +195,11 @@ function hideAll(targetID, buttonID) {
     const items = document.querySelectorAll('.item');
     const navButtons = document.querySelectorAll('.navButton');
 
+    const stacked = usesStackedFade();
+    if (stacked) mobileFadeToken++;
+    const hiddenClass = stacked ? 'item hide' : 'item hide spin';
     items.forEach(el => {
-        if (el.id !== targetID) el.className = "item hide spin";
+        if (el.id !== targetID) el.className = hiddenClass;
     });
 
     navButtons.forEach(btn => {

@@ -979,6 +979,21 @@ body.dark-mode #elevatorPitch p a:hover {
     margin: auto;
 }
 
+/* Opening laser pair: one short row, not two viewport-tall photos */
+#hobby .images.laser-lead {
+    flex-wrap: nowrap;
+    align-items: center;
+    width: 100%;
+    max-width: 560px;
+    gap: 12px;
+}
+
+#hobby .images.laser-lead img {
+    width: calc(50% - 6px);
+    max-width: none;
+    margin: 0;
+}
+
 /* ==================== SPOILER (DETAILS/SUMMARY) ==================== */
 details {
     background: rgba(255, 255, 255, 0.05);
@@ -1118,6 +1133,16 @@ body.dark-mode .gallery-thumbnail img {
         border-radius: 10px;
     }
 
+    #hobby .images.laser-lead {
+        max-width: 100%;
+    }
+
+    #hobby .images.laser-lead img {
+        width: calc(50% - 6px) !important;
+        max-width: calc(50% - 6px) !important;
+        border-radius: 10px;
+    }
+
     /* 🎨 Hobby Header Mobile Optimization */
     #hobby h1 {
         font-size: 2.2rem !important;
@@ -1221,6 +1246,48 @@ body.dark-mode .gallery-thumbnail img {
 
 .spin {
     transform: rotate(90deg);
+}
+
+/*
+ * Phones and tablets: pages stay stacked in place.
+ * Hidden pages are taken out of rendering entirely.
+ * The incoming page fades in; nothing translates or rotates.
+ */
+@media (max-width: 1024px) {
+    .item,
+    .item.hide,
+    .item.spin,
+    .item.reveal {
+        left: 0 !important;
+        top: 0;
+        transform: none !important;
+    }
+
+    .item {
+        transition: opacity 0.2s ease-out;
+    }
+
+    .item.hide {
+        display: none !important;
+        opacity: 0 !important;
+        content-visibility: hidden;
+        pointer-events: none;
+    }
+
+    .item.reveal {
+        opacity: 1;
+    }
+
+    .item.reveal.mobile-fade {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
+    .item {
+        transition: none !important;
+    }
 }
 
 /*
@@ -1907,4 +1974,4 @@ body.dark-mode .warning-content h3::before {
 
 .card-tab-panel.active {
     display: block;
-}
+}
