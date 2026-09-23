@@ -6,6 +6,7 @@
  */
 
 const { execSync, spawnSync } = require('child_process');
+const fs = require('fs');
 const os = require('os');
 
 const REQUIRED_PYTHON_PACKAGES = [
@@ -23,12 +24,30 @@ function runCmd(cmd) {
   }
 }
 
+function findOpenSsl() {
+  const candidates = [
+    'C:\\Program Files\\OpenSSL-Win64\\bin\\openssl.exe',
+    'C:\\Program Files\\OpenSSL-Win32\\bin\\openssl.exe',
+    'C:\\Program Files\\Git\\usr\\bin\\openssl.exe',
+    'C:\\Program Files (x86)\\Git\\usr\\bin\\openssl.exe',
+    'openssl'
+  ];
+  for (const bin of candidates) {
+    if (bin.includes('\\') && !fs.existsSync(bin)) continue;
+    const quoted = bin.includes('\\') || bin.includes(' ') ? `"${bin}"` : bin;
+    const test = runCmd(`${quoted} version`);
+    if (test.ok && test.output) return test.output.split('\n')[0];
+  }
+  return null;
+}
+
 function checkEnvironment() {
   const report = {
     platform: `${os.type()} ${os.release()} (${os.arch()})`,
     node: { ok: false, version: process.version },
     python: { ok: false, cmd: null, version: null },
     ffmpeg: { ok: false, version: null },
+    openssl: { ok: false, version: null },
     packages: {},
     warnings: [],
     actionsTaken: []
@@ -81,6 +100,17 @@ function checkEnvironment() {
       console.warn('   Linux install: sudo apt update && sudo apt install -y ffmpeg');
     }
     report.warnings.push('FFmpeg is missing. Multi-angle composite stitching will be unavailable until installed.');
+  }
+
+  const opensslVersion = findOpenSsl();
+  if (opensslVersion) {
+    report.openssl = { ok: true, version: opensslVersion };
+    console.log(`OpenSSL         : ${opensslVersion} (OK)`);
+  } else {
+    console.warn('⚠️  WARNING: OpenSSL was not detected!');
+    console.warn('   Phone cameras need the HTTPS certificate, and generating it requires OpenSSL.');
+    console.warn('   Windows install: winget install ShiningLight.OpenSSL.Light');
+    report.warnings.push('OpenSSL is missing. HTTPS certificates for phone cameras cannot be generated.');
   }
 
   // 3. Check and Install Python Packages if Python is available

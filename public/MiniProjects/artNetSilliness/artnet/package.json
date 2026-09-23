@@ -1,0 +1,12 @@
+{
+  "name": "artnet-web-controller",
+  "version": "1.0.0",
+  "description": "Web control interface for audio-reactive Art-Net pixel driver",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

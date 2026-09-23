@@ -51,6 +51,8 @@ function ensureCertificates(lanIps = []) {
 
   // Locate OpenSSL executable
   const candidateBins = [
+    'C:\\Program Files\\OpenSSL-Win64\\bin\\openssl.exe',
+    'C:\\Program Files\\OpenSSL-Win32\\bin\\openssl.exe',
     'C:\\Program Files\\Git\\usr\\bin\\openssl.exe',
     'C:\\Program Files (x86)\\Git\\usr\\bin\\openssl.exe',
     'openssl'
@@ -269,7 +271,55 @@ function getSessionDir(playerSlug, dateStr, sessionId) {
   return { dir: stdDir, folderName: sFolder };
 }
 
-// Automated Slice Merger: Concatenates contiguous slices into a complete video when recording stops
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function containerExtFromType(contentType) {
+  const t = String(contentType || '').toLowerCase();
+  if (t.includes('mp4') || t.includes('m4v') || t.includes('quicktime')) return 'mp4';
+  return 'webm';
+}
+
+function concatSliceBytes(rawDir, slices, destPath) {
+  fs.writeFileSync(destPath, Buffer.alloc(0));
+  for (const name of slices) {
+    fs.appendFileSync(destPath, fs.readFileSync(path.join(rawDir, name)));
+  }
+}
+
+function recordTakeMeta(sessionDir, folderName, playerSlug, dateStr, takeFilename, hole, osName, browserName, slices, takePath) {
+  const metaPath = path.join(sessionDir, 'session_meta.json');
+  if (!fs.existsSync(metaPath)) return;
+  try {
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+    meta.takes = meta.takes || [];
+    const firstSlice = meta.clips?.find(c => c.filename === slices[0]);
+    const lastSlice = meta.clips?.find(c => c.filename === slices[slices.length - 1]);
+    const takeStats = fs.statSync(takePath);
+    const takeEntry = {
+      filename: takeFilename,
+      hole,
+      os: osName,
+      browser: browserName,
+      startEpoch: firstSlice ? firstSlice.startEpoch : (Date.now() - slices.length * 5000),
+      endEpoch: lastSlice ? lastSlice.endEpoch : Date.now(),
+      durationSec: (lastSlice && firstSlice) ? (lastSlice.endEpoch - firstSlice.startEpoch) / 1000 : (slices.length * 5),
+      slicesCount: slices.length,
+      bytes: takeStats.size,
+      url: `/storage/recordings/${playerSlug}/${dateStr}/${folderName}/takes/${encodeURIComponent(takeFilename)}`,
+      isTake: true,
+      mergedAt: Date.now()
+    };
+    const existingIdx = meta.takes.findIndex(t => t.filename === takeFilename);
+    if (existingIdx >= 0) meta.takes[existingIdx] = takeEntry;
+    else meta.takes.push(takeEntry);
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+  } catch (e) {}
+}
+
+// Automated Slice Merger: Concatenates contiguous slices into a complete video when recording stops.
+// Chrome/Firefox send WebM. iPhone Safari sends fragmented MP4.
 function mergeSlicesForTake(playerSlug, dateStr, sessionId, hole, osName, browserName) {
   const { dir: sessionDir, folderName } = getSessionDir(playerSlug, dateStr, sessionId);
   const rawDir = path.join(sessionDir, 'raw');
@@ -278,60 +328,69 @@ function mergeSlicesForTake(playerSlug, dateStr, sessionId, hole, osName, browse
   if (!fs.existsSync(takesDir)) fs.mkdirSync(takesDir, { recursive: true });
 
   const allFiles = fs.readdirSync(rawDir);
-  // Match slices for this device & hole
-  const pattern = new RegExp(`^slice_(\\d+)_(${hole})_.*_(${osName})_(${browserName})\\.webm$`, 'i');
-  const slices = allFiles.filter(f => pattern.test(f)).sort();
-  if (slices.length === 0) return;
+  for (const ext of ['webm', 'mp4']) {
+    const pattern = new RegExp(
+      `^slice_(\\d+)_${escapeRegExp(hole)}_.*_${escapeRegExp(osName)}_${escapeRegExp(browserName)}\\.${ext}$`,
+      'i'
+    );
+    const slices = allFiles.filter(f => pattern.test(f)).sort();
+    if (slices.length === 0) continue;
 
-  const takeFilename = `take_${hole}_${osName}_${browserName}.webm`;
-  const takePath = path.join(takesDir, takeFilename);
-  const concatPath = path.join(takesDir, `concat_${hole}_${osName}_${browserName}.txt`);
+    const takeFilename = `take_${hole}_${osName}_${browserName}.${ext}`;
+    const takePath = path.join(takesDir, takeFilename);
 
-  const concatContent = slices.map(s => `file '${path.join(rawDir, s).replace(/\\/g, '/')}'`).join('\n');
-  fs.writeFileSync(concatPath, concatContent);
+    const finish = (err) => {
+      if (err) {
+        console.error(`[MERGER ERROR] ${takeFilename}:`, err.message || err);
+        return;
+      }
+      if (!fs.existsSync(takePath) || fs.statSync(takePath).size === 0) {
+        console.error(`[MERGER ERROR] ${takeFilename}: output missing`);
+        return;
+      }
+      console.log(`[MERGER SUCCESS] Stitched complete video: ${takeFilename} (${slices.length} slices)`);
+      recordTakeMeta(sessionDir, folderName, playerSlug, dateStr, takeFilename, hole, osName, browserName, slices, takePath);
+    };
 
-  const cmd = `ffmpeg -y -f concat -safe 0 -i "${concatPath}" -c copy "${takePath}"`;
-  exec(cmd, (err) => {
-    try { fs.unlinkSync(concatPath); } catch (e) {}
-    if (err) {
-      console.error(`[MERGER ERROR] ${takeFilename}:`, err.message);
-      return;
-    }
-    console.log(`[MERGER SUCCESS] Stitched complete video: ${takeFilename} (${slices.length} slices)`);
-
-    // Update session_meta.json
-    const metaPath = path.join(sessionDir, 'session_meta.json');
-    if (fs.existsSync(metaPath)) {
+    if (ext === 'mp4') {
       try {
-        const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
-        meta.takes = meta.takes || [];
-        const firstSlice = meta.clips?.find(c => c.filename === slices[0]);
-        const lastSlice = meta.clips?.find(c => c.filename === slices[slices.length - 1]);
-        const takeStats = fs.statSync(takePath);
-
-        const takeEntry = {
-          filename: takeFilename,
-          hole,
-          os: osName,
-          browser: browserName,
-          startEpoch: firstSlice ? firstSlice.startEpoch : (Date.now() - slices.length * 5000),
-          endEpoch: lastSlice ? lastSlice.endEpoch : Date.now(),
-          durationSec: (lastSlice && firstSlice) ? (lastSlice.endEpoch - firstSlice.startEpoch) / 1000 : (slices.length * 5),
-          slicesCount: slices.length,
-          bytes: takeStats.size,
-          url: `/storage/recordings/${playerSlug}/${dateStr}/${folderName}/takes/${encodeURIComponent(takeFilename)}`,
-          isTake: true,
-          mergedAt: Date.now()
-        };
-
-        const existingIdx = meta.takes.findIndex(t => t.filename === takeFilename);
-        if (existingIdx >= 0) meta.takes[existingIdx] = takeEntry;
-        else meta.takes.push(takeEntry);
-
-        fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-      } catch (e) {}
+        concatSliceBytes(rawDir, slices, takePath);
+      } catch (e) {
+        finish(e);
+        continue;
+      }
+      const remuxPath = path.join(takesDir, `remux_${takeFilename}`);
+      exec(`ffmpeg -y -i "${takePath}" -c copy -movflags +faststart "${remuxPath}"`, (err) => {
+        if (!err && fs.existsSync(remuxPath) && fs.statSync(remuxPath).size > 0) {
+          try {
+            fs.copyFileSync(remuxPath, takePath);
+          } catch (e) {}
+        } else {
+          console.log(`[MERGER] ${takeFilename} kept as fragmented MP4 (ffmpeg remux skipped)`);
+        }
+        try { fs.unlinkSync(remuxPath); } catch (e) {}
+        finish(null);
+      });
+      continue;
     }
-  });
+
+    const concatPath = path.join(takesDir, `concat_${hole}_${osName}_${browserName}.txt`);
+    const concatContent = slices.map(s => `file '${path.join(rawDir, s).replace(/\\/g, '/')}'`).join('\n');
+    fs.writeFileSync(concatPath, concatContent);
+    exec(`ffmpeg -y -f concat -safe 0 -i "${concatPath}" -c copy "${takePath}"`, (err) => {
+      try { fs.unlinkSync(concatPath); } catch (e) {}
+      if (err) {
+        try {
+          concatSliceBytes(rawDir, slices, takePath);
+          finish(null);
+        } catch (e) {
+          finish(err);
+        }
+        return;
+      }
+      finish(null);
+    });
+  }
 }
 
 // In-memory connected clients for live telemetry
@@ -381,6 +440,8 @@ const MIME_TYPES = {
   '.json': 'application/json; charset=UTF-8',
   '.webm': 'video/webm',
   '.mp4': 'video/mp4',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.csv': 'text/csv; charset=UTF-8'
@@ -762,7 +823,7 @@ const requestHandler = async (req, res) => {
                     for (const tf of takeFiles) {
                       if (tf.endsWith('.webm') || tf.endsWith('.mp4')) {
                         const stats = fs.statSync(path.join(takesDir, tf));
-                        const m = tf.match(/take_(H\d+)_([^_]+)_([^.]+)\.webm/);
+                        const m = tf.match(/take_(H\d+)_([^_]+)_([^.]+)\.(webm|mp4)$/i);
                         clips.push({
                           filename: tf,
                           hole: m ? m[1] : 'H1',
@@ -793,7 +854,7 @@ const requestHandler = async (req, res) => {
                         if (existing) {
                           clips.push({ ...existing, player: p, date: d, session: s, url: clipUrl, size: stats.size, isTake: false });
                         } else {
-                          const m = rf.match(/slice_(\d+)_(H\d+)_([^_]+)_([^_]+)_([^.]+)\.webm/);
+                          const m = rf.match(/slice_(\d+)_(H\d+)_([^_]+)_([^_]+)_([^.]+)\.(webm|mp4)$/i);
                           clips.push({
                             filename: rf,
                             hole: m ? m[2] : 'H1',
@@ -849,13 +910,12 @@ const requestHandler = async (req, res) => {
 
       const bodyBuffer = await parseBody(req);
 
-      // Save discrete slice file: slice_0001_H1_2026-09-22T15-30-00_Windows_Chrome.webm
-      const sliceFilename = `slice_${String(chunkIndex).padStart(4, '0')}_${hole}_${timestampIso}_${osName}_${browserName}.webm`;
+      const ext = containerExtFromType(req.headers['content-type']);
+      const sliceFilename = `slice_${String(chunkIndex).padStart(4, '0')}_${hole}_${timestampIso}_${osName}_${browserName}.${ext}`;
       const slicePath = path.join(rawDir, sliceFilename);
       fs.writeFileSync(slicePath, bodyBuffer);
 
-      // Append to full continuous recording
-      const fullPath = path.join(rawDir, `full_${osName}_${browserName}.webm`);
+      const fullPath = path.join(rawDir, `full_${osName}_${browserName}.${ext}`);
       fs.appendFileSync(fullPath, bodyBuffer);
 
       // Update session_meta.json

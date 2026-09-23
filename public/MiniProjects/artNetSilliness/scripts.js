@@ -21,11 +21,18 @@ document.addEventListener('DOMContentLoaded', () => {
   let analyser = null;
   let microphoneStream = null;
 
-  // Internal Wave Buffer & Fire Buffer for exact Python simulation
+  // Preview uses the same shaping as audio_artnet.py: log-spaced bands,
+  // fast attack, slow release, and fades instead of one-pixel jumps.
   const numLEDs = 128;
-  let waveBuffer = new Array(numLEDs).fill(0).map(() => [0, 0, 0]);
-  let fireBuffer = new Array(numLEDs).fill(0);
+  const BANDS = 24;
+  let bandLevels = new Array(BANDS).fill(0);
+  let bandPeaks = new Array(BANDS).fill(0);
+  let fireHeat = new Array(numLEDs).fill(0);
+  let sparkLevels = new Array(numLEDs).fill(0);
   let hueTracker = 0;
+  let wavePhase = 0;
+  let vuLevel = 0;
+  let vuPeak = 0;
 
   // Audio Processing Elements
   const toggleAudioBtn = document.getElementById('toggleAudioBtn');
@@ -123,13 +130,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 700);
   }
 
-  // Render Visualizer implementing Python audio_artnet.py exact algorithms
+  function hsvToRgb(h, s, v) {
+    const hue = ((h % 1) + 1) % 1;
+    const sat = Math.max(0, Math.min(1, s));
+    const val = Math.max(0, Math.min(1, v));
+    const i = Math.floor(hue * 6) % 6;
+    const f = hue * 6 - Math.floor(hue * 6);
+    const p = val * (1 - sat);
+    const q = val * (1 - f * sat);
+    const t = val * (1 - (1 - f) * sat);
+    const table = [
+      [val, t, p],
+      [q, val, p],
+      [p, val, t],
+      [p, q, val],
+      [t, p, val],
+      [val, p, q]
+    ];
+    const rgb = table[i];
+    return [Math.round(rgb[0] * 255), Math.round(rgb[1] * 255), Math.round(rgb[2] * 255)];
+  }
+
+  function attackRelease(prev, target, attack, release) {
+    const delta = target - prev;
+    return prev + delta * (delta >= 0 ? attack : release);
+  }
+
+  function sampleLogBands(dataArray) {
+    const release = Math.max(0.05, (1 - smoothing) * 0.5);
+    const gate = threshold * 40;
+    for (let b = 0; b < BANDS; b++) {
+      const start = Math.min(dataArray.length - 1, Math.floor(Math.pow(dataArray.length, b / BANDS)));
+      const end = Math.min(dataArray.length, Math.max(start + 1, Math.floor(Math.pow(dataArray.length, (b + 1) / BANDS))));
+      let sum = 0;
+      for (let i = start; i < end; i++) sum += dataArray[i];
+      let level = (sum / (end - start) / 255) * (gain / 5);
+      if (level < gate) level = 0;
+      level = Math.max(0, Math.min(1, level));
+      bandLevels[b] = attackRelease(bandLevels[b], level, 0.72, release);
+      bandPeaks[b] = Math.max(bandLevels[b], bandPeaks[b] - 0.012);
+    }
+  }
+
+  function bandAt(pixel) {
+    const x = (pixel / Math.max(1, numLEDs - 1)) * (BANDS - 1);
+    const lo = Math.floor(x);
+    const hi = Math.min(BANDS - 1, lo + 1);
+    const frac = x - lo;
+    return bandLevels[lo] * (1 - frac) + bandLevels[hi] * frac;
+  }
+
+  // Render Visualizer implementing the same shaping as audio_artnet.py
   let time = 0;
 
   function renderVisualizer() {
     requestAnimationFrame(renderVisualizer);
     time += 0.03;
-    hueTracker = (hueTracker + 0.005) % 1.0;
 
     ctx.fillStyle = '#05040a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -168,120 +224,119 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bassPower < threshold) bassPower = 0;
     if (treblePower < threshold) treblePower = 0;
 
-    const ledWidth = canvas.width / numLEDs;
-    const centerY = canvas.height / 2;
+    if (!(isAudioActive && analyser)) {
+      for (let i = 0; i < dataArray.length; i++) {
+        const wobble = 0.45 + 0.55 * Math.sin(time * 3 + i * 0.35);
+        dataArray[i] = Math.max(0, Math.min(255, (bassPower * (i < 6 ? 220 : 40) + avgAudio * 180 * wobble)));
+      }
+    }
+    sampleLogBands(dataArray);
+    const release = Math.max(0.05, (1 - smoothing) * 0.5);
+    vuLevel = attackRelease(vuLevel, Math.min(1, avgAudio), 0.75, release);
 
-    // Python Algorithm Emulations
     switch (currentAnimation) {
-
-      // 1. SPECTRUM: FFT frequency spectrum HSV mapping
       case 'spectrum': {
         for (let i = 0; i < numLEDs; i++) {
-          const normI = i / numLEDs;
-          const freqVal = dataArray[i % dataArray.length] ? (dataArray[i % dataArray.length] / 255) * gain : avgAudio;
-          const hue = normI * 0.8;
-          const rgb = hslToRgb(hue, 1.0, Math.min(1.0, freqVal));
-          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(10, freqVal * canvas.height * 0.85));
+          const level = bandAt(i);
+          const x = (i / Math.max(1, numLEDs - 1)) * (BANDS - 1);
+          const lo = Math.floor(x);
+          const hi = Math.min(BANDS - 1, lo + 1);
+          const peak = bandPeaks[lo] * (1 - (x - lo)) + bandPeaks[hi] * (x - lo);
+          const nearPeak = (peak - level) < 0.04;
+          const rgb = hsvToRgb(i / numLEDs * 0.72, nearPeak ? 0.35 : 1, nearPeak ? Math.max(level, peak) : level);
+          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(8, level * canvas.height * 0.9));
         }
         break;
       }
 
-      // 2. BASS: Whole-strip pulse scaled to low frequencies (<250Hz)
       case 'bass': {
-        const val = Math.min(1.0, bassPower);
-        const rgb = hslToRgb(hueTracker, 1.0, val);
-        const h = Math.max(15, val * canvas.height * 0.75);
+        hueTracker = (hueTracker + 0.002 + bassPower * 0.01) % 1;
+        const val = Math.min(1, bassPower);
         for (let i = 0; i < numLEDs; i++) {
-          drawPixel(i, rgb[0], rgb[1], rgb[2], h);
+          const x = (i / (numLEDs - 1)) * 2 - 1;
+          const bloom = Math.exp(-3 * x * x);
+          const v = Math.min(1, 0.04 + val * bloom * 1.35);
+          const rgb = hsvToRgb(hueTracker, 1, v);
+          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(8, v * canvas.height * 0.85));
         }
         break;
       }
 
-      // 3. VU: Symmetrical VU meter expanding outward from center
       case 'vu': {
-        const val = Math.min(1.0, avgAudio);
-        const litCount = Math.floor(val * (numLEDs / 2));
-        const center = Math.floor(numLEDs / 2);
-
+        vuPeak = Math.max(vuLevel, vuPeak - 0.01);
+        const center = (numLEDs - 1) / 2;
         for (let i = 0; i < numLEDs; i++) {
-          const distFromCenter = Math.abs(i - center);
-          if (distFromCenter <= litCount) {
-            const posRatio = distFromCenter / (numLEDs / 2);
-            const rgb = hslToRgb(posRatio * 0.8, 1.0, 1.0);
-            drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(15, (1 - posRatio * 0.5) * canvas.height * 0.7));
-          } else {
-            drawPixel(i, 10, 8, 18, 8);
-          }
+          const dist = Math.abs(i - center) / center;
+          const edge = 2 / numLEDs;
+          let v = Math.max(0, Math.min(1, (vuLevel - dist) / edge));
+          const isPeak = Math.abs(dist - vuPeak) < (1.5 / numLEDs);
+          if (isPeak) v = 1;
+          const rgb = hsvToRgb(0.33 * (1 - dist), isPeak ? 0.15 : 1, v);
+          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(6, v * canvas.height * 0.75));
         }
         break;
       }
 
-      // 4. WAVE: Propagation outwards from center
       case 'wave': {
-        const mid = Math.floor(numLEDs / 2);
-        // Shift buffer outward
-        for (let i = 0; i < mid - 1; i++) waveBuffer[i] = waveBuffer[i + 1];
-        for (let i = numLEDs - 1; i > mid; i--) waveBuffer[i] = waveBuffer[i - 1];
-
-        const peakHue = (time * 0.2) % 1.0;
-        const val = Math.min(1.0, avgAudio);
-        const centerRGB = hslToRgb(peakHue, 1.0, val);
-
-        waveBuffer[mid] = centerRGB;
-        if (mid - 1 >= 0) waveBuffer[mid - 1] = centerRGB;
-
+        wavePhase += 0.35 + Math.min(1, avgAudio) * 1.6;
         for (let i = 0; i < numLEDs; i++) {
-          const rgb = waveBuffer[i] || [0, 0, 0];
-          const brightness = (rgb[0] + rgb[1] + rgb[2]) / 765;
-          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(10, brightness * canvas.height * 0.8));
+          const dist = Math.abs(i - (numLEDs - 1) / 2);
+          const wave = 0.5 + 0.5 * Math.sin((dist - wavePhase) * 0.35);
+          const v = Math.min(1, (0.1 + avgAudio) * (0.3 + 0.7 * wave));
+          const rgb = hsvToRgb((0.55 + dist / numLEDs * 0.2) % 1, 0.9, v);
+          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(8, v * canvas.height * 0.85));
         }
         break;
       }
 
-      // 5. RAINBOW: Scroll hue across pixels
       case 'rainbow': {
-        const val = Math.min(1.0, avgAudio);
+        wavePhase += 0.2 + bassPower * 2.2;
         for (let i = 0; i < numLEDs; i++) {
-          const hue = (i / numLEDs + hueTracker) % 1.0;
-          const rgb = hslToRgb(hue, 1.0, val);
-          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(12, val * canvas.height * 0.75));
+          const shimmer = 0.72 + 0.28 * Math.sin(i * 0.17 + wavePhase * 0.15);
+          const v = Math.min(1, (0.2 + 0.8 * avgAudio) * shimmer);
+          const rgb = hsvToRgb((i / numLEDs + wavePhase / 48) % 1, 1, v);
+          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(10, v * canvas.height * 0.8));
         }
         break;
       }
 
-      // 6. FIRE: Heat propagation & cooling
       case 'fire': {
-        for (let i = 0; i < numLEDs; i++) fireBuffer[i] *= 0.94;
-        for (let i = numLEDs - 1; i > 0; i--) fireBuffer[i] = fireBuffer[i - 1];
-        fireBuffer[0] = Math.min(1.0, bassPower);
-
         for (let i = 0; i < numLEDs; i++) {
-          const h = fireBuffer[i];
-          let r = 0, g = 0, b = 0;
-          if (h < 0.15) {
-            r = 0; g = 0; b = 0;
-          } else if (h < 0.55) {
-            r = Math.min(255, Math.floor(h * 1.8 * 255));
-            g = Math.min(255, Math.floor((h - 0.15) * 0.5 * 255));
-          } else {
-            r = 255;
-            g = Math.min(255, Math.floor(h * 255));
-            b = Math.min(255, Math.floor((h - 0.55) * 2.2 * 255));
-          }
-          drawPixel(i, r, g, b, Math.max(8, h * canvas.height * 0.8));
+          fireHeat[i] = Math.max(0, fireHeat[i] * 0.97 - Math.random() * (0.02 + (1 - bassPower) * 0.02));
+        }
+        const diffused = fireHeat.slice();
+        for (let i = 1; i < numLEDs - 1; i++) {
+          diffused[i] = (fireHeat[i - 1] + fireHeat[i] * 2 + fireHeat[i + 1]) / 4.2;
+        }
+        fireHeat = diffused;
+        const sparks = Math.min(numLEDs, 1 + Math.floor(bassPower * 12));
+        for (let i = 0; i < sparks; i++) {
+          fireHeat[i] = Math.max(fireHeat[i], (0.45 + Math.random() * 0.55) * (0.4 + 0.6 * bassPower));
+        }
+        for (let i = 0; i < numLEDs; i++) {
+          const h = Math.max(0, Math.min(1, fireHeat[i]));
+          const r = Math.min(255, Math.floor(Math.min(1, h * 3) * 255));
+          const g = Math.min(255, Math.floor(Math.max(0, h * 3 - 1) * 255));
+          const b = Math.min(255, Math.floor(Math.max(0, h * 3 - 2) * 255));
+          drawPixel(i, r, g, b, Math.max(6, h * canvas.height * 0.85));
         }
         break;
       }
 
-      // 7. SPARKLE: Treble transient flashes
       case 'sparkle': {
-        const bgRGB = hslToRgb(hueTracker, 1.0, 0.08);
+        hueTracker = (hueTracker + 0.002) % 1;
+        const count = treblePower > 0.12 ? Math.max(1, Math.min(12, Math.floor(treblePower * 16))) : 0;
+        for (let s = 0; s < count; s++) {
+          sparkLevels[Math.floor(Math.random() * numLEDs)] = 1;
+        }
         for (let i = 0; i < numLEDs; i++) {
-          if (treblePower > threshold * 2.0 && Math.random() < treblePower * 0.3) {
-            drawPixel(i, 255, 255, 255, canvas.height * 0.85);
-          } else {
-            drawPixel(i, bgRGB[0], bgRGB[1], bgRGB[2], 12);
-          }
+          sparkLevels[i] *= 0.86;
+          const bg = hsvToRgb(hueTracker, 0.8, 0.07);
+          const k = sparkLevels[i];
+          const r = Math.round(bg[0] * (1 - k) + 255 * k);
+          const g = Math.round(bg[1] * (1 - k) + 255 * k);
+          const b = Math.round(bg[2] * (1 - k) + 255 * k);
+          drawPixel(i, r, g, b, Math.max(8, (0.1 + k) * canvas.height * 0.7));
         }
         break;
       }
@@ -314,30 +369,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderVisualizer();
 
-  // Helper HSL to RGB
-  function hslToRgb(h, s, l) {
-    let r, g, b;
-    if (s === 0) {
-      r = g = b = l;
-    } else {
-      const hue2rgb = (p, q, t) => {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1/6) return p + (q - p) * 6 * t;
-        if (t < 1/2) return q;
-        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-        return p;
-      };
-      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-      const p = 2 * l - q;
-      r = hue2rgb(p, q, h + 1/3);
-      g = hue2rgb(p, q, h);
-      b = hue2rgb(p, q, h - 1/3);
-    }
-    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-  }
-
-  // Grimoire Tab Switching Logic
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
 

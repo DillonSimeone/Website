@@ -18,9 +18,11 @@ function detectClientEnv() {
 
   let browser = "Browser";
   if (/Edg\//i.test(ua)) browser = "Edge";
+  else if (/CriOS\//i.test(ua)) browser = "Chrome";
+  else if (/FxiOS\//i.test(ua)) browser = "Firefox";
   else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) browser = "Chrome";
-  else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) browser = "Safari";
   else if (/Firefox\//i.test(ua)) browser = "Firefox";
+  else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) browser = "Safari";
 
   return { os, browser };
 }
@@ -438,6 +440,36 @@ class SessionManager {
   }
 }
 
+// Chrome and Firefox record WebM. iPhone Safari records MP4 (H.264).
+function pickRecorderMimeType() {
+  if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') return '';
+  const candidates = [
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4;codecs=avc1.4D401E,mp4a.40.2',
+    'video/mp4;codecs=avc1.42E01E',
+    'video/mp4;codecs=avc1,mp4a.40.2',
+    'video/mp4;codecs=avc1',
+    'video/mp4'
+  ];
+  for (const mimeType of candidates) {
+    try {
+      if (MediaRecorder.isTypeSupported(mimeType)) return mimeType;
+    } catch (e) {}
+  }
+  return '';
+}
+
+function contentTypeForVideo(mimeOrType) {
+  const t = String(mimeOrType || '').toLowerCase();
+  if (t.includes('mp4') || t.includes('m4v') || t.includes('quicktime')) return 'video/mp4';
+  return 'video/webm';
+}
+
 // ==========================================================================
 // 4. Capture Engine with Auto-Upload, Live Scoring & Real-Time Telemetry
 // ==========================================================================
@@ -458,6 +490,7 @@ class CaptureEngine {
     this.audioContext = null;
     this.analyser = null;
     this.isUsingFallbackCanvas = false;
+    this.recordingContentType = 'video/webm';
   }
 
   async init() {
@@ -700,9 +733,14 @@ class CaptureEngine {
     }, 50);
 
     try {
-      const options = { mimeType: 'video/webm;codecs=vp9,opus' };
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) options.mimeType = 'video/webm';
-      this.mediaRecorder = new MediaRecorder(this.mediaStream, options);
+      if (typeof MediaRecorder === 'undefined' || !this.mediaStream) {
+        throw new Error('MediaRecorder is not available in this browser');
+      }
+      const mimeType = pickRecorderMimeType();
+      this.mediaRecorder = mimeType
+        ? new MediaRecorder(this.mediaStream, { mimeType })
+        : new MediaRecorder(this.mediaStream);
+      this.recordingContentType = contentTypeForVideo(this.mediaRecorder.mimeType || mimeType);
 
       this.mediaRecorder.ondataavailable = async (e) => {
         if (e.data && e.data.size > 0) {
@@ -713,17 +751,24 @@ class CaptureEngine {
           await this.uploadSlice(e.data, sliceStart, sliceEnd);
         }
       };
-      this.mediaRecorder.start(5000);
+      try {
+        this.mediaRecorder.start(5000);
+      } catch (sliceErr) {
+        this.mediaRecorder.start();
+      }
     } catch (e) {
-      this.simInterval = setInterval(async () => {
-        if (!this.isRecording) return;
-        const sliceStart = this.currentSliceStartTime;
-        const sliceEnd = this.clockSync.getMasterEpoch();
-        this.currentSliceStartTime = sliceEnd;
-        this.sliceCount++;
-        const dummyBlob = new Blob([new Uint8Array(1024 * 64)], { type: 'video/webm' });
-        await this.uploadSlice(dummyBlob, sliceStart, sliceEnd);
-      }, 5000);
+      console.warn('Recording could not start.', e);
+      this.isRecording = false;
+      if (this.timerInterval) clearInterval(this.timerInterval);
+      document.getElementById('recBadge')?.classList.add('hidden');
+      document.getElementById('btnStartRecording')?.classList.remove('hidden');
+      document.getElementById('btnStopRecording')?.classList.add('hidden');
+      const shutterBtn = document.getElementById('btnThumbShutter');
+      if (shutterBtn) shutterBtn.classList.remove('recording');
+      const shutterLabel = document.getElementById('shutterLabel');
+      if (shutterLabel) shutterLabel.textContent = 'TAP TO RECORD';
+      const ind = document.getElementById('userUploadIndicator');
+      if (ind) ind.textContent = 'This browser could not start a recording. Use Safari or Chrome over HTTPS.';
     }
   }
 
@@ -740,6 +785,7 @@ class CaptureEngine {
     const timePart = startDate.toTimeString().split(' ')[0].replace(/:/g, '-');
     const timestampIso = `${datePart}T${timePart}`;
 
+    const contentType = contentTypeForVideo(blob.type || this.recordingContentType);
     const meta = {
       sessionId: session.id,
       player: player.name,
@@ -748,7 +794,8 @@ class CaptureEngine {
       os: this.clientEnv.os,
       browser: this.clientEnv.browser,
       startEpoch,
-      endEpoch
+      endEpoch,
+      contentType
     };
 
     const chunkId = await this.storage.saveChunk(blob, meta);
@@ -757,7 +804,7 @@ class CaptureEngine {
       const res = await fetch('/api/upload/chunk', {
         method: 'POST',
         headers: {
-          'Content-Type': 'video/webm',
+          'Content-Type': contentType,
           'X-Session-Id': session.id,
           'X-Player-Slug': playerSlug,
           'X-Chunk-Index': String(this.sliceCount),
@@ -816,7 +863,7 @@ class CaptureEngine {
             const res = await fetch('/api/upload/chunk', {
               method: 'POST',
               headers: {
-                'Content-Type': 'video/webm',
+                'Content-Type': contentTypeForVideo(item.contentType || item.blob?.type),
                 'X-Session-Id': item.sessionId || 'session_1',
                 'X-Player-Slug': playerSlug,
                 'X-Chunk-Index': String(item.sliceIndex || 1),

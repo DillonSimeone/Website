@@ -32,30 +32,55 @@
           <img src="artnet_gothic_hero.png" alt="Gothic Warlock controlling glowing Art-Net light streams" class="hero-img">
           <div class="hero-story">
             <p style="font-size: 1.15rem; margin-bottom: 1rem;">
-              Deep in the obsidian workshop, raw system audio is harvested in real-time using fast Fourier transform (FFT) analysis. Frequencies are forged into high-speed DMX universe packets and broadcast via UDP across standard Ethernet interfaces to drive thousands of addressable LED pixels without lag!
+              The laptop listens to the room, turns that sound into a 300-pixel picture, and sends the picture to every light over an ordinary ethernet cable. Each light in this set is about 300 pixels, so the whole animation fits on one fixture instead of being stretched across a much longer strip.
             </p>
             <div class="speech-bubble">
               <p class="speech-text">
-                "By the ancient protocols of Art-Net! 32 Universes bend to my command—1,250 addressable pixels pulsating to every bass drop and synth scream!"
+                "Stay on Wi-Fi, plug in the lights, and double-click startArtnet.bat. One permission prompt, then the show starts."
               </p>
             </div>
             <div style="margin-top: 1rem; display: flex; gap: 10px; flex-wrap: wrap;">
               <span class="sfx-badge">BZZZT! 45 FPS</span>
-              <span class="sfx-badge" style="background: var(--blood-red); color: #fff;">1,250 PIXELS/PORT</span>
+              <span class="sfx-badge" style="background: var(--blood-red); color: #fff;">300 PIXELS / LIGHT</span>
               <span class="sfx-badge" style="background: var(--arcane-purple); color: #fff;">UDP PORT 9999</span>
             </div>
           </div>
         </div>
       </section>
 
+      <section class="comic-panel span-12" id="startup">
+        <h2 class="panel-title">
+          <span>CHAPTER II: PLUG IN AND START</span>
+          <span class="panel-badge">ONE CLICK</span>
+        </h2>
+        <p style="margin-bottom: 1rem;">
+          You do not install Python, Node.js, or packages by hand. The starter does that the first time, after you approve one Windows permission prompt.
+        </p>
+        <ol style="margin: 0 0 1.25rem 1.4rem; line-height: 1.8;">
+          <li>Stay on Wi-Fi. The cable to the lights does not provide internet, and the first run may need to download installers.</li>
+          <li>Plug the lights' ethernet cable into the laptop.</li>
+          <li>Open the <code>artnet</code> folder and double-click <code>startArtnet.bat</code>.</li>
+          <li>Click Yes on the Windows permission prompt. Leave the black window open. Closing it stops the show.</li>
+          <li>The control page opens at <code>http://localhost:3000</code>. Pick an animation, then adjust gain if the lights are too dim or too jumpy.</li>
+          <li>When you are finished, double-click <code>restore_network.bat</code> in that same folder. That puts the ethernet port back to automatic.</li>
+        </ol>
+        <h3>How the pieces talk</h3>
+        <ul style="margin: 0.6rem 0 0 1.4rem; line-height: 1.8;">
+          <li><strong>startArtnet.bat</strong> installs anything missing, then starts the show. <code>startArtnet.ps1</code> has to stay beside it.</li>
+          <li><strong>audio_artnet.py</strong> sets this laptop's ethernet port to <code>192.168.0.101</code> and sends Art-Net to the lights at <code>192.168.0.100</code>. It draws one 300-pixel frame and repeats that frame on every light. Three hundred RGB pixels fill about two universes, and the sender covers 32 universes so a row of lights can all show the same picture.</li>
+          <li><strong>The control page</strong> is a small Node.js site on port 3000. Slider and animation changes go to Python on UDP port 9999, so the lights update without restarting.</li>
+          <li><strong>The animations</strong> follow the same ideas as WLED and Pixelblaze: log-spaced frequency bands, a fast attack when the music hits, and a slow fade after. Those projects are complete light programs, not a pack of effects this page can load.</li>
+        </ul>
+      </section>
+
       <!-- Panel 2: Interactive Light Simulator -->
       <section class="comic-panel span-12" id="simulator">
         <h2 class="panel-title">
-          <span>CHAPTER II: LIVE ART-NET LIGHTING SIMULATOR</span>
+          <span>CHAPTER III: LIVE ART-NET LIGHTING SIMULATOR</span>
           <span class="panel-badge">BROWSER PREVIEW</span>
         </h2>
         <p style="margin-bottom: 1.25rem;">
-          Experience how the Python FFT backend transforms sound into high-speed LED pixel frames. Select visualizer modes, adjust gain & noise thresholds, or enable live microphone audio!
+          Experience a short preview of the light show. The real fixtures are about 300 pixels each. The patterns below use the same log-spaced bands, fast hits, and slow fades as the Python sender.
         </p>
 
         <div class="simulator-container">
@@ -105,7 +130,7 @@
         <div class="download-box">
           <h2 class="download-title">CLAIM THE ART-NET ARCHIVE!</h2>
           <p class="download-desc">
-            Download the complete production-ready source package including Python FFT driver (<code>audio_artnet.py</code>), Node.js Express control dashboard (<code>server.js</code>), HTML web controller, and automatic network restore utilities.
+            Download the show folder: double-click <code>startArtnet.bat</code> inside it. That folder also has the Python light engine (<code>audio_artnet.py</code>), the control page, and <code>restore_network.bat</code> for when you unplug.
           </p>
           <a href="artnet.zip" download="artnet.zip" class="download-btn" id="artnetDownloadBtn">
             <span>⚡ DOWNLOAD ARTNET.ZIP</span>
@@ -113,7 +138,7 @@
           <div class="file-meta">
             <span>📦 FILE: artnet.zip</span>
             <span>⚡ SIZE: ~891 KB</span>
-            <span>📜 INCLUDES: Python Driver, Express Web Server, Network Batch Tools</span>
+            <span>📜 INCLUDES: One-click starter, Python light engine, control page</span>
           </div>
         </div>
       </section>
@@ -121,7 +146,7 @@
       <!-- Panel 4: Setup Grimoire -->
       <section class="comic-panel span-12">
         <h2 class="panel-title">
-          <span>CHAPTER III: THE GRIMOIRE OF SETUP</span>
+          <span>CHAPTER IV: THE GRIMOIRE OF SETUP</span>
           <span class="panel-badge">INSTRUCTIONS & CODE</span>
         </h2>
 
@@ -138,11 +163,12 @@
         <div class="tab-content active" id="tab-overview">
           <h3>How the System Works</h3>
           <p style="margin-top: 0.5rem;">
-            The project operates via a two-tier hybrid architecture for ultra-low-latency LED driving and easy web control:
+            Chapter II above is the whole startup. Under the hood, three programs share one laptop:
           </p>
           <ul style="margin: 1rem 0 1rem 1.5rem; line-height: 1.8;">
-            <td><strong>Python Engine (audio_artnet.py):</strong> Handles system audio recording, FFT spectral analysis, UDP control listening (Port 9999), and multi-universe DMX packet transmission over Ethernet via <code>stupidArtnet</code>.</td>
-            <td><strong>Express Dashboard (server.js):</strong> Hosts an interactive web interface on <code>http://localhost:3000</code>. Changing sliders sends real-time JSON commands over internal UDP socket (Port 9999) to Python.</td>
+            <li><strong>Python engine (audio_artnet.py):</strong> Reads the microphone, groups the sound into musical frequency bands, draws the 300-pixel frame, and broadcasts it as Art-Net.</li>
+            <li><strong>Control page (server.js):</strong> The page at <code>http://localhost:3000</code>. Changes go to Python on UDP port 9999.</li>
+            <li><strong>startArtnet.bat:</strong> The file you double-click. It asks for administrator permission once, installs missing Python, Node.js, and packages, then launches the engine.</li>
           </ul>
         </div>
 
@@ -153,14 +179,15 @@
             Art-Net controllers (such as Advatek PixLite, SanDevices, or DIY ESP32 Art-Net nodes) usually listen on static IP subnets (e.g. <code>192.168.0.100</code>).
           </p>
           <p style="margin-top: 0.5rem;">
-            When launched with Administrator privileges, <code>audio_artnet.py</code> auto-detects your physical Windows Ethernet adapter and configures static IP <code>192.168.0.200</code> so your computer can immediately transmit Art-Net packets directly to your lights!
+            Stay on Wi-Fi, plug the lights into the laptop ethernet port, and double-click <code>startArtnet.bat</code>. Approve the Windows permission prompt once. It installs Python, Node.js, and any missing packages, sets that ethernet port to <code>192.168.0.101</code>, and opens the light controls. The lights cable does not provide internet. When you are done, double-click <code>restore_network.bat</code> to put the port back to normal.
           </p>
         </div>
 
         <!-- Tab 3: Python Setup -->
         <div class="tab-content" id="tab-python">
           <h3>Python Environment Setup</h3>
-          <p style="margin-top: 0.5rem;">Install required audio processing and Art-Net modules:</p>
+          <p style="margin-top: 0.5rem;">Easiest path: double-click <code>startArtnet.bat</code> in the <code>artnet</code> folder. It installs Python, Node.js, and the packages below if they are missing, then starts the show.</p>
+          <p style="margin-top: 0.5rem;">To install the Python packages yourself:</p>
           <div class="code-block">
             <button class="copy-btn" id="copyPythonCmd">COPY</button>
             <code>pip install stupidArtnet sounddevice numpy</code>
