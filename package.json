@@ -29,5 +29,8 @@
     "vite-plugin-minify": "^2.1.0",
     "vite-plugin-singlefile": "^2.3.3",
     "vite-plugin-static-copy": "^4.1.0"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
   }
 }

@@ -1,0 +1,151 @@
+{
+  "sessionId": "session_2",
+  "sessionName": "Pier Park - Feature Card",
+  "course": "Pier Park DGC",
+  "layout": "Championship 18 - Par 54",
+  "holes": [
+    {
+      "number": 1,
+      "dist": 280,
+      "par": 3
+    },
+    {
+      "number": 2,
+      "dist": 295,
+      "par": 3
+    },
+    {
+      "number": 3,
+      "dist": 310,
+      "par": 3
+    },
+    {
+      "number": 4,
+      "dist": 325,
+      "par": 3
+    },
+    {
+      "number": 5,
+      "dist": 340,
+      "par": 4
+    },
+    {
+      "number": 6,
+      "dist": 355,
+      "par": 3
+    },
+    {
+      "number": 7,
+      "dist": 370,
+      "par": 3
+    },
+    {
+      "number": 8,
+      "dist": 385,
+      "par": 3
+    },
+    {
+      "number": 9,
+      "dist": 400,
+      "par": 3
+    },
+    {
+      "number": 10,
+      "dist": 415,
+      "par": 3
+    },
+    {
+      "number": 11,
+      "dist": 430,
+      "par": 3
+    },
+    {
+      "number": 12,
+      "dist": 285,
+      "par": 4
+    },
+    {
+      "number": 13,
+      "dist": 300,
+      "par": 3
+    },
+    {
+      "number": 14,
+      "dist": 315,
+      "par": 3
+    },
+    {
+      "number": 15,
+      "dist": 330,
+      "par": 3
+    },
+    {
+      "number": 16,
+      "dist": 345,
+      "par": 3
+    },
+    {
+      "number": 17,
+      "dist": 360,
+      "par": 5
+    },
+    {
+      "number": 18,
+      "dist": 375,
+      "par": 3
+    }
+  ],
+  "players": [
+    {
+      "id": "p_eagle",
+      "name": "Eagle McMahon",
+      "udisc": "eagle_m",
+      "scores": [
+        2,
+        3,
+        2,
+        3,
+        3,
+        4,
+        3,
+        2,
+        3,
+        3,
+        2,
+        4,
+        3,
+        3,
+        2,
+        3,
+        3,
+        3
+      ]
+    },
+    {
+      "id": "p_paul",
+      "name": "Paul McBeth",
+      "udisc": "pmcbeth",
+      "scores": [
+        3,
+        2,
+        3,
+        3,
+        2,
+        3,
+        3,
+        3,
+        3,
+        2,
+        3,
+        3,
+        3,
+        2,
+        3,
+        3,
+        3,
+        3
+      ]
+    }
+  ],
+  "timestamp": 1790117327012
+}

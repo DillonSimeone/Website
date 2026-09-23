@@ -1,0 +1,104 @@
+{
+  "sessionId": "session_1",
+  "sessionName": "Mary's River Park - Card A",
+  "course": "Mary's River Park",
+  "layout": "Main - Par 28",
+  "holes": [
+    {
+      "number": 1,
+      "dist": 265,
+      "par": 3
+    },
+    {
+      "number": 2,
+      "dist": 371,
+      "par": 3
+    },
+    {
+      "number": 3,
+      "dist": 335,
+      "par": 3
+    },
+    {
+      "number": 4,
+      "dist": 344,
+      "par": 3
+    },
+    {
+      "number": 5,
+      "dist": 428,
+      "par": 4
+    },
+    {
+      "number": 6,
+      "dist": 309,
+      "par": 3
+    },
+    {
+      "number": 7,
+      "dist": 331,
+      "par": 3
+    },
+    {
+      "number": 8,
+      "dist": 204,
+      "par": 3
+    },
+    {
+      "number": 9,
+      "dist": 224,
+      "par": 3
+    }
+  ],
+  "players": [
+    {
+      "id": "p_mayan",
+      "name": "Mayan Fogarty",
+      "udisc": "mayan_f",
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        3,
+        3,
+        null
+      ]
+    },
+    {
+      "id": "p_nate",
+      "name": "Nate",
+      "udisc": "m33td00m",
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        3,
+        3,
+        null
+      ]
+    },
+    {
+      "id": "p_77266g",
+      "name": "Shrek",
+      "udisc": "Shrek",
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        3,
+        null,
+        null
+      ]
+    }
+  ],
+  "timestamp": 1790117326033
+}
