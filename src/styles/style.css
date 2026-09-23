@@ -1257,7 +1257,9 @@ body.dark-mode .gallery-thumbnail img {
     .item,
     .item.hide,
     .item.spin,
-    .item.reveal {
+    .item.reveal,
+    .item.park-left,
+    .item.park-right {
         left: 0 !important;
         top: 0;
         transform: none !important;
@@ -1286,6 +1288,46 @@ body.dark-mode .gallery-thumbnail img {
 
 @media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
     .item {
+        transition: none !important;
+    }
+}
+
+/*
+ * Desktops: the open page and the next page move as a pair.
+ * Direction alternates each visit (see slideFromRight in indexScript.js).
+ */
+@media (min-width: 1025px) {
+    .item.reveal,
+    .item.park-left,
+    .item.park-right {
+        left: 0 !important;
+        transition: transform 0.4s ease;
+    }
+
+    .item.reveal {
+        transform: translateX(0) !important;
+    }
+
+    .item.reveal.is-entering {
+        z-index: 21;
+    }
+
+    .item.park-left {
+        transform: translateX(-100%) !important;
+        pointer-events: none;
+    }
+
+    .item.park-right {
+        transform: translateX(100%) !important;
+        pointer-events: none;
+    }
+}
+
+@media (min-width: 1025px) and (prefers-reduced-motion: reduce) {
+    .item,
+    .item.reveal,
+    .item.park-left,
+    .item.park-right {
         transition: none !important;
     }
 }

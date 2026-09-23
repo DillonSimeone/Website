@@ -13,12 +13,15 @@ if %errorlevel% neq 0 (
   exit /b
 )
 
-echo Adding Windows Firewall rules for Ports 3456 (HTTP), 3457 (HTTPS), and 5353 (mDNS)...
+echo Adding Windows Firewall rules for Ports 3456 (HTTP), 3457 (HTTPS), 3458 (discovery), and 5353 (mDNS)...
 netsh advfirewall firewall delete rule name="MYT Hub HTTP Port 3456" >nul 2>&1
 netsh advfirewall firewall add rule name="MYT Hub HTTP Port 3456" dir=in action=allow protocol=TCP localport=3456 profile=any >nul 2>&1
 
 netsh advfirewall firewall delete rule name="MYT Hub HTTPS Port 3457" >nul 2>&1
 netsh advfirewall firewall add rule name="MYT Hub HTTPS Port 3457" dir=in action=allow protocol=TCP localport=3457 profile=any >nul 2>&1
+
+netsh advfirewall firewall delete rule name="MYT Hub Discovery UDP 3458" >nul 2>&1
+netsh advfirewall firewall add rule name="MYT Hub Discovery UDP 3458" dir=in action=allow protocol=UDP localport=3458 profile=any >nul 2>&1
 
 netsh advfirewall firewall delete rule name="MYT Hub mDNS UDP 5353" >nul 2>&1
 netsh advfirewall firewall add rule name="MYT Hub mDNS UDP 5353" dir=in action=allow protocol=UDP localport=5353 profile=any >nul 2>&1

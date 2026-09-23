@@ -4,6 +4,149 @@
  * Native Hardware-Accelerated Multi-Angle Video Mixer, Dynamic Connected Telemetry, and Session Hole Editor.
  */
 
+const HUB_BASE_KEY = 'mytHubBase';
+
+function isInstalledApp() {
+  if (window.MYT_NATIVE === true) return true;
+  const cap = window.Capacitor;
+  if (cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) return true;
+  const host = location.hostname;
+  const onLoopback = host === 'localhost' || host === '127.0.0.1';
+  return onLoopback && location.port === '';
+}
+
+function hubBase() {
+  if (!isInstalledApp()) return '';
+  return String(localStorage.getItem(HUB_BASE_KEY) || '').replace(/\/+$/, '');
+}
+
+function hubUrl(path) {
+  const base = hubBase();
+  if (!base || typeof path !== 'string' || !path.startsWith('/')) return path;
+  return base + path;
+}
+
+function hubWsUrl(path) {
+  const base = hubBase();
+  if (!base) {
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${location.host}${path}`;
+  }
+  const parsed = new URL(base);
+  const protocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${parsed.host}${path}`;
+}
+
+(function installHubFetch() {
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    if (typeof input === 'string') input = hubUrl(input);
+    return nativeFetch(input, init);
+  };
+})();
+
+async function hubAnswers(url) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 1500);
+  try {
+    const res = await fetch(`${url}/api/network/endpoints`, { signal: ctrl.signal });
+    return res.ok;
+  } catch (e) {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function waitForCapacitor() {
+  const start = Date.now();
+  while (Date.now() - start < 2000) {
+    if (window.Capacitor && typeof window.Capacitor.registerPlugin === 'function') return window.Capacitor;
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  return null;
+}
+
+async function discoverHubUrls() {
+  const cap = await waitForCapacitor();
+  if (!cap) return [];
+  const plugin = cap.registerPlugin('HubDiscovery');
+  const result = await plugin.discover({ timeoutMs: 3200 });
+  const found = [];
+  for (const hub of result?.hubs || []) {
+    const candidates = Array.isArray(hub.urls) ? hub.urls : (hub.url ? [hub.url] : []);
+    for (const candidate of candidates) {
+      const url = String(candidate || '').replace(/\/+$/, '');
+      if (url && !found.includes(url) && await hubAnswers(url)) found.push(url);
+    }
+  }
+  return found;
+}
+
+async function ensureHubConfigured() {
+  if (!isInstalledApp()) return;
+  document.body.classList.add('native-app');
+
+  const saved = hubBase();
+  if (saved && await hubAnswers(saved)) return;
+
+  const panel = document.getElementById('hubConnectPanel');
+  const title = document.getElementById('hubConnectTitle');
+  const status = document.getElementById('hubConnectStatus');
+  const choices = document.getElementById('hubConnectChoices');
+  const retry = document.getElementById('btnRetryHub');
+  if (!panel) return;
+  panel.hidden = false;
+
+  const useHub = (url) => {
+    localStorage.setItem(HUB_BASE_KEY, url);
+    panel.hidden = true;
+  };
+
+  while (true) {
+    if (title) title.textContent = 'Looking for the hub';
+    if (status) status.textContent = 'Searching this Wi-Fi for the laptop running MYT Capture.';
+    if (choices) choices.innerHTML = '';
+    if (retry) retry.hidden = true;
+
+    let urls = [];
+    try {
+      urls = await discoverHubUrls();
+    } catch (e) {
+      urls = [];
+    }
+
+    if (urls.length === 1) {
+      useHub(urls[0]);
+      return;
+    }
+
+    if (urls.length > 1) {
+      if (title) title.textContent = 'Choose a hub';
+      if (status) status.textContent = 'More than one MYT hub is on this Wi-Fi.';
+      const picked = await new Promise(resolve => {
+        if (!choices) return;
+        choices.innerHTML = urls.map(url =>
+          `<button type="button" class="btn btn-outline hub-connect-choice" data-url="${url}">${url}</button>`
+        ).join('');
+        choices.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', () => resolve(btn.dataset.url));
+        });
+      });
+      useHub(picked);
+      return;
+    }
+
+    if (title) title.textContent = 'No hub found';
+    if (status) status.textContent = 'The phone and the laptop need to be on the same Wi-Fi, and the hub needs to be running.';
+    if (retry) retry.hidden = false;
+    await new Promise(resolve => {
+      if (!retry) return;
+      retry.onclick = () => resolve();
+    });
+  }
+}
+
 // ==========================================================================
 // 0. Client Environment Detector (Device-Agnostic OS & Browser)
 // ==========================================================================
@@ -98,8 +241,7 @@ class ClockSyncEngine {
   }
 
   tryWebSocket() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/clock`;
+    const wsUrl = hubWsUrl('/ws/clock');
     try {
       this.ws = new WebSocket(wsUrl);
       this.ws.onopen = () => this.ping();
@@ -161,6 +303,30 @@ class ClockSyncEngine {
       const sign = this.clockOffsetMs >= 0 ? '+' : '';
       offsetEl.textContent = `${sign}${this.clockOffsetMs.toFixed(1)} ms`;
     }
+  }
+}
+
+// A blank hole is null. Undefined and NaN must not be shown or added into totals.
+function strokeCount(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(0, Math.round(n));
+}
+
+function parCount(value) {
+  const n = strokeCount(value);
+  return n === null ? 3 : n;
+}
+
+function normalizeSessionScores(session) {
+  if (!session) return;
+  const count = session.holeCount || session.holes?.length || 0;
+  session.scores = session.scores || {};
+  session.playerIds = session.playerIds || [];
+  for (const pid of session.playerIds) {
+    const raw = Array.isArray(session.scores[pid]) ? session.scores[pid] : [];
+    session.scores[pid] = Array.from({ length: count }, (_, i) => strokeCount(raw[i]));
   }
 }
 
@@ -242,6 +408,7 @@ class SessionManager {
         const sData = await sessRes.json();
         if (Array.isArray(sData.sessions) && sData.sessions.length > 0) {
           this.sessions = sData.sessions;
+          this.sessions.forEach(normalizeSessionScores);
           if (!this.sessions.some(s => s.id === this.activeSessionId)) {
             this.activeSessionId = this.sessions[0].id;
           }
@@ -399,7 +566,7 @@ class SessionManager {
   setPlayerScore(playerId, holeIdx, strokes) {
     const s = this.getActiveSession();
     if (!s.scores[playerId]) s.scores[playerId] = Array(s.holeCount).fill(null);
-    s.scores[playerId][holeIdx] = strokes;
+    s.scores[playerId][holeIdx] = strokeCount(strokes);
     this.syncScorecardToServer();
     this.persistSessions();
   }
@@ -962,13 +1129,13 @@ class CaptureEngine {
 
     const players = this.sessionMgr.getActiveSessionPlayers();
     list.innerHTML = players.map(p => {
-      const score = s.scores[p.id]?.[hIdx];
-      const displayScore = score !== null ? score : '-';
+      const score = strokeCount(s.scores[p.id]?.[hIdx]);
+      const displayScore = score === null ? '-' : score;
       let badgeCls = 'score-par';
       let badgeTxt = 'Par';
 
       if (score !== null) {
-        const diff = score - h.par;
+        const diff = score - parCount(h?.par);
         if (score === 1) { badgeCls = 'score-ace'; badgeTxt = 'ACE!'; }
         else if (diff <= -2) { badgeCls = 'score-eagle'; badgeTxt = 'Eagle'; }
         else if (diff === -1) { badgeCls = 'score-birdie'; badgeTxt = 'Birdie'; }
@@ -987,7 +1154,7 @@ class CaptureEngine {
             <button class="btn-step-sm btn-quick-minus" data-pid="${p.id}" title="Decrease strokes">−</button>
             <span class="score-num-display mono">${displayScore}</span>
             <button class="btn-step-sm btn-quick-plus" data-pid="${p.id}" title="Increase strokes">+</button>
-            <span class="score-badge-inline ${badgeCls}">${score !== null ? badgeTxt : 'Ready'}</span>
+            <span class="score-badge-inline ${badgeCls}">${score === null ? 'Ready' : badgeTxt}</span>
           </div>
         </div>
       `;
@@ -997,8 +1164,8 @@ class CaptureEngine {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const pid = btn.dataset.pid;
-        const cur = s.scores[pid]?.[hIdx];
-        const next = cur === null ? h.par : Math.max(1, cur - 1);
+        const cur = strokeCount(s.scores[pid]?.[hIdx]);
+        const next = cur === null ? parCount(h?.par) : Math.max(1, cur - 1);
         this.sessionMgr.setPlayerScore(pid, hIdx, next);
         this.renderQuickScorecard();
         window.udiscApp?.render();
@@ -1009,8 +1176,8 @@ class CaptureEngine {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const pid = btn.dataset.pid;
-        const cur = s.scores[pid]?.[hIdx];
-        const next = cur === null ? h.par : cur + 1;
+        const cur = strokeCount(s.scores[pid]?.[hIdx]);
+        const next = cur === null ? parCount(h?.par) : cur + 1;
         this.sessionMgr.setPlayerScore(pid, hIdx, next);
         this.renderQuickScorecard();
         window.udiscApp?.render();
@@ -1122,10 +1289,10 @@ class UDiscScorecard {
     if (scrollContainer) {
       scrollContainer.innerHTML = s.holes.map((hole, idx) => {
         const p1 = this.sessionMgr.getActiveSessionPlayers()[0];
-        const p1Score = p1 ? s.scores[p1.id]?.[idx] : null;
+        const p1Score = p1 ? strokeCount(s.scores[p1.id]?.[idx]) : null;
         let badgeClass = 'score-empty';
         if (p1Score !== null) {
-          const diff = p1Score - hole.par;
+          const diff = p1Score - parCount(hole?.par);
           if (p1Score === 1) badgeClass = 'score-ace';
           else if (diff <= -2) badgeClass = 'score-eagle';
           else if (diff === -1) badgeClass = 'score-birdie';
@@ -1138,7 +1305,7 @@ class UDiscScorecard {
           <button class="hole-chip-btn ${idx === hIdx ? 'active' : ''}" data-index="${idx}">
             <span class="chip-hole-num">H${hole.number}</span>
             <span class="chip-hole-par">P${hole.par}</span>
-            <span class="chip-hole-score ${badgeClass}">${p1Score !== null ? p1Score : '-'}</span>
+            <span class="chip-hole-score ${badgeClass}">${p1Score === null ? '-' : p1Score}</span>
           </button>
         `;
       }).join('');
@@ -1162,8 +1329,8 @@ class UDiscScorecard {
 
     if (playersRows) {
       playersRows.innerHTML = players.map(p => {
-        const score = s.scores[p.id]?.[hIdx];
-        const displayScore = score !== null ? score : '-';
+        const score = strokeCount(s.scores[p.id]?.[hIdx]);
+        const displayScore = score === null ? '-' : score;
         return `
           <div class="player-score-row">
             <div class="player-meta-block">
@@ -1182,8 +1349,8 @@ class UDiscScorecard {
       playersRows.querySelectorAll('.btn-udisc-minus').forEach(btn => {
         btn.addEventListener('click', () => {
           const pid = btn.dataset.pid;
-          const cur = s.scores[pid]?.[hIdx];
-          const next = cur === null ? h.par : Math.max(1, cur - 1);
+          const cur = strokeCount(s.scores[pid]?.[hIdx]);
+          const next = cur === null ? parCount(h?.par) : Math.max(1, cur - 1);
           this.sessionMgr.setPlayerScore(pid, hIdx, next);
           this.render();
           window.captureApp?.renderQuickScorecard();
@@ -1193,8 +1360,8 @@ class UDiscScorecard {
       playersRows.querySelectorAll('.btn-udisc-plus').forEach(btn => {
         btn.addEventListener('click', () => {
           const pid = btn.dataset.pid;
-          const cur = s.scores[pid]?.[hIdx];
-          const next = cur === null ? h.par : cur + 1;
+          const cur = strokeCount(s.scores[pid]?.[hIdx]);
+          const next = cur === null ? parCount(h?.par) : cur + 1;
           this.sessionMgr.setPlayerScore(pid, hIdx, next);
           this.render();
           window.captureApp?.renderQuickScorecard();
@@ -1238,11 +1405,12 @@ class UDiscScorecard {
       let playedPar = 0;
       let hasAnyScore = false;
 
-      scores.forEach((sc, idx) => {
+      scores.forEach((raw, idx) => {
+        const sc = strokeCount(raw);
         if (sc !== null) {
           hasAnyScore = true;
           totalStrokes += sc;
-          playedPar += s.holes[idx]?.par || 3;
+          playedPar += parCount(s.holes[idx]?.par);
         }
       });
 
@@ -1259,12 +1427,12 @@ class UDiscScorecard {
 
       let holeCells = '';
       for (let i = 0; i < s.holeCount; i++) {
-        const sc = item.scores[i];
+        const sc = strokeCount(item.scores[i]);
         const h = s.holes[i];
         if (sc === null) {
           holeCells += `<td><span class="score-empty">-</span></td>`;
         } else {
-          const d = sc - h.par;
+          const d = sc - parCount(h?.par);
           let cls = 'score-par';
           if (sc === 1) cls = 'score-ace';
           else if (d <= -2) cls = 'score-eagle';
@@ -1554,7 +1722,7 @@ class SmartSyncStudio {
               <span class="source-feed-offset ${offsetClass} mono">${offsetText}</span>
             </div>
             <div class="source-video-wrapper">
-              <video id="sourceVideo_${angle.id}" class="source-preview-video" src="${c.url}" playsinline muted preload="auto"></video>
+              <video id="sourceVideo_${angle.id}" class="source-preview-video" src="${hubUrl(c.url)}" playsinline muted preload="auto"></video>
               <div class="source-timecode mono" id="sourceTc_${angle.id}">00:00:00.000</div>
             </div>
           </div>
@@ -1666,7 +1834,7 @@ class SmartSyncStudio {
 
     stage.innerHTML = activeAngles.map(angle => `
       <div class="mixer-stage-pane" id="pane_${angle.id}">
-        <video id="mixerVideo_${angle.id}" class="mixer-pane-video" src="${angle.clip.url}" playsinline muted preload="auto"></video>
+        <video id="mixerVideo_${angle.id}" class="mixer-pane-video" src="${hubUrl(angle.clip.url)}" playsinline muted preload="auto"></video>
         <div class="mixer-pane-badge mono" id="paneTag_${angle.id}">🎥 ${angle.name} • ${angle.clip.hole}</div>
       </div>
     `).join('');
@@ -2092,24 +2260,25 @@ class QrCodeTabManager {
 
   setMode(mode) {
     this.mode = mode;
-    const btnHttp = document.getElementById('btnQrModeHttp');
-    const btnHttps = document.getElementById('btnQrModeHttps');
+    const buttons = {
+      http: document.getElementById('btnQrModeHttp'),
+      https: document.getElementById('btnQrModeHttps'),
+      apk: document.getElementById('btnQrModeApk')
+    };
+    Object.entries(buttons).forEach(([key, btn]) => {
+      if (btn) btn.className = `btn btn-sm ${key === mode ? 'btn-accent' : 'btn-outline'}`;
+    });
+
     const badge = document.getElementById('qrProtocolBadge');
     const hint = document.getElementById('qrScanHint');
-
-    if (btnHttp && btnHttps) {
-      if (mode === 'http') {
-        btnHttp.className = 'btn btn-sm btn-accent';
-        btnHttps.className = 'btn btn-sm btn-outline';
-        if (badge) badge.textContent = 'NORMAL HTTP (PORT 3456) • ZERO WARNINGS';
-        if (hint) hint.textContent = 'SCAN FOR NORMAL HTTP (NO WARNINGS)';
-      } else {
-        btnHttp.className = 'btn btn-sm btn-outline';
-        btnHttps.className = 'btn btn-sm btn-accent';
-        if (badge) badge.textContent = 'SECURE HTTPS (PORT 3457) • CAMERA READY';
-        if (hint) hint.textContent = 'SCAN FOR SECURE HTTPS (ACCEPT CERT ONCE)';
-      }
-    }
+    const copy = {
+      http: ['NORMAL HTTP (PORT 3456) • ZERO WARNINGS', 'SCAN FOR NORMAL HTTP (NO WARNINGS)'],
+      https: ['SECURE HTTPS (PORT 3457) • CAMERA READY', 'SCAN FOR SECURE HTTPS (ACCEPT CERT ONCE)'],
+      apk: ['ANDROID APP', 'SCAN TO DOWNLOAD THE APK']
+    };
+    const text = copy[mode] || copy.http;
+    if (badge) badge.textContent = text[0];
+    if (hint) hint.textContent = text[1];
     this.renderEndpoints();
   }
 
@@ -2120,22 +2289,39 @@ class QrCodeTabManager {
     const linkMdns = document.getElementById('linkMdns');
     const linkPrimary = document.getElementById('linkPrimaryLan');
 
-    const isHttp = this.mode === 'http';
-    const primaryUrl = isHttp ? this.endpoints.httpUrl : this.endpoints.httpsUrl;
-    const mdnsUrl = isHttp ? this.endpoints.mdnsHttpUrl : this.endpoints.mdnsHttpsUrl;
+    const labelPrimary = document.getElementById('labelPrimaryLan');
+    const labelSecondary = document.getElementById('labelSecondaryLan');
+    let primaryUrl;
+    let secondaryUrl;
 
-    if (linkMdns && mdnsUrl) {
-      linkMdns.href = mdnsUrl;
-      linkMdns.textContent = mdnsUrl;
+    if (this.mode === 'apk') {
+      primaryUrl = this.endpoints.apkUrl;
+      secondaryUrl = this.endpoints.httpUrl;
+      if (labelPrimary) labelPrimary.textContent = 'ANDROID APK DOWNLOAD';
+      if (labelSecondary) labelSecondary.textContent = 'HUB ON THIS WI-FI';
+    } else {
+      const isHttp = this.mode === 'http';
+      primaryUrl = isHttp ? this.endpoints.httpUrl : this.endpoints.httpsUrl;
+      secondaryUrl = isHttp ? this.endpoints.mdnsHttpUrl : this.endpoints.mdnsHttpsUrl;
+      if (labelPrimary) labelPrimary.textContent = 'PRIMARY WI-FI IP (RECOMMENDED)';
+      if (labelSecondary) labelSecondary.textContent = 'mDNS NAME';
+    }
+
+    if (linkMdns && secondaryUrl) {
+      linkMdns.href = secondaryUrl;
+      linkMdns.textContent = secondaryUrl;
+      if (this.mode === 'apk') linkMdns.removeAttribute('download');
     }
 
     if (linkPrimary && primaryUrl) {
       linkPrimary.href = primaryUrl;
       linkPrimary.textContent = primaryUrl;
+      if (this.mode === 'apk') linkPrimary.setAttribute('download', 'MYT-Capture.apk');
+      else linkPrimary.removeAttribute('download');
     }
 
     if (img) {
-      img.src = `/api/qrcode?mode=${this.mode}&t=${Date.now()}`;
+      img.src = hubUrl(`/api/qrcode?mode=${this.mode}&t=${Date.now()}`);
     }
   }
 
@@ -2152,6 +2338,7 @@ class QrCodeTabManager {
   setupEventListeners() {
     document.getElementById('btnQrModeHttp')?.addEventListener('click', () => this.setMode('http'));
     document.getElementById('btnQrModeHttps')?.addEventListener('click', () => this.setMode('https'));
+    document.getElementById('btnQrModeApk')?.addEventListener('click', () => this.setMode('apk'));
 
     document.querySelectorAll('.btn-copy-link').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -2180,6 +2367,11 @@ class QrCodeTabManager {
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Initializing MYT Video Capture Hub...');
+  document.getElementById('btnChangeHub')?.addEventListener('click', () => {
+    localStorage.removeItem(HUB_BASE_KEY);
+    location.reload();
+  });
+  await ensureHubConfigured();
 
   const storage = new IndexedDBStorage();
   await storage.init();

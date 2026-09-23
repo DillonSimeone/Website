@@ -152,6 +152,71 @@ function startMdnsResponder(lanIps = []) {
   }
 }
 
+// Phones on the same Wi-Fi find the hub by UDP. The Android app probes this port
+// and also hears the beacon, then checks the HTTP API before trusting the reply.
+const DISCOVERY_PORT = 3458;
+const DISCOVERY_PROBE = 'MYT-DISCOVER';
+let discoverySocket = null;
+
+function ipv4Broadcast(ip, netmask) {
+  const ipParts = String(ip || '').split('.').map(Number);
+  const maskParts = String(netmask || '').split('.').map(Number);
+  if (ipParts.length !== 4 || maskParts.length !== 4) return null;
+  if (ipParts.some(n => Number.isNaN(n)) || maskParts.some(n => Number.isNaN(n))) return null;
+  return ipParts.map((part, i) => (part | (~maskParts[i] & 255)) & 255).join('.');
+}
+
+function discoveryPayload() {
+  const addresses = getLocalNetworkAddresses().filter(a => a.address && !a.address.startsWith('169.254.'));
+  return Buffer.from(JSON.stringify({
+    service: 'myt-capture-hub',
+    name: os.hostname() || 'MYT Capture Hub',
+    httpPort: PORT - 1,
+    urls: addresses.map(a => `http://${a.address}:${PORT - 1}`)
+  }));
+}
+
+function startDiscoveryBeacon() {
+  try {
+    const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+    discoverySocket = socket;
+
+    socket.on('error', (err) => {
+      console.log('[DISCOVERY] Notice:', err.message);
+    });
+
+    socket.on('message', (msg, rinfo) => {
+      const text = msg.toString('utf8').trim();
+      if (text !== DISCOVERY_PROBE) return;
+      try {
+        socket.send(discoveryPayload(), rinfo.port, rinfo.address);
+      } catch (e) {}
+    });
+
+    socket.bind(DISCOVERY_PORT, () => {
+      try { socket.setBroadcast(true); } catch (e) {}
+      console.log(`[DISCOVERY] Phones can find this hub on UDP ${DISCOVERY_PORT}`);
+    });
+
+    const announce = () => {
+      const payload = discoveryPayload();
+      const targets = new Set(['255.255.255.255']);
+      for (const addr of getLocalNetworkAddresses()) {
+        const bcast = ipv4Broadcast(addr.address, addr.netmask);
+        if (bcast) targets.add(bcast);
+      }
+      for (const target of targets) {
+        try { socket.send(payload, DISCOVERY_PORT, target); } catch (e) {}
+      }
+    };
+
+    const timer = setInterval(announce, 2000);
+    if (typeof timer.unref === 'function') timer.unref();
+  } catch (err) {
+    console.log('[DISCOVERY] Notice:', err.message);
+  }
+}
+
 // Ensure base storage & config directories exist
 if (!fs.existsSync(BASE_STORAGE)) {
   fs.mkdirSync(BASE_STORAGE, { recursive: true });
@@ -403,7 +468,7 @@ function getLocalNetworkAddresses() {
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
       if (iface.family === 'IPv4' && !iface.internal) {
-        addresses.push({ name, address: iface.address });
+        addresses.push({ name, address: iface.address, netmask: iface.netmask });
       }
     }
   }
@@ -444,7 +509,8 @@ const MIME_TYPES = {
   '.woff': 'font/woff',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
-  '.csv': 'text/csv; charset=UTF-8'
+  '.csv': 'text/csv; charset=UTF-8',
+  '.apk': 'application/vnd.android.package-archive'
 };
 
 // Main HTTP/HTTPS Request Handler
@@ -496,7 +562,9 @@ const requestHandler = async (req, res) => {
       const primaryIp = addresses[0] ? addresses[0].address : 'localhost';
       const port = mode === 'https' ? PORT : (PORT - 1);
       const protocol = mode === 'https' ? 'https' : 'http';
-      const defaultUrl = `${protocol}://${primaryIp}:${port}`;
+      const defaultUrl = mode === 'apk'
+        ? `http://${primaryIp}:${PORT - 1}/downloads/MYT-Capture.apk`
+        : `${protocol}://${primaryIp}:${port}`;
       const primaryUrl = targetQuery || defaultUrl;
 
       if (QRCode) {
@@ -530,6 +598,7 @@ const requestHandler = async (req, res) => {
       primaryIp,
       httpUrl: `http://${primaryIp}:${portHttp}`,
       httpsUrl: `https://${primaryIp}:${portHttps}`,
+      apkUrl: `http://${primaryIp}:${portHttp}/downloads/MYT-Capture.apk`,
       mdnsHttpUrl: `http://myt.local:${portHttp}`,
       mdnsHttpsUrl: `https://myt.local:${portHttps}`,
       lanUrls: addresses.map(a => ({
@@ -1144,11 +1213,15 @@ const requestHandler = async (req, res) => {
       return;
     }
 
-    res.writeHead(200, {
+    const headers = {
       'Content-Length': stats.size,
       'Content-Type': contentType,
       'Accept-Ranges': 'bytes'
-    });
+    };
+    if (ext === '.apk') {
+      headers['Content-Disposition'] = 'attachment; filename="MYT-Capture.apk"';
+    }
+    res.writeHead(200, headers);
     if (req.method === 'HEAD') {
       res.end();
       return;
@@ -1368,10 +1441,12 @@ try {
 
 // Start Multicast DNS responder for myt.local
 startMdnsResponder(addresses.map(a => a.address));
+startDiscoveryBeacon();
 
 // Clean Shutdown Handlers
 function cleanShutdown(signal) {
   console.log(`\n[SERVER] Received ${signal}. Closing server cleanly...`);
+  try { if (discoverySocket) discoverySocket.close(); } catch (e) {}
   try { httpServer.close(); } catch (e) {}
   server.close(() => {
     console.log('[SERVER] All network ports released.');

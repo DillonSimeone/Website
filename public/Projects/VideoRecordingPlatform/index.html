@@ -10,8 +10,18 @@
   
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="style.css">
+  <script src="native-marker.js"></script>
 </head>
 <body class="theme-dark">
+  <div id="hubConnectPanel" class="hub-connect-panel" hidden>
+    <div class="hub-connect-card">
+      <h2 id="hubConnectTitle">Looking for the hub</h2>
+      <p id="hubConnectStatus">Searching this Wi-Fi for the laptop running MYT Capture.</p>
+      <div id="hubConnectChoices" class="hub-connect-choices"></div>
+      <p id="hubConnectError" class="hub-connect-error" hidden></p>
+      <button type="button" class="btn btn-accent" id="btnRetryHub" hidden>Search again</button>
+    </div>
+  </div>
   <div id="app" class="hub-container">
 
     <!-- Top Station Header: Clean, Centered with Discreet Admin Toggle -->
@@ -27,6 +37,7 @@
 
         <!-- Admin Mode Switch -->
         <div class="admin-toggle-wrapper">
+          <button type="button" id="btnChangeHub" class="native-only btn-admin-toggle" title="Point this phone at a different hub computer">Hub</button>
           <button id="btnToggleAdmin" class="btn-admin-toggle" title="Toggle Admin Diagnostics & Advanced Sync Tools">
             <span class="admin-gear">⚙️</span>
             <span class="admin-toggle-text" id="adminToggleLabel">Admin Mode</span>
@@ -299,6 +310,9 @@
                 <button type="button" class="btn btn-sm btn-outline" id="btnQrModeHttps">
                   🔒 Secure HTTPS Mode (Strict Camera Security)
                 </button>
+                <button type="button" class="btn btn-sm btn-outline" id="btnQrModeApk">
+                  📲 Android App (Download APK)
+                </button>
               </div>
             </div>
 
@@ -312,12 +326,12 @@
                 <h3 class="qr-column-title">Direct Wi-Fi Links:</h3>
                 <div class="qr-endpoints-list" id="qrEndpointsList">
                   <div class="qr-endpoint-card">
-                    <span class="endpoint-tag mono">PRIMARY WI-FI IP (RECOMMENDED)</span>
+                    <span class="endpoint-tag mono" id="labelPrimaryLan">PRIMARY WI-FI IP (RECOMMENDED)</span>
                     <a href="#" target="_blank" class="endpoint-url mono" id="linkPrimaryLan">Loading...</a>
                     <button class="btn-xs btn-outline btn-copy-link" id="btnCopyPrimaryLan">📋 Copy</button>
                   </div>
                   <div class="qr-endpoint-card">
-                    <span class="endpoint-tag mono">mDNS NAME</span>
+                    <span class="endpoint-tag mono" id="labelSecondaryLan">mDNS NAME</span>
                     <a href="http://myt.local:3456" target="_blank" class="endpoint-url mono" id="linkMdns">http://myt.local:3456</a>
                     <button class="btn-xs btn-outline btn-copy-link" id="btnCopyMdns">📋 Copy</button>
                   </div>
@@ -329,6 +343,7 @@
                     <li><strong>Load Normally:</strong> In <em>Normal HTTP Mode</em>, the app loads immediately on phones, tablets, and PCs without any certificate warnings.</li>
                     <li><strong>Phone stuck on loading?</strong> Run <code>Allow_Phone_Connections.bat</code> in the project folder to allow Windows Firewall to accept phone Wi-Fi connections.</li>
                     <li><strong>If using HTTPS:</strong> Firefox and mobile Safari display a local certificate warning because local Wi-Fi networks don't have public domain certificates. Tap <em>"Advanced -> Accept Risk and Continue"</em> (or <em>"Show Details -> Visit this website"</em>) once to proceed.</li>
+                    <li><strong>Android app:</strong> Tap <em>Android App</em>, scan the code, and install the APK. Open it on this same Wi-Fi and it finds the laptop on its own.</li>
                   </ul>
                 </div>
               </div>

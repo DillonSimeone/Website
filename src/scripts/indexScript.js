@@ -1,3 +1,5 @@
+import { initFolderZip } from './folderZip.js';
+
 /*=======================================================
                 Theme Management
 =========================================================*/
@@ -68,13 +70,23 @@ let selectedButton = "";
 const HistoryAPIControlsEnable = true;
 let shattered = false;
 
-/* Phones/tablets: stacked fade. Desktops: side slide. Matches the CSS breakpoint. */
+/* Phones/tablets: stacked fade. Desktops: alternating side slide. */
 const stackedFadeQuery = window.matchMedia('(max-width: 1024px)');
 const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 let mobileFadeToken = 0;
+let slideToken = 0;
+/* First navigation enters from the right; each visit after that flips. */
+let slideFromRight = true;
 
 function usesStackedFade() {
     return stackedFadeQuery.matches;
+}
+
+function snapClass(el, className) {
+    el.style.transition = 'none';
+    el.className = className;
+    void el.offsetWidth;
+    el.style.transition = '';
 }
 
 window.addEventListener('popstate', (e) => {
@@ -97,55 +109,114 @@ const _galleriesConfig = [
     { id: 'shop', selector: '.grid-item', minSize: 0 }
 ];
 
+function ensureGalleries(targetID) {
+    if (_galleriesInitialized.has(targetID)) return;
+    _galleriesInitialized.add(targetID);
+    _galleriesConfig.forEach(cfg => {
+        if (cfg.id === targetID) {
+            initSectionGalleries(cfg.id, cfg.selector, cfg.minSize);
+        }
+    });
+}
+
+function resetSectionChrome(targetID) {
+    const globalToggle = document.getElementById('globalNavToggle');
+    if (globalToggle) {
+        globalToggle.classList.remove('active');
+        globalToggle.style.display = (targetID === 'elevatorPitch' || targetID === 'loading') ? 'none' : '';
+    }
+    document.querySelectorAll('.section-nav').forEach(nav => nav.classList.remove('active'));
+}
+
+/**
+ * Desktop push: outgoing leaves one side, incoming enters from the other.
+ * Pages travel exactly one viewport width so their edges stay together.
+ */
+function slidePages(outgoing, incoming, fromRight) {
+    const token = ++slideToken;
+    const enterClass = fromRight ? 'park-right' : 'park-left';
+    const exitClass = fromRight ? 'park-left' : 'park-right';
+
+    document.querySelectorAll('.item').forEach((el) => {
+        if (el === outgoing || el === incoming) return;
+        if (el.className !== 'item hide') snapClass(el, 'item hide');
+    });
+
+    snapClass(incoming, `item ${enterClass}`);
+    ensureGalleries(incoming.id);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            if (token !== slideToken) return;
+            outgoing.className = `item ${exitClass}`;
+            incoming.className = 'item reveal is-entering';
+        });
+    });
+
+    const finish = (e) => {
+        if (e.propertyName !== 'transform' || e.target !== incoming) return;
+        incoming.removeEventListener('transitionend', finish);
+        if (token !== slideToken) return;
+        incoming.classList.remove('is-entering');
+        if (outgoing.className !== 'item hide' && !outgoing.classList.contains('reveal')) {
+            snapClass(outgoing, 'item hide');
+        }
+    };
+    incoming.addEventListener('transitionend', finish);
+
+    window.setTimeout(() => {
+        if (token !== slideToken) return;
+        incoming.classList.remove('is-entering');
+        if (outgoing.className !== 'item hide' && !outgoing.classList.contains('reveal')) {
+            snapClass(outgoing, 'item hide');
+        }
+    }, 700);
+}
+
 function reveal(targetID, buttonID, timedelay = 60, historyAPI = false) {
     const button = buttonID ? document.getElementById(buttonID) : null;
     const stacked = usesStackedFade();
+    const targetNow = document.getElementById(targetID);
+    const outgoingNow = document.querySelector('.item.reveal');
+    const directional = !stacked
+        && !reducedMotionQuery.matches
+        && targetNow
+        && outgoingNow
+        && outgoingNow !== targetNow;
 
     setTimeout(() => {
         const target = document.getElementById(targetID);
         if (!target) return;
 
-        // Already on screen: skip the fade so the first paint doesn't flash.
-        const fadeIn = stacked && !reducedMotionQuery.matches && !target.classList.contains('reveal');
-
-        hideAll(targetID, buttonID);
         if (button) selectedButton = buttonID;
 
-        target.className = fadeIn ? 'item reveal mobile-fade' : 'item reveal';
+        const outgoing = document.querySelector('.item.reveal');
+        const samePage = outgoing === target;
+        const fadeIn = stacked && !reducedMotionQuery.matches && !samePage;
+        const slide = !stacked && !reducedMotionQuery.matches && !samePage && outgoing;
 
-        // Lazy gallery init: only process galleries the first time a section is shown.
-        // On phones this runs while the page is still opacity 0.
-        if (!_galleriesInitialized.has(targetID)) {
-            _galleriesInitialized.add(targetID);
-            _galleriesConfig.forEach(cfg => {
-                if (cfg.id === targetID) {
-                    initSectionGalleries(cfg.id, cfg.selector, cfg.minSize);
-                }
-            });
-        }
+        if (slide) {
+            setActiveNav(buttonID);
+            slidePages(outgoing, target, slideFromRight);
+            slideFromRight = !slideFromRight;
+        } else {
+            const fadeToken = fadeIn ? ++mobileFadeToken : mobileFadeToken;
+            hideAll(targetID, buttonID);
+            target.className = fadeIn ? 'item reveal mobile-fade' : 'item reveal';
+            ensureGalleries(targetID);
 
-        if (fadeIn) {
-            const token = mobileFadeToken;
-            // Two frames: the first paints opacity 0 after display:none is
-            // lifted, the second starts the ramp to 1. One frame is not enough;
-            // the browser would skip the transition.
-            requestAnimationFrame(() => {
+            if (fadeIn) {
                 requestAnimationFrame(() => {
-                    if (token !== mobileFadeToken) return;
-                    target.classList.remove('mobile-fade');
+                    requestAnimationFrame(() => {
+                        if (fadeToken !== mobileFadeToken) return;
+                        target.classList.remove('mobile-fade');
+                    });
                 });
-            });
+            }
         }
 
-        // UI Reset
-        const globalToggle = document.getElementById('globalNavToggle');
-        if (globalToggle) {
-            globalToggle.classList.remove('active');
-            globalToggle.style.display = (targetID === 'elevatorPitch' || targetID === 'loading') ? 'none' : '';
-        }
-
-        document.querySelectorAll('.section-nav').forEach(nav => nav.classList.remove('active'));
-    }, stacked ? 0 : timedelay);
+        resetSectionChrome(targetID);
+    }, directional || stacked ? 0 : timedelay);
 
     if (HistoryAPIControlsEnable && !historyAPI) {
         if (!buttonID) {
@@ -191,21 +262,18 @@ function unShatter() {
 /**
  * Hides all inactive sections and resets nav button colors.
  */
-function hideAll(targetID, buttonID) {
-    const items = document.querySelectorAll('.item');
-    const navButtons = document.querySelectorAll('.navButton');
-
-    const stacked = usesStackedFade();
-    if (stacked) mobileFadeToken++;
-    const hiddenClass = stacked ? 'item hide' : 'item hide spin';
-    items.forEach(el => {
-        if (el.id !== targetID) el.className = hiddenClass;
-    });
-
-    navButtons.forEach(btn => {
+function setActiveNav(buttonID) {
+    document.querySelectorAll('.navButton').forEach(btn => {
         btn.classList.toggle('active', btn.id === buttonID);
-        btn.style.fill = "";
+        btn.style.fill = '';
     });
+}
+
+function hideAll(targetID, buttonID) {
+    document.querySelectorAll('.item').forEach(el => {
+        if (el.id !== targetID) el.className = 'item hide';
+    });
+    setActiveNav(buttonID);
 }
 
 const neonPalette = ["#00f0ff", "#ff00ff", "#00ff66", "#ff3355", "#ffee00", "#00ddff", "#ff44aa"];
@@ -757,3 +825,4 @@ document.addEventListener('click', (e) => {
 });
 
 setUp();
+initFolderZip();
