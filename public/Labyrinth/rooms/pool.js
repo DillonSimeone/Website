@@ -2,80 +2,155 @@ import {
     THREE, COMMON_GLSL, MASK, glowBlending, INNER, WALL_H, PLAIN_VERT,
     cellUniforms, portalMaterial, litMaterial, glowSprite, makeRoom, asideSpot, ceilingPortal, sideVec,
 } from './kit.js';
+import { createTree } from './tree.js';
 
 const POOL_SKY = /* glsl */ `
-vec3 portalScene(vec3 ro, vec3 rd) { return skyColor(rd, vec3(0.0, 1.0, 0.0)); }
+uniform vec3 uBody;
+vec3 portalScene(vec3 ro, vec3 rd) { return skyColor(rd, uBody); }
 `;
 
-/* A great old tree: flared roots, a heavy trunk, branches reaching over the path, fireflies. */
-function bigTree(room, ctx, base) {
-    const bark = litMaterial(ctx, 0x4a3222, { sky: 0.8 });
-    room.track(bark);
-    const limb = (geo, from, to) => {
-        const mesh = new THREE.Mesh(geo, bark);
-        const dir = to.clone().sub(from);
-        mesh.position.copy(from).addScaledVector(dir, 0.5);
-        mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
-        mesh.scale.set(1, dir.length(), 1);
-        room.group.add(mesh);
-    };
-    const trunkGeo = new THREE.CylinderGeometry(0.2, 0.36, 1, 10);
-    const rootGeo = new THREE.CylinderGeometry(0.05, 0.14, 1, 6);
-    const branchGeo = new THREE.CylinderGeometry(0.04, 0.12, 1, 6);
-    room.track(trunkGeo, rootGeo, branchGeo);
-    const top = base.clone().setY(ctx.center.y + 2.2);
-    limb(trunkGeo, base.clone().setY(ctx.center.y), top);
-    for (let k = 0; k < 6; k++) {
-        const a = (k / 6) * Math.PI * 2 + 0.3;
-        limb(rootGeo, base.clone().setY(ctx.center.y + 0.5), base.clone().add(new THREE.Vector3(Math.cos(a) * 0.75, 0.02, Math.sin(a) * 0.75)));
-    }
-    const leafMat = litMaterial(ctx, 0x3f7a2a, { sky: 1, sway: 0.025, emissive: 0.08 });
-    const leafGeo = new THREE.IcosahedronGeometry(0.5, 1);
-    room.track(leafMat, leafGeo);
-    const towardCenter = ctx.center.clone().sub(base).setY(0);
-    const baseAngle = Math.atan2(towardCenter.z, towardCenter.x);
-    for (let k = 0; k < 7; k++) {
-        const a = baseAngle + (k - 3) * 0.55;
-        const reach = 1.1 + (k % 3) * 0.35;
-        const tip = top.clone().add(new THREE.Vector3(Math.cos(a) * reach, 0.35 + (k % 2) * 0.25, Math.sin(a) * reach));
-        limb(branchGeo, top, tip);
-        for (let c = 0; c < 2; c++) {
-            const leaf = new THREE.Mesh(leafGeo, leafMat);
-            leaf.position.copy(tip).add(new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.3) * 0.25, (Math.random() - 0.5) * 0.5));
-            leaf.position.y = Math.min(leaf.position.y, ctx.center.y + WALL_H - 0.45);
-            leaf.scale.setScalar(0.7 + Math.random() * 0.5);
-            leaf.rotation.set(Math.random() * 3, Math.random() * 3, 0);
-            room.group.add(leaf);
-        }
-    }
-    const crown = new THREE.Mesh(leafGeo, leafMat);
-    crown.position.copy(top).setY(ctx.center.y + 2.6);
-    crown.scale.setScalar(1.25);
-    room.group.add(crown);
+/*
+ * Light falling from the moon or sun, in the library's style: soft-edged streaked beams
+ * (bright where they face you, fading at their silhouettes), with dust sparkling inside.
+ */
+function lightBeams(room, ctx, bodyDir, avoid) {
+    const beamMat = glowBlending(new THREE.ShaderMaterial({
+        uniforms: cellUniforms(ctx),
+        vertexShader: /* glsl */ `
+            varying vec3 vWorld;
+            varying vec3 vNormal;
+            varying vec2 vUv;
+            void main() {
+                vec4 wp = modelMatrix * vec4(position, 1.0);
+                vWorld = wp.xyz;
+                vNormal = normalize(mat3(modelMatrix) * normal);
+                vUv = uv;
+                gl_Position = projectionMatrix * viewMatrix * wp;
+            }`,
+        fragmentShader: /* glsl */ `
+            ${COMMON_GLSL}
+            varying vec3 vWorld;
+            varying vec3 vNormal;
+            varying vec2 vUv;
+            void main() {
+                vec3 view = normalize(uCam - vWorld);
+                float edge = pow(abs(dot(normalize(vNormal), view)), 2.0);
+                float streaks = 0.55 + 0.45 * sin(vUv.x * 62.0 + sin(vUv.x * 13.0 + uTime * 0.15) * 3.0);
+                float drift = 0.85 + 0.15 * sin(vUv.y * 90.0 - uTime * 1.2);
+                float ends = smoothstep(0.0, 0.3, vUv.y) * mix(0.55, 1.0, vUv.y);
+                vec3 tint = mix(vec3(0.72, 0.82, 1.0), vec3(1.0, 0.84, 0.58), uDay);
+                float amount = edge * streaks * drift * ends * 0.075 * mix(0.8, 1.0, uDay) * uFade;
+                gl_FragColor = vec4(tint * amount * darkness(vWorld), 0.0);
+            }`,
+        side: THREE.DoubleSide,
+    }));
+    const beamGeo = new THREE.CylinderGeometry(1, 1, 1, 24, 1, true);
+    room.track(beamMat, beamGeo);
 
-    const FLIES = 70;
-    const flyGeo = new THREE.BufferGeometry();
-    const seeds = new Float32Array(FLIES * 4);
-    const points = new Float32Array(FLIES * 3);
-    for (let i = 0; i < FLIES; i++) {
-        for (let s = 0; s < 4; s++) seeds[i * 4 + s] = Math.random();
-        const a = Math.random() * Math.PI * 2;
-        const r = Math.random() * 1.6;
-        points.set([base.x + Math.cos(a) * r, ctx.center.y + 0.6 + Math.random() * 2.2, base.z + Math.sin(a) * r], i * 3);
+    const floorY = ctx.center.y;
+    const length = (WALL_H + 0.1) / bodyDir.y;
+    const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), bodyDir);
+    const spots = [];
+    for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2 + Math.random();
+        const r = 0.15 + Math.random() * 0.45;
+        const hit = ctx.center.clone().add(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)).addScaledVector(avoid, -0.25).setY(floorY);
+        const radius = 0.22 + Math.random() * 0.2;
+        const beam = new THREE.Mesh(beamGeo, beamMat);
+        beam.quaternion.copy(quat);
+        beam.scale.set(radius, length, radius);
+        beam.position.copy(hit).addScaledVector(bodyDir, length / 2);
+        beam.frustumCulled = false;
+        room.group.add(beam);
+        spots.push({ hit, radius });
     }
-    flyGeo.setAttribute('position', new THREE.BufferAttribute(points, 3));
-    flyGeo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 4));
-    const flies = new THREE.Points(flyGeo, glowSprite(ctx, 0xd8ff7a, 1.6));
-    flies.frustumCulled = false;
-    room.group.add(flies);
-    room.track(flyGeo, flies.material);
+
+    /* A soft pool of light where the beams land. */
+    const glowMat = glowBlending(new THREE.ShaderMaterial({
+        uniforms: cellUniforms(ctx),
+        vertexShader: /* glsl */ `
+            varying vec3 vWorld;
+            varying vec2 vUv;
+            void main() {
+                vec4 wp = modelMatrix * vec4(position, 1.0);
+                vWorld = wp.xyz;
+                vUv = uv;
+                gl_Position = projectionMatrix * viewMatrix * wp;
+            }`,
+        fragmentShader: /* glsl */ `
+            ${COMMON_GLSL}
+            varying vec3 vWorld;
+            varying vec2 vUv;
+            void main() {
+                float d = length(vUv - 0.5) * 2.0;
+                float glow = pow(max(1.0 - d, 0.0), 2.0) * (0.85 + 0.15 * sin(uTime * 0.7 + vWorld.x * 3.0));
+                vec3 tint = mix(vec3(0.6, 0.7, 1.0), vec3(1.0, 0.85, 0.6), uDay);
+                gl_FragColor = vec4(tint * glow * 0.12 * uFade * darkness(vWorld), 0.0);
+            }`,
+    }));
+    const glowGeo = new THREE.PlaneGeometry(1, 1);
+    room.track(glowMat, glowGeo);
+    for (const s of spots) {
+        const patch = new THREE.Mesh(glowGeo, glowMat);
+        patch.rotation.x = -Math.PI / 2;
+        patch.position.copy(s.hit).setY(floorY + 0.14);
+        patch.scale.setScalar(s.radius * 3.2);
+        room.group.add(patch);
+    }
+
+    /* Dust drifting inside the beams. */
+    const DUST = 110;
+    const dustGeo = new THREE.BufferGeometry();
+    const pts = new Float32Array(DUST * 3);
+    const seeds = new Float32Array(DUST * 4).map(() => Math.random());
+    for (let i = 0; i < DUST; i++) {
+        const s = spots[i % spots.length];
+        const along = Math.random() * length;
+        const off = new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5).multiplyScalar(s.radius * 1.4);
+        const p = s.hit.clone().add(off).addScaledVector(bodyDir, along);
+        pts.set([p.x, p.y, p.z], i * 3);
+    }
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+    dustGeo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 4));
+    const dust = new THREE.Points(dustGeo, glowSprite(ctx, 0xdfe6ff, 0.9, 0.12));
+    dust.frustumCulled = false;
+    room.group.add(dust);
+    room.track(dustGeo, dust.material);
 }
 
-/* Sky ceiling, reflective water crossed by stepping stones, grass, a light shaft, and the tree. */
+function fireflies(room, ctx, around) {
+    const FLIES = 60;
+    const geo = new THREE.BufferGeometry();
+    const seeds = new Float32Array(FLIES * 4).map(() => Math.random());
+    const points = new Float32Array(FLIES * 3);
+    for (let i = 0; i < FLIES; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.random() * 1.3;
+        points.set([around.x + Math.cos(a) * r, ctx.center.y + 0.4 + Math.random() * 2.2, around.z + Math.sin(a) * r], i * 3);
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(points, 3));
+    geo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 4));
+    const flies = new THREE.Points(geo, glowSprite(ctx, 0xd8ff7a, 1.4));
+    flies.frustumCulled = false;
+    room.group.add(flies);
+    room.track(geo, flies.material);
+}
+
+/* Sky ceiling, reflective water crossed by stepping stones, grass, moonbeams, and a great tree. */
 function build(ctx) {
     const room = makeRoom();
     const { center } = ctx;
-    ceilingPortal(room, ctx, portalMaterial(ctx, POOL_SKY, MASK.shaded));
+
+    /* The tree stands in a corner (on turns) or against a wall; the moon hangs on the far side. */
+    const [a, b] = ctx.solidSides;
+    const corner = a !== undefined && b !== undefined && (a + 2) % 4 !== b;
+    const treeBase = asideSpot(ctx, corner ? 1.85 : 1.45);
+    const avoid = treeBase.clone().sub(center).setY(0);
+    if (avoid.lengthSq() < 1e-4) avoid.set(0, 0, 1);
+    avoid.normalize();
+    const bodyDir = new THREE.Vector3(0, 1, 0).addScaledVector(avoid, -0.32).normalize();
+
+    ceilingPortal(room, ctx, portalMaterial(ctx, POOL_SKY, MASK.shaded, { uBody: { value: bodyDir } }));
 
     room.add(new THREE.PlaneGeometry(INNER * 2, INNER * 2), litMaterial(ctx, 0x2c4a1c, { sky: 1 }), (m) => {
         m.position.copy(center).setY(center.y + 0.004);
@@ -103,10 +178,11 @@ function build(ctx) {
     });
 
     const water = new THREE.ShaderMaterial({
-        uniforms: cellUniforms(ctx),
+        uniforms: cellUniforms(ctx, { uBody: { value: bodyDir } }),
         vertexShader: PLAIN_VERT,
         fragmentShader: /* glsl */ `
             ${COMMON_GLSL}
+            uniform vec3 uBody;
             varying vec3 vWorld;
             void main() {
                 dissolve();
@@ -120,7 +196,7 @@ function build(ctx) {
                 vec3 refl = reflect(rd, n);
                 float fres = 0.15 + 0.85 * pow(1.0 - max(dot(-rd, n), 0.0), 3.0);
                 vec3 deep = mix(vec3(0.01, 0.04, 0.06), vec3(0.05, 0.25, 0.3), uDay);
-                vec3 col = mix(deep, skyColor(refl, vec3(0.0, 1.0, 0.0)), fres);
+                vec3 col = mix(deep, skyColor(refl, uBody), fres);
                 gl_FragColor = vec4(col * darkness(vWorld), 0.0);
             }`,
     });
@@ -175,34 +251,9 @@ function build(ctx) {
     room.group.add(blades);
     room.track(bladeGeo, grassMat);
 
-    bigTree(room, ctx, asideSpot(ctx, 1.3));
-
-    const shaftMat = glowBlending(new THREE.ShaderMaterial({
-        uniforms: cellUniforms(ctx),
-        vertexShader: /* glsl */ `
-            varying vec3 vWorld;
-            varying float vY;
-            void main() {
-                vec4 wp = modelMatrix * vec4(position, 1.0);
-                vWorld = wp.xyz;
-                vY = uv.y;
-                gl_Position = projectionMatrix * viewMatrix * wp;
-            }`,
-        fragmentShader: /* glsl */ `
-            ${COMMON_GLSL}
-            varying vec3 vWorld;
-            varying float vY;
-            void main() {
-                if (uFade < 0.5) discard;
-                vec3 tint = mix(vec3(0.55, 0.65, 0.95), vec3(1.0, 0.85, 0.55), uDay);
-                float streak = 0.6 + 0.4 * sin(vWorld.x * 9.0 + vWorld.z * 7.0 + uTime * 0.4);
-                gl_FragColor = vec4(tint * 0.08 * vY * streak * darkness(vWorld), 0.0);
-            }`,
-        side: THREE.DoubleSide,
-    }));
-    room.add(new THREE.CylinderGeometry(1.3, 0.95, WALL_H, 24, 1, true), shaftMat, (m) => {
-        m.position.copy(center).setY(center.y + WALL_H / 2);
-    });
+    createTree(room, ctx, treeBase, { bodyDir });
+    fireflies(room, ctx, treeBase);
+    lightBeams(room, ctx, bodyDir, avoid);
 
     return room.result();
 }

@@ -4,6 +4,7 @@ import { ROOM_TYPES, HALL_ROOMS } from './rooms/index.js';
 import { SHAPES, SHAPE_KEYS } from './shapes.js';
 import { createBuildKit, buildCell } from './build.js';
 import { createRarity } from './rarity.js';
+import { critterOptions, habitatOf } from './critter.js';
 
 export { CELL, LEVEL, EYE, yawOf } from './grid.js';
 
@@ -13,6 +14,7 @@ const FADE_SECONDS = 1.4;
 /* A direction is only taken if at least this many free squares can be reached from it (no dead ends). */
 const SAFE_REACH = 12;
 const SPECIAL_THEMES = ['void', 'garden'];
+const CRITTER_CHANCE = 0.3;
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 const randInt = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -190,6 +192,30 @@ export function createCells(scene, U, { books = [] } = {}) {
         return rarity.pick('room', HALL_ROOMS.filter(k => k !== lastRoom));
     }
 
+    /*
+     * A room open to the sky (or with no floor) also needs the square above (or below) kept empty,
+     * or a neighbouring cell's slab would show up as a ceiling. Returns false if that square is taken.
+     */
+    function claimOpenings(L, next, lvl) {
+        const spec = ROOM_TYPES[L.room] || {};
+        const keys = [];
+        if (spec.skyCeiling) keys.push(keyOf(L.gx, L.gz, L.lvl + 1));
+        if (spec.noFloor) keys.push(keyOf(L.gx, L.gz, L.lvl - 1));
+        const mine = (k) => occupied.get(k) && occupied.get(k).cell === L;
+        if (!keys.every(k => mine(k) || isFree(k, null))) return false;
+        const fresh = keys.filter(k => !mine(k));
+        fresh.forEach(k => claim(k, L, 'stub'));
+        const [dx, dz] = DIRS[next.d];
+        const nextReach = next.kind === 'stairs'
+            ? reach(next.gx + dx, next.gz + dz, lvl + next.rise, L)
+            : reach(next.gx, next.gz, lvl, L);
+        if (nextReach < SAFE_REACH && nextReach < (next.reach ?? 0)) {
+            fresh.forEach(k => unclaim(k, L));
+            return false;
+        }
+        return true;
+    }
+
     function finalize(L, next, lvl) {
         const { d: outDir, gx, gz, kind, rise } = next;
         L.outDir = outDir;
@@ -197,6 +223,10 @@ export function createCells(scene, U, { books = [] } = {}) {
         const index = cells.indexOf(L);
 
         L.room = chooseRoom(L, index);
+        if (L.room && !claimOpenings(L, next, lvl)) {
+            if (L.room === 'pool' && L.zone.left > 0) L.zone.poolAt = L.zoneIndex + 1;
+            L.room = null;
+        }
         if (L.room) {
             if (L.room !== 'void') rarity.note('room', L.room);
             lastRoom = L.room;
@@ -229,6 +259,15 @@ export function createCells(scene, U, { books = [] } = {}) {
             }
         } else {
             sinceTome++;
+        }
+
+        if (L.kind !== 'stairs' && index > 0 && Math.random() < CRITTER_CHANCE) {
+            const spec = L.room ? ROOM_TYPES[L.room] : {};
+            const options = critterOptions(habitatOf(L, spec, solid));
+            if (options.length) {
+                L.critter = rarity.pick('critter', options);
+                rarity.note('critter', L.critter);
+            }
         }
 
         L.built = buildCell(L, { U, kit });

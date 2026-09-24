@@ -7,6 +7,7 @@ import { portalMaterial } from './rooms/kit.js';
 import { SHAPES } from './shapes.js';
 import { createBuildKit, buildCell, effectiveShape } from './build.js';
 import { createMaskedAscii } from './ascii.js';
+import { CRITTERS, critterFile, critterOptions, habitatOf } from './critter.js';
 
 /*
  * Labyrinth editor: builds one cell (optionally with its neighbours) from the settings in the URL,
@@ -15,8 +16,8 @@ import { createMaskedAscii } from './ascii.js';
  */
 
 const DEFAULTS = {
-    room: '', style: 'sandstone', from: '', shape: 'square', layout: 'straight',
-    stubs: '0', tome: '0', neighbours: '1', day: '0', ascii: '1', view: 'walk', seed: '1', speed: '1',
+    room: '', critter: '', style: 'sandstone', from: '', shape: 'square', layout: 'straight',
+    stubs: '0', tome: '0', neighbours: '1', roof: '0', day: '0', ascii: '1', view: 'walk', seed: '1', speed: '1',
 };
 const LAYOUTS = {
     straight: { out: 0, kind: 'corridor', rise: 0, label: 'Straight' },
@@ -104,6 +105,7 @@ function rebuild() {
     const room = ROOM_TYPES[state.room] ? state.room : null;
     const main = makeCell(0, 0, 0, 0, layout.out, layout.kind, layout.rise, {
         room,
+        critter: CRITTERS[state.critter] ? state.critter : null,
         shape: state.shape,
         styleFrom: STYLE_INDEX[state.from] ?? STYLE_INDEX[state.style] ?? 0,
     });
@@ -124,7 +126,7 @@ function rebuild() {
     cellsNow = { prev, main, next };
 
     const list = state.neighbours === '1' ? [prev, main, next] : [main];
-    const hideCeiling = state.view === 'overview';
+    const hideCeiling = state.view === 'overview' && state.roof !== '1';
     withSeed(state.seed, () => {
         for (const cell of list) {
             const b = buildCell(cell, { U, kit, hideCeiling });
@@ -245,6 +247,7 @@ function buildPanel() {
     select('room', 'Room', [['', '(none)'],
         ...Object.keys(ROOM_TYPES).filter(k => !SCENES[k]).map(k => [k, ROOM_TYPES[k].name]),
         ...sceneKeys.map(k => [k, `Scene: ${SCENES[k].name}`])]);
+    select('critter', 'Critter', [['', '(none)'], ...Object.entries(CRITTERS).map(([k, c]) => [k, c.name])]);
     select('style', 'Style', styleOptions);
     select('from', 'Blend from', [['', '(same)'], ...styleOptions]);
     select('shape', 'Shape', Object.entries(SHAPES).map(([k, s]) => [k, s.name]));
@@ -253,6 +256,7 @@ function buildPanel() {
     check('stubs', 'Side paths');
     check('tome', 'Found book');
     check('neighbours', 'Neighbours');
+    check('roof', 'Roof in overview');
     check('ascii', 'ASCII');
     range('day', 'Day', 0, 1, 0.01);
     range('speed', 'Time', 0, 3, 0.05);
@@ -296,6 +300,14 @@ function renderFiles() {
     if (ROOM_TYPES[state.room]) {
         lines.push(roomFile(state.room));
         lines.push(SCENES[state.room] ? 'rooms/scene.js + scenes/frame.js' : 'rooms/kit.js (shared helpers)');
+        if (state.room === 'pool') lines.push('rooms/tree.js');
+    }
+    if (CRITTERS[state.critter]) {
+        const main = cellsNow.main;
+        const entry = opposite(main.inDir);
+        const solid = [0, 1, 2, 3].filter(s => s !== entry && s !== main.outDir && !main.stubs.includes(s));
+        const fits = critterOptions(habitatOf(main, ROOM_TYPES[main.room] || {}, solid)).includes(state.critter);
+        lines.push(`${critterFile(state.critter)} + critter.js${fits ? '' : ' (would not spawn here in the maze)'}`);
     }
     filesBox.textContent = `Files for this view:\n${lines.join('\n')}\n\nLink:\n${location.search || '(defaults)'}`;
 }

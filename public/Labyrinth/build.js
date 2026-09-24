@@ -4,6 +4,7 @@ import { createCellMaterial } from './styles/index.js';
 import { ROOM_TYPES, createRoom } from './rooms/index.js';
 import { SHAPES, RAISE } from './shapes.js';
 import { createTome } from './tomes.js';
+import { CRITTERS, createCritter } from './critter.js';
 
 /* Geometry shared by every cell; dispose once when the labyrinth closes. */
 export function createBuildKit() {
@@ -30,7 +31,7 @@ export function effectiveShape(cell) {
 /**
  * Builds one cell: slabs, walls with doorways, side passages, stairs, its shape, room and tome.
  * cell: { gx, gz, lvl, exitLvl, inDir, outDir, kind, rise, stubs, room, shape, style, styleFrom,
- *         fade (uniform), tomeSide, tomeBook }. Sets cell.windowSide.
+ *         fade (uniform), tomeSide, tomeBook, critter }. Sets cell.windowSide.
  * Returns { group, update(t, camera), dispose() }.
  */
 export function buildCell(cell, { U, kit, hideCeiling = false }) {
@@ -165,6 +166,8 @@ export function buildCell(cell, { U, kit, hideCeiling = false }) {
     const ctx = { U, fade: cell.fade, cellCenter, center, entrySide, exitSide: cell.outDir, solidSides, windowSide, shape: shapeKey };
     const roomObj = cell.room ? createRoom(cell.room, ctx) : null;
     if (roomObj) group.add(roomObj.group);
+    const critter = cell.critter && CRITTERS[cell.critter] ? createCritter(cell.critter, ctx) : null;
+    if (critter) group.add(critter.group);
     let tome = null;
     if (cell.tomeBook) {
         const inset = cell.room === 'babel' ? 1.0 : (shape.tomeInset || 1.2);
@@ -177,12 +180,14 @@ export function buildCell(cell, { U, kit, hideCeiling = false }) {
         tome,
         update(t, camera) {
             if (roomObj) roomObj.update(t, camera);
+            if (critter) critter.update(t, camera);
             if (tome) tome.update(t, camera);
         },
         dispose() {
             meshes.forEach(mesh => mesh.dispose());
             material.dispose();
             if (roomObj) roomObj.dispose();
+            if (critter) critter.dispose();
             if (tome) tome.dispose();
         },
     };
