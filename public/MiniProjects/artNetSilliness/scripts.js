@@ -33,6 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let wavePhase = 0;
   let vuLevel = 0;
   let vuPeak = 0;
+  let matrixDrops = [];
+  let ripples = [];
+  let comets = [];
+  let chaserCanvas = new Array(numLEDs).fill(null).map(() => [0, 0, 0]);
 
   // Audio Processing Elements
   const toggleAudioBtn = document.getElementById('toggleAudioBtn');
@@ -73,7 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isAudioActive) {
         try {
           audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false
+            }
+          });
           microphoneStream = audioCtx.createMediaStreamSource(stream);
           analyser = audioCtx.createAnalyser();
           analyser.fftSize = 256;
@@ -301,18 +311,40 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       case 'fire': {
-        for (let i = 0; i < numLEDs; i++) {
-          fireHeat[i] = Math.max(0, fireHeat[i] * 0.97 - Math.random() * (0.02 + (1 - bassPower) * 0.02));
+        const drive = Math.max(0, Math.min(1, Math.max(avgAudio * 1.6, bassPower * 1.3)));
+        // Upward convection
+        for (let i = numLEDs - 1; i > 0; i--) {
+          fireHeat[i] = fireHeat[i - 1] * 0.88 + fireHeat[i] * 0.10;
         }
+        fireHeat[0] *= 0.7;
+
+        // Cooling
+        const coolRate = 0.015 + (1 - drive) * 0.035;
+        for (let i = 0; i < numLEDs; i++) {
+          fireHeat[i] = Math.max(0, fireHeat[i] - (0.005 + Math.random() * coolRate));
+        }
+
+        // Diffusion
         const diffused = fireHeat.slice();
         for (let i = 1; i < numLEDs - 1; i++) {
-          diffused[i] = (fireHeat[i - 1] + fireHeat[i] * 2 + fireHeat[i + 1]) / 4.2;
+          diffused[i] = (fireHeat[i - 1] + fireHeat[i] * 2 + fireHeat[i + 1]) / 4.0;
         }
         fireHeat = diffused;
-        const sparks = Math.min(numLEDs, 1 + Math.floor(bassPower * 12));
+
+        // Base sparks
+        const maxReach = Math.max(2, Math.floor(drive * numLEDs * 0.85));
+        const sparks = Math.min(numLEDs, Math.max(2, Math.floor(2 + drive * 20)));
         for (let i = 0; i < sparks; i++) {
-          fireHeat[i] = Math.max(fireHeat[i], (0.45 + Math.random() * 0.55) * (0.4 + 0.6 * bassPower));
+          fireHeat[i] = Math.max(fireHeat[i], (0.65 + Math.random() * 0.35) * (0.5 + 0.5 * drive));
         }
+        if (drive > 0.25) {
+          const bursts = Math.floor(drive * 8);
+          for (let b = 0; b < bursts; b++) {
+            const idx = Math.floor(Math.random() * maxReach);
+            fireHeat[idx] = Math.max(fireHeat[idx], 0.6 + Math.random() * 0.4);
+          }
+        }
+
         for (let i = 0; i < numLEDs; i++) {
           const h = Math.max(0, Math.min(1, fireHeat[i]));
           const r = Math.min(255, Math.floor(Math.min(1, h * 3) * 255));
@@ -324,19 +356,165 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       case 'sparkle': {
-        hueTracker = (hueTracker + 0.002) % 1;
-        const count = treblePower > 0.12 ? Math.max(1, Math.min(12, Math.floor(treblePower * 16))) : 0;
-        for (let s = 0; s < count; s++) {
-          sparkLevels[Math.floor(Math.random() * numLEDs)] = 1;
+        hueTracker = (hueTracker + 0.003) % 1;
+        const energy = Math.max(avgAudio * 1.5, treblePower * 1.6, bassPower * 0.9);
+        if (energy > 0.04) {
+          const count = Math.max(1, Math.min(numLEDs / 3, Math.floor(energy * numLEDs * 0.15)));
+          for (let s = 0; s < count; s++) {
+            sparkLevels[Math.floor(Math.random() * numLEDs)] = 0.75 + Math.random() * 0.25;
+          }
+        } else if (Math.random() < 0.15) {
+          sparkLevels[Math.floor(Math.random() * numLEDs)] = 0.3 + Math.random() * 0.4;
+        }
+
+        for (let i = 0; i < numLEDs; i++) {
+          sparkLevels[i] *= 0.82;
+          const bgBrightness = Math.max(0.03, Math.min(0.25, 0.04 + avgAudio * 0.1));
+          const bg = hsvToRgb(hueTracker, 0.85, bgBrightness);
+          const k = sparkLevels[i];
+          const r = Math.min(255, Math.round(bg[0] * (1 - k) + 255 * k));
+          const g = Math.min(255, Math.round(bg[1] * (1 - k) + 255 * k));
+          const b = Math.min(255, Math.round(bg[2] * (1 - k) + 240 * k));
+          drawPixel(i, r, g, b, Math.max(8, (0.1 + k) * canvas.height * 0.7));
+        }
+        break;
+      }
+
+      case 'plasma': {
+        const plasmaT = time * 0.8 + bassPower * 1.5;
+        for (let i = 0; i < numLEDs; i++) {
+          const x = (i / numLEDs) * 8.0;
+          const v1 = Math.sin(x + plasmaT * 0.8);
+          const v2 = Math.sin(x * 1.6 - plasmaT * 0.6);
+          const v3 = Math.sin((x * 0.5 + v1 + v2) * 1.4 + plasmaT);
+          const plasma = (v1 + v2 + v3) / 3.0;
+
+          const hue = ((0.55 + plasma * 0.35 + avgAudio * 0.25) % 1 + 1) % 1;
+          const val = Math.max(0.1, Math.min(1.0, 0.3 + 0.7 * (plasma * 0.5 + 0.5) * (0.4 + avgAudio * 0.6)));
+          const rgb = hsvToRgb(hue, 0.85, val);
+          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(8, val * canvas.height * 0.75));
+        }
+        break;
+      }
+
+      case 'matrix': {
+        if (Math.random() < (0.15 + avgAudio * 0.5)) {
+          matrixDrops.push({
+            pos: 0,
+            speed: 0.9 + Math.random() * 1.5,
+            length: Math.floor(6 + Math.random() * 14),
+            hue: [0.33, 0.36, 0.48, 0.82][Math.floor(Math.random() * 4)]
+          });
+        }
+        const canvasV = new Array(numLEDs).fill(0.04);
+        const canvasH = new Array(numLEDs).fill(0.33);
+        const canvasS = new Array(numLEDs).fill(1.0);
+
+        matrixDrops.forEach(d => {
+          d.pos += d.speed;
+          const head = Math.floor(d.pos);
+          for (let k = 0; k < d.length; k++) {
+            const p = head - k;
+            if (p >= 0 && p < numLEDs) {
+              const fade = 1.0 - (k / d.length);
+              if (k === 0) {
+                canvasV[p] = 1.0;
+                canvasS[p] = 0.15;
+                canvasH[p] = d.hue;
+              } else if (canvasV[p] < fade) {
+                canvasV[p] = fade * (0.4 + avgAudio * 0.6);
+                canvasS[p] = 0.95;
+                canvasH[p] = d.hue;
+              }
+            }
+          }
+        });
+        matrixDrops = matrixDrops.filter(d => Math.floor(d.pos) - d.length < numLEDs);
+
+        for (let i = 0; i < numLEDs; i++) {
+          const rgb = hsvToRgb(canvasH[i], canvasS[i], canvasV[i]);
+          drawPixel(i, rgb[0], rgb[1], rgb[2], Math.max(6, canvasV[i] * canvas.height * 0.8));
+        }
+        break;
+      }
+
+      case 'pulse': {
+        if (bassPower > 0.6 || Math.random() < (0.04 + avgAudio * 0.25)) {
+          ripples.push({
+            center: numLEDs / 2,
+            radius: 0,
+            speed: 1.6 + avgAudio * 2,
+            hue: Math.random(),
+            intensity: 1.0
+          });
+        }
+        const rippleRGB = new Array(numLEDs).fill(null).map(() => [0, 0, 0]);
+        ripples.forEach(r => {
+          r.radius += r.speed;
+          r.intensity *= 0.92;
+          for (let i = 0; i < numLEDs; i++) {
+            const dist = Math.abs(Math.abs(i - r.center) - r.radius);
+            const ring = Math.exp(-0.35 * dist * dist) * r.intensity;
+            if (ring > 0.01) {
+              const rgb = hsvToRgb(r.hue, 0.9, ring);
+              rippleRGB[i][0] = Math.min(255, rippleRGB[i][0] + rgb[0]);
+              rippleRGB[i][1] = Math.min(255, rippleRGB[i][1] + rgb[1]);
+              rippleRGB[i][2] = Math.min(255, rippleRGB[i][2] + rgb[2]);
+            }
+          }
+        });
+        ripples = ripples.filter(r => r.intensity > 0.03 && r.radius < numLEDs);
+
+        for (let i = 0; i < numLEDs; i++) {
+          const bg = hsvToRgb(i / numLEDs, 0.8, 0.04 + avgAudio * 0.15);
+          const r = Math.min(255, rippleRGB[i][0] + bg[0]);
+          const g = Math.min(255, rippleRGB[i][1] + bg[1]);
+          const b = Math.min(255, rippleRGB[i][2] + bg[2]);
+          const brightness = (r + g + b) / (255 * 3);
+          drawPixel(i, r, g, b, Math.max(6, brightness * canvas.height * 0.8));
+        }
+        break;
+      }
+
+      case 'chaser': {
+        if (bassPower > 0.5 || Math.random() < (0.04 + avgAudio * 0.22)) {
+          const dir = Math.random() > 0.3 ? 1 : -1;
+          comets.push({
+            pos: dir === 1 ? 0 : numLEDs - 1,
+            vel: (2.5 + Math.random() * 2.5) * dir,
+            hue: Math.random()
+          });
         }
         for (let i = 0; i < numLEDs; i++) {
-          sparkLevels[i] *= 0.86;
-          const bg = hsvToRgb(hueTracker, 0.8, 0.07);
-          const k = sparkLevels[i];
-          const r = Math.round(bg[0] * (1 - k) + 255 * k);
-          const g = Math.round(bg[1] * (1 - k) + 255 * k);
-          const b = Math.round(bg[2] * (1 - k) + 255 * k);
-          drawPixel(i, r, g, b, Math.max(8, (0.1 + k) * canvas.height * 0.7));
+          chaserCanvas[i][0] *= 0.85;
+          chaserCanvas[i][1] *= 0.85;
+          chaserCanvas[i][2] *= 0.85;
+        }
+
+        comets.forEach(c => {
+          c.pos += c.vel;
+          const p = Math.floor(c.pos);
+          if (p >= 0 && p < numLEDs) {
+            const head = hsvToRgb(c.hue, 0.2, 1.0);
+            chaserCanvas[p][0] = Math.max(chaserCanvas[p][0], head[0]);
+            chaserCanvas[p][1] = Math.max(chaserCanvas[p][1], head[1]);
+            chaserCanvas[p][2] = Math.max(chaserCanvas[p][2], head[2]);
+            if (p > 0) {
+              chaserCanvas[p - 1][0] = Math.max(chaserCanvas[p - 1][0], head[0] * 0.6);
+              chaserCanvas[p - 1][1] = Math.max(chaserCanvas[p - 1][1], head[1] * 0.6);
+              chaserCanvas[p - 1][2] = Math.max(chaserCanvas[p - 1][2], head[2] * 0.6);
+            }
+          }
+        });
+        comets = comets.filter(c => c.pos >= 0 && c.pos < numLEDs);
+
+        for (let i = 0; i < numLEDs; i++) {
+          const bg = hsvToRgb(0.7, 0.9, 0.03 + bassPower * 0.1);
+          const r = Math.min(255, Math.round(chaserCanvas[i][0] + bg[0]));
+          const g = Math.min(255, Math.round(chaserCanvas[i][1] + bg[1]));
+          const b = Math.min(255, Math.round(chaserCanvas[i][2] + bg[2]));
+          const brightness = (r + g + b) / (255 * 3);
+          drawPixel(i, r, g, b, Math.max(6, brightness * canvas.height * 0.8));
         }
         break;
       }

@@ -24,8 +24,12 @@ const { checkEnvironment } = require('./check_environment');
 
 let QRCode = null;
 try {
-  QRCode = require('qrcode');
-} catch (e) {}
+  QRCode = require('./qrcode.bundle.js');
+} catch (e) {
+  try {
+    QRCode = require('qrcode');
+  } catch (e2) {}
+}
 
 const PORT = parseInt(process.env.PORT || '3457', 10);
 const BASE_STORAGE = path.join(__dirname, 'storage', 'recordings');
@@ -509,6 +513,7 @@ const MIME_TYPES = {
   '.woff': 'font/woff',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.ico': 'image/x-icon',
   '.csv': 'text/csv; charset=UTF-8',
   '.apk': 'application/vnd.android.package-archive'
 };
@@ -567,7 +572,7 @@ const requestHandler = async (req, res) => {
         : `${protocol}://${primaryIp}:${port}`;
       const primaryUrl = targetQuery || defaultUrl;
 
-      if (QRCode) {
+      if (QRCode && QRCode.toString) {
         QRCode.toString(primaryUrl, { type: 'svg', margin: 2, color: { dark: '#0a0f1d', light: '#ffffff' } }, (err, svg) => {
           if (err) {
             res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -579,9 +584,11 @@ const requestHandler = async (req, res) => {
         });
         return;
       }
-    } catch (e) {}
-    res.writeHead(404);
-    res.end();
+    } catch (e) {
+      console.error('[QRCODE ERROR]', e);
+    }
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('QR Code generator unavailable');
     return;
   }
 
@@ -885,7 +892,11 @@ const requestHandler = async (req, res) => {
                   // 1. Include merged complete takes
                   if (metaTakes.length > 0) {
                     for (const t of metaTakes) {
-                      clips.push({ ...t, player: p, date: d, session: s, isTake: true });
+                      const takeFilename = t.filename || path.basename(t.url || '');
+                      const takeFilePath = path.join(takesDir, takeFilename);
+                      if (fs.existsSync(takeFilePath)) {
+                        clips.push({ ...t, player: p, date: d, session: s, isTake: true });
+                      }
                     }
                   } else if (fs.existsSync(takesDir)) {
                     const takeFiles = fs.readdirSync(takesDir);
@@ -1176,13 +1187,27 @@ const requestHandler = async (req, res) => {
   }
 
   // --- Static Asset Serving ---
-  let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
+  let safePath = pathname === '/' ? 'index.html' : pathname;
+  try {
+    safePath = decodeURIComponent(safePath);
+  } catch (e) {}
+  let filePath = path.join(__dirname, safePath);
 
   // Security check: ensure path is inside project directory
   if (!filePath.startsWith(__dirname)) {
     res.writeHead(403);
     res.end('Forbidden');
     return;
+  }
+
+  // Favicon fallback handler
+  if (pathname === '/favicon.ico' && !fs.existsSync(filePath)) {
+    const svgFavicon = path.join(__dirname, 'favicon.svg');
+    if (fs.existsSync(svgFavicon)) {
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+      fs.createReadStream(svgFavicon).pipe(res);
+      return;
+    }
   }
 
   fs.stat(filePath, (err, stats) => {

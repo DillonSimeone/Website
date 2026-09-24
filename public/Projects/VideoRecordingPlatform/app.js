@@ -1729,6 +1729,16 @@ class SmartSyncStudio {
         `;
       }).join('');
 
+      this.availableAngles.forEach(angle => {
+        const sv = document.getElementById(`sourceVideo_${angle.id}`);
+        if (sv) {
+          sv.onerror = () => {
+            const tc = document.getElementById(`sourceTc_${angle.id}`);
+            if (tc) tc.textContent = 'UNAVAILABLE';
+          };
+        }
+      });
+
       // Populate Angle Selector Chips
       this.renderAngleChips();
 
@@ -1843,6 +1853,10 @@ class SmartSyncStudio {
     activeAngles.forEach(angle => {
       const v = document.getElementById(`mixerVideo_${angle.id}`);
       if (v) {
+        v.onerror = () => {
+          const badge = document.getElementById(`paneTag_${angle.id}`);
+          if (badge) badge.textContent = `⚠️ ${angle.name} • Offline`;
+        };
         v.onloadedmetadata = () => {
           this.seekToOverlapTime(this.currentTime);
         };
@@ -2321,7 +2335,18 @@ class QrCodeTabManager {
     }
 
     if (img) {
-      img.src = hubUrl(`/api/qrcode?mode=${this.mode}&t=${Date.now()}`);
+      const qrApiUrl = hubUrl(`/api/qrcode?mode=${this.mode}&t=${Date.now()}`);
+      img.onerror = () => {
+        // Fallback: client-side offline SVG generation
+        if (window.QRCode && typeof window.QRCode.toString === 'function' && primaryUrl) {
+          window.QRCode.toString(primaryUrl, { type: 'svg', margin: 2, color: { dark: '#0a0f1d', light: '#ffffff' } }, (err, svg) => {
+            if (!err && svg) {
+              img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+            }
+          });
+        }
+      };
+      img.src = qrApiUrl;
     }
   }
 
