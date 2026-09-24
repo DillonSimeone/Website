@@ -43,7 +43,11 @@ function toggleTheme() {
 document.addEventListener('DOMContentLoaded', () => {
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
-        themeToggle.addEventListener('click', toggleTheme);
+        themeToggle.addEventListener('click', () => {
+            if (libraryHoldFired) { libraryHoldFired = false; return; }
+            toggleTheme();
+        });
+        initLibraryHold(themeToggle);
     }
 
     // Event delegation for navigation toggles
@@ -90,10 +94,106 @@ function snapClass(el, className) {
 }
 
 window.addEventListener('popstate', (e) => {
-    if (e.state) {
-        reveal(e.state.previousPage, e.state.previousButton, 30, true);
+    const state = e.state;
+    if (state && state.library && libraryAllowed()) {
+        enterLibrary({ state });
+        return;
+    }
+    if (libraryOpen) closeLibrary();
+    if (state) {
+        reveal(state.previousPage, state.previousButton, 30, true);
     }
 });
+
+/*=======================================================
+                Secret Library (?page=library)
+=========================================================*/
+
+const LIBRARY_URL = '/Library/library.js';
+const LIBRARY_HOLD_MS = 800;
+let libraryModule = null;
+let libraryOpen = false;
+let libraryHasBackEntry = false;
+let libraryHoldFired = false;
+let libraryReturn = { page: 'elevatorPitch', button: 'LandingPage' };
+
+function libraryAllowed() {
+    return !usesStackedFade();
+}
+
+function initLibraryHold(toggle) {
+    let timer = null;
+    const cancel = () => {
+        clearTimeout(timer);
+        timer = null;
+        toggle.classList.remove('library-holding');
+    };
+    toggle.addEventListener('pointerdown', (e) => {
+        libraryHoldFired = false;
+        if (e.button !== 0 || !libraryAllowed()) return;
+        toggle.classList.add('library-holding');
+        timer = setTimeout(() => {
+            cancel();
+            libraryHoldFired = true;
+            enterLibrary();
+        }, LIBRARY_HOLD_MS);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => toggle.addEventListener(evt, cancel));
+}
+
+/**
+ * state: history entry being restored (Back/Forward). direct: the page was loaded at ?page=library.
+ */
+function enterLibrary({ state = null, direct = false } = {}) {
+    if (libraryOpen || !libraryAllowed()) return;
+    libraryOpen = true;
+    libraryHasBackEntry = !direct;
+
+    const current = document.querySelector('.item.reveal');
+    libraryReturn = state
+        ? { page: state.previousPage, button: state.previousButton }
+        : { page: current && current.id !== 'loading' ? current.id : 'elevatorPitch', button: selectedButton || 'LandingPage' };
+
+    if (!state && !direct) {
+        history.pushState({ library: true, previousPage: libraryReturn.page, previousButton: libraryReturn.button }, '', '?page=library');
+    }
+
+    document.body.classList.add('library-entering');
+    shatter();
+
+    const settle = new Promise(resolve => setTimeout(resolve, reducedMotionQuery.matches ? 0 : 650));
+    // A full URL, so the dev server leaves this static public file alone.
+    Promise.all([import(/* @vite-ignore */ new URL(LIBRARY_URL, window.location.origin).href), settle])
+        .then(([mod]) => {
+            libraryModule = mod;
+            if (!libraryOpen) return;
+            document.body.classList.add('library-open');
+            return mod.enter({ onRequestExit: leaveLibrary, reducedMotion: reducedMotionQuery.matches });
+        })
+        .catch((error) => {
+            console.error(error);
+            leaveLibrary();
+        });
+}
+
+function closeLibrary() {
+    if (!libraryOpen) return;
+    libraryOpen = false;
+    if (libraryModule) libraryModule.exit();
+    document.body.classList.remove('library-open', 'library-entering');
+}
+
+function leaveLibrary() {
+    if (!libraryOpen) return;
+    if (libraryHasBackEntry) {
+        history.back();
+        return;
+    }
+    const { page, button } = libraryReturn;
+    history.replaceState({ previousPage: page, previousButton: button }, '', button ? `?page=${button}` : window.location.pathname);
+    closeLibrary();
+    reveal(page, button, 0, true);
+}
 
 /**
  * Main reveal function for page transitions.
@@ -369,7 +469,15 @@ function setUp() {
 
     randomizeColor();
 
-    if (page) {
+    if (page === 'library' || page === 'labyrinth') {
+        reveal('elevatorPitch', 'LandingPage', 0, true);
+        if (libraryAllowed()) {
+            history.replaceState({ library: true, labyrinth: page === 'labyrinth', previousPage: 'elevatorPitch', previousButton: 'LandingPage' }, '', `?page=${page}`);
+            enterLibrary({ direct: true });
+        } else {
+            history.replaceState({ previousPage: 'elevatorPitch', previousButton: 'LandingPage' }, '', window.location.pathname);
+        }
+    } else if (page) {
         const targetBtn = document.querySelector(`#${page}`);
         if (targetBtn) targetBtn.click();
     } else {
