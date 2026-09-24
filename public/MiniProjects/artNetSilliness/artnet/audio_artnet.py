@@ -51,7 +51,7 @@ except ImportError:
 # CONFIGURATION
 # ==============================================================================
 TARGET_IP = '192.168.0.100'  # The IP of your Art-Net controller
-PIXELS_PER_PORT = 300        # Pixels on one light (updated dynamically)
+PIXELS_PER_PORT = 680        # Default pixels across 4 universes (updated dynamically)
 TOTAL_UNIVERSES_TO_SEND = 32 # Broad block of universes to broadcast to
 
 PIXELS_PER_UNIVERSE = 170
@@ -64,7 +64,7 @@ FFT_WINDOW_SIZE = 4096
 # Visualizer parameters (updated dynamically via UDP control)
 visualizer_settings = {
     "animation": "spectrum",
-    "pixels": 300,
+    "pixels": 680,
     "gain": 5.0,
     "smoothing": 0.7,
     "threshold": 0.001
@@ -169,12 +169,20 @@ class ShowState:
         self.mid = 0.0
         self.treble = 0.0
         self.rms = 0.0
+        self.impact = 0.0          # Fast transient onset for percussive hits (stick taps, drum beats)
+        self.impact_energy = 0.0   # Background baseline follower for impact detection
         self.hue = 0.0
         self.phase = 0.0
         self.vu = 0.0
         self.vu_peak = 0.0
         self.fire = np.zeros(0)
         self.sparks = np.zeros(0)
+        # Pixelblaze & Moon Modules effect state
+        self.plasma_t = 0.0
+        self.matrix_drops = []
+        self.ripples = []
+        self.comets = []
+        self._chaser_canvas = None
         self.pixel_count = 0
 
     def resize(self, pixel_count):
@@ -184,10 +192,11 @@ class ShowState:
         self.pixel_count = pixel_count
         self.fire = np.zeros(pixel_count)
         self.sparks = np.zeros(pixel_count)
+        self._chaser_canvas = None
 
 
 def analyze_frame(fft_mag, audio, band_bins, gain, smoothing, threshold, state):
-    """Turn one FFT into smoothed bass, mid, treble, and 32 display bands."""
+    """Turn one FFT into smoothed bass, mid, treble, and 32 display bands, with transient/impact detection."""
     raw = band_energies(fft_mag, band_bins)
     peak = float(np.max(raw)) if raw.size else 0.0
     state.agc = max(peak, state.agc * 0.995)
@@ -196,7 +205,7 @@ def analyze_frame(fft_mag, audio, band_bins, gain, smoothing, threshold, state):
 
     # Gain 5 matches the control-page default, so that position is nominal.
     norm = np.clip(raw / state.agc * (gain / 5.0), 0.0, 1.0)
-    gate = float(np.clip(threshold * 40.0, 0.0, 0.6))
+    gate = float(np.clip(threshold * 30.0, 0.0, 0.5))
     norm = np.where(norm < gate, 0.0, norm)
 
     attack = 0.72
@@ -205,14 +214,34 @@ def analyze_frame(fft_mag, audio, band_bins, gain, smoothing, threshold, state):
     state.peaks = np.maximum(state.peaks - 0.012, state.bands)
 
     n = state.bands.size
-    state.bass = float(np.mean(state.bands[:max(1, n // 8)]))
-    mid = state.bands[n // 8:n // 2]
+    # Broaden bass band to 40Hz - 250Hz so table taps, stick clacks, and kick drums register
+    state.bass = float(np.mean(state.bands[:max(1, (n * 3) // 16)]))
+    mid = state.bands[(n * 3) // 16:n // 2]
     treble = state.bands[(3 * n) // 4:]
     state.mid = float(np.mean(mid)) if mid.size else 0.0
     state.treble = float(np.mean(treble)) if treble.size else 0.0
 
+    # Transient & Impact Detection (captures instantaneous stick hits, taps, claps):
+    # Laptop mics heavily attenuate low frequencies and average out 2ms transients over 93ms.
+    # We inspect the latest 512 samples (~11.6ms) for immediate peak amplitude.
+    recent = audio[-512:] if audio.size >= 512 else audio
+    inst_peak = float(np.max(np.abs(recent))) if recent.size else 0.0
+    inst_scaled = float(np.clip(inst_peak * gain * 4.0, 0.0, 1.0))
+
+    # Trigger transient impact if instantaneous spike exceeds background noise floor
+    if inst_scaled > state.impact_energy + 0.08 and inst_scaled > (gate * 0.5):
+        onset = min(1.0, (inst_scaled - state.impact_energy) * 2.5)
+        state.impact = max(state.impact, onset)
+    else:
+        # Fast exponential decay for snappy percussive feel
+        state.impact *= 0.80
+
+    state.impact_energy = state.impact_energy * 0.88 + inst_scaled * 0.12
+
+    # RMS volume: combine sustained power with instant peak so short transients don't get diluted
     rms = float(np.sqrt(np.mean(np.square(audio)))) if audio.size else 0.0
-    rms_n = float(np.clip(rms * gain * 6.0, 0.0, 1.0))
+    effective_vol = max(rms, inst_peak * 0.45)
+    rms_n = float(np.clip(effective_vol * gain * 6.0, 0.0, 1.0))
     if rms_n < gate:
         rms_n = 0.0
     state.rms = float(attack_release(np.array([state.rms]), np.array([rms_n]), attack, release)[0])
@@ -234,7 +263,8 @@ def effect_bass(state):
     state.hue = (state.hue + 0.0015 + state.bass * 0.012) % 1.0
     x = np.linspace(-1.0, 1.0, n)
     bloom = np.exp(-3.0 * x * x)
-    value = np.clip(0.04 + state.bass * bloom * 1.35, 0.0, 1.0)
+    hit_drive = max(state.bass, state.impact * 0.85)
+    value = np.clip(0.04 + hit_drive * bloom * 1.35, 0.0, 1.0)
     return hsv_to_rgb_u8(np.full(n, state.hue), np.full(n, 1.0), value)
 
 
@@ -254,57 +284,250 @@ def effect_vu(state):
 
 def effect_wave(state):
     n = state.pixel_count
-    state.phase += 0.35 + state.rms * 1.6
+    state.phase += 0.35 + state.rms * 1.6 + state.impact * 1.2
     x = np.arange(n, dtype=float)
     dist = np.abs(x - (n - 1) / 2.0)
     wave = 0.5 + 0.5 * np.sin((dist - state.phase) * 0.35)
     hue = np.mod(0.55 + state.mid * 0.35 + dist / n * 0.2, 1.0)
-    value = np.clip((0.1 + state.rms) * (0.3 + 0.7 * wave), 0.0, 1.0)
+    value = np.clip((0.1 + state.rms + state.impact * 0.4) * (0.3 + 0.7 * wave), 0.0, 1.0)
     return hsv_to_rgb_u8(hue, np.full(n, 0.9), value)
 
 
 def effect_rainbow(state):
     n = state.pixel_count
-    state.phase += 0.2 + state.bass * 2.2
+    state.phase += 0.2 + state.bass * 2.2 + state.impact * 1.8
     x = np.arange(n, dtype=float)
     hue = np.mod(x / n + state.phase / 48.0, 1.0)
     shimmer = 0.72 + 0.28 * np.sin(x * 0.17 + state.phase * 0.15)
-    value = np.clip((0.2 + 0.8 * state.rms) * shimmer, 0.0, 1.0)
+    value = np.clip((0.2 + 0.8 * state.rms + state.impact * 0.4) * shimmer, 0.0, 1.0)
     return hsv_to_rgb_u8(hue, np.full(n, 1.0), value)
 
 
 def effect_fire(state):
     heat = state.fire
     n = heat.size
-    heat *= 0.97
-    heat -= np.random.uniform(0.0, 0.02 + (1.0 - state.bass) * 0.02, size=n)
-    np.clip(heat, 0.0, None, out=heat)
+    if n == 0:
+        return np.zeros((0, 3), dtype=np.uint8)
+
+    # Volume & impact drive: respond strongly to voice/screams, bass, and table hits
+    drive = max(float(state.rms) * 1.6, float(state.bass) * 1.3, float(state.impact) * 1.8)
+    drive = np.clip(drive, 0.0, 1.0)
+
+    # 1. Upward convection (heat rises along the tube)
+    heat[1:] = (heat[:-1] * 0.88 + heat[1:] * 0.10)
+    heat[0] *= 0.7
+
+    # 2. Cooling down of heat particles
+    cool_rate = 0.015 + (1.0 - drive) * 0.035
+    cooling = np.random.uniform(0.005, cool_rate, size=n)
+    heat -= cooling
+    np.clip(heat, 0.0, 1.0, out=heat)
+
+    # 3. Dynamic diffusion (smoothing flames)
     if n > 2:
         diffused = heat.copy()
-        diffused[1:-1] = (heat[:-2] + heat[1:-1] * 2.0 + heat[2:]) / 4.2
-        diffused[-1] = (heat[-2] + heat[-1]) * 0.45
-        heat[:] = np.clip(diffused, 0.0, 1.0)
-    sparks = min(n, 1 + int(state.bass * 12))
-    heat[:sparks] = np.maximum(
-        heat[:sparks],
-        np.random.uniform(0.45, 1.0, size=sparks) * (0.4 + 0.6 * state.bass)
-    )
+        diffused[1:-1] = (heat[:-2] + heat[1:-1] * 2.0 + heat[2:]) / 4.0
+        heat[:] = diffused
+
+    # 4. Spawning sparks/heat at the base proportional to volume/impact
+    max_reach = max(2, int(np.clip(drive * n * 0.85, 2, n)))
+    sparks = min(n, max(2, int(2 + drive * 24)))
+
+    # Inject intense heat at the base
+    base_heat = np.random.uniform(0.65, 1.0, size=sparks) * (0.5 + 0.5 * drive)
+    heat[:sparks] = np.maximum(heat[:sparks], base_heat)
+
+    # On high energy transients (screams, loud beats, stick taps), launch fire bursts up the entire setup!
+    if drive > 0.20:
+        burst_count = int(np.clip(drive * 14, 1, 24))
+        burst_idx = np.random.randint(0, max_reach, size=burst_count)
+        burst_idx = np.clip(burst_idx, 0, n - 1)
+        heat[burst_idx] = np.maximum(heat[burst_idx], np.random.uniform(0.65, 1.0, size=burst_idx.size))
+
     return heat_to_rgb(heat)
 
 
 def effect_sparkle(state):
     n = state.pixel_count
-    state.sparks *= 0.86
-    state.hue = (state.hue + 0.002) % 1.0
-    if state.treble > 0.12:
-        count = int(np.clip(state.treble * 16.0, 1, 20))
+    if n == 0:
+        return np.zeros((0, 3), dtype=np.uint8)
+
+    # Fade existing sparks smoothly
+    state.sparks *= 0.82
+    state.hue = (state.hue + 0.003) % 1.0
+
+    # Trigger on overall volume, treble, bass, or sharp impact (stick hits)
+    energy = max(float(state.rms) * 1.5, float(state.treble) * 1.6, float(state.bass) * 0.9, float(state.impact) * 2.0)
+
+    if energy > 0.04:
+        # Number of sparks scales directly with volume/intensity
+        count = int(np.clip(energy * n * 0.18, 1, max(10, n // 3)))
         idx = np.random.randint(0, n, size=count)
-        state.sparks[idx] = 1.0
-    bg_v = np.full(n, 0.06 + 0.08 * state.mid)
-    bg = hsv_to_rgb_u8(np.full(n, state.hue), np.full(n, 0.8), bg_v).astype(float)
+        # Spark intensity: louder sounds make brighter, whiter sparks
+        state.sparks[idx] = np.random.uniform(0.75, 1.0, size=count)
+    elif np.random.random() < 0.15:
+        # Subtle gentle idle twinkle when quiet
+        idle_idx = np.random.randint(0, n)
+        state.sparks[idle_idx] = np.random.uniform(0.3, 0.7)
+
+    # Ambient backdrop: subtle glowing color that slowly shifts and pulses with mids/bass
+    bg_brightness = np.clip(0.04 + 0.08 * state.mid + 0.05 * state.bass, 0.03, 0.25)
+    bg = hsv_to_rgb_u8(np.full(n, state.hue), np.full(n, 0.85), np.full(n, bg_brightness)).astype(float)
+
     spark = np.clip(state.sparks, 0.0, 1.0).reshape(n, 1)
-    mixed = bg * (1.0 - spark) + 255.0 * spark
+    # Bright sparkling flashes (pure brilliant white / pale gold)
+    flash_color = np.array([255.0, 255.0, 240.0])
+    mixed = bg * (1.0 - spark) + flash_color * spark
     return np.clip(np.rint(mixed), 0, 255).astype(np.uint8)
+
+
+def effect_plasma(state):
+    """Aurora Plasma (Pixelblaze inspired): Multi-octave wave superposition warped by audio."""
+    n = state.pixel_count
+    if n == 0:
+        return np.zeros((0, 3), dtype=np.uint8)
+
+    # Time accelerates with bass and impacts
+    state.plasma_t += 0.03 + state.bass * 0.08 + state.impact * 0.14
+    t = state.plasma_t
+    x = np.linspace(0.0, 8.0, n)
+
+    # Pixelblaze plasma equations
+    v1 = np.sin(x + t * 0.8)
+    v2 = np.sin(x * 1.6 - t * 0.6)
+    v3 = np.sin((x * 0.5 + v1 + v2) * 1.4 + t)
+    plasma = (v1 + v2 + v3) / 3.0
+
+    hue = np.mod(0.55 + plasma * 0.35 + state.rms * 0.25 + state.hue * 0.1, 1.0)
+    sat = np.clip(0.85 - state.impact * 0.45, 0.25, 1.0)
+    val = np.clip(0.25 + 0.75 * (plasma * 0.5 + 0.5) * (0.4 + state.rms * 0.6) + state.impact * 0.55, 0.0, 1.0)
+    return hsv_to_rgb_u8(hue, sat, val)
+
+
+def effect_matrix(state):
+    """Cyber Rain (Moon Modules inspired): Digital rain drops cascading down with percussive splash."""
+    n = state.pixel_count
+    if n == 0:
+        return np.zeros((0, 3), dtype=np.uint8)
+
+    if not hasattr(state, 'matrix_drops') or state.matrix_drops is None:
+        state.matrix_drops = []
+
+    # Spawn droplets on audio beats / impacts or ambiently
+    spawn_chance = 0.15 + state.rms * 0.45 + state.impact * 0.85
+    if np.random.random() < spawn_chance:
+        speed = np.random.uniform(0.9, 2.4) + state.impact * 1.8
+        length = np.random.randint(6, 20)
+        hue_choice = float(np.random.choice([0.33, 0.36, 0.48, 0.82]))
+        state.matrix_drops.append([0.0, speed, length, hue_choice])
+
+    canvas_h = np.zeros(n)
+    canvas_s = np.zeros(n)
+    canvas_v = np.zeros(n)
+
+    alive_drops = []
+    for drop in state.matrix_drops:
+        pos, speed, length, d_hue = drop
+        pos += speed
+        head = int(pos)
+        for i in range(length):
+            p = head - i
+            if 0 <= p < n:
+                fade = 1.0 - (i / float(length))
+                if i == 0 or (i == 1 and state.impact > 0.2):
+                    canvas_v[p] = max(canvas_v[p], 1.0)
+                    canvas_s[p] = min(canvas_s[p], 0.15)  # White hot head
+                    canvas_h[p] = d_hue
+                else:
+                    canvas_v[p] = max(canvas_v[p], fade * (0.4 + state.rms * 0.6))
+                    canvas_s[p] = max(canvas_s[p], 0.95)
+                    canvas_h[p] = d_hue
+        if head - length < n:
+            alive_drops.append([pos, speed, length, d_hue])
+    state.matrix_drops = alive_drops[-25:]
+
+    canvas_v = np.clip(canvas_v + 0.03, 0.0, 1.0)
+    return hsv_to_rgb_u8(canvas_h, canvas_s, canvas_v)
+
+
+def effect_pulse(state):
+    """Supernova Ripple (Moon Modules inspired): Concentric shockwaves launched by beats and hits."""
+    n = state.pixel_count
+    if n == 0:
+        return np.zeros((0, 3), dtype=np.uint8)
+
+    if not hasattr(state, 'ripples') or state.ripples is None:
+        state.ripples = []
+
+    # Spawn ripple on percussive impact or strong bass beat
+    if state.impact > 0.22 or (state.bass > 0.55 and np.random.random() < 0.3):
+        center = n / 2.0
+        speed = 1.8 + state.impact * 2.2
+        hue = float(np.random.random())
+        state.ripples.append([center, 0.0, speed, hue, 1.0])
+
+    canvas_rgb = np.zeros((n, 3), dtype=float)
+    alive_ripples = []
+    x = np.arange(n, dtype=float)
+
+    for center, radius, speed, r_hue, intensity in state.ripples:
+        radius += speed
+        intensity *= 0.91
+
+        dist = np.abs(np.abs(x - center) - radius)
+        ring = np.exp(-0.35 * dist * dist) * intensity
+
+        rgb_ring = hsv_to_rgb_u8(np.full(n, r_hue), np.full(n, 0.9), ring).astype(float)
+        canvas_rgb += rgb_ring
+
+        if intensity > 0.03 and radius < n:
+            alive_ripples.append([center, radius, speed, r_hue, intensity])
+    state.ripples = alive_ripples[-12:]
+
+    bg = hsv_to_rgb_u8(np.linspace(0.0, 1.0, n), np.full(n, 0.8), np.full(n, 0.04 + state.rms * 0.15)).astype(float)
+    canvas_rgb += bg
+    return np.clip(np.rint(canvas_rgb), 0, 255).astype(np.uint8)
+
+
+def effect_chaser(state):
+    """Beat Comet (Pixelblaze inspired): High speed light comets blasted on audio transients."""
+    n = state.pixel_count
+    if n == 0:
+        return np.zeros((0, 3), dtype=np.uint8)
+
+    if not hasattr(state, 'comets') or state.comets is None:
+        state.comets = []
+
+    if state.impact > 0.18 or np.random.random() < (0.04 + state.rms * 0.22):
+        speed = float(np.random.uniform(2.5, 4.5) + state.impact * 2.5)
+        direction = 1 if np.random.random() > 0.3 else -1
+        start_pos = 0.0 if direction == 1 else float(n - 1)
+        hue = float(np.random.random())
+        state.comets.append([start_pos, speed * direction, hue, 1.0])
+
+    if state._chaser_canvas is None or state._chaser_canvas.shape[0] != n:
+        state._chaser_canvas = np.zeros((n, 3), dtype=float)
+
+    state._chaser_canvas *= 0.84
+
+    alive_comets = []
+    for pos, vel, c_hue, life in state.comets:
+        pos += vel
+        p = int(pos)
+        if 0 <= p < n:
+            head_color = hsv_to_rgb_u8(np.array([c_hue]), np.array([0.2]), np.array([1.0]))[0].astype(float)
+            state._chaser_canvas[p] = np.maximum(state._chaser_canvas[p], head_color)
+            if p > 0:
+                state._chaser_canvas[p - 1] = np.maximum(state._chaser_canvas[p - 1], head_color * 0.6)
+            if p < n - 1:
+                state._chaser_canvas[p + 1] = np.maximum(state._chaser_canvas[p + 1], head_color * 0.6)
+            alive_comets.append([pos, vel, c_hue, life])
+    state.comets = alive_comets[-15:]
+
+    bg_val = 0.03 + state.bass * 0.1
+    bg = hsv_to_rgb_u8(np.linspace(0.6, 0.9, n), np.full(n, 0.9), np.full(n, bg_val)).astype(float)
+    final_rgb = state._chaser_canvas + bg
+    return np.clip(np.rint(final_rgb), 0, 255).astype(np.uint8)
 
 
 EFFECTS = {
@@ -315,20 +538,23 @@ EFFECTS = {
     "rainbow": effect_rainbow,
     "fire": effect_fire,
     "sparkle": effect_sparkle,
+    "plasma": effect_plasma,
+    "matrix": effect_matrix,
+    "pulse": effect_pulse,
+    "chaser": effect_chaser,
 }
 
 
 def send_frame(rgb, artnet_clients):
-    """Repeat one light's pixels across every pair of Art-Net universes."""
+    """Distribute pixels continuously across all Art-Net universes."""
     n = int(rgb.shape[0])
-    universes_per_light = max(1, int(np.ceil(n / float(PIXELS_PER_UNIVERSE))))
     flat = np.ascontiguousarray(rgb).reshape(-1)
+
     for univ in range(TOTAL_UNIVERSES_TO_SEND):
-        u_offset = univ % universes_per_light
-        pix_start = u_offset * PIXELS_PER_UNIVERSE
+        pix_start = univ * PIXELS_PER_UNIVERSE
         pix_end = min(pix_start + PIXELS_PER_UNIVERSE, n)
         buf = bytearray(CHANNELS_PER_UNIVERSE)
-        if pix_end > pix_start:
+        if pix_start < n:
             chunk = flat[pix_start * 3:pix_end * 3]
             buf[:chunk.size] = chunk.tobytes()
         artnet_clients[univ].set(buf)

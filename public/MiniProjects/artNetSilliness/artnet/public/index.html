@@ -393,8 +393,13 @@
 <body>
     <div class="container">
         <header>
-            <h1>Art-Net Control Center</h1>
-            <p>Real-time Sound-Reactive LED Controller</p>
+            <div>
+                <h1>Art-Net Control Center</h1>
+                <p>Real-time Sound-Reactive LED Controller</p>
+            </div>
+            <a href="simulator.html" style="background: rgba(0, 240, 255, 0.15); border: 1px solid #00f0ff; color: #00f0ff; padding: 0.6rem 1.2rem; border-radius: 10px; font-weight: 600; text-decoration: none; font-size: 0.9rem; transition: all 0.2s;" onmouseover="this.style.background='#00f0ff'; this.style.color='#000';" onmouseout="this.style.background='rgba(0, 240, 255, 0.15)'; this.style.color='#00f0ff';">
+                ✨ Open 1:1 Tube Simulator
+            </a>
         </header>
 
         <div class="grid">
@@ -448,7 +453,35 @@
                         <div class="anim-icon">✨</div>
                         <div class="anim-info">
                             <h3>High Sparkle</h3>
-                            <p>Treble drops sparks that fade out, instead of flashing once.</p>
+                            <p>Twinkles with volume & treble, exploding on percussive hits.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="plasma">
+                        <div class="anim-icon">🌌</div>
+                        <div class="anim-info">
+                            <h3>Aurora Plasma</h3>
+                            <p>Pixelblaze multi-wave plasma with electric transient arcs.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="matrix">
+                        <div class="anim-icon">👾</div>
+                        <div class="anim-info">
+                            <h3>Cyber Rain</h3>
+                            <p>Moon Modules digital rain cascade with percussive white splashes.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="pulse">
+                        <div class="anim-icon">💫</div>
+                        <div class="anim-info">
+                            <h3>Supernova Ripple</h3>
+                            <p>Moon Modules concentric shockwaves launched by beats and hits.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="chaser">
+                        <div class="anim-icon">☄️</div>
+                        <div class="anim-info">
+                            <h3>Beat Comet</h3>
+                            <p>Pixelblaze high-speed energy comets rocketing along the strip.</p>
                         </div>
                     </div>
                 </div>
@@ -460,10 +493,10 @@
                 <div class="controls-panel">
                     <div class="slider-group">
                         <div class="slider-header">
-                            <span class="slider-title">Pixels per light</span>
-                            <span class="slider-val" id="pixels-val">300</span>
+                            <span class="slider-title">Total Rig Pixels</span>
+                            <span class="slider-val" id="pixels-val">680</span>
                         </div>
-                        <input type="range" id="pixels-slider" min="100" max="2500" step="50" value="300">
+                        <input type="range" id="pixels-slider" min="100" max="2500" step="10" value="680">
                     </div>
 
                     <div class="slider-group">
@@ -534,8 +567,8 @@
                 
                 updateActiveCard(data.animation);
                 
-                document.getElementById('pixels-slider').value = data.pixels || 300;
-                document.getElementById('pixels-val').innerText = data.pixels || 300;
+                document.getElementById('pixels-slider').value = data.pixels || 680;
+                document.getElementById('pixels-val').innerText = data.pixels || 680;
 
                 document.getElementById('gain-slider').value = data.gain;
                 document.getElementById('gain-val').innerText = Number(data.gain).toFixed(1);
@@ -636,7 +669,14 @@
         startMicBtn.addEventListener('click', async () => {
             if (isAnalyzing) return;
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }, 
+                    video: false 
+                });
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const source = audioCtx.createMediaStreamSource(stream);
                 
