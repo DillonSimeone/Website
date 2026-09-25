@@ -12,6 +12,10 @@
 - [x] **Automated Take Stitcher**: FFmpeg slice concatenator that merges discrete slices into a complete video file (`takes/take_H1_OS_Browser.webm`) when recording stops.
 - [x] **Smart Sync Studio Multi-Angle Mixer**: Supports arbitrary $N$ cameras with dynamic multi-grid, picture-in-picture, auto-director cuts, and ghost overlays.
 - [x] **Windows Firewall Script**: Added `scripts/setup_firewall.bat` to configure ports 3456, 3457, and 5353.
+- [x] **Automated 5-Second Slice Merger & Markdown Engine**: `MergeSlices.bat` and `scripts/merge_slices.js` losslessly combine slices across all folders, update `session_meta.json`, and generate comprehensive `merged.md` manifests.
+- [x] **Multi-Device Telemetry & Unique Device IDs**: Distinct persistent `deviceId` per client, instant heartbeat triggers on hole/session/recording transitions, and real-time Session/Hole tracking on the host admin dashboard.
+- [x] **Continuous Cross-Device State Sync**: Background auto-sync polling every 3.5s ensures new sessions, players, and scores created on any phone or host propagate immediately without browser reloads.
+- [x] **Dropdown Player Assignment in Session Modals**: Replaced clunky checkboxes with clean `<select>` dropdowns and removable player chip badges in New Session and Edit Session dialogs.
 
 ---
 

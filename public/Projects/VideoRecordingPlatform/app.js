@@ -170,6 +170,22 @@ function detectClientEnv() {
   return { os, browser };
 }
 
+function getOrCreateDeviceId() {
+  let id = localStorage.getItem('myt_client_device_id');
+  if (!id) {
+    const rand = Math.random().toString(36).substring(2, 7);
+    id = `dev_${rand}`;
+    localStorage.setItem('myt_client_device_id', id);
+  }
+  return id;
+}
+
+function getDeviceLabel(clientEnv, deviceId) {
+  const shortId = (deviceId || '').replace('dev_', '').slice(-4).toUpperCase();
+  const isHost = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  return `${clientEnv.os} (${clientEnv.browser}) #${shortId}${isHost ? ' (Host)' : ''}`;
+}
+
 // ==========================================================================
 // 1. IndexedDB Local Buffer
 // ==========================================================================
@@ -266,7 +282,8 @@ class ClockSyncEngine {
 
   ping() {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type: 'ping', clientTime: Date.now() }));
+      const devId = getOrCreateDeviceId();
+      this.ws.send(JSON.stringify({ type: 'ping', clientTime: Date.now(), deviceId: devId }));
     }
   }
 
@@ -413,6 +430,65 @@ class SessionManager {
             this.activeSessionId = this.sessions[0].id;
           }
         }
+      }
+      this.startAutoSync();
+    } catch (e) {
+      this.startAutoSync();
+    }
+  }
+
+  startAutoSync(intervalMs = 3500) {
+    if (this.syncTimer) clearInterval(this.syncTimer);
+    this.syncTimer = setInterval(async () => {
+      await this.syncWithServer();
+    }, intervalMs);
+  }
+
+  async syncWithServer() {
+    try {
+      const [rosterRes, sessRes] = await Promise.all([
+        fetch('/api/roster'),
+        fetch('/api/sessions/manifest')
+      ]);
+
+      let changed = false;
+
+      if (rosterRes.ok) {
+        const rData = await rosterRes.json();
+        if (Array.isArray(rData.players) && rData.players.length > 0) {
+          const currentRosterJson = JSON.stringify(this.players);
+          const remoteRosterJson = JSON.stringify(rData.players);
+          if (currentRosterJson !== remoteRosterJson) {
+            this.players = rData.players;
+            changed = true;
+          }
+        }
+      }
+
+      if (sessRes.ok) {
+        const sData = await sessRes.json();
+        if (Array.isArray(sData.sessions) && sData.sessions.length > 0) {
+          sData.sessions.forEach(normalizeSessionScores);
+          const currentSessJson = JSON.stringify(this.sessions);
+          const remoteSessJson = JSON.stringify(sData.sessions);
+          if (currentSessJson !== remoteSessJson) {
+            this.sessions = sData.sessions;
+            if (!this.sessions.some(s => s.id === this.activeSessionId)) {
+              this.activeSessionId = this.sessions[0].id;
+            }
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        window.captureApp?.populateSessionDropdown();
+        window.captureApp?.populatePlayerDropdown();
+        window.captureApp?.renderQuickScorecard();
+        window.udiscApp?.render();
+        window.renderSessionsCards?.();
+        window.renderRosterCards?.();
+        window.studioApp?.populatePlayerSelect();
       }
     } catch (e) {}
   }
@@ -658,6 +734,9 @@ class CaptureEngine {
     this.analyser = null;
     this.isUsingFallbackCanvas = false;
     this.recordingContentType = 'video/webm';
+    this.deviceId = getOrCreateDeviceId();
+    this.deviceLabel = getDeviceLabel(this.clientEnv, this.deviceId);
+    this.isFlushing = false;
   }
 
   async init() {
@@ -667,31 +746,36 @@ class CaptureEngine {
     this.setupEventListeners();
     this.renderQuickScorecard();
     this.sendTelemetryHeartbeat();
-    setInterval(() => this.sendTelemetryHeartbeat(), 5000);
+    setInterval(() => this.sendTelemetryHeartbeat(), 2500);
   }
 
   async sendTelemetryHeartbeat() {
     const playerSelect = document.getElementById('selectCapturePlayer');
     const selectedPlayerId = playerSelect ? playerSelect.value : null;
     const player = this.sessionMgr.players.find(p => p.id === selectedPlayerId) || this.sessionMgr.players[0];
-    const devId = `${this.clientEnv.os} (${this.clientEnv.browser})`;
-    const activeHole = this.sessionMgr.getActiveSession()?.holes[this.sessionMgr.activeHoleIndex]?.name || 'H1';
+    const activeSession = this.sessionMgr.getActiveSession();
+    const activeHoleObj = activeSession?.holes?.[this.sessionMgr.activeHoleIndex];
+    const activeHole = activeHoleObj ? `H${activeHoleObj.number} (Par ${activeHoleObj.par})` : 'H1';
 
     try {
       await fetch('/api/telemetry/heartbeat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          deviceId: devId,
+          deviceId: this.deviceId,
+          deviceName: this.deviceLabel,
           filmingPlayer: player ? `${player.name} (@${player.udisc})` : 'Player',
+          sessionId: activeSession ? activeSession.id : 'session_1',
+          sessionName: activeSession ? activeSession.name : 'Session Card',
           rttMs: this.clockSync.rttMs,
           offsetMs: this.clockSync.clockOffsetMs,
           activeHole: activeHole,
           slicesStreamed: this.sliceCount,
-          status: this.isRecording ? `Streaming Slices (${activeHole})` : 'Active Host'
+          isRecording: this.isRecording,
+          status: this.isRecording ? `🔴 Recording ${activeHole}` : 'Standby / Viewfinder'
         })
       });
-      window.refreshConnectedClientsTable?.();
+      if (window.isAdmin) window.refreshConnectedClientsTable?.();
     } catch (e) {}
   }
 
@@ -915,7 +999,8 @@ class CaptureEngine {
           const sliceEnd = this.clockSync.getMasterEpoch();
           this.currentSliceStartTime = sliceEnd;
           this.sliceCount++;
-          await this.uploadSlice(e.data, sliceStart, sliceEnd);
+          const isFinal = !this.isRecording;
+          await this.uploadSlice(e.data, sliceStart, sliceEnd, isFinal);
         }
       };
       try {
@@ -939,7 +1024,7 @@ class CaptureEngine {
     }
   }
 
-  async uploadSlice(blob, startEpoch, endEpoch) {
+  async uploadSlice(blob, startEpoch, endEpoch, isFinal = false) {
     const session = this.sessionMgr.getActiveSession();
     const playerSelect = document.getElementById('selectCapturePlayer');
     const selectedPlayerId = playerSelect ? playerSelect.value : null;
@@ -981,7 +1066,7 @@ class CaptureEngine {
           'X-Timestamp-Iso': timestampIso,
           'X-Start-Epoch': String(Math.round(startEpoch)),
           'X-End-Epoch': String(Math.round(endEpoch)),
-          'X-Is-Final': 'false'
+          'X-Is-Final': isFinal ? 'true' : 'false'
         },
         body: blob
       });
@@ -1008,7 +1093,8 @@ class CaptureEngine {
   }
 
   async flushOfflineBuffer() {
-    if (!this.storage || !this.storage.db) return;
+    if (!this.storage || !this.storage.db || this.isFlushing) return;
+    this.isFlushing = true;
     try {
       const tx = this.storage.db.transaction([this.storage.storeName], 'readonly');
       const store = tx.objectStore(this.storage.storeName);
@@ -1018,6 +1104,7 @@ class CaptureEngine {
         const unflushed = records.filter(r => !r.flushed);
         if (unflushed.length === 0) {
           document.getElementById('offlineBufferBadge')?.classList.add('hidden');
+          this.isFlushing = false;
           return;
         }
 
@@ -1055,8 +1142,11 @@ class CaptureEngine {
         if (offBadge) offBadge.classList.add('hidden');
         const ind = document.getElementById('userUploadIndicator');
         if (ind) ind.textContent = '✓ All Offline Slices Flushed to Hub';
+        this.isFlushing = false;
       };
-    } catch (e) {}
+    } catch (e) {
+      this.isFlushing = false;
+    }
   }
 
   stopRecording() {
@@ -1247,12 +1337,14 @@ class CaptureEngine {
       this.sessionMgr.activeHoleIndex = Math.max(0, this.sessionMgr.activeHoleIndex - 1);
       this.renderQuickScorecard();
       window.udiscApp?.render();
+      this.sendTelemetryHeartbeat();
     });
     document.getElementById('btnQuickNextHole')?.addEventListener('click', () => {
       const s = this.sessionMgr.getActiveSession();
       this.sessionMgr.activeHoleIndex = Math.min(s.holeCount - 1, this.sessionMgr.activeHoleIndex + 1);
       this.renderQuickScorecard();
       window.udiscApp?.render();
+      this.sendTelemetryHeartbeat();
     });
   }
 }
@@ -2472,34 +2564,44 @@ document.addEventListener('DOMContentLoaded', async () => {
           const playerSelect = document.getElementById('selectCapturePlayer');
           const selectedPlayerId = playerSelect ? playerSelect.value : null;
           const player = sessionMgr.players.find(p => p.id === selectedPlayerId) || sessionMgr.players[0];
-          const env = capture.clientEnv;
+          const activeSession = sessionMgr.getActiveSession();
+          const activeHoleObj = activeSession?.holes?.[sessionMgr.activeHoleIndex];
+          const activeHole = activeHoleObj ? `H${activeHoleObj.number} (Par ${activeHoleObj.par})` : 'H1';
+          const label = capture.deviceLabel || `${capture.clientEnv.os} (${capture.clientEnv.browser})`;
+
           tbody.innerHTML = `
             <tr>
-              <td class="mono font-bold">${env.os} (${env.browser})</td>
-              <td class="font-bold text-cyan">${player ? `${player.name} (@${player.udisc})` : 'Mayan Fogarty'}</td>
+              <td class="mono font-bold">${label}</td>
+              <td class="font-bold text-cyan">${player ? `${player.name} (@${player.udisc})` : 'Player'}</td>
               <td class="mono text-dim">127.0.0.1 <small>(Local Host)</small></td>
               <td class="mono text-emerald font-bold">${clockSync.rttMs.toFixed(1)} ms</td>
               <td class="mono text-cyan font-bold">${clockSync.clockOffsetMs > 0 ? '+' : ''}${clockSync.clockOffsetMs.toFixed(1)} ms</td>
-              <td class="mono font-bold">${sessionMgr.getActiveSession()?.holes[sessionMgr.activeHoleIndex]?.name || 'H1'} • ${capture.sliceCount} slices</td>
-              <td><span class="badge-status online">${capture.isRecording ? 'Streaming Slices' : 'Active Host'}</span></td>
+              <td class="font-bold text-cyan">${activeSession?.name || 'Card A'}</td>
+              <td class="mono font-bold">${activeHole} • ${capture.sliceCount} slices</td>
+              <td><span class="badge-status online">${capture.isRecording ? '🔴 Recording' : 'Standby / Viewfinder'}</span></td>
               <td class="mono text-dim">Just now</td>
             </tr>
           `;
         } else {
           tbody.innerHTML = clients.map(c => {
-            const ageSec = Math.max(0, Math.round((now - (c.lastSeen || now)) / 1000));
+            const ageSec = c.ageSec !== undefined ? c.ageSec : Math.max(0, Math.round((now - (c.lastSeen || now)) / 1000));
             const ageText = ageSec <= 1 ? 'Just now' : `${ageSec}s ago`;
             const rttColor = (c.rttMs || 1) < 15 ? 'text-emerald' : 'text-amber';
+            const isRec = Boolean(c.isRecording || (c.status && c.status.includes('Recording')));
+            const statusBadge = isRec
+              ? `<span class="badge-status" style="background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5);">${c.status || '🔴 Recording'}</span>`
+              : `<span class="badge-status online">${c.status || 'Standby'}</span>`;
 
             return `
               <tr>
-                <td class="mono font-bold">${c.deviceId || c.id}</td>
+                <td class="mono font-bold">${c.deviceName || c.deviceId || c.id}</td>
                 <td class="font-bold text-cyan">${c.filmingPlayer || 'Player'}</td>
                 <td class="mono text-dim">${c.ip || '127.0.0.1'} <small>(${c.connectionType || 'Wi-Fi / LAN'})</small></td>
                 <td class="mono ${rttColor} font-bold">${(c.rttMs || 1.2).toFixed(1)} ms</td>
                 <td class="mono text-cyan font-bold">${c.offsetMs !== undefined ? (c.offsetMs > 0 ? '+' : '') + Number(c.offsetMs).toFixed(1) + ' ms' : '+0.0 ms'}</td>
+                <td class="font-bold text-cyan">${c.sessionName || c.sessionId || 'Card A'}</td>
                 <td class="mono font-bold">${c.activeHole || 'H1'} • ${(c.slicesStreamed || 0)} slices</td>
-                <td><span class="badge-status online">${c.status || 'Active Host'}</span></td>
+                <td>${statusBadge}</td>
                 <td class="mono text-dim">${ageText}</td>
               </tr>
             `;
@@ -2604,20 +2706,68 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --------------------------------------------------------------------------
   // Modal: Create New Session (Users and Admins with Dropdowns)
   // --------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // Modal: Create New Session (Dropdown Selection & Interactive Player Chips)
+  // --------------------------------------------------------------------------
   const sessionModal = document.getElementById('sessionModal');
-  const sessionPlayersList = document.getElementById('sessionPlayersCheckboxList');
+  let selectedNewSessionPlayerIds = [];
+
+  function renderNewSessionPlayerChips() {
+    const container = document.getElementById('newSessionPlayersChips');
+    if (!container) return;
+    container.innerHTML = selectedNewSessionPlayerIds.map(pid => {
+      const p = sessionMgr.players.find(x => x.id === pid);
+      if (!p) return '';
+      return `
+        <span class="player-chip">
+          <span class="chip-avatar">${p.avatar}</span>
+          <span>${p.name}</span>
+          <button type="button" class="btn-chip-remove" data-pid="${p.id}" title="Remove player">&times;</button>
+        </span>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.btn-chip-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const removeId = btn.dataset.pid;
+        if (selectedNewSessionPlayerIds.length <= 1) {
+          alert('A session card requires at least one player.');
+          return;
+        }
+        selectedNewSessionPlayerIds = selectedNewSessionPlayerIds.filter(id => id !== removeId);
+        renderNewSessionPlayerChips();
+      });
+    });
+  }
+
+  function populateNewSessionPlayerSelect() {
+    const sel = document.getElementById('selectAddSessionPlayer');
+    if (!sel) return;
+    sel.innerHTML = sessionMgr.players.map(p => `
+      <option value="${p.id}">${p.name} (@${p.udisc})</option>
+    `).join('');
+  }
 
   window.openCreateSessionModal = function() {
-    if (sessionPlayersList) {
-      sessionPlayersList.innerHTML = sessionMgr.players.map(p => `
-        <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem; font-size:0.85rem; cursor:pointer;">
-          <input type="checkbox" value="${p.id}" checked>
-          <span>${p.name} (@${p.udisc})</span>
-        </label>
-      `).join('');
-    }
+    const playerSelect = document.getElementById('selectCapturePlayer');
+    const curPid = playerSelect ? playerSelect.value : null;
+    const defaultPid = sessionMgr.players.some(p => p.id === curPid) ? curPid : (sessionMgr.players[0]?.id || 'p_mayan');
+    selectedNewSessionPlayerIds = [defaultPid];
+
+    populateNewSessionPlayerSelect();
+    renderNewSessionPlayerChips();
     sessionModal?.classList.remove('hidden');
   };
+
+  document.getElementById('btnAddPlayerToNewSession')?.addEventListener('click', () => {
+    const sel = document.getElementById('selectAddSessionPlayer');
+    if (!sel || !sel.value) return;
+    if (!selectedNewSessionPlayerIds.includes(sel.value)) {
+      selectedNewSessionPlayerIds.push(sel.value);
+      renderNewSessionPlayerChips();
+    }
+  });
 
   document.getElementById('btnCreateSessionAdmin')?.addEventListener('click', () => {
     window.openCreateSessionModal();
@@ -2632,17 +2782,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const holeCount = parseInt(document.getElementById('selectSessionHoleCount').value, 10) || 9;
     const defaultPar = parseInt(document.getElementById('selectSessionDefaultPar').value, 10) || 3;
 
-    const checkedPids = [];
-    sessionPlayersList?.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
-      checkedPids.push(cb.value);
-    });
-
     if (!name) {
       alert('Please enter a session card name.');
       return;
     }
 
-    const newS = sessionMgr.createSession(name, course, holeCount, defaultPar, checkedPids);
+    const assignedPids = selectedNewSessionPlayerIds.length > 0 ? selectedNewSessionPlayerIds : [sessionMgr.players[0]?.id || 'p_mayan'];
+    const newS = sessionMgr.createSession(name, course, holeCount, defaultPar, assignedPids);
     sessionModal.classList.add('hidden');
 
     capture.populateSessionDropdown(newS.id);
@@ -2650,15 +2796,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     capture.renderQuickScorecard();
     udisc.render();
     renderSessionsCards();
+    capture.sendTelemetryHeartbeat();
   });
 
   // --------------------------------------------------------------------------
-  // Modal: Edit Existing Session (Admin Only: Add/Delete Holes & Adjust Pars)
+  // Modal: Edit Existing Session (Dropdown Selection & Interactive Player Chips)
   // --------------------------------------------------------------------------
   const editModal = document.getElementById('editSessionModal');
   const editHolesGrid = document.getElementById('adminHolesEditorGrid');
-  const editPlayersList = document.getElementById('editSessionPlayersList');
   const editHoleSummary = document.getElementById('editHoleCountSummary');
+  let selectedEditSessionPlayerIds = [];
+
+  function renderEditSessionPlayerChips() {
+    const container = document.getElementById('editSessionPlayersChips');
+    if (!container) return;
+    container.innerHTML = selectedEditSessionPlayerIds.map(pid => {
+      const p = sessionMgr.players.find(x => x.id === pid);
+      if (!p) return '';
+      return `
+        <span class="player-chip">
+          <span class="chip-avatar">${p.avatar}</span>
+          <span>${p.name}</span>
+          <button type="button" class="btn-chip-remove" data-pid="${p.id}" title="Remove player">&times;</button>
+        </span>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.btn-chip-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const removeId = btn.dataset.pid;
+        if (selectedEditSessionPlayerIds.length <= 1) {
+          alert('A session card requires at least one player.');
+          return;
+        }
+        selectedEditSessionPlayerIds = selectedEditSessionPlayerIds.filter(id => id !== removeId);
+        renderEditSessionPlayerChips();
+      });
+    });
+  }
+
+  function populateEditSessionPlayerSelect() {
+    const sel = document.getElementById('selectAddEditSessionPlayer');
+    if (!sel) return;
+    sel.innerHTML = sessionMgr.players.map(p => `
+      <option value="${p.id}">${p.name} (@${p.udisc})</option>
+    `).join('');
+  }
 
   function openEditSessionModal(sessionId) {
     const s = sessionMgr.sessions.find(x => x.id === sessionId);
@@ -2668,10 +2852,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('editSessionName').value = s.name;
     document.getElementById('editSessionCourse').value = s.course;
 
+    selectedEditSessionPlayerIds = [...(s.playerIds || [])];
+    populateEditSessionPlayerSelect();
+    renderEditSessionPlayerChips();
     renderHoleEditorGrid(s);
-    renderEditPlayersList(s);
     editModal.classList.remove('hidden');
   }
+
+  document.getElementById('btnAddPlayerToEditSession')?.addEventListener('click', () => {
+    const sel = document.getElementById('selectAddEditSessionPlayer');
+    if (!sel || !sel.value) return;
+    if (!selectedEditSessionPlayerIds.includes(sel.value)) {
+      selectedEditSessionPlayerIds.push(sel.value);
+      renderEditSessionPlayerChips();
+    }
+  });
 
   function renderHoleEditorGrid(s) {
     if (!editHolesGrid) return;
@@ -2699,16 +2894,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         capture.renderQuickScorecard();
       });
     });
-  }
-
-  function renderEditPlayersList(s) {
-    if (!editPlayersList) return;
-    editPlayersList.innerHTML = sessionMgr.players.map(p => `
-      <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem; font-size:0.85rem; cursor:pointer;">
-        <input type="checkbox" value="${p.id}" ${s.playerIds.includes(p.id) ? 'checked' : ''}>
-        <span>${p.name} (@${p.udisc})</span>
-      </label>
-    `).join('');
   }
 
   document.getElementById('btnAdminAddHole')?.addEventListener('click', () => {
@@ -2742,16 +2927,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     s.name = document.getElementById('editSessionName').value.trim() || s.name;
     s.course = document.getElementById('editSessionCourse').value.trim() || s.course;
 
-    const checkedPids = [];
-    editPlayersList?.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
-      checkedPids.push(cb.value);
-    });
-    s.playerIds = checkedPids.length > 0 ? checkedPids : s.playerIds;
-    checkedPids.forEach(pid => {
+    s.playerIds = selectedEditSessionPlayerIds.length > 0 ? selectedEditSessionPlayerIds : s.playerIds;
+    selectedEditSessionPlayerIds.forEach(pid => {
       if (!s.scores[pid]) s.scores[pid] = Array(s.holeCount).fill(null);
     });
 
     sessionMgr.syncScorecardToServer();
+    sessionMgr.persistSessions();
     editModal.classList.add('hidden');
 
     capture.populateSessionDropdown();
@@ -2759,6 +2941,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     capture.renderQuickScorecard();
     udisc.render();
     renderSessionsCards();
+    capture.sendTelemetryHeartbeat();
   });
 
   // --------------------------------------------------------------------------

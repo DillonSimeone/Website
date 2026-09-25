@@ -650,6 +650,7 @@
                     <th>Network IP &amp; Type</th>
                     <th>Latency (RTT)</th>
                     <th>Offset (Δt)</th>
+                    <th>Session</th>
                     <th>Hole &amp; Stream</th>
                     <th>Status</th>
                     <th>Last Heartbeat</th>
@@ -774,8 +775,17 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Assign Players to this Card:</label>
-            <div class="players-checkbox-list" id="sessionPlayersCheckboxList"></div>
+            <label for="selectAddSessionPlayer">Assign Players to this Card:</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <select id="selectAddSessionPlayer" class="form-select" style="flex: 1;"></select>
+              <button type="button" id="btnAddPlayerToNewSession" class="btn btn-sm btn-accent" style="white-space: nowrap;">
+                + Add Player
+              </button>
+            </div>
+            <div style="margin-top: 0.6rem;">
+              <span class="text-dim" style="font-size: 0.78rem; display: block; margin-bottom: 0.35rem;">Players on this Card:</span>
+              <div id="newSessionPlayersChips" class="player-chips-container"></div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -817,8 +827,17 @@
           </div>
 
           <div class="form-group mt-3">
-            <label>Assigned Players:</label>
-            <div class="players-checkbox-list" id="editSessionPlayersList"></div>
+            <label for="selectAddEditSessionPlayer">Card Players:</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <select id="selectAddEditSessionPlayer" class="form-select" style="flex: 1;"></select>
+              <button type="button" id="btnAddPlayerToEditSession" class="btn btn-sm btn-accent" style="white-space: nowrap;">
+                + Add Player
+              </button>
+            </div>
+            <div style="margin-top: 0.6rem;">
+              <span class="text-dim" style="font-size: 0.78rem; display: block; margin-bottom: 0.35rem;">Assigned Players:</span>
+              <div id="editSessionPlayersChips" class="player-chips-container"></div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">

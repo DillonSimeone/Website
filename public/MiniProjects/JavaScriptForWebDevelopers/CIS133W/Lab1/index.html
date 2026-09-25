@@ -10,34 +10,65 @@
 
 <body>
     <div class="calculator-container">
-        <h1>The Swamp Juice Master Brewer</h1>
-        <p>Shrek is brewing a fresh batch of swamp juice to keep unwanted visitors away.</p>
-        <div class="input-group">
-            <label for="mudInput">Pounds of Mud:</label>
-            <input type="text" id="mudInput">
+        <div class="header-section">
+            <h1>The Swamp Juice Master Brewer</h1>
+            <p>Shrek is brewing a fresh batch of swamp juice to keep unwanted visitors away.</p>
         </div>
 
-        <div class="input-group">
-            <label for="onionsInput">Pounds of Onions:</label>
-            <input type="text" id="onionsInput">
+        <div class="cauldron-visual" id="cauldronVisual">
+            <div class="steam-bubble bubble-1"></div>
+            <div class="steam-bubble bubble-2"></div>
+            <div class="steam-bubble bubble-3"></div>
+            <div class="pot-rim">
+                <div class="brew-liquid"></div>
+            </div>
+            <div class="pot-body"></div>
         </div>
 
-        <div class="input-group">
-            <label for="slugInput">Pounds of Slug Mucus:</label>
-            <input type="text" id="slugInput">
+        <div class="section-title">Base Ingredients</div>
+        <div class="inputs-grid" id="baseInputsGrid">
+            <div class="input-group">
+                <label for="mudInput">Pounds of Mud:</label>
+                <input type="text" id="mudInput" placeholder="0">
+            </div>
+
+            <div class="input-group">
+                <label for="onionsInput">Pounds of Onions:</label>
+                <input type="text" id="onionsInput" placeholder="0">
+            </div>
+
+            <div class="input-group">
+                <label for="slugInput">Pounds of Slug Mucus:</label>
+                <input type="text" id="slugInput" placeholder="0">
+            </div>
+
+            <div class="input-group">
+                <label for="snailInput">Pounds of Snail Slime:</label>
+                <input type="text" id="snailInput" placeholder="0">
+            </div>
         </div>
 
-        <div class="input-group">
-            <label for="snailInput">Pounds of Snail Slime:</label>
-            <input type="text" id="snailInput">
+        <div class="section-title">Throw In Something New</div>
+        <div class="add-ingredient-box">
+            <div class="add-row">
+                <input type="text" id="customNameInput" placeholder="Ingredient name (e.g. Earwax)">
+                <input type="text" id="customPoundsInput" placeholder="Pounds">
+            </div>
+            <div class="preview-row">
+                <span id="multiplierPreview">Type an ingredient to test stink potency</span>
+                <button type="button" id="addIngredientButton">Throw in Pot</button>
+            </div>
         </div>
+
+        <div id="customIngredientsList"></div>
 
         <button id="calculateButton">Get Swamp Juice</button>
 
         <div class="results-container">
             <h2>Results</h2>
-            <p>Total Swamp Juice: <span id="juiceAmount">0.00</span></p>
-            <p>Stink Level <span id="stinkLevel">0.00</span></p>
+            <p>Total Swamp Juice: <span id="juiceAmount">0.00 gallons</span></p>
+            <p>Stink Level: <span id="stinkLevel">0.00 stink points</span></p>
+            <p id="stinkRatingText"></p>
         </div>
     </div>
 

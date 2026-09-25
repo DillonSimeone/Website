@@ -31,6 +31,16 @@ node server.js
 
 The gateway displays your local network Wi-Fi IP addresses (e.g. `http://192.168.1.150:3457`), allowing phones and tablets to connect immediately.
 
+### 3. Batch Merge Video Slices
+When filming is complete, run the slice merger to combine all 5-second video slices into complete takes across all folders and log them in `merged.md`:
+```bash
+# Windows (Double-click or run from terminal)
+MergeSlices.bat
+
+# Or directly with Node:
+node scripts/merge_slices.js
+```
+
 ---
 
 ## Core Capabilities

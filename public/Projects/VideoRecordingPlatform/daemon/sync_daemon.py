@@ -99,10 +99,16 @@ class QuotaDaemon:
         conn.close()
 
     def get_current_pst_date(self):
-        # 00:00 PST (UTC-8) reset
-        from datetime import timezone, timedelta
-        pst = timezone(timedelta(hours=-8))
-        return datetime.now(pst).strftime('%Y-%m-%d')
+        # 00:00 Pacific Time reset (auto-adjusts between PST UTC-8 and PDT UTC-7)
+        try:
+            import zoneinfo
+            pac = zoneinfo.ZoneInfo("America/Los_Angeles")
+            return datetime.now(pac).strftime('%Y-%m-%d')
+        except Exception:
+            from datetime import timezone, timedelta
+            offset_hours = -7 if time.localtime().tm_isdst else -8
+            pac_tz = timezone(timedelta(hours=offset_hours))
+            return datetime.now(pac_tz).strftime('%Y-%m-%d')
 
     def get_remaining_quota(self):
         pst_date = self.get_current_pst_date()

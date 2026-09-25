@@ -402,63 +402,86 @@ function mergeSlicesForTake(playerSlug, dateStr, sessionId, hole, osName, browse
       `^slice_(\\d+)_${escapeRegExp(hole)}_.*_${escapeRegExp(osName)}_${escapeRegExp(browserName)}\\.${ext}$`,
       'i'
     );
-    const slices = allFiles.filter(f => pattern.test(f)).sort();
-    if (slices.length === 0) continue;
+    const matchedSlices = allFiles.filter(f => pattern.test(f)).sort();
+    if (matchedSlices.length === 0) continue;
 
-    const takeFilename = `take_${hole}_${osName}_${browserName}.${ext}`;
-    const takePath = path.join(takesDir, takeFilename);
-
-    const finish = (err) => {
-      if (err) {
-        console.error(`[MERGER ERROR] ${takeFilename}:`, err.message || err);
-        return;
+    // Partition slices if chunkIndex resets to 1 (indicating separate takes)
+    const takes = [];
+    let currentTakeSlices = [];
+    for (const f of matchedSlices) {
+      const m = f.match(/^slice_(\d+)_/i);
+      const idx = m ? parseInt(m[1], 10) : 1;
+      if (currentTakeSlices.length > 0 && idx === 1) {
+        takes.push(currentTakeSlices);
+        currentTakeSlices = [];
       }
-      if (!fs.existsSync(takePath) || fs.statSync(takePath).size === 0) {
-        console.error(`[MERGER ERROR] ${takeFilename}: output missing`);
-        return;
-      }
-      console.log(`[MERGER SUCCESS] Stitched complete video: ${takeFilename} (${slices.length} slices)`);
-      recordTakeMeta(sessionDir, folderName, playerSlug, dateStr, takeFilename, hole, osName, browserName, slices, takePath);
-    };
-
-    if (ext === 'mp4') {
-      try {
-        concatSliceBytes(rawDir, slices, takePath);
-      } catch (e) {
-        finish(e);
-        continue;
-      }
-      const remuxPath = path.join(takesDir, `remux_${takeFilename}`);
-      exec(`ffmpeg -y -i "${takePath}" -c copy -movflags +faststart "${remuxPath}"`, (err) => {
-        if (!err && fs.existsSync(remuxPath) && fs.statSync(remuxPath).size > 0) {
-          try {
-            fs.copyFileSync(remuxPath, takePath);
-          } catch (e) {}
-        } else {
-          console.log(`[MERGER] ${takeFilename} kept as fragmented MP4 (ffmpeg remux skipped)`);
-        }
-        try { fs.unlinkSync(remuxPath); } catch (e) {}
-        finish(null);
-      });
-      continue;
+      currentTakeSlices.push(f);
     }
+    if (currentTakeSlices.length > 0) takes.push(currentTakeSlices);
 
-    const concatPath = path.join(takesDir, `concat_${hole}_${osName}_${browserName}.txt`);
-    const concatContent = slices.map(s => `file '${path.join(rawDir, s).replace(/\\/g, '/')}'`).join('\n');
-    fs.writeFileSync(concatPath, concatContent);
-    exec(`ffmpeg -y -f concat -safe 0 -i "${concatPath}" -c copy "${takePath}"`, (err) => {
-      try { fs.unlinkSync(concatPath); } catch (e) {}
-      if (err) {
+    for (let tIdx = 0; tIdx < takes.length; tIdx++) {
+      const slices = takes[tIdx];
+      const isLatestTake = tIdx === takes.length - 1;
+      const takeFilename = takes.length > 1 && !isLatestTake
+        ? `take_${hole}_${osName}_${browserName}_take${tIdx + 1}.${ext}`
+        : `take_${hole}_${osName}_${browserName}.${ext}`;
+      const takePath = path.join(takesDir, takeFilename);
+
+      const finish = (err) => {
+        if (err) {
+          console.error(`[MERGER ERROR] ${takeFilename}:`, err.message || err);
+          return;
+        }
+        if (!fs.existsSync(takePath) || fs.statSync(takePath).size === 0) {
+          console.error(`[MERGER ERROR] ${takeFilename}: output missing`);
+          return;
+        }
+        console.log(`[MERGER SUCCESS] Stitched complete video: ${takeFilename} (${slices.length} slices)`);
+        recordTakeMeta(sessionDir, folderName, playerSlug, dateStr, takeFilename, hole, osName, browserName, slices, takePath);
+      };
+
+      if (ext === 'mp4') {
         try {
           concatSliceBytes(rawDir, slices, takePath);
-          finish(null);
         } catch (e) {
-          finish(err);
+          finish(e);
+          continue;
         }
-        return;
+        const remuxPath = path.join(takesDir, `remux_${takeFilename}`);
+        exec(`ffmpeg -y -i "${takePath}" -c copy -movflags +faststart "${remuxPath}"`, (err) => {
+          if (!err && fs.existsSync(remuxPath) && fs.statSync(remuxPath).size > 0) {
+            try {
+              fs.copyFileSync(remuxPath, takePath);
+            } catch (e) {}
+          } else {
+            console.log(`[MERGER] ${takeFilename} kept as fragmented MP4 (ffmpeg remux skipped)`);
+          }
+          try { fs.unlinkSync(remuxPath); } catch (e) {}
+          finish(null);
+        });
+        continue;
       }
-      finish(null);
-    });
+
+      const concatPath = path.join(takesDir, `concat_${hole}_${osName}_${browserName}_${Date.now()}.txt`);
+      const concatContent = slices.map(s => {
+        const filePath = path.join(rawDir, s).replace(/\\/g, '/');
+        return `file '${filePath.replace(/'/g, "'\\''")}'`;
+      }).join('\n');
+      fs.writeFileSync(concatPath, concatContent);
+      exec(`ffmpeg -y -f concat -safe 0 -i "${concatPath}" -c copy "${takePath}"`, (err) => {
+        try { fs.unlinkSync(concatPath); } catch (e) {}
+        if (err) {
+          try {
+            concatSliceBytes(rawDir, slices, takePath);
+            finish(null);
+          } catch (e) {
+            finish(err);
+          }
+          return;
+        }
+        finish(null);
+      });
+    }
   }
 }
 
@@ -622,7 +645,21 @@ const requestHandler = async (req, res) => {
   // 3. Connected Clients & Network Telemetry
   if (pathname === '/api/telemetry/clients') {
     const now = Date.now();
-    const clientsList = Array.from(connectedClients.values()).filter(c => (now - (c.lastSeen || c.lastPing || 0)) < 60000);
+    // Keep clients seen in the last 25 seconds (active/responsive window)
+    const clientsList = Array.from(connectedClients.values())
+      .filter(c => (now - (c.lastSeen || c.lastPing || 0)) < 25000)
+      .map(c => {
+        const ageSec = Math.max(0, Math.round((now - (c.lastSeen || c.lastPing || now)) / 1000));
+        let displayStatus = c.status || 'Active Host';
+        if (ageSec > 8 && !displayStatus.toLowerCase().includes('recording')) {
+          displayStatus = 'Idle / In Background';
+        }
+        return {
+          ...c,
+          ageSec,
+          status: displayStatus
+        };
+      });
 
     // Compute disk storage metrics
     let totalSlices = 0;
@@ -676,24 +713,31 @@ const requestHandler = async (req, res) => {
     try {
       const data = await parseBody(req);
       const payload = typeof data === 'object' ? data : JSON.parse(data.toString());
-      const devId = payload.deviceId || 'Host Computer';
+      const devId = payload.deviceId || `dev_${Math.random().toString(36).substring(2, 7)}`;
 
       let clientIp = req.socket.remoteAddress || '127.0.0.1';
       if (clientIp.startsWith('::ffff:')) clientIp = clientIp.replace('::ffff:', '');
       if (clientIp === '::1') clientIp = '127.0.0.1';
 
+      const existing = connectedClients.get(devId) || {};
+
       connectedClients.set(devId, {
+        ...existing,
         id: devId,
         deviceId: devId,
-        filmingPlayer: payload.filmingPlayer || 'Player',
+        deviceName: payload.deviceName || existing.deviceName || devId,
+        filmingPlayer: payload.filmingPlayer || existing.filmingPlayer || 'Player',
+        sessionId: payload.sessionId || existing.sessionId || 'session_1',
+        sessionName: payload.sessionName || existing.sessionName || 'Session Card',
         ip: clientIp,
-        rttMs: payload.rttMs !== undefined ? payload.rttMs : 1.2,
-        offsetMs: payload.offsetMs !== undefined ? payload.offsetMs : 0.0,
+        rttMs: payload.rttMs !== undefined ? payload.rttMs : (existing.rttMs || 1.2),
+        offsetMs: payload.offsetMs !== undefined ? payload.offsetMs : (existing.offsetMs || 0.0),
         connectionType: payload.connectionType || (clientIp === '127.0.0.1' ? 'Local Host (Loopback)' : 'Wi-Fi / LAN'),
-        status: payload.status || 'Active Host',
-        activeHole: payload.activeHole || 'H1',
-        slicesStreamed: payload.slicesStreamed || 0,
-        battery: payload.battery || null,
+        status: payload.status || (payload.isRecording ? '🔴 Recording' : 'Standby / Viewfinder'),
+        activeHole: payload.activeHole || existing.activeHole || 'H1',
+        slicesStreamed: payload.slicesStreamed !== undefined ? payload.slicesStreamed : (existing.slicesStreamed || 0),
+        isRecording: Boolean(payload.isRecording),
+        battery: payload.battery || existing.battery || null,
         lastSeen: Date.now()
       });
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -995,9 +1039,6 @@ const requestHandler = async (req, res) => {
       const slicePath = path.join(rawDir, sliceFilename);
       fs.writeFileSync(slicePath, bodyBuffer);
 
-      const fullPath = path.join(rawDir, `full_${osName}_${browserName}.${ext}`);
-      fs.appendFileSync(fullPath, bodyBuffer);
-
       // Update session_meta.json
       const metaPath = path.join(sessionDir, 'session_meta.json');
       let meta = {
@@ -1164,21 +1205,67 @@ const requestHandler = async (req, res) => {
     return;
   }
 
-  // 7. UDisc Scorecard Export
+  // 7. UDisc Scorecard Export (Full CSV for current session)
   if (pathname === '/api/scorecard/udisc/export') {
     try {
       const sessionId = urlObj.searchParams.get('session_id');
-      // Look for scorecard.json across storage
-      let foundScorecard = null;
-      // Search files if session specified or return demo UDisc CSV
-      if (sessionId) {
-        // Find session
+      const sessions = getDiscoveredSessions();
+      const roster = getDiscoveredRoster();
+      const targetSession = (sessionId ? sessions.find(s => s.id === sessionId) : null) || sessions[0];
+
+      if (!targetSession) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('No active session found for UDisc export');
+        return;
       }
+
+      const holeCount = targetSession.holeCount || 9;
+      const holeHeaders = Array.from({ length: holeCount }, (_, i) => `Hole${i + 1}`).join(',');
+      const headerRow = `PlayerName,CourseName,LayoutName,Date,Total,+/- ,${holeHeaders}\n`;
+
+      const courseName = (targetSession.course || "Mary's River Park").replace(/,/g, ' ');
+      const layoutName = (targetSession.layout || `Main - (${holeCount} Holes)`).replace(/,/g, ' ');
+      const dateStr = targetSession.timestampText || new Date().toISOString().split('T')[0];
+
+      const playerIds = targetSession.playerIds || ['p_mayan'];
+      const rows = [];
+
+      for (const pid of playerIds) {
+        const playerObj = roster.find(p => p.id === pid);
+        const playerName = (playerObj ? playerObj.name : pid).replace(/,/g, ' ');
+        const scores = targetSession.scores?.[pid] || [];
+
+        let totalScore = 0;
+        let playedHoles = 0;
+        let totalParForPlayed = 0;
+        const holeScoreCells = [];
+
+        for (let i = 0; i < holeCount; i++) {
+          const s = scores[i];
+          const par = targetSession.holes?.[i]?.par || 3;
+          if (s !== null && s !== undefined && s > 0) {
+            totalScore += s;
+            totalParForPlayed += par;
+            playedHoles++;
+            holeScoreCells.push(s);
+          } else {
+            holeScoreCells.push('');
+          }
+        }
+
+        const diff = playedHoles > 0 ? (totalScore - totalParForPlayed) : 0;
+        const diffStr = diff === 0 ? 'E' : (diff > 0 ? `+${diff}` : `${diff}`);
+        const totalDisplay = playedHoles > 0 ? totalScore : '';
+
+        rows.push(`${playerName},${courseName},${layoutName},${dateStr},${totalDisplay},${diffStr},${holeScoreCells.join(',')}`);
+      }
+
+      const safeFilename = (targetSession.name || 'scorecard').toLowerCase().replace(/[^a-z0-9]/g, '_');
       res.writeHead(200, {
         'Content-Type': 'text/csv; charset=UTF-8',
-        'Content-Disposition': 'attachment; filename="udisc_scorecard.csv"'
+        'Content-Disposition': `attachment; filename="udisc_${safeFilename}.csv"`
       });
-      res.end("PlayerName,CourseName,LayoutName,Date,Total,+/- ,Hole1,Hole2,Hole3,Hole4,Hole5,Hole6,Hole7,Hole8,Hole9\n");
+      res.end(headerRow + rows.join('\n') + '\n');
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
@@ -1280,15 +1367,7 @@ function handleWebSocketUpgrade(req, socket, head) {
     ];
     socket.write(headers.join('\r\n') + '\r\n\r\n');
 
-    const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-    connectedClients.set(clientId, {
-      id: clientId,
-      connectedAt: Date.now(),
-      ip: req.socket.remoteAddress,
-      lastPing: Date.now(),
-      rttMs: 0,
-      offsetMs: 0
-    });
+    let clientDeviceId = null;
 
     socket.on('data', (buffer) => {
       // Decode WebSocket unmasked frame or masked client frame
@@ -1297,7 +1376,6 @@ function handleWebSocketUpgrade(req, socket, head) {
         if (!decoded) return;
         if (decoded.opcode === 8) {
           // Close frame
-          connectedClients.delete(clientId);
           socket.end();
           return;
         }
@@ -1309,21 +1387,28 @@ function handleWebSocketUpgrade(req, socket, head) {
             const clientTime = msg.clientTime;
             const rtt = serverTime - clientTime;
             const offset = serverTime - (clientTime + rtt / 2);
+            const devId = msg.deviceId || clientDeviceId;
 
-            const clientRecord = connectedClients.get(clientId);
-            if (clientRecord) {
-              clientRecord.lastPing = serverTime;
-              clientRecord.rttMs = rtt;
-              clientRecord.offsetMs = offset;
-              clientRecord.deviceId = msg.deviceId || clientRecord.deviceId;
-              clientRecord.angle = msg.angle || clientRecord.angle;
+            if (devId) {
+              clientDeviceId = devId;
+              const existing = connectedClients.get(devId) || {};
+              connectedClients.set(devId, {
+                ...existing,
+                id: devId,
+                deviceId: devId,
+                lastPing: serverTime,
+                lastSeen: serverTime,
+                rttMs: rtt,
+                offsetMs: offset,
+                ip: req.socket.remoteAddress?.replace('::ffff:', '') || existing.ip || '127.0.0.1'
+              });
             }
 
             const response = JSON.stringify({
               type: 'pong',
               clientTime,
               serverTime,
-              clientId
+              deviceId: devId
             });
             socket.write(encodeWsFrame(response));
           }
@@ -1334,12 +1419,15 @@ function handleWebSocketUpgrade(req, socket, head) {
     });
 
     socket.on('close', () => {
-      connectedClients.delete(clientId);
+      if (clientDeviceId && connectedClients.has(clientDeviceId)) {
+        const c = connectedClients.get(clientDeviceId);
+        if (!c.isRecording) {
+          c.status = 'Disconnected';
+        }
+      }
     });
 
-    socket.on('error', () => {
-      connectedClients.delete(clientId);
-    });
+    socket.on('error', () => {});
   } else {
     socket.destroy();
   }
@@ -1356,20 +1444,23 @@ function decodeWsFrame(buffer) {
   let offset = 2;
 
   if (payloadLength === 126) {
+    if (buffer.length < 4) return null;
     payloadLength = buffer.readUInt16BE(2);
     offset = 4;
   } else if (payloadLength === 127) {
-    // 64-bit length not required for tiny ping/pong
+    if (buffer.length < 10) return null;
     payloadLength = Number(buffer.readBigUInt64BE(2));
     offset = 10;
   }
 
   let maskingKey = null;
   if (isMasked) {
+    if (buffer.length < offset + 4) return null;
     maskingKey = buffer.slice(offset, offset + 4);
     offset += 4;
   }
 
+  if (buffer.length < offset + payloadLength) return null;
   const payload = buffer.slice(offset, offset + payloadLength);
   if (isMasked && maskingKey) {
     for (let i = 0; i < payload.length; i++) {
