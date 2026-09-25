@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HAXEL Drill to Haptics - Bill of Materials & Assembly Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --panel-bg: rgba(22, 30, 46, 0.85);
+      --accent-cyan: #00f2fe;
+      --accent-blue: #4facfe;
+      --accent-orange: #ff7e5f;
+      --text-main: #f0f4f8;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 0;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-bottom: 30px;
+    }
+
+    .kit-image-container {
+      margin-bottom: 30px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .kit-image-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .info-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 4px solid var(--accent-cyan);
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .info-card h3 {
+      margin-top: 0;
+      color: var(--accent-cyan);
+    }
+
+    .warning-box {
+      background: rgba(255, 126, 95, 0.1);
+      border: 1px solid var(--accent-orange);
+      color: #ffb199;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .btn-link {
+      display: inline-block;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      color: #000;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+    }
+
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>HAXEL Drill to Haptics</h1>
+    <div class="subtitle">Bill of Materials (BOM) & Technical Notes</div>
+
+    <div class="kit-image-container">
+      <img src="images/drillToHaptics.jpg" alt="HAXEL Drill to Haptics Assembly Preview">
+    </div>
+
+    <div class="info-card">
+      <h3>Project Overview</h3>
+      <p>Assembled from a vintage hand drill donated to the workshop by <strong>Control+H</strong>, the Portland hackerspace.</p>
+      <p>A drill head mechanism was specifically chosen because the adjustable chuck can be clamped to any custom object to act as a dynamic, off-axis eccentric weight.</p>
+
+      <div class="warning-box">
+        <span>⚙️ Thermal & Current Protection Note:</span>
+        <span>The CC/CV step-down module limits the drill motor current to 0.75A and below—staying strictly within the H-bridge operating threshold to prevent thermal runaway and driver burnout!</span>
+      </div>
+    </div>
+
+    <h2>Bill of Materials (BOM)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Description</th>
+          <th>Link / Reference</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Power Delivery</strong></td>
+          <td>USB-C PD Decoy Module</td>
+          <td><a href="https://www.aliexpress.us/item/3256811989844239.html" target="_blank" class="btn-link">AliExpress</a></td>
+        </tr>
+        <tr>
+          <td><strong>Microcontroller</strong></td>
+          <td>ESP32-C3 SuperMini Board</td>
+          <td><a href="https://www.aliexpress.us/item/3256809943373309.html" target="_blank" class="btn-link">AliExpress</a></td>
+        </tr>
+        <tr>
+          <td><strong>Power Step-Down</strong></td>
+          <td>DC-DC Buck Converter</td>
+          <td><a href="https://www.aliexpress.us/item/3256806176287037.html" target="_blank" class="btn-link">AliExpress</a></td>
+        </tr>
+        <tr>
+          <td><strong>Motor Driver</strong></td>
+          <td>H-Bridge Motor Driver Module</td>
+          <td><a href="https://www.aliexpress.us/item/3256805903189820.html" target="_blank" class="btn-link">AliExpress</a></td>
+        </tr>
+        <tr>
+          <td><strong>Current Limiter</strong></td>
+          <td>CC/CV Step-Down Charge Module (0.75A Limiter)</td>
+          <td><a href="https://www.aliexpress.us/item/3256806866250722.html" target="_blank" class="btn-link">AliExpress</a></td>
+        </tr>
+        <tr>
+          <td><strong>Chassis & Chuck</strong></td>
+          <td>Hand Drill Frame (Control+H Portland Hackerspace)</td>
+          <td><em>Donated Workshop Hardware</em></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      HAXEL Open-Source Haptic Pattern Engine
+    </div>
+  </div>
+</body>
+</html>

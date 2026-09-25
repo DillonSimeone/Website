@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenJSCAD V2 - Haptic Device Suite</title>
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --accent-brand: #10b981;
+            --secondary: #3b82f6;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+        }
+
+        body {
+            margin: 0; padding: 0; background: var(--bg-dark); color: #f8fafc;
+            font-family: 'Inter', system-ui, sans-serif; overflow: hidden;
+            display: flex; height: 100vh;
+        }
+
+        #controls {
+            width: 420px; background: #0f172a; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; z-index: 100;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        .header {
+            padding: 24px; border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+        h1 { margin: 0; font-size: 1.25rem; font-weight: 900; letter-spacing: -1px; }
+
+        .content { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        .section-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: #64748b; font-weight: 700; margin-bottom: 6px; }
+        .param-group { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+        .ph { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; margin-top: 6px; }
+        .ph:first-child { margin-top: 0; }
+        .val { color: var(--accent-brand); font-family: var(--font-mono); font-weight: bold; }
+        
+        input[type="range"] { width: 100%; accent-color: var(--accent-brand); margin-bottom: 8px; }
+        input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent-brand); cursor: pointer; }
+
+        #viewer { flex: 1; position: relative; background: #020617; }
+        
+        .badge {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(15, 23, 42, 0.8); padding: 8px 16px; border-radius: 99px;
+            font-size: 0.8rem; border: 1px solid var(--border); backdrop-filter: blur(8px);
+            display: flex; align-items: center; gap: 8px; z-index: 1000;
+        }
+        .dot { width: 8px; height: 8px; background: var(--accent-brand); border-radius: 50%; box-shadow: 0 0 10px var(--accent-brand); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .ebtn {
+            background: #1f2937; color: white; border: 1px solid var(--border);
+            padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.75rem;
+            transition: all 0.15s; font-weight: 600; text-align: center;
+        }
+        .ebtn:hover { background: #374151; }
+        .ebtn.active { background: #f472b6; color: #111; border-color: #f472b6; box-shadow: 0 0 15px rgba(244, 114, 182, 0.4); }
+
+        .dl-btn {
+            background: #1e293b; color: white; border: 1px solid var(--border);
+            padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            width: 100%; margin-top: 5px; font-size: 0.75rem; transition: all 0.2s;
+        }
+        .dl-main { background: var(--accent-brand); color: #111; border: none; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <div class="header">
+            <h1>JSCAD <span style="font-weight: 300; opacity: 0.5;">Haptic v2</span></h1>
+            <div style="font-size: 0.75rem; opacity: 0.5; margin-top: 4px;">Approach 02: Pure Functional CSG Engine</div>
+        </div>
+        
+        <div class="content">
+            <div class="section-title">Assembly & Explosion</div>
+            <div class="param-group">
+                <div class="ph">Explosion <span class="val" id="v-exp">0</span>%</div>
+                <input type="range" id="exp" min="0" max="100" value="0">
+            </div>
+
+            <div class="section-title">Housing & Tube</div>
+            <div class="param-group">
+                <div class="ph">Wall Thickness <span class="val" id="v-wall">5</span>mm</div>
+                <input type="range" id="wall" min="1" max="10" step="0.5" value="5">
+                <div class="ph">Internal Gap <span class="val" id="v-gap">1</span>mm</div>
+                <input type="range" id="gap" min="0.5" max="8" step="0.5" value="1">
+            </div>
+
+            <div class="section-title">Chassis & Tracks</div>
+            <div class="param-group">
+                <div class="ph">Board Thick <span class="val" id="v-brdT">3</span>mm</div>
+                <input type="range" id="brdT" min="2" max="6" step="0.5" value="3">
+                <div class="ph">Track H <span class="val" id="v-trkH">5</span>mm</div>
+                <input type="range" id="trkH" min="3" max="10" step="0.5" value="5">
+                <div class="ph">Track D <span class="val" id="v-trkD">2.5</span>mm</div>
+                <input type="range" id="trkD" min="1" max="5" step="0.1" value="2.5">
+            </div>
+
+            <div class="section-title">Haptic Motor</div>
+            <div class="param-group">
+                <div class="ph">W / H / L <span class="val" id="v-mW">15</span>/<span class="val" id="v-mH">19</span>/<span class="val" id="v-mL">19</span></div>
+                <input type="range" id="mW" min="5" max="35" value="15">
+                <input type="range" id="mH" min="5" max="35" value="19">
+                <input type="range" id="mL" min="10" max="50" value="19">
+                <div class="ph" style="margin-top:10px">Vib Buffer <span class="val" id="v-buf">20</span>mm</div>
+                <input type="range" id="buf" min="5" max="40" value="20">
+            </div>
+
+            <div class="section-title">Digital Core</div>
+            <div class="param-group">
+                <div class="ph">ESP32 W/H/D <span class="val" id="v-espW">18</span>/<span class="val" id="v-espH">4.5</span>/<span class="val" id="v-espD">25</span></div>
+                <input type="range" id="espW" min="10" max="30" value="18">
+                <input type="range" id="espH" min="2" max="10" step="0.5" value="4.5">
+                <input type="range" id="espD" min="10" max="40" value="25">
+                <div class="ph" style="margin-top:10px">L298N W/H/D <span class="val" id="v-l29w">24</span>/<span class="val" id="v-l29h">8</span>/<span class="val" id="v-l29d">22</span></div>
+                <input type="range" id="l29w" min="10" max="40" value="24">
+                <input type="range" id="l29h" min="5" max="25" value="8">
+                <input type="range" id="l29d" min="10" max="40" value="22">
+            </div>
+
+            <div class="section-title">Power System</div>
+            <div class="param-group">
+                <div class="ph">Battery W/L/H <span class="val" id="v-batW">20</span>/<span class="val" id="v-batL">40</span>/<span class="val" id="v-batH">11</span></div>
+                <input type="range" id="batW" min="10" max="35" value="20">
+                <input type="range" id="batL" min="20" max="60" value="40">
+                <input type="range" id="batH" min="5" max="20" value="11">
+                <div class="ph" style="margin-top:10px">Charger W/L/H <span class="val" id="v-chW">17</span>/<span class="val" id="v-chL">28</span>/<span class="val" id="v-chH">4</span></div>
+                <input type="range" id="chW" min="10" max="30" value="17">
+                <input type="range" id="chL" min="10" max="40" value="28">
+                <input type="range" id="chH" min="1" max="8" step="0.5" value="4">
+            </div>
+
+            <div class="section-title">Motor Clamp</div>
+            <div class="param-group">
+                <div class="ph">Length / Screws <span class="val" id="v-clL">15</span> / <span class="val" id="v-scN">2</span></div>
+                <input type="range" id="clL" min="5" max="35" value="15">
+                <input type="range" id="scN" min="1" max="4" step="1" value="2">
+                <div class="ph" style="margin-top:10px">Screw Diameter <span class="val" id="v-scD">3.2</span>mm</div>
+                <input type="range" id="scD" min="2" max="6" step="0.2" value="3.2">
+            </div>
+
+            <div class="section-title">End Cap Settings</div>
+            <div class="param-group">
+                <div class="ph">Cap Thick / Lip Depth <span class="val" id="v-capT">5</span> / <span class="val" id="v-capL">6</span></div>
+                <input type="range" id="capT" min="2" max="10" step="0.5" value="5">
+                <input type="range" id="capL" min="2" max="15" step="0.5" value="6">
+                <div class="ph" style="margin-top:10px">USB Pos X / Y <span class="val" id="v-usbX">0</span> / <span class="val" id="v-usbY">0</span></div>
+                <input type="range" id="usbX" min="-10" max="10" step="0.5" value="0">
+                <input type="range" id="usbY" min="-10" max="10" step="0.5" value="0">
+            </div>
+
+            <div class="section-title">Cooling & Vents</div>
+            <div class="param-group">
+                <div class="ph" style="align-items:center;">Enable Vents <input type="checkbox" id="vEn"></div>
+                <div class="ph">Grid X / Z <span class="val" id="v-vX">3</span> / <span class="val" id="v-vZ">3</span></div>
+                <input type="range" id="vX" min="1" max="8" step="1" value="3">
+                <input type="range" id="vZ" min="1" max="10" step="1" value="3">
+            </div>
+
+            <div class="section-title">Component Explorer</div>
+            <div class="param-group">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+                    <button class="ebtn" data-k="motor">Motor</button>
+                    <button class="ebtn" data-k="l298n">L298N</button>
+                    <button class="ebtn" data-k="esp32">ESP32</button>
+                    <button class="ebtn" data-k="battery">Battery</button>
+                    <button class="ebtn" data-k="charger">Charger</button>
+                    <button class="ebtn" data-k="">Clear View</button>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:20px">Manufacturing Export</div>
+            <button class="dl-btn dl-main">EXPORT SHELL (.STL)</button>
+            <button class="dl-btn">EXPORT SLED (.STL)</button>
+        </div>
+    </div>
+
+    <div id="viewer">
+        <div class="badge">
+            <div class="dot"></div>
+            JSCAD FUNCTIONAL ENGINE ACTIVE
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "@jscad/modeling": "https://esm.sh/@jscad/modeling@2.12.0",
+                "three": "https://esm.sh/three@0.136.0",
+                "three-orbitcontrols": "https://esm.sh/three@0.136.0/examples/jsm/controls/OrbitControls.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as modeling from '@jscad/modeling';
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three-orbitcontrols';
+
+        const { primitives, booleans, transforms, colors } = modeling;
+
+        // --- Viewport Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 420) / window.innerHeight, 1, 3000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(250, 250, 250);
+        controls.update();
+
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x08101b, 1.2));
+        const p1 = new THREE.PointLight(0x10b981, 1.5, 1000); p1.position.set(200, 200, 200); scene.add(p1);
+        const p2 = new THREE.PointLight(0x3b82f6, 1.2, 1000); p2.position.set(-200, 100, -200); scene.add(p2);
+
+        let meshGroup = new THREE.Group();
+        scene.add(meshGroup);
+
+        let HL = null;
+
+        // --- Modeling Logic ---
+        function generateJSCADModel(params) {
+            const { 
+                wall, gap, trkH, trkD, brdT, 
+                mW, mH, mL, buf, 
+                espW, espH, espD, l29w, l29h, l29d,
+                batW, batL, batH, chW, chL, chH,
+                clL, scN, scD, vEn, vX, vZ, 
+                capT, capL, usbX, usbY, exp 
+            } = params;
+
+            const totalLen = mL + buf + l29d + gap + espD + gap + batL + gap + chL + 30;
+            const innerR = 22.5;
+            const outerR = innerR + wall;
+
+            // 1. Shell (Centered at 0)
+            let shell = booleans.subtract(
+                primitives.cylinder({ radius: outerR, height: totalLen, segments: 64, center: [0,0,0] }),
+                primitives.cylinder({ radius: innerR, height: totalLen + 4, segments: 64, center: [0,0,0] })
+            );
+            const trackCut = primitives.cuboid({ size: [trkD * 2, trkH, totalLen + 10], center: [0,0,0] });
+            shell = booleans.subtract(shell, transforms.translate([-innerR, 0, 0], trackCut), transforms.translate([ innerR, 0, 0], trackCut));
+
+            // 2. End Caps
+            const fCapZ = -(totalLen / 2 + capT / 2);
+            const bCapZ = (totalLen / 2 + capT / 2);
+
+            const fCapBase = primitives.cylinder({ radius: outerR + 0.5, height: capT, segments: 64, center: [0, 0, fCapZ] });
+            const fLip = booleans.subtract(
+                primitives.cylinder({ radius: innerR, height: capL, segments: 64, center: [0, 0, fCapZ + capT/2 + capL/2 - 0.1] }),
+                primitives.cylinder({ radius: innerR - 2.5, height: capL + 2, segments: 64, center: [0, 0, fCapZ + capT/2 + capL/2 - 0.1] })
+            );
+            let fCap = booleans.union(fCapBase, fLip);
+            
+            const bCapBase = primitives.cylinder({ radius: outerR + 0.5, height: capT, segments: 64, center: [0, 0, bCapZ] });
+            const bLip = booleans.subtract(
+                primitives.cylinder({ radius: innerR, height: capL, segments: 64, center: [0, 0, bCapZ - capT/2 - capL/2 + 0.1] }),
+                primitives.cylinder({ radius: innerR - 2.5, height: capL + 2, segments: 64, center: [0, 0, bCapZ - capT/2 - capL/2 + 0.1] })
+            );
+            let usbCut = primitives.cuboid({ size: [12, 6, 40], center: [usbX, usbY, bCapZ] });
+            let bCap = booleans.subtract(booleans.union(bCapBase, bLip), usbCut);
+
+            // 3. Sled
+            const sledW = (innerR - 1) * 2;
+            let sled = primitives.cuboid({ size: [sledW, brdT, totalLen - 10], center: [0,0,0] });
+            const rail = primitives.cuboid({ size: [trkD*2 - 0.5, trkH - 0.5, totalLen - 10], center: [0,0,0] });
+            sled = booleans.union(sled, transforms.translate([-sledW/2, 0, 0], rail), transforms.translate([ sledW/2, 0, 0], rail));
+
+            // 4. Motor Clamp
+            let zCur = -totalLen/2 + 5;
+            const clR = Math.min(Math.max(mW, mH)/2 + 1.5, innerR - 2);
+            const halfRing = booleans.subtract(
+                primitives.cylinder({radius: clR + 4, height: clL, segments:48 }),
+                primitives.cylinder({radius: clR, height: clL + 2, segments:48 }),
+                primitives.cuboid({size: [200, 200, clL + 5], center: [0, -100, 0]})
+            );
+            const tabs = primitives.cuboid({size: [clR*2 + 24, 4.5, clL], center: [0, 2.25, 0]});
+            const clamp = transforms.translate([0, mH/4, zCur + mL/2], booleans.union(halfRing, tabs));
+            
+            // Screw holes
+            let sHoles = [];
+            for (let i = 0; i < scN; i++) {
+                const zo = (i - (scN-1)/2) * (clL / (scN+0.2));
+                let hCyl = transforms.rotateX(Math.PI/2, primitives.cylinder({radius: scD/2, height: 60, segments:16}));
+                sHoles.push(transforms.translate([-(clR + 6), mH/4, zCur + mL/2 + zo], hCyl));
+                sHoles.push(transforms.translate([ (clR + 6), mH/4, zCur + mL/2 + zo], hCyl));
+            }
+            sled = booleans.subtract(booleans.union(sled, clamp), ...sHoles);
+
+            // 5. Component Pockets
+            const pock = {};
+            const makePocketWithVents = (w, h, d, zp, key) => {
+                let p = primitives.cuboid({ size: [w + 0.5, h + 0.5, d + 0.5], center: [0, h/2, zp + d/2] });
+                let vh = [];
+                if (vEn) {
+                    const sx = w / (vX + 1); const sz = d / (vZ + 1);
+                    for (let ix=1; ix<=vX; ix++) {
+                        for (let iz=1; iz<=vZ; iz++) {
+                            vh.push(transforms.translate([-w/2 + ix*sx, 0, zp + iz*sz], 
+                                transforms.rotateX(Math.PI/2, primitives.cylinder({radius: 1.6, height: 40})))
+                            );
+                        }
+                    }
+                }
+                return { p, vh, key };
+            };
+
+            // Motor Tombstone
+            let motCyl = transforms.rotateY(Math.PI/2, primitives.cylinder({radius: mH/2, height: mL + 1, segments:64}));
+            let motBx = primitives.cuboid({size: [mL + 1, mH + 1, mW + 0.5]});
+            pock.motor = { p: transforms.translate([0, mH/4, zCur + mL/2], booleans.intersect(motCyl, motBx)), vh: [] };
+            
+            zCur += mL + buf;
+            pock.l298n = makePocketWithVents(l29w, l29h, l29d, zCur, 'l298n');
+            zCur += l29d + gap;
+            pock.esp32 = makePocketWithVents(espW, espH, espD, zCur, 'esp32');
+            zCur += espD + gap;
+            pock.battery = makePocketWithVents(batW, batH, batL, zCur, 'battery');
+            zCur += batL + gap;
+            
+            pock.charger = makePocketWithVents(chW, chH, chL, totalLen/2 - chL - 5, 'charger');
+
+            // Apply subtractions
+            Object.values(pock).forEach(res => {
+                sled = booleans.subtract(sled, res.p);
+                if (res.vh.length > 0) sled = booleans.subtract(sled, ...res.vh);
+            });
+
+            return { shell, sled, fCap, bCap, pock, exp, totalLen };
+        }
+
+        function jscadToThree(jscadGeom, color, opacity, emissive) {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            jscadGeom.polygons.forEach(polygon => {
+                const pts = polygon.vertices;
+                for (let i = 1; i < pts.length - 1; i++) {
+                    vertices.push(...pts[0], ...pts[i], ...pts[i+1]);
+                }
+            });
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.computeVertexNormals();
+            const mat = new THREE.MeshPhysicalMaterial({ color, transparent: true, opacity, metalness: 0.1, roughness: 0.2, side: THREE.DoubleSide });
+            if (emissive) { mat.emissive = new THREE.Color(emissive); mat.emissiveIntensity = 0.5; }
+            return new THREE.Mesh(geometry, mat);
+        }
+
+        function update() {
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                return el.type === 'checkbox' ? el.checked : parseFloat(el.value);
+            };
+
+            const params = {
+                wall: getVal('wall'), gap: getVal('gap'), trkH: getVal('trkH'), trkD: getVal('trkD'), brdT: getVal('brdT'),
+                mW: getVal('mW'), mH: getVal('mH'), mL: getVal('mL'), buf: getVal('buf'),
+                espW: getVal('espW'), espH: getVal('espH'), espD: getVal('espD'),
+                l29w: getVal('l29w'), l29h: getVal('l29h'), l29d: getVal('l29d'),
+                batW: getVal('batW'), batL: getVal('batL'), batH: getVal('batH'),
+                chW: getVal('chW'), chL: getVal('chL'), chH: getVal('chH'),
+                clL: getVal('clL'), scN: getVal('scN'), scD: getVal('scD'),
+                vEn: getVal('vEn'), vX: getVal('vX'), vZ: getVal('vZ'),
+                capT: getVal('capT'), capL: getVal('capL'), usbX: getVal('usbX'), usbY: getVal('usbY'),
+                exp: getVal('exp') / 100
+            };
+
+            // Labels
+            Object.keys(params).forEach(k => {
+                const el = document.getElementById('v-' + k);
+                if (el) el.innerText = params[k];
+            });
+
+            while(meshGroup.children.length > 0) meshGroup.remove(meshGroup.children[0]);
+
+            try {
+                const res = generateJSCADModel(params);
+                const { shell, sled, fCap, bCap, pock, exp, totalLen } = res;
+
+                meshGroup.add(jscadToThree(shell, 0x10b981, 0.2));
+                
+                const sledMesh = jscadToThree(sled, 0x3b82f6, 1.0);
+                sledMesh.position.z += exp * 200;
+                meshGroup.add(sledMesh);
+
+                const fCapMesh = jscadToThree(fCap, 0x10b981, 0.6);
+                fCapMesh.position.y += exp * 100;
+                fCapMesh.position.z -= exp * 100;
+                meshGroup.add(fCapMesh);
+
+                const bCapMesh = jscadToThree(bCap, 0x10b981, 0.6);
+                bCapMesh.position.y += exp * 200;
+                bCapMesh.position.z += exp * 150;
+                meshGroup.add(bCapMesh);
+
+                if (HL && pock[HL]) {
+                    const hlMesh = jscadToThree(pock[HL].p, 0xf472b6, 0.8, 0xf472b6);
+                    hlMesh.position.z += exp * 200;
+                    meshGroup.add(hlMesh);
+                }
+
+            } catch (e) { console.error("Modeling error:", e); }
+        }
+
+        const ids = ['wall', 'gap', 'trkH', 'trkD', 'brdT', 'mW', 'mH', 'mL', 'buf', 'espW', 'espH', 'espD', 'l29w', 'l29h', 'l29d', 'batW', 'batL', 'batH', 'chW', 'chL', 'chH', 'clL', 'scN', 'scD', 'vEn', 'vX', 'vZ', 'capT', 'capL', 'usbX', 'usbY', 'exp'];
+        ids.forEach(id => document.getElementById(id).addEventListener('input', update));
+
+        window.setHighlight = (key) => {
+            HL = key || null;
+            document.querySelectorAll('.ebtn').forEach(b => {
+                if(b.dataset.k === key && key !== "") b.classList.add('active');
+                else b.classList.remove('active');
+            });
+            update();
+        };
+
+        document.querySelectorAll('.ebtn').forEach(b => {
+            b.addEventListener('click', () => window.setHighlight(b.dataset.k));
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 420) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        });
+
+        update();
+        animate();
+    </script>
+</body>
+</html>

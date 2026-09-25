@@ -1,0 +1,39 @@
+ref_des,part_description,manufacturer,mfg_part_number,lcsc_part_number,jlcpcb_part_number,qty_per_unit,unit_price_usd_qty1k,source_notes
+U1,60GHz mmWave Radar SoC AOP 3TX/4RX,Texas Instruments,IWR6843AOPR,C2687541,C2687541,1,38.50,training-data reference (verify)
+U2,i.MX 8M Mini SoM (Variscite DART-MX8MM),NXP / Variscite,DART-MX8MM-8GB,N/A,N/A,1,85.00,SoM - procure direct from Variscite; no LCSC/JLCPCB listing (verify)
+U3,8x8 Multizone ToF Distance Sensor,STMicroelectronics,VL53L7CX,C5172845,C5172845,1,6.20,training-data reference (verify)
+U4,LoRa Transceiver 915MHz +22dBm,Semtech,SX1262,C2828596,C2828596,1,4.80,training-data reference (verify)
+U5,PoE+ PD Module 802.3bt 30W isolated,Silvertel,Ag9800MT,C3014872,C3014872,1,12.40,training-data reference (verify)
+U6,Step-Down Reg 3.3V 3A Sync Buck,Texas Instruments,TPS62135RGTR,C191023,C191023,2,1.10,training-data reference (verify)
+U7,Step-Down Reg 5V 3A 60V input,Texas Instruments,TPS54360BDDAR,C16543,C16543,1,1.85,training-data reference (verify)
+U8,Haptic Driver LRA/ERM I2C,Texas Instruments,DRV2605LYZFR,C2677639,C2677639,1,1.95,training-data reference (verify) — wristband BOM
+U9,BLE SoC ESP32-S3 (wristband MCU),Espressif,ESP32-S3-MINI-1-N8,C2913202,C2913202,1,3.20,training-data reference (verify) — wristband BOM
+U10,OLED Display 128x32 I2C,Solomon Systech / Generic,SSD1306,C7578367,C7578367,1,1.40,training-data reference (verify) — wristband BOM
+U11,LiPo Charger IC 1A USB-C input,Texas Instruments,BQ24075RGTR,C521882,C521882,1,0.95,training-data reference (verify) — wristband BOM
+U12,Fuel Gauge 1-cell LiPo I2C,Texas Instruments,BQ27427YZFR,C2678812,C2678812,1,1.80,training-data reference (verify) — wristband BOM
+U13,3.3V LDO 300mA (wristband rail),Diodes Inc.,AP2112K-3.3TRG1,C51118,C51118,2,0.12,training-data reference (verify)
+U14,ESD Protection USB-C 4-line,STMicroelectronics,USBLC6-2SC6,C7519,C7519,2,0.18,training-data reference (verify)
+U15,Ethernet PHY 10/100 (SoM carrier),Microchip,LAN8720AI-CP,C2653,C2653,1,2.10,training-data reference (verify)
+U16,Real-Time Clock with TCXO,Epson,RX8900SAAJ,C2878912,C2878912,1,1.95,training-data reference (verify)
+U17,Supervisory Reset IC,Maxim,MAX809STRG,C12662,C12662,2,0.22,training-data reference (verify)
+U18,4Mbit NOR Flash SPI (config store),Winbond,W25Q32JVSSIQ,C179171,C179171,1,0.28,training-data reference (verify)
+C1-C20,MLCC 100nF 0402 X5R 10V,Yageo,CC0402KRX5R9BB104,C307331,C307331,20,0.01,training-data reference (verify)
+C21-C30,MLCC 10uF 0805 X5R 10V,Murata,GRM21BR61A106KE18L,C77086,C77086,10,0.08,training-data reference (verify)
+C31-C35,Bulk Electrolytic 100uF 25V,Panasonic,EEE-FT1E101AP,C176672,C176672,5,0.22,training-data reference (verify)
+R1-R20,Resistor 0402 1% various values assortment,Yageo,RC0402FR series,C137885,C137885,20,0.01,training-data reference (verify) — placeholder for full resistor array
+L1-L4,Inductor 4.7uH 2A 20% 0805 power,TDK,CLF10040NF-4R7N-D,C408743,C408743,4,0.28,training-data reference (verify)
+D1-D4,Schottky Diode 40V 1A SOD-123,Nexperia,PMEG4010EJ,C460782,C460782,4,0.06,training-data reference (verify)
+D5-D6,Status LED Red/Green 0603,Broadcom,ASMT-MRA0,C2286,C2286,2,0.08,best-guess (verify)
+Q1-Q4,MOSFET N-CH 30V 8A SOT-23,Alpha & Omega,AO3400A,C20917,C20917,4,0.05,training-data reference (verify)
+J1,RJ45 PoE Jack with magnetics,Bel Fuse,0826-1X1T-23-F,C381910,C381910,1,2.40,training-data reference (verify)
+J2,USB-C Receptacle 2.0 mid-mount,Korean Hroparts,TYPE-C-31-M-12,C165948,C165948,2,0.18,training-data reference (verify)
+J3,JST-SH 4P I2C debug header,JST,SM04B-SRSS-TB,C160404,C160404,2,0.22,training-data reference (verify)
+J4,10-pin SWD/JTAG debug header 1.27mm,Samtec,FTSH-105-01-L-DV,C9105,C9105,1,1.10,best-guess (verify)
+X1,Crystal 25MHz 18pF SMD 3225,TXC,7M-25.000MEEQ-T,C394831,C394831,1,0.28,training-data reference (verify)
+SW1,Tactile Switch SMD 6mm recessed,C&K,PTS526SM15SMTR2LFS,C221785,C221785,1,0.18,training-data reference (verify)
+TP1-TP10,Test Point SMD 1mm pad,Keystone,5019,C238266,C238266,10,0.03,training-data reference (verify)
+PCB1,Ceiling sensor head PCB 4-layer ENIG 130x100mm,JLCPCB,Custom,N/A,N/A,1,14.00,fabrication cost estimate @1k units (verify with fab)
+PCB2,Wristband PCB 4-layer ENIG flex-rigid 80x35mm,JLCPCB,Custom,N/A,N/A,1,11.00,fabrication cost estimate @1k units (verify with fab)
+ENC1,Polycarbonate IK10 NEMA4X dome 180mm,Custom / Takachi equiv.,Custom mold or WP10-8-7N,N/A,N/A,1,18.00,best-guess tooled-mold amortized @1k (verify)
+BAND1,TPU wristband strap with stainless clasp,Custom,Custom,N/A,N/A,1,3.50,best-guess (verify)
+BAT1,LiPo 500mAh 3.7V 3C wristband cell,Generic / EVE,LP402535,N/A,N/A,1,2.80,best-guess (verify) — wristband BOM

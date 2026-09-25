@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Tree hugger job list</title>
+<meta charset="utf-8">
+<link href="javajam.css" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--[if lt IE 9]>
+   <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"> </script>   
+<![endif]-->
+    <style>
+        body:hover .goof
+        {
+            transform: rotate(-180deg);
+            transition: transform 0.5s linear;
+        }
+        body:hover nav
+        {
+            transform: rotate(-360deg);
+            transition: transform 0.25s linear;
+        }
+        body:hover header
+        {
+            transform: rotate(-360deg);
+            transition: transform 0.5s linear;
+        }
+        input[type="submit"]:hover
+        {
+            transform: scale(2);
+            transition: transform 0.2s linear;
+        }
+        input[type="submit"]:hover
+        {
+            transform: scale(2);
+            transition: transform 0.2s linear;
+        }
+        p:hover
+        {
+            transform: scale(0.5);
+            transition: transform 0.2s linear;
+        }
+        label:hover
+        {
+            transform: scale(0.5);
+            transition: transform 0.2s linear;
+        }
+        nav ul:hover
+        {
+            transform: scale(2);
+            transition: transform 0.2s linear;
+        }
+        body:hover footer
+        {
+            transform: scale(0.5);
+            transition: transform 0.2s linear;
+        }
+        div:hover
+        {
+            transform: scale(0.9);
+            transition: transform 0.2s linear;
+        }
+    </style>
+</head>
+<body>
+<div id="wrapper">
+<header><h1>JavaJam Coffee House</h1></header>
+<nav>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+	<li><a href="menu.html">Menu</a></li>
+    <li><a href="music.html">Music</a></li>
+    <li><a href="Jobs.html">Jobs</a></li>
+  </ul>
+</nav>
+<main>
+<h2 class="goof">Coffee at JavaJam</h2>
+    <p>
+        Want to work at JavaJam? Fill the form below and be delined.
+    </p>
+    <form method="post" action="http://webdevbasics.net/scripts/javajam.php">
+        <label for="Name">*Name</label>
+        <input type="text" name="Name" id="Name" required="required">
+        <label for="Email">*Email</label>
+        <input type="email" name="Email" id="Email" required="required">
+        <label for="Start">Start Date</label>
+        <input type="date" name="Start" id="Start" required="required">
+        <label for="Experience">*Experience</label>
+        <textarea name="Experience" id="Experience" placeholder="You're already rejected at this point."required="required">
+        </textarea>
+        <input type="submit" value="I'm an idiot! Duh!">
+    </form>
+</main>
+<footer class="goof">
+Copyright &copy; 2016 JavaJam Coffeee House<br>
+<a href="mailto:yourfirstname@yourlastname.com">yourfirstname@yourlastname.com</a>
+</footer>
+</div>
+</body>
+</html>

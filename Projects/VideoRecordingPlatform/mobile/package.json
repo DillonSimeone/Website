@@ -1,0 +1,17 @@
+{
+  "name": "myt-capture-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Sideloadable Android client for the MYT Capture Hub",
+  "scripts": {
+    "sync": "node sync-www.js && npx cap sync android",
+    "apk": "node sync-www.js && npx cap sync android && cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
+  }
+}

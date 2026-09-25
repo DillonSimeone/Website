@@ -1,0 +1,142 @@
+[
+  {
+    "name": "Rainbow Drift",
+    "tags": ["classic", "smooth"],
+    "code": "h = i/n + time(8);\nhsv(h, 1, 1);"
+  },
+  {
+    "name": "Breathing Aurora",
+    "tags": ["calm", "perlin"],
+    "code": "// Slow organic colour wash, breathes in brightness.\nh = perlin1D(i*0.05 + t*0.1)*0.4 + 0.5;\nb = wave(time(6));\nhsv(h, 1, b*0.9 + 0.1);"
+  },
+  {
+    "name": "Fire Lick",
+    "tags": ["fire", "hot"],
+    "code": "// Hot core, cooler tips, animated with perlin.\ny = i/n;\nflame = perlin2D(y*3, t*1.4);\nh = 0.05 - flame*0.05;\nv = clamp(flame*1.5 - y*0.4, 0, 1);\nhsv(h, 1, v);"
+  },
+  {
+    "name": "Ocean Swell",
+    "tags": ["ocean", "perlin"],
+    "code": "x = i/n;\nswell = perlin2D(x*2, t*0.4);\nh = 0.5 + swell*0.1;\ns = 1 - swell*0.3;\nv = wave(x + t*0.1);\nhsv(h, s, v);"
+  },
+  {
+    "name": "Comet Trail",
+    "tags": ["motion", "trail"],
+    "code": "// Bright head, decaying tail.\nhead = time(4)*n;\nd = abs(i - head);\nd = min(d, abs(i - head - n));\nv = clamp(1 - d/8, 0, 1);\nv = v*v;\nhsv(0.6, 0.4, v);"
+  },
+  {
+    "name": "KITT Scanner",
+    "tags": ["motion", "scan"],
+    "code": "// Knight-Rider sweep with falloff.\npos = (triangle(time(3)))*n;\nd = abs(i - pos);\nv = clamp(1 - d/4, 0, 1);\nhsv(0, 1, v*v);"
+  },
+  {
+    "name": "Sparkle Snow",
+    "tags": ["sparkle", "random"],
+    "code": "// Twinkling stars, hash for stable per-pixel phase.\nphase = hash(i)*10;\nblink = wave(t*1.5 + phase);\nblink = pow(blink, 6);\nhsv(0.6, 0.2, blink);"
+  },
+  {
+    "name": "Plasma Field",
+    "tags": ["plasma", "perlin"],
+    "code": "x = i/n;\np = perlin2D(x*4 + t*0.3, t*0.2);\nh = p + time(20);\nhsv(h, 1, 1);"
+  },
+  {
+    "name": "Square Pulse",
+    "tags": ["square", "geometric"],
+    "code": "// Hard-edged moving bars with adjustable duty.\nbar = square(i*0.1 + time(2), 0.4);\nhsv(time(15), 1, bar);"
+  },
+  {
+    "name": "Triangle Chase",
+    "tags": ["triangle", "rainbow"],
+    "code": "x = i/n;\nb = triangle(x*3 + time(4));\nhsv(x + time(10), 1, b);"
+  },
+  {
+    "name": "Lava Lamp",
+    "tags": ["lava", "perlin"],
+    "code": "x = i/n;\nblob = perlin2D(x*2.5, t*0.5);\nblob = smoothstep(0.45, 0.6, blob);\nh = mix(0.02, 0.12, blob);\nhsv(h, 1, blob*0.9 + 0.1);"
+  },
+  {
+    "name": "Heartbeat",
+    "tags": ["pulse", "calm"],
+    "code": "// Two-beat heartbeat envelope.\np = frac(time(1.2));\nbeat = pow(wave(p*2), 8) + pow(wave(p*2 + 0.3), 8)*0.7;\nhsv(0, 1, clamp(beat, 0, 1));"
+  },
+  {
+    "name": "Cylon Rainbow",
+    "tags": ["motion", "rainbow"],
+    "code": "pos = triangle(time(5))*n;\nd = abs(i - pos);\nv = clamp(1 - d/6, 0, 1);\nhsv(i/n + time(8), 1, v);"
+  },
+  {
+    "name": "Twinkle Forest",
+    "tags": ["sparkle", "green"],
+    "code": "// Random forest of greens, occasional warm flicker.\nphase = hash(i)*7;\nbrt = pow(wave(t*0.8 + phase), 4);\nh = 0.33 + hash(i+1)*0.06;\nif (hash(i+5) > 0.92) h = 0.07;\nhsv(h, 0.9, brt);"
+  },
+  {
+    "name": "Stripes",
+    "tags": ["geometric"],
+    "code": "// Four colour stripes, slow drift.\nstripe = floor(frac(i/n + time(8))*4);\nhsv(stripe*0.25, 1, 1);"
+  },
+  {
+    "name": "Bouncing Dot",
+    "tags": ["motion"],
+    "code": "pos = triangle(time(2))*(n-1);\nv = i==floor(pos+0.5) ? 1 : 0;\nhsv(0.83, 1, v);"
+  },
+  {
+    "name": "Perlin Painter",
+    "tags": ["perlin", "calm"],
+    "code": "// Slow drifting hue painted by 2D noise.\nh = perlin2D(i*0.04, t*0.15);\ns = 0.6 + perlin1D(i*0.1 + 100)*0.4;\nhsv(h, s, 1);"
+  },
+  {
+    "name": "Strobe",
+    "tags": ["energy"],
+    "code": "// Hard strobe at ~5 Hz, hue drifts.\nflash = square(time(0.2), 0.15);\nhsv(time(6), 1, flash);"
+  },
+  {
+    "name": "Pendulum",
+    "tags": ["motion", "wave"],
+    "code": "// Smooth pendulum sweep using sine.\ns = wave(time(3));\npos = s*(n-1);\nd = abs(i - pos);\nv = clamp(1 - d/3, 0, 1);\nhsv(0.55, 1, v*v);"
+  },
+  {
+    "name": "Galaxy",
+    "tags": ["calm", "perlin"],
+    "code": "// Deep blues and purples with bright stars.\nstar = pow(wave(t*0.7 + hash(i)*9), 8);\ndust = perlin2D(i*0.1, t*0.2)*0.3;\nh = 0.72 + dust*0.1;\nv = star + dust*0.4;\nhsv(h, 1 - star*0.3, v);"
+  },
+  {
+    "name": "Frequency Rainbow",
+    "tags": ["audio", "frequency"],
+    "code": "// Bass=red, mids=green, highs=purple. Strip is divided\n// into 8 bands; each pixel's hue = its band index → hue\n// (mapped 0..0.83 so the high end lands on magenta/purple).\nb = floor(i / n * 8);\nlev = band(b);\nhsv(b/8 * 0.83, 1, lev);"
+  },
+  {
+    "name": "Spectrum Bars",
+    "tags": ["audio", "bars"],
+    "code": "// Each pixel maps to a band, lights up if level > threshold.\nb = floor(i / n * 8);\nthresh = (i/n - floor(i/n*8)/8) * 8;\nlev = band(b);\nh = b/8 * 0.83;\non = lev > thresh ? 1 : 0;\nhsv(h, 1, on * lev);"
+  },
+  {
+    "name": "VU Meter",
+    "tags": ["audio", "meter"],
+    "code": "// Pixels light up to the current VU level.\n// Green low, yellow mid, red top.\nlevel = vu();\nx = i/n;\nlit = x < level ? 1 : 0;\nh = (1 - x) * 0.33;\nhsv(h, 1, lit);"
+  },
+  {
+    "name": "Beat Pulse",
+    "tags": ["audio", "beat"],
+    "code": "// Whole strip flashes on each beat.\nb = beat();\nhsv(time(20), 1, b);"
+  },
+  {
+    "name": "Bass Bloom",
+    "tags": ["audio", "bass"],
+    "code": "// Bass drives brightness, ambient drift drives hue.\nh = perlin1D(i*0.05 + t*0.2);\nv = bass()*1.3 + 0.05;\nhsv(h, 1, clamp(v, 0, 1));"
+  },
+  {
+    "name": "Pitch Painter",
+    "tags": ["audio", "pitch"],
+    "code": "// Dominant pitch sets a moving point of colour.\np = pitch();\nd = abs(i/n - p);\nv = clamp(1 - d*4, 0, 1) * (vu() + 0.1);\nhsv(p * 0.83, 1, v);"
+  },
+  {
+    "name": "Treble Sparkle",
+    "tags": ["audio", "treble"],
+    "code": "// High frequencies trigger sparkles on random pixels.\nphase = hash(i)*7;\nflicker = wave(t*4 + phase);\nlevel = treble();\nv = pow(flicker, 8) * level * 4;\nhsv(0.7 + hash(i)*0.15, 0.3, clamp(v, 0, 1));"
+  },
+  {
+    "name": "Equalizer",
+    "tags": ["audio", "spectrum"],
+    "code": "// Continuous spectrum across the strip — no hard band edges.\nx = i/n;\nbIdx = x * 7;\nb1 = floor(bIdx);\nb2 = b1 + 1;\nfrac = bIdx - b1;\nlev = mix(band(b1), band(b2), frac);\nhsv(x * 0.83, 1, lev);"
+  }
+]

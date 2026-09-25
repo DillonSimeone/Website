@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deaf DJ Live Sound-Reactive Shader Suite</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Special+Elite&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="live.css">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="halftone-screen"></div>
+
+  <!-- Main Projection & Shader Canvas Target -->
+  <div id="canvas-projection-wrapper">
+    <div id="canvas-container"></div>
+    <div id="dj-fx-overlay" class="dj-fx-overlay"></div>
+  </div>
+
+  <!-- Floating Real-Time MIDI OSD Telemetry Display -->
+  <div id="midi-osd" class="midi-osd">
+    <div class="osd-top-row">
+      <span class="osd-badge">⚡ DDJ-200</span>
+      <span id="osd-event-tag" class="osd-event-tag">CC #15</span>
+      <span id="osd-channel" class="osd-channel">CH 1</span>
+    </div>
+    <div class="osd-main-row">
+      <div id="osd-label" class="osd-label">DECK 1 EQ LOW</div>
+      <div id="osd-arrow" class="osd-arrow">➔</div>
+      <div id="osd-action" class="osd-action">BASS PUNCH</div>
+      <div id="osd-val" class="osd-val">1.8x</div>
+    </div>
+    <div class="osd-gauge-track">
+      <div id="osd-gauge-fill" class="osd-gauge-fill" style="width: 60%;"></div>
+    </div>
+  </div>
+
+  <!-- Top DJ HUD Overlay -->
+  <header class="dj-top-hud">
+    <!-- Left/Center Deaf DJ FFT Spectrum Telemetry -->
+    <div class="hud-col center">
+      <div class="telemetry-box">
+        <div class="spectrum-mini-bars">
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-sub" class="bar-fill sub"></div></div>
+            <span class="freq-tag">SUB</span>
+            <span class="freq-sub">20-60Hz</span>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-bass" class="bar-fill bass"></div></div>
+            <span class="freq-tag">BASS</span>
+            <span class="freq-sub">250Hz</span>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-mid" class="bar-fill mid"></div></div>
+            <span class="freq-tag">MID</span>
+            <span class="freq-sub">1kHz</span>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-high" class="bar-fill high"></div></div>
+            <span class="freq-tag">HIGH</span>
+            <span class="freq-sub">6kHz</span>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div id="bar-air" class="bar-fill air"></div></div>
+            <span class="freq-tag">AIR</span>
+            <span class="freq-sub">20kHz</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="hud-col right">
+      <div class="audio-source-controls">
+        <button id="btn-mic" class="hud-btn active">MIC_IN</button>
+        <button id="btn-demo" class="hud-btn">TEST_BEAT</button>
+        <label for="audio-file-input" class="hud-btn file-upload-label">LOAD_FILE</label>
+        <input type="file" id="audio-file-input" accept="audio/*" style="display:none;">
+      </div>
+      <div class="hud-divider"></div>
+      <div class="system-tools">
+        <button id="btn-midi" class="hud-btn alt" title="Press [M] to toggle MIDI Studio Deck"><span class="midi-led" id="midi-led"></span><span id="midi-btn-text">MIDI [OFFLINE]</span></button>
+        <button id="btn-tweak" class="hud-btn" title="Press [T] to toggle Shader Tweaker">TWEAK [T]</button>
+        <button id="btn-calibrate" class="hud-btn alt" title="Press [C] to toggle Projector Mapping">MAPPING [C]</button>
+        <button id="btn-fullscreen" class="hud-btn alt" title="Press [F] for Fullscreen">FULLSCREEN [F]</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Slide-Out DJ Tweak Drawer -->
+  <aside id="dj-tweak-drawer" class="dj-tweak-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <span class="case-badge">DSP // LIVE TUNER</span>
+        <h2>REAL-TIME SHADER PARAMS</h2>
+      </div>
+      <button id="btn-close-drawer" class="drawer-close-btn" title="Close [T]">&times;</button>
+    </div>
+
+    <div class="drawer-content">
+      <!-- Section 1: Global Acoustics & Synesthesia -->
+      <div class="tweak-section">
+        <div class="section-title">GLOBAL ACOUSTICS & COLOR</div>
+        
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">BASS PUNCH (SUB & KICK)</span>
+            <span id="val-bass-punch" class="tweak-val">1.0x</span>
+          </div>
+          <input type="range" id="param-bass-punch" min="0.2" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">TREBLE SPARKLE (AIR & HI-HATS)</span>
+            <span id="val-treble-sparkle" class="tweak-val">1.0x</span>
+          </div>
+          <input type="range" id="param-treble-sparkle" min="0.2" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">FFT SMOOTHING (RESPONSE)</span>
+            <span id="val-smoothing" class="tweak-val">0.22</span>
+          </div>
+          <input type="range" id="param-smoothing" min="0.05" max="0.55" step="0.01" value="0.22">
+        </div>
+
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">PALETTE HUE SHIFT</span>
+            <span id="val-hue-shift" class="tweak-val">+0°</span>
+          </div>
+          <input type="range" id="param-hue-shift" min="0.0" max="1.0" step="0.02" value="0.0">
+        </div>
+
+        <div class="tweak-row">
+          <div class="tweak-label-group">
+            <span class="tweak-label">GLOW & BLOOM MULTIPLIER</span>
+            <span id="val-glow-mult" class="tweak-val">1.0x</span>
+          </div>
+          <input type="range" id="param-glow-mult" min="0.3" max="2.5" step="0.1" value="1.0">
+        </div>
+      </div>
+
+      <!-- Section 2: Active Shader Specific Controls -->
+      <div class="tweak-section">
+        <div class="section-title" id="active-shader-section-title">ACTIVE SHADER TUNER</div>
+        <div id="shader-custom-controls">
+          <!-- Populated dynamically based on active shader -->
+        </div>
+      </div>
+
+      <!-- Section 3: Persistence & Defaults -->
+      <div class="tweak-section storage-section">
+        <div class="section-title">PRESETS & PERSISTENCE</div>
+        <div class="storage-btn-group">
+          <button id="btn-save-settings" class="tweak-btn primary">SAVE TO STORAGE</button>
+          <button id="btn-reset-settings" class="tweak-btn danger">RESTORE DEFAULTS</button>
+        </div>
+        <div id="storage-status-msg" class="storage-status">ALL SETTINGS AUTOSAVED</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Slide-Out MIDI Studio & DDJ-200 Hardware Twin Drawer -->
+  <aside id="midi-studio-drawer" class="midi-studio-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <span class="case-badge">HARDWARE TELEMETRY // USB MIDI</span>
+        <h2>PIONEER DDJ-200 STUDIO HUD</h2>
+      </div>
+      <div class="midi-header-status">
+        <span id="midi-status-pill" class="status-pill offline">OFFLINE</span>
+        <button id="btn-midi-rescan" class="tweak-btn mini">RESCAN</button>
+        <button id="btn-close-midi" class="drawer-close-btn" title="Close [M]">&times;</button>
+      </div>
+    </div>
+
+    <div class="drawer-content midi-studio-content">
+      <!-- Virtual DDJ-200 Twin Surface -->
+      <div class="virtual-deck-wrapper">
+        <div class="deck-surface-grid">
+          <!-- Deck 1 (Left) -->
+          <div class="vdeck-col deck-1" id="vdeck-1">
+            <div class="vdeck-tag">DECK 1 // SHADER SELECTOR</div>
+            
+            <!-- Jog Wheel 1 -->
+            <div class="vdeck-jog-container">
+              <div class="vdeck-jog" id="vjog-1">
+                <div class="vjog-disc">
+                  <div class="vjog-indicator" id="vjog-ind-1"></div>
+                  <div class="vjog-center">
+                    <span class="vjog-label">JOG 1</span>
+                    <span class="vjog-sub">SCRATCH</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deck 1 Knobs row -->
+            <div class="vdeck-strip">
+              <div class="vknob-item">
+                <span class="vknob-label">HI (SPARKLE)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-hi-1" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-hi-1">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">MID (SMOOTH)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-mid-1" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-mid-1">0.22</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">LOW (PUNCH)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-low-1" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-low-1">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">CFX (HUE)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-cfx-1" style="height: 0%;"></div></div>
+                <span class="vknob-val" id="vval-cfx-1">0°</span>
+              </div>
+            </div>
+
+            <!-- Deck 1 Fader -->
+            <div class="vfader-row">
+              <span class="vfader-label">CH 1 VOL (MIC GAIN)</span>
+              <div class="vfader-track" id="vtrack-fader-1"><div class="vfader-thumb" id="vthumb-fader-1" style="bottom: 40%;"></div></div>
+              <span class="vfader-val" id="vval-fader-1">1.2x</span>
+            </div>
+
+            <!-- Deck 1 Performance Pads (Shaders 1-8) -->
+            <div class="vpads-title">PERFORMANCE PADS 1-8 (SELECT SHADER)</div>
+            <div class="vpads-grid" id="vpads-deck-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Center Mixer Section -->
+          <div class="vdeck-col mixer" id="vdeck-mixer">
+            <div class="vdeck-tag">MIXER // BUS</div>
+            
+            <div class="mixer-status-box">
+              <div class="mixer-title">HARDWARE LINK</div>
+              <div class="device-name-display" id="device-name-display">NO USB MIDI DETECTED</div>
+              <div class="device-help-text">Plug in Pioneer DDJ-200 via USB. Chrome automatically detects it with zero setup.</div>
+            </div>
+
+            <!-- Crossfader -->
+            <div class="crossfader-container">
+              <span class="cf-label">CROSSFADER (BLEND / MORPH)</span>
+              <div class="crossfader-track" id="vtrack-crossfader">
+                <div class="crossfader-thumb" id="vthumb-crossfader" style="left: 50%;"></div>
+              </div>
+              <div class="cf-endpoints">
+                <span>DECK 1 (A)</span>
+                <span id="cf-val-display">CENTER (0.5)</span>
+                <span>DECK 2 (B)</span>
+              </div>
+            </div>
+
+            <div class="mixer-quick-actions">
+              <button id="btn-midi-learn" class="tweak-btn primary mini">MIDI LEARN</button>
+              <button id="btn-reset-midi-map" class="tweak-btn danger mini">RESET MAP</button>
+            </div>
+
+            <div id="midi-learn-banner" class="midi-learn-banner hidden">
+              <span class="blink">●</span> WAITING FOR HARDWARE TOUCH...
+              <button id="btn-cancel-learn" class="term-btn">CANCEL</button>
+            </div>
+          </div>
+
+          <!-- Deck 2 (Right) -->
+          <div class="vdeck-col deck-2" id="vdeck-2">
+            <div class="vdeck-tag">DECK 2 // LIVE FX MATRIX</div>
+            
+            <!-- Jog Wheel 2 -->
+            <div class="vdeck-jog-container">
+              <div class="vdeck-jog" id="vjog-2">
+                <div class="vjog-disc">
+                  <div class="vjog-indicator" id="vjog-ind-2"></div>
+                  <div class="vjog-center">
+                    <span class="vjog-label">JOG 2</span>
+                    <span class="vjog-sub">ROTATE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deck 2 Knobs row -->
+            <div class="vdeck-strip">
+              <div class="vknob-item">
+                <span class="vknob-label">HI (PARAM 1)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-hi-2" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-hi-2">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">MID (PARAM 2)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-mid-2" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-mid-2">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">LOW (PARAM 3)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-low-2" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-low-2">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">CFX (ZOOM)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-cfx-2" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-cfx-2">1.0x</span>
+              </div>
+            </div>
+
+            <!-- Deck 2 Fader -->
+            <div class="vfader-row">
+              <span class="vfader-label">CH 2 VOL (BLOOM / GLOW)</span>
+              <div class="vfader-track" id="vtrack-fader-2"><div class="vfader-thumb" id="vthumb-fader-2" style="bottom: 35%;"></div></div>
+              <span class="vfader-val" id="vval-fader-2">1.0x</span>
+            </div>
+
+            <!-- Deck 2 Performance Pads (Live FX Triggers) -->
+            <div class="vpads-title">PERFORMANCE PADS 1-8 (LIVE FX TRIGGERS)</div>
+            <div class="vpads-grid" id="vpads-deck-2">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Real-Time MIDI Terminal Packet Log -->
+      <div class="midi-terminal-section">
+        <div class="terminal-bar">
+          <div class="term-title">
+            <span class="term-icon">❯_</span> REAL-TIME MIDI TELEMETRY CONSOLE
+          </div>
+          <div class="term-tools">
+            <label class="term-label"><input type="checkbox" id="chk-autoscroll" checked> AUTOSCROLL</label>
+            <button id="btn-clear-term" class="term-btn">CLEAR</button>
+          </div>
+        </div>
+        <div id="midi-console-log" class="midi-console-log">
+          <div class="log-line system">[SYSTEM] Web MIDI Engine Initialized. Plug in Pioneer DDJ-200 via USB.</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Bottom DJ Deck / Shader Switcher -->
+  <footer class="dj-bottom-deck">
+    <div class="deck-controls-row">
+      <div class="gain-meter-container">
+        <span class="ctrl-label">MIC GAIN</span>
+        <input type="range" id="slider-gain" min="0.2" max="3.0" step="0.1" value="1.2">
+        <span id="gain-val">1.2x</span>
+        <div id="clipping-warning" class="clip-badge">CLIP +0dB</div>
+      </div>
+
+      <div class="shader-quick-dock" id="shader-dock">
+        <!-- Buttons 1-10 populated dynamically by live.js -->
+      </div>
+    </div>
+  </footer>
+
+  <!-- Start Audio Splash Modal -->
+  <div id="start-modal" class="modal-overlay">
+    <div class="noir-modal-card">
+      <div class="case-badge">DEAF_DJ // SYSTEM INITIALIZATION</div>
+      <h2>SOUND-REACTIVE PROJECTION SHADERS</h2>
+      <p>
+        Real-time synesthetic GLSL visual engine with 20Hz (Crimson Red) to 20,000Hz (Violet/Air) FFT spectrum mapping, tactile beat telemetry, and 4-point corner pinning for live projection mapping.
+      </p>
+      <div class="modal-actions">
+        <button id="modal-btn-mic" class="noir-btn primary">START WITH LIVE MICROPHONE</button>
+        <button id="modal-btn-demo" class="noir-btn">PLAY BUILT-IN TEST BEAT</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="live.js"></script>
+</body>
+</html>

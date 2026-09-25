@@ -1,0 +1,178 @@
+:root {
+    --bg-color: #0b0f19;
+    --card-bg: rgba(23, 32, 54, 0.7);
+    --card-border: rgba(99, 102, 241, 0.25);
+    --card-hover-border: rgba(129, 140, 248, 0.6);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent: #6366f1;
+    --accent-glow: rgba(99, 102, 241, 0.4);
+    --button-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --button-hover: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
+    background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0b0f19 75%);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1.5rem 5rem;
+    line-height: 1.6;
+}
+
+header {
+    text-align: center;
+    max-width: 800px;
+    margin-bottom: 3.5rem;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 9999px;
+    margin-bottom: 1.25rem;
+}
+
+h1 {
+    font-size: 2.75rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.75rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.15rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+main.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 16px;
+    padding: 2rem 1.75rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gradient, var(--button-gradient));
+    opacity: 0.8;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: var(--card-hover-border);
+    box-shadow: 0 20px 35px -12px rgba(99, 102, 241, 0.25);
+}
+
+.card-content {
+    margin-bottom: 1.75rem;
+}
+
+.card-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.85rem;
+    letter-spacing: -0.01em;
+}
+
+.card-description {
+    color: var(--text-secondary);
+    font-size: 0.975rem;
+    line-height: 1.65;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.card-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    background: var(--button-gradient);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 14px var(--accent-glow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    width: 100%;
+    text-align: center;
+}
+
+.card-btn:hover {
+    background: var(--button-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+.card-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    transition: transform 0.2s ease;
+}
+
+.card-btn:hover svg {
+    transform: translateX(3px);
+}
+
+@media (max-width: 640px) {
+    h1 {
+        font-size: 2.1rem;
+    }
+    main.card-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Amazing Title</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body, html{
+            padding: 0;
+            margin: 0;
+        }
+        
+        /*================================*/
+        /*=========GRID WITCHERY==========*/
+        /*================================*/
+        .gridWrapper{
+            position: relative;
+            font-size: 1.5vw;
+            width: 100%;
+            margin: auto;
+        }
+        .gridColumnDividers{
+            position:absolute;
+            display: grid;
+            height: 100%;
+            width: 100%;
+            margin: auto;
+            grid-template-columns: 10% 10% 10% 10% 10% 10% 10% 10% 10% 10%;
+            grid-template-rows: 100%;
+        }
+        .gridColumnDividers div:nth-of-type(2n){
+            position: relative;
+            top: 2vh; /* Set this to the height of .gridOpinions's rows. */
+            height: calc(100% - 2vh - 1px); /* 100% width - Height of .gridOpinions .header and .gridOpinions .header border width. */
+            width: 0px; 
+            border-left: 2px dashed black;
+            background-color: rbga(255, 255, 255, 0);
+        }
+        .gridOpinions{
+            display: grid;
+            margin: auto;
+            grid-template-columns: 10% 10% 10% 10% 10% 10% 10% 10% 10% 10%;
+            grid-auto-rows: 2vh; /* https://developer.mozilla.org/en-US/docs/Web/CSS/grid-auto-rows */
+        }
+        .gridOpinions .header{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            grid-column: span 2;
+            
+            font-weight: bolder;
+            border: 1px solid black;
+            background-color: lightgray;
+        }
+        
+        .gridOpinions .bar{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bolder;
+            
+            animation: fillIn 3s ease-in-out;
+            background-image: linear-gradient(red, red);
+            background-repeat: no-repeat;
+            border-bottom-right-radius: 20px;
+            border-top-right-radius: 20px;
+            border: 1px solid rgba(0,0,0,1);
+        }
+        
+        .gridOpinions .bar:hover{
+            border: 10px solid blue;
+        }
+        
+        .gridOpinions .topic1{
+            grid-column-start: 1;
+            grid-column-end: 5;
+            grid-row-start: 2;
+        }
+        .gridOpinions .topic2{
+            grid-column-start: 1;
+            grid-column-end: 4;
+            grid-row-start: 3;
+        }
+        
+        .gridOpinions .topic3{
+            grid-column-start: 1;
+            grid-column-end: 2;
+            grid-row-start: 4;
+        }
+        
+        .gridOpinions .topic4{
+            grid-column-start: 1;
+            grid-column-end: 6;
+            grid-row-start: 5;
+        }
+        
+        .gridOpinions .topic5{
+            grid-column-start: 1;
+            grid-column-end: 10;
+            grid-row-start: 6;
+        }
+        
+        @keyframes fillIn{
+            from{
+                background-size: 0% 100%;
+                border: 1px solid rgba(0,0,0,0);
+            }to{
+                background-size: 100% 100%;
+                border: 1px solid rgba(0,0,0,1);
+            }
+        }
+        
+        /*===================================*/
+        /*=========::AFTER WITCHERY==========*/
+        /*===================================*/
+        .letter-changer{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        
+    .letter-changer::after {
+        animation: changeLetter 30s linear infinite alternate;
+        display: block;
+        content: "";
+        font-size: 80px;
+    }
+        
+    @keyframes changeLetter {
+        0%{
+            color: white;
+        }
+        0.7936507936507936%{
+            content:" T";
+            color: black;
+        }
+        1.5873015873015872%{
+            color: white;
+        }
+        2.380952380952381%{
+            content:" Te";
+            color: black;
+        }
+        3.1746031746031744%{
+            color: white;
+        }
+        3.968253968253968%{
+            content:" Tes";
+            color: black;
+        }
+        4.761904761904762%{
+            color: white;
+        }
+        5.555555555555555%{
+            content:" Test";
+            color: black;
+        }
+        6.349206349206349%{
+            color: white;
+        }
+        7.142857142857142%{
+            content:" Testi";
+            color: black;
+        }
+        7.936507936507936%{
+            color: white;
+        }
+        8.73015873015873%{
+            content:" Testin";
+            color: black;
+        }
+        9.523809523809524%{
+            color: white;
+        }
+        10.317460317460318%{
+            content:" Testing";
+            color: black;
+        }
+        11.111111111111112%{
+            color: white;
+        }
+        11.904761904761907%{
+            content:" Testing ";
+            color: black;
+        }
+        12.698412698412701%{
+            color: white;
+        }
+        13.492063492063496%{
+            content:" Testing t";
+            color: black;
+        }
+        14.28571428571429%{
+            color: white;
+        }
+        15.079365079365084%{
+            content:" Testing th";
+            color: black;
+        }
+        15.873015873015879%{
+            color: white;
+        }
+        16.66666666666667%{
+            content:" Testing thi";
+            color: black;
+        }
+        17.460317460317466%{
+            color: white;
+        }
+        18.25396825396826%{
+            content:" Testing this";
+            color: black;
+        }
+        19.047619047619055%{
+            color: white;
+        }
+        19.84126984126985%{
+            content:" Testing this ";
+            color: black;
+        }
+        20.634920634920643%{
+            color: white;
+        }
+        21.428571428571438%{
+            content:" Testing this a";
+            color: black;
+        }
+        22.222222222222232%{
+            color: white;
+        }
+        23.015873015873026%{
+            content:" Testing this am";
+            color: black;
+        }
+        23.80952380952382%{
+            color: white;
+        }
+        24.603174603174615%{
+            content:" Testing this ama";
+            color: black;
+        }
+        25.39682539682541%{
+            color: white;
+        }
+        26.190476190476204%{
+            content:" Testing this amaz";
+            color: black;
+        }
+        26.984126984127%{
+            color: white;
+        }
+        27.777777777777793%{
+            content:" Testing this amazi";
+            color: black;
+        }
+        28.571428571428587%{
+            color: white;
+        }
+        29.36507936507938%{
+            content:" Testing this amazin";
+            color: black;
+        }
+        30.158730158730176%{
+            color: white;
+        }
+        30.95238095238097%{
+            content:" Testing this amazing";
+            color: black;
+        }
+        31.746031746031765%{
+            color: white;
+        }
+        32.53968253968256%{
+            content:" Testing this amazingl";
+            color: black;
+        }
+        33.33333333333335%{
+            color: white;
+        }
+        34.12698412698414%{
+            content:" Testing this amazingly";
+            color: black;
+        }
+        34.92063492063493%{
+            color: white;
+        }
+        35.71428571428572%{
+            content:" Testing this amazingly ";
+            color: black;
+        }
+        36.50793650793651%{
+            color: white;
+        }
+        37.301587301587304%{
+            content:" Testing this amazingly l";
+            color: black;
+        }
+        38.095238095238095%{
+            color: white;
+        }
+        38.888888888888886%{
+            content:" Testing this amazingly lo";
+            color: black;
+        }
+        39.68253968253968%{
+            color: white;
+        }
+        40.47619047619047%{
+            content:" Testing this amazingly lon";
+            color: black;
+        }
+        41.26984126984126%{
+            color: white;
+        }
+        42.06349206349205%{
+            content:" Testing this amazingly long";
+            color: black;
+        }
+        42.85714285714284%{
+            color: white;
+        }
+        43.65079365079363%{
+            content:" Testing this amazingly long ";
+            color: black;
+        }
+        44.44444444444442%{
+            color: white;
+        }
+        45.23809523809521%{
+            content:" Testing this amazingly long a";
+            color: black;
+        }
+        46.031746031746%{
+            color: white;
+        }
+        46.825396825396794%{
+            content:" Testing this amazingly long an";
+            color: black;
+        }
+        47.619047619047585%{
+            color: white;
+        }
+        48.412698412698376%{
+            content:" Testing this amazingly long and";
+            color: black;
+        }
+        49.20634920634917%{
+            color: white;
+        }
+        49.99999999999996%{
+            content:" Testing this amazingly long and ";
+            color: black;
+        }
+        50.79365079365075%{
+            color: white;
+        }
+        51.58730158730154%{
+            content:" Testing this amazingly long and s";
+            color: black;
+        }
+        52.38095238095233%{
+            color: white;
+        }
+        53.17460317460312%{
+            content:" Testing this amazingly long and st";
+            color: black;
+        }
+        53.96825396825391%{
+            color: white;
+        }
+        54.7619047619047%{
+            content:" Testing this amazingly long and stu";
+            color: black;
+        }
+        55.55555555555549%{
+            color: white;
+        }
+        56.349206349206284%{
+            content:" Testing this amazingly long and stup";
+            color: black;
+        }
+        57.142857142857075%{
+            color: white;
+        }
+        57.936507936507866%{
+            content:" Testing this amazingly long and stupi";
+            color: black;
+        }
+        58.73015873015866%{
+            color: white;
+        }
+        59.52380952380945%{
+            content:" Testing this amazingly long and stupid";
+            color: black;
+        }
+        60.31746031746024%{
+            color: white;
+        }
+        61.11111111111103%{
+            content:" Testing this amazingly long and stupid ";
+            color: black;
+        }
+        61.90476190476182%{
+            color: white;
+        }
+        62.69841269841261%{
+            content:" Testing this amazingly long and stupid s";
+            color: black;
+        }
+        63.4920634920634%{
+            color: white;
+        }
+        64.28571428571419%{
+            content:" Testing this amazingly long and stupid st";
+            color: black;
+        }
+        65.07936507936499%{
+            color: white;
+        }
+        65.87301587301579%{
+            content:" Testing this amazingly long and stupid str";
+            color: black;
+        }
+        66.66666666666659%{
+            color: white;
+        }
+        67.46031746031738%{
+            content:" Testing this amazingly long and stupid stri";
+            color: black;
+        }
+        68.25396825396818%{
+            color: white;
+        }
+        69.04761904761898%{
+            content:" Testing this amazingly long and stupid strin";
+            color: black;
+        }
+        69.84126984126978%{
+            color: white;
+        }
+        70.63492063492058%{
+            content:" Testing this amazingly long and stupid string";
+            color: black;
+        }
+        71.42857142857137%{
+            color: white;
+        }
+        72.22222222222217%{
+            content:" Testing this amazingly long and stupid string ";
+            color: black;
+        }
+        73.01587301587297%{
+            color: white;
+        }
+        73.80952380952377%{
+            content:" Testing this amazingly long and stupid string w";
+            color: black;
+        }
+        74.60317460317457%{
+            color: white;
+        }
+        75.39682539682536%{
+            content:" Testing this amazingly long and stupid string wi";
+            color: black;
+        }
+        76.19047619047616%{
+            color: white;
+        }
+        76.98412698412696%{
+            content:" Testing this amazingly long and stupid string wit";
+            color: black;
+        }
+        77.77777777777776%{
+            color: white;
+        }
+        78.57142857142856%{
+            content:" Testing this amazingly long and stupid string with";
+            color: black;
+        }
+        79.36507936507935%{
+            color: white;
+        }
+        80.15873015873015%{
+            content:" Testing this amazingly long and stupid string with ";
+            color: black;
+        }
+        80.95238095238095%{
+            color: white;
+        }
+        81.74603174603175%{
+            content:" Testing this amazingly long and stupid string with t";
+            color: black;
+        }
+        82.53968253968254%{
+            color: white;
+        }
+        83.33333333333334%{
+            content:" Testing this amazingly long and stupid string with th";
+            color: black;
+        }
+        84.12698412698414%{
+            color: white;
+        }
+        84.92063492063494%{
+            content:" Testing this amazingly long and stupid string with thi";
+            color: black;
+        }
+        85.71428571428574%{
+            color: white;
+        }
+        86.50793650793653%{
+            content:" Testing this amazingly long and stupid string with this";
+            color: black;
+        }
+        87.30158730158733%{
+            color: white;
+        }
+        88.09523809523813%{
+            content:" Testing this amazingly long and stupid string with this ";
+            color: black;
+        }
+        88.88888888888893%{
+            color: white;
+        }
+        89.68253968253973%{
+            content:" Testing this amazingly long and stupid string with this t";
+            color: black;
+        }
+        90.47619047619052%{
+            color: white;
+        }
+        91.26984126984132%{
+            content:" Testing this amazingly long and stupid string with this th";
+            color: black;
+        }
+        92.06349206349212%{
+            color: white;
+        }
+        92.85714285714292%{
+            content:" Testing this amazingly long and stupid string with this thi";
+            color: black;
+        }
+        93.65079365079372%{
+            color: white;
+        }
+        94.44444444444451%{
+            content:" Testing this amazingly long and stupid string with this thin";
+            color: black;
+        }
+        95.23809523809531%{
+            color: white;
+        }
+        96.03174603174611%{
+            content:" Testing this amazingly long and stupid string with this thing";
+            color: black;
+        }
+        96.82539682539691%{
+            color: white;
+        }
+        97.6190476190477%{
+            content:" Testing this amazingly long and stupid string with this thingy";
+            color: black;
+        }
+        98.4126984126985%{
+            color: white;
+        }
+        99.2063492063493%{
+            content:" Testing this amazingly long and stupid string with this thingy.";
+            color: black;
+        }
+        100.0000000000001%{
+            color: white;
+        }
+        }
+    </style>
+    <script>
+        /*
+        let array = ["F", "Fu", "Fuc", "Fuck", "Fuck Y", "Fuck Yo", "Fuck You"];
+        let percentage = 100/(array.length * 2);
+        let percentageCounter = percentage;
+        console.log("Array size: " + array.length + " Percentage: " + percentage);
+        let effect = "color: white;";
+        let effect2 = "color: black;";
+        let keyframe = '0%{\n\t' + effect + '\n}\n';
+        for(let i = 0; i < array.length; i++){
+            keyframe += percentageCounter + '%{\n\tcontent:"' + array[i] + '";\n\t' + effect2 + '\n}\n';
+            percentageCounter = percentageCounter + percentage;
+            keyframe += percentageCounter + "%{\n\t" + effect + "\n}\n";
+            percentageCounter = percentageCounter + percentage;
+        }
+        console.log(keyframe);*/
+        /*
+        let string = "Testing this amazingly long and stupid string with this thingy.";
+        let percentage = 100/(string.length*2);
+        let percentageCounter = percentage;
+        console.log("Chars: " + string.length + " Percentage: " + percentage);
+        let effect = "color: white;";
+        let effect2 = "color: black;";
+        let oldChars = " ";
+        let keyframe = '0%{\n\t' + effect + '\n}\n';
+        for(let i = 0; i < string.length; i++){
+            keyframe += percentageCounter + '%{\n\tcontent:"' + oldChars + string.charAt(i) + '";\n\t' + effect2 + '\n}\n';
+            oldChars += string.charAt(i);
+            percentageCounter = percentageCounter + percentage
+            keyframe += percentageCounter + "%{\n\t" + effect + "\n}\n";
+            percentageCounter = percentageCounter + percentage            
+        }
+        console.log(keyframe);
+        */
+    </script>
+</head> 
+	<body>
+        <div class="gridWrapper">
+            <div class="gridOpinions">
+                <div class="gridColumnDividers">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="header">Hate</div>
+                <div class="header">Dislike</div>
+                <div class="header">Indifference</div>
+                <div class="header">Like</div>
+                <div class="header">Adore</div>
+                <div class="topic1 bar">Topic1</div>
+                <div class="topic2 bar">Topic2</div>
+                <div class="topic3 bar">Topic3</div>
+                <div class="topic4 bar">Topic4</div>
+                <div class="topic5 bar">Topic5</div>
+            </div>
+        </div>
+        <div class="letter-changer">
+        </div>
+	</body>
+</html>

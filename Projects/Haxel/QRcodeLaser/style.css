@@ -1,0 +1,198 @@
+:root {
+  --bg-dark: #0a0d14;
+  --panel-bg: rgba(18, 24, 38, 0.85);
+  --accent-orange: #ff6b00;
+  --accent-orange-glow: rgba(255, 107, 0, 0.35);
+  --accent-cyan: #00f2fe;
+  --text-primary: #f0f4f8;
+  --text-muted: #8a99ad;
+  --border-color: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+header {
+  max-width: 1100px;
+  width: 100%;
+  margin-bottom: 35px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  padding: 24px 30px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.header-title h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff, var(--text-muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.header-title .info {
+  font-size: 0.9rem;
+  color: var(--accent-cyan);
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.controls {
+  display: flex;
+  gap: 16px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff6b00, #ff8800);
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px var(--accent-orange-glow);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 107, 0, 0.5);
+  background: linear-gradient(135deg, #ff7b1a, #ff991a);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.workspaces-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 40px;
+  max-width: 1100px;
+  width: 100%;
+  justify-items: center;
+}
+
+.workspace-card {
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+}
+
+.workspace-header {
+  width: 100%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent-orange);
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+/* 4x4 inch bed workspace presentation scale */
+.workspace {
+  background: #ffffff;
+  color: #000000;
+  width: 400px;
+  height: 400px;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--accent-orange);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+}
+
+/* 30mm x 40mm tag representation */
+.qr-tag {
+  width: 118px;
+  height: 172px;
+  border: 1px dashed #aaaaaa;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px 5px 2px;
+  background: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.qr-tag:hover {
+  border-color: var(--accent-orange);
+}
+
+.qr-canvas-container {
+  width: 98px;
+  height: 98px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1px;
+}
+
+.qr-canvas-container img, .qr-canvas-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.tag-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 13px;
+  margin: 2px 0 1px 0;
+  text-align: center;
+  color: #000000;
+  letter-spacing: 0.5px;
+  width: 90%;
+  border-bottom: 1.5px solid #000000;
+  padding-bottom: 2px;
+}
+
+.tag-instructions {
+  font-size: 8.5px;
+  line-height: 1.12;
+  text-align: center;
+  color: #000000;
+  font-weight: 800;
+  padding: 0 2px;
+  width: 100%;
+}
