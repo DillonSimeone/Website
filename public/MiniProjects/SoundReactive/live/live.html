@@ -25,6 +25,25 @@
   <!-- Main Projection & Shader Canvas Target -->
   <div id="canvas-projection-wrapper">
     <div id="canvas-container"></div>
+    <div id="dj-fx-overlay" class="dj-fx-overlay"></div>
+  </div>
+
+  <!-- Floating Real-Time MIDI OSD Telemetry Display -->
+  <div id="midi-osd" class="midi-osd">
+    <div class="osd-top-row">
+      <span class="osd-badge">⚡ DDJ-200</span>
+      <span id="osd-event-tag" class="osd-event-tag">CC #15</span>
+      <span id="osd-channel" class="osd-channel">CH 1</span>
+    </div>
+    <div class="osd-main-row">
+      <div id="osd-label" class="osd-label">DECK 1 EQ LOW</div>
+      <div id="osd-arrow" class="osd-arrow">➔</div>
+      <div id="osd-action" class="osd-action">BASS PUNCH</div>
+      <div id="osd-val" class="osd-val">1.8x</div>
+    </div>
+    <div class="osd-gauge-track">
+      <div id="osd-gauge-fill" class="osd-gauge-fill" style="width: 60%;"></div>
+    </div>
   </div>
 
   <!-- Top DJ HUD Overlay -->
@@ -72,6 +91,7 @@
       </div>
       <div class="hud-divider"></div>
       <div class="system-tools">
+        <button id="btn-midi" class="hud-btn alt" title="Press [M] to toggle MIDI Studio Deck"><span class="midi-led" id="midi-led"></span><span id="midi-btn-text">MIDI [OFFLINE]</span></button>
         <button id="btn-tweak" class="hud-btn" title="Press [T] to toggle Shader Tweaker">TWEAK [T]</button>
         <button id="btn-calibrate" class="hud-btn alt" title="Press [C] to toggle Projector Mapping">MAPPING [C]</button>
         <button id="btn-fullscreen" class="hud-btn alt" title="Press [F] for Fullscreen">FULLSCREEN [F]</button>
@@ -151,6 +171,188 @@
           <button id="btn-reset-settings" class="tweak-btn danger">RESTORE DEFAULTS</button>
         </div>
         <div id="storage-status-msg" class="storage-status">ALL SETTINGS AUTOSAVED</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Slide-Out MIDI Studio & DDJ-200 Hardware Twin Drawer -->
+  <aside id="midi-studio-drawer" class="midi-studio-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <span class="case-badge">HARDWARE TELEMETRY // USB MIDI</span>
+        <h2>PIONEER DDJ-200 STUDIO HUD</h2>
+      </div>
+      <div class="midi-header-status">
+        <span id="midi-status-pill" class="status-pill offline">OFFLINE</span>
+        <button id="btn-midi-rescan" class="tweak-btn mini">RESCAN</button>
+        <button id="btn-close-midi" class="drawer-close-btn" title="Close [M]">&times;</button>
+      </div>
+    </div>
+
+    <div class="drawer-content midi-studio-content">
+      <!-- Virtual DDJ-200 Twin Surface -->
+      <div class="virtual-deck-wrapper">
+        <div class="deck-surface-grid">
+          <!-- Deck 1 (Left) -->
+          <div class="vdeck-col deck-1" id="vdeck-1">
+            <div class="vdeck-tag">DECK 1 // SHADER SELECTOR</div>
+            
+            <!-- Jog Wheel 1 -->
+            <div class="vdeck-jog-container">
+              <div class="vdeck-jog" id="vjog-1">
+                <div class="vjog-disc">
+                  <div class="vjog-indicator" id="vjog-ind-1"></div>
+                  <div class="vjog-center">
+                    <span class="vjog-label">JOG 1</span>
+                    <span class="vjog-sub">SCRATCH</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deck 1 Knobs row -->
+            <div class="vdeck-strip">
+              <div class="vknob-item">
+                <span class="vknob-label">HI (SPARKLE)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-hi-1" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-hi-1">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">MID (SMOOTH)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-mid-1" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-mid-1">0.22</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">LOW (PUNCH)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-low-1" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-low-1">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">CFX (HUE)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-cfx-1" style="height: 0%;"></div></div>
+                <span class="vknob-val" id="vval-cfx-1">0°</span>
+              </div>
+            </div>
+
+            <!-- Deck 1 Fader -->
+            <div class="vfader-row">
+              <span class="vfader-label">CH 1 VOL (MIC GAIN)</span>
+              <div class="vfader-track" id="vtrack-fader-1"><div class="vfader-thumb" id="vthumb-fader-1" style="bottom: 40%;"></div></div>
+              <span class="vfader-val" id="vval-fader-1">1.2x</span>
+            </div>
+
+            <!-- Deck 1 Performance Pads (Shaders 1-8) -->
+            <div class="vpads-title">PERFORMANCE PADS 1-8 (SELECT SHADER)</div>
+            <div class="vpads-grid" id="vpads-deck-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Center Mixer Section -->
+          <div class="vdeck-col mixer" id="vdeck-mixer">
+            <div class="vdeck-tag">MIXER // BUS</div>
+            
+            <div class="mixer-status-box">
+              <div class="mixer-title">HARDWARE LINK</div>
+              <div class="device-name-display" id="device-name-display">NO USB MIDI DETECTED</div>
+              <div class="device-help-text">Plug in Pioneer DDJ-200 via USB. Chrome automatically detects it with zero setup.</div>
+            </div>
+
+            <!-- Crossfader -->
+            <div class="crossfader-container">
+              <span class="cf-label">CROSSFADER (BLEND / MORPH)</span>
+              <div class="crossfader-track" id="vtrack-crossfader">
+                <div class="crossfader-thumb" id="vthumb-crossfader" style="left: 50%;"></div>
+              </div>
+              <div class="cf-endpoints">
+                <span>DECK 1 (A)</span>
+                <span id="cf-val-display">CENTER (0.5)</span>
+                <span>DECK 2 (B)</span>
+              </div>
+            </div>
+
+            <div class="mixer-quick-actions">
+              <button id="btn-midi-learn" class="tweak-btn primary mini">MIDI LEARN</button>
+              <button id="btn-reset-midi-map" class="tweak-btn danger mini">RESET MAP</button>
+            </div>
+
+            <div id="midi-learn-banner" class="midi-learn-banner hidden">
+              <span class="blink">●</span> WAITING FOR HARDWARE TOUCH...
+              <button id="btn-cancel-learn" class="term-btn">CANCEL</button>
+            </div>
+          </div>
+
+          <!-- Deck 2 (Right) -->
+          <div class="vdeck-col deck-2" id="vdeck-2">
+            <div class="vdeck-tag">DECK 2 // LIVE FX MATRIX</div>
+            
+            <!-- Jog Wheel 2 -->
+            <div class="vdeck-jog-container">
+              <div class="vdeck-jog" id="vjog-2">
+                <div class="vjog-disc">
+                  <div class="vjog-indicator" id="vjog-ind-2"></div>
+                  <div class="vjog-center">
+                    <span class="vjog-label">JOG 2</span>
+                    <span class="vjog-sub">ROTATE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deck 2 Knobs row -->
+            <div class="vdeck-strip">
+              <div class="vknob-item">
+                <span class="vknob-label">HI (PARAM 1)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-hi-2" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-hi-2">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">MID (PARAM 2)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-mid-2" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-mid-2">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">LOW (PARAM 3)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-eq-low-2" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-eq-low-2">1.0x</span>
+              </div>
+              <div class="vknob-item">
+                <span class="vknob-label">CFX (ZOOM)</span>
+                <div class="vknob-track"><div class="vknob-fill" id="vfill-cfx-2" style="height: 50%;"></div></div>
+                <span class="vknob-val" id="vval-cfx-2">1.0x</span>
+              </div>
+            </div>
+
+            <!-- Deck 2 Fader -->
+            <div class="vfader-row">
+              <span class="vfader-label">CH 2 VOL (BLOOM / GLOW)</span>
+              <div class="vfader-track" id="vtrack-fader-2"><div class="vfader-thumb" id="vthumb-fader-2" style="bottom: 35%;"></div></div>
+              <span class="vfader-val" id="vval-fader-2">1.0x</span>
+            </div>
+
+            <!-- Deck 2 Performance Pads (Live FX Triggers) -->
+            <div class="vpads-title">PERFORMANCE PADS 1-8 (LIVE FX TRIGGERS)</div>
+            <div class="vpads-grid" id="vpads-deck-2">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Real-Time MIDI Terminal Packet Log -->
+      <div class="midi-terminal-section">
+        <div class="terminal-bar">
+          <div class="term-title">
+            <span class="term-icon">❯_</span> REAL-TIME MIDI TELEMETRY CONSOLE
+          </div>
+          <div class="term-tools">
+            <label class="term-label"><input type="checkbox" id="chk-autoscroll" checked> AUTOSCROLL</label>
+            <button id="btn-clear-term" class="term-btn">CLEAR</button>
+          </div>
+        </div>
+        <div id="midi-console-log" class="midi-console-log">
+          <div class="log-line system">[SYSTEM] Web MIDI Engine Initialized. Plug in Pioneer DDJ-200 via USB.</div>
+        </div>
       </div>
     </div>
   </aside>

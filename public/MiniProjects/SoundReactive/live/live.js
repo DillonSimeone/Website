@@ -2,11 +2,26 @@ import * as THREE from 'three';
 import { AudioEngine } from '../shared/audio-engine.js';
 import { ProjectionMapper } from '../shared/projection-mapper.js';
 import { SHADER_DEFINITIONS } from '../shaders/shader-defs.js';
+import { MidiController } from '../shared/midi-controller.js';
 
 let renderer, scene, camera, mesh, material;
-let audioEngine, projectionMapper;
+let audioEngine, projectionMapper, midiController;
 let currentShaderIndex = 6;
 let uniforms = {};
+
+// Live DJ MIDI Runtime Variables
+let visualTime = 0;
+let tempoMultiplier = 1.0;
+let jogTimeOffset = 0;
+let isFrozen = false;
+let strobeIntensity = 0;
+let bassBombDecay = 0;
+let bloomBombDecay = 0;
+let raveHueCycle = false;
+let crossfadeVal = 0.5;
+let vjogAngle1 = 0;
+let vjogAngle2 = 0;
+let djFxOverlay = null;
 
 // Default Settings Blueprint
 const DEFAULT_SETTINGS = {
@@ -74,6 +89,27 @@ const paramHueShift = document.getElementById('param-hue-shift');
 const valHueShift = document.getElementById('val-hue-shift');
 const paramGlowMult = document.getElementById('param-glow-mult');
 const valGlowMult = document.getElementById('val-glow-mult');
+
+// MIDI HUD & Studio References
+const btnMidi = document.getElementById('btn-midi');
+const midiBtnText = document.getElementById('midi-btn-text');
+const midiLed = document.getElementById('midi-led');
+const midiStudioDrawer = document.getElementById('midi-studio-drawer');
+const btnCloseMidi = document.getElementById('btn-close-midi');
+const btnMidiRescan = document.getElementById('btn-midi-rescan');
+const btnMidiLearn = document.getElementById('btn-midi-learn');
+const btnCancelLearn = document.getElementById('btn-cancel-learn');
+const midiLearnBanner = document.getElementById('midi-learn-banner');
+const btnResetMidiMap = document.getElementById('btn-reset-midi-map');
+const btnClearTerm = document.getElementById('btn-clear-term');
+const midiStatusPill = document.getElementById('midi-status-pill');
+const deviceNameDisplay = document.getElementById('device-name-display');
+const vjogInd1 = document.getElementById('vjog-ind-1');
+const vjogInd2 = document.getElementById('vjog-ind-2');
+const vjog1 = document.getElementById('vjog-1');
+const vjog2 = document.getElementById('vjog-2');
+const vthumbCrossfader = document.getElementById('vthumb-crossfader');
+const cfValDisplay = document.getElementById('cf-val-display');
 
 function loadSettings() {
   try {
@@ -231,12 +267,6 @@ function renderActiveShaderControls() {
   });
 }
 
-function toggleTweakDrawer(open = null) {
-  if (!tweakDrawer) return;
-  const shouldOpen = open !== null ? open : !tweakDrawer.classList.contains('open');
-  tweakDrawer.classList.toggle('open', shouldOpen);
-  if (btnTweak) btnTweak.classList.toggle('active', shouldOpen);
-}
 
 function initThree() {
   const container = document.getElementById('canvas-container');
@@ -351,8 +381,500 @@ function buildShaderDock() {
   });
 }
 
+function toggleTweakDrawer(open = null) {
+  if (!tweakDrawer) return;
+  const shouldOpen = open !== null ? open : !tweakDrawer.classList.contains('open');
+  tweakDrawer.classList.toggle('open', shouldOpen);
+  if (btnTweak) btnTweak.classList.toggle('active', shouldOpen);
+  if (shouldOpen && midiStudioDrawer && midiStudioDrawer.classList.contains('open')) {
+    toggleMidiStudioDrawer(false);
+  }
+}
+
+function toggleMidiStudioDrawer(open = null) {
+  if (!midiStudioDrawer) return;
+  const shouldOpen = open !== null ? open : !midiStudioDrawer.classList.contains('open');
+  midiStudioDrawer.classList.toggle('open', shouldOpen);
+  if (btnMidi) btnMidi.classList.toggle('active', shouldOpen);
+  if (shouldOpen && tweakDrawer && tweakDrawer.classList.contains('open')) {
+    toggleTweakDrawer(false);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Real-Time MIDI OSD Telemetry
+// ---------------------------------------------------------------------------
+let osdTimeout = null;
+function showMidiOsd(data) {
+  const osd = document.getElementById('midi-osd');
+  const osdEventTag = document.getElementById('osd-event-tag');
+  const osdChannel = document.getElementById('osd-channel');
+  const osdLabel = document.getElementById('osd-label');
+  const osdAction = document.getElementById('osd-action');
+  const osdVal = document.getElementById('osd-val');
+  const osdGaugeFill = document.getElementById('osd-gauge-fill');
+
+  if (!osd) return;
+
+  if (osdEventTag) osdEventTag.textContent = data.eventKey || '';
+  if (osdChannel) osdChannel.textContent = `CH ${data.channel !== undefined ? data.channel + 1 : 1}`;
+  if (osdLabel) osdLabel.textContent = data.label || 'CONTROL';
+  if (osdAction) osdAction.textContent = data.action || '';
+  if (osdVal) osdVal.textContent = data.valText || '';
+  if (osdGaugeFill) {
+    const pct = Math.min(100, Math.max(0, (data.normalized !== undefined ? data.normalized : 0.5) * 100));
+    osdGaugeFill.style.width = `${pct}%`;
+  }
+
+  osd.classList.add('visible');
+  clearTimeout(osdTimeout);
+  osdTimeout = setTimeout(() => {
+    osd.classList.remove('visible');
+  }, 1600);
+}
+
+// ---------------------------------------------------------------------------
+// MIDI Terminal Console Logger
+// ---------------------------------------------------------------------------
+function logMidiConsole(type, text) {
+  const consoleLog = document.getElementById('midi-console-log');
+  if (!consoleLog) return;
+  const line = document.createElement('div');
+  line.className = `log-line ${type}`;
+  const now = new Date();
+  const timeStr = `${now.toTimeString().split(' ')[0]}.${String(now.getMilliseconds()).padStart(3, '0')}`;
+  line.textContent = `[${timeStr}] ${text}`;
+  consoleLog.appendChild(line);
+
+  if (consoleLog.children.length > 120) {
+    consoleLog.removeChild(consoleLog.firstChild);
+  }
+
+  const chkAutoscroll = document.getElementById('chk-autoscroll');
+  if (chkAutoscroll && chkAutoscroll.checked) {
+    consoleLog.scrollTop = consoleLog.scrollHeight;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Virtual Deck UI Synchronization
+// ---------------------------------------------------------------------------
+function updateVirtualKnob(id, normalized, valText) {
+  const fill = document.getElementById(`vfill-${id}`);
+  const val = document.getElementById(`vval-${id}`);
+  if (fill) fill.style.height = `${Math.round(normalized * 100)}%`;
+  if (val && valText) val.textContent = valText;
+}
+
+function updateVirtualFader(deck, normalized, valText) {
+  const thumb = document.getElementById(`vthumb-fader-${deck}`);
+  const val = document.getElementById(`vval-fader-${deck}`);
+  if (thumb) thumb.style.left = `${Math.round(normalized * 85)}%`;
+  if (val && valText) val.textContent = valText;
+}
+
+function updateVirtualCrossfader(normalized) {
+  if (vthumbCrossfader) {
+    vthumbCrossfader.style.left = `${Math.round(normalized * 100)}%`;
+  }
+  if (cfValDisplay) {
+    const pct = Math.round(normalized * 100);
+    cfValDisplay.textContent = pct === 50 ? 'CENTER (50/50)' : (pct < 50 ? `DECK A (${100 - pct}%)` : `DECK B (${pct}%)`);
+  }
+}
+
+function updateJogWheelVisual(deck, angle) {
+  const jog = document.getElementById(`vjog-${deck}`);
+  const ind = document.getElementById(`vjog-ind-${deck}`);
+  if (jog) {
+    jog.classList.add('scratching');
+    clearTimeout(jog._scratchTimeout);
+    jog._scratchTimeout = setTimeout(() => jog.classList.remove('scratching'), 150);
+  }
+  if (ind) {
+    ind.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-38px)`;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Live DJ Performance FX Triggers
+// ---------------------------------------------------------------------------
+function triggerStrobe() {
+  if (!djFxOverlay) djFxOverlay = document.getElementById('dj-fx-overlay');
+  if (djFxOverlay) {
+    djFxOverlay.classList.add('strobe');
+    strobeIntensity = 1.0;
+  }
+  logMidiConsole('note', '[FX TRIGGER] ⚡ WHITE STROBE BURST ACTIVATED');
+}
+
+function triggerInvert(active) {
+  if (!djFxOverlay) djFxOverlay = document.getElementById('dj-fx-overlay');
+  if (djFxOverlay) {
+    djFxOverlay.classList.toggle('invert', active);
+  }
+  logMidiConsole('note', `[FX TRIGGER] INVERT X-RAY: ${active ? 'HOLD ACTIVE' : 'RELEASED'}`);
+}
+
+function triggerGlitch(active) {
+  if (!djFxOverlay) djFxOverlay = document.getElementById('dj-fx-overlay');
+  if (djFxOverlay) {
+    djFxOverlay.classList.toggle('glitch', active);
+  }
+  logMidiConsole('note', `[FX TRIGGER] CHROMATIC GLITCH WARP: ${active ? 'HOLD ACTIVE' : 'RELEASED'}`);
+}
+
+function triggerFreeze(active) {
+  isFrozen = active;
+  logMidiConsole('note', `[FX TRIGGER] FREEZE FRAME: ${active ? 'TIME FROZEN' : 'RESUMED'}`);
+}
+
+function triggerBassBomb() {
+  bassBombDecay = 2.0;
+  logMidiConsole('note', '[FX TRIGGER] 💣 BASS BOMB SLAM: 3.0x SUB-PUNCH PEAK');
+}
+
+function toggleRaveCycle() {
+  raveHueCycle = !raveHueCycle;
+  logMidiConsole('note', `[FX TRIGGER] 🌈 NEON RAVE CYCLE: ${raveHueCycle ? 'LOOPING' : 'STOPPED'}`);
+}
+
+function triggerBloomFlare() {
+  bloomBombDecay = 1.8;
+  logMidiConsole('note', '[FX TRIGGER] ✦ BLOOM OVERDRIVE FLARE');
+}
+
+function triggerSpeedRush(active) {
+  tempoMultiplier = active ? 2.5 : 1.0;
+  logMidiConsole('note', `[FX TRIGGER] ⚡ SPEED RUSH: ${active ? '2.5x HYPER-TEMPO' : '1.0x NORMAL'}`);
+}
+
+// ---------------------------------------------------------------------------
+// Populate Virtual Performance Pads
+// ---------------------------------------------------------------------------
+const DECK_2_FX_DEFS = [
+  { name: 'STROBE', sub: 'BURST', fnDown: () => triggerStrobe(), fnUp: null },
+  { name: 'INVERT', sub: 'X-RAY', fnDown: () => triggerInvert(true), fnUp: () => triggerInvert(false) },
+  { name: 'GLITCH', sub: 'RGB SPLIT', fnDown: () => triggerGlitch(true), fnUp: () => triggerGlitch(false) },
+  { name: 'FREEZE', sub: 'TIME STOP', fnDown: () => triggerFreeze(true), fnUp: () => triggerFreeze(false) },
+  { name: 'BASS BOMB', sub: 'MAX PUNCH', fnDown: () => triggerBassBomb(), fnUp: null },
+  { name: 'RAVE', sub: 'HUE CYCLE', fnDown: () => toggleRaveCycle(), fnUp: null },
+  { name: 'BLOOM', sub: 'FLARE', fnDown: () => triggerBloomFlare(), fnUp: null },
+  { name: 'SPEED', sub: '2.5X RUSH', fnDown: () => triggerSpeedRush(true), fnUp: () => triggerSpeedRush(false) }
+];
+
+function populateVirtualPads() {
+  const containerDeck1 = document.getElementById('vpads-deck-1');
+  const containerDeck2 = document.getElementById('vpads-deck-2');
+
+  // Deck 1: Shaders 1-8
+  if (containerDeck1) {
+    containerDeck1.innerHTML = '';
+    for (let i = 0; i < 8; i++) {
+      const shader = SHADER_DEFINITIONS[i];
+      const btn = document.createElement('button');
+      btn.className = `vpad-btn ${i === currentShaderIndex ? 'active' : ''}`;
+      btn.id = `vpad-1-${i + 1}`;
+      btn.innerHTML = `
+        <span class="vpad-num">#${i + 1}</span>
+        <span>${shader ? shader.title.split(' ')[0] : `SHADER ${i + 1}`}</span>
+      `;
+      btn.addEventListener('click', () => {
+        setShader(i);
+        highlightVirtualPad(1, i, true);
+        setTimeout(() => highlightVirtualPad(1, i, false), 300);
+      });
+      containerDeck1.appendChild(btn);
+    }
+  }
+
+  // Deck 2: Live FX Triggers
+  if (containerDeck2) {
+    containerDeck2.innerHTML = '';
+    DECK_2_FX_DEFS.forEach((fx, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'vpad-btn';
+      btn.id = `vpad-2-${i + 1}`;
+      btn.innerHTML = `
+        <span class="vpad-num">FX ${i + 1}</span>
+        <span>${fx.name}</span>
+      `;
+      btn.addEventListener('mousedown', () => {
+        fx.fnDown();
+        btn.classList.add('active');
+      });
+      btn.addEventListener('mouseup', () => {
+        if (fx.fnUp) fx.fnUp();
+        btn.classList.remove('active');
+      });
+      btn.addEventListener('mouseleave', () => {
+        if (fx.fnUp) fx.fnUp();
+        btn.classList.remove('active');
+      });
+      containerDeck2.appendChild(btn);
+    });
+  }
+}
+
+function highlightVirtualPad(deck, padIndex, active) {
+  const pad = document.getElementById(`vpad-${deck}-${padIndex + 1}`);
+  if (pad) {
+    if (active) pad.classList.add('active');
+    else if (deck === 2 || padIndex !== currentShaderIndex) pad.classList.remove('active');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MIDI Controller Web API Initialization & Routing
+// ---------------------------------------------------------------------------
+async function initMidi() {
+  midiController = new MidiController();
+
+  midiController.on('connection', ({ connected, deviceName, inputCount }) => {
+    if (midiBtnText) {
+      midiBtnText.textContent = connected ? `MIDI: ${deviceName.substring(0, 10).toUpperCase()}` : 'MIDI [OFFLINE]';
+    }
+    if (midiLed) {
+      midiLed.classList.toggle('online', connected);
+    }
+    if (midiStatusPill) {
+      midiStatusPill.textContent = connected ? 'ONLINE' : 'OFFLINE';
+      midiStatusPill.className = `status-pill ${connected ? 'online' : 'offline'}`;
+    }
+    if (deviceNameDisplay) {
+      deviceNameDisplay.textContent = connected ? `${deviceName.toUpperCase()} (${inputCount} PORT)` : 'NO USB MIDI DETECTED';
+    }
+    logMidiConsole('system', connected ? `[HARDWARE] ${deviceName} Connected & Ready.` : '[SYSTEM] No MIDI Device Connected.');
+  });
+
+  midiController.on('rawMessage', (raw) => {
+    // Flash activity LED
+    if (midiLed) {
+      midiLed.classList.add('activity');
+      clearTimeout(midiLed._activityTimeout);
+      midiLed._activityTimeout = setTimeout(() => midiLed.classList.remove('activity'), 70);
+    }
+
+    let type = 'system';
+    let text = '';
+    if (raw.isCC) {
+      type = 'cc';
+      text = `CH ${raw.channel + 1} | CC #${raw.data1} = ${raw.data2} (${Math.round(raw.data2 / 1.27)}%) [${raw.hex}]`;
+    } else if (raw.isNoteOn) {
+      type = 'note';
+      text = `CH ${raw.channel + 1} | NOTE ON #${raw.data1} VEL ${raw.data2} [${raw.hex}]`;
+    } else if (raw.isNoteOff) {
+      type = 'note';
+      text = `CH ${raw.channel + 1} | NOTE OFF #${raw.data1} [${raw.hex}]`;
+    } else {
+      text = `RAW MIDI [${raw.hex}]`;
+    }
+    logMidiConsole(type, text);
+  });
+
+  // Control Change Routing (Knobs & Faders)
+  midiController.on('controlChange', (data) => {
+    const ctrlId = data.control.id;
+    const norm = data.normalized;
+
+    // Deck 1 EQ Knobs
+    if (ctrlId === 'eq_low_1') {
+      const val = 0.2 + norm * 2.8;
+      tweakState.global.bassPunch = val;
+      if (paramBassPunch) { paramBassPunch.value = val; valBassPunch.textContent = `${val.toFixed(1)}x`; }
+      updateVirtualKnob('eq-low-1', norm, `${val.toFixed(1)}x`);
+      applySettingsToUniforms();
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: 'DECK 1 EQ LOW', action: 'BASS PUNCH', valText: `${val.toFixed(1)}x`, normalized: norm });
+    } else if (ctrlId === 'eq_mid_1') {
+      const val = 0.05 + norm * 0.50;
+      tweakState.global.smoothing = val;
+      if (audioEngine) audioEngine.smoothFactor = val;
+      if (paramSmoothing) { paramSmoothing.value = val; valSmoothing.textContent = val.toFixed(2); }
+      updateVirtualKnob('eq-mid-1', norm, val.toFixed(2));
+      applySettingsToUniforms();
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: 'DECK 1 EQ MID', action: 'SMOOTHING', valText: val.toFixed(2), normalized: norm });
+    } else if (ctrlId === 'eq_hi_1') {
+      const val = 0.2 + norm * 2.8;
+      tweakState.global.trebleSparkle = val;
+      if (paramTrebleSparkle) { paramTrebleSparkle.value = val; valTrebleSparkle.textContent = `${val.toFixed(1)}x`; }
+      updateVirtualKnob('eq-hi-1', norm, `${val.toFixed(1)}x`);
+      applySettingsToUniforms();
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: 'DECK 1 EQ HI', action: 'TREBLE SPARKLE', valText: `${val.toFixed(1)}x`, normalized: norm });
+    } else if (ctrlId === 'cfx_1') {
+      tweakState.global.hueShift = norm;
+      const deg = Math.round(norm * 360);
+      if (paramHueShift) { paramHueShift.value = norm; valHueShift.textContent = `+${deg}°`; }
+      updateVirtualKnob('cfx-1', norm, `${deg}°`);
+      applySettingsToUniforms();
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: 'DECK 1 CFX', action: 'HUE SHIFT', valText: `+${deg}°`, normalized: norm });
+    }
+    // Deck 1 Channel Fader (Audio Mic Gain)
+    else if (ctrlId === 'fader_1' || ctrlId === 'fader_1_alt') {
+      const val = 0.2 + norm * 2.8;
+      if (audioEngine) audioEngine.gain = val;
+      if (sliderGain) sliderGain.value = val;
+      if (gainVal) gainVal.textContent = `${val.toFixed(1)}x`;
+      updateVirtualFader(1, norm, `${val.toFixed(1)}x`);
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: 'CH 1 FADER', action: 'MIC GAIN', valText: `${val.toFixed(1)}x`, normalized: norm });
+    }
+    // Deck 2 Channel Fader (Glow & Bloom)
+    else if (ctrlId === 'fader_2' || ctrlId === 'fader_2_alt') {
+      const val = 0.3 + norm * 2.2;
+      tweakState.global.glowMult = val;
+      if (paramGlowMult) { paramGlowMult.value = val; valGlowMult.textContent = `${val.toFixed(1)}x`; }
+      updateVirtualFader(2, norm, `${val.toFixed(1)}x`);
+      applySettingsToUniforms();
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: 'CH 2 FADER', action: 'BLOOM / GLOW', valText: `${val.toFixed(1)}x`, normalized: norm });
+    }
+    // Crossfader
+    else if (ctrlId === 'crossfader') {
+      crossfadeVal = norm;
+      updateVirtualCrossfader(norm);
+      // Crossfader blends visual energy and adds subtle chromatic saturation
+      uniforms.u_glowMultiplier.value = tweakState.global.glowMult * (1.0 + norm * 0.8);
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: 'CROSSFADER', action: 'BLEND / MORPH', valText: `${Math.round(norm * 100)}%`, normalized: norm });
+    }
+    // Tempo Sliders
+    else if (ctrlId === 'tempo_1' || ctrlId === 'tempo_2') {
+      tempoMultiplier = 0.25 + norm * 2.75;
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: data.control.name, action: 'PLAYBACK RATE', valText: `${tempoMultiplier.toFixed(2)}x`, normalized: norm });
+    }
+    // Deck 2 EQ Knobs (Mapped to active shader custom params or auxiliary audio shaping)
+    else if (ctrlId === 'eq_hi_2' || ctrlId === 'eq_mid_2' || ctrlId === 'eq_low_2' || ctrlId === 'cfx_2') {
+      const curShader = SHADER_DEFINITIONS[currentShaderIndex];
+      const paramIdx = ctrlId === 'eq_hi_2' ? 0 : (ctrlId === 'eq_mid_2' ? 1 : (ctrlId === 'eq_low_2' ? 2 : 3));
+      if (curShader && curShader.customParams && curShader.customParams[paramIdx]) {
+        const p = curShader.customParams[paramIdx];
+        const val = p.min + norm * (p.max - p.min);
+        if (!tweakState.shaders[curShader.id]) tweakState.shaders[curShader.id] = {};
+        tweakState.shaders[curShader.id][p.id] = val;
+        applySettingsToUniforms();
+        renderActiveShaderControls();
+        const knobLabel = ctrlId === 'eq_hi_2' ? 'eq-hi-2' : (ctrlId === 'eq_mid_2' ? 'eq-mid-2' : (ctrlId === 'eq_low_2' ? 'eq-low-2' : 'cfx-2'));
+        updateVirtualKnob(knobLabel, norm, `${val.toFixed(1)}${p.unit || ''}`);
+        showMidiOsd({ eventKey: data.key, channel: data.channel, label: data.control.name, action: p.name, valText: `${val.toFixed(1)}${p.unit || ''}`, normalized: norm });
+      }
+    }
+  });
+
+  // Jog Wheel Scratch Routing
+  midiController.on('jog', (data) => {
+    jogTimeOffset += data.delta * 0.04;
+    gridVelocity.x += data.delta * 0.5;
+
+    if (data.deck === 1) {
+      vjogAngle1 = (vjogAngle1 + data.delta * 10) % 360;
+      updateJogWheelVisual(1, vjogAngle1);
+    } else {
+      vjogAngle2 = (vjogAngle2 + data.delta * 10) % 360;
+      updateJogWheelVisual(2, vjogAngle2);
+    }
+
+    logMidiConsole('jog', `[JOG WHEEL] DECK ${data.deck} SCRATCH DELTA: ${data.delta > 0 ? '+' : ''}${data.delta}`);
+    showMidiOsd({
+      eventKey: `JOG DECK ${data.deck}`,
+      channel: data.deck - 1,
+      label: `DECK ${data.deck} JOG`,
+      action: data.delta > 0 ? 'FORWARD SCRATCH' : 'BACKWARD SCRATCH',
+      valText: `${data.delta > 0 ? '+' : ''}${data.delta}`,
+      normalized: 0.5 + data.delta * 0.05
+    });
+  });
+
+  // Note On Routing (Buttons & Performance Pads)
+  midiController.on('noteOn', (data) => {
+    const ctrlId = data.control.id;
+    const deck = data.deck;
+
+    // Deck 1 Performance Pads (1 to 8) -> Select Shaders 1 to 8
+    if (deck === 1 && data.control.padIndex !== undefined) {
+      const idx = data.control.padIndex;
+      setShader(idx);
+      highlightVirtualPad(1, idx, true);
+      showMidiOsd({
+        eventKey: data.key,
+        channel: data.channel,
+        label: `DECK 1 PAD #${idx + 1}`,
+        action: 'SELECT SHADER',
+        valText: SHADER_DEFINITIONS[idx]?.title || '',
+        normalized: (idx + 1) / 8
+      });
+      return;
+    }
+
+    // Deck 2 Performance Pads (1 to 8) -> Live FX Triggers
+    if (deck === 2 && data.control.padIndex !== undefined) {
+      const idx = data.control.padIndex;
+      const fx = DECK_2_FX_DEFS[idx];
+      if (fx) {
+        fx.fnDown();
+        highlightVirtualPad(2, idx, true);
+        showMidiOsd({
+          eventKey: data.key,
+          channel: data.channel,
+          label: `DECK 2 PAD #${idx + 1}`,
+          action: `TRIGGER ${fx.name}`,
+          valText: fx.sub,
+          normalized: 1.0
+        });
+      }
+      return;
+    }
+
+    // Play / Pause Button
+    if (ctrlId === 'play_1' || ctrlId === 'play_2') {
+      if (audioEngine) {
+        if (btnMic.classList.contains('active')) {
+          btnDemo.click();
+        } else {
+          btnMic.click();
+        }
+      }
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: 'PLAY / PAUSE', action: 'AUDIO TOGGLE', valText: 'SWITCH SOURCE', normalized: 1.0 });
+    }
+
+    // Cue Button
+    if (ctrlId === 'cue_1' || ctrlId === 'cue_2') {
+      triggerStrobe();
+      showMidiOsd({ eventKey: data.key, channel: data.channel, label: 'CUE BUTTON', action: 'TRANSIENT HIT', valText: 'PULSE', normalized: 1.0 });
+    }
+  });
+
+  // Note Off Routing (Release Momentary FX)
+  midiController.on('noteOff', (data) => {
+    const deck = data.deck;
+    if (deck === 1 && data.control.padIndex !== undefined) {
+      highlightVirtualPad(1, data.control.padIndex, false);
+    } else if (deck === 2 && data.control.padIndex !== undefined) {
+      const idx = data.control.padIndex;
+      const fx = DECK_2_FX_DEFS[idx];
+      if (fx && fx.fnUp) fx.fnUp();
+      highlightVirtualPad(2, idx, false);
+    }
+  });
+
+  await midiController.init();
+}
+
+function startMidiLearnSession() {
+  if (!midiController) return;
+  if (midiLearnBanner) midiLearnBanner.classList.remove('hidden');
+  midiController.startLearn('custom_param', 'SELECTED PARAMETER', (resolved) => {
+    if (midiLearnBanner) midiLearnBanner.classList.add('hidden');
+    logMidiConsole('system', `[LEARN] Bound ${resolved.eventKey} Successfully!`);
+  });
+}
+
+function cancelMidiLearnSession() {
+  if (midiController) midiController.cancelLearn();
+  if (midiLearnBanner) midiLearnBanner.classList.add('hidden');
+}
+
+// ---------------------------------------------------------------------------
+// Input Events & Hotkeys Binding
+// ---------------------------------------------------------------------------
 function bindInputEvents() {
-  // Key bindings 1-0 for shaders, [T] for tweak drawer, [C] for mapping, [F] for fullscreen
+  // Key bindings 1-0 for shaders, [T] for tweak drawer, [M] for MIDI studio, [C] for mapping, [F] for fullscreen
   window.addEventListener('keydown', (e) => {
     if (e.target.matches('input, textarea')) return;
 
@@ -363,16 +885,37 @@ function bindInputEvents() {
       setShader(9);
     } else if (e.key === 't' || e.key === 'T') {
       toggleTweakDrawer();
+    } else if (e.key === 'm' || e.key === 'M') {
+      toggleMidiStudioDrawer();
     } else if (e.key === 'f' || e.key === 'F') {
       toggleFullscreen();
     }
   });
 
-  // Drawer Toggle Handlers
+  // Tweak Drawer Toggle Handlers
   if (btnTweak) btnTweak.addEventListener('click', () => toggleTweakDrawer());
   if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', () => toggleTweakDrawer(false));
   if (btnSaveSettings) btnSaveSettings.addEventListener('click', () => saveSettings(true));
   if (btnResetSettings) btnResetSettings.addEventListener('click', () => restoreDefaults());
+
+  // MIDI Studio Drawer Toggle Handlers
+  if (btnMidi) btnMidi.addEventListener('click', () => toggleMidiStudioDrawer());
+  if (btnCloseMidi) btnCloseMidi.addEventListener('click', () => toggleMidiStudioDrawer(false));
+  if (btnMidiRescan) btnMidiRescan.addEventListener('click', () => {
+    if (midiController) midiController.scanInputs();
+  });
+  if (btnClearTerm) btnClearTerm.addEventListener('click', () => {
+    const consoleLog = document.getElementById('midi-console-log');
+    if (consoleLog) consoleLog.innerHTML = '<div class="log-line system">[SYSTEM] Terminal Log Cleared.</div>';
+  });
+  if (btnMidiLearn) btnMidiLearn.addEventListener('click', startMidiLearnSession);
+  if (btnCancelLearn) btnCancelLearn.addEventListener('click', cancelMidiLearnSession);
+  if (btnResetMidiMap) btnResetMidiMap.addEventListener('click', () => {
+    if (midiController) {
+      midiController.resetCustomMappings();
+      logMidiConsole('system', '[MAP] Pioneer DDJ-200 Default Hardware Profile Restored.');
+    }
+  });
 
   // Global Sliders Input Binding
   if (paramBassPunch) {
@@ -485,6 +1028,9 @@ function toggleFullscreen() {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Main Render Loop
+// ---------------------------------------------------------------------------
 let lastTime = 0;
 let gridOffset = new THREE.Vector2(0, 0);
 let gridVelocity = new THREE.Vector2(0, 0);
@@ -496,7 +1042,41 @@ function animate(time) {
   const dt = Math.max(0.001, Math.min(0.1, t - lastTime));
   lastTime = t;
 
-  uniforms.u_time.value = t;
+  // Advance visual time (modulated by tempo multiplier, frozen state, and jog scratches)
+  if (!isFrozen) {
+    visualTime += dt * tempoMultiplier;
+  }
+  uniforms.u_time.value = visualTime + jogTimeOffset;
+
+  // Smooth Strobe Decay
+  if (strobeIntensity > 0) {
+    strobeIntensity *= 0.82;
+    if (strobeIntensity < 0.02) {
+      strobeIntensity = 0;
+      if (djFxOverlay) djFxOverlay.classList.remove('strobe');
+    }
+  }
+
+  // Smooth Bass Bomb Slam Decay
+  if (bassBombDecay > 0) {
+    bassBombDecay *= 0.88;
+    if (bassBombDecay < 0.02) bassBombDecay = 0;
+    uniforms.u_bassPunch.value = Math.min(3.0, tweakState.global.bassPunch + bassBombDecay);
+  }
+
+  // Smooth Bloom Flare Decay
+  if (bloomBombDecay > 0) {
+    bloomBombDecay *= 0.90;
+    if (bloomBombDecay < 0.02) bloomBombDecay = 0;
+    uniforms.u_glowMultiplier.value = Math.min(2.5, tweakState.global.glowMult + bloomBombDecay);
+  }
+
+  // Neon Rave Hue Cycle
+  if (raveHueCycle) {
+    tweakState.global.hueShift = (tweakState.global.hueShift + dt * 0.4) % 1.0;
+    uniforms.u_hueOffset.value = tweakState.global.hueShift;
+    updateGlobalSlidersUI();
+  }
 
   if (audioEngine && audioEngine.isInitialized) {
     const telem = audioEngine.update();
@@ -517,7 +1097,6 @@ function animate(time) {
     uniforms.u_secondaryColor.value.set(telem.secondaryColor.r, telem.secondaryColor.g, telem.secondaryColor.b);
 
     // Grow-Decay Momentum Physics for Directional Infinite Grids:
-    // Repeated low notes (sub/bass) thrust forward; mids shift lateral drift; highs add speed bursts
     const targetVX = (telem.mid * 2.8 - telem.lowMid * 2.0 + telem.highMid * 1.8);
     const targetVY = (telem.subBass * 3.8 + telem.bass * 2.4 - telem.high * 1.2);
 
@@ -538,7 +1117,7 @@ function animate(time) {
       uniforms.u_gridVelocity.value.copy(gridVelocity);
     }
 
-    // Update Deaf DJ FFT Spectrum Bars (max 30px height)
+    // Update Deaf DJ FFT Spectrum Bars
     barSub.style.height = `${Math.min(30, Math.max(4, telem.subBass * 30))}px`;
     barBass.style.height = `${Math.min(30, Math.max(4, telem.bass * 30))}px`;
     barMid.style.height = `${Math.min(30, Math.max(4, telem.mid * 30))}px`;
@@ -552,8 +1131,11 @@ function animate(time) {
   renderer.render(scene, camera);
 }
 
+// ---------------------------------------------------------------------------
 // Initial Boot
+// ---------------------------------------------------------------------------
 window.addEventListener('DOMContentLoaded', () => {
+  djFxOverlay = document.getElementById('dj-fx-overlay');
   loadSettings();
   audioEngine = new AudioEngine();
   if (tweakState.global.smoothing) {
@@ -565,7 +1147,9 @@ window.addEventListener('DOMContentLoaded', () => {
     btnCalibrate.classList.toggle('active', active);
   };
   buildShaderDock();
+  populateVirtualPads();
   setShader(currentShaderIndex);
   bindInputEvents();
+  initMidi();
   animate(0);
 });
