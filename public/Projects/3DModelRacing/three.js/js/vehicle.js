@@ -12,6 +12,8 @@ export class Vehicle {
         // Vehicle Mesh & Root Hierarchy
         this.root = new THREE.Group();
         this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.castShadow = true;
+        this.mesh.receiveShadow = true;
         this.root.add(this.mesh);
 
         // Dual Xenon Headlights (Front nose cone)
@@ -22,9 +24,11 @@ export class Vehicle {
         });
         const hlL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.15), hlMat);
         hlL.position.set(-0.25, 0.22, -1.25);
+        hlL.castShadow = true;
         this.root.add(hlL);
         const hlR = hlL.clone();
         hlR.position.x = 0.25;
+        hlR.castShadow = true;
         this.root.add(hlR);
 
         // Dual Red Taillights (Rear deck)
@@ -35,27 +39,14 @@ export class Vehicle {
         });
         const tlL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.12), tlMat);
         tlL.position.set(-0.55, 0.35, 1.35);
+        tlL.castShadow = true;
         this.root.add(tlL);
         const tlR = tlL.clone();
         tlR.position.x = 0.55;
+        tlR.castShadow = true;
         this.root.add(tlR);
 
         this.scene.add(this.root);
-
-        // Projected 2D Silhouette Shadow with polygonOffset for zero z-fighting
-        const shadowMat = new THREE.MeshBasicMaterial({
-            color: 0x05060a,
-            transparent: true,
-            opacity: 0.55,
-            depthWrite: false,
-            side: THREE.DoubleSide,
-            polygonOffset: true,
-            polygonOffsetFactor: -6,
-            polygonOffsetUnits: -12
-        });
-        this.shadow = new THREE.Mesh(geometry.clone(), shadowMat);
-        this.shadow.renderOrder = 4;
-        this.scene.add(this.shadow);
 
         // Motion Variables
         this.position = new THREE.Vector3();
@@ -94,7 +85,6 @@ export class Vehicle {
         }
         this.root.position.copy(this.position);
         this.root.rotation.set(0, this.heading, 0);
-        this._updateShadow(this.position.y);
     }
 
     update(delta, trackData) {
@@ -106,16 +96,24 @@ export class Vehicle {
         // 1. Continuous Spline Ground Projection
         const ground = this._sampleTrackGround(this.position, trackData);
         const altitude = this.position.y - ground.y;
-        this.grounded = altitude < 1.5 && altitude > -0.5;
+        this.grounded = altitude < (this.hoverHeight + 0.85) && altitude > -0.6;
 
         if (this.grounded) {
-            const springForce = (this.hoverHeight - altitude) * 42.0;
-            const dampForce = -this.velocity.y * 9.0;
+            // Progressive spring suspension: non-linear force prevents bottoming out on steep ramps
+            const compression = this.hoverHeight - altitude;
+            let springForce = 0;
+            if (compression > 0) {
+                const compRatio = compression / this.hoverHeight;
+                springForce = Math.pow(compRatio, 1.8) * 160.0 + compression * 60.0;
+            } else {
+                springForce = compression * 35.0; // gentle pull down when hovering slightly high
+            }
+            const dampForce = -this.velocity.y * 11.0;
             this.velocity.y += (springForce + dampForce) * delta;
             this.airTime = 0;
         } else {
-            // Free-fall in air
-            this.velocity.y -= 24.0 * delta;
+            // Free-fall in air with gravity
+            this.velocity.y -= 26.0 * delta;
             this.airTime += delta;
         }
 
@@ -151,10 +149,12 @@ export class Vehicle {
             targetAccel = -this.inputs.brake * (accelPower * 1.3);
         }
 
-        // Boost thrust
+        // Boost thrust & automatic recharge over time
         if (this.inputs.boost && this.boostLeft > 0) {
-            targetAccel += 45.0;
+            targetAccel += 55.0;
             this.boostLeft = Math.max(0, this.boostLeft - delta);
+        } else if (!this.inputs.boost && this.boostLeft < this.maxBoost) {
+            this.boostLeft = Math.min(this.maxBoost, this.boostLeft + delta * 0.50);
         }
 
         this.speed += targetAccel * delta;
@@ -190,24 +190,63 @@ export class Vehicle {
         this.position.y += this.velocity.y * delta;
         this.position.z += this.velocity.z * delta;
 
-        // Ground Clamping
-        if (this.position.y < ground.y + 0.1) {
-            this.position.y = ground.y + 0.1;
+        // Robust Ramp & Ground Clamping: Hull never penetrates into road or ramps
+        const minClearance = ground.y + this.hoverHeight * 0.90;
+        if (this.position.y < minClearance) {
+            this.position.y = minClearance;
             if (this.velocity.y < 0) this.velocity.y = 0;
+            // Ramp upward velocity assist
+            if (this.speed > 5.0 && this.pitch < -0.05) {
+                const rampClimbVel = this.speed * Math.sin(-this.pitch);
+                if (this.velocity.y < rampClimbVel) {
+                    this.velocity.y = rampClimbVel;
+                }
+            }
         }
 
-        // 6. Visual Banking & Pitching
-        const leanTarget = -this.inputs.steer * (this.isDrifting ? 0.42 : 0.22);
-        this.roll = THREE.MathUtils.lerp(this.roll, leanTarget, delta * 8.0);
-        this.pitch = THREE.MathUtils.lerp(this.pitch, ground.slope, delta * 6.0);
+        // 6. Distinct Ground-Aligned vs. Airborne Flight Attitude
+        const rightX = Math.cos(this.heading);
+        const rightZ = -Math.sin(this.heading);
+
+        if (this.grounded) {
+            // Grounded: Sample terrain ahead and behind along vehicle heading
+            const frontPos = new THREE.Vector3(this.position.x + fwdX * 1.6, this.position.y, this.position.z + fwdZ * 1.6);
+            const rearPos = new THREE.Vector3(this.position.x - fwdX * 1.6, this.position.y, this.position.z - fwdZ * 1.6);
+            const frontGround = this._sampleTrackGround(frontPos, trackData);
+            const rearGround = this._sampleTrackGround(rearPos, trackData);
+
+            // Pitch angle: Negative rotates nose UP and rear DOWN to ascend hill cleanly!
+            const targetPitch = -Math.atan2(frontGround.y - rearGround.y, 3.2);
+
+            // Cross-slope roll: sample ground to left and right
+            const rPos = new THREE.Vector3(this.position.x + rightX * 0.9, this.position.y, this.position.z + rightZ * 0.9);
+            const lPos = new THREE.Vector3(this.position.x - rightX * 0.9, this.position.y, this.position.z - rightZ * 0.9);
+            const rGround = this._sampleTrackGround(rPos, trackData);
+            const lGround = this._sampleTrackGround(lPos, trackData);
+            const crossSlope = Math.atan2(rGround.y - lGround.y, 1.8);
+
+            const steerLean = -this.inputs.steer * (this.isDrifting ? 0.38 : 0.18);
+            const targetRoll = steerLean + crossSlope * 0.70;
+
+            this.pitch = THREE.MathUtils.lerp(this.pitch, targetPitch, delta * 12.0);
+            this.roll = THREE.MathUtils.lerp(this.roll, targetRoll, delta * 10.0);
+
+            // Hill climbing assist: Maintain momentum when ascending steep hills
+            if (this.pitch < -0.10 && this.inputs.throttle > 0) {
+                this.speed = Math.max(this.speed, 22.0);
+            }
+        } else {
+            // Airborne Flight: Nose smoothly follows flight trajectory vector
+            const horizSpeed = Math.hypot(this.velocity.x, this.velocity.z);
+            const flightPitch = horizSpeed > 1.0 ? -Math.atan2(this.velocity.y, horizSpeed) : 0.0;
+            this.pitch = THREE.MathUtils.lerp(this.pitch, flightPitch, delta * 4.5);
+            this.roll = THREE.MathUtils.lerp(this.roll, 0.0, delta * 3.0); // Self-level roll in air
+        }
 
         this.root.position.copy(this.position);
         this.root.rotation.set(this.pitch, this.heading, this.roll, 'YXZ');
 
-        // 7. Update True 3D Silhouette Shadow (Aligned strictly to road slope to eliminate clipping)
-        this._updateShadow(ground.y, ground.slope);
-
-        // 8. Check Star Ramp Launch (Player AND Rivals!)
+        // 7. Check Star Ramp Launch (Player AND Rivals!)
         if (ground.tag && (ground.tag & 2) !== 0 && this.speed > 16.0) {
             this.startAscension();
         }
@@ -286,19 +325,6 @@ export class Vehicle {
         };
     }
 
-    _updateShadow(groundY, groundSlope = 0) {
-        if (!this.shadow) return;
-
-        // Position shadow slightly elevated above road to eliminate curve clipping
-        this.shadow.position.set(this.position.x, groundY + 0.08, this.position.z);
-        // Align strictly with road surface slope so body bounce doesn't clip shadow
-        this.shadow.rotation.set(groundSlope, this.heading, 0, 'YXZ');
-        this.shadow.scale.set(this.mesh.scale.x, 0.001, this.mesh.scale.z);
-
-        const height = this.position.y - groundY;
-        this.shadow.material.opacity = THREE.MathUtils.clamp(1.0 - height / 14.0, 0.15, 0.58);
-    }
-
     startAscension() {
         if (this.ascended) return;
         this.ascended = true;
@@ -358,7 +384,6 @@ export class Vehicle {
 
     destroy() {
         if (this.root.parent) this.root.parent.remove(this.root);
-        if (this.shadow && this.shadow.parent) this.shadow.parent.remove(this.shadow);
         if (this.lightBeam && this.lightBeam.parent) this.lightBeam.parent.remove(this.lightBeam);
     }
 }

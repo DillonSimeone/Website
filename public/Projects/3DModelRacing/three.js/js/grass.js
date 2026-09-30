@@ -2,54 +2,138 @@ import * as THREE from 'three';
 import { getTerrainHeight, GLSL_TERRAIN_HEIGHT } from './terrain.js';
 
 /**
- * GrassField — Peter Adams (Antaeus AR) GhibliGrass with Dynamic Vehicle Trample
+ * GrassField — Grassworks-Quality Dense Thin-Strand Meadow
  * 
- * Features:
- * - 160,000 individual triangle blades (480,000 vertices) in a single geometry
- * - Expansive 140m x 140m infinite sliding window centered on the player
- * - Grounded on procedural rolling hills and plains via shared getTerrainHeight
- * - Interactive Vehicle Displacement: Player and NPC rivals part the grass as they drive
- * - Multi-octave Perlin noise texture driving 3D blade bending & turbulent wind
- * - Natural ambient occlusion darkening roots and lighting tips
- * - Edge falloff and organic bald patches
+ * Parameters calibrated via visual lab (grassStudy/) comparing headless Chrome
+ * captures against Three.js Grassworks reference images.
+ * 
+ * Winning lab params:
+ * Tufts: ~134K | Blades: ~1.6M | FPS: 60
+ * width=0.025, height=1.0, cell=0.15, blades=12, segments=3,
+ * leanMin=0.05, leanMax=0.30, curveMin=0.15, curveMax=0.40
  */
+
+export const DEFAULT_GRASS_CONFIG = {
+    bladeSegments: 3,
+    bladesPerTuft: 12,
+    cellSize: 0.15,
+    patchSize: 55.0,
+    bladeWidth: 0.025,
+    maxBladeHeight: 1.0,
+    leanMin: 0.05,
+    leanMax: 0.30,
+    curveMin: 0.15,
+    curveMax: 0.40,
+    hScaleMin: 0.40,
+    hScaleMax: 1.20,
+    farCellSize: 1.6,
+    farPatchSize: 280.0,
+    farBladesPerTuft: 3,
+    farBladeWidth: 0.08,
+    farMaxBladeHeight: 0.65,
+    colors: {
+        colRoot: [0.020, 0.078, 0.008],
+        colLower: [0.078, 0.176, 0.024],
+        colMid: [0.180, 0.361, 0.078],
+        colUpper: [0.302, 0.478, 0.118],
+        colTip: [0.420, 0.522, 0.157]
+    }
+};
+
 export class GrassField {
-    constructor(scene, trackData, trackCenter, trackSize) {
+    constructor(scene, trackData, trackCenter, trackSize, customConfig = null) {
         this.scene = scene;
         this.trackData = trackData;
         this.trackCenter = trackCenter;
         this.trackSize = trackSize;
 
+        this.config = Object.assign({}, DEFAULT_GRASS_CONFIG, customConfig || {});
+        if (customConfig && customConfig.colors) {
+            this.config.colors = Object.assign({}, DEFAULT_GRASS_CONFIG.colors, customConfig.colors);
+        }
+
         this.elapsedTime = 0;
-        this.mesh = null;
-        this.material = null;
-
-        const valleyRadius = Math.max(this.trackSize.x, this.trackSize.z) * 0.5 + 320.0;
-        this.boundingBoxMin = new THREE.Vector3(trackCenter.x - valleyRadius, -25.0, trackCenter.z - valleyRadius);
-        this.boundingBoxMax = new THREE.Vector3(trackCenter.x + valleyRadius, 65.0, trackCenter.z + valleyRadius);
-
-        this.settings = {
-            count: 160000,
-            patchSize: 140.0, // Expansive coverage going far and wide across hills
-            bladeWidth: 0.10,
-            maxBladeHeight: 0.38, // Halved for crisp, neat lawn and meadow coverage
-            heightNoiseFrequency: 14.0,
-            heightNoiseAmplitude: 1.4,
-            randomHeightAmount: 0.18,
-            falloffSharpness: 0.38,
-            baldPatchModifier: 1.6,
-            windDirection: Math.PI * 0.25,
-            windSpeed: 0.35,
-            windNoiseScale: 0.8,
-            maxBendAngle: 28.0
-        };
+        this.nearMesh = null;
+        this.farMesh = null;
+        this.nearUniforms = null;
+        this.farUniforms = null;
 
         this._initTextures();
-        this._buildGrass();
+        this._buildNearGrass();
+        this._buildFarGrass();
+
+        // Attempt async config load from configure/grass.json without blocking immediate render
+        this._loadConfig();
+    }
+
+    async _loadConfig() {
+        try {
+            const res = await fetch('./configure/grass.json');
+            if (res.ok) {
+                const loaded = await res.json();
+                this.applyConfig(loaded);
+            }
+        } catch (_) {
+            // Standalone / offline fallback: DEFAULT_GRASS_CONFIG is already active
+        }
+    }
+
+    applyConfig(newConfig) {
+        if (!newConfig) return;
+        const prev = this.config;
+        this.config = Object.assign({}, prev, newConfig);
+        if (newConfig.colors) {
+            this.config.colors = Object.assign({}, prev.colors, newConfig.colors);
+        }
+
+        const topologyChanged = (
+            prev.bladeSegments !== this.config.bladeSegments ||
+            prev.bladesPerTuft !== this.config.bladesPerTuft ||
+            prev.cellSize !== this.config.cellSize ||
+            prev.patchSize !== this.config.patchSize ||
+            prev.leanMin !== this.config.leanMin ||
+            prev.leanMax !== this.config.leanMax ||
+            prev.curveMin !== this.config.curveMin ||
+            prev.curveMax !== this.config.curveMax ||
+            prev.hScaleMin !== this.config.hScaleMin ||
+            prev.hScaleMax !== this.config.hScaleMax
+        );
+
+        if (topologyChanged) {
+            if (this.nearMesh) {
+                this.scene.remove(this.nearMesh);
+                this.nearMesh.geometry.dispose();
+                this.nearMesh.material.dispose();
+                this.nearMesh = null;
+            }
+            this._buildNearGrass();
+        } else {
+            if (this.nearUniforms) {
+                this.nearUniforms.uBladeWidth.value = this.config.bladeWidth;
+                this.nearUniforms.uMaxBladeHeight.value = this.config.maxBladeHeight;
+                this.nearUniforms.uPatchSize.value = this.config.patchSize;
+                if (this.config.colors) {
+                    this.nearUniforms.uColRoot.value.set(...this.config.colors.colRoot);
+                    this.nearUniforms.uColLower.value.set(...this.config.colors.colLower);
+                    this.nearUniforms.uColMid.value.set(...this.config.colors.colMid);
+                    this.nearUniforms.uColUpper.value.set(...this.config.colors.colUpper);
+                    this.nearUniforms.uColTip.value.set(...this.config.colors.colTip);
+                }
+            }
+            if (this.farUniforms) {
+                if (this.config.farBladeWidth) this.farUniforms.uBladeWidth.value = this.config.farBladeWidth;
+                if (this.config.farMaxBladeHeight) this.farUniforms.uMaxBladeHeight.value = this.config.farMaxBladeHeight;
+                if (this.config.farPatchSize) this.farUniforms.uPatchSize.value = this.config.farPatchSize;
+                if (this.config.colors) {
+                    this.farUniforms.uColRoot.value.set(...this.config.colors.colRoot);
+                    this.farUniforms.uColMid.value.set(...this.config.colors.colMid);
+                    this.farUniforms.uColTip.value.set(...this.config.colors.colTip);
+                }
+            }
+        }
     }
 
     _initTextures() {
-        // 1. Procedural 256x256 RGB Perlin Noise Texture (R = Height/Bald, G = Wind X, B = Wind Z)
         const nCanvas = document.createElement('canvas');
         nCanvas.width = 256;
         nCanvas.height = 256;
@@ -68,12 +152,10 @@ export class GrassField {
             const fy = y - j;
             const ux = fx * fx * (3.0 - 2.0 * fx);
             const uy = fy * fy * (3.0 - 2.0 * fy);
-
             const n00 = hash(i, j);
             const n10 = hash(i + 1, j);
             const n01 = hash(i, j + 1);
             const n11 = hash(i + 1, j + 1);
-
             return (n00 * (1 - ux) + n10 * ux) * (1 - uy) + (n01 * (1 - ux) + n11 * ux) * uy;
         };
 
@@ -83,8 +165,7 @@ export class GrassField {
                 const nr = smoothNoise(x * 0.05, y * 0.05) * 0.65 + smoothNoise(x * 0.12, y * 0.12) * 0.35;
                 const ng = smoothNoise(x * 0.025 + 10.0, y * 0.025 + 5.0) * 0.7 + smoothNoise(x * 0.06, y * 0.06) * 0.3;
                 const nb = smoothNoise(x * 0.025 + 40.0, y * 0.025 + 80.0) * 0.7 + smoothNoise(x * 0.06 + 30.0, y * 0.06 + 20.0) * 0.3;
-
-                data[idx] = Math.floor(nr * 255);
+                data[idx]     = Math.floor(nr * 255);
                 data[idx + 1] = Math.floor(ng * 255);
                 data[idx + 2] = Math.floor(nb * 255);
                 data[idx + 3] = 255;
@@ -94,348 +175,516 @@ export class GrassField {
         this.noiseTexture = new THREE.CanvasTexture(nCanvas);
         this.noiseTexture.wrapS = THREE.RepeatWrapping;
         this.noiseTexture.wrapT = THREE.RepeatWrapping;
-
-        // 2. Procedural 256x256 Diffuse Grass Map with Ghibli greens and buttercup petals
-        const dCanvas = document.createElement('canvas');
-        dCanvas.width = 256;
-        dCanvas.height = 256;
-        const dCtx = dCanvas.getContext('2d');
-        dCtx.fillStyle = '#22551a';
-        dCtx.fillRect(0, 0, 256, 256);
-
-        for (let i = 0; i < 650; i++) {
-            const px = Math.random() * 256;
-            const py = Math.random() * 256;
-            const pr = 2 + Math.random() * 9;
-            const greens = ['#1a4314', '#2d6e22', '#3e882a', '#4da333', '#66bb3e', '#23591b', '#3b7829'];
-            dCtx.fillStyle = greens[Math.floor(Math.random() * greens.length)];
-            dCtx.beginPath();
-            dCtx.arc(px, py, pr, 0, Math.PI * 2);
-            dCtx.fill();
-        }
-
-        // Golden buttercups
-        for (let i = 0; i < 110; i++) {
-            const fx = Math.random() * 256;
-            const fy = Math.random() * 256;
-            dCtx.fillStyle = '#ffd21e';
-            dCtx.beginPath();
-            dCtx.arc(fx, fy, 2.8, 0, Math.PI * 2);
-            dCtx.fill();
-            dCtx.fillStyle = '#f39c12';
-            dCtx.beginPath();
-            dCtx.arc(fx, fy, 1.4, 0, Math.PI * 2);
-            dCtx.fill();
-        }
-
-        this.diffuseMap = new THREE.CanvasTexture(dCanvas);
-        this.diffuseMap.wrapS = THREE.RepeatWrapping;
-        this.diffuseMap.wrapT = THREE.RepeatWrapping;
     }
 
-    _buildGrass() {
-        const count = this.settings.count;
-        const patchSize = this.settings.patchSize;
+    // ═══════════════════════════════════════════════════════════════
+    // NEAR FIELD — Dense grassworks-quality thin-blade carpet
+    // ═══════════════════════════════════════════════════════════════
+    _buildNearGrass() {
+        const SEGMENTS = this.config.bladeSegments;
+        const VERTS_PER_BLADE = (SEGMENTS + 1) * 2;
+        const TRIS_PER_BLADE = SEGMENTS * 2;
+        const IDX_PER_BLADE = TRIS_PER_BLADE * 3;
+        const BLADES_PER_TUFT = this.config.bladesPerTuft;
 
-        const positions = new Float32Array(count * 3 * 3);
-        const colors = new Float32Array(count * 3 * 3);
-        const uvs = new Float32Array(count * 3 * 2);
-        const yaws = new Float32Array(count * 3 * 3);
-        const bladeOrigins = new Float32Array(count * 3 * 3);
-        const indices = new Uint32Array(count * 3);
+        // Config params
+        const patchSize = this.config.patchSize;
+        const cellSize = this.config.cellSize;
+        const cellsPerAxis = Math.floor(patchSize / cellSize);
+        const tuftCount = cellsPerAxis * cellsPerAxis;
+        const totalBlades = tuftCount * BLADES_PER_TUFT;
 
-        const currentPosition = new THREE.Vector3();
-        const yawUnitVec = new THREE.Vector3();
-        const uv = new THREE.Vector2();
+        // Build blade template
+        const bladeVerts = [];
+        for (let s = 0; s <= SEGMENTS; s++) {
+            const t = s / SEGMENTS;
+            const w = Math.max(0.0, 1.0 - t * 0.9);
+            bladeVerts.push({ side: -1, t, w });
+            bladeVerts.push({ side: 1, t, w });
+        }
+        const idxTemplate = [];
+        for (let s = 0; s < SEGMENTS; s++) {
+            const bl = s * 2, br = s * 2 + 1, tl = (s + 1) * 2, tr = (s + 1) * 2 + 1;
+            idxTemplate.push(bl, br, tl, br, tr, tl);
+        }
 
-        const blCol = [0.1, 0.0, 0.0];
-        const brCol = [0.0, 0.0, 0.1];
-        const tcCol = [1.0, 1.0, 1.0];
+        const totalVerts = totalBlades * VERTS_PER_BLADE;
+        const totalIndices = totalBlades * IDX_PER_BLADE;
 
-        let pIdx = 0;
-        let cIdx = 0;
-        let uvIdx = 0;
-        let yIdx = 0;
-        let oIdx = 0;
-        let iIdx = 0;
+        const positions = new Float32Array(totalVerts * 3);
+        const origins = new Float32Array(totalVerts * 3);
+        const dirs = new Float32Array(totalVerts * 3);
+        const uvs = new Float32Array(totalVerts * 2);
+        const params = new Float32Array(totalVerts * 3);
+        const leans = new Float32Array(totalVerts);
+        const tints = new Float32Array(totalVerts * 2);
+        const indices = new Uint32Array(totalIndices);
 
-        for (let i = 0; i < count; i++) {
-            currentPosition.x = THREE.MathUtils.randFloat(-patchSize * 0.5, patchSize * 0.5);
-            currentPosition.y = 0.0;
-            currentPosition.z = THREE.MathUtils.randFloat(-patchSize * 0.5, patchSize * 0.5);
+        let pI = 0, oI = 0, dI = 0, uI = 0, pmI = 0, lI = 0, tI = 0, iI = 0, gvb = 0;
+        const half = patchSize * 0.5;
 
-            uv.set(
-                THREE.MathUtils.mapLinear(currentPosition.x, this.boundingBoxMin.x, this.boundingBoxMax.x, 0, 1),
-                THREE.MathUtils.mapLinear(currentPosition.z, this.boundingBoxMin.z, this.boundingBoxMax.z, 0, 1)
-            );
+        const LEAN_MIN = this.config.leanMin, LEAN_MAX = this.config.leanMax;
+        const CURVE_MIN = this.config.curveMin, CURVE_MAX = this.config.curveMax;
+        const H_MIN = this.config.hScaleMin, H_MAX = this.config.hScaleMax;
 
-            const yaw = Math.random() * Math.PI * 2;
-            yawUnitVec.set(Math.sin(yaw), 0, -Math.cos(yaw));
+        for (let cy = 0; cy < cellsPerAxis; cy++) {
+            for (let cx = 0; cx < cellsPerAxis; cx++) {
+                const bx = cx * cellSize - half + (Math.random() * 0.7 + 0.15) * cellSize;
+                const bz = cy * cellSize - half + (Math.random() * 0.7 + 0.15) * cellSize;
+                const ct = Math.random();
 
-            const vBase = i * 3;
+                for (let b = 0; b < BLADES_PER_TUFT; b++) {
+                    const yaw = Math.random() * Math.PI * 2;
+                    const dx = Math.sin(yaw), dz = -Math.cos(yaw);
+                    const lean = LEAN_MIN + Math.random() * (LEAN_MAX - LEAN_MIN);
+                    const hScale = H_MIN + Math.random() * (H_MAX - H_MIN);
+                    const curve = CURVE_MIN + Math.random() * (CURVE_MAX - CURVE_MIN);
+                    const bt = Math.random();
+                    const jx = bx + (Math.random() - 0.5) * 0.10;
+                    const jz = bz + (Math.random() - 0.5) * 0.10;
 
-            // Vertex 0: Bottom Left
-            positions[pIdx++] = currentPosition.x;
-            positions[pIdx++] = 0.0;
-            positions[pIdx++] = currentPosition.z;
-            colors[cIdx++] = blCol[0]; colors[cIdx++] = blCol[1]; colors[cIdx++] = blCol[2];
-            uvs[uvIdx++] = uv.x; uvs[uvIdx++] = uv.y;
-            yaws[yIdx++] = yawUnitVec.x; yaws[yIdx++] = yawUnitVec.y; yaws[yIdx++] = yawUnitVec.z;
-            bladeOrigins[oIdx++] = currentPosition.x; bladeOrigins[oIdx++] = 0.0; bladeOrigins[oIdx++] = currentPosition.z;
-
-            // Vertex 1: Bottom Right
-            positions[pIdx++] = currentPosition.x;
-            positions[pIdx++] = 0.0;
-            positions[pIdx++] = currentPosition.z;
-            colors[cIdx++] = brCol[0]; colors[cIdx++] = brCol[1]; colors[cIdx++] = brCol[2];
-            uvs[uvIdx++] = uv.x; uvs[uvIdx++] = uv.y;
-            yaws[yIdx++] = yawUnitVec.x; yaws[yIdx++] = yawUnitVec.y; yaws[yIdx++] = yawUnitVec.z;
-            bladeOrigins[oIdx++] = currentPosition.x; bladeOrigins[oIdx++] = 0.0; bladeOrigins[oIdx++] = currentPosition.z;
-
-            // Vertex 2: Top Center
-            positions[pIdx++] = currentPosition.x;
-            positions[pIdx++] = 0.0;
-            positions[pIdx++] = currentPosition.z;
-            colors[cIdx++] = tcCol[0]; colors[cIdx++] = tcCol[1]; colors[cIdx++] = tcCol[2];
-            uvs[uvIdx++] = uv.x; uvs[uvIdx++] = uv.y;
-            yaws[yIdx++] = yawUnitVec.x; yaws[yIdx++] = yawUnitVec.y; yaws[yIdx++] = yawUnitVec.z;
-            bladeOrigins[oIdx++] = currentPosition.x; bladeOrigins[oIdx++] = 0.0; bladeOrigins[oIdx++] = currentPosition.z;
-
-            indices[iIdx++] = vBase;
-            indices[iIdx++] = vBase + 1;
-            indices[iIdx++] = vBase + 2;
+                    for (let v = 0; v < bladeVerts.length; v++) {
+                        const bv = bladeVerts[v];
+                        positions[pI++] = jx; positions[pI++] = 0; positions[pI++] = jz;
+                        origins[oI++] = jx; origins[oI++] = 0; origins[oI++] = jz;
+                        dirs[dI++] = dx; dirs[dI++] = 0; dirs[dI++] = dz;
+                        uvs[uI++] = bv.side; uvs[uI++] = bv.t;
+                        params[pmI++] = bv.w; params[pmI++] = hScale; params[pmI++] = curve;
+                        leans[lI++] = lean;
+                        tints[tI++] = ct; tints[tI++] = bt;
+                    }
+                    for (let i = 0; i < idxTemplate.length; i++) indices[iI++] = gvb + idxTemplate[i];
+                    gvb += VERTS_PER_BLADE;
+                }
+            }
         }
 
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-        geometry.setAttribute('aYaw', new THREE.BufferAttribute(yaws, 3));
-        geometry.setAttribute('aBladeOrigin', new THREE.BufferAttribute(bladeOrigins, 3));
+        geometry.setAttribute('aOrigin', new THREE.BufferAttribute(origins, 3));
+        geometry.setAttribute('aDir', new THREE.BufferAttribute(dirs, 3));
+        geometry.setAttribute('aUV', new THREE.BufferAttribute(uvs, 2));
+        geometry.setAttribute('aParams', new THREE.BufferAttribute(params, 3));
+        geometry.setAttribute('aLean', new THREE.BufferAttribute(leans, 1));
+        geometry.setAttribute('aTint', new THREE.BufferAttribute(tints, 2));
         geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-        geometry.computeVertexNormals();
 
-        // Shaders with shared terrain height function and vehicle displacement
         const vertexShader = `
-            attribute vec3 aYaw;
-            attribute vec3 aBladeOrigin;
+            attribute vec3 aOrigin;
+            attribute vec3 aDir;
+            attribute vec2 aUV;
+            attribute vec3 aParams;   // x: widthTaper, y: heightScale, z: curveAmt
+            attribute float aLean;
+            attribute vec2 aTint;     // x: cluster, y: individual
 
             uniform float uTime;
             uniform sampler2D uNoiseTexture;
-            uniform sampler2D uDiffuseMap;
             uniform vec3 uPlayerPosition;
             uniform vec3 uVehiclePositions[8];
             uniform int uVehicleCount;
-            uniform vec3 uBoundingBoxMin;
-            uniform vec3 uBoundingBoxMax;
+            uniform vec3 uRoadPoints[32];
+            uniform int uRoadCount;
             uniform float uPatchSize;
             uniform float uBladeWidth;
-            uniform float uWindDirection;
-            uniform float uWindSpeed;
-            uniform float uWindNoiseScale;
-            uniform float uBaldPatchModifier;
-            uniform float uFalloffSharpness;
-            uniform float uHeightNoiseFrequency;
-            uniform float uHeightNoiseAmplitude;
-            uniform float uMaxBendAngle;
             uniform float uMaxBladeHeight;
-            uniform float uRandomHeightAmount;
+            uniform float uDayTime;
+            uniform vec3 uColRoot;
+            uniform vec3 uColLower;
+            uniform vec3 uColMid;
+            uniform vec3 uColUpper;
+            uniform vec3 uColTip;
 
             varying vec3 vColor;
 
             ${GLSL_TERRAIN_HEIGHT}
 
-            float map(float value, float min1, float max1, float min2, float max2) {
-                return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
-            }
-
-            float random(vec2 st) {
-                return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-            }
-
-            mat3 rotate3d(vec3 axis, float angle) {
-                axis = normalize(axis);
-                float s = sin(angle);
-                float c = cos(angle);
-                float oc = 1.0 - c;
-                return mat3(
-                    oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,
-                    oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,
-                    oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c
-                );
-            }
-
             void main() {
-                vec3 origin = aBladeOrigin;
+                vec3 origin = aOrigin;
+                float halfPatch = uPatchSize * 0.5;
+                origin.x = mod(origin.x - uPlayerPosition.x + halfPatch, uPatchSize) - halfPatch;
+                origin.z = mod(origin.z - uPlayerPosition.z + halfPatch, uPatchSize) - halfPatch;
 
-                // Infinite Sliding Window relative to player
-                float halfPatchSize = uPatchSize * 0.5;
-                origin.x = mod(origin.x - uPlayerPosition.x + halfPatchSize, uPatchSize) - halfPatchSize;
-                origin.z = mod(origin.z - uPlayerPosition.z + halfPatchSize, uPatchSize) - halfPatchSize;
-
-                // Sample exact terrain elevation of the rolling hills & plains!
                 vec2 worldXZ = vec2(uPlayerPosition.x + origin.x, uPlayerPosition.z + origin.z);
                 float terrainY = getTerrainHeight(worldXZ);
-                vec3 worldBase = vec3(worldXZ.x, terrainY, worldXZ.y);
-                vec3 transformed = worldBase;
 
-                // Map to bounding box UVs
-                vec2 uv = vec2(
-                    map(worldBase.x, uBoundingBoxMin.x, uBoundingBoxMax.x, 0.0, 1.0),
-                    map(worldBase.z, uBoundingBoxMin.z, uBoundingBoxMax.z, 0.0, 1.0)
-                );
-
-                // Height variation using noise
-                vec3 heightNoise = texture2D(uNoiseTexture, uv.yx * vec2(uHeightNoiseFrequency)).rgb;
-                float heightModifier = ((heightNoise.r + heightNoise.g + heightNoise.b) * uMaxBladeHeight) * uHeightNoiseAmplitude;
-                heightModifier += random(uv) * (uRandomHeightAmount * 0.1);
-
-                // Edge falloff for smooth fade far and wide
-                float edgeDistanceX = abs(origin.x) / halfPatchSize;
-                float edgeDistanceZ = abs(origin.z) / halfPatchSize;
-                float edgeFactor = 1.0 - max(edgeDistanceX, edgeDistanceZ);
-                edgeFactor = pow(clamp(edgeFactor, 0.0, 1.0), uFalloffSharpness);
-
-                // Random bald patches
-                float baldPatchOffset = heightNoise.r * (uBaldPatchModifier * (1.0 - edgeFactor));
-                heightModifier = max(0.04, heightModifier - baldPatchOffset);
+                // Height noise
+                float noiseH = texture2D(uNoiseTexture, worldXZ * 0.08).r * 0.45
+                             + texture2D(uNoiseTexture, worldXZ * 0.035).g * 0.35
+                             + texture2D(uNoiseTexture, worldXZ * 0.12).b * 0.20;
+                float bladeH = noiseH * uMaxBladeHeight * 1.8 * aParams.y;
 
                 // Edge fade
-                float edgeFade =
-                    smoothstep(uBoundingBoxMin.x, uBoundingBoxMin.x + 12.0, worldBase.x) *
-                    smoothstep(uBoundingBoxMax.x, uBoundingBoxMax.x - 12.0, worldBase.x) *
-                    smoothstep(uBoundingBoxMin.z, uBoundingBoxMin.z + 12.0, worldBase.z) *
-                    smoothstep(uBoundingBoxMax.z, uBoundingBoxMax.z - 12.0, worldBase.z);
-                heightModifier *= edgeFade;
+                float distFromCam = length(origin.xz);
+                float edgeFade = 1.0 - smoothstep(24.0, 30.0, distFromCam);
+                bladeH *= edgeFade;
 
-                // Width adjustment
-                float factor = (color.r == 0.1) ? 1.0 : (color.b == 0.1) ? -1.0 : 0.0;
-                float width = smoothstep(0.3, 1.0, heightModifier * 1.5) * uBladeWidth;
-                transformed += aYaw * (width * 0.5) * factor;
+                // Road clearance
+                float minRD = 999.0;
+                for (int r = 0; r < 32; r++) {
+                    if (r >= uRoadCount) break;
+                    float d = length(worldXZ - uRoadPoints[r].xz);
+                    if (d < minRD) minRD = d;
+                }
+                if (minRD < 6.5) bladeH = 0.0;
+                else if (minRD < 8.2) bladeH *= smoothstep(6.5, 8.2, minRD);
 
-                // Color sampling & ambient occlusion
-                vColor = texture2D(uDiffuseMap, uv * 10.0).rgb * color;
-                vec3 colorNoise = texture2D(uNoiseTexture, uv.yx * vec2(uHeightNoiseFrequency) + (uTime * 0.05)).rgb;
-                vColor *= (0.65 + colorNoise * 0.35);
+                float t = aUV.y;
+                float side = aUV.x;
+                vec3 pos = vec3(worldXZ.x, terrainY, worldXZ.y);
 
-                // Natural Wind Sway
-                float noiseScale = uWindNoiseScale * 0.1;
-                vec2 noiseUV = vec2(origin.x * noiseScale, origin.z * noiseScale);
-                mat2 rotation = mat2(
-                    cos(uWindDirection), -sin(uWindDirection),
-                    sin(uWindDirection), cos(uWindDirection)
-                );
-                vec2 rotatedNoiseUV = rotation * noiseUV + uTime * vec2(uWindSpeed);
-                vec3 windNoise = texture2D(uNoiseTexture, rotatedNoiseUV).rgb;
-                vec3 axis = vec3(windNoise.g, 0.0, windNoise.b);
+                // Width
+                vec3 sideDir = vec3(-aDir.z, 0.0, aDir.x);
+                pos += sideDir * (side * uBladeWidth * aParams.x * 0.5);
 
-                float angle = radians(map(windNoise.g + windNoise.b, 0.0, 2.0, -uMaxBendAngle, uMaxBendAngle)) * color.g;
-                mat3 rotationMatrix = rotate3d(axis, angle);
+                // Vertical
+                pos.y += t * bladeH;
 
-                vec3 basePosition = vec3(transformed.x, terrainY, transformed.z);
-                vec3 relativePosition = transformed - basePosition;
-                relativePosition = rotationMatrix * relativePosition;
-                transformed = basePosition + relativePosition;
-                transformed.y += heightModifier * color.g;
+                // Lean (linear tilt)
+                float leanDist = aLean * t * bladeH * 1.1;
+                pos += aDir * leanDist;
+                pos.y -= leanDist * aLean * 0.30;
 
-                // =========================================================================
-                // DYNAMIC VEHICLE DISPLACEMENT / TRAMPLE (Player & NPC Rivals)
-                // Blades are pushed aside radially and flattened down as vehicles pass
-                // =========================================================================
+                // Tip curve (quadratic)
+                float bend = t * t;
+                float curveStr = aParams.z * bladeH * 0.65;
+                pos += aDir * (bend * curveStr);
+                pos.y -= bend * curveStr * 0.28;
+
+                // Wind sway
+                float sw1 = sin(uTime * 1.8 + worldXZ.x * 0.15 + worldXZ.y * 0.12) * 0.12;
+                float sw2 = sin(uTime * 0.7 + worldXZ.x * 0.08 - worldXZ.y * 0.06) * 0.08;
+                pos.x += (sw1 + sw2) * bend * bladeH;
+                pos.z += (sw1 * 0.6 - sw2 * 0.4) * bend * bladeH;
+
+                // Vehicle trample
                 for (int v = 0; v < 8; v++) {
                     if (v >= uVehicleCount) break;
-                    vec3 vPos = uVehiclePositions[v];
-                    vec2 diff = worldBase.xz - vPos.xz;
-                    float dist = length(diff);
-                    float pushRadius = 6.4; // Substantially increased radius of displacement around vehicles
-                    if (dist < pushRadius && abs(worldBase.y - vPos.y) < 5.0) {
-                        float pushFactor = pow(1.0 - dist / pushRadius, 1.25) * color.g;
-                        vec2 pushDir = normalize(diff + vec2(0.0001, 0.0001));
-                        transformed.xz += pushDir * (pushFactor * 3.4);
-                        transformed.y -= pushFactor * 0.95; // decisively flatten blade toward earth
+                    vec2 vPos = uVehiclePositions[v].xz;
+                    vec2 toBlade = worldXZ - vPos;
+                    float dist = length(toBlade);
+                    if (dist < 7.0) {
+                        float pf = pow(1.0 - dist / 7.0, 1.2);
+                        vec2 pd = dist > 0.01 ? (toBlade / dist) : vec2(1.0, 0.0);
+                        pos.xz += pd * (pf * bend * 4.0);
+                        pos.y -= pf * bend * (bladeH * 0.65);
                     }
                 }
 
-                gl_Position = projectionMatrix * viewMatrix * vec4(transformed, 1.0);
+                // ===== Grassworks color gradient =====
+                vec3 c = mix(uColRoot, uColLower, smoothstep(0.0, 0.15, t));
+                c = mix(c, uColMid, smoothstep(0.15, 0.40, t));
+                c = mix(c, uColUpper, smoothstep(0.40, 0.70, t));
+                c = mix(c, uColTip, smoothstep(0.70, 1.0, t));
+
+                c *= mix(vec3(0.86, 1.02, 0.80), vec3(1.14, 0.98, 0.78), aTint.x);
+                c *= (0.78 + aTint.y * 0.44);
+
+                float ao = mix(0.25, 1.0, smoothstep(0.0, 0.42, t));
+                vColor = c * ao;
+
+                gl_Position = projectionMatrix * viewMatrix * vec4(pos, 1.0);
             }
         `;
 
         const fragmentShader = `
-            uniform float uDayTime;
             varying vec3 vColor;
+            uniform float uDayTime;
 
             void main() {
                 float t = uDayTime;
                 float nightFactor = smoothstep(0.44, 0.56, t) * (1.0 - smoothstep(0.78, 0.88, t));
-                float sunsetFactor = smoothstep(0.38, 0.48, t) * (1.0 - smoothstep(0.48, 0.58, t));
-
-                vec3 lightTint = vec3(1.0);
-                if (sunsetFactor > 0.0) lightTint = mix(lightTint, vec3(1.0, 0.72, 0.48), sunsetFactor);
-                if (nightFactor > 0.0) lightTint = mix(lightTint, vec3(0.25, 0.32, 0.55), nightFactor);
-
-                gl_FragColor = vec4(vColor * lightTint, 1.0);
+                vec3 dayCol = vColor;
+                vec3 nightCol = vColor * vec3(0.18, 0.22, 0.38);
+                vec3 finalCol = mix(dayCol, nightCol, nightFactor);
+                gl_FragColor = vec4(finalCol, 1.0);
             }
         `;
 
-        // Up to 8 vehicle positions (player + 7 rivals)
-        const vehiclePosUniforms = [];
-        for (let i = 0; i < 8; i++) {
-            vehiclePosUniforms.push(new THREE.Vector3(99999, 99999, 99999));
-        }
-
-        this.uniforms = {
+        this.nearUniforms = {
             uTime: { value: 0 },
             uNoiseTexture: { value: this.noiseTexture },
-            uDiffuseMap: { value: this.diffuseMap },
             uPlayerPosition: { value: new THREE.Vector3() },
-            uVehiclePositions: { value: vehiclePosUniforms },
-            uVehicleCount: { value: 1 },
-            uBoundingBoxMin: { value: this.boundingBoxMin },
-            uBoundingBoxMax: { value: this.boundingBoxMax },
-            uPatchSize: { value: this.settings.patchSize },
-            uBladeWidth: { value: this.settings.bladeWidth },
-            uWindDirection: { value: this.settings.windDirection },
-            uWindSpeed: { value: this.settings.windSpeed },
-            uWindNoiseScale: { value: this.settings.windNoiseScale },
-            uBaldPatchModifier: { value: this.settings.baldPatchModifier },
-            uFalloffSharpness: { value: this.settings.falloffSharpness },
-            uHeightNoiseFrequency: { value: this.settings.heightNoiseFrequency },
-            uHeightNoiseAmplitude: { value: this.settings.heightNoiseAmplitude },
-            uMaxBendAngle: { value: this.settings.maxBendAngle },
-            uMaxBladeHeight: { value: this.settings.maxBladeHeight },
-            uRandomHeightAmount: { value: this.settings.randomHeightAmount },
-            uDayTime: { value: 0.0 }
+            uVehiclePositions: { value: Array.from({ length: 8 }, () => new THREE.Vector3()) },
+            uVehicleCount: { value: 0 },
+            uRoadPoints: { value: Array.from({ length: 32 }, () => new THREE.Vector3()) },
+            uRoadCount: { value: 0 },
+            uPatchSize: { value: patchSize },
+            uBladeWidth: { value: this.config.bladeWidth },
+            uMaxBladeHeight: { value: this.config.maxBladeHeight },
+            uDayTime: { value: 0.0 },
+            uColRoot:  { value: new THREE.Vector3(...this.config.colors.colRoot) },
+            uColLower: { value: new THREE.Vector3(...this.config.colors.colLower) },
+            uColMid:   { value: new THREE.Vector3(...this.config.colors.colMid) },
+            uColUpper: { value: new THREE.Vector3(...this.config.colors.colUpper) },
+            uColTip:   { value: new THREE.Vector3(...this.config.colors.colTip) }
         };
 
-        this.material = new THREE.ShaderMaterial({
+        const material = new THREE.ShaderMaterial({
             vertexShader,
             fragmentShader,
-            uniforms: this.uniforms,
-            vertexColors: true,
+            uniforms: this.nearUniforms,
             side: THREE.DoubleSide
         });
 
-        this.mesh = new THREE.Mesh(geometry, this.material);
-        this.mesh.frustumCulled = false;
-        this.scene.add(this.mesh);
+        this.nearMesh = new THREE.Mesh(geometry, material);
+        this.nearMesh.frustumCulled = false;
+        this.scene.add(this.nearMesh);
     }
 
-    update(delta, playerPos, dayTime, vehiclePositions = []) {
-        this.elapsedTime += delta;
-        if (this.uniforms) {
-            this.uniforms.uTime.value = this.elapsedTime;
-            if (playerPos) {
-                this.uniforms.uPlayerPosition.value.copy(playerPos);
+    // ═══════════════════════════════════════════════════════════════
+    // FAR FIELD — Sparser distant meadow coverage
+    // ═══════════════════════════════════════════════════════════════
+    _buildFarGrass() {
+        const SEGMENTS = 2;
+        const VERTS_PER_BLADE = (SEGMENTS + 1) * 2; // 6
+        const TRIS_PER_BLADE = SEGMENTS * 2;         // 4
+        const IDX_PER_BLADE = TRIS_PER_BLADE * 3;    // 12
+        const BLADES_PER_TUFT = this.config.farBladesPerTuft || 3;
+
+        const patchSize = this.config.farPatchSize || 280.0;
+        const cellSize = this.config.farCellSize || 1.6;
+        const cellsPerAxis = Math.floor(patchSize / cellSize);
+        const tuftCount = cellsPerAxis * cellsPerAxis;
+        const totalBlades = tuftCount * BLADES_PER_TUFT;
+
+        const bladeVerts = [];
+        for (let s = 0; s <= SEGMENTS; s++) {
+            const t = s / SEGMENTS;
+            const w = Math.max(0.0, 1.0 - t * 0.8);
+            bladeVerts.push({ side: -1, t, w });
+            bladeVerts.push({ side: 1, t, w });
+        }
+        const idxTemplate = [];
+        for (let s = 0; s < SEGMENTS; s++) {
+            const bl = s * 2, br = s * 2 + 1, tl = (s + 1) * 2, tr = (s + 1) * 2 + 1;
+            idxTemplate.push(bl, br, tl, br, tr, tl);
+        }
+
+        const totalVerts = totalBlades * VERTS_PER_BLADE;
+        const totalIndices = totalBlades * IDX_PER_BLADE;
+
+        const positions = new Float32Array(totalVerts * 3);
+        const origins = new Float32Array(totalVerts * 3);
+        const dirs = new Float32Array(totalVerts * 3);
+        const uvs = new Float32Array(totalVerts * 2);
+        const params = new Float32Array(totalVerts * 3);
+        const leans = new Float32Array(totalVerts);
+        const tints = new Float32Array(totalVerts * 2);
+        const indices = new Uint32Array(totalIndices);
+
+        let pI = 0, oI = 0, dI = 0, uI = 0, pmI = 0, lI = 0, tI = 0, iI = 0, gvb = 0;
+        const half = patchSize * 0.5;
+
+        for (let cy = 0; cy < cellsPerAxis; cy++) {
+            for (let cx = 0; cx < cellsPerAxis; cx++) {
+                const bx = cx * cellSize - half + (Math.random() * 0.7 + 0.15) * cellSize;
+                const bz = cy * cellSize - half + (Math.random() * 0.7 + 0.15) * cellSize;
+                const ct = Math.random();
+
+                for (let b = 0; b < BLADES_PER_TUFT; b++) {
+                    const yaw = Math.random() * Math.PI * 2;
+                    const dx = Math.sin(yaw), dz = -Math.cos(yaw);
+                    const lean = 0.06 + Math.random() * 0.35;
+                    const hScale = 0.45 + Math.random() * 0.75;
+                    const curve = 0.12 + Math.random() * 0.30;
+                    const bt = Math.random();
+                    const jx = bx + (Math.random() - 0.5) * 0.12;
+                    const jz = bz + (Math.random() - 0.5) * 0.12;
+
+                    for (let v = 0; v < bladeVerts.length; v++) {
+                        const bv = bladeVerts[v];
+                        positions[pI++] = jx; positions[pI++] = 0; positions[pI++] = jz;
+                        origins[oI++] = jx; origins[oI++] = 0; origins[oI++] = jz;
+                        dirs[dI++] = dx; dirs[dI++] = 0; dirs[dI++] = dz;
+                        uvs[uI++] = bv.side; uvs[uI++] = bv.t;
+                        params[pmI++] = bv.w; params[pmI++] = hScale; params[pmI++] = curve;
+                        leans[lI++] = lean;
+                        tints[tI++] = ct; tints[tI++] = bt;
+                    }
+                    for (let i = 0; i < idxTemplate.length; i++) indices[iI++] = gvb + idxTemplate[i];
+                    gvb += VERTS_PER_BLADE;
+                }
             }
-            if (dayTime !== undefined) {
-                this.uniforms.uDayTime.value = dayTime;
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('aOrigin', new THREE.BufferAttribute(origins, 3));
+        geometry.setAttribute('aDir', new THREE.BufferAttribute(dirs, 3));
+        geometry.setAttribute('aUV', new THREE.BufferAttribute(uvs, 2));
+        geometry.setAttribute('aParams', new THREE.BufferAttribute(params, 3));
+        geometry.setAttribute('aLean', new THREE.BufferAttribute(leans, 1));
+        geometry.setAttribute('aTint', new THREE.BufferAttribute(tints, 2));
+        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+
+        const vertexShader = `
+            attribute vec3 aOrigin;
+            attribute vec3 aDir;
+            attribute vec2 aUV;
+            attribute vec3 aParams;
+            attribute float aLean;
+            attribute vec2 aTint;
+
+            uniform float uTime;
+            uniform sampler2D uNoiseTexture;
+            uniform vec3 uPlayerPosition;
+            uniform vec3 uRoadPoints[32];
+            uniform int uRoadCount;
+            uniform float uPatchSize;
+            uniform float uBladeWidth;
+            uniform float uMaxBladeHeight;
+            uniform float uDayTime;
+            uniform vec3 uColRoot;
+            uniform vec3 uColMid;
+            uniform vec3 uColTip;
+
+            varying vec3 vColor;
+
+            ${GLSL_TERRAIN_HEIGHT}
+
+            void main() {
+                vec3 origin = aOrigin;
+                float halfPatch = uPatchSize * 0.5;
+                origin.x = mod(origin.x - uPlayerPosition.x + halfPatch, uPatchSize) - halfPatch;
+                origin.z = mod(origin.z - uPlayerPosition.z + halfPatch, uPatchSize) - halfPatch;
+
+                vec2 worldXZ = vec2(uPlayerPosition.x + origin.x, uPlayerPosition.z + origin.z);
+                float terrainY = getTerrainHeight(worldXZ);
+
+                float noiseH = texture2D(uNoiseTexture, worldXZ * 0.08).r * 0.55
+                             + texture2D(uNoiseTexture, worldXZ * 0.035).g * 0.30
+                             + texture2D(uNoiseTexture, worldXZ * 0.12).b * 0.15;
+                float bladeH = noiseH * uMaxBladeHeight * 1.5 * aParams.y;
+
+                float distFromCam = length(origin.xz);
+                float farIn = smoothstep(25.0, 38.0, distFromCam);
+                float farOut = 1.0 - smoothstep(120.0, 140.0, distFromCam);
+                bladeH *= (farIn * farOut);
+
+                float minRD = 999.0;
+                for (int r = 0; r < 32; r++) {
+                    if (r >= uRoadCount) break;
+                    float d = length(worldXZ - uRoadPoints[r].xz);
+                    if (d < minRD) minRD = d;
+                }
+                if (minRD < 7.0) bladeH = 0.0;
+                else if (minRD < 8.6) bladeH *= smoothstep(7.0, 8.6, minRD);
+
+                float t = aUV.y;
+                float side = aUV.x;
+                vec3 pos = vec3(worldXZ.x, terrainY, worldXZ.y);
+
+                vec3 sideDir = vec3(-aDir.z, 0.0, aDir.x);
+                pos += sideDir * (side * uBladeWidth * aParams.x * 0.5);
+                pos.y += t * bladeH;
+
+                float leanDist = aLean * t * bladeH * 1.1;
+                pos += aDir * leanDist;
+                pos.y -= leanDist * aLean * 0.3;
+
+                float bend = t * t;
+                pos += aDir * (bend * aParams.z * bladeH * 0.6);
+                pos.y -= bend * aParams.z * bladeH * 0.25;
+
+                float sway = sin(uTime * 1.2 + worldXZ.x * 0.04 + worldXZ.y * 0.035) * 0.22;
+                pos.x += sway * bend * bladeH;
+
+                vec3 c = mix(uColRoot, uColMid, smoothstep(0.0, 0.45, t));
+                c = mix(c, uColTip, smoothstep(0.45, 1.0, t));
+                c *= mix(vec3(0.88, 1.04, 0.82), vec3(1.12, 0.96, 0.74), aTint.x);
+                c *= (0.80 + aTint.y * 0.40);
+
+                float ao = mix(0.30, 1.0, smoothstep(0.0, 0.45, t));
+                vColor = c * ao;
+
+                gl_Position = projectionMatrix * viewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            varying vec3 vColor;
+            uniform float uDayTime;
+
+            void main() {
+                float t = uDayTime;
+                float nightFactor = smoothstep(0.44, 0.56, t) * (1.0 - smoothstep(0.78, 0.88, t));
+                vec3 dayCol = vColor;
+                vec3 nightCol = vColor * vec3(0.18, 0.22, 0.38);
+                vec3 finalCol = mix(dayCol, nightCol, nightFactor);
+                gl_FragColor = vec4(finalCol, 1.0);
+            }
+        `;
+
+        this.farUniforms = {
+            uTime: { value: 0 },
+            uNoiseTexture: { value: this.noiseTexture },
+            uPlayerPosition: { value: new THREE.Vector3() },
+            uRoadPoints: { value: Array.from({ length: 32 }, () => new THREE.Vector3()) },
+            uRoadCount: { value: 0 },
+            uPatchSize: { value: patchSize },
+            uBladeWidth: { value: this.config.farBladeWidth || 0.08 },
+            uMaxBladeHeight: { value: this.config.farMaxBladeHeight || 0.65 },
+            uDayTime: { value: 0.0 },
+            uColRoot: { value: new THREE.Vector3(...this.config.colors.colRoot) },
+            uColMid:  { value: new THREE.Vector3(...this.config.colors.colMid) },
+            uColTip:  { value: new THREE.Vector3(...this.config.colors.colTip) }
+        };
+
+        const material = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms: this.farUniforms,
+            side: THREE.DoubleSide
+        });
+
+        this.farMesh = new THREE.Mesh(geometry, material);
+        this.farMesh.frustumCulled = false;
+        this.scene.add(this.farMesh);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // UPDATE — Per-frame uniform updates
+    // ═══════════════════════════════════════════════════════════════
+    update(delta, playerPos, dayTime, vehiclePositions = [], trackData = null) {
+        this.elapsedTime += delta;
+
+        if (this.nearUniforms) {
+            this.nearUniforms.uTime.value = this.elapsedTime;
+            if (playerPos) this.nearUniforms.uPlayerPosition.value.copy(playerPos);
+            if (dayTime !== undefined) this.nearUniforms.uDayTime.value = dayTime;
+
+            const maxVehicles = Math.min(vehiclePositions.length, 8);
+            this.nearUniforms.uVehicleCount.value = maxVehicles;
+            for (let v = 0; v < maxVehicles; v++) {
+                this.nearUniforms.uVehiclePositions.value[v].copy(vehiclePositions[v]);
             }
 
-            // Update vehicle trample positions
-            const maxVehicles = Math.min(vehiclePositions.length, 8);
-            this.uniforms.uVehicleCount.value = maxVehicles;
-            for (let v = 0; v < maxVehicles; v++) {
-                this.uniforms.uVehiclePositions.value[v].copy(vehiclePositions[v]);
+            if (trackData && trackData.points && playerPos) {
+                const pts = trackData.points;
+                let rIdx = 0;
+                for (let i = 0; i < pts.length && rIdx < 32; i += 2) {
+                    const p = pts[i];
+                    const dx = p.x - playerPos.x;
+                    const dz = p.z - playerPos.z;
+                    if (dx * dx + dz * dz < 36000) {
+                        this.nearUniforms.uRoadPoints.value[rIdx].copy(p);
+                        rIdx++;
+                    }
+                }
+                this.nearUniforms.uRoadCount.value = rIdx;
+            }
+        }
+
+        if (this.farUniforms) {
+            this.farUniforms.uTime.value = this.elapsedTime;
+            if (playerPos) this.farUniforms.uPlayerPosition.value.copy(playerPos);
+            if (dayTime !== undefined) this.farUniforms.uDayTime.value = dayTime;
+
+            if (this.nearUniforms) {
+                this.farUniforms.uRoadCount.value = this.nearUniforms.uRoadCount.value;
+                for (let r = 0; r < this.nearUniforms.uRoadCount.value; r++) {
+                    this.farUniforms.uRoadPoints.value[r].copy(this.nearUniforms.uRoadPoints.value[r]);
+                }
             }
         }
     }

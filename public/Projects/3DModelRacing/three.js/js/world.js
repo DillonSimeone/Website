@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getTerrainHeight } from './terrain.js';
+import { getTerrainHeight, GLSL_TERRAIN_HEIGHT } from './terrain.js';
 import { GrassField } from './grass.js';
 import { TreeManager } from './trees.js';
 import { PropsManager } from './props.js';
@@ -268,222 +268,60 @@ export class WorldView {
         turfTex.wrapT = THREE.RepeatWrapping;
         turfTex.repeat.set(50, 50);
 
-        // Procedural Rolling Hills & Plains Mesh (Subdivided to follow natural elevation)
-        const groundGeom = new THREE.PlaneGeometry(valleyRadius * 2.8, valleyRadius * 2.8, 160, 160);
+        // Procedural Rolling Hills & Plains Mesh (Dynamic infinite world following player)
+        const groundGeom = new THREE.PlaneGeometry(2400, 2400, 140, 140);
         groundGeom.rotateX(-Math.PI / 2);
-        const posAttr = groundGeom.attributes.position;
-        for (let i = 0; i < posAttr.count; i++) {
-            const vx = posAttr.getX(i) + cx;
-            const vz = posAttr.getZ(i) + cz;
-            posAttr.setY(i, getTerrainHeight(vx, vz));
-        }
-        groundGeom.computeVertexNormals();
 
         const groundMat = new THREE.MeshStandardMaterial({
             map: turfTex,
             roughness: 0.95,
             metalness: 0.02
         });
-        const ground = new THREE.Mesh(groundGeom, groundMat);
-        ground.position.set(cx, 0.0, cz);
-        ground.receiveShadow = true;
-        this.scene.add(ground);
 
-        // High Alpine Mountain Peaks
-        const peakGeom = new THREE.BufferGeometry();
-        const peakVerts = [];
-        const peakCols = [];
-        const count = 56;
-        const innerR = valleyRadius;
-        const outerR = valleyRadius + 380.0;
+        groundMat.onBeforeCompile = (shader) => {
+            shader.vertexShader = GLSL_TERRAIN_HEIGHT + '\n' + shader.vertexShader;
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <beginnormal_vertex>',
+                `
+                #include <beginnormal_vertex>
+                vec4 wNormPos = modelMatrix * vec4(position, 1.0);
+                float eps = 0.6;
+                float hL = getTerrainHeight(wNormPos.xz - vec2(eps, 0.0));
+                float hR = getTerrainHeight(wNormPos.xz + vec2(eps, 0.0));
+                float hD = getTerrainHeight(wNormPos.xz - vec2(0.0, eps));
+                float hU = getTerrainHeight(wNormPos.xz + vec2(0.0, eps));
+                objectNormal = normalize(vec3(hL - hR, 2.0 * eps, hD - hU));
+                `
+            );
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                #include <begin_vertex>
+                vec4 wP = modelMatrix * vec4(position, 1.0);
+                transformed.y = getTerrainHeight(wP.xz);
+                `
+            );
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <uv_vertex>',
+                `
+                #include <uv_vertex>
+                vec4 wUvPos = modelMatrix * vec4(position, 1.0);
+                vMapUv = wUvPos.xz * 0.035;
+                `
+            );
+        };
 
-        for (let i = 0; i < count; i++) {
-            const a0 = (i / count) * Math.PI * 2;
-            const a1 = ((i + 1) / count) * Math.PI * 2;
-            const h0 = 140 + Math.sin(i * 1.7) * 55 + Math.cos(i * 0.9) * 35;
-            const h1 = 140 + Math.sin((i + 1) * 1.7) * 55 + Math.cos((i + 1) * 0.9) * 35;
-
-            const inX0 = cx + Math.cos(a0) * innerR;
-            const inZ0 = cz + Math.sin(a0) * innerR;
-            const inY0 = getTerrainHeight(inX0, inZ0);
-            const pIn0 = [inX0, inY0, inZ0];
-            const pOut0 = [cx + Math.cos(a0) * outerR, h0, cz + Math.sin(a0) * outerR];
-
-            const inX1 = cx + Math.cos(a1) * innerR;
-            const inZ1 = cz + Math.sin(a1) * innerR;
-            const inY1 = getTerrainHeight(inX1, inZ1);
-            const pIn1 = [inX1, inY1, inZ1];
-            const pOut1 = [cx + Math.cos(a1) * outerR, h1, cz + Math.sin(a1) * outerR];
-
-            const colIn = new THREE.Color(0.24, 0.54, 0.28);
-            const colOut0 = h0 > 130 ? new THREE.Color(0.96, 0.97, 1.0) : new THREE.Color(0.46, 0.42, 0.38);
-            const colOut1 = h1 > 130 ? new THREE.Color(0.96, 0.97, 1.0) : new THREE.Color(0.46, 0.42, 0.38);
-
-            peakVerts.push(...pIn0, ...pOut0, ...pIn1);
-            peakVerts.push(...pIn1, ...pOut0, ...pOut1);
-
-            peakCols.push(colIn.r, colIn.g, colIn.b);
-            peakCols.push(colOut0.r, colOut0.g, colOut0.b);
-            peakCols.push(colIn.r, colIn.g, colIn.b);
-
-            peakCols.push(colIn.r, colIn.g, colIn.b);
-            peakCols.push(colOut0.r, colOut0.g, colOut0.b);
-            peakCols.push(colOut1.r, colOut1.g, colOut1.b);
-        }
-
-        peakGeom.setAttribute('position', new THREE.Float32BufferAttribute(peakVerts, 3));
-        peakGeom.setAttribute('color', new THREE.Float32BufferAttribute(peakCols, 3));
-        peakGeom.computeVertexNormals();
-
-        const peakMat = new THREE.MeshStandardMaterial({
-            vertexColors: true,
-            roughness: 0.9,
-            flatShading: true
-        });
-        const mountainRing = new THREE.Mesh(peakGeom, peakMat);
-        this.scene.add(mountainRing);
+        this.ground = new THREE.Mesh(groundGeom, groundMat);
+        this.ground.position.set(cx, 0.0, cz);
+        this.ground.receiveShadow = true;
+        this.ground.frustumCulled = false;
+        this.scene.add(this.ground);
     }
 
     _setupPropsAndVegetation() {
-        const { points, tangents, binormals, tags, halfWidth = 5.2 } = this.trackData;
-        const n = points.length;
-        const halfW = halfWidth;
-
-        // Initialize Managers
+        // Initialize Scenery & Vegetation Subsystems
         this.props = new PropsManager(this.scene, this.trackData, this.trackCenter);
         this.trees = new TreeManager(this.scene, this.trackData, this.trackCenter);
-
-        // Clearance Reservation Grid
-        const reservedLeft = new Uint8Array(n);
-        const reservedRight = new Uint8Array(n);
-
-        const isOccupied = (side, idx, radius = 1) => {
-            const arr = side < 0 ? reservedLeft : reservedRight;
-            for (let k = Math.max(0, idx - radius); k <= Math.min(n - 1, idx + radius); k++) {
-                if (arr[k]) return true;
-            }
-            return false;
-        };
-
-        const reserve = (side, idx, radius = 1) => {
-            const arr = side < 0 ? reservedLeft : reservedRight;
-            for (let k = Math.max(0, idx - radius); k <= Math.min(n - 1, idx + radius); k++) {
-                arr[k] = 1;
-            }
-        };
-
-        // PASS 1: Guardrails along outer curve bends
-        for (let i = 1; i < n - 2; i++) {
-            const tag = tags[i];
-            if ((tag & 1) !== 0) continue;
-
-            const t0 = tangents[i - 1];
-            const t1 = tangents[i + 1];
-            const curve = (t0.x * t1.z - t0.z * t1.x);
-
-            if (Math.abs(curve) > 0.04) {
-                const outerSide = curve > 0 ? 1 : -1;
-                this.props.createConnectedGuardrail(points[i], points[i + 1], binormals[i], binormals[i + 1], outerSide, halfW, i);
-                reserve(outerSide, i, 1);
-            }
-        }
-
-        // PASS 2: Chevron Signs at sharp curve entries
-        for (let i = 2; i < n - 3; i++) {
-            const tag = tags[i];
-            if ((tag & 1) !== 0) continue;
-
-            const t0 = tangents[i - 2];
-            const t1 = tangents[i + 2];
-            const curve = (t0.x * t1.z - t0.z * t1.x);
-
-            if (Math.abs(curve) > 0.08) {
-                const signSide = curve > 0 ? -1 : 1;
-                if (!isOccupied(signSide, i, 2)) {
-                    this.props.createChevronSign(points[i], tangents[i], binormals[i], signSide, halfW);
-                    reserve(signSide, i, 2);
-                }
-            }
-        }
-
-        // PASS 3: Distance Markers
-        const markers = [
-            { idx: Math.floor(n * 0.15), text: '500 M' },
-            { idx: Math.floor(n * 0.50), text: '250 M' },
-            { idx: Math.floor(n * 0.75), text: '100 M' }
-        ];
-        for (const m of markers) {
-            const idx = m.idx;
-            if (idx > 0 && idx < n) {
-                const side = -1;
-                if (!isOccupied(side, idx, 2)) {
-                    this.props.createDistanceMarker(points[idx], tangents[idx], binormals[idx], side, halfW, m.text);
-                    reserve(side, idx, 2);
-                }
-            }
-        }
-
-        // PASS 4: Grandstands & Billboards on straights
-        for (let i = 8; i < n - 8; i++) {
-            const tag = tags[i];
-            if ((tag & 1) !== 0) continue;
-
-            const t0 = tangents[i - 2];
-            const t1 = tangents[i + 2];
-            const curve = Math.abs(t0.x * t1.z - t0.z * t1.x);
-
-            if (curve < 0.12) {
-                if ((i === 12 || i === 48 || i === 76) && !isOccupied(1, i, 4)) {
-                    this.props.createGrandstand(points[i], tangents[i], binormals[i], 1, halfW);
-                    reserve(1, i, 4);
-                }
-                if ((i === 18 || i === 54 || i === 82) && !isOccupied(-1, i, 3)) {
-                    const text = i === 18 ? '★ SUPER MODEL GP ★' : (i === 54 ? 'TURBO SPEEDWAY' : '★ STAR RAMP AHEAD ★');
-                    this.props.createBillboard(points[i], tangents[i], binormals[i], -1, halfW, text);
-                    reserve(-1, i, 3);
-                }
-            }
-        }
-
-        // PASS 5: Street Lamps spaced every ~35m, alternating sides
-        let lampSide = 1;
-        for (let i = 4; i < n - 4; i += 6) {
-            const tag = tags[i];
-            if ((tag & 1) !== 0) continue;
-            const side = lampSide;
-            lampSide = -lampSide;
-            if (!isOccupied(side, i, 2)) {
-                this.props.createStreetLamp(points[i], tangents[i], binormals[i], side, halfW);
-                reserve(side, i, 2);
-            }
-        }
-
-        // PASS 6: Trees placed only in remaining unreserved space
-        for (let i = 3; i < n - 4; i += 2) {
-            const tag = tags[i];
-            if ((tag & 1) !== 0) continue;
-            for (const side of [-1, 1]) {
-                if (!isOccupied(side, i, 1)) {
-                    const dist = halfW + 4.8 + ((i * 7) % 4) * 0.8;
-                    const treePos = points[i].clone().add(binormals[i].clone().multiplyScalar(side * dist));
-                    const isPine = ((i + (side > 0 ? 1 : 0)) % 2 === 0);
-                    this.trees.createTree(treePos.x, treePos.z, isPine);
-                    reserve(side, i, 1);
-                }
-            }
-        }
-
-        // Start / Finish Gantry & Circuit Props
-        this.props.createStartGantry(points[1], tangents[1], binormals[1], 11.0);
-        this.props.setupOverheadTrussBridge();
-        this.props.setupFieldBoulders();
-        this.props.setupWindTurbines();
-        this.props.setupHotAirBalloons();
-
-        // Meadow groves across the valley
-        this.trees.setupMeadowGroves();
-
-        // High-Performance GLSL Triangle Grass & Wildflowers (Peter Adams technique)
         this.grass = new GrassField(this.scene, this.trackData, this.trackCenter, this.trackSize);
     }
 
@@ -540,6 +378,15 @@ export class WorldView {
             }
         }
 
+        // Dynamic ground and sky dome tracking for infinite world
+        if (playerPos && this.ground) {
+            this.ground.position.x = playerPos.x;
+            this.ground.position.z = playerPos.z;
+        }
+        if (cameraPos && this.skyDome) {
+            this.skyDome.position.copy(cameraPos);
+        }
+
         // Dynamic Sun position relative to player for soft shadow map tracking
         if (playerPos) {
             this.sun.target.position.copy(playerPos);
@@ -565,7 +412,7 @@ export class WorldView {
 
         // Update submodules
         if (this.props) {
-            this.props.update(delta, this.elapsedTime, nightFactor);
+            this.props.update(delta, this.elapsedTime, nightFactor, playerPos || cameraPos);
         }
         if (this.trees) {
             this.trees.update(delta, this.elapsedTime);

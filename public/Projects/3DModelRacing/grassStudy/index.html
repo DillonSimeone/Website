@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🌿 Grass Study Lab — Open Source Real-Time Meadow Renderer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #111; color: #eee; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+        canvas { display: block; }
+        #controls {
+            position: fixed; top: 0; right: 0; width: 330px; height: 100vh;
+            background: rgba(14, 18, 22, 0.92); backdrop-filter: blur(8px);
+            padding: 12px; overflow-y: auto; font-size: 12px; z-index: 10;
+            border-left: 1px solid rgba(255,255,255,0.08);
+            box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+        }
+        #controls h2 { margin-bottom: 6px; color: #55ff88; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+        #controls h3 { margin: 10px 0 4px; color: #88ccee; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; }
+        .ctrl-row { display: flex; align-items: center; margin: 3px 0; gap: 6px; }
+        .ctrl-row label { width: 115px; flex-shrink: 0; color: #bbb; }
+        .ctrl-row input[type=range] { flex: 1; accent-color: #28a745; cursor: pointer; }
+        .ctrl-row .val { width: 50px; text-align: right; color: #ffeb3b; font-family: 'Consolas', monospace; font-size: 11px; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+        button {
+            padding: 6px 10px; background: #233428; color: #cfd; border: 1px solid #3c5e44;
+            border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        button:hover { background: #32523b; color: #fff; border-color: #4cd16a; }
+        button:active { transform: translateY(1px); }
+        .btn-primary { background: #1b5e20; border-color: #2e7d32; color: #fff; }
+        .btn-primary:hover { background: #2e7d32; border-color: #43a047; }
+        .btn-sync { background: #004d40; border-color: #00796b; color: #80cbc4; }
+        .btn-sync:hover { background: #00695c; color: #fff; }
+        #capture-btn { background: #5c2020; border-color: #8c3232; }
+        #capture-btn:hover { background: #7c2828; border-color: #b84040; }
+        #ref-overlay {
+            position: fixed; bottom: 10px; left: 10px; z-index: 10; border: 2px solid #55ff88;
+            opacity: 0.6; pointer-events: none; max-width: 420px; border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+        }
+        #stats {
+            position: fixed; top: 0; left: 0; background: rgba(10,14,18,0.85);
+            backdrop-filter: blur(4px); padding: 6px 14px; font-family: 'Consolas', monospace;
+            font-size: 12px; z-index: 10; border-bottom-right-radius: 6px;
+            border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #aff;
+        }
+        #toast {
+            display: none; position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+            background: rgba(14, 20, 16, 0.95); backdrop-filter: blur(8px);
+            border: 1px solid #00aa44; border-radius: 6px; padding: 9px 20px;
+            font-size: 13px; z-index: 100; box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            color: #55ff88; font-weight: 500;
+        }
+        #server-status {
+            padding: 5px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 8px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+    </style>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <canvas id="lab-canvas"></canvas>
+    <div id="stats">Tufts: -- | Blades: -- | Tris: -- | FPS: --</div>
+    <div id="toast"></div>
+
+    <div id="controls">
+        <h2>🌿 Grass Study Lab</h2>
+        
+        <div id="server-status" style="background:#15202b; border:1px solid #2b4764; color:#8ec5fc;">
+            <span>🔵 Checking Backend...</span>
+        </div>
+
+        <div class="btn-group">
+            <button id="save-server-btn" class="btn-primary" onclick="saveToGame()" style="display:none;" title="Save changes directly to three.js/configure/grass.json">💾 Save to Game</button>
+            <button id="load-server-btn" class="btn-sync" onclick="loadFromGame()" style="display:none;" title="Load configuration from three.js/configure/grass.json">📂 Load Saved</button>
+            <button onclick="copyJsonConfig()" title="Copy grass.json formatted string to clipboard">📋 Copy JSON</button>
+            <button onclick="downloadJsonConfig()" title="Download grass.json config file">⬇️ Download</button>
+        </div>
+
+        <div class="btn-group">
+            <button id="apply-btn" class="btn-primary" onclick="rebuildGrass()">🔄 Rebuild</button>
+            <button id="capture-btn" onclick="captureFrame()">📸 Capture .webp</button>
+            <button onclick="toggleRef()">👁 Ref Overlay</button>
+            <button onclick="resetCamera()">🎥 Reset Cam</button>
+        </div>
+
+        <h3>Presets</h3>
+        <div class="btn-group">
+            <button class="btn-primary" onclick="applyPreset('winning')">🏆 Grassworks 60fps</button>
+            <button onclick="applyPreset('grassworks')">Grassworks Dark</button>
+            <button onclick="applyPreset('meadow')">Bright Meadow</button>
+            <button onclick="applyPreset('dense')">Ultra Dense</button>
+            <button onclick="applyPreset('wild')">Wild Field</button>
+        </div>
+
+        <h3>Blade Geometry</h3>
+        <div class="ctrl-row"><label>Width (m)</label><input type="range" id="bladeWidth" min="0.005" max="0.10" step="0.002" value="0.025"><span class="val" id="bladeWidth_v">0.025</span></div>
+        <div class="ctrl-row"><label>Height (m)</label><input type="range" id="bladeHeight" min="0.1" max="2.5" step="0.05" value="1.00"><span class="val" id="bladeHeight_v">1.00</span></div>
+        <div class="ctrl-row"><label>Segments</label><input type="range" id="segments" min="1" max="6" step="1" value="3"><span class="val" id="segments_v">3</span></div>
+
+        <h3>Density & Layout</h3>
+        <div class="ctrl-row"><label>Cell Size (m)</label><input type="range" id="cellSize" min="0.08" max="1.5" step="0.01" value="0.15"><span class="val" id="cellSize_v">0.15</span></div>
+        <div class="ctrl-row"><label>Blades/Tuft</label><input type="range" id="bladesPerTuft" min="1" max="24" step="1" value="12"><span class="val" id="bladesPerTuft_v">12</span></div>
+        <div class="ctrl-row"><label>Patch Size (m)</label><input type="range" id="patchSize" min="10" max="90" step="5" value="55"><span class="val" id="patchSize_v">55</span></div>
+
+        <h3>Lean & Curvature</h3>
+        <div class="ctrl-row"><label>Lean Min</label><input type="range" id="leanMin" min="0.0" max="0.5" step="0.01" value="0.05"><span class="val" id="leanMin_v">0.05</span></div>
+        <div class="ctrl-row"><label>Lean Max</label><input type="range" id="leanMax" min="0.0" max="1.0" step="0.01" value="0.30"><span class="val" id="leanMax_v">0.30</span></div>
+        <div class="ctrl-row"><label>Curve Min</label><input type="range" id="curveMin" min="0.0" max="0.8" step="0.01" value="0.15"><span class="val" id="curveMin_v">0.15</span></div>
+        <div class="ctrl-row"><label>Curve Max</label><input type="range" id="curveMax" min="0.0" max="1.0" step="0.01" value="0.40"><span class="val" id="curveMax_v">0.40</span></div>
+        <div class="ctrl-row"><label>Height Var Min</label><input type="range" id="hMin" min="0.1" max="1.0" step="0.05" value="0.40"><span class="val" id="hMin_v">0.40</span></div>
+        <div class="ctrl-row"><label>Height Var Max</label><input type="range" id="hMax" min="0.5" max="2.0" step="0.05" value="1.20"><span class="val" id="hMax_v">1.20</span></div>
+
+        <h3>Color Gradient (Root ➔ Tip)</h3>
+        <div class="ctrl-row"><label>Root Color</label><input type="color" id="colRoot" value="#051402"></div>
+        <div class="ctrl-row"><label>Lower Color</label><input type="color" id="colLower" value="#142d06"></div>
+        <div class="ctrl-row"><label>Mid Color</label><input type="color" id="colMid" value="#2e5c14"></div>
+        <div class="ctrl-row"><label>Upper Color</label><input type="color" id="colUpper" value="#4d7a1e"></div>
+        <div class="ctrl-row"><label>Tip Color</label><input type="color" id="colTip" value="#6b8528"></div>
+
+        <h3 style="margin-top:14px;">Active Configuration (grass.json)</h3>
+        <textarea id="paramDump" rows="9" style="width:100%;background:#090d10;color:#55ff88;border:1px solid #223326;border-radius:4px;font-family:'Consolas',monospace;font-size:10px;padding:6px;resize:vertical;" readonly></textarea>
+    </div>
+
+    <img id="ref-overlay" src="grassworks_ref.png" style="display:none;">
+
+    <script type="module">
+import * as THREE from 'three';
+
+// ═══════════════════════════════════════════════════════
+// GLOBALS & STATE
+// ═══════════════════════════════════════════════════════
+let scene, camera, renderer, grassMesh, groundMesh;
+let animFrame;
+const clock = new THREE.Clock();
+let frameCount = 0, lastFpsTime = 0;
+let hasBackend = false;
+
+// ═══════════════════════════════════════════════════════
+// NOTIFICATIONS & FEEDBACK
+// ═══════════════════════════════════════════════════════
+function showToast(msg, isSuccess = true) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.style.display = 'block';
+    t.style.borderColor = isSuccess ? '#00aa44' : '#dc3545';
+    t.style.color = isSuccess ? '#55ff88' : '#ff8888';
+    setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT LAB VIEWPORT
+// ═══════════════════════════════════════════════════════
+function init() {
+    const canvas = document.getElementById('lab-canvas');
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth - 330, window.innerHeight);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0.45, 0.62, 0.82);
+    scene.fog = new THREE.Fog(0x7ba0d2, 30, 120);
+
+    camera = new THREE.PerspectiveCamera(60, (window.innerWidth - 330) / window.innerHeight, 0.1, 500);
+    camera.position.set(0, 1.2, 6);
+    camera.lookAt(0, 0.6, -8);
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0xb0c4de, 0.6));
+    const sun = new THREE.DirectionalLight(0xffeedd, 1.2);
+    sun.position.set(20, 30, 10);
+    scene.add(sun);
+
+    // Ground plane
+    const groundGeo = new THREE.PlaneGeometry(200, 200);
+    const groundMat = new THREE.MeshLambertMaterial({ color: 0x1a3010 });
+    groundMesh = new THREE.Mesh(groundGeo, groundMat);
+    groundMesh.rotation.x = -Math.PI / 2;
+    groundMesh.position.y = -0.01;
+    scene.add(groundMesh);
+
+    // Initial build
+    rebuildGrass();
+
+    // Wire up slider readouts
+    document.querySelectorAll('#controls input[type=range]').forEach(inp => {
+        const valEl = document.getElementById(inp.id + '_v');
+        inp.addEventListener('input', () => { if (valEl) valEl.textContent = inp.value; });
+    });
+
+    window.addEventListener('resize', () => {
+        renderer.setSize(window.innerWidth - 330, window.innerHeight);
+        camera.aspect = (window.innerWidth - 330) / window.innerHeight;
+        camera.updateProjectionMatrix();
+    });
+
+    // Orbit controls
+    let dragging = false, prevX = 0, prevY = 0;
+    let orbitYaw = 0, orbitPitch = 0.22, orbitDist = 6.5;
+    const target = new THREE.Vector3(0, 0.4, 0);
+
+    canvas.addEventListener('mousedown', e => { dragging = true; prevX = e.clientX; prevY = e.clientY; });
+    window.addEventListener('mouseup', () => { dragging = false; });
+    canvas.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        orbitYaw += (e.clientX - prevX) * 0.008;
+        orbitPitch = Math.max(-0.1, Math.min(1.2, orbitPitch + (e.clientY - prevY) * 0.008));
+        prevX = e.clientX; prevY = e.clientY;
+        updateCameraOrbit();
+    });
+    canvas.addEventListener('wheel', e => {
+        orbitDist = Math.max(1, Math.min(30, orbitDist + e.deltaY * 0.01));
+        updateCameraOrbit();
+    });
+
+    function updateCameraOrbit() {
+        camera.position.set(
+            target.x + Math.sin(orbitYaw) * Math.cos(orbitPitch) * orbitDist,
+            target.y + Math.sin(orbitPitch) * orbitDist,
+            target.z + Math.cos(orbitYaw) * Math.cos(orbitPitch) * orbitDist
+        );
+        camera.lookAt(target);
+    }
+
+    window._resetCamera = () => {
+        orbitYaw = 0; orbitPitch = 0.22; orbitDist = 6.5;
+        target.set(0, 0.4, 0);
+        updateCameraOrbit();
+    };
+
+    updateCameraOrbit();
+    animate();
+
+    // Backend status check (graceful for standalone open source deployment)
+    checkServerStatus();
+}
+
+// ═══════════════════════════════════════════════════════
+// GRASS PARAMETERS & CONVERSIONS
+// ═══════════════════════════════════════════════════════
+function getParams() {
+    return {
+        bladeWidth:    parseFloat(document.getElementById('bladeWidth').value),
+        bladeHeight:   parseFloat(document.getElementById('bladeHeight').value),
+        segments:      parseInt(document.getElementById('segments').value),
+        cellSize:      parseFloat(document.getElementById('cellSize').value),
+        bladesPerTuft: parseInt(document.getElementById('bladesPerTuft').value),
+        patchSize:     parseFloat(document.getElementById('patchSize').value),
+        leanMin:       parseFloat(document.getElementById('leanMin').value),
+        leanMax:       parseFloat(document.getElementById('leanMax').value),
+        curveMin:      parseFloat(document.getElementById('curveMin').value),
+        curveMax:      parseFloat(document.getElementById('curveMax').value),
+        hMin:          parseFloat(document.getElementById('hMin').value),
+        hMax:          parseFloat(document.getElementById('hMax').value),
+        colRoot:       hexToVec3(document.getElementById('colRoot').value),
+        colLower:      hexToVec3(document.getElementById('colLower').value),
+        colMid:        hexToVec3(document.getElementById('colMid').value),
+        colUpper:      hexToVec3(document.getElementById('colUpper').value),
+        colTip:        hexToVec3(document.getElementById('colTip').value),
+    };
+}
+
+function hexToVec3(hex) {
+    const r = parseFloat((parseInt(hex.slice(1, 3), 16) / 255).toFixed(3));
+    const g = parseFloat((parseInt(hex.slice(3, 5), 16) / 255).toFixed(3));
+    const b = parseFloat((parseInt(hex.slice(5, 7), 16) / 255).toFixed(3));
+    return [r, g, b];
+}
+
+function vec3ToHex(v) {
+    const to255 = (n) => Math.max(0, Math.min(255, Math.round(n * 255))).toString(16).padStart(2, '0');
+    return `#${to255(v[0])}${to255(v[1])}${to255(v[2])}`;
+}
+
+function getJsonConfig() {
+    const P = getParams();
+    return {
+        bladeSegments: P.segments,
+        bladesPerTuft: P.bladesPerTuft,
+        cellSize: P.cellSize,
+        patchSize: P.patchSize,
+        bladeWidth: P.bladeWidth,
+        maxBladeHeight: P.bladeHeight,
+        leanMin: P.leanMin,
+        leanMax: P.leanMax,
+        curveMin: P.curveMin,
+        curveMax: P.curveMax,
+        hScaleMin: P.hMin,
+        hScaleMax: P.hMax,
+        farCellSize: 1.6,
+        farPatchSize: 280.0,
+        farBladesPerTuft: 3,
+        farBladeWidth: 0.08,
+        farMaxBladeHeight: 0.65,
+        colors: {
+            colRoot:  P.colRoot,
+            colLower: P.colLower,
+            colMid:   P.colMid,
+            colUpper: P.colUpper,
+            colTip:   P.colTip
+        }
+    };
+}
+
+// ═══════════════════════════════════════════════════════
+// REBUILD PROCEDURAL MESH
+// ═══════════════════════════════════════════════════════
+window.rebuildGrass = function() {
+    if (grassMesh) {
+        scene.remove(grassMesh);
+        grassMesh.geometry.dispose();
+        grassMesh.material.dispose();
+    }
+
+    const P = getParams();
+    const SEG = P.segments;
+    const VERTS_PER_BLADE = (SEG + 1) * 2;
+    const TRIS_PER_BLADE = SEG * 2;
+    const IDX_PER_BLADE = TRIS_PER_BLADE * 3;
+
+    const cellsPerAxis = Math.floor(P.patchSize / P.cellSize);
+    const tuftCount = cellsPerAxis * cellsPerAxis;
+    const totalBlades = tuftCount * P.bladesPerTuft;
+
+    // Blade template
+    const bladeVerts = [];
+    for (let s = 0; s <= SEG; s++) {
+        const t = s / SEG;
+        const w = Math.max(0.0, 1.0 - t * 0.9);
+        bladeVerts.push({ side: -1, t, w });
+        bladeVerts.push({ side:  1, t, w });
+    }
+    const idxTemplate = [];
+    for (let s = 0; s < SEG; s++) {
+        const bl = s * 2, br = s * 2 + 1, tl = (s + 1) * 2, tr = (s + 1) * 2 + 1;
+        idxTemplate.push(bl, br, tl, br, tr, tl);
+    }
+
+    const totalVerts = totalBlades * VERTS_PER_BLADE;
+    const totalIndices = totalBlades * IDX_PER_BLADE;
+
+    const positions = new Float32Array(totalVerts * 3);
+    const origins = new Float32Array(totalVerts * 3);
+    const dirs = new Float32Array(totalVerts * 3);
+    const uvs = new Float32Array(totalVerts * 2);
+    const params = new Float32Array(totalVerts * 3);
+    const leans = new Float32Array(totalVerts);
+    const tints = new Float32Array(totalVerts * 2);
+    const indices = new Uint32Array(totalIndices);
+
+    let pI = 0, oI = 0, dI = 0, uI = 0, pmI = 0, lI = 0, tI = 0, iI = 0, gvb = 0;
+    const half = P.patchSize * 0.5;
+
+    for (let cy = 0; cy < cellsPerAxis; cy++) {
+        for (let cx = 0; cx < cellsPerAxis; cx++) {
+            const bx = cx * P.cellSize - half + (Math.random() * 0.7 + 0.15) * P.cellSize;
+            const bz = cy * P.cellSize - half + (Math.random() * 0.7 + 0.15) * P.cellSize;
+            const ct = Math.random();
+
+            for (let b = 0; b < P.bladesPerTuft; b++) {
+                const yaw = Math.random() * Math.PI * 2;
+                const dx = Math.sin(yaw), dz = -Math.cos(yaw);
+                const lean = P.leanMin + Math.random() * (P.leanMax - P.leanMin);
+                const hScale = P.hMin + Math.random() * (P.hMax - P.hMin);
+                const curve = P.curveMin + Math.random() * (P.curveMax - P.curveMin);
+                const bt = Math.random();
+                const jx = bx + (Math.random() - 0.5) * 0.10;
+                const jz = bz + (Math.random() - 0.5) * 0.10;
+
+                for (let v = 0; v < bladeVerts.length; v++) {
+                    const bv = bladeVerts[v];
+                    positions[pI++] = jx; positions[pI++] = 0; positions[pI++] = jz;
+                    origins[oI++] = jx; origins[oI++] = 0; origins[oI++] = jz;
+                    dirs[dI++] = dx; dirs[dI++] = 0; dirs[dI++] = dz;
+                    uvs[uI++] = bv.side; uvs[uI++] = bv.t;
+                    params[pmI++] = bv.w; params[pmI++] = hScale; params[pmI++] = curve;
+                    leans[lI++] = lean;
+                    tints[tI++] = ct; tints[tI++] = bt;
+                }
+                for (let i = 0; i < idxTemplate.length; i++) indices[iI++] = gvb + idxTemplate[i];
+                gvb += VERTS_PER_BLADE;
+            }
+        }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('aOrigin', new THREE.BufferAttribute(origins, 3));
+    geo.setAttribute('aDir', new THREE.BufferAttribute(dirs, 3));
+    geo.setAttribute('aUV', new THREE.BufferAttribute(uvs, 2));
+    geo.setAttribute('aParams', new THREE.BufferAttribute(params, 3));
+    geo.setAttribute('aLean', new THREE.BufferAttribute(leans, 1));
+    geo.setAttribute('aTint', new THREE.BufferAttribute(tints, 2));
+    geo.setIndex(new THREE.BufferAttribute(indices, 1));
+
+    const vertShader = `
+        attribute vec3 aOrigin;
+        attribute vec3 aDir;
+        attribute vec2 aUV;
+        attribute vec3 aParams;
+        attribute float aLean;
+        attribute vec2 aTint;
+
+        uniform float uTime;
+        uniform float uBladeWidth;
+        uniform float uBladeHeight;
+        uniform vec3 uColRoot;
+        uniform vec3 uColLower;
+        uniform vec3 uColMid;
+        uniform vec3 uColUpper;
+        uniform vec3 uColTip;
+
+        varying vec3 vColor;
+
+        void main() {
+            float t = aUV.y;      // 0 base, 1 tip
+            float side = aUV.x;   // -1 left, 1 right
+            float bladeH = uBladeHeight * aParams.y;
+
+            vec3 pos = aOrigin;
+
+            // Width taper
+            vec3 sideDir = vec3(-aDir.z, 0.0, aDir.x);
+            float w = uBladeWidth * aParams.x;
+            pos += sideDir * (side * w * 0.5);
+
+            // Vertical rise
+            pos.y += t * bladeH;
+
+            // Linear lean tilt
+            float leanDist = aLean * t * bladeH * 1.1;
+            pos += aDir * leanDist;
+            pos.y -= leanDist * aLean * 0.30;
+
+            // Quadratic tip bend
+            float bend = t * t;
+            float curveStr = aParams.z * bladeH * 0.65;
+            pos += aDir * (bend * curveStr);
+            pos.y -= bend * curveStr * 0.28;
+
+            // Wind breeze
+            float sway = sin(uTime * 1.8 + aOrigin.x * 0.15 + aOrigin.z * 0.12) * 0.12;
+            float sway2 = sin(uTime * 0.7 + aOrigin.x * 0.08 - aOrigin.z * 0.06) * 0.08;
+            pos.x += (sway + sway2) * bend * bladeH;
+            pos.z += (sway * 0.6 - sway2 * 0.4) * bend * bladeH;
+
+            // Color gradient
+            vec3 c = mix(uColRoot, uColLower, smoothstep(0.0, 0.15, t));
+            c = mix(c, uColMid, smoothstep(0.15, 0.40, t));
+            c = mix(c, uColUpper, smoothstep(0.40, 0.70, t));
+            c = mix(c, uColTip, smoothstep(0.70, 1.0, t));
+
+            // Cluster & individual tinting
+            c *= mix(vec3(0.86, 1.02, 0.80), vec3(1.14, 0.98, 0.78), aTint.x);
+            c *= (0.78 + aTint.y * 0.44);
+
+            // Base ambient occlusion
+            float ao = mix(0.25, 1.0, smoothstep(0.0, 0.42, t));
+            vColor = c * ao;
+
+            gl_Position = projectionMatrix * viewMatrix * vec4(pos, 1.0);
+        }
+    `;
+
+    const fragShader = `
+        varying vec3 vColor;
+        void main() {
+            gl_FragColor = vec4(vColor, 1.0);
+        }
+    `;
+
+    const mat = new THREE.ShaderMaterial({
+        vertexShader: vertShader,
+        fragmentShader: fragShader,
+        side: THREE.DoubleSide,
+        uniforms: {
+            uTime: { value: 0 },
+            uBladeWidth: { value: P.bladeWidth },
+            uBladeHeight: { value: P.bladeHeight },
+            uColRoot:  { value: new THREE.Vector3(...P.colRoot) },
+            uColLower: { value: new THREE.Vector3(...P.colLower) },
+            uColMid:   { value: new THREE.Vector3(...P.colMid) },
+            uColUpper: { value: new THREE.Vector3(...P.colUpper) },
+            uColTip:   { value: new THREE.Vector3(...P.colTip) },
+        }
+    });
+
+    grassMesh = new THREE.Mesh(geo, mat);
+    grassMesh.frustumCulled = false;
+    scene.add(grassMesh);
+
+    // Update stats display
+    const statsText = `Tufts: ${tuftCount.toLocaleString()} | Blades: ${totalBlades.toLocaleString()} | Tris: ${(totalBlades * TRIS_PER_BLADE).toLocaleString()}`;
+    document.getElementById('stats').textContent = statsText;
+
+    // Update JSON readout
+    dumpParams();
+};
+
+function dumpParams() {
+    const cfg = getJsonConfig();
+    document.getElementById('paramDump').value = JSON.stringify(cfg, null, 2);
+}
+
+// ═══════════════════════════════════════════════════════
+// PRESETS
+// ═══════════════════════════════════════════════════════
+const PRESETS = {
+    winning: {
+        bladeWidth: 0.025, bladeHeight: 1.00, segments: 3,
+        cellSize: 0.15, bladesPerTuft: 12, patchSize: 55,
+        leanMin: 0.05, leanMax: 0.30, curveMin: 0.15, curveMax: 0.40,
+        hMin: 0.40, hMax: 1.20,
+        colRoot: '#051402', colLower: '#142d06', colMid: '#2e5c14', colUpper: '#4d7a1e', colTip: '#6b8528'
+    },
+    grassworks: {
+        bladeWidth: 0.045, bladeHeight: 0.80, segments: 3,
+        cellSize: 0.55, bladesPerTuft: 7, patchSize: 40,
+        leanMin: 0.05, leanMax: 0.30, curveMin: 0.15, curveMax: 0.40,
+        hMin: 0.40, hMax: 1.20,
+        colRoot: '#051402', colLower: '#142d06', colMid: '#2e5c14', colUpper: '#4d7a1e', colTip: '#6b8528'
+    },
+    meadow: {
+        bladeWidth: 0.06, bladeHeight: 0.60, segments: 3,
+        cellSize: 0.50, bladesPerTuft: 5, patchSize: 40,
+        leanMin: 0.05, leanMax: 0.20, curveMin: 0.10, curveMax: 0.30,
+        hMin: 0.50, hMax: 1.00,
+        colRoot: '#0a2005', colLower: '#1a4a0c', colMid: '#349918', colUpper: '#50b822', colTip: '#72d035'
+    },
+    dense: {
+        bladeWidth: 0.035, bladeHeight: 0.70, segments: 3,
+        cellSize: 0.35, bladesPerTuft: 9, patchSize: 30,
+        leanMin: 0.03, leanMax: 0.18, curveMin: 0.10, curveMax: 0.30,
+        hMin: 0.50, hMax: 1.10,
+        colRoot: '#040f02', colLower: '#0f2804', colMid: '#244c0e', colUpper: '#3d6a18', colTip: '#587c22'
+    },
+    wild: {
+        bladeWidth: 0.05, bladeHeight: 1.20, segments: 4,
+        cellSize: 0.50, bladesPerTuft: 6, patchSize: 40,
+        leanMin: 0.10, leanMax: 0.55, curveMin: 0.20, curveMax: 0.60,
+        hMin: 0.30, hMax: 1.50,
+        colRoot: '#060e03', colLower: '#142806', colMid: '#2a4c0e', colUpper: '#466a1c', colTip: '#6e7e2a'
+    }
+};
+
+window.applyPreset = function(name) {
+    const p = PRESETS[name];
+    if (!p) return;
+    for (const [key, val] of Object.entries(p)) {
+        setVal(key, val);
+    }
+    rebuildGrass();
+};
+
+function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+    const valEl = document.getElementById(id + '_v');
+    if (valEl) valEl.textContent = val;
+}
+
+// ═══════════════════════════════════════════════════════
+// BACKEND SYNC & CONFIG MANAGEMENT
+// ═══════════════════════════════════════════════════════
+async function checkServerStatus() {
+    const statusEl = document.getElementById('server-status');
+    const saveBtn = document.getElementById('save-server-btn');
+    const loadBtn = document.getElementById('load-server-btn');
+
+    try {
+        const res = await fetch('/api/status', { method: 'GET' });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.server) {
+                hasBackend = true;
+                if (statusEl) {
+                    statusEl.innerHTML = '🟢 <b>Server Connected</b> (Syncs to grass.json)';
+                    statusEl.style.background = '#003311';
+                    statusEl.style.borderColor = '#00aa44';
+                    statusEl.style.color = '#55ff88';
+                }
+                if (saveBtn) saveBtn.style.display = 'inline-block';
+                if (loadBtn) loadBtn.style.display = 'inline-block';
+                return;
+            }
+        }
+    } catch (_) {}
+
+    // Standalone fallback (open source web deployment)
+    hasBackend = false;
+    if (statusEl) {
+        statusEl.innerHTML = '🔵 <b>Standalone Mode</b> (Open source web runner)';
+        statusEl.style.background = '#15202b';
+        statusEl.style.borderColor = '#2b4764';
+        statusEl.style.color = '#8ec5fc';
+    }
+    if (saveBtn) saveBtn.style.display = 'none';
+    if (loadBtn) loadBtn.style.display = 'none';
+}
+
+window.saveToGame = async function() {
+    const config = getJsonConfig();
+    try {
+        const res = await fetch('/api/save-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+        const result = await res.json();
+        if (result.success) {
+            showToast('✅ Saved to three.js/configure/grass.json!');
+        } else {
+            showToast('❌ Save error: ' + (result.error || 'Unknown'), false);
+        }
+    } catch (e) {
+        showToast('❌ Network error saving config', false);
+    }
+};
+
+window.loadFromGame = async function() {
+    try {
+        const res = await fetch('/api/load-config');
+        if (res.ok) {
+            const cfg = await res.json();
+            applyJsonToUi(cfg);
+            showToast('📂 Loaded config from grass.json');
+        } else {
+            showToast('❌ No grass.json found on server', false);
+        }
+    } catch (e) {
+        showToast('❌ Could not load config', false);
+    }
+};
+
+function applyJsonToUi(cfg) {
+    if (!cfg) return;
+    if (cfg.bladeWidth !== undefined) setVal('bladeWidth', cfg.bladeWidth);
+    if (cfg.maxBladeHeight !== undefined) setVal('bladeHeight', cfg.maxBladeHeight);
+    if (cfg.bladeSegments !== undefined) setVal('segments', cfg.bladeSegments);
+    if (cfg.cellSize !== undefined) setVal('cellSize', cfg.cellSize);
+    if (cfg.bladesPerTuft !== undefined) setVal('bladesPerTuft', cfg.bladesPerTuft);
+    if (cfg.patchSize !== undefined) setVal('patchSize', cfg.patchSize);
+    if (cfg.leanMin !== undefined) setVal('leanMin', cfg.leanMin);
+    if (cfg.leanMax !== undefined) setVal('leanMax', cfg.leanMax);
+    if (cfg.curveMin !== undefined) setVal('curveMin', cfg.curveMin);
+    if (cfg.curveMax !== undefined) setVal('curveMax', cfg.curveMax);
+    if (cfg.hScaleMin !== undefined) setVal('hMin', cfg.hScaleMin);
+    if (cfg.hScaleMax !== undefined) setVal('hMax', cfg.hScaleMax);
+    if (cfg.colors) {
+        if (cfg.colors.colRoot) document.getElementById('colRoot').value = vec3ToHex(cfg.colors.colRoot);
+        if (cfg.colors.colLower) document.getElementById('colLower').value = vec3ToHex(cfg.colors.colLower);
+        if (cfg.colors.colMid) document.getElementById('colMid').value = vec3ToHex(cfg.colors.colMid);
+        if (cfg.colors.colUpper) document.getElementById('colUpper').value = vec3ToHex(cfg.colors.colUpper);
+        if (cfg.colors.colTip) document.getElementById('colTip').value = vec3ToHex(cfg.colors.colTip);
+    }
+    rebuildGrass();
+}
+
+window.copyJsonConfig = function() {
+    const config = getJsonConfig();
+    const str = JSON.stringify(config, null, 2);
+    navigator.clipboard.writeText(str).then(() => {
+        showToast('📋 Copied grass.json to clipboard!');
+    }).catch(() => {
+        showToast('⚠️ Clipboard permission denied', false);
+    });
+};
+
+window.downloadJsonConfig = function() {
+    const config = getJsonConfig();
+    const str = JSON.stringify(config, null, 2);
+    const blob = new Blob([str], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'grass.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('⬇️ Downloaded grass.json');
+};
+
+// ═══════════════════════════════════════════════════════
+// CAPTURE & REFERENCE
+// ═══════════════════════════════════════════════════════
+window.captureFrame = function() {
+    renderer.render(scene, camera);
+    const dataUrl = renderer.domElement.toDataURL('image/webp', 0.92);
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `grass_study_${Date.now()}.webp`;
+    a.click();
+    showToast('📸 Captured WebP screenshot');
+};
+
+let refVisible = false;
+window.toggleRef = function() {
+    refVisible = !refVisible;
+    document.getElementById('ref-overlay').style.display = refVisible ? 'block' : 'none';
+};
+
+window.resetCamera = function() { window._resetCamera?.(); };
+
+// ═══════════════════════════════════════════════════════
+// RENDER LOOP
+// ═══════════════════════════════════════════════════════
+function animate() {
+    animFrame = requestAnimationFrame(animate);
+    const dt = clock.getDelta();
+    if (grassMesh?.material?.uniforms?.uTime) {
+        grassMesh.material.uniforms.uTime.value += dt;
+    }
+    renderer.render(scene, camera);
+
+    frameCount++;
+    const now = performance.now();
+    if (now - lastFpsTime > 500) {
+        const fps = Math.round(frameCount / ((now - lastFpsTime) / 1000));
+        const statsEl = document.getElementById('stats');
+        const existing = statsEl.textContent.split('|').slice(0, 3).join('|');
+        statsEl.textContent = (existing ? existing + ' | ' : '') + `FPS: ${fps}`;
+        frameCount = 0;
+        lastFpsTime = now;
+    }
+}
+
+init();
+    </script>
+</body>
+</html>

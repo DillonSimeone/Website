@@ -461,6 +461,25 @@ html, body {
     transition: left 0.05s linear;
 }
 
+.hud-dist-badge {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(0, 242, 254, 0.45);
+    border-radius: 12px;
+    padding: 3px 14px;
+    font-family: var(--font-mono, monospace);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #00f2fe;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    white-space: nowrap;
+}
+
 /* Speedometer & Boost in Bottom Left */
 .hud-bottom-left {
     position: absolute;

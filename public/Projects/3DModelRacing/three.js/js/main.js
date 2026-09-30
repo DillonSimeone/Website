@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { VehicleStats } from './vehicle_stats.js';
 import { ModelLoader, COLORS, PATTERNS } from './model_loader.js';
 import { TrackGen } from './track_gen.js';
+import { RoadStreamer } from './road_streamer.js';
 import { WorldView } from './world.js';
 import { Vehicle } from './vehicle.js';
 import { RivalManager } from './rivals.js';
@@ -20,6 +21,8 @@ class GameApp {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         // Scenes & Cameras
         this.raceScene = new THREE.Scene();
@@ -51,12 +54,14 @@ class GameApp {
         this.prevMousePos = { x: 0, y: 0 };
 
         // Active Race Entities
+        this.streamer = null;
         this.trackData = null;
         this.world = null;
         this.player = null;
         this.rivals = null;
         this.elapsedTime = 0;
         this.topSpeedReached = 0;
+        this.totalDistanceDriven = 0;
         this.raceFinished = false;
 
         // Roguelite Upgrade State
@@ -368,8 +373,9 @@ class GameApp {
         // Menu Navigation
         document.getElementById('btn-arcade').onclick = () => {
             this.audio.ensureContext();
-            this.mode = 'arcade';
+            this.mode = 'driving';
             this.runSeed = 1;
+            document.getElementById('garage-mode-label').textContent = 'ENDLESS DRIVE';
             this.switchState('GARAGE');
         };
 
@@ -377,6 +383,7 @@ class GameApp {
             this.audio.ensureContext();
             this.mode = 'roguelite';
             this.runSeed = Math.floor(Math.random() * 99999) + 1;
+            document.getElementById('garage-mode-label').textContent = 'ROGUELITE RUN';
             this.switchState('GARAGE');
         };
 
@@ -390,8 +397,8 @@ class GameApp {
         };
 
         document.getElementById('garage-mode-btn').onclick = () => {
-            this.mode = this.mode === 'arcade' ? 'roguelite' : 'arcade';
-            document.getElementById('garage-mode-label').textContent = this.mode.toUpperCase();
+            this.mode = this.mode === 'driving' ? 'roguelite' : 'driving';
+            document.getElementById('garage-mode-label').textContent = this.mode === 'driving' ? 'ENDLESS DRIVE' : 'ROGUELITE RUN';
         };
 
         document.getElementById('garage-reset-facing-btn').onclick = () => {
@@ -490,23 +497,25 @@ class GameApp {
     _startRace() {
         this.elapsedTime = 0;
         this.topSpeedReached = 0;
+        this.totalDistanceDriven = 0;
         this.raceFinished = false;
         this.playerLevel = 1;
         this.playerXp = 0;
         this.activeUpgrades = [];
 
-        // Build continuous track
-        this.trackData = TrackGen.generate(this.mode, this.runSeed);
-        this.hud.initTrack(this.trackData);
-
         // Clear and prepare race scene
         while (this.raceScene.children.length > 0) {
             this.raceScene.remove(this.raceScene.children[0]);
         }
-        this.raceScene.add(this.trackData.trackMesh);
+
+        // Initialize Dynamic Road Streamer for Endless Driving
+        this.streamer = new RoadStreamer(this.raceScene, this.mode, this.runSeed);
+        this.trackData = this.streamer.getTrackData();
+        this.hud.initTrack(this.trackData);
 
         // Initialize Scenery & Day-Night cycle
         this.world = new WorldView(this.raceScene, this.trackData);
+        this.streamer.setSceneryManagers(this.world.trees, this.world.props);
 
         // Bake chosen garage facing/orientation into player vehicle geometry
         const bakedGeom = this.currentGeometry.clone();
@@ -549,6 +558,10 @@ class GameApp {
     }
 
     _teardownRace() {
+        if (this.streamer) {
+            this.streamer.destroy();
+            this.streamer = null;
+        }
         if (this.player) {
             this.player.destroy();
             this.player = null;
@@ -637,10 +650,12 @@ class GameApp {
         const curSpeedKmh = Math.abs(this.player.speed * 3.6);
         if (curSpeedKmh > this.topSpeedReached) this.topSpeedReached = curSpeedKmh;
 
+        if (this.player) {
+            this.totalDistanceDriven += Math.abs(this.player.speed) * delta;
+        }
         const pts = this.trackData.points;
-        const finishPt = this.trackData.finish;
 
-        // Progress percentage along track
+        // Dynamic progress calculation along streaming window
         let closestIndex = 0;
         let minDist = Infinity;
         for (let i = 0; i < pts.length; i++) {
@@ -650,7 +665,7 @@ class GameApp {
                 closestIndex = i;
             }
         }
-        const progress = closestIndex / (pts.length - 1);
+        const progress = (this.totalDistanceDriven % 3000.0) / 3000.0;
 
         // Roguelite XP accumulation
         if (this.mode === 'roguelite') {
@@ -677,12 +692,6 @@ class GameApp {
             return;
         }
 
-        // Check Normal Finish Line
-        if (this.player.position.distanceTo(finishPt) < 18.0 && progress > 0.95 && !this.raceFinished) {
-            this._endRace(false, rank);
-            return;
-        }
-
         // Update HUD
         const rivalPositions = this.rivals ? this.rivals.rivals.map(r => r.vehicle.position) : [];
         this.hud.update({
@@ -691,6 +700,7 @@ class GameApp {
             boostLeft: this.player.boostLeft,
             boostMax: 3.0,
             progress,
+            distanceDriven: this.totalDistanceDriven,
             elapsedTime: this.elapsedTime,
             rank,
             totalRacers: 6,
@@ -774,8 +784,14 @@ class GameApp {
 
             if (this.state === 'RACE') {
                 this._handleRaceInput();
+                if (this.streamer && this.player) {
+                    this.trackData = this.streamer.update(this.player.position);
+                }
                 if (this.player) this.player.update(delta, this.trackData);
-                if (this.rivals) this.rivals.update(delta);
+                if (this.rivals) {
+                    this.rivals.trackData = this.trackData;
+                    this.rivals.update(delta, this.player ? this.player.position : null);
+                }
                 const playerPos = (this.player && this.player.position) ? this.player.position : this.camera.position;
                 const vehiclePositions = [];
                 if (this.player && this.player.position) vehiclePositions.push(this.player.position);

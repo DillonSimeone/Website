@@ -12,6 +12,7 @@ export class RaceHud {
         this.boostBar = document.getElementById('hud-boost-fill');
         this.progressFill = document.getElementById('hud-progress-fill');
         this.playerPin = document.getElementById('hud-progress-player');
+        this.distValue = document.getElementById('hud-dist-val');
         this.timeValue = document.getElementById('hud-time-val');
         this.rankValue = document.getElementById('hud-rank-val');
         this.ascendBadge = document.getElementById('hud-ascend-badge');
@@ -77,10 +78,13 @@ export class RaceHud {
             this.boostBar.style.width = `${bPct}%`;
         }
 
-        // 3. Track Progress
+        // 3. Track Progress & Distance
         const pPct = Math.min(100, Math.max(0, progress * 100));
         if (this.progressFill) this.progressFill.style.width = `${pPct}%`;
         if (this.playerPin) this.playerPin.style.left = `${pPct}%`;
+        if (this.distValue && state.distanceDriven !== undefined) {
+            this.distValue.textContent = `${(state.distanceDriven / 1000).toFixed(2)} KM`;
+        }
 
         // 4. Time
         if (this.timeValue) {
@@ -122,21 +126,27 @@ export class RaceHud {
 
         ctx.clearRect(0, 0, w, h);
 
-        const scaleX = (x) => ((x - this.mapMinX) / (this.mapMaxX - this.mapMinX)) * (w - 24) + 12;
-        const scaleZ = (z) => ((z - this.mapMinZ) / (this.mapMaxZ - this.mapMinZ)) * (h - 24) + 12;
+        // Center radar scanner dynamically around player with 240m horizon
+        const cx = playerPos ? playerPos.x : 0;
+        const cz = playerPos ? playerPos.z : 0;
+        const range = 240.0;
+        const scaleX = (x) => ((x - (cx - range)) / (range * 2.0)) * (w - 24) + 12;
+        const scaleZ = (z) => ((z - (cz - range)) / (range * 2.0)) * (h - 24) + 12;
 
         // Draw track curve
         ctx.beginPath();
         ctx.lineWidth = 5;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
+        let first = true;
         for (let i = 0; i < trackPoints.length; i++) {
-            const px = scaleX(trackPoints[i].x);
-            const py = scaleZ(trackPoints[i].z);
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
+            const p = trackPoints[i];
+            const px = scaleX(p.x);
+            const py = scaleZ(p.z);
+            if (first) { ctx.moveTo(px, py); first = false; }
+            else { ctx.lineTo(px, py); }
         }
         ctx.stroke();
 
@@ -144,9 +154,13 @@ export class RaceHud {
         if (rivalPositions) {
             ctx.fillStyle = '#ff4757';
             for (const rPos of rivalPositions) {
-                ctx.beginPath();
-                ctx.arc(scaleX(rPos.x), scaleZ(rPos.z), 4, 0, Math.PI * 2);
-                ctx.fill();
+                const rx = scaleX(rPos.x);
+                const ry = scaleZ(rPos.z);
+                if (rx >= 0 && rx <= w && ry >= 0 && ry <= h) {
+                    ctx.beginPath();
+                    ctx.arc(rx, ry, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             }
         }
 

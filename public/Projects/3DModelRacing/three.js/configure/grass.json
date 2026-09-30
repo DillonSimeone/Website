@@ -1,0 +1,46 @@
+{
+  "bladeSegments": 3,
+  "bladesPerTuft": 12,
+  "cellSize": 0.15,
+  "patchSize": 55,
+  "bladeWidth": 0.025,
+  "maxBladeHeight": 1,
+  "leanMin": 0.05,
+  "leanMax": 0.3,
+  "curveMin": 0.15,
+  "curveMax": 0.4,
+  "hScaleMin": 0.4,
+  "hScaleMax": 1.2,
+  "farCellSize": 1.6,
+  "farPatchSize": 280,
+  "farBladesPerTuft": 3,
+  "farBladeWidth": 0.08,
+  "farMaxBladeHeight": 0.65,
+  "colors": {
+    "colRoot": [
+      0.02,
+      0.078,
+      0.008
+    ],
+    "colLower": [
+      0.078,
+      0.176,
+      0.024
+    ],
+    "colMid": [
+      0.18,
+      0.361,
+      0.078
+    ],
+    "colUpper": [
+      0.302,
+      0.478,
+      0.118
+    ],
+    "colTip": [
+      0.42,
+      0.522,
+      0.157
+    ]
+  }
+}
