@@ -48,6 +48,35 @@ export class Vehicle {
 
         this.scene.add(this.root);
 
+        // Soft Ground Contact AO Shadow (guarantees a grounded vehicle look on both road & terrain)
+        if (!Vehicle.sharedShadowTex) {
+            const sc = document.createElement('canvas');
+            sc.width = 128; sc.height = 128;
+            const sctx = sc.getContext('2d');
+            const radGrad = sctx.createRadialGradient(64, 64, 12, 64, 64, 60);
+            radGrad.addColorStop(0.0, 'rgba(0, 0, 0, 0.85)');
+            radGrad.addColorStop(0.45, 'rgba(0, 0, 0, 0.40)');
+            radGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
+            sctx.fillStyle = radGrad;
+            sctx.fillRect(0, 0, 128, 128);
+            Vehicle.sharedShadowTex = new THREE.CanvasTexture(sc);
+            Vehicle.sharedShadowMat = new THREE.MeshBasicMaterial({
+                map: Vehicle.sharedShadowTex,
+                transparent: true,
+                opacity: 0.75,
+                depthWrite: false,
+                polygonOffset: true,
+                polygonOffsetFactor: -4,
+                polygonOffsetUnits: -4
+            });
+            Vehicle.sharedShadowGeom = new THREE.PlaneGeometry(2.4, 3.8);
+            Vehicle.sharedShadowGeom.rotateX(-Math.PI / 2);
+        }
+
+        this.contactShadow = new THREE.Mesh(Vehicle.sharedShadowGeom, Vehicle.sharedShadowMat);
+        this.contactShadow.renderOrder = 3;
+        this.scene.add(this.contactShadow);
+
         // Motion Variables
         this.position = new THREE.Vector3();
         this.velocity = new THREE.Vector3();
@@ -62,9 +91,12 @@ export class Vehicle {
         this.grounded = true;
         this.isDrifting = false;
         this.driftScore = 0;
-        this.boostLeft = 0;
+        this.maxBoost = 3.0;
+        this.boostLeft = this.maxBoost;
+        this.boostRechargeRate = 0.65; // Recovers 1s of boost every 1.5s
         this.airTime = 0;
         this.ascended = false;
+        this.lastTrackIndex = null;
 
         // Input state (driven by Keyboard for Player, or AIController for Rivals)
         this.inputs = {
@@ -76,10 +108,17 @@ export class Vehicle {
         };
     }
 
+    onChunkShift(removedCount) {
+        if (this.lastTrackIndex != null) {
+            this.lastTrackIndex = Math.max(0, this.lastTrackIndex - removedCount);
+        }
+    }
+
     teleport(position, direction) {
         this.position.copy(position);
         this.velocity.set(0, 0, 0);
         this.speed = 0;
+        this.lastTrackIndex = null;
         if (direction) {
             this.heading = Math.atan2(-direction.x, -direction.z);
         }
@@ -123,14 +162,9 @@ export class Vehicle {
         let maxSpeed = this.stats.top_speed;
 
         if (isOffroad) {
-            maxSpeed = Math.min(maxSpeed, 26.0); // Allow fun off-road cruising across hills
+            maxSpeed = Math.min(maxSpeed, 36.0); // Responsive off-road cruising across hills
             if (this.speed > maxSpeed && !this.inputs.boost) {
                 this.speed = THREE.MathUtils.lerp(this.speed, maxSpeed, delta * 2.0);
-            }
-            // Inward cushion steering towards track only if very far out
-            if (Math.abs(ground.lateralDist) > 25.0) {
-                const pushDir = ground.lateralDist > 0 ? -1 : 1;
-                this.velocity.addScaledVector(ground.right, pushDir * 3.5 * delta);
             }
 
             // Auto-respawn only if driven deep into outer wilderness (> 120m off track)
@@ -153,8 +187,10 @@ export class Vehicle {
         if (this.inputs.boost && this.boostLeft > 0) {
             targetAccel += 55.0;
             this.boostLeft = Math.max(0, this.boostLeft - delta);
-        } else if (!this.inputs.boost && this.boostLeft < this.maxBoost) {
-            this.boostLeft = Math.min(this.maxBoost, this.boostLeft + delta * 0.50);
+        } else if (this.boostLeft < this.maxBoost) {
+            const rechargeRate = this.boostRechargeRate || 0.65;
+            const driftBonus = this.isDrifting ? 1.75 : 1.0;
+            this.boostLeft = Math.min(this.maxBoost, this.boostLeft + delta * rechargeRate * driftBonus);
         }
 
         this.speed += targetAccel * delta;
@@ -190,61 +226,99 @@ export class Vehicle {
         this.position.y += this.velocity.y * delta;
         this.position.z += this.velocity.z * delta;
 
-        // Robust Ramp & Ground Clamping: Hull never penetrates into road or ramps
-        const minClearance = ground.y + this.hoverHeight * 0.90;
+        // Robust Ramp & Ground Clamping: Cushion along surface normal prevents nose/tail road clipping on ramps
+        const surfNorm = ground.normal || new THREE.Vector3(0, 1, 0);
+        const cosSlope = Math.max(0.35, surfNorm.y);
+        const minClearance = ground.y + (this.hoverHeight / cosSlope) * 0.88;
         if (this.position.y < minClearance) {
             this.position.y = minClearance;
             if (this.velocity.y < 0) this.velocity.y = 0;
-            // Ramp upward velocity assist
-            if (this.speed > 5.0 && this.pitch < -0.05) {
-                const rampClimbVel = this.speed * Math.sin(-this.pitch);
+            // Ramp upward velocity assist (positive pitch = ascending uphill)
+            if (this.speed > 5.0 && this.pitch > 0.05) {
+                const rampClimbVel = this.speed * Math.sin(this.pitch);
                 if (this.velocity.y < rampClimbVel) {
                     this.velocity.y = rampClimbVel;
                 }
             }
         }
 
+        // Underpass Ceiling Collision: Prevent jumping through the underside of overhead bridges/loops
+        if (ground.isOverhead && this.position.y > (ground.trackPt.y - 0.6)) {
+            this.position.y = ground.trackPt.y - 0.6;
+            if (this.velocity.y > 0) this.velocity.y = -2.0;
+        }
+
         // 6. Distinct Ground-Aligned vs. Airborne Flight Attitude
-        const rightX = Math.cos(this.heading);
-        const rightZ = -Math.sin(this.heading);
+        const vFwd = new THREE.Vector3(-Math.sin(this.heading), 0, -Math.cos(this.heading));
+        const vRight = new THREE.Vector3(Math.cos(this.heading), 0, -Math.sin(this.heading));
 
         if (this.grounded) {
-            // Grounded: Sample terrain ahead and behind along vehicle heading
-            const frontPos = new THREE.Vector3(this.position.x + fwdX * 1.6, this.position.y, this.position.z + fwdZ * 1.6);
-            const rearPos = new THREE.Vector3(this.position.x - fwdX * 1.6, this.position.y, this.position.z - fwdZ * 1.6);
-            const frontGround = this._sampleTrackGround(frontPos, trackData);
-            const rearGround = this._sampleTrackGround(rearPos, trackData);
+            // Surface normal: on-road uses exact 3D deck normal; off-road samples terrain height gradient
+            let activeNormal = ground.normal;
+            if (ground.isOffroad) {
+                const hL = getTerrainHeight(this.position.x - 0.8, this.position.z);
+                const hR = getTerrainHeight(this.position.x + 0.8, this.position.z);
+                const hD = getTerrainHeight(this.position.x, this.position.z - 0.8);
+                const hU = getTerrainHeight(this.position.x, this.position.z + 0.8);
+                activeNormal = new THREE.Vector3(-(hR - hL) / 1.6, 1.0, -(hU - hD) / 1.6).normalize();
+            }
 
-            // Pitch angle: Negative rotates nose UP and rear DOWN to ascend hill cleanly!
-            const targetPitch = -Math.atan2(frontGround.y - rearGround.y, 3.2);
+            // Pitch: Positive tilts nose UP (ascend slopes), negative tilts nose DOWN (descend slopes)
+            const slopeFwd = -activeNormal.dot(vFwd);
+            const targetPitch = Math.atan2(slopeFwd, Math.max(0.05, activeNormal.y));
 
-            // Cross-slope roll: sample ground to left and right
-            const rPos = new THREE.Vector3(this.position.x + rightX * 0.9, this.position.y, this.position.z + rightZ * 0.9);
-            const lPos = new THREE.Vector3(this.position.x - rightX * 0.9, this.position.y, this.position.z - rightZ * 0.9);
-            const rGround = this._sampleTrackGround(rPos, trackData);
-            const lGround = this._sampleTrackGround(lPos, trackData);
-            const crossSlope = Math.atan2(rGround.y - lGround.y, 1.8);
-
+            // Cross-slope roll: Banks into curves and matches road camber
+            const slopeRight = -activeNormal.dot(vRight);
             const steerLean = -this.inputs.steer * (this.isDrifting ? 0.38 : 0.18);
-            const targetRoll = steerLean + crossSlope * 0.70;
+            const targetRoll = Math.atan2(slopeRight, Math.max(0.05, activeNormal.y)) * 0.85 + steerLean;
 
-            this.pitch = THREE.MathUtils.lerp(this.pitch, targetPitch, delta * 12.0);
-            this.roll = THREE.MathUtils.lerp(this.roll, targetRoll, delta * 10.0);
+            // Fast, responsive tracking on steep ramps so front/back never penetrates the road
+            const pitchRate = Math.abs(targetPitch) > 0.25 ? 24.0 : 15.0;
+            this.pitch = THREE.MathUtils.lerp(this.pitch, targetPitch, delta * pitchRate);
+            this.roll = THREE.MathUtils.lerp(this.roll, targetRoll, delta * 12.0);
 
-            // Hill climbing assist: Maintain momentum when ascending steep hills
-            if (this.pitch < -0.10 && this.inputs.throttle > 0) {
+            // Hill climbing assist: Maintain momentum when ascending steep hills (positive pitch is uphill)
+            if (this.pitch > 0.10 && this.inputs.throttle > 0) {
                 this.speed = Math.max(this.speed, 22.0);
             }
         } else {
-            // Airborne Flight: Nose smoothly follows flight trajectory vector
+            // Airborne Flight: Nose smoothly follows flight trajectory vector (positive flightPitch is climbing)
             const horizSpeed = Math.hypot(this.velocity.x, this.velocity.z);
-            const flightPitch = horizSpeed > 1.0 ? -Math.atan2(this.velocity.y, horizSpeed) : 0.0;
-            this.pitch = THREE.MathUtils.lerp(this.pitch, flightPitch, delta * 4.5);
-            this.roll = THREE.MathUtils.lerp(this.roll, 0.0, delta * 3.0); // Self-level roll in air
+            const flightPitch = horizSpeed > 1.0 ? Math.atan2(this.velocity.y, horizSpeed) : 0.0;
+            this.pitch = THREE.MathUtils.lerp(this.pitch, flightPitch, delta * 5.0);
+            this.roll = THREE.MathUtils.lerp(this.roll, 0.0, delta * 3.5); // Self-level roll in air
         }
 
         this.root.position.copy(this.position);
         this.root.rotation.set(this.pitch, this.heading, this.roll, 'YXZ');
+
+        // Boost Juiciness: Dynamic Mesh Stretch & Engine Shudder Vibration
+        const isBoosting = this.inputs.boost && this.boostLeft > 0;
+        if (isBoosting) {
+            // Stretch along forward axis (Z), squash width & height (X, Y)
+            const targetSx = THREE.MathUtils.lerp(this.mesh.scale.x, 0.88, delta * 14.0);
+            const targetSy = THREE.MathUtils.lerp(this.mesh.scale.y, 0.88, delta * 14.0);
+            const targetSz = THREE.MathUtils.lerp(this.mesh.scale.z, 1.20, delta * 14.0);
+            this.mesh.scale.set(targetSx, targetSy, targetSz);
+
+            // High-frequency engine vibration shudder
+            const vibX = (Math.random() - 0.5) * 0.045;
+            const vibY = (Math.random() - 0.5) * 0.045;
+            const vibZ = (Math.random() - 0.5) * 0.030;
+            this.mesh.position.set(vibX, vibY, vibZ);
+        } else {
+            // Smoothly restore normal scale and position
+            this.mesh.scale.lerp(new THREE.Vector3(1, 1, 1), delta * 10.0);
+            this.mesh.position.lerp(new THREE.Vector3(0, 0, 0), delta * 12.0);
+        }
+
+        // Update soft ground contact shadow directly beneath vehicle
+        if (this.contactShadow) {
+            const shadowY = ground.y + 0.04;
+            this.contactShadow.position.set(this.position.x, shadowY, this.position.z);
+            this.contactShadow.rotation.set(this.pitch, this.heading, this.roll, 'YXZ');
+            this.contactShadow.visible = this.grounded && !this.ascended;
+        }
 
         // 7. Check Star Ramp Launch (Player AND Rivals!)
         if (ground.tag && (ground.tag & 2) !== 0 && this.speed > 16.0) {
@@ -257,16 +331,50 @@ export class Vehicle {
     _sampleTrackGround(pos, trackData) {
         const { points, tangents, binormals, tags } = trackData;
         const n = points.length;
+        if (n === 0) {
+            return {
+                y: getTerrainHeight(pos.x, pos.z),
+                slope: 0,
+                tag: 0,
+                lateralDist: 0,
+                isOffroad: true,
+                trackPt: pos,
+                fwd: new THREE.Vector3(0, 0, -1),
+                right: new THREE.Vector3(1, 0, 0),
+                normal: new THREE.Vector3(0, 1, 0),
+                closestIndex: 0
+            };
+        }
+
         let closestDist = Infinity;
         let closestIndex = 0;
 
-        for (let i = 0; i < n; i++) {
-            const d = pos.distanceTo(points[i]);
-            if (d < closestDist) {
-                closestDist = d;
-                closestIndex = i;
+        // 1. Local Waypoint Tracking (Prevents jumping onto overhead bridges/loops when passing beneath!)
+        if (this.lastTrackIndex != null && this.lastTrackIndex >= 0 && this.lastTrackIndex < n) {
+            const minI = Math.max(0, this.lastTrackIndex - 6);
+            const maxI = Math.min(n - 1, this.lastTrackIndex + 22);
+            for (let i = minI; i <= maxI; i++) {
+                const d = pos.distanceTo(points[i]);
+                if (d < closestDist) {
+                    closestDist = d;
+                    closestIndex = i;
+                }
             }
         }
+
+        // 2. Global search fallback only if far away from tracked spline (e.g. after teleport or respawn)
+        if (closestDist > 38.0 || this.lastTrackIndex == null) {
+            closestDist = Infinity;
+            for (let i = 0; i < n; i++) {
+                const d = pos.distanceTo(points[i]);
+                if (d < closestDist) {
+                    closestDist = d;
+                    closestIndex = i;
+                }
+            }
+        }
+
+        this.lastTrackIndex = closestIndex;
 
         let i0 = closestIndex;
         let i1 = closestIndex + 1;
@@ -298,29 +406,65 @@ export class Vehicle {
         const trackPt = pA.clone().lerp(pB, t);
         const fwd = tangents[i0].clone().lerp(tangents[i1], t).normalize();
         const right = binormals[i0].clone().lerp(binormals[i1], t).normalize();
-
-        const toVehicle = pos.clone().sub(trackPt);
-        toVehicle.y = 0;
-        const lateralDist = toVehicle.dot(right);
+        const normal = new THREE.Vector3().crossVectors(right, fwd).normalize();
+        const lateralDist = pos.clone().sub(trackPt).dot(right);
         const absLat = Math.abs(lateralDist);
-        let groundY = trackPt.y;
-        if (absLat > 5.5) {
-            const curbBlend = THREE.MathUtils.clamp((absLat - 5.5) / 2.5, 0, 1);
-            const naturalTerrainY = getTerrainHeight(pos.x, pos.z);
-            groundY = THREE.MathUtils.lerp(trackPt.y, naturalTerrainY, curbBlend);
+
+        const naturalTerrainY = getTerrainHeight(pos.x, pos.z);
+        let groundY = naturalTerrainY;
+        let isOffroad = true;
+        let activeNormal = normal;
+
+        // UNDERPASS / OVERHEAD ROAD DETECTION:
+        // A road is only an overhead structure (bridge/loop) if it is significantly elevated (>= +2.8m above terrain)
+        // AND the vehicle is physically beneath it!
+        const roadIsElevated = trackPt.y > (naturalTerrainY + 2.8);
+        const vehicleIsBelowRoad = pos.y < (trackPt.y - 1.2);
+        const isOverhead = roadIsElevated && vehicleIsBelowRoad;
+
+        if (isOverhead) {
+            groundY = naturalTerrainY;
+            isOffroad = true;
+            const hL = getTerrainHeight(pos.x - 0.8, pos.z);
+            const hR = getTerrainHeight(pos.x + 0.8, pos.z);
+            const hD = getTerrainHeight(pos.x, pos.z - 0.8);
+            const hU = getTerrainHeight(pos.x, pos.z + 0.8);
+            activeNormal = new THREE.Vector3(-(hR - hL) / 1.6, 1.0, -(hU - hD) / 1.6).normalize();
+        } else if (absLat <= 5.5) {
+            // Driving directly on the road deck surface
+            groundY = trackPt.y;
+            isOffroad = false;
+            activeNormal = normal;
+        } else if (absLat <= 12.0 && trackPt.y <= naturalTerrainY + 2.8) {
+            // Smooth re-entry shoulder ramp: blends effortlessly from naturalTerrainY up to road deck height!
+            const shoulderT = THREE.MathUtils.clamp((12.0 - absLat) / 6.5, 0, 1);
+            const smoothT = shoulderT * shoulderT * (3.0 - 2.0 * shoulderT);
+            groundY = THREE.MathUtils.lerp(naturalTerrainY, trackPt.y, smoothT);
+            isOffroad = true;
+            activeNormal = normal;
+        } else {
+            // Driving on off-road terrain
+            groundY = naturalTerrainY;
+            isOffroad = true;
+            const hL = getTerrainHeight(pos.x - 0.8, pos.z);
+            const hR = getTerrainHeight(pos.x + 0.8, pos.z);
+            const hD = getTerrainHeight(pos.x, pos.z - 0.8);
+            const hU = getTerrainHeight(pos.x, pos.z + 0.8);
+            activeNormal = new THREE.Vector3(-(hR - hL) / 1.6, 1.0, -(hU - hD) / 1.6).normalize();
         }
-        const isOffroad = absLat > 5.8;
         const slope = (pB.y - pA.y) / Math.max(pA.distanceTo(pB), 1.0);
 
         return {
             y: groundY,
-            slope: -slope * 0.8,
-            tag: tags[i0],
+            slope: isOverhead ? 0 : -slope * 0.8,
+            tag: isOverhead ? 0 : tags[i0],
             lateralDist,
             isOffroad,
+            isOverhead,
             trackPt,
             fwd,
             right,
+            normal: activeNormal,
             closestIndex
         };
     }
@@ -384,6 +528,7 @@ export class Vehicle {
 
     destroy() {
         if (this.root.parent) this.root.parent.remove(this.root);
+        if (this.contactShadow && this.contactShadow.parent) this.contactShadow.parent.remove(this.contactShadow);
         if (this.lightBeam && this.lightBeam.parent) this.lightBeam.parent.remove(this.lightBeam);
     }
 }

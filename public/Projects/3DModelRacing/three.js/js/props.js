@@ -52,8 +52,11 @@ export class PropsManager {
 
     _initRealLights() {
         // Real Three.js light source pool (illuminates the road, cars, and scenery directly)
+        // CRITICAL: Keep visible = true permanently at all times! Toggling visible triggers full GLSL shader recompilations in Three.js.
         for (let i = 0; i < 8; i++) {
-            const pl = new THREE.PointLight(0xffeedd, 0, 36.0, 1.6);
+            const pl = new THREE.PointLight(0xffeedd, 0.0, 36.0, 1.6);
+            pl.position.set(0, -999, 0);
+            pl.visible = true;
             this.scene.add(pl);
             this.realLights.push(pl);
         }
@@ -104,9 +107,9 @@ export class PropsManager {
     _initSharedGeometries() {
         // 1. Sleek Modern Architectural Highway / Rally Floodlight
         this.sharedLampBaseGeom  = new THREE.CylinderGeometry(0.32, 0.44, 2.2, 8);
-        this.sharedLampPoleGeom  = new THREE.CylinderGeometry(0.11, 0.18, 6.2, 8);
-        this.sharedLampArmGeom   = new THREE.BoxGeometry(2.3, 0.14, 0.16);
-        this.sharedLampStrutGeom = new THREE.CylinderGeometry(0.04, 0.04, 1.6, 6);
+        this.sharedLampPoleGeom  = new THREE.CylinderGeometry(0.12, 0.18, 5.8, 8);
+        this.sharedLampArmGeom   = new THREE.BoxGeometry(2.3, 0.16, 0.16);
+        this.sharedLampElbowGeom = new THREE.BoxGeometry(0.28, 0.26, 0.26);
 
         // Angled dual LED floodlight luminaire head
         this.sharedLampHoodGeom = new THREE.BoxGeometry(1.15, 0.16, 0.48);
@@ -140,6 +143,8 @@ export class PropsManager {
         cCtx.lineWidth = 8;
         cCtx.strokeRect(4, 4, 248, 120);
         this.chevronTex = new THREE.CanvasTexture(cCanvas);
+        this.sharedChevronPlaneGeom = new THREE.PlaneGeometry(2.65, 1.2);
+        this.sharedChevronMat = new THREE.MeshBasicMaterial({ map: this.chevronTex });
 
         // 3. Shared Rocks
         this.sharedRockGeomHigh = this._createDeformedRockGeometry(1.0, 1, () => 0.5);
@@ -308,31 +313,6 @@ export class PropsManager {
                 seed: b.seed
             });
         }
-
-        // =========================================================================
-        // 3. INFINITE SLIDING BOULDERS & ROCKS (Identical Sliding Window to Grass)
-        // =========================================================================
-        const rockCount = 95;
-        this.rockInstancedMesh = new THREE.InstancedMesh(this.sharedRockGeomHigh, this.rockMat, rockCount);
-        this.rockInstancedMesh.receiveShadow = true;
-        this.scene.add(this.rockInstancedMesh);
-
-        let seed = 777;
-        const pseudoRand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-
-        for (let i = 0; i < rockCount; i++) {
-            const rx = (pseudoRand() - 0.5) * 230.0;
-            const rz = (pseudoRand() - 0.5) * 230.0;
-            const scale = 1.4 + pseudoRand() * 2.8;
-            this.rockInstances.push({
-                baseX: cx + rx,
-                baseZ: cz + rz,
-                scale,
-                rotX: pseudoRand() * 0.4,
-                rotY: pseudoRand() * Math.PI * 2,
-                rotZ: pseudoRand() * 0.4
-            });
-        }
     }
 
     createStreetLamp(p, fwd, right, side, halfW, parentGroup = null) {
@@ -351,36 +331,35 @@ export class PropsManager {
 
         // Sleek steel mast
         const poleMesh = new THREE.Mesh(this.sharedLampPoleGeom, this.silverMat);
-        poleMesh.position.y = 3.1;
+        poleMesh.position.y = 2.9;
         lamp.add(poleMesh);
 
         // Horizontal cantilever arm reaching over track edge
         const reachX = -side;
         const armMesh = new THREE.Mesh(this.sharedLampArmGeom, this.darkMetalMat);
-        armMesh.position.set(reachX * 1.15, 6.1, 0);
+        armMesh.position.set(reachX * 1.15, 5.88, 0);
         lamp.add(armMesh);
 
-        // Diagonal support brace strut
-        const strutMesh = new THREE.Mesh(this.sharedLampStrutGeom, this.silverMat);
-        strutMesh.position.set(reachX * 0.55, 5.5, 0);
-        strutMesh.rotation.z = reachX * 0.72;
-        lamp.add(strutMesh);
+        // Sleek mast top corner elbow junction cap
+        const elbowMesh = new THREE.Mesh(this.sharedLampElbowGeom, this.darkMetalMat);
+        elbowMesh.position.set(0, 5.88, 0);
+        lamp.add(elbowMesh);
 
         // Dual angled LED luminaire head tilted toward roadway
         const hoodMesh = new THREE.Mesh(this.sharedLampHoodGeom, this.darkMetalMat);
-        hoodMesh.position.set(reachX * 2.3, 6.05, 0);
+        hoodMesh.position.set(reachX * 2.3, 5.83, 0);
         hoodMesh.rotation.z = -reachX * 0.22;
         lamp.add(hoodMesh);
 
         // Luminous high-output lens
         const bulbMesh = new THREE.Mesh(this.sharedBulbGeom, this.bulbMat);
-        bulbMesh.position.set(reachX * 2.3, 5.96, 0);
+        bulbMesh.position.set(reachX * 2.3, 5.74, 0);
         bulbMesh.rotation.z = -reachX * 0.22;
         lamp.add(bulbMesh);
 
         // Real Light Source World Position (hanging over track lane)
         lamp.headWorldPos = curbPos.clone().add(right.clone().multiplyScalar(reachX * 2.3));
-        lamp.headWorldPos.y += 5.95;
+        lamp.headWorldPos.y += 5.73;
         this.streetLamps.push(lamp);
 
         const targetParent = parentGroup || this.scene;
@@ -413,8 +392,7 @@ export class PropsManager {
         sign.add(board);
 
         // High-vis front reflection plane with bold neon arrows
-        const frontMat = new THREE.MeshBasicMaterial({ map: this.chevronTex });
-        const front = new THREE.Mesh(new THREE.PlaneGeometry(2.65, 1.2), frontMat);
+        const front = new THREE.Mesh(this.sharedChevronPlaneGeom, this.sharedChevronMat);
         front.position.set(0, boardY, 0.05);
         if (side < 0) front.rotation.y = Math.PI; // Flip arrows toward curve apex
         sign.add(front);
@@ -464,16 +442,15 @@ export class PropsManager {
                     if (i < activeCount && sorted[i].distSq < 22500) { // within 150m
                         pl.position.copy(sorted[i].lamp.headWorldPos);
                         pl.intensity = lightIntensity;
-                        pl.visible = true;
                     } else {
-                        pl.intensity = 0;
-                        pl.visible = false;
+                        pl.position.set(0, -999, 0);
+                        pl.intensity = 0.0;
                     }
                 }
             } else {
                 for (const pl of this.realLights) {
-                    pl.intensity = 0;
-                    pl.visible = false;
+                    pl.position.set(0, -999, 0);
+                    pl.intensity = 0.0;
                 }
             }
         }
@@ -508,30 +485,6 @@ export class PropsManager {
             const bz = ((b.baseZ - playerPos.z) % balSpan + balSpan) % balSpan - halfBal + playerPos.z;
             b.group.position.set(bx, b.altitude + Math.sin(time * 0.45 + b.seed) * 4.5, bz);
             b.group.rotation.y += delta * 0.05;
-        }
-
-        // =========================================================================
-        // 5. INFINITE SLIDING BOULDERS & ROCKS (Identical sliding window to grass)
-        // =========================================================================
-        if (this.rockInstancedMesh) {
-            const rSpan = 240.0;
-            const halfR = rSpan * 0.5;
-            const dummy = new THREE.Object3D();
-
-            for (let i = 0; i < this.rockInstances.length; i++) {
-                const b = this.rockInstances[i];
-                const rx = ((b.baseX - playerPos.x) % rSpan + rSpan) % rSpan - halfR + playerPos.x;
-                const rz = ((b.baseZ - playerPos.z) % rSpan + rSpan) % rSpan - halfR + playerPos.z;
-                const ry = getTerrainHeight(rx, rz);
-
-                dummy.position.set(rx, ry - 0.15, rz);
-                dummy.scale.setScalar(b.scale);
-                dummy.rotation.set(b.rotX, b.rotY, b.rotZ);
-                dummy.updateMatrix();
-
-                this.rockInstancedMesh.setMatrixAt(i, dummy.matrix);
-            }
-            this.rockInstancedMesh.instanceMatrix.needsUpdate = true;
         }
     }
 

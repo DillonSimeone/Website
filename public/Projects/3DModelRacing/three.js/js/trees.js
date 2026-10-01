@@ -27,6 +27,15 @@ export class TreeManager {
         this.oakHighlightMat = new THREE.MeshStandardMaterial({ color: 0x3b8040, roughness: 0.80 });
         this.birchMat = new THREE.MeshStandardMaterial({ color: 0x7a6c22, roughness: 0.82 });
 
+        // Bush & Wildflower Materials
+        this.bushMat = new THREE.MeshStandardMaterial({ color: 0x1f5c22, roughness: 0.88 });
+        this.bushHighlightMat = new THREE.MeshStandardMaterial({ color: 0x347c2c, roughness: 0.84 });
+        this.flowerRedMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.55 });
+        this.flowerYellowMat = new THREE.MeshStandardMaterial({ color: 0xf1c40f, roughness: 0.55 });
+        this.flowerBlueMat = new THREE.MeshStandardMaterial({ color: 0x3498db, roughness: 0.55 });
+        this.flowerWhiteMat = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.55 });
+        this.stemMat = new THREE.MeshStandardMaterial({ color: 0x27ae60, roughness: 0.90 });
+
         this.trees = [];
         this.foliageNodes = [];
 
@@ -146,10 +155,88 @@ export class TreeManager {
         bLowCrown.position.y = 5.0;
         birchLow.add(bLowCrown);
         this.sharedLow[2] = birchLow;
+
+        // =========================================================================
+        // TYPE 3: LUSH MEADOW BUSH (Dense Rounded Shrub Dome)
+        // =========================================================================
+        const bushHigh = new THREE.Group();
+        const bushPuffs = [
+            { x: 0, y: 0.7, z: 0, r: 1.15, m: this.bushHighlightMat },
+            { x: 0.65, y: 0.55, z: 0.35, r: 0.85, m: this.bushMat },
+            { x: -0.6, y: 0.58, z: -0.25, r: 0.88, m: this.bushMat },
+            { x: 0.2, y: 0.5, z: -0.6, r: 0.82, m: this.bushMat }
+        ];
+        for (let i = 0; i < bushPuffs.length; i++) {
+            const p = bushPuffs[i];
+            const pMesh = new THREE.Mesh(this._createFoliagePuffGeometry(p.r, i * 13.0), p.m);
+            pMesh.position.set(p.x, p.y, p.z);
+            bushHigh.add(pMesh);
+        }
+        this.sharedHigh[3] = bushHigh;
+
+        const bushLow = new THREE.Group();
+        const bLowMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(1.4, 0), this.bushMat);
+        bLowMesh.position.y = 0.65;
+        bushLow.add(bLowMesh);
+        this.sharedLow[3] = bushLow;
+
+        // =========================================================================
+        // TYPE 4: FLOWERING SHRUB (Bush with Colorful Crimson & Golden Blossoms)
+        // =========================================================================
+        const flBushHigh = bushHigh.clone();
+        const flMats = [this.flowerRedMat, this.flowerYellowMat, this.flowerWhiteMat, this.flowerBlueMat];
+        const flGeom = new THREE.IcosahedronGeometry(0.16, 0);
+        for (let i = 0; i < 14; i++) {
+            const theta = (i / 14.0) * Math.PI * 2;
+            const phi = Math.random() * 0.9 + 0.3;
+            const rad = 1.05 + (i % 3) * 0.12;
+            const fl = new THREE.Mesh(flGeom, flMats[i % flMats.length]);
+            fl.position.set(
+                Math.sin(phi) * Math.cos(theta) * rad,
+                Math.cos(phi) * 0.65 + 0.5,
+                Math.sin(phi) * Math.sin(theta) * rad
+            );
+            flBushHigh.add(fl);
+        }
+        this.sharedHigh[4] = flBushHigh;
+        this.sharedLow[4] = bushLow.clone();
+
+        // =========================================================================
+        // TYPE 5: WILDFLOWER MEADOW PATCH (Cluster of Stems with Vibrant Petals)
+        // =========================================================================
+        const flowerHigh = new THREE.Group();
+        const flowerLow = new THREE.Group();
+        const bloomGeom = new THREE.DodecahedronGeometry(0.22, 0);
+        const stemGeom = new THREE.CylinderGeometry(0.025, 0.025, 0.65, 4);
+
+        for (let i = 0; i < 16; i++) {
+            const angle = (i / 16.0) * Math.PI * 2 + (i % 2) * 0.25;
+            const dist = 0.3 + (i % 4) * 0.35;
+            const fx = Math.cos(angle) * dist;
+            const fz = Math.sin(angle) * dist;
+            const mat = flMats[i % flMats.length];
+
+            const stem = new THREE.Mesh(stemGeom, this.stemMat);
+            stem.position.set(fx, 0.32, fz);
+            stem.rotation.z = (Math.random() - 0.5) * 0.2;
+            flowerHigh.add(stem);
+
+            const bloom = new THREE.Mesh(bloomGeom, mat);
+            bloom.position.set(fx, 0.62 + (i % 3) * 0.08, fz);
+            flowerHigh.add(bloom);
+
+            if (i < 5) {
+                const lowBloom = new THREE.Mesh(bloomGeom, mat);
+                lowBloom.position.set(fx, 0.55, fz);
+                flowerLow.add(lowBloom);
+            }
+        }
+        this.sharedHigh[5] = flowerHigh;
+        this.sharedLow[5] = flowerLow;
     }
 
-    createTree(x, z, type = 0, baseScale = 1.0, parentGroup = null) {
-        const safeType = Math.min(Math.max(type, 0), 2);
+    createVegetation(x, z, type = 0, baseScale = 1.0, parentGroup = null) {
+        const safeType = Math.min(Math.max(type, 0), 5);
         const lod = new THREE.LOD();
         lod.isTree = true;
         const y = getTerrainHeight(x, z);
@@ -159,8 +246,8 @@ export class TreeManager {
         // Instant clone of pre-cached shared geometry meshes (0ms CPU time!)
         const high = this.sharedHigh[safeType].clone();
         const low = this.sharedLow[safeType].clone();
-        lod.addLevel(high, 0);   // High LOD when within 75m
-        lod.addLevel(low, 75);   // Low LOD billboard when far away
+        lod.addLevel(high, 0);
+        lod.addLevel(low, safeType >= 3 ? 55 : 75);
 
         const targetParent = parentGroup || this.scene;
         targetParent.add(lod);
@@ -168,26 +255,20 @@ export class TreeManager {
         return lod;
     }
 
-    removeTree(tree) {
-        const idx = this.trees.indexOf(tree);
-        if (idx !== -1) this.trees.splice(idx, 1);
+    createTree(x, z, type = 0, baseScale = 1.0, parentGroup = null) {
+        return this.createVegetation(x, z, type, baseScale, parentGroup);
     }
 
-    setupMeadowGroves() {
-        const cx = this.trackCenter.x;
-        const cz = this.trackCenter.z;
-        let seed = 42;
-        const pseudoRand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    createBush(x, z, baseScale = 1.0, parentGroup = null) {
+        return this.createVegetation(x, z, 3, baseScale, parentGroup);
+    }
 
-        for (let i = 0; i < 28; i++) {
-            const angle = pseudoRand() * Math.PI * 2;
-            const dist = 35 + pseudoRand() * 220;
-            const tx = cx + Math.cos(angle) * dist;
-            const tz = cz + Math.sin(angle) * dist;
-            const rType = pseudoRand();
-            const type = rType < 0.5 ? 0 : (rType < 0.82 ? 1 : 2);
-            this.createTree(tx, tz, type, 0.85 + pseudoRand() * 0.45);
-        }
+    createFloweringBush(x, z, baseScale = 1.0, parentGroup = null) {
+        return this.createVegetation(x, z, 4, baseScale, parentGroup);
+    }
+
+    createFlowers(x, z, baseScale = 1.0, parentGroup = null) {
+        return this.createVegetation(x, z, 5, baseScale, parentGroup);
     }
 
     removeTree(treeObj) {
@@ -195,6 +276,10 @@ export class TreeManager {
         const idx = this.trees.indexOf(treeObj);
         if (idx !== -1) this.trees.splice(idx, 1);
         if (treeObj.parent) treeObj.parent.remove(treeObj);
+    }
+
+    setupMeadowGroves() {
+        // Obsolete: Scenery is now dynamically generated in infinite chunk bands
     }
 
     update(delta, time) {

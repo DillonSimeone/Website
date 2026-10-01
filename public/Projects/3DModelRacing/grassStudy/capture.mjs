@@ -115,6 +115,8 @@ async function main() {
     });
 
     const page = await browser.newPage();
+    page.on('console', msg => console.log('  [PAGE CONSOLE]:', msg.text()));
+    page.on('pageerror', err => console.log('  [PAGE ERROR]:', err.toString()));
     await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
     const delay = ms => new Promise(r => setTimeout(r, ms));
 

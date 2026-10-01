@@ -18,6 +18,21 @@
 <body>
     <!-- Full-screen WebGL Canvas -->
     <canvas id="webgl-canvas"></canvas>
+    <div id="warp-transition-overlay"></div>
+
+    <!-- Cyberpunk Holographic Void Loading HUD (Floats above vehicle during garage launch) -->
+    <div id="void-loading-hud" style="display: none;">
+        <div class="void-loader-box">
+            <div class="void-loader-header">
+                <div><span class="void-pulse-dot"></span><span id="void-loader-title">WARP DRIVE CHARGING</span></div>
+                <span id="void-loader-percent" style="color: #bd00ff;">0%</span>
+            </div>
+            <div class="void-progress-track">
+                <div class="void-progress-fill" id="void-loader-bar"></div>
+            </div>
+            <div class="void-loader-task" id="void-loader-task">SYNCHRONIZING PROCEDURAL SECTOR...</div>
+        </div>
+    </div>
 
     <!-- UI Overlay Layer -->
     <div class="ui-layer">

@@ -88,10 +88,22 @@ export class RivalManager {
         r.pathIndex = targetIdx;
     }
 
-    update(delta, playerPos = null) {
+    update(delta, playerPos = null, camera = null) {
         const { points, tangents, binormals } = this.trackData;
         const n = points.length;
         if (n < 6) return;
+
+        // Frustum culling test so rivals only despawn when NOT in camera view
+        let frustum = null;
+        if (camera) {
+            if (!this._frustum) {
+                this._frustum = new THREE.Frustum();
+                this._projScreenMatrix = new THREE.Matrix4();
+            }
+            this._projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+            this._frustum.setFromProjectionMatrix(this._projScreenMatrix);
+            frustum = this._frustum;
+        }
 
         // 1. Locate player along track spline for distance checks
         let playerPathIdx = 0;
@@ -120,17 +132,23 @@ export class RivalManager {
             }
 
             // 3. Endless Mode Respawning Check (Behind / Forward recycling)
+            // NEVER despawn or pop rivals while they are actively visible in the camera view!
+            const inView = frustum ? frustum.intersectsSphere(new THREE.Sphere(veh.position, 4.0)) : false;
+
             if (playerPos && r.respawnCooldown <= 0) {
                 const distToPlayer = veh.position.distanceTo(playerPos);
                 const toRival = veh.position.clone().sub(playerPos);
                 const isAhead = toRival.dot(playerFwd) > 0;
 
-                const tooFarAhead = isAhead && distToPlayer > 185.0;
-                const tooFarBehind = !isAhead && distToPlayer > 125.0;
+                const tooFarAhead = isAhead && distToPlayer > 260.0;
+                const tooFarBehind = !isAhead && distToPlayer > 130.0;
                 const fellBelowWorld = veh.position.y < -14.0;
-                const isStuck = r.stuckTimer > 4.5;
+                const isStuck = r.stuckTimer > 5.0 && distToPlayer > 25.0;
 
-                if (tooFarAhead || tooFarBehind || fellBelowWorld || isStuck) {
+                // Despawn strictly when NOT in view (or catastrophic fall below world)
+                const shouldRecycle = fellBelowWorld || (!inView && (tooFarAhead || tooFarBehind || isStuck));
+
+                if (shouldRecycle) {
                     this._respawnRival(r, playerPos, playerPathIdx, points, tangents, binormals, n);
                     continue;
                 }
@@ -147,23 +165,39 @@ export class RivalManager {
             }
             r.laneOffset = THREE.MathUtils.lerp(r.laneOffset, r.targetLane, delta * 2.2);
 
-            // 5. Spline Waypoint Tracking (Forward-biased search window)
-            let closestDist = Infinity;
+            // 5. Spline Waypoint Tracking (Forward-biased 2D planar search window)
+            // Measuring in 2D (XZ) prevents vertical cliff plunges from confusing waypoint tracking
+            let closestDistSq = Infinity;
             let closestIdx = r.pathIndex;
-            const searchMin = Math.max(0, r.pathIndex - 3);
-            const searchMax = Math.min(n - 1, r.pathIndex + 16);
+            const searchMin = Math.max(0, r.pathIndex - 1);
+            const searchMax = Math.min(n - 1, r.pathIndex + 18);
 
             for (let i = searchMin; i <= searchMax; i++) {
-                const d = veh.position.distanceTo(points[i]);
-                if (d < closestDist) {
-                    closestDist = d;
+                const dx = veh.position.x - points[i].x;
+                const dz = veh.position.z - points[i].z;
+                const dSq = dx * dx + dz * dz;
+                if (dSq < closestDistSq) {
+                    closestDistSq = dSq;
                     closestIdx = i;
                 }
             }
-            r.pathIndex = closestIdx;
 
-            // Target lookahead waypoint along track spline
-            const aheadIdx = Math.min(r.pathIndex + Math.max(3, Math.round(r.lookAheadDist / 5.8)), n - 1);
+            // Monotonic advancement: racers never target backward waypoints
+            r.pathIndex = Math.max(r.pathIndex, closestIdx);
+
+            // If racer is ahead of current point along track tangent, push index forward
+            if (r.pathIndex < n - 1) {
+                const curPt = points[r.pathIndex];
+                const curFwd = tangents[r.pathIndex];
+                const toVehX = veh.position.x - curPt.x;
+                const toVehZ = veh.position.z - curPt.z;
+                if (toVehX * curFwd.x + toVehZ * curFwd.z > 2.0) {
+                    r.pathIndex = Math.min(n - 1, r.pathIndex + 1);
+                }
+            }
+
+            // Target lookahead waypoint along track spline (lookahead 18-26m ahead)
+            const aheadIdx = Math.min(r.pathIndex + Math.max(3, Math.round(r.lookAheadDist / 5.6)), n - 1);
             const aheadPt = points[aheadIdx];
             const aheadRight = binormals[aheadIdx];
             const targetPos = aheadPt.clone().add(aheadRight.clone().multiplyScalar(r.laneOffset));
@@ -178,41 +212,58 @@ export class RivalManager {
             while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
             while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-            // Steer smoothly toward target waypoint
-            veh.inputs.steer = THREE.MathUtils.clamp(angleDiff * 3.4, -1.0, 1.0);
-
-            // 7. AI Throttle, Brake & Cruise Controller
-            const isSharpTurn = Math.abs(angleDiff) > 0.45;
-            if (veh.speed < 12.0) {
-                // Initial torque out of slow spots
+            // 7. Mid-Air Flight Stabilization vs Ground Steering
+            const inAir = veh.airTime > 0.05 || !veh.grounded;
+            if (inAir) {
+                // Stabilize steering in air to smoothly align with flight path; full throttle for ramp jump distance
+                veh.inputs.steer = THREE.MathUtils.clamp(angleDiff * 1.2, -0.35, 0.35);
                 veh.inputs.throttle = 1.0;
                 veh.inputs.brake = 0.0;
-                veh.inputs.drift = false;
-            } else if (isSharpTurn && veh.speed > 24.0) {
-                // Brake into apex
-                veh.inputs.throttle = 0.3;
-                veh.inputs.brake = 0.4;
-                veh.inputs.drift = true;
-            } else if (veh.speed > r.cruiseSpeed + 2.5) {
-                // Cruising speed regulation
-                veh.inputs.throttle = 0.1;
-                veh.inputs.brake = 0.25;
                 veh.inputs.drift = false;
             } else {
-                // Accelerate toward cruising speed
-                veh.inputs.throttle = 1.0;
-                veh.inputs.brake = 0.0;
-                veh.inputs.drift = false;
-            }
+                // Steer smoothly toward target waypoint on asphalt/terrain
+                veh.inputs.steer = THREE.MathUtils.clamp(angleDiff * 3.2, -1.0, 1.0);
 
-            // Occasional burst of boost on open straights
-            if (!isSharpTurn && veh.speed > 22.0 && Math.random() < 0.008 && veh.boostLeft <= 0) {
-                veh.boostLeft = 2.0;
-                veh.inputs.boost = true;
+                // 8. AI Throttle, Brake & Cruise Controller
+                const isSharpTurn = Math.abs(angleDiff) > 0.45;
+                if (veh.speed < 12.0) {
+                    // Initial torque out of slow spots
+                    veh.inputs.throttle = 1.0;
+                    veh.inputs.brake = 0.0;
+                    veh.inputs.drift = false;
+                } else if (isSharpTurn && veh.speed > 24.0) {
+                    // Brake into apex
+                    veh.inputs.throttle = 0.3;
+                    veh.inputs.brake = 0.4;
+                    veh.inputs.drift = true;
+                } else if (veh.speed > r.cruiseSpeed + 2.5) {
+                    // Cruising speed regulation
+                    veh.inputs.throttle = 0.1;
+                    veh.inputs.brake = 0.25;
+                    veh.inputs.drift = false;
+                } else {
+                    // Accelerate toward cruising speed
+                    veh.inputs.throttle = 1.0;
+                    veh.inputs.brake = 0.0;
+                    veh.inputs.drift = false;
+                }
+
+                // Occasional burst of boost on open straights
+                if (!isSharpTurn && veh.speed > 22.0 && Math.random() < 0.008 && veh.boostLeft <= 0) {
+                    veh.boostLeft = 2.0;
+                    veh.inputs.boost = true;
+                }
             }
 
             // 8. Run Unified Physics Engine
             veh.update(delta, this.trackData);
+        }
+    }
+
+    onChunkShift(removedPointCount) {
+        if (!removedPointCount || removedPointCount <= 0) return;
+        for (const r of this.rivals) {
+            r.pathIndex = Math.max(0, r.pathIndex - removedPointCount);
         }
     }
 

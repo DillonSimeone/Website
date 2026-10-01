@@ -19,6 +19,12 @@ export class AudioSynth {
         // Drift sound nodes
         this.driftGain = null;
         this.driftFilter = null;
+
+        // Weather sound nodes (Rain downpour & Wind gusts)
+        this.rainGain = null;
+        this.rainFilter = null;
+        this.windGain = null;
+        this.windFilter = null;
     }
 
     init() {
@@ -29,6 +35,7 @@ export class AudioSynth {
             this._setupEngine();
             this._setupBoost();
             this._setupDrift();
+            this._setupWeatherAudio();
             this.initialized = true;
         } catch (e) {
             console.warn('Web Audio API not supported or blocked:', e);
@@ -132,6 +139,129 @@ export class AudioSynth {
         whiteNoise.start();
     }
 
+    _setupWeatherAudio() {
+        const ctx = this.ctx;
+        const bufferSize = ctx.sampleRate * 2;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        // 1. Rain Ambient Hiss (Lowpass filtered white noise)
+        const rainSource = ctx.createBufferSource();
+        rainSource.buffer = noiseBuffer;
+        rainSource.loop = true;
+
+        this.rainFilter = ctx.createBiquadFilter();
+        this.rainFilter.type = 'lowpass';
+        this.rainFilter.frequency.setValueAtTime(1100, ctx.currentTime);
+
+        this.rainGain = ctx.createGain();
+        this.rainGain.gain.setValueAtTime(0.0, ctx.currentTime);
+
+        rainSource.connect(this.rainFilter);
+        this.rainFilter.connect(this.rainGain);
+        this.rainGain.connect(ctx.destination);
+        rainSource.start();
+
+        // 2. Wind Gust Howl (Bandpass filtered white noise)
+        const windSource = ctx.createBufferSource();
+        windSource.buffer = noiseBuffer;
+        windSource.loop = true;
+
+        this.windFilter = ctx.createBiquadFilter();
+        this.windFilter.type = 'bandpass';
+        this.windFilter.frequency.setValueAtTime(320, ctx.currentTime);
+        this.windFilter.Q.setValueAtTime(3.2, ctx.currentTime);
+
+        this.windGain = ctx.createGain();
+        this.windGain.gain.setValueAtTime(0.0, ctx.currentTime);
+
+        windSource.connect(this.windFilter);
+        this.windFilter.connect(this.windGain);
+        this.windGain.connect(ctx.destination);
+        windSource.start();
+    }
+
+    updateWeather(rainIntensity, windSpeed) {
+        if (!this.initialized || this.muted || !this.ctx) return;
+        const ctx = this.ctx;
+
+        // Rain volume scales with downpour intensity
+        if (this.rainGain) {
+            const targetRainVol = Math.min(0.28, rainIntensity * 0.28);
+            this.rainGain.gain.setTargetAtTime(targetRainVol, ctx.currentTime, 0.15);
+            if (this.rainFilter) {
+                this.rainFilter.frequency.setTargetAtTime(800 + rainIntensity * 700, ctx.currentTime, 0.2);
+            }
+        }
+
+        // Wind howl volume and frequency
+        if (this.windGain) {
+            const windFactor = Math.max(0, (windSpeed - 1.0) / 1.8);
+            const targetWindVol = Math.min(0.24, windFactor * 0.24);
+            this.windGain.gain.setTargetAtTime(targetWindVol, ctx.currentTime, 0.2);
+            if (this.windFilter) {
+                this.windFilter.frequency.setTargetAtTime(260 + windFactor * 240, ctx.currentTime, 0.25);
+            }
+        }
+    }
+
+    playThunder(intensity = 1.0) {
+        if (!this.initialized || this.muted || !this.ctx) return;
+        const ctx = this.ctx;
+        const now = ctx.currentTime;
+
+        // 1. Initial Sharp Crack / Pop
+        const crackOsc = ctx.createOscillator();
+        const crackFilter = ctx.createBiquadFilter();
+        const crackGain = ctx.createGain();
+
+        crackOsc.type = 'triangle';
+        crackOsc.frequency.setValueAtTime(380, now);
+        crackOsc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+
+        crackFilter.type = 'bandpass';
+        crackFilter.frequency.setValueAtTime(450, now);
+        crackFilter.Q.setValueAtTime(1.5, now);
+
+        const crackVol = Math.min(0.45, 0.25 * intensity);
+        crackGain.gain.setValueAtTime(crackVol, now);
+        crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        crackOsc.connect(crackFilter);
+        crackFilter.connect(crackGain);
+        crackGain.connect(ctx.destination);
+
+        crackOsc.start(now);
+        crackOsc.stop(now + 0.2);
+
+        // 2. Deep Sub-Bass Rumble Decay
+        const rumbleOsc = ctx.createOscillator();
+        const rumbleGain = ctx.createGain();
+
+        rumbleOsc.type = 'sawtooth';
+        rumbleOsc.frequency.setValueAtTime(55, now);
+        rumbleOsc.frequency.exponentialRampToValueAtTime(28, now + 2.5);
+
+        const rumbleFilter = ctx.createBiquadFilter();
+        rumbleFilter.type = 'lowpass';
+        rumbleFilter.frequency.setValueAtTime(140, now);
+        rumbleFilter.frequency.exponentialRampToValueAtTime(42, now + 2.2);
+
+        const rumbleVol = Math.min(0.42, 0.32 * intensity);
+        rumbleGain.gain.setValueAtTime(rumbleVol, now);
+        rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 2.6);
+
+        rumbleOsc.connect(rumbleFilter);
+        rumbleFilter.connect(rumbleGain);
+        rumbleGain.connect(ctx.destination);
+
+        rumbleOsc.start(now);
+        rumbleOsc.stop(now + 2.7);
+    }
+
     update(speed, maxSpeed, throttle, isBoosting, isDrifting) {
         if (!this.initialized || this.muted || !this.ctx) return;
 
@@ -200,5 +330,7 @@ export class AudioSynth {
         if (this.engineGain) this.engineGain.gain.setTargetAtTime(0, now, 0.05);
         if (this.boostGain) this.boostGain.gain.setTargetAtTime(0, now, 0.05);
         if (this.driftGain) this.driftGain.gain.setTargetAtTime(0, now, 0.05);
+        if (this.rainGain) this.rainGain.gain.setTargetAtTime(0, now, 0.05);
+        if (this.windGain) this.windGain.gain.setTargetAtTime(0, now, 0.05);
     }
 }

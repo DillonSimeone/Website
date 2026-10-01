@@ -52,7 +52,7 @@ export class RoadStreamer {
 
         // Bootstrap initial 7 chunks (~800m of road)
         for (let i = 0; i < 7; i++) {
-            this._generateNextChunk(i === 0 ? 'meadow' : null);
+            this._generateNextChunk(i === 0 ? 'meadow' : null, true);
         }
 
         this._rebuildConsolidatedTrackData();
@@ -63,7 +63,8 @@ export class RoadStreamer {
             vertexColors: true,
             roughness: 0.88,
             metalness: 0.04,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            shadowSide: THREE.FrontSide
         });
 
         this.steelMat = new THREE.MeshStandardMaterial({
@@ -94,7 +95,7 @@ export class RoadStreamer {
         return Math.max(hC, hL, hR) + 1.25;
     }
 
-    _generateNextChunk(forcedType = null) {
+    _generateNextChunk(forcedType = null, isInitial = false) {
         const types = [
             'meadow',
             'hill_climb_drop',
@@ -125,7 +126,12 @@ export class RoadStreamer {
             normals: [],
             tags: [],
             mesh: null,
-            propsGroup: new THREE.Group()
+            propsGroup: new THREE.Group(),
+            state: isInitial ? 'active' : 'rising',
+            spawnProgress: 0.0,
+            riseDuration: 1.4,
+            sinkProgress: 0.0,
+            sinkDuration: 1.2
         };
 
         // Seamless connection: chunk starts exactly where previous chunk ended!
@@ -195,7 +201,7 @@ export class RoadStreamer {
             const fwd = new THREE.Vector3(Math.cos(entryHeading), 0, Math.sin(entryHeading)).normalize();
             const startBase = this.headPos.clone();
 
-            for (let i = 0; i < count; i++) {
+            for (let i = 1; i < count; i++) {
                 const phi = (i / (count - 1)) * Math.PI * 2;
                 // Horizontal progress and vertical circular loop
                 const hDist = (i / (count - 1)) * 48.0;
@@ -283,6 +289,10 @@ export class RoadStreamer {
 
         // Extrude 3D road ribbon mesh with receiveShadow = true
         chunk.mesh = this._extrudeMesh(chunk);
+        chunk.mesh.position.y = 0.0;
+        if (!isInitial) {
+            chunk.propsGroup.position.y = -35.0;
+        }
         this.scene.add(chunk.mesh);
         this.scene.add(chunk.propsGroup);
 
@@ -296,25 +306,38 @@ export class RoadStreamer {
     _computeVectors(chunk) {
         const pts = chunk.points;
         const n = pts.length;
+        const prevChunk = this.chunks.length > 0 ? this.chunks[this.chunks.length - 1] : null;
 
         for (let i = 0; i < n; i++) {
             let fwd = new THREE.Vector3();
             if (i === 0) {
-                fwd.subVectors(pts[1], pts[0]);
+                if (prevChunk && prevChunk.tangents && prevChunk.tangents.length > 0) {
+                    // SEAMLESS C1 CONTINUITY: Inherit exact tangent from previous chunk endpoint!
+                    fwd.copy(prevChunk.tangents[prevChunk.tangents.length - 1]);
+                } else {
+                    fwd.subVectors(pts[1], pts[0]).normalize();
+                }
             } else if (i === n - 1) {
-                fwd.subVectors(pts[n - 1], pts[n - 2]);
+                fwd.subVectors(pts[n - 1], pts[n - 2]).normalize();
             } else {
-                fwd.subVectors(pts[i + 1], pts[i - 1]);
+                fwd.subVectors(pts[i + 1], pts[i - 1]).normalize();
             }
-            fwd.normalize();
 
             // Loop / 3D curvature normal calculation
             let up = new THREE.Vector3(0, 1, 0);
             if (chunk.type === 'sky_loop') {
                 const right = new THREE.Vector3().crossVectors(fwd, up).normalize();
                 up = new THREE.Vector3().crossVectors(right, fwd).normalize();
+            } else if (i === 0 && prevChunk && prevChunk.normals && prevChunk.normals.length > 0) {
+                up.copy(prevChunk.normals[prevChunk.normals.length - 1]);
             }
-            const right = new THREE.Vector3().crossVectors(fwd, up).normalize();
+
+            let right;
+            if (i === 0 && prevChunk && prevChunk.binormals && prevChunk.binormals.length > 0) {
+                right = prevChunk.binormals[prevChunk.binormals.length - 1].clone();
+            } else {
+                right = new THREE.Vector3().crossVectors(fwd, up).normalize();
+            }
 
             chunk.tangents.push(fwd);
             chunk.normals.push(up);
@@ -329,19 +352,22 @@ export class RoadStreamer {
         const binorms = chunk.binormals;
         const tags = chunk.tags;
         const n = pts.length;
+        const prevChunk = this.chunks.length > 0 ? this.chunks[this.chunks.length - 1] : null;
 
         const vertices = [];
         const colors = [];
         const normals = [];
 
         function addQuad(p1, p2, p3, p4, col, norm = null) {
+            // Front-facing Counter-Clockwise (CCW) winding: (p1, p4, p2) and (p4, p3, p2)
+            // Points normal UP (+Y) so road receives true Three.js directional soft shadows!
             vertices.push(p1.x, p1.y, p1.z);
-            vertices.push(p2.x, p2.y, p2.z);
-            vertices.push(p3.x, p3.y, p3.z);
-
-            vertices.push(p1.x, p1.y, p1.z);
-            vertices.push(p3.x, p3.y, p3.z);
             vertices.push(p4.x, p4.y, p4.z);
+            vertices.push(p2.x, p2.y, p2.z);
+
+            vertices.push(p4.x, p4.y, p4.z);
+            vertices.push(p3.x, p3.y, p3.z);
+            vertices.push(p2.x, p2.y, p2.z);
 
             const nx = norm ? norm.x : 0;
             const ny = norm ? norm.y : 1;
@@ -361,6 +387,19 @@ export class RoadStreamer {
         const loopCyan      = new THREE.Color(0.0, 0.88, 1.0);
 
         for (let i = 0; i < n - 1; i++) {
+            // Sub-surface underlap apron on first segment (5cm below road surface)
+            // Completely blocks any sub-pixel rasterization gaps at steep grazing angles without Z-fighting!
+            if (i === 0 && prevChunk && chunk.tangents.length > 0) {
+                const tongueFwd = chunk.tangents[0].clone().multiplyScalar(0.5);
+                const tA = pts[0].clone().sub(tongueFwd); tA.y -= 0.05;
+                const tB = pts[0].clone().add(tongueFwd); tB.y -= 0.05;
+                const tL_a = tA.clone().add(binorms[0].clone().multiplyScalar(-halfW - 1.2));
+                const tL_b = tB.clone().add(binorms[0].clone().multiplyScalar(-halfW - 1.2));
+                const tR_b = tB.clone().add(binorms[0].clone().multiplyScalar(halfW + 1.2));
+                const tR_a = tA.clone().add(binorms[0].clone().multiplyScalar(halfW + 1.2));
+                addQuad(tL_a, tL_b, tR_b, tR_a, centerGravel, chunk.normals[0]);
+            }
+
             const pA = pts[i];
             const pB = pts[i + 1];
             const rA = binorms[i];
@@ -431,6 +470,14 @@ export class RoadStreamer {
         }
     }
 
+    setRivalsManager(rivalsManager) {
+        this.rivalsManager = rivalsManager;
+    }
+
+    setPlayer(player) {
+        this.player = player;
+    }
+
     _populateChunkScenery(chunk) {
         if (!this.trees || !this.props) return;
         const pts = chunk.points;
@@ -439,30 +486,83 @@ export class RoadStreamer {
         const n = pts.length;
         if (n < 4) return;
 
-        // 1. Conifer and Broadleaf Trees alongside road chunk
-        for (let i = 2; i < n - 2; i += 3) {
-            const side = this._pseudoRand() > 0.5 ? 1 : -1;
-            const dist = 13.0 + this._pseudoRand() * 22.0;
-            const tx = pts[i].x + binorms[i].x * (side * dist);
-            const tz = pts[i].z + binorms[i].z * (side * dist);
-            const rType = this._pseudoRand();
-            const treeType = rType < 0.50 ? 0 : (rType < 0.82 ? 1 : 2);
-            const scale = 0.85 + this._pseudoRand() * 0.45;
-            this.trees.createTree(tx, tz, treeType, scale, chunk.propsGroup);
-        }
+        // 1. Roadside Verge: Flowering Bushes & Wildflower Patches (7m - 16m from road)
+        for (let i = 1; i < n - 1; i += 2) {
+            const side = (i % 4 === 1) ? 1 : -1;
+            const dist = 7.5 + this._pseudoRand() * 8.0;
+            const vx = pts[i].x + binorms[i].x * (side * dist);
+            const vz = pts[i].z + binorms[i].z * (side * dist);
 
-        // 2. Faceted Geological Rock Outcroppings
-        for (let i = 3; i < n - 3; i += 5) {
-            if (this._pseudoRand() < 0.45) {
-                const side = this._pseudoRand() > 0.5 ? 1 : -1;
-                const dist = 14.0 + this._pseudoRand() * 24.0;
-                const bx = pts[i].x + binorms[i].x * (side * dist);
-                const bz = pts[i].z + binorms[i].z * (side * dist);
-                this.props.createRockOutcropping(bx, bz, 1.8 + this._pseudoRand() * 2.0, chunk.propsGroup);
+            const rV = this._pseudoRand();
+            if (rV < 0.40) {
+                this.trees.createFlowers(vx, vz, 0.85 + this._pseudoRand() * 0.4, chunk.propsGroup);
+            } else if (rV < 0.75) {
+                this.trees.createFloweringBush(vx, vz, 0.9 + this._pseudoRand() * 0.45, chunk.propsGroup);
+            } else {
+                this.trees.createBush(vx, vz, 0.95 + this._pseudoRand() * 0.5, chunk.propsGroup);
             }
         }
 
-        // 3. Street Lamps with Asphalt Light Pools (on non-loop segments)
+        // 2. Near Roadside Trees & Rocks (14m - 38m)
+        for (let i = 2; i < n - 2; i += 3) {
+            const side = this._pseudoRand() > 0.5 ? 1 : -1;
+            const dist = 14.0 + this._pseudoRand() * 24.0;
+            const tx = pts[i].x + binorms[i].x * (side * dist);
+            const tz = pts[i].z + binorms[i].z * (side * dist);
+            const rType = this._pseudoRand();
+            const treeType = rType < 0.48 ? 0 : (rType < 0.82 ? 1 : 2);
+            const scale = 0.85 + this._pseudoRand() * 0.45;
+            this.trees.createTree(tx, tz, treeType, scale, chunk.propsGroup);
+
+            // Accompany with roadside boulder
+            if (this._pseudoRand() < 0.35) {
+                const rx = tx + (this._pseudoRand() - 0.5) * 12.0;
+                const rz = tz + (this._pseudoRand() - 0.5) * 12.0;
+                this.props.createRockOutcropping(rx, rz, 1.6 + this._pseudoRand() * 1.8, chunk.propsGroup);
+            }
+        }
+
+        // 3. Wide Meadow Groves & Rolling Hills (35m - 130m off-road)
+        // Spreads vegetation all across the surrounding landscape, not just hugging asphalt
+        for (let i = 3; i < n - 3; i += 5) {
+            for (const side of [-1, 1]) {
+                if (this._pseudoRand() < 0.75) {
+                    const dist = 38.0 + this._pseudoRand() * 92.0;
+                    const gx = pts[i].x + binorms[i].x * (side * dist);
+                    const gz = pts[i].z + binorms[i].z * (side * dist);
+
+                    // Clustered grove of 2-3 trees
+                    const groveCount = 1 + Math.floor(this._pseudoRand() * 3);
+                    for (let g = 0; g < groveCount; g++) {
+                        const ox = gx + (this._pseudoRand() - 0.5) * 16.0;
+                        const oz = gz + (this._pseudoRand() - 0.5) * 16.0;
+                        const tType = this._pseudoRand() < 0.6 ? 0 : (this._pseudoRand() < 0.85 ? 1 : 2);
+                        this.trees.createTree(ox, oz, tType, 0.9 + this._pseudoRand() * 0.5, chunk.propsGroup);
+                    }
+
+                    // Meadow shrubs & flowers in grove clearing
+                    if (this._pseudoRand() < 0.6) {
+                        this.trees.createBush(gx + 6, gz - 4, 1.1 + this._pseudoRand() * 0.4, chunk.propsGroup);
+                        this.trees.createFlowers(gx - 5, gz + 6, 1.2, chunk.propsGroup);
+                    }
+                }
+            }
+        }
+
+        // 4. Distant Horizon Ridge Tree Lines (130m - 260m on hill crests)
+        for (let i = 4; i < n - 4; i += 7) {
+            const side = (i % 14 === 4) ? 1 : -1;
+            const dist = 135.0 + this._pseudoRand() * 125.0;
+            const rx = pts[i].x + binorms[i].x * (side * dist);
+            const rz = pts[i].z + binorms[i].z * (side * dist);
+            // Alpine conifer silhouettes on distant ridges
+            this.trees.createTree(rx, rz, 0, 1.1 + this._pseudoRand() * 0.5, chunk.propsGroup);
+            if (this._pseudoRand() < 0.45) {
+                this.props.createRockOutcropping(rx + 8, rz - 6, 2.8 + this._pseudoRand() * 2.2, chunk.propsGroup);
+            }
+        }
+
+        // 5. Street Lamps with Asphalt Light Pools (on non-loop segments)
         if (chunk.type !== 'sky_loop') {
             for (let i = 3; i < n - 3; i += 6) {
                 const side = (i % 12 === 3) ? 1 : -1;
@@ -470,7 +570,7 @@ export class RoadStreamer {
             }
         }
 
-        // 4. Directional Chevron Boards on curves (Clean apex markers with minimum 56m spacing)
+        // 6. Directional Chevron Boards on curves (Apex markers with minimum 56m spacing)
         let lastSignIdx = -99;
         for (let i = 4; i < n - 4; i++) {
             if (i - lastSignIdx < 10) continue;
@@ -510,8 +610,35 @@ export class RoadStreamer {
         }
     }
 
-    update(playerPos) {
+    update(playerPos, delta = 0.016) {
         if (!playerPos || this.chunks.length === 0) return this.trackData;
+
+        // Animate rising and sinking scenery props out of / into the earth
+        // Road mesh stays solid at y=0 to guarantee a seamless, unbroken driving surface
+        for (let i = 0; i < this.chunks.length; i++) {
+            const c = this.chunks[i];
+            if (c.mesh) c.mesh.position.y = 0.0;
+
+            if (c.state === 'rising') {
+                c.spawnProgress += delta / c.riseDuration;
+                if (c.spawnProgress >= 1.0) {
+                    c.spawnProgress = 1.0;
+                    c.state = 'active';
+                    if (c.propsGroup) c.propsGroup.position.y = 0.0;
+                } else {
+                    const t = c.spawnProgress;
+                    const ease = 1.0 - Math.pow(1.0 - t, 3);
+                    const y = -35.0 * (1.0 - ease);
+                    if (c.propsGroup) c.propsGroup.position.y = y;
+                }
+            } else if (c.state === 'sinking') {
+                c.sinkProgress += delta / c.sinkDuration;
+                const t = Math.min(1.0, c.sinkProgress);
+                const ease = Math.pow(t, 3);
+                const y = -35.0 * ease;
+                if (c.propsGroup) c.propsGroup.position.y = y;
+            }
+        }
 
         // 1. Generate new chunks ahead if player approaches the forward horizon
         const lastChunk = this.chunks[this.chunks.length - 1];
@@ -523,7 +650,7 @@ export class RoadStreamer {
             this._rebuildConsolidatedTrackData();
         }
 
-        // 2. Despawn chunks trailing far behind player (>180m behind)
+        // 2. Despawn chunks trailing far behind player (>180m behind) with subterranean sinking
         if (this.chunks.length > 5) {
             const firstChunk = this.chunks[0];
             const firstChunkEnd = firstChunk.points[firstChunk.points.length - 1];
@@ -535,28 +662,41 @@ export class RoadStreamer {
             const isAhead = toPlayer.dot(fwd) > 0;
 
             if (isAhead && distBehind > 180.0) {
-                this.scene.remove(firstChunk.mesh);
-                if (firstChunk.propsGroup) {
-                    if (this.trees && typeof this.trees.removeTree === 'function') {
-                        const toRemove = [];
-                        for (const child of firstChunk.propsGroup.children) {
-                            if (child.isTree) toRemove.push(child);
+                if (firstChunk.state !== 'sinking') {
+                    firstChunk.state = 'sinking';
+                    firstChunk.sinkProgress = 0.0;
+                    firstChunk.sinkDuration = 1.2;
+                } else if (firstChunk.sinkProgress >= 1.0) {
+                    this.scene.remove(firstChunk.mesh);
+                    if (firstChunk.propsGroup) {
+                        if (this.trees && typeof this.trees.removeTree === 'function') {
+                            const toRemove = [];
+                            for (const child of firstChunk.propsGroup.children) {
+                                if (child.isTree) toRemove.push(child);
+                            }
+                            toRemove.forEach(t => this.trees.removeTree(t));
                         }
-                        toRemove.forEach(t => this.trees.removeTree(t));
-                    }
-                    if (this.props && typeof this.props.removeLamp === 'function') {
-                        const toRemoveLamps = [];
-                        for (const child of firstChunk.propsGroup.children) {
-                            if (child.isLamp) toRemoveLamps.push(child);
+                        if (this.props && typeof this.props.removeLamp === 'function') {
+                            const toRemoveLamps = [];
+                            for (const child of firstChunk.propsGroup.children) {
+                                if (child.isLamp) toRemoveLamps.push(child);
+                            }
+                            toRemoveLamps.forEach(l => this.props.removeLamp(l));
                         }
-                        toRemoveLamps.forEach(l => this.props.removeLamp(l));
+                        this.scene.remove(firstChunk.propsGroup);
                     }
-                    this.scene.remove(firstChunk.propsGroup);
-                }
-                if (firstChunk.mesh && firstChunk.mesh.geometry) firstChunk.mesh.geometry.dispose();
+                    if (firstChunk.mesh && firstChunk.mesh.geometry) firstChunk.mesh.geometry.dispose();
 
-                this.chunks.shift();
-                this._rebuildConsolidatedTrackData();
+                    const removedPts = firstChunk.points.length;
+                    this.chunks.shift();
+                    this._rebuildConsolidatedTrackData();
+                    if (this.player && typeof this.player.onChunkShift === 'function') {
+                        this.player.onChunkShift(removedPts);
+                    }
+                    if (this.rivalsManager && typeof this.rivalsManager.onChunkShift === 'function') {
+                        this.rivalsManager.onChunkShift(removedPts);
+                    }
+                }
             }
         }
 
