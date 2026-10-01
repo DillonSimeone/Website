@@ -1,61 +1,9 @@
-# LP-08 — Motion-to-Synth: Filter Sweeps with the Body
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** 6-8 (EXPRESSION)
-**Duration:** 60 minutes
-**Prerequisites:** LP-04, LP-07.
-
-## Big idea
-Your wrist tilt is now a knob. Your arm raised high makes the synth bright; lowered, it makes it dark. Movement becomes sound.
-
-This lesson uses the IMU pipeline from GestoLumina (GL §4.1). The MPU-6050 accelerometer values become OSC messages that drive a software synth running on the CyberDeck.
-
-## Learning Objectives
-1. Wear the GeLu bracelet correctly and verify IMU data on the CyberDeck screen.
-2. Map at least 2 IMU axes to 2 synth parameters (e.g., wrist tilt → filter cutoff; forearm rotation → resonance).
-3. Perform a 30-second "filter ballad" demonstrating expressive control.
-4. Sign IMU, AXIS, FILTER, CUTOFF, RESONANCE.
-
-## ASL Gloss Vocabulary (new)
-IMU (loaned: finger-spell + ACCELERATE-SENSE), AXIS (lined-up movement), FILTER (palm sieving), CUTOFF (chop motion), RESONANCE (vibrating both hands), OSC (loaned).
-
-## CyberDeck / PULSE Setup
-- Preset: `68_MotionSynth.preset`.
-- GeLu bracelet on dominant wrist (per GL §4); BLE-MIDI to CyberDeck (paired in advance by teacher).
-- CyberDeck runs a Pure Data (Pd) patch (or SuperCollider — see TECHNICAL_SPEC §4): a saw-wave oscillator → low-pass filter → reverb → master out.
-- Default mapping:
-  - IMU pitch axis (–90° to +90°) → filter cutoff (50 Hz to 8 kHz, log-scaled).
-  - IMU roll axis (–90° to +90°) → filter resonance (Q from 0.5 to 10).
-- AudioLux LED bar mirrors the synth output FFT.
-- PULSE vest receives the low-frequency content as continuous tactile.
-
-## Lesson Sequence
-| Time | Activity |
-|------|----------|
-| 0:00-0:08 | Greeting; review LP-07 latency note; teacher demos a 15-second filter ballad. |
-| 0:08-0:18 | Each student fits the GeLu bracelet; verifies IMU readings on screen. |
-| 0:18-0:35 | Free exploration: students discover the mapping by movement. Pair feedback: one performs, one wears vest, both observe LED. |
-| 0:35-0:50 | Composition: each student writes a 30-second piece with a clear shape (rise, plateau, fall — visible on LED). |
-| 0:50-0:60 | Performances + reflection. Sign WHO-MADE-RISE / WHO-MADE-FALL. |
-
-## Differentiation
-- **6th grade:** Single axis only (pitch → cutoff); fixed resonance.
-- **8th grade:** Add a third mapping (Y-axis displacement → reverb send) and require a contrasting B-section.
-- **Mobility-restricted students:** Use a head-mounted IMU instead of wrist; same mapping conventions.
-- **Hearing peers:** Must compose using vest + LED preview only.
-
-## Assessment Rubric
-
-| Criterion | 4 | 3 | 2 | 1 |
-|---|---|---|---|---|
-| **IMU setup independence** | Pairs bracelet without help. | Pairs with one hint. | Pairs with multiple hints. | Cannot pair. |
-| **Expressive shape** | Piece has clear rise, plateau, fall, recognizable from LED+vest alone. | Two of three shape elements. | One. | Flat / random. |
-| **Axis ↔ parameter understanding** | Explains both mappings precisely. | Explains 1. | Vague. | None. |
-| **ASL vocab use** | All 6 new signs. | 4-5. | 2-3. | 0-1. |
-
-**Evidence:** 30-second performance video; OSC log file from CyberDeck (`.osclog`); reflection sheet.
-
-## Connections
-- GL §4.1 (IMU + BLE-MIDI).
-- SA §5.1.3 (gestural interfaces that align with kinesthetic communication).
-- **NGSS MS-PS4-1** (mathematical representations to describe wave properties); **CSTA 3A-CS-01** (computing systems and physical components).
-- Pillar 4: students *modify* mappings; precursor to LP-10's firmware hack.
+[CIPHERTEXT]
+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
+---END-ENCRYPTED-FILE---

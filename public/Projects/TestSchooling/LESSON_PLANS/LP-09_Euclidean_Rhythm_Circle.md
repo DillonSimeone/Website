@@ -1,64 +1,9 @@
-# LP-09 — Euclidean Rhythm Circle
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** 6-8 (EXPRESSION)
-**Duration:** 60 minutes × 2 sessions
-**Prerequisites:** LP-07.
-
-## Background
-Toussaint's *The Geometry of Musical Rhythm* (cited GL §5) shows that humans worldwide adopt a small family of symmetrical rhythmic geometries — these are the rhythms that *recur* across cultures. GL §5 names these as "rhythms a DHH musician can trust." This lesson teaches polyrhythm geometrically, on a circular display, *before* introducing bar-line notation.
-
-## Learning Objectives
-1. Construct an E(k, n) Euclidean rhythm for at least three (k, n) pairs (e.g., E(3, 8) = tresillo).
-2. Identify three "innate" rhythms from world music (Cuban tresillo, West African bell pattern, Bulgarian 7/8).
-3. Combine two Euclidean rhythms into a polyrhythm and feel each on a separate vest channel.
-4. Sign EUCLIDEAN, POLYRHYTHM, CIRCLE, ROTATION, SYMMETRY.
-
-## ASL Gloss Vocabulary (new)
-EUCLIDEAN (finger-spell + GEOMETRY-RHYTHM compound), POLYRHYTHM (TWO + RHYTHM), CIRCLE, ROTATION (one hand orbiting), SYMMETRY (two mirrored hands).
-*Carried:* PATTERN, RHYTHM, TRIGGER.
-
-## CyberDeck / PULSE Setup
-- Preset: `68_EuclideanCircle.preset`.
-- CyberDeck shows two concentric rings of 16 dots. Students tap dots to fill k pulses out of n; the system distributes them evenly per the Euclidean algorithm (Toussaint).
-- Outer ring → kick drum → vest left chest.
-- Inner ring → woodblock → vest right shoulder.
-- Audible playback optional (for mixed-hearing rooms).
-
-## Lesson Sequence
-
-### Session 1 (60 min) — Single rhythm
-| Time | Activity |
-|------|----------|
-| 0:00-0:10 | Sign warm-up; teacher introduces three world rhythms by showing each as a circle. |
-| 0:10-0:25 | Build E(3,8), E(5,8), E(7,16) one by one; feel each on vest. |
-| 0:25-0:45 | Pair exploration: choose a (k, n) and explain *why* it feels stable or unstable. |
-| 0:45-0:60 | Reflection: which is symmetric, which isn't? |
-
-### Session 2 (60 min) — Polyrhythm
-| Time | Activity |
-|------|----------|
-| 0:00-0:10 | Recap; teacher demos two rings playing simultaneously. |
-| 0:10-0:35 | Pair work: one student designs outer, one designs inner. Both wear vests. |
-| 0:35-0:50 | Performances; class signs WHICH-WAS-CLEAR / WHICH-WAS-CONFUSING. |
-| 0:50-0:60 | Closing: students propose a new (k, n) for a future composition. |
-
-## Differentiation
-- **6th grade:** Stick to n = 8 ring.
-- **8th grade:** Introduce n = 12 ring (West African feel) and a polyrhythm of E(3,8) + E(4,12).
-- **Hearing peers:** Wear vest blindfolded; identify the rhythm only by feel.
-
-## Assessment Rubric
-
-| Criterion | 4 | 3 | 2 | 1 |
-|---|---|---|---|---|
-| **Euclidean construction** | Builds 3 (k,n) pairs independently. | 2 pairs. | 1 pair. | Cannot. |
-| **Polyrhythm performance** | Plays both rings + describes interaction. | Plays both rings. | Plays one ring against teacher's. | Cannot maintain. |
-| **Symmetry articulation** | Identifies symmetric rotations and shifts. | Identifies symmetric vs. asymmetric. | Identifies one. | Cannot. |
-| **ASL vocab** | All 5 new signs. | 3-4. | 1-2. | 0. |
-
-**Evidence:** `.euclid` save files; pair video; reflection page.
-
-## Connections
-- GL §5 (rhythm geometry + DHH trust).
-- **NGSS MS-PS4-1** (wave properties / patterns); **CCSS Math 6.NS.1** (proportional reasoning); **CCSS Math 7.G** (geometric figures).
-- Bridges into Band 4's Capstone, where compositions can lean on Euclidean rhythm without first earning Western notation literacy.
+[CIPHERTEXT]
+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
+---END-ENCRYPTED-FILE---

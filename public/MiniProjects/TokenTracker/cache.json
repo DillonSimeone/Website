@@ -1,12 +1,12 @@
 {
   "version": 4,
-  "last_scan_time": "2026-10-01T21:36:13.720502+00:00",
+  "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
   "sources": {
     "5aced6bf1638fa72": {
       "provider": "antigravity",
       "path": "C:\\Users\\DoctorNightmares\\.gemini\\antigravity\\conversations",
       "account_key": "antigravity@1790078620",
-      "last_scan_time": "2026-10-01T21:36:09.388878+00:00",
+      "last_scan_time": "2026-10-01T22:36:14.560397+00:00",
       "last_db_mtime": null,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -15,7 +15,7 @@
       "provider": "antigravity",
       "path": "C:\\Users\\DoctorNightmares\\.gemini\\antigravity-backup\\conversations",
       "account_key": "antigravity-backup@1779158214",
-      "last_scan_time": "2026-10-01T21:36:09.388878+00:00",
+      "last_scan_time": "2026-10-01T22:36:14.560397+00:00",
       "last_db_mtime": null,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -24,7 +24,7 @@
       "provider": "antigravity",
       "path": "C:\\Users\\DoctorNightmares\\.gemini\\antigravity-ide\\conversations",
       "account_key": "antigravity-ide@1790888591",
-      "last_scan_time": "2026-10-01T21:36:09.388878+00:00",
+      "last_scan_time": "2026-10-01T22:36:14.560397+00:00",
       "last_db_mtime": null,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -33,7 +33,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\globalStorage\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790850997.3631408,
       "seen_entry_ids": [],
       "seen_bubble_keys": [
@@ -74,10 +74,10 @@
         "bubbleId:419e4d24-1c2d-4232-a97d-4856b2cb498b:6cdd4d45-d80a-4da2-a379-e882056b00cc",
         "bubbleId:014c1cb1-59eb-4628-a571-0c6807397527:ed1a027e-f745-4ab9-95f6-0064a37dc23a",
         "bubbleId:014c1cb1-59eb-4628-a571-0c6807397527:b0581bc8-cd43-45ab-969d-f18c86a8e0da",
-        "bubbleId:302a6cc4-69e4-4a66-a1ac-48b8f058fc26:cd2f5a37-e4fa-4f49-9049-a1f7c04541a9",
-        "bubbleId:283e668a-d5db-4e37-906d-a3e2bcff3bd7:787939fd-8c0b-4f26-acdf-95e1ea71b909",
         "bubbleId:efd9ecbb-7fb6-45c5-ad86-68d80a1f93a6:33e2e784-018d-4949-886d-3afe85766434",
         "bubbleId:60635a88-3cc1-45e4-9d33-b3374f27cd62:9b24929d-da53-423b-9a0c-610cbcbefb78",
+        "bubbleId:302a6cc4-69e4-4a66-a1ac-48b8f058fc26:cd2f5a37-e4fa-4f49-9049-a1f7c04541a9",
+        "bubbleId:283e668a-d5db-4e37-906d-a3e2bcff3bd7:787939fd-8c0b-4f26-acdf-95e1ea71b909",
         "bubbleId:60635a88-3cc1-45e4-9d33-b3374f27cd62:0b899b64-e7e5-483c-b0cb-645dc651cd31",
         "bubbleId:c9ce6030-a242-4f84-af67-a588b72eacc6:03ee5e26-99ae-4983-ad27-5135caac19a8",
         "bubbleId:16680029-c8d4-4665-8e34-bcaf0ae5d470:82b0f2dd-23d5-4436-a214-aff1d4133fe1",
@@ -813,8 +813,8 @@
         "bubbleId:31e0cc29-e260-4400-946f-f2f84428fd23:dc379e17-465d-4655-bf68-b3c407687711",
         "bubbleId:d9caa35c-e31d-45b6-abac-d42db11ee694:18957900-2ea0-4593-bb13-44d18a741841",
         "bubbleId:efd0377c-ae08-47b9-ad01-6c1b167853d0:33b86583-4381-480e-8923-27e965a11f8b",
-        "bubbleId:87381c40-f465-49f7-a497-5de0dc85bf6f:d10c3901-acd3-45ad-a706-bc1cd3364a7b",
         "bubbleId:014c1cb1-59eb-4628-a571-0c6807397527:bd90ff8f-0623-444e-b90a-d53f9e7c0883",
+        "bubbleId:87381c40-f465-49f7-a497-5de0dc85bf6f:d10c3901-acd3-45ad-a706-bc1cd3364a7b",
         "bubbleId:419e4d24-1c2d-4232-a97d-4856b2cb498b:b39f0437-b85c-4085-b82c-f987d8ed8509",
         "bubbleId:16680029-c8d4-4665-8e34-bcaf0ae5d470:64859967-77ff-453b-9f05-ba37e986b8ac",
         "bubbleId:d9caa35c-e31d-45b6-abac-d42db11ee694:b7c9360a-7dca-48f5-8d08-871d66be7395",
@@ -3082,10 +3082,10 @@
         "bubbleId:16680029-c8d4-4665-8e34-bcaf0ae5d470:2f5a6027-92f3-4f8c-8b8c-5fb2be1c3fe6",
         "bubbleId:60635a88-3cc1-45e4-9d33-b3374f27cd62:240b14c2-1ef3-4d5a-83aa-bab13081ec13",
         "bubbleId:014c1cb1-59eb-4628-a571-0c6807397527:b06c9fbd-2744-4fad-8edf-71333069ea83",
-        "bubbleId:cf15167e-c61c-4ce8-b855-a4d69972ae75:98e5d084-dedc-4755-a97e-a591b18978fb",
         "bubbleId:16680029-c8d4-4665-8e34-bcaf0ae5d470:0bc7e38b-e1b1-405d-9fda-f84e8e7f38dc",
-        "bubbleId:c38590cc-0469-4378-93ab-4500e4f64f50:a40102f5-f81e-4f42-8c37-e672359b37a7",
+        "bubbleId:cf15167e-c61c-4ce8-b855-a4d69972ae75:98e5d084-dedc-4755-a97e-a591b18978fb",
         "bubbleId:c9ce6030-a242-4f84-af67-a588b72eacc6:a82760ef-fac6-4d35-88b4-e572826d1d9f",
+        "bubbleId:c38590cc-0469-4378-93ab-4500e4f64f50:a40102f5-f81e-4f42-8c37-e672359b37a7",
         "bubbleId:923175a6-1e65-410e-8f77-314cddbbc1b7:66a399a7-6603-4366-8132-7e24a22a8df6",
         "bubbleId:302a6cc4-69e4-4a66-a1ac-48b8f058fc26:6546c632-9626-4648-8200-2aa0f13b7dbe",
         "bubbleId:31e0cc29-e260-4400-946f-f2f84428fd23:975b202c-49ce-4150-bffb-c6bb5e70f565",
@@ -12357,7 +12357,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\10743a669343903cdd2e406838d5759e\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1781690652.1268582,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12366,7 +12366,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\1e1a8d35ee0cd5bacea4d4d15646d479\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790586429.6939409,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12375,7 +12375,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\2ea6c867554538346d999300537e4044\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1782639833.6324928,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12384,7 +12384,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\365c1c8ad9f55101eb9a6d8273160368\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1782588206.9308426,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12393,7 +12393,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\414a3994d6cf14eec40cc7fb72dad279\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1781690652.1093411,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12402,7 +12402,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\462c0a81ab33f5fccdfd88e4d8118a50\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1781830282.225515,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12411,7 +12411,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\65fa20a243ef7ab9f0ba3d718d329637\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1784489558.8378837,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12420,7 +12420,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\66e23ec6ac5c4e32c1123e3917ff803c\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1785811903.3306365,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12429,7 +12429,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\8189400db010c8abbf740c9971a35649\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1763281252.086561,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12438,7 +12438,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\849e4ebf7b677dea62973b1943fa6350\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1781877287.4536896,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12447,7 +12447,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\a7c76f88a5c3bc384a02ad60f4ac7cc1\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1784973216.8657708,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12456,7 +12456,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\b3a16af3841777b15a4123567c4d0525\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790640112.7046275,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12465,7 +12465,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\b685c871518315abbbedbe3400c2046c\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1781675502.0501244,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12474,7 +12474,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\c1602f467721d838406fe973f27d807a\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1784971972.6434224,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12483,7 +12483,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\d96e9ec38df0b365770787d609c2abea\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1781768512.605806,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12492,7 +12492,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\empty-window\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790850997.3587546,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12501,7 +12501,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\fc9468ba7beb841d815eca286060f017\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1784990137.4635916,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12528,7 +12528,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\3fd526d221bfbb2cf6cf60cd6588e2ac\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790243701.8409545,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12537,7 +12537,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\7ed97a58bcced0babc3cec69a7c183d3\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790157154.024318,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12555,7 +12555,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\ead6b0cf219d64f2ee425db1085b8f37\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790586429.6939409,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12573,7 +12573,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\273617fe6440129a8d3e3e243e810646\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790586429.7064834,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12582,7 +12582,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\3619ccb5f8147f7611bd0a262884ce5c\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790850997.3496573,
       "seen_entry_ids": [],
       "seen_bubble_keys": []
@@ -12591,7 +12591,7 @@
       "provider": "cursor",
       "path": "C:\\Users\\DoctorNightmares\\AppData\\Roaming\\Cursor\\User\\workspaceStorage\\5ec37765fbe3c114bd93dd6fe319bf0b\\state.vscdb",
       "account_key": "dillon.simeone@pcc.edu",
-      "last_scan_time": "2026-10-01T21:36:13.710796+00:00",
+      "last_scan_time": "2026-10-01T22:36:15.071410+00:00",
       "last_db_mtime": 1790850997.3587546,
       "seen_entry_ids": [],
       "seen_bubble_keys": []

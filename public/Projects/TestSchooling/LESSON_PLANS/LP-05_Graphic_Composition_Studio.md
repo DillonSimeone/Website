@@ -1,62 +1,9 @@
-# LP-05 — Graphic Composition Studio
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** 3-5 (EXPLORATION)
-**Duration:** 45 minutes × 2 sessions (this lesson is a two-parter)
-**Prerequisites:** LP-02, LP-04.
-
-## Big idea
-Composing is choosing what happens and when. You will write a one-minute piece in shapes and colors, then perform it with a friend on the CyberDeck.
-
-## Learning Objectives
-1. Compose a 16-cell graphic score using at least 3 shape categories and 3 frequency-color regions.
-2. Notate which body zone each event targets on the PULSE vest.
-3. Perform the piece as a duet (one player on CyberDeck, one wearing vest), then switch roles.
-4. Sign COMPOSE, MEASURE, REPEAT, SECTION, DUET.
-
-## ASL Gloss Vocabulary (new)
-COMPOSE (CREATE + MUSIC), MEASURE (palms framing space), REPEAT (rolling motion), SECTION (two flat hands cutting space), DUET (TWO-handshape pair).
-
-## CyberDeck / PULSE Setup
-- Preset: `35_ScoreSequencer.preset`.
-- Score-sequencer UI shows a 4×4 grid (16 cells). Each cell holds a (shape, color, body-zone) triplet.
-- Cell duration: 1 second; total piece: 16 seconds (can be looped).
-- Vest: 4-zone PULSE.
-
-## Lesson Sequence
-
-### Session 1 (45 min) — Compose
-| Time | Activity |
-|------|----------|
-| 0:00-0:05 | Greeting; review LP-02 shapes and LP-03 colors. |
-| 0:05-0:15 | Teacher composes a sample 16-cell piece live; students sign their reactions. |
-| 0:15-0:40 | Each student composes their own piece on the CyberDeck or on paper templates. |
-| 0:40-0:45 | Save and label. |
-
-### Session 2 (45 min) — Rehearse + Perform
-| Time | Activity |
-|------|----------|
-| 0:00-0:05 | Re-load saved pieces. |
-| 0:05-0:25 | Pair rehearsal — duets switch composer/performer. |
-| 0:25-0:40 | Sharing circle: 4 duets perform, group signs back what they felt. |
-| 0:40-0:45 | Closing reflection; sign COMPOSE + I-LIKE-MINE / I-WANT-CHANGE. |
-
-## Differentiation
-- **3rd grade:** 8-cell piece, 2 shape categories.
-- **5th grade:** Introduce a "repeat marker" cell so pieces can run 32 cells.
-- **Hearing-mixed classrooms:** Hearing students compose using only LED+vest preview; no audio monitoring.
-
-## Assessment Rubric
-
-| Criterion | 4 | 3 | 2 | 1 |
-|---|---|---|---|---|
-| **Compositional variety** | Uses 3+ shapes, 3+ colors, 3+ body zones; clear sections. | Uses all required elements once. | Uses 2 of 3 categories. | Single element repeated. |
-| **Performance accuracy** | Performs from own and partner's score. | Performs own correctly. | Needs guidance. | Cannot perform. |
-| **Listening back** | Identifies partner's piece by feel alone. | Identifies after one look. | Needs repetition. | Cannot identify. |
-| **ASL COMPOSE/REPEAT/SECTION** | All used with context. | 2 of 3. | 1. | None. |
-
-**Evidence:** Saved CyberDeck score file (`.score` JSON); photo of paper composition; video of duet performance.
-
-## Connections
-- **NCAS Music — Creating 3-5:** Generate, develop, refine, present musical ideas.
-- Pillar 4 (authorship: K-2 imitated; here we modify and create).
-- Foundation for LP-09 (Euclidean rhythm) and LP-12 (Capstone).
+[CIPHERTEXT]
+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
+---END-ENCRYPTED-FILE---

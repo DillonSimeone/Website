@@ -1,74 +1,9 @@
-# LP-10 — Firmware Hack: Re-Map the LEDs
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** 9-12 (CREATION)
-**Duration:** 90 minutes × 3 sessions
-**Prerequisites:** All Band 3 lessons; basic familiarity with the Arduino IDE (one-day primer offered before this lesson).
-
-## Big idea
-The frequency-to-color mapping you've been using since LP-03 is not a law of nature. It's three lines in a firmware file. Today you change them.
-
-## Learning Objectives
-1. Read and modify the Pixelblaze pattern file that drives the AudioLux LED bar from FFT bins.
-2. Justify a new mapping in writing, citing at least two perceptual or aesthetic reasons.
-3. Re-flash the Pixelblaze ESP32 with the new mapping and demonstrate it live.
-4. Sign FIRMWARE, FLASH, COMPILE, FFT, BIN.
-
-## ASL Gloss Vocabulary (new)
-FIRMWARE (FIRM + SOFT), FLASH (electric-flash with two hands), COMPILE (gather + transform), FFT (loaned), BIN (container), COMMIT (loaned + finalize), FORK (one becomes two).
-
-## CyberDeck / PULSE Setup
-- CyberDeck preset: `912_FirmwareLab.preset`. Boots a desktop with:
-  - Arduino IDE configured for ESP32 / Pixelblaze.
-  - Git client.
-  - Local clone of `https://github.com/DillonSimeone/Gestolumina` (per GL §6 footnote).
-  - Live serial monitor.
-- Each student gets a Pixelblaze ESP32 + Sensor Extension Board + WS2812B LED strip + Pixelblaze adapter.
-- PULSE vest optional; AudioLux LED strip mandatory.
-
-## Lesson Sequence
-
-### Session 1 (90 min) — Read the code
-| Time | Activity |
-|------|----------|
-| 0:00-0:10 | Greeting; tour of the GestoLumina repo; locate the Pixelblaze pattern file. |
-| 0:10-0:30 | Walk through the FFT-to-color mapping function line by line; teacher interprets each line. |
-| 0:30-0:60 | Pair reading: each pair annotates the file in ASL-vlog form (video annotation saved to repo). |
-| 0:60-0:80 | Class discussion: where would *you* change the mapping? Brainstorm. |
-| 0:80-0:90 | Each student picks a single change they will make next session. |
-
-### Session 2 (90 min) — Modify and flash
-| Time | Activity |
-|------|----------|
-| 0:00-0:10 | Branch the repo; create a personal feature branch. |
-| 0:10-0:50 | Implement the mapping change in code. |
-| 0:50-0:75 | Flash to Pixelblaze; test with mic input. |
-| 0:75-0:90 | Pair feedback; commit to branch. |
-
-### Session 3 (90 min) — Justify and pull-request
-| Time | Activity |
-|------|----------|
-| 0:00-0:30 | Write a 500-word rationale (in English or ASL-video) explaining the mapping choice with at least two perceptual/aesthetic reasons. Reference research literature where possible. |
-| 0:30-0:60 | Open a pull request to the curriculum's mappings repo with the rationale in the PR description. |
-| 0:60-0:80 | Peer review circle: students review each other's PRs and sign suggestions. |
-| 0:80-0:90 | Merge approved PRs; demo each accepted mapping live. |
-
-## Safety
-USB-C cables only; no soldering this lesson (LP-11 introduces soldering). LiPo batteries handled by teacher only.
-
-## Assessment Rubric
-
-| Criterion | 4 | 3 | 2 | 1 |
-|---|---|---|---|---|
-| **Code comprehension** | Can explain every line; suggests an unrelated improvement. | Explains the relevant function. | Reads the change site only. | Cannot read. |
-| **Mapping rationale** | Cites 3+ reasons including at least one from cited literature. | Cites 2 reasons. | Cites 1. | None. |
-| **Successful flash** | Flashes on first attempt and demos working mapping. | Flashes within 2 attempts. | Needs help to flash. | Cannot flash. |
-| **PR quality** | PR has clean diff, clear description, peer-approved. | PR opened with description. | PR opened, description thin. | No PR. |
-| **Peer review** | Reviews 2+ peers' PRs constructively. | Reviews 1. | Comments minimally. | No review. |
-
-**Evidence:** Personal git branch; merged PR (or recorded review); 500-word rationale; demo video.
-
-## Connections
-- GL §4.2-4.3 (Pixelblaze + Sensor Extension architecture).
-- Pillar 4 — DHH-as-designer fully realized.
-- **CSTA 3B-AP-08** (modify code), **3B-AP-15** (open-source contribution norms).
-- Industry-readiness: a real PR on a real repo is portfolio-grade evidence for DHH STEM career paths (NEA pp. 14, refs 24, 52).
+[CIPHERTEXT]
+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
+---END-ENCRYPTED-FILE---

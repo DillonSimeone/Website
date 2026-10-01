@@ -1,58 +1,9 @@
-# LP-04 — Stem-to-Body Mapping
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** 3-5 (EXPLORATION)
-**Duration:** 45 minutes
-**Prerequisites:** Band 1 (LP-01–LP-03).
-
-## Big idea
-You decide which instrument goes to which part of your body. The kick drum can live in your chest. The hi-hat can live on your shoulder. You are the audio engineer.
-
-This lesson is patterned directly on the CymaSpace "haptic design station" from SA §5.3.3 — repurposing a headphone mixer so each musician can place each instrument signal on their preferred vest channel.
-
-## Learning Objectives
-1. Differentiate kick, snare, hi-hat by feel alone on a multi-channel PULSE vest.
-2. Choose a body-channel assignment that *they* prefer, and articulate why.
-3. Sign STEM, CHANNEL, MIX, MAP, BODY.
-
-## ASL Gloss Vocabulary (new)
-STEM (compound: AUDIO + LAYER), CHANNEL (sign CHANNEL — index finger drawing a line), MIX (sign MIX — two flat hands rotating), MAP (palm becomes a surface with finger placing), BODY-PART (point + name).
-*Carried:* RHYTHM, PATTERN, RED/GREEN/BLUE, HIGH/LOW, FEEL.
-
-## CyberDeck / PULSE Setup
-- CyberDeck preset: `35_StemMapper.preset`.
-- Multi-channel PULSE vest (left chest, right chest, left shoulder, right shoulder = 4 zones).
-- Audio source: pre-loaded 60-second drum loop split into 4 stems (kick, snare, hi-hat, percussion).
-- CyberDeck UI shows a body diagram; students drag a stem icon onto a body zone with a stylus.
-- AudioLux LED bar mirrors all stems summed.
-
-## Lesson Sequence
-| Time | Activity |
-|------|----------|
-| 0:00-0:05 | Sign warm-up; review LP-03 colors. |
-| 0:05-0:10 | Teacher demo: shows the four stems in isolation, then mapped to four zones. |
-| 0:10-0:20 | Each student takes a turn at the CyberDeck, assigning the four stems to four body zones in any order. They wear the vest while doing this and adjust until they like the mix. |
-| 0:20-0:35 | Tabletop discussion: each student shows their mapping diagram and signs *why* (e.g., "I put kick on chest because I want to feel the thump near my heart"). |
-| 0:35-0:42 | Group remix: teacher plays the same loop with each student's mix in 10-second bursts; everyone wears their own vest. |
-| 0:42-0:45 | Closing reflection: sign WHICH-WAS-BEST and student-picks for tomorrow. |
-
-## Differentiation
-- **3rd grade:** Reduce to 3 stems / 3 zones.
-- **5th grade:** Add a *pan-over-time* feature — kick can move from left chest to right chest across 8 beats.
-- **Hearing peers:** Wear blindfold; must reverse-engineer the mapping by feel alone.
-
-## Assessment Rubric
-
-| Criterion | 4 | 3 | 2 | 1 |
-|---|---|---|---|---|
-| **Stem identification by feel** | All 4 stems identified blind. | 3 of 4. | 2 of 4. | 0-1. |
-| **Mapping rationale** | Articulates a clear musical/emotional reason for each placement. | Articulates reason for 2-3 stems. | Reason for 1. | None. |
-| **ASL STEM/CHANNEL/MIX/MAP** | Uses all 4 fluently. | Uses 3. | Uses 2. | 0-1. |
-| **Peer engagement** | Asks peers questions; offers alternative mapping. | Listens attentively. | Listens with prompting. | Disengaged. |
-
-**Evidence:** Each student's mapping diagram (snapshot of CyberDeck UI); 60-second performance clip; field notes on rationale.
-
-## Connections
-- **NCAS Music — Performing 3-5:** Demonstrate understanding of expressive qualities.
-- **NGSS 4-PS4-3:** Generate and compare multiple solutions that use patterns to transfer information.
-- Pillar 1 + Pillar 4 (student authorship begins).
-- Direct line to SA §5.3.3 (haptic design station).
+[CIPHERTEXT]
+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
+---END-ENCRYPTED-FILE---

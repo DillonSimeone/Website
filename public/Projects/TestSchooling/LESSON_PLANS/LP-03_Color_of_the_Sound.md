@@ -1,57 +1,9 @@
-# LP-03 — Color of the Sound
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** K-2 (FOUNDATION)
-**Duration:** 30 minutes
-**Prerequisites:** LP-01, LP-02.
-
-## Big idea
-Sound has a color when you know how to look. Different pitches become different colors on the CymaSpace LED bar.
-
-## Learning Objectives
-1. Identify three colors corresponding to three frequency regions (warm red = low, green = mid, cool blue = high).
-2. Predict which color the LED will show when the teacher plays each of three instruments (kick drum, woodblock, tambourine).
-3. Sign COLOR, RED, GREEN, BLUE, HIGH, LOW.
-
-## ASL Gloss Vocabulary (new)
-COLOR, RED, GREEN, BLUE, HIGH (pitch — fingers extending upward), LOW (pitch — palm descending), SOUND-LIGHT (compound: SOUND + LIGHT).
-*Carried:* PATTERN, DOT, LINE, FEEL, HEARTBEAT.
-
-## CyberDeck / PULSE Setup
-- CyberDeck preset: `K2_FFTColor.preset`.
-- Audio input: built-in mic (or USB mic) into the CyberDeck.
-- FFT bands → LED bar (16-LED WS2812B strip):
-  - 50-300 Hz → red (LEDs 1-5)
-  - 300-2000 Hz → green (LEDs 6-11)
-  - 2000-8000 Hz → blue (LEDs 12-16)
-- PULSE vest disabled this lesson (focus on visual mapping).
-- Three percussion instruments: kick drum (low), woodblock (mid), tambourine (high).
-
-## Lesson Sequence
-| Time | Activity |
-|------|----------|
-| 0:00-0:05 | Review LP-02; teacher shows the LED bar lit by their voice as they sign hello. |
-| 0:05-0:12 | "Color-Sound Lab": teacher plays each instrument, students sign which color and which pitch (HIGH/LOW). |
-| 0:12-0:20 | Prediction game: teacher hides instrument behind sheet; plays it; students predict color before LEDs activate. |
-| 0:20-0:27 | Pair work: one student claps/whistles/sings into the mic, partner reports color and pitch. |
-| 0:27-0:30 | Sign COLOR, RED, GREEN, BLUE; close with group sign of SOUND-LIGHT. |
-
-## Differentiation
-- **Two-band version** for K students: only red and blue.
-- **CI users:** Allow them to remove implants and rely on visual feedback only, per their preference (SA §3.1, NH).
-- **Hearing peers:** Wear noise-cancelling earmuffs for the prediction game to equalize the experience.
-
-## Assessment Rubric
-
-| Criterion | 4 | 3 | 2 | 1 |
-|---|---|---|---|---|
-| **Color ↔ pitch mapping** | Predicts color correctly for 5+ unknown sounds. | Predicts for 3-4 sounds. | Predicts for 1-2. | Cannot predict. |
-| **HIGH/LOW signs** | Uses both with non-manual emphasis (eyes up for HIGH). | Uses both signs. | Uses one. | Confused. |
-| **Color signs (RED, GREEN, BLUE)** | All three signed clearly. | Two of three. | One. | None. |
-| **Engagement / participation** | Volunteers for prediction round and helps peer. | Participates in all rounds. | Participates with prompting. | Reluctant. |
-
-**Evidence:** Photo of LED bar paired with instrument; field notes; student-drawn "color of my voice" picture.
-
-## Connections
-- **NGSS K-PS4-1:** Sound and matter vibration; introduces frequency as a measurable property.
-- Pillar 2 (see/feel before hear).
-- Foundation for LP-04 (Stem-to-Body Mapping) and ultimately LP-10 (Firmware Hack — re-map the LEDs).
+[CIPHERTEXT]
+0+fBXS6qNM/5TbQlXWhM6nk8mMNwNVqAIw8UMJJ1xchQO6EHSvkW+EuRrb/X3jxWetJK8aCfkOEiDE3A02ua++3jsw4SDdgnUBhdMDjiqXtZdwODMNoglgfZ10Y3DLpQENnAgNX1l8V4ciysGhz94HiHpM809p0GeCJZIi0bhy69Gn1zxBBqstaKhzvhky2GsbGgiINSur0UEw8shUL5GxTJFR0gIgRvsNHEMFPze50luqBcAF/pEooP/lvsziCesJDDyWVeNeop8r3ope6nOKfnTBVI2ym7tMjoL35oid4cHrYZBL5qIxr9tZB24FS+iEPEKTDiIgcpu9KWfDQNTqUG4juMlQpQE1tln27aksJ+koykwnV50Jj4FUfcakxC/eL35RhHUTvlG/QRqPrOi6gIqlUx3gY3ZmsIXI1CzEXy7+1zgW3yF1cyc4FDmuVNjnTQBuBrIoKtgFt2ctFEgAfCKwltWiLNqeut5Wz+Q71BGTA+V7WwBiZuKC6Y4NAPNazvIRGCXdfzYuUkkcmUVn2DVb+Ey+fdrVvtgOtp/oOIIiGV+R6lRxDpgl++jWj/q27V0WSIkypA/k3dINCGOQyGfcP7P+go6R7AfOw7eAgwF4mpL6pLG8DFFiq+5bXk6QsNqcr0T94L1b+srZVUPV7OpwIEDMzuWRGjDQp0KX8yFKFCtvv5T8HUQVsZ4U/rYzD6wct7Nb+mLizsvtWDvIRQcxtdA5sEoYxOGPEdaFgH97mkKaoJclm0N/0Vk/G72zapBS3zzlOX71YriSANOelmEc35Kv9nDCIB6fwj7x+ZDdAWajPVnV1pPpPLdgUDfi3Y2hCYN+lumcVF0taT/74YtqLEZ0exwJAIcGGkCerZj7NcXyD2gFZMJp1vBekHQJ41eqSqELZFzgEfINq47AUurK+PhGAJZMowRA5l5rAZSh3+Y7y8uk9h8GEJPawndJpzCnWvGKMVqjsP6biPMky76ocC2/cXXnyfzO43hZ5BpsGjiBS7lt78tvl8bERuzof2t31vWKppxgTLU3uYdUdFj5+jW8cjSyzZfuCWuL7AVDdcfDISBM1rztb0kQfPivNldJDLo4WrLilKY2m7K0O6ALIg3jVgNEDu4iM4Kl+R39izoUPhJYrmCx/Khx1M75VWWzGvXdCmdzUKfKBVEvNH0N3Y8efVFBIdGWS8ai82qt/1HZYbHeD3Su/B+c363x6rccHr4wEJh/WnblWg8eh7fNcu7HPajk57TglK5wh7QTvoWuMHLGRMe+EK4zpwwHvhIoL2H4FlcLOTwZ8H2r/bxLeyWRaYy8g+2SsmobJRsJBzegoNbsn3zAroA0wETIxaprM6Doch2afSZQa6Z92UG5nzyAXWO5lSkbGaI+vyhuRO9VMg8aJkdSYsw0oPdkBbaMnikiAF+XJ+Iln9DxEmFBGSTe4ptfEY8XebaxbecxxPr8V9RrddDm0yUxd0nKsI/+bCo4tX/D6V+pRDn4AFeB7P6Xw10CLg84c/avjXGPZ9WsbZEnZr5fCh2cUWA8TvUn4/3SuTfBvgChALlkx1fBPYpnT4yt25lqMz2A3/yAWk50HsTB/4lbrWTD2m7fXtmEoEQo2Y0ngeK4LjeWzmLfys56PHcoMSDtaJ987BpnbBV5U/TQt9UGqHbXKcrx5Qu2TPaNXdEj/MAfFNyB8rgYiK3Evh1FrCpoqjtz7DYKoWNEd7sEMrHqwlKgE7sSG7meyiapqkxPqdpl8xd/L/Dkyq884P++IJUs/d/jtHNHA9zUo7ymYqdDlsfx/nHXguk5YebvCfeFQ6GSb3BaEprwBD5sWddBbN9Qa5Tsz+rhZZ37ewHni3ZC8GTGCRWtAXaCnknEvydaWxKEoblQYDtnPX4a9ZVFVersY+SLNytvK5nrpMpZY67j8Xp7qt8LpRFxtM6wkiGM5OwhnHKCML5aC/DdMyRSyx5NSCpYnMRx9byjqmO0gFU6tvterdoaTt9j4ocEgyMbWGTTXPuDZl+sp8QCaV/wQQt6eYfGLb1UVSHia5ArLu4HNEMscvo7cMF8XkogMhIejDpP492l4e/xnmM9gxlZ9W/rQF/vp2wk83yIS3M54LvmUjRNhsYVHW/KwmUTr1pQnH/h4X6dka3f6kmq02/e9JFeYNkr7lGun/1Ar8gEBQxF2e9lYNSdHMIjESo3KfYzkdXvy/jBkF/pXZ8SHkQL7baxNTaTIAKxQ/eMTlR6ti8Mw2fKfCYoL+kBg3+/Xmi+tFj1p73TXxhN4excsno/qAOn77gwt1g8OowY5FCgFUFFjgQXsJEph49/pPWQs2ki1dswAtX3nEKDHjevNKGs4qO9dVJ9p0+GgkxGEA7mky0ralzPcJYqiUW06bdaSVl32yEFy8e8PGpVa7zqAlFMd0rAls2DLrGhESMoyq8TQlMiOsc6OwgpdWcYIp4UEXH37DSJwhYUh7nb5Otxl47M4Z1qaHFbu01AO1k2kOHGyADVHeeSzK+0WYfTVkEi+wCTVdpiNbdmJbhCEyYNrAEDgIzc3fK+Pgik8Bsc2EZL75jrtZAGxvJizy3Q4otJ/wWwTRPUHPNe20I8rufJ46g8D9+oGAObbF0CCsZZOqwe0plriYyela3ZL+7rN8JeGtcBw5pfjiPRaDacrCnaXADIrwnn+q5hAy7P/S7LszxCJKSO00mMigxnB2MMO+vbQYL6gRUxGlZjBKsOsFmbBbjyT/VNq33Pt0Eey8IRuFSMM4VTsPkE5q1q8NAc57hH/Hc4BeX/Fh3gZ0Y0ej6apWulP/JUG1BHuaF6yh+gSI/tIW1WiGAyQTZiNrJ70Pxjm25XFq9Nhf/9prW+t8Xi6f5i59/S1/EjUyTAhv3AdohrXN7cP8Jfo441eLv/GoZH3FE7DAvaftg4jOppA80yvi7L34AHlua2pkUJOtaK4P9dcShcdoOViSwX8lN0RudySgMynwmu7ec5SLML+rRV/MJQMb0BKVSPHmbidr2fIBrCNysVdf10RWkgK+e3fRG+P/ZgE+CTShClgic8NSnUOasMjuzarnFRQ5bt83Y/J0q5lUb1KN8ClWFQjy2WeHgjVBoAPT1LdHzk1YV+em9O2eLGITbsaWRr+Jbbf9yKtOv89KpgV0SauYJpr1DngnZuG+LtLRhWeWBHf06PuSvF1eZQfd00T2oD0TJo5pMo6UY3H8eaHfw9L8HoAQDME7ZXqtAO+0Vq3lElI6Vhqk7DhFAiJC5Dr+ubjYLMgdeB36Ei5eRphb7sg5gK72PQf4yCGMQRI3gJ/D0mG1CTVDciNAdynm+PxN5ucP0fCQBtD69vZD8pF165YF/DpDoEcJdsZ0qzDXQvsp9XwWDl/Y0/13TDXdzkAsgeP1eRGsETnBuE3Nddl0oKuGGmxz9zpIPsU9f9aL6sUB4Lna5v2u+BZAHAVk18sD5qytLSN6sbB1rae/Ip/PnsyyY+WGUjSlOVNzD99//CU1aEsyR8vohbQ6pKPE6B/tzZAZfvvMJsrdDv35zWVkzZcbB+d0VJsgMKRWkURH3pY6Q15CPTpFMR1B1Qpg7B777SfttDhoBAqaLoGSXFyE5pGz1mHTq6o6pGND6EsNLs1uR7on6/0kGxoVvPguLgg6Gl6UtsVH3v7i6ufOXFvuw95IDdWv7Iehvt2QC+s/sR9ZilP0X7Dq14SVlQAy5+sZOZPm2TFL2ODqT/i95ng143/2fVWOVU1L4gPmmYjczI3oc1/2YVpFbysWnDjybbAdFc4DnavMtPh1w19LpkzCHaFm8hDdOSvxHOP5ByYpOXb50coUK8e5CrKx+2dU4EwhzIN6T3fK/8zdHJ4amgRIusbkOq5/hYTNnj9Hes70UU5F69w8t5U1mikmw0orlwuYZq9k83rDPPICqlavFwk7Hr7lSjqLCRx5llKe9cIQFaCu+ybV933B9leZ5BgABt4vmMFBgyOxeyVZovIObWj9odCcgGHo91+n3idxdDLr0u/cDyMz+spMkVe1guBLw/c7FepWTggrz9xECTnhV+Si2NLvW0IcSyTc+HMmeARyaH3fTTs85HxG3rYofGIcJW21cEPBZnxPgNnuno1TRcwA9Y4aGrB9t7/TZFfDKvfrUFUhmHv0xyvqFVRPpSj7G1BxJABPWsRWWuAGcVquVZZVSNh3yMCqrEyspDL30Tl8HtevxVfxLJyGF147D8ypefeU2NekNXdkw4LXPoQN1EIBG5reJg==
+---END-ENCRYPTED-FILE---

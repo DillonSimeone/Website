@@ -1,6 +1,9 @@
-# Sonic Agency — K-12 Deaf Haptic STEAM Curriculum
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-> [!CAUTION]
-> **CONFIDENTIAL / TOP SECRET**
-> This curriculum project, grant alignment materials, and associated interactive software are currently confidential and strictly embargoed. 
-> Do not publish, expose on public portfolio cards, or distribute externally until public release approval is granted.
+[CIPHERTEXT]
+Uo7AQYccacC+W+/US4ZlhHESQBRjo/4+SVADEtcxDJO4K718XC5YrM+s6lQoXHtZhnuDTGZQgj3kul/T2h/eW2Ha+yKM6mqmQ6f72WQX2+BCDUNeWvLV1n7dRXaWuII+Iu8/rG3nJFyzakbO71QPXLjkUP5Hq5Z9822O5Ns/E96b3hfQdT+NklAGqLcYA3D9ao2Sr6gK1O2yV3TXHpO9iHOKclWcnYnGHHdVjxsTYdikNlosmgqXNbQ48n/hE+SAoGcxMUGhd3Fk6gax8Rh8Elagq72qgfPq/dUCDKasQ9RiVAwzUkvlrLlHc5HB6qt0Fil8aQsHVVcX1FJoWJiUBEF3u1R5c8DtZx7+IS2AFobuuYFh9Il13YV283m9Yv5ddMPt1vl3CodsbKVvJQDFVxQymkjbzO2nx3AA7zoH4L8MGKbFcE2oWJHXdtlLppneExUI8+jQNGMTerDjMddzLLVpIK7licxPCXk6iRgdEjc3VfzR6aFCBb89OdrvKSbfFyR8nqzXnx4R5lraqafYam/5bME=
+---END-ENCRYPTED-FILE---

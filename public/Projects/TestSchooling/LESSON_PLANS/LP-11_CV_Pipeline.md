@@ -1,89 +1,9 @@
-# LP-11 — CV Pipeline: Train Your Own Sign Classifier
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** 9-12 (CREATION)
-**Duration:** 90 minutes × 4 sessions
-**Prerequisites:** LP-07, LP-10.
-
-## Big idea
-LP-07 used a fixed list of four handshapes. Now you decide which handshapes the system recognizes — and you train it yourself.
-
-## Learning Objectives
-1. Collect a labeled dataset of at least 5 distinct ASL handshapes (≥ 100 samples each).
-2. Train a small classifier on hand landmarks (MediaPipe Hands → 21 keypoints → small MLP or k-NN).
-3. Report precision, recall, and confusion matrix per class.
-4. Deploy the trained model to the CyberDeck's Sign-to-Beat pipeline and validate live.
-5. Sign DATASET, LABEL, TRAIN, PRECISION, RECALL, CONFUSION-MATRIX.
-
-## ASL Gloss Vocabulary (new)
-DATASET (DATA + COLLECT), LABEL (sticker motion), TRAIN (TEACH-MACHINE), PRECISION (loaned + sign EXACT), RECALL (loaned + sign FIND-AGAIN), CONFUSION-MATRIX (loaned + GRID), MODEL (sign BRAIN-PROGRAM).
-
-## CyberDeck / PULSE Setup
-- Preset: `912_CVLab.preset`. Boots Python 3.12 with:
-  - `mediapipe`, `numpy`, `scikit-learn`, `onnxruntime`.
-  - JupyterLab + a starter notebook.
-  - Sign-to-Beat pipeline in inference mode (loads `.onnx` model from a known path).
-- USB camera (or built-in CyberDeck camera).
-- Optional GPU module on the CyberDeck (for groups training larger models).
-- PULSE vest + LED bar to validate inference live.
-
-## Lesson Sequence
-
-### Session 1 (90 min) — Data collection
-| Time | Activity |
-|------|----------|
-| 0:00-0:10 | Greeting; discuss data ethics: who owns these images? (Answer per project policy: the student, stored locally on the CyberDeck, never uploaded.) |
-| 0:10-0:30 | Decide as a class which 5+ handshapes to support. Recommend: 5, S, B, V, Y. |
-| 0:30-0:80 | Each student records ≥ 100 frames per class, varying angle and lighting. The notebook stores landmark vectors (21 × 3 floats), not images, for privacy. |
-| 0:80-0:90 | Inspect collected dataset; identify imbalances. |
-
-### Session 2 (90 min) — Train
-| Time | Activity |
-|------|----------|
-| 0:00-0:15 | Brief on classifier choice: k-NN vs. small MLP; trade-offs in size vs. accuracy. |
-| 0:15-0:60 | Train both; record metrics. |
-| 0:60-0:85 | Generate confusion matrix; identify worst pair (often B vs. 5). |
-| 0:85-0:90 | Decide next steps to improve. |
-
-### Session 3 (90 min) — Iterate + Deploy
-| Time | Activity |
-|------|----------|
-| 0:00-0:30 | Collect targeted additional data for confused pair. |
-| 0:30-0:55 | Retrain. |
-| 0:55-0:80 | Export to ONNX; deploy to Sign-to-Beat pipeline. |
-| 0:80-0:90 | Live test with vest. |
-
-### Session 4 (90 min) — Report
-| Time | Activity |
-|------|----------|
-| 0:00-0:60 | Write a 1,000-word technical report including methodology, metrics, and one limitation. ASL-video version equally acceptable, transcribed via the CyberDeck's on-device speech-to-text + ASL gloss tooling. |
-| 0:60-0:80 | Present 5-minute demo to class. |
-| 0:80-0:90 | Peer evaluation. |
-
-## Differentiation
-- **9-10:** Use the pre-built k-NN classifier; modify hyperparameters only.
-- **11-12:** Train a from-scratch MLP, tune hyperparameters, write the deploy script.
-- **Mobility-restricted students:** Use a partner's hands or a pre-recorded dataset; perform the analysis role.
-- **Hearing peers:** Must collect their own data; no pre-trained shortcuts.
-
-## Safety + Ethics
-- All data stored locally on the CyberDeck; nothing leaves the device.
-- Each student approves use of their data; can delete at any time.
-- Mirrors the data-ethics protocol of the NEA application (p.10).
-
-## Assessment Rubric
-
-| Criterion | 4 | 3 | 2 | 1 |
-|---|---|---|---|---|
-| **Dataset quality** | 5+ classes, ≥ 150/class, balanced. | 5 classes, ≥ 100/class. | 4 classes, 50-100. | < 4 classes or sparse. |
-| **Reported metrics** | Reports precision, recall, F1, confusion. | 3 of 4 metrics. | 1-2 metrics. | None. |
-| **Live deployment** | Deployed model works with vest, > 85% acc. | Works > 70%. | Works > 50%. | Fails to deploy. |
-| **Report depth** | 1,000+ words + 1 reflection on bias or limitation. | Meets length, partial reflection. | Below length. | Missing. |
-| **ASL vocab use** | All 7 new signs. | 5-6. | 3-4. | 0-2. |
-
-**Evidence:** Trained `.onnx` model; notebook; confusion-matrix image; deployment video; report.
-
-## Connections
-- TECHNICAL_SPEC §3 (CV pipeline architecture).
-- Pillar 4 — students now train, not just modify.
-- Direct preparation for NEA scaling phase: students become co-investigators on future iterations.
-- **CSTA 3B-AI-10** (AI ethics and bias), **3B-DA-06** (model evaluation).
+[CIPHERTEXT]
+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
+---END-ENCRYPTED-FILE---

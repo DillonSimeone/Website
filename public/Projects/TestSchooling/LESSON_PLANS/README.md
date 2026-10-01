@@ -1,34 +1,9 @@
-# LESSON PLANS Index
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-12 detailed plans, organized by grade band. Each plan includes Grade band, ASL gloss vocabulary, CyberDeck/PULSE setup, and Assessment Rubric.
-
-## Band 1 — K-2: FOUNDATION
-- [LP-01 Heartbeat & Pulse](./LP-01_Heartbeat_and_Pulse.md)
-- [LP-02 Sounds & Shapes Graphic Score](./LP-02_Sounds_and_Shapes.md)
-- [LP-03 Color of the Sound](./LP-03_Color_of_the_Sound.md)
-
-## Band 2 — 3-5: EXPLORATION
-- [LP-04 Stem-to-Body Mapping](./LP-04_Stem_to_Body_Mapping.md)
-- [LP-05 Graphic Composition Studio](./LP-05_Graphic_Composition_Studio.md)
-- [LP-06 Visual Vernacular Pulse Piece](./LP-06_Visual_Vernacular_Pulse_Piece.md)
-
-## Band 3 — 6-8: EXPRESSION
-- [LP-07 Sign-to-Beat I: Handshape Drumming](./LP-07_Sign_to_Beat_I.md)
-- [LP-08 Motion-to-Synth: Filter Sweeps](./LP-08_Motion_to_Synth.md)
-- [LP-09 Euclidean Rhythm Circle](./LP-09_Euclidean_Rhythm_Circle.md)
-
-## Band 4 — 9-12: CREATION
-- [LP-10 Firmware Hack: Re-Map the LEDs](./LP-10_Firmware_Hack.md)
-- [LP-11 CV Pipeline: Train Your Own Sign Classifier](./LP-11_CV_Pipeline.md)
-- [LP-12 Capstone Composition & Showcase](./LP-12_Capstone_Composition.md)
-
-## Shared resources (referenced by individual plans)
-- `../CURRICULUM_MAP.md` — pacing, mixed-hearing protocol, standards crosswalk.
-- `../TECHNICAL_SPEC.md` — CyberDeck architecture, Sign-to-Beat and Motion-to-Synth modules.
-- `../RESEARCH_AUDIT.md` — research grounding for each pedagogical choice.
-- `../GRANT_ALIGNMENT.md` — NEA-facing efficacy argument.
-
-## Operational notes for teachers
-- All `.preset` files referenced in the lesson plans are loaded on a per-band SD card image. Boot the CyberDeck, pick the lesson preset from the on-screen menu, and the rest is automatic.
-- Charging: every kit ships with a solar panel and a hand crank as backups (per CyberDeck design philosophy, RESEARCH_AUDIT §5). Plan for one full charge cycle between back-to-back classes.
-- Wear time on the PULSE vest: K-2 ≤ 15 min, 3-5 ≤ 20 min, 6-8 ≤ 30 min, 9-12 ≤ 45 min. (Drawn from SA §3.3 cognitive-overload cautions.)
+[CIPHERTEXT]
+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
+---END-ENCRYPTED-FILE---

@@ -1,73 +1,9 @@
-# LP-02 — Sounds & Shapes Graphic Score
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** K-2 (FOUNDATION)
-**Duration:** 30 minutes
-**Class size:** Up to 8 students
-**Prerequisites:** LP-01 (Heartbeat & Pulse).
-
-## Background
-Adapted from Sancton Wood Creative's *Aleatory* graphic score, as used by Hergert and the CymaSpace ensemble (see RESEARCH_AUDIT §3.5; SA §5.3.2, Figure 5). Graphic notation is the **primary** literacy in this curriculum; staff notation comes later.
-
-## Learning Objectives
-1. Read a row of three shape-cells as three sound events.
-2. Match a shape to a body-feel: dot = tap, line = sustained, spiral = swirl.
-3. Sign PATTERN, DOT, LINE, SHAPE.
-4. Perform a 4-cell score with a peer wearing the PULSE vest.
-
-## ASL Gloss Vocabulary (new)
-| Sign | Gloss |
-|------|-------|
-| PATTERN | sweep palm right-to-left in a wave |
-| DOT | index finger tap on flat palm |
-| LINE | index finger drawn across palm |
-| SHAPE | trace square in air |
-| READ | standard sign, eye gaze emphasized |
-| TURN | rotating two flat hands |
-
-*Carried from LP-01:* HEARTBEAT, FAST, SLOW, LOUD, QUIET, FEEL.
-
-## CyberDeck / PULSE Setup
-- CyberDeck preset: `K2_ShapePlayer.preset`.
-- Patch maps three shape-glyph buttons on the CyberDeck touchscreen to three sound samples:
-  - DOT → short woodblock tap (200 ms, 4 kHz peak, vest pulse 90 ms).
-  - LINE → sustained low cello tone (1.5 s, 220 Hz, vest sustained low-frequency).
-  - SPIRAL → ascending pitch sweep (1 s, 200→2000 Hz, vest swelling pulse).
-- Teacher operates touchscreen; later in the lesson, a student does.
-
-**Pre-class teacher prep (5 min):**
-1. Boot CyberDeck → load `K2_ShapePlayer.preset`.
-2. Print one A3 graphic-score grid per pair (4 empty cells in a row).
-3. Cut shape stickers (dots, lines, spirals).
-
-## Lesson Sequence
-| Time | Activity |
-|------|----------|
-| 0:00-0:03 | Greeting; review LP-01 signs. |
-| 0:03-0:10 | Demo each shape on the CyberDeck. Students wear vest one at a time and report (sign) which feel matches which shape. |
-| 0:10-0:20 | Pair work: each pair places stickers into 4 cells, then performs by tapping shapes left-to-right while the partner wears the vest and signs which shapes they felt. |
-| 0:20-0:27 | Share-out: 2 pairs perform for the group. Group signs back which shapes they observed. |
-| 0:27-0:30 | Closing: each student keeps their score; sign PATTERN and FEEL together. |
-
-## Differentiation
-- **2 cells** instead of 4 for K students.
-- **Two-vest version** in mixed-hearing rooms: hearing peer also wears vest and must identify shapes by feel only.
-- Spiral can be omitted if students are not yet abstracting visual→haptic dimension changes.
-
-## Assessment Rubric
-
-| Criterion | 4 | 3 | 2 | 1 |
-|---|---|---|---|---|
-| **Shape ↔ feel matching** | Correctly maps all 3 shapes; explains why. | Matches 2 of 3 reliably. | Matches 1 reliably. | No reliable mapping. |
-| **Score performance** | Performs own score and a peer's score. | Performs own score in correct order. | Performs with prompting on order. | Cannot maintain order. |
-| **ASL vocab (PATTERN, DOT, LINE, SHAPE)** | Uses all 4 in context. | Uses 3 of 4. | Uses 2. | Uses 0-1. |
-| **Peer mirroring** | Identifies peer's score from vest only with no glance. | Identifies after one peek. | Needs repeat performance. | Cannot identify. |
-
-**Evidence:** Photographs of each score; teacher field notes; one 30-second video per pair.
-
-## Connections
-- **NCAS Music — Creating (K-2):** Generate musical ideas; organize and develop musical ideas.
-- **NCAS Music — Responding (K-2):** Interpret intent and meaning in artistic work.
-- Pillar 1 (body before notation) + Pillar 2 (see/feel before hear).
-
-## Next lesson
-LP-03 — color is added as a third dimension; students discover frequency→color mapping for the first time.
+[CIPHERTEXT]
+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
+---END-ENCRYPTED-FILE---

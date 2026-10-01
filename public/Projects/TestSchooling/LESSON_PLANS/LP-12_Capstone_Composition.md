@@ -1,78 +1,9 @@
-# LP-12 — Capstone Composition & Showcase
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** 9-12 (CREATION)
-**Duration:** Year-long project with quarterly milestones; final showcase ≈ 3 hours.
-**Prerequisites:** LP-10, LP-11; ideally also Band 2 and Band 3.
-
-## Big idea
-You will compose a 3-7 minute Deaf-centered piece that uses *every* layer of the Sonic Agency Curriculum: graphic score + ASL gloss + haptic channels + at least one CV-driven or motion-driven element. You will perform it. You will publish the code, score, and an ASL artist statement.
-
-## Learning Objectives
-1. Compose a 3-7 minute multi-modal work with a clear formal structure and Deaf-centered concept.
-2. Author code (firmware or CV mapping) that is novel relative to the curriculum baseline.
-3. Perform the piece live with appropriate technical preparation.
-4. Publish a public-facing GitHub repository with code, score, and ASL artist statement.
-5. Lead an artist talk for younger students (Band 2 or 3).
-
-## ASL Gloss Vocabulary (consolidated)
-All 50+ signs from prior lessons, plus: CAPSTONE (KEYSTONE motion), SHOWCASE (PERFORM + REVEAL), REPOSITORY (loaned + STORAGE), STATEMENT (FORMAL-DECLARATION), DOCUMENTATION (RECORD + ORGANIZE).
-
-## CyberDeck / PULSE Setup
-- Each student gets a dedicated CyberDeck for the year.
-- All hardware: PULSE vest (4-channel), GeLu wristware, AudioLux LED stage strip, optional EPK marimba slot.
-- Optional studio session at Telegraph Mastering (NEA project partner, p.21) for final audio mastering — bookable for advanced projects.
-
-## Milestone Sequence
-
-### Q1 — Concept (8 weeks)
-- **Deliverable:** One-page concept brief (English or ASL-vlog). Title, central image, target audience, formal structure (e.g., A-B-A or through-composed), Deaf cultural reference, required hardware.
-- **Review:** Mentor sign-off (UMD team + classroom teacher).
-
-### Q2 — Score + technical plan (8 weeks)
-- **Deliverable:** Full graphic score with ASL gloss + technical block diagram showing all data flow from sensor to output.
-- **Review:** Tech rehearsal with skeleton patches.
-
-### Q3 — Build + rehearse (10 weeks)
-- **Deliverable:** Functional performance setup; at least one full run-through recorded.
-- **Review:** Dress rehearsal with younger-grade audience.
-
-### Q4 — Perform + publish (6 weeks)
-- **Deliverable A:** Public showcase performance at CymaSpace or partner venue.
-- **Deliverable B:** GitHub repo (code + score + statement + documentation).
-- **Deliverable C:** 5-minute artist talk delivered to a Band 2 or 3 class.
-
-## Showcase format (final day, 3 hours)
-- 30 min — vest fitting + tech check for audience members.
-- 90 min — six 15-minute performance slots.
-- 30 min — artist talks and Q&A (in ASL, with voice interpretation).
-- 30 min — community reception; families try the hardware.
-
-## Documentation requirements (NEA-aligned)
-Each capstone repository must contain:
-1. `README.md` — concept, build instructions, hardware list.
-2. `score/` — graphic score (PDF/PNG/SVG) + ASL gloss text.
-3. `firmware/` — any modified Pixelblaze, ESP32, or CyberDeck patches.
-4. `cv/` — any CV models, datasets (or links if private).
-5. `statement.mp4` — ASL artist statement, with English caption.
-6. `LICENSE` — recommend CC BY 4.0 to match the parent paper's license (SA p.1).
-
-## Assessment Rubric
-
-| Criterion | 4 — Exceeding | 3 — Meeting | 2 — Approaching | 1 — Emerging |
-|---|---|---|---|---|
-| **Compositional structure** | Clear formal architecture, surprises within. | Clear structure. | Loose structure. | No structure. |
-| **Multi-modal integration** | Haptic + visual + gestural all serve the work. | All 3 present. | 2 of 3 present. | 1 of 3. |
-| **Deaf-centered concept** | Concept names a Deaf cultural anchor + extends it. | Names an anchor. | Implicit anchor. | None. |
-| **Technical novelty** | New code or new mapping; documented. | Some novel code. | Minor mod. | Off-the-shelf only. |
-| **Performance quality** | Confident, prepared, technically smooth. | Solid performance. | Some issues. | Significant issues. |
-| **Documentation completeness** | All 6 repo items present + extras. | All 6. | 4-5. | < 4. |
-| **Artist statement** | Sophisticated framing in sonic agency theory. | Frames work in theory. | Brief framing. | Missing. |
-| **Younger-class talk** | Engaging, age-appropriate, leaves them inspired. | Clear talk. | Adequate. | Skipped. |
-
-**Evidence:** Performance video; GitHub repo URL; artist statement; Q&A transcript; younger-class feedback sheets.
-
-## Connections
-- All four pillars culminate here.
-- Maps directly to NEA Year-End Deliverables (NEA p.19).
-- Generates the long-term "Deaf-led portfolio" that informs CymaSpace's case for scaling the curriculum (see `GRANT_ALIGNMENT.md`).
-- **NCAS Music — all four artistic processes**; **CSTA Level 3B**; **AP CS Principles** "Create" task aligned.
+[CIPHERTEXT]
+68GLI9aNsmKJ2W0UCRV4MtcV2aAH7PipqRtBwDMlhC9aViurz8kWROOHEgEIf5j7CSB738SFSMGNYgydBgnrFwMj4t9MJTIqrRkhfFxiBM5CzYuw2KVPSdkm6HjGWe4vi5yO3CbhU3edYLqo5Xpaf/6PcwYX8iYIYw/bkhDPF6uwAY1UB2vAZYnrIInZx/zNb51PBgw3iudHZAklyCn4EtogyX1pLHOvneT8Rxf28+NbHaww0cJZyX0FnlGyMbJxitUuAiPBtppxRlmSh2Xep6I55e9/i7IRhZriTWul9AB0c+4p3rNHQLIqC5Wyt27aBnhCLaIo7ZCZbAM9jDiUHk/VLABSI/JtCQ7/wCpaeuyPEx0hTebpTQvtmlfEUF+fzcgTtNVKbjbLSuZvnditSv2P+39SwaGIQau8LxUXwLEgyXIlekRdezRXySD5GyqTNFMFMpDHadL9AdHcCJ/7akm5K5DI1Igj/pAd8E4sS23Tfz93YA183xyaukuBcVafaa+1Maj5HdzPPTSiUmW5Cq9GdKAXLZA/DQI8m6HIKIkslXuVmRejXlnfzvIzmQ9vaxJ+kgaxaOkdfxnW8/gvB+PwfjdiZOKmmlC3pmo9cseMuM9zHQimH4iHFns6VwuqRhB0Nz+j4dvJGhXQgfnlbtj0iyf3M+ucHiANE3RaFyGt/mkEW9qY0ksRWlUE9Oi62vREJKvFzm0tJHogMjW07hA0dwRwyIm2H0qEQB/Dln4BQL6FMFnbyZJX6HWr10atMgl/3YyWD9dJsESFGwuubK3d+2scEVq5UuTQCfydBzHwL5/psYhJZg5rUXARems1UP/ai9CpR9jglIcqfsWpC/9pR/4pfLKNHSZsYDydhc8JkNAS8JiNSHt3oEJC3wwLdxb78OyJArjsBo1P8BqlznsP+of80k9dzXwzpkOL+5xasese77JoSJoXmde+ft52Oghpf5s4fhoByDKdgM9E3eJTP1Z+UYcxAsi6yg3DKTgeNc1FbRUYMuHbVCCQoqbJ0AMhLxUGAetX5PloDCC/mgS0p53GMV2VWLLUF8gVvN689DiHHaMGYCI98Hw8AHnP3y2pZv87awi+ht7MS1gWDFN+VC1IiVX/Lo8xZ5vhM7n7FJUhSq/1iGw7nW1K/reHvcODE8Ps69PmEj5jSumSk34rqD+/J7BWpIf2JTbBfC51fOSIIABx4fjtDCRMouafpvSxRRYAFl/+lNS2YKOsfkztYoKNqgOc10iMkc711M3wweAmG9dMfpn4pYsXcuF80cO37+SgKN9gxwTOdspR1X/9wlKU2rlyZ5keS+VH7k6l4PRZ/DWApmXecevBr5vfYkN/mgYA0LPXHbiy/CTsp06cEYCHAmzrUdEV0mj7JToJuhI1j+fhHWmQcdG+4y/HLCxf5KIBU5nyBwrdnT1wDfLUBL/P6MUejFIcWMw9TsxZI/MssMuHCG75DNv3Jr6NfXGjR9lDWRvDIh2V3+RiRWbtYn98jUfaynHd2dgwN700vUoR62qlUXvJkJDzmyEz2uBGSO80FYgCmk2yLSQ86d0522j3NEk/GD+/HRWJRqa3ZqJThsuHivNsWeolL/ozcGCDvd/csckUZ5DgQ+wqzbuN8zlBfl0ogqAt5+ptyrSB36Q26LocTV2whCEA/KxeVCSW+OiRVIhCFDQW9MXCuylVV489NXHy/3iuwa0qdWeNDA8JOs+KVwLGwLplz0LrzPbh+HKuRtu+NTCWcEyurPoJH4IvSZ36kkYRI1wCJYJtrTT5ASYlBF3vSuS8rl3lKqvi8ip5I4xpvDioLy5iqa4tsHwwZB8dHvi0tFrrCjJeHafUrjE8GeuRXV7NsKKY+qMmLCLKSv9hwnVmbPHqNcGPOi8X6Tjc5+DEqv8biHtyP4WkPvSz8CwD1ajZk5H8MT6pVy3JDZeuHVt8MF3Q3GmOFOXY9h3jyogaYdWdhnbez39HSRwRv3WzPInOwADeyPFxVJAnhK8R3iz9HIKOMPe04u23WRWMKmje59/NeoaqtcplXKV4p8bsvRmP4IbjLmk0pAxSYsa1BTKZFJE5nScfLrmUBhTMxynzKrlQyfYfU8jyB4E8p6r+VJ9xM3E4U+PNcGKKMCcLhTeAepro6SJ0WRl6cX2Uc3FtyYZ63rPkLR1qGJ7ZAMD7VqY4Qt9WgCZed4j9pXFWfiIZt0KjE0ugYEVge+ryOSacz18YNvip18RQR8FgZes7O3cMMuSPuY4jPrPb/6nDca6tvzH3eBxeUFkj7qSnjj5mQFvWRvbSZVA5GVVh7OB890bFuhja3rN4GavTLIT3sjZidNsExkRdZ0AEYweafW9JJ0v8OcaS7ceWu+3EQ1st3TEdni0URiNSyGmAdeEkuXPi0QQgo1HLlAUWQ62G++loIhDfZx8tkV2MoEU1HBu8N1zqqcKwAAIYlaPE6C59GuZSNqViiYBL0rmdgdJK4tY/fhvEEP4hNoLztXCYLMRULMk8wtCX+cpEvhT5GGxJ7EzqF1XjvjzDMcCb4zDtWCROVJxea0E8fgGlxbVtn+1k4pzl+M2IDHPlvBS/oUDnDuWFASFtVQBrEoC7CinVC+/J04U0rLf8wbW7HHxJ0bGBvPO4+QG2RjJKJd18GPZcHfCWbImhE6Pwlcx+WgrNeieQzk0oBRYGVgYcQMGfs0wdQsp/r4amgA4roQ/72YYxNOB1/n+nVHgWYfoJ/NWcJPZl+BUAm5pufD/j+MHpiYqjftX/9U1B83A6RdjWBU52QaJzu9yh/SGIs636Rsbp0a3yEFABFrBslnv0V2VIydGb/tlO49d/5Mw0KLZ0mzf/ZrZceXcvciIjpWGhGEhb1QOSrTU5qnt1olAxtvZ7zkuPukxU6xFpXXnw00VR9sSWdejryg2SvSOzGwPpr5SQoMCbPsoLwfy3q6xzZwcdr6cJ85DatMa3U3OmarHf/h8U1Vf8buxgy+afRbEcvigEdI2ewSY+PSxtYaTN4CRLIUayv2tjVC0rfOb6JybPNK4Ox80PI5NfBfogMVPPbfIIoNZH84nlu5GoVXtA+OZyLgFifrrXFck0UG4JTE+9eRjrdubdnm64tuunxgwjHrmnMBNWvDd1+hg/tuheOD/6BEJ4Zx/Jbkw1ISLfBOu+lIxW7l/+sH5YHiqR75Y2gORqDGyaepuZOxJDJInCTRJmRa1VpU6Mdxm8P7whAdc2PyNJDNxjHesOae8X8Ha4fqBAZCV5k0SbJvJgY5Syj030fjzNXeiSbd2FcF7RtAAhQgpLNkPhwP/LQLMHQmPzOWJfdPYxP/+Td1qSBEn2Z60Qr0VlKZ/JWwY7vezibAYzAtCTiegdkCxhbKfvUrwbs2kqf/RGdGlQp9OVZFOoSPsQ5cayjwPZLNz0vC67dCmkwP3uRI0IyZvJjkrbVOd/UeHfRyseC9GdAUq/Mi2hlaZi+xxJcT4Dj025eC/EH0B02zShBdAniNU651pGWdvf48hdnM/CSxCKJ2HYK3sQEfTlTeYyMHfxkkt3ZmexNYoe7VyJtjiyzLZ2V0GGCLOvrkrlO86n0BkhEbDJBGRobXrtwAyzzYyumvWnfTehseTuUGX0ngYXQ3FcGWvwosc2PcjNaKUFO57Avuv/cfpOtXoH20236W1MZ1uIIsoCnBY6FI+rlI3hNfc6+0uqI55L8572COswWWhR6luwVc9wPR56tHYNx/XWE5gviSbHoqQwjAGlztRdXe0wX3N2UzB1971uyt9b9IiETTOilA/wJfS0In/IglPPvYsYwHxuXTORf0ZUpOlDbbfgYrLmbEdZa4o1jDbnrPR+j+7pWPe3eDG8DaLI1TJtdUr8Jf+mVExiFy6tj2aKnSl/hcDxlkIW1PhuTbbA+bYT5BqK3aswe7HGnxvoQood0hkcTU5lPdgVEpiLKUhcHwW7/MyGoASly82W8dYtd4/Heb/uQJybhV6E704mNww9B3h6ZLODlVgwCUTAmKlrazEpYFstyQnnm2yClAbiga+wipht7eXSleUV+TPFS0JO9itOE4CAoL9kWy7UI3j8IW6GNLmVPqfr9XmTV27WVAoY+dRQZHMR5eRfhiumx2sM2+3OK9gW5Bmkf/mwNO7JMyqds+fEvESrvbnzswPjg86Bu8EmXYUMEhhv2qeXIVen+9EMgtx6TxRyAJLS8aJjTs3cZ9x1ETjDq1nNJ4B9kLEvzupouKFW+0aqQTJn/JqOoGO3cfxEzcAe9Nh5tOV6L2bkwsdKJsMGq7YY8/HMR6GMBcvkWuLzVDXZ5kL4Jeo5AFF5NC/tXsJ8NoSjw0G1NF2X1LgnXYoRc6lGQt2BQSZILvLSqNi5An/NyFQR66Tw0HjBao5IMh0ehnDKLmbvUOalBLyqCTM1CGsTqncYNo7UXizXWKsQyu73sVUHcsm3X8T8R5G7JcAttUhqacgsXksH/Hc5GSIOUAhNZpwglzQSeAlnOVSxmyknV9j9LCiAo9lpz69gojIWgbKirzlBNVULSKu9/LtfEoK9vjMncbylI1hr2UQiSEJJHUw6HRkJo9VyuShyeGu2qNPDkEA0X3HY19XVFvJ9Sz1jOrsDnQj+HwFDjQ/fbE8bXd6E8dFzTQCHtdfUtR2lkoaivO4metcqv6+BKe11jVUtZkAX331QsY2sQehPM+zQz/oHgxen0x7bjQt8OM7rBFXuOeDwUfyhXrJBjqtrHRKTYdV4v2il2v3w924WIq7d4n3/RB84SSusIhWv4qPBVyXt2lR88YkC4LE15PbdTq4envFP7atYgtBnxOCaPKV5MV3tExpvwuSnzI0e7vDbwb1J5czigBnHE31iTFYipYPjdm6dirwLf4mBX04humnE0u6/BDSfFV9QlDilESwEh+0X7RjEIdFsJ+a/qCeQ3G0lnleIbSkYawMbuiv639P1C1MmEUj6PhUTQwJYy2AZ5IRi7wfO4d2JjruesTsTg4DaQSGr1MurkDddRMWJ5RyVszRZaNr77akvOrm3zWmRBFYV0QAKZJ1VbTfwWG0bWZ9uyUopBKRRrfG1bJwYbMCCIOX1unlJYm26Zwy4oDba0nZztfW151iwF5wp4A0sOVccA/qoXsyLAM1J0F2knckON8G9i2oRwbS8tJZXKYjp2UnZKCSghfpwM3455RPcG+Ef9C297me/DwXWtx+8cF1hprjn3g3TnUDGxKUlOQJgDIAH0bTIwqslx+PadS9qHq7gfg9ILGpVTlnkMW2dWePz7hsSeJhFKuRITc9T/Igk8gy4R9XKW8G3XA1sOrcdWc5d4Dn6+RCmjHRG2DuushCgvj0DdinZ+F+Zxm4W/yhR64zg0E3E/571WxwNIZrzeJyMfIe+hSX6FKVzwwpsxY8n6srlOH4rQbzRvFBEC86VpAMlW3CvrR4cnZWAhmZXftZOGehVhKSZX2O4b2tzTARkzseAtI5ygJtJtrMO8bVapWOAHHafkafrZkK/hBcEChliW/vTuxm22UGP97ybSVXssdmH047ZIH/kHO2Ofmo7bQhvbwgiBOTOYn6OwRhSmTD2XR3a+nVcbfL2/hgxZ39sDWtLpM3Qhkd2FlFzKeyQBhgW4V/rbKRrBo6oZv8uPu2gSdEblwPydE+nLVTFLQrGLQrs7Qm1ti4s1SQAAPw/fwpSv9ANvXI/eM2OuqU9k98FTVAtz4vvTRj0dID+vaBfV3xXrsCrGTynPoV9aSMkE1K+6y0CRKuBZFtTDolfwb5aX8VnY/CKStte/zM59QiG8yay1TWqzAgXqT634ZzgS1Plo4rkrHRSpy3bh5fd4VKLHyGMj7q15XUy9w89p6D8nTky7jmWfcWz51vRnLunizI8kosu8i+MVFpLxwopdB2Xdggd2WGf0Mna2a8VrT/7gB18mheeu7M+dH0iVJPqRs8w3WqdijPlHJyyPdnDJCznme2sUnvuhyr3ZYS7d7Xn10XNzHIIaak+3GRQ41sD1/Ei8eJYRb1ZfFSbVZTMs1BrffL1c/IjX6UaIkHy7P2htJao194Q0RIkgHNX+c9eCY4uaaHJg7QlobTE4XbqWodEDlbIEgbaDthZ29lfHRLlY9moAKl0IyCoF9JOR3CdzsiAEWed/780roIrF5J1uWHyiNcfVEviK5Okmum+YXGZMmeK1H8+EI0/9tE6JfNInSGLZcl7F3JyQHfyNdiuvusplvNf1wJwqNUJZzWI6yumUjRRVz717X8PJ4LHDAPb+q3me2M6B4/TGBSS4ufw+KB/Tx1mnMxWjs154jop0wxjoalmPsARpVj0w+RX69wMv5s3diYY7AZ0vhx83GYCtsKydVB53YnU9AglAVyB2smDpXbb+Trao7X8liEqxK7xM/mk7KOZ3cQfJKliW+9NzlCx7N/QJEm12SLrAM383mmGxi9n8E4khg8DIEdB1lxHdipupG6aMBehFJagtpxWw/kr5hKafRXuY/Xgxz5XRxCoAtBKficSDal5Oark+p42SbZUph69v0/fEBIA0t+uThbPFYI4vefi8iWvkFFT+d+eF6+bGEoRiF80QCgfMiJypkpWHdxGUMoFV8sWGDGMAzvG2TiVMfGxnCzGy+W5yyDBLlf9yVMkixg2WGe8jCwXNwKzV1Mpmb5ZZOf0xQIFVd6ijzVDFANEhJJeldiX9gmo
+---END-ENCRYPTED-FILE---

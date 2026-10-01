@@ -1,54 +1,9 @@
-# LP-06 — Visual Vernacular Pulse Piece
+---ENCRYPTED-FILE---
+# Protected Content
+This document is encrypted for confidentiality.
+To view this document, use the web viewer with access credentials or run:
+node crypto-tool.mjs decrypt
 
-**Grade band:** 3-5 (EXPLORATION)
-**Duration:** 45 minutes
-**Prerequisites:** LP-04, LP-05.
-
-## Background
-Visual Vernacular (VV) is a Deaf performance art form combining ASL, mime, and cinematic timing. It is named in GL §6 and Zaghetto (NEA ref 42) as a model for translating sonic energy into visible form. This lesson invites students to author a short VV piece *paired with* a haptic accompaniment they composed in LP-05.
-
-## Learning Objectives
-1. Define Visual Vernacular and identify 2 examples from Deaf performance culture (teacher provides clips with captions).
-2. Pair a VV gesture sequence with a 16-cell PULSE score from LP-05.
-3. Perform VV piece for the class with the score running.
-4. Sign VISUAL, VERNACULAR, EXPRESSION, PERFORM.
-
-## ASL Gloss Vocabulary (new)
-VISUAL, VERNACULAR (loaned sign; finger-spelled then sign VV), EXPRESSION (face + hands sweep), PERFORM (curtains parting), AUDIENCE (panoramic eye gaze).
-
-## CyberDeck / PULSE Setup
-- Preset: `35_VVPlayback.preset`.
-- Re-uses students' saved `.score` files from LP-05.
-- Score plays automatically in 16-second loop while student performs VV in front.
-- AudioLux LED bar mirrors the FFT of any vocalized/clapped accents the student adds live.
-- Hearing-room option: external speaker plays audio (so hearing peers can hear), DHH-only setting plays no audio (PULSE + LED only).
-
-## Lesson Sequence
-| Time | Activity |
-|------|----------|
-| 0:00-0:08 | Teacher shares 2 VV clips (with captions/translations); class signs reactions. |
-| 0:08-0:15 | Teacher models: performs a 16-second VV "rain growing into storm" piece with a haptic score. |
-| 0:15-0:30 | Students adapt LP-05 scores; pair with a short VV concept (a feeling, a weather event, a creature). |
-| 0:30-0:42 | Performance circle: each student performs; class signs WHAT-I-SAW. |
-| 0:42-0:45 | Closing: each student names one VV technique they want to learn next. |
-
-## Differentiation
-- **3rd grade:** VV concept can be a single image (one creature, one weather).
-- **5th grade:** Add a "twist" — the piece must shift mood once.
-- **Hearing peers:** Required to perform in VV — no spoken English.
-
-## Assessment Rubric
-
-| Criterion | 4 | 3 | 2 | 1 |
-|---|---|---|---|---|
-| **VV intelligibility** | Class identifies subject within 8 seconds. | Identifies by end of piece. | Partial identification. | Not identifiable. |
-| **Score-performance alignment** | Performance accents align with PULSE events. | Mostly aligned. | Loosely aligned. | Disconnected. |
-| **Expressive range** | Uses face + body + spatial depth + tempo. | Uses 3 of 4 modalities. | Uses 2. | Uses 1. |
-| **VV/EXPRESSION ASL signs** | All four new signs used. | 3 of 4. | 2. | 0-1. |
-
-**Evidence:** 30-second performance video; classmate audience-response sheet (drawn responses).
-
-## Connections
-- **NCAS Music — Connecting 3-5:** Demonstrate how interests, knowledge, and skills relate to personal choices.
-- Anchors Deaf culture as a curricular center — directly addresses SA §5.3.1 strategy of prioritizing Deaf-composed and Deaf-led work.
-- Bridge into Band 3 (where the body becomes the controller).
+[CIPHERTEXT]
+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
+---END-ENCRYPTED-FILE---
