@@ -17,10 +17,11 @@ import { WeatherManager, WEATHER_TYPES } from './weather.js';
  * - props.js: Street lamps, guardrails, signs, grandstands, bridge, turbines, balloons
  */
 export class WorldView {
-    constructor(scene, trackData, audio = null) {
+    constructor(scene, trackData, audio = null, options = {}) {
         this.scene = scene;
         this.trackData = trackData;
         this.audio = audio;
+        this.options = options || {};
 
         // Track bounding sphere & center
         const { points } = trackData;
@@ -387,7 +388,10 @@ export class WorldView {
         // Initialize Scenery & Vegetation Subsystems
         this.props = new PropsManager(this.scene, this.trackData, this.trackCenter);
         this.trees = new TreeManager(this.scene, this.trackData, this.trackCenter);
-        this.grass = new GrassField(this.scene, this.trackData, this.trackCenter, this.trackSize);
+        const grassOpts = (this.options && this.options.deferredGrass !== undefined)
+            ? { deferred: this.options.deferredGrass }
+            : { deferred: false };
+        this.grass = new GrassField(this.scene, this.trackData, this.trackCenter, this.trackSize, grassOpts);
     }
 
     update(delta, cameraPos, playerPos, vehiclePositions = []) {

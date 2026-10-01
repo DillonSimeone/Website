@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { getTerrainHeight } from './terrain.js';
 import { VehicleStats } from './vehicle_stats.js';
 import { ModelLoader, COLORS, PATTERNS } from './model_loader.js';
 import { TrackGen } from './track_gen.js';
@@ -15,6 +16,8 @@ class GameApp {
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
             antialias: true,
+            alpha: true,
+            preserveDrawingBuffer: true,
             powerPreference: 'high-performance'
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -49,6 +52,8 @@ class GameApp {
         this.turntableYaw = 0;
         this.turntablePitch = 0;
         this.turntableRoll = 0;
+        this.garageVehicleElevation = 0;
+        this.garageDisplayShadow = null;
         this.isDraggingTurntable = false;
         this.isAligningToFront = false;
         this.prevMousePos = { x: 0, y: 0 };
@@ -75,7 +80,10 @@ class GameApp {
         this.launchStartTime = 0;
         this.launchCarSpeed = 0;
         this.launchCarDist = 0;
-        this.launchPhase = 'IDLE';
+        this.hasSwappedToCompositor = false;
+        this.mediaRecorder = null;
+        this.recordedChunks = [];
+        this.isRecordingLaunch = false;
 
         // In-Race Background Performance Benchmark
         this.perfBenchmarkSamples = [];
@@ -87,7 +95,7 @@ class GameApp {
         this._setupEventListeners();
         this._buildGarageScene();
         this._initUI();
-        this._updateStatsUI();
+        this._updateGarageElevation();
 
         // Start render loop
         this.clock = new THREE.Clock();
@@ -122,7 +130,9 @@ class GameApp {
                 uTime: { value: 0.0 },
                 uSpeed: { value: 0.0 },
                 uGridColor: { value: new THREE.Color(0xff007f) },
-                uSubGridColor: { value: new THREE.Color(0x00f2fe) }
+                uSubGridColor: { value: new THREE.Color(0x00f2fe) },
+                uOpacity: { value: 1.0 },
+                uCenter: { value: new THREE.Vector2(0, 0) }
             },
             vertexShader: `
                 varying vec2 vWorldPos;
@@ -137,9 +147,11 @@ class GameApp {
                 uniform float uSpeed;
                 uniform vec3 uGridColor;
                 uniform vec3 uSubGridColor;
+                uniform float uOpacity;
+                uniform vec2 uCenter;
                 varying vec2 vWorldPos;
                 void main() {
-                    vec2 coord = vWorldPos;
+                    vec2 coord = vWorldPos - uCenter;
                     coord.y += uTime * uSpeed;
                     vec2 grid = abs(fract(coord * 0.25 - 0.5) - 0.5) / fwidth(coord * 0.25);
                     float line = min(grid.x, grid.y);
@@ -149,13 +161,13 @@ class GameApp {
                     float subLine = min(subGrid.x, subGrid.y);
                     float c2 = (1.0 - min(subLine, 1.0)) * 0.35;
 
-                    float dist = length(vWorldPos);
+                    float dist = length(vWorldPos - uCenter);
                     float fade = exp(-dist * 0.0075);
 
                     vec3 col = uGridColor * c1 * 1.8 + uSubGridColor * c2 * 1.2;
                     col += vec3(0.04, 0.01, 0.08) * (1.0 - fade * 0.5);
 
-                    gl_FragColor = vec4(col * fade, fade);
+                    gl_FragColor = vec4(col * fade * uOpacity, fade * uOpacity);
                 }
             `,
             transparent: true,
@@ -163,14 +175,16 @@ class GameApp {
         });
         const gridMesh = new THREE.Mesh(gridGeo, this.garageGridMat);
         gridMesh.position.y = -0.16;
+        this.garageGridMesh = gridMesh;
         this.garageScene.add(gridMesh);
 
         // 2. Purple Glitching Synthwave Sun on the Horizon
-        const sunGeo = new THREE.CircleGeometry(42, 64);
+        const sunGeo = new THREE.CircleGeometry(52, 64);
         this.garageSunMat = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0.0 },
-                uGlitch: { value: 0.0 }
+                uGlitch: { value: 0.0 },
+                uOpacity: { value: 1.0 }
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -182,6 +196,7 @@ class GameApp {
             fragmentShader: `
                 uniform float uTime;
                 uniform float uGlitch;
+                uniform float uOpacity;
                 varying vec2 vUv;
                 void main() {
                     vec2 p = vUv * 2.0 - 1.0;
@@ -192,11 +207,11 @@ class GameApp {
                     float twitch = sin(uTime * 45.0 + p.y * 30.0) * uGlitch * 0.04;
                     p.x += twitch;
 
-                    vec3 colCore = vec3(1.0, 0.12, 0.55); // Neon magenta
-                    vec3 colMid  = vec3(0.68, 0.05, 0.95); // Purple
-                    vec3 colEdge = vec3(0.28, 0.0, 0.55);  // Deep violet
-                    vec3 sunColor = mix(colCore, colMid, smoothstep(-0.6, 0.4, p.y));
-                    sunColor = mix(sunColor, colEdge, smoothstep(0.4, 0.95, r));
+                    vec3 colCore = vec3(1.0, 0.88, 0.20); // Vibrant solar gold
+                    vec3 colMid  = vec3(1.0, 0.12, 0.58); // Neon hot magenta
+                    vec3 colEdge = vec3(0.68, 0.05, 0.95); // Electric synth violet
+                    vec3 sunColor = mix(colCore, colMid, smoothstep(-0.5, 0.3, p.y));
+                    sunColor = mix(sunColor, colEdge, smoothstep(0.3, 0.95, r));
 
                     // Horizontal scanline slats getting thicker towards the bottom
                     if (p.y < 0.25) {
@@ -212,14 +227,16 @@ class GameApp {
                     sunColor += vec3(0.15, 0.05, 0.25) * scanline;
 
                     float glow = pow(1.0 - r, 0.55);
-                    gl_FragColor = vec4(sunColor * (1.25 + uGlitch * 0.8), glow);
+                    gl_FragColor = vec4(sunColor * (1.35 + uGlitch * 0.8) * uOpacity, glow * uOpacity);
                 }
             `,
             transparent: true,
+            depthWrite: false,
             side: THREE.DoubleSide
         });
         const sunMesh = new THREE.Mesh(sunGeo, this.garageSunMat);
-        sunMesh.position.set(0, 36, -260);
+        sunMesh.position.set(0, 24, -160);
+        this.garageSunMesh = sunMesh;
         this.garageScene.add(sunMesh);
 
         // Turntable Pedestal
@@ -231,6 +248,7 @@ class GameApp {
         });
         const platform = new THREE.Mesh(platGeom, platMat);
         platform.position.y = -0.15;
+        this.garagePlatform = platform;
         this.garageScene.add(platform);
 
         // Holographic Axis Rings
@@ -244,6 +262,7 @@ class GameApp {
         const ring = new THREE.Mesh(ringGeom, ringMat);
         ring.rotation.x = -Math.PI / 2;
         ring.position.y = -0.12;
+        this.garageRing = ring;
         this.garageScene.add(ring);
 
         // Unmistakable Glowing FRONT Direction Guide
@@ -298,6 +317,7 @@ class GameApp {
             fwdGroup.add(beacon);
         }
 
+        this.garageFwdGroup = fwdGroup;
         this.garageScene.add(fwdGroup);
 
         // Vehicle Display Root
@@ -316,35 +336,49 @@ class GameApp {
         this.garageMesh = new THREE.Mesh(this.currentGeometry, mat);
         this.garageVehicleRoot.add(this.garageMesh);
 
-        // Dual Xenon Headlights (Front nose cone)
+        this.currentGeometry.computeBoundingBox();
+        const box = this.currentGeometry.boundingBox || new THREE.Box3(new THREE.Vector3(-0.7, 0, -1.5), new THREE.Vector3(0.7, 0.8, 1.5));
+        const frontZ = box.min.z;
+        const rearZ = box.max.z;
+        const halfW = Math.max(0.18, (box.max.x - box.min.x) * 0.24);
+        const lightY = box.min.y + (box.max.y - box.min.y) * 0.38;
+
+        // Dual Xenon Headlights (Front nose cone — mounted directly to garageMesh so they are part of the model)
         const hlMat = new THREE.MeshStandardMaterial({ color: 0x00f2fe, emissive: 0x00f2fe, emissiveIntensity: 2.8 });
-        const hlL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.15), hlMat);
-        hlL.position.set(-0.25, 0.22, -1.25);
-        this.garageVehicleRoot.add(hlL);
+        const hlL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.12), hlMat);
+        hlL.position.set(-halfW, lightY, frontZ + 0.06);
+        this.garageMesh.add(hlL);
         const hlR = hlL.clone();
-        hlR.position.x = 0.25;
-        this.garageVehicleRoot.add(hlR);
+        hlR.position.x = halfW;
+        this.garageMesh.add(hlR);
 
-        // Dual Red Taillights (Rear deck)
+        // Dual Red Taillights / Brake Lights (Rear deck — mounted directly to garageMesh so they are part of the model)
         const tlMat = new THREE.MeshStandardMaterial({ color: 0xff1122, emissive: 0xff1122, emissiveIntensity: 2.8 });
-        const tlL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.12), tlMat);
-        tlL.position.set(-0.55, 0.35, 1.35);
-        this.garageVehicleRoot.add(tlL);
+        const tlL = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.08, 0.12), tlMat);
+        tlL.position.set(-halfW * 1.25, lightY + 0.08, rearZ - 0.06);
+        this.garageMesh.add(tlL);
         const tlR = tlL.clone();
-        tlR.position.x = 0.55;
-        this.garageVehicleRoot.add(tlR);
+        tlR.position.x = halfW * 1.25;
+        this.garageMesh.add(tlR);
 
-        // Display Shadow
+        // Display Shadow on the pedestal deck
+        if (this.garageDisplayShadow) {
+            this.garageScene.remove(this.garageDisplayShadow);
+            if (this.garageDisplayShadow.geometry) this.garageDisplayShadow.geometry.dispose();
+            if (this.garageDisplayShadow.material) this.garageDisplayShadow.material.dispose();
+            this.garageDisplayShadow = null;
+        }
+
         const shadowMat = new THREE.MeshBasicMaterial({
             color: 0x000000,
             transparent: true,
             opacity: 0.65,
             side: THREE.DoubleSide
         });
-        const shadow = new THREE.Mesh(this.currentGeometry.clone(), shadowMat);
-        shadow.scale.set(1.0, 0.002, 1.0);
-        shadow.position.y = -0.01;
-        this.garageVehicleRoot.add(shadow);
+        this.garageDisplayShadow = new THREE.Mesh(this.currentGeometry.clone(), shadowMat);
+        this.garageDisplayShadow.scale.set(1.0, 0.002, 1.0);
+        this.garageDisplayShadow.position.set(0, -0.015, 0);
+        this.garageScene.add(this.garageDisplayShadow);
     }
 
     _setupEventListeners() {
@@ -378,11 +412,11 @@ class GameApp {
         // Turntable Interactive Mouse Dragging
         const handleDragStart = (clientX, clientY, target) => {
             if (this.state !== 'GARAGE') return;
+            if (this.isAligningToFront) return; // Prevent interaction until vehicle has finished facing forward!
             if (target && (target.closest('.garage-sidebar') || target.closest('button') || target.closest('input') || target.closest('.color-swatch') || target.closest('.dropzone'))) {
                 return;
             }
             this.isDraggingTurntable = true;
-            this.isAligningToFront = false;
             this.prevMousePos = { x: clientX, y: clientY };
         };
 
@@ -391,7 +425,7 @@ class GameApp {
         });
 
         window.addEventListener('mousemove', (e) => {
-            if (!this.isDraggingTurntable || this.state !== 'GARAGE') return;
+            if (this.isAligningToFront || !this.isDraggingTurntable || this.state !== 'GARAGE') return;
             const dx = e.clientX - this.prevMousePos.x;
             const dy = e.clientY - this.prevMousePos.y;
 
@@ -402,11 +436,7 @@ class GameApp {
                 this.turntablePitch = THREE.MathUtils.clamp(this.turntablePitch + dy * 0.01, -0.6, 0.85);
             }
 
-            this.garageEuler.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
-            const oriented = VehicleStats.measureOrientedGeometry(this.currentGeometry, this.garageEuler);
-            this.currentStats = oriented.stats;
-            this._updateStatsUI();
-
+            this._updateGarageElevation();
             this.prevMousePos = { x: e.clientX, y: e.clientY };
         });
 
@@ -422,17 +452,13 @@ class GameApp {
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
-            if (!this.isDraggingTurntable || this.state !== 'GARAGE' || e.touches.length === 0) return;
+            if (this.isAligningToFront || !this.isDraggingTurntable || this.state !== 'GARAGE' || e.touches.length === 0) return;
             const dx = e.touches[0].clientX - this.prevMousePos.x;
             const dy = e.touches[0].clientY - this.prevMousePos.y;
             this.turntableYaw += dx * 0.015;
             this.turntablePitch = THREE.MathUtils.clamp(this.turntablePitch + dy * 0.01, -0.6, 0.85);
 
-            this.garageEuler.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
-            const oriented = VehicleStats.measureOrientedGeometry(this.currentGeometry, this.garageEuler);
-            this.currentStats = oriented.stats;
-            this._updateStatsUI();
-
+            this._updateGarageElevation();
             this.prevMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }, { passive: true });
 
@@ -479,7 +505,7 @@ class GameApp {
             this.currentStats = stats;
 
             this._rebuildGarageVehicleMesh();
-            this._updateStatsUI();
+            this._updateGarageElevation();
 
             if (statusEl) statusEl.textContent = `✓ Loaded ${file.name} (${geom.attributes.position.count / 3 | 0} tris)`;
         } catch (err) {
@@ -522,16 +548,19 @@ class GameApp {
         };
 
         document.getElementById('garage-reset-facing-btn').onclick = () => {
-            this.turntableYaw = 0;
-            this.turntablePitch = 0;
-            this.turntableRoll = 0;
-            this.garageEuler.set(0, 0, 0, 'YXZ');
-            const oriented = VehicleStats.measureOrientedGeometry(this.currentGeometry, this.garageEuler);
-            this.currentStats = oriented.stats;
-            this._updateStatsUI();
-            if (this.garageVehicleRoot) {
-                this.garageVehicleRoot.rotation.set(0, 0, 0, 'YXZ');
-            }
+            this.isAligningToFront = true;
+            this.alignStartTime = performance.now();
+            let startYaw = this.turntableYaw % (Math.PI * 2);
+            if (startYaw > Math.PI) startYaw -= Math.PI * 2;
+            if (startYaw < -Math.PI) startYaw += Math.PI * 2;
+            this.alignStartYaw = startYaw;
+            this.turntableYaw = startYaw;
+            this.alignStartPitch = this.turntablePitch;
+            this.alignStartRoll = this.turntableRoll;
+            this._updateGarageElevation();
+            document.body.style.cursor = 'wait';
+            const hintEl = document.querySelector('.garage-center-hint span');
+            if (hintEl) hintEl.textContent = '🧭 Aligning to forward heading...';
         };
 
         // Color Swatches
@@ -595,6 +624,28 @@ class GameApp {
         }
     }
 
+    _updateGarageElevation() {
+        this.garageEuler.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
+        const oriented = VehicleStats.measureOrientedGeometry(this.currentGeometry, this.garageEuler);
+        this.currentStats = oriented.stats;
+        this._updateStatsUI();
+
+        // Platform pedestal top is at y = -0.025. Clearance baseline at y = -0.015.
+        // If bottom vertex dips below deckY, elevate the vehicle root so it rests on the platform without clipping.
+        const deckY = -0.015;
+        const lowestVertexY = (oriented.minY !== undefined) ? oriented.minY : -0.2;
+        this.garageVehicleElevation = Math.max(0, deckY - lowestVertexY);
+
+        if (this.garageVehicleRoot && (this.state === 'GARAGE' || this.state === 'MENU')) {
+            this.garageVehicleRoot.position.set(0, this.garageVehicleElevation, 0);
+        }
+        if (this.garageDisplayShadow) {
+            this.garageDisplayShadow.rotation.set(0, this.turntableYaw, 0);
+            this.garageDisplayShadow.position.set(0, -0.015, 0);
+            this.garageDisplayShadow.visible = (this.state === 'GARAGE' || this.state === 'MENU' || this.state === 'GARAGE_LAUNCH');
+        }
+    }
+
     switchState(newState) {
         this.state = newState;
         document.getElementById('menu-view').style.display = newState === 'MENU' ? 'flex' : 'none';
@@ -602,16 +653,41 @@ class GameApp {
 
         if (newState === 'RACE') {
             this.hud.show();
+            if (this.garageDisplayShadow) this.garageDisplayShadow.visible = false;
             this._startRace();
         } else {
             this.hud.hide();
             this.audio.silence();
             this._teardownRace();
-            if (this.garageVehicleRoot) {
-                this.garageVehicleRoot.position.set(0, 0, 0);
+            if (this.garageDisplayShadow) this.garageDisplayShadow.visible = true;
+            if (this.garagePlatform) this.garagePlatform.visible = true;
+            if (this.garageRing) this.garageRing.visible = true;
+            if (this.garageFwdGroup) this.garageFwdGroup.visible = true;
+            if (this.garageGridMesh) this.garageGridMesh.position.set(0, -0.16, 0);
+            if (this.garageSunMesh) this.garageSunMesh.position.set(0, 24, -160);
+            if (this.garageGridMat) {
+                this.garageGridMat.uniforms.uOpacity.value = 1.0;
+                this.garageGridMat.uniforms.uCenter.value.set(0, 0);
+            }
+            if (this.garageSunMat) {
+                this.garageSunMat.uniforms.uOpacity.value = 1.0;
             }
             if (newState === 'GARAGE') {
-                this._updateStatsUI();
+                this.isAligningToFront = true;
+                this.alignStartTime = performance.now();
+                let startYaw = this.turntableYaw % (Math.PI * 2);
+                if (startYaw > Math.PI) startYaw -= Math.PI * 2;
+                if (startYaw < -Math.PI) startYaw += Math.PI * 2;
+                this.alignStartYaw = startYaw;
+                this.turntableYaw = startYaw;
+                this.alignStartPitch = (this.turntablePitch !== 0) ? this.turntablePitch : 0.12;
+                this.alignStartRoll = this.turntableRoll || 0;
+                this._updateGarageElevation();
+                document.body.style.cursor = 'wait';
+                const hintEl = document.querySelector('.garage-center-hint span');
+                if (hintEl) hintEl.textContent = '🧭 Aligning to forward heading...';
+            } else if (this.garageVehicleRoot) {
+                this.garageVehicleRoot.position.set(0, this.garageVehicleElevation || 0, 0);
             }
         }
     }
@@ -621,124 +697,306 @@ class GameApp {
         this.audio.playChime('checkpoint');
 
         this.state = 'GARAGE_LAUNCH';
-        document.getElementById('garage-view').style.display = 'none';
-
-        // Retain the user-dragged facing/orientation and stats!
-        if (this.garageVehicleRoot) {
-            this.garageVehicleRoot.position.set(0, 0, 0);
-            this.garageVehicleRoot.rotation.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
-        }
-
         this.launchStartTime = performance.now();
         this.launchCarSpeed = 0;
         this.launchCarDist = 0;
-        this.launchPhase = 'LOADING_VOID';
-        this.isRaceLoaded = false;
+        this.hasSwappedToCompositor = false;
+        this.isRecordingLaunch = false;
+        this.recordedChunks = [];
 
-        // Show holographic 3D loading HUD above the vehicle
-        const hudEl = document.getElementById('void-loading-hud');
-        if (hudEl) {
-            hudEl.style.display = 'block';
-            hudEl.style.opacity = '1';
-            this._updateLoadingProgress(8, '⚡ INITIALIZING HYPERSPACE DRIVE...');
+        const garageView = document.getElementById('garage-view');
+        if (garageView) garageView.style.display = 'none';
+
+        // 1. Hide stationary platform pedestal, orientation ring & forward guide
+        if (this.garagePlatform) this.garagePlatform.visible = false;
+        if (this.garageRing) this.garageRing.visible = false;
+        if (this.garageFwdGroup) this.garageFwdGroup.visible = false;
+        if (this.garageDisplayShadow) this.garageDisplayShadow.visible = false;
+
+        // 2. Ensure vehicle, synthwave grid runway and sun are visible
+        this._updateGarageElevation();
+        if (this.garageVehicleRoot) {
+            this.garageVehicleRoot.position.set(0, this.garageVehicleElevation || 0, 0);
+            this.garageVehicleRoot.rotation.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
+            this.garageVehicleRoot.visible = true;
         }
 
-        const overlay = document.getElementById('warp-transition-overlay');
+        if (this.garageGridMesh) {
+            this.garageGridMesh.visible = true;
+            this.garageGridMesh.position.set(0, -0.16, 0);
+            if (this.garageGridMat) {
+                this.garageGridMat.uniforms.uOpacity.value = 1.0;
+                this.garageGridMat.uniforms.uCenter.value.set(0, 0);
+            }
+        }
+        if (this.garageSunMesh) {
+            this.garageSunMesh.visible = true;
+            this.garageSunMesh.position.set(0, 24, -160);
+            if (this.garageSunMat) {
+                this.garageSunMat.uniforms.uOpacity.value = 1.0;
+            }
+        }
+
+        // 3. Keep compositor overlay hidden until 3D vehicle drive loop is recorded
+        const overlay = document.getElementById('launch-compositor-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            overlay.style.opacity = '1';
+            overlay.classList.remove('dissolve-out');
+        }
+
+        // 4. Begin recording live 60fps canvas stream to capture smooth driving loop
+        try {
+            if (this.canvas && typeof MediaRecorder !== 'undefined') {
+                const stream = this.canvas.captureStream(60);
+                const types = [
+                    'video/webm;codecs=vp9',
+                    'video/webm;codecs=vp8',
+                    'video/webm'
+                ];
+                const selectedType = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+                if (selectedType) {
+                    this.recordedChunks = [];
+                    this.mediaRecorder = new MediaRecorder(stream, { mimeType: selectedType });
+                    this.mediaRecorder.ondataavailable = (e) => {
+                        if (e.data && e.data.size > 0) this.recordedChunks.push(e.data);
+                    };
+                    this.mediaRecorder.onstop = () => {
+                        this._handleRecordedLoopReady(selectedType);
+                    };
+                    this.mediaRecorder.start();
+                    this.isRecordingLaunch = true;
+                }
+            }
+        } catch (err) {
+            console.warn('MediaRecorder error, using fallback:', err);
+        }
+
+        this.isRaceLoaded = false;
+    }
+
+    _handleRecordedLoopReady(mimeType) {
+        if (this.recordedChunks.length === 0) {
+            this._fallbackCompositorSwap();
+            return;
+        }
+
+        const blob = new Blob(this.recordedChunks, { type: mimeType });
+        const videoUrl = URL.createObjectURL(blob);
+
+        // Save to sessionStorage/localStorage as requested
+        try {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                try {
+                    sessionStorage.setItem('model3d_cyber_loop', reader.result);
+                } catch (_) {}
+            };
+            reader.readAsDataURL(blob);
+        } catch (_) {}
+
+        const videoEl = document.getElementById('compositor-video-loop');
+        const bgLoop = document.getElementById('compositor-bg-loop');
+        const vContainer = document.getElementById('compositor-vehicle-container');
+
+        if (videoEl) {
+            videoEl.src = videoUrl;
+            videoEl.style.display = 'block';
+            videoEl.play().catch(() => {});
+        }
+        if (bgLoop) bgLoop.style.display = 'none';
+        if (vContainer) vContainer.style.display = 'none';
+
+        const overlay = document.getElementById('launch-compositor-overlay');
         if (overlay) {
             overlay.style.transition = 'none';
-            overlay.style.backgroundColor = '#000000';
-            overlay.style.opacity = '0';
+            overlay.style.opacity = '1';
+            overlay.style.display = 'block';
+            overlay.classList.remove('dissolve-out');
         }
 
-        // Start progressive asynchronous loading while the vehicle drives into the void!
+        this.hasSwappedToCompositor = true;
+        this.isRaceLoaded = false;
+        this._updateLoadingProgress(8, '⚡ INITIALIZING HYPERSPACE DRIVE...');
+
+        // AND ONLY THEN: World actually starts loading in the background under the overlay!
+        this._startSteppedLoading();
+    }
+
+    _fallbackCompositorSwap() {
+        if (this.hasSwappedToCompositor) return;
+
+        // Isolate vehicle for snapshot
+        if (this.garageGridMesh) this.garageGridMesh.visible = false;
+        if (this.garageSunMesh) this.garageSunMesh.visible = false;
+        const prevBg = this.garageScene.background;
+        const prevFog = this.garageScene.fog;
+        this.garageScene.background = null;
+        this.garageScene.fog = null;
+
+        const prevClearColor = new THREE.Color();
+        this.renderer.getClearColor(prevClearColor);
+        const prevClearAlpha = this.renderer.getClearAlpha();
+        this.renderer.setClearColor(0x000000, 0.0);
+
+        this.renderer.render(this.garageScene, this.camera);
+        const snapshotUrl = this.renderer.domElement.toDataURL('image/png');
+
+        this.renderer.setClearColor(prevClearColor, prevClearAlpha);
+        this.garageScene.background = prevBg;
+        this.garageScene.fog = prevFog;
+        if (this.garageGridMesh) this.garageGridMesh.visible = true;
+        if (this.garageSunMesh) this.garageSunMesh.visible = true;
+
+        const vImg = document.getElementById('compositor-vehicle-img');
+        if (vImg) vImg.src = snapshotUrl;
+
+        const videoEl = document.getElementById('compositor-video-loop');
+        const bgLoop = document.getElementById('compositor-bg-loop');
+        const vContainer = document.getElementById('compositor-vehicle-container');
+        if (videoEl) videoEl.style.display = 'none';
+        if (bgLoop) bgLoop.style.display = 'block';
+        if (vContainer) vContainer.style.display = 'block';
+
+        const overlay = document.getElementById('launch-compositor-overlay');
+        if (overlay) {
+            overlay.style.transition = 'none';
+            overlay.style.opacity = '1';
+            overlay.style.display = 'block';
+            overlay.classList.remove('dissolve-out');
+        }
+
+        this.hasSwappedToCompositor = true;
+        this.isRaceLoaded = false;
+        this._updateLoadingProgress(8, '⚡ INITIALIZING HYPERSPACE DRIVE...');
+
+        // AND ONLY NOW: World starts loading in the background under the overlay!
         this._startSteppedLoading();
     }
 
     _updateLoadingProgress(percent, taskName) {
-        const bar = document.getElementById('void-loader-bar');
-        const pct = document.getElementById('void-loader-percent');
-        const task = document.getElementById('void-loader-task');
+        this.loadingTargetProgress = percent;
+        const bar = document.getElementById('compositor-loader-bar');
+        const pct = document.getElementById('compositor-loader-percent');
+        const task = document.getElementById('compositor-loader-task');
         if (bar) bar.style.width = `${percent}%`;
         if (pct) pct.textContent = `${Math.round(percent)}%`;
         if (task && taskName) task.textContent = taskName;
     }
 
     _startSteppedLoading() {
-        // Step 1: Initialize road streamer & spline (0% -> 25%)
-        setTimeout(() => {
-            if (this.state !== 'GARAGE_LAUNCH') return;
-            try {
-                this._updateLoadingProgress(25, 'GENERATING PROCEDURAL SPLINE...');
+        const ringLabels = [
+            'SYNCHRONIZING INNER DENSE MEADOW (0.16m)...',
+            'SYNCHRONIZING FINE MEADOW & WILDFLOWERS...',
+            'SYNCHRONIZING MID-RANGE VALLEY FLORA...',
+            'SYNCHRONIZING FAR-MID MEADOW RIDGES...',
+            'SYNCHRONIZING DISTANT MEADOW RIDGES...',
+            'SYNCHRONIZING HORIZON FLORA & RADIAL BLEND...'
+        ];
+
+        const steps = [
+            // Step 1: Initialize road streamer & procedural spline (14%)
+            () => {
+                this._updateLoadingProgress(14, 'GENERATING PROCEDURAL SPLINE & RUNWAY...');
                 while (this.raceScene.children.length > 0) {
                     this.raceScene.remove(this.raceScene.children[0]);
                 }
                 this.streamer = new RoadStreamer(this.raceScene, this.mode, this.runSeed);
                 this.trackData = this.streamer.getTrackData();
                 this.hud.initTrack(this.trackData);
-            } catch (err) {
-                console.error('Loading Step 1 Error:', err);
-            }
-
-            // Step 2: Build World, terrain & skydome (25% -> 55%)
-            setTimeout(() => {
-                if (this.state !== 'GARAGE_LAUNCH') return;
+            },
+            // Step 2: Build World, sky, sun, ground mesh, trees & props with deferred grass (26%)
+            () => {
+                this._updateLoadingProgress(26, 'CONSTRUCTING ATMOSPHERIC ENVIRONMENT & TERRAIN...');
+                this.world = new WorldView(this.raceScene, this.trackData, this.audio, { deferredGrass: true });
+                this.streamer.setSceneryManagers(this.world.trees, this.world.props);
                 try {
-                    this._updateLoadingProgress(55, 'CONSTRUCTING ATMOSPHERIC WORLD & ROLLING HILLS...');
-                    this.world = new WorldView(this.raceScene, this.trackData, this.audio);
-                    this.streamer.setSceneryManagers(this.world.trees, this.world.props);
-                } catch (err) {
-                    console.error('Loading Step 2 Error:', err);
-                }
+                    if (this.world.sky) this.renderer.compile(this.world.sky, this.camera);
+                    if (this.world.groundMesh) this.renderer.compile(this.world.groundMesh, this.camera);
+                } catch (_) {}
+            }
+        ];
 
-                // Step 3: Synchronize grass multi-rings with 0.16m density (55% -> 80%)
-                setTimeout(() => {
-                    if (this.state !== 'GARAGE_LAUNCH') return;
+        // Dynamic Grass Ring Build Steps (All 6 rings: 0 to 5)
+        const ringCount = 6;
+        for (let r = 0; r < ringCount; r++) {
+            const ringPct = 26 + Math.round(((r + 1) / ringCount) * 58); // Progress from 26% to 84%
+            const taskLabel = ringLabels[r] || `SYNCHRONIZING GRASS RING ${r + 1}...`;
+            steps.push(() => {
+                this._updateLoadingProgress(ringPct, taskLabel);
+                if (this.world && this.world.grass) {
+                    this.world.grass.buildRing(r);
                     try {
-                        this._updateLoadingProgress(80, 'SYNCHRONIZING DENSE FLORA & ROAD MASKING (0.16m)...');
-                    } catch (err) {
-                        console.error('Loading Step 3 Error:', err);
-                    }
-
-                    // Step 4: Bake player vehicle with user orientation & spawn rivals (80% -> 95%)
-                    setTimeout(() => {
-                        if (this.state !== 'GARAGE_LAUNCH') return;
-                        try {
-                            this._updateLoadingProgress(95, 'BAKING VEHICLE ORIENTATION & ARMING RIVALS...');
-                            // Bake chosen garage facing/orientation into player vehicle geometry
-                            const bakedGeom = this.currentGeometry.clone();
-                            const rotMat = new THREE.Matrix4().makeRotationFromEuler(this.garageEuler);
-                            bakedGeom.applyMatrix4(rotMat);
-                            bakedGeom.computeVertexNormals();
-
-                            const mat = ModelLoader.createMaterial(this.selectedColor, this.selectedPattern);
-                            this.player = new Vehicle(
-                                this.raceScene,
-                                bakedGeom,
-                                mat,
-                                { ...this.currentStats },
-                                true,
-                                'Player'
-                            );
-                            this.player.boostLeft = 3.0;
-                            this.player.teleport(this.trackData.spawn.position, this.trackData.spawn.direction);
-                            this.player.speed = 32.0;
-
-                            this.rivals = new RivalManager(this.raceScene, this.trackData, 5);
-                            this.streamer.setRivalsManager(this.rivals);
-                            this.streamer.setPlayer(this.player);
-                        } catch (err) {
-                            console.error('Loading Step 4 Error:', err);
+                        if (this.world.grass.rings && this.world.grass.rings[r] && this.world.grass.rings[r].mesh) {
+                            this.renderer.compile(this.world.grass.rings[r].mesh, this.camera);
                         }
+                    } catch (_) {}
+                }
+            });
+        }
 
-                        // Step 5: Ready for hyperspace insertion (100%)
-                        setTimeout(() => {
-                            if (this.state !== 'GARAGE_LAUNCH') return;
-                            this._updateLoadingProgress(100, '★ HYPERSPACE INSERTION READY!');
-                            this.isRaceLoaded = true;
-                        }, 120);
-                    }, 80);
-                }, 80);
-            }, 80);
+        // Arm player vehicle with unified modelGroup rotation and AI rivals (92%)
+        steps.push(() => {
+            this._updateLoadingProgress(92, 'BAKING VEHICLE ORIENTATION & ARMING RIVALS...');
+            const mat = ModelLoader.createMaterial(this.selectedColor, this.selectedPattern);
+            this.player = new Vehicle(
+                this.raceScene,
+                this.currentGeometry.clone(),
+                mat,
+                { ...this.currentStats },
+                true,
+                'Player',
+                this.garageEuler,
+                this.currentGeometry
+            );
+            this.player.boostLeft = 3.0;
+            this.player.teleport(this.trackData.spawn.position, this.trackData.spawn.direction);
+            this.player.speed = 34.0;
+
+            this.rivals = new RivalManager(this.raceScene, this.trackData, 5);
+            this.streamer.setRivalsManager(this.rivals);
+            this.streamer.setPlayer(this.player);
+
+            try {
+                if (this.player.root) this.renderer.compile(this.player.root, this.camera);
+            } catch (_) {}
+        });
+
+        // 100% loaded: Shaders are already compiled incrementally, zero freeze!
+        steps.push(() => {
+            this._updateLoadingProgress(100, 'WARP DRIVE ENGAGED - READY!');
+            this.isRaceLoaded = true;
+
+            // Brief pause at 100% full bar before seamless dissolve into race
+            setTimeout(() => {
+                if (this.state === 'GARAGE_LAUNCH') {
+                    this._finalizeRaceLaunch();
+                }
+            }, 220);
+        });
+
+        let stepIndex = 0;
+        const executeNextStep = () => {
+            if (this.state !== 'GARAGE_LAUNCH') return;
+            if (stepIndex < steps.length) {
+                try {
+                    steps[stepIndex]();
+                } catch (err) {
+                    console.error(`Stepped Loading Error (Step ${stepIndex + 1}):`, err);
+                }
+                stepIndex++;
+                setTimeout(() => {
+                    if (this.state === 'GARAGE_LAUNCH') {
+                        requestAnimationFrame(() => executeNextStep());
+                    }
+                }, 60);
+            }
+        };
+
+        setTimeout(() => {
+            if (this.state === 'GARAGE_LAUNCH') {
+                requestAnimationFrame(() => executeNextStep());
+            }
         }, 60);
     }
 
@@ -746,17 +1004,50 @@ class GameApp {
         this.state = 'RACE';
         this.hud.show();
 
-        if (this.garageVehicleRoot) {
-            this.garageVehicleRoot.position.set(0, 0, 0);
+        // Flush clock delta to prevent initial physics step jump
+        this.clock.getDelta();
+        this.audio.playChime('boost');
+
+        if (this.garageDisplayShadow) {
+            this.garageDisplayShadow.visible = false;
         }
 
-        // Safety fallback if preloader didn't run
+        if (this.garageVehicleRoot) {
+            this.garageVehicleRoot.position.set(0, 0, 0);
+            this.garageVehicleRoot.visible = true;
+        }
+
+        // Restore garageScene defaults for future garage visits
+        this.garageScene.background = new THREE.Color(0x0a0515);
+        this.garageScene.fog = new THREE.FogExp2(0x0a0515, 0.007);
+        if (this.garagePlatform) this.garagePlatform.visible = true;
+        if (this.garageRing) this.garageRing.visible = true;
+        if (this.garageFwdGroup) this.garageFwdGroup.visible = true;
+        if (this.garageGridMesh) this.garageGridMesh.position.set(0, -0.16, 0);
+        if (this.garageSunMesh) this.garageSunMesh.position.set(0, 24, -160);
+
         if (!this.player) {
             this._startRace();
+        } else {
+            this.player.boostLeft = 3.0;
+            this.player.speed = 34.0;
+            if (this.trackData) {
+                const ground = this.player._sampleTrackGround(this.player.position, this.trackData);
+                if (ground) {
+                    this.player.position.y = ground.y + 0.65;
+                    this.player.root.position.copy(this.player.position);
+                }
+            }
+            // Align camera precisely behind vehicle spawn
+            const pPos = this.player.position;
+            this.camera.position.set(pPos.x, pPos.y + 2.5, pPos.z + 6.2);
+            this.camera.lookAt(pPos.x, pPos.y + 0.8, pPos.z - 3.0);
+            this.camera.fov = 65;
+            this.camera.updateProjectionMatrix();
         }
 
         this.elapsedTime = 0;
-        this.topSpeedReached = 115;
+        this.topSpeedReached = Math.round((this.player ? this.player.speed : 34) * 3.6);
         this.totalDistanceDriven = 0;
         this.raceFinished = false;
         this.playerLevel = 1;
@@ -765,6 +1056,27 @@ class GameApp {
         this.isRaceLoaded = false;
         this.perfBenchmarkSamples = [];
         this.perfBenchmarkDone = false;
+
+        // Render live race scene underneath so it is immediately visible as overlay dissolves
+        this.renderer.render(this.raceScene, this.camera);
+
+        // Dissolve compositor overlay away over 0.75s — vehicle stays continuously in sight!
+        const overlay = document.getElementById('launch-compositor-overlay');
+        if (overlay) {
+            overlay.style.transition = 'opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1)';
+            overlay.style.opacity = '0';
+            overlay.style.pointerEvents = 'none';
+            overlay.classList.add('dissolve-out');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                overlay.classList.remove('dissolve-out');
+                const videoEl = document.getElementById('compositor-video-loop');
+                if (videoEl) {
+                    videoEl.pause();
+                    videoEl.src = '';
+                }
+            }, 750);
+        }
     }
 
     _completePerfBenchmark() {
@@ -838,20 +1150,17 @@ class GameApp {
         this.streamer.setSceneryManagers(this.world.trees, this.world.props);
 
         // Bake chosen garage facing/orientation into player vehicle geometry
-        const bakedGeom = this.currentGeometry.clone();
-        const rotMat = new THREE.Matrix4().makeRotationFromEuler(this.garageEuler);
-        bakedGeom.applyMatrix4(rotMat);
-        bakedGeom.computeVertexNormals();
-
-        // Player Vehicle Physics (Unified Vehicle class)
+        // Player Vehicle Physics (Unified Vehicle class with synchronized modelGroup rotation)
         const mat = ModelLoader.createMaterial(this.selectedColor, this.selectedPattern);
         this.player = new Vehicle(
             this.raceScene,
-            bakedGeom,
+            this.currentGeometry.clone(),
             mat,
             { ...this.currentStats },
             true,
-            'Player'
+            'Player',
+            this.garageEuler,
+            this.currentGeometry
         );
         this.player.boostLeft = 3.0; // 3 seconds boost
         this.player.teleport(this.trackData.spawn.position, this.trackData.spawn.direction);
@@ -1146,86 +1455,120 @@ class GameApp {
                 this.renderer.render(this.raceScene, this.camera);
             } else if (this.state === 'GARAGE_LAUNCH') {
                 const elapsed = (performance.now() - this.launchStartTime) / 1000.0;
-                this.launchCarSpeed = Math.min(this.launchCarSpeed + delta * 55.0, 140.0);
-                this.launchCarDist += this.launchCarSpeed * delta;
+                const nowSec = performance.now() * 0.001;
 
-                if (this.garageVehicleRoot) {
-                    this.garageVehicleRoot.position.set(0, 0, -this.launchCarDist);
-                    // High-speed chassis rumble vibration
-                    this.garageVehicleRoot.position.y = Math.sin(elapsed * 50.0) * 0.015;
-                    this.garageVehicleRoot.rotation.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
-                }
-
-                if (this.garageGridMat) {
-                    this.garageGridMat.uniforms.uTime.value += delta;
-                    this.garageGridMat.uniforms.uSpeed.value = this.launchCarSpeed;
-                }
                 if (this.garageSunMat) {
-                    this.garageSunMat.uniforms.uTime.value += delta;
-                    this.garageSunMat.uniforms.uGlitch.value = Math.min(elapsed * 2.2, 4.0);
+                    this.garageSunMat.uniforms.uTime.value = nowSec;
+                    this.garageSunMat.uniforms.uGlitch.value = Math.sin(nowSec * 3.0) > 0.96 ? 1.0 : 0.0;
+                }
+                if (this.garageGridMat) {
+                    this.garageGridMat.uniforms.uTime.value = nowSec;
                 }
 
-                // Dynamic camera chase behind the void-driving vehicle
-                const camZ = -this.launchCarDist + 5.2;
-                const camY = 1.55 + Math.sin(elapsed * 15.0) * 0.012;
-                this.camera.position.set(0, camY, camZ);
-                this.camera.lookAt(0, 0.45, -this.launchCarDist - 22.0);
-                this.camera.fov = 65 + Math.min(this.launchCarSpeed * 0.28, 24);
-                this.camera.updateProjectionMatrix();
+                if (!this.hasSwappedToCompositor) {
+                    // Phase 1: Real 3D forward acceleration along neon runway towards sun (~0.85s)
+                    this.launchCarSpeed = Math.min(this.launchCarSpeed + delta * 55.0, 50.0);
+                    this.launchCarDist += this.launchCarSpeed * delta;
 
-                // Project 3D position above vehicle onto screen for holographic loading HUD
-                const hudEl = document.getElementById('void-loading-hud');
-                if (hudEl && hudEl.style.display !== 'none') {
-                    const screenPos = new THREE.Vector3(0, 1.85, -this.launchCarDist);
-                    screenPos.project(this.camera);
-                    const sx = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
-                    const sy = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
-                    hudEl.style.left = `${sx}px`;
-                    hudEl.style.top = `${sy}px`;
-                }
-
-                // Warp transition trigger: ONLY when loading is 100% completed and car has driven at least 0.8s
-                if (this.isRaceLoaded && elapsed >= 0.8 && this.launchPhase === 'LOADING_VOID') {
-                    this.launchPhase = 'WARP_TRANSITION';
-                    if (hudEl) hudEl.style.opacity = '0';
-
-                    const overlay = document.getElementById('warp-transition-overlay');
-                    if (overlay) {
-                        overlay.style.transition = 'opacity 0.35s ease-in';
-                        overlay.style.backgroundColor = '#000000';
-                        overlay.style.opacity = '1';
+                    const carElev = this.garageVehicleElevation || 0;
+                    if (this.garageVehicleRoot) {
+                        this.garageVehicleRoot.position.set(0, carElev, -this.launchCarDist);
+                        this.garageVehicleRoot.rotation.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
                     }
 
-                    setTimeout(() => {
-                        // Flash to radiant white
-                        if (overlay) {
-                            overlay.style.transition = 'background-color 0.12s ease';
-                            overlay.style.backgroundColor = '#ffffff';
+                    // Camera smoothly swings into chase camera position behind driving car
+                    const targetCamPos = new THREE.Vector3(0, carElev + 2.5, -this.launchCarDist + 6.2);
+                    const camLerp = Math.min(1.0, delta * 7.0);
+                    this.camera.position.lerp(targetCamPos, camLerp);
+                    this.camera.lookAt(0, carElev + 0.8, -this.launchCarDist - 3.0);
+                    this.camera.fov = 65;
+                    this.camera.updateProjectionMatrix();
+
+                    // Move grid center with vehicle so runway is infinite
+                    if (this.garageGridMat) {
+                        this.garageGridMat.uniforms.uCenter.value.set(0, -this.launchCarDist);
+                    }
+                    if (this.garageGridMesh) {
+                        this.garageGridMesh.position.z = -this.launchCarDist;
+                    }
+                    if (this.garageSunMesh) {
+                        this.garageSunMesh.position.set(0, 24, -this.launchCarDist - 160);
+                    }
+
+                    this.renderer.render(this.garageScene, this.camera);
+
+                    // At 1.0s: stop recording and swap to compositor video loop
+                    if (elapsed >= 1.0) {
+                        if (this.isRecordingLaunch && this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                            this.isRecordingLaunch = false;
+                            this.mediaRecorder.stop();
+                            // _handleRecordedLoopReady will trigger upon recorder onstop event
+                        } else {
+                            this._fallbackCompositorSwap();
                         }
-
-                        setTimeout(() => {
-                            this._finalizeRaceLaunch();
-                            if (overlay) {
-                                overlay.style.transition = 'opacity 0.45s ease-out';
-                                overlay.style.opacity = '0';
-                            }
-                            if (hudEl) hudEl.style.display = 'none';
-                        }, 120);
-                    }, 350);
+                    }
+                } else {
+                    // Phase 2: Hardware-accelerated video loop handles 60 FPS loading loop on GPU thread
+                    // Render garage scene lightly in background
+                    this.renderer.render(this.garageScene, this.camera);
                 }
-
-                this.renderer.render(this.garageScene, this.camera);
             } else if (this.state === 'GARAGE') {
+                const nowSec = performance.now() * 0.001;
+                if (this.garageSunMat) {
+                    this.garageSunMat.uniforms.uTime.value = nowSec;
+                    this.garageSunMat.uniforms.uGlitch.value = Math.sin(nowSec * 3.0) > 0.96 ? 1.0 : 0.0;
+                }
+                if (this.garageGridMat) {
+                    this.garageGridMat.uniforms.uTime.value = nowSec;
+                }
                 this._updateCamera(delta);
+                if (this.isAligningToFront) {
+                    const elapsed = (performance.now() - this.alignStartTime) / 1000.0;
+                    const duration = 0.65;
+                    const t = Math.min(1.0, elapsed / duration);
+                    const ease = 1.0 - Math.pow(1.0 - t, 3.0);
+                    this.turntableYaw = THREE.MathUtils.lerp(this.alignStartYaw, 0, ease);
+                    this.turntablePitch = THREE.MathUtils.lerp(this.alignStartPitch, 0, ease);
+                    this.turntableRoll = THREE.MathUtils.lerp(this.alignStartRoll, 0, ease);
+                    this._updateGarageElevation();
+                    if (t >= 1.0) {
+                        this.isAligningToFront = false;
+                        this.turntableYaw = 0;
+                        this.turntablePitch = 0;
+                        this.turntableRoll = 0;
+                        this._updateGarageElevation();
+                        document.body.style.cursor = 'grab';
+                        const hintEl = document.querySelector('.garage-center-hint span');
+                        if (hintEl) hintEl.textContent = '🖱️ Click & Drag to Rotate Yaw/Pitch • Shift+Drag to Roll';
+                    }
+                }
                 if (this.garageVehicleRoot) {
+                    this.garageVehicleRoot.position.set(0, this.garageVehicleElevation || 0, 0);
                     this.garageVehicleRoot.rotation.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
+                }
+                if (this.garageDisplayShadow) {
+                    this.garageDisplayShadow.position.set(0, -0.015, 0);
+                    this.garageDisplayShadow.rotation.set(0, this.turntableYaw, 0);
                 }
                 this.renderer.render(this.garageScene, this.camera);
             } else if (this.state === 'MENU') {
+                const nowSec = performance.now() * 0.001;
+                if (this.garageSunMat) {
+                    this.garageSunMat.uniforms.uTime.value = nowSec;
+                    this.garageSunMat.uniforms.uGlitch.value = Math.sin(nowSec * 3.0) > 0.96 ? 1.0 : 0.0;
+                }
+                if (this.garageGridMat) {
+                    this.garageGridMat.uniforms.uTime.value = nowSec;
+                }
                 this.turntableYaw += delta * 0.4;
                 this._updateCamera(delta);
                 if (this.garageVehicleRoot) {
+                    this.garageVehicleRoot.position.set(0, this.garageVehicleElevation || 0, 0);
                     this.garageVehicleRoot.rotation.set(0.12, this.turntableYaw, 0, 'YXZ');
+                }
+                if (this.garageDisplayShadow) {
+                    this.garageDisplayShadow.position.set(0, -0.015, 0);
+                    this.garageDisplayShadow.rotation.set(0, this.turntableYaw, 0);
                 }
                 this.renderer.render(this.garageScene, this.camera);
             }

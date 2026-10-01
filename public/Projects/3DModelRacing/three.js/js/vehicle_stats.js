@@ -60,6 +60,8 @@ export const VehicleStats = {
 
         return {
             size,
+            minY: orientedBox.min.y,
+            maxY: orientedBox.max.y,
             stats: this.compute(size)
         };
     },

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { getTerrainHeight } from './terrain.js';
 
 export class Vehicle {
-    constructor(scene, geometry, material, stats, isPlayer = false, name = 'Racer') {
+    constructor(scene, geometry, material, stats, isPlayer = false, name = 'Racer', garageEuler = null, baseGeometry = null) {
         this.scene = scene;
         this.stats = { ...stats };
         this.isPlayer = isPlayer;
@@ -11,40 +11,61 @@ export class Vehicle {
 
         // Vehicle Mesh & Root Hierarchy
         this.root = new THREE.Group();
+        this.modelGroup = new THREE.Group();
+        this.root.add(this.modelGroup);
+
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
-        this.root.add(this.mesh);
+        this.modelGroup.add(this.mesh);
 
-        // Dual Xenon Headlights (Front nose cone)
+        // Compute reference bounds from unrotated base geometry if provided (matching garage!), otherwise from geometry
+        const refGeom = baseGeometry || geometry;
+        refGeom.computeBoundingBox();
+        const box = refGeom.boundingBox || new THREE.Box3(new THREE.Vector3(-0.7, 0, -1.5), new THREE.Vector3(0.7, 0.8, 1.5));
+        const frontZ = box.min.z;
+        const rearZ = box.max.z;
+        const halfW = Math.max(0.18, (box.max.x - box.min.x) * 0.24);
+        const lightY = box.min.y + (box.max.y - box.min.y) * 0.38;
+
+        // Dual Xenon Headlights (Front nose cone — integrated directly as child meshes of modelGroup)
         const hlMat = new THREE.MeshStandardMaterial({
             color: 0x00f2fe,
             emissive: 0x00f2fe,
             emissiveIntensity: 2.8
         });
-        const hlL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.15), hlMat);
-        hlL.position.set(-0.25, 0.22, -1.25);
+        const hlL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.12), hlMat);
+        hlL.position.set(-halfW, lightY, frontZ + 0.06);
         hlL.castShadow = true;
-        this.root.add(hlL);
-        const hlR = hlL.clone();
-        hlR.position.x = 0.25;
-        hlR.castShadow = true;
-        this.root.add(hlR);
+        this.modelGroup.add(hlL);
 
-        // Dual Red Taillights (Rear deck)
+        const hlR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.12), hlMat);
+        hlR.position.set(halfW, lightY, frontZ + 0.06);
+        hlR.castShadow = true;
+        this.modelGroup.add(hlR);
+
+        // Dual Red Taillights / Brake Lights (Rear deck — integrated directly as child meshes of modelGroup)
         const tlMat = new THREE.MeshStandardMaterial({
             color: 0xff1122,
             emissive: 0xff1122,
-            emissiveIntensity: 2.8
+            emissiveIntensity: 2.0
         });
-        const tlL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.12), tlMat);
-        tlL.position.set(-0.55, 0.35, 1.35);
+        const tlL = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.08, 0.12), tlMat);
+        tlL.position.set(-halfW * 1.25, lightY + 0.08, rearZ - 0.06);
         tlL.castShadow = true;
-        this.root.add(tlL);
-        const tlR = tlL.clone();
-        tlR.position.x = 0.55;
+        this.modelGroup.add(tlL);
+
+        const tlR = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.08, 0.12), tlMat);
+        tlR.position.set(halfW * 1.25, lightY + 0.08, rearZ - 0.06);
         tlR.castShadow = true;
-        this.root.add(tlR);
+        this.modelGroup.add(tlR);
+
+        this.brakeLights = [tlL, tlR];
+
+        // Apply garage orientation to modelGroup so the vehicle and all lights rotate as one unified model!
+        if (garageEuler) {
+            this.modelGroup.rotation.copy(garageEuler);
+        }
 
         this.scene.add(this.root);
 
@@ -318,6 +339,19 @@ export class Vehicle {
             this.contactShadow.position.set(this.position.x, shadowY, this.position.z);
             this.contactShadow.rotation.set(this.pitch, this.heading, this.roll, 'YXZ');
             this.contactShadow.visible = this.grounded && !this.ascended;
+        }
+
+        // Dynamic Brake Light Illumination
+        const isBraking = (this.inputs.brake > 0.1) || (this.speed > 3.0 && this.inputs.throttle < -0.1);
+        const targetIntensity = isBraking ? 6.5 : 2.0;
+        if (this.brakeLights) {
+            for (let i = 0; i < this.brakeLights.length; i++) {
+                this.brakeLights[i].material.emissiveIntensity = THREE.MathUtils.lerp(
+                    this.brakeLights[i].material.emissiveIntensity,
+                    targetIntensity,
+                    delta * 14.0
+                );
+            }
         }
 
         // 7. Check Star Ramp Launch (Player AND Rivals!)

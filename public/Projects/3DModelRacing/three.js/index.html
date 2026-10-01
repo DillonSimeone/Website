@@ -16,21 +16,33 @@
     </script>
 </head>
 <body>
-    <!-- Full-screen WebGL Canvas -->
     <canvas id="webgl-canvas"></canvas>
-    <div id="warp-transition-overlay"></div>
 
-    <!-- Cyberpunk Holographic Void Loading HUD (Floats above vehicle during garage launch) -->
-    <div id="void-loading-hud" style="display: none;">
-        <div class="void-loader-box">
-            <div class="void-loader-header">
-                <div><span class="void-pulse-dot"></span><span id="void-loader-title">WARP DRIVE CHARGING</span></div>
-                <span id="void-loader-percent" style="color: #bd00ff;">0%</span>
+    <!-- Hardware-Accelerated Compositor Loading Screen (Decoupled from V8/WebGL main thread) -->
+    <div id="launch-compositor-overlay" style="display: none;">
+        <!-- Hardware-decoded looping video of the live recorded drive (smooth 60fps on GPU thread) -->
+        <video id="compositor-video-loop" autoplay loop muted playsinline style="display: none;"></video>
+
+        <!-- Looping animated background of the moving neon grid and retro sun (fallback) -->
+        <img id="compositor-bg-loop" src="assets/cyber_grid_loop.webp" alt="Cyber Grid Drive Loop" style="display: none;">
+
+        <!-- Vehicle snapshot container (anchored in chase-cam screen space) -->
+        <div id="compositor-vehicle-container" style="display: none;">
+            <img id="compositor-vehicle-img" alt="Player Hovercraft">
+        </div>
+
+        <!-- Holographic HUD above vehicle -->
+        <div id="compositor-loading-hud">
+            <div class="void-loader-box">
+                <div class="void-loader-header">
+                    <div><span class="void-pulse-dot"></span><span id="compositor-loader-title">WARP DRIVE CHARGING</span></div>
+                    <span id="compositor-loader-percent" style="color: #00f3ff;">0%</span>
+                </div>
+                <div class="void-progress-track">
+                    <div class="void-progress-fill" id="compositor-loader-bar"></div>
+                </div>
+                <div class="void-loader-task" id="compositor-loader-task">SYNCHRONIZING PROCEDURAL SECTOR...</div>
             </div>
-            <div class="void-progress-track">
-                <div class="void-progress-fill" id="void-loader-bar"></div>
-            </div>
-            <div class="void-loader-task" id="void-loader-task">SYNCHRONIZING PROCEDURAL SECTOR...</div>
         </div>
     </div>
 

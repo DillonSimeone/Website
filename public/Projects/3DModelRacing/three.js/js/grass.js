@@ -25,7 +25,7 @@ export const DEFAULT_GRASS_RINGS = [
         segments: 2,
         bladesPerTuft: 5,
         cellSize: 0.16,
-        patchSize: 140.0,
+        patchSize: 140,
         bladeWidth: 0.034,
         maxBladeHeight: 1.0,
         fadeInMin: 0.0,
@@ -46,7 +46,7 @@ export const DEFAULT_GRASS_RINGS = [
         segments: 2,
         bladesPerTuft: 4,
         cellSize: 0.52,
-        patchSize: 240.0,
+        patchSize: 240,
         bladeWidth: 0.046,
         maxBladeHeight: 1.05,
         fadeInMin: 32.0,
@@ -67,7 +67,7 @@ export const DEFAULT_GRASS_RINGS = [
         segments: 1,
         bladesPerTuft: 4,
         cellSize: 0.74,
-        patchSize: 390.0,
+        patchSize: 390,
         bladeWidth: 0.065,
         maxBladeHeight: 1.10,
         fadeInMin: 72.0,
@@ -88,7 +88,7 @@ export const DEFAULT_GRASS_RINGS = [
         segments: 1,
         bladesPerTuft: 3,
         cellSize: 1.10,
-        patchSize: 610.0,
+        patchSize: 610,
         bladeWidth: 0.095,
         maxBladeHeight: 1.18,
         fadeInMin: 125.0,
@@ -109,7 +109,7 @@ export const DEFAULT_GRASS_RINGS = [
         segments: 1,
         bladesPerTuft: 3,
         cellSize: 1.65,
-        patchSize: 890.0,
+        patchSize: 890,
         bladeWidth: 0.145,
         maxBladeHeight: 1.25,
         fadeInMin: 200.0,
@@ -130,7 +130,7 @@ export const DEFAULT_GRASS_RINGS = [
         segments: 1,
         bladesPerTuft: 2,
         cellSize: 2.45,
-        patchSize: 1220.0,
+        patchSize: 1220,
         bladeWidth: 0.220,
         maxBladeHeight: 1.35,
         fadeInMin: 310.0,
@@ -159,10 +159,10 @@ export const DEFAULT_GRASS_CONFIG = {
         wheatFrequency: 0.08,
         twistIntensity: 0.95,
         flowerColors: [
-            [0.95, 0.22, 0.20], // Poppy Crimson
-            [0.98, 0.82, 0.14], // Buttercup Golden
-            [0.22, 0.55, 0.95], // Cornflower Blue
-            [0.98, 0.98, 0.95]  // Daisy White
+            [0.949, 0.220, 0.200], // Poppy Crimson
+            [0.980, 0.820, 0.141], // Buttercup Golden
+            [0.220, 0.549, 0.949], // Cornflower Blue
+            [0.980, 0.980, 0.949]  // Daisy White
         ]
     },
     rings: DEFAULT_GRASS_RINGS,
@@ -212,10 +212,12 @@ export class GrassField {
 
         this._initCommonShaders();
         this._initTextures();
-        this._buildConcentricRings();
 
-        // Attempt async config load from configure/grass.json without blocking immediate render
-        this._loadConfig();
+        if (!customConfig || !customConfig.deferred) {
+            this._buildConcentricRings();
+            // Attempt async config load from configure/grass.json without blocking immediate render
+            this._loadConfig();
+        }
     }
 
     _initCommonShaders() {
@@ -269,34 +271,43 @@ export class GrassField {
                 origin.x = mod(origin.x - uPlayerPosition.x + halfPatch, uPatchSize) - halfPatch;
                 origin.z = mod(origin.z - uPlayerPosition.z + halfPatch, uPatchSize) - halfPatch;
 
-                // Radial distance from player in moving toroidal coordinate space
-                float distFromCam = length(origin.xz);
+                vec2 worldXZ = vec2(uPlayerPosition.x + origin.x, uPlayerPosition.z + origin.z);
+
+                // Continuous multi-frequency organic wave jitter perturbs radial distance by ±5.5m
+                float radialJitter = sin(worldXZ.x * 0.065 + worldXZ.y * 0.045) * 3.2
+                                   + cos(worldXZ.x * 0.035 - worldXZ.y * 0.055) * 2.3;
+                float distFromCam = max(0.0, length(origin.xz) + radialJitter);
 
                 // Smooth radial cross-fading
                 float fadeIn = (uFadeInMax > 0.0) ? smoothstep(uFadeInMin, uFadeInMax, distFromCam) : 1.0;
                 float fadeOut = 1.0 - smoothstep(uFadeOutMin, uFadeOutMax, distFromCam);
                 float fade = fadeIn * fadeOut;
 
-                // CRITICAL: Mathematically discard any vertex beyond the inscribed circle.
-                if (fade <= 0.0005) {
+                // CRITICAL: Mathematically discard any vertex beyond the active cross-fade envelope
+                if (fade <= 0.001) {
                     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
                     return;
                 }
 
-                vec2 worldXZ = vec2(uPlayerPosition.x + origin.x, uPlayerPosition.z + origin.z);
-
-                // Road clearance check: discard grass growing inside asphalt ribbon
+                // Continuous road ribbon corridor clearance: line-segment distance check
                 float minRD = 999.0;
-                for (int r = 0; r < 32; r++) {
-                    if (r >= uRoadCount) break;
-                    float d = length(worldXZ - uRoadPoints[r].xz);
-                    if (d < minRD) minRD = d;
+                for (int r = 0; r < 31; r++) {
+                    if (r + 1 >= uRoadCount) break;
+                    vec2 pA = uRoadPoints[r].xz;
+                    vec2 pB = uRoadPoints[r + 1].xz;
+                    vec2 ab = pB - pA;
+                    float lenSq = dot(ab, ab);
+                    if (lenSq > 0.01) {
+                        float tSeg = clamp(dot(worldXZ - pA, ab) / lenSq, 0.0, 1.0);
+                        float d = length(worldXZ - (pA + ab * tSeg));
+                        if (d < minRD) minRD = d;
+                    }
                 }
-                if (minRD < 6.4) {
+                if (minRD < 7.0) {
                     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
                     return;
-                } else if (minRD < 8.2) {
-                    fade *= smoothstep(6.4, 8.2, minRD);
+                } else if (minRD < 9.2) {
+                    fade *= smoothstep(7.0, 9.2, minRD);
                 }
 
                 float terrainY = getTerrainHeight(worldXZ);
@@ -309,8 +320,8 @@ export class GrassField {
                     return;
                 }
 
-                // Power curve preserve: prevents blades from collapsing into a mowed depression in overlap zones!
-                float fadeH = pow(fade, 0.42);
+                // Smooth Ghibli cross-fading: blades gracefully taper height & width across overlap zones
+                float fadeH = pow(fade, 0.45);
 
                 float noiseH = texture2D(uNoiseTexture, worldXZ * 0.08).r * 0.45
                              + texture2D(uNoiseTexture, worldXZ * 0.035).g * 0.35
@@ -531,43 +542,25 @@ export class GrassField {
         this.noiseTexture.wrapT = THREE.RepeatWrapping;
     }
 
-    _calculateAdaptiveDensity(opts) {
-        const adConfig = this.config.adaptiveDensity || {};
-        if (!adConfig.enabled) {
-            return opts.cellSize || 0.5;
+    _calculateAdaptiveDensity(ring) {
+        const adCfg = this.config.adaptiveDensity;
+        if (!adCfg || !adCfg.enabled) {
+            return ring.cellSize || 0.5;
         }
-
-        const baseTargetTris = adConfig.targetTrianglesPerRing || 1200000;
-        const comp = adConfig.cullingCompensation || 1.35;
-        const patchSize = opts.patchSize || 140.0;
-        const bladesPerTuft = opts.bladesPerTuft || 4;
-        const segments = opts.segments || 2;
-
-        // Frustum factor (~0.48 visible) + fade envelope utilization
-        const fadeOut = opts.fadeOutMax || (patchSize * 0.45);
-        const fadeIn = opts.fadeInMin || 0.0;
+        const targetTris = (adCfg.targetTrianglesPerRing || 1200000) * (ring.segments > 1 ? 1.25 : 0.85);
+        const comp = adCfg.cullingCompensation || 1.35;
+        const fadeOut = ring.fadeOutMax || 64.0;
+        const fadeIn = ring.fadeInMin || 0.0;
         const activeArea = Math.PI * Math.max(1.0, (fadeOut * fadeOut - fadeIn * fadeIn));
-        const patchArea = patchSize * patchSize;
+        const patchArea = (ring.patchSize || 140) * (ring.patchSize || 140);
         const coverageRatio = Math.max(0.10, Math.min(1.0, activeArea / patchArea));
+        const visibleFraction = coverageRatio * 0.48;
 
-        const effectiveFrustumFraction = 0.48;
-        const visibleFraction = coverageRatio * effectiveFrustumFraction;
-
-        // Scale budget: nearer rings get slightly higher share
-        const lodMultiplier = (segments > 1) ? 1.25 : 0.85;
-        const targetTris = baseTargetTris * lodMultiplier;
-
-        // Tris per blade = segments * 2
-        const effectiveCapacity = Math.max(15000, targetTris / (segments * 2 * visibleFraction * comp));
-        const tuftsRequired = effectiveCapacity / bladesPerTuft;
-        const cellsPerAxis = Math.max(10, Math.sqrt(tuftsRequired));
-        const adaptiveCellSize = patchSize / cellsPerAxis;
-
-        // Clamp to sensible physical bounds relative to base cellSize
-        const baseCell = opts.cellSize || 0.5;
-        const minCell = Math.max(0.08, baseCell * 0.75);
-        const maxCell = Math.max(minCell, baseCell * 1.35);
-        return Math.min(maxCell, Math.max(minCell, adaptiveCellSize));
+        const capacity = Math.max(15000, targetTris / (ring.segments * 2 * visibleFraction * comp));
+        const tuftsReq = capacity / (ring.bladesPerTuft || 4);
+        const cellsAxis = Math.max(10, Math.sqrt(tuftsReq));
+        const adaptiveCell = (ring.patchSize || 140) / cellsAxis;
+        return Math.min((ring.cellSize || 0.5) * 1.35, Math.max(0.08, adaptiveCell));
     }
 
     _createRingMesh(opts) {
@@ -585,15 +578,15 @@ export class GrassField {
             leanMax = 0.32,
             hScaleMin = 0.45,
             hScaleMax = 1.25,
-            curveMin = 0.12,
-            curveMax = 0.38
+            curveMin = 0.14,
+            curveMax = 0.36
         } = opts;
 
         // Mathematical guarantee against square bounding-box artifacts:
         const minPatchRequired = Math.ceil(fadeOutMax * 2.15);
         const patchSize = Math.max(opts.patchSize || 0, minPatchRequired);
 
-        // Adaptive density calculation
+        // Density calculation
         const cellSize = this._calculateAdaptiveDensity(Object.assign({}, opts, { patchSize }));
 
         const floraConfig = this.config.flora || {};
@@ -751,41 +744,64 @@ export class GrassField {
         return { mesh, uniforms, geometry, material };
     }
 
-    _buildConcentricRings() {
-        this._disposeRings();
-
+    getRingCount() {
         const ringList = (this.config.rings && this.config.rings.length > 0)
             ? this.config.rings
             : DEFAULT_GRASS_RINGS;
+        return ringList.length;
+    }
 
-        for (const ringCfg of ringList) {
-            const r = this._createRingMesh({
-                id: ringCfg.id || 'ring',
-                segments: ringCfg.segments !== undefined ? ringCfg.segments : (this.config.bladeSegments || 2),
-                bladesPerTuft: ringCfg.bladesPerTuft !== undefined ? ringCfg.bladesPerTuft : (this.config.bladesPerTuft || 4),
-                patchSize: ringCfg.patchSize,
-                cellSize: ringCfg.cellSize || 0.6,
-                bladeWidth: ringCfg.bladeWidth || 0.05,
-                maxBladeHeight: ringCfg.maxBladeHeight || 1.0,
-                fadeInMin: ringCfg.fadeInMin !== undefined ? ringCfg.fadeInMin : 0.0,
-                fadeInMax: ringCfg.fadeInMax !== undefined ? ringCfg.fadeInMax : 0.0,
-                fadeOutMin: ringCfg.fadeOutMin !== undefined ? ringCfg.fadeOutMin : 80.0,
-                fadeOutMax: ringCfg.fadeOutMax !== undefined ? ringCfg.fadeOutMax : 120.0,
-                enableTrample: !!ringCfg.enableTrample,
-                leanMin: ringCfg.leanMin !== undefined ? ringCfg.leanMin : (this.config.leanMin || 0.06),
-                leanMax: ringCfg.leanMax !== undefined ? ringCfg.leanMax : (this.config.leanMax || 0.32),
-                hScaleMin: ringCfg.hScaleMin !== undefined ? ringCfg.hScaleMin : (this.config.hScaleMin || 0.45),
-                hScaleMax: ringCfg.hScaleMax !== undefined ? ringCfg.hScaleMax : (this.config.hScaleMax || 1.25),
-                curveMin: ringCfg.curveMin !== undefined ? ringCfg.curveMin : (this.config.curveMin || 0.14),
-                curveMax: ringCfg.curveMax !== undefined ? ringCfg.curveMax : (this.config.curveMax || 0.36)
-            });
-            this.rings.push(r);
+    buildRing(index) {
+        const ringList = (this.config.rings && this.config.rings.length > 0)
+            ? this.config.rings
+            : DEFAULT_GRASS_RINGS;
+        if (index < 0 || index >= ringList.length) return null;
+
+        if (this.rings[index]) {
+            const old = this.rings[index];
+            if (old && old.mesh) {
+                this.scene.remove(old.mesh);
+                if (old.geometry) old.geometry.dispose();
+                if (old.material) old.material.dispose();
+            }
+        }
+
+        const ringCfg = ringList[index];
+        const r = this._createRingMesh({
+            id: ringCfg.id || ('ring_' + index),
+            segments: ringCfg.segments !== undefined ? ringCfg.segments : (this.config.bladeSegments || 2),
+            bladesPerTuft: ringCfg.bladesPerTuft !== undefined ? ringCfg.bladesPerTuft : (this.config.bladesPerTuft || 4),
+            patchSize: ringCfg.patchSize,
+            cellSize: ringCfg.cellSize || 0.6,
+            bladeWidth: ringCfg.bladeWidth || 0.05,
+            maxBladeHeight: ringCfg.maxBladeHeight || 1.0,
+            fadeInMin: ringCfg.fadeInMin !== undefined ? ringCfg.fadeInMin : 0.0,
+            fadeInMax: ringCfg.fadeInMax !== undefined ? ringCfg.fadeInMax : 0.0,
+            fadeOutMin: ringCfg.fadeOutMin !== undefined ? ringCfg.fadeOutMin : 80.0,
+            fadeOutMax: ringCfg.fadeOutMax !== undefined ? ringCfg.fadeOutMax : 120.0,
+            enableTrample: !!ringCfg.enableTrample,
+            leanMin: ringCfg.leanMin !== undefined ? ringCfg.leanMin : (this.config.leanMin || 0.06),
+            leanMax: ringCfg.leanMax !== undefined ? ringCfg.leanMax : (this.config.leanMax || 0.32),
+            hScaleMin: ringCfg.hScaleMin !== undefined ? ringCfg.hScaleMin : (this.config.hScaleMin || 0.45),
+            hScaleMax: ringCfg.hScaleMax !== undefined ? ringCfg.hScaleMax : (this.config.hScaleMax || 1.25),
+            curveMin: ringCfg.curveMin !== undefined ? ringCfg.curveMin : (this.config.curveMin || 0.14),
+            curveMax: ringCfg.curveMax !== undefined ? ringCfg.curveMax : (this.config.curveMax || 0.36)
+        });
+        this.rings[index] = r;
+        return r;
+    }
+
+    _buildConcentricRings() {
+        this._disposeRings();
+        const count = this.getRingCount();
+        for (let i = 0; i < count; i++) {
+            this.buildRing(i);
         }
     }
 
     _disposeRings() {
         for (const r of this.rings) {
-            if (r.mesh) {
+            if (r && r.mesh) {
                 this.scene.remove(r.mesh);
                 if (r.geometry) r.geometry.dispose();
                 if (r.material) r.material.dispose();
@@ -848,6 +864,7 @@ export class GrassField {
             // Update dynamic uniforms without reallocating buffers
             for (let i = 0; i < this.rings.length; i++) {
                 const ring = this.rings[i];
+                if (!ring) continue;
                 const ringCfg = (this.config.rings && this.config.rings[i]) ? this.config.rings[i] : null;
                 const u = ring.uniforms;
 
@@ -885,23 +902,33 @@ export class GrassField {
         this.elapsedTime += delta;
         this.elapsedSeason = (this.elapsedSeason || 0) + delta * 0.0035;
 
-        // Calculate active road points once for all rings
+        // Calculate active connected road segments around the player once for all rings
         const roadPts = [];
         if (trackData && trackData.points && playerPos) {
             const pts = trackData.points;
-            for (let i = 0; i < pts.length && roadPts.length < 32; i += 2) {
-                const p = pts[i];
-                const dx = p.x - playerPos.x;
-                const dz = p.z - playerPos.z;
-                if (dx * dx + dz * dz < 40000) {
-                    roadPts.push(p);
+            let closestIdx = 0;
+            let closestDistSq = Infinity;
+            for (let i = 0; i < pts.length; i += 3) {
+                const dx = pts[i].x - playerPos.x;
+                const dz = pts[i].z - playerPos.z;
+                const dSq = dx * dx + dz * dz;
+                if (dSq < closestDistSq) {
+                    closestDistSq = dSq;
+                    closestIdx = i;
                 }
+            }
+            // Gather 32 consecutive connected road points around closest point
+            const startIdx = Math.max(0, closestIdx - 14);
+            const endIdx = Math.min(pts.length - 1, startIdx + 31);
+            for (let i = startIdx; i <= endIdx; i++) {
+                roadPts.push(pts[i]);
             }
         }
 
         const maxVehicles = Math.min(vehiclePositions.length, 8);
 
         for (const ring of this.rings) {
+            if (!ring) continue;
             const u = ring.uniforms;
             u.uTime.value = this.elapsedTime;
             u.uSeasonTime.value = this.elapsedSeason;
