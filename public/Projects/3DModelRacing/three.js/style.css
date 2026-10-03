@@ -763,13 +763,22 @@ html, body {
     overflow: hidden;
     pointer-events: auto;
     opacity: 1;
-    transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1);
     background: #07030e;
 }
 
 #launch-compositor-overlay.dissolve-out {
-    opacity: 0 !important;
-    pointer-events: none !important;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#compositor-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    z-index: 4540;
 }
 
 #compositor-video-loop {

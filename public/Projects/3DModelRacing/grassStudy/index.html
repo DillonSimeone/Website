@@ -24,11 +24,84 @@
             border-radius: 4px; padding: 4px 6px; font-family: 'Consolas', monospace;
             font-size: 11px; width: 80px;
         }
+        .ctrl-row input[type=range] {
+            flex: 1; height: 6px; border-radius: 3px;
+            cursor: pointer; outline: none; margin: 0 4px;
+            -webkit-appearance: none; appearance: none;
+        }
+        /* Color-Coded Sliders: Blue = Live GPU Uniform (Instant), Red = Structural (Rebuilds) */
+        .ctrl-row input[type=range].slider-blue {
+            background: #0d2238;
+            accent-color: #38bdf8;
+        }
+        .ctrl-row input[type=range].slider-blue::-webkit-slider-runnable-track {
+            background: #112d4a;
+            height: 6px;
+            border-radius: 3px;
+        }
+        .ctrl-row input[type=range].slider-blue::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #38bdf8; cursor: pointer;
+            box-shadow: 0 0 7px rgba(56, 189, 248, 0.7);
+            border: 1px solid #7dd3fc;
+            margin-top: -4px;
+        }
+        .ctrl-row input[type=range].slider-blue::-moz-range-thumb {
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #38bdf8; cursor: pointer;
+            box-shadow: 0 0 7px rgba(56, 189, 248, 0.7);
+            border: 1px solid #7dd3fc;
+        }
+
+        .ctrl-row input[type=range].slider-red {
+            background: #351014;
+            accent-color: #ef4444;
+        }
+        .ctrl-row input[type=range].slider-red::-webkit-slider-runnable-track {
+            background: #4a151b;
+            height: 6px;
+            border-radius: 3px;
+        }
+        .ctrl-row input[type=range].slider-red::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #ef4444; cursor: pointer;
+            box-shadow: 0 0 7px rgba(239, 68, 68, 0.7);
+            border: 1px solid #fca5a5;
+            margin-top: -4px;
+        }
+        .ctrl-row input[type=range].slider-red::-moz-range-thumb {
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #ef4444; cursor: pointer;
+            box-shadow: 0 0 7px rgba(239, 68, 68, 0.7);
+            border: 1px solid #fca5a5;
+        }
+
+        .ctrl-row input[type=number].compact {
+            width: 58px; flex: 0 0 58px;
+        }
+        .ctrl-row input[type=number].compact.num-blue {
+            border-color: #1e3a5f;
+            color: #7dd3fc;
+        }
+        .ctrl-row input[type=number].compact.num-blue:focus {
+            border-color: #38bdf8;
+            background: #0f1e2e;
+        }
+        .ctrl-row input[type=number].compact.num-red {
+            border-color: #5f1e24;
+            color: #fca5a5;
+        }
+        .ctrl-row input[type=number].compact.num-red:focus {
+            border-color: #ef4444;
+            background: #260d10;
+        }
         .ctrl-row select { color: #55ff88; }
         .ctrl-row input[type=number]:focus, .ctrl-row select:focus { outline: none; border-color: #55ff88; background: #17241b; }
         .ctrl-row input[type=color] { border: 1px solid #29402e; border-radius: 4px; height: 26px; cursor: pointer; flex: 1; background: #101712; }
         .ctrl-row input[type=checkbox] { width: 16px; height: 16px; accent-color: #55ff88; cursor: pointer; }
-        .btn-group { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
         button {
             padding: 6px 10px; background: #233428; color: #cfd; border: 1px solid #3c5e44;
             border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 500;
@@ -38,15 +111,8 @@
         button:active { transform: translateY(1px); }
         .btn-primary { background: #1b5e20; border-color: #2e7d32; color: #fff; }
         .btn-primary:hover { background: #2e7d32; border-color: #43a047; }
-        .btn-sync { background: #004d40; border-color: #00796b; color: #80cbc4; }
-        .btn-sync:hover { background: #00695c; color: #fff; }
         #capture-btn { background: #5c2020; border-color: #8c3232; }
         #capture-btn:hover { background: #7c2828; border-color: #b84040; }
-        #ref-overlay {
-            position: fixed; bottom: 10px; left: 10px; z-index: 10; border: 2px solid #55ff88;
-            opacity: 0.6; pointer-events: none; max-width: 420px; border-radius: 6px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
-        }
         #stats {
             position: fixed; top: 0; left: 0; background: rgba(10,14,18,0.88);
             backdrop-filter: blur(6px); padding: 8px 16px; font-family: 'Consolas', monospace;
@@ -61,12 +127,6 @@
             font-size: 13px; z-index: 100; box-shadow: 0 6px 20px rgba(0,0,0,0.6);
             color: #55ff88; font-weight: 500;
         }
-        #server-status {
-            padding: 6px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 8px;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; }
-        .badge-green { background: #1b5e20; color: #aff; }
     </style>
     <script type="importmap">
     {
@@ -85,24 +145,45 @@
     <div id="toast"></div>
 
     <div id="controls">
-        <h2>🌿 Grass Study Lab <span class="badge badge-green">v3.0 MEADOW</span></h2>
+        <h2>🌿 Grass Study Lab</h2>
         
-        <div id="server-status" style="background:#15202b; border:1px solid #2b4764; color:#8ec5fc;">
-            <span>🔵 Checking Backend...</span>
+        <div style="display:flex; justify-content:space-between; font-size:10px; padding:2px 0 6px; border-bottom:1px solid rgba(255,255,255,0.08); margin-bottom:8px;">
+            <span style="color:#38bdf8; font-weight:600;">🔵 Blue: Live Uniform (Instant)</span>
+            <span style="color:#ef4444; font-weight:600;">🔴 Red: Rebuilds on Idle</span>
         </div>
 
         <div class="btn-group">
-            <button id="save-server-btn" class="btn-primary" onclick="saveToGame()" style="display:none;" title="Save changes directly to three.js/configure/grass.json">💾 Save to Game</button>
-            <button id="load-server-btn" class="btn-sync" onclick="loadFromGame()" style="display:none;" title="Load configuration from three.js/configure/grass.json">📂 Load Saved</button>
+            <button id="sim-player-btn" class="btn-primary" onclick="toggleSimulatePlayer()" style="background:#1d4ed8; border-color:#3b82f6; flex:1.4;">🏎️ Simulate Player</button>
             <button onclick="copyJsonConfig()" title="Copy grass.json formatted string to clipboard">📋 Copy JSON</button>
-            <button onclick="downloadJsonConfig()" title="Download grass.json config file">⬇️ Download</button>
+            <button id="capture-btn" onclick="captureFrame()">📸 Screenshot</button>
+            <button onclick="resetCamera()">🎥 Reset Camera</button>
         </div>
 
-        <div class="btn-group">
-            <button id="apply-btn" class="btn-primary" onclick="rebuildGrass()">🔄 Rebuild</button>
-            <button id="capture-btn" onclick="captureFrame()">📸 Capture .webp</button>
-            <button onclick="toggleRef()">👁 Ref Overlay</button>
-            <button onclick="resetCamera()">🎥 Reset Cam</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin: 4px 0 8px; font-size:11px; color:#94a3b8; background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:4px; border:1px solid rgba(255,255,255,0.06);">
+            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; user-select:none;">
+                <input type="checkbox" id="cam-follow-cb" onchange="onFollowPlayerToggle(this.checked)"> 🎥 Follow Car
+            </label>
+            <span style="font-size:10px; color:#64748b;">🖱️ L: Orbit | R/Shift: Pan | WASD: Fly</span>
+        </div>
+
+        <h3>🌾 Botanical & Stylized Species</h3>
+        <div class="ctrl-row">
+            <label>Species Preset</label>
+            <select id="speciesPresetSelect" onchange="onSpeciesPresetChange()">
+                <option value="">-- Choose Species Preset --</option>
+                <option value="kentuckyBluegrass">Kentucky Bluegrass (Deep blue-green, upright)</option>
+                <option value="perennialRyegrass">Perennial Ryegrass (Fine textured, shiny)</option>
+                <option value="tallFescue">Tall Fescue (Coarse, dense clump)</option>
+                <option value="bermuda">Bermuda (Dense carpet, light green)</option>
+                <option value="zoysia">Zoysia (Stiff, fine, upright)</option>
+                <option value="stAugustine">St. Augustine (Broad blade, tropical)</option>
+                <option value="buffalo">Buffalo (Soft, curly, blue-gray)</option>
+                <option value="fineFescue">Fine Fescue (Very thin, floppy)</option>
+                <option value="toonMeadow">Toon Meadow (Stylized bright green)</option>
+                <option value="goldenSavanna">Golden Savanna (Stylized tall golden)</option>
+                <option value="autumnHaze">Autumn Haze (Stylized olive ochre)</option>
+                <option value="frostbite">Frostbite (Stylized pale frosted)</option>
+            </select>
         </div>
 
         <h3>🌐 Meadow View Mode</h3>
@@ -114,9 +195,16 @@
             </select>
         </div>
         <div class="ctrl-row">
+            <label>Coord System</label>
+            <select id="coordMode" onchange="onCoordModeChange()">
+                <option value="GAME_MODULO">🎮 Game Mode (Player-Centric Modulo)</option>
+                <option value="STATIC_FIELD">🌍 Static World Meadow</option>
+            </select>
+        </div>
+        <div class="ctrl-row">
             <label>Selected Ring</label>
             <select id="ringSelect" onchange="onRingSelectChange()">
-                <option value="0">Ring 1 (Ultra Carpet 0-64m)</option>
+                <option value="0">Ring 1 (Ultra Carpet 0-65m)</option>
                 <option value="1">Ring 2 (Fine Meadow 32-115m)</option>
                 <option value="2">Ring 3 (Mid Meadow 72-185m)</option>
                 <option value="3">Ring 4 (Far-Mid 125-290m)</option>
@@ -124,6 +212,108 @@
                 <option value="5">Ring 6 (Horizon 310-560m)</option>
             </select>
         </div>
+
+        <h3>⚡ Real-time Blade Geometry</h3>
+        <div class="ctrl-row">
+            <label>Max Height (m)</label>
+            <input type="range" id="maxBladeHeight_range" class="slider-blue" min="0.10" max="3.00" step="0.05" value="1.00">
+            <input type="number" id="maxBladeHeight" class="compact num-blue" step="0.05" value="1.00">
+        </div>
+        <div class="ctrl-row">
+            <label>Blade Width (m)</label>
+            <input type="range" id="bladeWidth_range" class="slider-blue" min="0.005" max="0.120" step="0.002" value="0.034">
+            <input type="number" id="bladeWidth" class="compact num-blue" step="0.001" value="0.034">
+        </div>
+        <div class="ctrl-row">
+            <label>Blade Curvature</label>
+            <input type="range" id="curvature_range" class="slider-blue" min="0.00" max="1.00" step="0.02" value="0.35">
+            <input type="number" id="curvature" class="compact num-blue" step="0.01" value="0.35">
+        </div>
+        <div class="ctrl-row">
+            <label>Blade Stiffness</label>
+            <input type="range" id="stiffness_range" class="slider-blue" min="0.10" max="2.50" step="0.05" value="1.00">
+            <input type="number" id="stiffness" class="compact num-blue" step="0.05" value="1.00">
+        </div>
+        <div class="ctrl-row">
+            <label>SSS Translucency</label>
+            <input type="range" id="translucency_range" class="slider-blue" min="0.00" max="1.50" step="0.05" value="0.65">
+            <input type="number" id="translucency" class="compact num-blue" step="0.05" value="0.65">
+        </div>
+        <div class="ctrl-row">
+            <label>Field Patchiness</label>
+            <input type="range" id="patchiness_range" class="slider-blue" min="0.00" max="1.00" step="0.02" value="0.40">
+            <input type="number" id="patchiness" class="compact num-blue" step="0.02" value="0.40">
+        </div>
+
+        <h3>🏗️ Structural Mesh Parameters</h3>
+        <div class="ctrl-row">
+            <label>Cell Size (m)</label>
+            <input type="range" id="cellSize_range" class="slider-red" min="0.08" max="1.50" step="0.02" value="0.16">
+            <input type="number" id="cellSize" class="compact num-red" step="0.01" value="0.16">
+        </div>
+        <div class="ctrl-row">
+            <label>Blades/Tuft</label>
+            <input type="range" id="bladesPerTuft_range" class="slider-red" min="1" max="10" step="1" value="5">
+            <input type="number" id="bladesPerTuft" class="compact num-red" step="1" value="5">
+        </div>
+        <div class="ctrl-row">
+            <label>Segments</label>
+            <input type="range" id="segments_range" class="slider-red" min="1" max="4" step="1" value="2">
+            <input type="number" id="segments" class="compact num-red" step="1" value="2">
+        </div>
+        <h3>🎛️ Ring Cross-Fade & Density Envelope</h3>
+        <div class="ctrl-row">
+            <label>Fade-In Start (m)</label>
+            <input type="range" id="fadeInMin_range" class="slider-blue" min="0" max="600" step="1" value="0">
+            <input type="number" id="fadeInMin" class="compact num-blue" step="1" value="0" min="0" max="1000">
+        </div>
+        <div class="ctrl-row">
+            <label>Fade-In Peak (m)</label>
+            <input type="range" id="fadeInMax_range" class="slider-blue" min="0" max="600" step="1" value="0">
+            <input type="number" id="fadeInMax" class="compact num-blue" step="1" value="0" min="0" max="1000">
+        </div>
+        <div class="ctrl-row">
+            <label>Fade-Out Start (m)</label>
+            <input type="range" id="fadeOutMin_range" class="slider-blue" min="5" max="800" step="1" value="32">
+            <input type="number" id="fadeOutMin" class="compact num-blue" step="1" value="32" min="0" max="1200">
+        </div>
+        <div class="ctrl-row">
+            <label>Fade-Out End / Culled (m)</label>
+            <input type="range" id="fadeOutMax_range" class="slider-blue" min="10" max="900" step="1" value="65">
+            <input type="number" id="fadeOutMax" class="compact num-blue" step="1" value="65" min="0" max="1400">
+        </div>
+        <div class="ctrl-row">
+            <label>Patch Size (m)</label>
+            <input type="range" id="patchSize_range" class="slider-red" min="40" max="1600" step="10" value="160">
+            <input type="number" id="patchSize" class="compact num-red" step="5" value="160" min="20" max="2000">
+        </div>
+
+        <h3>🌊 Blend Seam & Drop-Off Shaders (Global)</h3>
+        <div class="ctrl-row">
+            <label>Density Drop-off (Exp)</label>
+            <input type="range" id="densityDropoff_range" class="slider-blue" min="0.15" max="2.50" step="0.05" value="0.55">
+            <input type="number" id="densityDropoff" class="compact num-blue" step="0.05" value="0.55" min="0.1" max="4.0">
+        </div>
+        <div class="ctrl-row">
+            <label>Radial Jitter Breakup (m)</label>
+            <input type="range" id="radialJitterAmp_range" class="slider-blue" min="0.0" max="15.0" step="0.2" value="5.8">
+            <input type="number" id="radialJitterAmp" class="compact num-blue" step="0.1" value="5.8" min="0.0" max="25.0">
+        </div>
+        <div class="ctrl-row">
+            <label>Boundary Margin (m)</label>
+            <input type="range" id="boundaryMargin_range" class="slider-blue" min="0.0" max="25.0" step="0.5" value="8.0">
+            <input type="number" id="boundaryMargin" class="compact num-blue" step="0.5" value="8.0" min="0.0" max="50.0">
+        </div>
+
+        <h3>Lean & Curvature Variances</h3>
+        <div class="ctrl-row"><label>Lean Min/Max</label><input type="number" id="leanMin" step="0.01" value="0.05" style="width:38px"><input type="number" id="leanMax" step="0.01" value="0.30" style="width:38px"></div>
+        <div class="ctrl-row"><label>Curve Min/Max</label><input type="number" id="curveMin" step="0.01" value="0.15" style="width:38px"><input type="number" id="curveMax" step="0.01" value="0.40" style="width:38px"></div>
+        <div class="ctrl-row"><label>Height Scale Min/Max</label><input type="number" id="hScaleMin" step="0.05" value="0.40" style="width:38px"><input type="number" id="hScaleMax" step="0.05" value="1.20" style="width:38px"></div>
+
+        <h3>Adaptive Density & Tri Budgets</h3>
+        <div class="ctrl-row"><label>Adaptive Density</label><input type="checkbox" id="adaptiveEnabled" checked></div>
+        <div class="ctrl-row"><label>Target Tris/Ring</label><input type="number" id="targetTris" step="100000" value="1200000"></div>
+        <div class="ctrl-row"><label>Cull Compensation</label><input type="number" id="cullComp" step="0.05" value="1.35"></div>
 
         <h3>✨ Flora Shading FX & Styles</h3>
         <div class="ctrl-row">
@@ -172,16 +362,7 @@
             <input type="number" id="timeMorphSpeed" step="5" value="25" min="5" max="180">
         </div>
 
-        <h3>🎨 Quick Presets & Randomizer</h3>
-        <div class="btn-group">
-            <button onclick="applyFloraPreset('sakura')" style="flex:1;">🌸 Sakura</button>
-            <button onclick="applyFloraPreset('sunburst')" style="flex:1;">🌻 Sunburst</button>
-            <button onclick="applyFloraPreset('cyberpunk')" style="flex:1;">🔮 Cyber</button>
-            <button onclick="applyFloraPreset('opal')" style="flex:1;">🌊 Opal</button>
-            <button onclick="randomizeFloraPalette()" class="btn-sync" style="flex:1;">🎲 Random</button>
-        </div>
-
-        <h3>🌺 Flower Blossom Colors (Live Sync)</h3>
+        <h3>🌺 Flower Blossom Colors</h3>
         <div class="ctrl-row"><label>Poppy Crimson</label><input type="color" id="flowerCol0" value="#f23c34"></div>
         <div class="ctrl-row"><label>Buttercup Yellow</label><input type="color" id="flowerCol1" value="#fed022"></div>
         <div class="ctrl-row"><label>Cornflower Azure</label><input type="color" id="flowerCol2" value="#3488f2"></div>
@@ -197,49 +378,49 @@
         <h3>🌄 Undulating Landscape</h3>
         <div class="ctrl-row">
             <label>Terrain Relief</label>
-            <input type="number" id="terrainRelief" step="0.1" value="1.0" min="0.0" max="3.0">
+            <input type="range" id="terrainRelief_range" class="slider-blue" min="0.0" max="3.0" step="0.1" value="1.0">
+            <input type="number" id="terrainRelief" class="compact num-blue" step="0.1" value="1.0" min="0.0" max="3.0">
         </div>
 
         <h3>⛈️ Weather & Atmospheric Study</h3>
         <div class="ctrl-row"><label>🌧️ Rain Simulation</label><input type="checkbox" id="weatherRainEnabled"></div>
         <div class="ctrl-row"><label>Rain Intensity</label><input type="number" id="weatherRainIntensity" step="0.05" value="0.75" min="0.0" max="1.0"></div>
-        <div class="ctrl-row"><label>Wind Speed (Gale)</label><input type="number" id="weatherWindSpeed" step="0.1" value="1.2" min="0.2" max="4.0"></div>
-        <div class="ctrl-row"><label>Cloud Shadow</label><input type="number" id="weatherCloudShadow" step="0.05" value="0.45" min="0.0" max="1.0"></div>
-        <div class="btn-group">
-            <button class="btn-primary" onclick="triggerLightningFlash()" style="background:#2a4263; border-color:#4874a6;">⚡ Trigger Lightning</button>
+        <div class="ctrl-row">
+            <label>Wind Speed (Gale)</label>
+            <input type="range" id="weatherWindSpeed_range" class="slider-blue" min="0.0" max="4.0" step="0.1" value="1.2">
+            <input type="number" id="weatherWindSpeed" class="compact num-blue" step="0.1" value="1.2" min="0.0" max="4.0">
+        </div>
+        <div class="ctrl-row">
+            <label>Cloud Shadow</label>
+            <input type="range" id="weatherCloudShadow_range" class="slider-blue" min="0.00" max="1.00" step="0.05" value="0.45">
+            <input type="number" id="weatherCloudShadow" class="compact num-blue" step="0.05" value="0.45" min="0.0" max="1.0">
         </div>
 
         <h3>🌸 Mixed Flora & Species Frequency</h3>
-        <div class="ctrl-row"><label>Wildflowers (%)</label><input type="number" id="flowerFreq" step="0.01" value="0.08" min="0" max="1"></div>
-        <div class="ctrl-row"><label>Clover (%)</label><input type="number" id="cloverFreq" step="0.01" value="0.10" min="0" max="1"></div>
-        <div class="ctrl-row"><label>Wheat / Grain (%)</label><input type="number" id="wheatFreq" step="0.01" value="0.08" min="0" max="1"></div>
-        <div class="ctrl-row"><label>3D Twist Intensity</label><input type="number" id="twistIntensity" step="0.05" value="0.95" min="0" max="2"></div>
-
-        <h3>Adaptive Density & Tri Budgets</h3>
-        <div class="ctrl-row"><label>Adaptive Density</label><input type="checkbox" id="adaptiveEnabled" checked></div>
-        <div class="ctrl-row"><label>Target Tris/Ring</label><input type="number" id="targetTris" step="100000" value="1200000"></div>
-        <div class="ctrl-row"><label>Cull Compensation</label><input type="number" id="cullComp" step="0.05" value="1.35"></div>
-
-        <h3>Selected Ring Parameters</h3>
-        <div class="ctrl-row"><label>Cell Size (m)</label><input type="number" id="cellSize" step="0.01" value="0.16"></div>
-        <div class="ctrl-row"><label>Blades/Tuft</label><input type="number" id="bladesPerTuft" step="1" value="5"></div>
-        <div class="ctrl-row"><label>Blade Width (m)</label><input type="number" id="bladeWidth" step="0.001" value="0.034"></div>
-        <div class="ctrl-row"><label>Max Height (m)</label><input type="number" id="maxBladeHeight" step="0.05" value="1.00"></div>
-        <div class="ctrl-row"><label>Segments</label><input type="number" id="segments" step="1" value="2"></div>
-        <div class="ctrl-row"><label>Patch Size (m)</label><input type="number" id="patchSize" step="5" value="140"></div>
-        <div class="ctrl-row"><label>Fade In Min/Max</label><input type="number" id="fadeInMin" step="5" value="0" style="width:38px"><input type="number" id="fadeInMax" step="5" value="0" style="width:38px"></div>
-        <div class="ctrl-row"><label>Fade Out Min/Max</label><input type="number" id="fadeOutMin" step="5" value="32" style="width:38px"><input type="number" id="fadeOutMax" step="5" value="64" style="width:38px"></div>
-
-        <h3>Lean & Curvature</h3>
-        <div class="ctrl-row"><label>Lean Min/Max</label><input type="number" id="leanMin" step="0.01" value="0.05" style="width:38px"><input type="number" id="leanMax" step="0.01" value="0.30" style="width:38px"></div>
-        <div class="ctrl-row"><label>Curve Min/Max</label><input type="number" id="curveMin" step="0.01" value="0.15" style="width:38px"><input type="number" id="curveMax" step="0.01" value="0.40" style="width:38px"></div>
-        <div class="ctrl-row"><label>Height Scale Min/Max</label><input type="number" id="hScaleMin" step="0.05" value="0.40" style="width:38px"><input type="number" id="hScaleMax" step="0.05" value="1.20" style="width:38px"></div>
+        <div class="ctrl-row">
+            <label>Wildflowers (%)</label>
+            <input type="range" id="flowerFreq_range" class="slider-red" min="0.00" max="0.50" step="0.01" value="0.08">
+            <input type="number" id="flowerFreq" class="compact num-red" step="0.01" value="0.08" min="0" max="1">
+        </div>
+        <div class="ctrl-row">
+            <label>Clover (%)</label>
+            <input type="range" id="cloverFreq_range" class="slider-red" min="0.00" max="0.50" step="0.01" value="0.10">
+            <input type="number" id="cloverFreq" class="compact num-red" step="0.01" value="0.10" min="0" max="1">
+        </div>
+        <div class="ctrl-row">
+            <label>Wheat / Grain (%)</label>
+            <input type="range" id="wheatFreq_range" class="slider-red" min="0.00" max="0.50" step="0.01" value="0.08">
+            <input type="number" id="wheatFreq" class="compact num-red" step="0.01" value="0.08" min="0" max="1">
+        </div>
+        <div class="ctrl-row">
+            <label>3D Twist Intensity</label>
+            <input type="range" id="twistIntensity_range" class="slider-red" min="0.00" max="2.00" step="0.05" value="0.95">
+            <input type="number" id="twistIntensity" class="compact num-red" step="0.05" value="0.95" min="0" max="2">
+        </div>
 
         <h3 style="margin-top:14px;">Active Configuration (grass.json)</h3>
         <textarea id="paramDump" rows="9" style="width:100%;background:#090d10;color:#55ff88;border:1px solid #223326;border-radius:4px;font-family:'Consolas',monospace;font-size:10px;padding:6px;resize:vertical;" readonly></textarea>
     </div>
-
-    <img id="ref-overlay" src="grassworks_ref.png" style="display:none;">
 
     <script type="module">
 import * as THREE from 'three';
@@ -265,10 +446,138 @@ let scene, camera, renderer, terrainMesh;
 let activeRings = []; // Array of { mesh, uniforms, opts, triCount }
 const clock = new THREE.Clock();
 let frameCount = 0, lastFpsTime = 0, cullingCheckTimer = 0;
-let hasBackend = false;
 let currentRingIdx = 0;
 let viewMode = 'ALL'; // 'ALL' or 'SINGLE'
 let terrainRelief = 1.0;
+
+// Camera / Orbit & Long-Distance Navigation State
+let isDraggingOrbit = false;
+let isDraggingPan = false;
+let prevMouseX = 0, prevMouseY = 0;
+let orbitYaw = 0, orbitPitch = 0.28, orbitDist = 14.0;
+const cameraTarget = new THREE.Vector3(0, 0.8, 0);
+let cameraFollowPlayer = false; // When true, camera tracks simulated player; when false, free camera!
+const keysDown = {};
+
+function updateCameraOrbit() {
+    if (!camera) return;
+    camera.position.set(
+        cameraTarget.x + Math.sin(orbitYaw) * Math.cos(orbitPitch) * orbitDist,
+        cameraTarget.y + Math.sin(orbitPitch) * orbitDist,
+        cameraTarget.z + Math.cos(orbitYaw) * Math.cos(orbitPitch) * orbitDist
+    );
+    camera.lookAt(cameraTarget);
+}
+
+window.onFollowPlayerToggle = function(checked) {
+    cameraFollowPlayer = checked;
+    if (checked && simPlayerActive) {
+        cameraTarget.set(simPlayerPos.x, simPlayerPos.y + 0.9, simPlayerPos.z);
+        updateCameraOrbit();
+    }
+};
+
+// Simulated Player Mode State & Vehicle
+let simPlayerActive = false;
+let simPlayerGroup = null;
+let simPlayerPos = new THREE.Vector3(0, 0, -180);
+let simPlayerSpeed = 24.0; // 24 m/s ~ 86 km/h
+let vehiclePositionsArray = [
+    new THREE.Vector3(0, -999, 0),
+    new THREE.Vector3(0, -999, 0),
+    new THREE.Vector3(0, -999, 0),
+    new THREE.Vector3(0, -999, 0),
+    new THREE.Vector3(0, -999, 0),
+    new THREE.Vector3(0, -999, 0),
+    new THREE.Vector3(0, -999, 0),
+    new THREE.Vector3(0, -999, 0)
+];
+
+function createPlayerVehicle() {
+    const group = new THREE.Group();
+
+    // 1. Aerodynamic Cyber Racer Fuselage
+    const hullGeo = new THREE.ConeGeometry(0.9, 3.6, 4);
+    hullGeo.rotateY(Math.PI / 4);
+    hullGeo.rotateX(Math.PI / 2);
+    hullGeo.scale(1.15, 0.35, 1.0);
+    const hullMat = new THREE.MeshStandardMaterial({
+        color: 0x0ea5e9,
+        metalness: 0.85,
+        roughness: 0.25,
+        emissive: 0x0369a1,
+        emissiveIntensity: 0.2
+    });
+    const hull = new THREE.Mesh(hullGeo, hullMat);
+    hull.position.y = 0.22;
+    group.add(hull);
+
+    // 2. Cockpit Canopy (Dark Smoked Glass)
+    const canopyGeo = new THREE.SphereGeometry(0.38, 16, 12);
+    canopyGeo.scale(0.85, 0.55, 1.7);
+    const canopyMat = new THREE.MeshStandardMaterial({
+        color: 0x0a101d,
+        metalness: 0.95,
+        roughness: 0.08
+    });
+    const canopy = new THREE.Mesh(canopyGeo, canopyMat);
+    canopy.position.set(0, 0.38, -0.2);
+    group.add(canopy);
+
+    // 3. Side Sponsons & Stabilizers
+    const wingGeo = new THREE.BoxGeometry(2.3, 0.08, 0.85);
+    const wingMat = new THREE.MeshStandardMaterial({
+        color: 0x0284c7,
+        metalness: 0.75,
+        roughness: 0.3
+    });
+    const wing = new THREE.Mesh(wingGeo, wingMat);
+    wing.position.set(0, 0.18, -0.65);
+    group.add(wing);
+
+    const finGeo = new THREE.BoxGeometry(0.06, 0.4, 0.75);
+    const finL = new THREE.Mesh(finGeo, wingMat);
+    finL.position.set(-1.15, 0.35, -0.65);
+    const finR = finL.clone();
+    finR.position.x = 1.15;
+    group.add(finL, finR);
+
+    // 4. Dual Xenon Headlights
+    const hlGeo = new THREE.SphereGeometry(0.08, 8, 8);
+    const hlMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe });
+    const hlL = new THREE.Mesh(hlGeo, hlMat);
+    hlL.position.set(-0.4, 0.22, 1.55);
+    const hlR = hlL.clone();
+    hlR.position.x = 0.4;
+    group.add(hlL, hlR);
+
+    // 5. Plasma Thrusters
+    const thGeo = new THREE.CylinderGeometry(0.12, 0.16, 0.35, 12);
+    thGeo.rotateX(Math.PI / 2);
+    const thMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const thL = new THREE.Mesh(thGeo, thMat);
+    thL.position.set(-0.38, 0.20, -1.75);
+    const thR = thL.clone();
+    thR.position.x = 0.38;
+    group.add(thL, thR);
+
+    // 6. Terrain Silhouette Shadow
+    const shadowGeo = new THREE.PlaneGeometry(2.6, 4.4);
+    shadowGeo.rotateX(-Math.PI / 2);
+    const shadowMat = new THREE.MeshBasicMaterial({
+        color: 0x020804,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false
+    });
+    const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+    shadow.position.y = -0.22;
+    group.add(shadow);
+
+    group.visible = false;
+    scene.add(group);
+    return group;
+}
 
 // Shading FX & Audio Reactive State
 let audioSynth = null;
@@ -277,6 +586,214 @@ let timeMorphEnabled = false;
 let timeMorphPalette = 0;
 let timeMorphSpeed = 25;
 let timeMorphTimer = 0;
+
+// Curated Species Presets (AskAlice Botanical & Stylized Catalog)
+const SPECIES_PRESETS = {
+    kentuckyBluegrass: {
+        name: "Kentucky Bluegrass",
+        description: "Dense, fine-textured, deep blue-green lawn",
+        bladeHeight: 0.65,
+        bladeWidth: 0.038,
+        curvature: 0.35,
+        stiffness: 1.0,
+        patchiness: 0.25,
+        translucency: 0.65,
+        colors: {
+            colRoot:  [0.020, 0.080, 0.015],
+            colLower: [0.060, 0.200, 0.050],
+            colMid:   [0.120, 0.380, 0.110],
+            colUpper: [0.220, 0.540, 0.190],
+            colTip:   [0.341, 0.678, 0.302]
+        }
+    },
+    perennialRyegrass: {
+        name: "Perennial Ryegrass",
+        description: "Fine-textured, glossy blades with high wear tolerance",
+        bladeHeight: 0.55,
+        bladeWidth: 0.032,
+        curvature: 0.30,
+        stiffness: 1.2,
+        patchiness: 0.20,
+        translucency: 0.75,
+        colors: {
+            colRoot:  [0.015, 0.070, 0.020],
+            colLower: [0.050, 0.180, 0.060],
+            colMid:   [0.100, 0.350, 0.130],
+            colUpper: [0.200, 0.520, 0.240],
+            colTip:   [0.322, 0.651, 0.361]
+        }
+    },
+    tallFescue: {
+        name: "Tall Fescue",
+        description: "Broad, coarse, dark green blades with deep roots",
+        bladeHeight: 0.85,
+        bladeWidth: 0.052,
+        curvature: 0.40,
+        stiffness: 1.3,
+        patchiness: 0.30,
+        translucency: 0.55,
+        colors: {
+            colRoot:  [0.012, 0.060, 0.012],
+            colLower: [0.040, 0.160, 0.045],
+            colMid:   [0.090, 0.300, 0.095],
+            colUpper: [0.180, 0.450, 0.160],
+            colTip:   [0.282, 0.569, 0.243]
+        }
+    },
+    bermuda: {
+        name: "Bermuda",
+        description: "Aggressive, fine-textured warm-season grass",
+        bladeHeight: 0.45,
+        bladeWidth: 0.028,
+        curvature: 0.25,
+        stiffness: 1.4,
+        patchiness: 0.35,
+        translucency: 0.70,
+        colors: {
+            colRoot:  [0.025, 0.075, 0.010],
+            colLower: [0.080, 0.210, 0.035],
+            colMid:   [0.180, 0.400, 0.090],
+            colUpper: [0.320, 0.580, 0.180],
+            colTip:   [0.482, 0.722, 0.271]
+        }
+    },
+    zoysia: {
+        name: "Zoysia",
+        description: "Dense, stiff, carpet-like turf with prickle feel",
+        bladeHeight: 0.40,
+        bladeWidth: 0.030,
+        curvature: 0.20,
+        stiffness: 1.8,
+        patchiness: 0.15,
+        translucency: 0.60,
+        colors: {
+            colRoot:  [0.018, 0.065, 0.012],
+            colLower: [0.055, 0.170, 0.040],
+            colMid:   [0.130, 0.340, 0.100],
+            colUpper: [0.240, 0.500, 0.180],
+            colTip:   [0.380, 0.639, 0.278]
+        }
+    },
+    stAugustine: {
+        name: "St. Augustine",
+        description: "Coarse, broad-bladed, blue-green tropical lawn",
+        bladeHeight: 0.90,
+        bladeWidth: 0.065,
+        curvature: 0.45,
+        stiffness: 1.1,
+        patchiness: 0.30,
+        translucency: 0.60,
+        colors: {
+            colRoot:  [0.015, 0.060, 0.020],
+            colLower: [0.045, 0.150, 0.055],
+            colMid:   [0.100, 0.290, 0.120],
+            colUpper: [0.190, 0.440, 0.200],
+            colTip:   [0.302, 0.569, 0.310]
+        }
+    },
+    buffalo: {
+        name: "Buffalo",
+        description: "Low-growing, curly, blue-green prairie grass",
+        bladeHeight: 0.50,
+        bladeWidth: 0.035,
+        curvature: 0.60,
+        stiffness: 0.8,
+        patchiness: 0.45,
+        translucency: 0.65,
+        colors: {
+            colRoot:  [0.022, 0.065, 0.028],
+            colLower: [0.065, 0.165, 0.080],
+            colMid:   [0.140, 0.300, 0.160],
+            colUpper: [0.250, 0.440, 0.260],
+            colTip:   [0.380, 0.561, 0.369]
+        }
+    },
+    fineFescue: {
+        name: "Fine Fescue",
+        description: "Very thin, floppy, blue-green blades",
+        bladeHeight: 0.60,
+        bladeWidth: 0.022,
+        curvature: 0.75,
+        stiffness: 0.7,
+        patchiness: 0.40,
+        translucency: 0.50,
+        colors: {
+            colRoot:  [0.020, 0.055, 0.032],
+            colLower: [0.080, 0.180, 0.110],
+            colMid:   [0.180, 0.340, 0.220],
+            colUpper: [0.330, 0.530, 0.380],
+            colTip:   [0.500, 0.663, 0.541]
+        }
+    },
+    toonMeadow: {
+        name: "Toon Meadow (Stylized)",
+        description: "Wide, saturated, bright green blades",
+        bladeHeight: 0.55,
+        bladeWidth: 0.090,
+        curvature: 0.30,
+        stiffness: 0.8,
+        patchiness: 0.20,
+        translucency: 0.90,
+        colors: {
+            colRoot:  [0.020, 0.120, 0.035],
+            colLower: [0.120, 0.380, 0.140],
+            colMid:   [0.260, 0.620, 0.220],
+            colUpper: [0.450, 0.820, 0.280],
+            colTip:   [0.651, 0.949, 0.361]
+        }
+    },
+    goldenSavanna: {
+        name: "Golden Savanna (Stylized)",
+        description: "Tall, dry, golden African plains grass",
+        bladeHeight: 1.00,
+        bladeWidth: 0.045,
+        curvature: 0.50,
+        stiffness: 0.7,
+        patchiness: 0.35,
+        translucency: 0.90,
+        colors: {
+            colRoot:  [0.080, 0.060, 0.020],
+            colLower: [0.240, 0.180, 0.065],
+            colMid:   [0.480, 0.370, 0.130],
+            colUpper: [0.720, 0.580, 0.240],
+            colTip:   [0.941, 0.824, 0.478]
+        }
+    },
+    autumnHaze: {
+        name: "Autumn Haze (Stylized)",
+        description: "Olive-to-ochre autumn field",
+        bladeHeight: 0.50,
+        bladeWidth: 0.050,
+        curvature: 0.45,
+        stiffness: 0.9,
+        patchiness: 0.50,
+        translucency: 0.70,
+        colors: {
+            colRoot:  [0.055, 0.038, 0.015],
+            colLower: [0.180, 0.120, 0.045],
+            colMid:   [0.380, 0.260, 0.090],
+            colUpper: [0.580, 0.420, 0.160],
+            colTip:   [0.702, 0.569, 0.263]
+        }
+    },
+    frostbite: {
+        name: "Frostbite (Stylized)",
+        description: "Pale, frosted silver-white winter grass",
+        bladeHeight: 0.45,
+        bladeWidth: 0.040,
+        curvature: 0.35,
+        stiffness: 1.5,
+        patchiness: 0.25,
+        translucency: 0.50,
+        colors: {
+            colRoot:  [0.045, 0.062, 0.075],
+            colLower: [0.130, 0.170, 0.200],
+            colMid:   [0.260, 0.340, 0.390],
+            colUpper: [0.550, 0.650, 0.710],
+            colTip:   [0.894, 0.933, 0.941]
+        }
+    }
+};
 
 // Curated Floral Aesthetic Presets
 const FLORA_PRESETS = {
@@ -563,13 +1080,20 @@ let fullConfig = {
             [0.98, 0.98, 0.95]
         ]
     },
+    curvature: 0.35,
+    stiffness: 1.0,
+    translucency: 0.65,
+    patchiness: 0.40,
+    densityDropoff: 0.55,
+    radialJitterAmp: 5.8,
+    boundaryMargin: 8.0,
     rings: [
-        { id: "ring1_ultra", name: "Ring 1 (Ultra Carpet)", segments: 2, bladesPerTuft: 5, cellSize: 0.16, patchSize: 140.0, bladeWidth: 0.034, maxBladeHeight: 1.0, fadeInMin: 0.0, fadeInMax: 0.0, fadeOutMin: 32.0, fadeOutMax: 64.0, enableTrample: true, leanMin: 0.05, leanMax: 0.30, curveMin: 0.15, curveMax: 0.40, hScaleMin: 0.40, hScaleMax: 1.20 },
-        { id: "ring2_fine", name: "Ring 2 (Fine Meadow)", segments: 2, bladesPerTuft: 4, cellSize: 0.52, patchSize: 240.0, bladeWidth: 0.046, maxBladeHeight: 1.05, fadeInMin: 32.0, fadeInMax: 64.0, fadeOutMin: 72.0, fadeOutMax: 115.0, enableTrample: true, leanMin: 0.06, leanMax: 0.32, curveMin: 0.14, curveMax: 0.38, hScaleMin: 0.45, hScaleMax: 1.25 },
-        { id: "ring3_mid", name: "Ring 3 (Mid Meadow)", segments: 1, bladesPerTuft: 4, cellSize: 0.74, patchSize: 390.0, bladeWidth: 0.065, maxBladeHeight: 1.10, fadeInMin: 72.0, fadeInMax: 115.0, fadeOutMin: 125.0, fadeOutMax: 185.0, enableTrample: false, leanMin: 0.08, leanMax: 0.35, curveMin: 0.12, curveMax: 0.36, hScaleMin: 0.50, hScaleMax: 1.30 },
-        { id: "ring4_farmid", name: "Ring 4 (Far-Mid Field)", segments: 1, bladesPerTuft: 3, cellSize: 1.10, patchSize: 610.0, bladeWidth: 0.095, maxBladeHeight: 1.18, fadeInMin: 125.0, fadeInMax: 185.0, fadeOutMin: 200.0, fadeOutMax: 290.0, enableTrample: false, leanMin: 0.08, leanMax: 0.35, curveMin: 0.12, curveMax: 0.34, hScaleMin: 0.50, hScaleMax: 1.30 },
-        { id: "ring5_far", name: "Ring 5 (Distant Field)", segments: 1, bladesPerTuft: 3, cellSize: 1.65, patchSize: 890.0, bladeWidth: 0.145, maxBladeHeight: 1.25, fadeInMin: 200.0, fadeInMax: 290.0, fadeOutMin: 310.0, fadeOutMax: 420.0, enableTrample: false, leanMin: 0.08, leanMax: 0.35, curveMin: 0.10, curveMax: 0.32, hScaleMin: 0.55, hScaleMax: 1.35 },
-        { id: "ring6_horizon", name: "Ring 6 (Horizon Sea)", segments: 1, bladesPerTuft: 2, cellSize: 2.45, patchSize: 1220.0, bladeWidth: 0.220, maxBladeHeight: 1.35, fadeInMin: 310.0, fadeInMax: 420.0, fadeOutMin: 440.0, fadeOutMax: 560.0, enableTrample: false, leanMin: 0.06, leanMax: 0.30, curveMin: 0.10, curveMax: 0.30, hScaleMin: 0.60, hScaleMax: 1.40 }
+        { id: "ring1_ultra", name: "Ring 1 (Ultra Carpet)", segments: 2, bladesPerTuft: 4, cellSize: 0.32, patchSize: 160.0, bladeWidth: 0.042, maxBladeHeight: 1.0, fadeInMin: 0.0, fadeInMax: 0.0, fadeOutMin: 32.0, fadeOutMax: 65.0, enableTrample: true, leanMin: 0.05, leanMax: 0.30, curveMin: 0.15, curveMax: 0.40, hScaleMin: 0.40, hScaleMax: 1.20 },
+        { id: "ring2_fine", name: "Ring 2 (Fine Meadow)", segments: 2, bladesPerTuft: 4, cellSize: 0.58, patchSize: 260.0, bladeWidth: 0.054, maxBladeHeight: 1.05, fadeInMin: 32.0, fadeInMax: 65.0, fadeOutMin: 72.0, fadeOutMax: 115.0, enableTrample: true, leanMin: 0.06, leanMax: 0.32, curveMin: 0.14, curveMax: 0.38, hScaleMin: 0.45, hScaleMax: 1.25 },
+        { id: "ring3_mid", name: "Ring 3 (Mid Meadow)", segments: 1, bladesPerTuft: 4, cellSize: 0.74, patchSize: 420.0, bladeWidth: 0.065, maxBladeHeight: 1.10, fadeInMin: 72.0, fadeInMax: 115.0, fadeOutMin: 125.0, fadeOutMax: 185.0, enableTrample: false, leanMin: 0.08, leanMax: 0.35, curveMin: 0.12, curveMax: 0.36, hScaleMin: 0.50, hScaleMax: 1.30 },
+        { id: "ring4_farmid", name: "Ring 4 (Far-Mid Field)", segments: 1, bladesPerTuft: 3, cellSize: 1.10, patchSize: 640.0, bladeWidth: 0.095, maxBladeHeight: 1.18, fadeInMin: 125.0, fadeInMax: 185.0, fadeOutMin: 200.0, fadeOutMax: 290.0, enableTrample: false, leanMin: 0.08, leanMax: 0.35, curveMin: 0.12, curveMax: 0.34, hScaleMin: 0.50, hScaleMax: 1.30 },
+        { id: "ring5_far", name: "Ring 5 (Distant Field)", segments: 1, bladesPerTuft: 3, cellSize: 1.65, patchSize: 920.0, bladeWidth: 0.145, maxBladeHeight: 1.25, fadeInMin: 200.0, fadeInMax: 290.0, fadeOutMin: 310.0, fadeOutMax: 420.0, enableTrample: false, leanMin: 0.08, leanMax: 0.35, curveMin: 0.10, curveMax: 0.32, hScaleMin: 0.55, hScaleMax: 1.35 },
+        { id: "ring6_horizon", name: "Ring 6 (Horizon Sea)", segments: 1, bladesPerTuft: 2, cellSize: 2.45, patchSize: 1250.0, bladeWidth: 0.220, maxBladeHeight: 1.35, fadeInMin: 310.0, fadeInMax: 420.0, fadeOutMin: 440.0, fadeOutMax: 560.0, enableTrample: false, leanMin: 0.06, leanMax: 0.30, curveMin: 0.10, curveMax: 0.30, hScaleMin: 0.60, hScaleMax: 1.40 }
     ],
     colors: {
         colRoot:  [0.020, 0.078, 0.008],
@@ -607,6 +1131,17 @@ function vec3ToHex(v) {
 window.onViewModeChange = function() {
     viewMode = document.getElementById('meadowViewMode').value;
     rebuildGrass();
+};
+
+window.onCoordModeChange = function() {
+    const mode = document.getElementById('coordMode')?.value || 'GAME_MODULO';
+    const isGameModulo = (mode === 'GAME_MODULO');
+    for (const r of activeRings) {
+        if (r.uniforms && r.uniforms.uCoordMode) {
+            r.uniforms.uCoordMode.value = isGameModulo ? 1 : 0;
+        }
+    }
+    showToast(isGameModulo ? '🎮 Game Modulo Mode: Player-Centric Wrapping' : '🌍 Static World Meadow Mode');
 };
 
 window.onRingSelectChange = function() {
@@ -752,31 +1287,49 @@ function updateTimeMorphColors(timer) {
     }
 }
 
+function setUiValue(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+    const rEl = document.getElementById(id + '_range');
+    if (rEl) rEl.value = val;
+}
+
 function loadRingToUi(idx) {
     const r = fullConfig.rings[idx] || fullConfig.rings[0];
-    document.getElementById('cellSize').value = r.cellSize;
-    document.getElementById('bladesPerTuft').value = r.bladesPerTuft;
-    document.getElementById('bladeWidth').value = r.bladeWidth;
-    document.getElementById('maxBladeHeight').value = r.maxBladeHeight;
-    document.getElementById('segments').value = r.segments;
-    document.getElementById('patchSize').value = r.patchSize;
-    document.getElementById('fadeInMin').value = r.fadeInMin;
-    document.getElementById('fadeInMax').value = r.fadeInMax;
-    document.getElementById('fadeOutMin').value = r.fadeOutMin;
-    document.getElementById('fadeOutMax').value = r.fadeOutMax;
-    document.getElementById('leanMin').value = r.leanMin;
-    document.getElementById('leanMax').value = r.leanMax;
-    document.getElementById('curveMin').value = r.curveMin;
-    document.getElementById('curveMax').value = r.curveMax;
-    document.getElementById('hScaleMin').value = r.hScaleMin;
-    document.getElementById('hScaleMax').value = r.hScaleMax;
+    setUiValue('cellSize', r.cellSize);
+    setUiValue('bladesPerTuft', r.bladesPerTuft);
+    setUiValue('bladeWidth', r.bladeWidth);
+    setUiValue('maxBladeHeight', r.maxBladeHeight);
+    setUiValue('segments', r.segments);
+    setUiValue('patchSize', r.patchSize);
+    setUiValue('fadeInMin', r.fadeInMin);
+    setUiValue('fadeInMax', r.fadeInMax);
+    setUiValue('fadeOutMin', r.fadeOutMin);
+    setUiValue('fadeOutMax', r.fadeOutMax);
+    setUiValue('leanMin', r.leanMin);
+    setUiValue('leanMax', r.leanMax);
+    setUiValue('curveMin', r.curveMin);
+    setUiValue('curveMax', r.curveMax);
+    setUiValue('hScaleMin', r.hScaleMin);
+    setUiValue('hScaleMax', r.hScaleMax);
+
+    // Global AskAlice parameters
+    setUiValue('curvature', fullConfig.curvature ?? 0.35);
+    setUiValue('stiffness', fullConfig.stiffness ?? 1.0);
+    setUiValue('translucency', fullConfig.translucency ?? 0.65);
+    setUiValue('patchiness', fullConfig.patchiness ?? 0.40);
+
+    // Global Drop-off, Blending & Seam Shaders
+    setUiValue('densityDropoff', fullConfig.densityDropoff ?? 0.55);
+    setUiValue('radialJitterAmp', fullConfig.radialJitterAmp ?? 5.8);
+    setUiValue('boundaryMargin', fullConfig.boundaryMargin ?? 8.0);
 
     // Flora settings
     if (fullConfig.flora) {
-        if (fullConfig.flora.flowerFrequency !== undefined) document.getElementById('flowerFreq').value = fullConfig.flora.flowerFrequency;
-        if (fullConfig.flora.cloverFrequency !== undefined) document.getElementById('cloverFreq').value = fullConfig.flora.cloverFrequency;
-        if (fullConfig.flora.wheatFrequency !== undefined) document.getElementById('wheatFreq').value = fullConfig.flora.wheatFrequency;
-        if (fullConfig.flora.twistIntensity !== undefined) document.getElementById('twistIntensity').value = fullConfig.flora.twistIntensity;
+        if (fullConfig.flora.flowerFrequency !== undefined) setUiValue('flowerFreq', fullConfig.flora.flowerFrequency);
+        if (fullConfig.flora.cloverFrequency !== undefined) setUiValue('cloverFreq', fullConfig.flora.cloverFrequency);
+        if (fullConfig.flora.wheatFrequency !== undefined) setUiValue('wheatFreq', fullConfig.flora.wheatFrequency);
+        if (fullConfig.flora.twistIntensity !== undefined) setUiValue('twistIntensity', fullConfig.flora.twistIntensity);
 
         if (fullConfig.flora.flowerColors && fullConfig.flora.flowerColors.length >= 4) {
             document.getElementById('flowerCol0').value = vec3ToHex(fullConfig.flora.flowerColors[0]);
@@ -815,6 +1368,17 @@ function syncUiToRing(idx) {
     r.hScaleMin = parseFloat(document.getElementById('hScaleMin').value);
     r.hScaleMax = parseFloat(document.getElementById('hScaleMax').value);
 
+    // Global AskAlice parameters
+    fullConfig.curvature = parseFloat(document.getElementById('curvature')?.value || 0.35);
+    fullConfig.stiffness = parseFloat(document.getElementById('stiffness')?.value || 1.0);
+    fullConfig.translucency = parseFloat(document.getElementById('translucency')?.value || 0.65);
+    fullConfig.patchiness = parseFloat(document.getElementById('patchiness')?.value || 0.40);
+
+    // Global Drop-off & Blending
+    fullConfig.densityDropoff = parseFloat(document.getElementById('densityDropoff')?.value || 0.55);
+    fullConfig.radialJitterAmp = parseFloat(document.getElementById('radialJitterAmp')?.value || 5.8);
+    fullConfig.boundaryMargin = parseFloat(document.getElementById('boundaryMargin')?.value || 8.0);
+
     // Sync Global Flora & Colors
     fullConfig.adaptiveDensity.enabled = document.getElementById('adaptiveEnabled').checked;
     fullConfig.adaptiveDensity.targetTrianglesPerRing = parseInt(document.getElementById('targetTris').value);
@@ -838,6 +1402,125 @@ function syncUiToRing(idx) {
 
     terrainRelief = parseFloat(document.getElementById('terrainRelief').value || 1.0);
 }
+
+let rebuildTimer = null;
+function scheduleRebuildOnIdle(delay = 280) {
+    if (rebuildTimer) clearTimeout(rebuildTimer);
+    rebuildTimer = setTimeout(() => {
+        rebuildGrass();
+        rebuildTimer = null;
+    }, delay);
+}
+
+function onLiveUniformChange(id, value) {
+    syncUiToRing(currentRingIdx);
+
+    const isRingSpecific = ['fadeInMin', 'fadeInMax', 'fadeOutMin', 'fadeOutMax', 'maxBladeHeight', 'bladeWidth'].includes(id);
+
+    if (isRingSpecific) {
+        if (fullConfig.rings[currentRingIdx]) {
+            fullConfig.rings[currentRingIdx][id] = value;
+        }
+
+        const ringToUpdate = (viewMode === 'ALL') ? activeRings[currentRingIdx] : activeRings[0];
+        if (ringToUpdate && ringToUpdate.uniforms) {
+            const u = ringToUpdate.uniforms;
+            if (id === 'fadeInMin' && u.uFadeInMin) u.uFadeInMin.value = value;
+            if (id === 'fadeInMax' && u.uFadeInMax) u.uFadeInMax.value = value;
+            if (id === 'fadeOutMin' && u.uFadeOutMin) u.uFadeOutMin.value = value;
+            if (id === 'fadeOutMax' && u.uFadeOutMax) u.uFadeOutMax.value = value;
+            if (id === 'maxBladeHeight' && u.uMaxBladeHeight) u.uMaxBladeHeight.value = value;
+            if (id === 'bladeWidth' && u.uBladeWidth) u.uBladeWidth.value = value;
+        }
+    } else {
+        for (const r of activeRings) {
+            const u = r.uniforms;
+            if (!u) continue;
+            if (id === 'curvature' && u.uCurvature) u.uCurvature.value = value;
+            if (id === 'stiffness' && u.uStiffness) u.uStiffness.value = value;
+            if (id === 'translucency' && u.uTranslucency) u.uTranslucency.value = value;
+            if (id === 'patchiness' && u.uPatchiness) u.uPatchiness.value = value;
+            if (id === 'densityDropoff' && u.uFadePower) u.uFadePower.value = value;
+            if (id === 'radialJitterAmp' && u.uRadialJitterAmp) u.uRadialJitterAmp.value = value;
+            if (id === 'boundaryMargin' && u.uBoundaryMargin) u.uBoundaryMargin.value = value;
+            if (id === 'weatherWindSpeed' && u.uWindSpeed) u.uWindSpeed.value = value;
+            if (id === 'weatherCloudShadow' && u.uCloudShadowIntensity) u.uCloudShadowIntensity.value = value;
+            if (id === 'terrainRelief') {
+                terrainRelief = value;
+                if (u.uTerrainRelief) u.uTerrainRelief.value = value;
+                buildTerrain();
+            }
+        }
+    }
+    dumpParams();
+}
+
+window.onSpeciesPresetChange = function() {
+    const sel = document.getElementById('speciesPresetSelect');
+    const key = sel.value;
+    if (!key || !SPECIES_PRESETS[key]) return;
+
+    const preset = SPECIES_PRESETS[key];
+
+    // Set colors
+    if (preset.colors) {
+        fullConfig.colors.colRoot = [...preset.colors.colRoot];
+        fullConfig.colors.colLower = [...preset.colors.colLower];
+        fullConfig.colors.colMid = [...preset.colors.colMid];
+        fullConfig.colors.colUpper = [...preset.colors.colUpper];
+        fullConfig.colors.colTip = [...preset.colors.colTip];
+
+        document.getElementById('colRoot').value = vec3ToHex(preset.colors.colRoot);
+        document.getElementById('colLower').value = vec3ToHex(preset.colors.colLower);
+        document.getElementById('colMid').value = vec3ToHex(preset.colors.colMid);
+        document.getElementById('colUpper').value = vec3ToHex(preset.colors.colUpper);
+        document.getElementById('colTip').value = vec3ToHex(preset.colors.colTip);
+    }
+
+    // Set AskAlice uniforms
+    if (preset.curvature !== undefined) {
+        fullConfig.curvature = preset.curvature;
+        setUiValue('curvature', preset.curvature);
+    }
+    if (preset.stiffness !== undefined) {
+        fullConfig.stiffness = preset.stiffness;
+        setUiValue('stiffness', preset.stiffness);
+    }
+    if (preset.translucency !== undefined) {
+        fullConfig.translucency = preset.translucency;
+        setUiValue('translucency', preset.translucency);
+    }
+    if (preset.patchiness !== undefined) {
+        fullConfig.patchiness = preset.patchiness;
+        setUiValue('patchiness', preset.patchiness);
+    }
+
+    // Set dimensions on current ring or all rings proportionally
+    if (preset.bladeHeight !== undefined) {
+        fullConfig.rings[currentRingIdx].maxBladeHeight = preset.bladeHeight;
+        setUiValue('maxBladeHeight', preset.bladeHeight);
+    }
+    if (preset.bladeWidth !== undefined) {
+        fullConfig.rings[currentRingIdx].bladeWidth = preset.bladeWidth;
+        setUiValue('bladeWidth', preset.bladeWidth);
+    }
+
+    // Instantly apply live uniforms to running shaders
+    onLiveColorChange();
+    for (const r of activeRings) {
+        const u = r.uniforms;
+        if (!u) continue;
+        if (u.uMaxBladeHeight) u.uMaxBladeHeight.value = fullConfig.rings[currentRingIdx].maxBladeHeight;
+        if (u.uBladeWidth) u.uBladeWidth.value = fullConfig.rings[currentRingIdx].bladeWidth;
+        if (u.uCurvature) u.uCurvature.value = fullConfig.curvature;
+        if (u.uStiffness) u.uStiffness.value = fullConfig.stiffness;
+        if (u.uTranslucency) u.uTranslucency.value = fullConfig.translucency;
+        if (u.uPatchiness) u.uPatchiness.value = fullConfig.patchiness;
+    }
+
+    showToast(`🌾 Applied Species Preset: ${preset.name}`);
+    dumpParams();
+};
 
 // Live real-time color update without full geometry rebuild!
 function onLiveColorChange() {
@@ -867,9 +1550,9 @@ function init() {
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0.42, 0.60, 0.82);
-    scene.fog = new THREE.Fog(0x6b90be, 45, 260);
+    scene.fog = new THREE.Fog(0x6b90be, 90, 750);
 
-    camera = new THREE.PerspectiveCamera(58, (window.innerWidth - 375) / window.innerHeight, 0.1, 1200);
+    camera = new THREE.PerspectiveCamera(58, (window.innerWidth - 375) / window.innerHeight, 0.1, 2500);
     camera.position.set(0, 3.2, 12.0);
     camera.lookAt(0, 1.0, 0);
 
@@ -889,19 +1572,53 @@ function init() {
         inp.addEventListener('input', onLiveColorChange);
     });
 
-    // Listeners for other numeric inputs
-    document.querySelectorAll('#controls input:not([type=color]), #controls select').forEach(inp => {
-        inp.addEventListener('input', () => {
+    // Paired input synchronizer for live uniforms vs debounced structural rebuilds
+    const LIVE_IDS = [
+        'maxBladeHeight', 'bladeWidth', 'curvature', 'stiffness', 'translucency', 'patchiness',
+        'fadeInMin', 'fadeInMax', 'fadeOutMin', 'fadeOutMax',
+        'densityDropoff', 'radialJitterAmp', 'boundaryMargin',
+        'weatherWindSpeed', 'weatherCloudShadow', 'terrainRelief'
+    ];
+    const STRUCTURAL_IDS = [
+        'cellSize', 'bladesPerTuft', 'segments', 'patchSize',
+        'flowerFreq', 'cloverFreq', 'wheatFreq', 'twistIntensity',
+        'targetTris', 'cullComp',
+        'leanMin', 'leanMax', 'curveMin', 'curveMax', 'hScaleMin', 'hScaleMax'
+    ];
+
+    function bindPaired(id, isLive) {
+        const num = document.getElementById(id);
+        const rng = document.getElementById(id + '_range');
+        if (rng && num) {
+            rng.addEventListener('input', () => {
+                num.value = rng.value;
+                if (isLive) onLiveUniformChange(id, parseFloat(rng.value));
+                else { syncUiToRing(currentRingIdx); scheduleRebuildOnIdle(); }
+            });
+            num.addEventListener('input', () => {
+                rng.value = num.value;
+                if (isLive) onLiveUniformChange(id, parseFloat(num.value));
+                else { syncUiToRing(currentRingIdx); scheduleRebuildOnIdle(); }
+            });
+        } else if (num) {
+            num.addEventListener('input', () => {
+                if (isLive) onLiveUniformChange(id, parseFloat(num.value));
+                else { syncUiToRing(currentRingIdx); scheduleRebuildOnIdle(); }
+            });
+        }
+    }
+
+    LIVE_IDS.forEach(id => bindPaired(id, true));
+    STRUCTURAL_IDS.forEach(id => bindPaired(id, false));
+
+    // Only structural checkboxes should schedule a grass rebuild; live toggles (rain, season, follow) must never trigger rebuilds
+    const adaptiveCb = document.getElementById('adaptiveEnabled');
+    if (adaptiveCb) {
+        adaptiveCb.addEventListener('change', () => {
             syncUiToRing(currentRingIdx);
-            if (inp.id === 'terrainRelief') {
-                buildTerrain();
-                for (const r of activeRings) {
-                    if (r.uniforms.uTerrainRelief) r.uniforms.uTerrainRelief.value = terrainRelief;
-                }
-            }
-            dumpParams();
+            scheduleRebuildOnIdle(50);
         });
-    });
+    }
 
     window.addEventListener('resize', () => {
         renderer.setSize(window.innerWidth - 375, window.innerHeight);
@@ -909,43 +1626,86 @@ function init() {
         camera.updateProjectionMatrix();
     });
 
-    // Orbit controls
-    let dragging = false, prevX = 0, prevY = 0;
-    let orbitYaw = 0, orbitPitch = 0.28, orbitDist = 12.0;
-    const target = new THREE.Vector3(0, 0.8, 0);
+    // ═══════════════════════════════════════════════════════
+    // Intuitive Mouse Orbit, Pan & Zoom
+    // ═══════════════════════════════════════════════════════
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-    canvas.addEventListener('mousedown', e => { dragging = true; prevX = e.clientX; prevY = e.clientY; });
-    window.addEventListener('mouseup', () => { dragging = false; });
-    canvas.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        orbitYaw += (e.clientX - prevX) * 0.007;
-        orbitPitch = Math.max(-0.05, Math.min(1.4, orbitPitch + (e.clientY - prevY) * 0.007));
-        prevX = e.clientX; prevY = e.clientY;
-        updateCameraOrbit();
+    canvas.addEventListener('mousedown', e => {
+        if (e.button === 2 || e.button === 1 || e.shiftKey || e.altKey) {
+            isDraggingPan = true;
+        } else if (e.button === 0) {
+            isDraggingOrbit = true;
+        }
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
     });
+
+    window.addEventListener('mouseup', () => {
+        isDraggingOrbit = false;
+        isDraggingPan = false;
+    });
+
+    window.addEventListener('mousemove', e => {
+        if (!isDraggingOrbit && !isDraggingPan) return;
+        const dx = e.clientX - prevMouseX;
+        const dy = e.clientY - prevMouseY;
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
+
+        if (isDraggingOrbit) {
+            orbitYaw += dx * 0.007;
+            orbitPitch = Math.max(-0.08, Math.min(1.45, orbitPitch + dy * 0.007));
+            updateCameraOrbit();
+        } else if (isDraggingPan) {
+            cameraFollowPlayer = false; // Manual pan frees the camera
+            const followCb = document.getElementById('cam-follow-cb');
+            if (followCb) followCb.checked = false;
+
+            // Pan along camera right and forward/up vectors
+            const panSpeed = orbitDist * 0.0018;
+            const rightX = Math.cos(orbitYaw);
+            const rightZ = -Math.sin(orbitYaw);
+            const fwdX = -Math.sin(orbitYaw);
+            const fwdZ = -Math.cos(orbitYaw);
+
+            cameraTarget.x -= (rightX * dx - fwdX * dy * Math.sin(orbitPitch)) * panSpeed;
+            cameraTarget.z -= (rightZ * dx - fwdZ * dy * Math.sin(orbitPitch)) * panSpeed;
+            cameraTarget.y += dy * Math.cos(orbitPitch) * panSpeed;
+
+            // Clamp above terrain
+            const minH = getTerrainHeight(cameraTarget.x, cameraTarget.z) * terrainRelief + 0.4;
+            if (cameraTarget.y < minH) cameraTarget.y = minH;
+
+            updateCameraOrbit();
+        }
+    });
+
     canvas.addEventListener('wheel', e => {
-        orbitDist = Math.max(0.6, Math.min(220, orbitDist + e.deltaY * 0.03));
+        orbitDist = Math.max(0.6, Math.min(650, orbitDist + e.deltaY * 0.035 * (orbitDist * 0.08 + 0.5)));
         updateCameraOrbit();
-    });
+    }, { passive: true });
 
-    function updateCameraOrbit() {
-        camera.position.set(
-            target.x + Math.sin(orbitYaw) * Math.cos(orbitPitch) * orbitDist,
-            target.y + Math.sin(orbitPitch) * orbitDist,
-            target.z + Math.cos(orbitYaw) * Math.cos(orbitPitch) * orbitDist
-        );
-        camera.lookAt(target);
-    }
+    // Keyboard WASD / Arrow Keys Flight
+    window.addEventListener('keydown', e => {
+        keysDown[e.code] = true;
+    });
+    window.addEventListener('keyup', e => {
+        keysDown[e.code] = false;
+    });
 
     window._resetCamera = () => {
-        orbitYaw = 0; orbitPitch = 0.28; orbitDist = 12.0;
-        target.set(0, 0.8, 0);
+        orbitYaw = 0; orbitPitch = 0.28; orbitDist = 14.0;
+        if (simPlayerActive) {
+            cameraTarget.set(simPlayerPos.x, simPlayerPos.y + 0.9, simPlayerPos.z);
+        } else {
+            cameraTarget.set(0, 0.8, 0);
+        }
         updateCameraOrbit();
     };
 
     updateCameraOrbit();
     animate();
-    checkServerStatus();
 }
 
 function buildTerrain() {
@@ -955,8 +1715,8 @@ function buildTerrain() {
         terrainMesh.material.dispose();
     }
 
-    const size = 700.0;
-    const segs = 150;
+    const size = 1800.0;
+    const segs = 180;
     const geo = new THREE.PlaneGeometry(size, size, segs, segs);
     geo.rotateX(-Math.PI / 2);
 
@@ -1145,6 +1905,10 @@ function createSingleRingMesh(ring) {
         uniform float uTime;
         uniform float uBladeWidth;
         uniform float uMaxBladeHeight;
+        uniform float uCurvature;
+        uniform float uStiffness;
+        uniform float uTranslucency;
+        uniform float uPatchiness;
         uniform float uFadeInMin;
         uniform float uFadeInMax;
         uniform float uFadeOutMin;
@@ -1168,33 +1932,71 @@ function createSingleRingMesh(ring) {
         uniform float uAudioBass;
         uniform float uAudioTreble;
         uniform float uAudioVolume;
+        uniform vec3 uVehiclePositions[8];
+        uniform int uVehicleCount;
+        uniform vec3 uPlayerPosition;
+        uniform float uPatchSize;
+        uniform int uCoordMode;
+        uniform float uFadePower;
+        uniform float uRadialJitterAmp;
+        uniform float uBoundaryMargin;
 
         varying vec3 vColor;
 
         ${GLSL_TERRAIN_HEIGHT}
 
         void main() {
-            vec3 pos = aOrigin;
-            float distFromCenter = length(pos.xz);
+            vec3 origin = aOrigin;
+            vec2 worldXZ;
+            float distFromCenter;
+            float rawFade;
 
-            // Radial cross-fade & circular boundary discard (eliminates square corners!)
-            float fadeIn = (uFadeInMax > 0.0) ? smoothstep(uFadeInMin, uFadeInMax, distFromCenter) : 1.0;
-            float fadeOut = 1.0 - smoothstep(uFadeOutMin, uFadeOutMax, distFromCenter);
-            float fade = fadeIn * fadeOut;
-            if (fade <= 0.001) {
+            if (uCoordMode == 1) { // 🎮 Game Mode (Player-Centric Toroidal Modulo Wrapping)
+                float halfPatch = uPatchSize * 0.5;
+                origin.x = mod(origin.x - uPlayerPosition.x + halfPatch, uPatchSize) - halfPatch;
+                origin.z = mod(origin.z - uPlayerPosition.z + halfPatch, uPatchSize) - halfPatch;
+
+                worldXZ = vec2(uPlayerPosition.x + origin.x, uPlayerPosition.z + origin.z);
+
+                // Multi-frequency organic wave jitter breaks up circular ring edges
+                float radialJitter = (sin(worldXZ.x * 0.065 + worldXZ.y * 0.045) * 3.4
+                                    + cos(worldXZ.x * 0.035 - worldXZ.y * 0.055) * 2.4) * (uRadialJitterAmp / 5.8);
+                distFromCenter = max(0.0, length(origin.xz) + radialJitter);
+
+                // Safe circular fade-out headroom so blades fade completely to 0 before square modulo wrap
+                float safeMaxFade = halfPatch - uBoundaryMargin;
+                float effFadeOutMax = min(uFadeOutMax, safeMaxFade);
+                float effFadeOutMin = min(uFadeOutMin, effFadeOutMax - 8.0);
+
+                float fadeIn = (uFadeInMax > 0.0) ? smoothstep(uFadeInMin, uFadeInMax, distFromCenter) : 1.0;
+                float fadeOut = 1.0 - smoothstep(effFadeOutMin, effFadeOutMax, distFromCenter);
+                rawFade = fadeIn * fadeOut;
+            } else { // 🌍 Static World Meadow
+                worldXZ = origin.xz;
+                distFromCenter = length(origin.xz);
+
+                float fadeIn = (uFadeInMax > 0.0) ? smoothstep(uFadeInMin, uFadeInMax, distFromCenter) : 1.0;
+                float fadeOut = 1.0 - smoothstep(uFadeOutMin, uFadeOutMax, distFromCenter);
+                rawFade = fadeIn * fadeOut;
+            }
+
+            if (rawFade <= 0.001) {
                 gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
                 return;
             }
+
+            float fade = pow(rawFade, uFadePower);
+            float fadeH = fade;
 
             float t = aUV.y;
             float side = aUV.x;
 
             float plantType = aFlora.x;
             float heightMod = (plantType >= 1.5 && plantType < 2.5) ? 1.30 : (plantType >= 0.5 && plantType < 1.5) ? 0.65 : 1.0;
-            float fadeH = pow(fade, 0.45);
             float bladeH = uMaxBladeHeight * aParams.y * heightMod * fadeH;
 
             // Ground blade upon undulating rolling landscape
+            vec3 pos = vec3(worldXZ.x, 0.0, worldXZ.y);
             float terrainY = getTerrainHeight(pos.xz) * uTerrainRelief;
             pos.y += terrainY;
 
@@ -1237,16 +2039,39 @@ function createSingleRingMesh(ring) {
             else if (curveMode > 0.3) bend = (t * t * t - 0.35 * t) * 1.2;
             else bend = t * t;
 
-            pos += aDir * (bend * aParams.z * bladeH * 0.60);
-            pos.y -= bend * aParams.z * bladeH * 0.25;
+            // AskAlice droop spread: non-linear distribution where most stand tall and a few droop heavily
+            float droopSpread = (aFlora.w * aFlora.w * 1.5 + 0.25);
+            float effectiveCurvature = aParams.z * uCurvature * droopSpread;
+            pos += aDir * (bend * effectiveCurvature * bladeH * 0.60);
+            pos.y -= bend * effectiveCurvature * bladeH * 0.25;
 
-            // Next-Gen Wind with Gale Scaling
-            float windPhase = dot(pos.xz, vec2(0.82, 0.57)) * 0.15 + uTime * 2.4;
+            // Next-Gen Wind with Gale Scaling & Stiffness Damping
+            vec2 windDir = normalize(vec2(0.82, 0.57));
+            float windPhase = dot(pos.xz, windDir) * 0.15 + uTime * 2.4;
             float gust = sin(windPhase) * 0.14 + sin(windPhase * 2.3) * 0.05;
             float windSway = (plantType >= 1.5 && plantType < 2.5) ? 1.35 : (plantType >= 0.5 && plantType < 1.5) ? 0.45 : 1.0;
-            float totalWind = gust * bend * bladeH * windSway * uWindSpeed;
-            pos.xz += vec2(0.82, 0.57) * totalWind;
+            float stiff = max(0.05, uStiffness);
+            float totalWind = (gust * bend * bladeH * windSway * uWindSpeed) / stiff;
+            pos.xz += windDir * totalWind;
             pos.y -= abs(totalWind) * 0.20;
+
+            // Dynamic Player Vehicle Trample Flattening & Wake
+            if (uVehicleCount > 0) {
+                for (int v = 0; v < 8; v++) {
+                    if (v >= uVehicleCount) break;
+                    vec3 vPos = uVehiclePositions[v];
+                    vec2 dV = pos.xz - vPos.xz;
+                    float distV = length(dV);
+                    float trampleRadius = 6.4;
+                    if (distV < trampleRadius && abs(terrainY - vPos.y) < 3.5) {
+                        float pushFactor = (1.0 - distV / trampleRadius);
+                        pushFactor = pushFactor * pushFactor;
+                        vec2 pushDir = distV > 0.01 ? normalize(dV) : vec2(0.0, 1.0);
+                        pos.xz += pushDir * (pushFactor * (3.6 / stiff) * t);
+                        pos.y -= (pushFactor / stiff) * bladeH * 0.92 * t;
+                    }
+                }
+            }
 
             // Base Colors
             vec3 c = mix(uColRoot, uColLower, smoothstep(0.0, 0.22, t));
@@ -1255,6 +2080,17 @@ function createSingleRingMesh(ring) {
             c = mix(c, uColTip, smoothstep(0.82, 1.0, t));
             c *= mix(vec3(0.88, 1.04, 0.82), vec3(1.12, 0.96, 0.74), aTint.x);
             c *= (0.78 + aTint.y * 0.44);
+
+            // AskAlice Field-Scale Macro Variation & Sun-Baked Dry Patches
+            if (uPatchiness > 0.001) {
+                float pNoise = sin(pos.x * 0.02 + 0.7) * cos(pos.z * 0.02 + 1.2);
+                float pDry = sin(pos.x * 0.045 - 0.4) * cos(pos.z * 0.045 + 0.8) * 0.5 + 0.5;
+                c *= (1.0 + pNoise * uPatchiness * 0.38);
+                c = mix(c, c * vec3(1.30, 1.14, 0.55), smoothstep(0.48, 0.82, pDry) * uPatchiness);
+            }
+
+            // AskAlice Wind-Tilt Skylight Shimmer (bent blades catch ambient sky luminance)
+            c *= (1.0 + abs(gust) * uWindSpeed * 0.25 * t);
 
             // Multi-Species Color Overrides with user-configurable uniforms
             if (plantType >= 2.5) {
@@ -1337,7 +2173,16 @@ function createSingleRingMesh(ring) {
             c += vec3(0.42, 0.52, 0.68) * uLightning;
 
             float ao = pow(t, 0.55) * 0.72 + 0.28;
-            vColor = c * ao;
+
+            // AskAlice Subsurface Scattering (SSS) / Translucent Backlight
+            vec3 viewDir = normalize(cameraPosition - pos);
+            vec3 sDir = normalize(vec3(40.0, 65.0, 25.0)); // Sun direction in lab
+            float sssDot = max(0.0, dot(-viewDir, sDir));
+            float sssIntensity = (plantType >= 2.5) ? 0.85 : (plantType >= 1.5) ? 0.60 : 0.45;
+            float sss = pow(sssDot, 3.5) * sssIntensity * t * t;
+            vec3 sssGlow = mix(uColUpper, (plantType >= 2.5) ? c : uColTip, 0.65) * sss * (uTranslucency * 2.2);
+
+            vColor = (c * ao) + sssGlow;
 
             gl_Position = projectionMatrix * viewMatrix * vec4(pos, 1.0);
         }
@@ -1357,6 +2202,10 @@ function createSingleRingMesh(ring) {
         uTime: { value: 0 },
         uBladeWidth: { value: ring.bladeWidth },
         uMaxBladeHeight: { value: ring.maxBladeHeight },
+        uCurvature: { value: fullConfig.curvature ?? 0.35 },
+        uStiffness: { value: fullConfig.stiffness ?? 1.0 },
+        uTranslucency: { value: fullConfig.translucency ?? 0.65 },
+        uPatchiness: { value: fullConfig.patchiness ?? 0.40 },
         uFadeInMin: { value: ring.fadeInMin },
         uFadeInMax: { value: ring.fadeInMax },
         uFadeOutMin: { value: ring.fadeOutMin },
@@ -1379,7 +2228,15 @@ function createSingleRingMesh(ring) {
         uShadingFx: { value: currentShadingFx },
         uAudioBass: { value: 0.0 },
         uAudioTreble: { value: 0.0 },
-        uAudioVolume: { value: 0.0 }
+        uAudioVolume: { value: 0.0 },
+        uVehiclePositions: { value: vehiclePositionsArray },
+        uVehicleCount: { value: simPlayerActive ? 1 : 0 },
+        uPlayerPosition: { value: new THREE.Vector3().copy(simPlayerActive ? simPlayerPos : cameraTarget) },
+        uPatchSize: { value: ring.patchSize },
+        uCoordMode: { value: ((document.getElementById('coordMode')?.value || 'GAME_MODULO') === 'GAME_MODULO' || simPlayerActive) ? 1 : 0 },
+        uFadePower: { value: fullConfig.densityDropoff ?? 0.55 },
+        uRadialJitterAmp: { value: fullConfig.radialJitterAmp ?? 5.8 },
+        uBoundaryMargin: { value: fullConfig.boundaryMargin ?? 8.0 }
     };
 
     const mat = new THREE.ShaderMaterial({
@@ -1406,14 +2263,7 @@ function createSingleRingMesh(ring) {
 window.rebuildGrass = function() {
     syncUiToRing(currentRingIdx);
 
-    // Dispose old meshes
-    for (const r of activeRings) {
-        if (r.mesh) {
-            scene.remove(r.mesh);
-            r.mesh.geometry.dispose();
-            r.mesh.material.dispose();
-        }
-    }
+    const oldRings = activeRings.slice();
     activeRings = [];
 
     let totalTufts = 0, totalBlades = 0, totalTris = 0;
@@ -1436,84 +2286,80 @@ window.rebuildGrass = function() {
         totalTris = ringObj.triCount;
     }
 
+    // Zero-Blink disposal: remove and dispose old meshes only after new ones are created and added to scene
+    for (const r of oldRings) {
+        if (r.mesh) {
+            scene.remove(r.mesh);
+            r.mesh.geometry.dispose();
+            r.mesh.material.dispose();
+        }
+    }
+
     const statsEl = document.getElementById('stats');
     if (statsEl && statsEl.children[0]) {
-        const modeBadge = (viewMode === 'SINGLE')
-            ? `<span style="color:#ffcc00; font-weight:bold; background:rgba(120,90,0,0.45); padding:2px 6px; border-radius:3px;">🔍 Ring ${currentRingIdx + 1}: ${fullConfig.rings[currentRingIdx].name} [ISOLATED]</span>`
-            : `<span style="color:#55ff88; font-weight:bold; background:rgba(0,100,30,0.45); padding:2px 6px; border-radius:3px;">🌐 Full Concentric Meadow (All 6 Rings)</span>`;
-        statsEl.children[0].innerHTML = `🌿 ${modeBadge} | Tufts: ${totalTufts.toLocaleString()} | Blades: ${totalBlades.toLocaleString()} | Tris: ${totalTris.toLocaleString()}`;
+        const modeStr = (viewMode === 'SINGLE')
+            ? `Ring ${currentRingIdx + 1} (${fullConfig.rings[currentRingIdx].name}) [Isolated]`
+            : `Concentric Meadow (6 Rings)`;
+        statsEl.children[0].textContent = `🌿 ${modeStr} | Tufts: ${totalTufts.toLocaleString()} | Blades: ${totalBlades.toLocaleString()} | Tris: ${totalTris.toLocaleString()}`;
     }
 
     dumpParams();
 };
 
 function dumpParams() {
-    document.getElementById('paramDump').value = JSON.stringify(fullConfig, null, 2);
+    const el = document.getElementById('paramDump');
+    if (el) el.value = JSON.stringify(fullConfig, null, 2);
 }
 
-async function checkServerStatus() {
-    const statusEl = document.getElementById('server-status');
-    const saveBtn = document.getElementById('save-server-btn');
-    const loadBtn = document.getElementById('load-server-btn');
-
-    try {
-        const res = await fetch('/api/status', { method: 'GET' });
-        if (res.ok) {
-            const data = await res.json();
-            if (data.server) {
-                hasBackend = true;
-                statusEl.innerHTML = '🟢 <b>Server Connected</b> (Syncs to grass.json)';
-                statusEl.style.background = '#003311';
-                statusEl.style.borderColor = '#00aa44';
-                statusEl.style.color = '#55ff88';
-                saveBtn.style.display = 'inline-block';
-                loadBtn.style.display = 'inline-block';
-                loadFromGame();
-                return;
-            }
-        }
-    } catch (_) {}
-
-    hasBackend = false;
-    statusEl.innerHTML = '🔵 <b>Standalone Mode</b> (Local Editor)';
-    statusEl.style.background = '#15202b';
-    statusEl.style.borderColor = '#2b4764';
-    statusEl.style.color = '#8ec5fc';
-    saveBtn.style.display = 'none';
-    loadBtn.style.display = 'none';
-}
-
-window.saveToGame = async function() {
-    syncUiToRing(currentRingIdx);
-    try {
-        const res = await fetch('/api/save-config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(fullConfig)
-        });
-        const result = await res.json();
-        if (result.success) {
-            showToast('✅ Saved to three.js/configure/grass.json!');
-        } else {
-            showToast('❌ Save error: ' + (result.error || 'Unknown'), false);
-        }
-    } catch (e) {
-        showToast('❌ Network error saving config', false);
+window.toggleSimulatePlayer = function() {
+    if (!simPlayerGroup) {
+        simPlayerGroup = createPlayerVehicle();
     }
-};
 
-window.loadFromGame = async function() {
-    try {
-        const res = await fetch('/api/load-config');
-        if (res.ok) {
-            const cfg = await res.json();
-            fullConfig = cfg;
-            loadRingToUi(currentRingIdx);
-            rebuildGrass();
-            showToast('📂 Loaded config from grass.json');
+    simPlayerActive = !simPlayerActive;
+    const btn = document.getElementById('sim-player-btn');
+    const followCb = document.getElementById('cam-follow-cb');
+    const coordSel = document.getElementById('coordMode');
+
+    if (simPlayerActive) {
+        simPlayerGroup.visible = true;
+        simPlayerPos.set(0, getTerrainHeight(0, -600) * terrainRelief + 0.42, -600);
+        vehiclePositionsArray[0].copy(simPlayerPos);
+        cameraFollowPlayer = true;
+        if (followCb) followCb.checked = true;
+        if (coordSel) coordSel.value = 'GAME_MODULO';
+
+        cameraTarget.set(0, simPlayerPos.y + 0.9, -600);
+        updateCameraOrbit();
+
+        for (const r of activeRings) {
+            if (r.uniforms.uCoordMode) r.uniforms.uCoordMode.value = 1;
+            if (r.uniforms.uPlayerPosition) r.uniforms.uPlayerPosition.value.copy(simPlayerPos);
+            if (r.uniforms.uVehicleCount) r.uniforms.uVehicleCount.value = 1;
+            if (r.uniforms.uVehiclePositions) r.uniforms.uVehiclePositions.value = vehiclePositionsArray;
         }
-    } catch (e) {
-        showToast('❌ Could not load config', false);
+
+        if (btn) {
+            btn.innerHTML = '⏹️ Stop Player';
+            btn.style.background = '#dc2626';
+            btn.style.borderColor = '#ef4444';
+        }
+        showToast('🏎️ Player simulation active (Game Modulo Mode)! Cruising across meadow...');
+    } else {
+        simPlayerGroup.visible = false;
+        cameraFollowPlayer = false;
+        if (followCb) followCb.checked = false;
+        vehiclePositionsArray[0].set(0, -999, 0);
+        for (const r of activeRings) {
+            if (r.uniforms.uVehicleCount) r.uniforms.uVehicleCount.value = 0;
+            if (r.uniforms.uVehiclePositions) r.uniforms.uVehiclePositions.value = vehiclePositionsArray;
+        }
+        if (btn) {
+            btn.innerHTML = '🏎️ Simulate Player';
+            btn.style.background = '#1d4ed8';
+            btn.style.borderColor = '#3b82f6';
+        }
+        showToast('⏹️ Player simulation stopped');
     }
 };
 
@@ -1527,19 +2373,6 @@ window.copyJsonConfig = function() {
     });
 };
 
-window.downloadJsonConfig = function() {
-    syncUiToRing(currentRingIdx);
-    const str = JSON.stringify(fullConfig, null, 2);
-    const blob = new Blob([str], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'grass.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('⬇️ Downloaded grass.json');
-};
-
 window.captureFrame = function() {
     renderer.render(scene, camera);
     const dataUrl = renderer.domElement.toDataURL('image/webp', 0.92);
@@ -1550,25 +2383,117 @@ window.captureFrame = function() {
     showToast('📸 Captured WebP screenshot');
 };
 
-let refVisible = false;
-window.toggleRef = function() {
-    refVisible = !refVisible;
-    document.getElementById('ref-overlay').style.display = refVisible ? 'block' : 'none';
-};
-
 window.resetCamera = function() { window._resetCamera?.(); };
-
-window.triggerLightningFlash = function() {
-    for (const r of activeRings) {
-        if (r.uniforms.uLightning) r.uniforms.uLightning.value = 1.0;
-    }
-    showToast('⚡ Lightning strike triggered!');
-};
 
 let seasonTimer = 0;
 function animate() {
     requestAnimationFrame(animate);
     const dt = clock.getDelta();
+
+    // 1. Simulated Player Vehicle Cruise & Dynamic Grass Trample Wake
+    if (simPlayerActive && simPlayerGroup) {
+        simPlayerPos.z += simPlayerSpeed * dt;
+
+        // Seamless boundary wrap across the meadow field (1.2km long distance track)
+        if (simPlayerPos.z > 600.0) {
+            simPlayerPos.z = -600.0;
+        }
+
+        const curX = simPlayerPos.x;
+        const curZ = simPlayerPos.z;
+
+        // Sample undulating terrain height for ground-following hover physics
+        const curH = getTerrainHeight(curX, curZ) * terrainRelief;
+        simPlayerPos.y = curH + 0.42;
+
+        // Compute slope gradient for realistic hull pitch & roll
+        const lookDist = 2.2;
+        const fwdH = getTerrainHeight(curX, curZ + lookDist) * terrainRelief;
+        const pitch = Math.atan2(fwdH - curH, lookDist);
+
+        const latDist = 1.2;
+        const rH = getTerrainHeight(curX + latDist, curZ) * terrainRelief;
+        const lH = getTerrainHeight(curX - latDist, curZ) * terrainRelief;
+        const roll = Math.atan2(lH - rH, latDist * 2.0) * 0.6;
+
+        simPlayerGroup.position.copy(simPlayerPos);
+        simPlayerGroup.rotation.set(-pitch, 0, roll, 'YXZ');
+
+        // Update trample positions array
+        vehiclePositionsArray[0].copy(simPlayerPos);
+
+        for (const r of activeRings) {
+            const u = r.uniforms;
+            if (!u) continue;
+            if (u.uVehicleCount) u.uVehicleCount.value = 1;
+            if (u.uVehiclePositions) u.uVehiclePositions.value = vehiclePositionsArray;
+        }
+
+        // Camera follow vehicle when user has opted into follow mode
+        if (cameraFollowPlayer && !isDraggingOrbit && !isDraggingPan) {
+            cameraTarget.lerp(new THREE.Vector3(simPlayerPos.x, simPlayerPos.y + 0.9, simPlayerPos.z), dt * 5.0);
+            updateCameraOrbit();
+        }
+    }
+
+    // 2. Keyboard WASD / Arrow Keys Flight across long distance
+    const moveSpeed = (keysDown['ShiftLeft'] || keysDown['ShiftRight'] ? 80.0 : 28.0) * dt;
+    let moved = false;
+    const forwardX = -Math.sin(orbitYaw);
+    const forwardZ = -Math.cos(orbitYaw);
+    const rightX = Math.cos(orbitYaw);
+    const rightZ = -Math.sin(orbitYaw);
+
+    if (keysDown['KeyW'] || keysDown['ArrowUp']) {
+        cameraTarget.x += forwardX * moveSpeed;
+        cameraTarget.z += forwardZ * moveSpeed;
+        moved = true;
+    }
+    if (keysDown['KeyS'] || keysDown['ArrowDown']) {
+        cameraTarget.x -= forwardX * moveSpeed;
+        cameraTarget.z -= forwardZ * moveSpeed;
+        moved = true;
+    }
+    if (keysDown['KeyA'] || keysDown['ArrowLeft']) {
+        cameraTarget.x -= rightX * moveSpeed;
+        cameraTarget.z -= rightZ * moveSpeed;
+        moved = true;
+    }
+    if (keysDown['KeyD'] || keysDown['ArrowRight']) {
+        cameraTarget.x += rightX * moveSpeed;
+        cameraTarget.z += rightZ * moveSpeed;
+        moved = true;
+    }
+    if (keysDown['KeyE'] || keysDown['KeyR']) {
+        cameraTarget.y += moveSpeed * 0.7;
+        moved = true;
+    }
+    if (keysDown['KeyQ'] || keysDown['KeyF']) {
+        cameraTarget.y -= moveSpeed * 0.7;
+        moved = true;
+    }
+
+    if (moved) {
+        cameraFollowPlayer = false; // Key navigation frees camera
+        const followCb = document.getElementById('cam-follow-cb');
+        if (followCb) followCb.checked = false;
+
+        const minH = getTerrainHeight(cameraTarget.x, cameraTarget.z) * terrainRelief + 0.4;
+        if (cameraTarget.y < minH) cameraTarget.y = minH;
+        updateCameraOrbit();
+    }
+
+    // Dynamic Coordinate Anchor: Game Modulo centers rings on player (if active) or cameraTarget (if free flight)
+    const coordModeVal = document.getElementById('coordMode')?.value || 'GAME_MODULO';
+    const isGameModulo = (coordModeVal === 'GAME_MODULO' || simPlayerActive);
+    const anchorPos = simPlayerActive ? simPlayerPos : cameraTarget;
+
+    for (const r of activeRings) {
+        const u = r.uniforms;
+        if (!u) continue;
+        if (u.uCoordMode) u.uCoordMode.value = isGameModulo ? 1 : 0;
+        if (u.uPlayerPosition) u.uPlayerPosition.value.copy(anchorPos);
+    }
 
     // Seasonal Color Shifting
     const autoShift = document.getElementById('seasonalShiftAuto')?.checked ?? true;
@@ -1659,8 +2584,8 @@ function animate() {
             rainMesh.instanceMatrix.needsUpdate = true;
         } else {
             rainMesh.visible = false;
-            scene.fog.near = THREE.MathUtils.lerp(scene.fog.near, 45.0, dt * 2.0);
-            scene.fog.far = THREE.MathUtils.lerp(scene.fog.far, 260.0, dt * 2.0);
+            scene.fog.near = THREE.MathUtils.lerp(scene.fog.near, 90.0, dt * 2.0);
+            scene.fog.far = THREE.MathUtils.lerp(scene.fog.far, 750.0, dt * 2.0);
         }
     }
 
@@ -1717,7 +2642,7 @@ function updateDynamicCulling(fps) {
 
     const statsEl = document.getElementById('stats');
     if (statsEl && statsEl.children[1]) {
-        statsEl.children[1].innerHTML = `⚡ Active FPS: ${fps} | <span style="color:#55ff88;">Culled: ~${culledPercent}%</span> (${Math.round(culledTris).toLocaleString()} tris skipped)`;
+        statsEl.children[1].textContent = `⚡ FPS: ${fps} | Culled: ~${culledPercent}% (${Math.round(culledTris).toLocaleString()} tris skipped)`;
     }
 }
 

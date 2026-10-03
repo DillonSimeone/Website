@@ -15,6 +15,7 @@ export class RaceHud {
         this.distValue = document.getElementById('hud-dist-val');
         this.timeValue = document.getElementById('hud-time-val');
         this.rankValue = document.getElementById('hud-rank-val');
+        this.fpsValue = document.getElementById('hud-fps-val');
         this.ascendBadge = document.getElementById('hud-ascend-badge');
 
         // Modal Elements
@@ -94,8 +95,10 @@ export class RaceHud {
             this.timeValue.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
         }
 
-        // 5. Rank
-        if (this.rankValue) {
+        // 5. FPS Counter & Rank
+        if (this.fpsValue) {
+            this.fpsValue.textContent = state.fps !== undefined ? Math.round(state.fps) : '60';
+        } else if (this.rankValue) {
             this.rankValue.textContent = `${rank}/${totalRacers}`;
         }
 

@@ -81,9 +81,13 @@ class GameApp {
         this.launchCarSpeed = 0;
         this.launchCarDist = 0;
         this.hasSwappedToCompositor = false;
-        this.mediaRecorder = null;
-        this.recordedChunks = [];
-        this.isRecordingLaunch = false;
+        this.launchBitmaps = [];
+        this.isCapturingFrames = false;
+        this.lastCaptureTime = 0;
+        this.pingPongActive = false;
+        this.compFrameIdx = 0;
+        this.compFrameDir = 1;
+        this.currentFps = 60;
 
         // In-Race Background Performance Benchmark
         this.perfBenchmarkSamples = [];
@@ -151,8 +155,12 @@ class GameApp {
                 uniform vec2 uCenter;
                 varying vec2 vWorldPos;
                 void main() {
-                    vec2 coord = vWorldPos - uCenter;
+                    // Grid coordinates in world space:
+                    // As the vehicle travels forward (-Z), world Z decreases, so the grid lines
+                    // rush backwards underneath the car in true physical motion!
+                    vec2 coord = vWorldPos;
                     coord.y += uTime * uSpeed;
+
                     vec2 grid = abs(fract(coord * 0.25 - 0.5) - 0.5) / fwidth(coord * 0.25);
                     float line = min(grid.x, grid.y);
                     float c1 = 1.0 - min(line, 1.0);
@@ -388,6 +396,13 @@ class GameApp {
             this.camera.aspect = w / h;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(w, h);
+            if (this.pingPongActive) {
+                const compCanvas = document.getElementById('compositor-canvas');
+                if (compCanvas) {
+                    compCanvas.width = w;
+                    compCanvas.height = h;
+                }
+            }
         });
 
         // Keyboard Controls
@@ -641,7 +656,11 @@ class GameApp {
         }
         if (this.garageDisplayShadow) {
             this.garageDisplayShadow.rotation.set(0, this.turntableYaw, 0);
-            this.garageDisplayShadow.position.set(0, -0.015, 0);
+            if (this.state === 'GARAGE_LAUNCH') {
+                this.garageDisplayShadow.position.set(0, -0.15, -this.launchCarDist);
+            } else {
+                this.garageDisplayShadow.position.set(0, -0.015, 0);
+            }
             this.garageDisplayShadow.visible = (this.state === 'GARAGE' || this.state === 'MENU' || this.state === 'GARAGE_LAUNCH');
         }
     }
@@ -659,7 +678,24 @@ class GameApp {
             this.hud.hide();
             this.audio.silence();
             this._teardownRace();
-            if (this.garageDisplayShadow) this.garageDisplayShadow.visible = true;
+
+            // Cancel any pending/finished Web Animations on overlay and reset its state
+            const overlay = document.getElementById('launch-compositor-overlay');
+            if (overlay) {
+                overlay.getAnimations().forEach(a => a.cancel());
+                overlay.style.display = 'none';
+                overlay.style.opacity = '1';
+                overlay.classList.remove('dissolve-out');
+            }
+            const compCanvas = document.getElementById('compositor-canvas');
+            if (compCanvas) {
+                compCanvas.style.display = 'none';
+            }
+
+            if (this.garageDisplayShadow) {
+                this.garageDisplayShadow.visible = true;
+                this.garageDisplayShadow.position.set(0, -0.015, 0);
+            }
             if (this.garagePlatform) this.garagePlatform.visible = true;
             if (this.garageRing) this.garageRing.visible = true;
             if (this.garageFwdGroup) this.garageFwdGroup.visible = true;
@@ -667,10 +703,23 @@ class GameApp {
             if (this.garageSunMesh) this.garageSunMesh.position.set(0, 24, -160);
             if (this.garageGridMat) {
                 this.garageGridMat.uniforms.uOpacity.value = 1.0;
+                this.garageGridMat.uniforms.uSpeed.value = 0.0;
                 this.garageGridMat.uniforms.uCenter.value.set(0, 0);
             }
             if (this.garageSunMat) {
                 this.garageSunMat.uniforms.uOpacity.value = 1.0;
+            }
+            this.pingPongActive = false;
+            this.isCapturingFrames = false;
+            this.hasSwappedToCompositor = false;
+            this.launchCarDist = 0;
+            this.launchCarSpeed = 0;
+            this.isRaceLoaded = false;
+            if (this.launchBitmaps) {
+                for (const bmp of this.launchBitmaps) {
+                    try { bmp.close(); } catch (_) {}
+                }
+                this.launchBitmaps = [];
             }
             if (newState === 'GARAGE') {
                 this.isAligningToFront = true;
@@ -701,8 +750,18 @@ class GameApp {
         this.launchCarSpeed = 0;
         this.launchCarDist = 0;
         this.hasSwappedToCompositor = false;
-        this.isRecordingLaunch = false;
-        this.recordedChunks = [];
+        this.isCapturingFrames = true;
+        this.lastCaptureTime = 0;
+        this.pingPongActive = false;
+        this.isRaceLoaded = false;
+
+        // Clean up previous frame buffers
+        if (this.launchBitmaps) {
+            for (const bmp of this.launchBitmaps) {
+                try { bmp.close(); } catch (_) {}
+            }
+        }
+        this.launchBitmaps = [];
 
         const garageView = document.getElementById('garage-view');
         if (garageView) garageView.style.display = 'none';
@@ -711,21 +770,35 @@ class GameApp {
         if (this.garagePlatform) this.garagePlatform.visible = false;
         if (this.garageRing) this.garageRing.visible = false;
         if (this.garageFwdGroup) this.garageFwdGroup.visible = false;
-        if (this.garageDisplayShadow) this.garageDisplayShadow.visible = false;
+
+        // Shadow is placed directly on the grid mesh underneath the vehicle
+        if (this.garageDisplayShadow) {
+            this.garageDisplayShadow.visible = true;
+            this.garageDisplayShadow.position.set(0, -0.15, 0);
+            this.garageDisplayShadow.rotation.set(0, this.turntableYaw, 0);
+        }
 
         // 2. Ensure vehicle, synthwave grid runway and sun are visible
         this._updateGarageElevation();
+        const carElev = this.garageVehicleElevation || 0;
         if (this.garageVehicleRoot) {
-            this.garageVehicleRoot.position.set(0, this.garageVehicleElevation || 0, 0);
+            this.garageVehicleRoot.position.set(0, carElev, 0);
             this.garageVehicleRoot.rotation.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
             this.garageVehicleRoot.visible = true;
         }
+
+        // Camera is locked directly behind the vehicle in exact chase camera alignment
+        this.camera.position.set(0, carElev + 2.5, 6.2);
+        this.camera.lookAt(0, carElev + 0.8, -3.0);
+        this.camera.fov = 65;
+        this.camera.updateProjectionMatrix();
 
         if (this.garageGridMesh) {
             this.garageGridMesh.visible = true;
             this.garageGridMesh.position.set(0, -0.16, 0);
             if (this.garageGridMat) {
                 this.garageGridMat.uniforms.uOpacity.value = 1.0;
+                this.garageGridMat.uniforms.uSpeed.value = 0.0;
                 this.garageGridMat.uniforms.uCenter.value.set(0, 0);
             }
         }
@@ -737,94 +810,101 @@ class GameApp {
             }
         }
 
-        // 3. Keep compositor overlay hidden until 3D vehicle drive loop is recorded
+        // 3. Reset and prepare compositor overlay and progress bar
         const overlay = document.getElementById('launch-compositor-overlay');
         if (overlay) {
+            overlay.getAnimations().forEach(a => a.cancel());
             overlay.style.display = 'none';
             overlay.style.opacity = '1';
             overlay.classList.remove('dissolve-out');
         }
-
-        // 4. Begin recording live 60fps canvas stream to capture smooth driving loop
-        try {
-            if (this.canvas && typeof MediaRecorder !== 'undefined') {
-                const stream = this.canvas.captureStream(60);
-                const types = [
-                    'video/webm;codecs=vp9',
-                    'video/webm;codecs=vp8',
-                    'video/webm'
-                ];
-                const selectedType = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
-                if (selectedType) {
-                    this.recordedChunks = [];
-                    this.mediaRecorder = new MediaRecorder(stream, { mimeType: selectedType });
-                    this.mediaRecorder.ondataavailable = (e) => {
-                        if (e.data && e.data.size > 0) this.recordedChunks.push(e.data);
-                    };
-                    this.mediaRecorder.onstop = () => {
-                        this._handleRecordedLoopReady(selectedType);
-                    };
-                    this.mediaRecorder.start();
-                    this.isRecordingLaunch = true;
-                }
-            }
-        } catch (err) {
-            console.warn('MediaRecorder error, using fallback:', err);
+        const compCanvas = document.getElementById('compositor-canvas');
+        if (compCanvas) {
+            compCanvas.style.display = 'none';
         }
-
-        this.isRaceLoaded = false;
+        this._updateLoadingProgress(0, 'WARP DRIVE CHARGING...');
     }
 
-    _handleRecordedLoopReady(mimeType) {
-        if (this.recordedChunks.length === 0) {
-            this._fallbackCompositorSwap();
-            return;
-        }
-
-        const blob = new Blob(this.recordedChunks, { type: mimeType });
-        const videoUrl = URL.createObjectURL(blob);
-
-        // Save to sessionStorage/localStorage as requested
-        try {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                try {
-                    sessionStorage.setItem('model3d_cyber_loop', reader.result);
-                } catch (_) {}
-            };
-            reader.readAsDataURL(blob);
-        } catch (_) {}
-
-        const videoEl = document.getElementById('compositor-video-loop');
+    _startPingPongPlayback() {
+        if (this.hasSwappedToCompositor) return;
+        const overlay = document.getElementById('launch-compositor-overlay');
+        const compCanvas = document.getElementById('compositor-canvas');
         const bgLoop = document.getElementById('compositor-bg-loop');
         const vContainer = document.getElementById('compositor-vehicle-container');
+        const videoEl = document.getElementById('compositor-video-loop');
 
-        if (videoEl) {
-            videoEl.src = videoUrl;
-            videoEl.style.display = 'block';
-            videoEl.play().catch(() => {});
-        }
+        if (videoEl) videoEl.style.display = 'none';
         if (bgLoop) bgLoop.style.display = 'none';
         if (vContainer) vContainer.style.display = 'none';
 
-        const overlay = document.getElementById('launch-compositor-overlay');
-        if (overlay) {
-            overlay.style.transition = 'none';
-            overlay.style.opacity = '1';
-            overlay.style.display = 'block';
-            overlay.classList.remove('dissolve-out');
+        if (compCanvas && this.launchBitmaps && this.launchBitmaps.length >= 2) {
+            compCanvas.width = window.innerWidth;
+            compCanvas.height = window.innerHeight;
+            compCanvas.style.display = 'block';
+
+            const ctx = compCanvas.getContext('2d');
+            this.compFrameIdx = 0;
+            this.compFrameDir = 1;
+            this.pingPongActive = true;
+            let lastTick = performance.now();
+
+            const tick = (timestamp) => {
+                if (!this.pingPongActive) return;
+                // Render at smooth ~30 fps (every ~33ms)
+                if (timestamp - lastTick >= 33) {
+                    lastTick = timestamp;
+                    const frame = this.launchBitmaps[this.compFrameIdx];
+                    if (frame) {
+                        ctx.drawImage(frame, 0, 0, compCanvas.width, compCanvas.height);
+                    }
+                    this.compFrameIdx += this.compFrameDir;
+                    // Ping-pong forward then backward seamlessly!
+                    if (this.compFrameIdx >= this.launchBitmaps.length - 1) {
+                        this.compFrameIdx = this.launchBitmaps.length - 1;
+                        this.compFrameDir = -1; // Smoothly play backward!
+                    } else if (this.compFrameIdx <= 0) {
+                        this.compFrameIdx = 0;
+                        this.compFrameDir = 1;  // Smoothly play forward!
+                    }
+                }
+                requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+
+            // Save first captured frame to sessionStorage as .webp if supported
+            try {
+                const offscreen = document.createElement('canvas');
+                offscreen.width = 480;
+                offscreen.height = Math.round(480 * (window.innerHeight / window.innerWidth));
+                const octx = offscreen.getContext('2d');
+                if (octx && this.launchBitmaps[0]) {
+                    octx.drawImage(this.launchBitmaps[0], 0, 0, offscreen.width, offscreen.height);
+                    const webpData = offscreen.toDataURL('image/webp', 0.85);
+                    sessionStorage.setItem('model3d_cyber_loop', webpData);
+                }
+            } catch (_) {}
+
+            if (overlay) {
+                overlay.getAnimations().forEach(a => a.cancel());
+                overlay.style.display = 'block';
+                overlay.style.opacity = '1';
+                overlay.classList.remove('dissolve-out');
+            }
+
+            this.hasSwappedToCompositor = true;
+            this.isRaceLoaded = false;
+            this._updateLoadingProgress(8, '⚡ INITIALIZING HYPERSPACE DRIVE...');
+
+            // AND ONLY THEN: World actually starts loading in the background under the overlay!
+            this._startSteppedLoading();
+        } else {
+            this._fallbackCompositorSwap();
         }
-
-        this.hasSwappedToCompositor = true;
-        this.isRaceLoaded = false;
-        this._updateLoadingProgress(8, '⚡ INITIALIZING HYPERSPACE DRIVE...');
-
-        // AND ONLY THEN: World actually starts loading in the background under the overlay!
-        this._startSteppedLoading();
     }
 
     _fallbackCompositorSwap() {
         if (this.hasSwappedToCompositor) return;
+        this.hasSwappedToCompositor = true;
 
         // Isolate vehicle for snapshot
         if (this.garageGridMesh) this.garageGridMesh.visible = false;
@@ -860,13 +940,12 @@ class GameApp {
 
         const overlay = document.getElementById('launch-compositor-overlay');
         if (overlay) {
-            overlay.style.transition = 'none';
-            overlay.style.opacity = '1';
-            overlay.style.display = 'block';
+            overlay.getAnimations().forEach(a => a.cancel());
             overlay.classList.remove('dissolve-out');
+            overlay.style.display = 'block';
+            overlay.style.opacity = '1';
         }
 
-        this.hasSwappedToCompositor = true;
         this.isRaceLoaded = false;
         this._updateLoadingProgress(8, '⚡ INITIALIZING HYPERSPACE DRIVE...');
 
@@ -985,19 +1064,24 @@ class GameApp {
                     console.error(`Stepped Loading Error (Step ${stepIndex + 1}):`, err);
                 }
                 stepIndex++;
-                setTimeout(() => {
-                    if (this.state === 'GARAGE_LAUNCH') {
-                        requestAnimationFrame(() => executeNextStep());
-                    }
-                }, 60);
+                // Double rAF yield: lets ping-pong canvas and progress bar paint buttery-smooth without any thread blocking
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (this.state === 'GARAGE_LAUNCH') {
+                            executeNextStep();
+                        }
+                    });
+                });
             }
         };
 
-        setTimeout(() => {
-            if (this.state === 'GARAGE_LAUNCH') {
-                requestAnimationFrame(() => executeNextStep());
-            }
-        }, 60);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (this.state === 'GARAGE_LAUNCH') {
+                    executeNextStep();
+                }
+            });
+        });
     }
 
     _finalizeRaceLaunch() {
@@ -1025,6 +1109,7 @@ class GameApp {
         if (this.garageFwdGroup) this.garageFwdGroup.visible = true;
         if (this.garageGridMesh) this.garageGridMesh.position.set(0, -0.16, 0);
         if (this.garageSunMesh) this.garageSunMesh.position.set(0, 24, -160);
+        if (this.garageGridMat) this.garageGridMat.uniforms.uSpeed.value = 0.0;
 
         if (!this.player) {
             this._startRace();
@@ -1060,22 +1145,45 @@ class GameApp {
         // Render live race scene underneath so it is immediately visible as overlay dissolves
         this.renderer.render(this.raceScene, this.camera);
 
-        // Dissolve compositor overlay away over 0.75s — vehicle stays continuously in sight!
+        // Manual rAF-driven crossfade: fade overlay opacity 1→0 over 850ms
+        // This replaces the Web Animations API approach which was silently failing
         const overlay = document.getElementById('launch-compositor-overlay');
         if (overlay) {
-            overlay.style.transition = 'opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1)';
-            overlay.style.opacity = '0';
             overlay.style.pointerEvents = 'none';
-            overlay.classList.add('dissolve-out');
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                overlay.classList.remove('dissolve-out');
-                const videoEl = document.getElementById('compositor-video-loop');
-                if (videoEl) {
-                    videoEl.pause();
-                    videoEl.src = '';
+            overlay.getAnimations().forEach(a => a.cancel());
+            const fadeStart = performance.now();
+            const fadeDuration = 850;
+
+            const fadeStep = () => {
+                if (this.state !== 'RACE') return; // Aborted (user pressed Escape)
+                const progress = Math.min(1.0, (performance.now() - fadeStart) / fadeDuration);
+                // Cubic ease-out for smooth deceleration
+                const eased = 1.0 - Math.pow(1.0 - progress, 3);
+                overlay.style.opacity = String(1.0 - eased);
+
+                if (progress < 1.0) {
+                    requestAnimationFrame(fadeStep);
+                } else {
+                    // Fade complete — clean up everything
+                    overlay.style.display = 'none';
+                    overlay.style.opacity = '1';
+                    overlay.style.pointerEvents = 'auto';
+                    overlay.classList.remove('dissolve-out');
+                    this.pingPongActive = false;
+                    if (this.launchBitmaps) {
+                        for (const bmp of this.launchBitmaps) {
+                            try { bmp.close(); } catch (_) {}
+                        }
+                        this.launchBitmaps = [];
+                    }
+                    const videoEl = document.getElementById('compositor-video-loop');
+                    if (videoEl) {
+                        videoEl.pause();
+                        videoEl.src = '';
+                    }
                 }
-            }, 750);
+            };
+            requestAnimationFrame(fadeStep);
         }
     }
 
@@ -1205,6 +1313,7 @@ class GameApp {
         this.trackData = null;
         this.isRacePreloaded = false;
         this.isRacePreloading = false;
+        this.isRaceLoaded = false;
     }
 
     _handleRaceInput() {
@@ -1348,7 +1457,8 @@ class GameApp {
             isAscended: this.player.ascended,
             playerPos: this.player.position,
             rivalPositions,
-            trackPoints: pts
+            trackPoints: pts,
+            fps: this.currentFps
         });
 
         // Update Procedural Sound
@@ -1421,6 +1531,8 @@ class GameApp {
 
         try {
             const delta = Math.min(this.clock.getDelta(), 0.1);
+            const rawFps = 1.0 / Math.max(0.001, delta);
+            this.currentFps = THREE.MathUtils.lerp(this.currentFps || 60, rawFps, 0.08);
 
             if (this.state === 'RACE') {
                 this._handleRaceInput();
@@ -1463,23 +1575,30 @@ class GameApp {
                 }
                 if (this.garageGridMat) {
                     this.garageGridMat.uniforms.uTime.value = nowSec;
+                    // Grid only scrolls when the vehicle is actually driving forward
+                    this.garageGridMat.uniforms.uSpeed.value = this.launchCarSpeed > 0.5 ? 4.0 : 0.0;
                 }
 
                 if (!this.hasSwappedToCompositor) {
-                    // Phase 1: Real 3D forward acceleration along neon runway towards sun (~0.85s)
-                    this.launchCarSpeed = Math.min(this.launchCarSpeed + delta * 55.0, 50.0);
+                    const carElev = this.garageVehicleElevation || 0;
+
+                    // Accelerate smoothly forward away from platform (0 to 50 m/s), driving forever forward!
+                    this.launchCarSpeed = Math.min(this.launchCarSpeed + delta * 45.0, 50.0);
                     this.launchCarDist += this.launchCarSpeed * delta;
 
-                    const carElev = this.garageVehicleElevation || 0;
                     if (this.garageVehicleRoot) {
                         this.garageVehicleRoot.position.set(0, carElev, -this.launchCarDist);
                         this.garageVehicleRoot.rotation.set(this.turntablePitch, this.turntableYaw, this.turntableRoll, 'YXZ');
                     }
 
-                    // Camera smoothly swings into chase camera position behind driving car
-                    const targetCamPos = new THREE.Vector3(0, carElev + 2.5, -this.launchCarDist + 6.2);
-                    const camLerp = Math.min(1.0, delta * 7.0);
-                    this.camera.position.lerp(targetCamPos, camLerp);
+                    if (this.garageDisplayShadow) {
+                        this.garageDisplayShadow.visible = true;
+                        this.garageDisplayShadow.position.set(0, -0.15, -this.launchCarDist);
+                        this.garageDisplayShadow.rotation.set(0, this.turntableYaw, 0);
+                    }
+
+                    // Rigidly lock chase camera behind vehicle — ZERO jumping, ZERO jerking!
+                    this.camera.position.set(0, carElev + 2.5, -this.launchCarDist + 6.2);
                     this.camera.lookAt(0, carElev + 0.8, -this.launchCarDist - 3.0);
                     this.camera.fov = 65;
                     this.camera.updateProjectionMatrix();
@@ -1497,19 +1616,28 @@ class GameApp {
 
                     this.renderer.render(this.garageScene, this.camera);
 
-                    // At 1.0s: stop recording and swap to compositor video loop
-                    if (elapsed >= 1.0) {
-                        if (this.isRecordingLaunch && this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-                            this.isRecordingLaunch = false;
-                            this.mediaRecorder.stop();
-                            // _handleRecordedLoopReady will trigger upon recorder onstop event
-                        } else {
-                            this._fallbackCompositorSwap();
+                    // Frame capture window: Starts at 1.0s after takeoff and captures for ~1.0s
+                    const now = performance.now();
+                    if (elapsed >= 1.0 && elapsed < 2.0 && this.isCapturingFrames) {
+                        if (now - this.lastCaptureTime >= 40) {
+                            this.lastCaptureTime = now;
+                            // Resized to 960x540 for instant, stutter-free GPU readback without frame drops
+                            const targetW = Math.min(this.canvas.width, 960);
+                            const targetH = Math.round(targetW * (this.canvas.height / Math.max(1, this.canvas.width)));
+                            createImageBitmap(this.canvas, { resizeWidth: targetW, resizeHeight: targetH, resizeQuality: 'medium' }).then((bmp) => {
+                                if (this.isCapturingFrames && this.launchBitmaps) {
+                                    this.launchBitmaps.push(bmp);
+                                }
+                            }).catch(() => {});
+                        }
+                    } else if (elapsed >= 2.0 && !this.hasSwappedToCompositor) {
+                        this.isCapturingFrames = false;
+                        if ((this.launchBitmaps && this.launchBitmaps.length >= 4) || elapsed >= 2.4) {
+                            this._startPingPongPlayback();
                         }
                     }
                 } else {
-                    // Phase 2: Hardware-accelerated video loop handles 60 FPS loading loop on GPU thread
-                    // Render garage scene lightly in background
+                    // Overlay is active; light background render
                     this.renderer.render(this.garageScene, this.camera);
                 }
             } else if (this.state === 'GARAGE') {

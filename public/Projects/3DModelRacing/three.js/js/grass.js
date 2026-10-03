@@ -23,15 +23,15 @@ export const DEFAULT_GRASS_RINGS = [
         id: 'ring1_ultra',
         name: 'Ring 1 (Ultra Carpet)',
         segments: 2,
-        bladesPerTuft: 5,
-        cellSize: 0.16,
+        bladesPerTuft: 4,
+        cellSize: 0.32,
         patchSize: 140,
-        bladeWidth: 0.034,
+        bladeWidth: 0.042,
         maxBladeHeight: 1.0,
         fadeInMin: 0.0,
         fadeInMax: 0.0,
-        fadeOutMin: 32.0,
-        fadeOutMax: 64.0,
+        fadeOutMin: 36.0,
+        fadeOutMax: 70.0,
         enableTrample: true,
         leanMin: 0.05,
         leanMax: 0.30,
@@ -45,14 +45,14 @@ export const DEFAULT_GRASS_RINGS = [
         name: 'Ring 2 (Fine Meadow)',
         segments: 2,
         bladesPerTuft: 4,
-        cellSize: 0.52,
+        cellSize: 0.58,
         patchSize: 240,
-        bladeWidth: 0.046,
+        bladeWidth: 0.054,
         maxBladeHeight: 1.05,
         fadeInMin: 32.0,
-        fadeInMax: 64.0,
-        fadeOutMin: 72.0,
-        fadeOutMax: 115.0,
+        fadeInMax: 66.0,
+        fadeOutMin: 78.0,
+        fadeOutMax: 125.0,
         enableTrample: true,
         leanMin: 0.06,
         leanMax: 0.32,
@@ -147,12 +147,226 @@ export const DEFAULT_GRASS_RINGS = [
     }
 ];
 
+export const GRASS_PRESETS = {
+    kentuckyBluegrass: {
+        name: "Kentucky Bluegrass",
+        description: "Dense, fine, blue-green meadow grass",
+        bladeHeight: 0.50,
+        bladeWidth: 0.038,
+        curvature: 0.50,
+        stiffness: 1.0,
+        patchiness: 0.45,
+        translucency: 0.70,
+        colors: {
+            colRoot:  [0.015, 0.065, 0.020],
+            colLower: [0.070, 0.160, 0.075],
+            colMid:   [0.150, 0.320, 0.190],
+            colUpper: [0.240, 0.480, 0.290],
+            colTip:   [0.310, 0.615, 0.388]
+        }
+    },
+    perennialRyegrass: {
+        name: "Perennial Ryegrass",
+        description: "Glossy, dark green, slightly taller tufts",
+        bladeHeight: 0.55,
+        bladeWidth: 0.055,
+        curvature: 0.30,
+        stiffness: 0.9,
+        patchiness: 0.35,
+        translucency: 0.60,
+        colors: {
+            colRoot:  [0.012, 0.050, 0.010],
+            colLower: [0.078, 0.180, 0.035],
+            colMid:   [0.160, 0.350, 0.080],
+            colUpper: [0.260, 0.510, 0.120],
+            colTip:   [0.345, 0.640, 0.170]
+        }
+    },
+    tallFescue: {
+        name: "Tall Fescue",
+        description: "Coarse, wide blades in strong clumps",
+        bladeHeight: 0.85,
+        bladeWidth: 0.075,
+        curvature: 0.45,
+        stiffness: 1.1,
+        patchiness: 0.50,
+        translucency: 0.60,
+        colors: {
+            colRoot:  [0.025, 0.060, 0.012],
+            colLower: [0.120, 0.220, 0.050],
+            colMid:   [0.260, 0.390, 0.100],
+            colUpper: [0.420, 0.540, 0.180],
+            colTip:   [0.540, 0.655, 0.282]
+        }
+    },
+    bermudaGrass: {
+        name: "Bermuda Grass",
+        description: "Very dense, short, fine-bladed turf",
+        bladeHeight: 0.24,
+        bladeWidth: 0.030,
+        curvature: 0.25,
+        stiffness: 1.4,
+        patchiness: 0.40,
+        translucency: 0.50,
+        colors: {
+            colRoot:  [0.030, 0.070, 0.018],
+            colLower: [0.120, 0.240, 0.065],
+            colMid:   [0.280, 0.470, 0.140],
+            colUpper: [0.440, 0.650, 0.220],
+            colTip:   [0.576, 0.770, 0.330]
+        }
+    },
+    zoysiaGrass: {
+        name: "Zoysia Grass",
+        description: "Short, stiff, carpet-like lawn grass",
+        bladeHeight: 0.18,
+        bladeWidth: 0.032,
+        curvature: 0.20,
+        stiffness: 1.8,
+        patchiness: 0.30,
+        translucency: 0.40,
+        colors: {
+            colRoot:  [0.025, 0.065, 0.020],
+            colLower: [0.110, 0.230, 0.075],
+            colMid:   [0.230, 0.440, 0.150],
+            colUpper: [0.380, 0.610, 0.240],
+            colTip:   [0.510, 0.725, 0.340]
+        }
+    },
+    stAugustineGrass: {
+        name: "St. Augustine Grass",
+        description: "Broad, flat, deep green blades",
+        bladeHeight: 0.32,
+        bladeWidth: 0.095,
+        curvature: 0.30,
+        stiffness: 1.4,
+        patchiness: 0.35,
+        translucency: 0.55,
+        colors: {
+            colRoot:  [0.018, 0.055, 0.010],
+            colLower: [0.086, 0.220, 0.045],
+            colMid:   [0.170, 0.390, 0.090],
+            colUpper: [0.240, 0.510, 0.130],
+            colTip:   [0.310, 0.604, 0.173]
+        }
+    },
+    buffaloGrass: {
+        name: "Buffalo Grass",
+        description: "Short, curly, grey-green prairie grass",
+        bladeHeight: 0.28,
+        bladeWidth: 0.030,
+        curvature: 0.70,
+        stiffness: 1.1,
+        patchiness: 0.50,
+        translucency: 0.40,
+        colors: {
+            colRoot:  [0.065, 0.080, 0.055],
+            colLower: [0.180, 0.210, 0.150],
+            colMid:   [0.340, 0.390, 0.280],
+            colUpper: [0.550, 0.610, 0.450],
+            colTip:   [0.760, 0.800, 0.604]
+        }
+    },
+    fineFescue: {
+        name: "Fine Fescue",
+        description: "Very thin, floppy, blue-green blades",
+        bladeHeight: 0.60,
+        bladeWidth: 0.022,
+        curvature: 0.75,
+        stiffness: 0.7,
+        patchiness: 0.40,
+        translucency: 0.50,
+        colors: {
+            colRoot:  [0.020, 0.055, 0.032],
+            colLower: [0.080, 0.180, 0.110],
+            colMid:   [0.180, 0.340, 0.220],
+            colUpper: [0.330, 0.530, 0.380],
+            colTip:   [0.500, 0.663, 0.541]
+        }
+    },
+    toonMeadow: {
+        name: "Toon Meadow (Stylized)",
+        description: "Wide, saturated, bright green blades",
+        bladeHeight: 0.55,
+        bladeWidth: 0.090,
+        curvature: 0.30,
+        stiffness: 0.8,
+        patchiness: 0.20,
+        translucency: 0.90,
+        colors: {
+            colRoot:  [0.020, 0.120, 0.035],
+            colLower: [0.120, 0.380, 0.140],
+            colMid:   [0.260, 0.620, 0.220],
+            colUpper: [0.450, 0.820, 0.280],
+            colTip:   [0.651, 0.949, 0.361]
+        }
+    },
+    goldenSavanna: {
+        name: "Golden Savanna (Stylized)",
+        description: "Tall, dry, golden African plains grass",
+        bladeHeight: 1.00,
+        bladeWidth: 0.045,
+        curvature: 0.50,
+        stiffness: 0.7,
+        patchiness: 0.35,
+        translucency: 0.90,
+        colors: {
+            colRoot:  [0.080, 0.060, 0.020],
+            colLower: [0.240, 0.180, 0.065],
+            colMid:   [0.480, 0.370, 0.130],
+            colUpper: [0.720, 0.580, 0.240],
+            colTip:   [0.941, 0.824, 0.478]
+        }
+    },
+    autumnHaze: {
+        name: "Autumn Haze (Stylized)",
+        description: "Olive-to-ochre autumn field",
+        bladeHeight: 0.50,
+        bladeWidth: 0.050,
+        curvature: 0.45,
+        stiffness: 0.9,
+        patchiness: 0.50,
+        translucency: 0.70,
+        colors: {
+            colRoot:  [0.055, 0.038, 0.015],
+            colLower: [0.180, 0.120, 0.045],
+            colMid:   [0.380, 0.260, 0.090],
+            colUpper: [0.580, 0.420, 0.160],
+            colTip:   [0.702, 0.569, 0.263]
+        }
+    },
+    frostbite: {
+        name: "Frostbite (Stylized)",
+        description: "Pale, frosted silver-white winter grass",
+        bladeHeight: 0.45,
+        bladeWidth: 0.040,
+        curvature: 0.35,
+        stiffness: 1.5,
+        patchiness: 0.25,
+        translucency: 0.50,
+        colors: {
+            colRoot:  [0.045, 0.062, 0.075],
+            colLower: [0.130, 0.170, 0.200],
+            colMid:   [0.260, 0.340, 0.390],
+            colUpper: [0.550, 0.650, 0.710],
+            colTip:   [0.894, 0.933, 0.941]
+        }
+    }
+};
+
 export const DEFAULT_GRASS_CONFIG = {
     adaptiveDensity: {
         enabled: true,
         targetTrianglesPerRing: 1200000,
         cullingCompensation: 1.35
     },
+    curvature: 0.35,
+    stiffness: 1.0,
+    translucency: 0.65,
+    patchiness: 0.40,
+    densityDropoff: 0.55,
+    radialJitterAmp: 5.8,
+    boundaryMargin: 8.0,
     flora: {
         flowerFrequency: 0.08,
         cloverFrequency: 0.10,
@@ -244,6 +458,10 @@ export class GrassField {
             uniform float uFadeInMax;
             uniform float uFadeOutMin;
             uniform float uFadeOutMax;
+            uniform float uCurvature;    // AskAlice real-time droop multiplier
+            uniform float uStiffness;    // AskAlice real-time stiffness
+            uniform float uTranslucency; // AskAlice back-lit sun transmission
+            uniform float uPatchiness;   // AskAlice macro patchiness
             uniform float uDayTime;
             uniform vec3 uColRoot;
             uniform vec3 uColLower;
@@ -260,6 +478,9 @@ export class GrassField {
             uniform vec3 uFlowerCol2;
             uniform vec3 uFlowerCol3;
             uniform float uSeasonTime;
+            uniform float uDensityDropoff;
+            uniform float uRadialJitterAmp;
+            uniform float uBoundaryMargin;
 
             varying vec3 vColor;
 
@@ -273,21 +494,28 @@ export class GrassField {
 
                 vec2 worldXZ = vec2(uPlayerPosition.x + origin.x, uPlayerPosition.z + origin.z);
 
-                // Continuous multi-frequency organic wave jitter perturbs radial distance by ±5.5m
-                float radialJitter = sin(worldXZ.x * 0.065 + worldXZ.y * 0.045) * 3.2
-                                   + cos(worldXZ.x * 0.035 - worldXZ.y * 0.055) * 2.3;
+                // Continuous multi-frequency organic wave jitter perturbs radial distance
+                float radialJitter = (sin(worldXZ.x * 0.065 + worldXZ.y * 0.045) * 3.4
+                                    + cos(worldXZ.x * 0.035 - worldXZ.y * 0.055) * 2.4) * (uRadialJitterAmp / 5.8);
                 float distFromCam = max(0.0, length(origin.xz) + radialJitter);
+
+                // Enforce safe circular fade-out headroom so blades fade completely to 0 before square modulo wrap
+                float safeMaxFade = halfPatch - uBoundaryMargin;
+                float effFadeOutMax = min(uFadeOutMax, safeMaxFade);
+                float effFadeOutMin = min(uFadeOutMin, effFadeOutMax - 8.0);
 
                 // Smooth radial cross-fading
                 float fadeIn = (uFadeInMax > 0.0) ? smoothstep(uFadeInMin, uFadeInMax, distFromCam) : 1.0;
-                float fadeOut = 1.0 - smoothstep(uFadeOutMin, uFadeOutMax, distFromCam);
-                float fade = fadeIn * fadeOut;
+                float fadeOut = 1.0 - smoothstep(effFadeOutMin, effFadeOutMax, distFromCam);
+                float rawFade = fadeIn * fadeOut;
 
                 // CRITICAL: Mathematically discard any vertex beyond the active cross-fade envelope
-                if (fade <= 0.001) {
+                if (rawFade <= 0.001) {
                     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
                     return;
                 }
+
+                float fade = pow(rawFade, uDensityDropoff);
 
                 // Continuous road ribbon corridor clearance: line-segment distance check
                 float minRD = 999.0;
@@ -321,7 +549,7 @@ export class GrassField {
                 }
 
                 // Smooth Ghibli cross-fading: blades gracefully taper height & width across overlap zones
-                float fadeH = pow(fade, 0.45);
+                float fadeH = smoothstep(0.0, 1.0, fade);
 
                 float noiseH = texture2D(uNoiseTexture, worldXZ * 0.08).r * 0.45
                              + texture2D(uNoiseTexture, worldXZ * 0.035).g * 0.35
@@ -382,8 +610,11 @@ export class GrassField {
                     bend = t * t;
                 }
 
-                pos += aDir * (bend * aParams.z * bladeH * 0.60);
-                pos.y -= bend * aParams.z * bladeH * 0.25;
+                // AskAlice droop spread: most blades stand upright, a few flop over
+                float droopSpread = (aFlora.w * aFlora.w * 1.5 + 0.25);
+                float effectiveCurvature = aParams.z * uCurvature * droopSpread;
+                pos += aDir * (bend * effectiveCurvature * bladeH * 0.60);
+                pos.y -= bend * effectiveCurvature * bladeH * 0.25;
 
                 // Next-Gen Wind Simulation: Directional dual-frequency gusts + scrolling curl noise
                 vec2 windDir = normalize(vec2(0.82, 0.57));
@@ -394,7 +625,8 @@ export class GrassField {
                 float curlGust = (texture2D(uNoiseTexture, scrollUV).r - 0.5) * 0.30;
 
                 float windSway = (plantType >= 1.5 && plantType < 2.5) ? 1.35 : (plantType >= 0.5 && plantType < 1.5) ? 0.45 : 1.0;
-                float totalWind = (gust + curlGust) * bend * bladeH * windSway * uWindSpeed;
+                float stiff = max(0.05, uStiffness);
+                float totalWind = ((gust + curlGust) * bend * bladeH * windSway * uWindSpeed) / stiff;
                 pos.xz += windDir * totalWind;
                 pos.y -= abs(totalWind) * 0.20;
 
@@ -409,8 +641,8 @@ export class GrassField {
                         float pushFactor = (1.0 - distV / trampleRadius);
                         pushFactor = pushFactor * pushFactor;
                         vec2 pushDir = distV > 0.01 ? normalize(dV) : vec2(0.0, 1.0);
-                        pos.xz += pushDir * (pushFactor * 3.4 * t);
-                        pos.y -= pushFactor * bladeH * 0.90 * t;
+                        pos.xz += pushDir * (pushFactor * (3.4 / stiff) * t);
+                        pos.y -= (pushFactor / stiff) * bladeH * 0.90 * t;
                     }
                 }
                 #endif
@@ -422,6 +654,18 @@ export class GrassField {
                 c = mix(c, uColTip, smoothstep(0.82, 1.0, t));
                 c *= mix(vec3(0.88, 1.04, 0.82), vec3(1.12, 0.96, 0.74), aTint.x);
                 c *= (0.78 + aTint.y * 0.44);
+
+                // AskAlice Field-Scale Macro Variation & Sun-Baked Dry Patches
+                if (uPatchiness > 0.001) {
+                    vec2 patchUV = worldXZ * 0.005;
+                    float pDark = texture2D(uNoiseTexture, patchUV).r - 0.5;
+                    float pDry = texture2D(uNoiseTexture, patchUV * 1.7 + vec2(0.35, 0.65)).g;
+                    c *= (1.0 + pDark * uPatchiness * 0.72);
+                    c = mix(c, c * vec3(1.30, 1.14, 0.55), smoothstep(0.42, 0.76, pDry) * uPatchiness);
+                }
+
+                // AskAlice Wind-Tilt Skylight Shimmer (bent blades catch ambient sky luminance)
+                c *= (1.0 + abs(gust + curlGust) * uWindSpeed * 0.28 * t);
 
                 // Multi-Species Color Overrides:
                 if (plantType >= 2.5) {
@@ -476,13 +720,13 @@ export class GrassField {
                 // Height-Graded Ambient Occlusion: deep darkness at roots, luminous at tips
                 float ao = pow(t, 0.55) * 0.72 + 0.28;
 
-                // Subsurface Scattering (SSS) / Translucent Backlight:
+                // AskAlice Subsurface Scattering (SSS) / Translucent Backlight:
                 vec3 viewDir = normalize(cameraPosition - pos);
                 vec3 sDir = normalize(uSunDir);
                 float sssDot = max(0.0, dot(-viewDir, sDir));
-                float sssIntensity = (plantType >= 2.5) ? 0.75 : (plantType >= 1.5) ? 0.55 : 0.42;
-                float sss = pow(sssDot, 3.2) * sssIntensity * t;
-                vec3 sssGlow = mix(uColUpper, (plantType >= 2.5) ? c : uColTip, 0.65) * sss * 1.6;
+                float sssIntensity = (plantType >= 2.5) ? 0.85 : (plantType >= 1.5) ? 0.60 : 0.45;
+                float sss = pow(sssDot, 3.5) * sssIntensity * t * t;
+                vec3 sssGlow = mix(uColUpper, (plantType >= 2.5) ? c : uColTip, 0.65) * sss * (uTranslucency * 2.2);
 
                 vColor = (c * ao) + sssGlow;
 
@@ -556,11 +800,15 @@ export class GrassField {
         const coverageRatio = Math.max(0.10, Math.min(1.0, activeArea / patchArea));
         const visibleFraction = coverageRatio * 0.48;
 
-        const capacity = Math.max(15000, targetTris / (ring.segments * 2 * visibleFraction * comp));
+        const capacity = Math.max(12000, targetTris / (ring.segments * 2 * visibleFraction * comp));
         const tuftsReq = capacity / (ring.bladesPerTuft || 4);
         const cellsAxis = Math.max(10, Math.sqrt(tuftsReq));
         const adaptiveCell = (ring.patchSize || 140) / cellsAxis;
-        return Math.min((ring.cellSize || 0.5) * 1.35, Math.max(0.08, adaptiveCell));
+
+        const baseCell = ring.cellSize || 0.5;
+        const minCell = Math.max(0.20, baseCell * 0.85);
+        const maxCell = Math.max(minCell, baseCell * 1.35);
+        return Math.min(maxCell, Math.max(minCell, adaptiveCell));
     }
 
     _createRingMesh(opts) {
@@ -711,6 +959,13 @@ export class GrassField {
             uFadeInMax:        { value: fadeInMax },
             uFadeOutMin:       { value: fadeOutMin },
             uFadeOutMax:       { value: fadeOutMax },
+            uCurvature:        { value: this.config.curvature !== undefined ? this.config.curvature : 0.35 },
+            uStiffness:        { value: this.config.stiffness !== undefined ? this.config.stiffness : 1.0 },
+            uTranslucency:     { value: this.config.translucency !== undefined ? this.config.translucency : 0.65 },
+            uPatchiness:       { value: this.config.patchiness !== undefined ? this.config.patchiness : 0.40 },
+            uDensityDropoff:   { value: this.config.densityDropoff !== undefined ? this.config.densityDropoff : 0.55 },
+            uRadialJitterAmp:  { value: this.config.radialJitterAmp !== undefined ? this.config.radialJitterAmp : 5.8 },
+            uBoundaryMargin:   { value: this.config.boundaryMargin !== undefined ? this.config.boundaryMargin : 8.0 },
             uDayTime:          { value: 0.15 },
             uColRoot:          { value: new THREE.Vector3(...this.config.colors.colRoot) },
             uColLower:         { value: new THREE.Vector3(...this.config.colors.colLower) },
@@ -757,14 +1012,7 @@ export class GrassField {
             : DEFAULT_GRASS_RINGS;
         if (index < 0 || index >= ringList.length) return null;
 
-        if (this.rings[index]) {
-            const old = this.rings[index];
-            if (old && old.mesh) {
-                this.scene.remove(old.mesh);
-                if (old.geometry) old.geometry.dispose();
-                if (old.material) old.material.dispose();
-            }
-        }
+        const old = this.rings[index];
 
         const ringCfg = ringList[index];
         const r = this._createRingMesh({
@@ -788,11 +1036,18 @@ export class GrassField {
             curveMax: ringCfg.curveMax !== undefined ? ringCfg.curveMax : (this.config.curveMax || 0.36)
         });
         this.rings[index] = r;
+
+        // Zero-blink: dispose old mesh only AFTER new mesh is created and added to scene
+        if (old && old.mesh) {
+            this.scene.remove(old.mesh);
+            if (old.geometry) old.geometry.dispose();
+            if (old.material) old.material.dispose();
+        }
+
         return r;
     }
 
     _buildConcentricRings() {
-        this._disposeRings();
         const count = this.getRingCount();
         for (let i = 0; i < count; i++) {
             this.buildRing(i);
@@ -808,6 +1063,34 @@ export class GrassField {
             }
         }
         this.rings = [];
+    }
+
+    _scheduleRebuild(delay = 250) {
+        if (this._rebuildTimer) clearTimeout(this._rebuildTimer);
+        this._rebuildTimer = setTimeout(() => {
+            this._rebuildTimer = null;
+            this._buildConcentricRings();
+        }, delay);
+    }
+
+    set(options) {
+        if (!options) return this;
+        this.applyConfig(options);
+        return this;
+    }
+
+    setPreset(name) {
+        const p = GRASS_PRESETS[name];
+        if (!p) return this;
+        return this.set({
+            bladeHeight: p.bladeHeight,
+            bladeWidth: p.bladeWidth,
+            curvature: p.curvature,
+            stiffness: p.stiffness,
+            patchiness: p.patchiness,
+            translucency: p.translucency,
+            colors: p.colors
+        });
     }
 
     async _loadConfig() {
@@ -835,6 +1118,13 @@ export class GrassField {
         if (newConfig.adaptiveDensity) {
             this.config.adaptiveDensity = Object.assign({}, prev.adaptiveDensity || {}, newConfig.adaptiveDensity);
         }
+        if (newConfig.curvature !== undefined) this.config.curvature = newConfig.curvature;
+        if (newConfig.stiffness !== undefined) this.config.stiffness = newConfig.stiffness;
+        if (newConfig.translucency !== undefined) this.config.translucency = newConfig.translucency;
+        if (newConfig.patchiness !== undefined) this.config.patchiness = newConfig.patchiness;
+        if (newConfig.densityDropoff !== undefined) this.config.densityDropoff = newConfig.densityDropoff;
+        if (newConfig.radialJitterAmp !== undefined) this.config.radialJitterAmp = newConfig.radialJitterAmp;
+        if (newConfig.boundaryMargin !== undefined) this.config.boundaryMargin = newConfig.boundaryMargin;
         if (newConfig.rings) {
             this.config.rings = newConfig.rings;
         }
@@ -859,7 +1149,11 @@ export class GrassField {
         }
 
         if (ringStructureChanged) {
-            this._buildConcentricRings();
+            if (newConfig.immediateRebuild) {
+                this._buildConcentricRings();
+            } else {
+                this._scheduleRebuild(250);
+            }
         } else {
             // Update dynamic uniforms without reallocating buffers
             for (let i = 0; i < this.rings.length; i++) {
@@ -876,6 +1170,14 @@ export class GrassField {
                     if (ringCfg.fadeOutMin !== undefined) u.uFadeOutMin.value = ringCfg.fadeOutMin;
                     if (ringCfg.fadeOutMax !== undefined) u.uFadeOutMax.value = ringCfg.fadeOutMax;
                 }
+
+                if (this.config.curvature !== undefined && u.uCurvature) u.uCurvature.value = this.config.curvature;
+                if (this.config.stiffness !== undefined && u.uStiffness) u.uStiffness.value = this.config.stiffness;
+                if (this.config.translucency !== undefined && u.uTranslucency) u.uTranslucency.value = this.config.translucency;
+                if (this.config.patchiness !== undefined && u.uPatchiness) u.uPatchiness.value = this.config.patchiness;
+                if (this.config.densityDropoff !== undefined && u.uDensityDropoff) u.uDensityDropoff.value = this.config.densityDropoff;
+                if (this.config.radialJitterAmp !== undefined && u.uRadialJitterAmp) u.uRadialJitterAmp.value = this.config.radialJitterAmp;
+                if (this.config.boundaryMargin !== undefined && u.uBoundaryMargin) u.uBoundaryMargin.value = this.config.boundaryMargin;
 
                 if (this.config.colors) {
                     u.uColRoot.value.set(...this.config.colors.colRoot);
@@ -956,6 +1258,7 @@ export class GrassField {
     }
 
     destroy() {
+        if (this._rebuildTimer) clearTimeout(this._rebuildTimer);
         this._disposeRings();
         if (this.noiseTexture) this.noiseTexture.dispose();
     }
