@@ -1,0 +1,186 @@
+{
+  "id": "verdant_thorn_beast",
+  "displayName": "Verdant Thorn-Beast",
+  "kind": "beast",
+  "art": {
+    "body": "assets/anatomy/thorn_beast.png",
+    "size": [1024, 640],
+    "keying": "none"
+  },
+  "baseVitals": {
+    "pulse": 100
+  },
+  "organs": [
+    {
+      "id": "bile_sac_thorax",
+      "name": "Thoracic Bile Sac",
+      "region": "thorax",
+      "anchor": [512, 280],
+      "hitShape": {
+        "type": "ellipse",
+        "rx": 55,
+        "ry": 35
+      },
+      "loot": "bile_sac_thorax",
+      "rarity": "uncommon",
+      "baseSuccessPct": 85,
+      "pulseCost": 15,
+      "tags": ["fragile"],
+      "requires": [],
+      "killsPulse": false,
+      "slowedByClamp": ["thorax_artery"]
+    },
+    {
+      "id": "thorn_mantle_gland",
+      "name": "Thorn Mantle Gland",
+      "region": "dorsal",
+      "anchor": [540, 190],
+      "hitShape": {
+        "type": "rect",
+        "w": 90,
+        "h": 40
+      },
+      "loot": "thorn_mantle_gland",
+      "rarity": "rare",
+      "baseSuccessPct": 75,
+      "pulseCost": 18,
+      "tags": ["fragile"],
+      "requires": [],
+      "killsPulse": false,
+      "slowedByClamp": ["dorsal_sinus"]
+    },
+    {
+      "id": "cranial_chitin_plate",
+      "name": "Cranial Chitin Plate",
+      "region": "head",
+      "anchor": [300, 170],
+      "hitShape": {
+        "type": "polygon",
+        "points": [
+          [270, 140],
+          [330, 140],
+          [350, 190],
+          [290, 210]
+        ]
+      },
+      "loot": "cranial_chitin_plate",
+      "rarity": "uncommon",
+      "baseSuccessPct": 80,
+      "pulseCost": 10,
+      "tags": [],
+      "requires": [],
+      "killsPulse": false,
+      "slowedByClamp": []
+    },
+    {
+      "id": "ocular_nerve_nexus",
+      "name": "Ocular Nerve Nexus",
+      "region": "head",
+      "anchor": [310, 175],
+      "hitShape": {
+        "type": "ellipse",
+        "rx": 25,
+        "ry": 25
+      },
+      "loot": "ocular_nerve_nexus",
+      "rarity": "epic",
+      "baseSuccessPct": 65,
+      "pulseCost": 20,
+      "tags": ["fragile"],
+      "requires": ["cranial_chitin_plate"],
+      "killsPulse": false,
+      "slowedByClamp": []
+    },
+    {
+      "id": "vascular_root_core",
+      "name": "Vascular Root Core",
+      "region": "thorax",
+      "anchor": [460, 320],
+      "hitShape": {
+        "type": "ellipse",
+        "rx": 50,
+        "ry": 45
+      },
+      "loot": "vascular_root_core",
+      "rarity": "rare",
+      "baseSuccessPct": 70,
+      "pulseCost": 30,
+      "tags": [],
+      "requires": [],
+      "killsPulse": true,
+      "slowedByClamp": ["thorax_artery"]
+    },
+    {
+      "id": "flank_viscera",
+      "name": "Flank Viscera",
+      "region": "flank",
+      "anchor": [620, 330],
+      "hitShape": {
+        "type": "ellipse",
+        "rx": 65,
+        "ry": 45
+      },
+      "loot": "flank_viscera",
+      "rarity": "common",
+      "baseSuccessPct": 90,
+      "pulseCost": 12,
+      "tags": [],
+      "requires": [],
+      "killsPulse": false,
+      "slowedByClamp": []
+    },
+    {
+      "id": "acidic_stomach",
+      "name": "Acidic Maw Sac",
+      "region": "abdomen",
+      "anchor": [560, 420],
+      "hitShape": {
+        "type": "ellipse",
+        "rx": 60,
+        "ry": 40
+      },
+      "loot": "acidic_stomach",
+      "rarity": "uncommon",
+      "baseSuccessPct": 80,
+      "pulseCost": 16,
+      "tags": [],
+      "requires": [],
+      "killsPulse": false,
+      "slowedByClamp": []
+    }
+  ],
+  "severable": [
+    {
+      "id": "antler_left",
+      "name": "Left Antler-Stinger",
+      "loot": "antler_stinger",
+      "rarity": "rare",
+      "anchor": [200, 120],
+      "coverShape": {
+        "type": "ellipse",
+        "rx": 50,
+        "ry": 30
+      }
+    }
+  ],
+  "clampPoints": [
+    {
+      "id": "thorax_artery",
+      "name": "Thoracic Artery",
+      "anchor": [480, 260],
+      "drainReductionPct": 50,
+      "bleedReductionPct": 20
+    },
+    {
+      "id": "dorsal_sinus",
+      "name": "Dorsal Sinus",
+      "anchor": [580, 220],
+      "drainReductionPct": 40,
+      "bleedReductionPct": 15
+    }
+  ],
+  "feast": {
+    "calories": 35,
+    "biomassExp": 6
+  }
+}

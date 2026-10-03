@@ -1,0 +1,124 @@
+{
+  "id": "human_poacher",
+  "displayName": "Crucible Poacher",
+  "kind": "human",
+  "art": {
+    "body": "assets/anatomy/human_poacher.png",
+    "size": [1024, 640],
+    "keying": "none"
+  },
+  "baseVitals": {
+    "pulse": 90
+  },
+  "organs": [
+    {
+      "id": "poacher_heart",
+      "name": "Desperate Heart",
+      "region": "chest",
+      "anchor": [500, 280],
+      "hitShape": {
+        "type": "ellipse",
+        "rx": 40,
+        "ry": 35
+      },
+      "loot": "poacher_heart",
+      "rarity": "uncommon",
+      "baseSuccessPct": 80,
+      "pulseCost": 20,
+      "tags": [],
+      "requires": [],
+      "killsPulse": true,
+      "slowedByClamp": ["carotid_clamp"]
+    },
+    {
+      "id": "poacher_satchel",
+      "name": "Stolen Trapper Satchel",
+      "region": "waist",
+      "anchor": [560, 390],
+      "hitShape": {
+        "type": "rect",
+        "w": 70,
+        "h": 50
+      },
+      "loot": "poacher_satchel",
+      "rarity": "rare",
+      "baseSuccessPct": 90,
+      "pulseCost": 0,
+      "tags": [],
+      "requires": [],
+      "killsPulse": false,
+      "slowedByClamp": []
+    },
+    {
+      "id": "poacher_cleaver",
+      "name": "Poacher's Skinning Cleaver",
+      "region": "hands",
+      "anchor": [390, 420],
+      "hitShape": {
+        "type": "rect",
+        "w": 60,
+        "h": 30
+      },
+      "loot": "poacher_cleaver",
+      "rarity": "uncommon",
+      "baseSuccessPct": 95,
+      "pulseCost": 0,
+      "tags": [],
+      "requires": [],
+      "killsPulse": false,
+      "slowedByClamp": []
+    },
+    {
+      "id": "iron_snare_coil",
+      "name": "Heavy Iron Snare",
+      "region": "pack",
+      "anchor": [620, 260],
+      "hitShape": {
+        "type": "ellipse",
+        "rx": 35,
+        "ry": 35
+      },
+      "loot": "iron_snare_coil",
+      "rarity": "common",
+      "baseSuccessPct": 95,
+      "pulseCost": 0,
+      "tags": [],
+      "requires": [],
+      "killsPulse": false,
+      "slowedByClamp": []
+    },
+    {
+      "id": "tanned_hide_vest",
+      "name": "Reinforced Leather Vest",
+      "region": "chest",
+      "anchor": [512, 230],
+      "hitShape": {
+        "type": "rect",
+        "w": 90,
+        "h": 60
+      },
+      "loot": "tanned_hide_vest",
+      "rarity": "common",
+      "baseSuccessPct": 85,
+      "pulseCost": 5,
+      "tags": [],
+      "requires": [],
+      "killsPulse": false,
+      "slowedByClamp": []
+    }
+  ],
+  "clampPoints": [
+    {
+      "id": "carotid_clamp",
+      "name": "Carotid Compression",
+      "anchor": [490, 190],
+      "drainReductionPct": 60,
+      "bleedReductionPct": 20
+    }
+  ],
+  "severable": [],
+  "feast": {
+    "calories": 15,
+    "biomassExp": 2
+  }
+}
