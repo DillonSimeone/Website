@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametric PCB Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="scanline"></div>
+
+    <div class="container">
+        <header>
+            <h1>Parametric PCB Studio</h1>
+            <div class="subtitle">Code-Driven Electronic CAD Engine</div>
+        </header>
+
+        <div class="grid">
+            <a href="./01-V6Led/" class="card" style="border-color: rgba(0, 243, 255, 0.3); --neon-blue: #00f3ff;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00f3ff; box-shadow: 0 0 15px #00f3ff;">💡</div>
+                        V6 LED Strip Generator
+                    </div>
+                    <p class="card-desc">
+                        A fully parametric addressable LED strip designer. Set the length, LED counts, and pitch. Generates interactive schematic, PCB routing, and 3D preview. Instantly export Gerbers, BOM, and Pick & Place placement files.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #00f3ff; border-color: #00f3ff; background: rgba(0, 243, 255, 0.1);">WS2812B-3535</div>
+                    <div class="btn-launch" style="color: #00f3ff;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="secondary-section">
+            <div class="secondary-title">Core Library</div>
+            <div class="secondary-grid">
+                <a href="./00-commonParts/" class="s-card">
+                    <span class="s-card-title">Common Footprints & Components</span>
+                    <span class="s-card-tag">tscircuit components</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

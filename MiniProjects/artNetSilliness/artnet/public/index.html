@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art-Net Control Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8a2be2;
+            --primary-glow: rgba(138, 43, 226, 0.4);
+            --secondary: #00f2fe;
+            --secondary-glow: rgba(0, 242, 254, 0.4);
+            --bg: #090a0f;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text: #f0f3f9;
+            --text-muted: #8b9bb4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--bg);
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(138, 43, 226, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(0, 242, 254, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 950px;
+            background: rgba(255, 255, 255, 0.01);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+            display: inline-block;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: var(--secondary);
+            border-radius: 2px;
+        }
+
+        /* Animation List */
+        .animation-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        /* Custom Scrollbar for Animation Grid */
+        .animation-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        .animation-grid::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .animation-grid::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .anim-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .anim-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(0,242,254,0.05), rgba(138,43,226,0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .anim-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .anim-card:hover::before {
+            opacity: 1;
+        }
+
+        .anim-card.active {
+            border-color: var(--secondary);
+            background: rgba(0, 242, 254, 0.05);
+            box-shadow: 0 0 15px var(--secondary-glow);
+        }
+
+        .anim-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            color: var(--secondary);
+            transition: all 0.3s ease;
+        }
+
+        .anim-card.active .anim-icon {
+            background: var(--secondary);
+            color: #000;
+            box-shadow: 0 0 10px var(--secondary-glow);
+        }
+
+        .anim-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+        }
+
+        .anim-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 300;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        .slider-title {
+            color: var(--text-muted);
+        }
+
+        .slider-val {
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--secondary);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--secondary-glow);
+            transition: transform 0.1s, background-color 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #fff;
+        }
+
+        /* Audio Visualization Canvas */
+        .canvas-container {
+            margin-top: 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            width: 100%;
+            height: 150px;
+            background: transparent;
+            border-radius: 12px;
+        }
+
+        .canvas-btn {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px var(--primary-glow);
+            margin-bottom: 0.5rem;
+        }
+
+        .canvas-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px var(--primary-glow);
+            background: #9b46ff;
+        }
+
+        .canvas-readout {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 0.75rem;
+        }
+
+        .readout-item {
+            text-align: center;
+        }
+
+        .readout-val {
+            display: block;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-top: 0.2rem;
+        }
+
+        /* Footer & Shutdown Button */
+        footer {
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff66;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00ff66;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .btn-shutdown {
+            background: rgba(255, 75, 75, 0.1);
+            border: 1px solid rgba(255, 75, 75, 0.2);
+            color: #ff4b4b;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-shutdown:hover {
+            background: #ff4b4b;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 75, 75, 0.4);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Art-Net Control Center</h1>
+                <p>Real-time Sound-Reactive LED Controller</p>
+            </div>
+            <a href="simulator.html" style="background: rgba(0, 240, 255, 0.15); border: 1px solid #00f0ff; color: #00f0ff; padding: 0.6rem 1.2rem; border-radius: 10px; font-weight: 600; text-decoration: none; font-size: 0.9rem; transition: all 0.2s;" onmouseover="this.style.background='#00f0ff'; this.style.color='#000';" onmouseout="this.style.background='rgba(0, 240, 255, 0.15)'; this.style.color='#00f0ff';">
+                ✨ Open 1:1 Tube Simulator
+            </a>
+        </header>
+
+        <div class="grid">
+            <!-- Left Column: Animations -->
+            <div>
+                <h2 class="section-title">Animations</h2>
+                <div class="animation-grid">
+                    <div class="anim-card active" data-anim="spectrum">
+                        <div class="anim-icon">⚡</div>
+                        <div class="anim-info">
+                            <h3>Frequency Spectrum</h3>
+                            <p>Log-spaced bands with peaks that fall, sized for one light.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="bass">
+                        <div class="anim-icon">🥁</div>
+                        <div class="anim-info">
+                            <h3>Bass Pulse</h3>
+                            <p>Bass blooms out from the middle of the light.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="vu">
+                        <div class="anim-icon">📊</div>
+                        <div class="anim-info">
+                            <h3>VU Meter</h3>
+                            <p>Level fills out from the center, with a falling peak mark.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="wave">
+                        <div class="anim-icon">🌊</div>
+                        <div class="anim-info">
+                            <h3>Color Wave</h3>
+                            <p>A smooth wave rolling out from the center.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="rainbow">
+                        <div class="anim-icon">🌈</div>
+                        <div class="anim-info">
+                            <h3>Rainbow Scroll</h3>
+                            <p>Cycling color gradient modulated by audio intensity.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="fire">
+                        <div class="anim-icon">🔥</div>
+                        <div class="anim-info">
+                            <h3>Fire Simulation</h3>
+                            <p>Heat rises from one end. Bass throws more sparks.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="sparkle">
+                        <div class="anim-icon">✨</div>
+                        <div class="anim-info">
+                            <h3>High Sparkle</h3>
+                            <p>Twinkles with volume & treble, exploding on percussive hits.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="plasma">
+                        <div class="anim-icon">🌌</div>
+                        <div class="anim-info">
+                            <h3>Aurora Plasma</h3>
+                            <p>Pixelblaze multi-wave plasma with electric transient arcs.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="matrix">
+                        <div class="anim-icon">👾</div>
+                        <div class="anim-info">
+                            <h3>Cyber Rain</h3>
+                            <p>Moon Modules digital rain cascade with percussive white splashes.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="pulse">
+                        <div class="anim-icon">💫</div>
+                        <div class="anim-info">
+                            <h3>Supernova Ripple</h3>
+                            <p>Moon Modules concentric shockwaves launched by beats and hits.</p>
+                        </div>
+                    </div>
+                    <div class="anim-card" data-anim="chaser">
+                        <div class="anim-icon">☄️</div>
+                        <div class="anim-info">
+                            <h3>Beat Comet</h3>
+                            <p>Pixelblaze high-speed energy comets rocketing along the strip.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Settings & Visualizer -->
+            <div>
+                <h2 class="section-title">Visual Settings</h2>
+                <div class="controls-panel">
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-title">Total Rig Pixels</span>
+                            <span class="slider-val" id="pixels-val">680</span>
+                        </div>
+                        <input type="range" id="pixels-slider" min="100" max="2500" step="10" value="680">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-title">Gain Multiplier</span>
+                            <span class="slider-val" id="gain-val">5.0</span>
+                        </div>
+                        <input type="range" id="gain-slider" min="1.0" max="25.0" step="0.5" value="5.0">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-title">Temporal Smoothing</span>
+                            <span class="slider-val" id="smoothing-val">0.70</span>
+                        </div>
+                        <input type="range" id="smoothing-slider" min="0.0" max="0.95" step="0.05" value="0.70">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-title">Noise Gate Threshold</span>
+                            <span class="slider-val" id="threshold-val">0.001</span>
+                        </div>
+                        <input type="range" id="threshold-slider" min="0.0001" max="0.01" step="0.0005" value="0.001">
+                    </div>
+                </div>
+
+                <!-- Canvas Visualizer Section -->
+                <div class="canvas-container">
+                    <button class="canvas-btn" id="start-mic-btn">Enable Local Audio Analysis</button>
+                    <canvas id="audio-canvas"></canvas>
+                    <div class="canvas-readout">
+                        <div class="readout-item">
+                            Level
+                            <span class="readout-val" id="readout-level">0%</span>
+                        </div>
+                        <div class="readout-item">
+                            Peak Freq
+                            <span class="readout-val" id="readout-freq">0 Hz</span>
+                        </div>
+                        <div class="readout-item">
+                            Range
+                            <span class="readout-val" id="readout-band">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                <span>Active Link (192.168.0.100)</span>
+            </div>
+            <button class="btn-shutdown" id="shutdown-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                Shutdown Engine
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        // Fetch current settings on load
+        async function fetchSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                
+                updateActiveCard(data.animation);
+                
+                document.getElementById('pixels-slider').value = data.pixels || 680;
+                document.getElementById('pixels-val').innerText = data.pixels || 680;
+
+                document.getElementById('gain-slider').value = data.gain;
+                document.getElementById('gain-val').innerText = Number(data.gain).toFixed(1);
+                
+                document.getElementById('smoothing-slider').value = data.smoothing;
+                document.getElementById('smoothing-val').innerText = Number(data.smoothing).toFixed(2);
+                
+                document.getElementById('threshold-slider').value = data.threshold;
+                document.getElementById('threshold-val').innerText = Number(data.threshold).toFixed(4);
+            } catch (err) {
+                console.error('Error fetching settings:', err);
+            }
+        }
+
+        async function updateSettings(updatedFields) {
+            try {
+                await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedFields)
+                });
+            } catch (err) {
+                console.error('Error updating settings:', err);
+            }
+        }
+
+        function updateActiveCard(animName) {
+            document.querySelectorAll('.anim-card').forEach(card => {
+                if (card.dataset.anim === animName) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        }
+
+        // Animation card selectors
+        document.querySelectorAll('.anim-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const anim = card.dataset.anim;
+                updateActiveCard(anim);
+                updateSettings({ animation: anim });
+            });
+        });
+
+        // Sliders input events
+        document.getElementById('pixels-slider').addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            document.getElementById('pixels-val').innerText = val;
+            updateSettings({ pixels: val });
+        });
+
+        document.getElementById('gain-slider').addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            document.getElementById('gain-val').innerText = val.toFixed(1);
+            updateSettings({ gain: val });
+        });
+
+        document.getElementById('smoothing-slider').addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            document.getElementById('smoothing-val').innerText = val.toFixed(2);
+            updateSettings({ smoothing: val });
+        });
+
+        document.getElementById('threshold-slider').addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            document.getElementById('threshold-val').innerText = val.toFixed(4);
+            updateSettings({ threshold: val });
+        });
+
+        // Shutdown button event
+        const shutdownBtn = document.getElementById('shutdown-btn');
+        shutdownBtn.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to shut down the visualizer engine?')) {
+                shutdownBtn.innerText = 'Shutting Down...';
+                shutdownBtn.disabled = true;
+                try {
+                    await fetch('/api/shutdown', { method: 'POST' });
+                    document.body.innerHTML = `
+                        <div style="text-align: center; padding: 4rem; max-width: 500px; margin: auto; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px;">
+                            <h2 style="color: #ff4b4b; margin-bottom: 1rem;">Visualizer Engine Shut Down</h2>
+                            <p style="color: var(--text-muted); font-size: 1.1rem;">You can now close this tab safely. Run the restore script if you wish to reset your network adapter back to DHCP.</p>
+                        </div>
+                    `;
+                } catch (err) {
+                    console.error('Error shutting down:', err);
+                }
+            }
+        });
+
+        // Local Sound Analysis Canvas Code
+        const startMicBtn = document.getElementById('start-mic-btn');
+        const canvas = document.getElementById('audio-canvas');
+        const ctx = canvas.getContext('2d');
+        let audioCtx, analyser, dataArray, bufferLength;
+        let isAnalyzing = false;
+
+        startMicBtn.addEventListener('click', async () => {
+            if (isAnalyzing) return;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }, 
+                    video: false 
+                });
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaStreamSource(stream);
+                
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 256;
+                bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                source.connect(analyser);
+                
+                startMicBtn.style.display = 'none';
+                isAnalyzing = true;
+                draw();
+            } catch (err) {
+                alert('Microphone permission required for local FFT display: ' + err);
+            }
+        });
+
+        function draw() {
+            if (!isAnalyzing) return;
+            requestAnimationFrame(draw);
+            
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Resize canvas to scale
+            if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight;
+            }
+
+            const barWidth = (canvas.width / bufferLength) * 1.5;
+            let barHeight;
+            let x = 0;
+            let maxVal = 0;
+            let maxIndex = 0;
+            let totalVolume = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                barHeight = (dataArray[i] / 255) * canvas.height;
+                totalVolume += dataArray[i];
+                
+                if (dataArray[i] > maxVal) {
+                    maxVal = dataArray[i];
+                    maxIndex = i;
+                }
+
+                // Beautiful gradient bars
+                const grad = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
+                grad.addColorStop(0, 'rgba(138, 43, 226, 0.4)');
+                grad.addColorStop(1, '#00f2fe');
+
+                ctx.fillStyle = grad;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
+                
+                x += barWidth;
+            }
+
+            // Update numerical readings
+            const volumePercent = Math.round((totalVolume / (bufferLength * 255)) * 100);
+            const peakFreq = Math.round(maxIndex * (audioCtx.sampleRate / analyser.fftSize));
+            
+            document.getElementById('readout-level').innerText = volumePercent + '%';
+            document.getElementById('readout-freq').innerText = peakFreq + ' Hz';
+            
+            let band = 'Treble';
+            if (peakFreq < 250) band = 'Bass';
+            else if (peakFreq < 4000) band = 'Mids';
+            
+            document.getElementById('readout-band').innerText = band;
+        }
+
+        // Initialize values
+        fetchSettings();
+    </script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Autopsy — Maximize Your Tech</title>
+    <meta name="description" content="Review of maximizeyourtech.com as it stood on 23 September 2026, and what the rebuild changed.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,620&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #1c1915;
+            --muted: #5c564c;
+            --line: #d9d1c3;
+            --paper: #f6f1e7;
+            --card: #fffdf8;
+            --mark: #8a3b2a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Outfit, "Segoe UI", sans-serif;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+        h1, h2, h3 { font-family: Fraunces, Georgia, serif; font-weight: 500; letter-spacing: -0.02em; line-height: 1.15; }
+        h1 { font-size: clamp(2.2rem, 4vw, 3.4rem); margin: 0 0 0.6rem; }
+        h2 { font-size: 1.7rem; margin: 2.2rem 0 0.6rem; }
+        a { color: var(--mark); }
+        .bar {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.75rem 1.25rem;
+            background: #1c1915;
+            color: #f6f1e7;
+            font-size: 0.95rem;
+        }
+        .bar a { color: #f0b429; }
+        .wrap { width: min(52rem, calc(100% - 2.5rem)); margin: 0 auto; padding: 2.5rem 0 4rem; }
+        .lede { font-size: 1.15rem; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin: 1.5rem 0; }
+        .stat { background: var(--card); border: 1px solid var(--line); padding: 0.9rem; }
+        .stat b { display: block; font-family: Fraunces, Georgia, serif; font-size: 1.8rem; font-weight: 500; }
+        .stat span { color: var(--muted); font-size: 0.9rem; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 0.95rem; }
+        th, td { text-align: left; vertical-align: top; border-top: 1px solid var(--line); padding: 0.7rem 0.6rem; }
+        th { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+        .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .pair article { background: var(--card); border: 1px solid var(--line); padding: 1rem; }
+        .pair h3 { margin-top: 0; }
+        blockquote { margin: 0.4rem 0; color: var(--muted); }
+        .note { color: var(--muted); font-size: 0.92rem; }
+        @media (max-width: 800px) {
+            .stats, .pair { grid-template-columns: 1fr; }
+        }
+        @media print {
+            .bar { position: static; }
+            a { color: inherit; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bar">
+        <span>Site autopsy · 23 Sep 2026</span>
+        <span><a href="old.html">Before</a> · <a href="index.html">After</a></span>
+    </div>
+    <main class="wrap">
+        <p class="note">maximizeyourtech.com · GoDaddy Website Builder · public pages only</p>
+        <h1>The old site could not take an order.</h1>
+        <p class="lede">It asked people to shop, then told a personal story, then put another organization’s cafe calendar in the same menu as custom PCs. A venue, a shop, and someone buying a computer all landed on one page and could not see a price, a photo, or a button that went anywhere.</p>
+        <p>Open <a href="old.html">the before</a> beside <a href="index.html">the rebuild</a>. The wording in the before is theirs, including the typos. This page is the list of what had to change, and what the rebuild refused to invent.</p>
+
+        <div class="stats">
+            <div class="stat"><b>7</b><span>items in the main menu</span></div>
+            <div class="stat"><b>2</b><span>primary buttons whose address was #</span></div>
+            <div class="stat"><b>4</b><span>different buyers on the homepage</span></div>
+            <div class="stat"><b>$0</b><span>shown on any branding size</span></div>
+        </div>
+
+        <h2>The line at the top</h2>
+        <div class="pair">
+            <article>
+                <h3>Before</h3>
+                <blockquote>It’s time to Maximize Your Tech. The fun starts NOW. Let’s shop for your perfect business image upgrade.</blockquote>
+                <p>Get Started Today went to <code>#</code>. Find out more went to <code>#</code>. The icon was GoDaddy’s default app logo. The header phone field was empty.</p>
+            </article>
+            <article>
+                <h3>After</h3>
+                <blockquote>Captions on the room screens. Streams that stay up. Goods with your mark on them.</blockquote>
+                <p>The header is a canvas of meshing gears. The bulb brightens as they come up to speed, and flickers only while they are turning. Request a quote opens an email. It has an address.</p>
+            </article>
+        </div>
+
+        <h2>Where it failed</h2>
+        <table>
+            <thead>
+                <tr><th>Surface</th><th>What was there</th><th>Why a buyer leaves</th><th>What the rebuild does</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><a href="old.html#home">Home</a></td>
+                    <td>A slogan, then one sentence listing captions, OBS, printing, engraving, crafting, laptops, and a Woojer vest.</td>
+                    <td>Seven offers. No product page for the vest or the laptops. No photo. The next block is a diary.</td>
+                    <td>Three doors, each with a price that was actually published. The vest has its own page.</td>
+                </tr>
+                <tr>
+                    <td><a href="old.html#home">Voice</a></td>
+                    <td>“I’m launching this business.” “You’ll find me behind the monitor.” “l do online OBS streaming.”</td>
+                    <td>First person, a missing capital I, and a partner who appears on the homepage and disappears on About. Venues hire a company.</td>
+                    <td>Company voice. Mayan Fogarty, owner. Susan handles client accounts. Credentials stated once, as facts.</td>
+                </tr>
+                <tr>
+                    <td><a href="old.html#tech-services">Tech Services</a></td>
+                    <td>$60/hour, about 1.5 hours on site, $0.30/mile. Video files at $0.80/minute. The teardown line was duplicated. “Usually not more than.” Extra fees if the video is poor.</td>
+                    <td>The numbers were real and then buried in a run-on sentence. The hedges sound like a surprise bill.</td>
+                    <td>Three offers. $60/hour plus mileage. $0.80/minute, with the 120-minute file shown as $96. A bad file is declined before work starts. The stream, which had no price, is marked Quoted.</td>
+                </tr>
+                <tr>
+                    <td><a href="old.html#business-branding">Business Branding</a></td>
+                    <td>Vinyl, hats, mugs, prints, engraving. Every size said EACH. Labor was $25/hour.</td>
+                    <td>No dollar amount, no photo, no material, no turnaround. Nothing to compare.</td>
+                    <td>Sizes and the $25 labor rate stay. Piece prices stay blank until someone sets them. The page says that out loud.</td>
+                </tr>
+                <tr>
+                    <td><a href="old.html#tech-support">Tech Support</a></td>
+                    <td>Parts lists. Mid-range $1,000–$1,800. High end had no price. “$100–$200 extra.” The homepage said laptops.</td>
+                    <td>The page was named support and sold builds. Specs without a job, and a fee that never said extra on top of what.</td>
+                    <td>Renamed Computers. Assembly stated as $100–$200 on top of the machine. Entry and high end stay Quoted, because no system price was published. Laptops omitted.</td>
+                </tr>
+                <tr>
+                    <td><a href="old.html#events">Events</a></td>
+                    <td>“September 3–6, 2026 had me at Camp Taloali.” “The lights looks amazing.”</td>
+                    <td>A party diary in the main menu. The useful fact — captions on TVs and a YouTube stream — was the caption under a story.</td>
+                    <td>One proof card. Date, place, and what was delivered. The glow-party paragraph is gone.</td>
+                </tr>
+                <tr>
+                    <td><a href="old.html#woodstock">Woodstock Cafe</a></td>
+                    <td>A calendar for a cafe at 4103 SE Woodstock Blvd, with info@cymaspace.org.</td>
+                    <td>Another organization’s schedule, in the shop menu.</td>
+                    <td>Removed. CymaSpace remains one factual line on About.</td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="note">Source: the public pages Home, Events, Tech Services, Tech Support, Business Branding, About, and Woodstock Cafe Events, read 23 Sep 2026.</p>
+
+        <h2>Voice that had to go</h2>
+        <div class="pair">
+            <article>
+                <h3>On the old site</h3>
+                <blockquote>Both my partner and I are hard of hearing individuals who have a strong tie to the deaf community.</blockquote>
+                <blockquote>l do online OBS streaming.</blockquote>
+                <blockquote>Susan and I also offer 3D printing as well.</blockquote>
+                <blockquote>I’m launching this business to help support the community around me.</blockquote>
+                <blockquote>Overlooking this community means missing out of a pool of dedicated, knowledgeable individuals.</blockquote>
+            </article>
+            <article>
+                <h3>On the rebuild</h3>
+                <blockquote>Deaf-owned shop in Philomath. Event access, fabrication, and computers for Portland and the valley.</blockquote>
+                <blockquote>Mayan Fogarty is the owner, a certified systems administrator.</blockquote>
+                <blockquote>Susan handles client accounts. She has a BA in business management and a background in sales.</blockquote>
+                <blockquote>One email. The Gmail address is not published.</blockquote>
+            </article>
+        </div>
+
+        <h2>What was not invented</h2>
+        <table>
+            <thead>
+                <tr><th>Missing on the old site</th><th>How the rebuild treats it</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Dollar amounts on small, medium, and large vinyl, print, and engraving</td>
+                    <td>Still quoted per piece. Labor stays $25/hour, which was the published number.</td>
+                </tr>
+                <tr>
+                    <td>A price for live stream support</td>
+                    <td>Marked Quoted. The $60 rate is only attached to room captions, where it was published.</td>
+                </tr>
+                <tr>
+                    <td>A system price for the entry build and the high end</td>
+                    <td>Marked Quoted. Mid-range keeps $1,000–$1,800, with assembly still extra.</td>
+                </tr>
+                <tr>
+                    <td>Any laptop model</td>
+                    <td>Left off the shop.</td>
+                </tr>
+                <tr>
+                    <td>A shop price for the Woojer vest</td>
+                    <td>The page shows Woojer’s own current price, $407, regular $479, from woojer.com/products/vest-4 on 23 Sep 2026 (listed through 31 Dec 2026). The bulk agreement is why the shop can order them. The price a customer pays is confirmed on the quote.</td>
+                </tr>
+                <tr>
+                    <td>A phone number</td>
+                    <td>Still absent. The field was empty.</td>
+                </tr>
+                <tr>
+                    <td>A label on the last hours cell</td>
+                    <td>Saturday was Closed, and the next cell was Closed with no day. The rebuild lists Sunday as closed and says so in the footer.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>What a buyer can do now</h2>
+        <table>
+            <thead>
+                <tr><th>Page</th><th>Job of the page</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><a href="index.html">Home</a></td><td>Gears and bulb, three doors, CodaFest, the vest price, a quote form.</td></tr>
+                <tr><td><a href="access.html">Event access</a></td><td>Room captions, a stream, a finished file.</td></tr>
+                <tr><td><a href="goods.html">Made goods</a></td><td>Vinyl, print, engraving. Sizes and labor. Piece price still quoted.</td></tr>
+                <tr><td><a href="computers.html">Computers</a></td><td>Three builds, upgrades, and a path to the vest.</td></tr>
+                <tr><td><a href="woojer.html">Woojer Vest 4</a></td><td>Official photo, official price, what is in the box.</td></tr>
+                <tr><td><a href="work.html">Work</a></td><td>CodaFest as a delivered job.</td></tr>
+                <tr><td><a href="about.html">About</a></td><td>The company, two roles, one email, the hours.</td></tr>
+                <tr><td><a href="contact.html">Quote</a></td><td>Which offer, when, where. Opens an email. Stores nothing.</td></tr>
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

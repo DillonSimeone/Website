@@ -1,0 +1,184 @@
+:root {
+  --bg-canvas: #f4ebd0; /* Cream */
+  --bauhaus-red: #e23b24;
+  --bauhaus-blue: #002f6c;
+  --bauhaus-yellow: #f2b134;
+  --black: #111;
+  
+  --font-display: 'Archivo Black', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-canvas);
+  color: var(--black);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.bauhaus-container {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.bauhaus-header {
+  border-bottom: 4px solid var(--black);
+  padding-bottom: 25px;
+  margin-bottom: 40px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: #fff;
+  background: var(--black);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 11px;
+  padding: 4px 10px;
+  margin-bottom: 20px;
+}
+
+.nav-back:hover {
+  background: var(--bauhaus-red);
+}
+
+.bauhaus-title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 6rem);
+  margin: 0;
+  line-height: 0.9;
+  letter-spacing: -2px;
+}
+
+.bauhaus-subtitle {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin: 10px 0 0 0;
+  color: var(--bauhaus-red);
+}
+
+.bauhaus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.bauhaus-card {
+  border: 4px solid var(--black);
+  padding: 30px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.block-label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.bauhaus-card h2 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  margin: 0 0 15px 0;
+}
+
+.bauhaus-card p {
+  font-weight: 500;
+}
+
+/* Card presets */
+.card-yellow-block {
+  background-color: var(--bauhaus-yellow);
+}
+
+.card-blue-block {
+  background-color: var(--bauhaus-blue);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  min-height: 250px;
+}
+
+.diagonal-box {
+  transform: rotate(-45deg);
+}
+
+.diagonal-text {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 5rem);
+  color: #fff;
+  text-shadow: 4px 4px 0px var(--bauhaus-red);
+}
+
+.card-interactive {
+  background-color: #fff;
+}
+
+/* Shape composer canvas */
+.composer-canvas {
+  width: 100%;
+  height: 200px;
+  border: 4px solid var(--black);
+  background-color: var(--bg-canvas);
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+  margin-top: 15px;
+}
+
+.bauhaus-btn {
+  width: 100%;
+  background: var(--black);
+  color: #fff;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 11px;
+  padding: 12px;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+.bauhaus-btn:hover {
+  background: var(--bauhaus-blue);
+}
+
+/* Generated Shapes styles */
+.canvas-shape {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.c-circle {
+  border-radius: 50%;
+  background-color: var(--bauhaus-red);
+}
+
+.c-square {
+  background-color: var(--bauhaus-yellow);
+  border: 3px solid var(--black);
+}
+
+.c-triangle {
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 35px solid var(--bauhaus-blue);
+  background: transparent !important;
+}
+
+.c-line {
+  background-color: var(--black);
+  height: 6px;
+  transform: translate(-50%, -50%) rotate(30deg);
+}

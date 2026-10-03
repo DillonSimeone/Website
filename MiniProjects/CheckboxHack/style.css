@@ -1,0 +1,285 @@
+html{
+    background-color: black;
+    color: rgba(0,255,0,0.9)
+}
+
+a{
+    color: rgba(0,255,0,1);
+}
+
+label{
+    cursor: pointer;
+}
+
+a:visited{
+    color: rgba(0,255,0,0.3);
+}
+
+h1{
+    text-align: center;
+}
+
+section p{
+    text-align: center;
+}
+
+blockquote p{
+    text-align: left;
+}
+
+section{
+    margin: 0px auto 10px auto;
+    width: 90%;
+    border: 5px green solid;
+    padding: 10px;
+}
+
+#TestOneSection, #TestTwoSection, #TestTwoSection, #TestThreeSection, #Demo{
+    display: none;
+}
+
+#navTestOneR:checked ~ #TestOneSection{
+    display: block;
+}
+
+#navTestTwoR:checked ~ #TestTwoSection{
+    display: block;
+}
+
+#navTestThreeR:checked ~ #TestThreeSection{
+    display: block;
+}
+
+nav{
+    display: flex;
+    justify-content: space-around;
+    margin: auto;
+    width: 90%;
+    padding: ;
+    border-top: 5px green solid;
+    border-right: 5px green solid;
+    border-left: 5px green solid;
+}
+
+#navTestOneR, #navTestTwoR, #navTestThreeR{
+    display: none;
+}
+
+nav label{
+    font-size: 2em;
+    padding: 0px 10px 0px 10px;
+    margin: 0;
+    transition: background-color 1s;
+    cursor: pointer;
+}
+
+nav label:hover{
+    background-color: rgba(0,255,0,0.5);
+}
+
+pre{
+    font-size: 1em;
+    color: green;
+    background-color: black;
+    
+    height: 200px;
+    width: 50%;
+    margin: 10px auto 10px auto;
+    padding: 10px;
+    
+    border: 5px green solid;
+    
+    overflow: auto;
+}
+
+::-webkit-scrollbar-corner, ::-webkit-scrollbar-button {
+    display: none;  
+}
+
+/* Sets width/height of V. and H. scrollbar. (Width affects H. bar, Height affects V. Bar) */
+::-webkit-scrollbar{
+    width: 10px;
+    height: 10px;
+}
+
+/* Movey thingy scrollbar */
+::-webkit-scrollbar-thumb {
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
+    background-color:rgba(0,255,0,0.8);
+}
+
+::-webkit-scrollbar-thumb:window-inactive {
+	background: rgba(0,255,0,0.4); 
+}
+
+@Keyframes rainbow{
+    0%   {background-color:red;}
+    25%  {background-color:yellow;}
+    50%  {background-color:blue;}
+    75%  {background-color:green;}
+    100% {background-color:red;}
+}
+
+/*==== TEST ONE ====*/
+
+#TestOne{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    border: 5px green solid;
+}
+
+#TestOne label{
+    margin: 10px auto 10px;
+    width: 130px;
+    padding: 10px;
+}
+
+#TestOneItemOneR:checked ~ #TestOneItemOneE{
+    background-color: red;
+}
+
+#TestOneItemOneR:checked ~ #TestOneItemOneL{
+    background-color: blue;
+}
+
+#TestOneItemTwoR:checked ~ #TestOneItemTwoE{
+    background-color: red;
+}
+
+#TestOneItemTwoR:checked ~ #TestOneItemTwoL{
+    background-color: blue;
+}
+
+#TestOneItemThreeR:checked ~ #TestOneItemThreeE{
+    background-color: red;
+}
+
+#TestOneItemThreeR:checked ~ #TestOneItemThreeL{
+    background-color: blue;
+}
+
+#TestOneItemFourR:checked ~ #TestOneItemFourE{
+    background-color: red;
+}
+
+#TestOneItemFourR:checked ~ #TestOneItemFourL{
+    background-color: blue;
+}
+
+/*==== Test Two ==== */
+
+#TestTwo{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    border: 5px green solid;
+}
+
+#TestTwo label{
+    font-size: 2em;
+    margin: 10px auto 10px;
+    width: 130px;
+    padding: 10px;
+}
+
+#TestTwoInputLayout{
+    padding: 20px;
+}
+
+
+#TestTwoItemOneR:checked ~ #TestTwoItemOneE{
+    background-color: red;
+}
+
+#TestTwoItemOneR:checked ~ #TestTwoItemOneL{
+    background-color: blue;
+}
+
+#TestTwoItemTwoR:checked ~ #TestTwoItemTwoE{
+    background-color: red;
+}
+
+#TestTwoItemTwoR:checked ~ #TestTwoItemTwoL{
+    background-color: blue;
+}
+
+#TestTwoItemThreeR:checked ~ #TestTwoItemThreeE{
+    background-color: red;
+}
+
+#TestTwoItemThreeR:checked ~ #TestTwoItemThreeL{
+    background-color: blue;
+}
+
+#TestTwoItemFourR:checked ~ #TestTwoItemFourE{
+    background-color: red;
+}
+
+#TestTwoItemFourR:checked ~ #TestTwoItemFourL{
+    background-color: blue;
+}
+
+/*=== Test Three ===*/
+#TestThree{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    border: 5px green solid;
+    padding: 10px;
+}
+
+#TestThree div{
+    margin: 10px 0px 10px 0px;
+}
+
+#TestThree label{
+    font-size: 2em;
+    margin: 10px auto 10px;
+    width: 130px;
+    padding: 10px;
+}
+
+#TestThreeInputLayout{
+    padding: 20px;
+}
+
+
+#TestThreeItemOneR:checked ~ #TestThreeItemOneE{
+    background-color: red;
+}
+
+#TestThreeItemOneR:checked ~ .TestThreeItemOneL{
+    background-color: blue;
+}
+
+#TestThreeItemTwoR:checked ~ #TestThreeItemTwoE{
+    background-color: red;
+}
+
+#TestThreeItemTwoR:checked ~ .TestThreeItemTwoL{
+    background-color: blue;
+}
+
+#TestThreeItemThreeR:checked ~ #TestThreeItemThreeE{
+    background-color: red;
+}
+
+#TestThreeItemThreeR:checked ~ .TestThreeItemThreeL{
+    background-color: blue;
+}
+
+#TestThreeItemFourR:checked ~ #TestThreeItemFourE{
+    background-color: red;
+}
+
+#TestThreeItemFourR:checked ~ .TestThreeItemFourL{
+    background-color: blue;
+}
+
+

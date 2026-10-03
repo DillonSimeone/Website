@@ -1,0 +1,12 @@
+{
+  "name": "paladin-waste-consulting",
+  "version": "1.0.0",
+  "description": "Paladin Waste Consulting Static Website",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

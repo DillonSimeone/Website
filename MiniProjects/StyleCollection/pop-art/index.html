@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pop Art Comic Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="comic-container">
+    <header class="comic-header">
+      <a href="../index.html" class="nav-back">◀ BACK_TO_HUB</a>
+      <h1 class="comic-title">POP_ART!</h1>
+      <p class="comic-subtitle">BEN-DAY DOTS & RETRO SPEECH BURSTS</p>
+    </header>
+
+    <main class="comic-grid">
+      <!-- Info box -->
+      <section class="comic-card card-magenta">
+        <div class="card-dots"></div>
+        <h2>THE STORY</h2>
+        <p>Inspired by Roy Lichtenstein and Andy Warhol, Pop Art turned mass-produced comic book print grids into high art. It relies on primary yellow fills, hot magenta backgrounds, and heavy ink outlines.</p>
+      </section>
+
+      <!-- Click stamp Playroom -->
+      <section class="comic-card card-yellow interactive-card">
+        <h2>ACTION PANEL</h2>
+        <p>Click inside the panels below to spawn retro comic book action stamps!</p>
+        
+        <div class="comic-playroom" id="playroom">
+          <!-- Stamps generated here -->
+        </div>
+      </section>
+
+      <!-- Aesthetics list -->
+      <section class="comic-card card-cyan">
+        <div class="card-dots"></div>
+        <h2>GRAPHIC LAYOUT</h2>
+        <ul class="comic-list">
+          <li>- Ben-Day polka dot grids</li>
+          <li>- Thick solid black borders</li>
+          <li>- Spiked speech bubbles</li>
+          <li>- Archivo Black letters</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

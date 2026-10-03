@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MYT Video Capture Hub</title>
+  <meta name="description" content="Local-first multi-device video capture hub, precision millisecond clock sync, UDisc-compatible disc golf scorecard, and quota-managed cloud ingestion.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0d14">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="alternate icon" href="favicon.ico">
+  
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="native-marker.js"></script>
+</head>
+<body class="theme-dark">
+  <div id="hubConnectPanel" class="hub-connect-panel" hidden>
+    <div class="hub-connect-card">
+      <h2 id="hubConnectTitle">Looking for the hub</h2>
+      <p id="hubConnectStatus">Searching this Wi-Fi for the laptop running MYT Capture.</p>
+      <div id="hubConnectChoices" class="hub-connect-choices"></div>
+      <p id="hubConnectError" class="hub-connect-error" hidden></p>
+      <button type="button" class="btn btn-accent" id="btnRetryHub" hidden>Search again</button>
+    </div>
+  </div>
+  <div id="app" class="hub-container">
+
+    <!-- Top Station Header: Clean, Centered with Discreet Admin Toggle -->
+    <header class="station-header">
+      <div class="header-main-bar">
+        <div class="header-spacer"></div>
+
+        <!-- Centered Branding -->
+        <div class="hub-logo-centered">
+          <span class="logo-rec-indicator"></span>
+          <h1 class="logo-title">MYT CAPTURE HUB</h1>
+        </div>
+
+        <!-- Admin Mode Switch -->
+        <div class="admin-toggle-wrapper">
+          <button type="button" id="btnChangeHub" class="native-only btn-admin-toggle" title="Point this phone at a different hub computer">Hub</button>
+          <button id="btnToggleAdmin" class="btn-admin-toggle" title="Toggle Admin Diagnostics & Advanced Sync Tools">
+            <span class="admin-gear">⚙️</span>
+            <span class="admin-toggle-text" id="adminToggleLabel">Admin Mode</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin-Only Telemetry Bar (Hidden in normal user mode) -->
+      <div class="telemetry-bar admin-only" id="adminTelemetryBar">
+        <div class="telemetry-item" title="Master Clock Epoch Time">
+          <span class="telem-label">MASTER CLOCK:</span>
+          <span class="telem-val mono" id="headerMasterClock">00:00:00.000</span>
+        </div>
+        <div class="telemetry-item" title="Client to Hub Offset">
+          <span class="telem-label">Δt OFFSET:</span>
+          <span class="telem-val mono text-emerald" id="headerClockOffset">+0.0 ms</span>
+        </div>
+        <div class="telemetry-item" title="Local IndexedDB Chunk Buffer">
+          <span class="telem-label">BUFFER / STREAM:</span>
+          <span class="telem-val mono text-cyan" id="headerBufferCount">0 Slices Streamed</span>
+        </div>
+        <div class="telemetry-item" title="Daily YouTube Data API Budget">
+          <span class="telem-label">YT QUOTA:</span>
+          <span class="telem-val mono text-amber" id="headerQuotaRemaining">10,000 / 10k</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs (Simple User Tabs by default; Admin Tabs revealed when Admin Mode is ON) -->
+      <nav class="station-nav" role="tablist">
+        <!-- User Tabs -->
+        <button class="nav-tab active" data-tab="capture" id="tabBtnCapture">
+          <span class="tab-icon">📹</span> Record &amp; Score
+        </button>
+        <button class="nav-tab" data-tab="udisc" id="tabBtnUdisc">
+          <span class="tab-icon">🥏</span> Scorecard
+        </button>
+        <button class="nav-tab" data-tab="qrcode" id="tabBtnQr">
+          <span class="tab-icon">📱</span> QR Code
+        </button>
+
+        <!-- Admin-Only Tabs -->
+        <button class="nav-tab admin-only" data-tab="studio" id="tabBtnStudio">
+          <span class="tab-icon">🎛️</span> Smart Sync Studio
+        </button>
+        <button class="nav-tab admin-only" data-tab="storage" id="tabBtnStorage">
+          <span class="tab-icon">💾</span> Storage Explorer
+        </button>
+        <button class="nav-tab admin-only" data-tab="quota" id="tabBtnQuota">
+          <span class="tab-icon">☁️</span> YouTube Quota
+        </button>
+        <button class="nav-tab admin-only" data-tab="hub" id="tabBtnHub">
+          <span class="tab-icon">🖥️</span> Host &amp; Network
+        </button>
+        <button class="nav-tab admin-only" data-tab="roster" id="tabBtnRoster">
+          <span class="tab-icon">👥</span> Sessions &amp; Roster
+        </button>
+      </nav>
+    </header>
+
+    <!-- Main Workspace Content Panels -->
+    <main class="station-main">
+
+      <!-- ========================================== -->
+      <!-- TAB 1: SIMPLE RECORDING & SCORING (USER)   -->
+      <!-- ========================================== -->
+      <section id="panelCapture" class="tab-panel active">
+        <div class="user-capture-container">
+          
+          <!-- Session & Player Selection Banner -->
+          <div class="player-select-banner">
+            <div class="select-col">
+              <label for="selectActiveSession" class="player-label">Session Card:</label>
+              <select id="selectActiveSession" class="form-select player-dropdown">
+                <!-- Populated dynamically with sessions + Add New Session -->
+              </select>
+            </div>
+
+            <div class="select-col">
+              <label for="selectCapturePlayer" class="player-label">Filming Player:</label>
+              <select id="selectCapturePlayer" class="form-select player-dropdown">
+                <!-- Populated dynamically with session players + Add New Player -->
+              </select>
+            </div>
+
+            <button id="btnSwitchCamera" class="btn-sm btn-outline" title="Switch Front / Rear Camera">🔄 Flip Camera</button>
+          </div>
+
+          <!-- Viewfinder Screen -->
+          <div class="viewfinder-container">
+            <video id="viewfinderVideo" autoplay playsinline muted></video>
+            <canvas id="viewfinderFallbackCanvas" class="fallback-canvas hidden"></canvas>
+
+            <!-- Clean On-Screen Overlays -->
+            <div class="viewfinder-overlay top-left">
+              <div class="rec-badge hidden" id="recBadge">
+                <span class="rec-blink"></span> REC
+              </div>
+              <div class="timer-display mono" id="recordTimer">00:00:00.00</div>
+              <div class="wake-lock-badge mono" id="wakeLockBadge" title="Screen Stay-Awake Status">☀️ Screen Awake</div>
+              <div class="offline-buffer-badge mono hidden" id="offlineBufferBadge">⚠️ OFFLINE: 0 Slices Buffered</div>
+            </div>
+
+            <div class="viewfinder-overlay top-right">
+              <div class="player-tag-badge mono" id="overlayPlayerBadge">FILMING: Mayan Fogarty</div>
+              <div class="auto-upload-badge mono" id="overlayUploadBadge">H1 Slices Stream to Hub</div>
+            </div>
+
+            <div class="viewfinder-overlay bottom-right">
+              <!-- Live Audio Level Meter -->
+              <div class="audio-meter-container" id="audioMeterContainer" title="Microphone Level">
+                <span class="meter-label">MIC</span>
+                <div class="audio-meter-bar">
+                  <div class="audio-meter-fill" id="audioMeterFill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Outdoor High-Contrast Large Thumb Shutter (One-Handed Mobile Operation) -->
+          <div class="outdoor-shutter-bar">
+            <button id="btnThumbShutter" class="shutter-button" title="One-Handed Shutter: Tap to Start / Stop Recording">
+              <span class="shutter-circle" id="shutterCircle"></span>
+            </button>
+            <div class="shutter-label mono" id="shutterLabel">TAP TO RECORD</div>
+          </div>
+
+          <!-- Desktop / Traditional Record Buttons -->
+          <div class="simple-record-controls">
+            <button id="btnStartRecording" class="btn-hero btn-record">
+              <span class="hero-rec-icon">⏺</span> START RECORDING
+            </button>
+            <button id="btnStopRecording" class="btn-hero btn-stop hidden">
+              <span class="hero-stop-icon">⏹</span> STOP RECORDING
+            </button>
+          </div>
+
+          <!-- Integrated On-Screen Quick Scoring Card (Score and Record at the same time) -->
+          <div class="field-quick-scorecard">
+            <div class="quick-score-header">
+              <div class="hole-title-group">
+                <span class="quick-hole-badge" id="quickHoleTitle">HOLE 1 (Par 3)</span>
+                <span class="quick-course-sub" id="quickCourseSub">Mary's River Park</span>
+              </div>
+              <div class="hole-quick-nav">
+                <button class="btn-xs btn-outline" id="btnQuickPrevHole">◀ Prev Hole</button>
+                <span class="mono" id="quickHoleIndicator">Hole 1 of 9</span>
+                <button class="btn-xs btn-outline" id="btnQuickNextHole">Next Hole ▶</button>
+              </div>
+            </div>
+
+            <div class="quick-players-scoring-list" id="quickScoringList">
+              <!-- Dynamic player scoring rows rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Slices Stream Counter Indicator -->
+          <div class="slice-stream-status-bar">
+            <div class="stream-info">
+              <span>Slices saved to Hub: <strong id="userSliceCounter">0</strong></span>
+              <span class="stream-dot-divider">•</span>
+              <span class="text-dim" id="storagePathNote">Named with Hole, Master Timestamp, OS &amp; Browser</span>
+            </div>
+            <div class="stream-indicator text-emerald font-bold" id="userUploadIndicator">
+              ✓ Ready
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: SCORECARD (UDISC COMPATIBLE)        -->
+      <!-- ========================================== -->
+      <section id="panelUdisc" class="tab-panel">
+        <div class="udisc-container">
+          
+          <!-- Authentic Cardcast Header Card -->
+          <div class="udisc-official-header-card">
+            <div class="udisc-breadcrumbs">
+              <span id="udiscBreadcrumb">United States / Oregon / Philomath</span>
+            </div>
+            <div class="udisc-title-row">
+              <div class="udisc-title-block">
+                <h1 class="udisc-course-name" id="udiscCourseName">Mary's River Park</h1>
+                <div class="udisc-sub-bar">
+                  <span class="udisc-layout-chip" id="udiscLayoutTag">■ Main - Par 28</span>
+                </div>
+                <div class="udisc-date-location">
+                  <span id="udiscTimestampText">🕒 Sep 22, 2026 2:37 PM</span>
+                </div>
+              </div>
+
+              <div class="udisc-header-actions-wrapper">
+                <div class="udisc-header-actions">
+                  <button id="btnExportUDiscCSV" class="btn btn-sm btn-accent" title="Export CSV">📥 Export CSV</button>
+                  <label class="btn btn-sm btn-outline file-btn" title="Import CSV">
+                    📤 Import CSV
+                    <input type="file" id="inputImportUDiscCSV" accept=".csv" style="display:none;">
+                  </label>
+                  <div class="reset-button-wrapper">
+                    <button id="btnTriggerResetScorecard" class="btn btn-sm btn-danger-outline">🔄 Reset Card</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hole Carousel / Navigator -->
+          <div class="hole-nav-bar">
+            <button class="hole-nav-arrow" id="btnPrevHole">◀</button>
+            <div class="hole-chips-scroll" id="holeChipsScroll"></div>
+            <button class="hole-nav-arrow" id="btnNextHole">▶</button>
+          </div>
+
+          <!-- Active Hole Scoring Detail Card -->
+          <div class="hole-scoring-card" id="holeScoringCard">
+            <div class="hole-card-header">
+              <div class="hole-big-badge">HOLE <span id="activeHoleNum">1</span></div>
+              <div class="hole-param-editor">
+                <label>Par:
+                  <select id="activeHoleParSelect" class="form-select-sm">
+                    <option value="3">Par 3</option>
+                    <option value="4">Par 4</option>
+                    <option value="5">Par 5</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <!-- Players Scoring Rows for this Hole -->
+            <div class="players-score-rows" id="playersScoreRows"></div>
+          </div>
+
+          <!-- Official Cardcast Summary Table -->
+          <div class="udisc-table-container">
+            <div class="table-responsive">
+              <table class="udisc-cardcast-table" id="udiscSummaryTable">
+                <thead>
+                  <tr id="udiscTheadTr">
+                    <th class="th-pos">⇅ Pos</th>
+                    <th class="th-player">Name</th>
+                    <!-- Dynamic Hole Columns (H1, H2... with Par) -->
+                    <th class="th-total">Total</th>
+                  </tr>
+                </thead>
+                <tbody id="udiscTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB: QR CODE & MOBILE QUICK JOIN (USER/ADMIN) -->
+      <!-- ========================================== -->
+      <section id="panelQrcode" class="tab-panel">
+        <div class="qr-join-container">
+          <div class="qr-card">
+            <div class="qr-card-header">
+              <span class="qr-badge mono" id="qrProtocolBadge">NORMAL HTTP (PORT 3456) • ZERO WARNINGS</span>
+              <h2 class="qr-title">📱 Scan to Join &amp; Film on Wi-Fi</h2>
+              <p class="qr-subtitle">Scan with your phone or tablet camera to open the recording app immediately.</p>
+              
+              <!-- Protocol Selector Mode Switcher -->
+              <div class="qr-protocol-switcher" style="margin-top: 0.85rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-sm btn-accent" id="btnQrModeHttp">
+                  🟢 Normal HTTP (Loads Normally / Zero Warnings)
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" id="btnQrModeHttps">
+                  🔒 Secure HTTPS Mode (Strict Camera Security)
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" id="btnQrModeApk">
+                  📲 Android App (Download APK)
+                </button>
+              </div>
+            </div>
+
+            <div class="qr-display-row">
+              <div class="qr-code-wrapper" id="qrCodeWrapper">
+                <img id="qrCodeImg" class="qr-code-image" src="/api/qrcode?mode=http" alt="QR Code to Join MYT Hub" />
+                <div class="qr-scan-hint mono" id="qrScanHint">SCAN FOR NORMAL HTTP (NO WARNINGS)</div>
+              </div>
+
+              <div class="qr-info-column">
+                <h3 class="qr-column-title">Direct Wi-Fi Links:</h3>
+                <div class="qr-endpoints-list" id="qrEndpointsList">
+                  <div class="qr-endpoint-card">
+                    <span class="endpoint-tag mono" id="labelPrimaryLan">PRIMARY WI-FI IP (RECOMMENDED)</span>
+                    <a href="#" target="_blank" class="endpoint-url mono" id="linkPrimaryLan">Loading...</a>
+                    <button class="btn-xs btn-outline btn-copy-link" id="btnCopyPrimaryLan">📋 Copy</button>
+                  </div>
+                  <div class="qr-endpoint-card">
+                    <span class="endpoint-tag mono" id="labelSecondaryLan">mDNS NAME</span>
+                    <a href="http://myt.local:3456" target="_blank" class="endpoint-url mono" id="linkMdns">http://myt.local:3456</a>
+                    <button class="btn-xs btn-outline btn-copy-link" id="btnCopyMdns">📋 Copy</button>
+                  </div>
+                </div>
+
+                <div class="qr-tips-box">
+                  <h4>💡 Connecting Your Phone:</h4>
+                  <ul>
+                    <li><strong>Load Normally:</strong> In <em>Normal HTTP Mode</em>, the app loads immediately on phones, tablets, and PCs without any certificate warnings.</li>
+                    <li><strong>Phone stuck on loading?</strong> Run <code>Allow_Phone_Connections.bat</code> in the project folder to allow Windows Firewall to accept phone Wi-Fi connections.</li>
+                    <li><strong>If using HTTPS:</strong> Firefox and mobile Safari display a local certificate warning because local Wi-Fi networks don't have public domain certificates. Tap <em>"Advanced -> Accept Risk and Continue"</em> (or <em>"Show Details -> Visit this website"</em>) once to proceed.</li>
+                    <li><strong>Android app:</strong> Tap <em>Android App</em>, scan the code, and install the APK. Open it on this same Wi-Fi and it finds the laptop on its own.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 3: SMART SYNC STUDIO (ADMIN ONLY)      -->
+      <!-- ========================================== -->
+      <section id="panelStudio" class="tab-panel">
+        <div class="studio-container">
+          
+          <div class="studio-header">
+            <div>
+              <h2>Smart Timestamp Overlap Finder &amp; Multi-Angle Studio</h2>
+              <p class="section-subtext">Scans on-disk clips for a player, examines absolute master clock epochs, and finds overlapping moments for multi-angle replay.</p>
+            </div>
+            <div class="studio-session-selector">
+              <label for="selectStudioPlayer">Player Videos:</label>
+              <select id="selectStudioPlayer" class="form-select"></select>
+              <button id="btnScanOverlaps" class="btn btn-accent">🔍 Scan On-Disk Overlaps</button>
+            </div>
+          </div>
+
+          <!-- Timeline Overlap Visualization -->
+          <div class="card-section">
+            <div class="flex-between">
+              <h3 class="section-title">⏱️ RECORDED CLIPS &amp; OVERLAPPING TIME WINDOWS</h3>
+              <span class="badge-status" id="overlapStatusBadge">Checking Clips...</span>
+            </div>
+            <div class="timeline-overlap-chart" id="timelineOverlapChart"></div>
+          </div>
+
+          <!-- Row 1: Source Video Streams (Compact Previews, supporting arbitrary number of devices) -->
+          <div class="card-section">
+            <div class="flex-between mb-2">
+              <h3 class="section-title">📹 INCOMING CAMERA FEEDS (SOURCE STREAMS)</h3>
+              <span class="text-dim" style="font-size:0.75rem;" id="sourcesCountBadge">2 Synced Feeds</span>
+            </div>
+            <div class="studio-sources-strip" id="studioSourcesStrip">
+              <!-- Dynamically populated camera feed boxes -->
+            </div>
+          </div>
+
+          <!-- Interactive Camera Angle Selector Bar: Select / Unselect Which Angles to Synthesize -->
+          <div class="angle-selector-card" id="angleSelectorCard">
+            <div class="flex-between mb-2">
+              <div class="angle-title-wrap">
+                <span class="angle-selector-title">🎯 ACTIVE CAMERA ANGLES FOR SYNTHESIS &amp; MIXER:</span>
+                <span class="text-dim" style="font-size:0.75rem;" id="activeAnglesCountText">2 / 2 Selected</span>
+              </div>
+              <div class="angle-quick-actions">
+                <button id="btnSelectAllAngles" class="btn-xs-link">Select All</button>
+                <span class="text-dim">•</span>
+                <button id="btnUnselectAllAngles" class="btn-xs-link">Clear</button>
+              </div>
+            </div>
+            <div class="angle-chips-bar" id="angleChipsBar">
+              <!-- Dynamically populated camera angle toggle chips -->
+            </div>
+          </div>
+
+          <!-- Row 2: Master Multi-Angle Live Mixed Theater Screen -->
+          <div class="master-mixer-card">
+            <div class="mixer-header-row">
+              <div class="mixer-title-group">
+                <h3 class="section-title">🎬 MASTER MULTI-ANGLE LIVE MIXER</h3>
+              </div>
+              <!-- Settings for how videos are displayed: Multi-Grid, PiP, Auto-Director Cuts, Ghost Overlay -->
+              <div class="mixer-mode-controls">
+                <span class="mixer-mode-label">Display Mode:</span>
+                <button class="btn-mixer-mode active" data-mode="grid" title="Dynamic Multi-Grid Matrix (1x1, 1x2, 2x2, 2x3, 3x3)">🔲 Multi-Grid (Auto)</button>
+                <button class="btn-mixer-mode" data-mode="pip" title="Picture in Picture Inset">🖼️ PiP</button>
+                <button class="btn-mixer-mode" data-mode="directorCut" title="Crossfade Switching Between Selected Angles">🔀 Auto-Director Cuts</button>
+                <button class="btn-mixer-mode" data-mode="ghostOverlay" title="Transparent Blend for Throw Comparison">👻 Ghost Overlay</button>
+                <button class="btn-mixer-mode" data-mode="solo" title="Solo First Selected Camera">📱 Solo</button>
+              </div>
+            </div>
+
+            <!-- Big Screen Live Theater Stage (Dynamic N-Pane Grid) -->
+            <div class="mixer-theater-container" id="mixerTheaterContainer">
+              <div class="mixer-video-stage grid-2" id="mixerVideoStage">
+                <!-- Dynamically populated video panes for all checked angles -->
+              </div>
+              <!-- Clean On-Screen Director Overlay -->
+              <div class="mixer-burnin-badge mono" id="mixerDirectorBadge">MODE: MULTI-GRID | MASTER SYNC LOCK</div>
+              <div class="mixer-timecode-badge mono" id="mixerTimecodeBadge">00:00:00.000</div>
+            </div>
+          </div>
+
+          <!-- Master Synchronized Transport Controls -->
+          <div class="master-timeline-card">
+            <div class="timeline-controls-bar">
+              <div class="transport-buttons">
+                <button id="btnStudioPlayPause" class="btn btn-primary">▶ Play Overlap Sync</button>
+                <button id="btnStudioRewind" class="btn btn-outline">⏮ Overlap Start</button>
+                <div class="speed-selector">
+                  <button class="speed-btn active" data-speed="1.0">1.0x</button>
+                  <button class="speed-btn" data-speed="0.5">0.5x</button>
+                  <button class="speed-btn" data-speed="0.25">0.25x SlowMo</button>
+                </div>
+              </div>
+              <div class="timeline-timecode mono" id="masterTimecode">
+                OVERLAP TIMELINE: 00:00:00.000 / 00:00:10.000
+              </div>
+            </div>
+
+            <div class="scrub-container">
+              <input type="range" id="masterScrubber" min="0" max="10" value="0" step="0.05" class="scrub-slider">
+            </div>
+
+            <div class="flex-between mt-2">
+              <button id="btnExportComposite" class="btn btn-accent">
+                🎬 Render Multi-Angle Composite (Local FFmpeg)
+              </button>
+              <button id="btnExportSyncMeta" class="btn btn-outline">
+                📄 Inspect Synced Metadata JSON
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 4: STORAGE EXPLORER (ADMIN ONLY)       -->
+      <!-- ========================================== -->
+      <section id="panelStorage" class="tab-panel">
+        <div class="storage-container">
+          <div class="flex-between mb-2">
+            <div>
+              <h2>Hub On-Disk Storage Explorer</h2>
+              <p class="section-subtext">Click on any file row to open its folder in File Explorer on your computer.</p>
+            </div>
+            <button id="btnRefreshStorage" class="btn btn-accent">🔄 Refresh Files</button>
+          </div>
+
+          <div class="card-section">
+            <div class="storage-stats-bar" id="storageSummaryText">
+              Scanning disk storage...
+            </div>
+            <div class="table-responsive mt-2">
+              <table class="clients-table storage-table-clickable" id="storageFilesTable">
+                <thead>
+                  <tr>
+                    <th>Filename</th>
+                    <th>Folder Path (Click Row to Open Explorer)</th>
+                    <th>Size</th>
+                    <th>Date Modified</th>
+                  </tr>
+                </thead>
+                <tbody id="storageFilesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 5: YOUTUBE DATA API v3 (ADMIN ONLY)    -->
+      <!-- ========================================== -->
+      <section id="panelQuota" class="tab-panel">
+        <div class="quota-container">
+          <div class="quota-header">
+            <div>
+              <h2>YouTube Data API v3 Quota Daemon (Admin Only)</h2>
+              <p class="section-subtext">10,000 units/day budget manager, SQLite queue, and upload throttling.</p>
+            </div>
+            <div class="wan-status-box">
+              <span class="wan-dot online" id="wanStatusDot"></span>
+              <span id="wanStatusText">WAN ONLINE</span>
+              <button id="btnToggleWan" class="btn-xs btn-outline">Toggle Offline</button>
+            </div>
+          </div>
+
+          <div class="quota-cards-grid">
+            <div class="quota-card main-gauge-card">
+              <div class="gauge-title-row">
+                <span class="gauge-title">DAILY API UNIT BUDGET (00:00 PST RESET)</span>
+                <span class="countdown-badge mono" id="quotaResetCountdown">Reset in 08h 20m</span>
+              </div>
+              <div class="gauge-metric-large">
+                <span class="val-remaining mono text-emerald" id="gaugeRemainingUnits">10,000</span>
+                <span class="val-total mono">/ 10,000 UNITS</span>
+              </div>
+              <div class="quota-meter-bar">
+                <div class="quota-meter-fill" id="quotaMeterFill" style="width: 100%;"></div>
+              </div>
+              <div class="gauge-sub-info">
+                <span>Units Consumed: <strong class="mono text-amber" id="gaugeConsumedUnits">0</strong></span>
+                <span>Max Uploads Left: <strong class="mono text-emerald" id="gaugeMaxUploads">6</strong></span>
+              </div>
+            </div>
+
+            <div class="quota-card">
+              <h3 class="section-title">📊 QUOTA ECONOMICS</h3>
+              <table class="quota-table">
+                <thead><tr><th>Operation</th><th>Cost</th><th>Details</th></tr></thead>
+                <tbody>
+                  <tr><td><code>videos.insert</code></td><td class="mono text-amber">1,600 units</td><td>Resumable video upload</td></tr>
+                  <tr><td><code>playlistItems.insert</code></td><td class="mono text-cyan">50 units</td><td>Attach to player playlist</td></tr>
+                  <tr><td><code>Composite Render</code></td><td class="mono text-emerald font-bold">0 units</td><td>Local stitch (Saves API units)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="upload-queue-card mt-3">
+            <div class="flex-between mb-2">
+              <h3 class="section-title">📋 BACKGROUND UPLOAD QUEUE (SQLite3)</h3>
+              <div class="flex-gap">
+                <button id="btnEnqueueSession" class="btn btn-outline">+ Queue Clip</button>
+                <button id="btnProcessQueueNow" class="btn btn-accent">▶ Process Upload</button>
+                <button id="btnResetQuota" class="btn btn-secondary">Reset 10k</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="queue-table" id="queueTable">
+                <thead><tr><th>ID</th><th>Session</th><th>Player</th><th>Target</th><th>Status</th><th>Cost</th><th>YouTube Link</th></tr></thead>
+                <tbody id="queueTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 6: HOST & NETWORK (ADMIN ONLY)         -->
+      <!-- ========================================== -->
+      <section id="panelHub" class="tab-panel">
+        <div class="hub-dashboard-container">
+          <div class="hub-header">
+            <div>
+              <h2>Host Computer &amp; Network Station</h2>
+              <p class="section-subtext">Real-time network telemetry, device synchronization metrics, Wi-Fi endpoints, and connected recording devices.</p>
+            </div>
+          </div>
+
+          <!-- Top Row: Host, Network, Master Clock & Storage Activity Metrics -->
+          <div class="hub-stats-grid">
+            <div class="hub-stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon">🖥️</span>
+                <span class="stat-card-title">GATEWAY HOST</span>
+              </div>
+              <div class="stat-main-val mono" id="hubHostPlatform">Windows (x64)</div>
+              <div class="stat-sub-val text-dim" id="hubHostUptime">Uptime: 0m • Node.js Active</div>
+            </div>
+
+            <div class="hub-stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon">🌐</span>
+                <span class="stat-card-title">NETWORK &amp; WI-FI</span>
+              </div>
+              <div class="stat-main-val mono text-cyan" id="hubLanEndpoint">http://10.14.41.233:3457</div>
+              <div class="stat-sub-val text-dim" id="hubLoopbackEndpoint">Local: http://localhost:3457</div>
+            </div>
+
+            <div class="hub-stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon">⏱️</span>
+                <span class="stat-card-title">MASTER CLOCK ENGINE</span>
+              </div>
+              <div class="stat-main-val mono text-emerald" id="hubClockStatus">Synchronized (30 Hz)</div>
+              <div class="stat-sub-val text-dim" id="hubSyncOffset">Precision Drift: &lt; 1.0 ms (RFC 6455)</div>
+            </div>
+
+            <div class="hub-stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon">💾</span>
+                <span class="stat-card-title">STORAGE &amp; SLICES</span>
+              </div>
+              <div class="stat-main-val mono text-amber" id="hubStorageTotal">0 Slices Recorded</div>
+              <div class="stat-sub-val text-dim" id="hubStorageDisk">Storage: 0.0 MB on Disk</div>
+            </div>
+          </div>
+
+          <!-- Wi-Fi Connection Guide Box -->
+          <div class="card-section mt-3">
+            <h3 class="section-title">🌐 CONNECTING OTHER PHONES OVER WI-FI</h3>
+            <p class="section-subtext">Open this exact URL in mobile Chrome, Safari, or Firefox on any phone connected to the same Wi-Fi / Hotspot:</p>
+            <div class="lan-urls-box mono" id="lanUrlsBox">
+              ► http://localhost:3457 (This Computer)<br>
+              ► http://10.14.41.233:3457 (LAN Wi-Fi / Hotspot)
+            </div>
+          </div>
+
+          <!-- Connected Devices and Network Telemetry Table -->
+          <div class="card-section mt-3">
+            <div class="flex-between mb-2">
+              <h3 class="section-title">📱 CONNECTED RECORDING DEVICES &amp; NETWORK TELEMETRY</h3>
+              <span class="text-dim mono" style="font-size: 0.75rem;" id="devicesCountBadge">Active Clients: 1</span>
+            </div>
+            <div class="table-responsive">
+              <table class="clients-table" id="clientsTelemetryTable">
+                <thead>
+                  <tr>
+                    <th>Device / OS</th>
+                    <th>Filming Player</th>
+                    <th>Network IP &amp; Type</th>
+                    <th>Latency (RTT)</th>
+                    <th>Offset (Δt)</th>
+                    <th>Session</th>
+                    <th>Hole &amp; Stream</th>
+                    <th>Status</th>
+                    <th>Last Heartbeat</th>
+                  </tr>
+                </thead>
+                <tbody id="clientsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 7: SESSIONS & ROSTER (ADMIN ONLY)      -->
+      <!-- ========================================== -->
+      <section id="panelRoster" class="tab-panel">
+        <div class="roster-container">
+          <div class="roster-header">
+            <div>
+              <h2>Sessions &amp; Player Cards Manager</h2>
+              <p class="section-subtext">Configure round sessions, assign player cards, and manage players. Admins can delete sessions.</p>
+            </div>
+            <div class="flex-gap">
+              <button id="btnCreateSessionAdmin" class="btn btn-outline">➕ New Session</button>
+              <button id="btnAddPlayerAdmin" class="btn btn-accent">➕ New Player</button>
+            </div>
+          </div>
+
+          <!-- Active Sessions List -->
+          <div class="card-section">
+            <h3 class="section-title">🏆 ALL SESSIONS</h3>
+            <div class="sessions-grid mt-2" id="sessionsCardsGrid"></div>
+          </div>
+
+          <!-- All Players Roster -->
+          <div class="card-section mt-3">
+            <h3 class="section-title">👥 ALL REGISTERED PLAYERS</h3>
+            <div class="roster-cards-grid mt-2" id="rosterCardsGrid"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Modal: Add New Player -->
+    <div id="playerModal" class="modal-overlay hidden">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3>Add New Player</h3>
+          <button id="btnClosePlayerModal" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="inputPlayerName">Player Full Name:</label>
+            <input type="text" id="inputPlayerName" class="form-input" placeholder="e.g. Calvin Heimburg">
+          </div>
+          <div class="form-group">
+            <label for="inputUDiscUsername">UDisc Username / Handle:</label>
+            <input type="text" id="inputUDiscUsername" class="form-input" placeholder="e.g. cheimburg">
+          </div>
+          <div class="form-group">
+            <label for="inputPlayerDesc">Description / Bio / Division:</label>
+            <input type="text" id="inputPlayerDesc" class="form-input" placeholder="e.g. MPO Pro, Innova Star Team">
+          </div>
+          <div class="form-group">
+            <label>Avatar / Initials Icon:</label>
+            <div class="avatar-select-strip" id="avatarPickerStrip">
+              <span class="avatar-option selected" data-av="CH">CH</span>
+              <span class="avatar-option" data-av="🥏">🥏</span>
+              <span class="avatar-option" data-av="⭐">⭐</span>
+              <span class="avatar-option" data-av="🎯">🎯</span>
+            </div>
+          </div>
+          <div class="form-check">
+            <label>
+              <input type="checkbox" id="checkAddToActiveSession" checked> Add directly to active session card
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btnCancelPlayerModal" class="btn btn-outline">Cancel</button>
+          <button id="btnSavePlayerModal" class="btn btn-accent">Save Player</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Create New Session (Users & Admins can add) -->
+    <div id="sessionModal" class="modal-overlay hidden">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3>Create New Session Card</h3>
+          <button id="btnCloseSessionModal" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="inputSessionName">Session Card Name:</label>
+            <input type="text" id="inputSessionName" class="form-input" placeholder="e.g. Mary's River Park - Card B">
+          </div>
+          <div class="form-group">
+            <label for="inputSessionCourse">Course Name:</label>
+            <input type="text" id="inputSessionCourse" class="form-input" value="Mary's River Park">
+          </div>
+          <div class="form-row" style="display:flex; gap:1rem;">
+            <div class="form-group" style="flex:1;">
+              <label for="selectSessionHoleCount">Number of Holes:</label>
+              <select id="selectSessionHoleCount" class="form-select">
+                <option value="9" selected>9 Holes (Standard Half)</option>
+                <option value="18">18 Holes (Full Course)</option>
+                <option value="27">27 Holes (Championship)</option>
+                <option value="12">12 Holes</option>
+                <option value="6">6 Holes (Short Loop)</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label for="selectSessionDefaultPar">Default Par / Hole:</label>
+              <select id="selectSessionDefaultPar" class="form-select">
+                <option value="3" selected>Par 3 (Standard)</option>
+                <option value="4">Par 4</option>
+                <option value="5">Par 5</option>
+                <option value="2">Par 2</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="selectAddSessionPlayer">Assign Players to this Card:</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <select id="selectAddSessionPlayer" class="form-select" style="flex: 1;"></select>
+              <button type="button" id="btnAddPlayerToNewSession" class="btn btn-sm btn-accent" style="white-space: nowrap;">
+                + Add Player
+              </button>
+            </div>
+            <div style="margin-top: 0.6rem;">
+              <span class="text-dim" style="font-size: 0.78rem; display: block; margin-bottom: 0.35rem;">Players on this Card:</span>
+              <div id="newSessionPlayersChips" class="player-chips-container"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btnCancelSessionModal" class="btn btn-outline">Cancel</button>
+          <button id="btnSaveSessionModal" class="btn btn-accent">Create Session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Edit Existing Session (Admin Only: Add/Delete Holes, Change Pars & Players) -->
+    <div id="editSessionModal" class="modal-overlay hidden">
+      <div class="modal-dialog" style="max-width: 560px;">
+        <div class="modal-header">
+          <h3>✏️ Edit Session Card</h3>
+          <button id="btnCloseEditSessionModal" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editSessionId">
+          <div class="form-group">
+            <label for="editSessionName">Session Name:</label>
+            <input type="text" id="editSessionName" class="form-input">
+          </div>
+          <div class="form-group">
+            <label for="editSessionCourse">Course Name:</label>
+            <input type="text" id="editSessionCourse" class="form-input">
+          </div>
+
+          <div class="card-section mt-2" style="background: rgba(0,0,0,0.3); padding: 0.85rem; border-radius: var(--radius-sm);">
+            <div class="flex-between mb-2">
+              <label style="font-weight:700; font-size:0.88rem;">Holes &amp; Pars (<span id="editHoleCountSummary">9 Holes</span>):</label>
+              <div class="flex-gap">
+                <button type="button" class="btn btn-xs btn-outline" id="btnAdminAddHole">➕ Add Hole</button>
+                <button type="button" class="btn btn-xs btn-danger-outline" id="btnAdminRemoveHole">🗑️ Delete Last Hole</button>
+              </div>
+            </div>
+            <div class="admin-holes-editor-grid" id="adminHolesEditorGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; max-height: 180px; overflow-y: auto; padding: 0.25rem;">
+              <!-- Dynamic hole editor chips -->
+            </div>
+          </div>
+
+          <div class="form-group mt-3">
+            <label for="selectAddEditSessionPlayer">Card Players:</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <select id="selectAddEditSessionPlayer" class="form-select" style="flex: 1;"></select>
+              <button type="button" id="btnAddPlayerToEditSession" class="btn btn-sm btn-accent" style="white-space: nowrap;">
+                + Add Player
+              </button>
+            </div>
+            <div style="margin-top: 0.6rem;">
+              <span class="text-dim" style="font-size: 0.78rem; display: block; margin-bottom: 0.35rem;">Assigned Players:</span>
+              <div id="editSessionPlayersChips" class="player-chips-container"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btnCancelEditSessionModal" class="btn btn-outline">Cancel</button>
+          <button id="btnSaveEditSessionModal" class="btn btn-accent">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Confirmation for Reset Scorecard -->
+    <div id="confirmResetModal" class="modal-overlay hidden">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 style="color: var(--accent-red);">⚠️ Confirm Scorecard Reset</h3>
+          <button id="btnCloseResetModal" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.5;">
+            Are you sure you want to reset all scores for this round? This will clear all recorded strokes for this session and cannot be undone.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button id="btnCancelResetModal" class="btn btn-outline">Cancel</button>
+          <button id="btnConfirmResetModal" class="btn btn-danger-solid">Yes, Reset Round</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="qrcode.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

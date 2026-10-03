@@ -1,0 +1,147 @@
+:root {
+  --bg-color: #06060a;
+  --text-light: #f3f4f6;
+  --prism-magenta: #ff00ff;
+  --prism-cyan: #00ffff;
+  
+  --font-display: 'Outfit', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-light);
+  font-family: var(--font-display);
+  font-weight: 200;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Iridescent Background light */
+.prism-light-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 0, 255, 0.15), rgba(0, 240, 255, 0.15), var(--bg-color) 65%);
+  z-index: 1;
+  pointer-events: none;
+  transition: background 0.15s ease-out;
+}
+
+.prism-container {
+  position: relative;
+  z-index: 5;
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.prism-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: var(--text-light);
+  text-decoration: none;
+  font-weight: 400;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(5px);
+  padding: 6px 16px;
+  border-radius: 30px;
+  margin-bottom: 20px;
+}
+
+.nav-back:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: var(--prism-cyan);
+}
+
+.prism-title {
+  font-size: clamp(2.5rem, 5vw, 3.8rem);
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #fff 30%, var(--prism-cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.prism-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.7;
+  max-width: 600px;
+  margin: 10px auto 0 auto;
+}
+
+.prism-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 30px;
+}
+
+/* Glassmorphism Redux Cards */
+.prism-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 35px;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: transform 0.3s;
+}
+
+.prism-card:hover {
+  transform: translateY(-4px);
+}
+
+.prism-card h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-top: 0;
+  color: var(--prism-cyan);
+}
+
+.prism-card p {
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+/* Glass Pane visual details */
+.glass-pane-effect {
+  height: 140px;
+  background: linear-gradient(135deg, rgba(255, 0, 255, 0.08), rgba(0, 240, 255, 0.08));
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  margin-top: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 15px rgba(255,255,255,0.1);
+}
+
+.glass-glare {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.12) 50%, transparent 55%);
+  transition: transform 0.1s ease-out;
+}
+
+/* Lists */
+.prism-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.prism-list li {
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}

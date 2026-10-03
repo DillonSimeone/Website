@@ -1,0 +1,86 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+.input-group, .results-container {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+input[type="number"] {
+    width: calc(100% - 100px);
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    margin-left: 10px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#calculateButton {
+    background-color: #28a745;
+    margin-top: 10px;
+}
+
+#calculateButton:hover {
+    background-color: #218838;
+}
+
+.results-container {
+    border-top: 2px solid #eee;
+    padding-top: 20px;
+    text-align: left;
+}
+
+.results-container p {
+    margin: 8px 0;
+    color: #333;
+}
+
+#numbersList {
+    font-style: italic;
+    color: #777;
+    word-wrap: break-word;
+}

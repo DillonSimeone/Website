@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waveshare RP2040-Zero - Ultrasonic Haptic Display Pinout</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #080b12;
+            --card-bg: rgba(16, 22, 34, 0.8);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --accent-purple: #7f00ff;
+            --accent-magenta: #e100ff;
+            --accent-green: #00ffaa;
+            --accent-orange: #ff9900;
+            --text-main: #f0f4f8;
+            --text-muted: #8a99ad;
+            --glass-glow: rgba(0, 242, 254, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 242, 254, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 75%, rgba(127, 0, 255, 0.08) 0%, transparent 40%),
+                linear-gradient(to bottom, rgba(8, 11, 18, 0.8), rgba(8, 11, 18, 0.95)),
+                radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+            background-size: 100% 100%, 100% 100%, 100% 100%, 24px 24px;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 1rem;
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(127, 0, 255, 0.15));
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            border-radius: 50px;
+            color: var(--accent-cyan);
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(8px);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #a5c0ee 50%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 780px;
+            margin: 0 auto;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        @media (max-width: 992px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 1.75rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 242, 254, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 20px var(--glass-glow);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 0.75rem;
+        }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(127, 0, 255, 0.2));
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        /* Waveshare RP2040-Zero Board Styling */
+        .board-visualizer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem 0;
+        }
+
+        .rp2040-zero-pcb {
+            width: 290px;
+            height: 340px;
+            background: #112a52; /* Waveshare Blue PCB */
+            border: 2px solid #1c4077;
+            border-radius: 14px;
+            position: relative;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 0 15px rgba(0,242,254,0.15);
+            padding: 15px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pcb-title {
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1px;
+            margin-top: 135px;
+        }
+
+        .usbc-port {
+            width: 85px;
+            height: 35px;
+            background: linear-gradient(180deg, #cccccc, #777777);
+            border: 2px solid #aaaaaa;
+            border-radius: 6px 6px 0 0;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: inset 0 -3px 6px rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            color: #222;
+            font-weight: bold;
+        }
+
+        .rp2040-qfn {
+            width: 55px;
+            height: 55px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            position: absolute;
+            top: 105px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            color: #888;
+            font-weight: bold;
+        }
+
+        .btn-boot, .btn-reset {
+            width: 32px;
+            height: 32px;
+            background: #e6e6e6;
+            border: 2px solid #888888;
+            border-radius: 50%;
+            position: absolute;
+            top: 55px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            font-weight: bold;
+            color: #333;
+        }
+        .btn-reset { left: 45px; }
+        .btn-boot { right: 45px; }
+
+        .top-pins {
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            top: 10px;
+            left: 30px;
+            right: 30px;
+        }
+
+        .left-pins {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: absolute;
+            top: 45px;
+            bottom: 45px;
+            left: 10px;
+        }
+
+        .right-pins {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: absolute;
+            top: 45px;
+            bottom: 45px;
+            right: 10px;
+            align-items: flex-end;
+        }
+
+        .pad {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            color: #a4c4f4;
+        }
+
+        .pad-hole {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #d4af37;
+            border: 2px solid #997a15;
+            box-shadow: inset 0 0 3px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .pad.active-pwm .pad-hole {
+            background: #e100ff;
+            border-color: #ffffff;
+            box-shadow: 0 0 12px #e100ff;
+        }
+        .pad.active-pwm { color: #f07bff; font-weight: bold; }
+
+        .pad.active-adc .pad-hole {
+            background: #ff9900;
+            border-color: #ffffff;
+            box-shadow: 0 0 12px #ff9900;
+        }
+        .pad.active-adc { color: #ffc266; font-weight: bold; }
+
+        .pad.active-i2c .pad-hole {
+            background: #00f2fe;
+            border-color: #ffffff;
+            box-shadow: 0 0 12px #00f2fe;
+        }
+        .pad.active-i2c { color: #5eeeff; font-weight: bold; }
+
+        .pad.active-pwr .pad-hole {
+            background: #ff3366;
+            border-color: #ffffff;
+            box-shadow: 0 0 12px #ff3366;
+        }
+        .pad.active-pwr { color: #ff88a5; font-weight: bold; }
+
+        .pad.active-gnd .pad-hole {
+            background: #aaaaaa;
+            border-color: #ffffff;
+            box-shadow: 0 0 12px #aaaaaa;
+        }
+        .pad.active-gnd { color: #dddddd; font-weight: bold; }
+
+        .pin-table-wrapper {
+            overflow-x: auto;
+        }
+
+        table.pin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            text-align: left;
+        }
+
+        table.pin-table th {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.85rem 1rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+        }
+
+        table.pin-table td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        table.pin-table tr:hover {
+            background: rgba(0, 242, 254, 0.04);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tag-pwm { background: rgba(225, 0, 255, 0.15); color: #f07bff; border: 1px solid rgba(225, 0, 255, 0.3); }
+        .tag-adc { background: rgba(255, 153, 0, 0.15); color: #ffb84d; border: 1px solid rgba(255, 153, 0, 0.3); }
+        .tag-i2c { background: rgba(0, 242, 254, 0.15); color: #5eeeff; border: 1px solid rgba(0, 242, 254, 0.3); }
+        .tag-power { background: rgba(255, 51, 102, 0.15); color: #ff7799; border: 1px solid rgba(255, 51, 102, 0.3); }
+        .tag-gnd { background: rgba(150, 150, 150, 0.15); color: #cccccc; border: 1px solid rgba(150, 150, 150, 0.3); }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: #060911;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.25rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .control-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .control-group input[type="range"] {
+            accent-color: var(--accent-cyan);
+            cursor: pointer;
+        }
+
+        .val-display {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .oled-screen {
+            width: 220px;
+            height: 110px;
+            background: #000000;
+            border: 4px solid #1a1a1a;
+            border-radius: 10px;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #00f2fe;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.2), inset 0 0 10px rgba(0, 0, 0, 0.8);
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .oled-header {
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid #00f2fe;
+            padding-bottom: 4px;
+        }
+
+        .oled-line {
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <header>
+        <div class="badge">Hardware Pinout & Hardware Architecture</div>
+        <h1>Waveshare RP2040-Zero Setup</h1>
+        <p class="subtitle">Clean sequential pin layout utilizing 0 & 1 for OLED, 15 for PWM output, and 26, 27, 28 for Hardware ADC Potentiometers.</p>
+    </header>
+
+    <!-- Top Section: Interactive RP2040-Zero Board & Matrix -->
+    <div class="grid-2">
+
+        <!-- Board Visualizer -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🎛️</div>
+                <div class="card-title">RP2040-Zero Board Map</div>
+            </div>
+            
+            <div class="board-visualizer">
+                <div class="rp2040-zero-pcb">
+                    
+                    <!-- Top Pins (8 to 14) -->
+                    <div class="top-pins">
+                        <div class="pad"><div class="pad-hole"></div></div>
+                        <div class="pad"><div class="pad-hole"></div></div>
+                        <div class="pad"><div class="pad-hole"></div></div>
+                        <div class="pad"><div class="pad-hole"></div></div>
+                        <div class="pad"><div class="pad-hole"></div></div>
+                        <div class="pad"><div class="pad-hole"></div></div>
+                        <div class="pad"><div class="pad-hole"></div></div>
+                    </div>
+
+                    <!-- Reset & Boot Buttons -->
+                    <div class="btn-reset">RST</div>
+                    <div class="btn-boot">BOOT</div>
+
+                    <div class="rp2040-qfn">RP2040</div>
+                    <div class="pcb-title">RP2040-Zero</div>
+
+                    <!-- Left Pins (0 to 7) -->
+                    <div class="left-pins">
+                        <div class="pad active-i2c"><div class="pad-hole"></div>0 (SDA)</div>
+                        <div class="pad active-i2c"><div class="pad-hole"></div>1 (SCL)</div>
+                        <div class="pad"><div class="pad-hole"></div>2</div>
+                        <div class="pad"><div class="pad-hole"></div>3</div>
+                        <div class="pad"><div class="pad-hole"></div>4</div>
+                        <div class="pad"><div class="pad-hole"></div>5</div>
+                        <div class="pad"><div class="pad-hole"></div>6</div>
+                        <div class="pad"><div class="pad-hole"></div>7</div>
+                    </div>
+
+                    <!-- Right Pins (15 to 5V) -->
+                    <div class="right-pins">
+                        <div class="pad active-pwm">15 (PWM) <div class="pad-hole"></div></div>
+                        <div class="pad active-adc">26 (ADC0)<div class="pad-hole"></div></div>
+                        <div class="pad active-adc">27 (ADC1)<div class="pad-hole"></div></div>
+                        <div class="pad active-adc">28 (ADC2)<div class="pad-hole"></div></div>
+                        <div class="pad">29 <div class="pad-hole"></div></div>
+                        <div class="pad active-pwr">3V3 <div class="pad-hole"></div></div>
+                        <div class="pad active-gnd">GND <div class="pad-hole"></div></div>
+                        <div class="pad">5V <div class="pad-hole"></div></div>
+                    </div>
+
+                    <div class="usbc-port">USB-C</div>
+                </div>
+            </div>
+
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+                Yellow wire connects to pad <strong>15</strong> (Top Right). OLED uses pads <strong>0</strong> & <strong>1</strong> (Top Left).
+            </p>
+        </div>
+
+        <!-- Connection Matrix Table -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🔌</div>
+                <div class="card-title">RP2040-Zero Pin Matrix</div>
+            </div>
+
+            <div class="pin-table-wrapper">
+                <table class="pin-table">
+                    <thead>
+                        <tr>
+                            <th>Board Pad</th>
+                            <th>Signal Type</th>
+                            <th>Target Device</th>
+                            <th>Notes & Why This Pin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong style="color: #5eeeff;">0</strong> (Top Left)</td>
+                            <td><span class="tag tag-i2c">GPIO 0 (SDA)</span></td>
+                            <td>SSD1306 OLED SDA</td>
+                            <td>Starts cleanly right at Pin 0</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #5eeeff;">1</strong> (Left)</td>
+                            <td><span class="tag tag-i2c">GPIO 1 (SCL)</span></td>
+                            <td>SSD1306 OLED SCL</td>
+                            <td>Sequential Pin 1</td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #f07bff;">15</strong> (Top Right)</td>
+                            <td><span class="tag tag-pwm">GPIO 15 (PWM)</span></td>
+                            <td>TPA3118 IN+</td>
+                            <td>Yellow Wire (40 kHz Carrier)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>26</strong> (Right)</td>
+                            <td><span class="tag tag-adc">ADC0 (GPIO 26)</span></td>
+                            <td>Potentiometer 1</td>
+                            <td>Carrier Freq (38 – 42 kHz) *Required ADC</td>
+                        </tr>
+                        <tr>
+                            <td><strong>27</strong> (Right)</td>
+                            <td><span class="tag tag-adc">ADC1 (GPIO 27)</span></td>
+                            <td>Potentiometer 2</td>
+                            <td>Modulation Rate (50 – 300 Hz) *Required ADC</td>
+                        </tr>
+                        <tr>
+                            <td><strong>28</strong> (Right)</td>
+                            <td><span class="tag tag-adc">ADC2 (GPIO 28)</span></td>
+                            <td>Potentiometer 3</td>
+                            <td>Drive Level (1% – 20%) *Required ADC</td>
+                        </tr>
+                        <tr>
+                            <td><strong>3V3</strong> (Right)</td>
+                            <td><span class="tag tag-power">3.3V Power</span></td>
+                            <td>OLED & Pots VCC</td>
+                            <td>3.3V Power Output</td>
+                        </tr>
+                        <tr>
+                            <td><strong>GND</strong> (Right)</td>
+                            <td><span class="tag tag-gnd">Ground</span></td>
+                            <td>OLED, Pots, TPA3118 IN-</td>
+                            <td>Shared Common Ground</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 1.25rem; padding: 0.85rem 1rem; background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 10px; font-size: 0.85rem; color: #b3f7ff;">
+                🔍 <strong>Silkscreen Misalignment Notice:</strong> On RP2040-Zero boards, the text label "29" is printed twice due to PCB silk text offset. Count physical pads starting from the <strong>corner pad (Yellow Wire)</strong> going up towards USB-C:
+                <ul style="margin-top: 0.5rem; margin-left: 1.2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
+                    <li><strong>Pad 8 (Corner / Yellow Wire):</strong> GP15 (PWM Output)</li>
+                    <li><strong>Pad 7 (1 pad up from yellow):</strong> GP26 (Pot 1 - Carrier)</li>
+                    <li><strong>Pad 6 (2 pads up from yellow):</strong> GP27 (Pot 2 - Mod Rate)</li>
+                    <li><strong>Pad 5 (3 pads up from yellow):</strong> GP28 (Pot 3 - Drive Level)</li>
+                    <li><strong>Pad 4 (4 pads up from yellow):</strong> GP29</li>
+                    <li><strong>Pad 3:</strong> 3V3 &bull; <strong>Pad 2:</strong> GND &bull; <strong>Pad 1 (USB):</strong> 5V</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Functional Architecture -->
+    <div class="grid-3">
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🔊</div>
+                <div class="card-title">TPA3118 Signal</div>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">
+                Connected to pad <strong>15</strong> (Yellow wire). Softened with 2mA drive strength.
+            </p>
+            <ul style="list-style: none; font-size: 0.85rem;">
+                <li style="margin-bottom: 0.4rem;">⚡ <strong>GPIO 15 Output</strong>: 40 kHz ultrasound square wave.</li>
+                <li style="margin-bottom: 0.4rem;">🛡️ <strong>Drive Limit</strong>: Capped at 20% duty cycle to prevent amp distortion.</li>
+                <li>🔗 <strong>Shared Ground</strong>: Connect GND pad to TPA3118 IN-.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🎛️</div>
+                <div class="card-title">Pot Controls</div>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">
+                Pads <strong>26, 27, 28</strong> read analog potentiometers with EMA smoothing.
+            </p>
+            <ul style="list-style: none; font-size: 0.85rem;">
+                <li style="margin-bottom: 0.4rem;">🎚️ <strong>Pot 1 (Pad 26)</strong>: Carrier Freq (38–42 kHz).</li>
+                <li style="margin-bottom: 0.4rem;">🎚️ <strong>Pot 2 (Pad 27)</strong>: Mod Rate (50–300 Hz).</li>
+                <li>🎚️ <strong>Pot 3 (Pad 28)</strong>: Drive Duty Cycle (1–20%).</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">📺</div>
+                <div class="card-title">OLED Display</div>
+            </div>
+            <div class="oled-screen">
+                <div class="oled-header">ULTRASONIC HAPTIC</div>
+                <div class="oled-line"><span>Carrier:</span><span id="oledCarrier">40.0 kHz</span></div>
+                <div class="oled-line"><span>Mod Rate:</span><span id="oledMod">150 Hz</span></div>
+                <div class="oled-line"><span>Drive Lvl:</span><span id="oledDrive">10 %</span></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Signal Waveform Oscilloscope Simulator -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-icon">📉</div>
+            <div class="card-title">Ultrasonic AM Signal Simulator</div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="scopeCanvas"></canvas>
+        </div>
+
+        <div class="controls-panel">
+            <div class="control-group">
+                <label>Carrier Frequency: <span class="val-display" id="valCarrier">40.0 kHz</span></label>
+                <input type="range" id="sliderCarrier" min="38.0" max="42.0" step="0.1" value="40.0">
+            </div>
+
+            <div class="control-group">
+                <label>Modulation Rate: <span class="val-display" id="valMod">150 Hz</span></label>
+                <input type="range" id="sliderMod" min="50" max="300" step="1" value="150">
+            </div>
+
+            <div class="control-group">
+                <label>Drive Level (Duty): <span class="val-display" id="valDrive">10 %</span></label>
+                <input type="range" id="sliderDrive" min="1" max="20" step="1" value="10">
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Waveshare RP2040-Zero Ultrasonic Haptic Display Array Firmware</p>
+        <p style="margin-top: 0.4rem; font-size: 0.8rem;">Project location: <code>PlatformIO/09_ultraSonic/UltrasonicHapticDisplay</code></p>
+    </footer>
+
+</div>
+
+<script>
+    const canvas = document.getElementById('scopeCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const sliderCarrier = document.getElementById('sliderCarrier');
+    const sliderMod     = document.getElementById('sliderMod');
+    const sliderDrive   = document.getElementById('sliderDrive');
+
+    const valCarrier = document.getElementById('valCarrier');
+    const valMod     = document.getElementById('valMod');
+    const valDrive   = document.getElementById('valDrive');
+
+    const oledCarrier = document.getElementById('oledCarrier');
+    const oledMod     = document.getElementById('oledMod');
+    const oledDrive   = document.getElementById('oledDrive');
+
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    let timeOffset = 0;
+
+    function drawScope() {
+        const width = canvas.width;
+        const height = canvas.height;
+
+        const carrierKhz = parseFloat(sliderCarrier.value);
+        const modHz      = parseFloat(sliderMod.value);
+        const drivePct   = parseFloat(sliderDrive.value);
+
+        valCarrier.textContent = carrierKhz.toFixed(1) + ' kHz';
+        valMod.textContent     = Math.round(modHz) + ' Hz';
+        valDrive.textContent   = Math.round(drivePct) + ' %';
+
+        oledCarrier.textContent = carrierKhz.toFixed(1) + ' kHz';
+        oledMod.textContent     = Math.round(modHz) + ' Hz';
+        oledDrive.textContent   = Math.round(drivePct) + ' %';
+
+        ctx.fillStyle = '#060911';
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 1;
+
+        for (let x = 0; x < width; x += 40) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+        for (let y = 0; y < height; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = 'rgba(0, 242, 254, 0.15)';
+        ctx.beginPath();
+        ctx.moveTo(0, height / 2);
+        ctx.lineTo(width, height / 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#00f2fe';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#00f2fe';
+
+        const centerY = height / 2;
+        const amplitude = (height / 2.5) * (drivePct / 20.0);
+
+        const carrierCycles = carrierKhz * 0.8;
+        const modCycles = modHz * 0.02;
+
+        timeOffset += 0.03;
+
+        for (let x = 0; x < width; x++) {
+            const t = (x / width) * 10 + timeOffset;
+
+            const env = Math.sin(t * modCycles) >= 0 ? 1.0 : 0.0;
+            const carrier = Math.sin(t * carrierCycles) >= 0 ? 1.0 : -1.0;
+
+            const y = centerY - (carrier * env * amplitude);
+
+            if (x === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        requestAnimationFrame(drawScope);
+    }
+
+    requestAnimationFrame(drawScope);
+</script>
+
+</body>
+</html>

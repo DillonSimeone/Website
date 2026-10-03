@@ -1,0 +1,155 @@
+:root {
+  --bg-color: #0b0b0e;
+  --card-bg: rgba(15, 15, 21, 0.85);
+  --text-white: #ffffff;
+  --neon-green: #33ff33;
+  --neon-red: #ff3333;
+  --neon-blue: #00ffff;
+  
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-white);
+  font-family: var(--font-mono);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* Screen static noise overlay */
+.glitch-noise {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.99' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.065;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.glitch-container {
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.glitch-header {
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.2);
+  padding-bottom: 25px;
+  margin-bottom: 40px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: var(--neon-green);
+  text-decoration: none;
+  font-size: 0.9rem;
+  border: 1px solid var(--neon-green);
+  background: rgba(51, 255, 51, 0.04);
+  padding: 4px 12px;
+  letter-spacing: 1px;
+}
+
+.nav-back:hover {
+  background: var(--neon-green);
+  color: var(--bg-color);
+}
+
+.glitch-title {
+  font-size: clamp(2.5rem, 6vw, 4.2rem);
+  letter-spacing: -2px;
+  margin: 20px 0 5px 0;
+  /* Displaced by default */
+  text-shadow: -2px 0px 0px var(--neon-red), 2px 0px 0px var(--neon-blue);
+  animation: jitter 3s infinite;
+}
+
+@keyframes jitter {
+  0%, 100% { text-shadow: -2px 0px 0px var(--neon-red), 2px 0px 0px var(--neon-blue); }
+  98% { text-shadow: -2px 0px 0px var(--neon-red), 2px 0px 0px var(--neon-blue); }
+  99% { text-shadow: -6px 2px 0px var(--neon-red), 6px -2px 0px var(--neon-blue); }
+}
+
+.glitch-subtitle {
+  font-size: 0.95rem;
+  color: var(--neon-green);
+}
+
+.glitch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 30px;
+}
+
+/* Glitch Cards */
+.glitch-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 30px;
+  position: relative;
+}
+
+.glitch-tag {
+  position: absolute;
+  top: 5px;
+  left: 8px;
+  font-size: 8px;
+  color: var(--neon-green);
+}
+
+.glitch-card h2 {
+  font-size: 1.25rem;
+  margin-top: 5px;
+  border-bottom: 1px dashed rgba(255,255,255,0.15);
+  padding-bottom: 8px;
+}
+
+.glitch-card p {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+/* Signal Test Panel */
+.glitch-test-panel {
+  height: 120px;
+  background-color: #000;
+  border: 1px solid var(--neon-green);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  margin-top: 20px;
+  position: relative;
+}
+
+.glitch-signal-text {
+  font-size: 2.2rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: none; /* Modified via JS */
+  user-select: none;
+}
+
+.static-badge {
+  border: 1px solid var(--neon-red);
+  color: var(--neon-red);
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+  background-color: rgba(255, 51, 51, 0.05);
+  margin-top: 15px;
+}
+
+.blinking {
+  animation: blink 0.8s step-end infinite;
+}
+
+@keyframes blink {
+  from, to { opacity: 0.2; }
+  50% { opacity: 1; }
+}

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sound-Reactive Arts HUD // Deaf DJ Projection Suite</title>
+  
+  <!-- Google Fonts for Neo-Noir / Typewriter theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Special+Elite&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="hud-style.css">
+  <style>
+    .hero-card {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, rgba(255, 0, 85, 0.12) 0%, rgba(15, 15, 26, 0.95) 100%);
+      border: 2px solid #ff0055;
+      box-shadow: 0 0 25px rgba(255, 0, 85, 0.25);
+    }
+    .hero-card:hover {
+      box-shadow: 0 0 35px rgba(255, 0, 85, 0.5);
+      border-color: #ff3377;
+    }
+    .hero-tag {
+      background: #ff0055;
+      color: #fff;
+      padding: 3px 8px;
+      font-weight: bold;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .features-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .feat-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      border-radius: 2px;
+      color: #00e5ff;
+    }
+  </style>
+</head>
+<body>
+  <!-- Gritty Newspaper Halftone Grid background -->
+  <div class="halftone-screen"></div>
+
+  <div class="noir-container">
+    <header class="noir-header">
+      <a href="../../../index.html" class="nav-back">/// RETURN_TO_PORTFOLIO</a>
+      <h1 class="noir-title">SOUND_REACTIVE_ARTS</h1>
+      <div class="noir-metadata">
+        <p>CASE FILE ID: #SR-9082 // STATUS: DEAF DJ LIVE READY</p>
+        <p>SPECTRUM CALIBRATION: 20Hz (Crimson Red) $\to$ 20,000Hz (Violet/Air)</p>
+      </div>
+    </header>
+
+    <main class="noir-grid">
+      <!-- FEATURED MASTER SUITE: LIVE DEAF DJ PROJECTION DECK -->
+      <a href="./live/live.html" class="noir-card project-card hero-card">
+        <span class="hero-tag">FEATURED // MASTER PERFORMANCE SUITE</span>
+        <h2 class="card-title">DEAF DJ LIVE PROJECTION SUITE</h2>
+        <p class="card-desc">
+          The all-in-one live performance console engineered for deaf DJs and stage projection mapping. Integrates all 10 sound-reactive shaders with hotkey switching [1-0], tactile beat metronome pulse rings, 7-band frequency telemetry, transient flash alerts, and interactive 4-point corner pinning for angled stage facades.
+        </p>
+        <div class="features-list">
+          <span class="feat-chip">10 GLSL Shaders</span>
+          <span class="feat-chip">20Hz-20kHz FFT</span>
+          <span class="feat-chip">Red-to-Purple Color Synesthesia</span>
+          <span class="feat-chip">Tactile Beat Metronome</span>
+          <span class="feat-chip">Corner Pinning [C]</span>
+        </div>
+        <div class="card-footer">
+          <span>SOURCE: MIC / TEST BEAT / FILE</span>
+          <span class="launch-btn" style="color:#ff0055; font-weight:bold;">LAUNCH LIVE DECK -></span>
+        </div>
+      </a>
+
+
+      <!-- Existing Classic 1: Sonic Sphere (Ripple) -->
+      <a href="./ripple/ripple.html" class="noir-card project-card">
+        <div class="card-tag">CLASSIC // ACTIVE</div>
+        <h2 class="card-title">SONIC SPHERE</h2>
+        <p class="card-desc">
+          A real-time WebGL/Three.js installation driven by live microphone or audio input. Feeds custom audio frequency data to dynamically warp an icosahedron sphere.
+        </p>
+        <div class="card-footer">
+          <span>SPECTRUM: 0-20kHz</span>
+          <span class="launch-btn">LAUNCH_ART -></span>
+        </div>
+      </a>
+
+      <!-- Existing Classic 2: Sound Tunnels -->
+      <a href="./tunnel/index.html" class="noir-card project-card">
+        <div class="card-tag">CLASSIC // ACTIVE</div>
+        <h2 class="card-title">THE TUNNELS</h2>
+        <p class="card-desc">
+          A dual raymarching procedural tunnel engine. Uses dynamic weaving geometries governed by audio frequency and amplitude.
+        </p>
+        <div class="card-footer">
+          <span>SPECTRUM: 0-20kHz</span>
+          <span class="launch-btn">LAUNCH_ART -></span>
+        </div>
+      </a>
+
+      <!-- 64K DEMOSCENE TRILOGY -->
+      <a href="./demoscene/debris/index.html" class="noir-card project-card">
+        <div class="card-tag" style="background:#ff0055; color:#fff;">DEMOSCENE 64K // FRACTAL VOID</div>
+        <h2 class="card-title">DEBRIS_REDUX</h2>
+        <p class="card-desc">
+          Homage to Farbrausch's demoscene classic "debris". Pure GLSL raymarched 5-act journey through crystalline lattices, recursive Mandelbox caverns, folding geometry storms, and supernova apex vortexes with spline camera choreography.
+        </p>
+        <div class="features-list">
+          <span class="feat-chip">5-Act Storyboard</span>
+          <span class="feat-chip">Catmull-Rom Spline Cam</span>
+          <span class="feat-chip">Mandelbox SDF</span>
+          <span class="feat-chip">Transient Shake</span>
+        </div>
+        <div class="card-footer">
+          <span>SPECTRUM: 0-20kHz</span>
+          <span class="launch-btn" style="color:#ff0055;">LAUNCH_SHOW -></span>
+        </div>
+      </a>
+
+      <a href="./demoscene/monolith/index.html" class="noir-card project-card">
+        <div class="card-tag" style="background:#ffaa00; color:#000; font-weight:bold;">DEMOSCENE 64K // BRUTALISM</div>
+        <h2 class="card-title">MONOLITH</h2>
+        <p class="card-desc">
+          Cyber-brutalist megastructure expedition. 5-act continuous flight descending down skyscraper canyons, skimming subterranean laser power conduits, orbiting gyroscopic reactor cores, and high-speed monorail evacuation.
+        </p>
+        <div class="features-list">
+          <span class="feat-chip">5-Act Storyboard</span>
+          <span class="feat-chip">Brutalist Canyons</span>
+          <span class="feat-chip">Hyper-Torus Core</span>
+          <span class="feat-chip">High-Speed Rails</span>
+        </div>
+        <div class="card-footer">
+          <span>SPECTRUM: 0-20kHz</span>
+          <span class="launch-btn" style="color:#ffaa00;">LAUNCH_SHOW -></span>
+        </div>
+      </a>
+
+      <a href="./demoscene/neo-synapse/index.html" class="noir-card project-card">
+        <div class="card-tag" style="background:#00ffaa; color:#000; font-weight:bold;">DEMOSCENE 64K // BIOSPHERE</div>
+        <h2 class="card-title">NEO_SYNAPSE</h2>
+        <p class="card-desc">
+          Synthetic biology and cyber-organic evolution. 5-act raymarched journey following electrical nerve pulses down neural axons, diving into bioluminescent deep-sea abysses, ascending DNA helices, and breathing cellular hiveminds.
+        </p>
+        <div class="features-list">
+          <span class="feat-chip">5-Act Storyboard</span>
+          <span class="feat-chip">Neural Axons</span>
+          <span class="feat-chip">Bioluminescent SDF</span>
+          <span class="feat-chip">DNA Double-Helix</span>
+        </div>
+        <div class="card-footer">
+          <span>SPECTRUM: 0-20kHz</span>
+          <span class="launch-btn" style="color:#00ffaa;">LAUNCH_SHOW -></span>
+        </div>
+      </a>
+
+      <!-- Classic 3: Hplus Demoscene -->
+      <a href="./hplus/index.html" class="noir-card project-card">
+        <div class="card-tag">DEMOSCENE // 64K RE-IMAGINED</div>
+        <h2 class="card-title">HPLUS (HALCYON)</h2>
+        <p class="card-desc">
+          Sound-reactive homage to Halcyon's 1998 classic 64k intro. Rendered on a crisp 320x240 pixelated viewport featuring flat-shaded polyhedra solids, audio-deformed ribbon planes, and particle swarms.
+        </p>
+        <div class="card-footer">
+          <span>SPECTRUM: 0-20kHz</span>
+          <span class="launch-btn">LAUNCH_ART -></span>
+        </div>
+      </a>
+    </main>
+
+    <footer class="noir-footer">
+      <p>SYS.LOC: public/MiniProjects/SoundReactive/ // ANTIGRAVITY CODESET 2026</p>
+    </footer>
+  </div>
+</body>
+</html>

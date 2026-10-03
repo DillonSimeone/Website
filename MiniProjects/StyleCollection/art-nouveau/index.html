@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Art Nouveau Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;800&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="nouveau-container">
+    <header class="nouveau-header">
+      <a href="../index.html" class="nav-back">← Hub Overview</a>
+      <h1 class="nouveau-title">ART NOUVEAU</h1>
+      <div class="floral-divider">❦ ❦ ❦</div>
+      <p class="nouveau-subtitle">Whiplash lines, botanical gold gilding, and organic elegance.</p>
+    </header>
+
+    <main class="nouveau-grid">
+      <!-- Description -->
+      <section class="nouveau-card text-card">
+        <div class="border-vines"></div>
+        <h2>THE ORGANIC LINE</h2>
+        <p>Popular at the turn of the 20th century, Art Nouveau was inspired by natural forms. It features organic, flowing whiplash curves, plants, flowers, and asymmetrical botanical symmetry.</p>
+      </section>
+
+      <!-- Curve Board -->
+      <section class="nouveau-card curve-board">
+        <div class="border-vines"></div>
+        <h2>WHIPLASH TRACER</h2>
+        <p>Move your cursor inside the gold frame below to draw trailing organic plant vines.</p>
+        <div class="canvas-frame">
+          <canvas id="vine-canvas" width="300" height="160"></canvas>
+        </div>
+        <button class="nouveau-btn" id="btn-clear-vines">CLEAR VINES</button>
+      </section>
+
+      <!-- Poetic -->
+      <section class="nouveau-card quote-card">
+        <div class="border-vines"></div>
+        <p class="nouveau-quote">“Art is the flower; life is the green leaf.”</p>
+        <cite>— Charles Rennie Mackintosh</cite>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
