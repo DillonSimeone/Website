@@ -1,124 +1,71 @@
 {
+  "schemaVersion": 2,
   "id": "dire_wolf",
   "displayName": "Dire Wolf Alpha",
   "kind": "beast",
+  "template": "quadruped",
   "art": {
-    "body": "assets/anatomy/dire_wolf.png",
+    "body": null,
     "size": [1024, 640],
     "keying": "none"
   },
+  "patch": {
+    "heart": { "name": "Lupine Heart", "rarity": "epic", "pulseCost": 18, "presencePct": 95 },
+    "eyes": { "name": "Nightstalker Eyes", "rarity": "rare", "presencePct": 45, "yield": { "min": 1, "max": 2 }, "loot": "wolf_eye" },
+    "hide": { "name": "Thick Lupine Fur", "rarity": "common", "presencePct": 80, "loot": "wolf_pelt_core" }
+  },
+  "remove": ["liver"],
+  "add": [
+    {
+      "id": "canines",
+      "name": "Dire Wolf Canines",
+      "kind": "part",
+      "slotType": "head",
+      "region": "head",
+      "anchor": [140, 310],
+      "hitShape": { "type": "ellipse", "rx": 18, "ry": 14 },
+      "rarity": "uncommon",
+      "presencePct": 75,
+      "yield": { "min": 1, "max": 2 },
+      "pulseCost": 3,
+      "loot": "wolf_canine"
+    },
+    {
+      "id": "sinew",
+      "name": "Dire Spring Sinew",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "hindlegs",
+      "anchor": [760, 370],
+      "hitShape": { "type": "ellipse", "rx": 22, "ry": 15 },
+      "rarity": "uncommon",
+      "presencePct": 60,
+      "pulseCost": 4,
+      "loot": "beast_sinew"
+    },
+    {
+      "id": "alpha_gland",
+      "name": "Alpha Pheromone Gland",
+      "kind": "trait",
+      "slotType": "organ",
+      "region": "thorax",
+      "anchor": [380, 260],
+      "hitShape": { "type": "ellipse", "rx": 18, "ry": 14 },
+      "rarity": "epic",
+      "presencePct": 25,
+      "pulseCost": 10
+    }
+  ],
+  "loose": [],
+  "severable": [
+    { "id": "foreleg_l", "slotId": "foreleg_l" }
+  ],
   "baseVitals": {
     "pulse": 100
   },
-  "organs": [
-    {
-      "id": "wolf_heart",
-      "name": "Alpha Heart",
-      "region": "thorax",
-      "anchor": [490, 310],
-      "hitShape": {
-        "type": "ellipse",
-        "rx": 45,
-        "ry": 40
-      },
-      "loot": "wolf_heart",
-      "rarity": "rare",
-      "baseSuccessPct": 75,
-      "pulseCost": 25,
-      "tags": [],
-      "requires": [],
-      "killsPulse": true,
-      "slowedByClamp": ["cervical_artery"]
-    },
-    {
-      "id": "wolf_canine",
-      "name": "Dread Canine",
-      "region": "maw",
-      "anchor": [280, 230],
-      "hitShape": {
-        "type": "rect",
-        "w": 50,
-        "h": 30
-      },
-      "loot": "wolf_canine",
-      "rarity": "common",
-      "baseSuccessPct": 90,
-      "pulseCost": 5,
-      "tags": [],
-      "requires": [],
-      "killsPulse": false,
-      "slowedByClamp": []
-    },
-    {
-      "id": "wolf_pelt_core",
-      "name": "Prime Flank Sinew",
-      "region": "flank",
-      "anchor": [580, 290],
-      "hitShape": {
-        "type": "ellipse",
-        "rx": 70,
-        "ry": 45
-      },
-      "loot": "wolf_pelt_core",
-      "rarity": "uncommon",
-      "baseSuccessPct": 85,
-      "pulseCost": 12,
-      "tags": [],
-      "requires": [],
-      "killsPulse": false,
-      "slowedByClamp": []
-    },
-    {
-      "id": "wolf_lung",
-      "name": "Frost-Bitten Lung",
-      "region": "thorax",
-      "anchor": [440, 270],
-      "hitShape": {
-        "type": "ellipse",
-        "rx": 50,
-        "ry": 35
-      },
-      "loot": "wolf_lung",
-      "rarity": "uncommon",
-      "baseSuccessPct": 80,
-      "pulseCost": 15,
-      "tags": ["fragile"],
-      "requires": [],
-      "killsPulse": false,
-      "slowedByClamp": ["cervical_artery"]
-    },
-    {
-      "id": "wolf_eye",
-      "name": "Nightstalker Eye",
-      "region": "head",
-      "anchor": [330, 190],
-      "hitShape": {
-        "type": "ellipse",
-        "rx": 25,
-        "ry": 25
-      },
-      "loot": "wolf_eye",
-      "rarity": "rare",
-      "baseSuccessPct": 70,
-      "pulseCost": 10,
-      "tags": ["fragile"],
-      "requires": [],
-      "killsPulse": false,
-      "slowedByClamp": []
-    }
-  ],
-  "clampPoints": [
-    {
-      "id": "cervical_artery",
-      "name": "Cervical Artery",
-      "anchor": [390, 260],
-      "drainReductionPct": 50,
-      "bleedReductionPct": 25
-    }
-  ],
-  "severable": [],
   "feast": {
-    "calories": 28,
-    "biomassExp": 5
+    "baseCalories": 15,
+    "calories": 35,
+    "biomassExp": 4
   }
 }

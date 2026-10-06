@@ -1,105 +1,26 @@
 {
+  "schemaVersion": 2,
   "id": "generic_beast",
-  "displayName": "Generic Feral Beast",
+  "displayName": "Wild Beast",
   "kind": "beast",
+  "template": "quadruped",
   "art": {
-    "body": "assets/anatomy/generic_beast.png",
+    "body": null,
     "size": [1024, 640],
     "keying": "none"
   },
+  "patch": {},
+  "remove": [],
+  "add": [],
+  "loose": [],
+  "severable": [
+    { "id": "foreleg_l", "slotId": "foreleg_l" }
+  ],
   "baseVitals": {
     "pulse": 100
   },
-  "organs": [
-    {
-      "id": "beast_heart",
-      "name": "Beast Heart",
-      "region": "thorax",
-      "anchor": [512, 320],
-      "hitShape": {
-        "type": "ellipse",
-        "rx": 45,
-        "ry": 40
-      },
-      "loot": "beast_heart",
-      "rarity": "uncommon",
-      "baseSuccessPct": 80,
-      "pulseCost": 20,
-      "tags": [],
-      "requires": [],
-      "killsPulse": true,
-      "slowedByClamp": ["ventral_aorta"]
-    },
-    {
-      "id": "beast_liver",
-      "name": "Fibrous Liver",
-      "region": "abdomen",
-      "anchor": [520, 420],
-      "hitShape": {
-        "type": "ellipse",
-        "rx": 55,
-        "ry": 35
-      },
-      "loot": "beast_liver",
-      "rarity": "common",
-      "baseSuccessPct": 90,
-      "pulseCost": 10,
-      "tags": [],
-      "requires": [],
-      "killsPulse": false,
-      "slowedByClamp": []
-    },
-    {
-      "id": "beast_sinew",
-      "name": "Tensile Sinew",
-      "region": "legs",
-      "anchor": [380, 500],
-      "hitShape": {
-        "type": "rect",
-        "w": 80,
-        "h": 40
-      },
-      "loot": "beast_sinew",
-      "rarity": "common",
-      "baseSuccessPct": 85,
-      "pulseCost": 8,
-      "tags": [],
-      "requires": [],
-      "killsPulse": false,
-      "slowedByClamp": []
-    },
-    {
-      "id": "beast_gland",
-      "name": "Adrenal Gland",
-      "region": "cranial",
-      "anchor": [512, 180],
-      "hitShape": {
-        "type": "ellipse",
-        "rx": 30,
-        "ry": 25
-      },
-      "loot": "beast_gland",
-      "rarity": "rare",
-      "baseSuccessPct": 70,
-      "pulseCost": 15,
-      "tags": ["fragile"],
-      "requires": [],
-      "killsPulse": false,
-      "slowedByClamp": []
-    }
-  ],
-  "clampPoints": [
-    {
-      "id": "ventral_aorta",
-      "name": "Ventral Aorta",
-      "anchor": [490, 270],
-      "drainReductionPct": 40,
-      "bleedReductionPct": 20
-    }
-  ],
-  "severable": [],
   "feast": {
-    "calories": 20,
+    "calories": 30,
     "biomassExp": 3
   }
 }

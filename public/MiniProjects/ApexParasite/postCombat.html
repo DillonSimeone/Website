@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex Parasite — Post-Combat Surgery Harness</title>
+  <title>Apex Parasite — Post-Combat Surgery Harness (v2)</title>
   <link rel="stylesheet" href="./css/postcombat.css">
   <style>
     body {
@@ -33,14 +33,14 @@
 
       <div class="dev-group">
         <label for="dev-pulse-slider">Pulse:</label>
-        <input type="range" id="dev-pulse-slider" min="10" max="100" value="75">
-        <span id="dev-pulse-val" style="font-family:monospace; min-width:35px;">75%</span>
+        <input type="range" id="dev-pulse-slider" min="10" max="100" value="35">
+        <span id="dev-pulse-val" style="font-family:monospace; min-width:35px;">35%</span>
       </div>
 
       <div class="dev-group">
         <label for="dev-blood-slider">Blood:</label>
-        <input type="range" id="dev-blood-slider" min="5" max="100" value="35">
-        <span id="dev-blood-val" style="font-family:monospace; min-width:35px;">35%</span>
+        <input type="range" id="dev-blood-slider" min="5" max="100" value="30">
+        <span id="dev-blood-val" style="font-family:monospace; min-width:35px;">30%</span>
       </div>
 
       <div class="dev-group">
@@ -50,7 +50,7 @@
 
       <div class="dev-group">
         <label for="dev-skill-input">Skill:</label>
-        <input type="number" id="dev-skill-input" value="1" min="0" max="10" style="width: 40px;">
+        <input type="number" id="dev-skill-input" value="1" min="1" max="10" style="width: 40px;">
       </div>
 
       <div class="dev-group">
@@ -66,10 +66,12 @@
       <div class="dev-group">
         <label for="dev-seed-input">Seed:</label>
         <input type="number" id="dev-seed-input" value="12345" style="width: 80px;">
-        <button id="dev-new-seed-btn" class="dev-btn">🎲</button>
+        <button id="dev-new-seed-btn" class="dev-btn" title="Reroll Seed">🎲</button>
       </div>
 
       <div class="dev-group">
+        <label><input type="checkbox" id="dev-force-all-present"> Force All Present</label>
+        <label><input type="checkbox" id="dev-skill-presence"> Skill Drop Scaling</label>
         <label><input type="checkbox" id="dev-skip-entrance" checked> Skip Entrance</label>
         <label><input type="checkbox" id="dev-toggle-hitboxes"> Show Hitboxes</label>
         <label><input type="checkbox" id="dev-audio-mute"> Mute Audio</label>
@@ -77,8 +79,20 @@
 
       <div class="dev-group">
         <button id="dev-run-scene-btn" class="dev-btn" style="background: #10b981;">Run Scene</button>
+        <button id="dev-reroll-btn" class="dev-btn" style="background: #0284c7;">Reroll Body</button>
         <button id="dev-replay-btn" class="dev-btn" style="background: #6366f1;">Replay</button>
-        <button id="dev-reset-btn" class="dev-btn" style="background: #64748b;">Reset</button>
+        <button id="dev-toggle-inspector-btn" class="dev-btn" style="background: #d97706;">Body Inspector</button>
+        <a href="?test=balance" class="dev-btn" style="background: #8b5cf6; text-decoration: none; display: inline-flex; align-items: center;">⚖️ Balance Test</a>
+      </div>
+
+      <div class="dev-group">
+        <label for="dev-damage-type">Damage Type:</label>
+        <select id="dev-damage-type">
+          <option value="normal">Normal (Mixed)</option>
+          <option value="blunt">Blunt (Crushing)</option>
+          <option value="piercing">Piercing (Puncturing)</option>
+          <option value="slashing">Slashing (Lacerating)</option>
+        </select>
       </div>
 
       <!-- Checklists for damage -->
@@ -88,8 +102,8 @@
       </div>
 
       <div class="dev-group">
-        <label>Wounded:</label>
-        <div id="dev-wounded-checklist" style="display:flex; gap:6px;"></div>
+        <label>Region Dmg:</label>
+        <div id="dev-region-damage-controls" style="display:flex; gap:8px; align-items:center;"></div>
       </div>
     </header>
 
@@ -101,24 +115,62 @@
       <div class="surgery-idle-placeholder" style="margin: auto; color: #64748b; font-family: monospace;">Loading surgery harness...</div>
     </main>
 
-    <!-- Headless Output Container (Visible only when ?auto=1 or ?test=stats) -->
-    <div id="headless-container" style="display: none; position: absolute; inset: 0; background: #020408; z-index: 500; overflow: auto;">
-      <h2 style="padding: 20px 20px 0; margin: 0; color: #00f0ff; font-family: monospace;">HEADLESS SCRIPT / STATS TEST RESULT</h2>
+    <!-- Body Inspector Drawer (Section 9) -->
+    <div id="harness-body-inspector" class="body-inspector-drawer" style="display: none;">
+      <div class="inspector-header">
+        <span>GENERATED BODY INSTANCE INSPECTOR</span>
+        <button id="close-inspector-btn" class="dev-btn">✕</button>
+      </div>
+      <div class="inspector-table-container">
+        <table class="inspector-table">
+          <thead>
+            <tr>
+              <th>Slot ID</th>
+              <th>Kind</th>
+              <th>Present</th>
+              <th>Qty</th>
+              <th>Body Cond</th>
+              <th>Region Dmg</th>
+              <th>Damage Bias</th>
+              <th>Status / Reason</th>
+            </tr>
+          </thead>
+          <tbody id="inspector-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Headless / Balance Test Output Container (Visible when ?auto=1 or ?test=balance or ?test=stats) -->
+    <div id="headless-container" style="display: none; position: absolute; inset: 0; background: #020408; z-index: 500; overflow: auto; padding: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00f0ff; padding-bottom: 12px; margin-bottom: 16px;">
+        <h2 id="headless-title" style="margin: 0; color: #00f0ff; font-family: monospace;">BALANCE TEST REPORT (v2)</h2>
+        <div>
+          <button id="copy-balance-json-btn" class="dev-btn" style="background: #10b981;">Copy JSON</button>
+          <button id="copy-balance-text-btn" class="dev-btn" style="background: #6366f1;">Copy Plain Text</button>
+          <a href="./postCombat.html" class="dev-btn" style="background: #475569; text-decoration: none;">Back to Interactive</a>
+        </div>
+      </div>
       <pre id="headless-output" class="headless-display"></pre>
     </div>
 
-    <!-- Bottom Split: Roll Telemetry Log & Result JSON -->
-    <footer class="harness-bottom-split">
-      <div class="log-pane">
-        <div style="font-weight: bold; color: #94a3b8; margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">SURGICAL TELEMETRY & ROLL LOG</div>
-        <div id="harness-log"></div>
+    <!-- Bottom Split: Roll Telemetry Log & Result JSON (Collapsible) -->
+    <footer id="harness-bottom-pane" class="harness-bottom-split is-collapsed">
+      <div class="bottom-pane-toggle" id="bottom-pane-toggle-bar">
+        <span>▲ SURGICAL TELEMETRY & RESULT LOG</span>
+        <span id="bottom-pane-toggle-icon">▼</span>
       </div>
-      <div class="result-pane">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">
-          <span style="font-weight: bold; color: #38bdf8;">SURGERY RESULT (Section 6.2)</span>
-          <button id="dev-copy-bug-report" class="dev-btn" style="padding: 2px 8px; font-size: 0.7rem; background: #475569;">Copy Bug Report</button>
+      <div class="bottom-split-content">
+        <div class="log-pane">
+          <div style="font-weight: bold; color: #94a3b8; margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">SURGICAL TELEMETRY & ROLL LOG</div>
+          <div id="harness-log"></div>
         </div>
-        <pre id="result-json-output">// Run surgery or click Feast/Leave to see result</pre>
+        <div class="result-pane">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">
+            <span style="font-weight: bold; color: #38bdf8;">SURGERY RESULT (Section 8.4)</span>
+            <button id="dev-copy-bug-report" class="dev-btn" style="padding: 2px 8px; font-size: 0.7rem; background: #475569;">Copy Result Report</button>
+          </div>
+          <pre id="result-json-output">// Run surgery or click Feast/Leave to see result</pre>
+        </div>
       </div>
     </footer>
   </div>

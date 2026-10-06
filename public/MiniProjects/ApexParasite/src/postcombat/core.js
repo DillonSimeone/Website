@@ -1,36 +1,50 @@
 /**
- * Apex Parasite - Post-Combat Pure Core Session Logic
+ * Apex Parasite - Post-Combat Pure Core Session Logic (Phase 2)
  * Fully headless, zero DOM, zero audio dependencies.
- * Deterministic PRNG stream per seed.
+ * Deterministic cut stream per seed: mulberry32(fnv1a(seed + ":cuts")).
+ * Implements condition model (0-100), clamp rework, flatline multipliers, and loose/severed tray.
  */
 
 import { CONFIG } from './config.js';
 import { validateSurgeryResult } from './validator.js';
+import { resolveSpecimen, generateBody, fnv1a, mulberry32 } from './body.js';
 
-/**
- * 32-bit deterministic Mulberry32 PRNG
- */
-function createPrng(seed) {
-  let s = (seed >>> 0) || 12345;
-  return function next() {
-    s = (s + 0x6D2B79F5) | 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t >>> 0) / 4294967296);
-  };
-}
+export function createSession(specimenDef, templatesOrLoot, lootDefsOrInput, maybeInput, configOverride = {}) {
+  // Argument normalization for flexible callers
+  let templates = {};
+  let lootDefs = {};
+  let input = null;
+  let configOverrides = configOverride;
 
-const QUALITY_ORDER = { damaged: 0, intact: 1, pristine: 2 };
-function minQuality(q1, q2) {
-  return QUALITY_ORDER[q1] <= QUALITY_ORDER[q2] ? q1 : q2;
-}
+  if (maybeInput !== undefined) {
+    templates = templatesOrLoot || {};
+    lootDefs = lootDefsOrInput || {};
+    input = maybeInput;
+  } else if (lootDefsOrInput && typeof lootDefsOrInput === 'object' && ('specimenId' in lootDefsOrInput || 'player' in lootDefsOrInput)) {
+    // createSession(specimenDef, templates, input) or createSession(specimenDef, lootDefs, input)
+    if (specimenDef.template && templatesOrLoot && templatesOrLoot[specimenDef.template]) {
+      templates = templatesOrLoot;
+      lootDefs = {};
+    } else {
+      lootDefs = templatesOrLoot || {};
+    }
+    input = lootDefsOrInput;
+  } else {
+    input = lootDefsOrInput || {};
+  }
 
-export function createSession(specimenDef, lootDefs, input, configOverride = {}) {
-  const config = { ...CONFIG, ...configOverride };
-  const rng = createPrng(input.seed);
+  const config = { ...CONFIG, ...configOverrides };
+
+  // Resolve specimen against template if not already resolved
+  const resolvedSpecimen = (specimenDef.slots && Array.isArray(specimenDef.slots))
+    ? specimenDef
+    : resolveSpecimen(specimenDef, templates);
+
+  // Action cuts PRNG stream (Section 4.2)
+  const cutRng = mulberry32(fnv1a(String(input.seed) + ':cuts'));
 
   const isDeadFromStart = input.state === 'dead';
-  let pulse = isDeadFromStart ? 0 : input.pulsePct;
+  let pulse = isDeadFromStart ? 0 : (input.pulsePct ?? config.TYPICAL_START_PULSE);
   let flatlined = isDeadFromStart || pulse <= 0;
   const bloodPct = input.bloodPct ?? 100;
 
@@ -43,20 +57,19 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
   let suturesUsed = 0;
 
   const appliedClamps = new Set();
-  const extractedOrgans = new Map(); // organId -> { lootId, quality, rarity, source: 'organ' }
-  const destroyedOrgans = new Map(); // organId -> { lootId, reason: 'destroyed' }
-  const lostOrgans = new Map();      // organId -> { lootId, reason: 'necrosis' | 'forfeited' }
+  const extractedItems = new Map(); // slotId -> harvestedEntry
+  const destroyedItems = new Map(); // slotId -> { slotId, reason: 'destroyed', condition }
+  const rupturedItems = new Map();  // slotId -> { slotId, reason: 'ruptured' }
+  const lostItems = new Map();      // slotId -> { slotId, reason: 'forfeited' }
 
-  // Ground loot from severable parts
-  const severedIds = new Set(input.damage?.severedParts || []);
-  const groundLoot = (specimenDef.severable || [])
-    .filter(part => severedIds.has(part.id))
-    .map(part => ({
-      ...part,
-      taken: false
-    }));
+  // Generate deterministic body instance (Section 3.2 & 7)
+  const bodyInstance = generateBody(resolvedSpecimen, input);
 
-  const groundHarvested = [];
+  // Loose and severed tray items
+  const trayItems = [
+    ...bodyInstance.severedParts,
+    ...bodyInstance.looseItems
+  ];
 
   let ended = false;
   let endedBy = null;
@@ -66,7 +79,7 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
   function calcBleedReductionPct() {
     let total = 0;
     for (const clampId of appliedClamps) {
-      const c = specimenDef.clampPoints?.find(p => p.id === clampId);
+      const c = resolvedSpecimen.clampPoints?.find(p => p.id === clampId);
       if (c?.bleedReductionPct) {
         total += c.bleedReductionPct;
       }
@@ -84,54 +97,55 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
     return bleed;
   }
 
+  function getSlotCalorieCost(slot) {
+    if (!slot) return 0;
+    if (slot.kind === 'loose') return config.LOOSE_CALORIE_COST;
+    if (slot.calorieCost !== undefined) return slot.calorieCost;
+    const base = config.RARITY_CALORIE_COST[slot.rarity] || 3;
+    if (slot.kind === 'part') {
+      return base + config.PART_CALORIE_ADD;
+    }
+    return base;
+  }
+
+  function getSlotPulseCost(slot) {
+    if (pulse === null || isDeadFromStart || flatlined || pulse <= 0) return 0;
+    if (slot.killsPulse) return 100;
+
+    // Clamps protect specific regions (Section 6)
+    let reductionPct = 0;
+    for (const clampId of appliedClamps) {
+      const c = resolvedSpecimen.clampPoints?.find(p => p.id === clampId);
+      if (c?.protects?.includes(slot.region)) {
+        reductionPct += c.drainReductionPct;
+      }
+    }
+    reductionPct = Math.min(100, reductionPct);
+    return Math.max(0, Math.round(slot.pulseCost * (1 - reductionPct / 100)));
+  }
+
   function triggerFlatline(events) {
     if (flatlined) return;
     flatlined = true;
     events.push({ type: 'flatline' });
 
-    // Section 4.6: Every remaining organ tagged fragile is lost (reason: "necrosis")
-    for (const organ of specimenDef.organs) {
-      const alreadyHarvested = extractedOrgans.has(organ.id);
-      const alreadyDestroyed = destroyedOrgans.has(organ.id);
-      const alreadyLost = lostOrgans.has(organ.id);
-      if (!alreadyHarvested && !alreadyDestroyed && !alreadyLost) {
-        if (organ.tags && organ.tags.includes('fragile')) {
-          lostOrgans.set(organ.id, { lootId: organ.loot, reason: 'necrosis' });
-          events.push({ type: 'organ_lost', id: organ.id, reason: 'necrosis' });
-        }
-      }
-    }
-  }
+    // Section 4.4: Mark items whose projected max condition is < 10 as "ruptured"
+    bodyInstance.items.forEach(item => {
+      if (!item.present || item.taken) return;
+      if (extractedItems.has(item.slotId) || destroyedItems.has(item.slotId) || rupturedItems.has(item.slotId)) return;
 
-  function getQualityCeiling(organ) {
-    let ceiling = 'pristine';
-    if (isDeadFromStart) {
-      ceiling = minQuality(ceiling, 'intact');
-    }
-    if (flatlined) {
-      ceiling = minQuality(ceiling, 'damaged');
-    }
-    if (input.damage?.woundedRegions?.includes(organ.region)) {
-      ceiling = minQuality(ceiling, 'intact');
-    }
-    return ceiling;
-  }
+      const isFragile = item.slot.tags && item.slot.tags.includes('fragile');
+      const fragileMult = isFragile ? (config.FRAGILE_BASE + config.FRAGILE_SLOPE * 0) : 1.0;
+      const flatlineMult = isFragile ? config.FLATLINE_MULT_FRAGILE : config.FLATLINE_MULT_OTHER;
 
-  function getOrganPulseCost(organ) {
-    if (pulse === null || isDeadFromStart) return 0;
-    let reductionPct = 0;
-    if (organ.slowedByClamp && Array.isArray(organ.slowedByClamp)) {
-      for (const clampId of organ.slowedByClamp) {
-        if (appliedClamps.has(clampId)) {
-          const c = specimenDef.clampPoints?.find(p => p.id === clampId);
-          if (c?.drainReductionPct) {
-            reductionPct += c.drainReductionPct;
-          }
-        }
+      // Projected max condition with perfect cutFactor 1.0
+      const projectedMax = Math.round(item.bodyCondition * 1.0 * fragileMult * flatlineMult);
+
+      if (projectedMax < config.DESTROY_THRESHOLD) {
+        rupturedItems.set(item.slotId, { slotId: item.slotId, reason: 'ruptured' });
+        events.push({ type: 'organ_ruptured', id: item.slotId });
       }
-    }
-    reductionPct = Math.min(100, reductionPct);
-    return Math.max(0, Math.round(organ.pulseCost * (1 - reductionPct / 100)));
+    });
   }
 
   function canAct(action) {
@@ -144,24 +158,26 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
 
     switch (action.type) {
       case 'extract': {
-        const organ = specimenDef.organs.find(o => o.id === action.id);
-        if (!organ) return { ok: false, reason: 'Unknown organ' };
-        if (extractedOrgans.has(organ.id)) return { ok: false, reason: 'Organ already extracted' };
-        if (destroyedOrgans.has(organ.id)) return { ok: false, reason: 'Organ was destroyed' };
-        if (lostOrgans.has(organ.id)) return { ok: false, reason: 'Organ was lost to necrosis' };
+        const item = bodyInstance.items.find(i => i.slotId === action.id);
+        if (!item) return { ok: false, reason: 'Unknown slot' };
+        if (!item.present) return { ok: false, reason: item.reason || 'Not present' };
+        if (item.taken || extractedItems.has(item.slotId)) return { ok: false, reason: 'Already harvested' };
+        if (destroyedItems.has(item.slotId)) return { ok: false, reason: 'Item was destroyed' };
+        if (rupturedItems.has(item.slotId)) return { ok: false, reason: 'Ruptured on flatline' };
+        if (lostItems.has(item.slotId)) return { ok: false, reason: 'Item lost' };
 
         // Requirements check
-        if (organ.requires && organ.requires.length > 0) {
-          for (const reqId of organ.requires) {
-            const reqResolved = extractedOrgans.has(reqId) || destroyedOrgans.has(reqId);
+        if (item.slot.requires && item.slot.requires.length > 0) {
+          for (const reqId of item.slot.requires) {
+            const reqResolved = extractedItems.has(reqId) || destroyedItems.has(reqId);
             if (!reqResolved) {
-              const reqOrgan = specimenDef.organs.find(o => o.id === reqId);
-              return { ok: false, reason: `Requires: ${reqOrgan?.name || reqId}` };
+              const reqSlot = resolvedSpecimen.slots.find(s => s.id === reqId);
+              return { ok: false, reason: `Requires: ${reqSlot?.name || reqId}` };
             }
           }
         }
 
-        const cost = config.RARITY_CALORIE_COST[organ.rarity] || 1;
+        const cost = getSlotCalorieCost(item.slot);
         if (calories < cost) {
           return { ok: false, reason: `Need ${cost} cal` };
         }
@@ -170,9 +186,9 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
 
       case 'clamp': {
         if (isDeadFromStart || flatlined || pulse <= 0) {
-          return { ok: false, reason: 'Specimen is dead or flatlined' };
+          return { ok: false, reason: 'Specimen is dead' };
         }
-        const clampPoint = specimenDef.clampPoints?.find(c => c.id === action.id);
+        const clampPoint = resolvedSpecimen.clampPoints?.find(c => c.id === action.id);
         if (!clampPoint) return { ok: false, reason: 'Unknown clamp point' };
         if (appliedClamps.has(clampPoint.id)) return { ok: false, reason: 'Already clamped' };
         if (sutures < config.CLAMP_SUTURE_COST) return { ok: false, reason: 'No sutures left' };
@@ -181,9 +197,9 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
       }
 
       case 'take': {
-        const groundItem = groundLoot.find(g => g.id === action.id);
-        if (!groundItem) return { ok: false, reason: 'Unknown ground loot' };
-        if (groundItem.taken) return { ok: false, reason: 'Already taken' };
+        const trayItem = trayItems.find(t => t.id === action.id);
+        if (!trayItem) return { ok: false, reason: 'Unknown tray item' };
+        if (trayItem.taken) return { ok: false, reason: 'Already taken' };
         return { ok: true };
       }
 
@@ -206,21 +222,28 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
 
     switch (action.type) {
       case 'take': {
-        const item = groundLoot.find(g => g.id === action.id);
+        const item = trayItems.find(t => t.id === action.id);
         item.taken = true;
-        const entry = {
-          lootId: item.loot,
-          quality: 'intact',
+
+        const harvestedEntry = {
+          lootId: item.lootId,
+          slotId: item.slotId || item.id,
+          slotType: item.slotType,
+          side: item.side ?? null,
+          kind: item.kind,
           rarity: item.rarity,
-          source: 'ground'
+          condition: item.condition, // 100 for loose, calculated for severed
+          quantity: item.quantity,
+          source: item.kind === 'part' ? 'severed' : 'loose'
         };
-        groundHarvested.push(entry);
-        events.push({ type: 'ground_taken', id: item.id });
+
+        extractedItems.set(item.id, harvestedEntry);
+        events.push({ type: 'tray_taken', id: item.id, item: harvestedEntry });
         break;
       }
 
       case 'clamp': {
-        const clampPoint = specimenDef.clampPoints.find(c => c.id === action.id);
+        const clampPoint = resolvedSpecimen.clampPoints.find(c => c.id === action.id);
         appliedClamps.add(clampPoint.id);
 
         const oldCal = calories;
@@ -232,7 +255,7 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
         events.push({ type: 'clamped', id: clampPoint.id });
         events.push({ type: 'calories_changed', from: oldCal, to: calories });
 
-        // Passive bleed applies after clamp (Section 4.2)
+        // Passive bleed applies after clamp (Section 4.2 / Phase 1)
         if (pulse > 0 && !flatlined) {
           const bleed = calcPassiveBleed();
           const oldPulse = pulse;
@@ -246,107 +269,153 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
       }
 
       case 'extract': {
-        const organ = specimenDef.organs.find(o => o.id === action.id);
-        const calCost = config.RARITY_CALORIE_COST[organ.rarity] || 1;
+        const item = bodyInstance.items.find(i => i.slotId === action.id);
+        const calCost = getSlotCalorieCost(item.slot);
         const oldCal = calories;
         calories -= calCost;
         caloriesSpent += calCost;
         events.push({ type: 'calories_changed', from: oldCal, to: calories });
 
-        // Skill attempt XP
+        // Base attempt skill XP (Section 8.4)
         skillXp.Surgery += config.SKILL_XP.PER_ATTEMPT;
 
-        // Success calculation (Section 4.4)
-        const surgerySkill = input.player.surgerySkill || 0;
-        const precisionBonus = input.player.precisionBonus || 0;
-        const rarityPenalty = config.RARITY_PENALTY[organ.rarity] || 0;
-        const isWounded = input.damage?.woundedRegions?.includes(organ.region);
-        const woundPenalty = isWounded ? config.WOUND_PENALTY : 0;
+        // Draw exactly two numbers from action stream in order (Section 4.2)
+        const u1 = cutRng();
+        const u2 = cutRng();
 
-        let fragilePenalty = 0;
-        if (organ.tags?.includes('fragile') && !isDeadFromStart && pulse < config.FRAGILE_PULSE_THRESHOLD) {
-          fragilePenalty = (config.FRAGILE_PULSE_THRESHOLD - pulse) / 2;
+        const surgerySkill = input.player.surgerySkill ?? 1;
+        const precisionBonus = input.player.precisionBonus ?? 0;
+
+        const skillScore = config.SKILL_FLOOR
+          + config.SKILL_RANGE * (surgerySkill - 1) / (config.SKILL_MAX - 1)
+          + precisionBonus;
+
+        const difficulty = item.slot.difficulty ?? (config.RARITY_DIFFICULTY[item.slot.rarity] || 10);
+        const margin = skillScore - difficulty;
+
+        const spread = Math.max(5, config.SPREAD_BASE - config.SPREAD_SKILL_MULT * (surgerySkill - 1) / (config.SKILL_MAX - 1));
+        const cutFactor = Math.max(0.10, Math.min(1.00, config.CUT_FACTOR_BASE + margin / 100 + (u1 + u2 - 1) * spread / 100));
+
+        const isFragile = item.slot.tags && item.slot.tags.includes('fragile');
+        let fragileMult = 1.0;
+        if (isFragile && !isDeadFromStart) {
+          fragileMult = pulse >= config.FRAGILE_PULSE_THRESHOLD
+            ? 1.0
+            : config.FRAGILE_BASE + config.FRAGILE_SLOPE * pulse;
         }
 
-        let successPct = organ.baseSuccessPct
-          + config.SKILL_BONUS * surgerySkill
-          + precisionBonus
-          - rarityPenalty
-          - woundPenalty
-          - fragilePenalty;
+        let flatlineMult = 1.0;
+        if (flatlined && !isDeadFromStart) {
+          flatlineMult = isFragile ? config.FLATLINE_MULT_FRAGILE : config.FLATLINE_MULT_OTHER;
+        }
 
-        successPct = Math.max(config.SUCCESS_PCT_MIN, Math.min(config.SUCCESS_PCT_MAX, successPct));
+        const condition = Math.round(item.bodyCondition * cutFactor * fragileMult * flatlineMult);
 
-        // PRNG stream: draw exactly two numbers in order (Section 4.5)
-        const r1 = rng() * 100;
-        const r2 = rng() * 100;
+        rollLog.push({
+          slotId: item.slotId,
+          skillScore,
+          difficulty,
+          margin,
+          u1,
+          u2,
+          cutFactor,
+          fragile: fragileMult,
+          flatlineMult,
+          condition,
+          destroyed: condition < config.DESTROY_THRESHOLD
+        });
 
-        let quality;
-        let isDestroyed = false;
-        let destroyPct = 0;
+        const rollRecord = rollLog[rollLog.length - 1];
 
-        if (r1 <= successPct) {
-          quality = (r1 <= successPct / 2) ? 'pristine' : 'intact';
-        } else {
-          const missBy = r1 - successPct;
-          const baseDestroy = config.RARITY_DESTROY_BASE[organ.rarity] || 10;
-          destroyPct = baseDestroy + missBy * config.MISS_DESTROY_FACTOR - surgerySkill * config.SKILL_SAVE;
-          destroyPct = Math.max(config.DESTROY_PCT_MIN, Math.min(config.DESTROY_PCT_MAX, destroyPct));
+        if (condition < config.DESTROY_THRESHOLD) {
+          // Destroyed item (Section 4.2)
+          destroyedItems.set(item.slotId, {
+            slotId: item.slotId,
+            reason: 'destroyed',
+            condition
+          });
 
-          if (r2 < destroyPct) {
-            isDestroyed = true;
-          } else {
-            quality = 'damaged';
+          // Toxic / Volatile Organ Rupture (Chemical spill damages adjacent organs)
+          const isVolatile = item.slot.tags?.includes('toxic') || item.slot.tags?.includes('volatile') || item.slotId.includes('bile') || item.slotId.includes('venom');
+          if (isVolatile) {
+            const spillDmg = 20;
+            bodyInstance.items.forEach(adj => {
+              if (adj.slot.region === item.slot.region && adj.slotId !== item.slotId && adj.present) {
+                adj.bodyCondition = Math.max(10, adj.bodyCondition - spillDmg);
+              }
+            });
+            events.push({
+              type: 'toxic_spill',
+              id: item.slotId,
+              region: item.slot.region,
+              spillDmg
+            });
           }
-        }
 
-        if (isDestroyed) {
-          destroyedOrgans.set(organ.id, { lootId: organ.loot, reason: 'destroyed' });
           events.push({
             type: 'organ_failed',
-            id: organ.id,
-            quality: 'destroyed'
+            id: item.slotId,
+            condition,
+            roll: rollRecord
           });
         } else {
-          // Cap quality by ceiling
-          const ceiling = getQualityCeiling(organ);
-          quality = minQuality(quality, ceiling);
+          // Successfully harvested
+          const harvestedEntry = {
+            lootId: item.slot.loot || `${resolvedSpecimen.id}:${item.slotId}`,
+            slotId: item.slotId,
+            slotType: item.slot.slotType,
+            side: item.slot.side || null,
+            kind: item.slot.kind,
+            rarity: item.slot.rarity,
+            condition, // Integer 1-100
+            quantity: item.quantity,
+            source: 'body'
+          };
 
-          extractedOrgans.set(organ.id, {
-            lootId: organ.loot,
-            quality,
-            rarity: organ.rarity,
-            source: 'organ'
-          });
+          extractedItems.set(item.slotId, harvestedEntry);
 
-          // Skill rewards for pristine or rare+
-          if (quality === 'pristine') {
-            skillXp.Surgery += config.SKILL_XP.PER_PRISTINE;
+          // Head Decapitation Mutual Exclusivity:
+          // Removing the entire Head takes all remaining cranial parts (brain, eyes, fangs) with it
+          if (item.slot.slotType === 'head' || item.slotId === 'head') {
+            bodyInstance.items.forEach(child => {
+              if (child.slot.region === 'head' && child.slotId !== item.slotId && child.present) {
+                if (!extractedItems.has(child.slotId) && !destroyedItems.has(child.slotId) && !rupturedItems.has(child.slotId) && !lostItems.has(child.slotId)) {
+                  lostItems.set(child.slotId, { slotId: child.slotId, reason: 'forfeited' });
+                  events.push({ type: 'organ_forfeited', id: child.slotId, reason: 'decapitated' });
+                }
+              }
+            });
           }
-          if (['rare', 'epic', 'legendary'].includes(organ.rarity)) {
-            skillXp.Surgery += config.SKILL_XP.PER_RARE_PLUS;
+
+          // Craniotomy Mutual Exclusivity:
+          // Extracting the brain cracks open the skull, forfeiting the intact mountable Head
+          if (item.slot.slotType === 'brain' || item.slotId === 'brain') {
+            const headItem = bodyInstance.items.find(h => (h.slot.slotType === 'head' || h.slotId === 'head') && h.present);
+            if (headItem && !extractedItems.has(headItem.slotId) && !destroyedItems.has(headItem.slotId) && !rupturedItems.has(headItem.slotId) && !lostItems.has(headItem.slotId)) {
+              lostItems.set(headItem.slotId, { slotId: headItem.slotId, reason: 'forfeited' });
+              events.push({ type: 'organ_forfeited', id: headItem.slotId, reason: 'craniotomy' });
+            }
+          }
+
+          // Skill XP bonuses (Section 8.4)
+          if (condition >= 70) {
+            skillXp.Surgery += config.SKILL_XP.CONDITION_70_BONUS;
+          }
+          if (['rare', 'epic', 'legendary'].includes(item.slot.rarity) && condition >= 50) {
+            skillXp.Surgery += config.SKILL_XP.RARE_PLUS_50_BONUS;
           }
 
           events.push({
             type: 'organ_extracted',
-            id: organ.id,
-            quality
+            id: item.slotId,
+            entry: harvestedEntry,
+            roll: rollRecord
           });
         }
 
-        rollLog.push({
-          organId: organ.id,
-          successPct,
-          r1,
-          r2,
-          destroyPct,
-          outcome: isDestroyed ? 'destroyed' : quality
-        });
-
-        // Pulse mechanics (Section 4.2)
+        // Pulse Mechanics (Section 4.2 / Section 6)
         if (!isDeadFromStart && pulse > 0) {
-          // Organ pulse cost
-          const pCost = getOrganPulseCost(organ);
+          const pCost = getSlotPulseCost(item.slot);
           if (pCost > 0) {
             const oldPulse = pulse;
             pulse = Math.max(0, pulse - pCost);
@@ -354,7 +423,7 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
           }
 
           // killsPulse triggers after organ resolves
-          if (organ.killsPulse && pulse > 0) {
+          if (item.slot.killsPulse && pulse > 0) {
             const oldPulse = pulse;
             pulse = 0;
             events.push({ type: 'pulse_changed', from: oldPulse, to: 0 });
@@ -368,7 +437,6 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
             events.push({ type: 'pulse_changed', from: oldPulse, to: pulse });
           }
 
-          // Check flatline
           if (pulse <= 0) {
             triggerFlatline(events);
           }
@@ -382,31 +450,27 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
         endedBy = action.type;
 
         if (action.type === 'feast') {
-          const mult = (isDeadFromStart || flatlined)
-            ? config.DEAD_OR_FLATLINE_FEAST_CALORIE_MULT
-            : config.LIVING_FEAST_CALORIE_MULT;
-          caloriesGained = Math.round(specimenDef.feast.calories * mult);
-          biomassExpGained = specimenDef.feast.biomassExp;
+          caloriesGained = getRemainingFeastCalories();
+          biomassExpGained = resolvedSpecimen.feast?.biomassExp || 4;
         }
 
-        // Forfeit remaining organs
-        for (const organ of specimenDef.organs) {
-          const alreadyHarvested = extractedOrgans.has(organ.id);
-          const alreadyDestroyed = destroyedOrgans.has(organ.id);
-          const alreadyLost = lostOrgans.has(organ.id);
-          if (!alreadyHarvested && !alreadyDestroyed && !alreadyLost) {
-            lostOrgans.set(organ.id, { lootId: organ.loot, reason: 'forfeited' });
+        // Forfeit remaining present untaken slots (Section 8.4: absent slots not listed)
+        bodyInstance.items.forEach(item => {
+          if (!item.present) return;
+          const resolved = extractedItems.has(item.slotId)
+            || destroyedItems.has(item.slotId)
+            || rupturedItems.has(item.slotId)
+            || lostItems.has(item.slotId);
+
+          if (!resolved) {
+            lostItems.set(item.slotId, {
+              slotId: item.slotId,
+              reason: 'forfeited'
+            });
           }
-        }
+        });
 
-        // Forfeit untaken ground loot
-        for (const ground of groundLoot) {
-          if (!ground.taken) {
-            lostOrgans.set(ground.id, { lootId: ground.loot, reason: 'forfeited' });
-          }
-        }
-
-        events.push({ type: 'ended', endedBy: action.type });
+        events.push({ type: 'ended', endedBy: action.type, caloriesGained, biomassExpGained });
         break;
       }
     }
@@ -414,8 +478,41 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
     return events;
   }
 
+  function getRemainingFeastCalories() {
+    let unharvestedPartCalories = 0;
+    bodyInstance.items.forEach(item => {
+      if (item.present && !item.taken && !extractedItems.has(item.slotId)) {
+        unharvestedPartCalories += (item.nutritionalCalories || 0);
+      }
+    });
+
+    const baseCarcass = resolvedSpecimen.feast?.baseCalories !== undefined
+      ? resolvedSpecimen.feast.baseCalories
+      : (config.BASE_CARCASS_CALORIES || 12);
+
+    const mult = (isDeadFromStart || flatlined)
+      ? config.DEAD_OR_FLATLINE_FEAST_CALORIE_MULT
+      : config.LIVING_FEAST_CALORIE_MULT;
+
+    return Math.max(5, Math.round((baseCarcass + unharvestedPartCalories) * mult));
+  }
+
   function isEnded() {
     return ended;
+  }
+
+  function countFragileRemaining() {
+    let count = 0;
+    bodyInstance.items.forEach(item => {
+      if (item.present && !item.taken) {
+        if (!extractedItems.has(item.slotId) && !destroyedItems.has(item.slotId) && !rupturedItems.has(item.slotId)) {
+          if (item.slot.tags && item.slot.tags.includes('fragile')) {
+            count++;
+          }
+        }
+      }
+    });
+    return count;
   }
 
   function getState() {
@@ -428,10 +525,14 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
       sutures,
       suturesUsed,
       appliedClamps: Array.from(appliedClamps),
-      extractedOrgans: Array.from(extractedOrgans.entries()).map(([id, val]) => ({ id, ...val })),
-      destroyedOrgans: Array.from(destroyedOrgans.entries()).map(([id, val]) => ({ id, ...val })),
-      lostOrgans: Array.from(lostOrgans.entries()).map(([id, val]) => ({ id, ...val })),
-      groundLoot: groundLoot.map(g => ({ ...g })),
+      extractedItems: Array.from(extractedItems.values()),
+      destroyedItems: Array.from(destroyedItems.values()),
+      rupturedItems: Array.from(rupturedItems.values()),
+      lostItems: Array.from(lostItems.values()),
+      bodyInstance,
+      trayItems: trayItems.map(t => ({ ...t })),
+      fragileRemaining: countFragileRemaining(),
+      remainingFeastCalories: getRemainingFeastCalories(),
       ended,
       endedBy,
       skillXp: { ...skillXp },
@@ -444,19 +545,19 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
       throw new Error('Cannot get SurgeryResult before surgery has ended');
     }
 
-    const harvestedList = [
-      ...Array.from(extractedOrgans.values()),
-      ...groundHarvested
-    ];
+    const harvestedList = Array.from(extractedItems.values());
 
     const lostList = [
-      ...Array.from(destroyedOrgans.values()),
-      ...Array.from(lostOrgans.values())
+      ...Array.from(destroyedItems.values()),
+      ...Array.from(rupturedItems.values()),
+      ...Array.from(lostItems.values())
     ];
 
     const res = {
-      specimenId: input.specimenId,
-      specimenKind: specimenDef.kind,
+      schemaVersion: 2,
+      specimenId: resolvedSpecimen.id,
+      specimenKind: resolvedSpecimen.kind,
+      seed: input.seed,
       harvested: harvestedList,
       lost: lostList,
       caloriesSpent,
@@ -469,11 +570,10 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
         Surgery: skillXp.Surgery
       },
       endedBy,
-      flatlined: Boolean(flatlined),
-      seed: input.seed
+      flatlined: Boolean(flatlined)
     };
 
-    // Validate strictly against Section 6.2 schema
+    // Strict validation against Section 8.4 schema
     const validation = validateSurgeryResult(res);
     if (!validation.ok) {
       throw new Error(`Constructed SurgeryResult failed validation: ${validation.errors.join(', ')}`);
@@ -488,7 +588,11 @@ export function createSession(specimenDef, lootDefs, input, configOverride = {})
     act,
     isEnded,
     result,
-    getQualityCeiling,
-    getOrganPulseCost
+    getSlotPulseCost,
+    getSlotCalorieCost,
+    getRemainingFeastCalories,
+    countFragileRemaining,
+    resolvedSpecimen,
+    bodyInstance
   };
 }

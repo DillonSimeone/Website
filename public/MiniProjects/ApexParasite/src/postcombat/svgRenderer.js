@@ -1,10 +1,10 @@
 /**
- * Apex Parasite - Post-Combat SVG Stage & Anatomical Renderer
+ * Apex Parasite - Post-Combat SVG Stage & Anatomical Renderer (Phase 2)
  * Renders the anatomy viewport, placeholder body contours, SVG hitboxes,
- * clamp nodes, stump patches, and incision wounds in 1:1 art coordinate space.
+ * clamp nodes (living only), stump patches, ghost markers, and incision wounds in 1:1 art coordinate space.
  */
 
-export function createStageRenderer({ specimenDef, lootDefs, input }) {
+export function createStageRenderer({ specimenDef, lootDefs, input, bodyInstance }) {
   const [artW, artH] = specimenDef.art.size;
 
   // Build root container
@@ -18,9 +18,9 @@ export function createStageRenderer({ specimenDef, lootDefs, input }) {
 
   const img = document.createElement('img');
   img.className = 'surgery-anatomy-img';
-  img.src = specimenDef.art.body;
+  img.src = specimenDef.art.body || '';
   img.alt = specimenDef.displayName;
-  img.style.display = 'none'; // Shown if image loads successfully
+  img.style.display = 'none';
 
   // Placeholder SVG layer
   const placeholderSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -28,21 +28,24 @@ export function createStageRenderer({ specimenDef, lootDefs, input }) {
   placeholderSvg.setAttribute('class', 'surgery-placeholder-svg');
   placeholderSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-  // Interactive overlay SVG layer (contains hit regions, clamps, wounds, leader lines)
+  // Interactive overlay SVG layer
   const overlaySvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   overlaySvg.setAttribute('viewBox', `0 0 ${artW} ${artH}`);
   overlaySvg.setAttribute('class', 'surgery-overlay-svg');
   overlaySvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-  // Attempt image load
-  img.onload = () => {
-    img.style.display = 'block';
-    placeholderSvg.style.display = 'none';
-  };
-  img.onerror = () => {
-    img.style.display = 'none';
+  if (specimenDef.art.body) {
+    img.onload = () => {
+      img.style.display = 'block';
+      placeholderSvg.style.display = 'none';
+    };
+    img.onerror = () => {
+      img.style.display = 'none';
+      placeholderSvg.style.display = 'block';
+    };
+  } else {
     placeholderSvg.style.display = 'block';
-  };
+  }
 
   artWrapper.appendChild(img);
   artWrapper.appendChild(placeholderSvg);
@@ -56,6 +59,9 @@ export function createStageRenderer({ specimenDef, lootDefs, input }) {
   const severableGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   severableGroup.setAttribute('class', 'group-severable-stumps');
 
+  const ghostGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  ghostGroup.setAttribute('class', 'group-ghost-markers');
+
   const woundGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   woundGroup.setAttribute('class', 'group-wounds');
 
@@ -68,19 +74,28 @@ export function createStageRenderer({ specimenDef, lootDefs, input }) {
   const clampsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   clampsGroup.setAttribute('class', 'group-clamp-points');
 
+  // Clamp markers are NOT rendered on dead specimens (Section 6, Check 17)
+  if (input.state === 'dead') {
+    clampsGroup.style.display = 'none';
+  }
+
   const debugGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   debugGroup.setAttribute('class', 'group-debug-overlay');
   debugGroup.style.display = 'none';
 
   overlaySvg.appendChild(severableGroup);
+  overlaySvg.appendChild(ghostGroup);
   overlaySvg.appendChild(woundGroup);
   overlaySvg.appendChild(leaderLinesGroup);
   overlaySvg.appendChild(hitRegionsGroup);
   overlaySvg.appendChild(clampsGroup);
   overlaySvg.appendChild(debugGroup);
 
-  // Initialize severable stump patches
+  // Initialize severable stump patches & ghost markers
   renderSeverableStumps(severableGroup, specimenDef, input);
+  if (bodyInstance) {
+    renderGhostMarkers(ghostGroup, bodyInstance);
+  }
 
   return {
     element: container,
@@ -89,6 +104,7 @@ export function createStageRenderer({ specimenDef, lootDefs, input }) {
     hitRegionsGroup,
     clampsGroup,
     woundGroup,
+    ghostGroup,
     leaderLinesGroup,
     debugGroup,
     artSize: [artW, artH]
@@ -96,10 +112,9 @@ export function createStageRenderer({ specimenDef, lootDefs, input }) {
 }
 
 /**
- * Render dark-fantasy SVG placeholder anatomy when real art image is absent
+ * Render dark-fantasy SVG placeholder anatomy
  */
 function renderPlaceholderAnatomy(svg, def, w, h) {
-  // SVG Defs for gradients & patterns
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
   defs.innerHTML = `
     <radialGradient id="bodyGlow" cx="50%" cy="50%" r="50%">
@@ -113,7 +128,6 @@ function renderPlaceholderAnatomy(svg, def, w, h) {
   `;
   svg.appendChild(defs);
 
-  // Background panel
   const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   bg.setAttribute('width', w);
   bg.setAttribute('height', h);
@@ -126,7 +140,6 @@ function renderPlaceholderAnatomy(svg, def, w, h) {
   grid.setAttribute('fill', 'url(#diagGrid)');
   svg.appendChild(grid);
 
-  // Stylized anatomical chassis contour
   const contour = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   if (def.kind === 'human') {
     contour.setAttribute('d', `
@@ -141,7 +154,6 @@ function renderPlaceholderAnatomy(svg, def, w, h) {
       C ${w * 0.42} ${h * 0.22}, ${w * 0.42} ${h * 0.12}, ${w * 0.5} ${h * 0.1} Z
     `);
   } else {
-    // Beast / Chimera quadrupede / arachnid spine
     contour.setAttribute('d', `
       M ${w * 0.25} ${h * 0.3}
       C ${w * 0.35} ${h * 0.18}, ${w * 0.65} ${h * 0.18}, ${w * 0.8} ${h * 0.35}
@@ -157,7 +169,6 @@ function renderPlaceholderAnatomy(svg, def, w, h) {
   contour.setAttribute('stroke-dasharray', '8 4');
   svg.appendChild(contour);
 
-  // Skeleton / Rib lines
   for (let i = 0; i < 5; i++) {
     const rib = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     const yOff = h * 0.35 + i * (h * 0.08);
@@ -168,7 +179,6 @@ function renderPlaceholderAnatomy(svg, def, w, h) {
     svg.appendChild(rib);
   }
 
-  // Placeholder label (Section 9)
   const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   text.setAttribute('x', w * 0.5);
   text.setAttribute('y', h * 0.08);
@@ -179,36 +189,84 @@ function renderPlaceholderAnatomy(svg, def, w, h) {
   text.setAttribute('font-weight', 'bold');
   text.setAttribute('letter-spacing', '2');
   text.setAttribute('opacity', '0.7');
-  text.textContent = `[ PLACEHOLDER ANATOMY: ${def.displayName.toUpperCase()} ]`;
+  text.textContent = `[ SPECIMEN: ${def.displayName.toUpperCase()} ]`;
   svg.appendChild(text);
 }
 
 /**
- * Render severable cover shape stump patches (Section 6.3, Check 11)
+ * Render severable cover shape stump patches (Section 8.2)
  */
 function renderSeverableStumps(group, def, input) {
   group.innerHTML = '';
   const severedSet = new Set(input.damage?.severedParts || []);
 
-  (def.severable || []).forEach(part => {
-    if (severedSet.has(part.id)) {
+  (def.severable || []).forEach(sev => {
+    if (severedSet.has(sev.id) || severedSet.has(sev.slotId)) {
+      const slot = def.slots?.find(s => s.id === sev.slotId);
+      if (!slot) return;
+
+      const [ax, ay] = slot.anchor;
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.setAttribute('class', 'severed-stump-patch');
 
-      const shape = createSvgShape(part.coverShape, part.anchor);
+      const shape = createSvgShape(slot.hitShape, slot.anchor);
       shape.setAttribute('fill', '#05070a');
       shape.setAttribute('stroke', '#881337');
       shape.setAttribute('stroke-width', '2.5');
       g.appendChild(shape);
 
-      // Traumatic gore crosshatch on stump
-      const [ax, ay] = part.anchor;
       const cross = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       cross.setAttribute('d', `M ${ax - 15} ${ay - 10} L ${ax + 15} ${ay + 10} M ${ax - 15} ${ay + 10} L ${ax + 15} ${ay - 10}`);
       cross.setAttribute('stroke', '#f43f5e');
       cross.setAttribute('stroke-width', '2');
       cross.setAttribute('opacity', '0.8');
       g.appendChild(cross);
+
+      const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      lbl.setAttribute('x', ax);
+      lbl.setAttribute('y', ay + 4);
+      lbl.setAttribute('text-anchor', 'middle');
+      lbl.setAttribute('fill', '#f43f5e');
+      lbl.setAttribute('font-family', 'monospace');
+      lbl.setAttribute('font-size', '10');
+      lbl.setAttribute('font-weight', 'bold');
+      lbl.textContent = 'SEVERED';
+      g.appendChild(lbl);
+
+      group.appendChild(g);
+    }
+  });
+}
+
+/**
+ * Render dim ghost markers for absent non-trait slots (Section 3.2, 9, Check 5)
+ */
+function renderGhostMarkers(group, bodyInstance) {
+  group.innerHTML = '';
+  bodyInstance.items.forEach(item => {
+    if (!item.present && item.slot.kind !== 'trait' && item.reason !== 'severed') {
+      const [ax, ay] = item.slot.anchor;
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'ghost-marker-node');
+      g.setAttribute('opacity', '0.35');
+
+      const shape = createSvgShape(item.slot.hitShape, item.slot.anchor);
+      shape.setAttribute('fill', 'none');
+      shape.setAttribute('stroke', '#475569');
+      shape.setAttribute('stroke-width', '1.5');
+      shape.setAttribute('stroke-dasharray', '4 4');
+      g.appendChild(shape);
+
+      const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      txt.setAttribute('x', ax);
+      txt.setAttribute('y', ay + 4);
+      txt.setAttribute('text-anchor', 'middle');
+      txt.setAttribute('fill', '#94a3b8');
+      txt.setAttribute('font-family', 'monospace');
+      txt.setAttribute('font-size', '9');
+      txt.setAttribute('font-weight', 'bold');
+      txt.textContent = (item.reason || 'Mangled').toUpperCase();
+      g.appendChild(txt);
 
       group.appendChild(g);
     }
@@ -272,7 +330,6 @@ export function addIncisionWound(woundGroup, anchor, status = 'extracted') {
   const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   g.setAttribute('class', `incision-wound wound-${status}`);
 
-  // Slash line
   const slash = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   slash.setAttribute('d', `M ${ax - 22} ${ay - 12} Q ${ax} ${ay + 4} ${ax + 22} ${ay + 12}`);
   slash.setAttribute('fill', 'none');
@@ -281,7 +338,6 @@ export function addIncisionWound(woundGroup, anchor, status = 'extracted') {
   slash.setAttribute('stroke-linecap', 'round');
   g.appendChild(slash);
 
-  // Organic wound cavity
   const cavity = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
   cavity.setAttribute('cx', ax);
   cavity.setAttribute('cy', ay);

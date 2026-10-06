@@ -1,12 +1,12 @@
 /**
- * Apex Parasite - Post-Combat Surgery View & Runtime
+ * Apex Parasite - Post-Combat Surgery View & Runtime (Phase 2)
  * Implementation of createSurgery({ root, audio, content, onLog }) -> { run(input), destroy() }
  */
 
 import { CONFIG } from './config.js';
 import { createSession } from './core.js';
 import { createStageRenderer, addIncisionWound } from './svgRenderer.js';
-import { createCalloutManager } from './callouts.js';
+import { createCalloutManager, getConditionBand } from './callouts.js';
 import { validateSurgeryInput } from './validator.js';
 
 export function createSurgery({ root, audio, content, onLog = null }) {
@@ -67,19 +67,22 @@ export function createSurgery({ root, audio, content, onLog = null }) {
     abortController = new AbortController();
     const { signal } = abortController;
 
-    const session = createSession(specimenDef, content.loot, input);
+    const templates = content.templates || {};
+    const session = createSession(specimenDef, templates, content.loot, input);
     activeSession = session;
+    const resolvedSpecimen = session.resolvedSpecimen;
+    const bodyInstance = session.bodyInstance;
 
     // Build View Structure
     const overlay = document.createElement('div');
     overlay.className = 'postcombat-surgery-overlay';
 
-    // 1. Persistent Top Chrome (Section 7)
+    // 1. Persistent Top Chrome (Section 7 & 9)
     const topBar = document.createElement('div');
     topBar.className = 'surgery-top-bar';
     topBar.innerHTML = `
       <div class="top-meta">
-        <div class="meta-specimen">${specimenDef.displayName.toUpperCase()}</div>
+        <div class="meta-specimen">${resolvedSpecimen.displayName.toUpperCase()}</div>
         <div class="meta-status status-${input.state}">${input.state.toUpperCase()}</div>
       </div>
       <div class="top-vitals">
@@ -105,22 +108,27 @@ export function createSurgery({ root, audio, content, onLog = null }) {
         </div>
         <div class="telemetry-item sac-item" id="carrier-sac-icon" title="Carrier Sac">
           <span class="t-glyph">🎒</span>
-          <span class="t-val val-sac-count">${session.getState().extractedOrgans.length}</span>
+          <span class="t-val val-sac-count">${session.getState().extractedItems.length}</span>
         </div>
       </div>
     `;
     overlay.appendChild(topBar);
 
     // 2. Stage Renderer (Anatomy & SVG)
-    stageRenderer = createStageRenderer({ specimenDef, lootDefs: content.loot, input });
+    stageRenderer = createStageRenderer({
+      specimenDef: resolvedSpecimen,
+      lootDefs: content.loot,
+      input,
+      bodyInstance
+    });
     overlay.appendChild(stageRenderer.element);
 
-    // 3. Persistent Bottom Controls (Ground loot + Feast / Leave)
+    // 3. Persistent Bottom Controls (Ground/Severed Tray + Feast/Leave)
     const bottomBar = document.createElement('div');
     bottomBar.className = 'surgery-bottom-bar';
     bottomBar.innerHTML = `
       <div class="ground-loot-tray">
-        <div class="ground-loot-label">SEVERED PARTS (FREE)</div>
+        <div class="ground-loot-label">LOOSE GEAR & SEVERED PARTS (FREE)</div>
         <div class="ground-loot-items"></div>
       </div>
       <div class="action-buttons-group">
@@ -153,13 +161,14 @@ export function createSurgery({ root, audio, content, onLog = null }) {
     // Setup Callout Manager
     calloutManager = createCalloutManager({
       stage: stageRenderer,
-      specimenDef,
+      specimenDef: resolvedSpecimen,
+      bodyInstance,
       lootDefs: content.loot,
       onAction: handleAction,
       onHover: handleHover
     });
 
-    // Setup Ground Loot
+    // Render initial ground/tray items
     renderGroundLoot();
 
     // Audio initiation
@@ -185,7 +194,7 @@ export function createSurgery({ root, audio, content, onLog = null }) {
       stageRenderer.artWrapper.addEventListener('click', skipEntrance, { signal });
     }
 
-    // Two-step confirm logic (Section 7, Check 15)
+    // Two-step confirm logic for Feast/Leave (Section 7, Check 15)
     feastBtn.addEventListener('click', () => requestEnd('feast', feastBtn), { signal });
     leaveBtn.addEventListener('click', () => requestEnd('leave', leaveBtn), { signal });
 
@@ -200,8 +209,7 @@ export function createSurgery({ root, audio, content, onLog = null }) {
 
     function handleHover(info) {
       if (info && audio) {
-        // Soft audio tick on hover
-        // audio.chime('common') or silent
+        // Subtle audio feedback on hover if available
       }
     }
 
@@ -225,33 +233,57 @@ export function createSurgery({ root, audio, content, onLog = null }) {
               clampItem.element.classList.add('is-clamped');
               clampItem.clampedGraphic.style.display = 'block';
             }
-            log(`Clamp applied to ${ev.id}`);
+            log(`Clamp applied: ${ev.id}`);
             break;
           }
 
           case 'organ_extracted': {
+            const entry = ev.entry;
+            const slot = resolvedSpecimen.slots.find(s => s.id === ev.id);
             if (audio) {
               audio.cut();
               setTimeout(() => {
-                const organ = specimenDef.organs.find(o => o.id === ev.id);
-                audio.chime(organ?.rarity || 'common');
+                audio.chime(entry.rarity || 'common');
               }, 120);
             }
-            const organ = specimenDef.organs.find(o => o.id === ev.id);
-            addIncisionWound(stageRenderer.woundGroup, organ.anchor, 'extracted');
-            flyGlyphToSac(organ, ev.quality);
-            log(`Extracted ${organ.name} (${ev.quality})`);
+            if (slot) {
+              addIncisionWound(stageRenderer.woundGroup, slot.anchor, 'extracted');
+              flyGlyphToSac(slot, entry.condition);
+            }
+            if (ev.roll) {
+              const r = ev.roll;
+              log(`[Cut Roll] ${ev.id}: skill=${r.skillScore}, diff=${r.difficulty}, margin=${r.margin.toFixed(2)}, u1=${r.u1.toFixed(3)}, u2=${r.u2.toFixed(3)}, cutFactor=${r.cutFactor.toFixed(3)}, fragile=${r.fragile.toFixed(2)}, flatlineMult=${r.flatlineMult.toFixed(2)} => cond=${r.condition}`);
+            }
+            log(`Extracted: ${slot?.name || ev.id} (Cond: ${entry.condition} - ${getConditionBand(entry.condition).label})`);
+
+            // Micro-animation on feast button as carcass calories decrease
+            const feastBtn = root.querySelector('.btn-feast');
+            if (feastBtn) {
+              feastBtn.classList.add('feast-cal-drop');
+              setTimeout(() => feastBtn.classList.remove('feast-cal-drop'), 350);
+            }
             break;
           }
 
           case 'organ_failed': {
             if (audio) audio.tear();
-            const organ = specimenDef.organs.find(o => o.id === ev.id);
-            addIncisionWound(stageRenderer.woundGroup, organ.anchor, 'destroyed');
-            shatterGlyph(organ);
+            const slot = resolvedSpecimen.slots.find(s => s.id === ev.id);
+            if (slot) {
+              addIncisionWound(stageRenderer.woundGroup, slot.anchor, 'destroyed');
+              shatterGlyph(slot);
+            }
             stageRenderer.artWrapper.classList.add('screen-shake');
             setTimeout(() => stageRenderer.artWrapper.classList.remove('screen-shake'), 400);
-            log(`Destroyed ${organ.name}`);
+            if (ev.roll) {
+              const r = ev.roll;
+              log(`[Cut Roll] ${ev.id}: skill=${r.skillScore}, diff=${r.difficulty}, margin=${r.margin.toFixed(2)}, u1=${r.u1.toFixed(3)}, u2=${r.u2.toFixed(3)}, cutFactor=${r.cutFactor.toFixed(3)}, fragile=${r.fragile.toFixed(2)}, flatlineMult=${r.flatlineMult.toFixed(2)} => cond=${r.condition}`);
+            }
+            log(`Destroyed: ${slot?.name || ev.id} (Cond: ${ev.condition})`);
+            break;
+          }
+
+          case 'organ_ruptured': {
+            log(`Ruptured on flatline: ${ev.id}`);
             break;
           }
 
@@ -265,14 +297,14 @@ export function createSurgery({ root, audio, content, onLog = null }) {
             pulseContainer.classList.add('is-flatline');
             flatlineBanner.style.display = 'block';
             stageRenderer.artWrapper.classList.add('body-limp');
-            log('SPECIMEN FLATLINE');
+            log('SPECIMEN FLATLINE — Tissues degrading');
             break;
           }
 
-          case 'ground_taken': {
+          case 'tray_taken': {
             if (audio) audio.chime('common');
             renderGroundLoot();
-            log(`Ground loot taken: ${ev.id}`);
+            log(`Collected from tray: ${ev.item.name || ev.id}`);
             break;
           }
 
@@ -284,6 +316,11 @@ export function createSurgery({ root, audio, content, onLog = null }) {
               } else {
                 audio.stop();
               }
+            }
+            if (ev.endedBy === 'feast') {
+              log(`[Feast] Consumed remaining carcass biomass: +${ev.caloriesGained} Cal, +${ev.biomassExpGained} Biomass XP`);
+            } else {
+              log(`[Leave] Abandoned carcass without feasting (0 Cal gained)`);
             }
             setTimeout(() => {
               const res = session.result();
@@ -312,7 +349,7 @@ export function createSurgery({ root, audio, content, onLog = null }) {
         audio.stop();
         stageRenderer.artWrapper.classList.remove('body-breathing');
       } else {
-        const bpm = 45 + (state.pulse / 100) * 65; // 45 to 110 BPM
+        const bpm = 45 + (state.pulse / 100) * 65;
         const strength = 0.3 + (state.pulse / 100) * 0.7;
         audio.heartbeat(bpm, strength);
         stageRenderer.artWrapper.classList.add('body-breathing');
@@ -320,21 +357,22 @@ export function createSurgery({ root, audio, content, onLog = null }) {
       }
     }
 
-    function flyGlyphToSac(organ, quality) {
-      const loot = content.loot[organ.loot] || { glyph: '🫀' };
+    function flyGlyphToSac(slot, condition) {
+      const band = getConditionBand(condition);
       const flyer = document.createElement('div');
-      flyer.className = `flying-organ-glyph quality-${quality}`;
-      flyer.textContent = loot.glyph;
+      flyer.className = 'flying-organ-glyph';
+      flyer.textContent = '🩸';
 
       const artRect = stageRenderer.artWrapper.getBoundingClientRect();
       const sacRect = sacIcon.getBoundingClientRect();
 
-      const [ax, ay] = organ.anchor;
-      const startX = artRect.left + (ax / specimenDef.art.size[0]) * artRect.width;
-      const startY = artRect.top + (ay / specimenDef.art.size[1]) * artRect.height;
+      const [ax, ay] = slot.anchor;
+      const startX = artRect.left + (ax / resolvedSpecimen.art.size[0]) * artRect.width;
+      const startY = artRect.top + (ay / resolvedSpecimen.art.size[1]) * artRect.height;
 
       flyer.style.left = `${startX}px`;
       flyer.style.top = `${startY}px`;
+      flyer.style.borderColor = band.color;
       document.body.appendChild(flyer);
 
       requestAnimationFrame(() => {
@@ -349,16 +387,15 @@ export function createSurgery({ root, audio, content, onLog = null }) {
       }, CONFIG.FLIGHT_ANIMATION_MS);
     }
 
-    function shatterGlyph(organ) {
-      const loot = content.loot[organ.loot] || { glyph: '🫀' };
+    function shatterGlyph(slot) {
       const flyer = document.createElement('div');
       flyer.className = 'shattering-organ-glyph';
-      flyer.textContent = loot.glyph;
+      flyer.textContent = '✖';
 
       const artRect = stageRenderer.artWrapper.getBoundingClientRect();
-      const [ax, ay] = organ.anchor;
-      const startX = artRect.left + (ax / specimenDef.art.size[0]) * artRect.width;
-      const startY = artRect.top + (ay / specimenDef.art.size[1]) * artRect.height;
+      const [ax, ay] = slot.anchor;
+      const startX = artRect.left + (ax / resolvedSpecimen.art.size[0]) * artRect.width;
+      const startY = artRect.top + (ay / resolvedSpecimen.art.size[1]) * artRect.height;
 
       flyer.style.left = `${startX}px`;
       flyer.style.top = `${startY}px`;
@@ -370,16 +407,19 @@ export function createSurgery({ root, audio, content, onLog = null }) {
     function renderGroundLoot() {
       groundItemsEl.innerHTML = '';
       const state = session.getState();
-      state.groundLoot.forEach(item => {
-        const loot = content.loot[item.loot] || { name: item.name, glyph: '🦞' };
+      state.trayItems.forEach(item => {
         const btn = document.createElement('button');
         btn.className = `ground-loot-tile ${item.taken ? 'taken' : ''}`;
-        btn.setAttribute('aria-label', `Ground loot: ${item.name}. Click to collect.`);
+        btn.setAttribute('aria-label', `Collect ${item.name} (Free).`);
         btn.disabled = item.taken;
+
+        const glyph = item.kind === 'part' ? '🦵' : '🎒';
+        const condBadge = item.kind === 'part' ? `<span class="tray-cond-badge">${item.condition}%</span>` : '';
         btn.innerHTML = `
-          <span class="ground-glyph">${loot.glyph}</span>
+          <span class="ground-glyph">${glyph}</span>
           <span class="ground-name">${item.name}</span>
-          <span class="ground-status">${item.taken ? 'TAKEN' : 'TAKE (0 CAL)'}</span>
+          ${condBadge}
+          <span class="ground-status">${item.taken ? 'TAKEN' : 'TAKE (FREE)'}</span>
         `;
         btn.addEventListener('click', () => {
           if (!item.taken) {
@@ -392,17 +432,27 @@ export function createSurgery({ root, audio, content, onLog = null }) {
 
     function requestEnd(actionType, btnEl) {
       const state = session.getState();
-      const totalOrgans = specimenDef.organs.length;
-      const resolvedOrgans = state.extractedOrgans.length + state.destroyedOrgans.length + state.lostOrgans.length;
-      const remainingCount = totalOrgans - resolvedOrgans;
+      // Count remaining unharvested present items
+      let remainingCount = 0;
+      bodyInstance.items.forEach(item => {
+        if (item.present && !item.taken) {
+          const resolved = state.extractedItems.some(o => o.slotId === item.slotId)
+            || state.destroyedItems.some(o => o.slotId === item.slotId)
+            || state.rupturedItems.some(o => o.slotId === item.slotId)
+            || state.lostItems.some(o => o.slotId === item.slotId);
+          if (!resolved) {
+            remainingCount++;
+          }
+        }
+      });
 
-      // If organs remain, require in-place two-step confirmation (Section 7, Check 15)
+      // Two-step confirm if present items remain (Section 7, Check 15)
       if (remainingCount > 0 && confirmAction !== actionType) {
         confirmAction = actionType;
         const origText = actionType === 'feast' ? 'FEAST' : 'LEAVE';
         const origIcon = actionType === 'feast' ? '🩸' : '🚪';
 
-        btnEl.querySelector('.btn-text').textContent = `CONFIRM: forfeit ${remainingCount} organs`;
+        btnEl.querySelector('.btn-text').textContent = `CONFIRM: forfeit ${remainingCount} slots`;
         btnEl.classList.add('confirming');
 
         if (confirmTimer) clearTimeout(confirmTimer);
@@ -416,7 +466,6 @@ export function createSurgery({ root, audio, content, onLog = null }) {
         return;
       }
 
-      // Confirmed
       if (confirmTimer) clearTimeout(confirmTimer);
       handleAction({ type: actionType });
     }
@@ -426,7 +475,7 @@ export function createSurgery({ root, audio, content, onLog = null }) {
 
       calValEl.textContent = state.calories;
       suturesValEl.textContent = state.sutures;
-      sacCountEl.textContent = state.extractedOrgans.length;
+      sacCountEl.textContent = state.extractedItems.length;
 
       // Pulse readout
       if (input.state === 'living') {
@@ -437,20 +486,30 @@ export function createSurgery({ root, audio, content, onLog = null }) {
         }
       }
 
-      // Sync each organ callout tag
-      calloutManager.organEntries.forEach(entry => {
-        const { id, def, tag, hitG } = entry;
-        const check = session.canAct({ type: 'extract', id });
+      // Update dynamic carcass feast calories
+      const feastBtn = root.querySelector('.btn-feast');
+      if (feastBtn && confirmAction !== 'feast') {
+        const feastCal = state.remainingFeastCalories !== undefined ? state.remainingFeastCalories : (session.getRemainingFeastCalories ? session.getRemainingFeastCalories() : 0);
+        feastBtn.querySelector('.btn-text').textContent = `FEAST (+${feastCal} Cal)`;
+      }
 
-        const isExtracted = state.extractedOrgans.some(o => o.id === id);
-        const isDestroyed = state.destroyedOrgans.some(o => o.id === id);
-        const isLost = state.lostOrgans.some(o => o.id === id);
+      // Sync each slot tag
+      calloutManager.slotEntries.forEach(entry => {
+        const { id, slot, present, tag, hitG } = entry;
+        if (!present) return; // Ghost tags are already static
+
+        const isExtracted = state.extractedItems.some(o => o.slotId === id);
+        const isDestroyed = state.destroyedItems.some(o => o.slotId === id);
+        const isRuptured = state.rupturedItems.some(o => o.slotId === id);
+        const isLost = state.lostItems.some(o => o.slotId === id);
 
         tag.classList.toggle('is-extracted', isExtracted);
         tag.classList.toggle('is-destroyed', isDestroyed);
+        tag.classList.toggle('is-ruptured', isRuptured);
         tag.classList.toggle('is-lost', isLost);
         hitG.classList.toggle('is-extracted', isExtracted);
         hitG.classList.toggle('is-destroyed', isDestroyed);
+        hitG.classList.toggle('is-ruptured', isRuptured);
         hitG.classList.toggle('is-lost', isLost);
 
         const badgesEl = tag.querySelector('.tag-badges');
@@ -460,8 +519,9 @@ export function createSurgery({ root, audio, content, onLog = null }) {
 
         if (isExtracted) {
           tag.disabled = true;
-          const ext = state.extractedOrgans.find(o => o.id === id);
-          badgesEl.innerHTML = `<span class="badge badge-success">${(ext.quality || 'intact').toUpperCase()}</span>`;
+          const ext = state.extractedItems.find(o => o.slotId === id);
+          const band = getConditionBand(ext.condition);
+          badgesEl.innerHTML = `<span class="badge badge-success">${ext.condition}% ${band.label}</span>`;
           return;
         }
 
@@ -471,37 +531,58 @@ export function createSurgery({ root, audio, content, onLog = null }) {
           return;
         }
 
-        if (isLost) {
+        if (isRuptured) {
           tag.disabled = true;
-          badgesEl.innerHTML = `<span class="badge badge-lost">NECROSIS</span>`;
+          badgesEl.innerHTML = `<span class="badge badge-ruptured">RUPTURED</span>`;
           return;
         }
 
-        // Live calculation of effective costs and success %
-        const calCost = CONFIG.RARITY_CALORIE_COST[def.rarity] || 1;
-        const pulseCost = session.getOrganPulseCost(def);
+        if (isLost) {
+          tag.disabled = true;
+          badgesEl.innerHTML = `<span class="badge badge-lost">FORFEITED</span>`;
+          return;
+        }
+
+        // Live costs calculation
+        const calCost = session.getSlotCalorieCost(slot);
+        const pulseCost = session.getSlotPulseCost(slot);
         tag.querySelector('.val-cal').textContent = `${calCost}`;
-        tag.querySelector('.val-pulse').textContent = `-${pulseCost}`;
+        tag.querySelector('.val-pulse').textContent = slot.killsPulse ? '-100' : `-${pulseCost}`;
+        tag.querySelector('.val-pulse').classList.toggle('kills-pulse-val', Boolean(slot.killsPulse));
 
-        if (def.slowedByClamp && def.slowedByClamp.some(cId => state.appliedClamps.includes(cId))) {
-          tag.querySelector('.val-pulse').classList.add('discounted');
+        // Check if protected by applied clamp
+        const isClamped = state.appliedClamps.some(cId => {
+          const cp = resolvedSpecimen.clampPoints?.find(p => p.id === cId);
+          return cp?.protects?.includes(slot.region);
+        });
+        tag.querySelector('.val-pulse').classList.toggle('discounted', isClamped && !slot.killsPulse);
+
+        // Badges: FRAGILE, KILLS PULSE (N rot), REQUIRES
+        entry.fragileRemainingCount = state.fragileRemaining;
+
+        entry.syncBadges = () => {
+          badgesEl.innerHTML = '';
+          if (slot.tags?.includes('fragile')) {
+            badgesEl.innerHTML += `<span class="badge badge-fragile">FRAGILE</span>`;
+          }
+          if (slot.killsPulse) {
+            const rotCount = state.fragileRemaining;
+            badgesEl.innerHTML += `<span class="badge badge-danger">KILLS PULSE (${rotCount} rot)</span>`;
+          }
+          if (slot.requires && slot.requires.length > 0) {
+            const reqs = slot.requires.map(r => {
+              const reqS = resolvedSpecimen.slots.find(s => s.id === r);
+              return reqS?.name || r;
+            }).join(', ');
+            badgesEl.innerHTML += `<span class="badge badge-req">REQ: ${reqs}</span>`;
+          }
+        };
+
+        if (!tag.classList.contains('confirming-kill-pulse')) {
+          entry.syncBadges();
         }
 
-        // Badges
-        if (def.tags?.includes('fragile')) {
-          badgesEl.innerHTML += `<span class="badge badge-fragile">FRAGILE</span>`;
-        }
-        if (def.killsPulse) {
-          badgesEl.innerHTML += `<span class="badge badge-danger">KILLS PULSE</span>`;
-        }
-        if (def.requires && def.requires.length > 0) {
-          const reqs = def.requires.map(r => {
-            const reqO = specimenDef.organs.find(o => o.id === r);
-            return reqO?.name || r;
-          }).join(', ');
-          badgesEl.innerHTML += `<span class="badge badge-req">REQ: ${reqs}</span>`;
-        }
-
+        const check = session.canAct({ type: 'extract', id });
         if (!check.ok) {
           tag.disabled = true;
           tag.classList.add('is-disabled');
@@ -510,12 +591,6 @@ export function createSurgery({ root, audio, content, onLog = null }) {
           tag.disabled = false;
           tag.classList.remove('is-disabled');
         }
-
-        // Effective success rate preview
-        const effSuccess = calculateLiveSuccessPct(def, state, input);
-        tag.querySelector('.val-success').textContent = `${Math.round(effSuccess)}%`;
-
-        tag.setAttribute('aria-label', `${def.name} (${def.rarity}). Success: ${Math.round(effSuccess)}%. Pulse cost: ${pulseCost}. Calorie cost: ${calCost}. ${check.reason ? 'Disabled: ' + check.reason : 'Ready to extract'}`);
       });
 
       // Sync Clamps
@@ -530,32 +605,12 @@ export function createSurgery({ root, audio, content, onLog = null }) {
 
       calloutManager.updateAllLeaders();
     }
-
-    function calculateLiveSuccessPct(organ, state, inp) {
-      const surgerySkill = inp.player.surgerySkill || 0;
-      const precisionBonus = inp.player.precisionBonus || 0;
-      const rarityPenalty = CONFIG.RARITY_PENALTY[organ.rarity] || 0;
-      const isWounded = inp.damage?.woundedRegions?.includes(organ.region);
-      const woundPenalty = isWounded ? CONFIG.WOUND_PENALTY : 0;
-
-      let fragilePenalty = 0;
-      if (organ.tags?.includes('fragile') && inp.state === 'living' && state.pulse < CONFIG.FRAGILE_PULSE_THRESHOLD) {
-        fragilePenalty = (CONFIG.FRAGILE_PULSE_THRESHOLD - state.pulse) / 2;
-      }
-
-      let successPct = organ.baseSuccessPct
-        + CONFIG.SKILL_BONUS * surgerySkill
-        + precisionBonus
-        - rarityPenalty
-        - woundPenalty
-        - fragilePenalty;
-
-      return Math.max(CONFIG.SUCCESS_PCT_MIN, Math.min(CONFIG.SUCCESS_PCT_MAX, successPct));
-    }
   }
 
   return {
     run,
-    destroy
+    destroy,
+    getSession: () => activeSession,
+    getBody: () => activeSession ? activeSession.bodyInstance : null
   };
 }
