@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="26.0mm" height="121.0mm" viewBox="-13.0 -60.5 26.0 121.0">
+  <rect x="-10.0" y="-57.5" width="20" height="115" fill="none" stroke="#999" stroke-width="0.05"/>
+  <text x="0.00" y="-53.30" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">WS2812B LED</text>
+  <text x="-2.54" y="-48.20" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">5V</text>
+  <text x="0.00" y="-48.20" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">DAT</text>
+  <text x="2.54" y="-48.20" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="-4.20" y="-47.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">HAP_L</text>
+  <text x="-5.80" y="-48.77" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">+</text>
+  <text x="-5.80" y="-46.23" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">-</text>
+  <text x="4.20" y="-47.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">HAP_R</text>
+  <text x="5.80" y="-48.77" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">+</text>
+  <text x="5.80" y="-46.23" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">-</text>
+  <text x="-2.60" y="-46.50" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">Q_LPWR</text>
+  <text x="-2.60" y="-45.70" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D</text>
+  <text x="-3.55" y="-42.20" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G</text>
+  <text x="-1.65" y="-42.20" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">S</text>
+  <text x="-5.80" y="-45.70" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">100k</text>
+  <text x="2.60" y="-46.50" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">Q_LEN</text>
+  <text x="2.60" y="-45.70" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D</text>
+  <text x="1.65" y="-42.20" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G</text>
+  <text x="3.55" y="-42.20" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">S</text>
+  <text x="5.80" y="-45.70" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">10k</text>
+  <text x="0.00" y="-41.10" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">Q1 AO3400A</text>
+  <text x="0.00" y="-40.30" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D</text>
+  <text x="-1.00" y="-36.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G</text>
+  <text x="1.00" y="-36.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">S</text>
+  <text x="-3.20" y="-40.30" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">10k</text>
+  <text x="5.00" y="-40.30" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D_HAP</text>
+  <text x="3.20" y="-36.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">A</text>
+  <text x="6.80" y="-36.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">K</text>
+  <text x="0.00" y="-35.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">MPU6050/6500</text>
+  <text x="1.80" y="-34.39" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VCC</text>
+  <text x="1.80" y="-31.85" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="1.80" y="-29.31" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SCL</text>
+  <text x="1.80" y="-26.77" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SDA</text>
+  <text x="1.80" y="-24.23" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">XDA</text>
+  <text x="1.80" y="-21.69" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">XCL</text>
+  <text x="1.80" y="-19.15" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">AD0</text>
+  <text x="1.80" y="-16.61" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">INT</text>
+  <text x="0.00" y="-13.50" font-family="Courier New, monospace" font-size="0.85" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">By Dillon Simeone</text>
+  <text x="0.00" y="-2.00" font-family="Courier New, monospace" font-size="1.00" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">ESP32-C3 SUPERMINI</text>
+  <text x="-7.00" y="-10.89" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">5V</text>
+  <text x="7.00" y="-10.89" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO5</text>
+  <text x="-7.00" y="-8.35" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="7.00" y="-8.35" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO6</text>
+  <text x="-7.00" y="-5.81" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">3V3</text>
+  <text x="7.00" y="-5.81" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO7</text>
+  <text x="-7.00" y="-3.27" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO0</text>
+  <text x="7.00" y="-3.27" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO8</text>
+  <text x="-7.00" y="-0.73" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO1</text>
+  <text x="7.00" y="-0.73" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO9</text>
+  <text x="-7.00" y="1.81" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO2</text>
+  <text x="7.00" y="1.81" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO10</text>
+  <text x="-7.00" y="4.35" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO3</text>
+  <text x="7.00" y="4.35" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">RX</text>
+  <text x="-7.00" y="6.89" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO4</text>
+  <text x="7.00" y="6.89" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">TX</text>
+  <text x="0.00" y="13.00" font-family="Courier New, monospace" font-size="0.95" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">INMP441 I2S</text>
+  <text x="-5.40" y="16.96" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SCK</text>
+  <text x="-5.40" y="19.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">WS</text>
+  <text x="-5.40" y="22.04" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">L/R</text>
+  <text x="5.40" y="16.96" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SD</text>
+  <text x="5.40" y="19.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VDD</text>
+  <text x="5.40" y="22.04" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="0.00" y="25.00" font-family="Courier New, monospace" font-size="0.90" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">MAX4466</text>
+  <text x="-2.54" y="30.10" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VCC</text>
+  <text x="0.00" y="30.10" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="2.54" y="30.10" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">OUT</text>
+  <text x="-1.50" y="33.50" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">100k</text>
+  <text x="2.00" y="33.50" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">Q_PWR</text>
+  <text x="0.80" y="35.00" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D</text>
+  <text x="1.05" y="38.40" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G</text>
+  <text x="2.95" y="38.40" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">S</text>
+  <text x="6.40" y="33.00" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D_PWR</text>
+  <text x="4.75" y="37.20" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">K</text>
+  <text x="8.05" y="37.20" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">A</text>
+  <text x="-3.70" y="39.50" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">U_CHG</text>
+  <text x="-7.45" y="37.10" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">PROG</text>
+  <text x="-5.55" y="37.10" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VIN</text>
+  <text x="-7.45" y="41.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">STAT</text>
+  <text x="-6.50" y="41.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="-5.55" y="41.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VBAT</text>
+  <text x="-6.50" y="33.30" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">2k PROG</text>
+  <text x="-4.20" y="45.30" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">C_VIN</text>
+  <text x="-8.80" y="45.30" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">C_BAT</text>
+  <text x="5.23" y="42.00" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">BAT+</text>
+  <text x="7.77" y="42.00" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VSYS</text>
+  <text x="6.50" y="43.70" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SW_EXT</text>
+  <text x="0.00" y="47.30" font-family="Courier New, monospace" font-size="0.85" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">1S LiPo</text>
+  <text x="-2.00" y="53.70" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">BAT+</text>
+  <text x="2.00" y="53.70" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">BAT-</text>
+</svg>

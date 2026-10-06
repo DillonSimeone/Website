@@ -9,7 +9,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "@tscircuit/core": "^0.0.1361",
     "circuit-json-to-gerber": "^0.0.78",
