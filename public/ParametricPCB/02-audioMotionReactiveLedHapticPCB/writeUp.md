@@ -1,13 +1,19 @@
-# Audio & Motion Reactive Light Baton PCB (V2.0)
+# audioMotionReactiveLedHapticPCB
 ## Complete Hardware Architecture, Component Breakdown & DIY Sourcing Guide
 
 ---
 
 ## 1. Executive Summary & Mechanical Envelope
 
-The **0-2 Audio & Motion Reactive Light Baton PCB** is a specialized carrier board designed to fit inside a standard **22mm Outer Diameter (OD) / 19–20mm Inner Diameter (ID)** clear acrylic or polycarbonate baton tube. 
+The **audioMotionReactiveLedHapticPCB** is a versatile generalist carrier board designed for Dillon's reactive haptic and LED projects, wearable tech, pocketable gadgets, dynamic light batons, and interactive installations. It fits inside a standard **22mm Outer Diameter (OD) / 19–20mm Inner Diameter (ID)** cylindrical tube or custom enclosure.
 
 * **Board Dimensions**: 20.0 mm (W) × 115.0 mm (L) × 1.6 mm (FR4 thickness)
+* **Side-Mounted IMU Architecture**: The 8-pin universal IMU header is positioned along the **left edge ($x = -6.8\text{mm}$, $y = 28.5\text{mm}$)**. Because standard GY-521 / GY-6500 boards place their connector along one edge, mounting the header at $x = -6.8\text{mm}$ allows the 15.6mm wide IMU board body to sit **inward over the PCB substrate (spanning $x = -8.3\text{mm}$ to $+7.3\text{mm}$)** with **0mm protrusion beyond the 20mm tube perimeter**! Pin 8 (`INT` at $y = 19.61\text{mm}$) has a generous **$5.11\text{mm}$ vertical clearance** above `J_LED3` ($y = 14.5\text{mm}$), eliminating pin proximity crowding.
+* **3-Channel Addressable LED Output Architecture**: The board provides **3 independent 3-pin addressable LED ports** (`J_LED1` at Top Tip on GPIO 6, `J_LED2` at Upper Right on GPIO 20/RX, `J_LED3` at Upper Left on GPIO 21/TX). All three headers share the switched 5V rail (`NET_5V_LED_SW`) controlled by `Q_LED_PWR`, completely cutting power during sleep with zero quiescent current.
+* **Dedicated User Action / Boot Mode Button Header (`J_BTN`)**: Placed at $y = -12.0\text{mm}$ below the MCU, providing a 2-pin header (`Pin 1: GPIO 9`, `Pin 2: GND`). Connected to the ESP32-C3 BOOT pin with internal pull-up, it guarantees 100% reliable SPI flash booting while giving user firmware a hardware mode/trigger button (or manual download boot if held at power-up).
+* **Zero Strapping Pin Conflicts**: Pin mapping strictly complies with ESP32-C3 boot modes (GPIO 2 pulled HIGH via I2C pullup, GPIO 8 pulled HIGH via onboard LED and connected to High-Z INMP441 SD, GPIO 9 held HIGH via internal pull-up on `J_BTN`, and GPIO 10 used for high-side switch enable with 10kΩ pull-down).
+* **Safe Charger Center Clearance**: `U_CHG`, `R_PROG`, `C_VIN`, and `C_BAT` are shifted inward towards the board center ($x = -4.5\text{mm}$ and $-5.8\text{mm}$), leaving $> 3.8\text{mm}$ of clearance from the board boundary.
+* **Onboard 2-Column Pinout Silkscreen Map**: In the open area adjacent to the side-mounted IMU ($x \in [-4\text{mm}, +8\text{mm}]$), a high-contrast 2-column reference table lists every GPIO and peripheral assignment directly on both the Top and Bottom copper/silkscreen layers.
 * **M3 Corner Mounting Holes**: 4× symmetric plated mounting holes with **Ø3.2mm clearance drill** (fits standard M3 screws) and **Ø4.8mm copper annular ring pads**. Centered at $(\pm 6.5\text{mm}, \pm 53.5\text{mm})$ forming a precise **$13.0\text{mm} \times 107.0\text{mm}$** mounting pattern for baton end-caps, chassis rails, or standoffs.
 * **Form Factor Architecture**: Split-architecture hybrid design featuring **turnkey pre-assembled SMT active power electronics** (MOSFETs, auto power-path switching, diodes, passive filters, and LiPo charger) paired with **dual-mount (Through-Hole + SMD castellated) sockets** for pluggable off-the-shelf micro-modules (ESP32-C3 SuperMini, GY-521 MPU-6050, INMP441, MAX4466).
 * **Power Architecture**: 1S Li-ion / LiPo battery input (3.7V nominal / 4.2V peak) with onboard 500mA USB-C linear charging and instant zero-loss hardware power-path switching.
@@ -18,7 +24,7 @@ The **0-2 Audio & Motion Reactive Light Baton PCB** is a specialized carrier boa
 
 ```
 +----------------------------------------------------------------------------------------------------------------+
-|                                        BATON HARDWARE BLOCK DIAGRAM                                            |
+|                                  HARDWARE ARCHITECTURE BLOCK DIAGRAM                                           |
 |                                                                                                                |
 |   [ USB 5V In ] ----> [ D_PWR (B5819W) ] ----------------------------+                                         |
 |         |                     |                                      |                                         |
@@ -26,21 +32,23 @@ The **0-2 Audio & Motion Reactive Light Baton PCB** is a specialized carrier boa
 |  [ U_CHG: TP4054 ]      [ Q_PWR Gate ]                        [ NET_VSYS Rail ]                                |
 |         |                     |                                      |                                         |
 |         | (500mA)             v                                      +----> [ ESP32-C3 MCU ]                   |
-|         v             [ Q_PWR (AO3401A) ]                            |       (GPIO 0,1,2,3,4,5,6,7,8,10)       |
+|         v             [ Q_PWR (AO3401A) ]                            |       (13 GPIO Channels Active)         |
 |   [ J_BAT (3.7V) ] --------> Source -> Drain ------------------------+       |                                 |
-|         |                                                            |       |                                 |
-|   [ SW_EXT Switch ]                                                  |       | [ GPIO 8 (LED Enable) ]         |
-|                                                                      |       |        |                        |
+|         |                                                            |       | [ GPIO 10 (LED Power Enable) ]  |
+|   [ SW_EXT Switch ]                                                  |       |        |                        |
 |                                                                      |       |        v                        |
 |   [ Q_LED_PWR (AO3401A P-FET) ] <--- Source [ NET_VSYS ]             |       |  [ Q_LED_EN: AO3400A N-FET ]    |
 |         | Drain                                                      |       |  [ R_LED_GATE: 10k Pull-Down ]  |
-|         v                                                            |       |        |                        |
-|   [ J_LED (WS2812B Strip) ] <--- DAT [ GPIO 6 ]                      |       +--------+ (P-FET Gate Driver)    |
-|   (Eliminates 50-75mA sleep drain!)                                  |       |  [ R_LED_PU: 100k Pull-Up ]     |
-|                                                                      |                                         |
+|         v [ NET_5V_LED_SW ] (Zero Quiescent Sleep)                   |       |        |                        |
+|         +---------------------------------------------+              |       +--------+ (P-FET Gate Driver)    |
+|         |                      |                      |              |       |  [ R_LED_PU: 100k Pull-Up ]     |
+|         v                      v                      v              |                                         |
+|   [ J_LED1 (Top) ]       [ J_LED2 (Mid R) ]     [ J_LED3 (Mid L) ]   |   [ J_BTN (Mode / Boot Pin) ]           |
+|     DATA: GPIO 6           DATA: GPIO 20          DATA: GPIO 21      |     Pin 1: GPIO 9 (Internal Pull-Up)    |
+|                                                                      |     Pin 2: GND                          |
 |   [ Haptic PWM GPIO 7 ] ----> [ Q_FET: AO3400A ] <----+----+---------+----> [ J_HAP_L / J_HAP_R ] (Motors)     |
 |                               [ R_GATE: 10k Pull ]     |    |        |                                         |
-|                               [ D_HAP: B5819W Flyback ]+----+        +----> [ MPU-6050 IMU ]                   |
+|                               [ D_HAP: B5819W Flyback ]+----+        +----> [ MPU-6050 IMU (Side Mount) ]      |
 |                                                                      +----> [ INMP441 / MAX4466 Mics ]         |
 +----------------------------------------------------------------------------------------------------------------+
 ```
@@ -60,49 +68,58 @@ The **0-2 Audio & Motion Reactive Light Baton PCB** is a specialized carrier boa
 
 #### 2. `U_IMU` — MPU-6050 / MPU-6500 6-Axis Motion Sensor Breakout (GY-521)
 * **Footprint**: 8-Pin Lengthwise Header (2.54mm pitch)
+* **Placement**: Mounted along the **left edge ($x = -6.8\text{mm}$, center $y = 25.5\text{mm}$)**.
+* **Mechanical Clearance**: When a standard GY-521 breakout (15.6mm wide) is plugged into the header, its board body extends inward across the baton carrier from $x = -8.3\text{mm}$ to $+7.3\text{mm}$. It sits completely inside the 20mm tube ID with 1.7mm left clearance and 2.7mm right clearance. (Previously centered at $x = 0$, the sensor poked out past the edge by ~5mm).
 * **I2C Address**: `0x68` (Standard default)
 * **Pinout Used**: Pin 1 (`VCC` = 3.3V), Pin 2 (`GND`), Pin 3 (`SCL` = GPIO 3), Pin 4 (`SDA` = GPIO 2), Pin 8 (`INT` = GPIO 5).
-* **Why this part was chosen**:
-  * **Motion Sensing**: Combines a 3-axis gyroscope ($\pm 250^\circ / \text{s}$ to $\pm 2000^\circ / \text{s}$) and 3-axis accelerometer ($\pm 2g$ to $\pm 16g$).
-  * **Applications**: Jerk detection, twirl speed tracking, gesture recognition, orientation-aware LED light trails (POV persistence-of-vision effects), and tilt-controlled color palettes.
 * **Critical Design Detail (AD0 Ground Separation)**:
   * GY-521 breakouts feature an onboard $4.7\text{k}\Omega$ pull-down resistor from `AD0` to `GND`, establishing the default I2C address `0x68`.
-  * In our carrier PCB, **`AD0` is left unconnected**. This prevents the automated router from daisy-chaining sensor ground through high-current motor return paths, preventing motor inductive noise from corrupting delicate motion sensor readings.
+  * In our carrier PCB, **`AD0` is left unconnected**. This prevents the router from daisy-chaining sensor ground through high-current motor return paths, protecting motion sensor readings from inductive motor noise.
 
 ---
 
-### B. Audio Sensing Subsystems (Dual Acoustic Architecture)
-
-The PCB provides dedicated headers for **both** analog and digital microphone modules, allowing you to choose based on software requirements:
+### B. Audio Sensing Subsystems & GPIO Allocation Rationale
 
 #### 3. `J_MIC_MAX` — MAX4466 Analog Electret Microphone Header
 * **Footprint**: 3-Pin Header (2.54mm pitch): `VCC` (3.3V), `GND`, `OUT`
 * **Signal Pin**: Routed to **GPIO 0** (ESP32-C3 ADC1 Channel 0)
-* **Why this part was chosen**:
-  * **Simplicity & Latency**: Ultra-low-latency envelope detection. Provides an amplified analog voltage centered around a 1.65V DC bias with an adjustable gain potentiometer.
-  * **Use Case**: Fast beat detection, sudden percussion hits, instantaneous sound-reactive flash triggering with zero CPU audio processing overhead.
+* **Why MAX4466 Must Remain on GPIO 0 (ADC Constraint)**:
+  * The MAX4466 outputs a continuous analog audio waveform ($0\text{V} - 3.3\text{V}$) requiring an internal Analog-to-Digital Converter (ADC).
+  * On the ESP32-C3, only GPIO 0 through GPIO 5 have ADC hardware. The remaining pins (GPIO 9, GPIO 20, GPIO 21) are strictly digital. Routing MAX4466 to GPIO 9, 20, or 21 would completely break analog microphone functionality.
+  * GPIO 0 provides the lowest-noise ADC1 channel, ensuring clean analog sound sampling.
 
 #### 4. `J_MIC_INMP` — INMP441 Digital I2S MEMS Microphone Header
-* **Footprint**: Dual-Row 2×3 Header (2.54mm pitch): `SCK` (GPIO 4), `WS` (GPIO 1), `SD` (GPIO 10), `L/R` (GND), `VDD` (3.3V), `GND`
+* **Footprint**: Dual-Row 2×3 Header (2.54mm pitch): `SCK` (GPIO 4), `WS` (GPIO 1), `SD` (GPIO 8), `L/R` (GND), `VDD` (3.3V), `GND`
 * **Protocol**: Direct Digital I2S (Inter-IC Sound), 24-bit PCM audio stream
-* **Why this part was chosen**:
-  * **Signal Integrity**: By converting sound to digital bits inside the MEMS sensor silicon, audio is immune to analog EMI noise radiating from motor PWM and switching regulators.
-  * **DSP Capabilities**: Supplies uncompressed 16kHz–44.1kHz audio samples directly to ESP32-C3 hardware DMA buffers. Enables real-time Fast Fourier Transform (FFT) 16-band spectrum visualizers, pitch tracking, and musical frequency separation (bass/mids/treble).
+* **Why GPIO 8 is Safe for INMP441 SD (Strapping Compliance)**:
+  * At power-on reset, before I2S clocks begin, the INMP441's `SD` pin is in high-impedance (tri-state) mode.
+  * On the ESP32-C3 SuperMini, GPIO 8 has an onboard user LED with a pull-up resistor to 3.3V. This naturally pulls GPIO 8 HIGH during boot, satisfying the ESP32-C3 boot mode requirement (`GPIO 8 = 1`).
+  * Immunity to motor PWM and switching power noise. Supplies uncompressed 16kHz–44.1kHz audio samples directly to ESP32-C3 hardware DMA buffers.
 
 ---
 
-### C. Output Drivers & Actuation
- 
-#### 5. `J_LED` — WS2812B Addressable RGB LED Output Header
-* **Footprint**: 3-Pin Header (2.54mm pitch): `5V` (Switched `NET_5V_LED_SW`), `DAT` (GPIO 6), `GND`
-* **Why this part was chosen**:
-  * Directly drives addressable digital LED strips (Neopixel / WS2812B / SK6812) along the baton spine.
-  * Powered from the dedicated high-side switched rail `NET_5V_LED_SW` (isolated from the ESP32's sensitive 3.3V LDO).
+### C. 3-Channel Addressable LED Output Architecture & User Button
+
+#### 5. `J_LED1`, `J_LED2`, `J_LED3` — Triple Addressable LED Headers
+* **`J_LED1` (Main Top Tip)**: Pin 1 = 5V_SW, Pin 2 = DATA (GPIO 6), Pin 3 = GND ($y = 50.5\text{mm}$, $x = 0$)
+* **`J_LED2` (Aux Right Upper)**: Pin 1 = 5V_SW, Pin 2 = DATA (GPIO 20 / RX), Pin 3 = GND ($y = 14.5\text{mm}$, $x = +4.5\text{mm}$)
+* **`J_LED3` (Aux Left Upper)**: Pin 1 = 5V_SW, Pin 2 = DATA (GPIO 21 / TX), Pin 3 = GND ($y = 14.5\text{mm}$, $x = -4.5\text{mm}$)
+* **Unified High-Side Power Control**:
+  * All 3 LED ports have their VCC pins connected to `NET_5V_LED_SW`, driven by `Q_LED_PWR`.
+  * When entering deep sleep, firmware de-asserts GPIO 10, completely shutting off power to all connected LED strips across all 3 headers, eliminating 50–75mA parasitic quiescent drain!
+
+#### 5b. `J_BTN` — External User Action / Boot Mode Button Header
+* **Footprint**: 2-Pin Header (2.54mm pitch): Pin 1 = `BTN` (GPIO 9), Pin 2 = `GND` ($y = -12.0\text{mm}$, $x = 0$)
+* **Why GPIO 9 is Reserved for a Button (Strapping Compliance)**:
+  * On the ESP32-C3, GPIO 9 is the primary BOOT strapping pin. Pulling GPIO 9 LOW during power-on triggers the serial download bootloader, while leaving it HIGH executes normal SPI flash boot.
+  * If an unpowered LED strip were attached to GPIO 9, its unpowered ESD clamp diode would drag GPIO 9 LOW on startup, bricking normal boot!
+  * By dedicating GPIO 9 to an open pushbutton (`J_BTN`), the chip's internal weak pull-up holds GPIO 9 HIGH, ensuring 100% reliable booting from flash.
+  * During runtime, firmware uses `J_BTN` as a multi-function user button (single click, double click, hold) for switching animation modes, color palettes, or sensitivity profiles.
 
 #### 6. High-Side WS2812B Power Switch Architecture
 * **The Parasitic Quiescent Drain Problem**:
   * Each WS2812B integrated driver IC contains an internal oscillator, shift register, and constant-current drive circuitry. Even when commanded to turn all LEDs "off" (RGB `0, 0, 0`), each pixel draws **0.8mA to 1.2mA** of continuous quiescent supply current.
-  * For a typical 64-LED baton strip, that is a constant **50mA to 75mA parasitic leak** while sitting idle.
+  * For a typical 64-LED strip, that is a constant **50mA to 75mA parasitic leak** while sitting idle.
   * On a typical 500mAh–1000mAh single-cell LiPo battery, that parasitic drain alone depletes the battery from 100% to dead in **8 to 15 hours**, rendering battery sleep modes useless.
 * **Why Low-Side N-FET Switching Is Dangerous (CMOS Latchup Risk)**:
   * Switching the LED strip's ground line with a low-side N-FET leaves the LED strip 5V rail connected while disconnecting ground.
@@ -125,30 +142,28 @@ The PCB provides dedicated headers for **both** analog and digital microphone mo
 #### 9. `Q_LED_EN` — AO3400A N-Channel SOT-23 Pre-Driver MOSFET
 * **Footprint**: SOT-23 (Surface Mount)
 * **Ratings**: $V_{DS} = 30\text{V}$, $I_D = 5.7\text{A}$, $V_{GS(th)} \approx 0.9\text{V} - 1.4\text{V}$
-* **Control**: Driven by **GPIO 8** (ESP32-C3)
-* **Why the N-Channel Pre-Driver is Essential**:
-  * The baton rail voltage ranges from 3.7V to 4.2V on battery, and up to 5.0V on USB.
-  * If the ESP32-C3's 3.3V GPIO were connected directly to the P-MOSFET gate:
-    $$V_{GS} = 3.3\text{V} - 5.0\text{V} = -1.7\text{V} \quad (\text{or } 3.3\text{V} - 4.2\text{V} = -0.9\text{V})$$
-    Because the AO3401A threshold voltage is $-0.6\text{V}$ to $-1.3\text{V}$, a 3.3V logic high would **leave the P-FET partially conducting or severely leaking**!
-  * Using the AO3400A N-FET pre-driver completely decouples logic level from rail voltage: when GPIO 8 is HIGH (3.3V), the N-FET turns ON and pulls the P-FET gate cleanly to 0V (GND), driving $V_{GS}$ to a full $-3.7\text{V}$ to $-5.0\text{V}$ for hard saturation.
+* **Control**: Driven by **GPIO 10** (ESP32-C3)
+* **Why Driven by GPIO 10 Instead of GPIO 8 (Strapping Isolation)**:
+  * GPIO 10 is a non-strapping, pure digital GPIO on the ESP32-C3.
+  * Connecting `Q_LED_EN`'s gate (and its essential 10kΩ pull-down resistor `R_LED_GATE`) to GPIO 10 ensures that the pull-down **never pulls a boot strapping pin to ground**.
+  * Using the AO3400A N-FET pre-driver completely decouples logic level from rail voltage: when GPIO 10 is HIGH (3.3V), the N-FET turns ON and pulls the P-FET gate cleanly to 0V (GND), driving $V_{GS}$ to a full $-3.7\text{V}$ to $-5.0\text{V}$ for hard saturation.
 
 #### 10. `R_LED_GATE` — 10kΩ 1% 0603 Pre-Driver Pull-Down Resistor
-* **Connection**: Connected between `Q_LED_EN` Gate (Pin 1) and `GND` (Pin 2).
-* **Function**: Ensures the pre-driver gate stays solidly at 0V during microcontroller power-up resets and deep sleep modes when GPIO 8 floats high-impedance.
+* **Connection**: Connected between `Q_LED_EN` Gate (Pin 1) and `GND` (Pin 2) on GPIO 10.
+* **Function**: Ensures the pre-driver gate stays solidly at 0V during microcontroller power-up resets and deep sleep modes when GPIO 10 floats high-impedance.
 
 #### 11. Recommended Firmware Power Sequencing Protocol
 To avoid phantom-powering the LED strip through the data line, firmware should execute this sequence:
 * **Power-On Sequence**:
   1. Configure `DATA` pin (GPIO 6) as `OUTPUT` and drive `LOW`.
   2. Wait $1\text{ms}$.
-  3. Assert `LED_PWR_EN` (GPIO 8) `HIGH` to engage the high-side switch.
+  3. Assert `LED_PWR_EN` (GPIO 10) `HIGH` to engage the high-side switch.
   4. Wait $2\text{ms}$ for supply rail decoupling capacitors to charge and stabilize.
   5. Begin transmitting WS2812B RMT pulse stream.
 * **Standby / Power-Down Sequence**:
   1. Write RGB `(0, 0, 0)` to all pixels and latch.
   2. Drive `DATA` pin (GPIO 6) firmly `LOW`.
-  3. De-assert `LED_PWR_EN` (GPIO 8) `LOW` to cut the 5V rail.
+  3. De-assert `LED_PWR_EN` (GPIO 10) `LOW` to cut the 5V rail.
   4. Configure `DATA` pin as `INPUT` with internal pull-down (or hold LOW) before entering ESP32 deep sleep.
 
 ---

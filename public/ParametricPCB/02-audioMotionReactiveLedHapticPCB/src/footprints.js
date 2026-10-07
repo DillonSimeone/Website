@@ -388,21 +388,26 @@ export function DiodeSOD123({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0,
 }
 
 /**
- * SOT-23 P-Channel Power MOSFET (AO3401A) for Auto Power-Path
- * pin1: Gate (G), pin2: Source (S), pin3: Drain (D)
+ * SOT-23 P-Channel Power MOSFET (AO3401A) - Standardized SOT-23 pinout (1: G, 2: S, 3: D)
+ * Single source of truth: aliases directly to SOT23_MOSFET.
  */
-export function SOT23_PMOSFET({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0 }) {
+export const SOT23_PMOSFET = SOT23_MOSFET;
+
+/**
+ * External User Action / Boot Mode Button Header (2 Plated Through-Hole Pads)
+ */
+export function ButtonHeader({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0 }) {
   return React.createElement("chip", {
     name,
     pcbX,
     pcbY,
     pcbRotation,
-    pinLabels: { pin1: "G", pin2: "S", pin3: "D" },
+    pinLabels: { pin1: "BTN", pin2: "GND" },
     footprint: React.createElement("footprint", null,
-      React.createElement("smtpad", { portHints: ["pin1"], pcbX: "-0.95mm", pcbY: "-1.0mm", shape: "rect", width: "0.8mm", height: "0.9mm", layer: "top" }),
-      React.createElement("smtpad", { portHints: ["pin2"], pcbX: "0.95mm", pcbY: "-1.0mm", shape: "rect", width: "0.8mm", height: "0.9mm", layer: "top" }),
-      React.createElement("smtpad", { portHints: ["pin3"], pcbX: "0mm", pcbY: "1.0mm", shape: "rect", width: "0.8mm", height: "0.9mm", layer: "top" })
+      DualPad({ key: "btn_p1", portHints: ["pin1"], pcbX: "-1.27mm", pcbY: "0mm", width: "2.0mm", holeDia: "1.0mm" }),
+      DualPad({ key: "btn_p2", portHints: ["pin2"], pcbX: "1.27mm", pcbY: "0mm", width: "2.0mm", holeDia: "1.0mm" })
     )
   });
 }
+
 

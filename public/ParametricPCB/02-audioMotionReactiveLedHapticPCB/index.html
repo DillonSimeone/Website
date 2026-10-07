@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>0-2 Audio & Motion Reactive LED Haptic PCB Configurator</title>
+  <title>audioMotionReactiveLedHapticPCB Configurator</title>
   <link rel="stylesheet" href="./style.css">
   <!-- JSZip for instant Gerber ZIP bundle export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -13,8 +13,8 @@
     <header class="app-header">
       <div class="header-left">
         <a href="../index.html" class="back-link">‹ All PCB Projects</a>
-        <h1>0-2 Audio & Motion Reactive Light Baton PCB</h1>
-        <span class="badge">ESP32-C3 SuperMini • MPU6050/6500 • MAX4466/INMP441 • MOSFET Haptics</span>
+        <h1>audioMotionReactiveLedHapticPCB</h1>
+        <span class="badge">ESP32-C3 SuperMini • MPU6050/6500 • MAX4466/INMP441 • MOSFET Haptics • High-Side Power Switch</span>
       </div>
       <div class="header-actions">
         <button id="btn-export-gerber" class="btn primary">📦 Download Gerbers (.zip)</button>
@@ -64,7 +64,7 @@
             <li><strong>Haptic Protection:</strong> D_HAP B5819W Flyback + R_GATE 10kΩ</li>
             <li><strong>Auto Power-Path:</strong> AO3401A P-MOS + B5819W + 100kΩ</li>
             <li><strong>LiPo Charger:</strong> TP4054 + 2kΩ PROG (500mA) + Caps</li>
-            <li><strong>Outputs:</strong> Dual Haptic (L/R) & WS2812B 3-Pin</li>
+            <li><strong>Outputs:</strong> Dual Haptic (L/R), 3× LED Ports (High-Side Cutoff) & Mode Button</li>
             <li><strong>Power Control:</strong> 2-Pin External Switch Header (THT)</li>
             <li><strong>Mounting:</strong> 4× M3 Corner Holes (Ø3.2mm)</li>
           </ul>
@@ -101,8 +101,18 @@
 
       <!-- VISUALIZER WORKSPACE -->
       <main class="workspace">
+        <!-- Vaporwave Cyberpunk Sun Loading Overlay -->
+        <div id="compile-overlay" class="compile-overlay vaporwave-mode" aria-hidden="true">
+          <div class="vaporwave-sun"></div>
+          <div class="vaporwave-grid"></div>
+          <div class="vaporwave-content">
+            <div class="spinner-neon"></div>
+            <span class="vaporwave-text">Updating Layout...</span>
+          </div>
+        </div>
+
         <div class="tabs-header">
-          <button class="tab-btn active" data-tab="tab-3d">3D Baton PCB</button>
+          <button class="tab-btn active" data-tab="tab-3d">3D PCB View</button>
           <button class="tab-btn" data-tab="tab-2d">2D Route & Copper</button>
           <button class="tab-btn" data-tab="tab-schematic">Pin Mapping & Block Diagram</button>
         </div>
@@ -119,12 +129,12 @@
 
         <div class="tab-content" id="tab-schematic">
           <div class="schematic-view-panel">
-            <h3>Leader Controller Architecture Map</h3>
+            <h3>Carrier Architecture Map & Strapping Pin Protection</h3>
             <pre class="schematic-ascii">
    ┌────────────────────────────────────────────────────────────────────────┐
    │ 1S LiPo (3.7V) ──► [Battery Terminals J_BAT]                           │
    │                           │                                            │
-   │ USB 5V (ESP32-C3) ──► [TP4056/MCP73831] ──► Auto Power-Path (P-MOS)    │
+   │ USB 5V (ESP32-C3) ──► [TP4054 / MCP73831] ──► Auto Power-Path (P-MOS) │
    │                           │                                            │
    │                           ▼                                            │
    │              [External 2-Pin Switch SW_EXT] ──► System VSYS (3.7-5V)   │
@@ -133,13 +143,17 @@
        ┌───────────────────────┴───────────────────────┐
        ▼                                               ▼
 ┌─────────────────────────┐               ┌─────────────────────────┐
-│ ESP32-C3 SuperMini      │               │ Actuator & LED Stage    │
-│  • GPIO 2 (SDA) ────────┼──────────────►│  • MPU6050/6500 I2C     │
-│  • GPIO 3 (SCL) ────────┼──────────────►│  • INT on GPIO 5 (Wake) │
-│  • GPIO 6 (LED Data) ───┼──────────────►│  • WS2812B Direct 3.3V  │
+│ ESP32-C3 SuperMini      │               │ Actuators, LEDs & Audio │
+│  • GPIO 2 (I2C SDA) ────┼──────────────►│  • MPU6050/6500 (I2C)   │
+│  • GPIO 3 (I2C SCL) ────┼──────────────►│  • MPU INT on GPIO 5    │
+│  • GPIO 6 (LED1 TOP) ───┼──────────────►│  • J_LED Top Tip        │
+│  • GPIO 20 (LED2 RX) ───┼──────────────►│  • J_LED2 Upper Right   │
+│  • GPIO 21 (LED3 TX) ───┼──────────────►│  • J_LED3 Upper Left    │
+│  • GPIO 10 (LED PWR EN)─┼─►[AO3400/01]──┼─► High-Side 5V Switch   │
 │  • GPIO 7 (Motor PWM) ──┼─►[AO3400A]────┼─► HAP-L & HAP-R Outputs │
+│  • GPIO 9 (Mode / Boot) ◄───────────────┼── J_BTN (Strapping Safe)│
 │  • GPIO 0 (Mic ADC) ────┼──────────────►│  • MAX4466 Analog Mic   │
-│  • GPIO 1,4,10 (I2S) ───┼──────────────►│  • INMP441 2x3 I2S Mic  │
+│  • GPIO 1,4,8 (I2S) ────┼──────────────►│  • INMP441 Digital Mic  │
 └─────────────────────────┘               └─────────────────────────┘
             </pre>
           </div>

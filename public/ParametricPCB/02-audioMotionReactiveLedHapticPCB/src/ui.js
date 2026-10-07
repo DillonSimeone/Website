@@ -21,6 +21,25 @@ const drcStatusBox = document.getElementById("drc-status-box");
 const container3D = document.getElementById("canvas-3d-container");
 const container2D = document.getElementById("svg-2d-container");
 
+// Cyberpunk Vaporwave Loading Overlay
+const compileOverlay = document.getElementById("compile-overlay");
+const vaporwaveText = compileOverlay?.querySelector(".vaporwave-text");
+
+function showLoading(msg = "Updating Layout...") {
+  if (compileOverlay) {
+    if (vaporwaveText) vaporwaveText.textContent = msg;
+    compileOverlay.classList.add("is-visible");
+    compileOverlay.setAttribute("aria-hidden", "false");
+  }
+}
+
+function hideLoading() {
+  if (compileOverlay) {
+    compileOverlay.classList.remove("is-visible");
+    compileOverlay.setAttribute("aria-hidden", "true");
+  }
+}
+
 // Tab Switching
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -345,24 +364,22 @@ function drawSilkscreenDecal(canvas, circuitJson, boardWidth, boardHeight, scale
     }
   }
 
-  // Draw silkscreen paths (e.g. QR code modules) if layer === "bottom"
-  if (layer === "bottom") {
-    const paths = circuitJson.filter(item => item.type === "pcb_silkscreen_path" && item.layer === "bottom");
-    for (const p of paths) {
-      const route = p.route || [];
-      if (route.length >= 2) {
-        const sw = (p.stroke_width || 0.32) * pxPerMm;
-        const x1 = tx(route[0].x);
-        const y1 = ty(route[0].y);
-        const x2 = tx(route[1].x);
-        const y2 = ty(route[1].y);
-        ctx.lineWidth = sw;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-      }
+  // Draw silkscreen paths (QR code on bottom, Japanese ocean wave ripples on both layers)
+  const paths = circuitJson.filter(item => item.type === "pcb_silkscreen_path" && (item.layer === layer || (!item.layer && layer === "top")));
+  for (const p of paths) {
+    const route = p.route || [];
+    if (route.length >= 2) {
+      const sw = (p.stroke_width || 0.18) * pxPerMm;
+      const x1 = tx(route[0].x);
+      const y1 = ty(route[0].y);
+      const x2 = tx(route[1].x);
+      const y2 = ty(route[1].y);
+      ctx.lineWidth = sw;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
     }
   }
 }
@@ -556,8 +573,8 @@ function renderCircuitIn2D(circuitJson, boardWidth, boardHeight) {
     U_MCU: {
       pin1: "5V (VBUS)", pin2: "GND", pin3: "3V3", pin4: "GPIO0 (Mic ADC)",
       pin5: "GPIO1 (I2S WS)", pin6: "GPIO2 (I2C SDA)", pin7: "GPIO3 (I2C SCL)", pin8: "GPIO4 (I2S SCK)",
-      pin9: "GPIO5 (IMU INT)", pin10: "GPIO6 (LED DATA)", pin11: "GPIO7 (Motor PWM)", pin12: "GPIO8",
-      pin13: "GPIO9", pin14: "GPIO10 (I2S SD)", pin15: "GPIO20 (RX)", pin16: "GPIO21 (TX)"
+      pin9: "GPIO5 (IMU INT)", pin10: "GPIO6 (LED1 DATA)", pin11: "GPIO7 (Motor PWM)", pin12: "GPIO8 (I2S SD)",
+      pin13: "GPIO9 (BTN / BOOT)", pin14: "GPIO10 (LED PWR EN)", pin15: "GPIO20 (LED2 DATA)", pin16: "GPIO21 (LED3 DATA)"
     },
     U_IMU: {
       pin1: "VCC (3.3V)", pin2: "GND", pin3: "SCL", pin4: "SDA",
@@ -590,6 +607,18 @@ function renderCircuitIn2D(circuitJson, boardWidth, boardHeight) {
     D_HAP: {
       pin1: "Cathode (K -> VSYS)", pin2: "Anode (A <- Switched Drain)"
     },
+    Q_LED_PWR: {
+      pin1: "Gate (P-MOS Pull-Up to VSYS)", pin2: "Source (VSYS)", pin3: "Drain (Switched 5V Output)"
+    },
+    Q_LED_EN: {
+      pin1: "Gate (GPIO10 Pre-Driver)", pin2: "Source (GND)", pin3: "Drain (Pulls P-MOS Gate to GND)"
+    },
+    R_LED_PU: {
+      pin1: "Gate Pull-Up", pin2: "Source (VSYS)"
+    },
+    R_LED_GATE: {
+      pin1: "Gate Pull-Down (GPIO10)", pin2: "GND"
+    },
     U_CHG: {
       pin1: "STAT (Status)", pin2: "GND", pin3: "VBAT", pin4: "VIN (5V)", pin5: "PROG"
     },
@@ -600,7 +629,16 @@ function renderCircuitIn2D(circuitJson, boardWidth, boardHeight) {
       pin1: "SCK", pin2: "WS", pin3: "L/R", pin4: "SD", pin5: "VDD (3.3V)", pin6: "GND"
     },
     J_LED: {
-      pin1: "5V (VBUS)", pin2: "DATA", pin3: "GND"
+      pin1: "5V (Switched Rail)", pin2: "DATA (GPIO6, Main Top)", pin3: "GND"
+    },
+    J_LED2: {
+      pin1: "5V (Switched Rail)", pin2: "DATA (GPIO20, Aux Right)", pin3: "GND"
+    },
+    J_LED3: {
+      pin1: "5V (Switched Rail)", pin2: "DATA (GPIO21, Aux Left)", pin3: "GND"
+    },
+    J_BTN: {
+      pin1: "BTN (GPIO9, Mode / Boot Input)", pin2: "GND"
     },
     J_HAP_L: {
       pin1: "POS (+5V)", pin2: "NEG (Switched Drain)"
@@ -794,12 +832,15 @@ function renderCircuitIn2D(circuitJson, boardWidth, boardHeight) {
   const bh = boardHeight * scale;
   const bx = cx - bw / 2;
   const by = cy - bh / 2;
-  const inmpY = -halfL + 38;
-  const chgX = -(halfW - 3.5);
-  const chgY = -halfL + 18;
-  const swX = halfW - 3.5;
-  const swY = -halfL + 18;
-  const fetY = halfL - 19;
+
+  // Single Source of Truth: Extract exact component center positions directly from circuitJson
+  const compPosMap = new Map();
+  circuitJson.filter(e => e.type === "pcb_component").forEach(c => {
+    const name = scMap.get(c.source_component_id) || c.name || "";
+    if (name && c.center) {
+      compPosMap.set(name, { x: c.center.x, y: c.center.y });
+    }
+  });
 
   // Non-overlapping Callout Generator
   function makeCallout(anchorX, anchorY, side, text, color = "#00f0ff") {
@@ -821,20 +862,32 @@ function renderCircuitIn2D(circuitJson, boardWidth, boardHeight) {
     `;
   }
 
-  const annotations = [
-    makeCallout(cx, cy - (halfL - 7) * scale, "right", "WS2812B LED (3-Pin)", "#ec4899"),
-    makeCallout(bx + 1.5 * scale, cy - (halfL - 10) * scale, "left", "Left Haptic Motor", "#fbbf24"),
-    makeCallout(bx + bw - 1.5 * scale, cy - (halfL - 10) * scale, "right", "Right Haptic Motor", "#fbbf24"),
-    makeCallout(cx, cy - (halfL - 19) * scale, "left", "AO3400A & Turnkey Snubber", "#f59e0b"),
-    makeCallout(cx, cy - (halfL - 32) * scale, "right", "MPU6050/6500 (8-Pin Vert)", "#60a5fa"),
-    makeCallout(cx, cy - 2.0 * scale, "left", "ESP32-C3 SuperMini", "#34d399"),
-    makeCallout(cx, cy - (-halfL + 38) * scale, "right", "INMP441 I2S Mic (2x3 Dual)", "#a78bfa"),
-    makeCallout(cx, cy - (-halfL + 29) * scale, "left", "MAX4466 Analog Mic (3-Pin)", "#c084fc"),
-    makeCallout(cx + 4.0 * scale, cy - (-halfL + 22.5) * scale, "right", "Turnkey Auto Power-Path", "#38bdf8"),
-    makeCallout(bx + bw - 3.5 * scale, cy - (-halfL + 18) * scale, "right", "External Switch (2-Pin)", "#fb923c"),
-    makeCallout(bx + 3.5 * scale, cy - (-halfL + 18) * scale, "left", "LiPo Charger (MCP73831)", "#f87171"),
-    makeCallout(cx, cy - (-halfL + 7) * scale, "right", "1S LiPo Battery Terminals", "#eab308")
-  ].join("\n");
+  const calloutDefs = [
+    { id: "J_LED", label: "WS2812B Tip (GPIO 6)", side: "right", color: "#ec4899" },
+    { id: "J_HAP_L", label: "Left Haptic Motor", side: "left", color: "#fbbf24" },
+    { id: "J_HAP_R", label: "Right Haptic Motor", side: "right", color: "#fbbf24" },
+    { id: "Q_LED_PWR", label: "High-Side LED Switch", side: "left", color: "#ec4899" },
+    { id: "Q_FET", label: "AO3400A & Snubber (G7)", side: "right", color: "#f59e0b" },
+    { id: "U_IMU", label: "MPU6050/6500 (Side Mount)", side: "left", color: "#60a5fa" },
+    { id: "J_LED3", label: "LED3 Aux Left (G21)", side: "left", color: "#ec4899" },
+    { id: "J_LED2", label: "LED2 Aux Right (G20)", side: "right", color: "#ec4899" },
+    { id: "U_MCU", label: "ESP32-C3 SuperMini", side: "right", color: "#34d399" },
+    { id: "J_BTN", label: "Mode Button (GPIO 9)", side: "left", color: "#38bdf8" },
+    { id: "J_MIC_INMP", label: "INMP441 I2S Mic (2x3)", side: "right", color: "#a78bfa" },
+    { id: "J_MIC_MAX", label: "MAX4466 Analog Mic (G0)", side: "left", color: "#c084fc" },
+    { id: "Q_PWR", label: "Auto Power-Path (P-MOS)", side: "right", color: "#38bdf8" },
+    { id: "SW_EXT", label: "External Switch (2-Pin)", side: "right", color: "#fb923c" },
+    { id: "U_CHG", label: "LiPo Charger (TP4054)", side: "left", color: "#f87171" },
+    { id: "J_BAT", label: "1S LiPo Terminals", side: "right", color: "#eab308" }
+  ];
+
+  const annotations = calloutDefs.map(def => {
+    const pos = compPosMap.get(def.id);
+    if (!pos) return "";
+    const anchorX = cx + pos.x * scale;
+    const anchorY = cy - pos.y * scale;
+    return makeCallout(anchorX, anchorY, def.side, def.label, def.color);
+  }).filter(Boolean).join("\n");
 
   const silkItems = circuitJson.filter(item => item.type === "pcb_silkscreen_text" && (item.layer === "top" || !item.layer));
   const silkPins = `
@@ -858,11 +911,29 @@ function renderCircuitIn2D(circuitJson, boardWidth, boardHeight) {
     </g>
   `;
 
+  const topPaths = circuitJson.filter(item => item.type === "pcb_silkscreen_path" && (item.layer === "top" || !item.layer));
+  const silkPaths = `
+    <g id="svg-silkscreen-paths" opacity="0.85">
+      ${topPaths.map(p => {
+        const route = p.route || [];
+        if (route.length < 2) return "";
+        const x1 = cx + route[0].x * scale;
+        const y1 = cy - route[0].y * scale;
+        const x2 = cx + route[1].x * scale;
+        const y2 = cy - route[1].y * scale;
+        const sw = Math.max(0.8, (p.stroke_width || 0.18) * scale);
+        return `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="#ffffff" stroke-width="${sw.toFixed(2)}" stroke-linecap="round"/>`;
+      }).join("\n")}
+    </g>
+  `;
+
   container2D.innerHTML = `
     <svg width="100%" height="100%" viewBox="0 0 ${svgW + 280} ${svgH}" class="pcb-svg" style="overflow: visible;">
       <g id="svg-viewport-group" transform="translate(140, 0)">
         <!-- Board Substrate Outline -->
         <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="#131418" stroke="#39ff14" stroke-width="2" rx="${3 * scale}"/>
+        <!-- Silkscreen Japanese Ocean Wave Ripples -->
+        ${silkPaths}
         <!-- Copper Traces -->
         ${tracesSvg}
         <!-- Plated Hole & SMT Pads -->
@@ -884,6 +955,10 @@ async function triggerCompilation(shouldRoute = false) {
   const activeBtn = shouldRoute ? btnRoute : btnRecompile;
   activeBtn.disabled = true;
   activeBtn.textContent = shouldRoute ? "Routing Traces..." : "Updating Layout...";
+  showLoading(shouldRoute ? "Routing Traces..." : "Updating Layout...");
+
+  // Yield a frame so browser paints the vaporwave overlay before thread blocks
+  await new Promise(r => setTimeout(r, 30));
 
   const t0 = performance.now();
   const width = parseFloat(inputWidth.value) || 20;
@@ -906,8 +981,10 @@ async function triggerCompilation(shouldRoute = false) {
     const pads = circuitJson.filter(item => item.type === "pcb_smtpad");
     const holes = circuitJson.filter(item => item.type === "pcb_plated_hole");
     const traces = circuitJson.filter(item => item.type === "pcb_trace");
+    const pcbComps = circuitJson.filter(item => item.type === "pcb_component");
+
     statPadCount.textContent = `${holes.length} THT + ${pads.length} SMD`;
-    statCompCount.textContent = "10";
+    statCompCount.textContent = `${pcbComps.length}`;
 
     drcStatusBox.className = "drc-box drc-pass";
     const routeMsg = shouldRoute ? ` | ${traces.length} Traces Routed` : " | Layout Only";
@@ -921,6 +998,7 @@ async function triggerCompilation(shouldRoute = false) {
     drcStatusBox.className = "drc-box drc-fail";
     drcStatusBox.textContent = `Error: ${err.message}`;
   } finally {
+    hideLoading();
     activeBtn.disabled = false;
     btnRecompile.textContent = "⚡ Update Layout";
     btnRoute.textContent = "🔀 Route Traces";
@@ -952,7 +1030,7 @@ btnExportGerber.addEventListener("click", async () => {
     const url = URL.createObjectURL(currentArtifacts.gerberZipBlob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `AudioMotionLightBaton_Gerbers_${Date.now()}.zip`;
+    a.download = `audioMotionReactiveLedHapticPCB_Gerbers_${Date.now()}.zip`;
     a.click();
     URL.revokeObjectURL(url);
   } catch (err) {
@@ -985,7 +1063,7 @@ btnExportBom.addEventListener("click", async () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `AudioMotionLightBaton_BOM_${Date.now()}.csv`;
+    a.download = `audioMotionReactiveLedHapticPCB_BOM_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   } catch (err) {
@@ -1016,7 +1094,7 @@ if (btnExportPnp) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `AudioMotionLightBaton_PNP_${Date.now()}.csv`;
+      a.download = `audioMotionReactiveLedHapticPCB_PNP_${Date.now()}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {

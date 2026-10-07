@@ -76,6 +76,30 @@ For mechanical vibration resistance and prototyping flexibility:
   - When USB 5V (`VBUS`) is connected, Gate is pulled HIGH by VBUS, switching P-MOS OFF. The LiPo battery is completely isolated from the system load and cannot back-feed or overcharge. System runs on USB power through `D_PWR`.
   - When USB 5V is unplugged, Gate is pulled LOW to GND by `R_PWR`, switching P-MOS fully ON ($R_{DS(on)} < 30\text{m}\Omega$). Battery powers system with virtually zero voltage drop.
 
+### 2.4 ESP32-C3 ADC Pin Constraints (GPIO 0–5 Only) & Peripheral Allocation
+- **Analog Hardware Limits**:
+  - The ESP32-C3 integrates two SAR ADCs:
+    - `ADC1`: Channels 0 to 4 correspond strictly to **GPIO 0, GPIO 1, GPIO 2, GPIO 3, GPIO 4**.
+    - `ADC2`: Channel 0 corresponds strictly to **GPIO 5**.
+  - **GPIO 6 through GPIO 21 DO NOT have ADC hardware.**
+- **Routing Rules**:
+  - Continuous analog audio sensors (such as the MAX4466 microphone breakout) **must** be allocated to GPIO 0–5. Never route analog audio to GPIO 9, 20 (RX), or 21 (TX).
+  - When GPIO 0–5 are occupied by digital peripherals (I2C, I2S), map the analog sensor to the remaining ADC pin (e.g., GPIO 0 / ADC1_CH0).
+  - Leftover digital pins (GPIO 9, 20, 21) can be repurposed for additional addressable LED channels, button inputs, or PWM outputs, all multiplexed through high-side power switching.
+- **Boot Strapping Pin Rules (Preventing Boot Bricking)**:
+  - `GPIO 2`: Must be HIGH during boot for SPI flash execution. Safely held HIGH by external 4.7kΩ I2C pull-ups (e.g. GY-521 SDA).
+  - `GPIO 8`: Must be HIGH for serial download boot mode. Never place a pull-down resistor on GPIO 8! (Safe for High-Z inputs like INMP441 SD).
+  - `GPIO 9`: Must be HIGH during boot for normal SPI flash boot. Never attach an unpowered LED data line to GPIO 9 because the LED's unpowered ESD protection diode will drag GPIO 9 LOW, triggering bootloader mode. Dedicate GPIO 9 to an external mode / boot button (`J_BTN`) held HIGH by the ESP32-C3's internal weak pull-up.
+  - `GPIO 10`: Non-strapping pure GPIO. Safely host high-side MOSFET pre-driver gates with 10kΩ pull-down resistors.
+
+### 2.5 Edge-Connector Breakout Placement on Narrow Enclosures (Tube Nesting)
+- **Problem**: Many popular hobby breakout boards (GY-521 MPU-6050, GY-6500, OLED displays) have their pin headers along one perimeter edge rather than on their centerline.
+  - Centering the header at $x = 0$ on a narrow PCB (e.g., 20mm wand carrier) causes the module body to hang over the board edge by 4–6mm, colliding with cylindrical enclosure walls.
+- **Rule**:
+  - Calculate the module overhang: $\text{Width}_{\text{module}} - \text{PadOffset}$.
+  - Offset the carrier PCB header towards the opposing board edge so that when the module is plugged in, its body folds inward across the PCB substrate.
+  - For a 15.6mm GY-521 on a 20mm carrier: place header at $x = -6.8\text{mm}$. The inward-facing module spans $x \in [-8.3\text{mm}, +7.3\text{mm}]$, nesting 100% within the 20mm tubular profile with comfortable clearance on both sides.
+
 ---
 
 ## 3. JLCPCB SMT Manufacturing & Assembly Rules
@@ -195,6 +219,18 @@ Prefer JLCPCB Basic and Extended parts with high reel stock to avoid reel setup 
   ```
 - Isolated single modules ($x_1 = x_2$) flash a solid circular aperture of diameter `strokeWidth`.
 - Scans cleanly with 100% optical decode fidelity on physical boards.
+
+### 5.4 Japanese Ocean Wave (Seigaiha) Ripple Silkscreen Patterns
+- **Zero Added Cost**: Standard PCB fabs (e.g., JLCPCB) include 2-layer silkscreen in the standard base pricing. Vector art paths on Top Silkscreen (`.gto`) and Bottom Silkscreen (`.gbo`) incur **$0 extra cost** as long as line widths satisfy minimum rules ($\ge 0.15\text{mm}$ / 6 mil).
+- **Geometric Construction**:
+  - Staggered grid centers ($\Delta X \approx 5.5\text{mm}$, $\Delta Y \approx 3.0\text{mm}$) with concentric semicircular arcs ($r \in [1.4\text{mm}, 2.4\text{mm}, 3.3\text{mm}]$).
+  - Trace stroke width: $0.18\text{mm}$.
+- **Clearance & Keepout Constraints**:
+  - Maintain $\ge 5.0\text{mm}$ clearance around major text blocks (mission statement, pinout tables, designer attribution).
+  - Maintain $\ge 1.2\text{mm}$ clearance around pin labels and through-hole annular rings.
+  - Maintain $\ge 7.0\text{mm}$ radial keepout around vector QR codes to avoid scanning interference.
+- **Layer Isolation Rule**:
+  - Long multi-line descriptive text blocks (e.g. mission statements) must remain strictly on the primary layer (`top`). Never mirror dense multi-line text blocks onto the bottom layer over the vector QR code.
 
 ---
 

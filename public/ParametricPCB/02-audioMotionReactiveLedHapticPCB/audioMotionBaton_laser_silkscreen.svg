@@ -1,9 +1,376 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="26.0mm" height="121.0mm" viewBox="-13.0 -60.5 26.0 121.0">
   <rect x="-10.0" y="-57.5" width="20" height="115" fill="none" stroke="#999" stroke-width="0.05"/>
-  <text x="0.00" y="-53.30" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">WS2812B LED</text>
-  <text x="-2.54" y="-48.20" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">5V</text>
-  <text x="0.00" y="-48.20" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">DAT</text>
-  <text x="2.54" y="-48.20" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <!-- Silkscreen Paths (Ripples & QR Modules) -->
+  <line x1="-7.28" y1="49.78" x2="-8.20" y2="49.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.87" y1="49.67" x2="-6.94" y2="48.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.94" y1="48.95" x2="-8.20" y2="48.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.69" y1="51.01" x2="-3.99" y2="51.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.62" y1="49.78" x2="-4.40" y2="50.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.96" y1="48.95" x2="-5.03" y2="49.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.50" y1="50.30" x2="3.72" y2="49.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.13" y1="49.67" x2="4.06" y2="48.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.04" y1="48.95" x2="5.97" y2="49.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.65" y1="49.00" x2="-7.90" y2="47.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.05" y1="49.00" x2="-4.16" y2="48.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.16" y1="48.46" x2="-4.46" y2="48.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.46" y1="48.01" x2="-4.91" y2="47.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.91" y1="47.71" x2="-5.45" y2="47.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.45" y1="47.60" x2="-5.99" y2="47.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.99" y1="47.71" x2="-6.44" y2="48.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.44" y1="48.01" x2="-6.74" y2="48.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.74" y1="48.46" x2="-6.85" y2="49.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.23" y1="48.08" x2="-3.75" y2="47.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.15" y1="47.30" x2="-7.67" y2="48.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.67" y1="48.08" x2="-7.85" y2="49.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.35" y1="49.00" x2="3.10" y2="47.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.00" y1="47.74" x2="-3.25" y2="49.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.95" y1="49.00" x2="6.84" y2="48.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.84" y1="48.46" x2="6.54" y2="48.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.54" y1="48.01" x2="6.09" y2="47.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.09" y1="47.71" x2="5.55" y2="47.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="47.60" x2="5.01" y2="47.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.01" y1="47.71" x2="4.56" y2="48.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.56" y1="48.01" x2="4.26" y2="48.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.26" y1="48.46" x2="4.15" y2="49.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.95" y1="49.00" x2="7.77" y2="48.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.77" y1="48.08" x2="7.25" y2="47.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.25" y1="47.30" x2="6.47" y2="46.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.47" y1="46.78" x2="5.55" y2="46.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="46.60" x2="4.63" y2="46.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.63" y1="46.78" x2="3.85" y2="47.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.85" y1="47.30" x2="3.33" y2="48.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.88" y1="46.67" x2="6.81" y2="45.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.81" y1="45.95" x2="5.55" y2="45.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="45.70" x2="4.29" y2="45.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.29" y1="45.95" x2="3.22" y2="46.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="8.00" y1="47.74" x2="7.75" y2="49.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.28" y1="43.78" x2="-8.20" y2="43.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.48" y1="45.08" x2="-1.00" y2="44.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.00" y1="44.30" x2="-1.78" y2="43.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.78" y1="43.78" x2="-2.70" y2="43.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-2.70" y1="43.60" x2="-3.62" y2="43.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.35" y1="44.74" x2="-0.37" y2="43.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.37" y1="43.67" x2="-1.44" y2="42.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.20" y1="46.00" x2="4.09" y2="45.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.09" y1="45.46" x2="3.79" y2="45.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.79" y1="45.01" x2="3.34" y2="44.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.34" y1="44.71" x2="2.80" y2="44.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.80" y1="44.60" x2="2.26" y2="44.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.26" y1="44.71" x2="1.81" y2="45.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.81" y1="45.01" x2="1.51" y2="45.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.72" y1="43.78" x2="2.80" y2="43.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.80" y1="43.60" x2="1.88" y2="43.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.88" y1="43.78" x2="1.10" y2="44.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.10" y1="44.30" x2="0.58" y2="45.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.80" y1="42.70" x2="1.54" y2="42.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.54" y1="42.95" x2="0.47" y2="43.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.47" y1="43.67" x2="-0.25" y2="44.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.01" y1="45.46" x2="6.90" y2="46.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.65" y1="43.00" x2="-7.90" y2="41.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.67" y1="42.08" x2="-7.85" y2="43.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.71" y1="39.95" x2="-7.78" y2="40.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.45" y1="43.00" x2="1.34" y2="42.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.34" y1="42.46" x2="1.04" y2="42.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.04" y1="42.01" x2="0.59" y2="41.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.59" y1="41.71" x2="0.05" y2="41.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.05" y1="41.60" x2="-0.49" y2="41.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.49" y1="41.71" x2="-0.94" y2="42.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.94" y1="42.01" x2="-1.24" y2="42.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.24" y1="42.46" x2="-1.35" y2="43.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.45" y1="43.00" x2="2.27" y2="42.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.27" y1="42.08" x2="1.75" y2="41.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.75" y1="41.30" x2="0.97" y2="40.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.10" y1="41.74" x2="2.38" y2="40.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.38" y1="40.67" x2="1.31" y2="39.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.50" y1="41.74" x2="2.25" y2="43.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.80" y1="40.00" x2="-6.91" y2="39.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.91" y1="39.46" x2="-7.21" y2="39.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.21" y1="39.01" x2="-7.66" y2="38.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.66" y1="38.71" x2="-8.20" y2="38.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.37" y1="37.67" x2="-1.44" y2="36.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.65" y1="37.00" x2="-7.90" y2="35.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.15" y1="35.30" x2="-7.67" y2="36.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.67" y1="36.08" x2="-7.85" y2="37.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.94" y1="36.01" x2="-1.24" y2="36.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.24" y1="36.46" x2="-1.35" y2="37.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.21" y1="33.01" x2="-7.66" y2="32.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.66" y1="32.71" x2="-8.20" y2="32.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.28" y1="31.78" x2="-8.20" y2="31.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.87" y1="31.67" x2="-6.94" y2="30.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.94" y1="30.95" x2="-8.20" y2="30.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.65" y1="31.00" x2="-7.90" y2="29.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.46" y1="30.01" x2="-4.91" y2="29.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.91" y1="29.71" x2="-5.45" y2="29.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.45" y1="29.60" x2="-5.99" y2="29.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.99" y1="29.71" x2="-6.44" y2="30.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.44" y1="30.01" x2="-6.74" y2="30.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.74" y1="30.46" x2="-6.85" y2="31.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.15" y1="29.30" x2="-7.67" y2="30.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.67" y1="30.08" x2="-7.85" y2="31.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.95" y1="31.00" x2="6.84" y2="30.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.84" y1="30.46" x2="6.54" y2="30.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.54" y1="30.01" x2="6.09" y2="29.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.09" y1="29.71" x2="5.55" y2="29.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="29.60" x2="5.01" y2="29.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.01" y1="29.71" x2="4.56" y2="30.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.95" y1="31.00" x2="7.77" y2="30.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.77" y1="30.08" x2="7.25" y2="29.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="8.00" y1="29.74" x2="7.75" y2="31.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.77" y1="18.08" x2="7.25" y2="17.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.21" y1="15.01" x2="-7.66" y2="14.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.66" y1="14.71" x2="-8.20" y2="14.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.98" y1="15.08" x2="-6.50" y2="14.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.50" y1="14.30" x2="-7.28" y2="13.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.28" y1="13.78" x2="-8.20" y2="13.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.15" y1="14.74" x2="-5.87" y2="13.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.87" y1="13.67" x2="-6.94" y2="12.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.94" y1="12.95" x2="-8.20" y2="12.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.62" y1="13.78" x2="-4.40" y2="14.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.40" y1="14.30" x2="-4.92" y2="15.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-2.70" y1="12.70" x2="-3.96" y2="12.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.96" y1="12.95" x2="-5.03" y2="13.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.03" y1="13.67" x2="-5.75" y2="14.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.02" y1="15.08" x2="4.50" y2="14.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.50" y1="14.30" x2="3.72" y2="13.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.85" y1="14.74" x2="5.13" y2="13.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.13" y1="13.67" x2="4.06" y2="12.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.06" y1="12.95" x2="2.80" y2="12.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.76" y1="14.71" x2="7.31" y2="15.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.38" y1="13.78" x2="6.60" y2="14.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.60" y1="14.30" x2="6.08" y2="15.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.04" y1="12.95" x2="5.97" y2="13.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.97" y1="13.67" x2="5.25" y2="14.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.65" y1="13.00" x2="-7.90" y2="11.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.05" y1="13.00" x2="-4.16" y2="12.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.16" y1="12.46" x2="-4.46" y2="12.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.46" y1="12.01" x2="-4.91" y2="11.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.91" y1="11.71" x2="-5.45" y2="11.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.45" y1="11.60" x2="-5.99" y2="11.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.99" y1="11.71" x2="-6.44" y2="12.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.44" y1="12.01" x2="-6.74" y2="12.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.74" y1="12.46" x2="-6.85" y2="13.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.05" y1="13.00" x2="-3.23" y2="12.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.23" y1="12.08" x2="-3.75" y2="11.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.75" y1="11.30" x2="-4.53" y2="10.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.53" y1="10.78" x2="-5.45" y2="10.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.45" y1="10.60" x2="-6.37" y2="10.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.37" y1="10.78" x2="-7.15" y2="11.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.15" y1="11.30" x2="-7.67" y2="12.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.67" y1="12.08" x2="-7.85" y2="13.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.12" y1="10.67" x2="-4.19" y2="9.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.19" y1="9.95" x2="-5.45" y2="9.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.45" y1="9.70" x2="-6.71" y2="9.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.71" y1="9.95" x2="-7.78" y2="10.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.35" y1="13.00" x2="3.10" y2="11.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.00" y1="11.74" x2="-3.25" y2="13.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.95" y1="13.00" x2="6.84" y2="12.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.84" y1="12.46" x2="6.54" y2="12.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.54" y1="12.01" x2="6.09" y2="11.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.09" y1="11.71" x2="5.55" y2="11.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="11.60" x2="5.01" y2="11.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.01" y1="11.71" x2="4.56" y2="12.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.56" y1="12.01" x2="4.26" y2="12.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.26" y1="12.46" x2="4.15" y2="13.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.95" y1="13.00" x2="7.77" y2="12.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.77" y1="12.08" x2="7.25" y2="11.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.25" y1="11.30" x2="6.47" y2="10.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.47" y1="10.78" x2="5.55" y2="10.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="10.60" x2="4.63" y2="10.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.63" y1="10.78" x2="3.85" y2="11.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.85" y1="11.30" x2="3.33" y2="12.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.33" y1="12.08" x2="3.15" y2="13.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.88" y1="10.67" x2="6.81" y2="9.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.81" y1="9.95" x2="5.55" y2="9.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="9.70" x2="4.29" y2="9.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.29" y1="9.95" x2="3.22" y2="10.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.22" y1="10.67" x2="2.50" y2="11.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="8.00" y1="11.74" x2="7.75" y2="13.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.80" y1="10.00" x2="-6.91" y2="9.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.91" y1="9.46" x2="-7.21" y2="9.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.21" y1="9.01" x2="-7.66" y2="8.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.66" y1="8.71" x2="-8.20" y2="8.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.80" y1="10.00" x2="-5.98" y2="9.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.90" y1="10.00" x2="-5.15" y2="8.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.24" y1="8.71" x2="-3.69" y2="9.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.69" y1="9.01" x2="-3.99" y2="9.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.99" y1="9.46" x2="-4.10" y2="10.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.78" y1="7.78" x2="-2.70" y2="7.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-2.70" y1="7.60" x2="-3.62" y2="7.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.62" y1="7.78" x2="-4.40" y2="8.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.40" y1="8.30" x2="-4.92" y2="9.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.92" y1="9.08" x2="-5.10" y2="10.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.37" y1="7.67" x2="-1.44" y2="6.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.44" y1="6.95" x2="-2.70" y2="6.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-2.70" y1="6.70" x2="-3.96" y2="6.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.96" y1="6.95" x2="-5.03" y2="7.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.03" y1="7.67" x2="-5.75" y2="8.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.75" y1="8.74" x2="-6.00" y2="10.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.20" y1="10.00" x2="4.09" y2="9.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.09" y1="9.46" x2="3.79" y2="9.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.79" y1="9.01" x2="3.34" y2="8.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.20" y1="10.00" x2="5.02" y2="9.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.02" y1="9.08" x2="4.50" y2="8.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.50" y1="8.30" x2="3.72" y2="7.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.72" y1="7.78" x2="2.80" y2="7.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.80" y1="7.60" x2="1.88" y2="7.78" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.10" y1="10.00" x2="5.85" y2="8.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.85" y1="8.74" x2="5.13" y2="7.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.13" y1="7.67" x2="4.06" y2="6.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.06" y1="6.95" x2="2.80" y2="6.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.80" y1="6.70" x2="1.54" y2="6.95" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.54" y1="6.95" x2="0.47" y2="7.67" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.76" y1="8.71" x2="7.31" y2="9.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.31" y1="9.01" x2="7.01" y2="9.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.01" y1="9.46" x2="6.90" y2="10.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.08" y1="9.08" x2="5.90" y2="10.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.25" y1="8.74" x2="5.00" y2="10.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.05" y1="7.00" x2="-4.16" y2="6.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.16" y1="6.46" x2="-4.46" y2="6.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-4.46" y1="6.01" x2="-4.91" y2="5.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.05" y1="7.00" x2="-3.23" y2="6.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.23" y1="6.08" x2="-3.75" y2="5.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-2.15" y1="7.00" x2="-2.40" y2="5.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.45" y1="7.00" x2="1.34" y2="6.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.34" y1="6.46" x2="1.04" y2="6.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.04" y1="6.01" x2="0.59" y2="5.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.59" y1="5.71" x2="0.05" y2="5.60" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.05" y1="5.60" x2="-0.49" y2="5.71" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.49" y1="5.71" x2="-0.94" y2="6.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.94" y1="6.01" x2="-1.24" y2="6.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.24" y1="6.46" x2="-1.35" y2="7.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.45" y1="7.00" x2="2.27" y2="6.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.27" y1="6.08" x2="1.75" y2="5.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.65" y1="5.30" x2="-2.17" y2="6.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-2.17" y1="6.08" x2="-2.35" y2="7.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.35" y1="7.00" x2="3.10" y2="5.74" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.00" y1="5.74" x2="-3.25" y2="7.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.01" y1="5.71" x2="4.56" y2="6.01" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.56" y1="6.01" x2="4.26" y2="6.46" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.26" y1="6.46" x2="4.15" y2="7.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.85" y1="5.30" x2="3.33" y2="6.08" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.33" y1="6.08" x2="3.15" y2="7.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.50" y1="5.74" x2="2.25" y2="7.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.94" y1="-17.05" x2="-8.20" y2="-17.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.48" y1="-14.92" x2="-1.00" y2="-15.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.35" y1="-15.26" x2="-0.37" y2="-16.33" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.10" y1="-15.70" x2="0.58" y2="-14.92" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.47" y1="-16.33" x2="-0.25" y2="-15.26" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.65" y1="-17.00" x2="-7.90" y2="-18.26" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.15" y1="-18.70" x2="-7.67" y2="-17.92" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.67" y1="-17.92" x2="-7.85" y2="-17.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.71" y1="-20.05" x2="-7.78" y2="-19.33" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.04" y1="-17.99" x2="0.59" y2="-18.29" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.59" y1="-18.29" x2="0.05" y2="-18.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.97" y1="-19.22" x2="0.05" y2="-19.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.38" y1="-19.33" x2="1.31" y2="-20.05" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.31" y1="-20.05" x2="0.05" y2="-20.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.05" y1="-20.30" x2="-1.21" y2="-20.05" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.47" y1="-19.22" x2="5.55" y2="-19.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="-19.40" x2="4.63" y2="-19.22" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.88" y1="-19.33" x2="6.81" y2="-20.05" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.81" y1="-20.05" x2="5.55" y2="-20.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="-20.30" x2="4.29" y2="-20.05" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.29" y1="-20.05" x2="3.22" y2="-19.33" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.80" y1="-20.00" x2="-6.91" y2="-20.54" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.91" y1="-20.54" x2="-7.21" y2="-20.99" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.21" y1="-20.99" x2="-7.66" y2="-21.29" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.66" y1="-21.29" x2="-8.20" y2="-21.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.28" y1="-22.22" x2="-8.20" y2="-22.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.94" y1="-23.05" x2="-8.20" y2="-23.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.30" y1="-20.00" x2="-1.41" y2="-20.54" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.41" y1="-20.54" x2="-1.71" y2="-20.99" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.71" y1="-20.99" x2="-2.16" y2="-21.29" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-2.16" y1="-21.29" x2="-2.70" y2="-21.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.30" y1="-20.00" x2="-0.48" y2="-20.92" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.48" y1="-20.92" x2="-1.00" y2="-21.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.00" y1="-21.70" x2="-1.78" y2="-22.22" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.78" y1="-22.22" x2="-2.70" y2="-22.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.60" y1="-20.00" x2="0.35" y2="-21.26" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.35" y1="-21.26" x2="-0.37" y2="-22.33" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.37" y1="-22.33" x2="-1.44" y2="-23.05" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-1.44" y1="-23.05" x2="-2.70" y2="-23.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.20" y1="-20.00" x2="4.09" y2="-20.54" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.09" y1="-20.54" x2="3.79" y2="-20.99" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.79" y1="-20.99" x2="3.34" y2="-21.29" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.34" y1="-21.29" x2="2.80" y2="-21.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.80" y1="-21.40" x2="2.26" y2="-21.29" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.26" y1="-21.29" x2="1.81" y2="-20.99" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.81" y1="-20.99" x2="1.51" y2="-20.54" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.51" y1="-20.54" x2="1.40" y2="-20.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.20" y1="-20.00" x2="5.02" y2="-20.92" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.02" y1="-20.92" x2="4.50" y2="-21.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.50" y1="-21.70" x2="3.72" y2="-22.22" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="3.72" y1="-22.22" x2="2.80" y2="-22.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.80" y1="-22.40" x2="1.88" y2="-22.22" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.88" y1="-22.22" x2="1.10" y2="-21.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.10" y1="-21.70" x2="0.58" y2="-20.92" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.58" y1="-20.92" x2="0.40" y2="-20.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.10" y1="-20.00" x2="5.85" y2="-21.26" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.85" y1="-21.26" x2="5.13" y2="-22.33" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.13" y1="-22.33" x2="4.06" y2="-23.05" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.06" y1="-23.05" x2="2.80" y2="-23.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="2.80" y1="-23.30" x2="1.54" y2="-23.05" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="1.54" y1="-23.05" x2="0.47" y2="-22.33" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="0.47" y1="-22.33" x2="-0.25" y2="-21.26" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.25" y1="-21.26" x2="-0.50" y2="-20.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.76" y1="-21.29" x2="7.31" y2="-20.99" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.31" y1="-20.99" x2="7.01" y2="-20.54" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.01" y1="-20.54" x2="6.90" y2="-20.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.38" y1="-22.22" x2="6.60" y2="-21.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.60" y1="-21.70" x2="6.08" y2="-20.92" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.08" y1="-20.92" x2="5.90" y2="-20.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.04" y1="-23.05" x2="5.97" y2="-22.33" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.97" y1="-22.33" x2="5.25" y2="-21.26" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.25" y1="-21.26" x2="5.00" y2="-20.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.74" y1="-23.54" x2="-6.85" y2="-23.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.67" y1="-23.92" x2="-7.85" y2="-23.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.21" y1="-32.99" x2="-7.66" y2="-33.29" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.66" y1="-33.29" x2="-8.20" y2="-33.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.28" y1="-34.22" x2="-8.20" y2="-34.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.94" y1="-35.05" x2="-8.20" y2="-35.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.65" y1="-35.00" x2="-7.90" y2="-36.26" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.74" y1="-35.54" x2="-6.85" y2="-35.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.15" y1="-36.70" x2="-7.67" y2="-35.92" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.67" y1="-35.92" x2="-7.85" y2="-35.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.94" y1="-41.05" x2="-8.20" y2="-41.30" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.65" y1="-41.00" x2="-7.90" y2="-42.26" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.45" y1="-42.40" x2="-5.99" y2="-42.29" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.99" y1="-42.29" x2="-6.44" y2="-41.99" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.44" y1="-41.99" x2="-6.74" y2="-41.54" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.74" y1="-41.54" x2="-6.85" y2="-41.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-5.45" y1="-43.40" x2="-6.37" y2="-43.22" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.37" y1="-43.22" x2="-7.15" y2="-42.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.15" y1="-42.70" x2="-7.67" y2="-41.92" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-7.67" y1="-41.92" x2="-7.85" y2="-41.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-6.71" y1="-44.05" x2="-7.78" y2="-43.33" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.54" y1="-41.99" x2="6.09" y2="-42.29" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.09" y1="-42.29" x2="5.55" y2="-42.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="5.55" y1="-42.40" x2="5.01" y2="-42.29" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.77" y1="-41.92" x2="7.25" y2="-42.70" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.25" y1="-42.70" x2="6.47" y2="-43.22" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="6.47" y1="-43.22" x2="5.55" y2="-43.40" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="7.88" y1="-43.33" x2="6.81" y2="-44.05" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-0.30" y1="-44.00" x2="-0.48" y2="-44.92" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.69" y1="-50.99" x2="-3.99" y2="-50.54" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="-3.99" y1="-50.54" x2="-4.10" y2="-50.00" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.20" y1="-50.00" x2="4.09" y2="-50.54" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <line x1="4.09" y1="-50.54" x2="3.79" y2="-50.99" stroke="black" stroke-width="0.18" stroke-linecap="round"/>
+  <!-- Silkscreen Text Labels -->
+  <text x="0.00" y="-53.30" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">LED1 (G6)</text>
+  <text x="-2.54" y="-48.20" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">5V</text>
+  <text x="0.00" y="-48.20" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D1</text>
+  <text x="2.54" y="-48.20" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="4.50" y="-17.50" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">LED2 (G20)</text>
+  <text x="1.96" y="-12.50" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">5V</text>
+  <text x="4.50" y="-12.50" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D2</text>
+  <text x="7.04" y="-12.50" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="-3.50" y="-18.20" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">LED3 (G21)</text>
+  <text x="-7.04" y="-12.50" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">5V</text>
+  <text x="-4.50" y="-12.50" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D3</text>
+  <text x="-1.96" y="-12.50" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="0.00" y="9.60" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">BTN (G9)</text>
+  <text x="-1.27" y="14.40" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G9</text>
+  <text x="1.27" y="14.40" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
   <text x="-4.20" y="-47.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">HAP_L</text>
   <text x="-5.80" y="-48.77" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">+</text>
   <text x="-5.80" y="-46.23" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">-</text>
@@ -19,7 +386,7 @@
   <text x="2.60" y="-45.70" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D</text>
   <text x="1.65" y="-42.20" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G</text>
   <text x="3.55" y="-42.20" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">S</text>
-  <text x="5.80" y="-45.70" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">10k</text>
+  <text x="5.80" y="-45.70" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">10k(G10)</text>
   <text x="0.00" y="-41.10" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">Q1 AO3400A</text>
   <text x="0.00" y="-40.30" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D</text>
   <text x="-1.00" y="-36.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G</text>
@@ -28,40 +395,62 @@
   <text x="5.00" y="-40.30" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D_HAP</text>
   <text x="3.20" y="-36.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">A</text>
   <text x="6.80" y="-36.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">K</text>
-  <text x="0.00" y="-35.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">MPU6050/6500</text>
-  <text x="1.80" y="-34.39" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VCC</text>
-  <text x="1.80" y="-31.85" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
-  <text x="1.80" y="-29.31" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SCL</text>
-  <text x="1.80" y="-26.77" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SDA</text>
-  <text x="1.80" y="-24.23" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">XDA</text>
-  <text x="1.80" y="-21.69" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">XCL</text>
-  <text x="1.80" y="-19.15" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">AD0</text>
-  <text x="1.80" y="-16.61" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">INT</text>
-  <text x="0.00" y="-13.50" font-family="Courier New, monospace" font-size="0.85" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">By Dillon Simeone</text>
-  <text x="0.00" y="-2.00" font-family="Courier New, monospace" font-size="1.00" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">ESP32-C3 SUPERMINI</text>
-  <text x="-7.00" y="-10.89" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">5V</text>
-  <text x="7.00" y="-10.89" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO5</text>
-  <text x="-7.00" y="-8.35" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
-  <text x="7.00" y="-8.35" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO6</text>
-  <text x="-7.00" y="-5.81" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">3V3</text>
-  <text x="7.00" y="-5.81" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO7</text>
-  <text x="-7.00" y="-3.27" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO0</text>
-  <text x="7.00" y="-3.27" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO8</text>
-  <text x="-7.00" y="-0.73" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO1</text>
-  <text x="7.00" y="-0.73" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO9</text>
-  <text x="-7.00" y="1.81" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO2</text>
-  <text x="7.00" y="1.81" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO10</text>
-  <text x="-7.00" y="4.35" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO3</text>
-  <text x="7.00" y="4.35" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">RX</text>
-  <text x="-7.00" y="6.89" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IO4</text>
-  <text x="7.00" y="6.89" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">TX</text>
-  <text x="0.00" y="13.00" font-family="Courier New, monospace" font-size="0.95" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">INMP441 I2S</text>
-  <text x="-5.40" y="16.96" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SCK</text>
-  <text x="-5.40" y="19.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">WS</text>
-  <text x="-5.40" y="22.04" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">L/R</text>
-  <text x="5.40" y="16.96" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SD</text>
-  <text x="5.40" y="19.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VDD</text>
-  <text x="5.40" y="22.04" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="-6.80" y="-39.00" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">IMU</text>
+  <text x="-4.80" y="-37.39" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">VCC</text>
+  <text x="-4.80" y="-34.85" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">GND</text>
+  <text x="-4.80" y="-32.31" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">SCL</text>
+  <text x="-4.80" y="-29.77" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">SDA</text>
+  <text x="-4.80" y="-27.23" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">XDA</text>
+  <text x="-4.80" y="-24.69" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">XCL</text>
+  <text x="-4.80" y="-22.15" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">AD0</text>
+  <text x="-4.80" y="-19.61" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">INT</text>
+  <text x="1.80" y="-36.60" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">audioMotionReactive</text>
+  <text x="1.80" y="-35.35" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">LedHapticPCB PINOUT</text>
+  <text x="1.80" y="-34.30" font-family="Courier New, monospace" font-size="0.55" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">---------------------</text>
+  <text x="-1.20" y="-33.10" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G0: ADC MIC</text>
+  <text x="4.80" y="-33.10" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G6: LED1 TOP</text>
+  <text x="-1.20" y="-31.75" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G1: I2S WS</text>
+  <text x="4.80" y="-31.75" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G7: HAPTIC</text>
+  <text x="-1.20" y="-30.40" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G2: IMU SDA</text>
+  <text x="4.80" y="-30.40" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G8: I2S SD</text>
+  <text x="-1.20" y="-29.05" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G3: IMU SCL</text>
+  <text x="4.80" y="-29.05" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G9: BTN/BOOT</text>
+  <text x="-1.20" y="-27.70" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G4: I2S SCK</text>
+  <text x="4.80" y="-27.70" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G10: LED PWR</text>
+  <text x="-1.20" y="-26.35" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G5: IMU INT</text>
+  <text x="4.80" y="-26.35" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G20: LED2 RX</text>
+  <text x="-1.20" y="-25.00" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">1S LIPO/USB</text>
+  <text x="4.80" y="-25.00" font-family="Courier New, monospace" font-size="0.62" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">G21: LED3 TX</text>
+  <text x="0.00" y="23.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">By Dillon Simeone</text>
+  <text x="0.00" y="-7.80" font-family="Courier New, monospace" font-size="0.82" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">ESP32-C3 SUPERMINI</text>
+  <text x="0.00" y="-5.80" font-family="Courier New, monospace" font-size="0.58" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">Generalist Carrier PCB for</text>
+  <text x="0.00" y="-4.40" font-family="Courier New, monospace" font-size="0.58" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">Dillon's Reactive Haptic &amp;</text>
+  <text x="0.00" y="-3.00" font-family="Courier New, monospace" font-size="0.58" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">LED Projects: Wearables,</text>
+  <text x="0.00" y="-1.60" font-family="Courier New, monospace" font-size="0.58" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">Pocketables, Installations,</text>
+  <text x="0.00" y="-0.20" font-family="Courier New, monospace" font-size="0.58" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">&amp; Interactive Props</text>
+  <text x="-6.20" y="-10.49" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">5V</text>
+  <text x="6.20" y="-10.49" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">IO5</text>
+  <text x="-7.00" y="-8.35" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">GND</text>
+  <text x="7.00" y="-8.35" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">IO6</text>
+  <text x="-7.00" y="-5.81" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">3V3</text>
+  <text x="7.00" y="-5.81" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">IO7</text>
+  <text x="-7.00" y="-3.27" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">IO0</text>
+  <text x="7.00" y="-3.27" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">IO8</text>
+  <text x="-7.00" y="-0.73" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">IO1</text>
+  <text x="7.00" y="-0.73" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">IO9</text>
+  <text x="-7.00" y="1.81" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">IO2</text>
+  <text x="7.00" y="1.81" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">IO10</text>
+  <text x="-7.00" y="4.35" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">IO3</text>
+  <text x="7.00" y="4.35" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">RX</text>
+  <text x="-7.00" y="6.89" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">IO4</text>
+  <text x="7.00" y="6.89" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">TX</text>
+  <text x="0.00" y="16.00" font-family="Courier New, monospace" font-size="0.85" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">INMP441 I2S</text>
+  <text x="-5.40" y="16.96" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">SCK</text>
+  <text x="-5.40" y="19.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">WS</text>
+  <text x="-5.40" y="22.04" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="end" dominant-baseline="central" fill="black">L/R</text>
+  <text x="5.40" y="16.96" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">SD</text>
+  <text x="5.40" y="19.50" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">VDD</text>
+  <text x="5.40" y="22.04" font-family="Courier New, monospace" font-size="0.80" font-weight="bold" text-anchor="start" dominant-baseline="central" fill="black">GND</text>
   <text x="0.00" y="25.00" font-family="Courier New, monospace" font-size="0.90" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">MAX4466</text>
   <text x="-2.54" y="30.10" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VCC</text>
   <text x="0.00" y="30.10" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
@@ -74,15 +463,15 @@
   <text x="6.40" y="33.00" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">D_PWR</text>
   <text x="4.75" y="37.20" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">K</text>
   <text x="8.05" y="37.20" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">A</text>
-  <text x="-3.70" y="39.50" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">U_CHG</text>
-  <text x="-7.45" y="37.10" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">PROG</text>
-  <text x="-5.55" y="37.10" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VIN</text>
-  <text x="-7.45" y="41.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">STAT</text>
-  <text x="-6.50" y="41.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
-  <text x="-5.55" y="41.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VBAT</text>
-  <text x="-6.50" y="33.30" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">2k PROG</text>
-  <text x="-4.20" y="45.30" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">C_VIN</text>
-  <text x="-8.80" y="45.30" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">C_BAT</text>
+  <text x="-1.70" y="39.50" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">U_CHG</text>
+  <text x="-5.45" y="37.10" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">PROG</text>
+  <text x="-3.55" y="37.10" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VIN</text>
+  <text x="-5.45" y="41.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">STAT</text>
+  <text x="-4.50" y="41.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">GND</text>
+  <text x="-3.55" y="41.90" font-family="Courier New, monospace" font-size="0.65" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VBAT</text>
+  <text x="-4.50" y="33.30" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">2k PROG</text>
+  <text x="-3.20" y="45.30" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">C_VIN</text>
+  <text x="-5.80" y="45.30" font-family="Courier New, monospace" font-size="0.60" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">C_BAT</text>
   <text x="5.23" y="42.00" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">BAT+</text>
   <text x="7.77" y="42.00" font-family="Courier New, monospace" font-size="0.70" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">VSYS</text>
   <text x="6.50" y="43.70" font-family="Courier New, monospace" font-size="0.75" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="black">SW_EXT</text>

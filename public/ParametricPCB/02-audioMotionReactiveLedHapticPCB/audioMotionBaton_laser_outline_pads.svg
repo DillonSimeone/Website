@@ -68,22 +68,22 @@
   <circle cx="8.89" cy="4.35" r="0.47" fill="black" stroke="none"/>
   <circle cx="8.89" cy="6.89" r="0.88" fill="none" stroke="#666" stroke-width="0.05"/>
   <circle cx="8.89" cy="6.89" r="0.47" fill="black" stroke="none"/>
-  <circle cx="0.00" cy="-34.39" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
-  <circle cx="0.00" cy="-34.39" r="0.50" fill="black" stroke="none"/>
-  <circle cx="0.00" cy="-31.85" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
-  <circle cx="0.00" cy="-31.85" r="0.50" fill="black" stroke="none"/>
-  <circle cx="0.00" cy="-29.31" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
-  <circle cx="0.00" cy="-29.31" r="0.50" fill="black" stroke="none"/>
-  <circle cx="0.00" cy="-26.77" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
-  <circle cx="0.00" cy="-26.77" r="0.50" fill="black" stroke="none"/>
-  <circle cx="0.00" cy="-24.23" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
-  <circle cx="0.00" cy="-24.23" r="0.50" fill="black" stroke="none"/>
-  <circle cx="0.00" cy="-21.69" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
-  <circle cx="0.00" cy="-21.69" r="0.50" fill="black" stroke="none"/>
-  <circle cx="0.00" cy="-19.15" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
-  <circle cx="0.00" cy="-19.15" r="0.50" fill="black" stroke="none"/>
-  <circle cx="0.00" cy="-16.61" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
-  <circle cx="0.00" cy="-16.61" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-6.80" cy="-37.39" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-6.80" cy="-37.39" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-6.80" cy="-34.85" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-6.80" cy="-34.85" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-6.80" cy="-32.31" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-6.80" cy="-32.31" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-6.80" cy="-29.77" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-6.80" cy="-29.77" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-6.80" cy="-27.23" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-6.80" cy="-27.23" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-6.80" cy="-24.69" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-6.80" cy="-24.69" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-6.80" cy="-22.15" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-6.80" cy="-22.15" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-6.80" cy="-19.61" r="0.95" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-6.80" cy="-19.61" r="0.50" fill="black" stroke="none"/>
   <circle cx="-8.00" cy="-48.77" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
   <circle cx="-8.00" cy="-48.77" r="0.50" fill="black" stroke="none"/>
   <circle cx="-8.00" cy="-46.23" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
@@ -98,18 +98,34 @@
   <circle cx="0.00" cy="-50.50" r="0.50" fill="black" stroke="none"/>
   <circle cx="2.54" cy="-50.50" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
   <circle cx="2.54" cy="-50.50" r="0.50" fill="black" stroke="none"/>
+  <circle cx="1.96" cy="-14.50" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="1.96" cy="-14.50" r="0.50" fill="black" stroke="none"/>
+  <circle cx="4.50" cy="-14.50" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="4.50" cy="-14.50" r="0.50" fill="black" stroke="none"/>
+  <circle cx="7.04" cy="-14.50" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="7.04" cy="-14.50" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-7.04" cy="-14.50" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-7.04" cy="-14.50" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-4.50" cy="-14.50" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-4.50" cy="-14.50" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-1.96" cy="-14.50" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-1.96" cy="-14.50" r="0.50" fill="black" stroke="none"/>
+  <circle cx="-1.27" cy="12.00" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="-1.27" cy="12.00" r="0.50" fill="black" stroke="none"/>
+  <circle cx="1.27" cy="12.00" r="1.00" fill="none" stroke="#666" stroke-width="0.05"/>
+  <circle cx="1.27" cy="12.00" r="0.50" fill="black" stroke="none"/>
   <!-- SMT Pads -->
-  <rect x="-7.75" y="40.35" width="0.60" height="0.90" fill="black"/>
-  <rect x="-6.80" y="40.35" width="0.60" height="0.90" fill="black"/>
-  <rect x="-5.85" y="40.35" width="0.60" height="0.90" fill="black"/>
-  <rect x="-5.85" y="37.75" width="0.60" height="0.90" fill="black"/>
-  <rect x="-7.75" y="37.75" width="0.60" height="0.90" fill="black"/>
-  <rect x="-7.65" y="34.55" width="0.80" height="0.90" fill="black"/>
-  <rect x="-6.15" y="34.55" width="0.80" height="0.90" fill="black"/>
-  <rect x="-5.35" y="43.05" width="0.80" height="0.90" fill="black"/>
-  <rect x="-3.85" y="43.05" width="0.80" height="0.90" fill="black"/>
-  <rect x="-9.95" y="43.05" width="0.80" height="0.90" fill="black"/>
-  <rect x="-8.45" y="43.05" width="0.80" height="0.90" fill="black"/>
+  <rect x="-5.75" y="40.35" width="0.60" height="0.90" fill="black"/>
+  <rect x="-4.80" y="40.35" width="0.60" height="0.90" fill="black"/>
+  <rect x="-3.85" y="40.35" width="0.60" height="0.90" fill="black"/>
+  <rect x="-3.85" y="37.75" width="0.60" height="0.90" fill="black"/>
+  <rect x="-5.75" y="37.75" width="0.60" height="0.90" fill="black"/>
+  <rect x="-5.65" y="34.55" width="0.80" height="0.90" fill="black"/>
+  <rect x="-4.15" y="34.55" width="0.80" height="0.90" fill="black"/>
+  <rect x="-4.35" y="43.05" width="0.80" height="0.90" fill="black"/>
+  <rect x="-2.85" y="43.05" width="0.80" height="0.90" fill="black"/>
+  <rect x="-6.95" y="43.05" width="0.80" height="0.90" fill="black"/>
+  <rect x="-5.45" y="43.05" width="0.80" height="0.90" fill="black"/>
   <rect x="0.65" y="36.55" width="0.80" height="0.90" fill="black"/>
   <rect x="2.55" y="36.55" width="0.80" height="0.90" fill="black"/>
   <rect x="1.60" y="34.55" width="0.80" height="0.90" fill="black"/>
