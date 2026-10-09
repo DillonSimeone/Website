@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>00: Turnkey Starter PCB Template</title>
+  <!-- Universal Shared Stylesheet (Single Source of Truth) -->
+  <link rel="stylesheet" href="../shared/pcb-configurator.css">
+  <!-- JSZip for instant Gerber ZIP bundle export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-left">
+        <a href="../index.html" class="back-link">‹ All PCB Projects</a>
+        <h1>00: Turnkey Starter PCB Template</h1>
+        <span class="badge">Universal Modular Foundation • 3D Inspection • 2D Interactive Tooltips • Instant Gerbers/BOM/CPL</span>
+      </div>
+      <div class="header-actions">
+        <button id="btn-export-easyeda" class="btn secondary">📐 EasyEDA / KiCad (.zip)</button>
+        <button id="btn-export-gerber" class="btn primary">📦 Download Gerbers (.zip)</button>
+        <button id="btn-export-bom" class="btn secondary">📋 Download BOM (.csv)</button>
+        <button id="btn-export-pnp" class="btn secondary">🎯 Download PNP (.csv)</button>
+      </div>
+    </header>
+
+    <div class="main-layout">
+      <!-- SIDEBAR CONTROLS -->
+      <aside class="sidebar">
+        <div class="panel-section">
+          <h3>Mechanical Enclosure Dimensions</h3>
+          <div class="param-row">
+            <label for="input-board-width">Board Width</label>
+            <div class="input-with-unit">
+              <input type="number" id="input-board-width" value="40" min="20" max="100" step="1">
+              <span>mm</span>
+            </div>
+          </div>
+          <div class="param-hint">Parametric board width with automatic trace clamping and outline generation.</div>
+
+          <div class="param-row">
+            <label for="input-board-length">Board Length</label>
+            <div class="input-with-unit">
+              <input type="number" id="input-board-length" value="40" min="20" max="100" step="1">
+              <span>mm</span>
+            </div>
+          </div>
+
+          <div class="param-row" style="margin-top: 10px;">
+            <label for="input-silk-scale">Silkscreen Size</label>
+            <div class="input-with-unit">
+              <input type="range" id="input-silk-scale" value="1.0" min="0.5" max="3.0" step="0.05" style="width: 100px;">
+              <span id="label-silk-scale" style="min-width: 32px; font-size: 0.75rem;">1.0x</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Starter Hardware Architecture</h3>
+          <ul class="spec-list">
+            <li><strong>MCU Socket:</strong> ESP32-C3 SuperMini (Dual THT + SMD)</li>
+            <li><strong>Power Rail:</strong> +5V VBUS Input with Decoupling Caps</li>
+            <li><strong>Indicator:</strong> Power LED + 1kΩ Current-Limiting Resistor</li>
+            <li><strong>IO Breakout:</strong> 4-Pin Auxiliary Peripheral Header (5V, IO0, IO1, GND)</li>
+            <li><strong>Mounting:</strong> 4× M3 Corner Holes (Ø3.2mm) with 0.8mm Clearance Zones</li>
+            <li><strong>Manufacturing:</strong> 100% JLCPCB SMT Compatible (BOM & CPL Synchronized)</li>
+          </ul>
+        </div>
+
+        <div class="panel-section">
+          <div class="update-buttons-group">
+            <button id="btn-recompile" class="btn primary full-width">⚡ Update Layout</button>
+            <button id="btn-route" class="btn-route-board full-width">🔀 Route Traces</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Design & DRC Verification</h3>
+          <div id="drc-status-box" class="drc-box drc-pass">DRC: Ready</div>
+          <div id="stats-box" class="stats-box">
+            <div>Components: <span id="stat-comp-count">-</span></div>
+            <div>SMT Pads: <span id="stat-pad-count">-</span></div>
+            <div>Render Time: <span id="stat-render-time">-</span></div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Documentation & Next Steps</h3>
+          <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem;">
+            <a href="./README.md" target="_blank" class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">📖 Template Architecture Guide (.md)</a>
+            <a href="../SKILL.md" target="_blank" class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">🔍 Laser 600 DPI Test-Fit & EDA Skill (.md)</a>
+            <a href="../AGENTS.md" target="_blank" class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">📑 EDA & JLCPCB Best Practices (.md)</a>
+          </div>
+        </div>
+      </aside>
+
+      <!-- VIEWPORTS (100% Full-Height Workspace) -->
+      <main class="workspace">
+        <!-- Vaporwave Cyberpunk Loading Overlay -->
+        <div id="compile-overlay" class="compile-overlay vaporwave-mode" aria-hidden="true">
+          <div class="vaporwave-sun"></div>
+          <div class="vaporwave-grid"></div>
+          <div class="vaporwave-content">
+            <div class="spinner-neon"></div>
+            <span class="vaporwave-text">Compiling Starter Circuit...</span>
+          </div>
+        </div>
+
+        <div class="tabs-header">
+          <button class="tab-btn active" data-tab="tab-3d">🧊 3D Inspection</button>
+          <button class="tab-btn" data-tab="tab-2d">📐 PCB Route (2D)</button>
+          <button class="tab-btn" data-tab="tab-schematic">⚡ Architecture & Pinout</button>
+        </div>
+
+        <div id="tab-3d" class="tab-content active">
+          <div id="canvas-3d-container" class="viewport-canvas"></div>
+          <div class="viewport-overlay-hint">Left click: Rotate • Right click: Pan • Scroll: Zoom</div>
+        </div>
+
+        <div id="tab-2d" class="tab-content">
+          <div id="svg-2d-container" class="viewport-svg"></div>
+          <div id="pcb-2d-tooltip" class="pcb-2d-tooltip"></div>
+        </div>
+
+        <div id="tab-schematic" class="tab-content">
+          <div class="schematic-view-panel" style="padding: 24px; overflow: auto; height: 100%; color: #e2e8f0; font-family: monospace;">
+            <h3 style="color: #38bdf8; margin-top: 0;">⚡ Turnkey Starter PCB Modular Architecture & Pinout</h3>
+            <pre class="schematic-ascii" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 18px; line-height: 1.4; color: #a5f3fc; overflow-x: auto;">
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ +5V USB VBUS Input (ESP32-C3 SuperMini Pin 1)                          │
+   │      │                                                                 │
+   │      ├────────► [C_VBUS 10µF 0603 Decoupling] ──► GND                 │
+   │      │                                                                 │
+   │      ├────────► [J_AUX 4-Pin Auxiliary Peripheral Header Pin 1]       │
+   │      │                                                                 │
+   │      └────────► [D_LED 0603 Green Power LED]                           │
+   │                      │                                                 │
+   │                      └─► [R_LED 1kΩ 0603 Current Limiter] ──► GND      │
+   └────────────────────────────────────────────────────────────────────────┘
+
+        ┌────────────────────────────────────────────────────────┐
+        ▼                                                        ▼
+ ┌──────────────────────────────┐         ┌──────────────────────────────┐
+ │ ESP32-C3 SuperMini MCU       │         │ Auxiliary Breakout & Power   │
+ │   • Pin 1:  5V (VBUS Rail)  ─┼────────►│   • J_AUX Pin 1: +5V Power   │
+ │   • Pin 2:  GND (Common)    ─┼────────►│   • J_AUX Pin 4: GND Return  │
+ │   • Pin 3:  3V3 (LDO Out)    │         │                              │
+ │   • Pin 4:  GPIO 0 (ADC/IO0) ┼────────►│   • J_AUX Pin 2: IO0 Signal  │
+ │   • Pin 5:  GPIO 1 (IO1)    ─┼────────►│   • J_AUX Pin 3: IO1 Signal  │
+ │   • Pin 8-9: GPIO 8 / GPIO 9 │         │                              │
+ │     (Boot/Strapping Safe)    │         │ 4× M3 Corner Mounting Holes  │
+ │   • Pin 15-16: RX / TX (UART)│         │ (Ø3.2mm Drill, 5.0mm Pad)    │
+ └──────────────────────────────┘         └──────────────────────────────┘
+
+ ══════════════════════════════════════════════════════════════════════════
+  JLCPCB SMT 2-Layer Manufacturing Constraints:
+   • Min Trace Width: 0.15mm (Nominal Signal: 0.25mm, Power: 0.35mm)
+   • Trace-to-Pad Clearance: 0.15mm (Solder Mask Dam: ≥ 0.20mm)
+   • Plated Hole Annular Ring: ≥ 0.125mm (Hole Ø1.0mm -> Pad Ø1.8mm+)
+   • 100% BOM / CPL Parity: C_VBUS (C19666), D_LED (C72043), R_LED (C21190)
+ ══════════════════════════════════════════════════════════════════════════
+            </pre>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="./src/ui.js"></script>
+</body>
+</html>

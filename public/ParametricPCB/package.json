@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node shared/check-overlays.mjs",
+    "check-overlays": "node shared/check-overlays.mjs"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +14,10 @@
   "dependencies": {
     "@tscircuit/core": "^0.0.1361",
     "circuit-json-to-gerber": "^0.0.78",
+    "circuit-json-to-kicad": "^0.0.230",
     "esbuild": "^0.28.1",
+    "jszip": "^3.10.2",
+    "polygon-clipping": "^0.15.7",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   }
