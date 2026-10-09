@@ -75,7 +75,7 @@ export async function compileCircuit(params = {}) {
       pcbX: `${h.x.toFixed(2)}mm`,
       pcbY: `${h.y.toFixed(2)}mm`,
       holeDiameter: "3.2mm",
-      outerDiameter: "6.0mm",
+      outerDiameter: "4.8mm",
       shape: "circle"
     }));
   });
@@ -220,7 +220,7 @@ export async function compileCircuit(params = {}) {
     name: "C_VIN",
     key: "c_vin",
     pcbX: "-7.5mm",
-    pcbY: "17.4mm"
+    pcbY: "17.1mm"
   }));
 
   children.push(React.createElement(Capacitor0603, {
@@ -368,7 +368,7 @@ export async function compileCircuit(params = {}) {
   // Charger Group (Top-Left)
   children.push(makeSilk("lbl_chg", "U_CHG", -7.5, 15.9, "top", 0.55, "center"));
   children.push(makeSilk("lbl_rprog", "R_PROG 2k", -10.2, 13.4, "top", 0.50, "center"));
-  children.push(makeSilk("lbl_cvin", "C_VIN 4.7u", -10.2, 17.4, "top", 0.50, "center"));
+  children.push(makeSilk("lbl_cvin", "C_VIN 4.7u", -10.2, 17.1, "top", 0.50, "center"));
   children.push(makeSilk("lbl_cbat", "C_BAT 4.7u", -10.2, 11.8, "top", 0.50, "center"));
 
   // Auto Power-Path Group (Top-Right)
@@ -733,7 +733,7 @@ export async function generateManufacturingArtifacts(circuit, boardParams = {}) 
   const smtPosMap = {
     U_CHG: { x: -7.5, y: 14.6, rot: 0, layer: "Top" },
     R_PROG: { x: -10.2, y: 14.6, rot: 0, layer: "Top" },
-    C_VIN: { x: -7.5, y: 17.4, rot: 0, layer: "Top" },
+    C_VIN: { x: -7.5, y: 17.1, rot: 0, layer: "Top" },
     C_BAT: { x: -7.5, y: 11.8, rot: 0, layer: "Top" },
     Q_PWR: { x: 5.2, y: 13.5, rot: 270, layer: "Top" },
     D_PWR: { x: 9.8, y: 13.5, rot: 0, layer: "Top" },

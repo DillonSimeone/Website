@@ -79,6 +79,7 @@ async function run() {
   const bomCsv = "Designator,Comment,Footprint,LCSC Part #,Quantity\n" +
     smtComponents.map(c => `"${c.designator}","${c.comment}","${c.footprint}","${c.lcsc}",${c.qty}`).join("\n");
   fs.writeFileSync(path.join(outDir, "compactSquare_BOM.csv"), bomCsv, "utf8");
+  fs.writeFileSync(path.resolve("./03-compactAudioMotionSquarePCB/03_compactSquareLedHapticPCB_BOM.csv"), bomCsv, "utf8");
   console.log("Saved BOM: compactSquare_BOM.csv");
 
   // CPL CSV
@@ -87,7 +88,7 @@ async function run() {
   const smtPosMap = {
     U_CHG: { x: -7.5, y: 14.6, rot: 0, layer: "Top" },
     R_PROG: { x: -10.2, y: 14.6, rot: 0, layer: "Top" },
-    C_VIN: { x: -7.5, y: 17.4, rot: 0, layer: "Top" },
+    C_VIN: { x: -7.5, y: 17.1, rot: 0, layer: "Top" },
     C_BAT: { x: -7.5, y: 11.8, rot: 0, layer: "Top" },
     Q_PWR: { x: 5.2, y: 13.5, rot: 270, layer: "Top" },
     D_PWR: { x: 9.8, y: 13.5, rot: 0, layer: "Top" },
@@ -106,6 +107,7 @@ async function run() {
   });
   const cplCsv = cplRows.join("\n");
   fs.writeFileSync(path.join(outDir, "compactSquare_CPL.csv"), cplCsv, "utf8");
+  fs.writeFileSync(path.resolve("./03-compactAudioMotionSquarePCB/03_compactSquareLedHapticPCB_CPL.csv"), cplCsv, "utf8");
   console.log("Saved CPL: compactSquare_CPL.csv");
 
   // KiCad / EasyEDA Project Files (.kicad_pcb, .kicad_sch, .kicad_pro)
@@ -151,17 +153,20 @@ async function run() {
     pcbStr = pcbStr.replace(/\(layers F\.Cu B\.Cu\)/g, '(layers "F.Cu" "B.Cu")');
 
     fs.writeFileSync(path.join(outDir, "03_compactSquareLedHapticPCB.kicad_pcb"), pcbStr, "utf8");
+    fs.writeFileSync(path.resolve("./03-compactAudioMotionSquarePCB/03_compactSquareLedHapticPCB.kicad_pcb"), pcbStr, "utf8");
     console.log("Saved EasyEDA / KiCad PCB: 03_compactSquareLedHapticPCB.kicad_pcb");
 
     const schConv = new CircuitJsonToKicadSchConverter(circuitJson, { projectName: "03_compactSquareLedHapticPCB" });
     schConv.runUntilFinished();
     schStr = schConv.getOutputString();
     fs.writeFileSync(path.join(outDir, "03_compactSquareLedHapticPCB.kicad_sch"), schStr, "utf8");
+    fs.writeFileSync(path.resolve("./03-compactAudioMotionSquarePCB/03_compactSquareLedHapticPCB.kicad_sch"), schStr, "utf8");
     console.log("Saved EasyEDA / KiCad Schematic: 03_compactSquareLedHapticPCB.kicad_sch");
 
     const proConv = new CircuitJsonToKicadProConverter(circuitJson, { projectName: "03_compactSquareLedHapticPCB" });
     proStr = JSON.stringify(proConv.project, null, 2);
     fs.writeFileSync(path.join(outDir, "03_compactSquareLedHapticPCB.kicad_pro"), proStr, "utf8");
+    fs.writeFileSync(path.resolve("./03-compactAudioMotionSquarePCB/03_compactSquareLedHapticPCB.kicad_pro"), proStr, "utf8");
     console.log("Saved EasyEDA / KiCad Project: 03_compactSquareLedHapticPCB.kicad_pro");
   } catch (kicadErr) {
     console.warn("EasyEDA/KiCad Export warning:", kicadErr);

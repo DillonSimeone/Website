@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node shared/check-overlays.mjs",
-    "check-overlays": "node shared/check-overlays.mjs"
+    "test": "node shared/audit-footprints.mjs && node shared/check-overlays.mjs 03",
+    "audit-footprints": "node shared/audit-footprints.mjs",
+    "check-overlays": "node shared/check-overlays.mjs",
+    "audit-traces": "node shared/audit-traces.mjs 03",
+    "fetch-footprint": "node shared/fetch-easyeda-footprint.mjs"
   },
   "keywords": [],
   "author": "",

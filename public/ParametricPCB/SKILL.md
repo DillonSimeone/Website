@@ -141,6 +141,37 @@ Prefer JLCPCB Basic and Extended parts with high reel stock to avoid reel setup 
 - **2kΩ 0603 1%** (Prog Current 500mA, Uniroyal): `C17975`
 - **4.7µF 0603 10V / 25V X5R** (Decoupling Caps): `C15849`
 
+### 3.4 IPC-7351 Footprint Standards & Anti-Tombstoning Safety Buffers (`shared/footprints.js`)
+All project footprints are centralized in `shared/footprints.js` as the Single Source of Truth to eliminate package mismatch risks:
+- **SOD-123 Diodes (SS14 / B5819W, LCSC `C8598`)**:
+  - **Required Pitch**: `3.30mm` (`pcbX: ±1.65mm`). *Never use 2.6mm pitch!*
+  - **Pad Dimensions**: `1.10mm (W) x 1.20mm (H)`.
+  - **Inner Clearance Gap**: `2.20mm` (safely clears the 2.7mm plastic diode belly, preventing melted solder paste pooling underneath from causing tombstoning).
+  - **Outer Land Span**: `4.40mm` (guarantees >= 0.35mm outer toe fillet past the 3.85mm lead tips).
+- **0603 Passives (1608 Metric)**:
+  - **Pitch**: `1.60mm` (`pcbX: ±0.80mm`), `0.80mm (W) x 0.90mm (H)`.
+  - Inner gap `0.80mm`, outer span `2.40mm`.
+- **SOT-23 / SOT-23-5**:
+  - SOT-23: Pin 1-2 pitch `1.90mm`, row pitch `2.00mm`, pad size `0.70mm x 0.90mm`.
+  - SOT-23-5: Pin pitch `0.95mm`, row pitch `2.60mm`, pad size `0.60mm x 0.90mm`.
+- **THT Annular Ring Safety Buffer**:
+  - Enforce `annular ring >= 0.35mm` across all plated through-holes (`outer_diameter >= drill + 0.70mm`).
+- **Automated Validation**:
+  - Always run `npm test` or `node shared/audit-footprints.mjs` before committing or generating production exports.
+
+### 3.5 Live EasyEDA Footprint Extraction (`shared/fetch-easyeda-footprint.mjs`)
+Rather than squinting at datasheet mechanical drawings and converting imperial units manually, query JLCPCB / EasyEDA's internal CAD API directly by LCSC part number:
+```bash
+# Query any LCSC part number (e.g. C8598, C20917, C382138)
+node shared/fetch-easyeda-footprint.mjs C8598
+npm run fetch-footprint C20917
+```
+This utility:
+1. Calls EasyEDA's component registry (`https://easyeda.com/api/products/{LCSC_ID}/components`).
+2. Extracts the exact factory pad geometry (`PAD~...`) used by JLCPCB's CAM pick-and-place system.
+3. Converts the 10 mil units to millimeters with zero rounding error.
+4. Outputs the exact pitch, inner clearance gap, outer land span, and a drop-in tscircuit React component template.
+
 ---
 
 ## 4. tscircuit Routing Engine & DRC Enforcements

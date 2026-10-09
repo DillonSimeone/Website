@@ -177,7 +177,7 @@ async function main() {
       const d = distToSeg(viaPt, { x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 });
       const copperGap = d - (viaR + s.w / 2);
       if (copperGap < 0.10) {
-        console.log(`VIA-TRACE VIOLATION (${s.layer}): via ${via.pcb_via_id} (${viaNet}) vs trace ${s.net} -> gap = ${copperGap.toFixed(4)}mm`);
+        console.log(`VIA-TRACE VIOLATION (${s.layer}): via ${via.pcb_via_id} at (${via.x.toFixed(2)}, ${via.y.toFixed(2)}) (${viaNet}) vs trace ${s.net} -> gap = ${copperGap.toFixed(4)}mm`);
         viaTraceViolations++;
       }
     }

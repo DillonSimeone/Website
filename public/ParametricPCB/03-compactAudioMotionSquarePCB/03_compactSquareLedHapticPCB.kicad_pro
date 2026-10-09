@@ -4,8 +4,8 @@
     "generator": "circuit-json-to-kicad",
     "generator_version": "0.0.1",
     "project_name": "03_compactSquareLedHapticPCB",
-    "created": "2026-10-08T21:46:40.113Z",
-    "modified": "2026-10-08T21:46:40.113Z"
+    "created": "2026-10-09T14:43:11.682Z",
+    "modified": "2026-10-09T14:43:11.682Z"
   },
   "meta": {
     "version": 1
@@ -36,7 +36,7 @@
       {
         "name": "Default",
         "track_width": 0.15,
-        "via_diameter": 0.3,
+        "via_diameter": 0.45,
         "via_drill": 0.2,
         "clearance": 0.1
       }
@@ -61,9 +61,9 @@
     },
     "design_settings": {
       "rules": {
-        "min_via_annular_width": 0.04999999999999999,
+        "min_via_annular_width": 0.125,
         "min_hole_clearance": 0.1,
-        "min_via_diameter": 0.3,
+        "min_via_diameter": 0.45,
         "min_track_width": 0.15,
         "min_through_hole_diameter": 0.2
       }
@@ -72,7 +72,7 @@
   },
   "sheets": [
     [
-      "56d911bf-aec6-450c-acab-a7456be2e51f",
+      "5c0f58f9-a93e-42bc-84e5-a6edaeca988b",
       "Root"
     ]
   ]
