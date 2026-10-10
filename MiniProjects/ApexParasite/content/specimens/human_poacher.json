@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 2,
+  "id": "human_poacher",
+  "displayName": "Guild Poacher",
+  "kind": "human",
+  "template": "humanoid",
+  "art": {
+    "body": null,
+    "size": [1024, 640],
+    "keying": "none"
+  },
+  "patch": {},
+  "remove": [],
+  "add": [],
+  "loose": [
+    {
+      "id": "poacher_satchel",
+      "name": "Poacher's Satchel",
+      "loot": "poacher_satchel",
+      "rarity": "uncommon",
+      "presencePct": 80,
+      "yield": { "min": 1, "max": 1 }
+    },
+    {
+      "id": "poacher_cleaver",
+      "name": "Poacher's Cleaver",
+      "loot": "poacher_cleaver",
+      "rarity": "uncommon",
+      "presencePct": 85,
+      "yield": { "min": 1, "max": 1 }
+    },
+    {
+      "id": "linen_wraps",
+      "name": "Linen Wraps",
+      "loot": "tanned_hide_vest",
+      "rarity": "common",
+      "presencePct": 90,
+      "yield": { "min": 1, "max": 2 }
+    },
+    {
+      "id": "coin_purse",
+      "name": "Shilling Coin Purse",
+      "loot": "iron_snare_coil",
+      "rarity": "common",
+      "presencePct": 95,
+      "yield": { "min": 1, "max": 1 }
+    }
+  ],
+  "severable": [
+    { "id": "arm_l", "slotId": "arm_l" }
+  ],
+  "baseVitals": {
+    "pulse": 100
+  },
+  "feast": {
+    "calories": 30,
+    "biomassExp": 3
+  }
+}

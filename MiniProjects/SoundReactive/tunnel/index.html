@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sound-Reactive Tunnels</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="tunnel-style.css">
+  
+  <!-- Import Map for Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="halftone-screen"></div>
+  
+  <div id="canvas-container"></div>
+  
+  <!-- Back navigation overlay -->
+  <div class="hud-overlay top-left">
+    <a href="../index.html" class="nav-back">/// RETURN_TO_HUD</a>
+  </div>
+  
+  <div class="hud-overlay top-right">
+    <div class="stats-panel">
+      <div>SYS.LOC: SR-TUNNEL</div>
+      <div>ENERGY: <span id="energy-val">0.00</span></div>
+      <div>FREQ: <span id="freq-val">0Hz</span></div>
+    </div>
+  </div>
+
+  <!-- Audio activation overlay -->
+  <div id="intro-overlay">
+    <div class="intro-box">
+      <div class="case-tag">CASE FILE: #SR-TUNNEL</div>
+      <h1>THE SOUND TUNNELS</h1>
+      <p>A dual raymarching procedural tunnel engine. Dynamic weaving geometries governed by audio frequency and amplitude.</p>
+      <p class="instruction">CLICK ANYWHERE TO START AUDIO CAPTURE</p>
+      <button id="start-btn">INITIALIZE AUDIO</button>
+    </div>
+  </div>
+
+  <script type="module" src="tunnel.js"></script>
+</body>
+</html>

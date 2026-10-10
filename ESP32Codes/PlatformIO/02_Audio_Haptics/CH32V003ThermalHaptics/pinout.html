@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CH32V003 Thermal Haptics // Pinout & Wiring Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --card-bg: rgba(22, 30, 49, 0.75);
+      --card-border: #1e293b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      
+      --accent-cyan: #06b6d4;
+      --accent-pink: #ec4899;
+      --accent-amber: #f59e0b;
+      --accent-purple: #a855f7;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+
+      --glow-cyan: rgba(6, 182, 212, 0.25);
+      --glow-pink: rgba(236, 72, 153, 0.25);
+      --glow-amber: rgba(245, 158, 11, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.08) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.8) 0px, transparent 100%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    /* Layout Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      padding: 1.75rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .card-title .icon {
+      font-size: 1.3rem;
+    }
+
+    /* IC Visualizer */
+    .ic-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem 0;
+      position: relative;
+    }
+
+    .ic-package {
+      width: 240px;
+      background: #111625;
+      border: 2px solid #334155;
+      border-radius: 6px;
+      padding: 1.5rem 0.75rem;
+      position: relative;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.6);
+    }
+
+    /* Notch for Pin 1 */
+    .ic-package::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 12px;
+      background: var(--bg-dark);
+      border-bottom: 2px solid #334155;
+      border-left: 2px solid #334155;
+      border-right: 2px solid #334155;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .ic-label {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #64748b;
+      margin: 1.5rem 0;
+      letter-spacing: 0.1em;
+    }
+
+    .ic-pin-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0.85rem -1.6rem;
+      position: relative;
+    }
+
+    .pin-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .pin-leg {
+      width: 20px;
+      height: 8px;
+      background: linear-gradient(90deg, #94a3b8, #cbd5e1, #64748b);
+      border-radius: 2px;
+    }
+
+    .pin-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      border: 1px solid transparent;
+      cursor: default;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    /* Tag styles by type */
+    .tag-adc {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: rgba(6, 182, 212, 0.4);
+      color: #38bdf8;
+    }
+    .tag-pwm-peltier {
+      background: rgba(236, 72, 153, 0.15);
+      border-color: rgba(236, 72, 153, 0.4);
+      color: #f472b6;
+    }
+    .tag-pwm-motor {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+    }
+    .tag-gpio {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #c084fc;
+    }
+    .tag-prog {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+    .tag-power {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+    .tag-gnd {
+      background: rgba(100, 116, 139, 0.2);
+      border-color: rgba(100, 116, 139, 0.4);
+      color: #cbd5e1;
+    }
+
+    .pin-tag:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 12px currentColor;
+      z-index: 10;
+    }
+
+    /* Pin Table Style */
+    .pin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .pin-table th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .pin-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .pin-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .pin-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .chip-pin {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+    }
+
+    /* Modules List */
+    .module-item {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--card-border);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .module-name {
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .wire-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .wire-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .wire-arrow {
+      color: var(--text-muted);
+    }
+
+    .wire-target {
+      color: var(--accent-cyan);
+    }
+
+    /* Safety Box */
+    .warning-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .warning-title {
+      color: var(--accent-red);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .warning-box p {
+      color: #fca5a5;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .notice-box {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .notice-title {
+      color: var(--accent-amber);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .notice-box p {
+      color: #fde68a;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding-top: 2rem;
+      border-top: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    @media (max-width: 768px) {
+      .ic-package {
+        width: 180px;
+      }
+      .pin-tag {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.35rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- HEADER -->
+    <header>
+      <div class="badge">CH32V003F4P6 Pinout Guide</div>
+      <h1>Thermal Haptics Hardware Map</h1>
+      <p class="subtitle">Visual pin assignments, peripheral wiring, and power routing for the sound-reactive Peltier &amp; vibration project.</p>
+    </header>
+
+    <!-- SECTION 1: VISUAL CHIP & PIN TABLE -->
+    <div class="grid-2">
+      
+      <!-- Visual IC Diagram Card -->
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">⚡</span>
+          <span>TSSOP-20 Chip Map</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+          Hover over any pin tag to highlight peripheral assignments.
+        </p>
+
+        <div class="ic-container">
+          <div class="ic-package">
+            <div class="ic-label">CH32V003F4P6</div>
+            
+            <!-- Pin VCC / GND -->
+            <div class="ic-pin-row">
+              <div class="pin-group">
+                <span class="pin-tag tag-power" title="Board VCC / USB Rail (5V)">VCC</span>
+                <div class="pin-leg"></div>
+              </div>
+              <div class="pin-group">
+                <div class="pin-leg"></div>
+                <span class="pin-tag tag-gnd" title="System Ground">GND</span>
+              </div>
+            </div>
+
+            <!-- Pin PC4 (ADC) / Pin PD1 (SWIO) -->
+            <div class="ic-pin-row">
+              <div class="pin-group">
+                <span class="pin-tag tag-adc" title="PC4: MAX4466 Mic ADC Input">PC4</span>
+                <div class="pin-leg"></div>
+              </div>
+              <div class="pin-group">
+                <div class="pin-leg"></div>
+                <span class="pin-tag tag-prog" title="PD1: WCH-LinkE SWIO Program/Debug">PD1</span>
+              </div>
+            </div>
+
+            <!-- Pin PD2 (Peltier PWM) / Pin PD3 (Vibe PWM) -->
+            <div class="ic-pin-row">
+              <div class="pin-group">
+                <span class="pin-tag tag-pwm-peltier" title="PD2: MOSFET PWM (TEC Peltier Control)">PD2</span>
+                <div class="pin-leg"></div>
+              </div>
+              <div class="pin-group">
+                <div class="pin-leg"></div>
+                <span class="pin-tag tag-pwm-motor" title="PD3: Mini L298N IN1 (Vibe Motor PWM)">PD3</span>
+              </div>
+            </div>
+
+            <!-- Pin PC3 (Vibe Dir) / Pin NC -->
+            <div class="ic-pin-row">
+              <div class="pin-group">
+                <span class="pin-tag tag-gpio" title="PC3: Mini L298N IN2 (Dir LOW)">PC3</span>
+                <div class="pin-leg"></div>
+              </div>
+              <div class="pin-group">
+                <div class="pin-leg"></div>
+                <span class="pin-tag tag-gnd" title="Unused Pins">N/C</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="notice-box">
+          <div class="notice-title">💡 Signal Current Note</div>
+          <p>Pins <strong>PD2</strong>, <strong>PD3</strong>, and <strong>PC3</strong> are logic-level control lines only. They trigger external power drivers and must never directly drive motor or Peltier currents.</p>
+        </div>
+      </div>
+
+      <!-- Functional Pin Table Card -->
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">📋</span>
+          <span>Pin Master Reference</span>
+        </div>
+
+        <table class="pin-table">
+          <thead>
+            <tr>
+              <th>MCU Pin</th>
+              <th>Target Connection</th>
+              <th>Function / Hardware Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="chip-pin tag-adc">PC4</span></td>
+              <td>MAX4466 Microphone OUT</td>
+              <td>ADC Channel 2 (8 kHz audio sampling)</td>
+            </tr>
+            <tr>
+              <td><span class="chip-pin tag-pwm-peltier">PD2</span></td>
+              <td>MOSFET Module PWM Input</td>
+              <td>TIM1_CH1 (Peltier PWM duty control)</td>
+            </tr>
+            <tr>
+              <td><span class="chip-pin tag-pwm-motor">PD3</span></td>
+              <td>Mini L298N Channel A <code>IN1</code></td>
+              <td>TIM2_CH2 (Vibration motor PWM)</td>
+            </tr>
+            <tr>
+              <td><span class="chip-pin tag-gpio">PC3</span></td>
+              <td>Mini L298N Channel A <code>IN2</code></td>
+              <td>GPIO Output (Held LOW for direction)</td>
+            </tr>
+            <tr>
+              <td><span class="chip-pin tag-prog">PD1</span></td>
+              <td>WCH-LinkE Programmer</td>
+              <td>1-Wire SWIO Single-Pin Debugger</td>
+            </tr>
+            <tr>
+              <td><span class="chip-pin tag-power">V</span></td>
+              <td>USB 5V Rail / Module VCC</td>
+              <td>Board & Sensor Logic Power</td>
+            </tr>
+            <tr>
+              <td><span class="chip-pin tag-gnd">G</span></td>
+              <td>Common Ground Rail</td>
+              <td>System-wide shared ground reference</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="warning-box">
+          <div class="warning-title">⚠️ Programming &amp; Power Conflict</div>
+          <p>Never connect the WCH-LinkE target-power pin (3V3/5V) while the CH32V003 board is plugged into USB-C. Connect only <strong>SWIO (PD1)</strong> and <strong>GND</strong> when using USB power!</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SECTION 2: MODULE-BY-MODULE SCHEMATIC -->
+    <div class="card" style="margin-bottom: 3rem;">
+      <div class="card-title">
+        <span class="icon">🔌</span>
+        <span>Peripheral Wiring &amp; Module Map</span>
+      </div>
+
+      <div class="grid-2" style="gap: 1.5rem; margin-bottom: 0;">
+        
+        <!-- Audio Input -->
+        <div class="module-item">
+          <div class="module-header">
+            <span class="module-name">🎙️ MAX4466 Mic Module</span>
+            <span class="pin-tag tag-adc">Analog Input</span>
+          </div>
+          <div class="wire-list">
+            <div class="wire-row">
+              <span>OUT</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">CH32V003 PC4 (ADC2)</span>
+            </div>
+            <div class="wire-row">
+              <span>VCC</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">CH32 Board V Rail (5V)</span>
+            </div>
+            <div class="wire-row">
+              <span>GND</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">Common GND Rail</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- High-Power Peltier -->
+        <div class="module-item">
+          <div class="module-header">
+            <span class="module-name">❄️ MOSFET Module &amp; TEC1-12706</span>
+            <span class="pin-tag tag-pwm-peltier">12V High Current</span>
+          </div>
+          <div class="wire-list">
+            <div class="wire-row">
+              <span>PWM / SIG</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">CH32V003 PD2 (TIM1_CH1)</span>
+            </div>
+            <div class="wire-row">
+              <span>GND (Sig)</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">Common GND Rail</span>
+            </div>
+            <div class="wire-row">
+              <span>V+ / V- (In)</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">12V / 4A Power Supply</span>
+            </div>
+            <div class="wire-row">
+              <span>OUT+ / OUT-</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">TEC1-12706 Peltier Element</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Haptics Driver -->
+        <div class="module-item">
+          <div class="module-header">
+            <span class="module-name">📳 Mini L298N &amp; Coin Motor</span>
+            <span class="pin-tag tag-pwm-motor">3V-5V Haptic</span>
+          </div>
+          <div class="wire-list">
+            <div class="wire-row">
+              <span>IN1</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">CH32V003 PD3 (TIM2_CH2 PWM)</span>
+            </div>
+            <div class="wire-row">
+              <span>IN2</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">CH32V003 PC3 (GPIO LOW)</span>
+            </div>
+            <div class="wire-row">
+              <span>OUT A</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">Coin Vibration Motor</span>
+            </div>
+            <div class="wire-row">
+              <span>Motor VCC</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">Rated Motor Power (3V-5V)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Heat Sink & Fan Power -->
+        <div class="module-item">
+          <div class="module-header">
+            <span class="module-name">🌀 12V Cooling Fan</span>
+            <span class="pin-tag tag-power">Always-On Safety</span>
+          </div>
+          <div class="wire-list">
+            <div class="wire-row">
+              <span>FAN +</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">12V Supply (Before MOSFET Switch)</span>
+            </div>
+            <div class="wire-row">
+              <span>FAN -</span>
+              <span class="wire-arrow">➔</span>
+              <span class="wire-target">Power Supply GND</span>
+            </div>
+          </div>
+          <p style="font-size: 0.75rem; color: var(--accent-amber); margin-top: 0.6rem;">
+            * Must run continuously to prevent Peltier hot-side destruction.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      CH32V003 Thermal Haptics Project · Generated for PlatformIO Repository
+    </footer>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>City Pop Anime Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="citypop-container">
+    
+    <!-- Header with 80s Sunset layout -->
+    <header class="citypop-header">
+      <div class="header-retro-badge">シティポップ</div>
+      <h1 class="citypop-title">CITY POP</h1>
+      <p class="citypop-subtitle">80S RETRO ANIME SUNSET & SOUNDTRACKS</p>
+      <a href="../index.html" class="nav-back">← HUB</a>
+    </header>
+
+    <!-- Main Grid layout -->
+    <main class="citypop-grid">
+      
+      <!-- Anime Speech Bubble Info Card -->
+      <section class="citypop-card info-card">
+        <div class="anime-speech-bubble">
+          <p>“Welcome to the 80s night drive!”</p>
+        </div>
+        <h2>THE VIBE</h2>
+        <p>A retro-future aesthetic blending Japanese City Pop album covers, hand-drawn vector borders, neon pink sunsets, and nostalgic cassette loops.</p>
+      </section>
+
+      <!-- Cassette player interactive deck -->
+      <section class="citypop-card cassette-deck">
+        <h2>CASSETTE PLAYER</h2>
+        <div class="cassette" id="cassette">
+          <div class="cassette-label">
+            <span class="album-title">MIDNIGHT DRIVE</span>
+            <span class="track-no">SIDE A</span>
+          </div>
+          <!-- Wheels that rotate when active -->
+          <div class="cassette-wheels">
+            <div class="wheel" id="wheel-left">
+              <div class="wheel-spokes"></div>
+            </div>
+            <div class="wheel" id="wheel-right">
+              <div class="wheel-spokes"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="player-controls">
+          <button class="player-btn" id="btn-play">PLAY TAPE</button>
+        </div>
+        <p class="player-msg" id="player-msg">TAP PLAY TO SPIN TAPE & SYNTHESIZE BEATS</p>
+      </section>
+
+      <!-- Subtitles/Credits Card -->
+      <section class="citypop-card lyrics-card">
+        <h2>CITY POP SOUND</h2>
+        <p>Vibrant fuchsia backgrounds, thick anime-style borders, cassette widgets, and synthesised FM-Synth drum tracks.</p>
+        <div class="subtitle-block">
+          <p class="jp-sub">都会の夜は、きらめくメロディ。</p>
+          <p class="en-sub">(The city night, a sparkling melody...)</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

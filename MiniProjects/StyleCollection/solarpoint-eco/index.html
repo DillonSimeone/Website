@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solarpunk Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="solar-container">
+    <header class="solar-header">
+      <a href="../index.html" class="nav-back">← Hub Overview</a>
+      <div class="sun-icon">☀️</div>
+      <h1 class="solar-title">Solarpunk</h1>
+      <p class="solar-subtitle">Ecological technology, bright warm optimism, and green architectural curves.</p>
+    </header>
+
+    <main class="solar-grid">
+      <section class="solar-card info-card">
+        <h2>Optimistic Future</h2>
+        <p>Solarpunk offers an optimistic vision of the future where humanity lives in balance with nature, powered by clean energy. Visually, it merges organic plant shapes with high-technology solar collectors.</p>
+      </section>
+
+      <section class="solar-card interactive-card">
+        <h2>Solar Grid Array</h2>
+        <p>Adjust the slider representing sun exposure. The solar arrays will rotate to align with the sun's rays, maximizing clean power generation.</p>
+        
+        <div class="slider-wrapper">
+          <label for="solar-slider">Sun Exposure Angle:</label>
+          <input type="range" class="solar-slider" id="solar-slider" min="0" max="180" value="90">
+        </div>
+
+        <div class="solar-panel-visual">
+          <div class="solar-collector" id="solar-cell-1">
+            <div class="cell-grid"></div>
+          </div>
+          <div class="solar-collector" id="solar-cell-2">
+            <div class="cell-grid"></div>
+          </div>
+        </div>
+
+        <div class="power-display">Power Output: <span id="power-val">1.2 kW</span></div>
+      </section>
+
+      <section class="solar-card leaf-card">
+        <h2>Eco-Tech Vibe</h2>
+        <ul class="eco-list">
+          <li>Bright warm sandstone whites</li>
+          <li>Leaf greens and sunflower golds</li>
+          <li>Curved panel angles</li>
+          <li>Integrated biological accents</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

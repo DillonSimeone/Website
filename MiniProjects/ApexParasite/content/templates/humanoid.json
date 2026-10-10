@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 2,
+  "id": "humanoid",
+  "art": {
+    "body": null,
+    "size": [1024, 640],
+    "keying": "none"
+  },
+  "slots": [
+    {
+      "id": "head",
+      "name": "Head",
+      "kind": "part",
+      "slotType": "head",
+      "region": "head",
+      "anchor": [512, 140],
+      "hitShape": { "type": "ellipse", "rx": 40, "ry": 45 },
+      "rarity": "uncommon",
+      "presencePct": 100,
+      "pulseCost": 8,
+      "killsPulse": true
+    },
+    {
+      "id": "arm_l",
+      "name": "Left Arm",
+      "kind": "part",
+      "slotType": "arm",
+      "side": "left",
+      "region": "arms",
+      "anchor": [380, 290],
+      "hitShape": { "type": "ellipse", "rx": 28, "ry": 60 },
+      "rarity": "common",
+      "presencePct": 90,
+      "pulseCost": 3,
+      "reasonAbsent": "severed"
+    },
+    {
+      "id": "arm_r",
+      "name": "Right Arm",
+      "kind": "part",
+      "slotType": "arm",
+      "side": "right",
+      "region": "arms",
+      "anchor": [644, 290],
+      "hitShape": { "type": "ellipse", "rx": 28, "ry": 60 },
+      "rarity": "common",
+      "presencePct": 90,
+      "pulseCost": 3,
+      "reasonAbsent": "severed"
+    },
+    {
+      "id": "leg_l",
+      "name": "Left Leg",
+      "kind": "part",
+      "slotType": "leg",
+      "side": "left",
+      "region": "legs",
+      "anchor": [440, 490],
+      "hitShape": { "type": "ellipse", "rx": 30, "ry": 70 },
+      "rarity": "common",
+      "presencePct": 90,
+      "pulseCost": 3,
+      "reasonAbsent": "shattered"
+    },
+    {
+      "id": "leg_r",
+      "name": "Right Leg",
+      "kind": "part",
+      "slotType": "leg",
+      "side": "right",
+      "region": "legs",
+      "anchor": [584, 490],
+      "hitShape": { "type": "ellipse", "rx": 30, "ry": 70 },
+      "rarity": "common",
+      "presencePct": 90,
+      "pulseCost": 3,
+      "reasonAbsent": "shattered"
+    },
+    {
+      "id": "torso",
+      "name": "Torso Girdle",
+      "kind": "part",
+      "slotType": "torso",
+      "region": "thorax",
+      "anchor": [512, 270],
+      "hitShape": { "type": "ellipse", "rx": 48, "ry": 55 },
+      "rarity": "uncommon",
+      "presencePct": 100,
+      "pulseCost": 5
+    },
+    {
+      "id": "eyes",
+      "name": "Eyes",
+      "kind": "organ",
+      "slotType": "eye",
+      "region": "head",
+      "anchor": [512, 130],
+      "hitShape": { "type": "ellipse", "rx": 18, "ry": 12 },
+      "rarity": "common",
+      "presencePct": 95,
+      "yield": { "min": 1, "max": 2 },
+      "pulseCost": 5,
+      "tags": ["fragile"]
+    },
+    {
+      "id": "brain",
+      "name": "Human Brain",
+      "kind": "organ",
+      "slotType": "brain",
+      "region": "head",
+      "anchor": [512, 105],
+      "hitShape": { "type": "ellipse", "rx": 22, "ry": 16 },
+      "rarity": "rare",
+      "presencePct": 90,
+      "pulseCost": 8,
+      "killsPulse": true,
+      "tags": ["fragile"]
+    },
+    {
+      "id": "lungs",
+      "name": "Lungs",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "thorax",
+      "anchor": [512, 240],
+      "hitShape": { "type": "ellipse", "rx": 32, "ry": 24 },
+      "rarity": "common",
+      "presencePct": 95,
+      "pulseCost": 6,
+      "tags": ["fragile"]
+    },
+    {
+      "id": "heart",
+      "name": "Heart",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "thorax",
+      "anchor": [490, 275],
+      "hitShape": { "type": "ellipse", "rx": 26, "ry": 26 },
+      "rarity": "rare",
+      "presencePct": 100,
+      "pulseCost": 25,
+      "killsPulse": true
+    },
+    {
+      "id": "liver",
+      "name": "Liver",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "abdomen",
+      "anchor": [540, 340],
+      "hitShape": { "type": "ellipse", "rx": 26, "ry": 22 },
+      "rarity": "common",
+      "presencePct": 95,
+      "pulseCost": 5
+    },
+    {
+      "id": "viscera",
+      "name": "Abdominal Viscera",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "abdomen",
+      "anchor": [490, 360],
+      "hitShape": { "type": "ellipse", "rx": 32, "ry": 26 },
+      "rarity": "common",
+      "presencePct": 95,
+      "pulseCost": 4
+    }
+  ],
+  "clampPoints": [
+    {
+      "id": "carotid",
+      "name": "Carotid Artery",
+      "anchor": [512, 190],
+      "protects": ["head"],
+      "drainReductionPct": 50,
+      "bleedReductionPct": 10
+    },
+    {
+      "id": "aorta",
+      "name": "Aorta Trunk",
+      "anchor": [512, 310],
+      "protects": ["thorax", "abdomen"],
+      "drainReductionPct": 40,
+      "bleedReductionPct": 25
+    },
+    {
+      "id": "femoral",
+      "name": "Femoral Vessel",
+      "anchor": [512, 430],
+      "protects": ["arms", "legs"],
+      "drainReductionPct": 50,
+      "bleedReductionPct": 10
+    }
+  ]
+}

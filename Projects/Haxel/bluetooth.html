@@ -1,0 +1,1291 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Haxel — Web Bluetooth Control Portal</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="page-container">
+        <!-- HERO SECTION -->
+        <header class="hero">
+            <div class="hero-content">
+                <div class="badge">Web Bluetooth Control</div>
+                <h1>HAXEL</h1>
+                <p class="subtitle">Control Haxel haptic units directly from your Chrome browser using Bluetooth Low Energy (BLE).</p>
+                <div class="hero-actions">
+                    <button type="button" id="bleConnectBtnDoc" class="btn primary">CONNECT BLE</button>
+                    <a href="#simulator" class="btn">Launch Simulator</a>
+                    <a href="index.html" class="btn" style="border-color: #e23b24; color: #e23b24; font-weight: bold;">WiFi Mode</a>
+                    <a href="manual.html" class="btn secondary">Read Manual</a>
+                    <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/02_Audio_Haptics/Haxel"
+                        target="_blank" class="btn">View Source</a>
+                </div>
+            </div>
+            <div class="hero-graphic">
+                <div class="actuator-preview" id="hero-actuator">
+                    <canvas id="hero-canvas" width="600" height="80"></canvas>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT WRAPPER: DOCS & SIMULATOR -->
+        <div class="summary-sim-row"> <!-- LEFT: EXECUTIVE SUMMARY -->
+            <div class="summary-column">
+                <section class="doc-card" style="margin-bottom: 0;">
+                    <span class="block-label">01 // BLUETOOTH CONTROL</span>
+                    <h2>Web Bluetooth Mode</h2>
+                    <p>
+                        This page controls Haxel hardware directly through Chrome's
+                        <strong>Web Bluetooth API</strong>. No local network or Wi-Fi configuration is required —
+                        as long as the unit is flashed in Bluetooth mode, you can pair and stream real-time haptic
+                        commands from this browser.
+                    </p>
+                    <p>
+                        Power on your Haxel board, then click <strong>CONNECT BLE</strong> (hero bar or portal
+                        header), pick the device named like <code>Haxel-XXXX</code>, and the portal unlocks for live
+                        control.
+                    </p>
+
+                    <div class="tech-table-wrapper" style="margin-top: auto;">
+                        <table class="tech-table">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Legacy Haptic Control</th>
+                                    <th>Haxel (HAL)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Driver Integration</strong></td>
+                                    <td>Hardware-specific register hacking per driver IC</td>
+                                    <td><strong>Unified Hardware Abstraction Layer</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pattern Generation</strong></td>
+                                    <td>Hardcoded non-blocking loops</td>
+                                    <td><strong>Declarative pattern library runtime</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Control Interface</strong></td>
+                                    <td>Serial monitor & manual uploads</td>
+                                    <td><strong>Mobile-first captive portal web UI</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Audio Reactivity</strong></td>
+                                    <td>Custom DSP / external hardware filters</td>
+                                    <td><strong>Built-in 32-band <a
+                                                href="https://en.wikipedia.org/wiki/Fast_Fourier_Transform">FFT</a> &
+                                            envelope follower</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Actuator Support</strong></td>
+                                    <td>Single actuator style per compile</td>
+                                    <td><strong>Dynamic <a
+                                                href="https://en.wikipedia.org/wiki/Linear_resonant_actuator">LRA</a>,
+                                            <a href="https://en.wikipedia.org/wiki/Eccentric_rotating_mass">ERM</a>, <a
+                                                href="https://en.wikipedia.org/wiki/Solenoid">Solenoid</a>
+                                            mapping</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- RIGHT: INTERACTIVE CAPTIVE PORTAL SIMULATOR -->
+            <section class="simulator-column" id="simulator">
+                <div class="simulator-sticky">
+
+                    <div class="sim-header">
+                        <div class="sim-title">
+                            <span class="dot live blinking"></span>
+                            <h2>Live Portal Simulator</h2>
+                        </div>
+                    </div>
+
+                    <!-- VIRTUAL ACTUATOR / TELEMETRY CHASSIS -->
+                    <div class="virtual-actuator-chassis">
+                        <div class="strip-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Tactile Actuator Telemetry</span>
+                            <div class="telemetry-toggles" style="display: flex; gap: 4px; margin-left: auto; margin-right: 15px;">
+                                <button class="telemetry-toggle-btn active" data-mode="classic">Classic</button>
+                                <button class="telemetry-toggle-btn" data-mode="symmetric">Symmetric</button>
+                                <button class="telemetry-toggle-btn" data-mode="waterfall">Waterfall (audio)</button>
+                                <button class="telemetry-toggle-btn" data-mode="orbit">Orbit</button>
+                            </div>
+                            <span class="sim-fps" id="sim-fps">60 FPS</span>
+                        </div>
+                        <div class="telemetry-viewport">
+                            <canvas id="prev" width="400" height="180"></canvas>
+                        </div>
+                        <div class="strip-footer">
+<span>Driver: <b id="currentDriver">MOSFET</b></span> | <span>Actuator: <b
+                                id="currentActuator">ERM</b></span>
+                        </div>
+                    </div>
+
+                    <!-- PORTAL CONTAINER -->
+                    <div class="portal-container">
+                        <div class="portal-header">
+                            <div class="portal-logo" style="margin-right: auto;">HAXEL (BLE)</div>
+                            <button type="button" id="bleConnectBtn" class="btn primary" style="margin-right: 15px; padding: 6px 12px; font-size: 11px; font-weight: bold; cursor: pointer; border-width: 2px; box-shadow: 2px 2px 0 var(--black);">CONNECT BLE</button>
+                            <div class="portal-crumb" style="margin-right: 15px;">Active: <b id="patternName">Pulse Wave</b></div>
+                            <div class="portal-status">
+                                <span class="portal-dot" id="dot"></span>
+                                <span id="connText">disconnected</span>
+                            </div>
+                        </div>
+
+                        <div class="portal-body">
+                            <!-- PANEL TABS & CONTROLS -->
+                            <div class="portal-tabs">
+                                <div class="tabbar">
+                                    <button class="tab active" data-tab="play">Play</button>
+                                    <button class="tab" data-tab="lib">Library</button>
+                                    <button class="tab" data-tab="studio">Pattern Studio</button>
+                                    <button class="tab" data-tab="audio">Audio-Reactive</button>
+                                    <button class="tab" data-tab="device">Device</button>
+                                </div>
+
+                                <!-- PLAY TAB -->
+                                <div class="tab-content" id="tab-play">
+                                    <h3>Quick Control Panel</h3>
+
+                                    <div class="row">
+                                        <label>Master Intensity</label>
+                                        <input type="range" id="bright" min="0" max="255" value="180">
+                                        <span class="val" id="brightVal">70%</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Frequency Shift</label>
+                                        <input type="range" id="freqShift" min="50" max="250" value="150">
+                                        <span class="val" id="freqVal">150 Hz</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Playback Speed</label>
+                                        <input type="range" id="speed" min="5" max="30" value="10">
+                                        <span class="val" id="speedVal">1.0x</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Motor Startup Floor</label>
+                                        <input type="range" id="startFloor" min="0" max="70" value="35">
+                                        <span class="val" id="floorVal">35%</span>
+                                    </div>
+
+                                    <div class="motor-presets" style="display:flex; flex-wrap:wrap; gap:8px; margin: 10px 0 14px;">
+                                        <span class="chip-preset motor-preset" data-motor="130" title="Floor 50% · Intensity 100%">Type 130 Motor</span>
+                                        <span class="chip-preset motor-preset" data-motor="gentle" title="Floor 15% · Intensity 70%">Gentle / LRA</span>
+                                    </div>
+
+                                    <div class="control-actions">
+                                        <button class="btn primary" id="playBtn">Play Pattern</button>
+                                        <button class="btn danger" id="stopBtn">Stop</button>
+                                    </div>
+                                </div>
+
+                                <!-- LIBRARY TAB -->
+                                <div class="tab-content" id="tab-lib" style="display:none">
+                                    <h3>Pattern Library</h3>
+                                    <div class="tag-chips">
+                                        <span class="chip active" data-tag="all">All</span>
+                                        <span class="chip" data-tag="pulse">Pulse</span>
+                                        <span class="chip" data-tag="rhythm">Rhythm</span>
+                                        <span class="chip" data-tag="alert">Alert</span>
+                                        <span class="chip" data-tag="music">Audio</span>
+                                        <span class="chip" data-tag="time">Time</span>
+                                        <span class="chip" data-tag="custom">Custom</span>
+                                    </div>
+                                    <div class="cards" id="libCards"></div>
+                                </div>
+
+                                <!-- PATTERN STUDIO TAB (EMBER-LIKE COMPILER) -->
+                                <div class="tab-content" id="tab-studio" style="display:none">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <h3 style="margin-bottom: 0;">Pattern Studio</h3>
+                                        <button class="btn" id="openManualBtn" style="font-family: var(--font-display); font-size: 11px; text-transform: uppercase; padding: 4px 10px; background: var(--bauhaus-blue); color: #fff; border: 2px solid var(--black); cursor: pointer;">
+                                            📖 Read Manual
+                                        </button>
+                                    </div>
+                                    <p class="hint">Write haptic math expressions. Edits compile live and push to the device automatically (Save only archives to the library).</p>
+
+                                    <div class="studio-presets">
+                                        <span class="chip-preset" data-template="pulse">Pulse Click</span>
+                                        <span class="chip-preset" data-template="saw">Sawtooth Sweep</span>
+                                        <span class="chip-preset" data-template="pwm">PWM Buzz</span>
+                                        <span class="chip-preset" data-template="chaos">Chaos Noise</span>
+                                    </div>
+
+                                    <!-- IDE Code Editor -->
+                                    <div class="editor-container">
+                                        <div class="editor-gutter" id="gutter">1</div>
+                                        <div class="editor-textarea-wrapper">
+                                            <pre class="editor-hl" id="hl"></pre>
+                                            <textarea class="editor-textarea" id="ta" spellcheck="false"
+                                                autocomplete="off" wrap="off">/* Custom Haptic Expression */
+// t = time in seconds, freq = frequency shift
+// Try functions like: wave(t), triangle(t), square(t)
+wave(t * (freq * 0.05))
+</textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="compilation-status ok" id="compiler-status">compiled ✓</div>
+
+                                    <div class="studio-actions">
+                                        <input type="text" id="customPatternName" placeholder="Pattern Name"
+                                            value="My Waveform">
+                                        <button class="btn primary" id="savePatternBtn">Save to Library</button>
+                                    </div>
+                                </div>
+
+                                <!-- AUDIO TAB -->
+                                <div class="tab-content" id="tab-audio" style="display:none">
+                                    <h3>Audio-Reactive Telemetry</h3>
+                                    <div class="row">
+                                        <label>Telemetry Source</label>
+                                        <select id="micSrc">
+                                            <option value="0">Simulated Synthesizer</option>
+                                            <option value="1">I2S Microphone (INMP441)</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <label>Reactive Gain</label>
+                                        <input type="range" id="audioGain" min="1" max="10" value="4">
+                                        <span class="val" id="gainVal">4.0x</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Min Active Freq</label>
+                                        <input type="range" id="audioMinFreq" min="40" max="2000" step="10" value="40">
+                                        <span class="val" id="minFreqVal">40 Hz</span>
+                                    </div>
+                                    <div class="row">
+                                        <label>Max Active Freq</label>
+                                        <input type="range" id="audioMaxFreq" min="2000" max="20000" step="100" value="16000">
+                                        <span class="val" id="maxFreqVal">16000 Hz</span>
+                                    </div>
+                                    <div class="spectrum-visualizer">
+                                        <canvas id="spectrum-canvas" width="400" height="80"></canvas>
+                                    </div>
+                                    <div class="audio-bins-list"
+                                        style="margin-top: 15px; border-top: 2px solid #111; padding-top: 15px;">
+                                        <div
+                                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; flex-wrap: wrap;">
+                                            <h4 style="margin: 0;">Frequency Band Partitioning</h4>
+                                            <div style="display: flex; gap: 8px;">
+                                                <button class="btn" id="addBinBtn"
+                                                    style="padding: 2px 8px; font-size: 11px;">+ Add Bin</button>
+                                                <button class="btn" id="subBinBtn"
+                                                    style="padding: 2px 8px; font-size: 11px;">- Subtract Bin</button>
+                                            </div>
+                                        </div>
+                                        <div id="bins-container">
+                                            <!-- Dynamically rendered bin rows go here -->
+                                        </div>
+                                    </div>
+                                    <p class="hint">Maps acoustic audio frequencies into physical mechanical pulses for
+                                        sensory substitution.</p>
+                                    <p id="mobile-feedback-note" class="hint" style="display: none; color: var(--bauhaus-red); font-weight: bold; margin-top: 10px; border-left: 3px solid var(--bauhaus-red); padding-left: 8px;">
+                                        Note: Mobile device detected. Bin 0 (0-800Hz) is set to nonreactive to prevent the device's microphone from hearing its own vibration motors (feedback loop).
+                                    </p>
+                                </div>
+
+                                <!-- DEVICE TAB -->
+                                <div class="tab-content" id="tab-device" style="display:none">
+                                    <h3>Hardware Calibration</h3>
+                                    <div class="calib-section">
+                                        <h4>Device Identity</h4>
+                                        <div class="row">
+                                            <label>WiFi / BLE Name</label>
+                                            <input type="text" id="deviceSsid" maxlength="31" value="Haxel" placeholder="Haxel-MyDevice">
+                                        </div>
+                                        <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px;">
+                                            Used for both the WiFi SSID and Bluetooth device name after saving and rebooting. Names are kept under the Haxel prefix for browser discovery.
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Driver Section -->
+                                    <div class="calib-section">
+                                        <h4>Actuator Driver Output</h4>
+                                        <div class="row">
+                                            <label>Driver IC</label>
+                                            <select id="drvChip">
+                                                <option value="L298N">L298N (Dual H-Bridge)</option>
+                                                <option value="DRV2605L">DRV2605L (I2C Low-Latency)</option>
+                                                <option value="DRV8833">DRV8833 (Dual PWM H-Bridge)</option>
+                                                <option value="MOSFET" selected>Raw MOSFET (Direct PWM Output)</option>
+                                                <option value="MINI_HBRIDGE">Mini H-Bridge (2-pin)</option>
+                                            </select>
+                                        </div>
+                                        <div class="row">
+                                            <label>Actuator Type</label>
+                                            <select id="actuatorType">
+                                                <option value="LRA">Linear Resonant Actuator (LRA)</option>
+                                                <option value="ERM" selected>Eccentric Rotating Mass (ERM)</option>
+                                                <option value="Solenoid">High-Amplitude Solenoid</option>
+                                            </select>
+                                        </div>
+                                        <div class="row">
+                                            <label>PWM Freq (Hz)</label>
+                                            <select id="pwmHz">
+                                                <option value="50">50 Hz (Solenoid default)</option>
+                                                <option value="1000">1000 Hz</option>
+                                                <option value="10000">10000 Hz</option>
+                                                <option value="20000" selected>20000 Hz (Ultrasonic / Silent)</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Motor channels: enable toggle + GPIO pin per row -->
+                                        <div style="margin-top: 15px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                                <h5>Motor Channels</h5>
+                                                <button class="btn" id="addMotorBtn" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">+ Add Motor</button>
+                                            </div>
+                                            <p class="hint" style="font-size: 10px; color: #555; margin-top: 0;">
+                                                Enable/disable each channel and assign GPIO pins. Values sync from the device on connect.
+                                            </p>
+                                            <div id="motorsContainer">
+                                                <!-- Dynamically rendered motor rows -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- I2C Bus Section -->
+                                    <div class="calib-section">
+                                        <h4>I2C Interface Configuration</h4>
+                                        <div class="row">
+                                            <label>SDA Pin</label>
+                                            <select id="pinSDA">
+                                                <option value="-1" selected>Unassigned (-1)</option>
+                                                <option value="1">GPIO 1</option>
+                                                <option value="3">GPIO 3</option>
+                                                <option value="4">GPIO 4</option>
+                                                <option value="5">GPIO 5</option>
+                                                <option value="6">GPIO 6</option>
+                                                <option value="7">GPIO 7</option>
+                                                <option value="10">GPIO 10</option>
+                                            </select>
+                                        </div>
+                                        <div class="row">
+                                            <label>SCL Pin</label>
+                                            <select id="pinSCL">
+                                                <option value="-1" selected>Unassigned (-1)</option>
+                                                <option value="1">GPIO 1</option>
+                                                <option value="2">GPIO 2</option>
+                                                <option value="3">GPIO 3</option>
+                                                <option value="4">GPIO 4</option>
+                                                <option value="5">GPIO 5</option>
+                                                <option value="6">GPIO 6</option>
+                                                <option value="7">GPIO 7</option>
+                                                <option value="10">GPIO 10</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Audio Input Section -->
+                                    <div class="calib-section">
+                                        <h4>Audio Reactive Input</h4>
+                                        <div class="row">
+                                            <label>Audio Enabled</label>
+                                            <input type="checkbox" id="audioEnabled" style="width:auto; margin:0;">
+                                        </div>
+                                        <div class="row">
+                                            <label>Input Source</label>
+                                            <select id="audioSource">
+                                                <option value="0">Simulated / Synth</option>
+                                                <option value="1">Analog ADC Mic</option>
+                                                <option value="2" selected>I2S MEMS Mic (INMP441)</option>
+                                            </select>
+                                        </div>
+                                        <div id="i2sPinsContainer">
+                                            <div class="row">
+                                                <label>I2S BCLK Pin</label>
+                                                <select id="audioBclk">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
+                                                    <option value="0">GPIO 0</option>
+                                                    <option value="1">GPIO 1</option>
+                                                    <option value="2">GPIO 2</option>
+                                                    <option value="3">GPIO 3</option>
+                                                    <option value="4">GPIO 4</option>
+                                                    <option value="5">GPIO 5</option>
+                                                    <option value="6">GPIO 6</option>
+                                                    <option value="7">GPIO 7</option>
+                                                    <option value="10">GPIO 10</option>
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <label>I2S WS Pin</label>
+                                                <select id="audioWs">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
+                                                    <option value="0">GPIO 0</option>
+                                                    <option value="1">GPIO 1</option>
+                                                    <option value="2">GPIO 2</option>
+                                                    <option value="3">GPIO 3</option>
+                                                    <option value="4">GPIO 4</option>
+                                                    <option value="5">GPIO 5</option>
+                                                    <option value="6">GPIO 6</option>
+                                                    <option value="7">GPIO 7</option>
+                                                    <option value="10">GPIO 10</option>
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <label>I2S SD Pin</label>
+                                                <select id="audioSd">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
+                                                    <option value="0">GPIO 0</option>
+                                                    <option value="1">GPIO 1</option>
+                                                    <option value="2">GPIO 2</option>
+                                                    <option value="3">GPIO 3</option>
+                                                    <option value="4">GPIO 4</option>
+                                                    <option value="5">GPIO 5</option>
+                                                    <option value="6">GPIO 6</option>
+                                                    <option value="7">GPIO 7</option>
+                                                    <option value="10">GPIO 10</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div id="adcPinsContainer" style="display:none;">
+                                            <div class="row">
+                                                <label>ADC Analog Pin</label>
+                                                <select id="audioAdc">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
+                                                    <option value="0">GPIO 0 / A0</option>
+                                                    <option value="1">GPIO 1 / A1</option>
+                                                    <option value="2">GPIO 2 / A2</option>
+                                                    <option value="3">GPIO 3 / A3</option>
+                                                    <option value="4">GPIO 4 / A4</option>
+                                                    <option value="5">GPIO 5 / A5</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- LED Section -->
+                                    <div class="calib-section">
+                                        <h4>FastLED Reactivity</h4>
+                                        <div class="row">
+                                            <label>LEDs Enabled</label>
+                                            <input type="checkbox" id="ledEnabled" checked style="width:auto; margin:0;">
+                                        </div>
+                                        <div class="row">
+                                            <label>Feedback Pin</label>
+                                            <select id="ledPin">
+                                                <option value="-1" selected>Unassigned (-1)</option>
+                                                <option value="2">GPIO 2</option>
+                                                <option value="3">GPIO 3</option>
+                                                <option value="4">GPIO 4</option>
+                                                <option value="5">GPIO 5</option>
+                                                <option value="6">GPIO 6</option>
+                                                <option value="7">GPIO 7</option>
+                                                <option value="10">GPIO 10</option>
+                                            </select>
+                                        </div>
+                                        <div class="row">
+                                            <label>Feedback Count</label>
+                                            <input type="number" id="ledCount" min="1" max="300" step="1" value="20">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Knobs Section -->
+                                    <div class="calib-section">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                            <h4>Analog Knob Controls</h4>
+                                            <button class="btn" id="addKnobBtn" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">+ Add Knob</button>
+                                        </div>
+                                        <div id="knobsContainer">
+                                            <!-- Dynamically rendered knob rows -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- OLED Section -->
+                                    <div class="calib-section">
+                                        <h4>OLED Status Display</h4>
+                                        <div class="row">
+                                            <label>OLED Enabled</label>
+                                            <input type="checkbox" id="oledEnabled" style="width:auto; margin:0;">
+                                        </div>
+                                        <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px; margin-bottom: 0;">
+                                            Note: The OLED screen shares the main I2C interface bus pins configured in the I2C section above.
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <label>Phone Haptics</label>
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                            <input type="checkbox" id="phoneHapticsToggle" checked style="width: auto; margin: 0;">
+                                            <span style="font-size: 0.85rem; color: #475569;" id="hapticsStatusText">Enabled</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="diag-specs">
+                                        <div class="diag-line"><span>Firmware Version</span> <span id="fwVersionLabel">v1.2.0-dev</span></div>
+                                        <div class="diag-line"><span>FreeRTOS Core Jitter</span> <span>&lt; 1.4 ms</span></div>
+                                        <div class="diag-line"><span>ESP32-C3 Uptime</span> <span id="uptime">0s</span></div>
+                                    </div>
+                                    
+                                    <div style="margin-top: 20px; display: flex; justify-content: flex-end; width: 100%;">
+                                        <button class="btn primary" id="saveHardwareBtn" style="padding: 10px 20px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; text-align: center;">Save Hardware Configuration & Reboot</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ESP32-C3 BOARD EMULATOR & SERIAL CONSOLE -->
+                    <div class="hardware-emulator-block">
+                        <div class="strip-header">
+                            <span>ESP32-C3 Hardware Board Emulator</span>
+                            <span class="chip-status" id="wifi-status">AP: HAXEL-ESP32</span>
+                        </div>
+                        <div class="emulator-split">
+                            <!-- SVG board layout -->
+                            <div class="esp32-board-svg">
+                                <svg viewBox="0 0 260 180" width="100%" height="100%">
+                                    <!-- Board Body -->
+                                    <rect x="65" y="10" width="130" height="160" fill="#002f6c" stroke="#111"
+                                        stroke-width="4" rx="4" />
+                                    <!-- ESP32-C3 SoC chip -->
+                                    <rect x="100" y="40" width="60" height="50" fill="#111" stroke="#fff"
+                                        stroke-width="2" rx="2" />
+                                    <text x="130" y="70" fill="#fff" font-family="var(--mono)" font-size="9"
+                                        font-weight="bold" text-anchor="middle">ESP32-C3</text>
+
+                                    <!-- Status LED (GPIO8) -->
+                                    <circle id="esp-led" cx="130" cy="120" r="8" fill="#111" stroke="#fff"
+                                        stroke-width="1.5" />
+                                    <text x="130" y="142" fill="#fff" font-family="var(--mono)" font-size="7"
+                                        text-anchor="middle">GPIO8 (RGB)</text>
+
+                                    <!-- Pins on left side -->
+                                    <!-- SDA (G1) -->
+                                    <line x1="65" y1="35" x2="50" y2="35" stroke="#fff" stroke-width="2" />
+                                    <circle id="pin-sda" cx="50" cy="35" r="4" fill="#111" stroke="#fff"
+                                        stroke-width="1" />
+                                    <text x="42" y="38" fill="#111" font-family="var(--mono)" font-size="8"
+                                        text-anchor="end">SDA (G1)</text>
+
+                                    <!-- SCL (G2) -->
+                                    <line x1="65" y1="65" x2="50" y2="65" stroke="#fff" stroke-width="2" />
+                                    <circle id="pin-scl" cx="50" cy="65" r="4" fill="#111" stroke="#fff"
+                                        stroke-width="1" />
+                                    <text x="42" y="68" fill="#111" font-family="var(--mono)" font-size="8"
+                                        text-anchor="end">SCL (G2)</text>
+
+                                    <!-- PWM (G3) -->
+                                    <line x1="65" y1="95" x2="50" y2="95" stroke="#fff" stroke-width="2" />
+                                    <circle id="pin-pwm" cx="50" cy="95" r="4" fill="#111" stroke="#fff"
+                                        stroke-width="1" />
+                                    <text x="42" y="98" fill="#111" font-family="var(--mono)" font-size="8"
+                                        text-anchor="end">PWM (G3)</text>
+
+                                    <!-- Pins on right side -->
+                                    <!-- TX (G21) -->
+                                    <line x1="195" y1="35" x2="210" y2="35" stroke="#fff" stroke-width="2" />
+                                    <circle id="pin-tx" cx="210" cy="35" r="4" fill="#f2b134" stroke="#111"
+                                        stroke-width="1.5" />
+                                    <text x="218" y="38" fill="#111" font-family="var(--mono)" font-size="8"
+                                        text-anchor="start">TX (G21)</text>
+
+                                    <!-- RX (G20) -->
+                                    <line x1="195" y1="65" x2="210" y2="65" stroke="#fff" stroke-width="2" />
+                                    <circle id="pin-rx" cx="210" cy="65" r="4" fill="#111" stroke="#fff"
+                                        stroke-width="1" />
+                                    <text x="218" y="68" fill="#111" font-family="var(--mono)" font-size="8"
+                                        text-anchor="start">RX (G20)</text>
+
+                                    <!-- 3V3 -->
+                                    <line x1="195" y1="95" x2="210" y2="95" stroke="#fff" stroke-width="2" />
+                                    <circle id="pin-3v3" cx="210" cy="95" r="4" fill="#e23b24" stroke="#111"
+                                        stroke-width="1.5" />
+                                    <text x="218" y="98" fill="#111" font-family="var(--mono)" font-size="8"
+                                        text-anchor="start">3V3</text>
+                                </svg>
+                            </div>
+
+                            <!-- Serial Console -->
+                            <div class="serial-console-wrapper">
+                                <div class="console-header">
+                                    <span>USB Serial Monitor (115200 baud)</span>
+                                    <button class="btn-clear-console" id="clearConsoleBtn">Clear</button>
+                                </div>
+                                <div class="console-output" id="serialConsole">
+                                    <!-- Boot logs injected dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+
+        <!-- SPECIFICATIONS & ARCHITECTURE SECTION -->
+        <div class="bottom-docs-column" id="architecture">
+
+            <!-- 02 // THE PROBLEM -->
+            <section class="doc-card topic-problem card-reference">
+                <span class="block-label">02 // THE PROBLEM</span>
+                <h2>Why Haptic Accessibility Is Hard</h2>
+                <p>
+                    The idea of converting sound into touch is not new. It belongs to a research tradition called <a
+                        href="https://en.wikipedia.org/wiki/Sensory_substitution">sensory substitution</a>, the
+                    systematic replacement of one sensory channel with another. Paul Bach-y-Rita demonstrated
+                    tactile-visual substitution in 1969, and the field has since produced devices like the BrainPort
+                    (tongue-based electrotactile vision) and David Eagleman's VEST (a vibrotactile vest for hearing).
+                    The underlying neuroscience of <a
+                        href="https://en.wikipedia.org/wiki/Neuroplasticity#Multisensory_plasticity">cross-modal
+                        plasticity</a> shows that the brain can repurpose cortical areas when an input modality is
+                    missing. This prior work suggests that structured tactile signals could, over time, become interpretable by the wearer (a hypothesis Haxel intends to evaluate in the Section 11 user study).
+                </p>
+                <p>
+                    But building an accessible, programmable haptic device runs into two distinct challenges.
+                </p>
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <h3>The Frequency Mismatch</h3>
+                        <p>Human hearing spans roughly 20 Hz to 20,000 Hz, a 1000:1 range. Haptic actuators respond to
+                            maybe 50 to 250 Hz, a 5:1 range. Compressing a thousandfold dynamic range into a fivefold
+                            one produces what is effectively brown noise: the actuator vibrates in a constant, muddy hum
+                            with no distinguishable structure, and the mechanical stress will eventually destroy it.
+                            Direct linear mapping is not viable.</p>
+                    </div>
+                    <div class="spec-item">
+                        <h3>Hardware Fragmentation</h3>
+                        <p>Every actuator type is fundamentally different. An LRA needs AC resonance tracking. An ERM
+                            just wants a DC voltage threshold. A solenoid is a different beast entirely. Normally that
+                            means a separate codebase for each one, locking projects into a single hardware
+                            configuration and making experimentation expensive.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 04 // AUDIO-REACTIVE PIPELINE -->
+            <section class="doc-card topic-audio card-technical">
+                <span class="block-label">04 // AUDIO-REACTIVE PIPELINE</span>
+                <h2>From Sound to Structured Touch</h2>
+                <p>
+                    Haxel's audio-reactive pipeline ingests raw sound through either an analog aux port or an <a
+                        href="https://en.wikipedia.org/wiki/I%C2%B2S">I2S</a> digital microphone and runs a 256-point <a
+                        href="https://en.wikipedia.org/wiki/Fast_Fourier_Transform">FFT</a> to decompose the full 0–20 kHz spectrum into 32 log-spaced bands in real time. The goal is <a
+                        href="https://en.wikipedia.org/wiki/Sensory_substitution">sensory substitution</a>: translating
+                    the structure of sound into tactile patterns that a user can feel, learn, and eventually interpret,
+                    serving as a direct accessibility bridge for the Deaf and Hard-of-Hearing.
+                </p>
+                <p>
+                    Instead of mapping the full spectrum linearly (which, as described in Section 02, produces brown
+                    noise), the <a href="https://en.wikipedia.org/wiki/Fast_Fourier_Transform">FFT</a> output is divided
+                    into configurable frequency brackets. By default, these are low (bass), mid (vocal), and high
+                    (treble), and each bracket drives an independent haptic pattern generator. Bass energy might trigger
+                    sharp staccato <a href="https://en.wikipedia.org/wiki/Solenoid">solenoid</a> impacts. Mid-range
+                    vocal presence could modulate a sustained <a
+                        href="https://en.wikipedia.org/wiki/Eccentric_rotating_mass">ERM</a> rumble. High-frequency
+                    transients produce rapid micro-pulses. The design aims to establish **structured tactile semantics**:
+                    the user doesn't feel "sound"; they feel distinct, learnable textures that correspond to acoustic
+                    categories.
+                </p>
+            </section>
+
+            <!-- 03 // ARCHITECTURE -->
+            <section class="doc-card topic-architecture card-technical">
+                <span class="block-label">03 // ARCHITECTURE</span>
+                <h2>How the HAL Works</h2>
+                <p>
+                    Haxel's Hardware Abstraction Layer solves the fragmentation problem. A single firmware image
+                    supports <a href="https://en.wikipedia.org/wiki/Linear_resonant_actuator">LRAs</a>, <a
+                        href="https://en.wikipedia.org/wiki/Eccentric_rotating_mass">ERMs</a>, and <a
+                        href="https://en.wikipedia.org/wiki/Solenoid">solenoids</a> through a unified driver pipeline
+                    running inside a <a href="https://en.wikipedia.org/wiki/FreeRTOS">FreeRTOS</a> task. You swap
+                    hardware, not codebases.
+                </p>
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <h3>Dynamic Resonance Tracking</h3>
+                        <p>LRAs only feel right at their physical resonant frequency, usually somewhere between 170 and
+                            235 Hz. Haxel reads <a
+                                href="https://en.wikipedia.org/wiki/Counter-electromotive_force">back-EMF</a> signals
+                            from the active driver continuously and nudges the output frequency to stay locked to
+                            resonance, so you don't have to measure it yourself or recompile when you swap actuators.
+                        </p>
+                    </div>
+                    <div class="spec-item">
+                        <h3>Waveform Synthesis</h3>
+                        <p>Patterns run through a flat-bytecode interpreter that outputs normalized intensity values
+                            between 0.0 and 1.0. The active HAL driver then translates those into whatever the hardware
+                            actually needs: voltage ramps for an <a
+                                href="https://en.wikipedia.org/wiki/Linear_resonant_actuator">LRA</a>, <a
+                                href="https://en.wikipedia.org/wiki/Pulse-width_modulation">PWM</a> duty cycles for an
+                            <a href="https://en.wikipedia.org/wiki/Eccentric_rotating_mass">ERM</a>, or timed pulses for
+                            a <a href="https://en.wikipedia.org/wiki/Solenoid">solenoid</a>.</p>
+                    </div>
+                </div>
+
+                <!-- Bauhaus HAL Architecture Diagram -->
+                <div class="hal-architecture-diagram">
+                    <div class="diagram-column src-column">
+                        <div class="diagram-badge">Input</div>
+                        <div class="diagram-box">
+                            <h4>Pattern Studio / FFT</h4>
+                            <p>Generates normalized bytecode values (0.0 to 1.0)</p>
+                            <div class="diagram-signal">0.0 - 1.0</div>
+                        </div>
+                    </div>
+
+                    <div class="diagram-arrow">→</div>
+
+                    <div class="diagram-column core-column">
+                        <div class="diagram-badge">HAL Core</div>
+                        <div class="diagram-box">
+                            <h4>Dynamic Calibration</h4>
+                            <ul class="diagram-list">
+                                <li>Resonance Tracker (reads back-EMF)</li>
+                                <li>Motor Startup Floor offset</li>
+                                <li>Weber-scale compensation</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="diagram-arrow">→</div>
+
+                    <div class="diagram-column driver-column">
+                        <div class="diagram-badge">Drivers</div>
+                        <div class="driver-mappings">
+                            <div class="driver-mapping-box lra-driver">
+                                <h5>LRA Driver</h5>
+                                <span>AC Resonance Loop</span>
+                            </div>
+                            <div class="driver-mapping-box erm-driver">
+                                <h5>ERM Driver</h5>
+                                <span>PWM Duty Cycle</span>
+                            </div>
+                            <div class="driver-mapping-box solenoid-driver">
+                                <h5>Solenoid Driver</h5>
+                                <span>Timed Pulse Triggers</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="diagram-arrow">→</div>
+
+                    <div class="diagram-column target-column">
+                        <div class="diagram-badge">Actuators</div>
+                        <div class="actuator-targets">
+                            <div class="actuator-target lra-target">LRA (Mechanical Resonance)</div>
+                            <div class="actuator-target erm-target">ERM (DC Centrifugal Force)</div>
+                            <div class="actuator-target solenoid-target">Solenoid (Linear Impact)</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 05 // PATTERN STUDIO -->
+            <section class="doc-card topic-studio card-technical">
+                <span class="block-label">05 // PATTERN STUDIO</span>
+                <h2>Scriptable Expression Engine</h2>
+                <p>
+                    Haxel's Pattern Studio provides a Pixelblaze-inspired scripting environment for authoring haptic
+                    waveforms. Users write mathematical expressions using built-in functions like <code>wave()</code>,
+                    <code>triangle()</code>, <code>square()</code>, and <code>noise()</code>, which are compiled in
+                    real-time and executed against the virtual motor at 60 ticks per second. Variables like
+                    <code>t</code> (elapsed time), <code>freq</code> (frequency shift), and <code>speed</code> (playback
+                    rate) are injected automatically.
+                </p>
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <h3>Haptic Scripting Examples</h3>
+                        <p>Write math formulas directly in the studio console. Key code patterns include:</p>
+                        <p class="callout" style="font-family: var(--mono); font-size: 11px; padding: 10px; margin-top: 10px;">
+                            <strong>Sharp Pulse (Click)</strong><br>
+                            <code>wave(t * 10) * (wave(t * 10) > 0.85)</code><br><br>
+                            <strong>Sawtooth Ramp Sweep</strong><br>
+                            <code>(t * speed) % 1.0</code><br><br>
+                            <strong>Rhythmic Staccato</strong><br>
+                            <code>square(t * 4) * noise(t) * 0.7</code><br><br>
+                            <strong>Resonant Sine Breathing</strong><br>
+                            <code>wave(t * (freq * 0.05)) * 0.5 + 0.5</code>
+                        </p>
+                    </div>
+                    <div class="spec-item">
+                        <h3>Workflow Integration</h3>
+                        <p>
+                            Custom patterns can be saved to the library and immediately assigned to any frequency bin in the
+                            audio-reactive pipeline. This closes the loop between authoring and deployment: you write a pattern,
+                            feel it on your phone or actuator, and assign it to respond to bass hits, vocal presence, or cymbal
+                            transients, all without recompiling firmware.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 06 // PRIOR ART & RELATED WORK -->
+            <section class="doc-card topic-prior card-reference">
+                <span class="block-label">06 // PRIOR ART</span>
+                <h2>Related Work & Differentiation</h2>
+                <p>
+                    Haptic feedback for music and accessibility is an active research area with several notable systems:
+                </p>
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <h3><a href="https://www.entandaudiologynews.com/reviews/tech-reviews/post/neosensory-buzz-can-a-wristband-really-help-with-sound-awareness-and-tinnitus" target="_blank">Neosensory Buzz</a></h3>
+                        <p>A wristband for Deaf users that maps audio to vibrotactile patterns across multiple
+                            actuators. While functionally related, Haxel distinguishes itself by focusing on a fully open-source 
+                            platform, utilizing standard off-the-shelf components, and exposing a client-side user-scriptable pattern sandbox.</p>
+                    </div>
+                    <div class="spec-item">
+                        <h3><a href="https://subpac.com" target="_blank">Subpac</a></h3>
+                        <p>A wearable bass transducer (backpack/seat form factor) designed for music producers. Focuses 
+                            on single-channel low-pass tactile sub-bass reproduction, whereas Haxel targets multi-band frequency-band 
+                            partitioning and scriptable pattern modulation.</p>
+                    </div>
+                    <div class="spec-item">
+                        <h3><a href="https://www.audicus.com/blog/hearing-aid-tech/vest-hearing-loss-technology/" target="_blank">Eagleman's VEST</a></h3>
+                        <p>David Eagleman's Versatile Extra-Sensory Transducer: a vibrotactile vest for hearing. Demonstrates 
+                            cross-modal plasticity in longitudinal academic studies. Haxel aims to adapt these sensory-substitution 
+                            principles into a low-cost, highly accessible DIY framework.</p>
+                    </div>
+                    <div class="spec-item">
+                        <h3><a href="https://dl.acm.org/doi/10.1145/1753846.1753919" target="_blank">Emoti-Chair</a></h3>
+                        <p>Ryerson University's multi-channel vibrotactile chair for music appreciation. Maps audio 
+                            bands to physical zones across the chair. Haxel scales down these multi-channel sound-localization 
+                            advantages into a portable, field-configurable, and wearable package.</p>
+                    </div>
+                </div>
+                <p>
+                    Haxel's differentiation is the intersection of four properties: open-source design, user-scriptable
+                    patterns, configurable frequency-band partitioning, and near-zero hardware cost (an ESP32-C3 board
+                    plus a motor driver typically costs under $8 in components).
+                </p>
+            </section>
+
+            <!-- 07 // FREQUENCY-BAND PARTITIONING -->
+            <section class="doc-card topic-novel card-novel">
+                <span class="block-label">07 // NOVEL CONTRIBUTION</span>
+                <h2>Frequency-Band Partitioning</h2>
+                <p>
+                    The core technical contribution of Haxel is its approach to the audio-to-haptic mapping problem.
+                    Rather than applying a single transfer function to the entire audio spectrum or distributing linear
+                    frequency bands across a fixed actuator array, Haxel decomposes the FFT output into N
+                    user-configurable frequency brackets, each driving an independent haptic pattern generator.
+                </p>
+                <h3>Haptic Mapping Algorithm</h3>
+
+                <div class="algorithm-diagram">
+                    <div class="algo-step">
+                        <div class="step-num-badge">01</div>
+                        <h4>FFT Decomp</h4>
+                        <p>256-point FFT at 44.1 kHz sample rate produces 128 raw frequency bins. Haxel downsamples and aggregates these into 32 log-spaced bands (0 to 20,000 Hz) to capture full musical details.</p>
+                    </div>
+                    <div class="algo-arrow">→</div>
+                    <div class="algo-step">
+                        <div class="step-num-badge">02</div>
+                        <h4>Partitioning</h4>
+                        <p>Dividers split the 32 log-spaced bands into N contiguous brackets (up to 5 bands).</p>
+                    </div>
+                    <div class="algo-arrow">→</div>
+                    <div class="algo-step">
+                        <div class="step-num-badge">03</div>
+                        <h4>Envelope</h4>
+                        <p>Each band's average magnitude is computed and scaled by gain.</p>
+                    </div>
+                    <div class="algo-arrow">→</div>
+                    <div class="algo-step">
+                        <div class="step-num-badge">04</div>
+                        <h4>Modulation</h4>
+                        <p>Volume envelope modulates its assigned haptic pattern function.</p>
+                    </div>
+                    <div class="algo-arrow">→</div>
+                    <div class="algo-step">
+                        <div class="step-num-badge">05</div>
+                        <h4>Max-Merge</h4>
+                        <p>Output takes the maximum of all band outputs to drive the motor.</p>
+                    </div>
+                </div>
+
+                <h3>Why Configurable Granularity Matters</h3>
+                <p>
+                    The optimal number of frequency bands is not universal. For music with simple spectral structure
+                    (solo voice, acoustic guitar), two or three bands may suffice. For complex electronic music with
+                    distinct sub-bass, mid-bass, vocal, presence, and air bands, five partitions provide meaningfully
+                    different tactile textures. The ability to add or subtract bins at runtime, and to assign NONE to
+                    any bin, gives users control over the information density of their haptic experience.
+                </p>
+            </section>
+
+            <!-- 08 // PSYCHOPHYSICS -->
+            <section class="doc-card topic-psych card-reference">
+                <span class="block-label">08 // PSYCHOPHYSICS</span>
+                <h2>Haptic Perception Science</h2>
+                <p>
+                    The design decisions in Haxel are grounded in the psychophysics of vibrotactile perception.
+                    Understanding the biological hardware that receives haptic signals constrains what is possible and
+                    guides what is useful.
+                </p>
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <h3><a href="https://en.wikipedia.org/wiki/Mechanoreceptor" target="_blank">Mechanoreceptors</a></h3>
+                        <p>Pacinian corpuscles, located deep in the skin and joints, are the primary vibration
+                            detectors. They are most sensitive between 200 and 300 Hz. While standard LRAs operate 
+                            slightly lower at 170 to 235 Hz, this range overlaps significantly with the Pacinian response 
+                            band, allowing effective coupling. Meissner's corpuscles, closer to the skin surface, respond
+                            to lower frequencies (10 to 50 Hz) and detect flutter and texture. Haxel's frequency shift
+                            control allows tuning output to target either receptor population.</p>
+
+                        <div class="psych-visual mechno-visual">
+                            <div class="visual-wave-row">
+                                <span class="wave-tag">Pacinian (250 Hz)</span>
+                                <div class="wave-graphic-wrapper">
+                                    <svg viewBox="0 0 200 30" class="oscilloscope" preserveAspectRatio="none">
+                                        <path class="wave-path fast-path"
+                                            d="M 0 15 Q 2.5 5 5 15 T 10 15 T 15 15 T 20 15 T 25 15 T 30 15 T 35 15 T 40 15 T 45 15 T 50 15 T 55 15 T 60 15 T 65 15 T 70 15 T 75 15 T 80 15 T 85 15 T 90 15 T 95 15 T 100 15 T 105 15 T 110 15 T 115 15 T 120 15 T 125 15 T 130 15 T 135 15 T 140 15 T 145 15 T 150 15 T 155 15 T 160 15 T 165 15 T 170 15 T 175 15 T 180 15 T 185 15 T 190 15 T 195 15 T 200 15 T 205 15 T 210 15 T 215 15 T 220 15 T 225 15 T 230 15 T 235 15 T 240 15 T 245 15 T 250 15 T 255 15 T 260 15 T 265 15 T 270 15 T 275 15 T 280 15 T 285 15 T 290 15 T 295 15 T 300 15"
+                                            fill="none" stroke="var(--bauhaus-red)" stroke-width="2.5" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="visual-wave-row">
+                                <span class="wave-tag">Meissner (25 Hz)</span>
+                                <div class="wave-graphic-wrapper">
+                                    <svg viewBox="0 0 200 30" class="oscilloscope" preserveAspectRatio="none">
+                                        <path class="wave-path slow-path"
+                                            d="M 0 15 Q 15 5 30 15 T 60 15 T 90 15 T 120 15 T 150 15 T 180 15 T 210 15 T 240 15 T 270 15 T 300 15 T 330 15 T 360 15 T 390 15 T 420 15"
+                                            fill="none" stroke="var(--bauhaus-blue)" stroke-width="2.5" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="spec-item">
+                        <h3><a href="https://en.wikipedia.org/wiki/Just-noticeable_difference" target="_blank">Perceptual Thresholds</a></h3>
+                        <p>The Just Noticeable Difference (JND) for vibrotactile amplitude is approximately 15 to 20%
+                            change in intensity. This means pattern functions that modulate below this threshold will
+                            feel like a constant hum. Haxel's pattern library is designed with JND-exceeding contrast:
+                            pulse patterns alternate between 0% and 100%, and even subtle patterns like "ambient"
+                            maintain at least 25% peak-to-trough variation.</p>
+
+                        <div class="psych-visual jnd-visual">
+                            <div class="jnd-wave-row">
+                                <div class="jnd-item">
+                                    <span class="jnd-tag detected">Above JND (Δ 30%)</span>
+                                    <svg viewBox="0 0 100 30" class="oscilloscope" preserveAspectRatio="none">
+                                        <path class="wave-path jnd-above-path"
+                                            d="M 0 15 Q 5 5 10 15 T 20 15 T 30 15 T 40 15 T 50 15 T 60 15 T 70 15 T 80 15 T 90 15 T 100 15 T 110 15"
+                                            fill="none" stroke="var(--bauhaus-red)" stroke-width="2" />
+                                    </svg>
+                                </div>
+                                <div class="jnd-item">
+                                    <span class="jnd-tag unperceived">Below JND (Δ 5%)</span>
+                                    <svg viewBox="0 0 100 30" class="oscilloscope" preserveAspectRatio="none">
+                                        <path class="wave-path jnd-below-path"
+                                            d="M 0 15 Q 5 13 10 15 T 20 15 T 30 15 T 40 15 T 50 15 T 60 15 T 70 15 T 80 15 T 90 15 T 100 15 T 110 15"
+                                            fill="none" stroke="var(--muted)" stroke-width="2" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="spec-item">
+                        <h3><a href="https://en.wikipedia.org/wiki/Temporal_resolution" target="_blank">Temporal Resolution</a></h3>
+                        <p>Humans can distinguish separate haptic events spaced as close as 5 to 10 milliseconds apart.
+                            Haxel's animation loop runs at approximately 60 ticks per second (16.7 ms per tick), which
+                            falls within the temporal resolution window for distinct event discrimination. For patterns
+                            requiring faster modulation (staccato, micro-pulse), the underlying PWM frequency operates
+                            in the kilohertz range.</p>
+
+                        <div class="psych-visual temporal-visual">
+                            <div class="temporal-row">
+                                <div class="temporal-scenario">
+                                    <span class="temp-tag">Discrete (>10ms)</span>
+                                    <div class="pulse-indicator-wrapper">
+                                        <div class="pulse-dot dot-1"></div>
+                                        <div class="pulse-line"></div>
+                                        <div class="pulse-dot dot-2"></div>
+                                    </div>
+                                    <span class="temp-status">2 Felt Impacts</span>
+                                </div>
+                                <div class="temporal-scenario">
+                                    <span class="temp-tag">Fused (&lt;5ms)</span>
+                                            <div class="pulse-indicator-wrapper fused">
+                                                <div class="pulse-dot dot-fused-1"></div>
+                                                <div class="pulse-dot dot-fused-2"></div>
+                                            </div>
+                                            <span class="temp-status">1 Constant Buzz</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="spec-item">
+                        <h3><a href="https://en.wikipedia.org/wiki/Weber%E2%80%93Fechner_law" target="_blank">Weber's Law</a></h3>
+                        <p>Perceived intensity follows a logarithmic relationship, not a linear one. A doubling of
+                            voltage does not produce a doubling of perceived vibration strength. Haxel's master
+                            intensity slider operates on a linear 0-255 scale, but the Motor Startup Floor calibration
+                            and HAL driver curves compensate for the nonlinear perceptual response of the actuator-skin
+                            system relative to Weber's Law.</p>
+
+                        <div class="psych-visual weber-visual">
+                            <div class="weber-bar-row">
+                                <div class="weber-bar-label">Input Power (Linear)</div>
+                                <div class="weber-bar-container">
+                                    <div class="weber-bar linear-fill"></div>
+                                </div>
+                            </div>
+                            <div class="weber-bar-row">
+                                <div class="weber-bar-label">Perceived Strength (Logarithmic)</div>
+                                <div class="weber-bar-container">
+                                    <div class="weber-bar log-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 09 // LATENCY BUDGET -->
+            <section class="doc-card topic-latency card-technical">
+                    <span class="block-label">09 // REAL-TIME CONSTRAINTS</span>
+                    <h2>Latency Budget</h2>
+                    <p>
+                        Research on audio-haptic synchronization perception shows that users detect desynchronization
+                        above approximately 50 milliseconds. Haxel's end-to-end latency budget from audio input to
+                        actuator response must stay below this threshold to feel "live."
+                    </p>
+                    <div class="spec-grid">
+                        <div class="spec-item">
+                            <h3>Real-time Constraints</h3>
+                            <p class="callout">To prevent perceptible audio-haptic lag, the entire pipeline must execute
+                                well under the <strong>50 ms human synchronization threshold</strong>. Haxel schedules
+                                tasks directly in FreeRTOS to prioritize motor output.</p>
+                        </div>
+                        <div class="spec-item">
+                            <h3>Total Budget</h3>
+                            <p class="callout callout-right">Estimated end-to-end latency is 10 to 15 ms, calculated as empirical design constraints based on the ESP32-C3 firmware execution model (DMA buffer intervals and FreeRTOS task timings). FreeRTOS task scheduling runs the haptic loop at elevated priority with core jitter below 1.4 ms, ensuring that haptic feedback feels instantaneous relative to the audio events.</p>
+                        </div>
+                    </div>
+
+                    <!-- Custom Horizontal Bauhaus Pipeline Visualization -->
+                    <div class="latency-flow">
+                        <div class="flow-stage stage-audio">
+                            <div class="stage-num">STAGE 01</div>
+                            <div class="stage-title">Audio Capture</div>
+                            <div class="stage-time">~5.8 ms</div>
+                            <div class="stage-desc">I2S DMA buffer fills in ~5.8 ms at 44.1 kHz sample rate</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-stage stage-fft">
+                            <div class="stage-num">STAGE 02</div>
+                            <div class="stage-title">FFT Analysis</div>
+                            <div class="stage-time">~1.2 ms</div>
+                            <div class="stage-desc">256-point FFT on ESP32-C3 RISC-V core: ~1.2 ms</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-stage stage-pattern">
+                            <div class="stage-num">STAGE 03</div>
+                            <div class="stage-title">Pattern Eval</div>
+                            <div class="stage-time">&lt; 0.5 ms</div>
+                            <div class="stage-desc">Bytecode interpreter tick completes in &lt; 0.5 ms</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-stage stage-output">
+                            <div class="stage-num">STAGE 04</div>
+                            <div class="stage-title">Driver Output</div>
+                            <div class="stage-time">~0.3 ms</div>
+                            <div class="stage-desc">DRV2605L register write via 400 kHz I2C: ~0.3 ms</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-stage stage-mechanical">
+                            <div class="stage-num">STAGE 05</div>
+                            <div class="stage-title">Motor Response</div>
+                            <div class="stage-time">3-8 ms</div>
+                            <div class="stage-desc">Mechanical ring-up LRA response takes 3 to 8 ms</div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison bar with human threshold -->
+                    <div class="latency-comparison">
+                        <div class="comparison-label">Perceptual Budget Comparison</div>
+                        <div class="comparison-bar-container">
+                            <div class="comparison-bar actual"></div>
+                            <div class="comparison-bar threshold"></div>
+                            <span class="actual-text-label">Haxel: ~10-15 ms</span>
+                            <span class="threshold-text-label">Limit: 50 ms</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 10 // MOTOR STARTUP FLOOR -->
+                <section class="doc-card topic-calibration card-technical">
+                    <span class="block-label">10 // CALIBRATION</span>
+                    <h2>Motor Startup Floor</h2>
+                    <p>
+                        The Motor Startup Floor control addresses a real electromechanical engineering problem: static
+                        friction (stiction). All rotating and oscillating actuators have a minimum input energy required
+                        to overcome bearing friction and begin moving. Below this threshold, the motor receives power
+                        but produces no perceptible vibration; the energy is entirely consumed by friction.
+                    </p>
+                    <div class="spec-grid">
+                        <div class="spec-item">
+                            <h3>ERM Stiction</h3>
+                            <p>Eccentric Rotating Mass motors have the highest stiction threshold due to bearing
+                                friction and the inertia of the offset weight. Typical minimum duty cycle to initiate
+                                rotation is 15 to 25% of maximum input. Below this, the motor stalls: it heats up
+                                without spinning.</p>
+                        </div>
+                        <div class="spec-item">
+                            <h3>LRA Ring-Up</h3>
+                            <p>Linear Resonant Actuators don't have bearings, but they do have a ring-up period: the
+                                number of oscillation cycles needed to reach steady-state amplitude at their resonant
+                                frequency. If the pattern switches direction before ring-up completes, the actuator
+                                produces weak, inconsistent output. The startup floor ensures the minimum drive level
+                                exceeds the ring-up threshold.</p>
+                        </div>
+                    </div>
+                    <p>
+                        Haxel's startup floor remaps the entire pattern output range. At 0% floor, the output spans 0.0
+                        to 1.0 as authored. At 15% floor, the output spans 0.15 to 1.0, guaranteeing that any nonzero
+                        pattern value produces perceptible motion. The simulator's stall detection warns when the floor
+                        is set too low for the selected actuator type.
+                    </p>
+                    <h3>Hardware Safety & Motor Protection</h3>
+                    <div class="callout" style="border-left-color: var(--bauhaus-red);">
+                        <p style="margin: 0 0 10px 0;"><strong>Hardware & Electromechanical Protection:</strong> Because Haxel is a general-purpose engine driving inductive motor loads, several firmware and circuit safety boundaries are supported:</p>
+                        <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
+                            <li style="margin-bottom: 8px;"><strong>Engine Fault State Machine:</strong> The firmware implements a dedicated <code>EngineState::FAULT</code> safety state. When a fault is raised (via <code>raiseFault()</code>), the engine halts the real-time execution loop (<code>Engine::tick()</code> returns early) and shuts off all motor drive. Haptics remain completely stopped until the user explicitly clears the fault state via the web API (sending a <code>{"clear": true}</code> state patch).</li>
+                            <li style="margin-bottom: 8px;"><strong>Watchdog Extensions:</strong> While the fault-handling engine is fully implemented, active triggers (e.g., continuous duty-cycle timeout or temperature sensor inputs) are left as customizable hardware extension points. Builders can easily bind custom safety checks to trigger <code>raiseFault()</code> on their specific ESP32 pin configurations.</li>
+                            <li style="margin-bottom: 8px;"><strong>Inductive Back-EMF Protection:</strong> Vibration motors are inductive loads. When drive current is cut, the collapsing magnetic field creates high-voltage spikes. The hardware implementation must include flyback diodes or dedicated driver ICs (like the DRV2605L) with integrated overcurrent and thermal shutdown.</li>
+                            <li><strong>Stall Protection:</strong> Operating motors below their stiction threshold (startup floor) causes them to draw current without rotating, producing purely resistive heat. Configuring a proper startup floor directly mitigates this electromechanical stall condition.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- 11 // FUTURE WORK -->
+                <section class="doc-card topic-future card-future">
+                    <span class="block-label">11 // FUTURE WORK</span>
+                    <h2>Roadmap & Evaluation</h2>
+                    <p>
+                        Several research and engineering directions remain open for future development:
+                    </p>
+                    <div class="spec-grid">
+                        <div class="spec-item">
+                            <h3>User Study</h3>
+                            <p>A controlled evaluation with Deaf and Hard-of-Hearing participants is the next critical
+                                milestone. The proposed study design: N=5 to 10 participants, each exposed to
+                                bass-heavy, vocal-heavy, and treble-heavy music tracks through haptic-only feedback.
+                                Primary metric: can participants correctly identify which frequency category dominates?
+                                Secondary metrics: subjective preference ratings, pattern discriminability scores, and
+                                learning curves over repeated sessions.</p>
+                        </div>
+                        <div class="spec-item">
+                            <h3>Multi-Actuator Arrays</h3>
+                            <p>The current architecture drives a single actuator. Extending the HAL to support spatial
+                                arrays (multiple actuators mapped to different body locations) would enable richer
+                                tactile experiences, similar to the Emoti-Chair's spatial approach but with Haxel's
+                                scriptability and portability.</p>
+                        </div>
+                        <div class="spec-item">
+                            <h3>Over-the-Air Pattern Sharing</h3>
+                            <p>A community pattern repository where users can upload, share, and download haptic
+                                patterns. This would accelerate the discovery of effective audio-to-haptic mappings
+                                through collective experimentation rather than individual trial and error.</p>
+                        </div>
+                        <div class="spec-item">
+                            <h3>Adaptive Frequency Partitioning</h3>
+                            <p>Machine learning models that automatically adjust bin boundaries based on the spectral
+                                content of incoming audio. For example, detecting that a song is bass-heavy and
+                                automatically narrowing the bass bin to increase resolution in that range, while
+                                widening treble bins where less information is present.</p>
+                        </div>
+                    </div>
+                    <p>
+                        This work is suitable for submission to venues such as ACM CHI (Human-Computer Interaction), ACM
+                        ASSETS (Accessible Computing), or IEEE World Haptics Conference, particularly once user
+                        evaluation data is collected.
+                    </p>
+                </section>
+
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="main-footer">
+            <p>Haxel &copy; 2026. Designed with Bauhaus Aesthetics. Form Follows Function.</p>
+        </footer>
+    </div>
+
+    <!-- Haptics Warning Modal -->
+    <div id="haptics-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+            <div class="modal-icon-container">
+                <svg class="modal-warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                    </path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <h4>Haptic Feedback Support</h4>
+            <p>This simulator features real-time haptics, confirmed working on <strong>Chrome for Android</strong>. Note
+                that Apple does not allow iOS browsers to control device haptics.</p>
+            <button class="btn primary modal-dismiss-btn" id="modal-dismiss-btn">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- Mobile Haptic Float Button -->
+    <div id="mobile-haptic-float-btn" style="display: none;" title="Toggle Playback">
+        <canvas id="mobile-haptic-canvas" width="110" height="110"></canvas>
+    </div>
+
+    <!-- Mobile Haptic Guide Tooltip Pop-up -->
+    <div id="mobile-haptic-guide" style="display: none;">
+        <span>ENGAGE/DISABLE HAPTICS</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f2b134" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+    </div>
+
+    <!-- Mobile Haptic Activation Overlay -->
+    <div id="haptic-activation-overlay" class="bauhaus-overlay" style="display: none;">
+        <div class="bauhaus-modal">
+            <span class="block-label primary">MOBILE SENSORY PORTAL</span>
+            <h2>Tactile Feedback Ready</h2>
+            <p>
+                This interactive portal simulates real-time mechanical haptics. To enable physical vibration on your device, the browser requires an initial user interaction.
+            </p>
+            <div class="modal-buttons">
+                <button id="enable-haptics-btn" class="btn primary">ENABLE</button>
+                <button id="test-haptics-btn" class="btn secondary">TEST</button>
+                <button id="disable-haptics-btn" class="btn">DISABLE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IFRAME MANUAL MODAL -->
+    <div id="manualModal" class="activation-overlay manual-modal-overlay" style="display: none;">
+        <div class="manual-modal-shell">
+            <div class="manual-modal-bar">
+                <span class="manual-modal-title">HAXEL // REFERENCE MANUAL</span>
+                <button id="closeManualBtn" class="manual-modal-close" type="button">
+                    Close [X]
+                </button>
+            </div>
+            <iframe src="manual.html" title="Haxel Reference Manual" class="manual-modal-frame"></iframe>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="bluetooth.js"></script>
+</body>
+
+</html>

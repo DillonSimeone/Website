@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "generic_beast",
+  "displayName": "Wild Beast",
+  "kind": "beast",
+  "template": "quadruped",
+  "art": {
+    "body": null,
+    "size": [1024, 640],
+    "keying": "none"
+  },
+  "patch": {},
+  "remove": [],
+  "add": [],
+  "loose": [],
+  "severable": [
+    { "id": "foreleg_l", "slotId": "foreleg_l" }
+  ],
+  "baseVitals": {
+    "pulse": 100
+  },
+  "feast": {
+    "calories": 30,
+    "biomassExp": 3
+  }
+}

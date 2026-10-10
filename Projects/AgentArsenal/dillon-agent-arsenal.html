@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DILLON'S AGENT ARSENAL // HACKATHON BRIEFING</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=DM+Sans:wght@300;400;600&display=swap');
+
+  :root {
+    --red: #ff2a2a;
+    --amber: #ffaa00;
+    --green: #00ff88;
+    --cyan: #00e5ff;
+    --dark: #080c10;
+    --mid: #0f1820;
+    --panel: #111d28;
+    --border: #1e3040;
+    --text: #c8dde8;
+    --dim: #4a6070;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  header {
+    background: linear-gradient(180deg, #0a1520 0%, var(--dark) 100%);
+    border-bottom: 2px solid var(--red);
+    padding: 40px 30px 30px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: 'AGENT SYSTEMS BRIEFING // UNLIMITED ACCESS KEY ACTIVE';
+    position: absolute;
+    top: 10px; right: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 2px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 8vw, 90px);
+    line-height: 0.9;
+    color: #fff;
+    letter-spacing: 2px;
+  }
+
+  h1 span { color: var(--red); }
+
+  .subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--amber);
+    letter-spacing: 2px;
+    margin-top: 16px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 30px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1px;
+  }
+
+  .stat strong {
+    display: block;
+    font-size: 28px;
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--cyan);
+    line-height: 1;
+  }
+
+  /* TIER SYSTEM */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  .tier {
+    margin-bottom: 50px;
+  }
+
+  .tier-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tier-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .tier-badge.ss { border-color: #ff00ff; color: #ff00ff; background: rgba(255,0,255,0.08); }
+  .tier-badge.s { border-color: var(--red); color: var(--red); background: rgba(255,42,42,0.08); }
+  .tier-badge.a { border-color: var(--amber); color: var(--amber); background: rgba(255,170,0,0.08); }
+
+  .tier-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: #fff;
+  }
+
+  /* PROJECT CARDS */
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .project-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+
+  .project-card:hover {
+    border-color: var(--cyan);
+    transform: translateY(-2px);
+  }
+
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+  }
+
+  .project-card.ss-tier::before { background: #ff00ff; }
+  .project-card.s-tier::before { background: var(--red); }
+  .project-card.a-tier::before { background: var(--amber); }
+
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: #fff;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+
+  .card-what {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+
+  .agents-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .agent-chain {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+
+  .agent {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .agent-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    padding: 1px 5px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .agent-desc { color: var(--text); line-height: 1.4; }
+
+  .output-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid;
+    display: inline-block;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+
+  .output-tag.unlimited { border-color: #ff00ff; color: #ff00ff; }
+  .output-tag.autonomous { border-color: var(--green); color: var(--green); }
+  .output-tag.recursive { border-color: #aa88ff; color: #aa88ff; }
+  .output-tag.scale { border-color: var(--cyan); color: var(--cyan); }
+
+  /* MODAL SYSTEM */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal-content {
+    background: var(--panel);
+    border: 1px solid var(--cyan);
+    width: 100%;
+    max-width: 800px;
+    max-height: 85vh;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 50px rgba(0,229,255,0.15);
+  }
+
+  .modal-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 1px;
+    color: var(--cyan);
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 30px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .modal-close:hover { color: #fff; }
+
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .terminal-output {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--green);
+    background: #000;
+    padding: 15px;
+    border: 1px solid #111;
+    min-height: 200px;
+    margin-top: 15px;
+    line-height: 1.4;
+  }
+
+  .project-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  .select-btn {
+    background: var(--mid);
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+  }
+
+  .select-btn:hover {
+    border-color: var(--cyan);
+    background: rgba(0,229,255,0.05);
+  }
+
+  .log-line { margin-bottom: 4px; }
+  .log-sys { color: var(--cyan); }
+  .log-warn { color: var(--amber); }
+  .log-success { color: var(--green); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 30px 20px;
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 2px;
+  }
+
+  footer strong { color: var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>DILLON'S<br><span>AGENT</span><br>ARSENAL</h1>
+  <div class="subtitle">COMPLETE MULTI-AGENT ORCHESTRATION // RECURSIVE HARDWARE & CODE EVOLUTION</div>
+  <div class="stats-row">
+    <div class="stat">RECURSIVE LOOPS<strong>INF</strong></div>
+    <div class="stat">AUTONOMY LEVEL<strong>05</strong></div>
+    <div class="stat">COMPUTE SCALE<strong>UNLIMITED</strong></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- SS TIER -->
+  <div class="tier">
+    <div class="tier-header">
+      <div class="tier-badge ss">SS-TIER</div>
+      <div class="tier-title">RECURSIVE HARDWARE & EVOLUTIONARY CODE</div>
+    </div>
+    <div class="project-grid">
+
+      <div class="project-card ss-tier" onclick="openAgentModule('strategist')">
+        <div class="card-title">AUTONOMOUS COMPONENT STRATEGIST</div>
+        <div class="card-what">Eliminates assembly bottlenecks by identifying alternatives based on technical OUTPUT (e.g. signal specs, voltage ranges, noise floor) rather than physical footprint or drop-in compatibility. The agent autonomously audits component datasheets to extract "Output Profiles" and crawls live "Basic/Preferred" reels at major assembly houses (JLCPCB/PCBWay) to find parts already loaded on the machines, bypassing manual change-order fees and sourcing risks.</div>
+        <div class="agents-label">Agent Chain</div>
+        <div class="agent-chain">
+          <div class="agent"><div class="agent-num">A1</div><div class="agent-desc">Output Spec Auditor — Extracts technical output profiles from any target component datasheet.</div></div>
+          <div class="agent"><div class="agent-num">A2</div><div class="agent-desc">Factory Reel Crawler — Recursively searches in-stock "Basic Part" reels for functional matches.</div></div>
+          <div class="agent"><div class="agent-num">A3</div><div class="agent-desc">Assembly Valuator — Calculates total assembly cost based on live feeder availability and change fees.</div></div>
+        </div>
+        <span class="output-tag unlimited">UNLIMITED</span><span class="output-tag scale">LOGISTICS</span>
+      </div>
+
+      <div class="project-card ss-tier">
+        <div class="card-title">DARWINIAN CODE EVOLUTION PIPELINE</div>
+        <div class="card-what">Autonomous software evolution via recursive genetic algorithms. Generates thousands of Variations of procedural or algorithmic systems (City Engines, Swarm Logic), scores them based on visual aesthetics (via Vision agents) and performance, and "breeds" the optimal versions. The highest-performing code is autonomously committed to the repository.</div>
+        <div class="agents-label">Agent Chain</div>
+        <div class="agent-chain">
+          <div class="agent"><div class="agent-num">A1</div><div class="agent-desc">Variation Agent — Produces thousands of procedural city or shader layouts.</div></div>
+          <div class="agent"><div class="agent-num">A2</div><div class="agent-desc">Scoring Agent — Evaluates aesthetics and framerates across simulated device tiers.</div></div>
+        </div>
+        <span class="output-tag autonomous">AUTONOMOUS</span><span class="output-tag recursive">EVOLUTIONARY</span>
+      </div>
+
+      <div class="project-card ss-tier">
+        <div class="card-id">SS-003 // ADVERSARIAL GRANT FORGE</div>
+        <div class="card-title">50-CYCLE RECURSIVE REFINEMENT</div>
+        <div class="card-what">Iterative synthesis for high-value funding. Generates technical proposals and subjects them to a "Shadow Review Board" of 10 distinct expert agents for adversarial critique. Executes 50 rewrite cycles per grant (NSF, Fellowship, Private) until the proposal is mathematically maximized against the rubric.</div>
+        <div class="agents-label">Agent Chain</div>
+        <div class="agent-chain">
+          <div class="agent"><div class="agent-num">A1</div><div class="agent-desc">Synthesis Agent — Integrates project history and research data into core narratives.</div></div>
+          <div class="agent"><div class="agent-num">A2</div><div class="agent-desc">Adversarial Swarm — 10 parallel agents executing adversarial critiques.</div></div>
+        </div>
+        <span class="output-tag recursive">ADVERSARIAL</span><span class="output-tag unlimited">UNLIMITED</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- S TIER -->
+  <div class="tier">
+    <div class="tier-header">
+      <div class="tier-badge s">S-TIER</div>
+      <div class="tier-title">PROFESSIONAL SCALING & INCLUSIVE DESIGN</div>
+    </div>
+    <div class="project-grid">
+
+      <div class="project-card s-tier">
+        <div class="card-title">TECHNICAL INFLUENCE ENGINE</div>
+        <div class="card-what">Senior-level career scaling via hyper-personalized technical networking. Identifies decision-makers, audits their entire engineering history, and drafts technical dialogues that link your specific research (GestoLumina, PatchXR) directly to their current architectural challenges. No generic mass-applications.</div>
+        <div class="agents-label">Agent Chain</div>
+        <div class="agent-chain">
+          <div class="agent"><div class="agent-num">A1</div><div class="agent-desc">Target Mapper — Identifies and audits the work history of decision-makers.</div></div>
+          <div class="agent"><div class="agent-num">A2</div><div class="agent-desc">Synthesis Agent — Drafts hyper-personalized technical dialogues and critiques.</div></div>
+        </div>
+        <span class="output-tag scale">MASS SCALE</span><span class="output-tag recursive">NETWORKING</span>
+      </div>
+
+      <div class="project-card s-tier">
+        <div class="card-title">GLOBAL OPPORTUNITY HUNTER-GATHERER</div>
+        <div class="card-what">Autonomous business development agent for creative technology. Monitors global databases for hardware-focused grants, residencies, and innovation calls. Synthesizes factual, data-backed technical proposals using repository context and handles the entire submission process.</div>
+        <div class="agents-label">Agent Chain</div>
+        <div class="agent-chain">
+          <div class="agent"><div class="agent-num">A1</div><div class="agent-desc">Discovery Agent — Monitors global databases for niche tech and hardware funding.</div></div>
+          <div class="agent"><div class="agent-num">A2</div><div class="agent-desc">Submission Engine — Executes and tracks all outgoing applications autonomously.</div></div>
+        </div>
+        <span class="output-tag autonomous">AUTONOMOUS</span><span class="output-tag scale">MASS SCALE</span>
+      </div>
+
+      <div class="project-card s-tier">
+        <div class="card-title">SENSORY-PROFILE ACCESSIBILITY SWARM</div>
+        <div class="card-what">Accessibility validation via simulated human experience. Vision and audio agents "experience" designs from the perspective of diverse sensory profiles (DHH, low vision), identifying technical barriers and suggesting specific design refactors to meet universal design standards.</div>
+        <div class="agents-label">Agent Chain</div>
+        <div class="agent-chain">
+          <div class="agent"><div class="agent-num">A1</div><div class="agent-desc">Experience Agent — Simulates variable sensory inputs and limitations.</div></div>
+          <div class="agent"><div class="agent-num">A2</div><div class="agent-desc">Audit Agent — Identifies accessibility friction points and technical fixes.</div></div>
+        </div>
+        <span class="output-tag unlimited">UNLIMITED</span><span class="output-tag recursive">INCLUSIVE</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- A TIER -->
+  <div class="tier">
+    <div class="tier-header">
+      <div class="tier-badge a">A-TIER</div>
+      <div class="tier-title">SYSTEMIC OPTIMIZATION</div>
+    </div>
+    <div class="project-grid">
+
+      <div class="project-card a-tier">
+        <div class="card-title">METROPOLIS GLOBAL OPTIMIZER</div>
+        <div class="card-what">Recursive stress-testing and hardware-aware refactoring for WebGL city engines. Identifies Three.js code paths causing 60fps drops across 10,000 simulated device profiles and autonomously refactors code (instancing/merging) to maintain a universal performance baseline.</div>
+        <div class="agents-label">Agent Chain</div>
+        <div class="agent-chain">
+          <div class="agent"><div class="agent-num">A1</div><div class="agent-desc">Stress Tester — Benchmarks engine performance across 10,000 simulated tiers.</div></div>
+          <div class="agent"><div class="agent-num">A2</div><div class="agent-desc">Refactor Agent — Suggests Three.js refactors to reach global performance targets.</div></div>
+        </div>
+        <span class="output-tag scale">SCALING</span><span class="output-tag autonomous">WEBGL</span>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL OVERLAY -->
+<div class="modal-overlay" id="agentModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">TECHNICAL ARCHITECTURE // SS-001</div>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      
+      <div style="margin-bottom: 24px;">
+        <h3 style="color: var(--cyan); margin-bottom: 10px; font-family: 'Bebas Neue'; letter-spacing: 1px;">SYSTEM ARCHITECTURE: SPEC-DRIVEN RECURSION</h3>
+        <p style="font-size: 13px; color: var(--dim); margin-bottom: 12px;">The agent bypasses physical compatibility in favor of technical output matching. It executes recursive audits of global factory inventory to minimize "Extended Part" fees and manual change orders.</p>
+        <div style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--cyan); padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 11px;">
+          INPUT: Target Component (e.g. MPU6050)<br>
+          |--> AGENT 1: Extract Datasheet Specs (6-Axis, I2C, ±16g, 3.3V)<br>
+          |--> AGENT 2: Query JLCPCB/PCBWay Live "Basic Parts" Inventory<br>
+          |--> AGENT 3: Match Functionally Identical Components (LSM6DS3 / BMI270)<br>
+          |--> OUTPUT: Optimized BOM with 0% Feeder Change Fees
+        </div>
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <h3 style="color: var(--amber); margin-bottom: 10px; font-family: 'Bebas Neue'; letter-spacing: 1px;">CASE STUDY: PROJECT LIGHT BATON</h3>
+        <table style="width: 100%; border-collapse: collapse; font-family: 'Share Tech Mono', monospace; font-size: 11px;">
+          <tr style="border-bottom: 1px solid var(--border); color: var(--dim);">
+            <th style="text-align: left; padding: 8px;">ORIGINAL PART</th>
+            <th style="text-align: left; padding: 8px;">TECH SPECS</th>
+            <th style="text-align: left; padding: 8px;">AGENT ALTERNATIVE</th>
+            <th style="text-align: left; padding: 8px;">FACTORY STATUS</th>
+          </tr>
+          <tr style="border-bottom: 1px solid #1a2530;">
+            <td style="padding: 8px; color: #fff;">MPU6050</td>
+            <td style="padding: 8px;">6-Axis, I2C</td>
+            <td style="padding: 8px; color: var(--green);">LSM6DS3TR-C</td>
+            <td style="padding: 8px; color: var(--cyan);">BASIC (ON REEL)</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #1a2530;">
+            <td style="padding: 8px; color: #fff;">TP4056</td>
+            <td style="padding: 8px;">LiPo Charge (1A)</td>
+            <td style="padding: 8px; color: var(--green);">MCP73831T</td>
+            <td style="padding: 8px; color: var(--cyan);">BASIC (ON REEL)</td>
+          </tr>
+        </table>
+      </div>
+
+      <div>
+        <h3 style="color: var(--green); margin-bottom: 10px; font-family: 'Bebas Neue'; letter-spacing: 1px;">CASE STUDY: PROJECT PULSE</h3>
+        <table style="width: 100%; border-collapse: collapse; font-family: 'Share Tech Mono', monospace; font-size: 11px;">
+          <tr style="border-bottom: 1px solid var(--border); color: var(--dim);">
+            <th style="text-align: left; padding: 8px;">ORIGINAL PART</th>
+            <th style="text-align: left; padding: 8px;">TECH SPECS</th>
+            <th style="text-align: left; padding: 8px;">AGENT ALTERNATIVE</th>
+            <th style="text-align: left; padding: 8px;">FACTORY STATUS</th>
+          </tr>
+          <tr style="border-bottom: 1px solid #1a2530;">
+            <td style="padding: 8px; color: #fff;">ESP32-C3</td>
+            <td style="padding: 8px;">RISC-V, WiFi/BLE</td>
+            <td style="padding: 8px; color: var(--green);">ESP32-C3-WROOM-02</td>
+            <td style="padding: 8px; color: var(--cyan);">BASIC (ON REEL)</td>
+          </tr>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function openAgentModule(type) {
+    const modal = document.getElementById('agentModal');
+    modal.classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('agentModal').classList.remove('active');
+  }
+
+  // Close modal on outside click
+  window.onclick = function(event) {
+    if (event.target == document.getElementById('agentModal')) {
+      closeModal();
+    }
+  }
+</script>
+
+<footer>
+  DILLON SIMEONE // LEAD DESIGN ENGINEER // PORTLAND, OREGON<br>
+  <strong>COMPLETE MULTI-AGENT ORCHESTRATION // RECURSIVE SYNTHESIS // UNLIMITED SCALE</strong>
+</footer>
+
+</body>
+</html>

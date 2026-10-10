@@ -1,0 +1,192 @@
+:root {
+  --map-parchment: #ebd9b4;
+  --map-paper: #f9f0d5;
+  --map-ink: #4e3518;
+  --compass-color: rgba(78, 53, 24, 0.08);
+  
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-mono: 'Special Elite', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #2e2111;
+  background-image: radial-gradient(#1c1409 1px, transparent 1px);
+  background-size: 28px 28px;
+  color: var(--map-ink);
+  font-family: var(--font-serif);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Coordinate lines across map */
+.map-grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(rgba(78, 53, 24, 0.04) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(78, 53, 24, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.map-workspace {
+  width: 95%;
+  max-width: 900px;
+  background-color: var(--map-parchment);
+  border: 12px double #8c7355;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5), inset 0 0 50px rgba(0,0,0,0.15);
+  position: relative;
+  z-index: 2;
+  padding: 50px 25px;
+  min-height: 80vh;
+  box-sizing: border-box;
+}
+
+/* Giant background compass rose */
+.compass-rose {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24rem;
+  color: var(--compass-color);
+  pointer-events: none;
+  user-select: none;
+  z-index: -1;
+  animation: compass-sway 25s linear infinite;
+}
+
+@keyframes compass-sway {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.map-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.nav-back {
+  color: inherit;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  border: 1px dashed var(--map-ink);
+  padding: 4px 10px;
+}
+.nav-back:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.map-title {
+  font-size: clamp(2.8rem, 7vw, 5rem);
+  font-weight: 700;
+  margin: 20px 0 0 0;
+  letter-spacing: 4px;
+  font-style: italic;
+}
+
+.map-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  margin-top: 10px;
+}
+
+/* Map content grid */
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 35px;
+  position: relative;
+  z-index: 3;
+}
+
+.map-card {
+  background: var(--map-paper);
+  border: 4px double #8c7355;
+  padding: 35px;
+  box-shadow: 2px 6px 12px rgba(0, 0, 0, 0.1);
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.2s;
+}
+
+.map-card:hover {
+  transform: scale(1.02) rotate(var(--rot, 0deg)) !important;
+}
+
+.map-card h2 {
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  margin-top: 0;
+  border-bottom: 1px solid var(--map-ink);
+  padding-bottom: 8px;
+}
+
+.map-card p {
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* Pin element */
+.map-pin {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #c43a3a;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  z-index: 99;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.map-pin::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 14px;
+  background-color: #c43a3a;
+  top: 18px;
+  left: 9px;
+}
+
+/* Pin coords popup box */
+.pin-popup {
+  position: absolute;
+  background: var(--map-paper);
+  border: 1px solid #8c7355;
+  color: var(--map-ink);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  pointer-events: none;
+}
+
+.clear-btn {
+  font-family: var(--font-mono);
+  background: transparent;
+  border: 2px dashed var(--map-ink);
+  color: var(--map-ink);
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.clear-btn:hover {
+  background: rgba(0,0,0,0.05);
+}

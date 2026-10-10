@@ -1,0 +1,1560 @@
+/* ==========================================================================
+   Deaf DJ Live Sound-Reactive Shader Suite Styles
+   Theme: High-Contrast Neo-Noir / Tactical Cybernetic HUD
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #050508;
+  color: #e0e0e0;
+  font-family: 'Courier Prime', monospace;
+}
+
+/* Gritty Halftone Overlay */
+.halftone-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(#ffffff 1px, transparent 1px);
+  background-size: 4px 4px;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Projection Canvas Wrapper */
+#canvas-projection-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+#canvas-container {
+  width: 100%;
+  height: 100%;
+}
+
+#canvas-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* ==========================================================================
+   Top DJ HUD
+   ========================================================================== */
+.dj-top-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 28px;
+  background: linear-gradient(to bottom, rgba(5, 5, 8, 0.96) 0%, rgba(5, 5, 8, 0) 100%);
+  z-index: 100;
+  pointer-events: none;
+  gap: 24px;
+  flex-wrap: nowrap;
+}
+
+.dj-top-hud > * {
+  pointer-events: auto;
+}
+
+.hud-col {
+  display: flex;
+  align-items: center;
+}
+
+.hud-col.center {
+  flex-shrink: 0;
+}
+
+.hud-col.right {
+  gap: 16px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.hud-divider {
+  width: 1px;
+  height: 28px;
+  background: #25253a;
+  margin: 0 4px;
+}
+
+.audio-source-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-back {
+  color: #ff3366;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: rgba(255, 51, 102, 0.1);
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 51, 102, 0.4);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-back:hover {
+  background: #ff3366;
+  color: #000;
+}
+
+.shader-title {
+  font-family: 'Special Elite', cursive, monospace;
+  font-size: 1.25rem;
+  color: #ffffff;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* ==========================================================================
+   FFT Frequency Spectrum Telemetry (Aligned)
+   ========================================================================== */
+.telemetry-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 18, 0.9);
+  border: 1px solid #2a2a40;
+  padding: 8px 16px;
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.85);
+}
+
+.spectrum-mini-bars {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 42px;
+}
+
+.bar-track {
+  width: 20px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  display: flex;
+  align-items: flex-end;
+  padding: 2px;
+  margin-bottom: 5px;
+}
+
+.bar-fill {
+  width: 100%;
+  height: 4px;
+  min-height: 4px;
+  border-radius: 2px;
+  transition: height 0.05s ease-out;
+}
+
+.bar-fill.sub { background: #ff0033; box-shadow: 0 0 8px #ff0033; }
+.bar-fill.bass { background: #ff6600; box-shadow: 0 0 8px #ff6600; }
+.bar-fill.mid { background: #00ff88; box-shadow: 0 0 8px #00ff88; }
+.bar-fill.high { background: #0066ff; box-shadow: 0 0 8px #0066ff; }
+.bar-fill.air { background: #cc00ff; box-shadow: 0 0 8px #cc00ff; }
+
+.freq-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #ddd;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.freq-sub {
+  font-size: 0.55rem;
+  color: #666;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Buttons */
+.hud-btn {
+  background: #12121c;
+  color: #aaa;
+  border: 1px solid #333348;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hud-btn:hover {
+  background: #202030;
+  color: #fff;
+  border-color: #00e5ff;
+}
+
+.hud-btn.active {
+  background: #00e5ff;
+  color: #000;
+  border-color: #00e5ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+.hud-btn.alt {
+  border-color: #ffaa00;
+  color: #ffaa00;
+}
+
+.hud-btn.alt:hover {
+  background: #ffaa00;
+  color: #000;
+}
+
+.file-upload-label {
+  display: inline-block;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Bottom DJ Deck / Shader Switcher
+   ========================================================================== */
+.dj-bottom-deck {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, rgba(5, 5, 8, 0.95) 0%, rgba(5, 5, 8, 0) 100%);
+  padding: 16px 24px 20px;
+  z-index: 100;
+}
+
+.deck-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.gain-meter-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(12, 12, 20, 0.9);
+  padding: 8px 14px;
+  border: 1px solid #2a2a3a;
+  border-radius: 4px;
+}
+
+.ctrl-label {
+  font-size: 0.7rem;
+  color: #888;
+}
+
+#slider-gain {
+  accent-color: #00e5ff;
+  width: 90px;
+}
+
+#gain-val {
+  font-size: 0.75rem;
+  color: #00e5ff;
+  width: 35px;
+}
+
+.clip-badge {
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 2px;
+  background: #200;
+  color: #600;
+  border: 1px solid #400;
+  transition: all 0.05s ease;
+}
+
+.clip-badge.clipping {
+  background: #ff0033;
+  color: #fff;
+  border-color: #ff0033;
+  box-shadow: 0 0 12px #ff0033;
+}
+
+.shader-quick-dock {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.shader-tab-btn {
+  flex: 1;
+  min-width: 95px;
+  background: #0f0f18;
+  border: 1px solid #2a2a3a;
+  color: #888;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.shader-tab-btn .hotkey {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.6rem;
+  color: #555;
+  border: 1px solid #333;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.shader-tab-btn .tab-name {
+  display: block;
+  font-weight: bold;
+  color: #ccc;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shader-tab-btn:hover {
+  border-color: #00e5ff;
+  background: #181828;
+}
+
+.shader-tab-btn.active {
+  border-color: #ff0055;
+  background: rgba(255, 0, 85, 0.15);
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+}
+
+.shader-tab-btn.active .tab-name {
+  color: #ff3377;
+}
+
+/* ==========================================================================
+   Projection Mapping Overlay & Corner Handles
+   ========================================================================== */
+.projection-mapper-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  pointer-events: none !important;
+}
+
+.projection-grid-svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.proj-status-bar {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 10, 20, 0.95);
+  border: 1px solid #00e5ff;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.4);
+  padding: 10px 18px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  z-index: 1020;
+  font-size: 0.8rem;
+  color: #00e5ff;
+  font-weight: bold;
+  letter-spacing: 1px;
+  backdrop-filter: blur(8px);
+}
+
+.proj-status-title {
+  white-space: nowrap;
+  font-size: 0.75rem;
+  margin-right: 6px;
+}
+
+.proj-mini-btn {
+  background: #18182c;
+  color: #ddd;
+  border: 1px solid #3d3d5c;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.proj-mini-btn:hover {
+  background: #2b2b48;
+  color: #fff;
+  border-color: #00e5ff;
+}
+
+.proj-mini-btn.primary {
+  background: #00e5ff;
+  color: #000;
+  border-color: #00e5ff;
+}
+
+.proj-mini-btn.primary:hover {
+  background: #33eeff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
+}
+
+.proj-quad-outline {
+  fill: rgba(0, 229, 255, 0.05);
+  stroke: #00e5ff;
+  stroke-width: 2px;
+  stroke-dasharray: 8 4;
+}
+
+.proj-crosshair {
+  stroke: rgba(255, 170, 0, 0.45);
+  stroke-width: 1.5px;
+  stroke-dasharray: 4 4;
+}
+
+.proj-subgrid {
+  stroke: rgba(0, 229, 255, 0.3);
+  stroke-width: 1px;
+  stroke-dasharray: 3 3;
+}
+
+.proj-target-ring {
+  fill: none;
+  stroke: #ff0055;
+  stroke-width: 1.5px;
+  stroke-dasharray: 4 2;
+  opacity: 0.75;
+}
+
+.proj-target-center {
+  fill: #00e5ff;
+  opacity: 0.8;
+}
+
+.proj-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  margin-left: -18px;
+  border-radius: 50%;
+  background: #ff0055;
+  border: 3px solid #fff;
+  cursor: grab;
+  box-shadow: 0 0 20px #ff0055, 0 0 35px rgba(255, 0, 85, 0.6);
+  z-index: 1010;
+  touch-action: none;
+  pointer-events: auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Expanded invisible grab target for easy grabbing even at edge of screen */
+.proj-handle::before {
+  content: '';
+  position: absolute;
+  top: -24px;
+  left: -24px;
+  right: -24px;
+  bottom: -24px;
+  border-radius: 50%;
+  pointer-events: auto;
+}
+
+.proj-handle-tag {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #fff;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.proj-handle-coords {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-weight: bold;
+  background: rgba(10, 10, 18, 0.92);
+  border: 1px solid #00e5ff;
+  color: #00e5ff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+/* Invert coordinates label for bottom handles so they stay inside the screen */
+.handle-2 .proj-handle-coords,
+.handle-3 .proj-handle-coords {
+  top: -28px;
+}
+
+.proj-handle:hover {
+  background: #ff3377;
+  box-shadow: 0 0 25px #ff3377, 0 0 45px rgba(255, 51, 119, 0.8);
+}
+
+.proj-handle.dragging,
+.proj-handle:active {
+  cursor: grabbing;
+  background: #00ff88;
+  border-color: #ffffff;
+  box-shadow: 0 0 30px #00ff88, 0 0 50px rgba(0, 255, 136, 0.8);
+}
+
+.proj-handle.dragging .proj-handle-tag,
+.proj-handle:active .proj-handle-tag {
+  color: #000;
+}
+
+/* Dim HUD and deck during Mapping Mode to prevent obstruction */
+body.mapping-mode-active .dj-top-hud,
+body.mapping-mode-active .dj-bottom-deck {
+  opacity: 0.15;
+  pointer-events: none;
+  filter: blur(0.5px);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+body.mapping-mode-active .dj-top-hud:hover,
+body.mapping-mode-active .dj-bottom-deck:hover {
+  opacity: 0.85;
+  pointer-events: auto;
+  filter: none;
+}
+
+/* ==========================================================================
+   Start Modal
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(4, 4, 8, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.noir-modal-card {
+  max-width: 580px;
+  padding: 36px;
+  background: #0e0e18;
+  border: 1px solid #2a2a3e;
+  border-left: 5px solid #ff0055;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+}
+
+.noir-modal-card h2 {
+  font-family: 'Special Elite', cursive, monospace;
+  font-size: 1.8rem;
+  margin: 12px 0;
+  color: #fff;
+}
+
+.noir-modal-card p {
+  color: #99a;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.noir-btn {
+  flex: 1;
+  padding: 14px;
+  background: #181826;
+  color: #ccc;
+  border: 1px solid #333348;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.noir-btn:hover {
+  background: #252538;
+  color: #fff;
+  border-color: #00e5ff;
+}
+
+.noir-btn.primary {
+  background: #ff0055;
+  color: #fff;
+  border-color: #ff0055;
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
+}
+
+.noir-btn.primary:hover {
+  background: #ff2277;
+}
+
+/* ==========================================================================
+   Slide-Out DJ Tweak Drawer
+   ========================================================================== */
+.dj-tweak-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  max-width: 92vw;
+  height: 100vh;
+  background: rgba(10, 10, 18, 0.96);
+  backdrop-filter: blur(16px);
+  border-left: 2px solid #00e5ff;
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.9);
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dj-tweak-drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  padding: 22px 28px;
+  border-bottom: 1px solid #202035;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: rgba(14, 14, 24, 0.8);
+}
+
+.drawer-header h2 {
+  font-family: 'Special Elite', cursive, monospace;
+  font-size: 1.15rem;
+  color: #fff;
+  margin-top: 4px;
+}
+
+.drawer-close-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.15s ease;
+}
+
+.drawer-close-btn:hover {
+  color: #ff0055;
+}
+
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 30px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.tweak-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #00e5ff;
+  letter-spacing: 1.8px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.tweak-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.tweak-label-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tweak-label {
+  font-size: 0.72rem;
+  color: #ccc;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.tweak-val {
+  font-size: 0.78rem;
+  color: #00e5ff;
+  font-family: monospace;
+  font-weight: bold;
+}
+
+/* Custom Styled Range Sliders */
+.tweak-row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #141424;
+  border-radius: 4px;
+  outline: none;
+  border: 1px solid #282840;
+  margin: 4px 0 6px;
+}
+
+.tweak-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #00e5ff;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00e5ff;
+  border: 2.5px solid #fff;
+  transition: transform 0.1s ease;
+}
+
+.tweak-row input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: #ff0055;
+  box-shadow: 0 0 12px #ff0055;
+}
+
+/* Storage & Preset Buttons */
+.storage-btn-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.tweak-btn {
+  flex: 1;
+  padding: 12px;
+  background: #181828;
+  color: #ddd;
+  border: 1px solid #33334e;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.tweak-btn:hover {
+  background: #25253e;
+  color: #fff;
+}
+
+.tweak-btn.primary {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: #00e5ff;
+  color: #00e5ff;
+}
+
+.tweak-btn.primary:hover {
+  background: #00e5ff;
+  color: #000;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+.tweak-btn.danger {
+  border-color: #ff3366;
+  color: #ff3366;
+}
+
+.tweak-btn.danger:hover {
+  background: #ff3366;
+  color: #fff;
+}
+
+.storage-status {
+  font-size: 0.65rem;
+  color: #667;
+  text-align: center;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   MIDI LED & Top HUD Button
+   ========================================================================== */
+.midi-led {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff3366;
+  box-shadow: 0 0 6px rgba(255, 51, 102, 0.7);
+  margin-right: 6px;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+}
+
+.midi-led.online {
+  background: #00ff88;
+  box-shadow: 0 0 8px #00ff88;
+}
+
+.midi-led.activity {
+  background: #00e5ff !important;
+  box-shadow: 0 0 12px #00e5ff, 0 0 20px #00e5ff !important;
+  transform: scale(1.4);
+}
+
+/* ==========================================================================
+   Live DJ FX Fullscreen Overlay
+   ========================================================================== */
+.dj-fx-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15;
+  transition: backdrop-filter 0.05s ease, filter 0.05s ease, background-color 0.05s ease;
+}
+
+.dj-fx-overlay.strobe {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+.dj-fx-overlay.invert {
+  backdrop-filter: invert(1) hue-rotate(180deg);
+  filter: invert(1);
+}
+
+.dj-fx-overlay.glitch {
+  animation: glitchShake 0.12s infinite;
+  box-shadow: inset 0 0 80px rgba(255, 0, 85, 0.6), inset 0 0 40px rgba(0, 229, 255, 0.6);
+}
+
+@keyframes glitchShake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-4px, 2px); }
+  50% { transform: translate(3px, -3px); }
+  75% { transform: translate(-2px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ==========================================================================
+   Real-Time MIDI On-Screen Display (OSD) Toast
+   ========================================================================== */
+.midi-osd {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(8, 8, 16, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid #00e5ff;
+  border-left: 4px solid #00e5ff;
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.35), 0 10px 30px rgba(0,0,0,0.8);
+  border-radius: 4px;
+  padding: 10px 18px;
+  min-width: 340px;
+  z-index: 120;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.midi-osd.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.osd-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+}
+
+.osd-badge {
+  color: #00e5ff;
+  font-weight: 700;
+}
+
+.osd-event-tag {
+  color: #ffaa00;
+  font-family: monospace;
+}
+
+.osd-channel {
+  color: #888;
+  font-size: 0.6rem;
+}
+
+.osd-main-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.osd-arrow {
+  color: #00e5ff;
+  font-size: 0.85rem;
+}
+
+.osd-action {
+  color: #00e5ff;
+}
+
+.osd-val {
+  margin-left: auto;
+  font-size: 0.95rem;
+  color: #ff0055;
+  font-family: monospace;
+}
+
+.osd-gauge-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.osd-gauge-fill {
+  height: 100%;
+  background: linear-gradient(to right, #00e5ff, #ff0055);
+  transition: width 0.05s ease-out;
+}
+
+/* ==========================================================================
+   Slide-Out MIDI Studio & DDJ-200 Hardware Twin Drawer
+   ========================================================================== */
+.midi-studio-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 820px;
+  max-width: 96vw;
+  height: 100vh;
+  background: rgba(10, 10, 18, 0.97);
+  backdrop-filter: blur(20px);
+  border-right: 2px solid #00e5ff;
+  box-shadow: 12px 0 45px rgba(0, 0, 0, 0.95);
+  z-index: 160;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.midi-studio-drawer.open {
+  transform: translateX(0);
+}
+
+.midi-header-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  background: #201018;
+  color: #ff3366;
+  border: 1px solid rgba(255, 51, 102, 0.4);
+}
+
+.status-pill.online {
+  background: #0a241a;
+  color: #00ff88;
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.25);
+}
+
+.tweak-btn.mini {
+  padding: 6px 12px;
+  font-size: 0.68rem;
+}
+
+.midi-studio-content {
+  gap: 20px;
+  padding: 20px 24px 40px;
+}
+
+/* Virtual DDJ-200 Twin Layout */
+.virtual-deck-wrapper {
+  background: #090912;
+  border: 1px solid #1f1f32;
+  border-radius: 6px;
+  padding: 16px;
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+}
+
+.deck-surface-grid {
+  display: grid;
+  grid-template-columns: 1fr 140px 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.vdeck-col {
+  background: #0e0e1a;
+  border: 1px solid #25253c;
+  border-radius: 4px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vdeck-col.deck-1 {
+  border-top: 3px solid #00e5ff;
+}
+
+.vdeck-col.deck-2 {
+  border-top: 3px solid #ff0055;
+}
+
+.vdeck-col.mixer {
+  border-top: 3px solid #ffaa00;
+  justify-content: space-between;
+}
+
+.vdeck-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #aaa;
+  text-align: center;
+  border-bottom: 1px solid #202035;
+  padding-bottom: 6px;
+}
+
+.deck-1 .vdeck-tag { color: #00e5ff; }
+.deck-2 .vdeck-tag { color: #ff0055; }
+.mixer .vdeck-tag { color: #ffaa00; }
+
+/* Virtual Jog Wheel */
+.vdeck-jog-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.vdeck-jog {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1a1a2e 0%, #0d0d16 70%, #050508 100%);
+  border: 3px solid #33334e;
+  box-shadow: 0 0 15px rgba(0,0,0,0.9), inset 0 0 10px rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: border-color 0.15s ease;
+}
+
+.vdeck-jog.scratching {
+  border-color: #00e5ff;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+}
+
+.deck-2 .vdeck-jog.scratching {
+  border-color: #ff0055;
+  box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+}
+
+.vjog-disc {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, #151522 0, #151522 3px, #0f0f18 4px, #0f0f18 6px);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.vjog-indicator {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 12px;
+  background: #00e5ff;
+  border-radius: 3px;
+  box-shadow: 0 0 8px #00e5ff;
+}
+
+.deck-2 .vjog-indicator {
+  background: #ff0055;
+  box-shadow: 0 0 8px #ff0055;
+}
+
+.vjog-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.vjog-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.vjog-sub {
+  font-size: 0.5rem;
+  color: #777;
+}
+
+/* Virtual Knobs Strip */
+.vdeck-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.vknob-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.vknob-label {
+  font-size: 0.58rem;
+  color: #888;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.vknob-track {
+  width: 14px;
+  height: 48px;
+  background: #141424;
+  border: 1px solid #2a2a44;
+  border-radius: 2px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 1px;
+}
+
+.vknob-fill {
+  width: 100%;
+  background: #00e5ff;
+  border-radius: 1px;
+  box-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+  transition: height 0.05s ease-out;
+}
+
+.deck-2 .vknob-fill {
+  background: #ff0055;
+  box-shadow: 0 0 6px rgba(255, 0, 85, 0.4);
+}
+
+.vknob-val {
+  font-size: 0.58rem;
+  font-family: monospace;
+  color: #ddd;
+}
+
+/* Virtual Faders */
+.vfader-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vfader-label {
+  font-size: 0.6rem;
+  color: #888;
+  font-weight: 700;
+}
+
+.vfader-track {
+  width: 100%;
+  height: 24px;
+  background: #121220;
+  border: 1px solid #26263e;
+  border-radius: 2px;
+  position: relative;
+}
+
+.vfader-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 24px;
+  background: #33334e;
+  border: 1px solid #00e5ff;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+  transition: left 0.05s ease-out;
+}
+
+.deck-2 .vfader-thumb {
+  border-color: #ff0055;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.3);
+}
+
+.vfader-val {
+  font-size: 0.6rem;
+  font-family: monospace;
+  color: #aaa;
+  text-align: right;
+}
+
+/* Performance Pads Grid */
+.vpads-title {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #777;
+  letter-spacing: 0.5px;
+}
+
+.vpads-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.vpad-btn {
+  aspect-ratio: 1.2;
+  background: #141424;
+  border: 1px solid #2e2e48;
+  border-radius: 3px;
+  color: #aaa;
+  font-family: inherit;
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px;
+  text-align: center;
+  line-height: 1.1;
+  transition: all 0.1s ease;
+}
+
+.vpad-btn:hover {
+  background: #202035;
+  color: #fff;
+}
+
+.deck-1 .vpad-btn.active {
+  background: rgba(0, 229, 255, 0.25);
+  border-color: #00e5ff;
+  color: #00e5ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+.deck-2 .vpad-btn.active {
+  background: rgba(255, 0, 85, 0.35);
+  border-color: #ff0055;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 0, 85, 0.6);
+  transform: scale(0.96);
+}
+
+.vpad-num {
+  font-size: 0.5rem;
+  opacity: 0.6;
+}
+
+/* Mixer Center Details */
+.mixer-status-box {
+  background: #11111e;
+  border: 1px solid #25253c;
+  padding: 10px;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.mixer-title {
+  font-size: 0.58rem;
+  color: #777;
+  font-weight: 700;
+}
+
+.device-name-display {
+  font-size: 0.72rem;
+  color: #ffaa00;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.device-help-text {
+  font-size: 0.55rem;
+  color: #667;
+  line-height: 1.3;
+}
+
+/* Crossfader */
+.crossfader-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #11111e;
+  border: 1px solid #25253c;
+  padding: 10px;
+  border-radius: 3px;
+}
+
+.cf-label {
+  font-size: 0.58rem;
+  color: #ffaa00;
+  font-weight: 700;
+  text-align: center;
+}
+
+.crossfader-track {
+  width: 100%;
+  height: 28px;
+  background: #090912;
+  border: 1px solid #333348;
+  border-radius: 2px;
+  position: relative;
+}
+
+.crossfader-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 26px;
+  background: #252538;
+  border: 2px solid #ffaa00;
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.4);
+  transform: translateX(-50%);
+  transition: left 0.05s ease-out;
+}
+
+.cf-endpoints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.5rem;
+  color: #777;
+}
+
+.cf-endpoints span:first-child { color: #00e5ff; }
+.cf-endpoints span:last-child { color: #ff0055; }
+
+.mixer-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.midi-learn-banner {
+  background: #ffaa00;
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 6px 8px;
+  border-radius: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.midi-learn-banner.hidden {
+  display: none;
+}
+
+.blink {
+  animation: blink 0.6s infinite alternate;
+}
+
+@keyframes blink {
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
+
+/* Real-Time Terminal Console */
+.midi-terminal-section {
+  background: #070710;
+  border: 1px solid #1c1c2e;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  height: 180px;
+}
+
+.terminal-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #11111c;
+  border-bottom: 1px solid #1c1c2e;
+}
+
+.term-title {
+  font-size: 0.65rem;
+  color: #00e5ff;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
+
+.term-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.term-label {
+  font-size: 0.6rem;
+  color: #777;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.term-btn {
+  background: #1a1a2a;
+  border: 1px solid #33334e;
+  color: #aaa;
+  font-family: inherit;
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.term-btn:hover {
+  background: #28283e;
+  color: #fff;
+}
+
+.midi-console-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: #bbb;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.log-line {
+  word-break: break-all;
+}
+
+.log-line.system { color: #00ff88; }
+.log-line.cc { color: #00e5ff; }
+.log-line.note { color: #ff0055; }
+.log-line.jog { color: #ffaa00; }
+
+

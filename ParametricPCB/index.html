@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametric PCB Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="scanline"></div>
+
+    <div class="container">
+        <header>
+            <h1>Parametric PCB Studio</h1>
+            <div class="subtitle">Code-Driven Electronic CAD Engine</div>
+        </header>
+
+        <div class="grid">
+            <a href="./01-V6Led/" class="card" style="border-color: rgba(0, 243, 255, 0.3); --neon-blue: #00f3ff;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00f3ff; box-shadow: 0 0 15px #00f3ff;">💡</div>
+                        V6 LED Strip Generator
+                    </div>
+                    <p class="card-desc">
+                        A fully parametric addressable LED strip designer. Set the length, LED counts, and pitch. Generates interactive schematic, PCB routing, and 3D preview. Instantly export Gerbers, BOM, and Pick & Place placement files.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #00f3ff; border-color: #00f3ff; background: rgba(0, 243, 255, 0.1);">WS2812B-3535</div>
+                    <div class="btn-launch" style="color: #00f3ff;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./02-audioMotionReactiveLedHapticPCB/" class="card" style="border-color: rgba(168, 85, 247, 0.3); --neon-blue: #a855f7;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #a855f7; box-shadow: 0 0 15px #a855f7;">🪄</div>
+                        0-2 Audio & Motion Reactive Light Baton PCB
+                    </div>
+                    <p class="card-desc">
+                        Parametric controller for light batons, flow wands, and wearable audio-visual props. Accepts ESP32-C3 SuperMini, universal MPU6050/6500 IMU, MAX4466/INMP441 microphones, haptic MOSFET PWM, 5V level shifter, and LiPo charging with auto power-path switching.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #a855f7; border-color: #a855f7; background: rgba(168, 85, 247, 0.1);">ESP32-C3 • IMU • MIC • MOSFET</div>
+                    <div class="btn-launch" style="color: #a855f7;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="./03-compactAudioMotionSquarePCB/" class="card" style="border-color: rgba(57, 255, 20, 0.3); --neon-blue: #39ff14;">
+                <div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #39ff14; box-shadow: 0 0 15px #39ff14;">🟩</div>
+                        0-3 Compact Square Reactive Controller PCB
+                    </div>
+                    <p class="card-desc">
+                        Ultra-dense square controller (38×38mm). Back-to-back 3D stacking with ESP32-C3 SuperMini on top and MPU6050/6500 on the backside. Triple addressable LED outputs, dual haptic PWM drivers, dual microphones, LiPo charger with auto power-path, and M3 mounting pattern.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <div class="tag" style="color: #39ff14; border-color: #39ff14; background: rgba(57, 255, 20, 0.1);">DENSE SQUARE • DUAL-LAYER • 38×38mm</div>
+                    <div class="btn-launch" style="color: #39ff14;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="secondary-section">
+            <div class="secondary-title">Core Library & Templates</div>
+            <div class="secondary-grid">
+                <a href="./00-starterPCB/" class="s-card" style="border-color: rgba(0, 240, 255, 0.4);">
+                    <span class="s-card-title">⚡ 00: Turnkey Starter PCB Template</span>
+                    <span class="s-card-tag" style="color: var(--neon-cyan, #00f0ff);">Modular Base • 3D/2D Visualizers • Instant Exports</span>
+                </a>
+                <a href="./00-commonParts/" class="s-card">
+                    <span class="s-card-title">Common Footprints & Components</span>
+                    <span class="s-card-tag">tscircuit components</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

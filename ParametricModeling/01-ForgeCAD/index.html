@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCAD Studio - Premium Parametric CAD</title>
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --accent-brand: #6366f1;
+            --secondary: #a855f7;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-dark);
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, sans-serif;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar / Controls */
+        #studio-panel {
+            width: 380px;
+            background: #0f172a;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        }
+
+        .panel-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-box {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(to bottom right, var(--accent-brand), var(--secondary));
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #64748b;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        /* Param sliders */
+        .param-row {
+            padding: 16px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .param-row:hover {
+            border-color: var(--accent-brand);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .param-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .param-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .param-value {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent-brand);
+            background: #1e293b;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #334155;
+            border-radius: 2px;
+            appearance: none;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-brand);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+            border: 2px solid white;
+        }
+
+        /* Code View */
+        .code-snippet {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: #020617;
+            padding: 16px;
+            border-radius: 8px;
+            color: #94a3b8;
+            border-left: 3px solid var(--secondary);
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .keyword { color: #f472b6; }
+        .func { color: #22d3ee; }
+        .string { color: #fbbf24; }
+
+        /* Main Viewport */
+        #viewport-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #viewer {
+            width: 100%;
+            height: 100%;
+        }
+
+        .viewport-badge {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            padding: 8px 16px;
+            border-radius: 99px;
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="studio-panel">
+        <div class="panel-header">
+            <div class="logo">
+                <div class="logo-box">F</div>
+                ForgeCAD <span style="font-weight: 300; opacity: 0.5;">Studio</span>
+            </div>
+        </div>
+
+        <div class="panel-content">
+            <div class="section-title">Model Parameters</div>
+            
+            <div id="params-container">
+                <!-- Params dynamic generation -->
+            </div>
+
+            <div class="section-title">Source Script</div>
+            <div class="code-snippet" id="code-view">
+<span class="keyword">const</span> radius = <span class="func">param</span>(<span class="string">"Base"</span>, 25);
+<span class="keyword">const</span> height = <span class="func">param</span>(<span class="string">"Extrude"</span>, 50);
+
+<span class="keyword">return</span> <span class="func">cylinder</span>(radius, height)
+    .<span class="func">subtract</span>(<span class="func">sphere</span>(radius * 1.2));
+            </div>
+        </div>
+    </div>
+
+    <div id="viewport-container">
+        <div id="viewer"></div>
+        <div class="viewport-badge">
+            <div class="status-dot"></div>
+            HOT RELOAD ACTIVE (2026)
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+        
+        // Use Manifold as the backend for ForgeCAD simulation
+        import Module from 'https://unpkg.com/manifold-3d/manifold.js';
+
+        let wasm, Manifold;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth - 380, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(150, 150, 150);
+        controls.update();
+
+        // Lighting
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+        scene.add(hemiLight);
+
+        const spotLight = new THREE.SpotLight(0xffffff, 3);
+        spotLight.position.set(100, 300, 200);
+        scene.add(spotLight);
+
+        const amberLight = new THREE.PointLight(0xffaa00, 1, 500);
+        amberLight.position.set(-150, 100, -150);
+        scene.add(amberLight);
+
+        // Grid
+        const grid = new THREE.GridHelper(500, 50, 0x334155, 0x1e293b);
+        grid.position.y = -100;
+        scene.add(grid);
+
+        let currentMesh = null;
+
+        // --- ForgeCAD API Simulation ---
+        const PARAMS = {};
+        const param = (name, defaultValue, options = {}) => {
+            if (!PARAMS[name]) {
+                const min = options.min || 0;
+                const max = options.max || (defaultValue * 4);
+                PARAMS[name] = { value: defaultValue, min, max, name };
+                createParamUI(name, defaultValue, min, max);
+            }
+            return PARAMS[name].value;
+        };
+
+        function createParamUI(name, val, min, max) {
+            const container = document.getElementById('params-container');
+            const row = document.createElement('div');
+            row.className = 'param-row';
+            row.innerHTML = `
+                <div class="param-info">
+                    <div class="param-label">${name}</div>
+                    <div class="param-value" id="val-${name}">${val}</div>
+                </div>
+                <input type="range" id="input-${name}" min="${min}" max="${max}" step="1" value="${val}">
+            `;
+            container.appendChild(row);
+
+            row.querySelector('input').addEventListener('input', (e) => {
+                const newVal = parseFloat(e.target.value);
+                PARAMS[name].value = newVal;
+                document.getElementById(`val-${name}`).innerText = newVal;
+                requestUpdate();
+            });
+        }
+
+        // Modeling Functions
+        const cylinder = (r, h) => Manifold.cylinder(h, r, r, 64, true);
+        const sphere = (r) => Manifold.sphere(r, 64);
+        const cube = (w, d, h) => Manifold.cube([w, d, h], true);
+
+        // --- Runtime ---
+        async function runForgeCAD() {
+            wasm = await Module();
+            wasm.setup();
+            Manifold = wasm.Manifold;
+
+            // Define the model using ForgeCAD syntax
+            const modelFunc = () => {
+                const baseRadius = param("Base Radius", 40, { min: 10, max: 100 });
+                const height = param("Main Height", 80, { min: 20, max: 200 });
+                const twist = param("Twist Shift", 15, { min: 0, max: 50 });
+                const shell = param("Wall Thick", 5, { min: 1, max: 20 });
+
+                // Start building
+                let base = cylinder(baseRadius, height);
+                
+                // Subtract a twisted core
+                let core = cylinder(baseRadius - shell, height + 10);
+                // In a real ForgeCAD we'd use .twist(), here we simulate with two cubes/cylinders
+                
+                let result = base.subtract(core);
+                
+                // Add some detail
+                let detail = sphere(baseRadius * 0.8).translate([0, 0, height/2]);
+                result = result.subtract(detail);
+
+                return result;
+            };
+
+            window.modelFunc = modelFunc;
+            requestUpdate();
+            animate();
+        }
+
+        function requestUpdate() {
+            if (!Manifold) return;
+            if (currentMesh) scene.remove(currentMesh);
+
+            try {
+                const model = window.modelFunc();
+                const mesh = model.getMesh();
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(mesh.vertProperties, 3));
+                geometry.setIndex(new THREE.Uint32BufferAttribute(mesh.triVerts, 1));
+                geometry.computeVertexNormals();
+
+                const material = new THREE.MeshPhysicalMaterial({
+                    color: 0x00f2ff,
+                    emissive: 0x004466,
+                    metalness: 0.1,
+                    roughness: 0.1,
+                    transmission: 0.4,
+                    thickness: 1,
+                    transparent: true,
+                    opacity: 0.9,
+                    side: THREE.DoubleSide
+                });
+
+                currentMesh = new THREE.Mesh(geometry, material);
+                scene.add(currentMesh);
+                model.delete();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentMesh) currentMesh.rotation.y += 0.003;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 380) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 380, window.innerHeight);
+        });
+
+        runForgeCAD();
+    </script>
+</body>
+</html>

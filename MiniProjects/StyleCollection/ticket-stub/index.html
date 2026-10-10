@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro Ticket Stub Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ticket-workspace">
+    <header class="workspace-header">
+      <a href="../index.html" class="nav-back">← HUB-PORT</a>
+      <h1 class="workspace-title">PASSENGER TICKET</h1>
+      <p class="workspace-subtitle">TAP THE TICKET STUB TO TEAR OFF</p>
+    </header>
+
+    <!-- Main Ticket stub -->
+    <div class="ticket" id="ticket">
+      
+      <!-- Main body (Left side) -->
+      <div class="ticket-body">
+        <div class="ticket-airline">TRANS-WORLD AIRWAYS</div>
+        <div class="ticket-routing">
+          <div class="routing-station">
+            <span class="code">NYC</span>
+            <span class="city">NEW YORK</span>
+          </div>
+          <div class="routing-arrow">➔</div>
+          <div class="routing-station">
+            <span class="code">TYO</span>
+            <span class="city">TOKYO</span>
+          </div>
+        </div>
+
+        <div class="ticket-meta-grid">
+          <div>
+            <div class="meta-label">CARRIER</div>
+            <div class="meta-val">TW-420</div>
+          </div>
+          <div>
+            <div class="meta-label">CLASS</div>
+            <div class="meta-val">FIRST</div>
+          </div>
+          <div>
+            <div class="meta-label">DATE</div>
+            <div class="meta-val">14 JUN 76</div>
+          </div>
+          <div>
+            <div class="meta-label">SEAT</div>
+            <div class="meta-val">04-A</div>
+          </div>
+        </div>
+
+        <!-- Barcode -->
+        <div class="barcode-container">
+          <div class="barcode"></div>
+          <div class="barcode-num">*00427699*</div>
+        </div>
+
+        <!-- Distressed Stamp Overlay -->
+        <div class="ink-stamp stamp-pass">PASSED 1976</div>
+      </div>
+
+      <!-- Perforated Line -->
+      <div class="perforation-line"></div>
+
+      <!-- Ticket Stub (Right side - Tear-off) -->
+      <div class="ticket-stub-part" id="ticket-stub">
+        <div class="ink-stamp stamp-security">SECURITY CONTROL</div>
+        
+        <div class="stub-header">BOARDING PASS</div>
+        <div class="stub-routing">NYC ➔ TYO</div>
+        
+        <div class="stub-meta">
+          <div>
+            <div class="meta-label">SEAT</div>
+            <div class="meta-val">04-A</div>
+          </div>
+          <div>
+            <div class="meta-label">GATE</div>
+            <div class="meta-val">B-12</div>
+          </div>
+        </div>
+
+        <button class="tear-btn" id="btn-tear">TEAR STUB</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

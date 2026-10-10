@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>audioMotionReactiveLedHapticPCB Configurator</title>
+  <link rel="stylesheet" href="./style.css">
+  <!-- JSZip for instant Gerber ZIP bundle export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-left">
+        <a href="../index.html" class="back-link">‹ All PCB Projects</a>
+        <h1>audioMotionReactiveLedHapticPCB</h1>
+        <span class="badge">ESP32-C3 SuperMini • MPU6050/6500 • MAX4466/INMP441 • MOSFET Haptics • High-Side Power Switch</span>
+      </div>
+      <div class="header-actions">
+        <button id="btn-export-gerber" class="btn primary">📦 Download Gerbers (.zip)</button>
+        <button id="btn-export-bom" class="btn secondary">📋 Download BOM (.csv)</button>
+        <button id="btn-export-pnp" class="btn secondary">🎯 Download PNP (.csv)</button>
+      </div>
+    </header>
+
+    <div class="main-layout">
+      <!-- SIDEBAR CONTROLS -->
+      <aside class="sidebar">
+        <div class="panel-section">
+          <h3>Mechanical Enclosure Dimensions</h3>
+          <div class="param-row">
+            <label for="input-board-width">Board Width (Tube Fit)</label>
+            <div class="input-with-unit">
+              <input type="number" id="input-board-width" value="20" min="16" max="30" step="0.5">
+              <span>mm</span>
+            </div>
+          </div>
+          <div class="param-hint">Fits 22mm OD / 19–20mm ID baton polycarbonate tubes.</div>
+
+          <div class="param-row">
+            <label for="input-board-length">Board Length</label>
+            <div class="input-with-unit">
+              <input type="number" id="input-board-length" value="115" min="70" max="200" step="1">
+              <span>mm</span>
+            </div>
+          </div>
+
+          <div class="param-row" style="margin-top: 10px;">
+            <label for="input-silk-scale">Silkscreen Size</label>
+            <div class="input-with-unit">
+              <input type="range" id="input-silk-scale" value="1.0" min="0.5" max="3.0" step="0.05" style="width: 100px;">
+              <span id="label-silk-scale" style="min-width: 32px; font-size: 0.75rem;">1.0x</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Turnkey Pre-Assembled Hardware Map</h3>
+          <ul class="spec-list">
+            <li><strong>MCU:</strong> ESP32-C3 SuperMini (Dual THT + SMD)</li>
+            <li><strong>IMU:</strong> MPU-6050 / MPU-6500 (8-Pin Dual Mount)</li>
+            <li><strong>Microphones:</strong> MAX4466 (Analog) & INMP441 (I2S)</li>
+            <li><strong>Tactile Driver:</strong> AO3400A N-MOSFET (GPIO 7 PWM)</li>
+            <li><strong>Haptic Protection:</strong> D_HAP B5819W Flyback + R_GATE 10kΩ</li>
+            <li><strong>Auto Power-Path:</strong> AO3401A P-MOS + B5819W + 100kΩ</li>
+            <li><strong>LiPo Charger:</strong> TP4054 + 2kΩ PROG (500mA) + Caps</li>
+            <li><strong>Outputs:</strong> Dual Haptic (L/R), 3× LED Ports (High-Side Cutoff) & Mode Button</li>
+            <li><strong>Power Control:</strong> 2-Pin External Switch Header (THT)</li>
+            <li><strong>Mounting:</strong> 4× M3 Corner Holes (Ø3.2mm)</li>
+          </ul>
+        </div>
+
+        <div class="panel-section">
+          <div class="update-buttons-group">
+            <button id="btn-recompile" class="btn primary full-width">⚡ Update Layout</button>
+            <button id="btn-route" class="btn-route-board full-width">🔀 Route Traces</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Laser Fit-Check & Documentation</h3>
+          <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem;">
+            <a href="./audioMotionBaton_laser_outline_pads.png" download class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">✂️ Cut Outline + Pads (.png)</a>
+            <a href="./audioMotionBaton_laser_silkscreen.png" download class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">🔤 Silkscreen Top / Front (.png)</a>
+            <a href="./audioMotionBaton_laser_silkscreen_bottom.png" download class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">🔤 Silkscreen Back + QR (.png)</a>
+            <a href="./audioMotionBaton_laser_combined_testfit.png" download class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">🔍 1:1 Scale Printout (.png)</a>
+            <a href="./writeUp.md" target="_blank" class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">📖 Architecture Writeup (.md)</a>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>DRC & Design Stats</h3>
+          <div id="drc-status-box" class="drc-box drc-pass">DRC: Ready</div>
+          <div id="stats-box" class="stats-box">
+            <div>Components: <span id="stat-comp-count">-</span></div>
+            <div>SMT Pads: <span id="stat-pad-count">-</span></div>
+            <div>Render Time: <span id="stat-render-time">-</span></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- VISUALIZER WORKSPACE -->
+      <main class="workspace">
+        <!-- Vaporwave Cyberpunk Sun Loading Overlay -->
+        <div id="compile-overlay" class="compile-overlay vaporwave-mode" aria-hidden="true">
+          <div class="vaporwave-sun"></div>
+          <div class="vaporwave-grid"></div>
+          <div class="vaporwave-content">
+            <div class="spinner-neon"></div>
+            <span class="vaporwave-text">Updating Layout...</span>
+          </div>
+        </div>
+
+        <div class="tabs-header">
+          <button class="tab-btn active" data-tab="tab-3d">3D PCB View</button>
+          <button class="tab-btn" data-tab="tab-2d">2D Route & Copper</button>
+          <button class="tab-btn" data-tab="tab-schematic">Pin Mapping & Block Diagram</button>
+        </div>
+
+        <div class="tab-content active" id="tab-3d">
+          <div id="canvas-3d-container" class="viewport-canvas"></div>
+          <div class="viewport-overlay-hint">Left click: Rotate • Right click: Pan • Scroll: Zoom</div>
+        </div>
+
+        <div class="tab-content" id="tab-2d">
+          <div id="svg-2d-container" class="viewport-svg"></div>
+          <div id="pcb-2d-tooltip" class="pcb-2d-tooltip"></div>
+        </div>
+
+        <div class="tab-content" id="tab-schematic">
+          <div class="schematic-view-panel">
+            <h3>Carrier Architecture Map & Strapping Pin Protection</h3>
+            <pre class="schematic-ascii">
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ 1S LiPo (3.7V) ──► [Battery Terminals J_BAT]                           │
+   │                           │                                            │
+   │ USB 5V (ESP32-C3) ──► [TP4054 / MCP73831] ──► Auto Power-Path (P-MOS) │
+   │                           │                                            │
+   │                           ▼                                            │
+   │              [External 2-Pin Switch SW_EXT] ──► System VSYS (3.7-5V)   │
+   └───────────────────────────┬────────────────────────────────────────────┘
+                               │
+       ┌───────────────────────┴───────────────────────┐
+       ▼                                               ▼
+┌─────────────────────────┐               ┌─────────────────────────┐
+│ ESP32-C3 SuperMini      │               │ Actuators, LEDs & Audio │
+│  • GPIO 2 (I2C SDA) ────┼──────────────►│  • MPU6050/6500 (I2C)   │
+│  • GPIO 3 (I2C SCL) ────┼──────────────►│  • MPU INT on GPIO 5    │
+│  • GPIO 6 (LED1 TOP) ───┼──────────────►│  • J_LED Top Tip        │
+│  • GPIO 20 (LED2 RX) ───┼──────────────►│  • J_LED2 Upper Right   │
+│  • GPIO 21 (LED3 TX) ───┼──────────────►│  • J_LED3 Upper Left    │
+│  • GPIO 10 (LED PWR EN)─┼─►[AO3400/01]──┼─► High-Side 5V Switch   │
+│  • GPIO 7 (Motor PWM) ──┼─►[AO3400A]────┼─► HAP-L & HAP-R Outputs │
+│  • GPIO 9 (Mode / Boot) ◄───────────────┼── J_BTN (Strapping Safe)│
+│  • GPIO 0 (Mic ADC) ────┼──────────────►│  • MAX4466 Analog Mic   │
+│  • GPIO 1,4,8 (I2S) ────┼──────────────►│  • INMP441 Digital Mic  │
+└─────────────────────────┘               └─────────────────────────┘
+            </pre>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="./src/ui.js"></script>
+</body>
+</html>
