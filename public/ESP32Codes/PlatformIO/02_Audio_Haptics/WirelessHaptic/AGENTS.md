@@ -10,7 +10,7 @@ This project implements a low-latency, real-time wireless audio-to-haptic feedba
  * Captures audio at 16kHz with 128-sample (8ms) windows.
  * Performs Float FFT to extract frequency band energy (Bass, Mid, Treble).
  * Calculates overall audio intensity (MAD - Mean Absolute Deviation).
-* **Communication**: Broadcasts a 4-channel `struct_message` via ESP-NOW to all listening followers every 8ms.
+* **Communication**: Broadcasts a 4-channel `struct_message` (prefixed with `"HAPTIC"` magic filter string to prevent crosstalk with `DeafDoorbell` or other ESP-NOW nodes) via ESP-NOW to all listening followers every 8ms.
 * **Web UI**: Configuration portal for thresholds, patterns, and performance mode toggles.
 * **Performance Mode**: BOOT button (GPIO 9) or Web UI "Go Dark" button stops the Web Server/DNS to prioritize radio cycles for ESP-NOW.
 

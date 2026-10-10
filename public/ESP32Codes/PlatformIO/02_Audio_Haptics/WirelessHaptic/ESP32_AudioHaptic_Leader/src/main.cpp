@@ -39,6 +39,8 @@ Preferences preferences;
 
 // ESP-NOW Struct definitions
 #define MAX_CHANNELS 4 // 0: Bass, 1: Mid, 2: Treble, 3: Transient
+#define HAPTIC_FILTER_STR "HAPTIC"
+#define HAPTIC_FILTER_LEN 6
 
 typedef struct {
     uint8_t mode;          // 0: OFF, 1: Forward, 2: Reverse, 3: Alternating
@@ -46,7 +48,8 @@ typedef struct {
     uint8_t dayTonPattern; // 1-123 for DRV2605L ROM built-in effects
 } HapticCommand;
 
-typedef struct struct_message {
+typedef struct __attribute__((packed)) {
+    char filter[HAPTIC_FILTER_LEN]; // "HAPTIC" prefix prevents DeafDoorbell (which expects 0x01 at byte 0) from triggering
     HapticCommand channels[MAX_CHANNELS];
 } struct_message;
 
@@ -284,6 +287,7 @@ void setup() {
     Serial.println("Failed to add broadcast peer");
     return;
   }
+  memcpy(broadcastData.filter, HAPTIC_FILTER_STR, HAPTIC_FILTER_LEN);
 
   i2s_config_t i2s_config = {
     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),

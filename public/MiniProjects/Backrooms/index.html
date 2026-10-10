@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Backrooms: Deconstructive Survival Roguelite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+
+  <!-- Modern Three.js via ES Module CDN -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- WebGL Render Canvas Container -->
+  <div id="canvas-container"></div>
+  <div class="vhs-overlay"></div>
+  <div id="screen-flash"></div>
+
+  <!-- Reticle & Targeted Component HUD -->
+  <div id="crosshair-container">
+    <div id="crosshair"></div>
+    <div id="target-info">
+      <span id="target-title">Target</span>
+      <div id="target-hp-bar">
+        <div id="target-hp-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Telemetry & Progression Bar -->
+  <div id="top-bar" class="hud-layer">
+    <div class="status-badge">
+      <span class="level-indicator" id="player-lvl">LVL 1</span>
+      <div id="xp-container">
+        <div class="xp-label">
+          <span>SALVAGE SYNC</span>
+          <span id="xp-numbers">0 / 60 XP</span>
+        </div>
+        <div class="xp-track">
+          <div id="xp-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-badge" style="gap: 12px;">
+      <span id="zone-info">STRATA // LEVEL 0: MONOSODIUM YELLOW</span>
+      <span id="coord-info">X: 0.0 | Y: 1.6 (FL 0) | Z: 0.0</span>
+      <span id="fps-counter" style="color: #666; font-size: 10px;">60 FPS</span>
+    </div>
+  </div>
+
+  <!-- Raw Salvage Inventory (Bottom-Left) -->
+  <div id="inventory-panel" class="hud-layer">
+    <div class="panel-header">
+      <span>SALVAGE REPOSITORY</span>
+      <span style="color: #777;">RAW</span>
+    </div>
+    <div class="res-row">
+      <span class="res-name">🧱 Drywall Plaster</span>
+      <span class="res-val" id="res-drywall">0</span>
+    </div>
+    <div class="res-row">
+      <span class="res-name">🪵 Wood 2x4s</span>
+      <span class="res-val" id="res-wood">0</span>
+    </div>
+    <div class="res-row">
+      <span class="res-name">⚡ Copper Wiring</span>
+      <span class="res-val" id="res-copper">0</span>
+    </div>
+    <div class="res-row">
+      <span class="res-name">💡 Ballasts & Caps</span>
+      <span class="res-val" id="res-ballast">0</span>
+    </div>
+    <div class="res-row">
+      <span class="res-name">🧶 Damp Carpet Fiber</span>
+      <span class="res-val" id="res-fiber">0</span>
+    </div>
+    <div class="res-row">
+      <span class="res-name">💺 Molded Plastic</span>
+      <span class="res-val" id="res-plastic">0</span>
+    </div>
+    <div class="res-row">
+      <span class="res-name">🪜 Scaffolding</span>
+      <span class="res-val" id="res-scaffolding">0</span>
+    </div>
+  </div>
+
+  <!-- Improvised Workbench (Bottom-Right) -->
+  <div id="crafting-panel" class="hud-layer">
+    <div class="panel-header">
+      <span>IMPROVISED WORKBENCH</span>
+      <span style="color: #88c0d0;">[CLICK / HOTKEYS 1-7 / R]</span>
+    </div>
+    <div class="recipe-list" id="recipe-list-el"></div>
+  </div>
+
+  <!-- Active Anomalous Perks Dock (Bottom Center) -->
+  <div id="perks-dock" class="hud-layer"></div>
+
+  <!-- Realtime Notification Toast Feed -->
+  <div id="notification-feed"></div>
+
+  <!-- Hotkey Navigation Banner -->
+  <div id="controls-banner">
+    [WASD] MOVE &nbsp;|&nbsp; [SPACE] JUMP &nbsp;|&nbsp; [HOLD LMB] DEMOLISH &nbsp;|&nbsp; [RMB / B] BARRICADE &nbsp;|&nbsp; [L] SCAFFOLDING &nbsp;|&nbsp; [F] LANTERN &nbsp;|&nbsp; [Q] PHASE &nbsp;|&nbsp; [1-6] CRAFT
+  </div>
+
+  <!-- PointerLock Start Screen -->
+  <div id="start-screen">
+    <h1>THE BACKROOMS</h1>
+    <h3 style="letter-spacing: 3px; color: #ffb000; font-size: 16px;">INFINITE 3D STRATA // DECONSTRUCTIVE ROGUELITE</h3>
+    <p>
+      The Backrooms extend infinitely in all three dimensions.<br>
+      Mine floor tiles to reveal structural joists or drop into flooded Poolrooms and subterranean subbasements.<br>
+      Knock through ceiling tiles to breach mechanical crawlspaces overhead.<br>
+      Every wall segment is harvestable matter. Craft improvised tools and draft anomalous reality distortions.
+    </p>
+    <div class="pulse-btn">CLICK TO BREACH REALITY [POINTER LOCK]</div>
+  </div>
+
+  <!-- Roguelite Level-Up 3-Card Draft Modal -->
+  <div id="levelup-modal">
+    <div class="modal-header">
+      <div class="modal-title">ANOMALOUS ADAPTATION</div>
+      <div class="modal-subtitle">CHOOSE ONE PERMANENT REALITY DISTORTION BENEFIT</div>
+    </div>
+    <div class="card-deck" id="card-deck-el"></div>
+  </div>
+
+  <!-- Modular Game Entry Point -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

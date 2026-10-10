@@ -15,6 +15,8 @@ Adafruit_DRV2605 drv;
 
 // ESP-NOW Struct definitions (Must match Leader)
 #define MAX_CHANNELS 4
+#define HAPTIC_FILTER_STR "HAPTIC"
+#define HAPTIC_FILTER_LEN 6
 
 typedef struct {
     uint8_t mode;          // 0: OFF, 1: Forward, 2: Reverse, 3: Alternating
@@ -22,7 +24,8 @@ typedef struct {
     uint8_t dayTonPattern; // 1-123 for DRV2605L ROM built-in effects
 } HapticCommand;
 
-typedef struct struct_message {
+typedef struct __attribute__((packed)) {
+    char filter[HAPTIC_FILTER_LEN];
     HapticCommand channels[MAX_CHANNELS];
 } struct_message;
 
@@ -31,7 +34,8 @@ float smoothIntensity = 0;
 
 // Handle incoming data
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-    if (len < sizeof(myData)) return;
+    if (len < (int)sizeof(myData)) return;
+    if (memcmp(incomingData, HAPTIC_FILTER_STR, HAPTIC_FILTER_LEN) != 0) return;
     memcpy(&myData, incomingData, sizeof(myData));
 }
 
