@@ -53,7 +53,10 @@ function initHeaderCanvas() {
         { amp: 0.035, freq: 7.1,  speed: 0.021,  phase: 5.0,  alpha: 0.10 },
     ];
 
-    const COLOR = '96, 130, 190'; // p1 hsl(215,50%,58%) → rgb approx
+    const part = document.body.getAttribute('data-part') || '1';
+    let COLOR = '96, 130, 190'; // Part 1: Slate Blue
+    if (part === '2') COLOR = '170, 130, 225'; // Part 2: Awakening Violet
+    if (part === '3') COLOR = '225, 180, 80';  // Part 3: Wheat Gold
 
     let t = 0;
     let frameId;
