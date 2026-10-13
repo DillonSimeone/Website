@@ -1,6 +1,6 @@
 @echo off
 setlocal
-echo Starting ESP32-C3 Auto-Upload (DeafDoorbell Master)...
+echo Starting ESP32-C3 Auto-Upload (DeafDoorbell Leader)...
 
 call pio run --target upload
 if %ERRORLEVEL% neq 0 (
