@@ -442,6 +442,112 @@
         .bom-item a { color: var(--pink); text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: 0.2s; }
         .bom-item a:hover { color: #fff; text-shadow: 0 0 10px var(--pink); }
 
+        /* Custom Commissioning & Estimates */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .pricing-card {
+            background: rgba(10, 14, 26, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--cyan);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.25);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--pink);
+            box-shadow: 0 0 20px rgba(255, 0, 110, 0.25);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--pink);
+            background: rgba(255, 0, 110, 0.15);
+            border: 1px solid var(--pink);
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: 1px;
+        }
+
+        .pricing-header h3 {
+            font-size: 1.05rem;
+            color: var(--cyan);
+            margin-bottom: 6px;
+        }
+
+        .pricing-price {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 12px 0;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+        }
+
+        .pricing-price span {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            font-weight: 400;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pricing-list {
+            list-style: none;
+            margin: 12px 0 18px 0;
+            font-size: 0.82rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 12px;
+        }
+
+        .pricing-list li {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-dim);
+        }
+
+        .pricing-list li b {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .setup-callout {
+            background: rgba(0, 243, 255, 0.04);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--cyan);
+            border-radius: 8px;
+            padding: 18px;
+            margin: 20px 0;
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+
+        .setup-callout h4 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--cyan);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
         /* Mission Footer */
         .mission-box { border-left: 4px solid var(--cyan); padding-left: 20px; font-style: italic; color: var(--text-dim); margin-top: 10px; }
 
@@ -685,6 +791,115 @@
             <div class="bom-item">
                 <span>Bulk USB-A to USB-C Cables (High Reliability)</span>
                 <a href="https://www.amazon.com/dp/B0C622FVMX?th=1" target="_blank">View on Amazon &rarr;</a>
+            </div>
+        </section>
+
+        <!-- Custom Commission & Build Estimates -->
+        <section class="card">
+            <h2>Custom Builds & Commissioning</h2>
+            <p>Interested in having a turnkey system built and configured for your space? Below is the exact cost and labor breakdown derived from the BOM hardware, 3D printing requirements, hand assembly, and firmware setup.</p>
+
+            <div class="pricing-grid">
+                <!-- Leader Unit -->
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Leader Node</h3>
+                        <p style="font-size: 0.78rem; color: var(--text-dim);">Acoustic Chime Listener</p>
+                    </div>
+                    <div class="pricing-price">$75 <span>/ unit</span></div>
+                    <ul class="pricing-list">
+                        <li><span>Hardware & Materials</span> <b>$12</b></li>
+                        <li><span>Assembly & Solder</span> <b>1.25 hrs ($63)</b></li>
+                        <li><span>3D Printed Mount</span> <b>Custom PETG Enclosure</b></li>
+                        <li><span>Firmware Setup</span> <b>Flashed & Audio Tested</b></li>
+                    </ul>
+                    <p style="font-size: 0.75rem; color: var(--text-dim);">Includes ESP32-C3 SuperMini, INMP441 I2S digital mic, dual-tone 3D printed bird enclosure, internal potting, and low-voltage power harness.</p>
+                </div>
+
+                <!-- Follower Unit -->
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Follower Node</h3>
+                        <p style="font-size: 0.78rem; color: var(--text-dim);">8x8 Visual Strobe Display</p>
+                    </div>
+                    <div class="pricing-price">$65 <span>/ unit</span></div>
+                    <ul class="pricing-list">
+                        <li><span>Hardware & Materials</span> <b>$15</b></li>
+                        <li><span>Assembly & Solder</span> <b>1.0 hr ($50)</b></li>
+                        <li><span>3D Printed Mount</span> <b>Diffuser Grid + Stand</b></li>
+                        <li><span>Wireless Network</span> <b>ESP-NOW Sync Verified</b></li>
+                    </ul>
+                    <p style="font-size: 0.75rem; color: var(--text-dim);">Includes ESP32-C3 SuperMini, 64-LED WS2812B matrix panel, custom angled desktop holder, and snap-fit honeycomb baffle diffuser.</p>
+                </div>
+
+                <!-- Complete Starter Package -->
+                <div class="pricing-card featured">
+                    <span class="pricing-badge">TURNKEY</span>
+                    <div class="pricing-header">
+                        <h3>Starter Kit</h3>
+                        <p style="font-size: 0.78rem; color: var(--text-dim);">1 Leader + 1 Follower</p>
+                    </div>
+                    <div class="pricing-price">$140 <span>/ bundle</span></div>
+                    <ul class="pricing-list">
+                        <li><span>Hardware Included</span> <b>1 Leader + 1 Follower</b></li>
+                        <li><span>Network Configuration</span> <b>Pre-Paired Out of the Box</b></li>
+                        <li><span>Firmware Flashing</span> <b>Tested & Verified</b></li>
+                        <li><span>Extra Follower Units</span> <b>+$65 each</b></li>
+                    </ul>
+                    <p style="font-size: 0.75rem; color: var(--text-dim);">Pre-paired and ready to plug in. Simply power the units with 5V USB and place the Leader next to your existing mechanical chime.</p>
+                </div>
+            </div>
+
+            <!-- On-Site Setup & Commissioning Details -->
+            <div class="setup-callout">
+                <h4>System Setup & In-Home Acoustic Tuning</h4>
+                <p><b>Pre-Configured Turnkey Kits ($140):</b> Both nodes come fully soldered, enclosed, pre-flashed, and MAC-address paired over ESP-NOW broadcast. Plug them into any standard 5V USB power source and they communicate instantaneously across rooms without touching your home Wi-Fi network.</p>
+                <p style="margin-top: 10px;"><b>Optional On-Site Installation & Custom Tuning ($75 | 1.5 hrs labor):</b> For local setups requiring custom power cable routing or in-home calibration. We mount the Leader directly adjacent to your existing doorbell chime and connect to its onboard captive portal (`192.168.4.1`) to record your chime's exact acoustic signature. We calibrate the Mean Absolute Deviation (MAD) trigger threshold specifically to your chime so it fires on every strike while ignoring loud speech, slamming doors, or barking dogs.</p>
+            </div>
+
+            <!-- Labor Breakdown Table -->
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item / Task</th>
+                            <th>Materials Cost</th>
+                            <th>Labor Time</th>
+                            <th>Labor Cost (@ $50/hr)</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>Leader Node (Acoustic Chime Listener)</b></td>
+                            <td>$12.00</td>
+                            <td>1.25 hrs</td>
+                            <td>$63.00</td>
+                            <td><b>$75.00</b></td>
+                        </tr>
+                        <tr>
+                            <td><b>Follower Node (8x8 Alert Display)</b></td>
+                            <td>$15.00</td>
+                            <td>1.00 hr</td>
+                            <td>$50.00</td>
+                            <td><b>$65.00</b></td>
+                        </tr>
+                        <tr>
+                            <td><b>Pre-Flashing & ESP-NOW Network Pairing</b></td>
+                            <td>$0.00</td>
+                            <td>0.50 hr</td>
+                            <td>$25.00</td>
+                            <td><b>Included in Starter Kit</b></td>
+                        </tr>
+                        <tr>
+                            <td><b>Optional On-Site Mounting & In-Home MAD Tuning</b></td>
+                            <td>$0.00</td>
+                            <td>1.50 hrs</td>
+                            <td>$75.00</td>
+                            <td><b>$75.00</b></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </section>
 
