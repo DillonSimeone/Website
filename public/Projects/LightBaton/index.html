@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motion-Reactive Haptic Light Baton | Dillon Simeone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #070913;
+            --bg-card: rgba(15, 23, 42, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --accent-amber: #f59e0b;
+            --accent-gold: #fbbf24;
+            --accent-cyan: #06b6d4;
+            --accent-magenta: #d946ef;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 75%, rgba(6, 182, 212, 0.08) 0%, transparent 45%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px 80px 24px;
+        }
+
+        /* Top Nav */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-glass);
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-amber);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-pill {
+            padding: 8px 18px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-cad {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #93c5fd;
+        }
+
+        .btn-cad:hover {
+            background: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-store {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #0f172a;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+        }
+
+        .btn-store:hover {
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+            transform: translateY(-1px);
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: var(--accent-gold);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+
+        .hero-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #fff;
+            margin-bottom: 16px;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #ffffff 30%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 24px auto;
+            line-height: 1.7;
+        }
+
+        .meta-pills {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .meta-tag {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            color: #cbd5e1;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Card Section */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 28px;
+            max-width: 850px;
+        }
+
+        /* Video Showcase Grids */
+        .video-grid-dual {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            align-items: center;
+        }
+
+        .video-grid-triple {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        @media (max-width: 860px) {
+            .video-grid-dual {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-box-short {
+            aspect-ratio: 9/16;
+            max-width: 320px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: #000;
+            width: 100%;
+        }
+
+        .video-box-wide {
+            aspect-ratio: 16/9;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: #000;
+        }
+
+        /* Interactive Motion Simulator */
+        .simulator-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 32px;
+            align-items: stretch;
+        }
+
+        @media (max-width: 900px) {
+            .simulator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sim-canvas-box {
+            position: relative;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #09090b 80%);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            height: 480px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #batonSimCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: grab;
+        }
+
+        #batonSimCanvas:active {
+            cursor: grabbing;
+        }
+
+        .canvas-overlay-hint {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            font-size: 0.75rem;
+            color: var(--accent-gold);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 10px;
+            border-radius: 6px;
+            pointer-events: none;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sim-panel {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sim-panel-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .telemetry-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid var(--border-glass);
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .telemetry-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .telemetry-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .btn-action-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn-sim-action {
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            color: #cbd5e1;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-sim-action:hover {
+            background: var(--accent-amber);
+            color: #0f172a;
+            border-color: var(--accent-amber);
+        }
+
+        /* Remote Light Indicator */
+        .remote-fixture-box {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px dashed var(--border-glass);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .remote-fixture-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        /* Progress & Gate Meters */
+        .meter-container {
+            margin-bottom: 10px;
+        }
+
+        .meter-label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+        }
+
+        .meter-bar-track {
+            height: 7px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .meter-bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.06s ease;
+            border-radius: 999px;
+        }
+
+        .fill-cyan { background: linear-gradient(90deg, #06b6d4, #38bdf8); }
+        .fill-amber { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .fill-magenta { background: linear-gradient(90deg, #d946ef, #f43f5e); }
+        .fill-emerald { background: linear-gradient(90deg, #10b981, #34d399); }
+
+        /* Follower Light Strip Visualizer */
+        .follower-strip-container {
+            margin-top: 14px;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.55);
+            border-radius: 12px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .follower-led-row {
+            display: flex;
+            gap: 2px;
+            height: 12px;
+            margin: 8px 0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .follower-led-cell {
+            flex: 1;
+            border-radius: 2px;
+            background: #111827;
+            transition: background 0.05s ease, box-shadow 0.05s ease;
+        }
+
+        /* PCB Upgrade Showcase */
+        .pcb-upgrade-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 36px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .pcb-upgrade-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pcb-image-card {
+            background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.15);
+            position: relative;
+            text-align: center;
+        }
+
+        .pcb-image-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            display: block;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pcb-badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+            justify-content: center;
+        }
+
+        .pcb-feature-pill {
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+
+        .pcb-specs-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .pcb-spec-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 14px 18px;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .pcb-spec-item:hover {
+            border-color: rgba(16, 185, 129, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .pcb-spec-item h4 {
+            font-size: 0.95rem;
+            color: #f8fafc;
+            margin-bottom: 4px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pcb-spec-item p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Architecture Tables */
+        .table-responsive {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-gold);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            color: #cbd5e1;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .code-inline {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #38bdf8;
+        }
+
+        /* CTA Footer */
+        .cta-footer {
+            text-align: center;
+            padding: 56px 24px;
+            background: radial-gradient(circle at center, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .cta-footer h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .cta-footer p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Top Nav -->
+        <nav class="top-nav">
+            <a href="/" class="nav-link">&larr; Back to Main Portfolio</a>
+            <div class="nav-actions">
+                <a href="/ParametricModeling/11-LightBaton/index.html" class="btn-pill btn-cad" target="_blank" rel="noopener noreferrer">
+                    Open 3D CAD Configurator &rarr;
+                </a>
+                <a href="/#shop" class="btn-pill btn-store">
+                    Commission Custom Baton ($200.00) &rarr;
+                </a>
+            </div>
+        </nav>
+
+        <!-- Hero Header -->
+        <header class="hero">
+            <div class="hero-badge">Kinetic Motion &amp; Haptic Instrument</div>
+            <h1 class="hero-title">MOTION-REACTIVE LIGHT BATON</h1>
+            <p class="hero-subtitle">
+                Swing it, it vibrates and glows! A high-performance flow-arts and stage-performance kinetic instrument with 6-axis motion tracking, responsive haptic feedback, and universal parametric core fabrication.
+            </p>
+            <div class="meta-pills">
+                <span class="meta-tag">6-Axis MPU6050 IMU</span>
+                <span class="meta-tag">High-Torque ERM Haptic Feedback</span>
+                <span class="meta-tag">Dense WS2812B LED Diffusion</span>
+                <span class="meta-tag">ESP32-C3 SuperMini MCU</span>
+                <span class="meta-tag">Universal Parametric Core (Bamboo / Steel / Branch)</span>
+                <span class="meta-tag">Sub-10ms ESP-NOW Wireless Broadcast</span>
+                <span class="meta-tag">USB-C Rechargeable LiPo</span>
+            </div>
+        </header>
+
+        <!-- Video Showcase 1: Kinetic Action & Parametric Engine -->
+        <section class="card">
+            <h2 class="section-title">Kinetic Action &amp; Parametric Core Versatility</h2>
+            <p class="section-desc">
+                Watch the baton swing in real time; generating instantaneous vibration feedback and trailing LED light sweeps as velocity builds. Below it is the custom 3D parametric configurator that lets Dillon build this baton around any core material you choose.
+            </p>
+
+            <div class="video-grid-dual">
+                <!-- Looping Muted Short -->
+                <div style="text-align: center;">
+                    <div class="video-box-short">
+                        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/rRfqmuUabTo?autoplay=1&mute=1&loop=1&playlist=rRfqmuUabTo"
+                            title="Swing it, it vibrates and glows!" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px; font-weight: 600;">
+                        Live Kinetic Swing Demo: Instantaneous haptics &amp; glowing velocity trail
+                    </p>
+                </div>
+
+                <!-- Parametric Configurator Video -->
+                <div>
+                    <div class="video-box-wide">
+                        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/4M8jgZdE3cY"
+                            title="Light Baton Parametric Configurator Engine" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <h3 style="font-family: 'Orbitron', sans-serif; font-size: 1.15rem; color: var(--accent-gold); margin-bottom: 8px;">
+                            Built Around Any Core: Bamboo, Steel, or Branch
+                        </h3>
+                        <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 14px;">
+                            Most commercial LED flow props are glued into cheap, brittle plastic tubes. Dillon's parametric system treats the structural core as an open variable. By adjusting shaft diameters and wall offsets in code, the baton's 3D-printed chassis can clamp onto lightweight bamboo shafts, rigid solid steel rods, carbon fiber spars, or hand-foraged tree branches.
+                        </p>
+                        <a href="/ParametricModeling/11-LightBaton/index.html" class="btn-pill btn-cad" target="_blank" rel="noopener noreferrer">
+                            Launch Live 3D Parametric CAD Studio &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Kinetic Motion Simulator -->
+        <section class="card">
+            <h2 class="section-title">Interactive Kinetic Motion Simulator</h2>
+            <p class="section-desc">
+                Drag your cursor across the canvas or trigger kinetic actions below to simulate swinging the baton. This interactive simulator runs the exact math from Dillon's ESP32 firmware: 6-axis MPU motion analysis, planar X/Y velocity gating, 5V vibration cell PWM drive with deadband clamping, and sub-10ms ESP-NOW wireless broadcast with delta-smoothed follower lighting.
+            </p>
+
+            <div class="simulator-grid">
+                <!-- Motion Canvas -->
+                <div class="sim-canvas-box">
+                    <canvas id="batonSimCanvas"></canvas>
+                    <div class="canvas-overlay-hint">Drag Cursor Across Canvas to Swing Baton</div>
+                </div>
+
+                <!-- Telemetry & Controls -->
+                <div class="sim-panel">
+                    <div>
+                        <div class="sim-panel-title">
+                            <span>Baton Firmware Telemetry</span>
+                            <span id="telemetryPill" style="color: #10b981; font-size: 0.75rem;">RUNNING (MPU6050 + 5V ERM)</span>
+                        </div>
+
+                        <!-- X/Y Motion Gate Progress -->
+                        <div class="meter-container">
+                            <div class="meter-label-row">
+                                <span>X-Axis Velocity Gate (|g_z| &times; 0.65 + |a_x| &times; 0.35):</span>
+                                <span class="telemetry-val" id="gateXVal">0%</span>
+                            </div>
+                            <div class="meter-bar-track">
+                                <div class="meter-bar-fill fill-cyan" id="gateXBar"></div>
+                            </div>
+                        </div>
+
+                        <div class="meter-container">
+                            <div class="meter-label-row">
+                                <span>Y-Axis Velocity Gate (|g_x| &times; 0.65 + |a_y| &times; 0.35):</span>
+                                <span class="telemetry-val" id="gateYVal">0%</span>
+                            </div>
+                            <div class="meter-bar-track">
+                                <div class="meter-bar-fill fill-magenta" id="gateYBar"></div>
+                            </div>
+                        </div>
+
+                        <div class="meter-container">
+                            <div class="meter-label-row">
+                                <span>Energy Accumulator (Charge &times; dt - Decay &times; dt):</span>
+                                <span class="telemetry-val" id="energyVal">0%</span>
+                            </div>
+                            <div class="meter-bar-track">
+                                <div class="meter-bar-fill fill-amber" id="energyBar"></div>
+                            </div>
+                        </div>
+
+                        <div class="meter-container">
+                            <div class="meter-label-row">
+                                <span>5V Vibration Cell PWM (Startup Floor &plus; 75% Saturation):</span>
+                                <span class="telemetry-val" id="hapticPwmVal">0%</span>
+                            </div>
+                            <div class="meter-bar-track">
+                                <div class="meter-bar-fill fill-emerald" id="hapticBar"></div>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-row" style="margin-top: 10px;">
+                            <span class="telemetry-label">Angular Velocity (&omega;):</span>
+                            <span class="telemetry-val" id="omegaVal">0.0 rad/s</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="telemetry-label">Linear Acceleration (G):</span>
+                            <span class="telemetry-val" id="accelVal">1.00 G</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="telemetry-label">LED Trailing Wave:</span>
+                            <span class="telemetry-val" id="ledColorVal">Nocturnal Idle</span>
+                        </div>
+
+                        <!-- Motion Presets -->
+                        <div style="margin-top: 14px;">
+                            <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700;">Simulate Kinetic Actions</span>
+                            <div class="btn-action-group">
+                                <button class="btn-sim-action" id="btnFlourish">Fast Spin / Flourish</button>
+                                <button class="btn-sim-action" id="btnStrike">Sudden Kinetic Strike</button>
+                                <button class="btn-sim-action" id="btnGentle">Gentle Sway</button>
+                                <button class="btn-sim-action" id="btnSleep">Simulate Sleep / Wake</button>
+                            </div>
+                        </div>
+
+                        <!-- Follower Synchronized Light Strip Visualizer -->
+                        <div class="follower-strip-container">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 700; color: var(--accent-gold); letter-spacing: 1px; text-transform: uppercase;">
+                                <span>ESP-NOW Wireless Follower Node</span>
+                                <span id="espNowPps" style="font-family: 'JetBrains Mono', monospace; color: #38bdf8;">33.3 pps (30ms)</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+                                Delta Math Easing: <span class="code-inline" style="font-size: 0.7rem;">curr += (target - curr) &times; 6.0 &times; dt</span>
+                            </div>
+
+                            <!-- 74-LED Strip Visualizer -->
+                            <div class="follower-led-row" id="followerLedRow">
+                                <!-- Generated dynamically via JS -->
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
+                                <span>Follower LEDs Lit: <strong id="followerLedCount" style="color: #fff;">0 / 74</strong></span>
+                                <span>Latency: <strong style="color: #10b981;">&lt; 3 ms</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Incoming Update: Custom Production PCBs -->
+        <section class="card" id="custom-pcb-update" style="border: 1px solid rgba(16, 185, 129, 0.4); background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.85) 60%);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                <div class="hero-badge" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.5); color: #34d399; margin-bottom: 0;">
+                    Incoming Hardware Evolution: Custom PCBs Ordered &amp; In Fabrication
+                </div>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--accent-gold); font-weight: 700;">
+                    38 &times; 38 mm Ultra-Dense Footprint
+                </span>
+            </div>
+
+            <h2 class="section-title">Next-Gen Hardware Upgrade: Monolithic Reactive Controller PCBs</h2>
+            <p class="section-desc">
+                Prototype light batons relied on hand-wired perfboards and point-to-point silicone wiring squeezed into 3D-printed core sleds. To elevate the baton into a rugged, stage-ready instrument, Dillon designed and ordered a dedicated production batch of custom 2-layer SMT controller PCBs (JLCPCB fabricated). These boards eliminate rat's-nest wiring, eradicate parasitic battery sleep drain, and introduce dual independent 5V haptic channels.
+            </p>
+
+            <div class="pcb-upgrade-grid">
+                <!-- PCB Diagram Image -->
+                <div class="pcb-image-card">
+                    <img src="/Images/Shop/light-baton-controller-pcb.png" alt="03 Compact Audio/Motion Reactive Controller PCB Layout by Dillon Simeone" loading="lazy">
+                    <div class="pcb-badge-row">
+                        <span class="pcb-feature-pill">ESP32-C3 SuperMini</span>
+                        <span class="pcb-feature-pill">MPU6050/6500 IMU</span>
+                        <span class="pcb-feature-pill">Dual 5V Haptics</span>
+                        <span class="pcb-feature-pill">Schottky Flyback Diodes</span>
+                        <span class="pcb-feature-pill">High-Side LED Cut-off</span>
+                        <span class="pcb-feature-pill">TP4056 Power-Path</span>
+                        <span class="pcb-feature-pill">Dual Analog/I2S Mics</span>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; font-family: 'JetBrains Mono', monospace;">
+                        Production Gerber Layout: Back-to-back 3D stacked carrier with standard 31&times;31mm M3 bolt pattern
+                    </p>
+                </div>
+
+                <!-- Technical Innovations Breakdown -->
+                <div>
+                    <ul class="pcb-specs-list">
+                        <li class="pcb-spec-item">
+                            <h4>Back-to-Back 3D Component Stacking</h4>
+                            <p>
+                                The ESP32-C3 SuperMini MCU mounts on the top surface, while the MPU6050/6500 6-axis IMU mounts directly underneath on the bottom layer. This vertical stacking minimizes I2C trace lengths to under 6mm, isolates high-frequency radio noise, and fits comfortably inside narrow 38mm cylindrical handles.
+                            </p>
+                        </li>
+
+                        <li class="pcb-spec-item">
+                            <h4>Dual 5V Haptic Channels with Flyback Protection</h4>
+                            <p>
+                                Upgraded from a single motor to dual independent vibration channels (Haptic Left &amp; Right). Driven by high-current AO3400A N-channel MOSFETs with 10k gate pull-downs and onboard SS14 Schottky flyback diodes (D_HAP), fully protecting the microcontroller from inductive motor voltage spikes during rapid kinetic swings.
+                            </p>
+                        </li>
+
+                        <li class="pcb-spec-item">
+                            <h4>Zero-Drain High-Side LED Isolation</h4>
+                            <p>
+                                Addressable WS2812B LED pixels continuously consume 1mA to 3mA per pixel even when turned black. A dedicated AO3401A P-channel MOSFET switch (Q_LED_PWR) completely severs 5V rail power to the strip during deep sleep, extending standby battery life from days to months.
+                            </p>
+                        </li>
+
+                        <li class="pcb-spec-item">
+                            <h4>TP4056 Charging with Auto Power-Path Switching</h4>
+                            <p>
+                                Features onboard TP4056 1S LiPo charging via USB-C (R_PROG configured for 500mA fast charge) coupled with an automatic P-FET power-path selector (Q_PWR + D_PWR). Performer batons seamlessly draw continuous power from external USB power banks without cycling or stressing the internal lithium cell.
+                            </p>
+                        </li>
+
+                        <li class="pcb-spec-item">
+                            <h4>Hybrid Audio + Kinetic Reactive Inputs</h4>
+                            <p>
+                                In addition to the 6-axis inertial tracking, the PCB integrates both an analog MAX4466 microphone (ADC1_CH0 / G0) for zero-latency kinetic audio beats and a digital I2S INMP441 microphone (BCLK, WS, SD) for studio-grade FFT frequency band analysis.
+                            </p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wireless Remote Lighting & Internal Hardware Architecture -->
+        <section class="card">
+            <h2 class="section-title">Remote Lighting Broadcast &amp; Internal Core Architecture</h2>
+            <p class="section-desc">
+                The baton is an interactive controller as well as a kinetic prop. Below, watch the baton wirelessly trigger remote room lights over ESP-NOW, and examine the internal hardware core sled.
+            </p>
+
+            <div class="video-grid-triple">
+                <!-- Video 1: Remote lighting demo 1 -->
+                <div style="text-align: center;">
+                    <div class="video-box-short">
+                        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/MfULyaRyWB0"
+                            title="Baton Remotely Controlling Lights via ESP-NOW Demo 1" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px; font-weight: 600;">
+                        ESP-NOW Remote Lighting Trigger (Part 1)
+                    </p>
+                </div>
+
+                <!-- Video 2: Remote lighting demo 2 -->
+                <div style="text-align: center;">
+                    <div class="video-box-short">
+                        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/8GJwDi7aQ58"
+                            title="Baton Remotely Controlling Lights via ESP-NOW Demo 2" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px; font-weight: 600;">
+                        Sub-10ms Wireless Room Lighting Sync (Part 2)
+                    </p>
+                </div>
+
+                <!-- Video 3: Internal core sled -->
+                <div style="text-align: center;">
+                    <div class="video-box-short">
+                        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/cyLVtnKag7w"
+                            title="Internal Hardware Core Sled Architecture" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px; font-weight: 600;">
+                        Internal Core Sled: 3D printed carrier &amp; electronics
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hardware Specifications Table -->
+        <section class="card">
+            <h2 class="section-title">Hardware Architecture &amp; Electronics Specifications</h2>
+            <p class="section-desc">
+                Engineered for extreme centrifugal force, rotational stability, and zero-latency wireless broadcast.
+            </p>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subsystem</th>
+                            <th>Hardware Component</th>
+                            <th>Bus / Protocol</th>
+                            <th>Engineering Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Motion Tracking</strong></td>
+                            <td>MPU6050 / MPU6500 6-Axis IMU</td>
+                            <td><span class="code-inline">I2C (GPIO 8 / 9)</span></td>
+                            <td>Captures rotational gyroscope velocity and multi-axis acceleration at 200 Hz with on-chip DLPF filtering.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tactile Feedback</strong></td>
+                            <td>High-Torque ERM Motor + AO3400A Driver</td>
+                            <td><span class="code-inline">Hardware PWM</span></td>
+                            <td>Translates kinetic velocity and centrifugal load directly into physical vibration felt through the performer's grip.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Visual Illumination</strong></td>
+                            <td>High-Density WS2812B Addressable LED Strip</td>
+                            <td><span class="code-inline">FastLED RMT</span></td>
+                            <td>Trailing chromatic ripples, energetic wave bursts on strikes, and smooth delta-time easing.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Wireless Telemetry</strong></td>
+                            <td>ESP32-C3 SuperMini RISC-V</td>
+                            <td><span class="code-inline">ESP-NOW Broadcast</span></td>
+                            <td>Direct peer-to-peer radio packets broadcasted to stage lighting receivers with sub-10ms response time; no router required.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Power System</strong></td>
+                            <td>Rechargeable LiPo Cell + USB-C Charger</td>
+                            <td>5V Protected Bus</td>
+                            <td>Integrated high-side MOSFET power-path isolation prevents LED parasitic battery drain when powered down.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Structural Chassis</strong></td>
+                            <td>Universal Parametric 3D-Printed Sled</td>
+                            <td>Friction Clamp Collar</td>
+                            <td>Clamps securely onto bamboo, steel, carbon fiber, or natural wood dowels based on performer balance preferences.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CTA Footer -->
+        <footer class="cta-footer">
+            <h2>Commission a Custom Light Baton</h2>
+            <p>
+                Handcrafted, custom-balanced, and parametrically adapted to your choice of core material. Perfect for flow-arts performers, martial artists, stage dancers, and interactive light installations.
+            </p>
+            <a href="/#shop" class="btn-pill btn-store" style="font-size: 1rem; padding: 12px 28px;">
+                Commission Light Baton in Hardware Store ($200.00) &rarr;
+            </a>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 16px;">
+                Or email directly: <a href="mailto:dillonsimeone@gmail.com" style="color: var(--accent-gold); text-decoration: underline;">dillonsimeone@gmail.com</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Interactive Baton Simulator Canvas Script -->
+    <script>
+        (function() {
+            const canvas = document.getElementById('batonSimCanvas');
+            const ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            // Populate 74 Follower LED visualizer cells
+            const followerLedRow = document.getElementById('followerLedRow');
+            const FOLLOWER_LED_COUNT = 74;
+            const followerCells = [];
+            followerLedRow.innerHTML = '';
+            for (let i = 0; i < FOLLOWER_LED_COUNT; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'follower-led-cell';
+                followerLedRow.appendChild(cell);
+                followerCells.push(cell);
+            }
+
+            // Baton Kinetic & Firmware State
+            let angle = -Math.PI / 4;
+            let targetAngle = -Math.PI / 4;
+            let angularVelocity = 0; // rad/s (gyroZ)
+            let accelLinear = 0;     // m/s^2 linear
+            let accelX = 0;
+            let accelY = 0;
+            let accelZ = 9.81;
+            let gyroX = 0;
+            let gyroY = 0;
+            let gyroZ = 0;
+
+            // MotionAnalyzer State (MotionAnalyzer.cpp)
+            let smoothSpeedX = 0;
+            let smoothSpeedY = 0;
+            let speedX = 0;
+            let speedY = 0;
+            let rmsSmooth = 0;
+            let energyLevel = 0.0;   // 0.0 to 1.0 (main.cpp)
+            let hapticDuty = 0.0;    // 0.0 to 1.0 (PatternEngine.cpp)
+
+            // ESP-NOW Follower State (reactiveFollowerLightMotion)
+            let targetCharge = 0.0;
+            let currentCharge = 0.0;
+            const easingFactor = 6.0; // Follower delta math coefficient
+            let lastEspNowTime = 0;
+            let packetCount = 0;
+
+            // Inactivity sleep state
+            let isAsleep = false;
+            let lastMotionTime = performance.now();
+            const INACTIVITY_TIMEOUT = 10000; // 10s timeout from firmware
+
+            let hue = 38;
+            let isDragging = false;
+            let prevMouseX = canvas.width / 2;
+            let prevMouseY = canvas.height / 2;
+            let prevTime = performance.now();
+            const trail = [];
+
+            // DOM Elements
+            const gateXVal = document.getElementById('gateXVal');
+            const gateXBar = document.getElementById('gateXBar');
+            const gateYVal = document.getElementById('gateYVal');
+            const gateYBar = document.getElementById('gateYBar');
+            const energyVal = document.getElementById('energyVal');
+            const energyBar = document.getElementById('energyBar');
+            const hapticPwmVal = document.getElementById('hapticPwmVal');
+            const hapticBar = document.getElementById('hapticBar');
+            const omegaVal = document.getElementById('omegaVal');
+            const accelVal = document.getElementById('accelVal');
+            const ledColorVal = document.getElementById('ledColorVal');
+            const telemetryPill = document.getElementById('telemetryPill');
+            const followerLedCount = document.getElementById('followerLedCount');
+
+            // Interactive dragging
+            canvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                wakeUp();
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+            });
+            window.addEventListener('mouseup', () => isDragging = false);
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                wakeUp();
+                const rect = canvas.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                targetAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+
+                const dx = e.clientX - prevMouseX;
+                const dy = e.clientY - prevMouseY;
+                const linearDist = Math.sqrt(dx * dx + dy * dy);
+
+                // Simulate MPU6050 physical gyro and accel response
+                angularVelocity = Math.min(28.0, angularVelocity + linearDist * 0.14);
+                accelLinear = Math.min(18.0, accelLinear + linearDist * 0.22);
+                accelX = dx * 0.25;
+                accelY = dy * 0.25;
+                gyroZ = angularVelocity;
+                gyroX = dy * 0.35;
+
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+            });
+
+            // Touch events for mobile
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 0) {
+                    isDragging = true;
+                    wakeUp();
+                    prevMouseX = e.touches[0].clientX;
+                    prevMouseY = e.touches[0].clientY;
+                }
+            }, { passive: true });
+            window.addEventListener('touchend', () => isDragging = false);
+            canvas.addEventListener('touchmove', (e) => {
+                if (!isDragging || e.touches.length === 0) return;
+                wakeUp();
+                const rect = canvas.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                targetAngle = Math.atan2(e.touches[0].clientY - cy, e.touches[0].clientX - cx);
+
+                const dx = e.touches[0].clientX - prevMouseX;
+                const dy = e.touches[0].clientY - prevMouseY;
+                const linearDist = Math.sqrt(dx * dx + dy * dy);
+
+                angularVelocity = Math.min(28.0, angularVelocity + linearDist * 0.14);
+                accelLinear = Math.min(18.0, accelLinear + linearDist * 0.22);
+                accelX = dx * 0.25;
+                accelY = dy * 0.25;
+                gyroZ = angularVelocity;
+
+                prevMouseX = e.touches[0].clientX;
+                prevMouseY = e.touches[0].clientY;
+            }, { passive: true });
+
+            function wakeUp() {
+                if (isAsleep) {
+                    isAsleep = false;
+                    telemetryPill.textContent = 'RUNNING (MPU6050 + 5V ERM)';
+                    telemetryPill.style.color = '#10b981';
+                }
+                lastMotionTime = performance.now();
+            }
+
+            // Action Buttons
+            document.getElementById('btnFlourish').addEventListener('click', () => {
+                wakeUp();
+                angularVelocity = 20.0;
+                accelLinear = 8.5;
+                gyroZ = 18.0;
+                gyroX = 12.0;
+                accelX = 6.0;
+                accelY = 7.5;
+            });
+
+            document.getElementById('btnStrike').addEventListener('click', () => {
+                wakeUp();
+                angularVelocity = 28.5;
+                accelLinear = 22.0;
+                gyroZ = 24.0;
+                accelX = 16.0;
+                accelY = 14.0;
+            });
+
+            document.getElementById('btnGentle').addEventListener('click', () => {
+                wakeUp();
+                angularVelocity = 4.5;
+                accelLinear = 2.0;
+                gyroZ = 4.0;
+                accelX = 2.0;
+                accelY = 1.5;
+            });
+
+            document.getElementById('btnSleep').addEventListener('click', () => {
+                if (!isAsleep) {
+                    isAsleep = true;
+                    angularVelocity = 0;
+                    accelLinear = 0;
+                    accelX = 0;
+                    accelY = 0;
+                    gyroX = 0;
+                    gyroZ = 0;
+                    energyLevel = 0;
+                    hapticDuty = 0;
+                    targetCharge = 0;
+                    telemetryPill.textContent = 'DEEP SLEEP (Low Power / Cutoff Active)';
+                    telemetryPill.style.color = '#ef4444';
+                } else {
+                    wakeUp();
+                }
+            });
+
+            function update() {
+                const now = performance.now();
+                const dt = Math.min(0.05, (now - prevTime) / 1000);
+                prevTime = now;
+
+                if (!isAsleep) {
+                    // Check inactivity timeout (10s)
+                    if (now - lastMotionTime > INACTIVITY_TIMEOUT && angularVelocity < 0.2 && energyLevel < 0.05) {
+                        isAsleep = true;
+                        telemetryPill.textContent = 'DEEP SLEEP (Inactivity Cutoff)';
+                        telemetryPill.style.color = '#ef4444';
+                    }
+
+                    // Physical motion decay
+                    angularVelocity *= 0.94;
+                    accelLinear *= 0.91;
+                    accelX *= 0.88;
+                    accelY *= 0.88;
+                    gyroZ = angularVelocity;
+                    gyroX *= 0.88;
+
+                    if (!isDragging) {
+                        targetAngle += angularVelocity * dt;
+                    }
+                    angle += (targetAngle - angle) * 0.35;
+
+                    //--- MotionAnalyzer.cpp Algorithm ---
+                    const gyroMag = Math.sqrt(gyroX * gyroX + gyroY * gyroY + gyroZ * gyroZ);
+                    const accelMag = Math.sqrt(accelX * accelX + accelY * accelY + accelZ * accelZ) - 9.81;
+                    const motionMag = gyroMag + Math.abs(accelMag);
+
+                    if (motionMag > 3.0) {
+                        lastMotionTime = now;
+                    }
+
+                    // Raw X/Y planar speed gates
+                    const rawSpeedX = Math.abs(gyroZ) * 0.65 + Math.abs(accelX) * 0.35;
+                    const rawSpeedY = Math.abs(gyroX) * 0.65 + Math.abs(accelY) * 0.35;
+
+                    smoothSpeedX += (rawSpeedX - smoothSpeedX) * 0.35;
+                    smoothSpeedY += (rawSpeedY - smoothSpeedY) * 0.35;
+
+                    speedX = Math.min(1.0, Math.max(0.0, smoothSpeedX / 8.0));
+                    speedY = Math.min(1.0, Math.max(0.0, smoothSpeedY / 8.0));
+
+                    const instantRms = Math.min(1.0, Math.max(0.0, motionMag / 20.0));
+                    rmsSmooth += (instantRms - rmsSmooth) * 0.25;
+
+                    //--- main.cpp updateEnergy ---
+                    const chargeRate = 0.85;
+                    const decayRate = 0.45;
+                    energyLevel += motionMag * chargeRate * dt;
+                    energyLevel -= decayRate * dt;
+                    energyLevel = Math.min(1.0, Math.max(0.0, energyLevel));
+
+                    //--- PatternEngine.cpp evaluateMotor ---
+                    // Deadband check:
+                    if (rmsSmooth < 0.015 && motionMag < 0.3 && energyLevel < 0.02) {
+                        hapticDuty = 0.0;
+                    } else {
+                        // 75% LED fill reaches 100% (1.0) PWM duty:
+                        const energyScaled = Math.min(1.0, Math.max(0.0, energyLevel / 0.75));
+                        let v = Math.max(Math.max(speedX, speedY) * 0.85, energyScaled);
+
+                        // Startup floor kick (0.15 floor for 5V ERM cell):
+                        if (v >= 0.05) {
+                            v = 0.15 + v * (1.0 - 0.15);
+                        } else {
+                            v = 0.0;
+                        }
+                        hapticDuty = Math.min(1.0, Math.max(0.0, v));
+                    }
+
+                    // ESP-NOW broadcast every 30ms (sendMotionEspNow)
+                    if (now - lastEspNowTime >= 30) {
+                        lastEspNowTime = now;
+                        targetCharge = energyLevel;
+                        packetCount++;
+                    }
+
+                    // Follower delta math easing:
+                    const diff = targetCharge - currentCharge;
+                    currentCharge += diff * easingFactor * dt;
+                    if (Math.abs(diff) < 0.001) {
+                        currentCharge = targetCharge;
+                    }
+                } else {
+                    // Deep sleep zero-power state
+                    energyLevel = 0;
+                    hapticDuty = 0;
+                    speedX = 0;
+                    speedY = 0;
+                    currentCharge += (0 - currentCharge) * 6.0 * dt;
+                }
+
+                // Update Telemetry Displays
+                gateXVal.textContent = Math.round(speedX * 100) + '%';
+                gateXBar.style.width = (speedX * 100) + '%';
+                gateYVal.textContent = Math.round(speedY * 100) + '%';
+                gateYBar.style.width = (speedY * 100) + '%';
+
+                energyVal.textContent = Math.round(energyLevel * 100) + '%';
+                energyBar.style.width = (energyLevel * 100) + '%';
+
+                const pwmPercent = Math.round(hapticDuty * 100);
+                hapticPwmVal.textContent = pwmPercent + '%';
+                hapticBar.style.width = pwmPercent + '%';
+
+                omegaVal.textContent = angularVelocity.toFixed(1) + ' rad/s';
+                const totalG = (1.0 + (accelLinear / 9.81)).toFixed(2);
+                accelVal.textContent = totalG + ' G';
+
+                // Hue and LED description
+                hue = (hue + 0.6) % 360;
+                if (isAsleep) {
+                    ledColorVal.textContent = 'Deep Sleep Rail Off (0mA)';
+                    ledColorVal.style.color = '#ef4444';
+                } else if (angularVelocity > 15) {
+                    ledColorVal.textContent = 'Cyan Velocity Surge (High &omega;)';
+                    ledColorVal.style.color = '#06b6d4';
+                } else if (angularVelocity > 5) {
+                    ledColorVal.textContent = 'Kinetic Gold Sweeps (Active)';
+                    ledColorVal.style.color = '#fbbf24';
+                } else {
+                    ledColorVal.textContent = 'Nocturnal Violet Idle';
+                    ledColorVal.style.color = '#c026d3';
+                }
+
+                // Update 74 Follower LED cells
+                const ledsLit = Math.min(FOLLOWER_LED_COUNT, Math.round(currentCharge * FOLLOWER_LED_COUNT + 0.5));
+                followerLedCount.textContent = `${ledsLit} / ${FOLLOWER_LED_COUNT}`;
+                for (let i = 0; i < FOLLOWER_LED_COUNT; i++) {
+                    const cell = followerCells[i];
+                    if (!isAsleep && i < ledsLit) {
+                        const cellHue = (hue + i * 2) % 360;
+                        cell.style.background = `hsl(${cellHue}, 100%, 55%)`;
+                        cell.style.boxShadow = `0 0 4px hsl(${cellHue}, 100%, 50%)`;
+                    } else {
+                        cell.style.background = '#111827';
+                        cell.style.boxShadow = 'none';
+                    }
+                }
+
+                // Render Canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const batonLen = Math.min(canvas.width, canvas.height) * 0.68;
+                const halfLen = batonLen / 2;
+
+                const x1 = cx - Math.cos(angle) * halfLen;
+                const y1 = cy - Math.sin(angle) * halfLen;
+                const x2 = cx + Math.cos(angle) * halfLen;
+                const y2 = cy + Math.sin(angle) * halfLen;
+
+                // Motion Trail
+                if (angularVelocity > 2 && !isAsleep) {
+                    trail.push({ x: x1, y: y1, life: 1.0, hue: hue });
+                    trail.push({ x: x2, y: y2, life: 1.0, hue: hue });
+                }
+
+                for (let i = trail.length - 1; i >= 0; i--) {
+                    const pt = trail[i];
+                    pt.life -= 0.04;
+                    if (pt.life <= 0) {
+                        trail.splice(i, 1);
+                        continue;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, 6 * pt.life, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${pt.hue}, 95%, 60%, ${pt.life * 0.4})`;
+                    ctx.fill();
+                }
+
+                // Central Core Structural Shaft (Bamboo / Steel / Carbon)
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.lineWidth = 14;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#0f172a';
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = '#64748b';
+                ctx.stroke();
+
+                // WS2812B Glowing LED Blade Strip (proportional to energyLevel)
+                if (!isAsleep) {
+                    const activeLength = halfLen * Math.max(0.1, energyLevel);
+                    const lx1 = cx - Math.cos(angle) * activeLength;
+                    const ly1 = cy - Math.sin(angle) * activeLength;
+                    const lx2 = cx + Math.cos(angle) * activeLength;
+                    const ly2 = cy + Math.sin(angle) * activeLength;
+
+                    ctx.beginPath();
+                    ctx.moveTo(lx1, ly1);
+                    ctx.lineTo(lx2, ly2);
+                    ctx.lineWidth = 10;
+                    ctx.strokeStyle = `hsla(${hue}, 100%, 65%, 0.95)`;
+                    ctx.shadowColor = `hsl(${hue}, 100%, 55%)`;
+                    ctx.shadowBlur = 15 + angularVelocity * 1.5;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+
+                // Central Handle Enclosure (holds 38x38 PCB & 5V ERM Cell)
+                ctx.beginPath();
+                ctx.arc(cx, cy, 15, 0, Math.PI * 2);
+                ctx.fillStyle = isAsleep ? '#1e293b' : '#0f172a';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = hapticDuty > 0.1 ? '#10b981' : '#475569';
+                ctx.stroke();
+
+                // 5V Vibration Cell Pulse Rings
+                if (hapticDuty > 0.05 && !isAsleep) {
+                    const pulseR = 18 + (Math.sin(now * 0.04) * 6 * hapticDuty);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, pulseR, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(16, 185, 129, ${hapticDuty * 0.8})`;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    // Secondary haptic ring for dual haptic channels
+                    const pulseR2 = 24 + (Math.cos(now * 0.04) * 5 * hapticDuty);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, pulseR2, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(245, 158, 11, ${hapticDuty * 0.5})`;
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+
+                requestAnimationFrame(update);
+            }
+            update();
+        })();
+    </script>
+</body>
+</html>

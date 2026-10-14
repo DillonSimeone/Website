@@ -743,6 +743,14 @@
 
 <body>
     <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 30px;">
+            <a href="/" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                &larr; Back to Portfolio
+            </a>
+            <a href="/#shop" style="text-decoration: none; padding: 8px 18px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #93c5fd; border-radius: 8px; font-weight: 700; font-size: 0.85rem; transition: all 0.2s;">
+                Commission a PULSE System in Store &rarr;
+            </a>
+        </div>
         <header>
             <h1><span>P</span><span>U</span><span>L</span><span>S</span><span>E</span></h1>
             <div
@@ -963,6 +971,37 @@
             </div>
         </section>
 
+        <!-- Physical Hardware & Protective Architecture Showcase -->
+        <section class="saucer-section" style="flex-direction: column; align-items: stretch; margin-top: 60px;">
+            <div style="text-align: center; max-width: 750px; margin: 0 auto 32px auto;">
+                <div class="saucer-badge" style="background: #a855f7;">Physical Hardware &amp; Protection</div>
+                <h2 style="font-size: 2.2rem; letter-spacing: -1px; margin-top: 0; color: #f472b6;">Rugged Enclosure &amp; Internal Electronics</h2>
+                <p style="color: #cbd5e1; line-height: 1.6;">
+                    Capturing haptics in action through still photography is notoriously difficult since tactile sensations are felt rather than seen. Here is the actual production hardware: the heavy-duty protective outer saucer puck and the inner modular drive sled. The casing is specifically engineered to shield the sensitive motor, ESP32, and LiPo battery from severe mechanical impacts and moisture during energetic live stage performances.
+                </p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px;">
+                <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; display: flex; flex-direction: column;">
+                    <img src="/Images/Shop/pulse-saucer-casing.png" alt="PULSE Haptic Saucer Protective Enclosure" style="width: 100%; height: 340px; object-fit: cover; display: block; border-bottom: 1px solid var(--border);">
+                    <div style="padding: 24px;">
+                        <h3 style="font-size: 1.2rem; margin: 0 0 8px 0; color: #f472b6;">Impact &amp; Water-Resistant Outer Casing</h3>
+                        <p style="font-size: 0.9rem; color: #94a3b8; line-height: 1.6; margin: 0;">
+                            Precision 3D printed puck with perimeter fastener points. Built with thick-walled impact polymer to withstand high-acceleration drops, table rattles, and sweat/spills while delivering maximum acoustic kinetic energy to the user.
+                        </p>
+                    </div>
+                </div>
+                <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; display: flex; flex-direction: column;">
+                    <img src="/Images/Shop/pulse-internals.jpg" alt="PULSE Internal Sled &amp; Drive Electronics" style="width: 100%; height: 340px; object-fit: cover; display: block; border-bottom: 1px solid var(--border);">
+                    <div style="padding: 24px;">
+                        <h3 style="font-size: 1.2rem; margin: 0 0 8px 0; color: #38bdf8;">Modular Internal Sled &amp; Drive Core</h3>
+                        <p style="font-size: 0.9rem; color: #94a3b8; line-height: 1.6; margin: 0;">
+                            The internal sled slides cleanly into the outer shell, securing the high-torque eccentric rotating mass (ERM) vibration motor, rechargeable LiPo pouch cell, USB-C charge &amp; protection circuit, motor driver, and the wireless ESP32 receiver node.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="philosophy-section writeup">
             <h2>Engineering Philosophy: The Parametric Shift</h2>
             <p>
@@ -1034,12 +1073,26 @@
             </a>
         </section>
 
-        <section class="media-section">
-            <div class="video-wrapper" style="max-width: 450px; margin: 0 auto; aspect-ratio: 9/16;">
-                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/Zp6q29pBqWo" title="PULSE Demo"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <section class="media-section" style="display: flex; flex-direction: column; align-items: center; gap: 40px;">
+            <div style="text-align: center; max-width: 650px;">
+                <h2 style="font-size: 2.5rem; letter-spacing: -2px; margin-bottom: 12px;">Haptics in Action</h2>
+                <p style="color: #cbd5e1; line-height: 1.6;">
+                    Live audio-to-haptic synchronization test: performing music via a Moog Theremini, where real-time frequency analysis on the Leader node triggers immediate tactile vibration on the table-mounted PULSE follower saucer.
+                </p>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; width: 100%;">
+                <div class="video-wrapper" style="width: 100%; max-width: 360px; aspect-ratio: 9/16; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 8px 30px rgba(0,0,0,0.4);">
+                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/sianFh91GGc" title="PULSE Theremini Haptics in Action"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
+                </div>
+                <div class="video-wrapper" style="width: 100%; max-width: 360px; aspect-ratio: 9/16; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 8px 30px rgba(0,0,0,0.4);">
+                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/Zp6q29pBqWo" title="PULSE Hardware Assembly Demo"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
+                </div>
             </div>
 
             <div class="todo-list">

@@ -1,31 +1,63 @@
 <div class="grid-item">
     <h2>PULSE: Haptic Ecosystem</h2>
-    <h3>Price: $30.00 (Leader) / $60.00 (Follower)</h3>
+    <h3>Starting at $65.00 / $140.00 Starter Pair</h3>
     <p>
         The PULSE ecosystem is a professional-grade hardware and software framework for high-fidelity tactile feedback.
-        This system uses an ESP32-based "Leader" unit to broadcast commands to multiple "Follower" haptic saucers via
-        ESP-NOW, creating a synchronized, low-latency haptic environment.
+        This system uses an ESP32-based "Leader" unit to capture real-time audio via an I2S digital microphone, perform on-chip FFT frequency analysis, and broadcast synchronized commands to multiple "Follower" haptic saucers via ESP-NOW with sub-10ms latency.
     </p>
     <p>
-        The Follower units feature a high-durability mechanical design and a refined haptic response, perfect for music
-        visualization, gaming, or accessibility research.
+        The Follower units feature a rugged, parametric "sled-in-shell" mechanical design and a refined tactile response, ideal for live music performance, gaming immersion, sensory rooms, or accessibility research.
     </p>
+    <p>
+        <b>Pure Kinetic Force (Safe for Pacemakers &amp; Cochlear Implants):</b> Commercial haptic vests are heavy, hot, and rely on massive voice-coil magnets that emit intense electromagnetic fields; making them unsafe for people with cardiac pacemakers, ICDs, or sensitive cochlear implants. PULSE was born out of frustration with those vests. It delivers pure, direct kinetic force without heavy voice-coil magnets, generating zero dangerous magnetic radiation. Lightweight and modular, you can slip a puck into a pocket, tuck it against clothing, or set it directly on an instrument or tabletop.
+    </p>
+
     <div class="medias">
-        <div class="images">
+        <div class="images shop-multi-img">
             <div
-                style="width: 100%; aspect-ratio: 16/9; background: var(--bg-glass); display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px dashed var(--border-color);">
-                <img src="./Images/Shop/pulse.webp" alt="Pulse" width="400" height="300">
+                style="flex: 1; min-width: 240px; aspect-ratio: 16/9; background: var(--bg-glass); display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden;">
+                <img src="./Images/Shop/pulse-saucer-casing.png" alt="PULSE Haptic Saucer Protective Casing" width="400" height="300" style="max-width: 100%; height: 100%; object-fit: cover; display: block;">
+            </div>
+            <div
+                style="flex: 1; min-width: 240px; max-width: 280px; aspect-ratio: 9/16; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.25);">
+                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/sianFh91GGc"
+                    title="PULSE Theremini Haptics in Action" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
             </div>
         </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); font-style: italic; margin-top: 8px; text-align: center; line-height: 1.4;">
+            Note: It's hard to take a good picture of haptics in action! The rugged circular saucer casing protects the internal motor and electronics from physical impacts and water during high-energy live performance.
+        </p>
     </div>
-    <div class="shop-actions" style="margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
-        <a href="https://buy.stripe.com/test_8x2bIT34q6tjeKBdJU0Jq00" class="buy-button" target="_blank"
-            style="display: inline-block; padding: 12px 20px; background: #3b82f6; color: #fff; text-decoration: none; font-family: 'Orbitron', sans-serif; font-weight: bold; border-radius: 4px; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); transition: all 0.3s;">
-            BUY LEADER ($30)
+
+    <div style="margin: 16px 0; text-align: center;">
+        <a href="./ParametricModeling/04-Pulse/index.html" target="_blank" rel="noopener noreferrer" class="project-deep-dive-btn">
+            Explore Interactive 3D Parametric CAD & Firmware Specs &rarr;
         </a>
-        <a href="https://buy.stripe.com/test_8x2bIT34q6tjeKBdJU0Jq00" class="buy-button" target="_blank"
-            style="display: inline-block; padding: 12px 20px; background: #a855f7; color: #fff; text-decoration: none; font-family: 'Orbitron', sans-serif; font-weight: bold; border-radius: 4px; box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); transition: all 0.3s;">
-            BUY FOLLOWER ($60)
+    </div>
+
+    <div class="pricing-options-summary">
+        <ul>
+            <li><b>Turnkey Starter Pair:</b> $140.00 (1 Audio FFT Leader Hub + 1 Haptic Saucer Follower, calibrated &amp; pre-paired)</li>
+            <li><b>Leader Hub Only:</b> $75.00 (ESP32-C3, INMP441 I2S mic, real-time 16kHz FFT DSP engine, web tuning portal)</li>
+            <li><b>Follower Saucer Only:</b> $65.00 (Parametric sled-in-shell housing, DRV driver, high-torque tactile transducer)</li>
+            <li><b>Battery &amp; USB-C:</b> USB-C charging cable always included. Standard rechargeable LiPo yields 4 to 6+ hours of continuous vibration; the battery can be scaled even larger upon request as there is plenty of reserve room inside the pucks!</li>
+            <li><b>Multi-Node Bundles:</b> Custom configurations for multi-user music, stage performance, or lab research</li>
+            <li><b>Invoicing &amp; Shipping:</b> Invoiced through Square (Credit Card, Apple Pay, Google Pay). Built to order in Philomath, Oregon and shipped via PirateShip with tracking (typical turnaround 1 to 2 weeks).</li>
+        </ul>
+    </div>
+
+    <div class="shop-actions">
+        <a href="mailto:dillonsimeone@gmail.com?subject=Commission%20Request%3A%20PULSE%20Haptic%20Ecosystem&body=Hi%20Dillon%2C%0A%0AI%27d%20like%20to%20commission%20a%20custom%20build%20of%20the%20PULSE%20Haptic%20Ecosystem.%0A%0ACommission%20Details%3A%0A%E2%80%A2%20Desired%20Configuration%3A%20%5B%20%5D%20Turnkey%20Starter%20Pair%20%28%24140%29%20%20%5B%20%5D%20Audio%20Leader%20Hub%20%28%2475%29%20%20%5B%20%5D%20Follower%20Saucer%20%28%2465%29%20%20%5B%20%5D%20Multi-Saucer%20Bundle%0A%E2%80%A2%20Quantity%20%2F%20Number%20of%20Saucers%3A%20%0A%E2%80%A2%20Intended%20Setup%20%2F%20Sensory%20Application%3A%20%0A%E2%80%A2%20Shipping%20Address%3A%20%0A%E2%80%A2%20Notes%20%2F%20Custom%20Firmware%20Needs%3A%20%0A%0ALooking%20forward%20to%20your%20Square%20invoice%20and%20follow-up%20questions%21%0A%0ABest%20regards%2C%0A%5BYour%20Name%5D"
+            class="commission-button pulse-btn">
+            Commission this project!
         </a>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; text-align: center;">
+            Or email directly: <a href="mailto:dillonsimeone@gmail.com" style="color: var(--accent-magenta, #d946ef); text-decoration: underline;">dillonsimeone@gmail.com</a>
+        </p>
+        <p style="font-size: 0.75rem; color: #94a3b8; text-align: center; margin-top: 4px;">
+            Secure Square Invoicing • Shipped via PirateShip with tracking • USB-C cable included
+        </p>
     </div>
 </div>

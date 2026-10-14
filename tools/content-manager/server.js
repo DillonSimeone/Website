@@ -45,8 +45,8 @@ function getTemplateContent(type, title) {
             <img loading="lazy" data-src="./path/to/product-image.webp" alt="${title}">
         </div>
     </div>
-    <div class="shop-actions" style="margin-top: 20px; text-align: center;">
-        <a href="https://buy.stripe.com/..." class="buy-button" target="_blank" style="display: inline-block; padding: 12px 30px; background: var(--neon-cyan); color: #000; text-decoration: none; font-family: 'Orbitron', sans-serif; font-weight: bold; border-radius: 4px; box-shadow: 0 0 15px var(--neon-cyan); transition: all 0.3s;">BUY NOW</a>
+    <div class="shop-actions">
+        <a href="mailto:dillonsimeone@gmail.com?subject=Commission%20Request%3A%20${encodeURIComponent(title)}&body=Hi%20Dillon%2C%0A%0AI%27d%20like%20to%20commission%20a%20custom%20build%20of%20this%20project%21%0A%0A" class="commission-button">Commission this project!</a>
     </div>
 </div>\n`;
     } else {
