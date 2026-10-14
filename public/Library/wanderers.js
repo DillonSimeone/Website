@@ -32,7 +32,7 @@ function flightQuat(dir, out, bank = 0) {
     return out.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, f, z));
 }
 
-export function createWanderers(scene, well, material, { enabled = true } = {}) {
+export function createWanderers(scene, well, material, { enabled = true, onPerch = () => {} } = {}) {
     const box = new THREE.BoxGeometry(1, 1, 1);
     const mesh = new THREE.InstancedMesh(box, material, MAX * 2);
     mesh.frustumCulled = false;
@@ -191,6 +191,17 @@ export function createWanderers(scene, well, material, { enabled = true } = {}) 
         takeOff(bird);
     }
 
+    const frustum = new THREE.Frustum();
+    const projScreen = new THREE.Matrix4();
+    let cachedCamera = null;
+
+    function isInSightline(bird, camera) {
+        if (!camera || !camera.isCamera) return false;
+        projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+        frustum.setFromProjectionMatrix(projScreen);
+        return frustum.containsPoint(bird.origin) && bird.origin.distanceTo(camera.position) < 85.0;
+    }
+
     function despawn(bird, releaseSlots = true) {
         if (releaseSlots) {
             if (bird.seat) freeSlot(bird.seat);
@@ -207,8 +218,23 @@ export function createWanderers(scene, well, material, { enabled = true } = {}) 
         for (let i = freeSlots.length - 1; i >= 0; i--) {
             if (freeSlots[i].k === k) freeSlots.splice(i, 1);
         }
-        birds.filter(b => b.originK === k || (b.seat && b.seat.k === k) || (b.target && b.target.k === k))
-            .forEach(b => despawn(b));
+        birds.slice().forEach((b) => {
+            if (b.originK === k || (b.seat && b.seat.k === k) || (b.target && b.target.k === k)) {
+                if (b.target && b.target.k === k) {
+                    b.target = null;
+                    b.perch = perchSpot(b);
+                }
+                if (b.seat && b.seat.k === k) {
+                    b.seat = null;
+                }
+                // Never despawn if the user can see the book!
+                if (!cachedCamera || !isInSightline(b, cachedCamera)) {
+                    despawn(b);
+                } else if (b.state === 'rest') {
+                    takeOff(b);
+                }
+            }
+        });
     });
 
     function step(bird, dt) {
@@ -252,6 +278,7 @@ export function createWanderers(scene, well, material, { enabled = true } = {}) 
                         bird.target = null;
                         setState(bird, 'tuck', 1.1);
                     } else {
+                        onPerch();
                         setState(bird, 'alight', 0.45);
                     }
                 }
@@ -327,9 +354,11 @@ export function createWanderers(scene, well, material, { enabled = true } = {}) 
     }
 
     return {
-        update(dt, cameraY) {
+        update(dt, camera) {
             if (!enabled) return;
             time += dt;
+            cachedCamera = camera && camera.isCamera ? camera : null;
+            const cameraY = cachedCamera ? cachedCamera.position.y : (typeof camera === 'number' ? camera : camY);
             camY = cameraY;
             spawnIn -= dt;
             if (spawnIn <= 0) {
@@ -337,7 +366,12 @@ export function createWanderers(scene, well, material, { enabled = true } = {}) 
                 if (birds.length < MAX) spawn();
             }
             for (const bird of birds.slice()) {
-                if (Math.abs(bird.origin.y - camY) > 3.5 * H) { despawn(bird); continue; }
+                const inSight = cachedCamera ? isInSightline(bird, cachedCamera) : false;
+                // Never despawn a book that is in sightline
+                if (!inSight && Math.abs(bird.origin.y - camY) > 8.0 * H) {
+                    despawn(bird);
+                    continue;
+                }
                 step(bird, dt);
             }
             birds.forEach(write);

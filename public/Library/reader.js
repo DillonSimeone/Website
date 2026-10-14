@@ -278,10 +278,71 @@ export function createReader({ root, scene, camera, cards, material, onStateChan
         });
     }
 
+    function openSecret(secret) {
+        if (state.busy || state.open) return;
+        state.busy = true;
+        state.index = -99;
+        onStateChange(true);
+
+        const secretEl = document.createElement('div');
+        secretEl.className = 'lib-secret-content';
+        secretEl.innerHTML = `
+            <div class="lib-secret-badge">${secret.badge}</div>
+            <h2>${secret.title}</h2>
+            <h3 class="lib-secret-sub">${secret.subtitle}</h3>
+            <div class="lib-secret-body">${secret.body}</div>
+        `;
+
+        body.innerHTML = '';
+        body.appendChild(secretEl);
+        state.element = secretEl;
+        state.placeholder = null;
+
+        sectionLabel.textContent = 'Secret Apocrypha';
+        card.setAttribute('aria-label', secret.title);
+        card.scrollTop = 0;
+
+        overlay.hidden = false;
+        overlay.classList.remove('is-open');
+        card.style.transition = 'none';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.8) translateY(24px)';
+        void card.offsetWidth;
+        card.style.transition = `transform ${CARD_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${CARD_MS * 0.6}ms ease`;
+        card.style.transform = '';
+        card.style.opacity = '1';
+        overlay.classList.add('is-open');
+
+        setTimeout(() => {
+            state.busy = false;
+            state.open = true;
+            card.querySelector('.lib-reader-close').focus({ preventScroll: true });
+        }, CARD_MS);
+    }
+
     function close() {
         if (state.busy || !state.open) return;
         state.busy = true;
         const i = state.index;
+
+        if (i === -99) {
+            card.style.transition = `transform ${CARD_MS * 0.6}ms ease, opacity ${CARD_MS * 0.6}ms ease`;
+            card.style.transform = 'scale(0.85) translateY(20px)';
+            card.style.opacity = '0';
+            overlay.classList.remove('is-open');
+            setTimeout(() => {
+                overlay.hidden = true;
+                card.style.transform = '';
+                body.innerHTML = '';
+                state.element = null;
+                state.index = -1;
+                state.busy = false;
+                state.open = false;
+                onStateChange(false);
+            }, CARD_MS * 0.6);
+            return;
+        }
+
         fly.visible = true;
         const front = frontPose();
         setPose(front);
@@ -312,6 +373,7 @@ export function createReader({ root, scene, camera, cards, material, onStateChan
 
     return {
         open,
+        openSecret,
         close,
         returnFromPortal,
         get inPortal() { return state.portal; },

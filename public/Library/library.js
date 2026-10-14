@@ -6,6 +6,8 @@ import { SECTIONS, layoutCards, createCardBooks } from './books.js';
 import { createPages } from './pages.js';
 import { createAscii } from './ascii.js';
 import { createReader } from './reader.js';
+import { createCelestialTome } from './secrets.js';
+import { LibraryAudio } from './audio.js';
 
 const STYLE_HREF = new URL('./library.css', import.meta.url).href;
 const LAND = { floor: 1, pitch: 0.22 };
@@ -69,18 +71,29 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
     const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.05, 220);
     camera.rotation.order = 'YXZ';
 
+    const audio = new LibraryAudio();
     const U = createSharedUniforms();
     const material = createWorldMaterial(U);
     const { books, occupancy } = layoutCards();
     const well = createWell(scene, U, occupancy, material);
+    let currentFloorsAbove = 20;
+    let currentFloorsBelow = 16;
+    well.setFloorRange(currentFloorsBelow, currentFloorsAbove);
+    U.uPagesRange.value.set((currentFloorsBelow + 1.5) * H, (currentFloorsAbove + 1.5) * H);
+
     const cards = createCardBooks(scene, books, material);
     const beams = createBeams(scene, U);
     const sky = createSky(scene, U);
-    const pages = createPages(scene, U, 360);
+    const pages = createPages(scene, U, 450);
     const dust = createDust(scene, U);
-    const wanderers = createWanderers(scene, well, material, { enabled: !reducedMotion });
+    const wanderers = createWanderers(scene, well, material, {
+        enabled: !reducedMotion,
+        onPerch: () => audio.playBookPerch(1.0),
+    });
+    const secrets = createCelestialTome(scene, U);
     const ascii = createAscii(renderer);
-    let asciiOn = true;
+    let asciiOn = false; // Default: non-ASCII shaded mode
+    U.uAsciiMode.value = 0.0;
     let dayGoal = document.body.classList.contains('dark-mode') ? 0 : 1;
     U.uDay.value = dayGoal;
 
@@ -96,12 +109,22 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
             </button></li>`).join('')}
         </ol>
         <button type="button" class="lib-daynight"></button>
+        <button type="button" class="lib-audio-toggle"></button>
         <button type="button" class="lib-leave">Leave the library</button>
-        <p class="lib-hint">Drag to look · Scroll to climb · Click a shelf to fly there, a book to read · N day or night · A switches the look · Esc leaves</p>`;
+        <p class="lib-hint">W/S climb · A/D turn · Scroll/Drag · Q ascii · E day/night · M sound · Esc leaves</p>`;
     root.appendChild(index);
     const dayButton = index.querySelector('.lib-daynight');
-    const syncDayButton = () => { dayButton.textContent = dayGoal ? 'Night falls (N)' : 'Sunrise (N)'; };
+    const syncDayButton = () => { dayButton.textContent = dayGoal ? 'Night falls (E)' : 'Sunrise (E)'; };
     syncDayButton();
+
+    const audioButton = index.querySelector('.lib-audio-toggle');
+    const syncAudioButton = () => { audioButton.textContent = audio.isMuted ? 'Sound: Off (M)' : 'Sound: On (M)'; };
+    syncAudioButton();
+
+    const toggleAudio = () => {
+        audio.toggleMute();
+        syncAudioButton();
+    };
 
     const label = document.createElement('div');
     label.className = 'lib-label';
@@ -273,12 +296,14 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
 
     function pickAt(ndc) {
         raycaster.setFromCamera(ndc, camera);
+        if (secrets.checkHit(raycaster)) return { book: -1, section: -1, secret: true };
         const book = cards.pick(raycaster, READ_DISTANCE);
-        if (book >= 0) return { book, section: -1 };
-        return { book: -1, section: pickSection(raycaster.ray) };
+        if (book >= 0) return { book, section: -1, secret: false };
+        return { book: -1, section: pickSection(raycaster.ray), secret: false };
     }
 
     function onPointerDown(e) {
+        audio.unlock();
         if (e.button !== 0 || reader.active) return;
         pointer.down = true;
         pointer.moved = false;
@@ -314,18 +339,30 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
         if (pointer.moved || flight || reader.active || e.type === 'pointercancel') return;
         mouse.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
         const target = pickAt(mouse);
-        if (target.book >= 0) reader.open(target.book);
-        else if (target.section >= 0) flyToSection(target.section);
+        if (target.secret) {
+            audio.unlock();
+            reader.openSecret(secrets.getSecret());
+            secrets.dismiss();
+        } else if (target.book >= 0) {
+            reader.open(target.book);
+        } else if (target.section >= 0) {
+            flyToSection(target.section);
+        }
     }
 
     function onWheel(e) {
         e.preventDefault();
+        audio.unlock();
         if (flight || reader.active) return;
         const delta = Math.max(-120, Math.min(120, e.deltaY));
         goal.y -= delta * 0.012;
+        if (Math.random() < 0.2) audio.playPageFlutter(0.5);
     }
 
+    const keysHeld = new Set();
+
     function onKey(e) {
+        audio.unlock();
         if (labyrinth.open) return;
         if (e.key === 'Escape') {
             if (document.querySelector('.gallery-modal.active')) return;
@@ -336,15 +373,35 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
         }
         if (reader.active || e.ctrlKey || e.metaKey || e.altKey) return;
         const key = e.key.toLowerCase();
-        if (key === 'a') asciiOn = !asciiOn;
-        else if (key === 'n') toggleDay();
-        else if (/^[1-5]$/.test(key)) flyToSection(Number(key) - 1);
-        else if (!flight && (key === 'arrowup' || key === 'pageup')) goal.y += H;
-        else if (!flight && (key === 'arrowdown' || key === 'pagedown')) goal.y -= H;
-        else if (!flight && key === 'arrowleft') goal.yaw += Math.PI / 3;
-        else if (!flight && key === 'arrowright') goal.yaw -= Math.PI / 3;
-        else return;
-        e.preventDefault();
+        if (key === 'q') {
+            asciiOn = !asciiOn;
+            U.uAsciiMode.value = asciiOn ? 1.0 : 0.0;
+            e.preventDefault();
+            return;
+        }
+        if (key === 'e' || key === 'n') {
+            toggleDay();
+            e.preventDefault();
+            return;
+        }
+        if (key === 'm') {
+            toggleAudio();
+            e.preventDefault();
+            return;
+        }
+        if (/^[1-5]$/.test(key)) {
+            flyToSection(Number(key) - 1);
+            e.preventDefault();
+            return;
+        }
+        if (['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'pageup', 'pagedown'].includes(key)) {
+            keysHeld.add(key);
+            e.preventDefault();
+        }
+    }
+
+    function onKeyUp(e) {
+        keysHeld.delete(e.key.toLowerCase());
     }
 
     function toggleDay() {
@@ -353,13 +410,16 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
     }
 
     function onIndexClick(e) {
+        audio.unlock();
         const btn = e.target.closest('[data-section]');
         if (btn) { flyToSection(Number(btn.dataset.section)); return; }
         if (e.target.closest('.lib-daynight')) { toggleDay(); return; }
+        if (e.target.closest('.lib-audio-toggle')) { toggleAudio(); return; }
         if (e.target.closest('.lib-leave')) onRequestExit();
     }
 
     function onPlaqueClick(e) {
+        audio.unlock();
         const btn = e.target.closest('[data-section]');
         if (btn) flyToSection(Number(btn.dataset.section));
     }
@@ -387,6 +447,7 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
     canvas.addEventListener('pointerleave', onPointerLeave);
     canvas.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKeyUp);
     window.addEventListener('resize', onResize);
     index.addEventListener('click', onIndexClick);
     plaqueLayer.addEventListener('click', onPlaqueClick);
@@ -398,6 +459,7 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
     let revealTime = 0;
     let frameId = 0;
     let slowFor = 0;
+    let headroomFor = 0;
     let frameAvg = 1 / 60;
     let prevYaw = view.yaw;
     const projected = new THREE.Vector3();
@@ -437,6 +499,18 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
         }
         if (pointer.down) return;
         const target = pickAt(mouse);
+
+        if (target.secret) {
+            hovered = -1;
+            hoveredSection = -1;
+            cards.setHover(-1);
+            label.innerHTML = '<small>Astral Tome · Secret</small>Click to unfold';
+            label.hidden = false;
+            canvas.classList.add('lib-over-book');
+            label.style.transform = `translate(${pointer.x + 16}px, ${pointer.y + 16}px)`;
+            return;
+        }
+
         if (target.book !== hovered || target.section !== hoveredSection) {
             hovered = target.book;
             hoveredSection = target.section;
@@ -471,12 +545,36 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
         }
     }
 
+    /* Dynamically adjust spawned floor sections based on real-time FPS */
     function adaptQuality(dt) {
         frameAvg += (dt - frameAvg) * 0.05;
         if (time < 2) return;
-        slowFor = frameAvg > 0.02 ? slowFor + dt : 0;
-        if (slowFor > 1.5 && pages.count > 90) {
-            pages.setCount(pages.count / 2);
+
+        if (frameAvg <= 0.0175) {
+            headroomFor += dt;
+            slowFor = 0;
+            if (headroomFor > 0.8) {
+                headroomFor = 0;
+                let bumped = false;
+                if (currentFloorsAbove < 24) { currentFloorsAbove++; bumped = true; }
+                if (currentFloorsBelow < 18) { currentFloorsBelow++; bumped = true; }
+                if (bumped) well.setFloorRange(currentFloorsBelow, currentFloorsAbove);
+            }
+        } else if (frameAvg >= 0.022) {
+            slowFor += dt;
+            headroomFor = 0;
+            if (slowFor > 0.4) {
+                slowFor = 0;
+                if (currentFloorsAbove > 8 || currentFloorsBelow > 6) {
+                    currentFloorsAbove = Math.max(8, currentFloorsAbove - 2);
+                    currentFloorsBelow = Math.max(6, currentFloorsBelow - 2);
+                    well.setFloorRange(currentFloorsBelow, currentFloorsAbove);
+                } else if (pages.count > 90) {
+                    pages.setCount(pages.count / 2);
+                }
+            }
+        } else {
+            headroomFor = 0;
             slowFor = 0;
         }
     }
@@ -491,6 +589,26 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
         if (flight) {
             updateFlight(dt);
         } else if (!reader.active) {
+            // Continuous smooth flight & turntable orbit from keys held
+            let movedY = false;
+            if (keysHeld.has('w') || keysHeld.has('arrowup') || keysHeld.has('pageup')) {
+                goal.y += 15.0 * dt;
+                movedY = true;
+            }
+            if (keysHeld.has('s') || keysHeld.has('arrowdown') || keysHeld.has('pagedown')) {
+                goal.y -= 15.0 * dt;
+                movedY = true;
+            }
+            if (movedY && Math.random() < 0.12) {
+                audio.playPageFlutter(0.45);
+            }
+            if (keysHeld.has('a') || keysHeld.has('arrowleft')) {
+                goal.yaw += 1.8 * dt;
+            }
+            if (keysHeld.has('d') || keysHeld.has('arrowright')) {
+                goal.yaw -= 1.8 * dt;
+            }
+
             const k = Math.min(1, dt * 8);
             view.yaw += wrapAngle(goal.yaw - view.yaw) * k;
             view.pitch += (goal.pitch - view.pitch) * k;
@@ -521,14 +639,20 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
         const dayStep = reducedMotion ? 1 : dt * 0.6;
         U.uDay.value += Math.max(-dayStep, Math.min(dayStep, dayGoal - U.uDay.value));
 
+        const spanAbove = (currentFloorsAbove + 1.5) * H;
+        const spanBelow = (currentFloorsBelow + 1.5) * H;
+        U.uPagesRange.value.set(spanBelow, spanAbove);
+
         well.update(camera.position.y);
-        wanderers.update(dt, camera.position.y);
+        wanderers.update(dt, camera);
         dust.setPointSize(asciiOn ? 0.7 : 2.5);
         beams.update(time, camera.position.y);
-        pages.update(time, camera.position.y);
+        pages.update(dt, camera.position.y);
+        secrets.update(dt, time, camera.position.y, spanAbove, spanBelow);
         sky.update(camera.position);
         reader.update(dt);
         cards.pulse(time);
+        audio.update(camera.position.y, dt);
         updateHover();
         updatePlaques();
         adaptQuality(dt);
@@ -562,6 +686,7 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
             canvas.removeEventListener('pointerleave', onPointerLeave);
             canvas.removeEventListener('wheel', onWheel);
             window.removeEventListener('keydown', onKey);
+            window.removeEventListener('keyup', onKeyUp);
             window.removeEventListener('resize', onResize);
             index.removeEventListener('click', onIndexClick);
             plaqueLayer.removeEventListener('click', onPlaqueClick);
@@ -572,11 +697,13 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
                     well.dispose();
                     cards.dispose();
                     beams.dispose();
+                    secrets.dispose();
                     sky.dispose();
                     pages.dispose();
                     dust.dispose();
                     wanderers.dispose();
                     ascii.dispose();
+                    audio.dispose();
                     material.dispose();
                     renderer.dispose();
                     renderer.forceContextLoss();

@@ -330,9 +330,53 @@
     aspect-ratio: 16 / 9;
 }
 
+.lib-index .lib-audio-toggle {
+    margin-top: 6px;
+    justify-content: center;
+    border: 1px solid rgba(232, 210, 160, 0.3);
+    font-size: 0.88rem;
+}
+
+/* ---------- Secret Apocrypha Scrolls ---------- */
+.lib-secret-content {
+    padding: 10px 4px;
+}
+
+.lib-secret-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(85, 120, 60, 0.15);
+    border: 1px solid rgba(85, 120, 60, 0.45);
+    border-radius: 4px;
+    color: #4a6828;
+    font-size: 0.82rem;
+    font-family: Georgia, serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.lib-secret-sub {
+    font-style: italic;
+    font-weight: normal;
+    font-size: 1.05rem !important;
+    color: #63523f !important;
+    margin: -4px 0 16px !important;
+}
+
+.lib-secret-body p {
+    margin-bottom: 14px;
+}
+
+.lib-secret-body ul {
+    margin: 10px 0 16px 20px;
+    padding: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .lib-root,
     .lib-reader-backdrop {
         transition-duration: 0.01s;
     }
 }
+
