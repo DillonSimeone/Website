@@ -1,4 +1,5 @@
 // Lab 2 - Parallel Arrays & Dynamic Gallery
+// Developed by Dillon Simeone for CIS 133W
 
 // 1 Parallel Array: Item Titles
 const itemNames = [

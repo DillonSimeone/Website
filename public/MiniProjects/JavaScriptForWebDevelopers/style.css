@@ -35,6 +35,28 @@ header {
     margin-bottom: 3.5rem;
 }
 
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.back-link:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
 .badge {
     display: inline-block;
     padding: 0.35rem 0.9rem;
@@ -109,6 +131,20 @@ main.card-grid {
 
 .card-content {
     margin-bottom: 1.75rem;
+}
+
+.card-badge {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #818cf8;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 6px;
+    margin-bottom: 0.85rem;
 }
 
 .card-title {

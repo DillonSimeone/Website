@@ -44,7 +44,7 @@ function extractInfoFromHtml(dirPath) {
         title = titleMatch[1].trim();
     }
 
-    // Match <h1>...</h1>
+    // Match <h1>...</h1> if no title
     if (!title) {
         const h1Match = content.match(/<h1[^>]*>([^<]+)<\/h1>/i);
         if (h1Match) {
@@ -58,44 +58,122 @@ function extractInfoFromHtml(dirPath) {
         description = metaDescMatch[1].trim();
     }
 
-    // Match first <p>...</p> if no meta description
+    // Match subtitle or description paragraphs
     if (!description) {
-        const pMatch = content.match(/<p[^>]*>([^<]+)<\/p>/i);
-        if (pMatch) {
-            description = pMatch[1].trim();
+        const subMatch = content.match(/<p[^>]*class=["'][^"']*(?:subtitle|description|lead)[^"']*["'][^>]*>([\s\S]*?)<\/p>/i);
+        if (subMatch) {
+            description = subMatch[1].replace(/<[^>]+>/g, '').trim();
         }
+    }
+
+    // Match header paragraph inside <header>
+    if (!description) {
+        const headerPMatch = content.match(/<header[^>]*>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>[\s\S]*?<\/header>/i);
+        if (headerPMatch) {
+            description = headerPMatch[1].replace(/<[^>]+>/g, '').trim();
+        }
+    }
+
+    // Fallback: match any reasonable <p>...</p> with substance
+    if (!description) {
+        const pMatches = content.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi);
+        for (const m of pMatches) {
+            const text = m[1].replace(/<[^>]+>/g, '').trim();
+            if (text.length > 20 && !/^(tip amount|total cost|none yet)/i.test(text)) {
+                description = text;
+                break;
+            }
+        }
+    }
+
+    if (description) {
+        description = description.replace(/\s+/g, ' ').trim();
     }
 
     return { title, description };
 }
 
+function deriveBadge(relDir) {
+    if (/CIS133W/i.test(relDir)) {
+        if (/Lab\s*(\d+)/i.test(relDir)) {
+            const m = relDir.match(/Lab\s*(\d+)/i);
+            return `CIS 133W • Lab ${m[1]}`;
+        }
+        if (/Practice\s*([\d-]+)/i.test(relDir)) {
+            const m = relDir.match(/Practice\s*([\d-]+)/i);
+            return `CIS 133W • Practice ${m[1]}`;
+        }
+        if (/Module\s*(\d+)/i.test(relDir)) {
+            const m = relDir.match(/Module\s*(\d+)/i);
+            return `CIS 133W • Module ${m[1]}`;
+        }
+        return 'CIS 133W';
+    }
+
+    const firstSegment = relDir.split('/')[0];
+    return firstSegment || 'Demo';
+}
+
 function scanProjects() {
-    const items = fs.readdirSync(baseDir, { withFileTypes: true });
     const projects = [];
 
-    for (const item of items) {
-        if (!item.isDirectory()) continue;
-        const dirName = item.name;
-        if (dirName.startsWith('.') || dirName === 'node_modules') continue;
+    function walk(currentDir) {
+        const items = fs.readdirSync(currentDir, { withFileTypes: true });
 
-        const dirPath = path.join(baseDir, dirName);
-        const hasIndexHtml = fs.existsSync(path.join(dirPath, 'index.html'));
+        for (const item of items) {
+            if (!item.isDirectory()) continue;
+            const dirName = item.name;
+            if (dirName.startsWith('.') || dirName === 'node_modules' || dirName === '__MACOSX') continue;
 
-        if (!hasIndexHtml) continue;
+            const dirPath = path.join(currentDir, dirName);
+            const hasIndexHtml = fs.existsSync(path.join(dirPath, 'index.html'));
 
-        const readmeInfo = extractInfoFromReadme(dirPath);
-        const htmlInfo = extractInfoFromHtml(dirPath);
+            if (hasIndexHtml) {
+                // Leaf project directory: do not descend deeper
+                const relDir = path.relative(baseDir, dirPath).replace(/\\/g, '/');
+                const readmeInfo = extractInfoFromReadme(dirPath);
+                const htmlInfo = extractInfoFromHtml(dirPath);
 
-        const title = (readmeInfo && readmeInfo.title) || (htmlInfo && htmlInfo.title) || dirName;
-        const description = (readmeInfo && readmeInfo.description) || (htmlInfo && htmlInfo.description) || 'Explore this project interactive demo.';
+                let title = (readmeInfo && readmeInfo.title) || (htmlInfo && htmlInfo.title) || dirName;
+                let description = (readmeInfo && readmeInfo.description) || (htmlInfo && htmlInfo.description);
 
-        projects.push({
-            dirName,
-            title,
-            description,
-            link: `./${dirName}/index.html`
-        });
+                if (!description) {
+                    if (/tip_calculator/i.test(dirName)) {
+                        description = 'Interactive restaurant bill and tip calculator with customizable tip percentages.';
+                    } else if (/Practice 3-1/i.test(dirName)) {
+                        description = 'Real-time integer statistics calculator analyzing numbers for sum, average, min, and max.';
+                    } else {
+                        description = 'Interactive JavaScript mini-project and DOM challenge.';
+                    }
+                }
+
+                const badge = deriveBadge(relDir);
+
+                projects.push({
+                    relDir,
+                    dirName,
+                    badge,
+                    title,
+                    description,
+                    link: `./${relDir}/index.html`
+                });
+            } else {
+                // Intermediate category folder (e.g. CIS133W, Module1): descend into children
+                walk(dirPath);
+            }
+        }
     }
+
+    walk(baseDir);
+
+    // Sort order: prioritize Labs, then numeric/alphabetical by relative directory
+    projects.sort((a, b) => {
+        const aIsLab = /Lab/i.test(a.relDir);
+        const bIsLab = /Lab/i.test(b.relDir);
+        if (aIsLab && !bIsLab) return -1;
+        if (!aIsLab && bIsLab) return 1;
+        return a.relDir.localeCompare(b.relDir, undefined, { numeric: true, sensitivity: 'base' });
+    });
 
     return projects;
 }
@@ -104,11 +182,12 @@ function generateHtml(projects) {
     const cardsHtml = projects.map(p => `        <!-- Card: ${escapeHtml(p.title)} -->
         <div class="card">
             <div class="card-content">
+                <span class="card-badge">${escapeHtml(p.badge)}</span>
                 <h2 class="card-title">${escapeHtml(p.title)}</h2>
                 <p class="card-description">${escapeHtml(p.description)}</p>
             </div>
             <div class="card-footer">
-                <a href="${escapeHtml(p.link)}" class="card-btn">
+                <a href="${encodeURI(p.link)}" class="card-btn">
                     Launch Project
                     <svg viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -129,6 +208,13 @@ function generateHtml(projects) {
 
 <body>
     <header>
+        <a href="../../index.html" class="back-link">
+            <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+            </svg>
+            Back to Portfolio
+        </a>
+        <br>
         <span class="badge">Interactive Demos</span>
         <h1>JavaScript For Web Developers</h1>
         <p class="subtitle">A collection of hands-on interactive mini-projects, challenges, and experiments.</p>
@@ -155,7 +241,7 @@ function escapeHtml(str) {
 
 const projects = scanProjects();
 console.log(`Found ${projects.length} project(s):`);
-projects.forEach(p => console.log(` - [${p.dirName}] "${p.title}"`));
+projects.forEach(p => console.log(` - [${p.badge}] "${p.title}" (${p.link})`));
 
 const output = generateHtml(projects);
 fs.writeFileSync(indexHtmlPath, output, 'utf-8');
