@@ -1,5 +1,3 @@
-import { initFolderZip } from './folderZip.js';
-
 /*=======================================================
                 Theme Management
 =========================================================*/
@@ -205,18 +203,30 @@ const _galleriesInitialized = new Set();
 const _galleriesConfig = [
     { id: 'hobby', selector: '.artwork, .headers + .images', minSize: 0 },
     { id: 'work', selector: '.medias, .images, .videos', minSize: 1 },
-    { id: 'embedded', selector: '.grid-item', minSize: 0 },
-    { id: 'shop', selector: '.grid-item', minSize: 0 }
+    { id: 'embedded', selector: '.grid-item', minSize: 0 }
 ];
 
 function ensureGalleries(targetID) {
-    if (_galleriesInitialized.has(targetID)) return;
+    if (_galleriesInitialized.has(targetID)) {
+        triggerSectionVideos(targetID);
+        return;
+    }
     _galleriesInitialized.add(targetID);
+    if (targetID === 'shop') {
+        initShopImageZoom();
+    }
     _galleriesConfig.forEach(cfg => {
         if (cfg.id === targetID) {
             initSectionGalleries(cfg.id, cfg.selector, cfg.minSize);
         }
     });
+    triggerSectionVideos(targetID);
+}
+
+function triggerSectionVideos(targetID) {
+    const sec = document.getElementById(targetID);
+    if (!sec) return;
+    sec.querySelectorAll('video.lazy-loop-video').forEach(v => loadAndPlayVideo(v));
 }
 
 function resetSectionChrome(targetID) {
@@ -481,7 +491,8 @@ function setUp() {
         const targetBtn = document.querySelector(`#${page}`);
         if (targetBtn) targetBtn.click();
     } else {
-        reveal('elevatorPitch', 'LandingPage', 0);
+        ensureGalleries('elevatorPitch');
+        resetSectionChrome('elevatorPitch');
     }
 
     generateDynamicNavs();
@@ -491,6 +502,8 @@ function setUp() {
     // Galleries are only processed the first time each section is shown.
 
     initYouTubeFacades();
+    initShopImageZoom();
+    initLazyVideos();
     
     // Start dynamic favicon cycle (pauses when tab is hidden to save CPU)
     if (document.getElementById('dynamic-favicon')) {
@@ -691,7 +704,9 @@ function initSectionGalleries(sectionId, blockSelector, minSizeToConvert = 0) {
 
         if (!imageGrid) return;
 
-        const items = Array.from(imageGrid.querySelectorAll('img, video, .youtube-facade'));
+        const items = Array.from(imageGrid.querySelectorAll('img, video, .youtube-facade')).filter(el => {
+            return !el.closest('.shop-loop-container') && !el.hasAttribute('autoplay');
+        });
         if (items.length === 0) return;
 
         // Lazy-load fallback for non-gallery items
@@ -865,23 +880,53 @@ window.closeGallery = closeGallery;
  */
 function initYouTubeFacades() {
     document.querySelectorAll('.youtube-facade').forEach(facade => {
+        if (facade.dataset.facadeInitialized) return;
         const videoId = facade.getAttribute('data-video-id');
         const playlistId = facade.getAttribute('data-playlist-id');
         const title = facade.getAttribute('data-title') || 'YouTube Video';
 
         if (!videoId && !playlistId) return;
+        facade.dataset.facadeInitialized = 'true';
 
         facade.innerHTML = '';
         facade.setAttribute('role', 'button');
         facade.setAttribute('aria-label', `Play video: ${title}`);
         facade.setAttribute('tabindex', '0');
 
-        // Create preview image
-        const img = document.createElement('img');
-        img.alt = `${title} Preview`;
-        img.loading = 'lazy';
-        img.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-        facade.appendChild(img);
+        const loopMp4 = facade.getAttribute('data-loop-mp4');
+        const loopWebm = facade.getAttribute('data-loop-webm');
+
+        if (loopMp4 || loopWebm) {
+            const video = document.createElement('video');
+            video.autoplay = true;
+            video.loop = true;
+            video.muted = true;
+            video.playsInline = true;
+            video.preload = 'metadata';
+            video.setAttribute('aria-hidden', 'true');
+            video.style.borderRadius = facade.style.borderRadius || '20px';
+
+            if (loopWebm) {
+                const sWebm = document.createElement('source');
+                sWebm.src = loopWebm;
+                sWebm.type = 'video/webm';
+                video.appendChild(sWebm);
+            }
+            if (loopMp4) {
+                const sMp4 = document.createElement('source');
+                sMp4.src = loopMp4;
+                sMp4.type = 'video/mp4';
+                video.appendChild(sMp4);
+            }
+            facade.appendChild(video);
+        } else {
+            // Create preview image
+            const img = document.createElement('img');
+            img.alt = `${title} Preview`;
+            img.loading = 'lazy';
+            img.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+            facade.appendChild(img);
+        }
 
         const loadIframe = () => {
             const iframe = document.createElement('iframe');
@@ -902,7 +947,8 @@ function initYouTubeFacades() {
             iframe.style.width = '100%';
             iframe.style.height = '100%';
             iframe.style.aspectRatio = facade.style.getPropertyValue('--aspect-ratio') || '4/3';
-            iframe.style.borderRadius = '20px';
+            iframe.style.borderRadius = facade.style.borderRadius || '20px';
+            iframe.style.border = facade.style.border || 'none';
 
             facade.replaceWith(iframe);
         };
@@ -917,6 +963,90 @@ function initYouTubeFacades() {
     });
 }
 window.initYouTubeFacades = initYouTubeFacades;
+
+/**
+ * Initializes zoom-in lightbox for shop photos without destroying card layouts.
+ */
+function initShopImageZoom() {
+    document.querySelectorAll('#shop .shop-photo-card img, #shop .images img').forEach(img => {
+        if (img.dataset.zoomInitialized) return;
+        img.dataset.zoomInitialized = 'true';
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('click', () => {
+            const card = img.closest('.grid-item');
+            const title = card?.querySelector('h2')?.textContent || 'Shop Item';
+            const allImgs = Array.from(card.querySelectorAll('.shop-photo-card img, .images img'));
+            
+            // Reorder to place the clicked image first, followed by others
+            const sortedImgs = [
+                img,
+                ...allImgs.filter(i => i !== img)
+            ];
+
+            const galleryItems = sortedImgs.map(i => ({
+                type: 'image',
+                src: i.getAttribute('data-src') || i.src,
+                alt: i.alt || title
+            }));
+
+            window.openGallery(title, galleryItems.length > 0 ? galleryItems : [{ type: 'image', src: img.src, alt: img.alt }]);
+        });
+    });
+}
+window.initShopImageZoom = initShopImageZoom;
+
+/**
+ * Lazy loads and manages playback for looping background and short videos.
+ * Only loads sources when element is near the viewport; pauses when offscreen.
+ */
+function initLazyVideos() {
+    const lazyVideos = document.querySelectorAll('video.lazy-loop-video');
+    if (lazyVideos.length === 0) return;
+
+    if (!('IntersectionObserver' in window)) {
+        lazyVideos.forEach(v => loadAndPlayVideo(v));
+        return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target;
+            if (entry.isIntersecting) {
+                loadAndPlayVideo(video);
+            } else {
+                if (!video.paused) {
+                    video.pause();
+                }
+            }
+        });
+    }, { rootMargin: '200px 0px' });
+
+    lazyVideos.forEach(v => observer.observe(v));
+}
+
+function loadAndPlayVideo(video) {
+    let needsLoad = false;
+    video.querySelectorAll('source[data-src]').forEach(source => {
+        source.src = source.getAttribute('data-src');
+        source.removeAttribute('data-src');
+        needsLoad = true;
+    });
+    if (video.getAttribute('data-src')) {
+        video.src = video.getAttribute('data-src');
+        video.removeAttribute('data-src');
+        needsLoad = true;
+    }
+    if (video.getAttribute('data-poster')) {
+        video.poster = video.getAttribute('data-poster');
+        video.removeAttribute('data-poster');
+    }
+    if (needsLoad) {
+        video.load();
+    }
+    video.play().catch(() => {});
+}
+window.initLazyVideos = initLazyVideos;
+window.loadAndPlayVideo = loadAndPlayVideo;
 
 // Event delegation for card tabs
 document.addEventListener('click', (e) => {
@@ -933,4 +1063,17 @@ document.addEventListener('click', (e) => {
 });
 
 setUp();
-initFolderZip();
+
+// Lazy load folderZip and zipStore on demand when user clicks or hovers a download link
+let _zipLoaded = false;
+function loadZipModule() {
+    if (_zipLoaded) return;
+    _zipLoaded = true;
+    import('./folderZip.js').then(m => m.initFolderZip());
+}
+document.addEventListener('pointerover', (e) => {
+    if (e.target.closest('a[data-zip-root]')) loadZipModule();
+}, { passive: true });
+document.addEventListener('click', (e) => {
+    if (e.target.closest('a[data-zip-root]')) loadZipModule();
+});

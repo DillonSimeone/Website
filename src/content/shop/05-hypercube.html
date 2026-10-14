@@ -11,25 +11,32 @@
         <b>Universal USB-C Power:</b> Powered directly from any standard USB-C phone charger, laptop port, or portable 5V power bank, just like your smartphone (USB-C power cable included). Plug it in at your desk, studio shelf, or take it on the go with a battery pack.
     </p>
 
-    <div class="medias">
-        <div class="images shop-multi-img" style="align-items: center; justify-content: center;">
-            <div style="flex: 1; min-width: 220px; max-width: 320px; aspect-ratio: 9/16; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/cpChwnLkwsk"
-                    title="Sound-Reactive LED Hypercube in Action" frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
+    <div class="shop-media-row">
+        <!-- Standalone Autolooping Video -->
+        <a href="https://www.youtube.com/watch?v=cpChwnLkwsk" target="_blank" rel="noopener noreferrer" class="shop-loop-container" style="flex: 1; min-width: 220px; max-width: 300px; aspect-ratio: 9/16;" title="Watch full Sound-Reactive Hypercube demo with sound on YouTube">
+            <video loop muted playsinline preload="none" class="lazy-loop-video">
+                <source data-src="./Images/Shop/hypercube-loop.webm" type="video/webm">
+                <source data-src="./Images/Shop/hypercube-loop.mp4" type="video/mp4">
+            </video>
+            <span class="shop-yt-link">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                Watch with Sound
+            </span>
+        </a>
+
+        <!-- Photo 1: Active Ripple State -->
+        <div class="shop-photo-card" style="flex: 1; min-width: 220px; max-width: 320px;">
+            <img src="./Images/Shop/hypercube-lit.jpg" alt="Hypercube Lit with Sound-Reactive Ripple Patterns" loading="lazy" width="400" height="300" style="height: 260px; object-fit: cover;">
+            <div class="photo-caption">
+                <b>Active Ripple State:</b> Frequency-reactive purple/pink illumination through textured hood
             </div>
-            <div style="flex: 1; min-width: 220px; max-width: 340px; background: var(--bg-glass); border-radius: 12px; border: 1px dashed var(--border-color); overflow: hidden;">
-                <img src="./Images/Shop/hypercube-lit.jpg" alt="Hypercube Lit with Sound-Reactive Ripple Patterns" width="400" height="300" style="width: 100%; height: 260px; object-fit: cover; display: block;">
-                <div style="padding: 10px; font-size: 0.8rem; text-align: center; color: var(--text-secondary);">
-                    <b>Active Ripple State:</b> Frequency-reactive purple/pink illumination through textured hood
-                </div>
-            </div>
-            <div style="flex: 1; min-width: 220px; max-width: 340px; background: var(--bg-glass); border-radius: 12px; border: 1px dashed var(--border-color); overflow: hidden;">
-                <img src="./Images/Shop/hypercube-unlit.jpg" alt="Hypercube Unlit Showing 3D Printed Diffuser Cube and Base" width="400" height="300" style="width: 100%; height: 260px; object-fit: cover; display: block;">
-                <div style="padding: 10px; font-size: 0.8rem; text-align: center; color: var(--text-secondary);">
-                    <b>Mechanical Form Factor:</b> 5-face 3D printed diffusion cube and weighted electronics stand
-                </div>
+        </div>
+
+        <!-- Photo 2: Mechanical Form Factor -->
+        <div class="shop-photo-card" style="flex: 1; min-width: 220px; max-width: 320px;">
+            <img src="./Images/Shop/hypercube-unlit.jpg" alt="Hypercube Unlit Showing 3D Printed Diffuser Cube and Base" loading="lazy" width="400" height="300" style="height: 260px; object-fit: cover;">
+            <div class="photo-caption">
+                <b>Mechanical Form Factor:</b> 5-face 3D printed diffusion cube and weighted electronics stand
             </div>
         </div>
     </div>

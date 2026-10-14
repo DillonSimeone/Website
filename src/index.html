@@ -6,9 +6,135 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Portfolio website of Dillon Simeone, showcasing custom 3D printing, laser cutting, embedded systems, and other projects.">
     <title>Dillon Simeone</title>
-    <link rel="preload" href="/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high">
+    <link rel="preload" href="/fonts/ShareTechMono-Regular.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high">
     <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="%233498db"/></svg>'>
-    <link href="./styles/style.css" rel="stylesheet">
+    <link href="./styles/style.css" rel="stylesheet" fetchpriority="high">
+    <style>
+        @font-face {
+            font-family: 'Orbitron';
+            font-style: normal;
+            font-weight: 400 900;
+            font-display: optional;
+            src: url('/fonts/Orbitron-Variable.woff2') format('woff2');
+        }
+        @font-face {
+            font-family: 'Share Tech Mono';
+            font-style: normal;
+            font-weight: 400;
+            font-display: optional;
+            src: url('/fonts/ShareTechMono-Regular.woff2') format('woff2');
+        }
+        /* Critical landing layout lock to eliminate FOUC layout shifts */
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        #elevatorPitch { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; overflow-y: hidden; }
+        #elevatorPitch section {
+            height: 100vh;
+            max-height: 100vh;
+            box-sizing: border-box;
+            padding-top: clamp(65px, 8.5vh, 85px);
+            padding-bottom: clamp(16px, 2.5vh, 32px);
+            margin: 0 auto;
+            width: 90%;
+            max-width: 960px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            text-align: left;
+        }
+        #elevatorPitch h1#name { font-family: 'Orbitron', sans-serif; font-weight: 800; letter-spacing: 0.5px; font-size: clamp(2.2rem, 3.8vw, 3.2rem); line-height: 1.05; margin: 0 0 4px 0; }
+        #elevatorPitch h2 { font-family: 'Orbitron', sans-serif; font-weight: 600; letter-spacing: 0.3px; font-size: clamp(0.95rem, 1.25vw, 1.15rem); line-height: 1.35; margin: 0 0 clamp(10px, 1.8vh, 18px) 0; }
+        .hero-body { font-family: 'Share Tech Mono', monospace; display: flex; flex-direction: column; gap: clamp(10px, 1.6vh, 16px); width: 100%; }
+        .hero-body p { font-size: clamp(0.92rem, 1.08vw, 1.05rem); line-height: 1.6; margin: 0; }
+        .hero-commission-feature {
+            background: rgba(0, 77, 128, 0.05);
+            border-left: 4px solid #004d80;
+            padding: clamp(10px, 1.5vh, 14px) clamp(12px, 1.5vw, 18px);
+            border-radius: 0 8px 8px 0;
+            box-sizing: border-box;
+        }
+        .hero-commission-feature strong {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.95em;
+            letter-spacing: 0.5px;
+        }
+        #elevatorPitch #jobs {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 14px;
+            margin-top: clamp(8px, 1.8vh, 18px);
+            width: 100%;
+        }
+        nav {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 1.25rem;
+            width: 100vw;
+            height: 64px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+        #elevatorPitch #jobs a {
+            margin: 0;
+            font-weight: 700;
+            font-size: clamp(0.85rem, 0.98vw, 0.95rem);
+            font-family: 'Orbitron', sans-serif;
+            border-radius: 6px;
+            padding: 11px 24px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.5px;
+            box-sizing: border-box;
+            min-height: 44px;
+        }
+        #elevatorPitch #jobs a#hire {
+            background: #0d47a1;
+            color: #ffffff;
+            border: 2px solid #0d47a1;
+            box-shadow: 0 2px 8px rgba(13, 71, 161, 0.25);
+        }
+        #elevatorPitch #jobs a#shop-commission-link {
+            background: transparent;
+            color: #003366;
+            border: 2px solid #004d80;
+        }
+        #elevatorPitch #jobs a.resume-link {
+            color: #374151;
+            background: transparent;
+            border: none;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+            padding: 11px 16px;
+        }
+        @media only screen and (max-width: 899px) {
+            #elevatorPitch { overflow-y: auto; }
+            #elevatorPitch section {
+                height: auto;
+                min-height: 100vh;
+                padding-top: 75px;
+                padding-bottom: 40px;
+                width: 88%;
+            }
+            #elevatorPitch #jobs {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #elevatorPitch #jobs a {
+                text-align: center;
+            }
+        }
+    </style>
     <meta charset="utf-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.p5js.org https://code.jquery.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -96,7 +222,7 @@
     {{> nav }}
 
     <!-- Global mobile toggle for section navigation -->
-    <div class="global-nav-toggle" id="globalNavToggle">
+    <div class="global-nav-toggle" id="globalNavToggle" style="display: none;">
         <div class="bar"></div>
         <div class="bar"></div>
         <div class="bar"></div>
@@ -136,8 +262,8 @@
 
                 <h1>Lasered Artworks</h1>
                 <div class="images laser-lead">
-                    <img fetchpriority="high" src="./Hobby/Lasering/LaserCutting.webp" alt="Laser Cutting" width="400" height="300">
-                    <img src="./Hobby/Lasering/LaserCutting2.webp" alt="Laser Cutting2" width="400" height="300">
+                    <img loading="lazy" src="./Hobby/Lasering/LaserCutting.webp" alt="Laser Cutting" width="400" height="300">
+                    <img loading="lazy" src="./Hobby/Lasering/LaserCutting2.webp" alt="Laser Cutting2" width="400" height="300">
                 </div>
 
                 {{#each laserCards}}
@@ -305,8 +431,8 @@
         <span class="icon-moon">🌙</span>
     </button>
 
-    <script type="module" src="./scripts/indexScript.js"></script>
-    <script type="module" src="./scripts/background.js"></script>
+    <script type="module" src="./scripts/indexScript.js" fetchpriority="low"></script>
+    <script type="module" src="./scripts/background.js" fetchpriority="low"></script>
 </body>
 
 </html>
