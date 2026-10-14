@@ -57,6 +57,16 @@ export function occupancyKey(floor, wall, shelf) {
     return `${floor}|${wall}|${shelf}`;
 }
 
+export const BIOME_TIERS = {
+    CELESTIAL: 13,
+    CANOPY: 7,
+    SCRIPTORIUM: 2,
+    ATRIUM: -2,
+    OCEAN: -8,
+    CRYSTAL: -13,
+    // HELL: <= -14
+};
+
 export function createSharedUniforms() {
     return {
         uTime: { value: 0 },
@@ -66,14 +76,36 @@ export function createSharedUniforms() {
         uAsciiMode: { value: 0.0 }, // 0.0: shaded default, 1.0: ascii
         uFadeBounds: { value: new THREE.Vector4(14.0 * H, 17.0 * H, -5.0 * H, -7.0 * H) },
         uAstralPos: { value: new THREE.Vector4(0, -9999, 0, 0) }, // x, y, z, active
-        uPagesRange: { value: new THREE.Vector2(25.0, 65.0) }, // spanBelow, spanAbove
         uBeamDir: { value: new THREE.Vector3(0.36, -1, 0.22).normalize() },
         uBeams: { value: Array.from({ length: BEAM_COUNT }, () => new THREE.Vector4(0, -9999, 0, 1)) },
         uShadows: { value: Array.from({ length: SHADOW_CASTERS }, () => new THREE.Vector4(0, -9999, 0, 0)) },
     };
 }
 
+export const BIOME_GLSL = /* glsl */ `
+struct BiomeWeights {
+    float hell;
+    float cave;
+    float ocean;
+    float scriptorium;
+    float canopy;
+    float celestial;
+};
+
+BiomeWeights getBiomeWeights(float y) {
+    BiomeWeights b;
+    b.celestial = smoothstep(50.0, 58.0, y);
+    b.canopy = smoothstep(26.0, 32.0, y) * (1.0 - smoothstep(48.0, 54.0, y));
+    b.ocean = smoothstep(-36.0, -30.0, y) * (1.0 - smoothstep(-14.0, -8.0, y));
+    b.cave = smoothstep(-58.0, -52.0, y) * (1.0 - smoothstep(-38.0, -32.0, y));
+    b.hell = 1.0 - smoothstep(-58.0, -50.0, y);
+    b.scriptorium = clamp(1.0 - (b.celestial + b.canopy + b.ocean + b.cave + b.hell), 0.0, 1.0);
+    return b;
+}
+`;
+
 export const LIGHTING_GLSL = /* glsl */ `
+${BIOME_GLSL}
 uniform vec3 uCam;
 uniform float uReveal;
 uniform float uTime;
@@ -136,8 +168,9 @@ vec3 fogColorFor(vec3 p, float rel) {
 
     float absY = uCam.y + rel;
     // Biome-tinted abyss deep down: Hell has glowing ember atmosphere
+    BiomeWeights bw = getBiomeWeights(absY);
     vec3 ember = vec3(0.18, 0.025, 0.01);
-    vec3 abyss = mix(vec3(0.0), ember, 1.0 - smoothstep(-50.0, -15.0, absY));
+    vec3 abyss = mix(vec3(0.0), ember, bw.hell);
 
     // As we reach the bottom cutoff boundary, fade abyss to 0.0 (pure black)
     // so it matches the sky dome and clear color seamlessly with ZERO POP!
@@ -259,8 +292,8 @@ export function createWorldMaterial(U) {
  * Tier 2: Subterranean Crystal Cave (floor -13..-9): Dark stalactite stone, amethyst crystal veins, mineral books
  * Tier 1: Hellish Inferno Abyss (floor <= -14): Charred volcanic obsidian, smoldering magma, blood/ember books
  */
-function getBiome(floor) {
-    if (floor >= 13) {
+export function getBiome(floor) {
+    if (floor >= BIOME_TIERS.CELESTIAL) {
         // Celestial Stacks
         return {
             panel: new THREE.Color(0.92, 0.90, 0.86),
@@ -271,7 +304,7 @@ function getBiome(floor) {
             bookHues: [0.55, 0.58, 0.62, 0.12, 0.15, 0.08],
             lightBias: 0.35,
         };
-    } else if (floor >= 7) {
+    } else if (floor >= BIOME_TIERS.CANOPY) {
         // Overgrown Canopy (Garden / Living Wood)
         return {
             panel: new THREE.Color(0.12, 0.18, 0.11),
@@ -282,7 +315,7 @@ function getBiome(floor) {
             bookHues: [0.25, 0.30, 0.35, 0.14, 0.08],
             lightBias: 0.15,
         };
-    } else if (floor >= 2) {
+    } else if (floor >= BIOME_TIERS.SCRIPTORIUM) {
         // High Scriptorium
         return {
             panel: new THREE.Color(0.18, 0.10, 0.06),
@@ -293,7 +326,7 @@ function getBiome(floor) {
             bookHues: [0.0, 0.05, 0.1, 0.35, 0.58],
             lightBias: 0.1,
         };
-    } else if (floor >= -2) {
+    } else if (floor >= BIOME_TIERS.ATRIUM) {
         // Nexus Atrium
         return {
             panel: new THREE.Color(0.09, 0.06, 0.04),
@@ -304,7 +337,7 @@ function getBiome(floor) {
             bookHues: [0.0, 0.03, 0.07, 0.1, 0.33, 0.45, 0.6, 0.95],
             lightBias: 0.0,
         };
-    } else if (floor >= -8) {
+    } else if (floor >= BIOME_TIERS.OCEAN) {
         // Ocean Abyss (Sunken Drowned Library)
         return {
             panel: new THREE.Color(0.04, 0.10, 0.14),
@@ -315,7 +348,7 @@ function getBiome(floor) {
             bookHues: [0.48, 0.52, 0.56, 0.42, 0.60],
             lightBias: -0.05,
         };
-    } else if (floor >= -13) {
+    } else if (floor >= BIOME_TIERS.CRYSTAL) {
         // Subterranean Crystal Cave
         return {
             panel: new THREE.Color(0.06, 0.05, 0.08),

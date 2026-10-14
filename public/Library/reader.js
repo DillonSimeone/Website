@@ -145,11 +145,12 @@ export function createReader({ root, scene, camera, cards, material, onStateChan
             { ...pulledPose(i, shelf), dur: 0.35 },
             { ...frontPose(), dur: 0.7 },
         ], () => {
-            fly.visible = false;
+            writePortalBook(i, 0, FRONT_DISTANCE, 1.0);
             portalBook.visible = true;
+            fly.visible = false;
             runPortal([
-                { dur: 0.25, from: { open: 0, dist: FRONT_DISTANCE, glow: 1 }, to: { open: 0, dist: FRONT_DISTANCE, glow: 1.2 } },
-                { dur: 1.1, from: { open: 0, dist: FRONT_DISTANCE, glow: 1.2 }, to: { open: 1, dist: 1.0, glow: 1.8 } },
+                { dur: 0.25, from: { open: 0, dist: FRONT_DISTANCE, glow: 1.0 }, to: { open: 0, dist: FRONT_DISTANCE, glow: 1.25 } },
+                { dur: 1.1, from: { open: 0, dist: FRONT_DISTANCE, glow: 1.25 }, to: { open: 1, dist: 1.0, glow: 1.8 } },
                 { dur: 0.9, from: { open: 1, dist: 1.0, glow: 1.8 }, to: { open: 1, dist: 0.16, glow: 3.2 }, flash: true },
             ], () => {
                 setTimeout(() => onPortal(i), 150);
@@ -270,7 +271,6 @@ export function createReader({ root, scene, camera, cards, material, onStateChan
             card.style.opacity = '1';
             overlay.classList.add('is-open');
             setTimeout(() => {
-                fly.visible = false;
                 state.busy = false;
                 state.open = true;
                 card.querySelector('.lib-reader-close').focus({ preventScroll: true });

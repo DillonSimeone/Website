@@ -79,7 +79,6 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
     let currentFloorsAbove = 20;
     let currentFloorsBelow = 16;
     well.setFloorRange(currentFloorsBelow, currentFloorsAbove);
-    U.uPagesRange.value.set((currentFloorsBelow + 1.5) * H, (currentFloorsAbove + 1.5) * H);
 
     const cards = createCardBooks(scene, books, material);
     const beams = createBeams(scene, U);
@@ -111,7 +110,7 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
         <button type="button" class="lib-daynight"></button>
         <button type="button" class="lib-audio-toggle"></button>
         <button type="button" class="lib-leave">Leave the library</button>
-        <p class="lib-hint">W/S climb · A/D turn · Scroll/Drag · Q ascii · E day/night · M sound · Esc leaves</p>`;
+        <p class="lib-hint">W/S climb · A/D turn 90° · Scroll/Drag · Q ascii · E day/night · M sound · Esc leaves</p>`;
     root.appendChild(index);
     const dayButton = index.querySelector('.lib-daynight');
     const syncDayButton = () => { dayButton.textContent = dayGoal ? 'Night falls (E)' : 'Sunrise (E)'; };
@@ -341,6 +340,7 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
         const target = pickAt(mouse);
         if (target.secret) {
             audio.unlock();
+            audio.playSecretChime();
             reader.openSecret(secrets.getSecret());
             secrets.dismiss();
         } else if (target.book >= 0) {
@@ -394,7 +394,21 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
             e.preventDefault();
             return;
         }
-        if (['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'pageup', 'pagedown'].includes(key)) {
+        if (key === 'a' || key === 'arrowleft') {
+            if (e.repeat) return;
+            const step = Math.PI / 2;
+            goal.yaw = Math.round(goal.yaw / step) * step + step;
+            e.preventDefault();
+            return;
+        }
+        if (key === 'd' || key === 'arrowright') {
+            if (e.repeat) return;
+            const step = Math.PI / 2;
+            goal.yaw = Math.round(goal.yaw / step) * step - step;
+            e.preventDefault();
+            return;
+        }
+        if (['w', 's', 'arrowup', 'arrowdown', 'pageup', 'pagedown'].includes(key)) {
             keysHeld.add(key);
             e.preventDefault();
         }
@@ -451,6 +465,10 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
     window.addEventListener('resize', onResize);
     index.addEventListener('click', onIndexClick);
     plaqueLayer.addEventListener('click', onPlaqueClick);
+    const unlockAudio = () => { audio.unlock(); };
+    window.addEventListener('pointerdown', unlockAudio, { passive: true });
+    window.addEventListener('keydown', unlockAudio, { passive: true });
+    window.addEventListener('wheel', unlockAudio, { passive: true });
     onResize();
 
     /* ---------- frame loop ---------- */
@@ -602,12 +620,6 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
             if (movedY && Math.random() < 0.12) {
                 audio.playPageFlutter(0.45);
             }
-            if (keysHeld.has('a') || keysHeld.has('arrowleft')) {
-                goal.yaw += 1.8 * dt;
-            }
-            if (keysHeld.has('d') || keysHeld.has('arrowright')) {
-                goal.yaw -= 1.8 * dt;
-            }
 
             const k = Math.min(1, dt * 8);
             view.yaw += wrapAngle(goal.yaw - view.yaw) * k;
@@ -641,7 +653,6 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
 
         const spanAbove = (currentFloorsAbove + 1.5) * H;
         const spanBelow = (currentFloorsBelow + 1.5) * H;
-        U.uPagesRange.value.set(spanBelow, spanAbove);
 
         well.update(camera.position.y);
         wanderers.update(dt, camera);
@@ -690,6 +701,9 @@ function createLibrary({ onRequestExit = () => {}, reducedMotion = false }) {
             window.removeEventListener('resize', onResize);
             index.removeEventListener('click', onIndexClick);
             plaqueLayer.removeEventListener('click', onPlaqueClick);
+            window.removeEventListener('pointerdown', unlockAudio);
+            window.removeEventListener('keydown', unlockAudio);
+            window.removeEventListener('wheel', unlockAudio);
             return new Promise((resolve) => {
                 setTimeout(() => {
                     cancelAnimationFrame(frameId);

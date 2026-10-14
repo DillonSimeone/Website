@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { R, SHADOW_CASTERS, LIGHTING_DEFINES, LIGHTING_GLSL, mulberry32 } from './well.js';
+import { R, SHADOW_CASTERS, LIGHTING_DEFINES, LIGHTING_GLSL, BIOME_GLSL, mulberry32 } from './well.js';
 
 // Fixed spatial span completely decoupled from dynamic section loading
 export const PAGE_TOTAL_SPAN = 200.0;
@@ -7,6 +7,7 @@ export const PAGE_HALF_SPAN = 100.0;
 
 /* pageCenter() in vertex shader and CPU shadow updater match exactly. */
 const PAGE_VERT = /* glsl */ `
+${BIOME_GLSL}
 attribute vec4 aSeed; // x: phase [0,1], y: fallSpeed, z: radius, w: angle0
 uniform float uTime;
 uniform vec3 uCam;
@@ -55,13 +56,8 @@ void main() {
     float yaw = uTime * 0.25 * (aSeed.y + 0.3) + aSeed.w;
     mat3 rot = rotY(yaw) * rotX(pitch) * rotZ(roll);
 
-    // Biome weights for vertex deformation & shaders
-    float celestialW = smoothstep(50.0, 58.0, yWorld);
-    float canopyW = smoothstep(26.0, 32.0, yWorld) * (1.0 - smoothstep(48.0, 54.0, yWorld));
-    float oceanW = smoothstep(-36.0, -30.0, yWorld) * (1.0 - smoothstep(-14.0, -8.0, yWorld));
-    float caveW = smoothstep(-58.0, -52.0, yWorld) * (1.0 - smoothstep(-38.0, -32.0, yWorld));
-    float hellW = 1.0 - smoothstep(-58.0, -50.0, yWorld);
-    float defaultW = clamp(1.0 - (celestialW + canopyW + oceanW + caveW + hellW), 0.0, 1.0);
+    // Unified biome weights for vertex deformation
+    BiomeWeights b = getBiomeWeights(yWorld);
 
     vec2 p = uv - 0.5;
 
@@ -84,7 +80,7 @@ void main() {
     float rCorner = length(p * vec2(1.3, 1.0));
     float hellBend = pow(max(0.0, rCorner - 0.18) * 2.2, 2.0) * 0.22 + sin(a1 * 2.2 + p.x * 10.0) * 0.015;
 
-    float zDisp = cBend * celestialW + leafBend * canopyW + oceanBend * oceanW + caveBend * caveW + hellBend * hellW + defBend * defaultW;
+    float zDisp = cBend * b.celestial + leafBend * b.canopy + oceanBend * b.ocean + caveBend * b.cave + hellBend * b.hell + defBend * b.scriptorium;
 
     // Natural page geometry with authentic aerofoil curvature
     vec3 lp = position;
@@ -139,58 +135,54 @@ void main() {
     vec3 base = vec3(0.88, 0.83, 0.72);
     base *= 1.0 - 0.20 * step(0.55, fract(vUv.y * 14.0)) * inside;
 
-    // Biome weights based on page's vertical world position
-    float celestialW = smoothstep(50.0, 58.0, vBiomeY);
-    float canopyW = smoothstep(26.0, 32.0, vBiomeY) * (1.0 - smoothstep(48.0, 54.0, vBiomeY));
-    float oceanW = smoothstep(-36.0, -30.0, vBiomeY) * (1.0 - smoothstep(-14.0, -8.0, vBiomeY));
-    float caveW = smoothstep(-58.0, -52.0, vBiomeY) * (1.0 - smoothstep(-38.0, -32.0, vBiomeY));
-    float hellW = 1.0 - smoothstep(-58.0, -50.0, vBiomeY);
+    // Unified biome weights based on page's vertical world position
+    BiomeWeights b = getBiomeWeights(vBiomeY);
 
     vec3 emission = vec3(0.0);
 
     // 1. Canopy: Botanical leaf tint
-    if (canopyW > 0.001) {
+    if (b.canopy > 0.001) {
         float vein = step(0.48, fract(vUv.x * 6.0 + sin(vUv.y * 12.0) * 0.3));
         vec3 leafCol = mix(vec3(0.35, 0.52, 0.28), vec3(0.78, 0.75, 0.58), vein * 0.55);
-        base = mix(base, leafCol, canopyW * 0.85);
+        base = mix(base, leafCol, b.canopy * 0.85);
     }
 
     // 2. Celestial: Divine golden parchment
-    if (celestialW > 0.001) {
+    if (b.celestial > 0.001) {
         vec3 celCol = mix(vec3(0.96, 0.94, 0.88), vec3(1.0, 0.90, 0.55), 0.45);
-        base = mix(base, celCol, celestialW);
-        emission += vec3(1.0, 0.90, 0.60) * 0.4 * celestialW;
+        base = mix(base, celCol, b.celestial);
+        emission += vec3(1.0, 0.90, 0.60) * 0.4 * b.celestial;
     }
 
     // 3. Ocean: Waterlogged wet vellum with specular gleam
-    if (oceanW > 0.001) {
+    if (b.ocean > 0.001) {
         vec3 wetCol = vec3(0.38, 0.54, 0.58);
         vec3 V = normalize(uCam - vWorld);
         vec3 H2 = normalize(-uBeamDir + V);
         float wetSpec = pow(max(dot(n, H2), 0.0), 32.0) * 1.5;
-        base = mix(base, wetCol, oceanW * 0.8);
-        emission += vec3(0.6, 0.85, 0.95) * wetSpec * oceanW;
+        base = mix(base, wetCol, b.ocean * 0.8);
+        emission += vec3(0.6, 0.85, 0.95) * wetSpec * b.ocean;
     }
 
     // 4. Cave: Subterranean amethyst runes on dark slate vellum
-    if (caveW > 0.001) {
+    if (b.cave > 0.001) {
         vec3 slateCol = vec3(0.20, 0.18, 0.24);
         float rune = step(0.70, fract(vUv.y * 10.0 + sin(vUv.x * 9.0))) * inside;
         vec3 runeCol = vec3(0.72, 0.35, 0.95);
-        base = mix(base, slateCol, caveW * 0.9);
-        emission += runeCol * rune * 1.0 * caveW;
+        base = mix(base, slateCol, b.cave * 0.9);
+        emission += runeCol * rune * 1.0 * b.cave;
     }
 
     // 5. Hell: Scorched charred parchment with smoldering flame edges
     // Charred paper body matches the dark shelves; only the flame perimeter glows!
-    if (hellW > 0.001) {
+    if (b.hell > 0.001) {
         float dE = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
         float fire = 1.0 - smoothstep(0.0, 0.16, dE);
         float flk = sin(uTime * 14.0 + vWorld.x * 20.0 + vWorld.y * 18.0) * 0.5 + 0.5;
         vec3 flameCol = mix(vec3(1.0, 0.22, 0.02), vec3(1.0, 0.85, 0.12), flk);
         vec3 charred = vec3(0.12, 0.09, 0.07);
-        base = mix(base, charred, hellW);
-        emission += flameCol * fire * 2.0 * hellW;
+        base = mix(base, charred, b.hell);
+        emission += flameCol * fire * 2.0 * b.hell;
     }
 
     // Base shading from the library's atmospheric lighting model
