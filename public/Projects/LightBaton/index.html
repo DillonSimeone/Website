@@ -516,7 +516,7 @@
             transform: translateY(-2px);
         }
 
-        .pcb-spec-item h4 {
+        .pcb-spec-item h3 {
             font-size: 0.95rem;
             color: #f8fafc;
             margin-bottom: 4px;
@@ -613,6 +613,7 @@
             </div>
         </nav>
 
+        <main>
         <!-- Hero Header -->
         <header class="hero">
             <div class="hero-badge">Kinetic Motion &amp; Haptic Instrument</div>
@@ -825,35 +826,35 @@
                 <div>
                     <ul class="pcb-specs-list">
                         <li class="pcb-spec-item">
-                            <h4>Back-to-Back 3D Component Stacking</h4>
+                            <h3>Back-to-Back 3D Component Stacking</h3>
                             <p>
                                 The ESP32-C3 SuperMini MCU mounts on the top surface, while the MPU6050/6500 6-axis IMU mounts directly underneath on the bottom layer. This vertical stacking minimizes I2C trace lengths to under 6mm, isolates high-frequency radio noise, and fits comfortably inside narrow 38mm cylindrical handles.
                             </p>
                         </li>
 
                         <li class="pcb-spec-item">
-                            <h4>Dual 5V Haptic Channels with Flyback Protection</h4>
+                            <h3>Dual 5V Haptic Channels with Flyback Protection</h3>
                             <p>
                                 Upgraded from a single motor to dual independent vibration channels (Haptic Left &amp; Right). Driven by high-current AO3400A N-channel MOSFETs with 10k gate pull-downs and onboard SS14 Schottky flyback diodes (D_HAP), fully protecting the microcontroller from inductive motor voltage spikes during rapid kinetic swings.
                             </p>
                         </li>
 
                         <li class="pcb-spec-item">
-                            <h4>Zero-Drain High-Side LED Isolation</h4>
+                            <h3>Zero-Drain High-Side LED Isolation</h3>
                             <p>
                                 Addressable WS2812B LED pixels continuously consume 1mA to 3mA per pixel even when turned black. A dedicated AO3401A P-channel MOSFET switch (Q_LED_PWR) completely severs 5V rail power to the strip during deep sleep, extending standby battery life from days to months.
                             </p>
                         </li>
 
                         <li class="pcb-spec-item">
-                            <h4>TP4056 Charging with Auto Power-Path Switching</h4>
+                            <h3>TP4056 Charging with Auto Power-Path Switching</h3>
                             <p>
                                 Features onboard TP4056 1S LiPo charging via USB-C (R_PROG configured for 500mA fast charge) coupled with an automatic P-FET power-path selector (Q_PWR + D_PWR). Performer batons seamlessly draw continuous power from external USB power banks without cycling or stressing the internal lithium cell.
                             </p>
                         </li>
 
                         <li class="pcb-spec-item">
-                            <h4>Hybrid Audio + Kinetic Reactive Inputs</h4>
+                            <h3>Hybrid Audio + Kinetic Reactive Inputs</h3>
                             <p>
                                 In addition to the 6-axis inertial tracking, the PCB integrates both an analog MAX4466 microphone (ADC1_CH0 / G0) for zero-latency kinetic audio beats and a digital I2S INMP441 microphone (BCLK, WS, SD) for studio-grade FFT frequency band analysis.
                             </p>
@@ -970,6 +971,8 @@
                 </table>
             </div>
         </section>
+
+        </main>
 
         <!-- CTA Footer -->
         <footer class="cta-footer">
