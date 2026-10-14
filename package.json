@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "generate-synth-knobs": "node public/ParametricModeling/06-SythKnobs/cli.mjs",
-    "lighthouse": "node tools/lighthouse/run.js"
+    "lighthouse": "node tools/lighthouse/run.js",
+    "deadlinks": "node tools/deadlink-search/crawler.js"
   },
   "repository": {
     "type": "git",
