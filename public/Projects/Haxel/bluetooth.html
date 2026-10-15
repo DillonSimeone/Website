@@ -25,11 +25,11 @@
                 <p class="subtitle">Control Haxel haptic units directly from your Chrome browser using Bluetooth Low Energy (BLE).</p>
                 <div class="hero-actions">
                     <button type="button" id="bleConnectBtnDoc" class="btn primary">CONNECT BLE</button>
-                    <a href="#simulator" class="btn">Launch Simulator</a>
+                    <a href="haxel-firmware.zip" download class="btn" style="border-color: #ff6a3d; color: #ff6a3d; font-weight: bold;">Download Firmware (.zip)</a>
                     <a href="index.html" class="btn" style="border-color: #e23b24; color: #e23b24; font-weight: bold;">WiFi Mode</a>
                     <a href="manual.html" class="btn secondary">Read Manual</a>
                     <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/02_Audio_Haptics/Haxel"
-                        target="_blank" class="btn">View Source</a>
+                        target="_blank" class="btn">View on GitHub</a>
                 </div>
             </div>
             <div class="hero-graphic">
@@ -51,6 +51,9 @@
                         as long as the unit is flashed in Bluetooth mode, you can pair and stream real-time haptic
                         commands from this browser.
                     </p>
+                    <div style="background: var(--cream); border: 2px solid var(--black); padding: 12px 16px; margin: 12px 0; font-size: 0.85rem;">
+                        <strong>Flash Instructions for BLE:</strong> Flash your ESP32 with the <code>c3BLULED</code> (ESP32-C3) or <code>c6BLULED</code> (ESP32-C6) environment using the included <code>flash_haxel.bat</code> installer or PlatformIO!
+                    </div>
                     <p>
                         Power on your Haxel board, then click <strong>CONNECT BLE</strong> (hero bar or portal
                         header), pick the device named like <code>Haxel-XXXX</code>, and the portal unlocks for live

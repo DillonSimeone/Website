@@ -428,7 +428,11 @@
         <!-- NAVIGATION HEADER -->
         <div class="nav-header">
             <span class="nav-header-title">HAXEL // REFERENCE MANUAL</span>
-            <a href="index.html">← Back to Portal</a>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <a href="haxel-firmware.zip" download style="border-color: var(--bauhaus-yellow); color: var(--bauhaus-yellow);">⬇ Firmware (.zip)</a>
+                <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/02_Audio_Haptics/Haxel" target="_blank">GitHub Source</a>
+                <a href="index.html">← Back to Portal</a>
+            </div>
         </div>
 
         <!-- HERO INTRODUCTION -->
@@ -438,10 +442,129 @@
                 <h1 style="margin: 15px 0;">Firmware Specifications & Developer Manual</h1>
                 <p class="subtitle" style="max-width: 800px;">
                     An in-depth guide detailing Haxel's multi-tasking FreeRTOS scheduling model, safety state machines, 
-                    firmware API interfaces, and advanced mathematical expression scripting.
+                    firmware API interfaces, hardware setup, and advanced mathematical expression scripting.
                 </p>
+                <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+                    <a href="haxel-firmware.zip" download class="btn primary" style="background: var(--bauhaus-red); color: white; padding: 10px 18px; text-decoration: none; font-family: var(--font-display); font-size: 13px; border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);">
+                        ⬇ Download Firmware (.zip)
+                    </a>
+                    <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/02_Audio_Haptics/Haxel" target="_blank" class="btn" style="background: white; color: black; padding: 10px 18px; text-decoration: none; font-family: var(--font-display); font-size: 13px; border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);">
+                        View Firmware Source on GitHub
+                    </a>
+                    <a href="#quickstart" class="btn" style="background: var(--bauhaus-yellow); color: black; padding: 10px 18px; text-decoration: none; font-family: var(--font-display); font-size: 13px; border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);">
+                        Hardware Setup & Pinouts ↓
+                    </a>
+                </div>
             </div>
         </header>
+
+        <!-- SECTION 00: QUICKSTART & HARDWARE SETUP -->
+        <section class="manual-section topic-architecture card-technical" id="quickstart" style="border-bottom: 4px solid var(--black); background: #ffffff;">
+            <span class="block-label" style="background: var(--bauhaus-red); color: #fff;">00 // QUICKSTART: HARDWARE & FLASHING</span>
+            <h2>Hardware Assembly, Pinouts & Flashing Guide</h2>
+            <p style="margin-bottom: 20px;">
+                Haxel turns low-cost ESP32 boards into high-fidelity haptic engines with real-time FastLED lighting and Web telemetry. 
+                Below is everything you need to source parts, connect wiring, and flash your microcontroller.
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                <div style="border: 2px solid var(--black); padding: 18px; background: var(--cream);">
+                    <h3 style="margin-top: 0; font-size: 1.1rem; color: var(--black);">🛒 Hardware Parts & Sourcing</h3>
+                    <ul style="padding-left: 20px; font-size: 13px; line-height: 1.7; margin-top: 8px;">
+                        <li><strong>ESP32-C3 SuperMini ($2):</strong> <a href="https://www.aliexpress.us/w/wholesale-esp32-c3-super-mini.html?spm=a2g0o.home.search.0" target="_blank" style="color: var(--bauhaus-blue); font-weight: bold;">AliExpress Store</a> (Recommended default)</li>
+                        <li><strong>FireBeetle 2 ESP32-C6 Mini ($6):</strong> <a href="https://www.dfrobot.com/product-2778.html" target="_blank" style="color: var(--bauhaus-blue); font-weight: bold;">DFRobot Store</a> (Onboard LiPo charger & fleet node)</li>
+                        <li><strong>Vibration Motors:</strong> <a href="https://www.aliexpress.us/w/wholesale-vibrator-motor.html?spm=a2g0o.productlist.search.0" target="_blank" style="color: var(--bauhaus-blue); font-weight: bold;">Coin cells & Coreless motors</a></li>
+                        <li><strong>MOSFET Power Driver:</strong> <a href="https://www.aliexpress.us/w/wholesale-mosfet-module-esp32.html" target="_blank" style="color: var(--bauhaus-blue); font-weight: bold;">AO3400A / LR7843 Module</a></li>
+                        <li><strong>FastLED Strip:</strong> <a href="https://www.aliexpress.us/w/wholesale-ws2812b-strip.html" target="_blank" style="color: var(--bauhaus-blue); font-weight: bold;">WS2812B NeoPixel 5V/3.3V Strip</a></li>
+                    </ul>
+                </div>
+
+                <div style="border: 2px solid var(--black); padding: 18px; background: var(--cream);">
+                    <h3 style="margin-top: 0; font-size: 1.1rem; color: var(--black);">⚡ 1-Click Flashing (.bat)</h3>
+                    <p style="font-size: 13px; line-height: 1.6; margin-top: 8px;">
+                        The firmware download includes <code>flash_haxel.bat</code> for Windows:
+                    </p>
+                    <ol style="padding-left: 20px; font-size: 13px; line-height: 1.7; margin-top: 6px;">
+                        <li>Connect your ESP32 via USB.</li>
+                        <li>Double-click <code>flash_haxel.bat</code>.</li>
+                        <li>It automatically verifies Python, installs PlatformIO if missing, and flashes both the <strong>firmware</strong> and the <strong>LittleFS captive portal</strong>.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <h3>Pinout & Hardware Mapping</h3>
+            <div class="table-scroll">
+                <table class="spec-table">
+                    <thead>
+                        <tr>
+                            <th>Board</th>
+                            <th>PlatformIO Env</th>
+                            <th>Motor Pin (PWM)</th>
+                            <th>FastLED Pin (WS2812B)</th>
+                            <th>Transport Mode</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>ESP32-C3 SuperMini</strong> (Default)</td>
+                            <td><code>c3WIFILED</code></td>
+                            <td>GPIO 6 (MOSFET)</td>
+                            <td>GPIO 5 (20 LEDs default)</td>
+                            <td>WiFi SoftAP <code>Haxel-XXXX</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>ESP32-C3 SuperMini BLE</strong></td>
+                            <td><code>c3BLULED</code></td>
+                            <td>GPIO 6 (MOSFET)</td>
+                            <td>GPIO 5</td>
+                            <td>Chrome Web Bluetooth</td>
+                        </tr>
+                        <tr>
+                            <td><strong>FireBeetle 2 ESP32-C6 Mini</strong></td>
+                            <td><code>c6WIFILED</code></td>
+                            <td>GPIO 16, 17, 19, 20 (Mini L298N)</td>
+                            <td>GPIO 17</td>
+                            <td>WiFi SoftAP <code>Haxel-XXXX</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>FireBeetle 2 ESP32-C6 BLE</strong></td>
+                            <td><code>c6BLULED</code></td>
+                            <td>GPIO 16, 17, 19, 20</td>
+                            <td>GPIO 17</td>
+                            <td>Chrome Web Bluetooth</td>
+                        </tr>
+                        <tr>
+                            <td><strong>FireBeetle 2 ESP32-C6 Fleet</strong></td>
+                            <td><code>c6WIFILED_FOLLOWER</code></td>
+                            <td>GPIO 16, 17, 19, 20</td>
+                            <td>GPIO 17</td>
+                            <td>ESP-NOW Mesh Slave (&lt; 5 ms)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ESP32 DevKit v1 / Classic</strong></td>
+                            <td><code>devWIFILED</code></td>
+                            <td>GPIO 18 / 19</td>
+                            <td>GPIO 2</td>
+                            <td>WiFi SoftAP <code>Haxel-XXXX</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="background: #1e1e1e; color: #fff; padding: 16px 20px; border: 3px solid var(--black); margin-top: 15px;">
+                <h4 style="margin: 0 0 8px 0; color: var(--bauhaus-yellow); font-family: var(--font-display);">CRITICAL: LittleFS Filesystem Upload (uploadfs)</h4>
+                <p style="font-size: 13px; line-height: 1.6; margin: 0 0 10px 0; color: #dcdcdc;">
+                    For Wi-Fi portal environments, you MUST flash both the firmware code AND the LittleFS filesystem partition. The filesystem contains the HTML, JavaScript, and CSS that the ESP32 serves to your phone:
+                </p>
+                <div class="code-block" style="margin: 0; background: #000; padding: 12px; font-size: 12px;">
+# 1. Compile & flash firmware
+pio run -e c3WIFILED -t upload
+
+# 2. Upload LittleFS web portal files (REQUIRED for WiFi captive portal)
+pio run -e c3WIFILED -t uploadfs
+                </div>
+            </div>
+        </section>
 
         <!-- SECTION 01: ARCHITECTURE OVERVIEW -->
         <section class="manual-section topic-architecture card-technical">

@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "generate-synth-knobs": "node public/ParametricModeling/06-SythKnobs/cli.mjs",
+    "package-haxel": "node public/Projects/Haxel/package-firmware.mjs",
     "lighthouse": "node tools/lighthouse/run.js",
     "deadlinks": "node tools/deadlink-search/crawler.js"
   },
