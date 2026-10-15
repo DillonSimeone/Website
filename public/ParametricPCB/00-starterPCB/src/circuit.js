@@ -139,24 +139,22 @@ export async function compileCircuit(params = {}) {
   // ============================================================
   // 5. RAT'S NEST LOGICAL TRACE NETS
   // ============================================================
-  if (!skipRouting) {
-    // 5V Power Rail (U_MCU Pin 1 -> C_VBUS Pin 1, D_LED Anode, J_AUX Pin 1)
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin1", to: ".C_VBUS > .pin1", key: "tr_pwr_c", name: "NET_5V", width: PWR }));
-    children.push(React.createElement("trace", { from: ".C_VBUS > .pin1", to: ".J_AUX > .pin1", key: "tr_pwr_aux", name: "NET_5V", width: PWR }));
-    children.push(React.createElement("trace", { from: ".J_AUX > .pin1", to: ".D_LED > .pin2", key: "tr_pwr_led", name: "NET_5V", width: SIG }));
+  // 5V Power Rail (U_MCU Pin 1 -> C_VBUS Pin 1, D_LED Anode, J_AUX Pin 1)
+  children.push(React.createElement("trace", { from: ".U_MCU > .pin1", to: ".C_VBUS > .pin1", key: "tr_pwr_c", name: "NET_5V", width: PWR }));
+  children.push(React.createElement("trace", { from: ".C_VBUS > .pin1", to: ".J_AUX > .pin1", key: "tr_pwr_aux", name: "NET_5V", width: PWR }));
+  children.push(React.createElement("trace", { from: ".J_AUX > .pin1", to: ".D_LED > .pin2", key: "tr_pwr_led", name: "NET_5V", width: SIG }));
 
-    // LED Resistor to GND
-    children.push(React.createElement("trace", { from: ".D_LED > .pin1", to: ".R_LED > .pin1", key: "tr_led_res", name: "NET_LED_SERIES", width: SIG }));
-    children.push(React.createElement("trace", { from: ".R_LED > .pin2", to: ".J_AUX > .pin4", key: "tr_res_gnd", name: "NET_GND", width: PWR }));
+  // LED Resistor to GND
+  children.push(React.createElement("trace", { from: ".D_LED > .pin1", to: ".R_LED > .pin1", key: "tr_led_res", name: "NET_LED_SERIES", width: SIG }));
+  children.push(React.createElement("trace", { from: ".R_LED > .pin2", to: ".J_AUX > .pin4", key: "tr_res_gnd", name: "NET_GND", width: PWR }));
 
-    // GND Rail
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".C_VBUS > .pin2", key: "tr_gnd_mcu", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".C_VBUS > .pin2", to: ".J_AUX > .pin4", key: "tr_gnd_aux", name: "NET_GND", width: PWR }));
+  // GND Rail
+  children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".C_VBUS > .pin2", key: "tr_gnd_mcu", name: "NET_GND", width: PWR }));
+  children.push(React.createElement("trace", { from: ".C_VBUS > .pin2", to: ".J_AUX > .pin4", key: "tr_gnd_aux", name: "NET_GND", width: PWR }));
 
-    // GPIO Signals (IO0 -> Pin 2, IO1 -> Pin 3)
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin4", to: ".J_AUX > .pin2", key: "tr_sig_io0", name: "NET_IO0", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin5", to: ".J_AUX > .pin3", key: "tr_sig_io1", name: "NET_IO1", width: SIG }));
-  }
+  // GPIO Signals (IO0 -> Pin 2, IO1 -> Pin 3)
+  children.push(React.createElement("trace", { from: ".U_MCU > .pin4", to: ".J_AUX > .pin2", key: "tr_sig_io0", name: "NET_IO0", width: SIG }));
+  children.push(React.createElement("trace", { from: ".U_MCU > .pin5", to: ".J_AUX > .pin3", key: "tr_sig_io1", name: "NET_IO1", width: SIG }));
 
   const boardPropsObj = boardProps(boardWidth, boardLength, routing, { skipRouting });
   const boardElement = React.createElement("board", {

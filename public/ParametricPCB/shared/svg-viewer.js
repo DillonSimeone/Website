@@ -202,6 +202,9 @@ export function setupInteractiveSvg(options = {}) {
   return {
     transform,
     applyTransform,
+    update() {
+      applyTransform();
+    },
     resetView() {
       transform.x = 0;
       transform.y = 0;

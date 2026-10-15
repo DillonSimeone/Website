@@ -5,6 +5,7 @@ import {
   convertSoupToExcellonDrillCommands,
   stringifyExcellonDrill 
 } from "../../00-commonParts/circuit-json-to-gerber.js";
+import { createGerberZipBlob } from "../../shared/export-utils.js";
 import { WS2812B_1313, VerticalThreePadHeader, HorizontalEdgeHeader } from "../../00-commonParts/Led/led.js";
 import { boardProps, normalizeRouting } from "./pcb-rules.js";
 import { runManufacturingDrc } from "./drc.js";
@@ -28,8 +29,15 @@ function isAssemblyComponent(designator) {
  * Includes manual via placement to route crossing traces on bottom copper layer,
  * avoiding electrical shorts.
  */
-export async function compileCircuit(params) {
-  const { ledCount, spacing, boardWidth, boardHeight, routing, skipRouting } = params;
+export async function compileCircuit(params = {}) {
+  const { 
+    ledCount = 6, 
+    spacing = 9.22, 
+    boardWidth = 60, 
+    boardHeight = params?.boardHeight || params?.boardLength || 10.0, 
+    routing = {}, 
+    skipRouting = true 
+  } = params || {};
   const R = normalizeRouting(routing);
   const PWR = `${R.powerTraceWidth}mm`;
   const SIG = `${R.nominalTraceWidth}mm`;
@@ -58,47 +66,43 @@ export async function compileCircuit(params) {
     name: "J_BEG", pcbX: `${j_beg_x}mm`, pcbY: "0mm", key: "j_beg", isEnd: false, boardHeight: boardHeight
   }));
 
-  if (!skipRouting) {
-    children.push(React.createElement("trace", { from: ".J_BEG > .pin1", to: ".U1 > .pin1", key: "t_beg_u1_v", name: "t_beg_u1_vcc", width: PWR }));
-    children.push(React.createElement("trace", { from: ".J_BEG > .pin2", to: ".U1 > .pin4", key: "t_beg_u1_d", name: "t_beg_u1_dat", width: SIG }));
-    children.push(React.createElement("trace", { from: ".J_BEG > .pin3", to: ".U1 > .pin3", key: "t_beg_u1_g", name: "t_beg_u1_gnd", width: PWR }));
-  }
+  children.push(React.createElement("trace", { from: ".J_BEG > .pin1", to: ".U1 > .pin1", key: "t_beg_u1_v", name: "t_beg_u1_vcc", width: PWR }));
+  children.push(React.createElement("trace", { from: ".J_BEG > .pin2", to: ".U1 > .pin4", key: "t_beg_u1_d", name: "t_beg_u1_dat", width: SIG }));
+  children.push(React.createElement("trace", { from: ".J_BEG > .pin3", to: ".U1 > .pin3", key: "t_beg_u1_g", name: "t_beg_u1_gnd", width: PWR }));
   
   // ============================================================
   // 2. LEDs + INTERMEDIATE HEADERS + VIAS FOR BOTTOM LAYER TRANSITIONS
   // ============================================================
   for (let i = 1; i <= ledCount; i++) {
-    const ledX = startX + (i - 1) * spacing;
+    const ledX = +(startX + (i - 1) * spacing).toFixed(3);
     
     // Place LED
     children.push(React.createElement(WS2812B_1313, {
-      name: `U${i}`, pcbX: `${ledX}mm`, pcbY: "0mm", key: `u${i}`
+      name: `U${i}`, pcbX: `${ledX.toFixed(3)}mm`, pcbY: "0mm", key: `u${i}`
     }));
     
     // Place single intermediate header between LED[i] and LED[i+1]
     if (i < ledCount) {
-      const midX = ledX + spacing / 2;
+      const midX = +(ledX + spacing / 2).toFixed(3);
       
       // Place header component
       children.push(React.createElement(HorizontalEdgeHeader, {
-        name: `J_MID${i}`, pcbX: `${midX}mm`, pcbY: "0mm", key: `j_mid_${i}`, boardHeight: boardHeight
+        name: `J_MID${i}`, pcbX: `${midX.toFixed(3)}mm`, pcbY: "0mm", key: `j_mid_${i}`, boardHeight: boardHeight
       }));
       
-      if (!skipRouting) {
-        children.push(React.createElement("trace", { from: `.U${i} > .pin1`, to: `.J_MID${i} > .pin1`, key: `t_${i}_v_t`, name: `t_${i}_vcc_t`, width: PWR }));
-        children.push(React.createElement("trace", { from: `.U${i} > .pin1`, to: `.J_MID${i} > .pin4`, key: `t_${i}_v_b`, name: `t_${i}_vcc_b`, width: PWR }));
-        children.push(React.createElement("trace", { from: `.U${i} > .pin2`, to: `.J_MID${i} > .pin2`, key: `t_${i}_d_t`, name: `t_${i}_dat_t`, width: SIG }));
-        children.push(React.createElement("trace", { from: `.U${i} > .pin2`, to: `.J_MID${i} > .pin5`, key: `t_${i}_d_b`, name: `t_${i}_dat_b`, width: SIG }));
-        children.push(React.createElement("trace", { from: `.U${i} > .pin3`, to: `.J_MID${i} > .pin6`, key: `t_${i}_g_b`, name: `t_${i}_gnd_b`, width: PWR }));
-        children.push(React.createElement("trace", { from: `.U${i} > .pin3`, to: `.J_MID${i} > .pin3`, key: `t_${i}_g_t`, name: `t_${i}_gnd_t`, width: PWR }));
+      children.push(React.createElement("trace", { from: `.U${i} > .pin1`, to: `.J_MID${i} > .pin1`, key: `t_${i}_v_t`, name: `t_${i}_vcc_t`, width: PWR }));
+      children.push(React.createElement("trace", { from: `.U${i} > .pin1`, to: `.J_MID${i} > .pin4`, key: `t_${i}_v_b`, name: `t_${i}_vcc_b`, width: PWR }));
+      children.push(React.createElement("trace", { from: `.U${i} > .pin2`, to: `.J_MID${i} > .pin2`, key: `t_${i}_d_t`, name: `t_${i}_dat_t`, width: SIG }));
+      children.push(React.createElement("trace", { from: `.U${i} > .pin2`, to: `.J_MID${i} > .pin5`, key: `t_${i}_d_b`, name: `t_${i}_dat_b`, width: SIG }));
+      children.push(React.createElement("trace", { from: `.U${i} > .pin3`, to: `.J_MID${i} > .pin6`, key: `t_${i}_g_b`, name: `t_${i}_gnd_b`, width: PWR }));
+      children.push(React.createElement("trace", { from: `.U${i} > .pin3`, to: `.J_MID${i} > .pin3`, key: `t_${i}_g_t`, name: `t_${i}_gnd_t`, width: PWR }));
 
-        children.push(React.createElement("trace", { from: `.J_MID${i} > .pin1`, to: `.U${i + 1} > .pin1`, key: `t_mid_${i}_v_t`, name: `t_mid_${i}_vcc_t`, width: PWR }));
-        children.push(React.createElement("trace", { from: `.J_MID${i} > .pin4`, to: `.U${i + 1} > .pin1`, key: `t_mid_${i}_v_b`, name: `t_mid_${i}_vcc_b`, width: PWR }));
-        children.push(React.createElement("trace", { from: `.J_MID${i} > .pin2`, to: `.U${i + 1} > .pin4`, key: `t_mid_${i}_d_t`, name: `t_mid_${i}_dat_t`, width: SIG }));
-        children.push(React.createElement("trace", { from: `.J_MID${i} > .pin5`, to: `.U${i + 1} > .pin4`, key: `t_mid_${i}_d_b`, name: `t_mid_${i}_dat_b`, width: SIG }));
-        children.push(React.createElement("trace", { from: `.J_MID${i} > .pin6`, to: `.U${i + 1} > .pin3`, key: `t_mid_${i}_g_b`, name: `t_mid_${i}_gnd_b`, width: PWR }));
-        children.push(React.createElement("trace", { from: `.J_MID${i} > .pin3`, to: `.U${i + 1} > .pin3`, key: `t_mid_${i}_g_t`, name: `t_mid_${i}_gnd_t`, width: PWR }));
-      }
+      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin1`, to: `.U${i + 1} > .pin1`, key: `t_mid_${i}_v_t`, name: `t_mid_${i}_vcc_t`, width: PWR }));
+      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin4`, to: `.U${i + 1} > .pin1`, key: `t_mid_${i}_v_b`, name: `t_mid_${i}_vcc_b`, width: PWR }));
+      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin2`, to: `.U${i + 1} > .pin4`, key: `t_mid_${i}_d_t`, name: `t_mid_${i}_dat_t`, width: SIG }));
+      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin5`, to: `.U${i + 1} > .pin4`, key: `t_mid_${i}_d_b`, name: `t_mid_${i}_dat_b`, width: SIG }));
+      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin6`, to: `.U${i + 1} > .pin3`, key: `t_mid_${i}_g_b`, name: `t_mid_${i}_gnd_b`, width: PWR }));
+      children.push(React.createElement("trace", { from: `.J_MID${i} > .pin3`, to: `.U${i + 1} > .pin3`, key: `t_mid_${i}_g_t`, name: `t_mid_${i}_gnd_t`, width: PWR }));
     }
   }
 
@@ -111,11 +115,9 @@ export async function compileCircuit(params) {
     name: "J_END", pcbX: `${j_end_x}mm`, pcbY: "0mm", key: "j_end", isEnd: true, boardHeight: boardHeight
   }));
 
-  if (!skipRouting) {
-    children.push(React.createElement("trace", { from: `.U${ledCount} > .pin1`, to: ".J_END > .pin1", key: "t_end_v", name: "t_end_vcc", width: PWR }));
-    children.push(React.createElement("trace", { from: `.U${ledCount} > .pin2`, to: ".J_END > .pin2", key: "t_end_d", name: "t_end_dat", width: SIG }));
-    children.push(React.createElement("trace", { from: `.U${ledCount} > .pin3`, to: ".J_END > .pin3", key: "t_end_g", name: "t_end_gnd", width: PWR }));
-  }
+  children.push(React.createElement("trace", { from: `.U${ledCount} > .pin1`, to: ".J_END > .pin1", key: "t_end_v", name: "t_end_vcc", width: PWR }));
+  children.push(React.createElement("trace", { from: `.U${ledCount} > .pin2`, to: ".J_END > .pin2", key: "t_end_d", name: "t_end_dat", width: SIG }));
+  children.push(React.createElement("trace", { from: `.U${ledCount} > .pin3`, to: ".J_END > .pin3", key: "t_end_g", name: "t_end_gnd", width: PWR }));
   
   // ============================================================
   // 4. CREATE BOARD
@@ -372,4 +374,30 @@ export function generateGerbers(circuitJson) {
     console.error("Error generating Gerbers:", err);
     return null;
   }
+}
+
+/**
+ * Standardized manufacturing artifact generator matching Projects 00, 02, 03, and 04.
+ */
+export async function generateManufacturingArtifacts(circuit, boardParams = {}) {
+  const circuitJson = circuit.getCircuitJson();
+  const prepared = prepareCircuitJsonForExport(circuitJson);
+  const drc = runManufacturingDrc(circuitJson);
+  let gerberZipBlob = null;
+  try {
+    gerberZipBlob = await createGerberZipBlob(prepared, {
+      projectName: "01_v6led",
+      prefix: "01_v6led"
+    });
+  } catch (err) {
+    console.warn("[Gerber Export Warning]:", err);
+  }
+  const bomCsv = generateBOM(circuitJson);
+  const pnpCsv = generatePNP(circuitJson);
+  return {
+    drc,
+    gerberZipBlob,
+    bomCsv,
+    pnpCsv
+  };
 }

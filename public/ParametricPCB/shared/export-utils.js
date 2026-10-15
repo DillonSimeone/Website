@@ -29,28 +29,42 @@ export function downloadFile(content, filename, mimeType = "application/octet-st
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+async function getJSZip() {
+  let JSZipClass = (typeof window !== "undefined" && window.JSZip) || (typeof global !== "undefined" && global.JSZip) || null;
+  if (!JSZipClass) {
+    if (typeof window !== "undefined") {
+      try {
+        const mod = await import("https://esm.sh/jszip");
+        JSZipClass = mod.default || mod;
+      } catch (err) {
+        console.warn("[Export Utils] Could not dynamically load JSZip from CDN:", err);
+      }
+    } else {
+      try {
+        const mod = await import("jszip");
+        JSZipClass = mod.default || mod;
+      } catch (err) {
+        console.warn("[Export Utils] Could not dynamically load jszip in Node:", err);
+      }
+    }
+  }
+  return JSZipClass;
+}
+
 /**
  * Generates a full Gerber ZIP bundle from circuitJson with standard layer extensions.
  * Automatically outputs both .gko and .gml for board outline compatibility.
+ * Supports returning Blob (browser) or Buffer (Node.js).
  */
 export async function createGerberZipBlob(circuitJson, options = {}) {
-  const { projectName = "PCB", prefix = projectName } = options;
+  const { projectName = "PCB", prefix = projectName, format } = options;
 
   const gerberCommands = convertSoupToGerberCommands(circuitJson);
   const layers = stringifyGerberCommandLayers(gerberCommands);
   const drillCommands = convertSoupToExcellonDrillCommands({ circuitJson, is_plated: true });
   const drill = stringifyExcellonDrill(drillCommands);
 
-  let JSZipClass = (typeof window !== "undefined" && window.JSZip) || (typeof global !== "undefined" && global.JSZip) || null;
-  if (!JSZipClass && typeof window !== "undefined") {
-    try {
-      const mod = await import("https://esm.sh/jszip");
-      JSZipClass = mod.default || mod;
-    } catch (err) {
-      console.warn("[Gerber Export] Could not dynamically load JSZip:", err);
-    }
-  }
-
+  const JSZipClass = await getJSZip();
   if (!JSZipClass) {
     throw new Error("JSZip library is not available in the current environment.");
   }
@@ -77,7 +91,8 @@ export async function createGerberZipBlob(circuitJson, options = {}) {
     zip.file(`${prefix}_Drill.drl`, drill);
   }
 
-  return await zip.generateAsync({ type: "blob" });
+  const outputType = format || (typeof window !== "undefined" ? "blob" : "nodebuffer");
+  return await zip.generateAsync({ type: outputType });
 }
 
 /**
@@ -156,21 +171,13 @@ export async function createEasyEdaZipBlob(circuitJson, options = {}) {
     console.warn("[EasyEDA / KiCad Export] PCB conversion notice:", err);
   }
 
-  let JSZipClass = (typeof window !== "undefined" && window.JSZip) || (typeof global !== "undefined" && global.JSZip) || null;
-  if (!JSZipClass && typeof window !== "undefined") {
-    try {
-      const mod = await import("https://esm.sh/jszip");
-      JSZipClass = mod.default || mod;
-    } catch (err) {
-      console.warn("[EasyEDA Export] Could not dynamically load JSZip:", err);
-    }
-  }
-
+  const JSZipClass = await getJSZip();
   if (JSZipClass) {
     const zip = new JSZipClass();
     if (pcbStr) zip.file(`${prefix}.kicad_pcb`, pcbStr);
-    return await zip.generateAsync({ type: "blob" });
+    const outputType = options.format || (typeof window !== "undefined" ? "blob" : "nodebuffer");
+    return await zip.generateAsync({ type: outputType });
   }
 
-  return new Blob([pcbStr], { type: "text/plain;charset=utf-8" });
+  return (typeof Blob !== "undefined") ? new Blob([pcbStr], { type: "text/plain;charset=utf-8" }) : Buffer.from(pcbStr, "utf8");
 }

@@ -495,3 +495,427 @@ export function Header4Pin({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0, 
     footprint: React.createElement("footprint", null, ...pads)
   });
 }
+
+/**
+ * 2-Pin 2.54mm Pitch Breakout Header (Plated Through-Hole)
+ */
+export function Header2Pin({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0, labels = { pin1: "1", pin2: "2" } }) {
+  const pitch = 2.54;
+  const startX = -0.5 * pitch;
+  const pads = [];
+
+  for (let i = 0; i < 2; i++) {
+    const pinNum = i + 1;
+    const xPos = startX + i * pitch;
+    pads.push(
+      DualPad({
+        key: `pad_${pinNum}`,
+        portHints: [`pin${pinNum}`],
+        pcbX: `${xPos.toFixed(2)}mm`,
+        pcbY: "0mm",
+        width: "1.90mm",
+        holeDia: "1.00mm"
+      })
+    );
+  }
+
+  return React.createElement("chip", {
+    name,
+    pcbX,
+    pcbY,
+    pcbRotation,
+    pinLabels: labels,
+    footprint: React.createElement("footprint", null, ...pads)
+  });
+}
+
+/**
+ * 5-Pin 2.54mm Pitch Breakout Header (Plated Through-Hole)
+ * Typically used for MPU I2C diagnostic tap (3V3, GND, SCL, SDA, INT).
+ */
+export function Header5Pin({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0, labels = { pin1: "3V3", pin2: "GND", pin3: "SCL", pin4: "SDA", pin5: "INT" } }) {
+  const pitch = 2.54;
+  const startX = -2 * pitch;
+  const pads = [];
+
+  for (let i = 0; i < 5; i++) {
+    const pinNum = i + 1;
+    const xPos = startX + i * pitch;
+    pads.push(
+      DualPad({
+        key: `pad_${pinNum}`,
+        portHints: [`pin${pinNum}`],
+        pcbX: `${xPos.toFixed(2)}mm`,
+        pcbY: "0mm",
+        width: "1.90mm",
+        holeDia: "1.00mm"
+      })
+    );
+  }
+
+  return React.createElement("chip", {
+    name,
+    pcbX,
+    pcbY,
+    pcbRotation,
+    pinLabels: labels,
+    footprint: React.createElement("footprint", null, ...pads)
+  });
+}
+
+/**
+ * 2-Pin Miniature SMD Tactile Push Button (TS-1187A / C318884)
+ * Used for EN (Reset) and IO9 (Boot / User Action)
+ */
+export function PushSwitch_SMD({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0, labels = { pin1: "1", pin2: "2" } }) {
+  return React.createElement("chip", {
+    name,
+    pcbX,
+    pcbY,
+    pcbRotation,
+    pinLabels: labels,
+    footprint: React.createElement("footprint", null,
+      React.createElement("smtpad", { portHints: ["pin1"], pcbX: "-1.50mm", pcbY: "0mm", shape: "rect", width: "1.00mm", height: "1.20mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin2"], pcbX: "1.50mm", pcbY: "0mm", shape: "rect", width: "1.00mm", height: "1.20mm", layer: "top" })
+    )
+  });
+}
+
+/**
+ * ME6211C33M5G-N 3.3V 500mA LDO Voltage Regulator (SOT-23-5, LCSC C82942)
+ * Standard SOT-23-5 pinout:
+ * Pin 1: VIN, Pin 2: GND, Pin 3: EN
+ * Pin 4: NC/BYP, Pin 5: VOUT
+ */
+export function ME6211_SOT23_5({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0 }) {
+  return React.createElement("chip", {
+    name,
+    pcbX,
+    pcbY,
+    pcbRotation,
+    pinLabels: { pin1: "VIN", pin2: "GND", pin3: "EN", pin4: "NC", pin5: "VOUT" },
+    footprint: React.createElement("footprint", null,
+      React.createElement("smtpad", { portHints: ["pin1"], pcbX: "-0.95mm", pcbY: "-1.30mm", shape: "rect", width: "0.60mm", height: "0.90mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin2"], pcbX: "0mm", pcbY: "-1.30mm", shape: "rect", width: "0.60mm", height: "0.90mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin3"], pcbX: "0.95mm", pcbY: "-1.30mm", shape: "rect", width: "0.60mm", height: "0.90mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin4"], pcbX: "0.95mm", pcbY: "1.30mm", shape: "rect", width: "0.60mm", height: "0.90mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin5"], pcbX: "-0.95mm", pcbY: "1.30mm", shape: "rect", width: "0.60mm", height: "0.90mm", layer: "top" })
+    )
+  });
+}
+
+/**
+ * INMP441 Omnidirectional Digital I2S MEMS Microphone (SMD-9, LCSC C5438445)
+ * Official factory footprint extracted from EasyEDA API:
+ * - Pin 1: SCK, Pin 2: WS, Pin 3: L/R, Pin 4: GND
+ * - Pin 5: Acoustic port ground shield
+ * - Pin 6: VDD, Pin 7: GND, Pin 8: SD (DOUT), Pin 9: GND
+ */
+export function INMP441_SMD({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0 }) {
+  return React.createElement("chip", {
+    name,
+    pcbX,
+    pcbY,
+    pcbRotation,
+    pinLabels: {
+      pin1: "SCK", pin2: "WS", pin3: "L_R", pin4: "GND",
+      pin5: "GND_RING",
+      pin6: "VDD", pin7: "GND", pin8: "SD", pin9: "GND"
+    },
+    footprint: React.createElement("footprint", null,
+      React.createElement("smtpad", { portHints: ["pin1"], pcbX: "-1.33mm", pcbY: "1.89mm", shape: "rect", width: "0.40mm", height: "0.60mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin2"], pcbX: "-1.33mm", pcbY: "0.84mm", shape: "rect", width: "0.40mm", height: "0.60mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin3"], pcbX: "-1.33mm", pcbY: "-0.21mm", shape: "rect", width: "0.40mm", height: "0.60mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin4"], pcbX: "-1.33mm", pcbY: "-1.26mm", shape: "rect", width: "0.40mm", height: "0.60mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin5"], pcbX: "0mm", pcbY: "-1.26mm", shape: "rect", width: "1.33mm", height: "0.66mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin6"], pcbX: "1.33mm", pcbY: "-1.26mm", shape: "rect", width: "0.40mm", height: "0.60mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin7"], pcbX: "1.33mm", pcbY: "-0.21mm", shape: "rect", width: "0.40mm", height: "0.60mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin8"], pcbX: "1.33mm", pcbY: "0.84mm", shape: "rect", width: "0.40mm", height: "0.60mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin9"], pcbX: "1.33mm", pcbY: "1.89mm", shape: "rect", width: "0.40mm", height: "0.60mm", layer: "top" })
+    )
+  });
+}
+
+/**
+ * LSM6DS3TR-C 6-Axis IMU (Accelerometer + Gyroscope) (LGA-14, LCSC C967633)
+ * STMicroelectronics official factory footprint:
+ * Dimensions: 2.50mm x 3.00mm, Pitch: 0.50mm
+ * Pin 1: SDO/SA0 (I2C LSB, GND for 0x6A)
+ * Pin 2: SDx (Aux I2C Data, NC)
+ * Pin 3: SCx (Aux I2C Clock, NC)
+ * Pin 4: INT1 (Motion Interrupt)
+ * Pin 5: VDDIO (Digital I/O Power, 3.3V)
+ * Pin 6: GND
+ * Pin 7: GND
+ * Pin 8: VDD (Core Power, 3.3V)
+ * Pin 9: INT2 (Aux Interrupt, NC)
+ * Pin 10: NC
+ * Pin 11: NC
+ * Pin 12: CS (SPI CS, connect to VDDIO/3.3V for I2C mode)
+ * Pin 13: SCL (I2C Clock)
+ * Pin 14: SDA (I2C Data)
+ */
+export function LSM6DS3TR_C({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0 }) {
+  return React.createElement("chip", {
+    name, pcbX, pcbY, pcbRotation,
+    pinLabels: {
+      pin1: "SDO_SA0", pin2: "SDx", pin3: "SCx", pin4: "INT1",
+      pin5: "VDDIO", pin6: "GND", pin7: "GND", pin8: "VDD",
+      pin9: "INT2", pin10: "NC", pin11: "NC", pin12: "CS",
+      pin13: "SCL", pin14: "SDA"
+    },
+    footprint: React.createElement("footprint", null,
+      React.createElement("smtpad", { portHints: ["pin1"], pcbX: "-1.262mm", pcbY: "0.75mm", shape: "rect", width: "0.675mm", height: "0.28mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin2"], pcbX: "-1.262mm", pcbY: "0.25mm", shape: "rect", width: "0.675mm", height: "0.28mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin3"], pcbX: "-1.262mm", pcbY: "-0.25mm", shape: "rect", width: "0.675mm", height: "0.28mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin4"], pcbX: "-1.262mm", pcbY: "-0.75mm", shape: "rect", width: "0.675mm", height: "0.28mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin5"], pcbX: "-0.50mm", pcbY: "-1.012mm", shape: "rect", width: "0.28mm", height: "0.675mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin6"], pcbX: "0.00mm", pcbY: "-1.012mm", shape: "rect", width: "0.28mm", height: "0.675mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin7"], pcbX: "0.50mm", pcbY: "-1.012mm", shape: "rect", width: "0.28mm", height: "0.675mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin8"], pcbX: "1.262mm", pcbY: "-0.75mm", shape: "rect", width: "0.675mm", height: "0.28mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin9"], pcbX: "1.262mm", pcbY: "-0.25mm", shape: "rect", width: "0.675mm", height: "0.28mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin10"], pcbX: "1.262mm", pcbY: "0.25mm", shape: "rect", width: "0.675mm", height: "0.28mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin11"], pcbX: "1.262mm", pcbY: "0.75mm", shape: "rect", width: "0.675mm", height: "0.28mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin12"], pcbX: "0.50mm", pcbY: "1.012mm", shape: "rect", width: "0.28mm", height: "0.675mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin13"], pcbX: "0.00mm", pcbY: "1.012mm", shape: "rect", width: "0.28mm", height: "0.675mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin14"], pcbX: "-0.50mm", pcbY: "1.012mm", shape: "rect", width: "0.28mm", height: "0.675mm", layer: "top" })
+    )
+  });
+}
+
+/**
+ * WMM7037AT2-4/TR Omnidirectional Analog MEMS Microphone (LGA-4 / MIC-SMD, LCSC C140705)
+ * WillSemi official factory footprint:
+ * Dimensions: 3.76mm x 2.95mm
+ * Pin 1: VDD (Power Supply, 3.3V)
+ * Pin 2: GND
+ * Pin 3: GND
+ * Pin 4: OUT (Analog Audio Output to ESP32-C3 ADC)
+ */
+export function WMM7037AT2({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0 }) {
+  return React.createElement("chip", {
+    name, pcbX, pcbY, pcbRotation,
+    pinLabels: { pin1: "VDD", pin2: "GND", pin3: "GND", pin4: "OUT" },
+    footprint: React.createElement("footprint", null,
+      React.createElement("smtpad", { portHints: ["pin1"], pcbX: "0.85mm", pcbY: "1.23mm", shape: "rect", width: "1.00mm", height: "1.00mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin2"], pcbX: "0.85mm", pcbY: "-1.23mm", shape: "rect", width: "1.00mm", height: "1.00mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin3"], pcbX: "-0.85mm", pcbY: "-1.23mm", shape: "rect", width: "1.00mm", height: "1.00mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin4"], pcbX: "-0.85mm", pcbY: "1.23mm", shape: "rect", width: "1.00mm", height: "1.00mm", layer: "top" })
+    )
+  });
+}
+
+/**
+ * MPU-6050 6-Axis Motion Tracking Sensor (QFN-24, LCSC C24112 / C2686888)
+ * Standard QFN-24 4.0mm x 4.0mm, 0.50mm pitch:
+ * Pin 1: CLKIN, Pin 8: VLOGIC, Pin 9: AD0, Pin 10: REGOUT, Pin 11: FSYNC, Pin 12: INT
+ * Pin 13: VDD, Pin 18: GND, Pin 20: CPOUT, Pin 23: SCL, Pin 24: SDA, Pin 25: Thermal EP
+ */
+export function MPU6050_QFN24({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0 }) {
+  const pads = [];
+  const padW = "0.28mm";
+  const padH = "0.80mm";
+
+  // Bottom row (Pins 1-6) at y = -2.0mm
+  const xBottom = [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25];
+  for (let i = 0; i < 6; i++) {
+    pads.push(React.createElement("smtpad", {
+      key: `mpu_p${i + 1}`,
+      portHints: [`pin${i + 1}`],
+      pcbX: `${xBottom[i].toFixed(2)}mm`,
+      pcbY: "-2.00mm",
+      shape: "rect",
+      width: padW,
+      height: padH,
+      layer: "top"
+    }));
+  }
+
+  // Right row (Pins 7-12) at x = +2.0mm
+  const yRight = [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25];
+  for (let i = 0; i < 6; i++) {
+    pads.push(React.createElement("smtpad", {
+      key: `mpu_p${i + 7}`,
+      portHints: [`pin${i + 7}`],
+      pcbX: "2.00mm",
+      pcbY: `${yRight[i].toFixed(2)}mm`,
+      shape: "rect",
+      width: padH,
+      height: padW,
+      layer: "top"
+    }));
+  }
+
+  // Top row (Pins 13-18) at y = +2.0mm
+  const xTop = [1.25, 0.75, 0.25, -0.25, -0.75, -1.25];
+  for (let i = 0; i < 6; i++) {
+    pads.push(React.createElement("smtpad", {
+      key: `mpu_p${i + 13}`,
+      portHints: [`pin${i + 13}`],
+      pcbX: `${xTop[i].toFixed(2)}mm`,
+      pcbY: "2.00mm",
+      shape: "rect",
+      width: padW,
+      height: padH,
+      layer: "top"
+    }));
+  }
+
+  // Left row (Pins 19-24) at x = -2.0mm
+  const yLeft = [1.25, 0.75, 0.25, -0.25, -0.75, -1.25];
+  for (let i = 0; i < 6; i++) {
+    pads.push(React.createElement("smtpad", {
+      key: `mpu_p${i + 19}`,
+      portHints: [`pin${i + 19}`],
+      pcbX: "-2.00mm",
+      pcbY: `${yLeft[i].toFixed(2)}mm`,
+      shape: "rect",
+      width: padH,
+      height: padW,
+      layer: "top"
+    }));
+  }
+
+  // Thermal ground pad (Pin 25)
+  pads.push(React.createElement("smtpad", {
+    key: "mpu_p25",
+    portHints: ["pin25"],
+    pcbX: "0mm",
+    pcbY: "0mm",
+    shape: "rect",
+    width: "2.60mm",
+    height: "2.60mm",
+    layer: "top"
+  }));
+
+  return React.createElement("chip", {
+    name,
+    pcbX,
+    pcbY,
+    pcbRotation,
+    pinLabels: {
+      pin1: "CLKIN", pin8: "VLOGIC", pin9: "AD0", pin10: "REGOUT",
+      pin11: "FSYNC", pin12: "INT", pin13: "VDD", pin18: "GND",
+      pin20: "CPOUT", pin23: "SCL", pin24: "SDA", pin25: "EP_GND"
+    },
+    footprint: React.createElement("footprint", null, ...pads)
+  });
+}
+
+/**
+ * ESP32-C3-WROOM-02-N4 Wi-Fi & BLE SMD Module (LCSC C2934560)
+ * 18 castellated pads with 1.50mm pitch, module dimensions 18.0mm x 20.0mm:
+ * Left Row:
+ *   Pin 1: 3V3, Pin 2: EN, Pin 3: GPIO4, Pin 4: GPIO5, Pin 5: GPIO6,
+ *   Pin 6: GPIO7, Pin 7: GPIO8, Pin 8: GPIO9, Pin 9: GND
+ * Right Row:
+ *   Pin 10: GPIO10, Pin 11: GPIO20(RX), Pin 12: GPIO21(TX),
+ *   Pin 13: GPIO18(USB D-), Pin 14: GPIO19(USB D+), Pin 15: GPIO3(SCL),
+ *   Pin 16: GPIO2(SDA), Pin 17: GPIO1(INT), Pin 18: GND
+ * Center Ground:
+ *   Pin 19: EP_GND
+ */
+export function ESP32C3_WROOM_02({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0 }) {
+  const xSpan = 8.75;
+  const pitch = 1.50;
+  const startY = 6.00;
+  const pads = [];
+
+  const leftPinNames = ["3V3", "EN", "IO4_SCK", "IO5_WS", "IO6_LED", "IO7_HAP", "IO8_SD", "IO9_BOOT", "GND"];
+  const rightPinNames = ["IO10_LED_EN", "IO20_RX", "IO21_TX", "IO18_USBDM", "IO19_USBDP", "IO3_SCL", "IO2_SDA", "IO1_INT", "GND"];
+
+  const pinLabels = {};
+
+  // Left Row (Pins 1-9)
+  for (let i = 0; i < 9; i++) {
+    const pinNum = i + 1;
+    const yPos = startY - i * pitch;
+    pinLabels[`pin${pinNum}`] = leftPinNames[i];
+    pads.push(React.createElement("smtpad", {
+      key: `c3_p${pinNum}`,
+      portHints: [`pin${pinNum}`],
+      pcbX: `-${xSpan.toFixed(2)}mm`,
+      pcbY: `${yPos.toFixed(2)}mm`,
+      shape: "rect",
+      width: "2.00mm",
+      height: "0.95mm",
+      layer: "top"
+    }));
+  }
+
+  // Right Row (Pins 10-18)
+  for (let i = 0; i < 9; i++) {
+    const pinNum = i + 10;
+    const yPos = -startY + i * pitch;
+    pinLabels[`pin${pinNum}`] = rightPinNames[i];
+    pads.push(React.createElement("smtpad", {
+      key: `c3_p${pinNum}`,
+      portHints: [`pin${pinNum}`],
+      pcbX: `${xSpan.toFixed(2)}mm`,
+      pcbY: `${yPos.toFixed(2)}mm`,
+      shape: "rect",
+      width: "2.00mm",
+      height: "0.95mm",
+      layer: "top"
+    }));
+  }
+
+  // Center Ground Pad (Pin 19)
+  pinLabels["pin19"] = "EP_GND";
+  pads.push(React.createElement("smtpad", {
+    key: "c3_p19",
+    portHints: ["pin19"],
+    pcbX: "0mm",
+    pcbY: "0mm",
+    shape: "rect",
+    width: "3.20mm",
+    height: "3.20mm",
+    layer: "top"
+  }));
+
+  return React.createElement("chip", {
+    name,
+    pcbX,
+    pcbY,
+    pcbRotation,
+    pinLabels,
+    footprint: React.createElement("footprint", null, ...pads)
+  });
+}
+
+/**
+ * USB Type-C 16-Pin Receptacle (TYPE-C-31-M-12, LCSC C165948)
+ * 4 through-hole shell mounting tabs + SMT contact pads
+ * pin1: GND, pin2: VBUS, pin3: CC1, pin4: DP, pin5: DN, pin6: CC2, pin7: VBUS, pin8: GND
+ * pin9..pin12: Shell mounting tabs
+ */
+export function USB_C_16P({ name, pcbX = "0mm", pcbY = "0mm", pcbRotation = 0 }) {
+  return React.createElement("chip", {
+    name,
+    pcbX,
+    pcbY,
+    pcbRotation,
+    pinLabels: {
+      pin1: "GND", pin2: "VBUS", pin3: "CC1", pin4: "DP",
+      pin5: "DN", pin6: "CC2", pin7: "VBUS", pin8: "GND",
+      pin9: "SH1", pin10: "SH2", pin11: "SH3", pin12: "SH4"
+    },
+    footprint: React.createElement("footprint", null,
+      // Shell Plated Through-Hole Mounting Tabs (Ø1.2mm drill, Ø2.0mm pad)
+      DualPad({ key: "sh1", portHints: ["pin9", "pin_sh1"], pcbX: "-4.32mm", pcbY: "0mm", width: "2.00mm", holeDia: "1.20mm" }),
+      DualPad({ key: "sh2", portHints: ["pin10", "pin_sh2"], pcbX: "4.32mm", pcbY: "0mm", width: "2.00mm", holeDia: "1.20mm" }),
+      DualPad({ key: "sh3", portHints: ["pin11", "pin_sh3"], pcbX: "-4.32mm", pcbY: "-4.20mm", width: "1.80mm", holeDia: "1.20mm" }),
+      DualPad({ key: "sh4", portHints: ["pin12", "pin_sh4"], pcbX: "4.32mm", pcbY: "-4.20mm", width: "1.80mm", holeDia: "1.20mm" }),
+
+      // Primary SMT Pins (GND, VBUS, CC1, DP, DN, CC2, VBUS, GND)
+      React.createElement("smtpad", { portHints: ["pin1", "pinA1", "pinB12"], pcbX: "-3.20mm", pcbY: "0.70mm", shape: "rect", width: "0.60mm", height: "1.20mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin2", "pinA4", "pinB9"], pcbX: "-2.40mm", pcbY: "0.70mm", shape: "rect", width: "0.55mm", height: "1.20mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin3", "pinA5"], pcbX: "-1.25mm", pcbY: "0.70mm", shape: "rect", width: "0.30mm", height: "1.20mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin4", "pinA6", "pinB6"], pcbX: "-0.25mm", pcbY: "0.70mm", shape: "rect", width: "0.30mm", height: "1.20mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin5", "pinA7", "pinB7"], pcbX: "0.25mm", pcbY: "0.70mm", shape: "rect", width: "0.30mm", height: "1.20mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin6", "pinB5"], pcbX: "1.25mm", pcbY: "0.70mm", shape: "rect", width: "0.30mm", height: "1.20mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin7", "pinB4", "pinA9"], pcbX: "2.40mm", pcbY: "0.70mm", shape: "rect", width: "0.55mm", height: "1.20mm", layer: "top" }),
+      React.createElement("smtpad", { portHints: ["pin8", "pinB1", "pinA12"], pcbX: "3.20mm", pcbY: "0.70mm", shape: "rect", width: "0.60mm", height: "1.20mm", layer: "top" })
+    )
+  });
+}

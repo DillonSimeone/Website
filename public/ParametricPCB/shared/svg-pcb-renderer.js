@@ -50,7 +50,8 @@ export function generatePcbSvgMarkup(circuitJson, options = {}) {
         if (pt1 && pt2) len += Math.hypot(pt2.x - pt1.x, pt2.y - pt1.y);
       }
     }
-    const netName = stMap.get(trace.source_trace_id)?.name || trace.connection_name || "TRACE";
+    const rawNet = stMap.get(trace.source_trace_id)?.name || trace.connection_name || "TRACE";
+    const netName = rawNet.includes("__") ? rawNet.split("__")[0] : rawNet;
     netLengths.set(netName, (netLengths.get(netName) || 0) + len);
 
     const startPort = ppMap.get(trace.route?.[0]?.start_pcb_port_id);
@@ -71,14 +72,16 @@ export function generatePcbSvgMarkup(circuitJson, options = {}) {
   const sourceTraces = circuitJson.filter(item => item.type === "source_trace");
   const portToNetName = new Map();
   sourceTraces.forEach(st => {
+    const rawNet = st.name || "";
+    const cleanNet = rawNet.includes("__") ? rawNet.split("__")[0] : rawNet;
     (st.connected_source_port_ids || []).forEach(spId => {
-      portToNetName.set(spId, st.name);
-      if (!netEndpoints.has(st.name)) netEndpoints.set(st.name, new Set());
+      portToNetName.set(spId, cleanNet);
+      if (!netEndpoints.has(cleanNet)) netEndpoints.set(cleanNet, new Set());
       const sp = spMap.get(spId);
       if (sp) {
         const comp = scMap.get(sp.source_component_id) || "Comp";
         const func = pinNames[comp]?.[sp.name] || sp.name;
-        netEndpoints.get(st.name).add(`${comp}.${sp.name} (${func})`);
+        netEndpoints.get(cleanNet).add(`${comp}.${sp.name} (${func})`);
       }
     });
   });
@@ -90,7 +93,8 @@ export function generatePcbSvgMarkup(circuitJson, options = {}) {
 
   // 1. Traces with metadata
   const tracesSvg = pcbTraces.map(trace => {
-    const netName = stMap.get(trace.source_trace_id)?.name || trace.connection_name || "UNROUTED";
+    const rawNet = stMap.get(trace.source_trace_id)?.name || trace.connection_name || "UNROUTED";
+    const netName = rawNet.includes("__") ? rawNet.split("__")[0] : rawNet;
     const netLen = (netLengths.get(netName) || 0).toFixed(1);
 
     const startPort = ppMap.get(trace.route?.[0]?.start_pcb_port_id);
@@ -238,7 +242,21 @@ export function generatePcbSvgMarkup(circuitJson, options = {}) {
     `;
   }).join("\n");
 
-  // 4. Silkscreen Text Over Pins
+  // 4. Silkscreen Vector Paths & Outlines
+  const silkPaths = circuitJson.filter(item => item.type === "pcb_silkscreen_path" && (item.layer === "top" || !item.layer));
+  const silkLinesSvg = `
+    <g id="svg-silkscreen-paths">
+      ${silkPaths.map(p => {
+        const route = p.route || [];
+        if (route.length < 2) return "";
+        const pts = route.map(pt => `${(cx + pt.x * scale).toFixed(2)},${(cy - pt.y * scale).toFixed(2)}`).join(" ");
+        const sw = Math.max(1.0, (p.stroke_width || 0.15) * scale);
+        return `<polyline points="${pts}" fill="none" stroke="#ffffff" stroke-width="${sw.toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
+      }).join("\n")}
+    </g>
+  `;
+
+  // 5. Silkscreen Text Over Pins
   const silkItems = circuitJson.filter(item => item.type === "pcb_silkscreen_text" && (item.layer === "top" || !item.layer));
   const silkPins = `
     <g id="svg-silkscreen-pins">
@@ -267,6 +285,7 @@ export function generatePcbSvgMarkup(circuitJson, options = {}) {
         <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="#0a1d12" stroke="#34d399" stroke-width="1.5" rx="8" />
         ${tracesSvg}
         ${padsSvg}
+        ${silkLinesSvg}
         ${silkPins}
         ${annotations}
       </g>

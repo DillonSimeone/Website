@@ -13,7 +13,15 @@ import {
   LEDOutputHeader,
   ButtonHeader,
   ExternalSwitchPads,
-  BatteryPads
+  BatteryPads,
+  Header2Pin,
+  Header5Pin,
+  ESP32C3_WROOM_02,
+  MPU6050_QFN24,
+  INMP441_SMD,
+  ME6211_SOT23_5,
+  LSM6DS3TR_C,
+  WMM7037AT2
 } from "./footprints.js";
 
 /**
@@ -122,7 +130,9 @@ const thtHeaders = [
   { name: "UniversalIMU_8Pin", chip: UniversalIMU_8Pin({ name: "IMU" }) },
   { name: "LEDOutputHeader", chip: LEDOutputHeader({ name: "LED" }) },
   { name: "ButtonHeader", chip: ButtonHeader({ name: "BTN" }) },
-  { name: "BatteryPads", chip: BatteryPads({ name: "BAT" }) }
+  { name: "BatteryPads", chip: BatteryPads({ name: "BAT" }) },
+  { name: "Header2Pin", chip: Header2Pin({ name: "H2" }) },
+  { name: "Header5Pin", chip: Header5Pin({ name: "H5" }) }
 ];
 
 for (const th of thtHeaders) {
@@ -133,6 +143,50 @@ for (const th of thtHeaders) {
   const annularRing = (outer - drill) / 2;
   assert(annularRing >= 0.35, `${th.name}: Annular Ring is ${annularRing.toFixed(3)}mm (drill: ${drill}mm, pad: ${outer}mm; JLCPCB safe buffer >= 0.35mm)`);
 }
+
+// 6. Audit New Integrated SMD Footprints (Project 04)
+console.log("\n--- Auditing Integrated SMD Footprints (Project 04) ---");
+
+// ESP32-C3-WROOM-02
+const espPads = extractPads(ESP32C3_WROOM_02({ name: "U_MCU" }));
+const espP1 = espPads[0].props;
+const espP2 = espPads[1].props;
+const espPitch = Math.abs(parseDim(espP1.pcbY) - parseDim(espP2.pcbY));
+const espSpan = Math.abs(parseDim(espPads[9].props.pcbX) - parseDim(espPads[0].props.pcbX));
+assert(Math.abs(espPitch - 1.50) < 0.05, `ESP32-C3 Pitch is ${espPitch.toFixed(2)}mm (Required: 1.50mm)`);
+assert(Math.abs(espSpan - 17.50) < 0.20, `ESP32-C3 Outer Row Span is ${espSpan.toFixed(2)}mm (Standard: 17.50mm)`);
+
+// MPU-6050 QFN-24
+const mpuPads = extractPads(MPU6050_QFN24({ name: "U_IMU" }));
+const mpuP1 = mpuPads[0].props;
+const mpuP2 = mpuPads[1].props;
+const mpuPitch = Math.abs(parseDim(mpuP2.pcbX) - parseDim(mpuP1.pcbX));
+assert(Math.abs(mpuPitch - 0.50) < 0.05, `MPU-6050 QFN Pitch is ${mpuPitch.toFixed(2)}mm (Required: 0.50mm)`);
+
+// INMP441 SMD-9
+const inmpPads = extractPads(INMP441_SMD({ name: "U_MIC" }));
+assert(inmpPads.length === 9, `INMP441 has 9 pads (Found: ${inmpPads.length})`);
+
+// ME6211 SOT-23-5
+const ldoPads = extractPads(ME6211_SOT23_5({ name: "U_LDO" }));
+const ldoP1 = ldoPads[0].props;
+const ldoP2 = ldoPads[1].props;
+const ldoPitch = Math.abs(parseDim(ldoP2.pcbX) - parseDim(ldoP1.pcbX));
+assert(Math.abs(ldoPitch - 0.95) < 0.05, `ME6211 SOT-23-5 Pitch is ${ldoPitch.toFixed(2)}mm (Standard: 0.95mm)`);
+
+// LSM6DS3TR-C LGA-14
+const lsmPads = extractPads(LSM6DS3TR_C({ name: "U_IMU" }));
+assert(lsmPads.length === 14, `LSM6DS3TR-C has 14 pads (Found: ${lsmPads.length})`);
+const lsmP1 = lsmPads[0].props;
+const lsmP2 = lsmPads[1].props;
+const lsmPitchY = Math.abs(parseDim(lsmP1.pcbY) - parseDim(lsmP2.pcbY));
+assert(Math.abs(lsmPitchY - 0.50) < 0.05, `LSM6DS3TR-C Pitch is ${lsmPitchY.toFixed(2)}mm (Standard: 0.50mm)`);
+
+// WMM7037AT2 Analog MEMS Mic LGA-4
+const micPads = extractPads(WMM7037AT2({ name: "U_MIC" }));
+assert(micPads.length === 4, `WMM7037AT2 has 4 pads (Found: ${micPads.length})`);
+const micSpanX = Math.abs(parseDim(micPads[0].props.pcbX) - parseDim(micPads[3].props.pcbX));
+assert(Math.abs(micSpanX - 1.70) < 0.05, `WMM7037AT2 Pad Span is ${micSpanX.toFixed(2)}mm (Standard: 1.70mm)`);
 
 console.log("\n======================================================");
 if (failures === 0) {

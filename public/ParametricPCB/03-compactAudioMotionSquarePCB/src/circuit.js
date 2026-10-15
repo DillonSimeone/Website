@@ -1,10 +1,9 @@
 import { Circuit, React } from "../../00-commonParts/tscircuit-core.js";
 import { 
-  convertSoupToGerberCommands, 
-  stringifyGerberCommandLayers,
-  convertSoupToExcellonDrillCommands,
-  stringifyExcellonDrill 
-} from "../../00-commonParts/circuit-json-to-gerber.js";
+  createGerberZipBlob, 
+  createBomCsv, 
+  createCplCsv 
+} from "../../shared/export-utils.js";
 import { 
   ESP32C3_SuperMini, 
   UniversalIMU_8Pin, 
@@ -194,7 +193,7 @@ export async function compileCircuit(params = {}) {
   children.push(React.createElement(BatteryPads, {
     name: "J_BAT",
     key: "j_bat",
-    pcbX: "0mm",
+    pcbX: "-2.0mm",
     pcbY: "-16.0mm"
   }));
 
@@ -350,9 +349,9 @@ export async function compileCircuit(params = {}) {
   addSilkBoth("st_sw", "POWER SW", 17.5, -10.0, 0.60, "center", 90);
 
   // Bottom Edge Connectors
-  addSilkBoth("st_bat_name", "1S LiPo (3.7V)", 0, -14.2, 0.60, "center");
-  children.push(makeSilk("st_bat_p1", "+", -1.8, -17.6, "top", 0.60, "center"));
-  children.push(makeSilk("st_bat_p2", "-", 1.8, -17.6, "top", 0.60, "center"));
+  addSilkBoth("st_bat_name", "1S LiPo (3.7V)", -2.0, -14.2, 0.60, "center");
+  children.push(makeSilk("st_bat_p1", "+", -3.8, -17.6, "top", 0.60, "center"));
+  children.push(makeSilk("st_bat_p2", "-", -0.2, -17.6, "top", 0.60, "center"));
 
   // MAX4466 Analog Mic
   addSilkBoth("st_max_name", "MAX4466 (G0)", -8.5, -11.6, 0.60, "center");
@@ -502,8 +501,7 @@ export async function compileCircuit(params = {}) {
   // ============================================================
   // 11. RAT'S NEST LOGICAL NETS & TRACE ROUTING
   // ============================================================
-  if (!skipRouting) {
-    // IMU I2C & Interrupt
+  // IMU I2C & Interrupt
     children.push(React.createElement("trace", { from: ".U_MCU > .pin7", to: ".U_IMU > .pin3", key: "tr_scl", name: "NET_I2C_SCL", width: SIG }));
     children.push(React.createElement("trace", { from: ".U_MCU > .pin6", to: ".U_IMU > .pin4", key: "tr_sda", name: "NET_I2C_SDA", width: SIG }));
     children.push(React.createElement("trace", { from: ".U_MCU > .pin9", to: ".U_IMU > .pin8", key: "tr_imu_int", name: "NET_IMU_INT", width: SIG }));
@@ -519,6 +517,11 @@ export async function compileCircuit(params = {}) {
     children.push(React.createElement("trace", { from: ".Q_LED_PWR > .pin3", to: ".J_LED > .pin1", key: "tr_led_pwr_1", name: "NET_5V_SW", width: PWR }));
     children.push(React.createElement("trace", { from: ".Q_LED_PWR > .pin3", to: ".J_LED2 > .pin1", key: "tr_led_pwr_2", name: "NET_5V_SW", width: PWR }));
     children.push(React.createElement("trace", { from: ".Q_LED_PWR > .pin3", to: ".J_LED3 > .pin1", key: "tr_led_pwr_3", name: "NET_5V_SW", width: PWR }));
+
+    // LED Ground Return Rails (J_LED Headers Pin 3 -> System GND)
+    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".J_LED > .pin3", key: "tr_led_gnd_1", name: "NET_GND", width: PWR }));
+    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".J_LED2 > .pin3", key: "tr_led_gnd_2", name: "NET_GND", width: PWR }));
+    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".J_LED3 > .pin3", key: "tr_led_gnd_3", name: "NET_GND", width: PWR }));
 
     // High-Side LED Switch Control (GPIO 10 -> Q_LED_EN Gate via R_LED_GATE)
     children.push(React.createElement("trace", { from: ".U_MCU > .pin14", to: ".Q_LED_EN > .pin1", key: "tr_led_en_gate", name: "NET_LED_PWR_EN", width: SIG }));
@@ -580,7 +583,6 @@ export async function compileCircuit(params = {}) {
     children.push(React.createElement("trace", { from: ".Q_PWR > .pin1", to: ".R_PWR > .pin1", key: "tr_r_pwr_g", name: "NET_VBUS", width: SIG }));
     children.push(React.createElement("trace", { from: ".R_PWR > .pin2", to: ".U_CHG > .pin2", key: "tr_r_pwr_gnd", name: "NET_GND", width: PWR }));
     children.push(React.createElement("trace", { from: ".D_PWR > .pin2", to: ".Q_PWR > .pin1", key: "tr_pwr_gate_vbus", name: "NET_VBUS", width: SIG }));
-  }
 
   const boardConfig = boardProps(boardWidth, boardLength, routing, { skipRouting });
   const boardElement = React.createElement("board", {
@@ -657,42 +659,10 @@ export async function generateManufacturingArtifacts(circuit, boardParams = {}) 
   let pnpCsv = "";
 
   try {
-    const gerberCommands = convertSoupToGerberCommands(circuitJson);
-    const layers = stringifyGerberCommandLayers(gerberCommands);
-    const drillCommands = convertSoupToExcellonDrillCommands({ circuitJson, is_plated: true });
-    const drill = stringifyExcellonDrill(drillCommands);
-
-    let JSZipClass = (typeof window !== "undefined" && window.JSZip) || (typeof global !== "undefined" && global.JSZip) || null;
-    if (!JSZipClass && typeof window !== "undefined") {
-      try {
-        const mod = await import("https://esm.sh/jszip");
-        JSZipClass = mod.default || mod;
-      } catch (err) {
-        console.warn("[Gerber Export] Could not dynamically load JSZip:", err);
-      }
-    }
-
-    if (JSZipClass) {
-      const zip = new JSZipClass();
-      Object.entries(layers).forEach(([layerName, content]) => {
-        let filename = `compactAudioMotionSquare_${layerName}.gbr`;
-        if (layerName.includes("F_Cu")) filename = "compactAudioMotionSquare_TopCopper.gtl";
-        else if (layerName.includes("B_Cu")) filename = "compactAudioMotionSquare_BottomCopper.gbl";
-        else if (layerName.includes("F_SilkScreen")) filename = "compactAudioMotionSquare_TopSilkscreen.gto";
-        else if (layerName.includes("B_SilkScreen")) filename = "compactAudioMotionSquare_BottomSilkscreen.gbo";
-        else if (layerName.includes("F_Mask")) filename = "compactAudioMotionSquare_TopSolderMask.gts";
-        else if (layerName.includes("B_Mask")) filename = "compactAudioMotionSquare_BottomSolderMask.gbs";
-        else if (layerName.includes("F_Paste")) filename = "compactAudioMotionSquare_TopPaste.gtp";
-        else if (layerName.includes("B_Paste")) filename = "compactAudioMotionSquare_BottomPaste.gbp";
-        else if (layerName.includes("Edge_Cuts")) {
-          filename = "compactAudioMotionSquare_EdgeCuts.gko";
-          zip.file("compactAudioMotionSquare_BoardOutline.gml", content);
-        }
-        zip.file(filename, content);
-      });
-      if (drill) zip.file("compactAudioMotionSquare_Drill.drl", drill);
-      gerberZipBlob = await zip.generateAsync({ type: "blob" });
-    }
+    gerberZipBlob = await createGerberZipBlob(circuitJson, {
+      projectName: "03_compactSquareLedHapticPCB",
+      prefix: "compactSquare"
+    });
   } catch (err) {
     console.warn("[Gerber Export Warning]:", err);
   }

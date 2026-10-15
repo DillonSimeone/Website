@@ -1,10 +1,9 @@
 import { Circuit, React } from "../../00-commonParts/tscircuit-core.js";
 import { 
-  convertSoupToGerberCommands, 
-  stringifyGerberCommandLayers,
-  convertSoupToExcellonDrillCommands,
-  stringifyExcellonDrill 
-} from "../../00-commonParts/circuit-json-to-gerber.js";
+  createGerberZipBlob, 
+  createBomCsv, 
+  createCplCsv 
+} from "../../shared/export-utils.js";
 import { 
   ESP32C3_SuperMini, 
   UniversalIMU_8Pin, 
@@ -730,8 +729,7 @@ export async function compileCircuit(params) {
   // ============================================================
   // COMPLETE COPPER TRACES & RAT'S NEST ROUTING
   // ============================================================
-  if (!skipRouting) {
-    // --- 1. IMU Full Net Connections ---
+  // --- 1. IMU Full Net Connections ---
     // SCL (GPIO 3 = pin7 -> IMU SCL = pin3)
     children.push(React.createElement("trace", { from: ".U_MCU > .pin7", to: ".U_IMU > .pin3", key: "tr_scl", name: "NET_I2C_SCL", width: SIG }));
     // SDA (GPIO 2 = pin6 -> IMU SDA = pin4)
@@ -862,7 +860,6 @@ export async function compileCircuit(params) {
     children.push(React.createElement("trace", { from: ".R_PWR > .pin2", to: ".U_CHG > .pin2", key: "tr_r_pwr_gnd", name: "NET_GND_SYS", width: PWR }));
     // P-MOSFET Gate Tied to VBUS (When USB connected, VBUS turns P-MOS OFF isolating battery)
     children.push(React.createElement("trace", { from: ".D_PWR > .pin2", to: ".Q_PWR > .pin1", key: "tr_pwr_gate_vbus", name: "NET_VBUS", width: SIG }));
-  }
 
   const boardConfig = boardProps(boardWidth, boardLength, routing, { skipRouting });
   const boardElement = React.createElement("board", {
@@ -938,36 +935,10 @@ export async function generateManufacturingArtifacts(circuit, boardParams = {}) 
   let pnpCsv = "";
 
   try {
-    const gerberCommands = convertSoupToGerberCommands(circuitJson);
-    const layers = stringifyGerberCommandLayers(gerberCommands);
-    const drillCommands = convertSoupToExcellonDrillCommands({ circuitJson, is_plated: true });
-    const drill = stringifyExcellonDrill(drillCommands);
-
-    let JSZipClass = (typeof window !== "undefined" && window.JSZip) || (typeof global !== "undefined" && global.JSZip) || null;
-    if (!JSZipClass && typeof window !== "undefined") {
-      try {
-        const mod = await import("https://esm.sh/jszip");
-        JSZipClass = mod.default || mod;
-      } catch {}
-    }
-    if (JSZipClass) {
-      const zip = new JSZipClass();
-      Object.entries(layers).forEach(([layerName, content]) => {
-        let filename = `audioMotionBaton_${layerName}.gbr`;
-        if (layerName.includes("F_Cu")) filename = "audioMotionBaton_TopCopper.gtl";
-        else if (layerName.includes("B_Cu")) filename = "audioMotionBaton_BottomCopper.gbl";
-        else if (layerName.includes("F_SilkScreen")) filename = "audioMotionBaton_TopSilkscreen.gto";
-        else if (layerName.includes("B_SilkScreen")) filename = "audioMotionBaton_BottomSilkscreen.gbo";
-        else if (layerName.includes("F_Mask")) filename = "audioMotionBaton_TopSolderMask.gts";
-        else if (layerName.includes("B_Mask")) filename = "audioMotionBaton_BottomSolderMask.gbs";
-        else if (layerName.includes("F_Paste")) filename = "audioMotionBaton_TopPaste.gtp";
-        else if (layerName.includes("B_Paste")) filename = "audioMotionBaton_BottomPaste.gbp";
-        else if (layerName.includes("Edge_Cuts")) filename = "audioMotionBaton_EdgeCuts.gko";
-        zip.file(filename, content);
-      });
-      zip.file("audioMotionBaton_Drill.drl", drill);
-      gerberZipBlob = await zip.generateAsync({ type: "blob" });
-    }
+    gerberZipBlob = await createGerberZipBlob(circuitJson, {
+      projectName: "02_audioMotionBaton",
+      prefix: "audioMotionBaton"
+    });
   } catch (err) {
     console.warn("[Gerber generation]", err);
   }

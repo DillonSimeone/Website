@@ -60,10 +60,12 @@ const projectDirMap = {
   "01": "01-V6Led",
   "02": "02-audioMotionReactiveLedHapticPCB",
   "03": "03-compactAudioMotionSquarePCB",
+  "04": "04-smdAudioMotionBatonPCB",
   "0": "00-starterPCB",
   "1": "01-V6Led",
   "2": "02-audioMotionReactiveLedHapticPCB",
-  "3": "03-compactAudioMotionSquarePCB"
+  "3": "03-compactAudioMotionSquarePCB",
+  "4": "04-smdAudioMotionBatonPCB"
 };
 
 const resolvedSubdir = projectDirMap[targetSubdir] || targetSubdir;
@@ -96,9 +98,19 @@ async function runCheck() {
     throw new Error(`Module at ${circuitModulePath} does not export compileCircuit()`);
   }
 
+  const defaultDimensions = {
+    "00-starterPCB": { boardWidth: 40, boardLength: 40 },
+    "01-V6Led": { boardWidth: 50, boardLength: 12 },
+    "02-audioMotionReactiveLedHapticPCB": { boardWidth: 20, boardLength: 120 },
+    "03-compactAudioMotionSquarePCB": { boardWidth: 38, boardLength: 38 },
+    "04-smdAudioMotionBatonPCB": { boardWidth: 22, boardLength: 110 }
+  };
+
+  const projectDims = defaultDimensions[resolvedSubdir] || { boardWidth: 38, boardLength: 38 };
+
   const circuit = await circuitModule.compileCircuit({
-    boardWidth: 38,
-    boardLength: 38,
+    boardWidth: projectDims.boardWidth,
+    boardLength: projectDims.boardLength,
     skipRouting: true
   });
 

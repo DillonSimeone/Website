@@ -4,11 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node shared/audit-footprints.mjs && node shared/check-overlays.mjs 03",
+    "test": "node shared/audit-footprints.mjs && node shared/check-overlays.mjs 04 && node shared/audit-netlist.mjs 04",
     "audit-footprints": "node shared/audit-footprints.mjs",
     "check-overlays": "node shared/check-overlays.mjs",
+    "audit-netlist": "node shared/audit-netlist.mjs",
     "audit-traces": "node shared/audit-traces.mjs 03",
-    "fetch-footprint": "node shared/fetch-easyeda-footprint.mjs"
+    "fetch-footprint": "node shared/fetch-easyeda-footprint.mjs",
+    "check-supply": "node shared/check-jlc-supply.mjs",
+    "test:browser": "node shared/test-headless.mjs 04",
+    "export-all": "node shared/export-stl.mjs --all",
+    "export-stl": "node shared/export-stl.mjs"
   },
   "keywords": [],
   "author": "",
