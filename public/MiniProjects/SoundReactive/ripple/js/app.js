@@ -33,13 +33,14 @@ class App {
 
     async startAudio() {
         try {
-            await this.audioManager.init();
-            this.uiManager.setStatus("Listening...");
+            const hasMic = await this.audioManager.init();
+            this.uiManager.setStatus(hasMic ? "Listening..." : "Procedural Synth Active");
             this.uiManager.startButton.disabled = true;
-            this.uiManager.startButton.textContent = "Active";
+            this.uiManager.startButton.textContent = hasMic ? "Active" : "Synth Active";
             this.isRunning = true;
         } catch (e) {
-            this.uiManager.setStatus("Error: Mic access denied.");
+            this.uiManager.setStatus("Synth Active");
+            this.isRunning = true;
         }
     }
 

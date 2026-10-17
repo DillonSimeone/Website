@@ -201,8 +201,51 @@ async function initializeAudio() {
     }, 500);
 
   } catch (err) {
-    console.error("Microphone capture failed:", err);
-    alert("Audio initialization failed. Ensure microphone access is granted.");
+    console.warn("Microphone capture unavailable, switching to procedural synth beat:", err);
+    startDemoBeatFallback();
+  }
+}
+
+function startDemoBeatFallback() {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+  analyser = audioContext.createAnalyser();
+  analyser.fftSize = 512;
+  dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(110, audioContext.currentTime);
+  gain.gain.setValueAtTime(0.25, audioContext.currentTime);
+  osc.connect(gain);
+  gain.connect(analyser);
+
+  const master = audioContext.createGain();
+  master.gain.value = 0.15;
+  gain.connect(master);
+  master.connect(audioContext.destination);
+  osc.start();
+
+  let step = 0;
+  setInterval(() => {
+    step++;
+    const freqs = [60, 120, 240, 480, 180, 960];
+    const f = freqs[step % freqs.length];
+    osc.frequency.setValueAtTime(f, audioContext.currentTime);
+    gain.gain.setValueAtTime(0.4, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.04, audioContext.currentTime + 0.22);
+  }, 240);
+
+  isAudioInitialized = true;
+  const overlay = document.getElementById('intro-overlay');
+  if (overlay) {
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+      overlay.style.display = 'none';
+    }, 500);
   }
 }
 

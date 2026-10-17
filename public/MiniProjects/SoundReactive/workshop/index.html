@@ -21,6 +21,16 @@
   </script>
 </head>
 <body>
+  <!-- File Protocol CORS & Audio Security Warning Banner -->
+  <div id="file-protocol-warning" style="display:none; background:#ff0055; color:#ffffff; padding:10px 16px; font-family:'Courier Prime', monospace; font-size:0.8rem; font-weight:bold; letter-spacing:0.5px; border-bottom:2px solid #ffffff; text-align:center; z-index:99999; position:sticky; top:0; box-shadow:0 4px 20px rgba(255,0,85,0.6);">
+    ⚠️ LOCAL SERVER REQUIRED: Direct file:// access blocks ES Modules and Microphone capture in modern browsers due to CORS security policies. Double-click <code>start-server.bat</code> or run <code>npm start</code> to launch locally at <code>http://localhost:8080/workshop/index.html</code>.
+  </div>
+  <script>
+    if (window.location.protocol === 'file:') {
+      document.getElementById('file-protocol-warning').style.display = 'block';
+    }
+  </script>
+
   <!-- Gritty Newspaper Halftone Grid background -->
   <div class="halftone-screen"></div>
 
@@ -34,6 +44,14 @@
       <!-- Left: Brand & Source Controls -->
       <div class="brand-section">
         <div class="brand-title">
+          <a href="../index.html" class="nav-back-link" id="nav-back-link" title="Return to Sound-Reactive Hub">/// RETURN_TO_HUD</a>
+          <script>
+            // Prevent broken link if running standalone local server in SoundReactive directory
+            const backLink = document.getElementById('nav-back-link');
+            if (backLink && window.location.pathname.endsWith('/index.html') && !window.location.pathname.includes('/public/MiniProjects/SoundReactive/')) {
+              backLink.href = '/index.html';
+            }
+          </script>
           <span>WORKSHOP_MATRIX</span>
           <span class="brand-tag">LIVE_PERF</span>
         </div>
@@ -67,6 +85,9 @@
           <span class="detector-label">ACOUSTIC CLASSIFIER</span>
           <span id="sound-category-display" class="detector-val">LISTENING...</span>
         </div>
+
+        <span class="fps-telemetry-chip" id="fps-display">FPS: --</span>
+        <button id="btn-quality" class="hud-btn" title="Press [P] to cycle Performance Mode (BALANCED / ECO / HIGH)">PERF: BALANCED [P]</button>
 
         <div id="midi-pill" class="midi-pill" title="MIDI Controller Status">
           <div id="midi-led" class="midi-led"></div>

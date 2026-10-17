@@ -6,8 +6,15 @@ import { MidiController } from '../shared/midi-controller.js';
 
 let renderer, scene, camera, mesh, material;
 let audioEngine, projectionMapper, midiController;
-let currentShaderIndex = 6;
+let currentShaderIndex = 0;
 let uniforms = {};
+
+// Performance & Quality Management
+let currentQuality = 'balanced'; // 'eco', 'balanced', 'high'
+let frameCount = 0;
+let lastFpsUpdate = performance.now();
+const fpsDisplay = document.getElementById('fps-display');
+const btnQuality = document.getElementById('btn-quality');
 
 // Live DJ MIDI Runtime Variables
 let visualTime = 0;
@@ -268,6 +275,33 @@ function renderActiveShaderControls() {
 }
 
 
+function applyQuality(quality) {
+  currentQuality = quality;
+  let ratio = 1.0;
+  if (quality === 'eco') {
+    ratio = 0.75;
+  } else if (quality === 'balanced') {
+    ratio = Math.min(window.devicePixelRatio, 1.0);
+  } else if (quality === 'high') {
+    ratio = Math.min(window.devicePixelRatio, 1.5);
+  }
+
+  if (renderer) {
+    renderer.setPixelRatio(ratio);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    renderer.setSize(w, h);
+    if (uniforms && uniforms.u_resolution) {
+      uniforms.u_resolution.value.set(w * ratio, h * ratio);
+    }
+  }
+
+  const qBtn = document.getElementById('btn-quality');
+  if (qBtn) {
+    qBtn.textContent = `PERF: ${quality.toUpperCase()} [P]`;
+  }
+}
+
 function initThree() {
   const container = document.getElementById('canvas-container');
   const w = window.innerWidth;
@@ -277,9 +311,12 @@ function initThree() {
   camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
   camera.position.z = 1;
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  renderer.setSize(w, h);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Optimized for laptops: antialias: false eliminates 4x MSAA bandwidth overhead on fullscreen quad
+  renderer = new THREE.WebGLRenderer({
+    antialias: false,
+    alpha: false,
+    powerPreference: 'high-performance'
+  });
   container.appendChild(renderer.domElement);
 
   // Setup Base Uniforms & Custom Param Uniforms
@@ -311,6 +348,8 @@ function initThree() {
     u_sandDensity: { value: 1.0 }
   };
 
+  applyQuality(currentQuality);
+
   const vertexShader = `
     varying vec2 vUv;
     void main() {
@@ -337,8 +376,9 @@ function initThree() {
 function onWindowResize() {
   const w = window.innerWidth;
   const h = window.innerHeight;
+  let ratio = currentQuality === 'eco' ? 0.75 : currentQuality === 'balanced' ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 1.5);
   renderer.setSize(w, h);
-  uniforms.u_resolution.value.set(w, h);
+  uniforms.u_resolution.value.set(w * ratio, h * ratio);
 }
 
 function setShader(index) {
@@ -889,8 +929,19 @@ function bindInputEvents() {
       toggleMidiStudioDrawer();
     } else if (e.key === 'f' || e.key === 'F') {
       toggleFullscreen();
+    } else if (e.key === 'p' || e.key === 'P') {
+      const nextQ = currentQuality === 'balanced' ? 'eco' : currentQuality === 'eco' ? 'high' : 'balanced';
+      applyQuality(nextQ);
     }
   });
+
+  const btnQ = document.getElementById('btn-quality');
+  if (btnQ) {
+    btnQ.addEventListener('click', () => {
+      const nextQ = currentQuality === 'balanced' ? 'eco' : currentQuality === 'eco' ? 'high' : 'balanced';
+      applyQuality(nextQ);
+    });
+  }
 
   // Tweak Drawer Toggle Handlers
   if (btnTweak) btnTweak.addEventListener('click', () => toggleTweakDrawer());
@@ -1042,6 +1093,19 @@ function animate(time) {
   const dt = Math.max(0.001, Math.min(0.1, t - lastTime));
   lastTime = t;
 
+  // FPS Telemetry Update
+  frameCount++;
+  const nowTime = performance.now();
+  if (nowTime - lastFpsUpdate >= 500) {
+    const fps = Math.round((frameCount * 1000) / (nowTime - lastFpsUpdate));
+    if (fpsDisplay) {
+      fpsDisplay.textContent = `FPS: ${fps}`;
+      fpsDisplay.style.color = fps >= 50 ? '#00ff88' : fps >= 30 ? '#ffaa00' : '#ff0055';
+    }
+    frameCount = 0;
+    lastFpsUpdate = nowTime;
+  }
+
   // Advance visual time (modulated by tempo multiplier, frozen state, and jog scratches)
   if (!isFrozen) {
     visualTime += dt * tempoMultiplier;
@@ -1117,12 +1181,12 @@ function animate(time) {
       uniforms.u_gridVelocity.value.copy(gridVelocity);
     }
 
-    // Update Deaf DJ FFT Spectrum Bars
-    barSub.style.height = `${Math.min(30, Math.max(4, telem.subBass * 30))}px`;
-    barBass.style.height = `${Math.min(30, Math.max(4, telem.bass * 30))}px`;
-    barMid.style.height = `${Math.min(30, Math.max(4, telem.mid * 30))}px`;
-    barHigh.style.height = `${Math.min(30, Math.max(4, telem.high * 30))}px`;
-    barAir.style.height = `${Math.min(30, Math.max(4, telem.air * 30))}px`;
+    // Update Deaf DJ FFT Spectrum Bars via GPU transform (zero layout reflow)
+    barSub.style.transform = `scaleY(${Math.min(1.0, Math.max(0.08, telem.subBass))})`;
+    barBass.style.transform = `scaleY(${Math.min(1.0, Math.max(0.08, telem.bass))})`;
+    barMid.style.transform = `scaleY(${Math.min(1.0, Math.max(0.08, telem.mid))})`;
+    barHigh.style.transform = `scaleY(${Math.min(1.0, Math.max(0.08, telem.high))})`;
+    barAir.style.transform = `scaleY(${Math.min(1.0, Math.max(0.08, telem.air))})`;
 
     // Clipping Warning
     clipWarning.classList.toggle('clipping', telem.isClipping);

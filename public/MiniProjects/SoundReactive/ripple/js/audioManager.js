@@ -42,9 +42,51 @@ export class AudioManager {
             }
             return true;
         } catch (error) {
-            console.error("Audio Access Denied:", error);
-            throw error;
+            console.warn("Microphone access unavailable, falling back to demo synth beat:", error);
+            this.startDemoFallback();
+            return false;
         }
+    }
+
+    startDemoFallback() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 512;
+        this.analyser.smoothingTimeConstant = 0.8;
+        const bufferLength = this.analyser.frequencyBinCount;
+        this.dataArray = new Uint8Array(bufferLength);
+        this.frequencyData = new Uint8Array(bufferLength);
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(this.analyser);
+        
+        const master = this.ctx.createGain();
+        master.gain.value = 0.15;
+        gain.connect(master);
+        master.connect(this.ctx.destination);
+        osc.start();
+
+        let step = 0;
+        setInterval(() => {
+            step++;
+            const notes = [65.4, 130.8, 196.0, 261.6, 329.6, 523.2];
+            const freq = notes[step % notes.length];
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.02, this.ctx.currentTime + 0.22);
+        }, 250);
+
+        this.isInitialized = true;
     }
 
     setSmoothing(val) {

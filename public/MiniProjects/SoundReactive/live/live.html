@@ -48,7 +48,17 @@
 
   <!-- Top DJ HUD Overlay -->
   <header class="dj-top-hud">
-    <!-- Left/Center Deaf DJ FFT Spectrum Telemetry -->
+    <!-- Left Navigation & Telemetry -->
+    <div class="hud-col left">
+      <a href="../index.html" class="nav-back">/// RETURN_TO_HUD</a>
+      <div class="shader-info-block">
+        <span class="hud-tag">LIVE_SUITE</span>
+        <h1 class="shader-title" id="shader-title-display">CYMATICS RESONANCE MATRIX</h1>
+      </div>
+      <span class="fps-telemetry-chip" id="fps-display">FPS: --</span>
+    </div>
+
+    <!-- Center Deaf DJ FFT Spectrum Telemetry -->
     <div class="hud-col center">
       <div class="telemetry-box">
         <div class="spectrum-mini-bars">
@@ -91,6 +101,7 @@
       </div>
       <div class="hud-divider"></div>
       <div class="system-tools">
+        <button id="btn-quality" class="hud-btn alt" title="Press [P] to cycle Performance Mode (BALANCED / ECO / HIGH)">PERF: BALANCED [P]</button>
         <button id="btn-midi" class="hud-btn alt" title="Press [M] to toggle MIDI Studio Deck"><span class="midi-led" id="midi-led"></span><span id="midi-btn-text">MIDI [OFFLINE]</span></button>
         <button id="btn-tweak" class="hud-btn" title="Press [T] to toggle Shader Tweaker">TWEAK [T]</button>
         <button id="btn-calibrate" class="hud-btn alt" title="Press [C] to toggle Projector Mapping">MAPPING [C]</button>

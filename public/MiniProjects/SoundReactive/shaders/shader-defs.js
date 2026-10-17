@@ -520,8 +520,8 @@ export const SHADER_DEFINITIONS = [
         }
 
         md = 8.0;
-        for (int j = -2; j <= 2; j++) {
-          for (int i = -2; i <= 2; i++) {
+        for (int j = -1; j <= 1; j++) {
+          for (int i = -1; i <= 1; i++) {
             vec2 g = mg + vec2(float(i), float(j));
             vec2 o = vec2(hash21(n + g), hash21(n + g + 13.7));
             o = 0.5 + 0.4 * sin(u_time * 1.2 + 6.2831 * o);
@@ -632,12 +632,12 @@ export const SHADER_DEFINITIONS = [
         float trap = 0.0;
         float glow = 0.0;
 
-        for (int i = 0; i < 48; i++) {
+        for (int i = 0; i < 36; i++) {
           vec3 p = ro + rd * t;
           float d = mandelbulb(p, trap);
           glow += (0.02 * u_glowMultiplier) / (abs(d) + 0.05);
 
-          if (d < 0.003 || t > 5.0) break;
+          if (d < 0.003 || t > 4.5 || glow > 2.2) break;
           t += d * 0.8;
         }
 

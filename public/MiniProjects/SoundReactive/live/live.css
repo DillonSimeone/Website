@@ -83,6 +83,36 @@ body, html {
   align-items: center;
 }
 
+.hud-col.left {
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.shader-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud-tag {
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  color: #ff0055;
+  font-weight: 700;
+}
+
+.fps-telemetry-chip {
+  background: rgba(10, 10, 20, 0.85);
+  border: 1px solid #333348;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 3px;
+  color: #00ff88;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
 .hud-col.center {
   flex-shrink: 0;
 }
@@ -115,11 +145,11 @@ body, html {
 .nav-back {
   color: #ff3366;
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 1px;
   background: rgba(255, 51, 102, 0.1);
-  padding: 8px 14px;
+  padding: 6px 10px;
   border: 1px solid rgba(255, 51, 102, 0.4);
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -132,7 +162,7 @@ body, html {
 
 .shader-title {
   font-family: 'Special Elite', cursive, monospace;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   color: #ffffff;
   letter-spacing: 1.5px;
   text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
@@ -177,14 +207,16 @@ body, html {
   align-items: flex-end;
   padding: 2px;
   margin-bottom: 5px;
+  overflow: hidden;
 }
 
 .bar-fill {
   width: 100%;
-  height: 4px;
-  min-height: 4px;
+  height: 28px;
   border-radius: 2px;
-  transition: height 0.05s ease-out;
+  transform-origin: bottom;
+  transform: scaleY(0.1);
+  will-change: transform;
 }
 
 .bar-fill.sub { background: #ff0033; box-shadow: 0 0 8px #ff0033; }
@@ -903,7 +935,7 @@ body.mapping-mode-active .dj-bottom-deck:hover {
   height: 100%;
   pointer-events: none;
   z-index: 15;
-  transition: backdrop-filter 0.05s ease, filter 0.05s ease, background-color 0.05s ease;
+  transition: opacity 0.05s ease, background-color 0.05s ease;
 }
 
 .dj-fx-overlay.strobe {
@@ -1030,8 +1062,8 @@ body.mapping-mode-active .dj-bottom-deck:hover {
   width: 820px;
   max-width: 96vw;
   height: 100vh;
-  background: rgba(10, 10, 18, 0.97);
-  backdrop-filter: blur(20px);
+  background: rgba(10, 10, 18, 0.98);
+  backdrop-filter: blur(8px);
   border-right: 2px solid #00e5ff;
   box-shadow: 12px 0 45px rgba(0, 0, 0, 0.95);
   z-index: 160;

@@ -131,6 +131,29 @@ const toastContainer = document.getElementById('toast-container');
 const startModal = document.getElementById('start-modal');
 const modalBtnMic = document.getElementById('modal-btn-mic');
 const modalBtnDemo = document.getElementById('modal-btn-demo');
+const fpsDisplay = document.getElementById('fps-display');
+const btnQuality = document.getElementById('btn-quality');
+
+// Performance & Quality Management
+let currentQuality = 'balanced'; // 'eco', 'balanced', 'high'
+let frameCount = 0;
+let lastFpsUpdate = performance.now();
+
+function getQualityPixelRatio() {
+  if (currentQuality === 'eco') return 0.75;
+  if (currentQuality === 'high') return Math.min(window.devicePixelRatio || 1, 1.5);
+  return Math.min(window.devicePixelRatio || 1, 1.0);
+}
+
+function applyQuality(quality) {
+  currentQuality = quality;
+  if (renderer) {
+    resizeThree();
+  }
+  if (btnQuality) {
+    btnQuality.textContent = `PERF: ${quality.toUpperCase()} [P]`;
+  }
+}
 
 /* =========================================================================
    3. AUDIO ENGINE & ACOUSTIC CLASSIFIER
@@ -399,9 +422,13 @@ function initThreeCymatics() {
   scene = new THREE.Scene();
   camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  const initialDpr = Math.min(window.devicePixelRatio || 1, 2.5);
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(initialDpr);
+  // Optimized for laptops: antialias: false eliminates 4x MSAA bandwidth overhead on fullscreen quad
+  renderer = new THREE.WebGLRenderer({
+    antialias: false,
+    alpha: true,
+    powerPreference: 'high-performance'
+  });
+  applyQuality(currentQuality);
   shaderCanvasContainer.appendChild(renderer.domElement);
 
   uniforms = {
@@ -565,7 +592,7 @@ function resizeThree() {
   if (!renderer || !shaderCanvasContainer) return;
   const rect = shaderCanvasContainer.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) return;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  const dpr = getQualityPixelRatio();
   renderer.setPixelRatio(dpr);
   renderer.setSize(rect.width, rect.height, false);
   if (uniforms.u_resolution) {
@@ -1007,8 +1034,18 @@ window.addEventListener('keydown', (e) => {
   } else if (e.code === 'Space') {
     e.preventDefault();
     handleTapTempo();
+  } else if (e.key === 'p' || e.key === 'P') {
+    const nextQ = currentQuality === 'balanced' ? 'eco' : currentQuality === 'eco' ? 'high' : 'balanced';
+    applyQuality(nextQ);
   }
 });
+
+if (btnQuality) {
+  btnQuality.addEventListener('click', () => {
+    const nextQ = currentQuality === 'balanced' ? 'eco' : currentQuality === 'eco' ? 'high' : 'balanced';
+    applyQuality(nextQ);
+  });
+}
 
 /* =========================================================================
    11. TOP CONTROLS & FILE UPLOADS
@@ -1057,6 +1094,19 @@ function animate(now) {
 
   const dt = (now - prevTime) * 0.001;
   prevTime = now;
+
+  // FPS Telemetry Update
+  frameCount++;
+  const nowTime = performance.now();
+  if (nowTime - lastFpsUpdate >= 500) {
+    const fps = Math.round((frameCount * 1000) / (nowTime - lastFpsUpdate));
+    if (fpsDisplay) {
+      fpsDisplay.textContent = `FPS: ${fps}`;
+      fpsDisplay.style.color = fps >= 50 ? '#00ff88' : fps >= 30 ? '#ffaa00' : '#ff0055';
+    }
+    frameCount = 0;
+    lastFpsUpdate = nowTime;
+  }
 
   // 1. Update Audio Engine
   const telemetry = audioEngine.update();
