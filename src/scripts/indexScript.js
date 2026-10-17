@@ -224,9 +224,7 @@ function ensureGalleries(targetID) {
 }
 
 function triggerSectionVideos(targetID) {
-    const sec = document.getElementById(targetID);
-    if (!sec) return;
-    sec.querySelectorAll('video.lazy-loop-video').forEach(v => loadAndPlayVideo(v));
+    initLazyVideos();
 }
 
 function resetSectionChrome(targetID) {
@@ -253,7 +251,6 @@ function slidePages(outgoing, incoming, fromRight) {
     });
 
     snapClass(incoming, `item ${enterClass}`);
-    ensureGalleries(incoming.id);
 
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -263,24 +260,31 @@ function slidePages(outgoing, incoming, fromRight) {
         });
     });
 
+    let transitionFinished = false;
     const finish = (e) => {
-        if (e.propertyName !== 'transform' || e.target !== incoming) return;
+        if (e && (e.propertyName !== 'transform' || e.target !== incoming)) return;
         incoming.removeEventListener('transitionend', finish);
-        if (token !== slideToken) return;
+        if (token !== slideToken || transitionFinished) return;
+        transitionFinished = true;
+
         incoming.classList.remove('is-entering');
         if (outgoing.className !== 'item hide' && !outgoing.classList.contains('reveal')) {
             snapClass(outgoing, 'item hide');
+        }
+
+        // Defer heavy media/gallery processing until the slide completes
+        ensureGalleries(incoming.id);
+
+        // Cap DOM memory of outgoing section
+        if (outgoing && outgoing.id) {
+            trimInactiveSection(outgoing.id);
         }
     };
     incoming.addEventListener('transitionend', finish);
 
     window.setTimeout(() => {
-        if (token !== slideToken) return;
-        incoming.classList.remove('is-entering');
-        if (outgoing.className !== 'item hide' && !outgoing.classList.contains('reveal')) {
-            snapClass(outgoing, 'item hide');
-        }
-    }, 700);
+        finish();
+    }, 450);
 }
 
 function reveal(targetID, buttonID, timedelay = 60, historyAPI = false) {
@@ -313,15 +317,21 @@ function reveal(targetID, buttonID, timedelay = 60, historyAPI = false) {
             const fadeToken = fadeIn ? ++mobileFadeToken : mobileFadeToken;
             hideAll(targetID, buttonID);
             target.className = fadeIn ? 'item reveal mobile-fade' : 'item reveal';
-            ensureGalleries(targetID);
+
+            if (outgoing && outgoing.id && outgoing.id !== targetID) {
+                trimInactiveSection(outgoing.id);
+            }
 
             if (fadeIn) {
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         if (fadeToken !== mobileFadeToken) return;
                         target.classList.remove('mobile-fade');
+                        ensureGalleries(targetID);
                     });
                 });
+            } else {
+                ensureGalleries(targetID);
             }
         }
 
@@ -459,6 +469,276 @@ window.randomizeColor = randomizeColor;
 // Function getUrlVars has been refactored to use URLSearchParams directly where needed.
 
 /*=======================================================
+            Progressive Card Loading & Memory Manager
+=========================================================*/
+
+const _cardPools = {};
+const _sentinelObservers = {};
+const _progressiveConfigs = [
+    {
+        id: 'projects',
+        getContainer: () => document.querySelector('#projects .grid'),
+        getCards: () => Array.from(document.querySelectorAll('#projects .grid > .grid-item')),
+        label: 'projects'
+    },
+    {
+        id: 'embedded',
+        getContainer: () => document.querySelector('#embedded .grid'),
+        getCards: () => Array.from(document.querySelectorAll('#embedded .grid > .grid-item')),
+        label: 'hardware projects'
+    },
+    {
+        id: 'work',
+        getContainer: () => document.querySelector('#work section'),
+        getCards: () => Array.from(document.querySelectorAll('#work section > div:not(.progressive-load-indicator)')),
+        label: 'past works'
+    },
+    {
+        id: 'hobby',
+        getContainer: () => document.querySelector('#hobby section'),
+        getCards: () => Array.from(document.querySelectorAll('#hobby section > .artwork')),
+        label: 'hobbies & artworks'
+    }
+];
+
+const INITIAL_BATCH_SIZE = 8;
+const SCROLL_BATCH_SIZE = 6;
+const MAX_RETAIN_INACTIVE = 16;
+
+/**
+ * Initializes progressive card loading across heavy sections.
+ * Runs after dynamic nav generation so all titles and anchor IDs exist.
+ */
+function initProgressiveCardLoading() {
+    _progressiveConfigs.forEach(cfg => {
+        const container = cfg.getContainer();
+        if (!container) return;
+
+        const cards = cfg.getCards();
+        if (cards.length <= INITIAL_BATCH_SIZE) return;
+
+        _cardPools[cfg.id] = [];
+
+        if (cfg.id === 'hobby') {
+            // For hobby, retain the first 8 .artwork cards.
+            // Any sibling elements following the 8th card (remaining cards + headers) are detached in order.
+            const pivot = cards[INITIAL_BATCH_SIZE - 1];
+            let next = pivot.nextElementSibling;
+            while (next && !next.classList.contains('site-footer')) {
+                const toRemove = next;
+                next = next.nextElementSibling;
+                _cardPools[cfg.id].push(toRemove);
+                toRemove.remove();
+            }
+        } else {
+            // For projects, embedded, work: slice from index 8 onwards
+            const toPool = cards.slice(INITIAL_BATCH_SIZE);
+            toPool.forEach(card => {
+                _cardPools[cfg.id].push(card);
+                card.remove();
+            });
+        }
+
+        // Create indicator / sentinel
+        const indicator = document.createElement('div');
+        indicator.className = 'progressive-load-indicator';
+        indicator.id = `progressive-sentinel-${cfg.id}`;
+        indicator.setAttribute('data-section', cfg.id);
+        indicator.innerHTML = `<span class="load-dot"></span><span>Loading more ${cfg.label}...</span>`;
+
+        const footer = container.querySelector('.site-footer') || container.parentElement?.querySelector('.site-footer');
+        if (container.tagName === 'SECTION' && footer && footer.parentElement === container) {
+            container.insertBefore(indicator, footer);
+        } else {
+            container.appendChild(indicator);
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    loadNextBatch(cfg.id);
+                }
+            });
+        }, { rootMargin: '400px 0px' });
+
+        observer.observe(indicator);
+        _sentinelObservers[cfg.id] = observer;
+    });
+
+    handleInitialAnchor();
+}
+
+/**
+ * Loads the next batch of cards for the given section.
+ */
+function loadNextBatch(sectionId, count = SCROLL_BATCH_SIZE) {
+    const pool = _cardPools[sectionId];
+    if (!pool || pool.length === 0) return;
+
+    const cfg = _progressiveConfigs.find(c => c.id === sectionId);
+    if (!cfg) return;
+
+    const container = cfg.getContainer();
+    const indicator = document.getElementById(`progressive-sentinel-${sectionId}`);
+    if (!container || !indicator) return;
+
+    let batch = pool.splice(0, count);
+
+    // In hobby, if the next item is a lone header (e.g. H1), mount it with this batch
+    if (sectionId === 'hobby' && pool.length > 0 && pool[0].tagName === 'H1') {
+        batch.push(pool.shift());
+        if (pool.length > 0) {
+            batch.push(pool.shift());
+        }
+    }
+
+    const fragment = document.createDocumentFragment();
+    batch.forEach(el => fragment.appendChild(el));
+    container.insertBefore(fragment, indicator);
+
+    onCardsAppended(sectionId);
+
+    if (pool.length === 0) {
+        indicator.classList.add('is-hidden');
+        if (_sentinelObservers[sectionId]) {
+            _sentinelObservers[sectionId].disconnect();
+        }
+    }
+}
+
+/**
+ * Re-runs needed initializers on newly mounted cards.
+ */
+function onCardsAppended(sectionId) {
+    initYouTubeFacades();
+    initLazyVideos();
+    if (_galleriesInitialized.has(sectionId)) {
+        _galleriesConfig.forEach(cfg => {
+            if (cfg.id === sectionId) {
+                initSectionGalleries(cfg.id, cfg.selector, cfg.minSize);
+            }
+        });
+    }
+}
+
+/**
+ * Automatically expands cards in a pool until the target ID is mounted in the DOM.
+ */
+function expandToCard(sectionId, targetId) {
+    if (!targetId) return;
+    if (document.getElementById(targetId)) return;
+
+    const pool = _cardPools[sectionId];
+    if (!pool || pool.length === 0) return;
+
+    const cfg = _progressiveConfigs.find(c => c.id === sectionId);
+    if (!cfg) return;
+
+    const container = cfg.getContainer();
+    const indicator = document.getElementById(`progressive-sentinel-${sectionId}`);
+    if (!container) return;
+
+    // Search pool for element matching targetId
+    let foundIndex = -1;
+    for (let i = 0; i < pool.length; i++) {
+        const el = pool[i];
+        if (el.id === targetId) {
+            foundIndex = i;
+            break;
+        }
+        try {
+            if (el.querySelector('#' + CSS.escape(targetId)) || el.querySelector(`[id="${targetId}"]`)) {
+                foundIndex = i;
+                break;
+            }
+        } catch (e) {
+            if (el.querySelector(`[id="${targetId}"]`)) {
+                foundIndex = i;
+                break;
+            }
+        }
+    }
+
+    if (foundIndex === -1) return;
+
+    const batch = pool.splice(0, foundIndex + 1);
+    const fragment = document.createDocumentFragment();
+    batch.forEach(el => fragment.appendChild(el));
+
+    if (indicator && indicator.parentElement === container) {
+        container.insertBefore(fragment, indicator);
+    } else {
+        container.appendChild(fragment);
+    }
+
+    onCardsAppended(sectionId);
+
+    if (pool.length === 0 && indicator) {
+        indicator.classList.add('is-hidden');
+        if (_sentinelObservers[sectionId]) {
+            _sentinelObservers[sectionId].disconnect();
+        }
+    }
+}
+
+/**
+ * Trims inactive section back down to maxRetain (16 cards) to conserve memory.
+ */
+function trimInactiveSection(sectionId, maxRetain = MAX_RETAIN_INACTIVE) {
+    if (!_cardPools[sectionId]) return;
+
+    const cfg = _progressiveConfigs.find(c => c.id === sectionId);
+    if (!cfg) return;
+
+    const cards = cfg.getCards();
+    if (cards.length <= maxRetain) return;
+
+    const pool = _cardPools[sectionId];
+    const indicator = document.getElementById(`progressive-sentinel-${sectionId}`);
+
+    if (sectionId === 'hobby') {
+        const pivot = cards[maxRetain - 1];
+        let next = pivot.nextElementSibling;
+        const trimmed = [];
+        while (next && next !== indicator && !next.classList.contains('site-footer')) {
+            const toRemove = next;
+            next = next.nextElementSibling;
+            trimmed.push(toRemove);
+            toRemove.remove();
+        }
+        _cardPools[sectionId] = [...trimmed, ...pool];
+    } else {
+        const toTrim = cards.slice(maxRetain);
+        toTrim.forEach(card => {
+            card.remove();
+        });
+        _cardPools[sectionId] = [...toTrim, ...pool];
+    }
+
+    if (indicator) {
+        indicator.classList.remove('is-hidden');
+        if (_sentinelObservers[sectionId]) {
+            _sentinelObservers[sectionId].disconnect();
+            _sentinelObservers[sectionId].observe(indicator);
+        }
+    }
+}
+
+/**
+ * Checks if the page was opened with an anchor hash and expands up to that card.
+ */
+function handleInitialAnchor() {
+    const hash = window.location.hash ? window.location.hash.substring(1) : '';
+    if (!hash) return;
+
+    for (const cfg of _progressiveConfigs) {
+        expandToCard(cfg.id, hash);
+    }
+}
+
+window.addEventListener('hashchange', () => handleInitialAnchor());
+
+/*=======================================================
                 Initialization Logic
 =========================================================*/
 
@@ -479,6 +759,10 @@ function setUp() {
 
     randomizeColor();
 
+    generateDynamicNavs();
+    injectFooters();
+    initProgressiveCardLoading();
+
     if (page === 'library' || page === 'labyrinth') {
         reveal('elevatorPitch', 'LandingPage', 0, true);
         if (libraryAllowed()) {
@@ -494,9 +778,6 @@ function setUp() {
         ensureGalleries('elevatorPitch');
         resetSectionChrome('elevatorPitch');
     }
-
-    generateDynamicNavs();
-    injectFooters();
 
     // Gallery initialization is now deferred — see reveal() function.
     // Galleries are only processed the first time each section is shown.
@@ -620,7 +901,12 @@ document.addEventListener('click', (e) => {
         const href = e.target.getAttribute('href');
         if (href.startsWith('#')) {
             e.preventDefault();
-            const target = document.getElementById(href.substring(1));
+            const targetId = href.substring(1);
+            const section = nav.closest('.item');
+            if (section) {
+                expandToCard(section.id, targetId);
+            }
+            const target = document.getElementById(targetId);
             if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -703,6 +989,8 @@ function initSectionGalleries(sectionId, blockSelector, minSizeToConvert = 0) {
             : block.querySelector('.images, .medias, .videos');
 
         if (!imageGrid) return;
+        if (imageGrid.dataset.galleryInitialized) return;
+        imageGrid.dataset.galleryInitialized = 'true';
 
         const items = Array.from(imageGrid.querySelectorAll('img, video, .youtube-facade')).filter(el => {
             return !el.closest('.shop-loop-container') && !el.hasAttribute('autoplay');
@@ -999,6 +1287,7 @@ window.initShopImageZoom = initShopImageZoom;
  * Lazy loads and manages playback for looping background and short videos.
  * Only loads sources when element is near the viewport; pauses when offscreen.
  */
+let _lazyVideoObserver = null;
 function initLazyVideos() {
     const lazyVideos = document.querySelectorAll('video.lazy-loop-video');
     if (lazyVideos.length === 0) return;
@@ -1008,20 +1297,27 @@ function initLazyVideos() {
         return;
     }
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            const video = entry.target;
-            if (entry.isIntersecting) {
-                loadAndPlayVideo(video);
-            } else {
-                if (!video.paused) {
-                    video.pause();
+    if (!_lazyVideoObserver) {
+        _lazyVideoObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target;
+                if (entry.isIntersecting) {
+                    loadAndPlayVideo(video);
+                } else {
+                    if (!video.paused) {
+                        video.pause();
+                    }
                 }
-            }
-        });
-    }, { rootMargin: '200px 0px' });
+            });
+        }, { rootMargin: '200px 0px' });
+    }
 
-    lazyVideos.forEach(v => observer.observe(v));
+    lazyVideos.forEach(v => {
+        if (!v.dataset.lazyObserverAttached) {
+            v.dataset.lazyObserverAttached = 'true';
+            _lazyVideoObserver.observe(v);
+        }
+    });
 }
 
 function loadAndPlayVideo(video) {
