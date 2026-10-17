@@ -25,7 +25,7 @@ echo Building Standalone Windowed Tray Executable...
 echo (No console window, runs silently in system tray)
 echo.
 
-%PY_CMD% -m PyInstaller --noconfirm --onefile --windowed --name "GoveeTrayControl" --icon="bulb.ico" --add-data "bulb.ico;." tray_app.py
+%PY_CMD% -m PyInstaller --noconfirm --onefile --windowed --name "GoveeTrayControl" --icon="bulb.ico" --add-data "bulb.ico;." --collect-all zeroconf --hidden-import websocket tray_app.py
 
 if %errorlevel% neq 0 (
     echo.

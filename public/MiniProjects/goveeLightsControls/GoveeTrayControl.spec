@@ -1,12 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_all
+
+datas = [('bulb.ico', '.'), ('pixelblaze_cache.json', '.'), ('govee_lan_cache.json', '.')]
+binaries = []
+hiddenimports = ['websocket']
+tmp_ret = collect_all('zeroconf')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
 a = Analysis(
     ['tray_app.py'],
     pathex=[],
-    binaries=[],
-    datas=[('bulb.ico', '.')],
-    hiddenimports=[],
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

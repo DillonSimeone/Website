@@ -87,6 +87,57 @@ class GoveeManager:
         self._pending_brightness_timers: Dict[str, threading.Timer] = {}
         self.on_state_updated: Optional[Callable[[], None]] = None
 
+        self.cache_file = os.path.join(
+            os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(__file__),
+            "govee_lan_cache.json"
+        )
+        self._load_lan_cache()
+
+    def _load_lan_cache(self):
+        if os.path.exists(self.cache_file):
+            try:
+                with open(self.cache_file, "r", encoding="utf-8") as f:
+                    cached = json.load(f)
+                    if isinstance(cached, dict):
+                        self.lan_devices.update(cached)
+            except Exception as e:
+                print(f"[Govee LAN Cache Load Error] {e}")
+
+    def _save_lan_cache(self):
+        try:
+            with open(self.cache_file, "w", encoding="utf-8") as f:
+                json.dump(self.lan_devices, f, indent=2)
+        except Exception as e:
+            print(f"[Govee LAN Cache Save Error] {e}")
+
+    def set_device_ip(self, mac: str, ip: Optional[str]) -> bool:
+        clean_mac = mac.replace(":", "").upper()
+        with self._lock:
+            if not ip or not ip.strip():
+                # Clear assignment
+                keys_to_remove = [k for k in self.lan_devices if k.replace(":", "").upper() == clean_mac]
+                for k in keys_to_remove:
+                    self.lan_devices.pop(k, None)
+                for dev in self.devices.values():
+                    if dev.mac.replace(":", "").upper() == clean_mac:
+                        dev.lan_ip = None
+                self._save_lan_cache()
+                return True
+
+            clean_ip = ip.strip()
+            self.lan_devices[mac] = clean_ip
+            for dev in self.devices.values():
+                if dev.mac.replace(":", "").upper() == clean_mac:
+                    dev.lan_ip = clean_ip
+        self._save_lan_cache()
+        # Verify via UDP devStatus
+        try:
+            status_cmd = {"msg": {"cmd": "devStatus", "data": {}}}
+            self._send_lan_command(clean_ip, status_cmd)
+        except Exception:
+            pass
+        return True
+
     def get_headers(self):
         return {
             "Content-Type": "application/json",
@@ -97,7 +148,12 @@ class GoveeManager:
         """Discovers any Govee devices supporting LAN API on the local network."""
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            try:
+                s.bind(("", 4002))
+            except Exception as e:
+                print(f"[Govee LAN Bind Error] {e}")
             s.settimeout(timeout)
             
             scan_msg = json.dumps({
@@ -109,9 +165,27 @@ class GoveeManager:
                 }
             }).encode()
             
-            s.sendto(scan_msg, ("239.255.255.250", 4001))
+            # Send to standard multicast address
+            try:
+                s.sendto(scan_msg, ("239.255.255.250", 4001))
+            except Exception:
+                pass
+
+            # Send to general and directed broadcasts
+            for bcast_ip in ("255.255.255.255", "192.168.1.255", "10.237.23.255"):
+                try:
+                    s.sendto(scan_msg, (bcast_ip, 4001))
+                except Exception:
+                    pass
+
+            # Also probe any known/cached IPs directly with unicast
+            for ip in set(self.lan_devices.values()):
+                try:
+                    s.sendto(scan_msg, (ip, 4001))
+                except Exception:
+                    pass
+
             start_time = time.time()
-            
             while time.time() - start_time < timeout:
                 try:
                     data, addr = s.recvfrom(2048)
@@ -122,11 +196,13 @@ class GoveeManager:
                         ip = d_info.get("ip") or addr[0]
                         mac = d_info.get("device")
                         if mac and ip:
-                            # Standardize mac format (uppercase with colons)
                             clean_mac = ":".join(mac[i:i+2].upper() for i in range(0, len(mac.replace(":", "")), 2))
-                            self.lan_devices[clean_mac] = ip
-                            if clean_mac in self.devices:
-                                self.devices[clean_mac].lan_ip = ip
+                            with self._lock:
+                                self.lan_devices[clean_mac] = ip
+                                for dev in self.devices.values():
+                                    if dev.mac.replace(":", "").upper() == clean_mac.replace(":", "").upper():
+                                        dev.lan_ip = ip
+                            self._save_lan_cache()
                 except socket.timeout:
                     break
                 except Exception:
@@ -163,9 +239,11 @@ class GoveeManager:
                             self.devices[mac].capabilities = d.get("capabilities", self.devices[mac].capabilities)
                 
                 # Link known LAN IPs
-                for mac, ip in self.lan_devices.items():
-                    if mac in self.devices:
-                        self.devices[mac].lan_ip = ip
+                for mac_key, ip in self.lan_devices.items():
+                    norm_mac = mac_key.replace(":", "").upper()
+                    for dev in self.devices.values():
+                        if dev.mac.replace(":", "").upper() == norm_mac:
+                            dev.lan_ip = ip
 
             # Fetch states for all devices in parallel
             self.refresh_all_states()
