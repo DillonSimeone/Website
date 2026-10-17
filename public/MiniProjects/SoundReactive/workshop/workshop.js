@@ -1093,7 +1093,7 @@ function animate(now) {
 }
 
 /* =========================================================================
-   13. MUSICAL SCORE ENGINE FOR DEAF PERFORMERS (4-PART ENSEMBLE)
+   13. MUSICAL SCORE ENGINE // "LOVE YOUR NEIGHBOR" (14-SESSION ENSEMBLE)
    ========================================================================= */
 
 const btnMusicalScore = document.getElementById('btn-musical-score');
@@ -1101,65 +1101,968 @@ const scoreOverlay = document.getElementById('score-overlay');
 const btnCloseScore = document.getElementById('btn-close-score');
 const btnScorePlay = document.getElementById('btn-score-play');
 const btnScoreLoop = document.getElementById('btn-score-loop');
+const btnScoreSynth = document.getElementById('btn-score-synth');
+const btnScoreCountIn = document.getElementById('btn-score-countin');
 const scoreTabBtns = document.querySelectorAll('.score-tab-btn');
+const sessionPillsRack = document.getElementById('session-pills-rack');
 const scoreMeasureRuler = document.getElementById('score-measure-ruler');
 const scoreLanesContainer = document.getElementById('score-lanes-container');
 const scorePlayhead = document.getElementById('score-playhead');
 const scoreMeasureVal = document.getElementById('score-measure-val');
 const scoreBeatVal = document.getElementById('score-beat-val');
 const scoreBpmVal = document.getElementById('score-bpm-val');
+const scoreTeleHintText = document.getElementById('score-tele-hint-text');
 
-const SCORE_DATA = [
+// Zoom and Warm-Up Controls
+const btnScoreZoomIn = document.getElementById('btn-score-zoom-plus');
+const btnScoreZoomOut = document.getElementById('btn-score-zoom-minus');
+const scoreZoomVal = document.getElementById('score-zoom-val');
+const btnScoreWarmup = document.getElementById('btn-score-warmup');
+
+// Count-In Elements
+const countInOverlay = document.getElementById('countin-overlay');
+const countInNum = document.getElementById('countin-num');
+const countInLabel = document.getElementById('countin-label');
+
+// Synchronized ASL / Caption Card Elements
+const captionPhraseBadge = document.getElementById('caption-phrase-badge');
+const captionTempoBadge = document.getElementById('caption-tempo-badge');
+const captionLyricText = document.getElementById('caption-lyric-text');
+const captionSignHint = document.getElementById('caption-sign-hint');
+const phraseProgressBar = document.getElementById('phrase-progress-bar');
+const aslVideoAsset = document.getElementById('asl-video-asset');
+const aslPlaceholder = document.getElementById('asl-media-placeholder');
+
+/* --- 13.1 Master Score Data ("Love Your Neighbor") --- */
+
+// The 7 canonical 2-bar lyric phrases forming the 14-bar Master Loop (Page 3 of PDF)
+const MASTER_LOOP_PHRASES = [
   {
-    partId: 0,
-    title: 'PART A: CALL & RESPONSE',
+    phraseIndex: 1,
+    bars: [1, 2],
+    lyric: "This is our world, bright and wide,",
+    signHint: "Singers sing & Signers sign phrase across the 2-bar window",
+    aslWebpUrl: "",
     measures: [
-      { hits: { pillar_ul: [0, 2], pillar_ur: [], pillar_ll: [], pillar_lr: [] } },
-      { hits: { pillar_ul: [], pillar_ur: [1, 3], pillar_ll: [], pillar_lr: [] } },
-      { hits: { pillar_ul: [], pillar_ur: [], pillar_ll: [0, 1], pillar_lr: [] } },
-      { hits: { pillar_ul: [], pillar_ur: [], pillar_ll: [], pillar_lr: [2, 3] } }
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }, // Bar 1
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }  // Bar 2
     ]
   },
   {
-    partId: 1,
-    title: 'PART B: DRIVING GROOVE',
+    phraseIndex: 2,
+    bars: [3, 4],
+    lyric: "Every hand has something kind.",
+    signHint: "Clap on beats 2 & 4 adds rhythmic momentum",
+    aslWebpUrl: "",
     measures: [
-      { hits: { pillar_ul: [0, 2], pillar_ur: [1, 3], pillar_ll: [1, 2], pillar_lr: [] } },
-      { hits: { pillar_ul: [0, 2], pillar_ur: [1, 3], pillar_ll: [2], pillar_lr: [3] } },
-      { hits: { pillar_ul: [0, 2], pillar_ur: [1, 3], pillar_ll: [1, 2], pillar_lr: [] } },
-      { hits: { pillar_ul: [0, 2], pillar_ur: [1, 3], pillar_ll: [0, 2], pillar_lr: [3] } }
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }, // Bar 3
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }  // Bar 4
     ]
   },
   {
-    partId: 2,
-    title: 'PART C: TUTTI CLIMAX',
+    phraseIndex: 3,
+    bars: [5, 6],
+    lyric: "When you fall, I’ll help you rise,",
+    signHint: "Singers & Signers lift energy into the upcoming Hoot cue",
+    aslWebpUrl: "",
     measures: [
-      { hits: { pillar_ul: [0, 2], pillar_ur: [0, 2], pillar_ll: [1, 3], pillar_lr: [1, 3] } },
-      { hits: { pillar_ul: [0], pillar_ur: [1], pillar_ll: [2], pillar_lr: [3] } },
-      { hits: { pillar_ul: [0, 2], pillar_ur: [1, 3], pillar_ll: [0, 2], pillar_lr: [1, 3] } },
-      { hits: { pillar_ul: [0, 1, 2, 3], pillar_ur: [0, 1, 2, 3], pillar_ll: [0, 1, 2, 3], pillar_lr: [0, 1, 2, 3] } }
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }, // Bar 5
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }  // Bar 6
     ]
   },
   {
-    partId: 3,
-    title: 'PART D: OUTRO FADE',
+    phraseIndex: 4,
+    bars: [7, 8],
+    lyric: "When I’m lost, you’re by my side.",
+    signHint: "Hoot sustains on beat 1 of Bar 7 for 2 beats! Clap on beats 2 & 4",
+    aslWebpUrl: "",
     measures: [
-      { hits: { pillar_ul: [0], pillar_ur: [0], pillar_ll: [0], pillar_lr: [0] } },
-      { hits: { pillar_ul: [], pillar_ur: [], pillar_ll: [1], pillar_lr: [3] } },
-      { hits: { pillar_ul: [0], pillar_ur: [], pillar_ll: [], pillar_lr: [] } },
-      { hits: { pillar_ul: [0], pillar_ur: [0], pillar_ll: [0], pillar_lr: [0] } }
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: { startBeat: 0, durationBeats: 2, label: "HOOT (2 BEATS)" } }, // Bar 7
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null } // Bar 8
+    ]
+  },
+  {
+    phraseIndex: 5,
+    bars: [9, 10],
+    lyric: "Different voices, one big song,",
+    signHint: "Singers sing & Signers sign phrase across the 2-bar window",
+    aslWebpUrl: "",
+    measures: [
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }, // Bar 9
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }  // Bar 10
+    ]
+  },
+  {
+    phraseIndex: 6,
+    bars: [11, 12],
+    lyric: "Every neighbor can belong.",
+    signHint: "Clap on beats 2 & 4 building toward the grand finale phrase",
+    aslWebpUrl: "",
+    measures: [
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }, // Bar 11
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }  // Bar 12
+    ]
+  },
+  {
+    phraseIndex: 7,
+    bars: [13, 14],
+    lyric: "Love your neighbor, near and far— / This is who we are!",
+    signHint: "Hoot sustains on beat 1 for 4 beats! Clap on all 4 beats!",
+    aslWebpUrl: "",
+    measures: [
+      { bass: [0, 2], snare: [1, 3], clap: [0, 1, 2, 3], hoot: { startBeat: 0, durationBeats: 4, label: "TOOT (4 BEATS)" } }, // Bar 13
+      { bass: [0, 2], snare: [1, 3], clap: [0, 1, 2, 3], hoot: null } // Bar 14
     ]
   }
 ];
 
-let currentScorePart = 0;
+// 5 Ensemble Tracks
+const ENSEMBLE_LANES = [
+  { id: 'bass', name: 'CAJON BASS', keyHint: '[1] Low Center Hit', color: '#ff3366', badge: 'B', pillarId: 'pillar_ul' },
+  { id: 'snare', name: 'CAJON SNARE', keyHint: '[4] Top Rim Slap', color: '#ff8800', badge: 'S', pillarId: 'pillar_lr' },
+  { id: 'clap', name: 'HAND CLAP', keyHint: '[3] Loud Clap', color: '#ffcc00', badge: 'C', pillarId: 'pillar_ll' },
+  { id: 'hoot', name: 'HOOT / TOOT', keyHint: '[2] Sustained Tone', color: '#00d2ff', badge: 'H', pillarId: 'pillar_ur' },
+  { id: 'lyrics', name: 'SINGERS & SIGNERS', keyHint: 'Lyrics & ASL', color: '#e2b714', badge: 'V', pillarId: null }
+];
+
+/* --- 13.2 State Management --- */
+let currentScoreMode = 'loop'; // 'loop' | 'lift' | 'spiral' | 'full'
+let selectedSession = 1;       // Session offset 1..14
 let isScoreLooping = true;
-let isScorePlaying = true;
+let isScorePlaying = false;    // NEVER auto-play on open! User clicks PLAY
+let currentScoreZoom = 1.0;    // Score zoom scale
+let isWarmupMode = true;       // Audience warm-up: no words until Bar 14
 let isScoreWindowOpen = false;
+let isSynthGuideEnabled = true;
+let isCountInEnabled = true;
+let isCountingIn = false;
+let countInStep = 0;
+let countInTimer = null;
 let scoreStartTime = 0;
+let scorePausedElapsed = 0;
+let lastTriggeredStep = -1;
 let currentHighlightedBeat = -1;
 
+// Rehearsal Web Audio Guide
+let synthMasterGain = null;
+
+function getSynthContext() {
+  if (audioEngine.ctx) {
+    if (audioEngine.ctx.state === 'suspended') audioEngine.ctx.resume();
+    if (!synthMasterGain) {
+      synthMasterGain = audioEngine.ctx.createGain();
+      synthMasterGain.gain.value = 0.55;
+      synthMasterGain.connect(audioEngine.ctx.destination);
+    }
+    return audioEngine.ctx;
+  }
+  return null;
+}
+
+/* --- 13.3 Synthesizer Audio Models --- */
+
+function playSynthBass(time) {
+  if (!isSynthGuideEnabled) return;
+  const ctx = getSynthContext();
+  if (!ctx) return;
+  const t = time || ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(95, t);
+  osc.frequency.exponentialRampToValueAtTime(36, t + 0.22);
+
+  gain.gain.setValueAtTime(0.9, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+
+  osc.connect(gain);
+  gain.connect(synthMasterGain);
+  osc.start(t);
+  osc.stop(t + 0.3);
+}
+
+function playSynthSnare(time) {
+  if (!isSynthGuideEnabled) return;
+  const ctx = getSynthContext();
+  if (!ctx) return;
+  const t = time || ctx.currentTime;
+
+  const bufSize = Math.floor(ctx.sampleRate * 0.14);
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buf;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'highpass';
+  filter.frequency.value = 900;
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.7, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(synthMasterGain);
+  noise.start(t);
+  noise.stop(t + 0.14);
+}
+
+function playSynthClap(time) {
+  if (!isSynthGuideEnabled) return;
+  const ctx = getSynthContext();
+  if (!ctx) return;
+  const t = time || ctx.currentTime;
+
+  [0, 0.012, 0.024].forEach((delay, idx) => {
+    const burstLen = Math.floor(ctx.sampleRate * (idx === 2 ? 0.09 : 0.025));
+    const buf = ctx.createBuffer(1, burstLen, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < burstLen; i++) d[i] = Math.random() * 2 - 1;
+
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 1200;
+    filter.Q.value = 1.4;
+
+    const gain = ctx.createGain();
+    const triggerTime = t + delay;
+    gain.gain.setValueAtTime(0.65, triggerTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, triggerTime + (idx === 2 ? 0.08 : 0.022));
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(synthMasterGain);
+    src.start(triggerTime);
+    src.stop(triggerTime + 0.1);
+  });
+}
+
+function playSynthHoot(time, durationSec, volume = 0.5) {
+  if (!isSynthGuideEnabled) return;
+  const ctx = getSynthContext();
+  if (!ctx) return;
+  const t = time || ctx.currentTime;
+  const dur = Math.max(0.3, durationSec || 1.5);
+
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc1.type = 'sine';
+  osc1.frequency.setValueAtTime(392, t); // G4 hoot tone
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(784, t); // G5 octave harmonic
+
+  gain.gain.setValueAtTime(0.001, t);
+  gain.gain.linearRampToValueAtTime(volume * 0.55, t + 0.08);
+  gain.gain.setValueAtTime(volume * 0.55, t + dur - 0.1);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+  osc1.connect(gain);
+  osc2.connect(gain);
+  gain.connect(synthMasterGain);
+
+  osc1.start(t);
+  osc2.start(t);
+  osc1.stop(t + dur + 0.05);
+  osc2.stop(t + dur + 0.05);
+}
+
+/* --- 13.4 Score Generator by Mode --- */
+
+function getActiveScoreData() {
+  if (currentScoreMode === 'loop') {
+    // 14-bar Master Loop re-indexed so Bar 1 starts at selectedSession
+    const measures = [];
+    for (let i = 0; i < 14; i++) {
+      const canonicalMasterBar = ((i + selectedSession - 1) % 14) + 1;
+      const phraseIdx = Math.floor((canonicalMasterBar - 1) / 2);
+      const measureInPhrase = (canonicalMasterBar - 1) % 2;
+      const phrase = MASTER_LOOP_PHRASES[phraseIdx];
+      const mData = phrase.measures[measureInPhrase];
+
+      let lyricText = phrase.lyric;
+      let hintText = phrase.signHint;
+      let phraseId = phrase.phraseIndex;
+      let isWarmup = false;
+
+      // When warm-up mode is enabled:
+      if (isWarmupMode) {
+        if (i < 13) {
+          lyricText = "(Instrumental Warm-Up)";
+          hintText = "Ensemble warm-up — building pulse and rhythm with the audience";
+          phraseId = "WARM-UP";
+          isWarmup = true;
+        } else {
+          lyricText = "“Love your neighbor, near and far— / This is who we are!”";
+          hintText = "First vocal entrance! Signers cue audience into the full song";
+          phraseId = "WARM-UP FINALE";
+          isWarmup = false;
+        }
+      }
+
+      measures.push({
+        displayLabel: `BAR ${i + 1} (M${canonicalMasterBar})`,
+        masterBar: canonicalMasterBar,
+        phraseIndex: phraseId,
+        lyric: lyricText,
+        signHint: hintText,
+        aslWebpUrl: isWarmup ? "" : phrase.aslWebpUrl,
+        measureInPhrase: measureInPhrase,
+        bpm: 80,
+        isWarmup: isWarmup,
+        bass: mData.bass,
+        snare: mData.snare,
+        clap: mData.clap,
+        hoot: mData.hoot
+      });
+    }
+    return {
+      title: `14-BAR MASTER LOOP (SESSION ${selectedSession})`,
+      totalMeasures: 14,
+      tempoMode: 'fixed',
+      baseBpm: 80,
+      measures: measures
+    };
+  }
+
+  if (currentScoreMode === 'lift') {
+    // The Lift (Bars 41-45): Tempo rises 80 -> 90 BPM
+    const measures = [];
+    for (let i = 0; i < 5; i++) {
+      const barNum = 41 + i;
+      const prog = i / 4;
+      const bpm = 80 + prog * 10;
+      measures.push({
+        displayLabel: `BAR ${barNum}`,
+        masterBar: barNum,
+        phraseIndex: 'LIFT',
+        lyric: "“This is who we are!” (SUSTAINED)",
+        signHint: "Signers: sign final lyric phrase slowly & clearly, holding through Bar 45",
+        aslWebpUrl: "",
+        bpm: bpm,
+        isWarmup: false,
+        bass: [0, 1, 2, 3], // beats 1, 2, 3, 4
+        snare: [0.5, 1.5, 2.5, 3.5], // the "and" of every beat
+        clap: [1, 3], // beats 2 & 4
+        hoot: (barNum === 41 || barNum === 43) ? { startBeat: 0, durationBeats: 2, label: "HOOT (2 BEATS)" } : null
+      });
+    }
+    return {
+      title: "THE LIFT // BARS 41–45 (80–90 BPM)",
+      totalMeasures: 5,
+      tempoMode: 'ramp',
+      baseBpm: 80,
+      measures: measures
+    };
+  }
+
+  if (currentScoreMode === 'spiral') {
+    // Spiral Out (Bars 46-50): Tempo rises 90 -> 100 BPM
+    const measures = [];
+    for (let i = 0; i < 5; i++) {
+      const barNum = 46 + i;
+      const prog = i / 4;
+      const bpm = 90 + prog * 10;
+      measures.push({
+        displayLabel: `BAR ${barNum}`,
+        masterBar: barNum,
+        phraseIndex: 'SPIRAL',
+        lyric: "“AHHH...” (OSCILLATING WASH)",
+        signHint: "Signers: hold final sign (TOGETHER/LOVE) lifted, slowly open outward on final beat",
+        aslWebpUrl: "",
+        bpm: bpm,
+        isWarmup: false,
+        bass: [0, 1, 2, 3], // quarter notes
+        snare: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5], // eighth notes
+        clap: [0, 1, 2, 3], // every beat
+        hoot: (i === 0) ? { startBeat: 0, durationBeats: 20, label: "SUSTAIN WASH (BARS 46–50)" } : null
+      });
+    }
+    return {
+      title: "SCHEFFER SPIRAL OUT // BARS 46–50 (90–100 BPM)",
+      totalMeasures: 5,
+      tempoMode: 'ramp',
+      baseBpm: 90,
+      measures: measures
+    };
+  }
+
+  if (currentScoreMode === 'full') {
+    // Full 50-Bar Performance: Bars 1-40 rolling loop, 41-45 lift, 46-50 spiral out
+    const measures = [];
+    // 1-40: Rolling Loop
+    for (let i = 0; i < 40; i++) {
+      const canonicalMasterBar = ((i + selectedSession - 1) % 14) + 1;
+      const phraseIdx = Math.floor((canonicalMasterBar - 1) / 2);
+      const measureInPhrase = (canonicalMasterBar - 1) % 2;
+      const phrase = MASTER_LOOP_PHRASES[phraseIdx];
+      const mData = phrase.measures[measureInPhrase];
+
+      let lyricText = phrase.lyric;
+      let hintText = phrase.signHint;
+      let phraseId = phrase.phraseIndex;
+      let isWarmup = false;
+
+      // SET 1 (Bars 1 to 14): Warm-up audience with no words until Bar 14!
+      if (isWarmupMode && i < 13) {
+        lyricText = "(Instrumental Warm-Up)";
+        hintText = "Audience & ensemble warm-up — building pulse and percussion";
+        phraseId = "WARM-UP";
+        isWarmup = true;
+      } else if (isWarmupMode && i === 13) {
+        lyricText = "“Love your neighbor, near and far— / This is who we are!”";
+        hintText = "First vocal entrance! Signers cue audience into the full song";
+        phraseId = "WARM-UP FINALE";
+        isWarmup = false;
+      } else {
+        // Normal captioning (Bars 15-40, or Bars 1-40 when warm-up disabled)
+        const activeBar = isWarmupMode ? (((i - 14 + selectedSession - 1) % 14) + 1) : canonicalMasterBar;
+        const activePhraseIdx = Math.floor((activeBar - 1) / 2);
+        const activePhrase = MASTER_LOOP_PHRASES[activePhraseIdx];
+        lyricText = activePhrase.lyric;
+        hintText = activePhrase.signHint;
+        phraseId = activePhrase.phraseIndex;
+        isWarmup = false;
+      }
+
+      measures.push({
+        displayLabel: `BAR ${i + 1}`,
+        masterBar: canonicalMasterBar,
+        phraseIndex: phraseId,
+        lyric: lyricText,
+        signHint: hintText,
+        aslWebpUrl: isWarmup ? "" : phrase.aslWebpUrl,
+        measureInPhrase: measureInPhrase,
+        bpm: 80,
+        isWarmup: isWarmup,
+        bass: mData.bass,
+        snare: mData.snare,
+        clap: mData.clap,
+        hoot: mData.hoot
+      });
+    }
+    // 41-45: The Lift
+    for (let i = 0; i < 5; i++) {
+      const barNum = 41 + i;
+      const prog = i / 4;
+      measures.push({
+        displayLabel: `BAR ${barNum}`,
+        masterBar: barNum,
+        phraseIndex: 'LIFT',
+        lyric: "“This is who we are!” (SUSTAINED)",
+        signHint: "Hold sign through Bar 45. Accelerating 80 -> 90 BPM",
+        aslWebpUrl: "",
+        bpm: 80 + prog * 10,
+        isWarmup: false,
+        bass: [0, 1, 2, 3],
+        snare: [0.5, 1.5, 2.5, 3.5],
+        clap: [1, 3],
+        hoot: (barNum === 41 || barNum === 43) ? { startBeat: 0, durationBeats: 2, label: "HOOT (2 BEATS)" } : null
+      });
+    }
+    // 46-50: Spiral Out
+    for (let i = 0; i < 5; i++) {
+      const barNum = 46 + i;
+      const prog = i / 4;
+      measures.push({
+        displayLabel: `BAR ${barNum}`,
+        masterBar: barNum,
+        phraseIndex: 'SPIRAL',
+        lyric: "“AHHH...” (OSCILLATING WASH)",
+        signHint: "Hold sign lifted, open hands outward on beat 4 of Bar 50. Silence follows!",
+        aslWebpUrl: "",
+        bpm: 90 + prog * 10,
+        isWarmup: false,
+        bass: [0, 1, 2, 3],
+        snare: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5],
+        clap: [0, 1, 2, 3],
+        hoot: (i === 0) ? { startBeat: 0, durationBeats: 20, label: "SUSTAIN WASH (BARS 46–50)" } : null
+      });
+    }
+
+    return {
+      title: `FULL 50-BAR SESSION (SESSION ${selectedSession} OFFSET)`,
+      totalMeasures: 50,
+      tempoMode: 'full',
+      baseBpm: 80,
+      measures: measures
+    };
+  }
+
+  return null;
+}
+
+/* --- 13.5 Render UI (Session Pills, Ruler, 5 Lanes) --- */
+
+function renderSessionPills() {
+  if (!sessionPillsRack) return;
+  sessionPillsRack.innerHTML = '';
+
+  for (let s = 1; s <= 14; s++) {
+    const btn = document.createElement('button');
+    btn.className = `session-pill-btn ${s === selectedSession ? 'active' : ''}`;
+    btn.dataset.session = s;
+    btn.textContent = `S${s} (Bar ${s})`;
+    btn.title = `Start ensemble at Bar ${s} of Master Loop`;
+    btn.addEventListener('click', () => {
+      selectedSession = s;
+      document.querySelectorAll('.session-pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderScoreMeasureRuler();
+      renderScoreLanes();
+      updateCaptionCard(0, 0);
+      showToast(`🎯 SESSION ${s} SELECTED (START AT BAR ${s})`);
+    });
+    sessionPillsRack.appendChild(btn);
+  }
+}
+
+function renderScoreMeasureRuler() {
+  if (!scoreMeasureRuler) return;
+  scoreMeasureRuler.innerHTML = '';
+
+  const scoreData = getActiveScoreData();
+  if (!scoreData) return;
+
+  scoreData.measures.forEach((m, idx) => {
+    const block = document.createElement('div');
+    block.className = 'ruler-measure-block';
+    block.dataset.measureIndex = idx;
+
+    block.innerHTML = `
+      <span class="ruler-measure-label">${m.displayLabel}</span>
+      <div class="ruler-beat-ticks">
+        <div class="ruler-beat-tick">1</div>
+        <div class="ruler-beat-tick">2</div>
+        <div class="ruler-beat-tick">3</div>
+        <div class="ruler-beat-tick">4</div>
+      </div>
+    `;
+    scoreMeasureRuler.appendChild(block);
+  });
+}
+
+function renderScoreLanes() {
+  if (!scoreLanesContainer) return;
+  scoreLanesContainer.innerHTML = '';
+
+  const scoreData = getActiveScoreData();
+  if (!scoreData) return;
+
+  ENSEMBLE_LANES.forEach((cfg) => {
+    const lane = document.createElement('div');
+    lane.className = `score-lane lane-${cfg.id}`;
+
+    // Lane Header Dock
+    const header = document.createElement('div');
+    header.className = 'lane-header';
+    header.innerHTML = `
+      <div class="lane-num-badge" style="background:${cfg.color};">${cfg.badge}</div>
+      <div class="lane-info">
+        <span class="lane-title" style="color:${cfg.color};">${cfg.name}</span>
+        <span class="lane-key-hint">${cfg.keyHint}</span>
+      </div>
+    `;
+    lane.appendChild(header);
+
+    // Track Measures
+    const track = document.createElement('div');
+    track.className = 'lane-track';
+
+    scoreData.measures.forEach((m, mIdx) => {
+      const measure = document.createElement('div');
+      measure.className = 'lane-measure';
+      measure.dataset.measureIndex = mIdx;
+
+      if (cfg.id === 'lyrics') {
+        // Lyrics Lane: show warm-up, 2-bar or section block
+        if (m.isWarmup) {
+          if (mIdx === 0) {
+            const block = document.createElement('div');
+            block.className = 'lyric-phrase-block warmup-block';
+            block.style.width = 'calc(var(--measure-width, 160px) * 13 - 6px)';
+            block.innerHTML = `<span class="lyric-phrase-label" style="opacity:0.8;">(Instrumental Warm-Up // Bars 1–13)</span>`;
+            measure.appendChild(block);
+          }
+        } else if (m.phraseIndex === 'WARM-UP FINALE') {
+          const block = document.createElement('div');
+          block.className = 'lyric-phrase-block active';
+          block.style.width = 'calc(var(--measure-width, 160px) - 6px)';
+          block.innerHTML = `<span class="lyric-phrase-label">${m.lyric}</span>`;
+          measure.appendChild(block);
+        } else if (mIdx % 2 === 0 || currentScoreMode === 'lift' || currentScoreMode === 'spiral') {
+          const isSustainMode = currentScoreMode === 'lift' || currentScoreMode === 'spiral';
+          if (!isSustainMode || mIdx === 0) {
+            const block = document.createElement('div');
+            block.className = `lyric-phrase-block ${isSustainMode ? 'active' : ''}`;
+            const spanBars = isSustainMode ? scoreData.totalMeasures : 2;
+            block.style.width = `calc(var(--measure-width, 160px) * ${spanBars} - 6px)`;
+            block.innerHTML = `<span class="lyric-phrase-label">${m.lyric}</span>`;
+            measure.appendChild(block);
+          }
+        }
+      } else {
+        // Rhythm / Hoot Lane
+        const hits = m[cfg.id] || [];
+
+        // 4 Beats per measure
+        for (let b = 0; b < 4; b++) {
+          const beatSlot = document.createElement('div');
+          beatSlot.className = 'lane-beat';
+          const globalBeatIndex = mIdx * 4 + b;
+          beatSlot.dataset.globalBeat = globalBeatIndex;
+
+          const hasQuarterHit = Array.isArray(hits) && hits.includes(b);
+          const hasEighthHit = Array.isArray(hits) && hits.includes(b + 0.5);
+
+          if (hasQuarterHit && hasEighthHit) {
+            beatSlot.classList.add('has-sub-beat');
+          }
+
+          // Regular Quarter Beat Hit
+          if (hasQuarterHit) {
+            const hitBox = document.createElement('div');
+            hitBox.className = `hit-box hit-${cfg.id}`;
+            hitBox.textContent = b + 1;
+            hitBox.dataset.beatIndex = globalBeatIndex;
+            hitBox.title = `Click to play ${cfg.name}`;
+            hitBox.addEventListener('pointerdown', (e) => {
+              e.stopPropagation();
+              triggerEnsembleVoice(cfg.id, 1.0);
+            });
+            beatSlot.appendChild(hitBox);
+          }
+
+          // Eighth-Note Sub-beat Hit (the "and" of beat: e.g. b + 0.5)
+          if (hasEighthHit) {
+            const subHit = document.createElement('div');
+            subHit.className = `hit-box hit-${cfg.id} sub-beat`;
+            subHit.textContent = '&';
+            subHit.dataset.subBeatIndex = globalBeatIndex + 0.5;
+            subHit.title = `${cfg.name} Upbeat (&)`;
+            subHit.addEventListener('pointerdown', (e) => {
+              e.stopPropagation();
+              triggerEnsembleVoice(cfg.id, 0.5);
+            });
+            beatSlot.appendChild(subHit);
+          }
+
+          measure.appendChild(beatSlot);
+        }
+
+        // Sustained note block (for Hoot)
+        if (cfg.id === 'hoot' && m.hoot) {
+          const sustain = document.createElement('div');
+          sustain.className = 'sustain-block';
+          const durationBeats = m.hoot.durationBeats || 2;
+          const beatWidthPercent = (durationBeats / 4) * 100;
+          sustain.style.width = `calc(${beatWidthPercent}% - 6px)`;
+          sustain.style.left = `${(m.hoot.startBeat / 4) * 100}%`;
+          sustain.innerHTML = `<span class="sustain-block-label">${m.hoot.label || 'SUSTAIN'}</span>`;
+          measure.appendChild(sustain);
+        }
+      }
+
+      track.appendChild(measure);
+    });
+
+    lane.appendChild(track);
+    scoreLanesContainer.appendChild(lane);
+  });
+}
+
+function triggerEnsembleVoice(voiceId, durationSec = 1.0) {
+  if (voiceId === 'bass') {
+    playSynthBass();
+    triggerPillar('pillar_ul');
+  } else if (voiceId === 'snare') {
+    playSynthSnare();
+    triggerPillar('pillar_lr');
+  } else if (voiceId === 'clap') {
+    playSynthClap();
+    triggerPillar('pillar_ll');
+  } else if (voiceId === 'hoot') {
+    playSynthHoot(null, durationSec);
+    triggerPillar('pillar_ur');
+  }
+}
+
+/* --- 13.6 Synchronized Caption & ASL Media Card --- */
+
+function updateCaptionCard(measureIndex, beatInBar, beatProgress = 0) {
+  const scoreData = getActiveScoreData();
+  if (!scoreData || measureIndex >= scoreData.measures.length) return;
+
+  const currentMeasure = scoreData.measures[measureIndex];
+
+  if (captionPhraseBadge) {
+    if (typeof currentMeasure.phraseIndex === 'number') {
+      captionPhraseBadge.textContent = `PHRASE ${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}`;
+    } else {
+      captionPhraseBadge.textContent = `${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}`;
+    }
+  }
+
+  if (captionTempoBadge) {
+    captionTempoBadge.textContent = `${Math.round(currentMeasure.bpm || currentBpm)} BPM`;
+  }
+
+  if (captionLyricText) {
+    captionLyricText.textContent = currentMeasure.lyric;
+  }
+
+  if (captionSignHint) {
+    captionSignHint.textContent = currentMeasure.signHint;
+  }
+
+  // Calculate 2-bar phrase progress (0% -> 100%)
+  if (phraseProgressBar) {
+    let progressPercent = 0;
+    if (currentScoreMode === 'lift' || currentScoreMode === 'spiral') {
+      progressPercent = ((measureIndex + (beatInBar + beatProgress) / 4) / scoreData.totalMeasures) * 100;
+    } else {
+      const measureInTwoBar = (currentMeasure.measureInPhrase || 0) % 2;
+      progressPercent = ((measureInTwoBar * 4 + beatInBar + beatProgress) / 8) * 100;
+    }
+    phraseProgressBar.style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
+  }
+
+  // ASL WebP Media Slot
+  if (aslVideoAsset && aslPlaceholder) {
+    if (currentMeasure.aslWebpUrl && currentMeasure.aslWebpUrl.trim().length > 0) {
+      aslVideoAsset.src = currentMeasure.aslWebpUrl;
+      aslVideoAsset.style.display = 'block';
+      aslPlaceholder.style.display = 'none';
+    } else {
+      aslVideoAsset.style.display = 'none';
+      aslPlaceholder.style.display = 'flex';
+    }
+  }
+}
+
+/* --- 13.7 Count-In Controller --- */
+
+function startCountInSequence() {
+  if (!isCountInEnabled) {
+    launchScorePlayback();
+    return;
+  }
+
+  isCountingIn = true;
+  countInStep = 0;
+  if (countInOverlay) countInOverlay.classList.add('active');
+
+  const stepDurationMs = (60.0 / currentBpm) * 1000;
+  stepCountIn(stepDurationMs);
+}
+
+function stepCountIn(stepDurationMs) {
+  if (!isCountingIn) return;
+  countInStep++;
+
+  if (countInNum) {
+    countInNum.textContent = countInStep;
+    countInNum.style.animation = 'none';
+    void countInNum.offsetWidth; // re-trigger animation
+    countInNum.style.animation = 'countPulse 0.35s ease-out';
+  }
+
+  if (countInLabel) {
+    countInLabel.textContent = `COUNT-IN: BEAT ${countInStep} OF 4`;
+  }
+
+  // Play metronome click on count-in
+  if (isAudioClickEnabled && audioEngine.ctx) {
+    playMetronomeClick(audioEngine.ctx.currentTime, countInStep === 1);
+  }
+
+  if (countInStep >= 4) {
+    countInTimer = setTimeout(() => {
+      isCountingIn = false;
+      if (countInOverlay) countInOverlay.classList.remove('active');
+      launchScorePlayback();
+    }, stepDurationMs);
+  } else {
+    countInTimer = setTimeout(() => stepCountIn(stepDurationMs), stepDurationMs);
+  }
+}
+
+function launchScorePlayback() {
+  isScorePlaying = true;
+  const now = audioEngine.ctx ? audioEngine.ctx.currentTime : performance.now() * 0.001;
+  scoreStartTime = now - scorePausedElapsed;
+  lastTriggeredStep = -1;
+  if (btnScorePlay) {
+    btnScorePlay.textContent = 'PAUSE';
+    btnScorePlay.classList.add('active');
+  }
+}
+
+/* --- 13.8 Playhead & Audio Scheduling Engine --- */
+
+function updateScorePlayhead() {
+  if (!isScoreWindowOpen || !isScorePlaying || isCountingIn || !scorePlayhead) return;
+
+  const scoreData = getActiveScoreData();
+  if (!scoreData || scoreData.totalMeasures === 0) return;
+
+  const timeSec = audioEngine.ctx ? audioEngine.ctx.currentTime : performance.now() * 0.001;
+  const elapsed = Math.max(0, timeSec - scoreStartTime);
+
+  // 1. Calculate total duration across ALL measures in this score section
+  let totalScoreDuration = 0;
+  for (let m = 0; m < scoreData.totalMeasures; m++) {
+    const mBpm = scoreData.measures[m].bpm || scoreData.baseBpm || 80;
+    totalScoreDuration += (60.0 / mBpm) * 4;
+  }
+
+  // 2. Looping Check (triggers ONLY when elapsed reaches the end of the full score)
+  if (elapsed >= totalScoreDuration) {
+    if (isScoreLooping) {
+      scoreStartTime = timeSec;
+      scorePausedElapsed = 0;
+      lastTriggeredStep = -1;
+      const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
+      if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
+      return;
+    } else {
+      isScorePlaying = false;
+      scorePausedElapsed = 0;
+      if (btnScorePlay) {
+        btnScorePlay.textContent = 'PLAY';
+        btnScorePlay.classList.remove('active');
+      }
+      if (scorePlayhead) scorePlayhead.style.left = '170px';
+      const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
+      if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
+      return;
+    }
+  }
+
+  // 3. Find current measure and position within measure
+  let accumulatedTime = 0;
+  let currentMeasureIdx = 0;
+  let beatInMeasureFloat = 0;
+  let currentMeasureBpm = scoreData.baseBpm;
+
+  for (let m = 0; m < scoreData.totalMeasures; m++) {
+    const mBpm = scoreData.measures[m].bpm || scoreData.baseBpm || 80;
+    const mDuration = (60.0 / mBpm) * 4;
+
+    if (elapsed < accumulatedTime + mDuration || m === scoreData.totalMeasures - 1) {
+      currentMeasureIdx = m;
+      currentMeasureBpm = mBpm;
+      const measureElapsed = elapsed - accumulatedTime;
+      beatInMeasureFloat = Math.min(3.999, Math.max(0, measureElapsed / (60.0 / mBpm)));
+      break;
+    }
+    accumulatedTime += mDuration;
+  }
+
+  const beatInBar = Math.floor(beatInMeasureFloat);
+  const beatProgress = beatInMeasureFloat - beatInBar;
+  const globalEighthStep = Math.floor((currentMeasureIdx * 4 + beatInMeasureFloat) * 2);
+
+  // Telemetry Display Updates
+  if (scoreMeasureVal) scoreMeasureVal.textContent = `BAR ${currentMeasureIdx + 1} / ${scoreData.totalMeasures}`;
+  if (scoreBeatVal) scoreBeatVal.textContent = `BEAT ${beatInBar + 1}`;
+  if (scoreBpmVal) scoreBpmVal.textContent = `${Math.round(currentMeasureBpm)} BPM`;
+
+  // Update Caption & ASL Card
+  updateCaptionCard(currentMeasureIdx, beatInBar, beatProgress);
+
+  // Align playhead smoothly across measure blocks
+  const measureBlocks = document.querySelectorAll('.ruler-measure-block');
+  const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
+  if (measureBlocks.length > currentMeasureIdx && scoreGridWrapper) {
+    const targetBlock = measureBlocks[currentMeasureIdx];
+    const blockRect = targetBlock.getBoundingClientRect();
+    const wrapperRect = scoreGridWrapper.getBoundingClientRect();
+
+    const measureFraction = beatInMeasureFloat / 4.0;
+    const playheadX = (blockRect.left - wrapperRect.left + scoreGridWrapper.scrollLeft) + (measureFraction * blockRect.width);
+    scorePlayhead.style.left = `${playheadX}px`;
+
+    // Continuous smooth camera tracking:
+    // Center the camera smoothly ahead of the playhead for a silky cinematic glide
+    const targetScroll = Math.max(0, playheadX - (scoreGridWrapper.clientWidth * 0.38));
+    const scrollDelta = targetScroll - scoreGridWrapper.scrollLeft;
+    if (Math.abs(scrollDelta) > 0.5) {
+      scoreGridWrapper.scrollLeft += scrollDelta * 0.15;
+    }
+  }
+
+  // Trigger hits & synth guides on new eighth-note step
+  if (globalEighthStep !== lastTriggeredStep) {
+    lastTriggeredStep = globalEighthStep;
+
+    const measureData = scoreData.measures[currentMeasureIdx];
+    const quarterBeat = beatInBar;
+    const isEighthUpbeat = (globalEighthStep % 2) === 1;
+
+    if (!isEighthUpbeat) {
+      // Quarter Note Hits (Downbeats)
+      if (measureData.bass && measureData.bass.includes(quarterBeat)) {
+        triggerEnsembleVoice('bass');
+      }
+      if (measureData.snare && measureData.snare.includes(quarterBeat)) {
+        triggerEnsembleVoice('snare');
+      }
+      if (measureData.clap && measureData.clap.includes(quarterBeat)) {
+        triggerEnsembleVoice('clap');
+      }
+      if (measureData.hoot && measureData.hoot.startBeat === quarterBeat) {
+        const durSec = (measureData.hoot.durationBeats / (currentMeasureBpm / 60.0));
+        triggerEnsembleVoice('hoot', durSec);
+      }
+
+      // Flash ONLY downbeat hit boxes exactly once on entry
+      const globalBeatIndex = currentMeasureIdx * 4 + quarterBeat;
+      document.querySelectorAll(`.hit-box:not(.sub-beat)[data-beat-index="${globalBeatIndex}"]`).forEach(box => {
+        box.classList.add('active');
+        setTimeout(() => box.classList.remove('active'), 140);
+      });
+    } else {
+      // Eighth Note Upbeats (&)
+      const subBeatVal = quarterBeat + 0.5;
+      if (measureData.snare && measureData.snare.includes(subBeatVal)) {
+        triggerEnsembleVoice('snare');
+      }
+
+      // Flash ONLY eighth-note sub-beat hit boxes on upbeat entry
+      const globalSubBeatIndex = currentMeasureIdx * 4 + quarterBeat + 0.5;
+      document.querySelectorAll(`.hit-box.sub-beat[data-sub-beat-index="${globalSubBeatIndex}"]`).forEach(box => {
+        box.classList.add('active');
+        setTimeout(() => box.classList.remove('active'), 140);
+      });
+    }
+  }
+}
+
+/* --- 13.9 Zoom Controller --- */
+
+function applyZoom(newZoom) {
+  currentScoreZoom = Math.max(0.7, Math.min(2.5, Math.round(newZoom * 10) / 10));
+  if (scoreZoomVal) scoreZoomVal.textContent = `${currentScoreZoom.toFixed(1)}x`;
+  const measureWidth = Math.round(160 * currentScoreZoom);
+  if (scoreOverlay) {
+    scoreOverlay.style.setProperty('--measure-width', `${measureWidth}px`);
+  }
+}
+
+/* --- 13.10 Score Overlay Init & Listeners --- */
+
 function initScore() {
+  renderSessionPills();
+
   if (btnMusicalScore) {
     btnMusicalScore.addEventListener('click', openScoreWindow);
   }
@@ -1172,166 +2075,169 @@ function initScore() {
     });
   }
 
+  // Zoom Controls
+  if (btnScoreZoomIn) {
+    btnScoreZoomIn.addEventListener('click', () => {
+      applyZoom(currentScoreZoom + 0.15);
+    });
+  }
+  if (btnScoreZoomOut) {
+    btnScoreZoomOut.addEventListener('click', () => {
+      applyZoom(currentScoreZoom - 0.15);
+    });
+  }
+
+  // Audience Warm-Up Toggle
+  if (btnScoreWarmup) {
+    btnScoreWarmup.addEventListener('click', () => {
+      isWarmupMode = !isWarmupMode;
+      btnScoreWarmup.classList.toggle('active', isWarmupMode);
+      btnScoreWarmup.textContent = `WARM-UP: ${isWarmupMode ? 'AUTO' : 'OFF'}`;
+      renderScoreLanes();
+      updateCaptionCard(0, 0);
+      showToast(`WARM-UP: ${isWarmupMode ? 'ENABLED (NO WORDS UNTIL BAR 14)' : 'OFF (ALL LYRICS SHOWN)'}`);
+    });
+  }
+
+  // Section Tabs (Loop, Lift, Spiral, Full)
   scoreTabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       scoreTabBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      currentScorePart = parseInt(btn.dataset.part, 10);
+      currentScoreMode = btn.dataset.mode || 'loop';
+      renderScoreMeasureRuler();
       renderScoreLanes();
-      showToast(`🎼 SCORE: ${SCORE_DATA[currentScorePart].title}`);
+      updateCaptionCard(0, 0);
+
+      // Reset playhead & pause cleanly
+      isScorePlaying = false;
+      scorePausedElapsed = 0;
+      if (btnScorePlay) {
+        btnScorePlay.textContent = 'PLAY';
+        btnScorePlay.classList.remove('active');
+      }
+      if (isCountingIn) {
+        isCountingIn = false;
+        clearTimeout(countInTimer);
+        if (countInOverlay) countInOverlay.classList.remove('active');
+      }
+      if (scorePlayhead) scorePlayhead.style.left = '170px';
+      const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
+      if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
+
+      const title = getActiveScoreData().title;
+      showToast(`🎼 SCORE: ${title}`);
     });
   });
 
+  // Loop Toggle
   if (btnScoreLoop) {
     btnScoreLoop.addEventListener('click', () => {
       isScoreLooping = !isScoreLooping;
       btnScoreLoop.classList.toggle('active', isScoreLooping);
       btnScoreLoop.textContent = `LOOP: ${isScoreLooping ? 'ON' : 'OFF'}`;
+      showToast(`LOOP: ${isScoreLooping ? 'ENABLED' : 'DISABLED'}`);
     });
   }
 
+  // Play / Pause Button with Count-In & Pause Resume
   if (btnScorePlay) {
     btnScorePlay.addEventListener('click', () => {
-      isScorePlaying = !isScorePlaying;
-      btnScorePlay.classList.toggle('active', isScorePlaying);
-      btnScorePlay.textContent = isScorePlaying ? 'PAUSE' : 'PLAY';
+      if (isScorePlaying || isCountingIn) {
+        // Pause playback
+        isScorePlaying = false;
+        if (isCountingIn) {
+          isCountingIn = false;
+          clearTimeout(countInTimer);
+          if (countInOverlay) countInOverlay.classList.remove('active');
+        }
+        const now = audioEngine.ctx ? audioEngine.ctx.currentTime : performance.now() * 0.001;
+        scorePausedElapsed = Math.max(0, now - scoreStartTime);
+        btnScorePlay.classList.remove('active');
+        btnScorePlay.textContent = 'PLAY';
+      } else {
+        // Start playback with 4-beat visual count-in
+        startCountInSequence();
+      }
+    });
+  }
+
+  // Synth Guide Audio Toggle
+  if (btnScoreSynth) {
+    btnScoreSynth.addEventListener('click', () => {
+      isSynthGuideEnabled = !isSynthGuideEnabled;
+      btnScoreSynth.classList.toggle('active', isSynthGuideEnabled);
+      btnScoreSynth.textContent = `SYNTH: ${isSynthGuideEnabled ? 'ON' : 'OFF'}`;
+      showToast(`SYNTH GUIDE: ${isSynthGuideEnabled ? 'ON' : 'MUTED'}`);
+    });
+  }
+
+  // Count-In Toggle
+  if (btnScoreCountIn) {
+    btnScoreCountIn.addEventListener('click', () => {
+      isCountInEnabled = !isCountInEnabled;
+      btnScoreCountIn.classList.toggle('active', isCountInEnabled);
+      btnScoreCountIn.textContent = `COUNT-IN: ${isCountInEnabled ? '4' : 'OFF'}`;
+      showToast(`COUNT-IN: ${isCountInEnabled ? '4 BEATS' : 'OFF'}`);
     });
   }
 
   renderScoreMeasureRuler();
   renderScoreLanes();
+  updateCaptionCard(0, 0);
 }
 
 function openScoreWindow() {
   if (!scoreOverlay) return;
   scoreOverlay.classList.add('open');
   isScoreWindowOpen = true;
-  scoreStartTime = audioEngine.ctx ? audioEngine.ctx.currentTime : performance.now() * 0.001;
+
+  // Never auto-play on open! Conductor clicks PLAY when ready.
+  isScorePlaying = false;
+  scorePausedElapsed = 0;
+  scoreStartTime = 0;
+  lastTriggeredStep = -1;
+
+  if (btnScorePlay) {
+    btnScorePlay.textContent = 'PLAY';
+    btnScorePlay.classList.remove('active');
+  }
+  if (isCountingIn) {
+    isCountingIn = false;
+    clearTimeout(countInTimer);
+    if (countInOverlay) countInOverlay.classList.remove('active');
+  }
+
+  if (scorePlayhead) scorePlayhead.style.left = '170px';
+  const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
+  if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
+
+  applyZoom(currentScoreZoom);
+  renderSessionPills();
   renderScoreMeasureRuler();
   renderScoreLanes();
+  updateCaptionCard(0, 0);
+
+  const scoreData = getActiveScoreData();
+  if (scoreMeasureVal && scoreData) scoreMeasureVal.textContent = `BAR 1 / ${scoreData.totalMeasures}`;
+  if (scoreBeatVal) scoreBeatVal.textContent = 'BEAT 1';
+  if (scoreBpmVal && scoreData) scoreBpmVal.textContent = `${Math.round(scoreData.baseBpm || 80)} BPM`;
 }
 
 function closeScoreWindow() {
   if (!scoreOverlay) return;
   scoreOverlay.classList.remove('open');
   isScoreWindowOpen = false;
-}
-
-function renderScoreMeasureRuler() {
-  if (!scoreMeasureRuler) return;
-  scoreMeasureRuler.innerHTML = '';
-
-  for (let m = 0; m < 4; m++) {
-    const block = document.createElement('div');
-    block.className = 'ruler-measure-block';
-    block.innerHTML = `
-      <span class="ruler-measure-label">BAR ${m + 1}</span>
-      <div class="ruler-beat-ticks">
-        <div class="ruler-beat-tick">1</div>
-        <div class="ruler-beat-tick">2</div>
-        <div class="ruler-beat-tick">3</div>
-        <div class="ruler-beat-tick">4</div>
-      </div>
-    `;
-    scoreMeasureRuler.appendChild(block);
+  isScorePlaying = false;
+  scorePausedElapsed = 0;
+  if (btnScorePlay) {
+    btnScorePlay.textContent = 'PLAY';
+    btnScorePlay.classList.remove('active');
   }
-}
-
-function renderScoreLanes() {
-  if (!scoreLanesContainer) return;
-  scoreLanesContainer.innerHTML = '';
-
-  const part = SCORE_DATA[currentScorePart];
-
-  PILLAR_CONFIGS.forEach((cfg, idx) => {
-    const lane = document.createElement('div');
-    lane.className = `score-lane lane-${idx + 1}`;
-
-    const header = document.createElement('div');
-    header.className = 'lane-header';
-    header.innerHTML = `
-      <div class="lane-num-badge" style="background:${cfg.color};">${idx + 1}</div>
-      <div class="lane-info">
-        <span class="lane-title" style="color:${cfg.color};">${cfg.name.split(' ')[0]}</span>
-        <span class="lane-key-hint">${cfg.keyHint}</span>
-      </div>
-    `;
-    lane.appendChild(header);
-
-    const track = document.createElement('div');
-    track.className = 'lane-track';
-
-    for (let m = 0; m < 4; m++) {
-      const measure = document.createElement('div');
-      measure.className = 'lane-measure';
-
-      const hitsForMeasure = part.measures[m].hits[cfg.id] || [];
-
-      for (let b = 0; b < 4; b++) {
-        const beatSlot = document.createElement('div');
-        beatSlot.className = 'lane-beat';
-        const globalBeatIndex = m * 4 + b;
-        beatSlot.dataset.globalBeat = globalBeatIndex;
-
-        if (hitsForMeasure.includes(b)) {
-          const hitBox = document.createElement('div');
-          hitBox.className = `hit-box hit-${idx + 1}`;
-          hitBox.textContent = idx + 1;
-          hitBox.dataset.beatIndex = globalBeatIndex;
-          hitBox.title = `Click or tap ${cfg.keyHint} to trigger!`;
-          hitBox.addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
-            triggerPillar(cfg.id);
-          });
-          beatSlot.appendChild(hitBox);
-        }
-
-        measure.appendChild(beatSlot);
-      }
-      track.appendChild(measure);
-    }
-
-    lane.appendChild(track);
-    scoreLanesContainer.appendChild(lane);
-  });
-}
-
-function updateScorePlayhead() {
-  if (!isScoreWindowOpen || !isScorePlaying || !scorePlayhead) return;
-
-  const timeSec = audioEngine.ctx ? audioEngine.ctx.currentTime : performance.now() * 0.001;
-  const secondsPerBeat = 60.0 / currentBpm;
-  const totalDuration = 16 * secondsPerBeat;
-
-  const elapsed = (timeSec - scoreStartTime) % totalDuration;
-  const progress = Math.max(0, Math.min(1, elapsed / totalDuration));
-
-  const currentTotalBeat = Math.floor(progress * 16);
-  const currentMeasure = Math.floor(currentTotalBeat / 4) + 1;
-  const currentBeatInBar = (currentTotalBeat % 4) + 1;
-
-  if (scoreMeasureVal) scoreMeasureVal.textContent = `BAR ${currentMeasure} / 4`;
-  if (scoreBeatVal) scoreBeatVal.textContent = `BEAT ${currentBeatInBar}`;
-  if (scoreBpmVal) scoreBpmVal.textContent = `${currentBpm} BPM`;
-
-  const gridWrapper = document.querySelector('.score-grid-wrapper');
-  if (gridWrapper) {
-    const laneHeaderWidth = 170;
-    const paddingLeft = 20;
-    const paddingRight = 20;
-    const availableTrackWidth = gridWrapper.clientWidth - laneHeaderWidth - paddingLeft - paddingRight;
-
-    const playheadX = laneHeaderWidth + paddingLeft + (progress * availableTrackWidth);
-    scorePlayhead.style.left = `${playheadX}px`;
-  }
-
-  if (currentTotalBeat !== currentHighlightedBeat) {
-    currentHighlightedBeat = currentTotalBeat;
-
-    document.querySelectorAll(`.hit-box[data-beat-index="${currentTotalBeat}"]`).forEach(box => {
-      box.classList.add('active');
-      setTimeout(() => box.classList.remove('active'), 140);
-    });
+  if (isCountingIn) {
+    isCountingIn = false;
+    clearTimeout(countInTimer);
+    if (countInOverlay) countInOverlay.classList.remove('active');
   }
 }
 

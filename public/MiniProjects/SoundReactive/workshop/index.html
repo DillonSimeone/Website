@@ -209,34 +209,85 @@
          ------------------------------------------------------------- -->
     <div id="score-overlay" class="score-overlay">
       <div class="score-window">
+        <!-- Visual 4-Beat Count-In Overlay -->
+        <div id="countin-overlay" class="countin-overlay">
+          <div class="countin-box">
+            <span class="countin-title">VISUAL COUNT-IN</span>
+            <div id="countin-num" class="countin-num">4</div>
+            <span id="countin-label" class="countin-label">WATCH FOR BEAT 1</span>
+          </div>
+        </div>
+
         <!-- Header -->
         <div class="score-header">
           <div class="score-title-group">
-            <span class="score-badge">DEAF ACCESSIBLE SCORE</span>
-            <h2 class="score-main-title">COLOR RHYTHM ENSEMBLE // 4/4 TIME</h2>
-            <span class="score-sub-note">Assign performers by color: Red (1), Blue (2), Amber (3), Violet (4)</span>
+            <span class="score-badge">DEAF ACCESSIBLE SCORE // "LOVE YOUR NEIGHBOR"</span>
+            <h2 class="score-main-title">ENSEMBLE SCORE & ASL REHEARSAL // 4/4 TIME</h2>
+            <span class="score-sub-note">14 Sessions • 5 Musical Voices: Cajon Bass & Snare, Clap, Hoot, Singers & Signers</span>
           </div>
 
           <!-- Section Selectors -->
           <div class="score-section-tabs">
-            <button class="score-tab-btn active" data-part="0">PART A: CALL & RESPONSE</button>
-            <button class="score-tab-btn" data-part="1">PART B: DRIVING GROOVE</button>
-            <button class="score-tab-btn" data-part="2">PART C: TUTTI CLIMAX</button>
-            <button class="score-tab-btn" data-part="3">PART D: OUTRO FADE</button>
+            <button class="score-tab-btn active" data-mode="loop">14-BAR MASTER LOOP</button>
+            <button class="score-tab-btn" data-mode="lift">THE LIFT (BARS 41–45)</button>
+            <button class="score-tab-btn" data-mode="spiral">SPIRAL OUT (BARS 46–50)</button>
+            <button class="score-tab-btn" data-mode="full">FULL SESSION (50 BARS / 2:30)</button>
           </div>
 
           <div class="score-controls">
+            <div class="score-zoom-group">
+              <span class="zoom-lbl">ZOOM:</span>
+              <button id="btn-score-zoom-minus" class="nudge-btn" title="Zoom Out">-</button>
+              <span id="score-zoom-val" class="score-tele-num" style="min-width:32px; text-align:center;">1.0x</span>
+              <button id="btn-score-zoom-plus" class="nudge-btn" title="Zoom In">+</button>
+            </div>
+            <button id="btn-score-warmup" class="hud-btn" title="Toggle Audience Warm-Up mode (No lyrics until Bar 14)">WARM-UP: AUTO</button>
+            <button id="btn-score-synth" class="hud-btn active" title="Toggle Synthesized Guide Audio">SYNTH: ON</button>
+            <button id="btn-score-countin" class="hud-btn active" title="Toggle 4-Beat Visual Count-In">COUNT-IN: 4</button>
             <button id="btn-score-loop" class="hud-btn active" title="Loop Selected Part">LOOP: ON</button>
-            <button id="btn-score-play" class="hud-btn active" title="Play/Pause Score Playhead">PAUSE</button>
+            <button id="btn-score-play" class="hud-btn" title="Start Score Playhead">PLAY</button>
             <button id="btn-close-score" class="close-score-btn" title="Close Score (Esc)">&times;</button>
+          </div>
+        </div>
+
+        <!-- Session 1–14 Offset Selector Bar -->
+        <div class="score-session-bar">
+          <div class="session-bar-label">
+            <span class="sess-title">CLASSROOM SESSION OFFSET:</span>
+            <span class="sess-desc">Each session starts 1 bar later to create the spiraling overlay</span>
+          </div>
+          <div id="session-pills-rack" class="session-pills-rack">
+            <!-- 14 Session pills dynamically rendered -->
+          </div>
+        </div>
+
+        <!-- Synchronized Lyric & ASL Caption Media Box -->
+        <div class="score-asl-caption-card">
+          <div class="asl-media-slot" id="asl-media-slot" title="Ready for ASL WebP loop animations">
+            <img id="asl-video-asset" class="asl-media-img" src="" alt="ASL Sign Animation" style="display:none;" />
+            <div id="asl-media-placeholder" class="asl-placeholder-box">
+              <span class="asl-hand-icon">🤟</span>
+              <span class="asl-slot-label">ASL VIDEO</span>
+            </div>
+          </div>
+          <div class="caption-content">
+            <div class="caption-header-row">
+              <span id="caption-phrase-badge" class="caption-phrase-badge">BARS 1–2 // PHRASE 1</span>
+              <span id="caption-tempo-badge" class="caption-tempo-badge">80 BPM</span>
+            </div>
+            <div id="caption-lyric-text" class="caption-lyric-text">“This is our world, bright and wide,”</div>
+            <div id="caption-sign-hint" class="caption-sign-hint">Singers sing & Signers sign phrase across the 2-bar window</div>
+            <div class="phrase-progress-track">
+              <div id="phrase-progress-bar" class="phrase-progress-bar"></div>
+            </div>
           </div>
         </div>
 
         <!-- Telemetry & Beat Ruler -->
         <div class="score-telemetry-bar">
           <div class="score-tele-item">
-            <span class="score-tele-lbl">CURRENT MEASURE:</span>
-            <span id="score-measure-val" class="score-tele-num">BAR 1 / 4</span>
+            <span class="score-tele-lbl">MEASURE:</span>
+            <span id="score-measure-val" class="score-tele-num">BAR 1 / 14</span>
           </div>
           <div class="score-tele-item">
             <span class="score-tele-lbl">METRONOME BEAT:</span>
@@ -247,16 +298,16 @@
             <span id="score-bpm-val" class="score-tele-num">80 BPM</span>
           </div>
           <div class="score-tele-hint">
-            <span>TIP: WATCH THE PLAYHEAD SWEEP ACROSS BEATS 1 - 2 - 3 - 4</span>
+            <span id="score-tele-hint-text">TIP: WATCH THE PLAYHEAD SWEEP ACROSS BEATS 1 - 2 - 3 - 4</span>
           </div>
         </div>
 
-        <!-- Visual Timeline Grid & 4 Color Tracks -->
+        <!-- Visual Timeline Grid & 5 Synchronized Tracks -->
         <div class="score-grid-wrapper">
           <!-- Measure Header Ruler (Beats 1, 2, 3, 4 per measure) -->
           <div id="score-measure-ruler" class="score-measure-ruler"></div>
 
-          <!-- 4 Synchronized Color Lanes -->
+          <!-- Synchronized Lanes (Bass, Snare, Clap, Hoot, Lyrics) -->
           <div id="score-lanes-container" class="score-lanes-container">
             <!-- Rendered dynamically by workshop.js -->
           </div>

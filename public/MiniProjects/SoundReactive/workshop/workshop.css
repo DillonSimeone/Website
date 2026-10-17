@@ -869,8 +869,8 @@ html, body {
 .score-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(6, 7, 12, 0.78);
-  backdrop-filter: blur(8px);
+  background: rgba(6, 7, 12, 0.85);
+  backdrop-filter: blur(10px);
   z-index: 80;
   display: flex;
   align-items: center;
@@ -889,26 +889,90 @@ html, body {
 
 /* Kept within outer margins so Left & Right corner pillars remain visible! */
 .score-window {
-  width: calc(100vw - 160px);
-  height: calc(100vh - 40px);
-  background: rgba(12, 14, 22, 0.96);
-  backdrop-filter: blur(20px);
+  width: calc(100vw - 120px);
+  height: calc(100vh - 30px);
+  background: rgba(12, 14, 22, 0.97);
+  backdrop-filter: blur(24px);
   border: 2px solid var(--border-color);
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.95);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
+/* 4-Beat Visual Count-In Overlay */
+.countin-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 5, 8, 0.88);
+  backdrop-filter: blur(8px);
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.countin-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.countin-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 30px 60px;
+  background: rgba(18, 22, 34, 0.95);
+  border: 2px solid var(--accent-gold);
+  box-shadow: 0 0 50px rgba(226, 183, 20, 0.4);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.countin-title {
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  color: var(--accent-gold);
+  font-weight: bold;
+}
+
+.countin-num {
+  font-size: 6rem;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: #fff;
+  line-height: 1;
+  text-shadow: 0 0 30px #00e5ff;
+  animation: countPulse 0.4s ease-out;
+}
+
+@keyframes countPulse {
+  0% { transform: scale(1.4); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.countin-label {
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+/* Score Header */
 .score-header {
-  padding: 14px 20px;
+  padding: 10px 18px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  background: rgba(0, 0, 0, 0.4);
+  gap: 14px;
+  background: rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
 }
 
 .score-title-group {
@@ -918,27 +982,28 @@ html, body {
 }
 
 .score-badge {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: bold;
   color: var(--accent-gold);
   letter-spacing: 1.5px;
 }
 
 .score-main-title {
-  font-size: 1.05rem;
-  letter-spacing: 1.5px;
+  font-size: 0.95rem;
+  letter-spacing: 1.2px;
   color: #fff;
+  margin: 0;
 }
 
 .score-sub-note {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--text-muted);
 }
 
 .score-section-tabs {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: rgba(255, 255, 255, 0.04);
   padding: 3px;
   border-radius: 4px;
@@ -950,11 +1015,11 @@ html, body {
   border: none;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 1px;
-  padding: 6px 12px;
+  font-size: 0.68rem;
+  letter-spacing: 0.8px;
+  padding: 5px 10px;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 3px;
   transition: all 0.15s;
 }
 
@@ -972,7 +1037,7 @@ html, body {
 .score-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .close-score-btn {
@@ -988,20 +1053,208 @@ html, body {
   color: #ff0055;
 }
 
+/* Session 1-14 Selector Bar */
+.score-session-bar {
+  padding: 6px 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.session-bar-label {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+
+.sess-title {
+  font-size: 0.62rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: var(--accent-gold);
+}
+
+.sess-desc {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+}
+
+.session-pills-rack {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.session-pill-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+
+.session-pill-btn:hover {
+  border-color: #00e5ff;
+  color: #fff;
+  background: rgba(0, 229, 255, 0.1);
+}
+
+.session-pill-btn.active {
+  background: #00e5ff;
+  color: #000;
+  font-weight: bold;
+  border-color: #00e5ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+/* Synchronized ASL & Caption Card */
+.score-asl-caption-card {
+  margin: 8px 18px 4px 18px;
+  padding: 8px 14px;
+  background: rgba(16, 20, 32, 0.92);
+  border: 1px solid rgba(226, 183, 20, 0.35);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.asl-media-slot {
+  width: 110px;
+  height: 64px;
+  background: #05070a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.asl-media-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.asl-placeholder-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--accent-gold);
+}
+
+.asl-hand-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.asl-slot-label {
+  font-size: 0.52rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.caption-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.caption-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.caption-phrase-badge {
+  font-size: 0.6rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: var(--accent-gold);
+}
+
+.caption-tempo-badge {
+  font-size: 0.6rem;
+  font-family: var(--font-mono);
+  color: #00e5ff;
+  font-weight: bold;
+}
+
+.caption-lyric-text {
+  font-family: 'Special Elite', 'Courier Prime', monospace;
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #ffffff;
+  letter-spacing: 0.6px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+.caption-sign-hint {
+  font-size: 0.62rem;
+  color: #94a3b8;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.phrase-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.phrase-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-gold), #ff0055);
+  box-shadow: 0 0 8px rgba(226, 183, 20, 0.6);
+  transition: width 0.05s linear;
+}
+
+/* Telemetry Bar */
 .score-telemetry-bar {
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 8px 24px;
-  background: rgba(0, 0, 0, 0.5);
+  gap: 20px;
+  padding: 6px 20px;
+  background: rgba(0, 0, 0, 0.45);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 .score-tele-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .score-tele-lbl {
@@ -1016,7 +1269,7 @@ html, body {
 
 .score-tele-hint {
   margin-left: auto;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--accent-gold);
   letter-spacing: 1px;
 }
@@ -1027,35 +1280,94 @@ html, body {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 12px 20px 20px 20px;
-  overflow: hidden;
+  padding: 8px 18px 14px 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
   background: #08090e;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-gold) rgba(6, 8, 14, 0.95);
+}
+
+/* Custom Styled Scrollbar for Score Grid */
+.score-grid-wrapper::-webkit-scrollbar {
+  height: 10px;
+  background: rgba(6, 8, 14, 0.95);
+}
+
+.score-grid-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.score-grid-wrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--accent-gold), #00e5ff);
+  border-radius: 5px;
+  border: 2px solid rgba(12, 14, 22, 0.9);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+.score-grid-wrapper::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #ff0055, var(--accent-gold));
+  box-shadow: 0 0 16px rgba(255, 0, 85, 0.6);
+}
+
+.score-grid-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
+  height: 100%;
+}
+
+/* Zoom Group in Score Controls */
+.score-zoom-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.zoom-lbl {
+  font-size: 0.58rem;
+  font-weight: bold;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
 }
 
 /* Measure Header Ruler */
 .score-measure-ruler {
-  height: 28px;
+  height: 24px;
   display: flex;
   margin-left: 170px; /* Space for lane header badge */
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
+  flex-shrink: 0;
+  min-width: max-content;
 }
 
 .ruler-measure-block {
-  flex: 1;
+  width: var(--measure-width, 160px);
+  min-width: var(--measure-width, 160px);
+  flex-shrink: 0;
   display: flex;
   border-right: 2px solid rgba(255, 255, 255, 0.25);
   position: relative;
+  box-sizing: border-box;
 }
 
 .ruler-measure-label {
   position: absolute;
   top: -2px;
-  left: 6px;
-  font-size: 0.65rem;
+  left: 4px;
+  font-size: 0.6rem;
   font-weight: bold;
   color: var(--accent-gold);
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
 }
 
 .ruler-beat-ticks {
@@ -1068,75 +1380,89 @@ html, body {
 .ruler-beat-tick {
   flex: 1;
   border-right: 1px dashed rgba(255, 255, 255, 0.08);
-  font-size: 0.58rem;
+  font-size: 0.52rem;
   color: var(--text-muted);
-  padding: 2px 4px;
+  padding: 1px 3px;
+  text-align: center;
 }
 
-/* 4 Color Lanes */
+/* 5 Score Lanes */
 .score-lanes-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: space-between;
+  gap: 4px;
   position: relative;
-  margin-top: 6px;
+  margin-top: 4px;
+  min-width: max-content;
 }
 
 .score-lane {
   display: flex;
   align-items: center;
-  height: calc((100% - 36px) / 4);
+  flex: 1;
+  min-height: 44px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 4px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  min-width: max-content;
 }
 
-.score-lane.lane-1 { border-color: rgba(255, 0, 85, 0.25); }
-.score-lane.lane-2 { border-color: rgba(0, 210, 255, 0.25); }
-.score-lane.lane-3 { border-color: rgba(255, 158, 0, 0.25); }
-.score-lane.lane-4 { border-color: rgba(199, 125, 255, 0.25); }
+.score-lane.lane-bass { border-color: rgba(255, 51, 102, 0.35); }
+.score-lane.lane-snare { border-color: rgba(255, 136, 0, 0.35); }
+.score-lane.lane-clap { border-color: rgba(255, 204, 0, 0.35); }
+.score-lane.lane-hoot { border-color: rgba(0, 210, 255, 0.35); }
+.score-lane.lane-lyrics { border-color: rgba(226, 183, 20, 0.4); background: rgba(226, 183, 20, 0.03); }
 
 .lane-header {
   width: 170px;
   height: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 12px;
-  background: rgba(0, 0, 0, 0.6);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 5;
+  gap: 8px;
+  padding: 0 10px;
+  background: rgba(10, 12, 18, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 10;
+  flex-shrink: 0;
+  position: sticky;
+  left: 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.6);
 }
 
 .lane-num-badge {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #000;
+  flex-shrink: 0;
 }
 
 .lane-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .lane-title {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: bold;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
 }
 
 .lane-key-hint {
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .lane-track {
@@ -1144,14 +1470,19 @@ html, body {
   height: 100%;
   display: flex;
   position: relative;
+  min-width: max-content;
 }
 
 .lane-measure {
-  flex: 1;
+  width: var(--measure-width, 160px);
+  min-width: var(--measure-width, 160px);
+  flex-shrink: 0;
   height: 100%;
   display: flex;
   border-right: 2px solid rgba(255, 255, 255, 0.18);
   position: relative;
+  overflow: hidden; /* Stops any child notes from pushing out */
+  box-sizing: border-box;
 }
 
 .lane-beat {
@@ -1160,44 +1491,146 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 2px;
+  padding: 0 2px;
   border-right: 1px dashed rgba(255, 255, 255, 0.05);
   position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Hit Markers */
 .hit-box {
-  width: 68%;
-  height: 68%;
-  border-radius: 4px;
+  width: 76%;
+  height: 74%;
+  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
+  font-size: 0.72rem;
+  letter-spacing: 0.3px;
   color: #000;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
   transition: transform 0.08s, box-shadow 0.08s, background 0.08s;
   cursor: pointer;
+  z-index: 2;
+  box-sizing: border-box;
 }
 
-.hit-box.hit-1 { background: var(--red-pillar); box-shadow: 0 0 12px rgba(255, 0, 85, 0.6); }
-.hit-box.hit-2 { background: var(--blue-pillar); box-shadow: 0 0 12px rgba(0, 210, 255, 0.6); }
-.hit-box.hit-3 { background: var(--amber-pillar); box-shadow: 0 0 12px rgba(255, 158, 0, 0.6); }
-.hit-box.hit-4 { background: var(--violet-pillar); box-shadow: 0 0 12px rgba(199, 125, 255, 0.6); }
+.hit-box.hit-bass { background: #ff3366; box-shadow: 0 0 8px rgba(255, 51, 102, 0.5); }
+.hit-box.hit-snare { background: #ff8800; box-shadow: 0 0 8px rgba(255, 136, 0, 0.5); }
+.hit-box.hit-clap { background: #ffcc00; box-shadow: 0 0 8px rgba(255, 204, 0, 0.5); }
+.hit-box.hit-hoot { background: #00d2ff; box-shadow: 0 0 8px rgba(0, 210, 255, 0.5); }
 
 .hit-box.active {
-  transform: scale(1.18);
+  transform: scale(1.22);
   background: #ffffff !important;
   color: #000 !important;
   box-shadow: 0 0 25px #ffffff, 0 0 40px currentColor !important;
 }
 
+/* Subdivision Layout: When a beat has both Downbeat & Upbeat */
+.lane-beat.has-sub-beat {
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.lane-beat.has-sub-beat .hit-box {
+  width: calc(50% - 2px);
+  flex: 0 0 calc(50% - 2px);
+  height: 72%;
+  font-size: 0.65rem;
+}
+
+.lane-beat.has-sub-beat .hit-box.sub-beat {
+  height: 60%;
+  font-size: 0.58rem;
+  background: rgba(255, 136, 0, 0.65);
+  border: 1px dashed rgba(255, 255, 255, 0.5);
+  color: #fff;
+  box-shadow: 0 0 4px rgba(255, 136, 0, 0.4);
+}
+
+/* Sustained Tone Blocks (Hoot / Vocals) */
+.sustain-block {
+  position: absolute;
+  top: 14%;
+  bottom: 14%;
+  border-radius: 4px;
+  background: rgba(0, 210, 255, 0.3);
+  border: 1px solid #00d2ff;
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.35);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sustain-block.vocal-sustain {
+  background: rgba(226, 183, 20, 0.3);
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 12px rgba(226, 183, 20, 0.35);
+}
+
+.sustain-block-label {
+  font-size: 0.62rem;
+  font-weight: bold;
+  letter-spacing: 0.8px;
+  color: #fff;
+  white-space: nowrap;
+  text-shadow: 0 0 6px #000;
+}
+
+.sustain-block.active {
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 20px #00e5ff, 0 0 35px #ffffff;
+}
+
+/* 2-Bar Lyric Phrase Blocks in Score Lane */
+.lyric-phrase-block {
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  border-radius: 4px;
+  background: rgba(226, 183, 20, 0.12);
+  border: 1px dashed rgba(226, 183, 20, 0.4);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  z-index: 2;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.lyric-phrase-block:hover {
+  background: rgba(226, 183, 20, 0.22);
+}
+
+.lyric-phrase-block.active {
+  background: rgba(226, 183, 20, 0.35);
+  border-style: solid;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 15px rgba(226, 183, 20, 0.5);
+}
+
+.lyric-phrase-label {
+  font-family: 'Special Elite', 'Courier Prime', monospace;
+  font-size: 0.72rem;
+  font-weight: bold;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Synchronized Sweeping Playhead */
 .score-playhead {
   position: absolute;
-  top: 12px;
-  bottom: 20px;
+  top: 8px;
+  bottom: 14px;
   left: 170px; /* Aligned with ruler start */
   width: 3px;
   background: #ffffff;
@@ -1223,7 +1656,7 @@ html, body {
   background: #00e5ff;
   color: #000;
   font-weight: bold;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   padding: 1px 4px;
   border-radius: 2px;
   letter-spacing: 0.5px;
