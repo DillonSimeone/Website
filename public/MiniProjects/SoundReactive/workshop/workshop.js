@@ -395,6 +395,33 @@ PILLAR_CONFIGS.forEach(cfg => {
 let renderer, scene, camera, material, mesh;
 let uniforms = {};
 
+// Continuous temporal integrators (strictly continuous rotation & wave ripple motion)
+let accumulatedRotAngle = 0;
+let accumulatedRipplePhase = 0;
+
+// Continuous smoothed acoustic feature state (Attack-Decay smoothing envelopes)
+const smoothAudio = {
+  subBass: 0,
+  bass: 0,
+  lowMid: 0,
+  mid: 0,
+  high: 0,
+  air: 0,
+  energy: 0,
+  transient: 0,
+  drum: 0,
+  snare: 0,
+  vocal: 0,
+  clap: 0,
+  canjo: 0
+};
+
+// Smooth ADSR Envelope function (fast attack, smooth musical decay)
+function smoothEnvelope(curr, target, dt, attackRate = 18.0, decayRate = 5.0) {
+  const rate = target > curr ? attackRate : decayRate;
+  return curr + (target - curr) * (1.0 - Math.exp(-rate * Math.max(0.001, dt)));
+}
+
 function initThreeCymatics() {
   scene = new THREE.Scene();
   camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -406,8 +433,10 @@ function initThreeCymatics() {
   uniforms = {
     u_time: { value: 0 },
     u_resolution: { value: new THREE.Vector2() },
+    u_rotAngle: { value: 0 },
+    u_ripplePhase: { value: 0 },
 
-    // FFT bands
+    // Smoothed FFT bands
     u_subBass: { value: 0 },
     u_bass: { value: 0 },
     u_lowMid: { value: 0 },
@@ -417,7 +446,7 @@ function initThreeCymatics() {
     u_energy: { value: 0 },
     u_transient: { value: 0 },
 
-    // Acoustic Keyed Sound Features
+    // Continuous Acoustic Keyed Sound Features
     u_canjo: { value: 0 },
     u_drum: { value: 0 },
     u_snare: { value: 0 },
@@ -445,6 +474,8 @@ function initThreeCymatics() {
   const fragmentShader = `
     uniform float u_time;
     uniform vec2 u_resolution;
+    uniform float u_rotAngle;
+    uniform float u_ripplePhase;
 
     uniform float u_subBass;
     uniform float u_bass;
@@ -483,57 +514,80 @@ function initThreeCymatics() {
       vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
       uv *= 2.3;
 
-      float warp = 1.0 + u_vocal * 0.35 + u_drum * 0.4;
-      uv /= warp;
+      // Organic subtle breathing (smoothly interpolated, no teleporting zoom)
+      float breath = 1.0 + (u_vocal * 0.12 + u_drum * 0.15 + u_subBass * 0.1) * u_bassPunch;
+      uv /= breath;
 
-      float rotAngle = (u_time * 0.08 + u_mid * 0.25 + u_canjo * 0.4) * u_spinSpeed;
-      vec2 rotUV = rot2D(rotAngle) * uv;
+      // Rotation driven by the continuous time integral (strictly continuous, cannot jerk)
+      vec2 rotUV = rot2D(u_rotAngle) * uv;
 
       float r = length(rotUV);
       float a = atan(rotUV.y, rotUV.x);
 
       float hScale = max(0.2, u_harmonicScale);
-      float n1 = (1.0 + (u_subBass * 1.8 + u_drum * 2.2) * u_bassPunch) * hScale;
-      float m1 = (2.0 + (u_bass * 2.2 + u_drum * 1.8) * u_bassPunch) * hScale;
 
-      float n2 = (3.0 + u_mid * 2.5 + u_canjo * 3.0) * hScale;
-      float m2 = (4.0 + (u_high * 3.5 + u_air * 2.5 + u_clap * 4.0)) * hScale;
-
+      // Stable Harmonic Basis Modes:
+      // Base integer modes with microscopic continuous acoustic pitch modulation (max +-0.1)
+      float n1 = (1.0 + u_subBass * 0.15) * hScale;
+      float m1 = (2.0 + u_bass * 0.15) * hScale;
       float w1 = chladniWave(rotUV, n1, m1);
+
+      float n2 = (2.0 + u_canjo * 0.12) * hScale;
+      float m2 = (3.0 + u_mid * 0.15) * hScale;
       float w2 = chladniDual(rotUV, n2, m2);
 
-      float rippleFreq = 7.0 + u_bass * 6.0 * u_bassPunch + u_canjo * 5.0;
-      float radialWave = cos(r * rippleFreq - u_time * 0.9) * cos(6.0 * a + u_time * 0.2) * u_rippleDepth;
+      float n3 = (3.0 + u_snare * 0.15) * hScale;
+      float m3 = (4.0 + u_high * 0.15) * hScale;
+      float w3 = chladniWave(rotUV, n3, m3);
 
-      float weight1 = 0.8 + (u_subBass + u_drum) * 1.5 * u_bassPunch;
-      float weight2 = (u_mid * 0.8 + u_high * 1.2 + u_snare * 1.5 + u_clap * 1.8);
-      float weightRadial = 0.35 + (u_bass + u_canjo) * 0.6;
+      float n4 = (4.0 + u_clap * 0.15) * hScale;
+      float m4 = (5.0 + u_air * 0.15) * hScale;
+      float w4 = chladniDual(rotUV, n4, m4);
 
-      float W = (w1 * weight1 + w2 * weight2 + radialWave * weightRadial) / (weight1 + weight2 + weightRadial + 0.01);
+      // Radial standing wave ripple with continuous phase integral (cannot jump or invert)
+      float radialWave = cos(r * (8.5 * hScale) - u_ripplePhase) * cos(6.0 * a + u_time * 0.15);
+
+      // Dynamic Harmonic Superposition:
+      // Energy smoothly shifts weighting between harmonic layers without tearing
+      float weight1 = 0.8 + (u_subBass * 1.5 + u_drum * 2.0) * u_bassPunch;
+      float weight2 = 0.5 + (u_mid * 1.2 + u_canjo * 2.2);
+      float weight3 = 0.35 + (u_high * 1.0 + u_snare * 2.0);
+      float weight4 = 0.2 + (u_air * 1.0 + u_clap * 2.2 + u_vocal * 1.5);
+      float weightRadial = (0.3 + (u_bass + u_canjo * 0.5) * 0.8) * u_rippleDepth;
+
+      float totalWeight = weight1 + weight2 + weight3 + weight4 + weightRadial + 0.001;
+
+      float W = (w1 * weight1 + w2 * weight2 + w3 * weight3 + w4 * weight4 + radialWave * weightRadial) / totalWeight;
       float nodalDist = abs(W);
 
-      float sharpness = max(0.01, u_lineSharpness + u_snare * 1.2);
-      float nodalLine = smoothstep((0.08 + u_transient * 0.06) / sharpness, 0.005, nodalDist);
+      // Nodal line sharpness & smooth transient expansion
+      float sharpness = max(0.01, u_lineSharpness * (1.0 + u_snare * 0.3));
+      float nodalLine = smoothstep((0.08 + u_transient * 0.04) / sharpness, 0.005, nodalDist);
       float resonanceGlow = (0.045 * u_glowMult) / (nodalDist + 0.035);
 
-      float freqGradient = clamp(r * 0.35 + (u_high * 0.4 + u_clap * 0.5), 0.0, 1.0);
-      vec3 spectralColor = freqToColor(freqGradient, (1.2 + u_energy * 0.8) * u_glowMult, 0.0);
+      // Continuous 20Hz-20kHz Synesthetic Color Palette
+      float freqGradient = clamp(r * 0.35 + (u_high * 0.35 + u_clap * 0.4), 0.0, 1.0);
+      vec3 spectralColor = freqToColor(freqGradient, (1.2 + u_energy * 0.7) * u_glowMult, 0.0);
 
-      vec3 crimsonCore = vec3(1.0, 0.02, 0.15) * (0.8 + (u_subBass + u_drum) * 2.2 * u_bassPunch);
-      vec3 violetHighs = vec3(0.75, 0.0, 1.0) * (0.8 + (u_high * 2.5 + u_clap * 3.0));
+      // Crimson core (drums) vs Violet high-frequency mandalas (singing/claps)
+      vec3 crimsonCore = vec3(1.0, 0.02, 0.15) * (0.8 + (u_subBass + u_drum) * 1.8 * u_bassPunch);
+      vec3 violetHighs = vec3(0.75, 0.0, 1.0) * (0.8 + (u_high * 2.0 + u_clap * 2.2 + u_vocal * 1.2));
       vec3 plateColor = mix(crimsonCore, violetHighs, smoothstep(0.1, 0.8, freqGradient));
 
       vec3 finalCol = nodalLine * spectralColor * 2.4 + resonanceGlow * plateColor * (0.6 + u_bass * 0.8);
 
-      float sandFactor = u_sandDensity * (1.0 + u_clap * 2.0 + u_snare * 1.5);
+      // Acoustic Micro-Sand Sparkles along nodal lines (smoothly amplified, no flickering)
+      float sandFactor = u_sandDensity * (1.0 + u_clap * 1.5 + u_snare * 1.0);
       if (sandFactor > 0.01) {
         float sandNoise = hash21(rotUV * 130.0 + sin(u_time * 0.15));
-        if (sandNoise > (0.96 - sandFactor * 0.08)) {
-          finalCol += spectralColor * smoothstep(0.12, 0.01, nodalDist) * (0.6 + u_air * 2.0) * sandFactor;
+        if (sandNoise > (0.96 - sandFactor * 0.07)) {
+          finalCol += spectralColor * smoothstep(0.12, 0.01, nodalDist) * (0.5 + u_air * 1.5) * sandFactor;
         }
       }
 
+      // Circular boundary vignette
       finalCol *= smoothstep(1.35, 0.75, r);
+
       gl_FragColor = vec4(finalCol, 1.0);
     }
   `;
@@ -1050,24 +1104,57 @@ function animate(now) {
     drawMinimetersSpectrum(audioEngine.dataArray);
   }
 
-  // 4. Update Three.js Cymatics Shader Uniforms
+  // 4. Update Three.js Cymatics Shader Uniforms with Continuous Smooth State
   if (uniforms && uniforms.u_time) {
     uniforms.u_time.value = now * 0.001;
 
-    uniforms.u_subBass.value = telemetry.subBass;
-    uniforms.u_bass.value = telemetry.bass;
-    uniforms.u_lowMid.value = telemetry.lowMid;
-    uniforms.u_mid.value = telemetry.mid;
-    uniforms.u_high.value = telemetry.high;
-    uniforms.u_air.value = telemetry.air;
-    uniforms.u_energy.value = telemetry.overallEnergy;
-    uniforms.u_transient.value = telemetry.transientAttack;
+    // Continuous acoustic feature extractions (continuous float weights, not binary booleans!)
+    const rawDrum = Math.min(1.0, telemetry.subBass * 1.5 + (telemetry.bass > 0.35 ? telemetry.transientAttack * 0.7 : 0.0));
+    const rawSnare = Math.min(1.0, telemetry.highMid * 1.6 + telemetry.transientAttack * 0.5);
+    const rawVocal = Math.min(1.0, telemetry.mid * 1.4 * (0.4 + telemetry.overallEnergy * 0.6));
+    const rawClap = Math.min(1.0, (telemetry.air * 1.6 + telemetry.high * 0.7) * (0.3 + telemetry.transientAttack * 0.7));
+    const rawCanjo = Math.min(1.0, (telemetry.lowMid * 1.5 + telemetry.mid * 0.6) * (0.4 + (telemetry.spectralCentroid > 350 && telemetry.spectralCentroid < 1400 ? 0.6 : 0.0)));
 
-    uniforms.u_drum.value = classification.name.includes('DRUM') ? 1.0 : 0.0;
-    uniforms.u_snare.value = classification.name.includes('SNARE') ? 1.0 : 0.0;
-    uniforms.u_vocal.value = classification.name.includes('YELLING') ? 1.0 : (classification.name.includes('SINGING') ? 0.6 : 0.0);
-    uniforms.u_clap.value = classification.name.includes('CLAP') ? 1.0 : 0.0;
-    uniforms.u_canjo.value = classification.name.includes('CANJO') ? 1.0 : 0.0;
+    // Smooth all audio bands and acoustic features with musical attack-decay envelopes
+    smoothAudio.subBass = smoothEnvelope(smoothAudio.subBass, telemetry.subBass, dt, 16.0, 5.0);
+    smoothAudio.bass = smoothEnvelope(smoothAudio.bass, telemetry.bass, dt, 16.0, 5.0);
+    smoothAudio.lowMid = smoothEnvelope(smoothAudio.lowMid, telemetry.lowMid, dt, 14.0, 5.0);
+    smoothAudio.mid = smoothEnvelope(smoothAudio.mid, telemetry.mid, dt, 14.0, 5.0);
+    smoothAudio.high = smoothEnvelope(smoothAudio.high, telemetry.high, dt, 16.0, 6.0);
+    smoothAudio.air = smoothEnvelope(smoothAudio.air, telemetry.air, dt, 18.0, 6.0);
+    smoothAudio.energy = smoothEnvelope(smoothAudio.energy, telemetry.overallEnergy, dt, 14.0, 4.0);
+    smoothAudio.transient = smoothEnvelope(smoothAudio.transient, telemetry.transientAttack, dt, 24.0, 7.0);
+
+    smoothAudio.drum = smoothEnvelope(smoothAudio.drum, rawDrum, dt, 18.0, 5.0);
+    smoothAudio.snare = smoothEnvelope(smoothAudio.snare, rawSnare, dt, 20.0, 6.0);
+    smoothAudio.vocal = smoothEnvelope(smoothAudio.vocal, rawVocal, dt, 12.0, 4.0);
+    smoothAudio.clap = smoothEnvelope(smoothAudio.clap, rawClap, dt, 20.0, 6.0);
+    smoothAudio.canjo = smoothEnvelope(smoothAudio.canjo, rawCanjo, dt, 16.0, 5.0);
+
+    // Continuous rotation and ripple integration (strictly continuous - never jerks or snaps)
+    const spinVelocity = (0.2 + smoothAudio.mid * 0.35 + smoothAudio.canjo * 0.25) * tweakParams.spinSpeed;
+    accumulatedRotAngle += dt * spinVelocity;
+
+    const rippleVelocity = (0.7 + smoothAudio.bass * 0.8 + smoothAudio.drum * 0.6) * tweakParams.rippleDepth;
+    accumulatedRipplePhase += dt * rippleVelocity;
+
+    uniforms.u_rotAngle.value = accumulatedRotAngle;
+    uniforms.u_ripplePhase.value = accumulatedRipplePhase;
+
+    uniforms.u_subBass.value = smoothAudio.subBass;
+    uniforms.u_bass.value = smoothAudio.bass;
+    uniforms.u_lowMid.value = smoothAudio.lowMid;
+    uniforms.u_mid.value = smoothAudio.mid;
+    uniforms.u_high.value = smoothAudio.high;
+    uniforms.u_air.value = smoothAudio.air;
+    uniforms.u_energy.value = smoothAudio.energy;
+    uniforms.u_transient.value = smoothAudio.transient;
+
+    uniforms.u_drum.value = smoothAudio.drum;
+    uniforms.u_snare.value = smoothAudio.snare;
+    uniforms.u_vocal.value = smoothAudio.vocal;
+    uniforms.u_clap.value = smoothAudio.clap;
+    uniforms.u_canjo.value = smoothAudio.canjo;
 
     uniforms.u_harmonicScale.value = tweakParams.harmonicScale;
     uniforms.u_spinSpeed.value = tweakParams.spinSpeed;
