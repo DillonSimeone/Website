@@ -1,0 +1,12 @@
+/* debris.css - Specific theme tweaks for Debris Redux */
+
+.hud-title {
+  color: #ff0055;
+  text-shadow: 0 0 12px rgba(255, 0, 85, 0.6);
+}
+
+.hud-badge {
+  background: rgba(255, 0, 85, 0.15);
+  color: #ff3377;
+  border-color: rgba(255, 0, 85, 0.5);
+}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Gaussian Splat Rotary Table</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="ui-layer">
+        <header class="glass-panel header">
+            <h1>Gaussian Splat Rotary</h1>
+            <p class="subtitle">MediaPipe Vision &amp; Realtime Point Cloud Turntable</p>
+        </header>
+
+        <div class="controls-panel glass-panel">
+            <div class="video-preview-wrapper">
+                <video id="webcam" autoplay playsinline muted></video>
+                <canvas id="landmark-canvas"></canvas>
+                <div id="camera-status" class="status-tag">Initializing Camera...</div>
+            </div>
+
+            <div class="timer-card">
+                <span class="label">Cycle Timer (<span id="cycle-label">3.0s</span>)</span>
+                <div class="progress-bar-bg">
+                    <div id="cycle-progress" class="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <span class="stat-value" id="splat-count">0</span>
+                    <span class="stat-label">Splat Nodes</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-value" id="slot-count">0/8</span>
+                    <span class="stat-label">Rotary Slots</span>
+                </div>
+            </div>
+
+            <div class="action-hint">
+                <span id="hint-desktop"><span class="key-badge">Spacebar</span> to Dissolve</span>
+                <span id="hint-mobile" style="display:none;"><span class="touch-badge">Tap Screen</span> to Dissolve</span>
+            </div>
+
+            <div class="btn-group">
+                <button id="toggle-camera-btn" class="action-btn sm">Demo / Use Webcam</button>
+                <button id="trigger-dissolve-btn" class="action-btn sm primary">Dissolve</button>
+                <button id="open-settings-btn" class="action-btn sm icon-btn" title="Open Settings">⚙️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Drawer -->
+    <div id="settings-drawer" class="settings-drawer glass-panel">
+        <div class="drawer-header">
+            <h2>Scanner &amp; Audio Settings</h2>
+            <button id="close-settings-btn" class="close-btn">&times;</button>
+        </div>
+        
+        <div class="drawer-content">
+            <h3 class="settings-section-title">🎤 Audio &amp; Color</h3>
+
+            <div class="setting-item">
+                <label for="toggle-audio-reactive" class="checkbox-label">
+                    <input type="checkbox" id="toggle-audio-reactive">
+                    <span><strong>Sound-Reactive FFT</strong> (Mic Sync)</span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="toggle-random-colors" class="checkbox-label">
+                    <input type="checkbox" id="toggle-random-colors">
+                    <span><strong>Rainbow Colors</strong></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-audio-sensitivity">
+                    <span>FFT Audio Sensitivity: <strong id="val-audio-sensitivity">1.5x</strong></span>
+                    <input type="range" id="setting-audio-sensitivity" min="0.5" max="4.0" step="0.1" value="1.5">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-bg-intensity">
+                    <span>Background Shader Intensity: <strong id="val-bg-intensity">1.0x</strong></span>
+                    <input type="range" id="setting-bg-intensity" min="0.0" max="3.0" step="0.1" value="1.0">
+                </label>
+            </div>
+
+            <h3 class="settings-section-title">⏱️ Timing &amp; Capture</h3>
+
+            <div class="setting-item">
+                <label for="setting-capture-interval">
+                    <span>Capture Cycle Duration: <strong id="val-capture-interval">3.0s</strong></span>
+                    <input type="range" id="setting-capture-interval" min="1.0" max="10.0" step="0.5" value="3.0">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-fade-in-speed">
+                    <span>Fade-In Duration: <strong id="val-fade-in-speed">0.4s</strong></span>
+                    <input type="range" id="setting-fade-in-speed" min="0.1" max="1.5" step="0.05" value="0.4">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-dissolve-duration">
+                    <span>Dissolve Duration: <strong id="val-dissolve-duration">1.5s</strong></span>
+                    <input type="range" id="setting-dissolve-duration" min="0.5" max="4.0" step="0.1" value="1.5">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="toggle-auto-cycle" class="checkbox-label">
+                    <input type="checkbox" id="toggle-auto-cycle" checked>
+                    <span><strong>Auto-Cycle Loop</strong> (Spawn → Dissolve → Repeat)</span>
+                </label>
+            </div>
+
+            <h3 class="settings-section-title">🎨 Rendering</h3>
+
+            <div class="setting-item">
+                <label for="setting-rotate-speed">
+                    <span>Ring Rotation Speed: <strong id="val-rotate-speed">1.0x</strong></span>
+                    <input type="range" id="setting-rotate-speed" min="0.0" max="4.0" step="0.1" value="1.0">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-splat-size">
+                    <span>Splat Point Size: <strong id="val-splat-size">0.16</strong></span>
+                    <input type="range" id="setting-splat-size" min="0.04" max="0.5" step="0.01" value="0.16">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-cluster-density">
+                    <span>Splat Cluster Density: <strong id="val-cluster-density">3</strong></span>
+                    <input type="range" id="setting-cluster-density" min="1" max="8" step="1" value="3">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-max-slots">
+                    <span>Ring Slots: <strong id="val-max-slots">8</strong></span>
+                    <input type="range" id="setting-max-slots" min="3" max="20" step="1" value="8">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-radial-distance">
+                    <span>Radial Distance: <strong id="val-radial-distance">4.5</strong></span>
+                    <input type="range" id="setting-radial-distance" min="2.0" max="8.0" step="0.5" value="4.5">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-splat-height">
+                    <span>Splat Y Height: <strong id="val-splat-height">0.0</strong></span>
+                    <input type="range" id="setting-splat-height" min="-2.0" max="4.0" step="0.1" value="0.0">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="setting-fog-density">
+                    <span>Fog Density: <strong id="val-fog-density">0.020</strong></span>
+                    <input type="range" id="setting-fog-density" min="0.0" max="0.08" step="0.002" value="0.020">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

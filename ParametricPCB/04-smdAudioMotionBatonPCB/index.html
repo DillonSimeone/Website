@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>04: All-in-One SMD Audio & Motion Reactive Baton PCB</title>
+  <!-- Universal Shared Stylesheet (Single Source of Truth) -->
+  <link rel="stylesheet" href="../shared/pcb-configurator.css">
+  <!-- JSZip for instant Gerber ZIP bundle export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-left">
+        <a href="../index.html" class="back-link">‹ All PCB Projects</a>
+        <h1>04: All-in-One SMD Audio & Motion Reactive Baton PCB</h1>
+        <span class="badge">100% JLCPCB SMT Factory Assembled • ESP32-C3 SMD • MPU-6050 • I2S MEMS Mic • USB-C CDC • LiPo Charger</span>
+      </div>
+      <div class="header-actions">
+        <button id="btn-export-easyeda" class="btn secondary">📐 EasyEDA / JLCPCB</button>
+        <button id="btn-export-gerber" class="btn primary">📦 Download Gerbers (.zip)</button>
+        <button id="btn-export-bom" class="btn secondary">📋 Download BOM (.csv)</button>
+        <button id="btn-export-pnp" class="btn secondary">🎯 Download PNP (.csv)</button>
+      </div>
+    </header>
+
+    <div class="main-layout">
+      <!-- SIDEBAR CONTROLS -->
+      <aside class="sidebar">
+        <div class="panel-section">
+          <h3>Baton Enclosure Dimensions</h3>
+          <div class="param-row">
+            <label for="input-board-width">Board Width</label>
+            <div class="input-with-unit">
+              <input type="number" id="input-board-width" value="22" min="18" max="35" step="1">
+              <span>mm</span>
+            </div>
+          </div>
+          <div class="param-hint">Fits standard 25mm (1 inch) polycarbonate wand tubes with corner clearance.</div>
+
+          <div class="param-row">
+            <label for="input-board-length">Board Length</label>
+            <div class="input-with-unit">
+              <input type="number" id="input-board-length" value="110" min="80" max="160" step="1">
+              <span>mm</span>
+            </div>
+          </div>
+
+          <div class="param-row" style="margin-top: 10px;">
+            <label for="input-silk-scale">Silkscreen Size</label>
+            <div class="input-with-unit">
+              <input type="range" id="input-silk-scale" value="1.0" min="0.5" max="3.0" step="0.05" style="width: 100px;">
+              <span id="label-silk-scale" style="min-width: 32px; font-size: 0.75rem;">1.0x</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>All-SMD Integrated Hardware</h3>
+          <ul class="spec-list">
+            <li><strong>MCU Core:</strong> ESP32-C3-WROOM-02-N4 (Castellated SMD, Native USB CDC/JTAG)</li>
+            <li><strong>Motion Sensor:</strong> MPU-6050 6-Axis Gyro/Accelerometer (QFN-24, I2C)</li>
+            <li><strong>Audio Sensor:</strong> INMP441 Omnidirectional Digital I2S MEMS Mic (SMD-9)</li>
+            <li><strong>Power System:</strong> USB-C 16P + 1S LiPo Charger (MCP73831) + Auto Power-Path</li>
+            <li><strong>Voltage Rail:</strong> ME6211C33M5G-N 3.3V 500mA Low Dropout LDO</li>
+            <li><strong>LED Output:</strong> Switched 5V/VSYS Header with High-Side P-MOSFET Isolator</li>
+            <li><strong>Haptic Driver:</strong> AO3400A N-MOSFET PWM + SS14 Flyback Diode</li>
+            <li><strong>Diagnostic:</strong> 5-Pin MPU I2C Tap Header, Hardware Reset & Boot Buttons</li>
+            <li><strong>Mounting:</strong> 4× M3 Corner Holes (Ø3.2mm Drill, Ø4.8mm Pad)</li>
+            <li><strong>Assembly:</strong> 100% Single-Order Factory SMT by JLCPCB (Zero Hand Soldering)</li>
+          </ul>
+        </div>
+
+        <div class="panel-section">
+          <div class="update-buttons-group">
+            <button id="btn-recompile" class="btn primary full-width">⚡ Update Layout</button>
+            <button id="btn-route" class="btn-route-board full-width">🔀 Route Traces</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Design & DRC Verification</h3>
+          <div id="drc-status-box" class="drc-box drc-pass">DRC: Ready</div>
+          <div id="stats-box" class="stats-box">
+            <div>Components: <span id="stat-comp-count">-</span></div>
+            <div>SMT Pads: <span id="stat-pad-count">-</span></div>
+            <div>Render Time: <span id="stat-render-time">-</span></div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Documentation & Next Steps</h3>
+          <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem;">
+            <a href="./README.md" target="_blank" class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">📖 Project Architecture Guide (.md)</a>
+            <a href="../SKILL.md" target="_blank" class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">🔍 Laser 600 DPI Test-Fit & EDA Skill (.md)</a>
+            <a href="../AGENTS.md" target="_blank" class="btn secondary" style="text-align: center; text-decoration: none; padding: 6px 8px;">📑 EDA & JLCPCB Best Practices (.md)</a>
+          </div>
+        </div>
+      </aside>
+
+      <!-- VIEWPORTS -->
+      <main class="workspace">
+        <!-- Loading Overlay -->
+        <div id="compile-overlay" class="compile-overlay vaporwave-mode" aria-hidden="true">
+          <div class="vaporwave-sun"></div>
+          <div class="vaporwave-grid"></div>
+          <div class="vaporwave-content">
+            <div class="spinner-neon"></div>
+            <span class="vaporwave-text">Compiling All-SMD Baton Circuit...</span>
+          </div>
+        </div>
+
+        <div class="tabs-header">
+          <button class="tab-btn active" data-tab="tab-3d">🧊 3D Inspection</button>
+          <button class="tab-btn" data-tab="tab-2d">📐 PCB Route (2D)</button>
+          <button class="tab-btn" data-tab="tab-schematic">⚡ Architecture & Pinout</button>
+        </div>
+
+        <div id="tab-3d" class="tab-content active">
+          <div id="canvas-3d-container" class="viewport-canvas"></div>
+          <div class="viewport-overlay-hint">Left click: Rotate • Right click: Pan • Scroll: Zoom</div>
+        </div>
+
+        <div id="tab-2d" class="tab-content">
+          <div id="svg-2d-container" class="viewport-svg"></div>
+          <div id="pcb-2d-tooltip" class="pcb-2d-tooltip"></div>
+        </div>
+
+        <div id="tab-schematic" class="tab-content">
+          <div class="schematic-view-panel" style="padding: 24px; overflow: auto; height: 100%; color: #e2e8f0; font-family: monospace;">
+            <h3 style="color: #38bdf8; margin-top: 0;">⚡ Project 04: All-in-One SMD Audio & Motion Reactive Baton Architecture</h3>
+            <pre class="schematic-ascii" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 18px; line-height: 1.4; color: #a5f3fc; overflow-x: auto;">
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ USB-C 16-Pin Receptacle (5V VBUS Input & Native CDC/JTAG Serial)             │
+  │   • Pin A4/B9: +5V VBUS Rail ──► [D_PWR SS14 Schottky] ──────────► VSYS     │
+  │   • Pin A5: CC1 5.1kΩ Pull-down to GND (Type-C negotiation)                 │
+  │   • Pin B5: CC2 5.1kΩ Pull-down to GND (Type-C negotiation)                 │
+  │   • Pin A6/B6: D+ ─────────────► ESP32-C3 GPIO 19 (USB D+)                  │
+  │   • Pin A7/B7: D- ─────────────► ESP32-C3 GPIO 18 (USB D-)                  │
+  └─────────────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ├────────► [U_CHG MCP73831 LiPo Charger] ──► J_BAT (3.7V)
+                                  │
+                                  └────────► [Auto Power-Path Q_PWR AO3401A] ──► VSYS
+                                                                                   │
+  ┌───────────────────────────────────────────────────────────────────────────────┘
+  ▼
+  ┌─────────────────────────────────┐         ┌─────────────────────────────────┐
+  │ ME6211C33M5G-N 3.3V 500mA LDO   │         │ ESP32-C3-WROOM-02-N4 Core MCU   │
+  │   • VIN: VSYS Rail              │         │   • Pin 1:  3V3 System Rail     │
+  │   • C_IN: 10µF Filter           │────────►│   • Pin 2:  EN (Hardware Reset) │
+  │   • C_OUT: 10µF Filter          │         │   • Pin 8:  GPIO 9 (Boot/Action)│
+  │   • VOUT: Clean 3.3V Rail       │         │   • Pin 9/18/19: System GND     │
+  └─────────────────────────────────┘         └─────────────────────────────────┘
+                  │                                            │
+                  ├──────────────────────┬─────────────────────┤
+                  ▼                      ▼                     ▼
+  ┌──────────────────────────────┐ ┌───────────────────┐ ┌──────────────────────┐
+  │ MPU-6050 6-Axis Motion IMU   │ │ INMP441 MEMS Mic  │ │ Actuators & Outputs  │
+  │   • GPIO 3: I2C SCL (4.7kΩ)  │ │   • GPIO 4: SCK   │ │   • GPIO 6: LED Data │
+  │   • GPIO 2: I2C SDA (4.7kΩ)  │ │   • GPIO 5: WS    │ │   • GPIO 10: LED EN  │
+  │   • GPIO 1: Motion Interrupt │ │   • GPIO 8: SD    │ │   • GPIO 7: Haptic   │
+  │   • 5-Pin J_MPU Diagnostic   │ │   • Digital 24-bit│ │   • Q_LED_PWR Switch │
+  └──────────────────────────────┘ └───────────────────┘ └──────────────────────┘
+
+  ═════════════════════════════════════════════════════════════════════════════
+  JLCPCB SMT 2-Layer Manufacturing & Strapping Map:
+    • GPIO 2 (SDA): Sampled at boot. Pulled HIGH via 4.7kΩ (Passes Strapping).
+    • GPIO 8 (I2S SD): Non-conflicting during boot.
+    • GPIO 9 (Boot Button): Pulled HIGH via 10kΩ. Grounded via button to flash.
+    • 100% BOM Parity: All 18 SMD types have active LCSC Part Numbers.
+  ═════════════════════════════════════════════════════════════════════════════
+            </pre>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="./src/ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zen Wabi-Sabi Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;600&family=Inter:wght@300;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Textured Paper overlay -->
+  <div class="paper-texture"></div>
+
+  <div class="zen-container">
+    <header class="zen-header">
+      <a href="../index.html" class="nav-back">戻る HUB</a>
+      <div class="red-seal">侘寂</div>
+      <h1 class="zen-title">Wabi-Sabi</h1>
+      <p class="zen-subtitle">Quiet space, textured paper grain, and natural organic wood boundaries.</p>
+    </header>
+
+    <main class="zen-grid">
+      <!-- Vertically aligned card -->
+      <section class="zen-card vertical-card">
+        <div class="vertical-text">
+          <h2>不完全の美</h2>
+          <p>Wabi-sabi represents the beauty of things imperfect, impermanent, and incomplete. It values modesty, asymmetry, and raw natural textures.</p>
+        </div>
+      </section>
+
+      <!-- Painting Board -->
+      <section class="zen-card painting-board">
+        <h2>SUMI-E BRUSH</h2>
+        <p>Click and drag inside the stone frame below to draw calligraphic ink brush strokes.</p>
+        <div class="canvas-frame">
+          <canvas id="brush-canvas" width="300" height="180"></canvas>
+        </div>
+        <button class="zen-btn" id="btn-clear-ink">CLEAR INK</button>
+      </section>
+
+      <!-- Poetic Card -->
+      <section class="zen-card poem-card">
+        <p class="haiku">
+          An old silent pond...<br>
+          A frog jumps into the pond,<br>
+          splash! Silence again.
+        </p>
+        <cite>— Matsuo Bashō</cite>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skeuomorphic Synth Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="synth-case">
+    <!-- Wood Side Panels -->
+    <div class="wood-panel wood-left"></div>
+    
+    <!-- Main Metal Deck -->
+    <div class="synth-deck">
+      <header class="synth-header">
+        <a href="../index.html" class="hub-btn">EXIT_SYNTH</a>
+        <h1 class="synth-logo">ANALOGUE SHOCK v1</h1>
+        <div class="led-indicator">
+          <div class="led-bulb led-red" id="power-led"></div>
+          <span class="led-label">PWR</span>
+        </div>
+      </header>
+
+      <main class="synth-controls">
+        <!-- Knob 1: Cutoff -->
+        <div class="control-station">
+          <label>CUTOFF</label>
+          <div class="knob-wrapper">
+            <div class="synth-knob" id="knob-cutoff">
+              <div class="knob-pointer"></div>
+            </div>
+          </div>
+          <div class="value-readout" id="val-cutoff">50%</div>
+        </div>
+
+        <!-- Knob 2: Resonance -->
+        <div class="control-station">
+          <label>RESONANCE</label>
+          <div class="knob-wrapper">
+            <div class="synth-knob" id="knob-res">
+              <div class="knob-pointer"></div>
+            </div>
+          </div>
+          <div class="value-readout" id="val-res">30%</div>
+        </div>
+
+        <!-- Fader 1: Volume -->
+        <div class="control-station fader-station">
+          <label>VOLUME</label>
+          <div class="fader-track">
+            <div class="fader-groove"></div>
+            <div class="fader-handle" id="fader-vol"></div>
+          </div>
+          <div class="value-readout" id="val-vol">80%</div>
+        </div>
+      </main>
+
+      <footer class="synth-keys">
+        <!-- Physical Piano Keys -->
+        <div class="key white" data-note="C"></div>
+        <div class="key black" data-note="C#"></div>
+        <div class="key white" data-note="D"></div>
+        <div class="key black" data-note="D#"></div>
+        <div class="key white" data-note="E"></div>
+        <div class="key white" data-note="F"></div>
+        <div class="key black" data-note="F#"></div>
+        <div class="key white" data-note="G"></div>
+        <div class="key black" data-note="G#"></div>
+        <div class="key white" data-note="A"></div>
+        <div class="key black" data-note="A#"></div>
+        <div class="key white" data-note="B"></div>
+      </footer>
+    </div>
+
+    <div class="wood-panel wood-right"></div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+.lab-root {
+    position: fixed;
+    inset: 0;
+    z-index: 50010;
+    background: #000;
+    color: #e8dcc2;
+    font-family: Georgia, 'Times New Roman', serif;
+    overflow: hidden;
+}
+
+.lab-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+    touch-action: none;
+}
+
+.lab-canvas.lab-dragging {
+    cursor: grabbing;
+}
+
+.lab-canvas.lab-over-book {
+    cursor: pointer;
+}
+
+/* The portal's light: white on the way in and on the way out. */
+.lab-veil {
+    position: absolute;
+    inset: 0;
+    background: #fffaf0;
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity 0.45s ease;
+    z-index: 4;
+}
+
+.lab-veil.is-clear {
+    opacity: 0;
+    transition: opacity 1.4s ease;
+}
+
+.lab-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 6px 14px;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    opacity: 0.6;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.lab-reading .lab-hint {
+    opacity: 0;
+}
+
+.lab-whisper {
+    position: absolute;
+    left: 50%;
+    top: 12%;
+    transform: translateX(-50%);
+    font-size: 1.4rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: #f4e6c4;
+    text-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.lab-whisper.is-shown {
+    animation: lab-whisper 3.2s ease forwards;
+}
+
+@keyframes lab-whisper {
+    0% { opacity: 0; letter-spacing: 0.6em; }
+    25% { opacity: 0.85; }
+    70% { opacity: 0.85; }
+    100% { opacity: 0; letter-spacing: 0.3em; }
+}
+
+.lab-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    max-width: 360px;
+    padding: 6px 10px;
+    background: rgba(12, 9, 6, 0.9);
+    border: 1px solid rgba(232, 210, 160, 0.35);
+    border-radius: 6px;
+    font-size: 15px;
+    line-height: 1.35;
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 2;
+}
+
+.lab-label[hidden] {
+    display: none;
+}
+
+.lab-label small {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #c9a860;
+}
+
+/* ---------- reading a found book ---------- */
+.lab-reader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+}
+
+.lab-reader[hidden] {
+    display: none;
+}
+
+.lab-reader-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.lab-reader-card {
+    position: relative;
+    width: min(760px, 92vw);
+    max-height: 84vh;
+    overflow: auto;
+    padding: 0 34px 30px;
+    background: #f3ecdc;
+    color: #22190f;
+    border-radius: 10px;
+    box-shadow: 0 0 60px rgba(255, 210, 140, 0.35), 0 30px 80px rgba(0, 0, 0, 0.6);
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    opacity: 0;
+    transform: translateY(24px) scale(0.94);
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.lab-reader.is-open .lab-reader-backdrop {
+    opacity: 1;
+}
+
+.lab-reader.is-open .lab-reader-card {
+    opacity: 1;
+    transform: none;
+}
+
+.lab-reader-head {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 -34px;
+    padding: 12px 18px 10px 34px;
+    background: #f3ecdc;
+    border-bottom: 1px solid rgba(60, 40, 20, 0.15);
+    z-index: 1;
+}
+
+.lab-reader-section {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #8a6a2a;
+}
+
+.lab-reader-close {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #22190f;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.lab-reader-close:hover {
+    background: rgba(60, 40, 20, 0.1);
+}
+
+.lab-reader-body > * {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    content-visibility: visible !important;
+    color: #22190f;
+}
+
+.lab-reader-body h1,
+.lab-reader-body h2,
+.lab-reader-body h3 {
+    color: #1a120a !important;
+    font-family: Georgia, 'Times New Roman', serif;
+    text-shadow: none !important;
+}
+
+.lab-reader-body h2 {
+    font-size: 1.9rem;
+    margin: 0.6em 0 0.4em;
+}
+
+.lab-reader-body p,
+.lab-reader-body li,
+.lab-reader-body span {
+    font-size: 1.04rem;
+    line-height: 1.7;
+    color: #2a2016 !important;
+}
+
+.lab-reader-body a {
+    color: #8a3b12 !important;
+}
+
+.lab-reader-body img,
+.lab-reader-body video,
+.lab-reader-body iframe {
+    max-width: 100% !important;
+    height: auto;
+    border-radius: 8px;
+}
+
+.lab-reader-body iframe {
+    width: 100% !important;
+    aspect-ratio: 16 / 9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lab-veil,
+    .lab-veil.is-clear,
+    .lab-reader-backdrop,
+    .lab-reader-card {
+        transition-duration: 0.01s;
+    }
+
+    .lab-whisper.is-shown {
+        animation-duration: 0.01s;
+    }
+}

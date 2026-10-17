@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleepy Dragon's Lair</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #050510;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        #scene-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Twinkling stars */
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .star {
+            animation: twinkle 3s infinite ease-in-out;
+        }
+
+        .star:nth-child(even) {
+            animation-duration: 4s;
+            animation-delay: 1s;
+        }
+
+        .star:nth-child(3n) {
+            animation-duration: 5s;
+            animation-delay: 2s;
+        }
+
+        /* Breathing dragon */
+        @keyframes breathe {
+
+            0%,
+            100% {
+                transform: scaleY(1) translateY(0);
+            }
+
+            50% {
+                transform: scaleY(1.02) translateY(-2px);
+            }
+        }
+
+        #dragon-body-group {
+            animation: breathe 6s infinite ease-in-out;
+            transform-origin: 50% 80%;
+        }
+
+        /* Zzz floating */
+        @keyframes floatZzz {
+            0% {
+                opacity: 0;
+                transform: translate(0, 0) scale(0.5);
+            }
+
+            20% {
+                opacity: 0.8;
+            }
+
+            80% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(20px, -50px) scale(1.5);
+            }
+        }
+
+        .zzz {
+            opacity: 0;
+            font-size: 24px;
+            font-family: "Comic Sans MS", cursive, sans-serif;
+            fill: #a0d8ef;
+            font-weight: bold;
+            filter: drop-shadow(0 0 2px rgba(160, 216, 239, 0.8));
+        }
+
+        .zzz-1 {
+            animation: floatZzz 4s infinite linear;
+        }
+
+        .zzz-2 {
+            animation: floatZzz 4s infinite linear 1.3s;
+            font-size: 18px;
+        }
+
+        .zzz-3 {
+            animation: floatZzz 4s infinite linear 2.6s;
+            font-size: 30px;
+        }
+
+        /* Snoring Smoke */
+        @keyframes smokePuff {
+            0% {
+                opacity: 0;
+                transform: translate(0, 0) scale(0.5);
+            }
+
+            30% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-30px, -40px) scale(2);
+            }
+        }
+
+        .smoke {
+            fill: #d0e0e3;
+            opacity: 0;
+            filter: blur(4px);
+        }
+
+        .smoke-1 {
+            animation: smokePuff 6s infinite ease-out 1s;
+        }
+
+        .smoke-2 {
+            animation: smokePuff 6s infinite ease-out 1.5s;
+        }
+
+        .eye-pupil {
+            transition: transform 0.05s linear;
+            transform-origin: center;
+        }
+
+        /* Interactive Lighting */
+        .crystal {
+            transition: filter 0.3s ease;
+        }
+
+        .crystal:hover {
+            filter: brightness(1.5) drop-shadow(0 0 15px #00ffcc);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="scene-container">
+        <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <!-- Sky Gradient -->
+                <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#0a0a20" />
+                    <stop offset="30%" stop-color="#14143a" />
+                    <stop offset="70%" stop-color="#2a204a" />
+                    <stop offset="100%" stop-color="#4e3863" />
+                </linearGradient>
+
+                <!-- Moon Gradient -->
+                <radialGradient id="moonGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#fffbea" />
+                    <stop offset="60%" stop-color="#fdf4c1" />
+                    <stop offset="100%" stop-color="#e8c97e" />
+                </radialGradient>
+
+                <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="rgba(253, 244, 193, 0.6)" />
+                    <stop offset="100%" stop-color="rgba(253, 244, 193, 0)" />
+                </radialGradient>
+
+                <!-- Mountain Gradients -->
+                <linearGradient id="mountBack" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#2a224a" />
+                    <stop offset="100%" stop-color="#141126" />
+                </linearGradient>
+
+                <linearGradient id="mountMid" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#201a33" />
+                    <stop offset="100%" stop-color="#0c0a14" />
+                </linearGradient>
+
+                <linearGradient id="mountFront" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#171421" />
+                    <stop offset="100%" stop-color="#05040a" />
+                </linearGradient>
+
+                <!-- Cave Gradient -->
+                <radialGradient id="caveInner" cx="50%" cy="80%" r="70%">
+                    <stop offset="0%" stop-color="#2a1212" />
+                    <stop offset="40%" stop-color="#140a0c" />
+                    <stop offset="80%" stop-color="#050305" />
+                    <stop offset="100%" stop-color="#000000" />
+                </radialGradient>
+
+                <!-- Dragon Gradients -->
+                <linearGradient id="dragonSkin" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#1c634c" />
+                    <stop offset="50%" stop-color="#0d4030" />
+                    <stop offset="100%" stop-color="#041a12" />
+                </linearGradient>
+
+                <linearGradient id="dragonBelly" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#8a9e6d" />
+                    <stop offset="50%" stop-color="#647849" />
+                    <stop offset="100%" stop-color="#3d4d29" />
+                </linearGradient>
+
+                <linearGradient id="dragonSpike" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#e0bb6b" />
+                    <stop offset="100%" stop-color="#826224" />
+                </linearGradient>
+
+                <linearGradient id="dragonWing" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#0f2922" />
+                    <stop offset="100%" stop-color="#040d0a" />
+                </linearGradient>
+
+                <linearGradient id="wingMembrane" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#234a3b" />
+                    <stop offset="100%" stop-color="#091712" />
+                </linearGradient>
+
+                <!-- Gold Treasury Gradients -->
+                <linearGradient id="gold1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffe680" />
+                    <stop offset="50%" stop-color="#f5b800" />
+                    <stop offset="100%" stop-color="#b37700" />
+                </linearGradient>
+                <linearGradient id="gold2" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#ffcc00" />
+                    <stop offset="50%" stop-color="#d49a00" />
+                    <stop offset="100%" stop-color="#8c5800" />
+                </linearGradient>
+
+                <!-- Crystal Gradients -->
+                <linearGradient id="crystal1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#aafff0" />
+                    <stop offset="50%" stop-color="#00ffcc" />
+                    <stop offset="100%" stop-color="#00997a" />
+                </linearGradient>
+
+                <linearGradient id="crystal2" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#ccdaff" />
+                    <stop offset="50%" stop-color="#4d88ff" />
+                    <stop offset="100%" stop-color="#003cb3" />
+                </linearGradient>
+
+                <!-- Filters -->
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="8" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+
+                <filter id="lightGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="25" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+
+                <!-- Eye Gradient -->
+                <radialGradient id="eyeSclera" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#ffe600" />
+                    <stop offset="80%" stop-color="#ff9900" />
+                    <stop offset="100%" stop-color="#cc5500" />
+                </radialGradient>
+            </defs>
+
+            <!-- BACKGROUND: Sky & Stars -->
+            <rect width="1200" height="800" fill="url(#skyGrad)" />
+
+            <!-- Stars generation via JS loop effectively, hardcoding some for detailed SVG -->
+            <g id="stars-layer">
+                <circle class="star" cx="150" cy="100" r="1.5" fill="#fff" />
+                <circle class="star" cx="250" cy="60" r="2" fill="#e0f7fa" />
+                <circle class="star" cx="350" cy="180" r="1" fill="#fff" />
+                <circle class="star" cx="450" cy="90" r="2.5" fill="#fff" />
+                <circle class="star" cx="500" cy="220" r="1" fill="#fff" />
+                <circle class="star" cx="100" cy="250" r="2" fill="#fff" />
+                <circle class="star" cx="650" cy="120" r="1.5" fill="#fff" />
+                <circle class="star" cx="720" cy="60" r="1" fill="#fff" />
+                <circle class="star" cx="800" cy="200" r="2.5" fill="#fff" />
+                <circle class="star" cx="950" cy="80" r="1.5" fill="#fff" />
+                <circle class="star" cx="1050" cy="150" r="2" fill="#e0f7fa" />
+                <circle class="star" cx="1150" cy="110" r="1" fill="#fff" />
+                <!-- More distributed tiny stars -->
+                <path
+                    d="M50 50 h1 v1 h-1 z M150 150 h1 v1 h-1 z M200 30 h1 v1 h-1 z M300 250 h1 v1 h-1 z M400 130 h1 v1 h-1 z M550 50 h1 v1 h-1 z M600 180 h1 v1 h-1 z M750 140 h1 v1 h-1 z M850 40 h1 v1 h-1 z M900 220 h1 v1 h-1 z M1000 70 h1 v1 h-1 z M1100 260 h1 v1 h-1 z"
+                    fill="#fff" opacity="0.6" />
+            </g>
+
+            <!-- BACKGROUND: Moon -->
+            <circle cx="900" cy="150" r="120" fill="url(#moonGlow)" />
+            <circle cx="900" cy="150" r="80" fill="url(#moonGrad)" filter="drop-shadow(0 0 10px #fdf4c1)" />
+            <!-- Moon Craters -->
+            <circle cx="870" cy="120" r="15" fill="#d4b46a" opacity="0.3" />
+            <circle cx="930" cy="160" r="22" fill="#d4b46a" opacity="0.2" />
+            <circle cx="890" cy="190" r="12" fill="#d4b46a" opacity="0.4" />
+            <circle cx="840" cy="150" r="8" fill="#d4b46a" opacity="0.3" />
+
+            <!-- DISTANT MOUNTAINS -->
+            <path d="M0 500 Q 150 350 300 450 T 600 400 T 900 450 T 1200 350 L 1200 800 L 0 800 Z"
+                fill="url(#mountBack)" />
+            <path d="M0 550 Q 200 400 450 500 T 850 420 T 1200 500 L 1200 800 L 0 800 Z" fill="url(#mountMid)" />
+
+            <!-- CAVE EXTERIOR (Main Mountain) -->
+            <path d="M-50 850 L 150 250 Q 280 100 450 150 Q 550 180 650 120 Q 800 60 950 250 L 1250 850 Z"
+                fill="url(#mountFront)" />
+            <path d="M-20 850 L 220 350 Q 320 250 450 280 Q 580 300 680 220 Q 800 160 880 320 L 1220 850 Z"
+                fill="#110d1a" />
+
+            <!-- CAVE INTERIOR / ENTRANCE -->
+            <path d="M180 850 C 180 400, 350 280, 580 280 C 850 280, 950 450, 950 850 Z" fill="url(#caveInner)" />
+
+            <!-- Cave Details (Stalactites) -->
+            <!-- Foreground stalactites -->
+            <path d="M 220 380 Q 235 480 250 550 Q 270 450 290 330 Z" fill="#0a0508" />
+            <path d="M 320 300 Q 340 420 360 490 Q 375 400 390 290 Z" fill="#0a0508" />
+            <path d="M 450 280 Q 465 400 480 460 Q 500 380 520 285 Z" fill="#0d080c" />
+            <path d="M 580 280 Q 600 450 620 580 Q 640 430 650 285 Z" fill="#0d080c" />
+            <path d="M 720 300 Q 735 400 750 480 Q 770 380 780 310 Z" fill="#0a0508" />
+            <path d="M 850 350 Q 860 450 870 520 Q 885 430 900 380 Z" fill="#0a0508" />
+
+            <!-- Stalagmites -->
+            <path d="M 200 850 Q 220 700 240 600 Q 260 720 280 850 Z" fill="#050204" />
+            <path d="M 850 850 Q 880 720 900 650 Q 920 730 940 850 Z" fill="#050204" />
+
+            <!-- TREASURE HOARD (Background layers) -->
+            <path d="M 250 850 C 250 780, 350 720, 480 730 C 650 740, 800 730, 900 850 Z" fill="url(#gold1)" />
+            <path d="M 300 850 C 320 760, 420 740, 520 750 C 680 760, 780 760, 850 850 Z" fill="url(#gold2)" />
+            <path d="M 380 850 C 400 790, 480 770, 550 780 C 680 790, 750 790, 800 850 Z" fill="url(#gold1)" />
+
+            <!-- Gold Coin Details (Scattered) -->
+            <g id="gold-coins" fill="#ffd700" stroke="#b37700" stroke-width="1">
+                <ellipse cx="400" cy="745" rx="10" ry="4" transform="rotate(15 400 745)" />
+                <ellipse cx="420" cy="760" rx="12" ry="5" transform="rotate(-10 420 760)" />
+                <ellipse cx="440" cy="735" rx="8" ry="3" transform="rotate(45 440 735)" />
+                <ellipse cx="480" cy="755" rx="15" ry="6" transform="rotate(-20 480 755)" />
+                <ellipse cx="510" cy="770" rx="10" ry="4" transform="rotate(30 510 770)" />
+                <ellipse cx="680" cy="760" rx="14" ry="5" transform="rotate(10 680 760)" />
+                <ellipse cx="720" cy="745" rx="9" ry="3.5" transform="rotate(-35 720 745)" />
+                <ellipse cx="750" cy="770" rx="12" ry="4.5" transform="rotate(25 750 770)" />
+                <ellipse cx="780" cy="750" rx="11" ry="4" transform="rotate(-15 780 750)" />
+            </g>
+
+            <!-- GLOWING CRYSTALS -->
+            <!-- Left Cluster -->
+            <g class="crystal">
+                <polygon points="300,850 315,700 330,680 345,710 350,850" fill="url(#crystal1)" opacity="0.85"
+                    filter="url(#glow)" />
+                <polygon points="315,700 330,680 335,740 320,850" fill="#ccfffa" opacity="0.6" />
+                <polygon points="280,850 295,740 310,730 315,770 300,850" fill="url(#crystal1)" opacity="0.7" />
+            </g>
+
+            <!-- Right Cluster -->
+            <g class="crystal">
+                <polygon points="800,850 820,680 840,650 860,690 850,850" fill="url(#crystal2)" opacity="0.85"
+                    filter="url(#glow)" />
+                <polygon points="820,680 840,650 835,720 810,850" fill="#e6f0ff" opacity="0.6" />
+                <polygon points="850,850 865,720 880,710 890,750 880,850" fill="url(#crystal2)" opacity="0.7" />
+                <polygon points="770,850 780,750 795,740 805,780 790,850" fill="url(#crystal2)" opacity="0.9"
+                    filter="url(#glow)" />
+            </g>
+
+            <!-- Ambient Light from Crystals -->
+            <circle cx="325" cy="750" r="150" fill="#00ffcc" opacity="0.08" filter="url(#lightGlow)" />
+            <circle cx="830" cy="740" r="180" fill="#4d88ff" opacity="0.08" filter="url(#lightGlow)" />
+
+            <!-- ============================================== -->
+            <!-- THE SLEEPY DRAGON -->
+            <!-- ============================================== -->
+            <g id="dragon-body-group">
+
+                <!-- Dragon Tail (coiled in foreground/background) -->
+                <path d="M 750,850 C 900,830 880,680 780,650 C 650,610 500,650 420,720 C 350,780 320,820 450,850"
+                    fill="none" stroke="url(#dragonSkin)" stroke-width="70" stroke-linecap="round" />
+
+                <!-- Tail Spine Spikes -->
+                <polygon points="820,685 845,640 835,695" fill="url(#dragonSpike)" />
+                <polygon points="780,655 810,610 800,665" fill="url(#dragonSpike)" />
+                <polygon points="730,642 755,595 750,652" fill="url(#dragonSpike)" />
+                <polygon points="680,640 695,590 700,650" fill="url(#dragonSpike)" />
+                <polygon points="630,645 640,595 650,655" fill="url(#dragonSpike)" />
+                <polygon points="580,658 580,610 600,668" fill="url(#dragonSpike)" />
+                <polygon points="530,676 525,630 550,686" fill="url(#dragonSpike)" />
+
+                <!-- Tail shading -->
+                <path d="M 750,850 C 900,830 880,680 780,650 C 650,610 500,650 420,720 C 350,780 320,820 450,850"
+                    fill="none" stroke="#000" stroke-width="70" stroke-linecap="round" opacity="0.4" filter="blur(8px)"
+                    transform="translate(0, 15)" />
+                <path d="M 750,850 C 900,830 880,680 780,650 C 650,610 500,650 420,720 C 350,780 320,820 450,850"
+                    fill="none" stroke="url(#dragonBelly)" stroke-width="25" stroke-linecap="round"
+                    transform="translate(0, 18)" />
+
+                <!-- Main Body (curled up) -->
+                <path d="M 380,850 C 300,720 380,550 550,550 C 720,550 750,700 680,850 Z" fill="url(#dragonSkin)" />
+
+                <!-- Body Scales Detail (Overlapping circles) -->
+                <g opacity="0.15" fill="#000">
+                    <circle cx="450" cy="650" r="15" />
+                    <circle cx="475" cy="640" r="15" />
+                    <circle cx="500" cy="635" r="15" />
+                    <circle cx="525" cy="635" r="15" />
+                    <circle cx="550" cy="640" r="15" />
+                    <circle cx="575" cy="650" r="15" />
+                    <circle cx="465" cy="670" r="15" />
+                    <circle cx="490" cy="660" r="15" />
+                    <circle cx="515" cy="660" r="15" />
+                    <circle cx="540" cy="660" r="15" />
+                    <circle cx="565" cy="670" r="15" />
+                    <circle cx="480" cy="690" r="15" />
+                    <circle cx="505" cy="685" r="15" />
+                    <circle cx="530" cy="685" r="15" />
+                    <circle cx="555" cy="690" r="15" />
+                </g>
+
+                <!-- Body Shading -->
+                <path d="M 380,850 C 300,720 380,550 550,550 C 720,550 750,700 680,850 Z" fill="none" stroke="#000"
+                    stroke-width="40" opacity="0.5" filter="blur(15px)" />
+
+                <!-- Back Spikes -->
+                <polygon points="420,590 370,540 435,605" fill="url(#dragonSpike)" />
+                <polygon points="450,565 410,510 470,580" fill="url(#dragonSpike)" />
+                <polygon points="490,552 460,490 510,560" fill="url(#dragonSpike)" />
+                <polygon points="530,548 510,480 550,555" fill="url(#dragonSpike)" />
+                <polygon points="575,550 565,485 595,560" fill="url(#dragonSpike)" />
+                <polygon points="615,565 620,495 635,575" fill="url(#dragonSpike)" />
+                <polygon points="655,590 675,520 670,600" fill="url(#dragonSpike)" />
+
+                <!-- Folded Wing -->
+                <g id="dragon-wing" transform="translate(10, -20)">
+                    <!-- Wing Base -->
+                    <path d="M 460,570 C 550,420 720,450 750,580 C 700,680 580,680 460,570 Z" fill="url(#wingMembrane)"
+                        stroke="#06120e" stroke-width="4" />
+
+                    <!-- Wing Bone Structure -->
+                    <!-- Main arm -->
+                    <path d="M 460,570 Q 560,485 640,430" fill="none" stroke="url(#dragonSkin)" stroke-width="22"
+                        stroke-linecap="round" />
+                    <!-- Fingers -->
+                    <path d="M 640,430 Q 700,480 740,560" fill="none" stroke="url(#dragonSkin)" stroke-width="12"
+                        stroke-linecap="round" />
+                    <path d="M 600,452 Q 650,550 670,620" fill="none" stroke="url(#dragonSkin)" stroke-width="10"
+                        stroke-linecap="round" />
+                    <path d="M 545,492 Q 580,580 580,630" fill="none" stroke="url(#dragonSkin)" stroke-width="8"
+                        stroke-linecap="round" />
+
+                    <!-- Claws on Wing -->
+                    <polygon points="630,420 645,390 650,425" fill="#a4b39e" />
+                    <polygon points="735,550 760,545 745,565" fill="#a4b39e" />
+
+                    <!-- Wing Highlight/Shadow -->
+                    <path d="M 460,570 C 550,420 720,450 750,580" fill="none" stroke="#164d3b" stroke-width="4"
+                        opacity="0.6" />
+                </g>
+
+                <!-- Front Paw (Resting under head) -->
+                <path d="M 480,750 C 440,730 400,750 380,780 C 370,800 420,820 450,820 C 520,820 520,770 480,750 Z"
+                    fill="url(#dragonSkin)" />
+                <path d="M 380,780 Q 360,790 385,800" fill="none" stroke="#000" stroke-width="3" />
+                <path d="M 390,770 Q 365,775 390,785" fill="none" stroke="#000" stroke-width="3" />
+                <!-- Claws -->
+                <polygon points="380,780 340,785 375,790" fill="#a4b39e" />
+                <polygon points="385,800 345,805 385,810" fill="#a4b39e" />
+                <polygon points="390,770 355,765 390,775" fill="#a4b39e" />
+
+                <!-- The Head -->
+                <g id="dragon-head">
+                    <!-- Neck connection shadow -->
+                    <path d="M 450,680 Q 500,600 560,650 L 510,720 Z" fill="#061c14" opacity="0.7" filter="blur(5px)" />
+
+                    <!-- Main Head Shape -->
+                    <path d="M 410,640 C 410,560 520,550 560,620 C 600,680 620,770 540,780 C 460,790 410,720 410,640 Z"
+                        fill="url(#dragonSkin)" />
+
+                    <!-- Snout Base -->
+                    <path d="M 530,660 Q 640,660 630,730 C 620,780 540,790 510,760 Z" fill="url(#dragonSkin)" />
+                    <path d="M 530,660 Q 640,660 630,730 C 620,780 540,790 510,760 Z" fill="none" stroke="#09291e"
+                        stroke-width="12" />
+
+                    <!-- Snout Highlight -->
+                    <path d="M 560,670 Q 610,670 615,700" fill="none" stroke="#257a5e" stroke-width="6"
+                        stroke-linecap="round" opacity="0.6" />
+
+                    <!-- Head Fins/Spikes (Cheeks) -->
+                    <polygon points="430,720 360,740 440,750" fill="url(#wingMembrane)" stroke="#0b1712"
+                        stroke-width="2" />
+                    <polygon points="410,690 340,690 425,715" fill="url(#wingMembrane)" stroke="#0b1712"
+                        stroke-width="2" />
+                    <polygon points="420,660 360,640 432,680" fill="url(#wingMembrane)" stroke="#0b1712"
+                        stroke-width="2" />
+
+                    <!-- Giant Horns -->
+                    <!-- Left Horn (Back) -->
+                    <path d="M 450,590 C 420,480 350,450 300,430 C 350,480 390,520 420,600 Z" fill="#808c74"
+                        stroke="#484f42" stroke-width="2" />
+                    <path d="M 450,590 C 420,480 350,450 300,430 C 350,480 390,520 420,600 Z" fill="none" stroke="#000"
+                        stroke-width="6" opacity="0.3" filter="blur(3px)" transform="translate(-5, 5)" />
+
+                    <!-- Right Horn (Front - Main) -->
+                    <path d="M 500,580 C 480,440 400,380 320,350 C 400,410 430,470 460,590 Z" fill="#a4b39e"
+                        stroke="#667061" stroke-width="2" />
+                    <!-- Horn ridges -->
+                    <path d="M 488,540 Q 470,545 460,555" fill="none" stroke="#565e52" stroke-width="3" />
+                    <path d="M 470,490 Q 445,495 440,510" fill="none" stroke="#565e52" stroke-width="3" />
+                    <path d="M 445,440 Q 420,445 415,465" fill="none" stroke="#565e52" stroke-width="3" />
+                    <path d="M 405,395 Q 380,405 385,420" fill="none" stroke="#565e52" stroke-width="3" />
+
+                    <!-- Nostrils -->
+                    <ellipse cx="605" cy="710" rx="8" ry="12" fill="#040d0a" transform="rotate(20 605 710)" />
+                    <ellipse cx="625" cy="718" rx="6" ry="10" fill="#040d0a" transform="rotate(30 625 718)" />
+
+                    <!-- Mouth Line (Slight smile/smirk) -->
+                    <path id="dragon-mouth" d="M 520,760 Q 580,780 625,750 Q 580,770 520,760" fill="transparent"
+                        stroke="none" />
+                    <path id="dragon-mouth-line" d="M 520,760 Q 580,780 625,750" fill="none" stroke="#040d0a"
+                        stroke-width="5" stroke-linecap="round" />
+                    <!-- Teeth -->
+                    <path id="dragon-teeth"
+                        d="M 530,760 L 536,775 L 542,760 M 550,765 L 555,785 L 560,768 M 580,765 L 588,785 L 595,760"
+                        fill="#e8eee3" opacity="1" />
+
+                    <!-- Roar Fire (Hidden by default) -->
+                    <g id="dragon-fire" opacity="0"
+                        style="transform: scale(0); transform-origin: 600px 750px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                        <path d="M 600,750 Q 750,880 950,650 Q 800,730 650,720 Z" fill="#ff4400" filter="url(#glow)" />
+                        <path d="M 610,745 Q 730,820 850,680 Q 750,720 620,730 Z" fill="#ffaa00" />
+                        <path d="M 620,740 Q 680,770 750,710 Q 690,730 630,735 Z" fill="#ffffff" />
+                    </g>
+
+                    <!-- ===================== -->
+                    <!-- EYES (INTERACTIVE)    -->
+                    <!-- ===================== -->
+                    <g id="dragon-eyes">
+
+                        <!-- LEFT EYE -->
+                        <!-- Sclera -->
+                        <path d="M 485,630 Q 505,610 525,635 Q 505,650 485,630 Z" fill="url(#eyeSclera)"
+                            stroke="#051711" stroke-width="2" />
+                        <!-- Eye Base for Javascript Tracking -->
+                        <g id="left-eye-base" transform="translate(505, 630)">
+                            <!-- Moving Pupil Assembly -->
+                            <g id="left-pupil" class="eye-pupil">
+                                <ellipse cx="0" cy="0" rx="4" ry="12" fill="#0a0000" />
+                                <!-- Eye Highlight -->
+                                <circle cx="-2" cy="-4" r="2.5" fill="#ffffff" />
+                            </g>
+                        </g>
+
+                        <!-- RIGHT EYE -->
+                        <path d="M 545,640 Q 565,620 585,650 Q 565,665 545,640 Z" fill="url(#eyeSclera)"
+                            stroke="#051711" stroke-width="2" />
+                        <g id="right-eye-base" transform="translate(565, 642)">
+                            <!-- Moving Pupil Assembly -->
+                            <g id="right-pupil" class="eye-pupil">
+                                <ellipse cx="0" cy="0" rx="4" ry="12" fill="#0a0000" />
+                                <!-- Eye Highlight -->
+                                <circle cx="-2" cy="-4" r="2.5" fill="#ffffff" />
+                            </g>
+                        </g>
+
+                        <!-- HEAVY SLEEPY EYELIDS -->
+                        <!-- Left Eyelid -->
+                        <path id="left-eyelid" d="M 475,628 Q 505,615 533,638 L 530,595 Q 500,590 470,605 Z"
+                            fill="#15513d" stroke="#0c382b" stroke-width="2" />
+                        <path id="left-eyelid-curve" d="M 475,628 Q 505,615 533,638" fill="none" stroke="#257a5e"
+                            stroke-width="3" stroke-linecap="round" />
+                        <!-- Left Lower Lid -->
+                        <path d="M 480,634 Q 505,644 528,638" fill="none" stroke="#04120d" stroke-width="4"
+                            stroke-linecap="round" />
+
+                        <!-- Right Eyelid -->
+                        <path id="right-eyelid" d="M 535,638 Q 565,625 593,652 L 595,605 Q 560,600 530,615 Z"
+                            fill="#15513d" stroke="#0c382b" stroke-width="2" />
+                        <path id="right-eyelid-curve" d="M 535,638 Q 565,625 593,652" fill="none" stroke="#257a5e"
+                            stroke-width="3" stroke-linecap="round" />
+                        <!-- Right Lower Lid -->
+                        <path d="M 540,646 Q 565,657 588,652" fill="none" stroke="#04120d" stroke-width="4"
+                            stroke-linecap="round" />
+
+                    </g>
+
+                </g> <!-- End Dragon Head -->
+
+                <!-- Snoring Smoke coming from nose -->
+                <ellipse cx="615" cy="715" rx="10" ry="10" class="smoke smoke-1" />
+                <ellipse cx="615" cy="715" rx="15" ry="12" class="smoke smoke-2" />
+
+                <!-- Zzz Text Elements (now inside breathing body group) -->
+                <text x="630" y="700" class="zzz zzz-1">Z</text>
+                <text x="645" y="660" class="zzz zzz-2">z</text>
+                <text x="670" y="620" class="zzz zzz-3">Z</text>
+
+            </g> <!-- End Dragon Body Group -->
+
+            <!-- Foreground Cave Shadow / Vignette -->
+            <path d="M 0,0 L 250,0 Q 150,400 0,800 Z" fill="#050308" opacity="0.8" pointer-events="none" />
+            <path d="M 1200,0 L 950,0 Q 1050,400 1200,800 Z" fill="#050308" opacity="0.8" pointer-events="none" />
+            <path d="M 0,0 L 1200,0 L 1200,80 Q 600,150 0,80 Z" fill="#050308" opacity="0.6" pointer-events="none" />
+            <path d="M 0,800 L 1200,800 L 1200,750 Q 600,680 0,750 Z" fill="#000" opacity="0.7" filter="blur(20px)"
+                pointer-events="none" />
+
+        </svg>
+    </div>
+
+    <script>
+        // Eye Tracking Logic
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+
+            const container = document.getElementById('scene-container');
+            const containerRect = container.getBoundingClientRect();
+
+            // Use normalized coordinates for SVG scaling
+            // Calculate mouse position relative to the center of the container
+            const centerX = containerRect.left + containerRect.width / 2;
+            const centerY = containerRect.top + containerRect.height / 2;
+
+            // Base elements where the eye centers are located
+            const leftEyeBase = document.getElementById('left-eye-base');
+            const rightEyeBase = document.getElementById('right-eye-base');
+            const leftPupil = document.getElementById('left-pupil');
+            const rightPupil = document.getElementById('right-pupil');
+
+            function updatePupil(baseElement, pupilElement) {
+                // Get screen coordinates of the eye base
+                const rect = baseElement.getBoundingClientRect();
+                const eyeCenterX = rect.left + rect.width / 2;
+                const eyeCenterY = rect.top + rect.height / 2;
+
+                // Calculate angle and distance to mouse
+                const dx = mouseX - eyeCenterX;
+                const dy = mouseY - eyeCenterY;
+                const angle = Math.atan2(dy, dx);
+                const distance = Math.hypot(dx, dy);
+
+                // Cap the pupil movement so it doesn't leave the eye 
+                const maxMoveDistance = 5;
+                const moveDist = Math.min(distance / 50, maxMoveDistance);
+
+                const moveX = Math.cos(angle) * moveDist;
+                const moveY = Math.sin(angle) * moveDist;
+
+                // Apply translation directly to SVG element
+                pupilElement.setAttribute('transform', `translate(${moveX}, ${moveY})`);
+            }
+
+            updatePupil(leftEyeBase, leftPupil);
+            updatePupil(rightEyeBase, rightPupil);
+        });
+
+        // Click to Roar Animation
+        let isRoaring = false;
+        document.addEventListener('click', () => {
+            if (isRoaring) return;
+            isRoaring = true;
+
+            // Hide Zzz and smoke by setting display to none
+            document.querySelectorAll('.zzz, .smoke').forEach(el => {
+                el.style.display = 'none';
+            });
+
+            const head = document.getElementById('dragon-head');
+            const mouthLine = document.getElementById('dragon-mouth-line');
+            const mouthOpen = document.getElementById('dragon-mouth');
+            const teeth = document.getElementById('dragon-teeth');
+            const fire = document.getElementById('dragon-fire');
+            const leftEyelid = document.getElementById('left-eyelid');
+            const rightEyelid = document.getElementById('right-eyelid');
+            const leftEyelidCurve = document.getElementById('left-eyelid-curve');
+            const rightEyelidCurve = document.getElementById('right-eyelid-curve');
+
+            // Eye wide open (move eyelids up)
+            leftEyelid.setAttribute('d', 'M 475,628 Q 505,585 533,638 L 530,595 Q 500,590 470,605 Z');
+            leftEyelidCurve.setAttribute('d', 'M 475,628 Q 505,585 533,638');
+            rightEyelid.setAttribute('d', 'M 535,638 Q 565,595 593,652 L 595,605 Q 560,600 530,615 Z');
+            rightEyelidCurve.setAttribute('d', 'M 535,638 Q 565,595 593,652');
+
+            // Head rears up
+            head.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            head.style.transformOrigin = '500px 720px';
+            head.style.transform = 'rotate(-15deg) translate(-10px, -20px)';
+
+            // Open jaw and fire
+            setTimeout(() => {
+                mouthLine.style.display = 'none';
+                mouthOpen.setAttribute('d', 'M 520,760 Q 560,820 625,750 Q 550,730 520,760');
+                mouthOpen.setAttribute('fill', '#4a111a'); // Dark red throat
+
+                // Adjust teeth position for open mouth
+                teeth.setAttribute('d', 'M 525,780 L 532,800 L 538,782 M 545,790 L 550,810 L 555,792 M 570,780 L 575,800 L 585,775');
+
+                // Fire breath
+                fire.style.opacity = '1';
+                fire.style.transform = 'scale(1)';
+            }, 150);
+
+            // Reset everything back to sleepy state
+            setTimeout(() => {
+                head.style.transition = 'transform 1s ease-in-out';
+                head.style.transform = 'rotate(0deg) translate(0, 0)';
+
+                mouthLine.style.display = 'block';
+                mouthOpen.setAttribute('d', 'M 520,760 Q 580,780 625,750 Q 580,770 520,760');
+                mouthOpen.setAttribute('fill', 'transparent');
+
+                // Revert teeth
+                teeth.setAttribute('d', 'M 530,760 L 536,775 L 542,760 M 550,765 L 555,785 L 560,768 M 580,765 L 588,785 L 595,760');
+
+                fire.style.opacity = '0';
+                fire.style.transform = 'scale(0)';
+
+                // Sleepy eyes revert
+                leftEyelid.setAttribute('d', 'M 475,628 Q 505,615 533,638 L 530,595 Q 500,590 470,605 Z');
+                leftEyelidCurve.setAttribute('d', 'M 475,628 Q 505,615 533,638');
+                rightEyelid.setAttribute('d', 'M 535,638 Q 565,625 593,652 L 595,605 Q 560,600 530,615 Z');
+                rightEyelidCurve.setAttribute('d', 'M 535,638 Q 565,625 593,652');
+
+                // Restore Zzz and smoke
+                setTimeout(() => {
+                    document.querySelectorAll('.zzz, .smoke').forEach(el => el.style.display = '');
+                    isRoaring = false;
+                }, 1000);
+
+            }, 1600);
+        });
+
+        // Handle touch for mobile devices
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                // Simulate a mouse event to reuse logic
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                document.dispatchEvent(mouseEvent);
+            }
+        });
+
+        // Reset eyes if leaving window
+        document.addEventListener('mouseleave', () => {
+            const leftPupil = document.getElementById('left-pupil');
+            const rightPupil = document.getElementById('right-pupil');
+            leftPupil.setAttribute('transform', `translate(0, 0)`);
+            rightPupil.setAttribute('transform', `translate(0, 0)`);
+        });
+    </script>
+
+</body>
+
+</html>

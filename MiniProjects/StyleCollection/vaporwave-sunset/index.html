@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vaporwave Sunset Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Sunset background -->
+  <div class="retro-sky">
+    <div class="retro-sun"></div>
+  </div>
+  
+  <!-- Perspective grid floor -->
+  <div class="grid-floor" id="floor-grid"></div>
+
+  <div class="vapor-container">
+    <header class="vapor-header">
+      <a href="../index.html" class="nav-back">◀ RETURN_TO_HUB</a>
+      <h1 class="vapor-title">VAPORWAVE</h1>
+      <p class="vapor-subtitle">夕日 // RETRO PERSPECTIVE GRID SYNTHESIS</p>
+    </header>
+
+    <main class="vapor-grid">
+      <section class="vapor-card">
+        <h2>NOSTALGIA DECK</h2>
+        <p>Combining the early-90s consumer technology aesthetics with glitched fuchsia sunsets and retro computer software dialog panels.</p>
+      </section>
+
+      <section class="vapor-card ctrl-card">
+        <h2>GRID PARALLAX</h2>
+        <p>Drag your cursor horizontally across the viewport below to scroll the wireframe grid floor left or right.</p>
+        
+        <div class="grid-drag-pad" id="drag-pad">
+          <span class="pad-label">DRAG_HERE_X</span>
+        </div>
+      </section>
+
+      <section class="vapor-card info-card">
+        <h2>AESTHETIC SCHEME</h2>
+        <ul class="vapor-list">
+          <li>- Pink/orange sunset skies</li>
+          <li>- Glowing cyan grid floors</li>
+          <li>- Wireframe perspective lines</li>
+          <li>- Japanese katakana labels</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

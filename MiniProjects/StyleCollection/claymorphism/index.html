@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claymorphic Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="clay-container">
+    <header class="clay-header">
+      <a href="../index.html" class="back-btn">← Back to Hub</a>
+      <h1 class="clay-title">Claymorphism</h1>
+      <p class="clay-subtitle">Friendly, inflated 3D shapes and squishy tactile interactions.</p>
+    </header>
+
+    <main class="clay-grid">
+      <section class="clay-card info-card">
+        <h2>What is Claymorphism?</h2>
+        <p>Unlike flat design or glassmorphism, claymorphism uses multiple inner shadows and soft outer drop shadows to simulate inflated 3D objects made of clay or plastic.</p>
+        <div class="pill-badge">Soft Aesthetics</div>
+        <div class="pill-badge">Pastel Colors</div>
+        <div class="pill-badge">Tactile Depth</div>
+      </section>
+
+      <section class="clay-card interactive-card">
+        <h2>Squishy Buttons</h2>
+        <p>Interactive elements respond to clicks by morphing their inner shadows, feeling soft and squeezable.</p>
+        <div class="clay-button-row">
+          <button class="clay-btn clay-btn-blue" id="btn-soft">Click Me</button>
+          <button class="clay-btn clay-btn-peach" id="btn-reset">Reset Bubble</button>
+        </div>
+      </section>
+
+      <section class="clay-card bubble-card">
+        <h2>Bubble Inflator</h2>
+        <p>Click the bubble to inflate it! If it gets too big, it will pop.</p>
+        <div class="bubble-wrapper">
+          <div class="clay-bubble" id="inflatable-bubble">
+            <span class="bubble-text" id="bubble-count">0</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tiki Bamboo Bar Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="tiki-container">
+    
+    <!-- Header framed by Bamboo -->
+    <header class="tiki-header">
+      <a href="../index.html" class="nav-back">← HUB-LAGOON</a>
+      <div class="tiki-mask">🗿</div>
+      <h1 class="tiki-title">TIKI BAR</h1>
+      <p class="tiki-subtitle">BAMBOO FRAMING & TROPICAL MIXOLOGY</p>
+    </header>
+
+    <main class="tiki-grid">
+      
+      <!-- Exotic Info Card -->
+      <section class="tiki-card main-info">
+        <div class="bamboo-border"></div>
+        <h2>THE ESCAPE</h2>
+        <p>Capturing the mid-century Polynesian Pop aesthetic. It blends bamboo borders, coconut wood grains, tiki torches, and neon lanterns.</p>
+      </section>
+
+      <!-- Cocktail Mixer Interactive -->
+      <section class="tiki-card mixer-widget">
+        <div class="bamboo-border"></div>
+        <h2>MIXOLOGY</h2>
+        <p>Add ingredients to create your cocktail. The glass level will rise and change colors!</p>
+        
+        <div class="ingredient-buttons">
+          <button class="ing-btn" data-color="#ffcc00" id="btn-pineapple">Pineapple</button>
+          <button class="ing-btn" data-color="#ff3366" id="btn-hibiscus">Grenadine</button>
+          <button class="ing-btn" data-color="#33ff33" id="btn-lime">Lime Juice</button>
+        </div>
+
+        <div class="cocktail-glass">
+          <div class="fluid" id="cocktail-fluid"></div>
+        </div>
+        <button class="reset-btn" id="btn-drink">Drink Up!</button>
+      </section>
+
+      <!-- Tiki Lanterns Card -->
+      <section class="tiki-card lanterns-info">
+        <div class="bamboo-border"></div>
+        <h2>COCONUT COZY</h2>
+        <p>Warm earth tones paired with bright neon green and magenta lantern highlights. A relaxing island evening.</p>
+        <div class="lanterns-row">
+          <span class="lantern red-lat">🏮</span>
+          <span class="lantern green-lat">🏮</span>
+          <span class="lantern blue-lat">🏮</span>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+:root {
+  --bg-dark: #000000;
+  --neon-lime: #39ff14;
+  --neon-magenta: #ff007f;
+  --neon-cyan: #00f0ff;
+  
+  --font-wide: 'Syne', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: #fff;
+  font-family: var(--font-mono);
+  overflow-x: hidden;
+}
+
+.acid-wrapper {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Background Rave Grid Strobe */
+.grid-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(to right, rgba(255, 0, 127, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 0, 127, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: 1;
+}
+
+/* Strobe Speed Modes */
+.grid-backdrop.speed-rave {
+  animation: strobe 0.2s infinite alternate;
+}
+
+.grid-backdrop.speed-slow {
+  animation: strobe 1.5s infinite alternate;
+}
+
+@keyframes strobe {
+  0% {
+    background-image: 
+      linear-gradient(to right, rgba(57, 255, 20, 0.12) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(57, 255, 20, 0.12) 1px, transparent 1px);
+    background-color: rgba(255, 0, 127, 0.02);
+  }
+  100% {
+    background-image: 
+      linear-gradient(to right, rgba(0, 240, 255, 0.12) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 240, 255, 0.12) 1px, transparent 1px);
+    background-color: rgba(57, 255, 20, 0.02);
+  }
+}
+
+.acid-container {
+  position: relative;
+  z-index: 5;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.acid-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: var(--neon-lime);
+  text-decoration: none;
+  font-family: var(--font-wide);
+  font-size: 0.9rem;
+  border: 2px solid var(--neon-lime);
+  padding: 5px 15px;
+  background: #000;
+  box-shadow: 3px 3px 0px var(--neon-lime);
+  transition: all 0.1s;
+}
+
+.nav-back:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px var(--neon-lime);
+}
+
+.nav-back:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px var(--neon-lime);
+}
+
+.acid-title {
+  font-family: var(--font-wide);
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -2px;
+  color: var(--neon-lime);
+  text-shadow: 4px 4px 0px var(--neon-magenta);
+  margin: 20px 0 10px 0;
+  text-transform: uppercase;
+}
+
+.acid-subtitle {
+  color: var(--neon-cyan);
+  font-size: 0.95rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.acid-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 30px;
+}
+
+.acid-card {
+  background: #111;
+  border: 3px solid #fff;
+  border-radius: 12px;
+  padding: 30px;
+  position: relative;
+  color: #fff;
+  transition: transform 0.2s;
+}
+
+.card-icon {
+  font-size: 1.8rem;
+  position: absolute;
+  top: 15px;
+  right: 20px;
+}
+
+.acid-card h2 {
+  font-family: var(--font-wide);
+  font-size: 1.3rem;
+  margin-top: 10px;
+  letter-spacing: -1px;
+}
+
+.acid-card p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+/* Card color themes */
+.card-cyan {
+  border-color: var(--neon-cyan);
+  box-shadow: 6px 6px 0px var(--neon-cyan);
+}
+.card-cyan h2 { color: var(--neon-cyan); }
+
+.card-magenta {
+  border-color: var(--neon-magenta);
+  box-shadow: 6px 6px 0px var(--neon-magenta);
+}
+.card-magenta h2 { color: var(--neon-magenta); }
+
+.card-lime {
+  border-color: var(--neon-lime);
+  box-shadow: 6px 6px 0px var(--neon-lime);
+}
+.card-lime h2 { color: var(--neon-lime); }
+
+/* Control buttons */
+.control-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.acid-btn {
+  background: transparent;
+  border: 2px solid var(--neon-magenta);
+  color: var(--neon-magenta);
+  font-family: var(--font-wide);
+  font-size: 0.8rem;
+  padding: 8px 16px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px var(--neon-magenta);
+  transition: all 0.1s;
+}
+
+.acid-btn.active, .acid-btn:hover {
+  background: var(--neon-magenta);
+  color: #000;
+  font-weight: bold;
+}
+
+.acid-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0px 0px 0px var(--neon-magenta);
+}
+
+/* Chrome metal panel simulator */
+.chrome-panel {
+  height: 140px;
+  border-radius: 8px;
+  border: 2px solid var(--neon-lime);
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at 50% 50%, #fff, #555 30%, #111 60%, #555 90%);
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.chrome-label {
+  font-family: var(--font-wide);
+  font-size: 0.9rem;
+  color: #fff;
+  background: #000;
+  padding: 2px 10px;
+  border: 1px solid var(--neon-lime);
+  mix-blend-mode: difference;
+}

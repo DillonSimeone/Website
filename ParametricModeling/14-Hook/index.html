@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametric Wall Hook Configurator</title>
+    <!-- Browser Import Map for resolving 'three' bare specifiers -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+      }
+    </script>
+    <!-- Google Fonts for Technical Aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="blueprint-border"></div>
+
+    <!-- Drawing Title Block -->
+    <header style="justify-content: center;">
+        <h1 style="text-align: center; margin: 0;">PARAMETRIC WALL HOOK CONFIGURATOR</h1>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+        <!-- Left Panel: Parameter Controls -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">1. Flat Bar & Hook Specs</span>
+            </div>
+            <div class="panel-content">
+                <!-- Section: Metal Flat Bar Specifications -->
+                <div class="control-group">
+                    <div class="control-group-title">Metal Flat Bar Specs</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Bar Width (Slot Depth)</span><span class="param-value"><span id="val-barWidth">25.0</span> mm</span></div>
+                        <input type="range" id="input-barWidth" min="15.0" max="50.0" step="1.0" value="25.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Bar Thickness (Slot Width)</span><span class="param-value"><span id="val-barThickness">3.0</span> mm</span></div>
+                        <input type="range" id="input-barThickness" min="1.0" max="10.0" step="0.5" value="3.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Slot Clearance / Tolerance</span><span class="param-value"><span id="val-slotTolerance">0.3</span> mm</span></div>
+                        <input type="range" id="input-slotTolerance" min="0.0" max="1.5" step="0.05" value="0.3">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Retaining Lip Height</span><span class="param-value"><span id="val-slotLipHeight">8.0</span> mm</span></div>
+                        <input type="range" id="input-slotLipHeight" min="3.0" max="20.0" step="0.5" value="8.0">
+                    </div>
+                </div>
+
+                <!-- Section: Hook Body Geometry -->
+                <div class="control-group">
+                    <div class="control-group-title">Hook Body Details</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Hook Wall Thickness</span><span class="param-value"><span id="val-hookWallThickness">5.0</span> mm</span></div>
+                        <input type="range" id="input-hookWallThickness" min="3.0" max="12.0" step="0.5" value="5.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Backplate Width</span><span class="param-value"><span id="val-backplateWidth">22.0</span> mm</span></div>
+                        <input type="range" id="input-backplateWidth" min="15.0" max="45.0" step="1.0" value="22.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Backplate Thickness</span><span class="param-value"><span id="val-backplateThickness">5.0</span> mm</span></div>
+                        <input type="range" id="input-backplateThickness" min="3.0" max="12.0" step="0.5" value="5.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Support Ramp Height</span><span class="param-value"><span id="val-rampHeight">25.0</span> mm</span></div>
+                        <input type="range" id="input-rampHeight" min="10.0" max="50.0" step="1.0" value="25.0">
+                    </div>
+                </div>
+
+                <!-- Section: Mounting Screws -->
+                <div class="control-group">
+                    <div class="control-group-title">Mounting Screws</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Screw Spacing</span><span class="param-value"><span id="val-screwSpacing">60.0</span> mm</span></div>
+                        <input type="range" id="input-screwSpacing" min="40.0" max="120.0" step="2.0" value="60.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Screw Hole Diameter</span><span class="param-value"><span id="val-screwHoleDiameter">4.5</span> mm</span></div>
+                        <input type="range" id="input-screwHoleDiameter" min="2.0" max="8.0" step="0.1" value="4.5">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Countersink Diameter</span><span class="param-value"><span id="val-screwHeadDiameter">8.5</span> mm</span></div>
+                        <input type="range" id="input-screwHeadDiameter" min="4.0" max="15.0" step="0.5" value="8.5">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Panel: Viewport -->
+        <div id="viewport-container">
+            <div id="canvas3d"></div>
+            <svg id="dimensions-overlay"></svg>
+        </div>
+
+        <!-- Right Panel: Visibility & Export -->
+        <div class="panel panel-right">
+            <div class="panel-header">
+                <span class="panel-title">2. Preview & Export</span>
+            </div>
+            <div class="panel-content">
+                <!-- Visibilities -->
+                <div class="control-group">
+                    <div class="control-group-title">Show/Hide Parts</div>
+                    <div class="toggle-row">
+                        <span>Show Wall Hook</span>
+                        <input type="checkbox" id="show-hook" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Show Metal Bar</span>
+                        <input type="checkbox" id="show-bar" checked>
+                    </div>
+                </div>
+
+                <!-- Display Settings -->
+                <div class="control-group">
+                    <div class="control-group-title">Display Settings</div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Solid Opacity</span><span class="param-value"><span id="val-opacity">90</span>%</span></div>
+                        <input type="range" id="input-opacity" min="10" max="100" step="5" value="90">
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Render Mode</span>
+                        <div class="btn-group">
+                            <button class="btn" id="btn-render-mode">Neon Render</button>
+                            <button class="btn active" id="btn-blueprint-mode">Blueprint</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STL Export Block -->
+                <div class="control-group">
+                    <div class="control-group-title">Export STL Files</div>
+                    <div style="font-size: 0.65rem; color: rgba(0, 243, 255, 0.65); line-height: 1.3; margin-bottom: 12px; font-family: 'Share Tech Mono', monospace;">
+                        * PARTS ARE GENERATED IN MM FOR DIRECT 3D PRINTER SLICER COMPATIBILITY.
+                    </div>
+                    
+                    <button class="btn btn-accent" id="btn-export-hook" style="border-color: #ff007f; color: #ff007f; text-shadow: 0 0 4px rgba(255,0,127,0.4); font-weight: bold; width: 100%;">EXPORT WALL HOOK STL</button>
+                    <button class="btn btn-accent" id="btn-export-bar" style="margin-top: 10px; border-color: #c8ff00; color: #c8ff00; text-shadow: 0 0 4px rgba(200,255,0,0.4); width: 100%;">EXPORT METAL BAR STL</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Status -->
+    <footer>
+        <div class="status-left">
+            <div class="status-dot"></div>
+            <span>GEOMETRY KERNEL:</span>
+            <span id="kernel-status">OFFLINE</span>
+        </div>
+        <div style="text-align: center; letter-spacing: 1px;">PARAMETRIC WALL HOOK CONFIGURATOR</div>
+        <div style="text-align: right;">v1.0.0 (2026)</div>
+    </footer>
+
+    <!-- Main Script Entry -->
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <title>Haptic Control</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 15px; }
+    .card { background: rgba(255,255,255,0.15); border-radius: 10px; padding: 15px; margin: 10px 0; }
+    h1 { text-align: center; font-size: 1.5em; margin-bottom: 20px; }
+    h2 { font-size: 1.1em; margin: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 5px; }
+    .mon { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .mi { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; text-align: center; }
+    .mv { font-size: 1.5em; font-weight: bold; font-family: monospace; margin-top: 5px; }
+    .ml { font-size: 0.8em; opacity: 0.8; }
+    label { display: block; margin: 10px 0 5px; font-size: 0.9em; }
+    .vd { float: right; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 5px; font-family: monospace; }
+    input[type=range] { width: 100%; height: 6px; border-radius: 5px; background: rgba(255,255,255,0.2); }
+    select { width: 100%; padding: 8px; border: none; border-radius: 6px; background: rgba(255,255,255,0.9); color: #333; }
+    button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em; font-weight: bold; margin: 5px 0; cursor: pointer; }
+    .bs { background: #667eea; color: #fff; }
+    .br { background: #f5576c; color: #fff; }
+  </style>
+</head>
+<body>
+  <script>
+    function updateData() {
+      // In standalone HTML, this will fail unless hosted with the ESP32 server.
+      // Mocking the behavior for the template could be done but we'll keep the original script.
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          document.getElementById('monitor-data').innerHTML = this.responseText;
+        }
+      };
+      xhttp.open('GET', '/data', true);
+      xhttp.send();
+    }
+    // setInterval(updateData, 1000);
+    // window.onload = updateData;
+  </script>
+
+  <h1>Haptic Control</h1>
+  <h1>By Dillon Simeone</h1>
+  
+  <div class='card'>
+    <h2>Monitor</h2>
+    <div id='monitor-data'>
+      <!-- This matches buildDataPanelHTML() for when the page is viewed offline -->
+      <div class='mon'>
+        <div class='mi'><div class='ml'>Audio</div><div class='mv'>0</div></div>
+        <div class='mi'><div class='ml'>Freq (Hz)</div><div class='mv'>0</div></div>
+        <div class='mi'><div class='ml'>Motor</div><div class='mv'>0%</div></div>
+        <div class='mi'><div class='ml'>Mode</div><div class='mv'>OFF</div></div>
+      </div>
+    </div>
+  </div>
+
+  <form action='/save' method='POST'>
+    <div class='card'>
+      <h2>Motor</h2>
+      <label>Mic Gain <span class='vd'>1.0x</span></label>
+      <input type='range' name='mg' min='0.1' max='3' step='0.1' value='1.0'>
+      
+      <label>Intensity <span class='vd'>255</span></label>
+      <input type='range' name='mi' min='100' max='255' step='5' value='255'>
+      
+      <label>Gate <span class='vd'>650</span></label>
+      <input type='range' name='gt' min='50' max='1000' step='10' value='650'>
+      
+      <label>Smooth <span class='vd'>0.25</span></label>
+      <input type='range' name='sm' min='0.05' max='0.5' step='0.05' value='0.25'>
+      
+      <label>Power Curve <span class='vd'>1.00</span></label>
+      <input type='range' name='mc' min='0.25' max='2.0' step='0.05' value='1.0'>
+    </div>
+
+    <div class='card'>
+      <h2>Haptic Logic</h2>
+      <label>Motor Logic</label>
+      <select name='mlogic'>
+        <option value='0' selected>Peak Frequency</option>
+        <option value='1'>Band Energy</option>
+      </select>
+      
+      <label>Bass (&lt;250Hz) Mode</label>
+      <select name='bm'>
+        <option value='0'>Off</option>
+        <option value='1' selected>Forward</option>
+        <option value='2'>Reverse</option>
+        <option value='3'>Alternating</option>
+      </select>
+      
+      <label>Mid (250-2000Hz) Mode</label>
+      <select name='mm'>
+        <option value='0'>Off</option>
+        <option value='1'>Forward</option>
+        <option value='2'>Reverse</option>
+        <option value='3' selected>Alternating</option>
+      </select>
+      
+      <label>Treble (&gt;2000Hz) Mode</label>
+      <select name='tm'>
+        <option value='0'>Off</option>
+        <option value='1'>Forward</option>
+        <option value='2' selected>Reverse</option>
+        <option value='3'>Alternating</option>
+      </select>
+    </div>
+
+    <div class='card'>
+      <h2>Transient</h2>
+      <label>Threshold <span class='vd'>3.0x</span></label>
+      <input type='range' name='tt' min='1.5' max='5' step='0.1' value='3.0'>
+      
+      <label>Boost <span class='vd'>50</span></label>
+      <input type='range' name='tb' min='20' max='100' step='5' value='50'>
+      
+      <label>Duration <span class='vd'>150ms</span></label>
+      <input type='range' name='td' min='50' max='300' step='10' value='150'>
+    </div>
+
+    <div class='card'>
+      <h2>LED</h2>
+      <label>LED Mode</label>
+      <select name='llogic'>
+        <option value='0' selected>Peak Frequency</option>
+        <option value='1'>3-Band Splitter</option>
+      </select>
+      
+      <label>Max Brightness <span class='vd'>50</span></label>
+      <input type='range' name='lb' min='5' max='255' step='5' value='50'>
+      
+      <label>Attack (Fade-In) <span class='vd'>0.07s</span></label>
+      <input type='range' name='la' min='0.01' max='1.0' step='0.01' value='0.07'>
+      
+      <label>Release (Fade-Out) <span class='vd'>0.07s</span></label>
+      <input type='range' name='lr' min='0.01' max='1.0' step='0.01' value='0.07'>
+    </div>
+
+    <button type='submit' class='bs'>Save</button>
+  </form>
+  
+  <button onclick='location.href="/reset"' class='br'>Reset</button>
+
+</body>
+</html>

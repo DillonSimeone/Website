@@ -1,0 +1,4 @@
+// Two-beat heartbeat — pow() shapes the wave envelope.
+p = frac(time(1.2));
+b = pow(wave(p*2), 8) + pow(wave(p*2 + 0.3), 8) * 0.7;
+hsv(0, 1, clamp(b, 0, 1));
