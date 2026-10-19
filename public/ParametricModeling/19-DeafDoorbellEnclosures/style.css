@@ -1,0 +1,241 @@
+:root {
+    --bg: #07090e;
+    --panel-bg: rgba(12, 16, 28, 0.82);
+    --border: rgba(0, 243, 255, 0.25);
+    --border-glow: 0 0 16px rgba(0, 243, 255, 0.35);
+    --cyan: #00f3ff;
+    --pink: #ff006e;
+    --orange: #ff9d00;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --font-mono: 'Space Mono', monospace;
+    --font-heading: 'Orbitron', 'Share Tech Mono', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+header {
+    height: 60px;
+    background: rgba(10, 14, 24, 0.9);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+.title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cad-badge {
+    background: rgba(0, 243, 255, 0.15);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+h1 {
+    font-size: 1.15rem;
+    color: #fff;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff0055;
+}
+
+.status-badge.active .status-dot {
+    background: #00ff88;
+    box-shadow: 0 0 10px #00ff88;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+#viewport-container {
+    flex: 1;
+    height: 100%;
+    position: relative;
+}
+
+.sidebar {
+    width: 380px;
+    background: var(--panel-bg);
+    backdrop-filter: blur(14px);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 5;
+}
+
+.sidebar-section {
+    background: rgba(18, 24, 38, 0.6);
+    border: 1px solid rgba(0, 243, 255, 0.15);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.section-title {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--cyan);
+    margin-bottom: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.preset-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.preset-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-dim);
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    transition: 0.2s;
+    text-align: left;
+}
+
+.preset-btn:hover {
+    border-color: var(--cyan);
+    color: #fff;
+    background: rgba(0, 243, 255, 0.1);
+}
+
+.preset-btn.active {
+    border-color: var(--cyan);
+    background: rgba(0, 243, 255, 0.2);
+    color: var(--cyan);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    font-weight: 700;
+}
+
+.control-row {
+    margin-bottom: 14px;
+}
+
+.control-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+.control-val {
+    color: var(--cyan);
+    font-weight: 700;
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--cyan);
+    background: rgba(0, 0, 0, 0.4);
+    height: 5px;
+    border-radius: 3px;
+    outline: none;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    margin-top: 8px;
+    color: var(--text-dim);
+}
+
+.export-btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.btn-export {
+    background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(0, 243, 255, 0.05));
+    border: 1px solid var(--cyan);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: 0.2s;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-export:hover {
+    background: var(--cyan);
+    color: #000;
+    box-shadow: var(--border-glow);
+    transform: translateY(-1px);
+}
+
+.btn-export.pink {
+    background: linear-gradient(135deg, rgba(255, 0, 110, 0.2), rgba(255, 0, 110, 0.05));
+    border-color: var(--pink);
+}
+
+.btn-export.pink:hover {
+    background: var(--pink);
+    color: #fff;
+    box-shadow: 0 0 16px rgba(255, 0, 110, 0.4);
+}

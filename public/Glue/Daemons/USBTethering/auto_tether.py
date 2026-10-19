@@ -28,11 +28,26 @@ LOG_FILE = os.path.join(SCRIPT_DIR, "tethering.log")
 PLATFORM_TOOLS_DIR = os.path.join(SCRIPT_DIR, "platform-tools")
 PLATFORM_TOOLS_URL = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
 
+if sys.stderr is None:
+    try:
+        sys.stderr = open(os.path.join(SCRIPT_DIR, "stderr.log"), "a", encoding="utf-8")
+    except Exception:
+        pass
+if sys.stdout is None:
+    try:
+        sys.stdout = open(os.path.join(SCRIPT_DIR, "stdout.log"), "a", encoding="utf-8")
+    except Exception:
+        pass
+
 
 def log(message: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     formatted = f"[{timestamp}] {message}"
-    print(formatted, flush=True)
+    if sys.stdout is not None:
+        try:
+            print(formatted, flush=True)
+        except Exception:
+            pass
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(formatted + "\n")
@@ -84,8 +99,21 @@ def get_adb_path() -> str:
 def run_adb(adb_cmd: list, timeout: int = 20) -> tuple[int, str]:
     """Runs an ADB command and returns (returncode, stdout + stderr)."""
     try:
+        # Avoid Windows pipe inheritance deadlock when ADB server starts or wait-for-device blocks
+        if any(arg in ["start-server", "wait-for-device"] for arg in adb_cmd):
+            proc = subprocess.run(
+                adb_cmd,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=timeout,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+            )
+            return proc.returncode, ""
+
         proc = subprocess.run(
             adb_cmd,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -101,25 +129,24 @@ def run_adb(adb_cmd: list, timeout: int = 20) -> tuple[int, str]:
 
 def is_usb_tethering_active(adb: str) -> bool:
     """Checks whether USB tethering is currently active on the device."""
-    code, out = run_adb([adb, "shell", "dumpsys", "tethering"], timeout=10)
-    if code != 0:
-        return False
-
-    out_lower = out.lower()
-    # Check for active tethered interfaces (rndis0, ncm0, usb0) in the dumpsys output
-    tethered_match = re.search(r"tethered:\s*\[([^\]]*)\]", out_lower)
-    if tethered_match:
-        interfaces = tethered_match.group(1)
-        if any(iface in interfaces for iface in ["rndis", "ncm", "usb"]):
+    code, out = run_adb([adb, "shell", "dumpsys", "tethering"], timeout=8)
+    if code == 0:
+        out_lower = out.lower()
+        if "tetheredstate" in out_lower:
             return True
+        tethered_match = re.search(r"tethered:\s*\[([^\]]*)\]", out_lower)
+        if tethered_match:
+            interfaces = tethered_match.group(1)
+            if any(iface in interfaces for iface in ["rndis", "ncm", "usb"]):
+                return True
 
-    # Also check if tethered interface exists in ip link
-    code_ip, out_ip = run_adb([adb, "shell", "ip", "link"], timeout=6)
+    # Also check if tethered interface exists in ip -br link
+    code_ip, out_ip = run_adb([adb, "shell", "ip", "-br", "link"], timeout=5)
     if code_ip == 0:
         for line in out_ip.splitlines():
             line_l = line.lower()
             if any(k in line_l for k in ["rndis0", "ncm0", "usb0"]):
-                if "state up" in line_l or "state unknown" in line_l:
+                if "up" in line_l:
                     return True
 
     return False
@@ -287,8 +314,8 @@ def daemon_loop():
         log(f"Fatal error initializing ADB: {err}")
         return
 
-    # Start adb server
-    run_adb([adb, "start-server"], timeout=15)
+    # Ensure ADB server is running
+    run_adb([adb, "start-server"], timeout=10)
 
     while True:
         try:
@@ -328,12 +355,47 @@ def daemon_loop():
             time.sleep(5)
 
 
+PID_FILE = os.path.join(SCRIPT_DIR, "auto_tether.pid")
+_MUTEX_HANDLE = None
+
+
+def acquire_single_instance_mutex() -> bool:
+    """Ensures only a single instance of auto_tether runs on Windows."""
+    global _MUTEX_HANDLE
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        _MUTEX_HANDLE = kernel32.CreateMutexW(None, False, "Global\\PixelAutoTetherDaemon_Mutex")
+        if kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
+            return False
+        return True
+    except Exception:
+        return True
+
+
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--test-setup":
-        adb = get_adb_path()
-        log(f"Test setup successful. ADB resolved at: {adb}")
-        code, out = run_adb([adb, "version"])
-        log(f"ADB Version:\n{out}")
+    if not acquire_single_instance_mutex():
+        log("Another instance of auto_tether is already running. Exiting silently.")
         sys.exit(0)
 
-    daemon_loop()
+    try:
+        with open(PID_FILE, "w", encoding="utf-8") as f:
+            f.write(str(os.getpid()))
+    except Exception:
+        pass
+
+    try:
+        if len(sys.argv) > 1 and sys.argv[1] == "--test-setup":
+            adb = get_adb_path()
+            log(f"Test setup successful. ADB resolved at: {adb}")
+            code, out = run_adb([adb, "version"])
+            log(f"ADB Version:\n{out}")
+            sys.exit(0)
+
+        daemon_loop()
+    finally:
+        try:
+            if os.path.exists(PID_FILE):
+                os.remove(PID_FILE)
+        except Exception:
+            pass

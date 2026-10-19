@@ -9,9 +9,11 @@
 #include <esp_wifi.h>
 #include <driver/i2s.h>
 #include <Preferences.h>
+#include "DoorbellProtocol.h"
 
 // ============================================================
-//  DeafDoorbell — Master Node (Hardened Firmware v2.0)
+//  DeafDoorbell — Master Node (Firmware v3.0)
+//  - Mesh relay, multi-leader zone alert, and animation dispatch
 //  - 32-bit I2S audio with DMA backlog drain & bit-slip guard
 //  - Strict acoustic debounce with zero-leaky reset & cooldown isolation
 //  - Peak-envelope tracking for UI graph (eliminates sub-threshold illusion)
@@ -52,16 +54,20 @@
 #define MAX_PLAUSIBLE_MAD 120000.0f // Filter rail-to-rail DMA bit-slips
 #define MIN_COOLDOWN_MS   10000      // Minimum 10s between alerts (prevents noise-storm rapid-fire)
 
-// ===== ESP-NOW PROTOCOL (Must match Follower struct exactly) =====
+// ===== ESP-NOW BROADCAST & PAIRING STATE =====
 uint8_t broadcastAddr[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-typedef struct {
-    uint8_t  msgType;       // 0x01 = DOORBELL_ALERT
-    uint16_t durationMs;    // Flash duration
-    uint8_t  r;             // LED color — Red
-    uint8_t  g;             // LED color — Green
-    uint8_t  b;             // LED color — Blue
-} __attribute__((packed)) DoorbellMsg;
+struct PairedFollower {
+    uint8_t  mac[6];
+    uint32_t lastSeenMs;
+    uint8_t  firmwareVer;
+};
+#define MAX_PAIRED_FOLLOWERS 16
+PairedFollower pairedFollowers[MAX_PAIRED_FOLLOWERS];
+int pairedFollowerCount = 0;
+
+bool pairingModeActive = false;
+unsigned long pairingExpiresMs = 0;
 
 // ===== ESP-NOW TRAFFIC MONITORING LOG (Circular Buffer) =====
 struct EspNowLogEntry {
@@ -126,6 +132,13 @@ uint8_t colorB      = 255;
 float   micGain     = 1.5f;
 float   motorSmooth = 0.35f;
 
+// v3.0 Network & Animation State
+uint16_t networkId   = 0xA48F; // House Network Key (auto-generated or configured)
+uint8_t  leaderId    = 1;      // Door Zone (1=Front Door, 2=Back Door, 3=Side Gate...)
+uint8_t  patternId   = PATTERN_BREATHE; // Animation preset (0 to 5)
+uint8_t  speedX10    = 10;     // 10 = 1.0x
+uint32_t alertSeqCounter = 100;// Sequence counter for deduplication
+
 // ===== AUDIO FILTER & RUNTIME STATE =====
 float rawSamples[SAMPLES] = {0.0f};
 float currentMAD         = 0.0f;
@@ -143,7 +156,7 @@ const float DC_FILTER_R = 0.985f; // ~80Hz high-pass cutoff at 16kHz
 unsigned long alertCooldownUntilMs = 0;
 int burstPacketsRemaining = 0;
 unsigned long nextBurstPacketMs = 0;
-DoorbellMsg activeAlertMsg;
+DoorbellPacket activeAlertPacket;
 
 // ===== WEB SERVER & DNS =====
 DNSServer dnsServer;
@@ -236,6 +249,23 @@ void setupI2S() {
     i2s_zero_dma_buffer(I2S_PORT);
 }
 
+void recordFollower(const uint8_t *mac, uint8_t ver = PROTOCOL_VERSION) {
+    if (!mac) return;
+    for (int i = 0; i < pairedFollowerCount; i++) {
+        if (memcmp(pairedFollowers[i].mac, mac, 6) == 0) {
+            pairedFollowers[i].lastSeenMs = millis();
+            pairedFollowers[i].firmwareVer = ver;
+            return;
+        }
+    }
+    if (pairedFollowerCount < MAX_PAIRED_FOLLOWERS) {
+        memcpy(pairedFollowers[pairedFollowerCount].mac, mac, 6);
+        pairedFollowers[pairedFollowerCount].lastSeenMs = millis();
+        pairedFollowers[pairedFollowerCount].firmwareVer = ver;
+        pairedFollowerCount++;
+    }
+}
+
 // ============================================================
 //  ESP-NOW Setup & Traffic Logging (Fast & Non-Blocking)
 // ============================================================
@@ -252,14 +282,30 @@ void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len) {
     entry.timestampMs = millis();
     entry.isDoorbell = false;
 
-    if (len >= (int)sizeof(DoorbellMsg) && data != NULL) {
-        DoorbellMsg msg;
-        memcpy(&msg, data, sizeof(msg));
-        if (msg.msgType == 0x01) {
+    if (len >= 2 && data != NULL && data[0] == DEAF_DOORBELL_MAGIC) {
+        uint8_t msgType = data[1];
+
+        if (msgType == MSG_ALERT) {
             entry.isDoorbell = true;
             validDoorbellPackets++;
-        } else {
-            unknownPackets++;
+        }
+        else if (msgType == MSG_PAIR_BEACON) {
+            DEBUG_PRINTLN("Received PAIR_BEACON from follower!");
+            if (pairingModeActive && millis() < pairingExpiresMs && mac) {
+                PairOfferPacket offer;
+                offer.magic = DEAF_DOORBELL_MAGIC;
+                offer.msgType = MSG_PAIR_OFFER;
+                memcpy(offer.targetMac, mac, 6);
+                offer.networkId = networkId;
+                offer.leaderId = leaderId;
+                esp_now_send(broadcastAddr, (uint8_t*)&offer, sizeof(offer));
+                DEBUG_PRINTF("Sent PAIR_OFFER to %02X:%02X:%02X:%02X:%02X:%02X (netId: 0x%04X)\n",
+                             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], networkId);
+            }
+        }
+        else if (msgType == MSG_PAIR_CONFIRM) {
+            DEBUG_PRINTLN("Received PAIR_CONFIRM from follower!");
+            recordFollower(mac);
         }
     } else {
         unknownPackets++;
@@ -299,9 +345,9 @@ void recordTrigger(float mad, bool isTest) {
     entry.timestampMs = millis();
     entry.peakMad     = (uint16_t)min((float)65535, mad);
     entry.threshold   = (uint16_t)min(65535, threshold);
-    entry.r           = activeAlertMsg.r;
-    entry.g           = activeAlertMsg.g;
-    entry.b           = activeAlertMsg.b;
+    entry.r           = activeAlertPacket.r;
+    entry.g           = activeAlertPacket.g;
+    entry.b           = activeAlertPacket.b;
     entry.isTest      = isTest;
 
     triggerLog[triggerLogHead] = entry;
@@ -332,9 +378,22 @@ void serviceHistory24h(unsigned long now) {
 // ============================================================
 //  Alert Broadcasting Engine (Consistent Single-Color Bursts)
 // ============================================================
+// ============================================================
+//  Alert Broadcasting Engine (Consistent Single-Color Bursts)
+// ============================================================
 void triggerAlert(bool isTest = false) {
-    activeAlertMsg.msgType    = 0x01;
-    activeAlertMsg.durationMs = (uint16_t)duration;
+    alertSeqCounter++;
+    activeAlertPacket.magic      = DEAF_DOORBELL_MAGIC;
+    activeAlertPacket.msgType    = MSG_ALERT;
+    activeAlertPacket.networkId  = networkId;
+    activeAlertPacket.seqId      = alertSeqCounter;
+    activeAlertPacket.leaderId   = leaderId;
+    activeAlertPacket.ttl        = 2; // Allow up to 2 repeater hops
+    activeAlertPacket.patternId  = patternId;
+    activeAlertPacket.durationMs = (uint16_t)duration;
+    activeAlertPacket.brightness = (uint8_t)constrain(brightness, 10, 100);
+    activeAlertPacket.speedX10   = speedX10;
+    activeAlertPacket.partyMode  = (partyMode && !isTest) ? 1 : 0;
 
     uint8_t r = 0, g = 0, b = 0;
     if (partyMode && !isTest) {
@@ -346,30 +405,32 @@ void triggerAlert(bool isTest = false) {
     }
 
     float bScale = constrain(brightness, 10, 100) / 100.0f;
-    activeAlertMsg.r = (uint8_t)(r * bScale);
-    activeAlertMsg.g = (uint8_t)(g * bScale);
-    activeAlertMsg.b = (uint8_t)(b * bScale);
+    activeAlertPacket.r = (uint8_t)(r * bScale);
+    activeAlertPacket.g = (uint8_t)(g * bScale);
+    activeAlertPacket.b = (uint8_t)(b * bScale);
 
     // Record to persistent trigger history log
     recordTrigger(isTest ? 0.0f : lastTriggerMAD, isTest);
 
-    // Schedule a 4-packet burst spaced 10ms apart to guarantee RF delivery
+    // Schedule a 4-packet burst spaced 12ms apart to guarantee RF delivery
     burstPacketsRemaining = 4;
     nextBurstPacketMs = millis();
     unsigned long cooldownLen = max((unsigned long)duration, (unsigned long)MIN_COOLDOWN_MS);
     alertCooldownUntilMs = millis() + cooldownLen;
     uiTriggered = true;
 
-    DEBUG_PRINTF(">>> ALERT FIRED! Duration: %dms | Color: #%02X%02X%02X | MAD: %.0f\n",
-                 activeAlertMsg.durationMs, activeAlertMsg.r, activeAlertMsg.g, activeAlertMsg.b,
+    DEBUG_PRINTF(">>> ALERT FIRED! Seq=%u Zone=%u Net=0x%04X Pat=%u Dur=%dms | Color=#%02X%02X%02X | MAD: %.0f\n",
+                 activeAlertPacket.seqId, activeAlertPacket.leaderId, activeAlertPacket.networkId,
+                 activeAlertPacket.patternId, activeAlertPacket.durationMs,
+                 activeAlertPacket.r, activeAlertPacket.g, activeAlertPacket.b,
                  isTest ? 0.0f : lastTriggerMAD);
 }
 
 void serviceAlertBursts() {
     if (burstPacketsRemaining > 0 && millis() >= nextBurstPacketMs) {
-        esp_now_send(broadcastAddr, (uint8_t*)&activeAlertMsg, sizeof(activeAlertMsg));
+        esp_now_send(broadcastAddr, (uint8_t*)&activeAlertPacket, sizeof(activeAlertPacket));
         burstPacketsRemaining--;
-        nextBurstPacketMs = millis() + 10; // 10ms burst interval
+        nextBurstPacketMs = millis() + 12; // 12ms burst interval
     }
 }
 
@@ -377,7 +438,7 @@ void serviceAlertBursts() {
 //  NVS Load / Save
 // ============================================================
 void loadSettings() {
-    prefs.begin("doorbell", true);
+    prefs.begin("doorbell", false);
     threshold   = prefs.getInt("threshold", 2500);
     duration    = prefs.getInt("duration", 3000);
     brightness  = prefs.getInt("bright", 100);
@@ -386,6 +447,16 @@ void loadSettings() {
     colorG      = prefs.getUChar("colorG", 210);
     colorB      = prefs.getUChar("colorB", 255);
     micGain     = prefs.getFloat("gain", 1.5f);
+    networkId   = prefs.getUShort("netId", 0);
+    leaderId    = prefs.getUChar("leaderId", 1);
+    patternId   = prefs.getUChar("pattern", PATTERN_BREATHE);
+    speedX10    = prefs.getUChar("speedX10", 10);
+
+    if (networkId == 0) {
+        // Auto-generate random 16-bit network ID on first boot
+        networkId = (uint16_t)random(0x1000, 0xFFFF);
+        prefs.putUShort("netId", networkId);
+    }
     prefs.end();
 }
 
@@ -399,6 +470,10 @@ void saveSettings() {
     prefs.putUChar("colorG", colorG);
     prefs.putUChar("colorB", colorB);
     prefs.putFloat("gain", micGain);
+    prefs.putUShort("netId", networkId);
+    prefs.putUChar("leaderId", leaderId);
+    prefs.putUChar("pattern", patternId);
+    prefs.putUChar("speedX10", speedX10);
     prefs.end();
 }
 
@@ -798,6 +873,31 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       </div>
     </div>
 
+    <!-- Motion Pattern Selection -->
+    <div class="card">
+      <div class="card-title">
+        <span>Light Motion Pattern</span>
+        <span class="val-display" id="patName">Slow Breathe</span>
+      </div>
+      <label>Visual animation style played across all followers</label>
+      <select id="patternSelect" style="width:100%; padding:10px; background:#1c2128; border:1px solid #30363d; border-radius:8px; color:#fff; font-size:0.95em; margin:6px 0;" onchange="updatePatternLabel()">
+        <option value="0">Slow Breathe (Sine Fade)</option>
+        <option value="1">Expanding Ripple (Concentric Rings)</option>
+        <option value="2">Snaking Crawl (Matrix Wave)</option>
+        <option value="3">Bouncing Bar (Oscillating Beam)</option>
+        <option value="4">Soft Beacon (Smooth Lighthouse)</option>
+        <option value="5">Classic Strobe (100ms Flash)</option>
+      </select>
+      <div style="margin-top:10px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.85em; color:var(--text-dim); margin-bottom:4px;">
+          <span>Motion Speed</span>
+          <span id="speedVal" style="color:var(--text); font-weight:700;">1.0x</span>
+        </div>
+        <input type="range" id="speedSlider" min="0.4" max="2.4" step="0.1" value="1.0"
+               oninput="document.getElementById('speedVal').innerText=parseFloat(this.value).toFixed(1)+'x';">
+      </div>
+    </div>
+
     <!-- Threshold & Sensitivity -->
     <div class="card">
       <div class="card-title">
@@ -859,6 +959,42 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         <div><strong>Local IP:</strong> <span id="localIp">192.168.4.1</span></div>
         <div><strong>mDNS URL:</strong> <a id="mdnsLink" href="http://deafdoorbell.local" target="_blank">http://deafdoorbell.local</a></div>
         <div><strong>OTA Update:</strong> <a href="/update" target="_blank">Web Firmware Update (/update)</a></div>
+      </div>
+    </div>
+
+    <!-- System Network & Multi-Door Zones -->
+    <div class="card">
+      <div class="card-title">
+        <span>House Network & Door Zones</span>
+      </div>
+      <label>House Network Key (Prevents neighbor cross-talk)</label>
+      <div style="display:flex; gap:8px; margin:6px 0 12px;">
+        <input type="text" id="netIdInput" maxlength="4" style="flex:1; padding:8px 12px; background:#1c2128; border:1px solid #30363d; border-radius:8px; color:var(--accent); font-family:monospace; font-size:1.1em; font-weight:700; text-transform:uppercase;">
+        <button class="btn-test" style="flex:0; width:auto; padding:8px 12px; font-size:0.8em;" onclick="generateRandomNetId()">New Key</button>
+      </div>
+
+      <label>Door Zone / Leader Index</label>
+      <select id="leaderZoneSelect" style="width:100%; padding:10px; background:#1c2128; border:1px solid #30363d; border-radius:8px; color:#fff; font-size:0.95em; margin:6px 0 14px;">
+        <option value="1">Zone 1 — Front Door</option>
+        <option value="2">Zone 2 — Back Door</option>
+        <option value="3">Zone 3 — Side Gate</option>
+        <option value="4">Zone 4 — Garage / Service</option>
+      </select>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.9em; font-weight:600; color:var(--text);">Follower Pairing</span>
+          <span id="pairStatusBadge" style="font-size:0.75em; padding:2px 8px; border-radius:12px; background:#21262d; color:#8b949e;">Idle</span>
+        </div>
+        <p style="font-size:0.8em; color:var(--text-dim); margin-bottom:10px;">
+          Unpaired followers ripple orange on their 8x8 matrix. Click below to pair them in 1 click.
+        </p>
+        <button id="btnPairToggle" class="btn-primary" style="background:#238636;" onclick="togglePairingMode()">Open Pairing Mode (60s)</button>
+
+        <div id="pairedFollowersBox" style="margin-top:12px; display:none;">
+          <div style="font-size:0.8em; color:var(--text-dim); margin-bottom:6px;">Connected Followers (<span id="pairedCount">0</span>):</div>
+          <div id="pairedFollowersList" style="display:flex; flex-direction:column; gap:6px; font-family:monospace; font-size:0.8em;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1258,10 +1394,28 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
           document.getElementById('durVal').innerText = d.duration;
           document.getElementById('partyToggle').checked = d.party;
           document.getElementById('colorPicker').value = d.color;
+          if (d.pattern !== undefined) {
+            document.getElementById('patternSelect').value = d.pattern;
+            updatePatternLabel();
+          }
+          if (d.speed !== undefined) {
+            document.getElementById('speedSlider').value = d.speed;
+            document.getElementById('speedVal').innerText = parseFloat(d.speed).toFixed(1) + 'x';
+          }
+          if (d.netId !== undefined) {
+            document.getElementById('netIdInput').value = d.netId;
+          }
+          if (d.leaderId !== undefined) {
+            document.getElementById('leaderZoneSelect').value = d.leaderId;
+          }
           updateThreshLine();
           fetchEspNowLog();
           fetchTriggerLog();
           initialized = true;
+        }
+
+        if (d.pairing !== undefined) {
+          updatePairingBadge(d.pairing, d.pairSec, d.pairedCount);
         }
 
         if (d.triggered) {
@@ -1274,6 +1428,12 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       setTimeout(pollData, 120);
     }
 
+    const PATTERN_NAMES = ['Slow Breathe', 'Expanding Ripple', 'Snaking Crawl', 'Bouncing Bar', 'Soft Beacon', 'Classic Strobe'];
+    function updatePatternLabel() {
+      const sel = document.getElementById('patternSelect');
+      document.getElementById('patName').innerText = PATTERN_NAMES[sel.value] || 'Custom';
+    }
+
     function togglePartyMode(checked) {
       saveSettings();
     }
@@ -1284,8 +1444,12 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       const d = document.getElementById('durSlider').value;
       const p = document.getElementById('partyToggle').checked ? '1' : '0';
       const col = document.getElementById('colorPicker').value.substring(1);
+      const pat = document.getElementById('patternSelect').value;
+      const spd = document.getElementById('speedSlider').value;
+      const net = document.getElementById('netIdInput').value;
+      const zone = document.getElementById('leaderZoneSelect').value;
 
-      fetch('/set?threshold=' + t + '&bright=' + b + '&duration=' + d + '&party=' + p + '&color=' + col)
+      fetch('/set?threshold=' + t + '&bright=' + b + '&duration=' + d + '&party=' + p + '&color=' + col + '&pattern=' + pat + '&speed=' + spd + '&netId=' + net + '&leaderId=' + zone)
         .then(() => {
           document.getElementById('status').innerText = 'Settings saved successfully!';
           setTimeout(() => { document.getElementById('status').innerText = ''; }, 3000);
@@ -1293,6 +1457,54 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         .catch(() => {
           document.getElementById('status').innerText = 'Error saving settings!';
         });
+    }
+
+    let isPairingLocal = false;
+    function togglePairingMode() {
+      isPairingLocal = !isPairingLocal;
+      fetch('/pair?enable=' + (isPairingLocal ? '1' : '0'))
+        .then(r => r.json())
+        .then(d => {
+          isPairingLocal = d.active;
+          updatePairingBadge(d.active, d.secLeft, d.count);
+          if (d.followers && d.followers.length > 0) {
+            document.getElementById('pairedFollowersBox').style.display = 'block';
+            document.getElementById('pairedCount').innerText = d.followers.length;
+            let html = '';
+            d.followers.forEach(f => {
+              html += '<div style="display:flex; justify-content:space-between; padding:4px 8px; background:#161b22; border-radius:4px; border:1px solid #30363d;"><span>' + f.mac + '</span><span style="color:#8b949e;">' + f.ageSec + 's ago</span></div>';
+            });
+            document.getElementById('pairedFollowersList').innerHTML = html;
+          }
+        });
+    }
+
+    function updatePairingBadge(active, secLeft, count) {
+      const btn = document.getElementById('btnPairToggle');
+      const badge = document.getElementById('pairStatusBadge');
+      if (active) {
+        btn.innerText = 'Pairing Active (' + secLeft + 's) — Stop';
+        btn.style.background = '#da3633';
+        badge.innerText = 'Listening for beacons (' + secLeft + 's)';
+        badge.style.color = '#3fb950';
+        badge.style.background = 'rgba(63, 185, 80, 0.15)';
+      } else {
+        btn.innerText = 'Open Pairing Mode (60s)';
+        btn.style.background = '#238636';
+        badge.innerText = 'Idle';
+        badge.style.color = '#8b949e';
+        badge.style.background = '#21262d';
+      }
+      if (count > 0) {
+        document.getElementById('pairedFollowersBox').style.display = 'block';
+        document.getElementById('pairedCount').innerText = count;
+      }
+    }
+
+    function generateRandomNetId() {
+      const hex = Math.floor(0x1000 + Math.random() * 0xEFFF).toString(16).toUpperCase();
+      document.getElementById('netIdInput').value = hex;
+      saveSettings();
     }
 
     function sendTestAlert() {
@@ -1390,9 +1602,12 @@ void handleData() {
     float reportedMad = max(currentMAD, peakMADSincePoll);
     peakMADSincePoll = currentMAD; // Reset peak tracking
 
-    char jsonBuf[384];
+    bool activePair = pairingModeActive && (millis() < pairingExpiresMs);
+    uint32_t pairSec = activePair ? ((pairingExpiresMs - millis()) / 1000) : 0;
+
+    char jsonBuf[512];
     snprintf(jsonBuf, sizeof(jsonBuf),
-        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"triggered\":%s,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u}",
+        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"pattern\":%d,\"speed\":%.1f,\"netId\":\"%04X\",\"leaderId\":%d,\"pairing\":%s,\"pairSec\":%u,\"pairedCount\":%d,\"triggered\":%s,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u}",
         reportedMad,
         levelLP,
         threshold,
@@ -1400,6 +1615,13 @@ void handleData() {
         brightness,
         partyMode ? "true" : "false",
         colorHex,
+        patternId,
+        (float)speedX10 / 10.0f,
+        networkId,
+        leaderId,
+        activePair ? "true" : "false",
+        pairSec,
+        pairedFollowerCount,
         uiTriggered ? "true" : "false",
         totalEspNowPackets,
         validDoorbellPackets,
@@ -1526,13 +1748,51 @@ void handleSet() {
     if (server.hasArg("bright"))    brightness = server.arg("bright").toInt();
     if (server.hasArg("party"))     partyMode  = server.arg("party") == "1";
     if (server.hasArg("color"))     parseHexColor(server.arg("color"));
+    if (server.hasArg("pattern"))   patternId  = (uint8_t)server.arg("pattern").toInt();
+    if (server.hasArg("speed"))     speedX10   = (uint8_t)constrain((int)(server.arg("speed").toFloat() * 10), 4, 30);
+    if (server.hasArg("leaderId"))  leaderId   = (uint8_t)constrain(server.arg("leaderId").toInt(), 1, 8);
+    if (server.hasArg("netId")) {
+        String nStr = server.arg("netId");
+        if (nStr.startsWith("0x") || nStr.startsWith("0X")) nStr = nStr.substring(2);
+        uint16_t parsedNet = (uint16_t)strtoul(nStr.c_str(), NULL, 16);
+        if (parsedNet != 0) networkId = parsedNet;
+    }
 
     saveSettings();
     char colorHex[8];
     colorToHexBuf(colorHex, sizeof(colorHex), colorR, colorG, colorB);
-    DEBUG_PRINTF("Settings saved: thresh=%d dur=%d bright=%d party=%d color=%s\n",
-                  threshold, duration, brightness, partyMode ? 1 : 0, colorHex);
+    DEBUG_PRINTF("Settings saved: thresh=%d dur=%d bright=%d party=%d pat=%d spd=%d net=0x%04X zone=%d\n",
+                  threshold, duration, brightness, partyMode ? 1 : 0, patternId, speedX10, networkId, leaderId);
     server.send(200, "text/plain", "OK");
+}
+
+void handlePair() {
+    if (server.hasArg("enable")) {
+        bool en = server.arg("enable") == "1";
+        pairingModeActive = en;
+        pairingExpiresMs = en ? (millis() + 60000) : 0;
+        DEBUG_PRINTF("Pairing mode set to: %d (expires in %lu ms)\n", en, en ? 60000UL : 0UL);
+    }
+
+    bool active = pairingModeActive && (millis() < pairingExpiresMs);
+    uint32_t secLeft = active ? ((pairingExpiresMs - millis()) / 1000) : 0;
+
+    char jsonBuf[512];
+    int offset = snprintf(jsonBuf, sizeof(jsonBuf),
+        "{\"active\":%s,\"secLeft\":%u,\"netId\":\"%04X\",\"count\":%d,\"followers\":[",
+        active ? "true" : "false", secLeft, networkId, pairedFollowerCount);
+
+    for (int i = 0; i < pairedFollowerCount; i++) {
+        char macStr[18];
+        snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+                 pairedFollowers[i].mac[0], pairedFollowers[i].mac[1], pairedFollowers[i].mac[2],
+                 pairedFollowers[i].mac[3], pairedFollowers[i].mac[4], pairedFollowers[i].mac[5]);
+        uint32_t ageSec = (millis() >= pairedFollowers[i].lastSeenMs) ? ((millis() - pairedFollowers[i].lastSeenMs) / 1000) : 0;
+        offset += snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset,
+            "%s{\"mac\":\"%s\",\"ageSec\":%u}", (i > 0) ? "," : "", macStr, ageSec);
+    }
+    snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset, "]}");
+    server.send(200, "application/json", jsonBuf);
 }
 
 void handleTest() {
@@ -1573,6 +1833,7 @@ void setupNetworking() {
     // Web Server endpoints
     server.on("/", handleRoot);
     server.on("/data", handleData);
+    server.on("/pair", handlePair);
     server.on("/history", handleHistory);
     server.on("/triggers", handleTriggers);
     server.on("/triggers/clear", handleClearTriggers);
