@@ -119,7 +119,7 @@ def compute_stats(
     """Compute aggregate token statistics, optionally filtered by provider."""
     stats = TokenStats()
     by_model: dict[str, dict[str, int]] = defaultdict(
-        lambda: {"prompt": 0, "output": 0, "thinking": 0, "turns": 0}
+        lambda: {"prompt": 0, "output": 0, "thinking": 0, "cached": 0, "turns": 0}
     )
 
     for entry in entries:
@@ -140,6 +140,7 @@ def compute_stats(
         m["prompt"] += entry.prompt_tokens
         m["output"] += entry.output_tokens
         m["thinking"] += entry.thinking_tokens
+        m["cached"] += entry.cached_tokens
         m["turns"] += 1
 
     stats.total_tokens = stats.total_prompt + stats.total_output

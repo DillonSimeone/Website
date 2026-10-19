@@ -7,12 +7,11 @@
 #include <Update.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
-#include <driver/i2s.h>
 #include <Preferences.h>
 #include "DoorbellProtocol.h"
 
 // ============================================================
-//  DeafDoorbell — Master Node (Firmware v3.0)
+//  DeafDoorbell - Master Node (Firmware v3.0)
 //  - Mesh relay, multi-leader zone alert, and animation dispatch
 //  - 32-bit I2S audio with DMA backlog drain & bit-slip guard
 //  - Strict acoustic debounce with zero-leaky reset & cooldown isolation
@@ -37,21 +36,19 @@
   #define DEBUG_PRINTLN(x)
 #endif
 
-// ===== I2S MIC PIN CONFIGURATION (ESP32-C3 SuperMini) =====
-#define I2S_SD          0   // DIN
-#define I2S_SCK         1   // BCLK
-#define I2S_LR          2   // L/R select (driven LOW = left)
-#define I2S_WS          3   // LRC / Word Select
+// ===== MAX4466 ANALOG MIC PIN CONFIGURATION (ESP32-C3 SuperMini) =====
+// Wiring: VCC -> 3.3V, GND -> Pin 4 (Soft Ground), OUT -> Pin 3 (ADC1_CH3)
+#define MIC_ANALOG_PIN  3   // MAX4466 OUT (ADC1_CH3)
 #define MIC_GND_PIN     4   // Soft ground for mic (driven LOW)
 #define ONBOARD_LED_PIN 8   // Onboard LED (inverted: 0=MAX, 255=OFF)
 #define LED_CHANNEL     0
 
-// ===== I2S & AUDIO SETTINGS =====
-#define I2S_PORT        I2S_NUM_0
-#define SAMPLE_RATE     16000
+// ===== AUDIO & SAMPLING SETTINGS =====
 #define SAMPLES         128 // Rolling window for level calculation
-#define CHUNK_SIZE      64  // 4ms read window (64 samples @ 16kHz)
-#define MAX_PLAUSIBLE_MAD 120000.0f // Filter rail-to-rail DMA bit-slips
+#define CHUNK_SIZE      64  // 64 samples per audio chunk
+#define SAMPLE_DELAY_US 50  // 50us between samples (~20kHz sample rate)
+#define ANALOG_MAD_SCALE 8.0f // Scales 12-bit ADC MAD to match UI threshold range
+#define MAX_PLAUSIBLE_MAD 65000.0f
 #define MIN_COOLDOWN_MS   10000      // Minimum 10s between alerts (prevents noise-storm rapid-fire)
 
 // ===== ESP-NOW BROADCAST & PAIRING STATE =====
@@ -61,10 +58,66 @@ struct PairedFollower {
     uint8_t  mac[6];
     uint32_t lastSeenMs;
     uint8_t  firmwareVer;
+    uint8_t  triggerArea; // 0 = All Areas, 1 = Area 1 (Front Door)...
 };
 #define MAX_PAIRED_FOLLOWERS 16
 PairedFollower pairedFollowers[MAX_PAIRED_FOLLOWERS];
 int pairedFollowerCount = 0;
+
+void addOrUpdateFollowerPeer(const uint8_t *mac) {
+    if (!mac) return;
+    esp_now_peer_info_t peerInfo = {};
+    memcpy(peerInfo.peer_addr, mac, 6);
+    peerInfo.channel = 1;
+    peerInfo.ifidx = WIFI_IF_AP;
+    peerInfo.encrypt = false;
+
+    if (esp_now_is_peer_exist(mac)) {
+        esp_now_mod_peer(&peerInfo);
+    } else {
+        esp_now_add_peer(&peerInfo);
+    }
+}
+
+void loadPairedFollowers() {
+    Preferences pPrefs;
+    if (pPrefs.begin("db_peers", true)) {
+        pairedFollowerCount = pPrefs.getInt("count", 0);
+        if (pairedFollowerCount > MAX_PAIRED_FOLLOWERS) pairedFollowerCount = MAX_PAIRED_FOLLOWERS;
+        for (int i = 0; i < pairedFollowerCount; i++) {
+            char kMac[16], kVer[16], kArea[16];
+            snprintf(kMac, sizeof(kMac), "m%d", i);
+            snprintf(kVer, sizeof(kVer), "v%d", i);
+            snprintf(kArea, sizeof(kArea), "a%d", i);
+
+            pPrefs.getBytes(kMac, pairedFollowers[i].mac, 6);
+            pairedFollowers[i].firmwareVer = pPrefs.getUChar(kVer, PROTOCOL_VERSION);
+            pairedFollowers[i].triggerArea = pPrefs.getUChar(kArea, 0);
+            pairedFollowers[i].lastSeenMs = millis();
+        }
+        pPrefs.end();
+        DEBUG_PRINTF("Loaded %d paired followers from NVS\n", pairedFollowerCount);
+    }
+}
+
+void savePairedFollowers() {
+    Preferences pPrefs;
+    if (pPrefs.begin("db_peers", false)) {
+        pPrefs.putInt("count", pairedFollowerCount);
+        for (int i = 0; i < pairedFollowerCount; i++) {
+            char kMac[16], kVer[16], kArea[16];
+            snprintf(kMac, sizeof(kMac), "m%d", i);
+            snprintf(kVer, sizeof(kVer), "v%d", i);
+            snprintf(kArea, sizeof(kArea), "a%d", i);
+
+            pPrefs.putBytes(kMac, pairedFollowers[i].mac, 6);
+            pPrefs.putUChar(kVer, pairedFollowers[i].firmwareVer);
+            pPrefs.putUChar(kArea, pairedFollowers[i].triggerArea);
+        }
+        pPrefs.end();
+        DEBUG_PRINTF("Saved %d paired followers to NVS\n", pairedFollowerCount);
+    }
+}
 
 bool pairingModeActive = false;
 unsigned long pairingExpiresMs = 0;
@@ -116,8 +169,8 @@ uint16_t currentBucketPeakMad = 0;
 uint8_t  currentBucketTriggers = 0;
 
 // ===== WIFI & NETWORK CONFIGURATION =====
-const char* AP_SSID       = "MayanSusanDoorbell";
-const char* AP_PASS       = "shrek!1234";
+const char* AP_SSID       = "LeeDoorBell";
+const char* AP_PASS       = "shrek1234!";
 const char* HOSTNAME_MDNS = "deafdoorbell";
 
 // ===== CONFIGURABLE STATE (NVS-backed) =====
@@ -214,39 +267,17 @@ void colorToHexBuf(char* outBuf, size_t bufSize, uint8_t r, uint8_t g, uint8_t b
 }
 
 // ============================================================
-//  I2S Audio Setup (Deep DMA Queue & Low-Latency 32-bit Frame)
+//  MAX4466 Analog Audio Setup (Pin 3 ADC, Pin 4 Soft Ground)
 // ============================================================
-void setupI2S() {
+void setupAudio() {
+    // 1. Soft Ground for MAX4466 GND pin
     pinMode(MIC_GND_PIN, OUTPUT);
     digitalWrite(MIC_GND_PIN, LOW);
 
-    pinMode(I2S_LR, OUTPUT);
-    digitalWrite(I2S_LR, LOW);
-
-    i2s_config_t i2s_config = {
-        .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
-        .sample_rate = SAMPLE_RATE,
-        .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
-        .communication_format = (i2s_comm_format_t)I2S_COMM_FORMAT_STAND_I2S,
-        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
-        .dma_buf_count = 6,     // 6 buffers x 128 samples = 48ms queue headroom
-        .dma_buf_len = SAMPLES,
-        .use_apll = false,
-        .tx_desc_auto_clear = false,
-        .fixed_mclk = 0
-    };
-
-    i2s_pin_config_t pin_config = {
-        .bck_io_num = I2S_SCK,
-        .ws_io_num = I2S_WS,
-        .data_out_num = I2S_PIN_NO_CHANGE,
-        .data_in_num = I2S_SD
-    };
-
-    i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
-    i2s_set_pin(I2S_PORT, &pin_config);
-    i2s_zero_dma_buffer(I2S_PORT);
+    // 2. Analog Input on Pin 3 (ADC1_CH3)
+    pinMode(MIC_ANALOG_PIN, INPUT);
+    analogReadResolution(12); // 0-4095
+    analogSetPinAttenuation(MIC_ANALOG_PIN, ADC_11db); // Full range ~0 - 3.1V
 }
 
 void recordFollower(const uint8_t *mac, uint8_t ver = PROTOCOL_VERSION) {
@@ -255,6 +286,8 @@ void recordFollower(const uint8_t *mac, uint8_t ver = PROTOCOL_VERSION) {
         if (memcmp(pairedFollowers[i].mac, mac, 6) == 0) {
             pairedFollowers[i].lastSeenMs = millis();
             pairedFollowers[i].firmwareVer = ver;
+            addOrUpdateFollowerPeer(mac);
+            savePairedFollowers();
             return;
         }
     }
@@ -262,7 +295,10 @@ void recordFollower(const uint8_t *mac, uint8_t ver = PROTOCOL_VERSION) {
         memcpy(pairedFollowers[pairedFollowerCount].mac, mac, 6);
         pairedFollowers[pairedFollowerCount].lastSeenMs = millis();
         pairedFollowers[pairedFollowerCount].firmwareVer = ver;
+        pairedFollowers[pairedFollowerCount].triggerArea = 0; // Default to 0 (All Trigger Areas)
         pairedFollowerCount++;
+        addOrUpdateFollowerPeer(mac);
+        savePairedFollowers();
     }
 }
 
@@ -292,15 +328,27 @@ void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len) {
         else if (msgType == MSG_PAIR_BEACON) {
             DEBUG_PRINTLN("Received PAIR_BEACON from follower!");
             if (pairingModeActive && millis() < pairingExpiresMs && mac) {
+                uint8_t assignedArea = 0;
+                for (int i = 0; i < pairedFollowerCount; i++) {
+                    if (memcmp(pairedFollowers[i].mac, mac, 6) == 0) {
+                        assignedArea = pairedFollowers[i].triggerArea;
+                        break;
+                    }
+                }
+
                 PairOfferPacket offer;
                 offer.magic = DEAF_DOORBELL_MAGIC;
                 offer.msgType = MSG_PAIR_OFFER;
                 memcpy(offer.targetMac, mac, 6);
                 offer.networkId = networkId;
                 offer.leaderId = leaderId;
+                offer.triggerArea = assignedArea;
+                
+                addOrUpdateFollowerPeer(mac);
+                esp_now_send(mac, (uint8_t*)&offer, sizeof(offer));
                 esp_now_send(broadcastAddr, (uint8_t*)&offer, sizeof(offer));
-                DEBUG_PRINTF("Sent PAIR_OFFER to %02X:%02X:%02X:%02X:%02X:%02X (netId: 0x%04X)\n",
-                             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], networkId);
+                DEBUG_PRINTF("Sent PAIR_OFFER to %02X:%02X:%02X:%02X:%02X:%02X (netId: 0x%04X, area: %d)\n",
+                             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], networkId, assignedArea);
             }
         }
         else if (msgType == MSG_PAIR_CONFIRM) {
@@ -329,11 +377,16 @@ void setupESPNow() {
     esp_now_peer_info_t peerInfo = {};
     memcpy(peerInfo.peer_addr, broadcastAddr, 6);
     peerInfo.channel = 1;
-    peerInfo.ifidx = WIFI_IF_STA;
+    peerInfo.ifidx = WIFI_IF_AP;
     peerInfo.encrypt = false;
 
     if (esp_now_add_peer(&peerInfo) != ESP_OK) {
         DEBUG_PRINTLN("Failed to add broadcast peer");
+    }
+
+    // Register all previously saved followers as peers on AP interface
+    for (int i = 0; i < pairedFollowerCount; i++) {
+        addOrUpdateFollowerPeer(pairedFollowers[i].mac);
     }
 }
 
@@ -378,9 +431,18 @@ void serviceHistory24h(unsigned long now) {
 // ============================================================
 //  Alert Broadcasting Engine (Consistent Single-Color Bursts)
 // ============================================================
-// ============================================================
-//  Alert Broadcasting Engine (Consistent Single-Color Bursts)
-// ============================================================
+void sendAlertPacketNow() {
+    // 1. Broadcast to all listening nodes
+    esp_now_send(broadcastAddr, (uint8_t*)&activeAlertPacket, sizeof(activeAlertPacket));
+
+    // 2. Unicast to each paired follower matching this trigger area
+    for (int i = 0; i < pairedFollowerCount; i++) {
+        if (pairedFollowers[i].triggerArea == 0 || pairedFollowers[i].triggerArea == activeAlertPacket.leaderId) {
+            esp_now_send(pairedFollowers[i].mac, (uint8_t*)&activeAlertPacket, sizeof(activeAlertPacket));
+        }
+    }
+}
+
 void triggerAlert(bool isTest = false) {
     alertSeqCounter++;
     activeAlertPacket.magic      = DEAF_DOORBELL_MAGIC;
@@ -412,9 +474,12 @@ void triggerAlert(bool isTest = false) {
     // Record to persistent trigger history log
     recordTrigger(isTest ? 0.0f : lastTriggerMAD, isTest);
 
-    // Schedule a 4-packet burst spaced 12ms apart to guarantee RF delivery
-    burstPacketsRemaining = 4;
-    nextBurstPacketMs = millis();
+    // Immediately fire burst packet 1 with 0 latency
+    sendAlertPacketNow();
+
+    // Schedule remaining 3 packets spaced 15ms apart to guarantee RF delivery
+    burstPacketsRemaining = 3;
+    nextBurstPacketMs = millis() + 15;
     unsigned long cooldownLen = max((unsigned long)duration, (unsigned long)MIN_COOLDOWN_MS);
     alertCooldownUntilMs = millis() + cooldownLen;
     uiTriggered = true;
@@ -428,9 +493,9 @@ void triggerAlert(bool isTest = false) {
 
 void serviceAlertBursts() {
     if (burstPacketsRemaining > 0 && millis() >= nextBurstPacketMs) {
-        esp_now_send(broadcastAddr, (uint8_t*)&activeAlertPacket, sizeof(activeAlertPacket));
+        sendAlertPacketNow();
         burstPacketsRemaining--;
-        nextBurstPacketMs = millis() + 12; // 12ms burst interval
+        nextBurstPacketMs = millis() + 15; // 15ms burst interval
     }
 }
 
@@ -482,8 +547,9 @@ void saveSettings() {
 // ============================================================
 const char PORTAL_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>DeafDoorbell Master</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
@@ -949,23 +1015,10 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       <div class="status-msg" id="status"></div>
     </div>
 
-    <!-- Network & Discoverability -->
-    <div class="card">
+    <!-- House Network & Trigger Areas -->
+    <div class="card" id="networkZonesCard">
       <div class="card-title">
-        <span>Network & Discoverability</span>
-      </div>
-      <div class="net-info">
-        <div><strong>WiFi:</strong> <span id="wifiStatus">AP Mode (Channel 1)</span></div>
-        <div><strong>Local IP:</strong> <span id="localIp">192.168.4.1</span></div>
-        <div><strong>mDNS URL:</strong> <a id="mdnsLink" href="http://deafdoorbell.local" target="_blank">http://deafdoorbell.local</a></div>
-        <div><strong>OTA Update:</strong> <a href="/update" target="_blank">Web Firmware Update (/update)</a></div>
-      </div>
-    </div>
-
-    <!-- System Network & Multi-Door Zones -->
-    <div class="card">
-      <div class="card-title">
-        <span>House Network & Door Zones</span>
+        <span>House Network & Trigger Areas</span>
       </div>
       <label>House Network Key (Prevents neighbor cross-talk)</label>
       <div style="display:flex; gap:8px; margin:6px 0 12px;">
@@ -973,12 +1026,12 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         <button class="btn-test" style="flex:0; width:auto; padding:8px 12px; font-size:0.8em;" onclick="generateRandomNetId()">New Key</button>
       </div>
 
-      <label>Door Zone / Leader Index</label>
+      <label>Trigger Area</label>
       <select id="leaderZoneSelect" style="width:100%; padding:10px; background:#1c2128; border:1px solid #30363d; border-radius:8px; color:#fff; font-size:0.95em; margin:6px 0 14px;">
-        <option value="1">Zone 1 — Front Door</option>
-        <option value="2">Zone 2 — Back Door</option>
-        <option value="3">Zone 3 — Side Gate</option>
-        <option value="4">Zone 4 — Garage / Service</option>
+        <option value="1">Area 1 - Front Door</option>
+        <option value="2">Area 2 - Back Door</option>
+        <option value="3">Area 3 - Side Gate</option>
+        <option value="4">Area 4 - Garage / Service</option>
       </select>
 
       <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
@@ -990,11 +1043,44 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
           Unpaired followers ripple orange on their 8x8 matrix. Click below to pair them in 1 click.
         </p>
         <button id="btnPairToggle" class="btn-primary" style="background:#238636;" onclick="togglePairingMode()">Open Pairing Mode (60s)</button>
+      </div>
+    </div>
 
-        <div id="pairedFollowersBox" style="margin-top:12px; display:none;">
-          <div style="font-size:0.8em; color:var(--text-dim); margin-bottom:6px;">Connected Followers (<span id="pairedCount">0</span>):</div>
-          <div id="pairedFollowersList" style="display:flex; flex-direction:column; gap:6px; font-family:monospace; font-size:0.8em;"></div>
-        </div>
+    <!-- Paired Followers & Trigger Points -->
+    <div class="card" id="pairedDevicesCard">
+      <div class="card-title">
+        <span>Paired Followers & Trigger Points</span>
+        <span id="pairedCountBadge" class="badge badge-ok">0 Devices</span>
+      </div>
+      <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 10px;">
+        Assign each follower to a specific trigger area or respond to all doorbell chimes.
+      </div>
+      <div class="log-table-wrap" style="max-height: 240px;">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Follower MAC</th>
+              <th>Assigned Trigger Point</th>
+              <th>Last Active</th>
+            </tr>
+          </thead>
+          <tbody id="followersTableBody">
+            <tr><td colspan="3" style="text-align:center; color:var(--text-dim); padding:16px;">No paired followers yet. Hold a follower's Boot button for 3s to enter pairing mode, then click Open Pairing Mode below.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Network & Discoverability (At the very bottom) -->
+    <div class="card" id="networkCard">
+      <div class="card-title">
+        <span>Network & Discoverability</span>
+      </div>
+      <div class="net-info">
+        <div><strong>WiFi SSID:</strong> <span style="color:#fff; font-weight:bold;">LeeDoorBell</span> (Pass: <code style="color:var(--accent);">shrek1234!</code>)</div>
+        <div><strong>Local IP:</strong> <span id="localIp">192.168.4.1</span></div>
+        <div><strong>mDNS URL:</strong> <a id="mdnsLink" href="http://deafdoorbell.local" target="_blank">http://deafdoorbell.local</a></div>
+        <div><strong>OTA Update:</strong> <a href="/update" target="_blank">Web Firmware Update (/update)</a></div>
       </div>
     </div>
   </div>
@@ -1418,6 +1504,10 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
           updatePairingBadge(d.pairing, d.pairSec, d.pairedCount);
         }
 
+        if (d.followers !== undefined) {
+          renderFollowersList(d.followers);
+        }
+
         if (d.triggered) {
           document.getElementById('liveCard').classList.add('triggered-flash');
           setTimeout(() => document.getElementById('liveCard').classList.remove('triggered-flash'), 400);
@@ -1459,6 +1549,70 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         });
     }
 
+    function updateFollowerArea(mac, area) {
+      fetch('/setFollowerArea?mac=' + encodeURIComponent(mac) + '&area=' + area)
+        .then(() => {
+          document.getElementById('status').innerText = 'Follower ' + mac + ' set to Area ' + area;
+          setTimeout(() => { document.getElementById('status').innerText = ''; }, 2500);
+        })
+        .catch(() => {
+          document.getElementById('status').innerText = 'Error setting follower area!';
+        });
+    }
+
+    let lastFollowersJson = '';
+    function renderFollowersList(followers) {
+      if (!followers) return;
+      const tbody = document.getElementById('followersTableBody');
+      const badge = document.getElementById('pairedCountBadge');
+      if (badge) badge.innerText = followers.length + ' Devices';
+      if (!tbody) return;
+
+      if (followers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-dim); padding:16px;">No paired followers yet. Hold a follower\'s Boot button for 3s to enter pairing mode, then click Open Pairing Mode below.</td></tr>';
+        lastFollowersJson = '';
+        return;
+      }
+
+      // If user is currently focused on an area select dropdown, do not replace HTML
+      if (document.activeElement && document.activeElement.classList.contains('follower-area-select')) {
+        followers.forEach(f => {
+          const ageEl = document.getElementById('age-' + f.mac.replace(/:/g, ''));
+          if (ageEl) ageEl.innerText = formatAge(f.ageSec);
+        });
+        return;
+      }
+
+      const currentJson = JSON.stringify(followers.map(f => ({mac: f.mac, area: f.area})));
+      if (currentJson === lastFollowersJson) {
+        followers.forEach(f => {
+          const ageEl = document.getElementById('age-' + f.mac.replace(/:/g, ''));
+          if (ageEl) ageEl.innerText = formatAge(f.ageSec);
+        });
+        return;
+      }
+      lastFollowersJson = currentJson;
+
+      let html = '';
+      followers.forEach(f => {
+        const cleanId = f.mac.replace(/:/g, '');
+        html += `<tr>
+          <td><code style="color:var(--accent); font-weight:700;">${f.mac}</code></td>
+          <td>
+            <select class="follower-area-select" onchange="updateFollowerArea('${f.mac}', this.value)" style="padding:4px 8px; background:#1c2128; border:1px solid #30363d; border-radius:6px; color:#fff; font-size:0.85em;">
+              <option value="0"${f.area === 0 ? ' selected' : ''}>All Trigger Areas</option>
+              <option value="1"${f.area === 1 ? ' selected' : ''}>Area 1 - Front Door</option>
+              <option value="2"${f.area === 2 ? ' selected' : ''}>Area 2 - Back Door</option>
+              <option value="3"${f.area === 3 ? ' selected' : ''}>Area 3 - Side Gate</option>
+              <option value="4"${f.area === 4 ? ' selected' : ''}>Area 4 - Garage / Service</option>
+            </select>
+          </td>
+          <td><span id="age-${cleanId}" style="color:var(--text-dim);">${formatAge(f.ageSec)}</span></td>
+        </tr>`;
+      });
+      tbody.innerHTML = html;
+    }
+
     let isPairingLocal = false;
     function togglePairingMode() {
       isPairingLocal = !isPairingLocal;
@@ -1467,14 +1621,8 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         .then(d => {
           isPairingLocal = d.active;
           updatePairingBadge(d.active, d.secLeft, d.count);
-          if (d.followers && d.followers.length > 0) {
-            document.getElementById('pairedFollowersBox').style.display = 'block';
-            document.getElementById('pairedCount').innerText = d.followers.length;
-            let html = '';
-            d.followers.forEach(f => {
-              html += '<div style="display:flex; justify-content:space-between; padding:4px 8px; background:#161b22; border-radius:4px; border:1px solid #30363d;"><span>' + f.mac + '</span><span style="color:#8b949e;">' + f.ageSec + 's ago</span></div>';
-            });
-            document.getElementById('pairedFollowersList').innerHTML = html;
+          if (d.followers !== undefined) {
+            renderFollowersList(d.followers);
           }
         });
     }
@@ -1483,7 +1631,7 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
       const btn = document.getElementById('btnPairToggle');
       const badge = document.getElementById('pairStatusBadge');
       if (active) {
-        btn.innerText = 'Pairing Active (' + secLeft + 's) — Stop';
+        btn.innerText = 'Pairing Active (' + secLeft + 's) - Stop';
         btn.style.background = '#da3633';
         badge.innerText = 'Listening for beacons (' + secLeft + 's)';
         badge.style.color = '#3fb950';
@@ -1494,10 +1642,6 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(
         badge.innerText = 'Idle';
         badge.style.color = '#8b949e';
         badge.style.background = '#21262d';
-      }
-      if (count > 0) {
-        document.getElementById('pairedFollowersBox').style.display = 'block';
-        document.getElementById('pairedCount').innerText = count;
       }
     }
 
@@ -1591,7 +1735,7 @@ const char UPDATE_HTML[] PROGMEM = R"rawliteral(
 //  Web Server Handlers (Zero-Heap Buffer Optimization)
 // ============================================================
 void handleRoot() {
-    server.send(200, "text/html", PORTAL_HTML);
+    server.send(200, "text/html; charset=utf-8", PORTAL_HTML);
 }
 
 void handleData() {
@@ -1605,9 +1749,9 @@ void handleData() {
     bool activePair = pairingModeActive && (millis() < pairingExpiresMs);
     uint32_t pairSec = activePair ? ((pairingExpiresMs - millis()) / 1000) : 0;
 
-    char jsonBuf[512];
-    snprintf(jsonBuf, sizeof(jsonBuf),
-        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"pattern\":%d,\"speed\":%.1f,\"netId\":\"%04X\",\"leaderId\":%d,\"pairing\":%s,\"pairSec\":%u,\"pairedCount\":%d,\"triggered\":%s,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u}",
+    char jsonBuf[1536];
+    int offset = snprintf(jsonBuf, sizeof(jsonBuf),
+        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"pattern\":%d,\"speed\":%.1f,\"netId\":\"%04X\",\"leaderId\":%d,\"pairing\":%s,\"pairSec\":%u,\"pairedCount\":%d,\"triggered\":%s,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u,\"followers\":[",
         reportedMad,
         levelLP,
         threshold,
@@ -1627,6 +1771,18 @@ void handleData() {
         validDoorbellPackets,
         unknownPackets
     );
+
+    for (int i = 0; i < pairedFollowerCount; i++) {
+        char macStr[18];
+        snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+                 pairedFollowers[i].mac[0], pairedFollowers[i].mac[1], pairedFollowers[i].mac[2],
+                 pairedFollowers[i].mac[3], pairedFollowers[i].mac[4], pairedFollowers[i].mac[5]);
+        uint32_t ageSec = (millis() >= pairedFollowers[i].lastSeenMs) ? ((millis() - pairedFollowers[i].lastSeenMs) / 1000) : 0;
+        offset += snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset,
+            "%s{\"mac\":\"%s\",\"ageSec\":%u,\"area\":%u}",
+            (i > 0) ? "," : "", macStr, ageSec, pairedFollowers[i].triggerArea);
+    }
+    snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset, "]}");
     server.send(200, "application/json", jsonBuf);
     uiTriggered = false;
 }
@@ -1777,7 +1933,7 @@ void handlePair() {
     bool active = pairingModeActive && (millis() < pairingExpiresMs);
     uint32_t secLeft = active ? ((pairingExpiresMs - millis()) / 1000) : 0;
 
-    char jsonBuf[512];
+    char jsonBuf[1536];
     int offset = snprintf(jsonBuf, sizeof(jsonBuf),
         "{\"active\":%s,\"secLeft\":%u,\"netId\":\"%04X\",\"count\":%d,\"followers\":[",
         active ? "true" : "false", secLeft, networkId, pairedFollowerCount);
@@ -1789,10 +1945,61 @@ void handlePair() {
                  pairedFollowers[i].mac[3], pairedFollowers[i].mac[4], pairedFollowers[i].mac[5]);
         uint32_t ageSec = (millis() >= pairedFollowers[i].lastSeenMs) ? ((millis() - pairedFollowers[i].lastSeenMs) / 1000) : 0;
         offset += snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset,
-            "%s{\"mac\":\"%s\",\"ageSec\":%u}", (i > 0) ? "," : "", macStr, ageSec);
+            "%s{\"mac\":\"%s\",\"ageSec\":%u,\"area\":%u}", (i > 0) ? "," : "", macStr, ageSec, pairedFollowers[i].triggerArea);
     }
     snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset, "]}");
     server.send(200, "application/json", jsonBuf);
+}
+
+void handleSetFollowerArea() {
+    if (!server.hasArg("mac") || !server.hasArg("area")) {
+        server.send(400, "text/plain", "Missing mac or area");
+        return;
+    }
+    String macStr = server.arg("mac");
+    uint8_t newArea = (uint8_t)server.arg("area").toInt();
+
+    uint8_t targetMac[6] = {0};
+    int parsed = sscanf(macStr.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
+                        &targetMac[0], &targetMac[1], &targetMac[2],
+                        &targetMac[3], &targetMac[4], &targetMac[5]);
+    if (parsed != 6) {
+        server.send(400, "text/plain", "Invalid MAC format");
+        return;
+    }
+
+    bool found = false;
+    for (int i = 0; i < pairedFollowerCount; i++) {
+        if (memcmp(pairedFollowers[i].mac, targetMac, 6) == 0) {
+            pairedFollowers[i].triggerArea = newArea;
+            found = true;
+            break;
+        }
+    }
+    if (!found && pairedFollowerCount < MAX_PAIRED_FOLLOWERS) {
+        memcpy(pairedFollowers[pairedFollowerCount].mac, targetMac, 6);
+        pairedFollowers[pairedFollowerCount].lastSeenMs = millis();
+        pairedFollowers[pairedFollowerCount].firmwareVer = PROTOCOL_VERSION;
+        pairedFollowers[pairedFollowerCount].triggerArea = newArea;
+        pairedFollowerCount++;
+    }
+
+    savePairedFollowers();
+    addOrUpdateFollowerPeer(targetMac);
+
+    PairOfferPacket offer;
+    offer.magic = DEAF_DOORBELL_MAGIC;
+    offer.msgType = MSG_PAIR_OFFER;
+    memcpy(offer.targetMac, targetMac, 6);
+    offer.networkId = networkId;
+    offer.leaderId = leaderId;
+    offer.triggerArea = newArea;
+
+    esp_now_send(targetMac, (uint8_t*)&offer, sizeof(offer));
+    esp_now_send(broadcastAddr, (uint8_t*)&offer, sizeof(offer));
+
+    DEBUG_PRINTF("Updated follower %s to triggerArea=%d and sent config packet\n", macStr.c_str(), newArea);
+    server.send(200, "text/plain", "OK");
 }
 
 void handleTest() {
@@ -1822,6 +2029,7 @@ void setupNetworking() {
     IPAddress netMsk(255, 255, 255, 0);
     WiFi.softAP(AP_SSID, AP_PASS, 1);
     WiFi.softAPConfig(apIP, apIP, netMsk);
+    esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
     dnsServer.start(DNS_PORT, "*", apIP);
 
     uint8_t actualCh = 0;
@@ -1834,6 +2042,7 @@ void setupNetworking() {
     server.on("/", handleRoot);
     server.on("/data", handleData);
     server.on("/pair", handlePair);
+    server.on("/setFollowerArea", handleSetFollowerArea);
     server.on("/history", handleHistory);
     server.on("/triggers", handleTriggers);
     server.on("/triggers/clear", handleClearTriggers);
@@ -1917,13 +2126,14 @@ void setup() {
     DEBUG_PRINTLN("==============================================");
 
     loadSettings();
+    loadPairedFollowers();
     char colorHex[8];
     colorToHexBuf(colorHex, sizeof(colorHex), colorR, colorG, colorB);
     DEBUG_PRINTF("Loaded Settings: Threshold=%d, Duration=%dms, Party=%d, Color=%s\n",
                   threshold, duration, partyMode ? 1 : 0, colorHex);
 
     setupLED();
-    setupI2S();
+    setupAudio();
     setupNetworking();
     setupESPNow();
 
@@ -1951,91 +2161,81 @@ void loop() {
         lastNetHandle = now;
     }
 
-    // 4. Audio Capture & Processing (32-bit I2S with DMA Backlog Drain)
-    int32_t samples[CHUNK_SIZE];
-    size_t bytesRead = 0;
-    
-    // First read blocks up to 10ms until audio chunk is ready
-    esp_err_t err = i2s_read(I2S_PORT, samples, sizeof(samples), &bytesRead, pdMS_TO_TICKS(10));
-    int chunksProcessed = 0;
+    // 4. Audio Capture & Processing (MAX4466 Analog Electret on Pin 3)
+    // Capture a chunk of 64 samples at ~20kHz (64 * 50us = 3.2ms)
+    float samples[CHUNK_SIZE];
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        samples[i] = (float)analogRead(MIC_ANALOG_PIN);
+        delayMicroseconds(SAMPLE_DELAY_US);
+    }
 
-    // Drain up to 4 pending DMA chunks so network handling never causes DMA queue overflow
-    while (err == ESP_OK && bytesRead == sizeof(samples) && chunksProcessed < 4) {
-        chunksProcessed++;
+    // Shift raw history buffer
+    for (int i = 0; i < SAMPLES - CHUNK_SIZE; i++) {
+        rawSamples[i] = rawSamples[i + CHUNK_SIZE];
+    }
 
-        // Shift raw history buffer
-        for (int i = 0; i < SAMPLES - CHUNK_SIZE; i++) {
-            rawSamples[i] = rawSamples[i + CHUNK_SIZE];
-        }
+    // Apply IIR DC-blocking High-Pass filter & append new chunk
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        float inSample = samples[i];
+        // y[n] = x[n] - x[n-1] + R * y[n-1]
+        float outSample = inSample - lastInputSample + (DC_FILTER_R * lastOutputSample);
+        lastInputSample = inSample;
+        lastOutputSample = outSample;
 
-        // Apply IIR DC-blocking High-Pass filter & append new chunk
-        for (int i = 0; i < CHUNK_SIZE; i++) {
-            float inSample = (float)(samples[i] >> 14);
-            // y[n] = x[n] - x[n-1] + R * y[n-1]
-            float outSample = inSample - lastInputSample + (DC_FILTER_R * lastOutputSample);
-            lastInputSample = inSample;
-            lastOutputSample = outSample;
+        rawSamples[SAMPLES - CHUNK_SIZE + i] = outSample;
+    }
 
-            rawSamples[SAMPLES - CHUNK_SIZE + i] = outSample;
-        }
+    // Compute MAD (Mean Absolute Deviation) on filtered signal
+    float madSum = 0.0f;
+    for (int i = 0; i < SAMPLES; i++) {
+        madSum += fabsf(rawSamples[i]);
+    }
+    float mad = (madSum / SAMPLES) * ANALOG_MAD_SCALE * micGain;
+    currentMAD = mad;
 
-        // Compute MAD (Mean Absolute Deviation) on filtered signal
-        float madSum = 0.0f;
-        for (int i = 0; i < SAMPLES; i++) {
-            madSum += fabsf(rawSamples[i]);
-        }
-        float mad = (madSum / SAMPLES) * micGain;
-        currentMAD = mad;
+    // Peak tracking: track maximum MAD seen since last poll and in 1-min history bucket
+    if (currentMAD > peakMADSincePoll) {
+        peakMADSincePoll = currentMAD;
+    }
+    if ((uint16_t)currentMAD > currentBucketPeakMad) {
+        currentBucketPeakMad = (uint16_t)min((float)65535, currentMAD);
+    }
 
-        // Peak tracking: track maximum MAD seen since last poll and in 1-min history bucket
-        if (currentMAD > peakMADSincePoll) {
-            peakMADSincePoll = currentMAD;
-        }
-        if ((uint16_t)currentMAD > currentBucketPeakMad) {
-            currentBucketPeakMad = (uint16_t)min((float)65535, currentMAD);
-        }
+    // Exponential smoothing envelope
+    levelLP += motorSmooth * (currentMAD - levelLP);
 
-        // Exponential smoothing envelope
-        levelLP += motorSmooth * (currentMAD - levelLP);
+    // 5. Hardened Acoustic Debounce & Warmup Protection
+    // Warmup: 2500ms startup settling guard
+    // Persistence: Require sustained chime energy for at least 8 chunks (~25-30ms)
+    // Strict reset: any chunk below threshold IMMEDIATELY resets debounce counter to 0!
+    static int consecutiveOverThresh = 0;
+    #define WARMUP_MS 2500
+    #define MIN_TRIGGER_CHUNKS 8
 
-        // 5. Hardened Acoustic Debounce & Warmup Protection
-        // Warmup: 2500ms startup settling guard
-        // Persistence: Require sustained chime energy for at least 8 chunks (~32ms)
-        // Strict reset: any chunk below threshold IMMEDIATELY resets debounce counter to 0!
-        static int consecutiveOverThresh = 0;
-        #define WARMUP_MS 2500
-        #define MIN_TRIGGER_CHUNKS 8
+    bool alertActive = (now < alertCooldownUntilMs);
 
-        bool alertActive = (now < alertCooldownUntilMs);
-
-        if (now > WARMUP_MS) {
-            if (currentMAD > MAX_PLAUSIBLE_MAD) {
-                // Reject rail-to-rail DMA bit-slip anomalies & re-sync
-                i2s_zero_dma_buffer(I2S_PORT);
-                consecutiveOverThresh = 0;
-            } else if (currentMAD >= threshold) {
-                if (!alertActive) {
-                    consecutiveOverThresh++;
-                    if (consecutiveOverThresh >= MIN_TRIGGER_CHUNKS) {
-                        lastTriggerMAD = currentMAD;
-                        triggerAlert(false);
-                        consecutiveOverThresh = 0;
-                    }
-                } else {
+    if (now > WARMUP_MS) {
+        if (currentMAD > MAX_PLAUSIBLE_MAD) {
+            consecutiveOverThresh = 0;
+        } else if (currentMAD >= threshold) {
+            if (!alertActive) {
+                consecutiveOverThresh++;
+                if (consecutiveOverThresh >= MIN_TRIGGER_CHUNKS) {
+                    lastTriggerMAD = currentMAD;
+                    triggerAlert(false);
                     consecutiveOverThresh = 0;
                 }
             } else {
-                // Strict reset on sub-threshold chunks: prevents leaky accumulation of noise
                 consecutiveOverThresh = 0;
             }
-        }
-        if (alertActive) {
-            // Keep debounce counter zeroed during cooldown to prevent delayed triggers on exit
+        } else {
+            // Strict reset on sub-threshold chunks: prevents leaky accumulation of noise
             consecutiveOverThresh = 0;
         }
-
-        // Non-blocking drain check for next chunk in DMA
-        err = i2s_read(I2S_PORT, samples, sizeof(samples), &bytesRead, 0);
+    }
+    if (alertActive) {
+        // Keep debounce counter zeroed during cooldown to prevent delayed triggers on exit
+        consecutiveOverThresh = 0;
     }
 
     // 6. Update Audio-Reactive Onboard LED

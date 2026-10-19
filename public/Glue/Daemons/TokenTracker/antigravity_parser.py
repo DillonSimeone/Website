@@ -75,15 +75,21 @@ def _extract_gen_metadata(data_blob: bytes) -> dict[str, Any] | None:
     if not f4:
         return None
 
-    output_tokens = get_varint(f4, 1) or 0
-    context_tokens = get_varint(f4, 2) or 0
-    text_tokens = get_varint(f4, 10) or 0
-    # f4.f2 is often the full context size for a request; summing it across turns
-    # massively over-counts. f4.f10 (text_tokens) is the per-turn input increment.
-    prompt_tokens = text_tokens if text_tokens > 0 else context_tokens
+    uncached_prompt = get_varint(f4, 2) or 0
     cached_tokens = get_varint(f4, 5) or 0
+    output_tokens = get_varint(f4, 3) or 0
     thinking_tokens = get_varint(f4, 9) or 0
+    text_tokens = get_varint(f4, 10) or 0
     model_name = get_string(f1, 19) or "unknown"
+
+    # If f3 is absent, total candidates output is thinking + text tokens
+    if output_tokens == 0:
+        output_tokens = thinking_tokens + text_tokens
+
+    # Total prompt tokens processed by the model = uncached prompt + cached prompt
+    prompt_tokens = uncached_prompt + cached_tokens
+    if prompt_tokens == 0:
+        prompt_tokens = text_tokens
 
     if prompt_tokens == 0 and output_tokens == 0:
         return None
@@ -94,7 +100,7 @@ def _extract_gen_metadata(data_blob: bytes) -> dict[str, Any] | None:
         "output_tokens": output_tokens,
         "thinking_tokens": thinking_tokens,
         "cached_tokens": cached_tokens,
-        "context_tokens": context_tokens,
+        "context_tokens": uncached_prompt,
     }
 
 
@@ -209,11 +215,16 @@ def _parse_db_file(db_path: Path, source: DataSource) -> list[TokenEntry]:
 
 
 def _is_token_message(msg: dict) -> bool:
-    f1 = get_varint(msg, 1)
     f2 = get_varint(msg, 2)
-    if f1 is None or f2 is None:
-        return False
-    return _MIN_TOKENS <= f1 <= _MAX_TOKENS and _MIN_TOKENS <= f2 <= _MAX_TOKENS
+    f3 = get_varint(msg, 3)
+    f10 = get_varint(msg, 10)
+    if f2 is not None and f2 > 0:
+        return True
+    if f3 is not None and f3 > 0:
+        return True
+    if f10 is not None and f10 > 0:
+        return True
+    return False
 
 
 def _recursive_find_token_data(
@@ -227,15 +238,25 @@ def _recursive_find_token_data(
 
     f4 = get_nested(msg, 4)
     if f4 is not None and _is_token_message(f4):
-        context_tokens = get_varint(f4, 2) or 0
+        uncached_prompt = get_varint(f4, 2) or 0
+        cached_tokens = get_varint(f4, 5) or 0
+        output_tokens = get_varint(f4, 3) or 0
+        thinking_tokens = get_varint(f4, 9) or 0
         text_tokens = get_varint(f4, 10) or 0
-        prompt_tokens = text_tokens if text_tokens > 0 else context_tokens
+
+        if output_tokens == 0:
+            output_tokens = thinking_tokens + text_tokens
+
+        prompt_tokens = uncached_prompt + cached_tokens
+        if prompt_tokens == 0:
+            prompt_tokens = text_tokens
+
         results.append({
             "model": get_string(msg, 19) or "unknown",
             "prompt_tokens": prompt_tokens,
-            "output_tokens": get_varint(f4, 1) or 0,
-            "thinking_tokens": get_varint(f4, 9) or 0,
-            "cached_tokens": get_varint(f4, 5) or 0,
+            "output_tokens": output_tokens,
+            "thinking_tokens": thinking_tokens,
+            "cached_tokens": cached_tokens,
         })
         return
 
@@ -325,7 +346,14 @@ def scan_source(
 
     for db_file in db_files:
         try:
-            mtime = datetime.fromtimestamp(db_file.stat().st_mtime, tz=timezone.utc)
+            db_mtime = db_file.stat().st_mtime
+            wal_file = db_file.with_name(db_file.name + "-wal")
+            if wal_file.is_file():
+                try:
+                    db_mtime = max(db_mtime, wal_file.stat().st_mtime)
+                except OSError:
+                    pass
+            mtime = datetime.fromtimestamp(db_mtime, tz=timezone.utc)
         except OSError:
             mtime = datetime.now(timezone.utc)
 

@@ -41,6 +41,63 @@ ML_PER_TOKEN = 0.0003
 # Human daily water intake recommendation: ~2,500 mL (from all sources)
 HUMAN_DAILY_WATER_ML = 2500.0
 
+# --- Market API Pricing Constants (USD per 1M tokens) ---
+# Derived from published developer API pricing (Google Cloud, Anthropic, Cursor)
+PRICING_TABLE = {
+    'opus': {'uncached': 15.00, 'cached': 1.50, 'output': 75.00},
+    'sonnet': {'uncached': 3.00, 'cached': 0.30, 'output': 15.00},
+    'pro': {'uncached': 2.50, 'cached': 0.625, 'output': 10.00},
+    'flash': {'uncached': 0.10, 'cached': 0.025, 'output': 0.30},
+    'gemini': {'uncached': 0.10, 'cached': 0.025, 'output': 0.30},
+    'default': {'uncached': 3.00, 'cached': 0.75, 'output': 15.00},
+}
+
+
+def get_model_rates(model_name: str) -> dict:
+    """Lookup API pricing rates for a given model identifier."""
+    m = model_name.lower()
+    for key, rates in PRICING_TABLE.items():
+        if key in m:
+            return rates
+    return PRICING_TABLE['default']
+
+
+def compute_cost_from_stats(stats: dict) -> dict:
+    """
+    Compute estimated API cost from a stats dict (cached vs retail uncached).
+    Returns dict with keys: 'cached_cost', 'retail_cost', 'total_tokens'.
+    """
+    by_model = stats.get('by_model', {})
+    total_cached_cost = 0.0
+    total_retail_cost = 0.0
+
+    if by_model:
+        for model_name, mdata in by_model.items():
+            prompt = mdata.get('prompt', 0)
+            cached = mdata.get('cached', 0)
+            output = mdata.get('output', 0)
+            rates = get_model_rates(model_name)
+            uncached = max(0, prompt - cached)
+
+            c_cost = (uncached / 1e6 * rates['uncached']) + (cached / 1e6 * rates['cached']) + (output / 1e6 * rates['output'])
+            r_cost = (prompt / 1e6 * rates['uncached']) + (output / 1e6 * rates['output'])
+            total_cached_cost += c_cost
+            total_retail_cost += r_cost
+    else:
+        prompt = stats.get('total_prompt', 0)
+        cached = stats.get('total_cached', 0)
+        output = stats.get('total_output', 0)
+        rates = PRICING_TABLE['flash']
+        uncached = max(0, prompt - cached)
+        total_cached_cost = (uncached / 1e6 * rates['uncached']) + (cached / 1e6 * rates['cached']) + (output / 1e6 * rates['output'])
+        total_retail_cost = (prompt / 1e6 * rates['uncached']) + (output / 1e6 * rates['output'])
+
+    return {
+        'cached_cost': total_cached_cost,
+        'retail_cost': total_retail_cost,
+        'total_tokens': stats.get('total_tokens', 0)
+    }
+
 
 def format_tokens(count: int) -> str:
     """Format a token count with commas for display."""
@@ -242,6 +299,10 @@ class TokenPopup:
     def close(self):
         """Close the popup."""
         try:
+            self.root.unbind_all("<MouseWheel>")
+        except Exception:
+            pass
+        try:
             self.root.destroy()
         except Exception:
             pass
@@ -269,7 +330,11 @@ class TokenPopup:
 
         # Mouse wheel scrolling
         def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            try:
+                if canvas.winfo_exists():
+                    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            except Exception:
+                pass
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         canvas.pack(side="left", fill="both", expand=True)
@@ -295,6 +360,12 @@ class TokenPopup:
                               COLORS['accent_purple'])
         self._build_stat_card(main_frame, "Lifetime", lifetime,
                               COLORS['accent_green'])
+
+        # --- Divider ---
+        self._divider(main_frame)
+
+        # --- Plan Value & Cost Estimator ---
+        self._build_cost_estimator_section(main_frame, today, thirty_d, lifetime)
 
         # --- Divider ---
         self._divider(main_frame)
@@ -493,6 +564,207 @@ class TokenPopup:
         tk.Label(details, text=detail_text,
                  bg=COLORS['bg_card'], fg=COLORS['text_dim'],
                  font=('Segoe UI', 8)).pack(anchor='w')
+
+    def _build_cost_estimator_section(self, parent, today, thirty_d, lifetime):
+        """Build interactive Cost & Plan Value Estimator with slider."""
+        section = tk.Frame(parent, bg=COLORS['bg'], padx=16, pady=4)
+        section.pack(fill='x')
+
+        header_frame = tk.Frame(section, bg=COLORS['bg'])
+        header_frame.pack(fill='x')
+
+        tk.Label(header_frame, text="💰 PLAN VALUE & COST ESTIMATOR",
+                 bg=COLORS['bg'], fg=COLORS['accent_green'],
+                 font=('Segoe UI', 9, 'bold')).pack(side='left')
+
+        cost_today = compute_cost_from_stats(today)
+        cost_30d = compute_cost_from_stats(thirty_d)
+        cost_life = compute_cost_from_stats(lifetime)
+
+        # Subtitle
+        tk.Label(section, text="Compare flat subscription costs vs equivalent pay-per-token API market value",
+                 bg=COLORS['bg'], fg=COLORS['text_dim'],
+                 font=('Segoe UI', 8)).pack(anchor='w', pady=(2, 6))
+
+        # Metrics Card (2 columns: 30-Day Value & Lifetime Value)
+        metrics_card = tk.Frame(section, bg=COLORS['bg_card'], padx=14, pady=10)
+        metrics_card.pack(fill='x', pady=(0, 6))
+
+        # Col 1: 30-Day Value
+        c1 = tk.Frame(metrics_card, bg=COLORS['bg_card'])
+        c1.pack(side='left', expand=True, fill='x')
+        tk.Label(c1, text="30-Day API Value", bg=COLORS['bg_card'],
+                 fg=COLORS['text_secondary'], font=('Segoe UI', 8)).pack(anchor='w')
+        tk.Label(c1, text=f"${cost_30d['cached_cost']:,.2f}", bg=COLORS['bg_card'],
+                 fg=COLORS['accent_green'], font=('Segoe UI Semibold', 13)).pack(anchor='w')
+        tk.Label(c1, text=f"Retail: ${cost_30d['retail_cost']:,.2f}", bg=COLORS['bg_card'],
+                 fg=COLORS['text_dim'], font=('Segoe UI', 7)).pack(anchor='w')
+
+        # Divider between cols
+        tk.Frame(metrics_card, bg=COLORS['border'], width=1).pack(side='left', fill='y', padx=10)
+
+        # Col 2: Lifetime Value
+        c2 = tk.Frame(metrics_card, bg=COLORS['bg_card'])
+        c2.pack(side='left', expand=True, fill='x')
+        tk.Label(c2, text="Lifetime API Value", bg=COLORS['bg_card'],
+                 fg=COLORS['text_secondary'], font=('Segoe UI', 8)).pack(anchor='w')
+        tk.Label(c2, text=f"${cost_life['cached_cost']:,.2f}", bg=COLORS['bg_card'],
+                 fg=COLORS['accent_purple'], font=('Segoe UI Semibold', 13)).pack(anchor='w')
+        tk.Label(c2, text=f"Retail: ${cost_life['retail_cost']:,.2f}", bg=COLORS['bg_card'],
+                 fg=COLORS['text_dim'], font=('Segoe UI', 7)).pack(anchor='w')
+
+        # Interactive Slider Box
+        slider_card = tk.Frame(section, bg=COLORS['bg_card'], padx=14, pady=10)
+        slider_card.pack(fill='x', pady=4)
+
+        slider_hdr = tk.Frame(slider_card, bg=COLORS['bg_card'])
+        slider_hdr.pack(fill='x')
+
+        tk.Label(slider_hdr, text="Your Monthly Plan Fee:",
+                 bg=COLORS['bg_card'], fg=COLORS['text_primary'],
+                 font=('Segoe UI Semibold', 9)).pack(side='left')
+
+        fee_display = tk.Label(slider_hdr, text="$20 / mo",
+                               bg=COLORS['bg_card'], fg=COLORS['accent_blue'],
+                               font=('Segoe UI Semibold', 10))
+        fee_display.pack(side='right')
+
+        # Slider variable
+        plan_var = tk.DoubleVar(value=20.0)
+        mode_var = tk.StringVar(value='cached')
+
+        # Scale slider (tk.Scale for clean dark-theme styling)
+        slider = tk.Scale(slider_card, from_=0, to=100, resolution=1, orient='horizontal',
+                          variable=plan_var, showvalue=0, bd=0, highlightthickness=0,
+                          bg=COLORS['bg_card'], troughcolor=COLORS['bg'],
+                          activebackground=COLORS['accent_blue'])
+        slider.pack(fill='x', pady=(6, 8))
+
+        # Quick preset pills
+        pills_frame = tk.Frame(slider_card, bg=COLORS['bg_card'])
+        pills_frame.pack(fill='x')
+
+        def set_fee(val):
+            plan_var.set(val)
+            _update_estimates()
+
+        presets = [
+            ("$20 Single", 20),
+            ("$40 Dual Pro", 40),
+            ("$60 Triple", 60),
+            ("$0 Free Tier", 0),
+        ]
+        for pill_label, val in presets:
+            btn = tk.Label(pills_frame, text=pill_label, bg='#2a3550', fg=COLORS['accent_blue'],
+                           font=('Segoe UI', 7, 'bold'), padx=6, pady=3, cursor='hand2')
+            btn.pack(side='left', padx=(0, 4))
+            btn.bind('<Button-1>', lambda e, v=val: set_fee(v))
+            btn.bind('<Enter>', lambda e, b=btn: b.config(bg='#3a4870'))
+            btn.bind('<Leave>', lambda e, b=btn: b.config(bg='#2a3550'))
+
+        # Benchmark pricing mode pills
+        tier_frame = tk.Frame(slider_card, bg=COLORS['bg_card'])
+        tier_frame.pack(fill='x', pady=(8, 0))
+
+        tk.Label(tier_frame, text="API Benchmark:",
+                 bg=COLORS['bg_card'], fg=COLORS['text_dim'],
+                 font=('Segoe UI', 7)).pack(side='left', padx=(0, 6))
+
+        cached_pill = tk.Label(tier_frame, text="⚡ Prompt Cached",
+                               bg='#1f3b2f', fg=COLORS['accent_green'],
+                               font=('Segoe UI', 7, 'bold'), padx=6, pady=2, cursor='hand2')
+        cached_pill.pack(side='left', padx=2)
+
+        retail_pill = tk.Label(tier_frame, text="🏷️ Retail Uncached",
+                               bg='#2a3550', fg=COLORS['text_dim'],
+                               font=('Segoe UI', 7), padx=6, pady=2, cursor='hand2')
+        retail_pill.pack(side='left', padx=2)
+
+        # Dynamic Verdict & ROI Card
+        verdict_card = tk.Frame(section, bg='#132d22', padx=14, pady=10, highlightthickness=1, highlightbackground='#235e40')
+        verdict_card.pack(fill='x', pady=(6, 4))
+
+        roi_badge = tk.Label(verdict_card, text="8.3× ROI (+726%)",
+                             bg='#132d22', fg=COLORS['accent_green'],
+                             font=('Segoe UI Semibold', 12))
+        roi_badge.pack(anchor='w')
+
+        net_label = tk.Label(verdict_card, text="+$145.20 / mo net surplus value",
+                             bg='#132d22', fg=COLORS['text_primary'],
+                             font=('Segoe UI', 9))
+        net_label.pack(anchor='w', pady=(2, 0))
+
+        verdict_text = tk.Label(verdict_card, text="",
+                                bg='#132d22', fg='#a3cfbb',
+                                font=('Segoe UI', 8), wraplength=380, justify='left')
+        verdict_text.pack(anchor='w', pady=(4, 0))
+
+        def _update_estimates(*args):
+            fee = plan_var.get()
+            fee_display.config(text=f"${int(fee)} / mo" if fee == int(fee) else f"${fee:.2f} / mo")
+
+            is_retail = (mode_var.get() == 'retail')
+            val_30d = cost_30d['retail_cost'] if is_retail else cost_30d['cached_cost']
+            val_life = cost_life['retail_cost'] if is_retail else cost_life['cached_cost']
+
+            # Monthly net value
+            net = val_30d - fee
+
+            # Estimate active months (~6 months of sustained usage)
+            active_months = 6.0
+            life_spent = fee * active_months
+            life_net = val_life - life_spent
+
+            if fee > 0:
+                roi_mult = val_30d / fee
+                roi_pct = ((val_30d - fee) / fee) * 100
+                roi_str = f"{roi_mult:.1f}× ROI ({roi_pct:+.0f}%)"
+            else:
+                roi_mult = float('inf')
+                roi_str = "∞ Free Value"
+
+            if net > 50:
+                verdict_card.config(bg='#132d22', highlightbackground='#235e40')
+                roi_badge.config(bg='#132d22', fg=COLORS['accent_green'], text=roi_str)
+                net_label.config(bg='#132d22', text=f"+${net:,.2f} / mo net surplus value  (Lifetime: +${life_net:,.2f})")
+                verdict_text.config(bg='#132d22', fg='#a3cfbb',
+                    text=f"🔥 Definite YES! You are extracting {roi_mult:.1f}× more API compute than your ${int(fee)} plan fee.")
+            elif net > 0:
+                verdict_card.config(bg='#132d22', highlightbackground='#235e40')
+                roi_badge.config(bg='#132d22', fg=COLORS['accent_green'], text=roi_str)
+                net_label.config(bg='#132d22', text=f"+${net:,.2f} / mo net surplus value  (Lifetime: +${life_net:,.2f})")
+                verdict_text.config(bg='#132d22', fg='#a3cfbb',
+                    text=f"✅ Worth it! Your usage comfortably outvalues your ${int(fee)}/mo subscription cost.")
+            elif net == 0:
+                verdict_card.config(bg='#262b3a', highlightbackground='#3d455d')
+                roi_badge.config(bg='#262b3a', fg=COLORS['accent_amber'], text="1.0× Break-Even")
+                net_label.config(bg='#262b3a', text="$0.00 / mo net (even)")
+                verdict_text.config(bg='#262b3a', fg=COLORS['text_secondary'],
+                    text="⚖️ Exact break-even. You are getting exactly the token volume you pay for.")
+            else:
+                verdict_card.config(bg='#2d1818', highlightbackground='#5e2323')
+                roi_badge.config(bg='#2d1818', fg=COLORS['accent_red'], text=roi_str)
+                net_label.config(bg='#2d1818', text=f"-${abs(net):,.2f} / mo underutilized")
+                verdict_text.config(bg='#2d1818', fg='#cfabab',
+                    text=f"⚠️ Underutilized at ${int(fee)}/mo. You could switch to pay-per-token API or downscale.")
+
+        slider.config(command=lambda v: _update_estimates())
+
+        def switch_mode(mode):
+            mode_var.set(mode)
+            if mode == 'cached':
+                cached_pill.config(bg='#1f3b2f', fg=COLORS['accent_green'], font=('Segoe UI', 7, 'bold'))
+                retail_pill.config(bg='#2a3550', fg=COLORS['text_dim'], font=('Segoe UI', 7))
+            else:
+                retail_pill.config(bg='#3d2c55', fg=COLORS['accent_purple'], font=('Segoe UI', 7, 'bold'))
+                cached_pill.config(bg='#2a3550', fg=COLORS['text_dim'], font=('Segoe UI', 7))
+            _update_estimates()
+
+        cached_pill.bind('<Button-1>', lambda e: switch_mode('cached'))
+        retail_pill.bind('<Button-1>', lambda e: switch_mode('retail'))
+
+        # Initial calculation
+        _update_estimates()
 
     def _build_water_section(self, parent, today, lifetime):
         """Build the water usage comparison section."""

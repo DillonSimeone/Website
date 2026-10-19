@@ -62,6 +62,75 @@ def acquire_single_instance_mutex():
         return True
 
 
+class GoveeAudioSyncBridge:
+    """Non-blocking background bridge to pulse Govee smart lights on audio transients."""
+    def __init__(self):
+        self.last_pulse_time = 0.0
+        self.manager = None
+        self.initialized = False
+        self._busy = False
+        self._init_lock = threading.Lock()
+        # Pre-initialize in background thread to avoid drop on first audio hit
+        threading.Thread(target=self._init_manager, daemon=True).start()
+
+    def _init_manager(self):
+        with self._init_lock:
+            if self.manager is not None:
+                return
+            try:
+                govee_path = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "..", "MiniProjects", "goveeLightsControls"))
+                if not os.path.isdir(govee_path):
+                    log(f"[GoveeSync] Path not found: {govee_path}")
+                    return
+                if govee_path not in sys.path:
+                    sys.path.insert(0, govee_path)
+                from govee_api import GoveeManager
+                self.manager = GoveeManager()
+                self.manager.refresh_devices()
+                self.manager.scan_lan(timeout=1.0)
+                self.initialized = True
+                devs = [f"{d.name} ({'LAN' if d.lan_ip else 'Cloud'})" for d in self.manager.devices.values()]
+                log(f"[GoveeSync] Successfully initialized Govee bridge. Discovered {len(devs)} device(s): {', '.join(devs)}")
+            except Exception as e:
+                log(f"[GoveeSync Init Error] {e}")
+
+    def trigger_hit(self, velocity: float, peak_amp: int, is_deep_sub: bool):
+        now = time.time()
+        has_lan = bool(self.manager and any(d.lan_ip for d in self.manager.devices.values()))
+        cooldown = 0.16 if has_lan else 1.2
+        if now - self.last_pulse_time < cooldown or self._busy:
+            return
+        self.last_pulse_time = now
+        self._busy = True
+        threading.Thread(target=self._do_pulse, args=(velocity, peak_amp, is_deep_sub, has_lan), daemon=True).start()
+
+    def _do_pulse(self, velocity: float, peak_amp: int, is_deep_sub: bool, has_lan: bool):
+        try:
+            if not self.initialized:
+                self._init_manager()
+
+            if not self.manager or not self.manager.devices:
+                return
+
+            # Sub-bass: Vibrant Magenta/Pink (255, 42, 133); Punch / Snare: Cyan (0, 200, 255)
+            r, g, b = (255, 42, 133) if is_deep_sub else (0, 200, 255)
+            pulse_brightness = min(100, max(50, int(peak_amp / 255.0 * 100)))
+
+            for mac in list(self.manager.devices.keys()):
+                self.manager.set_brightness(mac, pulse_brightness, debounce=False)
+                self.manager.set_color_rgb(mac, r, g, b)
+
+            if has_lan:
+                time.sleep(0.14)
+                # Return smoothly to calm ambient floor (15%)
+                for mac in list(self.manager.devices.keys()):
+                    self.manager.set_brightness(mac, 15, debounce=False)
+        except Exception as e:
+            log(f"[GoveeSync Pulse Error] {e}")
+        finally:
+            self._busy = False
+
+
 class GestoluminaAudioHapticsDaemon:
     def __init__(self):
         self.adb = get_adb_path()
@@ -83,10 +152,14 @@ class GestoluminaAudioHapticsDaemon:
             "mid_punch_high_hz": 220,
             "snap_high_hz": 1200,
             "mode": "gestolumina_pwm",
+            "govee_sync": False,
         }
         self.last_config_mtime = 0.0
         self.last_config_check = 0.0
         self._load_config()
+
+        # Non-blocking Govee smart light audio sync bridge
+        self.govee_bridge = GoveeAudioSyncBridge()
 
         # Localhost UDP Telemetry Broadcaster (Port 48123)
         self.udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -300,10 +373,11 @@ class GestoluminaAudioHapticsDaemon:
 
             min_vel = self.config.get("min_velocity", 0.018)
             is_enabled = bool(self.config.get("enabled", True))
+            govee_sync = bool(self.config.get("govee_sync", False))
             hit_this_frame = False
 
-            # Trigger condition: sudden upward surge above ambient floor (only when enabled)
-            if is_enabled and now >= self.cooldown_until and velocity > min_vel and bass_energy > (1.15 * self.bass_slow_ema):
+            # Trigger condition: sudden upward surge above ambient floor (evaluates when either haptics or Govee sync is enabled)
+            if (is_enabled or govee_sync) and now >= self.cooldown_until and velocity > min_vel and bass_energy > (1.15 * self.bass_slow_ema):
                 scale = self.config.get("amplitude_scale", 2.0)
                 norm_v = min(1.0, max(0.0, (velocity - min_vel) / (0.75 - min_vel)))
                 v_curved = min(1.0, max(0.05, (norm_v ** 0.85) * scale))
@@ -317,7 +391,11 @@ class GestoluminaAudioHapticsDaemon:
                 is_deep_sub = sub_energy > (punch_energy * 1.25)
 
                 cmd, duration_ms, peak_amp = self._build_envelope(v_curved, is_snap, is_deep_sub)
-                self.send_command(cmd)
+                if is_enabled:
+                    self.send_command(cmd)
+
+                if govee_sync:
+                    self.govee_bridge.trigger_hit(v_curved, peak_amp, is_deep_sub)
 
                 self.current_peak_amp = peak_amp
                 self.current_envelope_end = now + duration_ms / 1000.0
@@ -328,7 +406,7 @@ class GestoluminaAudioHapticsDaemon:
                 self.cooldown_until = now + (duration_ms + 16) / 1000.0
 
             # Calculate dynamic active PWM duty cycle (0 - 100%)
-            if is_enabled and now < self.current_envelope_end and self.total_envelope_ms > 0:
+            if now < self.current_envelope_end and self.total_envelope_ms > 0:
                 rem = max(0.0, (self.current_envelope_end - now) / (self.total_envelope_ms / 1000.0))
                 active_pwm = int((self.current_peak_amp / 255.0) * 100 * (rem ** 0.5))
             else:

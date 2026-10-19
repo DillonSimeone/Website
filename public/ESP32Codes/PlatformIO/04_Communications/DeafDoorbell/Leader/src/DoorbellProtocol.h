@@ -54,5 +54,6 @@ typedef struct {
     uint8_t  msgType;       // MSG_PAIR_OFFER (0x03)
     uint8_t  targetMac[6];  // Intended follower MAC
     uint16_t networkId;     // House network ID
-    uint8_t  leaderId;      // Leader ID
+    uint8_t  leaderId;      // Leader ID / Trigger Area
+    uint8_t  triggerArea;   // Assigned Trigger Area for follower (0 = All Areas)
 } __attribute__((packed)) PairOfferPacket;

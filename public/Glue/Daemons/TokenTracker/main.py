@@ -17,6 +17,24 @@ from tray_app import TokenTrackerApp
 from data_sources import discover_all_sources, get_app_data_dir
 
 
+_APP_MUTEX = None
+
+def acquire_single_instance() -> bool:
+    global _APP_MUTEX
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            ERROR_ALREADY_EXISTS = 183
+            _APP_MUTEX = kernel32.CreateMutexW(None, False, "Global\\LLMTokenTracker_Mutex")
+            last_error = kernel32.GetLastError()
+            if last_error == ERROR_ALREADY_EXISTS:
+                return False
+            return True
+        except Exception:
+            return True
+    return True
+
 DEFAULT_REFRESH_INTERVAL_MINUTES = 60
 DEFAULT_CONVERSATIONS_DIR = os.path.join(
     os.path.expanduser("~"), ".gemini", "antigravity", "conversations"
@@ -74,8 +92,21 @@ def main():
         action='store_true',
         help="Enable debug logging",
     )
+    parser.add_argument(
+        '--tray',
+        action='store_true',
+        default=False,
+        help="Show legacy system tray icon (default: False, runs headless)",
+    )
+    parser.add_argument(
+        '--headless',
+        action='store_true',
+        default=True,
+        help="Run without system tray icon (default: True)",
+    )
 
     args = parser.parse_args()
+    headless_mode = not args.tray
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     handlers = []
@@ -125,14 +156,28 @@ def main():
         cursor_db_max_mb=args.cursor_db_max_mb,
     )
 
+    pid_file = data_dir / "token_tracker.pid"
     try:
-        app.start()
+        pid_file.write_text(str(os.getpid()), encoding="utf-8")
+    except Exception:
+        pass
+
+    try:
+        app.start(headless=headless_mode)
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
     except Exception as e:
         logger.error("Fatal error: %s", e, exc_info=True)
         sys.exit(1)
+    finally:
+        try:
+            if pid_file.is_file():
+                pid_file.unlink()
+        except Exception:
+            pass
 
 
 if __name__ == '__main__':
+    if not acquire_single_instance():
+        sys.exit(0)
     main()

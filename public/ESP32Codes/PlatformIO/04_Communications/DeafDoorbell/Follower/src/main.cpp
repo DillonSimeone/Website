@@ -1,18 +1,20 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_now.h>
+#include <esp_wifi.h>
 #include <FastLED.h>
 #include <Preferences.h>
 #include "DoorbellProtocol.h"
 
 // ============================================================
-//  DeafDoorbell — Follower Node (Firmware v3.0)
+//  DeafDoorbell - Follower Node (Firmware v3.1)
 //  - Multi-pattern FastLED rendering (Breathe, Ripple, Crawl, Bounce, Beacon, Strobe)
 //  - Store-and-forward mesh relay with TTL hop limiting
 //  - Anti-storm de-duplication cache
-//  - House Network Key isolation
+//  - House Network Key & Trigger Area filtering
 //  - 3-second boot-button long press to re-enter pairing mode
-//  - Random multi-shade orange ripples during pairing mode
+//  - Slow, safe 3-second center-expanding orange ripples during pairing mode
+//  - Smooth emerald green ripple on pairing confirmation
 // ============================================================
 
 #define DEBUG_ENABLED
@@ -28,7 +30,7 @@
 #endif
 
 // ===== HARDWARE PIN CONFIGURATION =====
-#define LED_PIN         4       // WS2812B data line
+#define LED_PIN         5       // WS2812B data line (GPIO 5)
 #define LED_COUNT       64      // 8x8 WS2812B matrix (or strip)
 #define MOTOR_PIN       3       // Digital vibration motor output
 #define ONBOARD_LED     8       // Inverted logic: LOW=ON, HIGH=OFF
@@ -36,7 +38,8 @@
 
 // ===== NVS PREFERENCES & NETWORK KEY =====
 Preferences prefs;
-uint16_t myNetworkId = 0;       // 0 = Unpaired / Discovery Mode
+uint16_t myNetworkId   = 0;       // 0 = Unpaired / Discovery Mode
+uint8_t  myTriggerArea = 0;       // 0 = All Trigger Areas, 1 = Area 1 (Front Door)...
 bool isPaired = false;
 uint8_t myMac[6] = {0};
 
@@ -74,18 +77,20 @@ float    currentSpeed      = 1.0f;
 CRGB     currentColor      = CRGB::Cyan;
 uint8_t  currentPartyMode  = 0;
 
-// ===== PAIRING MODE ORANGE RIPPLE ENGINE =====
-struct ActiveOrangeRipple {
-    float centerX;
-    float centerY;
-    float radius;
-    float speed;
-    CRGB  color;
-    bool  active;
-};
-#define MAX_ORANGE_RIPPLES 4
-ActiveOrangeRipple orangeRipples[MAX_ORANGE_RIPPLES];
-unsigned long nextOrangeRippleMs = 0;
+// ===== MATRIX COORDINATE HELPER (Standard 8x8 Serpentine Panel) =====
+inline uint16_t getMatrixIndex(uint8_t x, uint8_t y) {
+    if (x >= 8 || y >= 8) return 0;
+    // Standard serpentine: odd rows run backwards
+    if (y & 0x01) {
+        return (y * 8) + (7 - x);
+    } else {
+        return (y * 8) + x;
+    }
+}
+
+// ===== PAIRING MODE ORANGE RIPPLE STATE =====
+unsigned long pairingModeStartMs = 0;
+unsigned long lastPairingFrameMs = 0;
 unsigned long lastBeaconBroadcastMs = 0;
 
 const CRGB ORANGE_SHADES[] = {
@@ -107,11 +112,12 @@ bool heartbeatState = false;
 // ============================================================
 void loadSettings() {
     prefs.begin("doorbell", false);
-    myNetworkId = prefs.getUShort("netId", 0);
+    myNetworkId   = prefs.getUShort("netId", 0);
+    myTriggerArea = prefs.getUChar("trigArea", 0);
     prefs.end();
 
     isPaired = (myNetworkId != 0);
-    DEBUG_PRINTF("Loaded NVS: networkId=0x%04X, isPaired=%d\n", myNetworkId, isPaired);
+    DEBUG_PRINTF("Loaded NVS: networkId=0x%04X, triggerArea=%d, isPaired=%d\n", myNetworkId, myTriggerArea, isPaired);
 }
 
 void saveNetworkId(uint16_t id) {
@@ -121,6 +127,14 @@ void saveNetworkId(uint16_t id) {
     prefs.putUShort("netId", myNetworkId);
     prefs.end();
     DEBUG_PRINTF("Saved NVS: networkId=0x%04X\n", myNetworkId);
+}
+
+void saveTriggerArea(uint8_t area) {
+    myTriggerArea = area;
+    prefs.begin("doorbell", false);
+    prefs.putUChar("trigArea", myTriggerArea);
+    prefs.end();
+    DEBUG_PRINTF("Saved NVS: triggerArea=%d\n", myTriggerArea);
 }
 
 // ============================================================
@@ -181,18 +195,54 @@ void stopAlert() {
 }
 
 // ============================================================
-//  Visual Pairing Confirmation (Green Flashes)
+//  Visual Pairing Confirmation (Gentle Emerald Green Ripple)
 // ============================================================
 void playPairConfirmation() {
-    for (int k = 0; k < 3; k++) {
-        fill_solid(leds, LED_COUNT, CRGB::Green);
-        FastLED.setBrightness(180);
-        FastLED.show();
-        delay(120);
+    FastLED.setBrightness(100);
+    const float cx = 3.5f;
+    const float cy = 3.5f;
+    const float ringThickness = 1.35f;
+    unsigned long startMs = millis();
+    const unsigned long durMs = 1500; // 1.5s soothing confirmation ripple
+
+    while (millis() - startMs < durMs) {
+        float progress = (float)(millis() - startMs) / (float)durMs;
+        float radius = progress * 5.2f;
+
+        float envelope = 1.0f;
+        if (progress < 0.15f) {
+            envelope = sinf((progress / 0.15f) * (3.14159f / 2.0f));
+        } else if (progress > 0.60f) {
+            envelope = cosf(((progress - 0.60f) / 0.40f) * (3.14159f / 2.0f));
+        }
+        envelope = max(0.0f, envelope);
+
         fill_solid(leds, LED_COUNT, CRGB::Black);
+
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                float dx = (float)x - cx;
+                float dy = (float)y - cy;
+                float dist = sqrtf(dx * dx + dy * dy);
+
+                float diff = fabsf(dist - radius);
+                if (diff < ringThickness) {
+                    float normDiff = diff / ringThickness;
+                    float bell = 0.5f * (1.0f + cosf(normDiff * 3.14159265f));
+                    float intensity = powf(bell, 1.4f) * envelope;
+
+                    CRGB c = CRGB(0, 255, 60); // Vibrant emerald green
+                    c.nscale8_video((uint8_t)(intensity * 255.0f));
+                    leds[getMatrixIndex(x, y)] = c;
+                }
+            }
+        }
         FastLED.show();
-        delay(100);
+        delay(16); // ~60 FPS
     }
+
+    fill_solid(leds, LED_COUNT, CRGB::Black);
+    FastLED.show();
 }
 
 // ============================================================
@@ -214,6 +264,14 @@ void onDataRecv(const uint8_t *mac, const uint8_t *data, int len) {
         if (isPaired && pkt.networkId != myNetworkId) {
             DEBUG_PRINTF("Ignored alert: Network ID mismatch (pkt:0x%04X, my:0x%04X)\n",
                          pkt.networkId, myNetworkId);
+            return;
+        }
+
+        // Trigger Area check:
+        // Accept if follower is set to All Areas (0) or if alert matches assigned area
+        if (myTriggerArea != 0 && pkt.leaderId != 0 && pkt.leaderId != myTriggerArea) {
+            DEBUG_PRINTF("Ignored alert: Trigger Area mismatch (pkt:%u, my:%u)\n",
+                         pkt.leaderId, myTriggerArea);
             return;
         }
 
@@ -245,8 +303,9 @@ void onDataRecv(const uint8_t *mac, const uint8_t *data, int len) {
 
         // Check if targeted to our MAC address
         if (memcmp(offer.targetMac, myMac, 6) == 0) {
-            DEBUG_PRINTF(">>> Received PAIR OFFER! Network ID: 0x%04X\n", offer.networkId);
+            DEBUG_PRINTF(">>> Received PAIR OFFER! Net:0x%04X, Area:%u\n", offer.networkId, offer.triggerArea);
             saveNetworkId(offer.networkId);
+            saveTriggerArea(offer.triggerArea);
             playPairConfirmation();
 
             // Send confirmation back
@@ -272,7 +331,7 @@ void serviceMeshRelay() {
 }
 
 // ============================================================
-//  Pairing Mode Service (Random Multi-Shade Orange Ripples)
+//  Pairing Mode Service (Slow 3-Second Gentle Center Orange Ripple)
 // ============================================================
 void servicePairingMode(unsigned long now) {
     // 1. Broadcast hello beacon every 1500ms
@@ -287,58 +346,69 @@ void servicePairingMode(unsigned long now) {
         DEBUG_PRINTLN("Pair beacon broadcast sent...");
     }
 
-    // 2. Launch random orange ripples at staggered intervals
-    if (now >= nextOrangeRippleMs) {
-        for (int i = 0; i < MAX_ORANGE_RIPPLES; i++) {
-            if (!orangeRipples[i].active) {
-                orangeRipples[i].active = true;
-                // Vary origin point slightly around center
-                orangeRipples[i].centerX = (float)random(22, 48) / 10.0f;
-                orangeRipples[i].centerY = (float)random(22, 48) / 10.0f;
-                orangeRipples[i].radius = 0.0f;
-                orangeRipples[i].speed = (float)random(32, 55) / 10.0f; // 3.2 to 5.5 units/sec
-                orangeRipples[i].color = ORANGE_SHADES[random(0, NUM_ORANGE_SHADES)];
-                break;
+    // 2. Strict 50 FPS frame throttle (20ms) to ensure smooth motion and prevent strobe/flicker
+    if (now - lastPairingFrameMs < 20) return;
+    lastPairingFrameMs = now;
+
+    if (pairingModeStartMs == 0) pairingModeStartMs = now;
+    unsigned long elapsed = now - pairingModeStartMs;
+
+    // Each ripple wave takes exactly 3000ms (3.0 seconds) to expand from center outward
+    #define PAIRING_RIPPLE_PERIOD_MS 3000
+    uint32_t cycleNumber = elapsed / PAIRING_RIPPLE_PERIOD_MS;
+    float cycleTime = (float)(elapsed % PAIRING_RIPPLE_PERIOD_MS);
+    float progress = cycleTime / (float)PAIRING_RIPPLE_PERIOD_MS; // 0.0 to 1.0 over 3.0s
+
+    // Cycle through orange shades across cycles, blending smoothly
+    int shadeIdx = cycleNumber % NUM_ORANGE_SHADES;
+    int nextShadeIdx = (shadeIdx + 1) % NUM_ORANGE_SHADES;
+    CRGB waveColor = blend(ORANGE_SHADES[shadeIdx], ORANGE_SHADES[nextShadeIdx], (uint8_t)(progress * 180));
+
+    // Radius expands slowly from center (0.0) out past corners (5.2) over 3 seconds
+    float radius = progress * 5.2f;
+
+    // Smooth envelope: gentle bloom at center (first 400ms), soft dissipation at perimeter (last 1000ms)
+    float envelope = 1.0f;
+    if (progress < 0.15f) {
+        // Attack
+        envelope = sinf((progress / 0.15f) * (3.14159f / 2.0f));
+    } else if (progress > 0.65f) {
+        // Decay
+        float decayProgress = (progress - 0.65f) / 0.35f;
+        envelope = cosf(decayProgress * (3.14159f / 2.0f));
+    }
+    envelope = max(0.0f, envelope);
+
+    // Safe, non-glaring brightness for pairing mode
+    FastLED.setBrightness(75);
+
+    // Clear frame
+    fill_solid(leds, LED_COUNT, CRGB::Black);
+
+    const float cx = 3.5f;
+    const float cy = 3.5f;
+    const float ringThickness = 1.35f; // Soft, broad wavefront thickness
+
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            float dx = (float)x - cx;
+            float dy = (float)y - cy;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            float diff = fabsf(dist - radius);
+            if (diff < ringThickness) {
+                // Cosine bell curve for seamless falloff
+                float normDiff = diff / ringThickness;
+                float bell = 0.5f * (1.0f + cosf(normDiff * 3.14159265f));
+                float intensity = powf(bell, 1.4f) * envelope;
+
+                CRGB pixelColor = waveColor;
+                pixelColor.nscale8_video((uint8_t)(intensity * 255.0f));
+                leds[getMatrixIndex(x, y)] = pixelColor;
             }
         }
-        nextOrangeRippleMs = now + random(550, 1300);
     }
 
-    // 3. Render active ripples to the matrix
-    FastLED.setBrightness(160);
-    fadeToBlackBy(leds, LED_COUNT, 55);
-
-    float dt = 0.03f; // ~33 FPS step
-    for (int i = 0; i < MAX_ORANGE_RIPPLES; i++) {
-        if (orangeRipples[i].active) {
-            orangeRipples[i].radius += orangeRipples[i].speed * dt;
-            if (orangeRipples[i].radius > 7.5f) {
-                orangeRipples[i].active = false;
-                continue;
-            }
-
-            for (int y = 0; y < 8; y++) {
-                for (int x = 0; x < 8; x++) {
-                    float dx = (float)x - orangeRipples[i].centerX;
-                    float dy = (float)y - orangeRipples[i].centerY;
-                    float dist = sqrtf(dx * dx + dy * dy);
-                    float diff = fabsf(dist - orangeRipples[i].radius);
-
-                    if (diff < 1.25f) {
-                        float ringBri = 1.0f - (diff / 1.25f);
-                        float edgeFade = 1.0f - (orangeRipples[i].radius / 7.5f);
-                        float finalVal = ringBri * edgeFade;
-
-                        CRGB c = orangeRipples[i].color;
-                        c.nscale8_video((uint8_t)(finalVal * 255.0f));
-
-                        int idx = y * 8 + x;
-                        leds[idx] += c;
-                    }
-                }
-            }
-        }
-    }
     FastLED.show();
 }
 
@@ -346,6 +416,10 @@ void servicePairingMode(unsigned long now) {
 //  FastLED Animation Renderers
 // ============================================================
 void renderAlertFrame(unsigned long now) {
+    static unsigned long lastAlertFrameMs = 0;
+    if (now - lastAlertFrameMs < 16) return; // ~60 FPS smooth limiter
+    lastAlertFrameMs = now;
+
     float elapsedSec = (float)(now - alertStartMs) / 1000.0f;
     float t = elapsedSec * currentSpeed;
 
@@ -380,7 +454,7 @@ void renderAlertFrame(unsigned long now) {
                     float intensity = powf(wave, 2.2f);
                     CRGB c = activeColor;
                     c.nscale8_video((uint8_t)(intensity * 255.0f));
-                    leds[y * 8 + x] = c;
+                    leds[getMatrixIndex(x, y)] = c;
                 }
             }
             break;
@@ -398,7 +472,7 @@ void renderAlertFrame(unsigned long now) {
                         float intensity = powf(1.0f - (diff / 14.0f), 2.0f);
                         CRGB c = activeColor;
                         c.nscale8_video((uint8_t)(intensity * 255.0f));
-                        leds[y * 8 + x] = c;
+                        leds[getMatrixIndex(x, y)] = c;
                     }
                 }
             }
@@ -415,7 +489,7 @@ void renderAlertFrame(unsigned long now) {
                 CRGB c = activeColor;
                 c.nscale8_video((uint8_t)(intensity * 255.0f));
                 for (int x = 0; x < 8; x++) {
-                    leds[y * 8 + x] = c;
+                    leds[getMatrixIndex(x, y)] = c;
                 }
             }
             break;
@@ -464,6 +538,7 @@ void serviceBootButton(unsigned long now) {
         } else if (now - bootButtonDownMs >= BOOT_HOLD_TIME_MS) {
             DEBUG_PRINTLN(">>> BOOT BUTTON HELD 3S: Resetting Network ID to Unpaired Mode!");
             saveNetworkId(0);
+            pairingModeStartMs = millis();
 
             // Amber flash feedback
             fill_solid(leds, LED_COUNT, CRGB(255, 120, 0));
@@ -505,15 +580,17 @@ void setup() {
     fill_solid(leds, LED_COUNT, CRGB::Black);
     FastLED.show();
 
-    // WiFi Station mode for ESP-NOW
+    // WiFi Station mode for ESP-NOW (Locked to Channel 1 matching Leader SoftAP)
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
+    esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
     WiFi.macAddress(myMac);
     Serial.printf("MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
                   myMac[0], myMac[1], myMac[2], myMac[3], myMac[4], myMac[5]);
 
-    // Load persistent Network ID
+    // Load persistent Network ID and Trigger Area
     loadSettings();
+    pairingModeStartMs = millis();
 
     // Init ESP-NOW
     if (esp_now_init() != ESP_OK) {
@@ -522,14 +599,15 @@ void setup() {
     }
     esp_now_register_recv_cb(esp_now_recv_cb_t(onDataRecv));
 
-    // Register broadcast peer
+    // Register broadcast peer explicitly on Channel 1
     esp_now_peer_info_t peerInfo = {};
     memcpy(peerInfo.peer_addr, ESPNOW_BROADCAST_MAC, 6);
-    peerInfo.channel = 0;
+    peerInfo.channel = 1;
+    peerInfo.ifidx = WIFI_IF_STA;
     peerInfo.encrypt = false;
     esp_now_add_peer(&peerInfo);
 
-    DEBUG_PRINTLN("Follower v3.0 online. Listening for doorbell alerts...");
+    DEBUG_PRINTLN("Follower v3.1 online. Listening for doorbell alerts on Channel 1...");
 }
 
 // ============================================================

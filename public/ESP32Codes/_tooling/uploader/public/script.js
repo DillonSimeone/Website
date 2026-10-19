@@ -510,20 +510,46 @@ btnOpenExplorer.addEventListener('click', async () => {
 });
 
 // Load COM Ports list
+let isLoadingPorts = false;
 async function loadPorts() {
-  portSelectEl.innerHTML = '<option value="">Auto-Detect Port</option>';
+  if (isLoadingPorts) return;
+  isLoadingPorts = true;
+  const originalBtnText = btnRefreshPorts ? btnRefreshPorts.textContent : 'Scan Ports';
+  if (btnRefreshPorts) {
+    btnRefreshPorts.textContent = 'Scanning...';
+    btnRefreshPorts.disabled = true;
+  }
+
   try {
     const res = await fetch('/api/ports');
     const ports = await res.json();
     
-    ports.forEach(port => {
-      const opt = document.createElement('option');
-      opt.value = port.port;
-      opt.textContent = `${port.port} - ${port.description || 'Unknown Device'}`;
-      portSelectEl.appendChild(opt);
-    });
+    const currentVal = portSelectEl.value;
+    portSelectEl.innerHTML = '<option value="">Auto-Detect Port</option>';
+    
+    const seenPorts = new Set();
+    if (Array.isArray(ports)) {
+      ports.forEach(port => {
+        if (!port || !port.port || seenPorts.has(port.port)) return;
+        seenPorts.add(port.port);
+        const opt = document.createElement('option');
+        opt.value = port.port;
+        opt.textContent = `${port.port} - ${port.description || 'Unknown Device'}`;
+        portSelectEl.appendChild(opt);
+      });
+    }
+
+    if (currentVal && seenPorts.has(currentVal)) {
+      portSelectEl.value = currentVal;
+    }
   } catch (err) {
     console.error('Failed to load ports:', err);
+  } finally {
+    isLoadingPorts = false;
+    if (btnRefreshPorts) {
+      btnRefreshPorts.textContent = originalBtnText;
+      btnRefreshPorts.disabled = false;
+    }
   }
 }
 
@@ -578,9 +604,6 @@ tabButtons.forEach(btn => {
   });
 });
 
-// Auto-scan COM ports on click/focus
-portSelectEl.addEventListener('focus', loadPorts);
-portSelectEl.addEventListener('mousedown', loadPorts);
 
 // Add environment listener
 addEnvSelectEl.addEventListener('change', async () => {

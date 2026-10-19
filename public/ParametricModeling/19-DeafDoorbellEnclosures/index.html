@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>19 — DeafDoorbell Master & Follower Enclosures (Parametric CAD)</title>
-    <meta name="description" content="Precision top-loading 3D enclosures for DeafDoorbell Master and Follower nodes with zero-wiggle USB-C cable clamp, exposed tactile buttons, and dual screw keyhole and 3M Command drywall adhesive mounting.">
+    <meta name="description" content="Precision top-loading 3D enclosures for DeafDoorbell Master and Follower nodes with zero-wiggle USB-C cable clamp, exposed tactile buttons, visible drywall screw mounting tabs, 3M Command adhesive recesses, and stable desktop kickstand.">
 
     <!-- Browser Import Map for Three.js -->
     <script type="importmap">
@@ -26,7 +26,7 @@
     <header>
         <div class="title-wrap">
             <span class="cad-badge">CAD-19</span>
-            <h1>DEAFDOORBELL ENCLOSURE STUDIO</h1>
+            <h1>DEAFDOORBELL ENCLOSURE STUDIO v2.0</h1>
         </div>
         <div class="status-badge" id="kernel-status-badge">
             <div class="status-dot"></div>
@@ -49,6 +49,7 @@
                     <button class="preset-btn" data-preset="follower_base">Follower Base</button>
                     <button class="preset-btn" data-preset="follower_lid">Follower Lid</button>
                     <button class="preset-btn" data-preset="follower_grid">Diffuser 8x8 Grid</button>
+                    <button class="preset-btn" data-preset="follower_stand">Desktop Stand</button>
                 </div>
             </div>
 
@@ -83,9 +84,9 @@
                 <div class="control-row">
                     <div class="control-label">
                         <span>Lid Screw Pilot Dia</span>
-                        <span class="control-val"><span id="val-screwHoleDia">2.80</span> mm</span>
+                        <span class="control-val"><span id="val-screwHoleDia">3.20</span> mm</span>
                     </div>
-                    <input type="range" id="input-screwHoleDia" min="2.4" max="4.2" step="0.1" value="2.8">
+                    <input type="range" id="input-screwHoleDia" min="2.5" max="4.2" step="0.1" value="3.2">
                 </div>
 
                 <div class="control-row">
@@ -124,6 +125,10 @@
                     </button>
                     <button class="btn-export" data-export="follower_grid">
                         <span>8x8 Diffuser Grid STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export pink" data-export="follower_stand">
+                        <span>Follower Desk Stand STL</span>
                         <span>&darr;</span>
                     </button>
                 </div>

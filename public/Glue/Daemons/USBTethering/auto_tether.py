@@ -15,6 +15,7 @@ Runs continuously in the background on Windows:
 import os
 import sys
 import time
+import socket
 import shutil
 import urllib.request
 import zipfile
@@ -290,15 +291,43 @@ def activate_usb_tethering(adb: str):
     return False
 
 
+def check_internet_connectivity(timeout: float = 1.5) -> bool:
+    """Fast, zero-subprocess probe to check if the tethered connection is passing traffic."""
+    for host in ("1.1.1.1", "8.8.8.8"):
+        try:
+            with socket.create_connection((host, 53), timeout=timeout):
+                return True
+        except (socket.timeout, OSError):
+            continue
+    return False
+
+
 def wait_for_disconnect(adb: str):
-    """Monitors the connection and returns once the device is disconnected."""
-    log("Device is connected and active. Monitoring for disconnect...")
+    """Monitors the connection, guards against silent tether freezes, and detects disconnect."""
+    log("Device is connected and active. Tether watchdog active (monitoring ping & disconnect)...")
+    fail_count = 0
+    last_watchdog_check = time.time()
+    watchdog_interval = 12.0  # Check internet pass-through every 12 seconds
+
     while True:
         time.sleep(3)
         code, out = run_adb([adb, "get-state"], timeout=5)
         if code != 0 or "device" not in out:
             log("Device disconnected.")
             break
+
+        now = time.time()
+        if now - last_watchdog_check >= watchdog_interval:
+            last_watchdog_check = now
+            if not check_internet_connectivity(timeout=1.5):
+                fail_count += 1
+                log(f"[WATCHDOG] Internet probe failed ({fail_count}/2). Checking tether status...")
+                if fail_count >= 2:
+                    log("[WATCHDOG] Tether stall detected! Auto-recovering USB tethering...")
+                    activate_usb_tethering(adb)
+                    fail_count = 0
+            else:
+                fail_count = 0
 
 
 def daemon_loop():

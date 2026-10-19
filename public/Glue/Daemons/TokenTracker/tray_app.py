@@ -52,7 +52,7 @@ from popup_ui import TokenPopup
 
 logger = logging.getLogger('token_tracker')
 
-CACHE_VERSION = 4
+CACHE_VERSION = 5
 
 
 class TokenTrackerApp:
@@ -193,14 +193,16 @@ class TokenTrackerApp:
             }
 
             self.data_dir.mkdir(parents=True, exist_ok=True)
-            with open(self._cache_file, "w", encoding="utf-8") as f:
+            temp_cache = self._cache_file.with_suffix(".tmp")
+            with open(temp_cache, "w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=2, ensure_ascii=False)
+            os.replace(temp_cache, self._cache_file)
             logger.info("Saved %d entries to %s", len(self.entries), self._cache_file)
         except Exception as exc:
             logger.error("Error saving cache: %s", exc, exc_info=True)
 
-    def start(self) -> None:
-        logger.info("Starting LLM Token Tracker...")
+    def start(self, headless: bool = False) -> None:
+        logger.info("Starting LLM Token Tracker (headless=%s)...", headless)
         logger.info("Providers: %s", ", ".join(self.providers))
         logger.info("Data dir: %s", self.data_dir)
         logger.info("Discovered %d data sources", len(self.sources))
@@ -211,26 +213,38 @@ class TokenTrackerApp:
         self._load_cache()
         self._refresh_data()
 
-        icon_image = self._get_current_icon()
-        self.tray_icon = pystray.Icon(
-            name="LLMTokenTracker",
-            icon=icon_image,
-            title=self._get_tooltip_text(),
-            menu=self._build_menu(),
-        )
+        if not headless:
+            icon_image = self._get_current_icon()
+            self.tray_icon = pystray.Icon(
+                name="LLMTokenTracker",
+                icon=icon_image,
+                title=self._get_tooltip_text(),
+                menu=self._build_menu(),
+            )
+            try:
+                self.tray_icon.run_detached()
+                self._update_tray()
+            except Exception:
+                self.tray_thread = threading.Thread(
+                    target=self.tray_icon.run,
+                    kwargs={"setup": self._on_tray_setup},
+                    daemon=True,
+                )
+                self.tray_thread.start()
 
         self._refresh_thread = threading.Thread(target=self._refresh_loop, daemon=True)
         self._refresh_thread.start()
 
-        self.tray_thread = threading.Thread(
-            target=self.tray_icon.run,
-            kwargs={"setup": self._on_tray_setup},
-            daemon=True,
-        )
-        self.tray_thread.start()
-
-        logger.info("Starting main Tkinter event loop...")
-        self.root.mainloop()
+        if not headless:
+            logger.info("Starting main Tkinter event loop...")
+            self.root.mainloop()
+        else:
+            logger.info("Running in headless background scanner mode...")
+            try:
+                while not self._stop_event.is_set():
+                    self._stop_event.wait(timeout=1.0)
+            except (KeyboardInterrupt, SystemExit):
+                pass
 
     def _on_tray_setup(self, icon) -> None:
         icon.visible = True
@@ -384,7 +398,7 @@ class TokenTrackerApp:
         if entries is not None:
             from collections import defaultdict
             by_model: dict[str, dict] = defaultdict(
-                lambda: {"prompt": 0, "output": 0, "thinking": 0, "turns": 0}
+                lambda: {"prompt": 0, "output": 0, "thinking": 0, "cached": 0, "turns": 0}
             )
             for entry in entries:
                 key = f"[{entry.provider}] {entry.model}"
@@ -392,6 +406,7 @@ class TokenTrackerApp:
                 m["prompt"] += entry.prompt_tokens
                 m["output"] += entry.output_tokens
                 m["thinking"] += entry.thinking_tokens
+                m["cached"] += entry.cached_tokens
                 m["turns"] += 1
             result['by_model'] = dict(by_model)
         return result

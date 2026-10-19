@@ -106,6 +106,7 @@ TOKEN_SCRIPT = os.path.join(TOKEN_DIR, "main.py")
 TOKEN_VBS = os.path.join(TOKEN_DIR, "run_token_tracker.vbs")
 TOKEN_LOG = os.path.join(TOKEN_DIR, "token_tracker.log")
 TOKEN_CACHE = os.path.join(TOKEN_DIR, "cache.json")
+TOKEN_PID_FILE = os.path.join(TOKEN_DIR, "token_tracker.pid")
 
 # Import TokenTracker popup UI components if available
 TOKEN_TRACKER_AVAILABLE = False
@@ -405,6 +406,11 @@ class DaemonCommandCenter:
                 self.token_slideout.root.geometry(f"+{new_x - 450 - 6}+{new_y}")
             except Exception:
                 pass
+        if getattr(self, "haptics_slideout_open", False) and hasattr(self, "haptics_slideout") and self.haptics_slideout and self.haptics_slideout.winfo_exists():
+            try:
+                self.haptics_slideout.geometry(f"+{new_x - 440 - 6}+{new_y}")
+            except Exception:
+                pass
 
     # --- System Tray Setup ---
     def _on_tray_setup(self, icon):
@@ -415,8 +421,10 @@ class DaemonCommandCenter:
         menu = Menu(
             Item("🎛️ Toggle Command Center", self.toggle_window, default=True),
             Menu.SEPARATOR,
+            Item("🎛️ Pop Out Tuning Panel", lambda icon, item: self.toggle_haptics_slideout()),
             Item("🧮 Pop Out Token Tracker", lambda icon, item: self.toggle_token_slideout()),
             Item("📳 Toggle Haptic Mute", lambda icon, item: self.toggle_haptics_power()),
+            Item("💡 Toggle Govee Sync", lambda icon, item: self.toggle_govee_sync()),
             Item("📳 Test Haptic Hit", lambda icon, item: self.trigger_test_haptic()),
             Item("🌙 Sleep Phone Screen", lambda icon, item: self.trigger_screen_sleep()),
             Item("⚡ Nudge Wi-Fi to 5 GHz", lambda icon, item: self.trigger_5g_nudge()),
@@ -438,12 +446,16 @@ class DaemonCommandCenter:
             "Pixel 6a: Initializing...",
             menu=menu
         )
-        self.tray_thread = threading.Thread(
-            target=self.tray_icon.run,
-            kwargs={"setup": self._on_tray_setup},
-            daemon=True
-        )
-        self.tray_thread.start()
+        try:
+            self.tray_icon.run_detached()
+            self._update_tray()
+        except Exception:
+            self.tray_thread = threading.Thread(
+                target=self.tray_icon.run,
+                kwargs={"setup": self._on_tray_setup},
+                daemon=True
+            )
+            self.tray_thread.start()
 
     def toggle_window(self, icon=None, item=None):
         try:
@@ -522,6 +534,14 @@ class DaemonCommandCenter:
             return -1, str(e)
 
     def _find_token_tracker_pid(self) -> Optional[int]:
+        if os.path.exists(TOKEN_PID_FILE):
+            try:
+                with open(TOKEN_PID_FILE, "r", encoding="utf-8") as f:
+                    pid = int(f.read().strip())
+                if is_pid_alive(pid, "python"):
+                    return pid
+            except Exception:
+                pass
         try:
             proc = subprocess.run(
                 ["tasklist", "/FI", "IMAGENAME eq LLMTokenTracker.exe", "/FO", "CSV", "/NH"],
@@ -888,11 +908,18 @@ class DaemonCommandCenter:
 
     def stop_token_tracker(self):
         try:
+            if os.path.exists(TOKEN_PID_FILE):
+                try:
+                    with open(TOKEN_PID_FILE, "r", encoding="utf-8") as f:
+                        pid = int(f.read().strip())
+                    subprocess.run(["taskkill", "/F", "/PID", str(pid)], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
+                    os.remove(TOKEN_PID_FILE)
+                except Exception:
+                    pass
             if self._cached_token_pid:
                 subprocess.run(["taskkill", "/F", "/PID", str(self._cached_token_pid)], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
                 self._cached_token_pid = None
-            else:
-                subprocess.run(["taskkill", "/F", "/IM", "LLMTokenTracker.exe"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
+            subprocess.run(["taskkill", "/F", "/IM", "LLMTokenTracker.exe"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
         except Exception:
             pass
 
@@ -977,6 +1004,7 @@ class DaemonCommandCenter:
                 m["prompt"] += entry.prompt_tokens
                 m["output"] += entry.output_tokens
                 m["thinking"] += entry.thinking_tokens
+                m["cached"] = m.get("cached", 0) + entry.cached_tokens
                 m["turns"] += 1
             result['by_model'] = dict(by_model)
         return result
@@ -985,6 +1013,8 @@ class DaemonCommandCenter:
         if getattr(self, "token_slideout_open", False):
             self._slide_in_token_tracker()
         else:
+            if getattr(self, "haptics_slideout_open", False):
+                self._slide_in_haptics_tuning()
             self._slide_out_token_tracker()
 
     def _slide_out_token_tracker(self):
@@ -1177,60 +1207,298 @@ class DaemonCommandCenter:
                 self.btn_haptics_power.config(text="⏸️ Paused", fg=COLORS["accent_amber"], bg="#38291a")
                 self.lbl_haptics_badge.config(text="Haptics Paused", fg=COLORS["accent_amber"], bg="#38291a")
 
-    def toggle_haptics_spoiler(self):
-        if not hasattr(self, "spoiler_expanded"):
-            self.spoiler_expanded = False
+    def toggle_haptics_slideout(self):
+        if getattr(self, "haptics_slideout_open", False):
+            self._slide_in_haptics_tuning()
+        else:
+            if getattr(self, "token_slideout_open", False):
+                self._slide_in_token_tracker()
+            self._slide_out_haptics_tuning()
 
-        self.spoiler_expanded = not self.spoiler_expanded
+    def _slide_out_haptics_tuning(self):
+        cc_x = self.root.winfo_x()
+        cc_y = self.root.winfo_y()
+        cc_h = self.root.winfo_height()
+        target_w = 440
+        target_x = cc_x - target_w - 6
+        target_y = cc_y
 
-        # Target heights with headroom for the real-time canvas visualizer
-        base_h = getattr(self, "base_window_h", 670)
-        expanded_h = min(930, base_h + 260)
+        if hasattr(self, "haptics_slideout") and self.haptics_slideout and self.haptics_slideout.winfo_exists():
+            try:
+                self.haptics_slideout.destroy()
+            except Exception:
+                pass
 
-        if self.spoiler_expanded:
-            self.btn_toggle_config.config(text="⚙️ Tuning ▲", fg=COLORS["accent_pink"], bg="#381f2f")
-            self.spoiler_frame.pack(fill="x", pady=(4, 2))
-            self._animate_window_height(target_h=expanded_h)
-            if not self.graph_running:
+        self.haptics_slideout = tk.Toplevel(self.root)
+        self.haptics_slideout.title("Gestolumina Tactile Tuning")
+        self.haptics_slideout.overrideredirect(True)
+        self.haptics_slideout.attributes('-topmost', True)
+        self.haptics_slideout.configure(bg=COLORS["bg"])
+        init_geom = f"{target_w}x{cc_h}+{cc_x}+{cc_y}"
+        self.haptics_slideout.geometry(init_geom)
+        self.haptics_slideout.bind('<Escape>', lambda e: self._slide_in_haptics_tuning())
+
+        self._build_haptics_slideout_ui(self.haptics_slideout)
+
+        self.haptics_slideout.lower(self.root)
+
+        if hasattr(self, "btn_tuning_slideout"):
+            self.btn_tuning_slideout.config(text="⌛ Sliding...", fg=COLORS["accent_amber"], bg="#38291a")
+
+        total_steps = 15
+        def _step_anim(step=0):
+            if step >= total_steps or not hasattr(self, "haptics_slideout") or not self.haptics_slideout or not self.haptics_slideout.winfo_exists():
+                if hasattr(self, "haptics_slideout") and self.haptics_slideout and self.haptics_slideout.winfo_exists():
+                    self.haptics_slideout.geometry(f"{target_w}x{cc_h}+{target_x}+{target_y}")
+                    self.haptics_slideout.lift()
+                self.haptics_slideout_open = True
+                if hasattr(self, "btn_tuning_slideout"):
+                    self.btn_tuning_slideout.config(text="▶️ Retract", fg=COLORS["accent_amber"], bg="#38291a")
                 self.graph_running = True
                 self._update_pwm_graph()
-        else:
-            self.btn_toggle_config.config(text="⚙️ Tuning ▼", fg=COLORS["accent_blue"], bg="#2e3450")
+                return
+            t = step / total_steps
+            ease = 1.0 - (1.0 - t) ** 3
+            cur_x = int(cc_x + (target_x - cc_x) * ease)
+            self.haptics_slideout.geometry(f"{target_w}x{cc_h}+{cur_x}+{target_y}")
+            self.root.after(12, _step_anim, step + 1)
+
+        _step_anim()
+
+    def _slide_in_haptics_tuning(self):
+        if not hasattr(self, "haptics_slideout") or not self.haptics_slideout or not self.haptics_slideout.winfo_exists():
+            self.haptics_slideout_open = False
             self.graph_running = False
-            self._animate_window_height(target_h=base_h, on_done=lambda: self.spoiler_frame.pack_forget())
+            if hasattr(self, "btn_tuning_slideout"):
+                self.btn_tuning_slideout.config(text="◀️ Tuning", fg=COLORS["accent_pink"], bg="#381f2f")
+            return
 
-    def _animate_window_height(self, target_h: int, on_done=None):
-        try:
-            curr_w = self.root.winfo_width()
-            curr_h = self.root.winfo_height()
-            curr_x = self.root.winfo_x()
-            curr_y = self.root.winfo_y()
+        self.graph_running = False
+        cc_x = self.root.winfo_x()
+        cc_y = self.root.winfo_y()
+        cc_h = self.root.winfo_height()
+        target_w = 440
+        start_x = self.haptics_slideout.winfo_x()
+        target_x = cc_x
 
-            if curr_w <= 1:
-                curr_w = 480
-            if curr_h <= 1:
-                curr_h = getattr(self, "base_window_h", 670)
+        self.haptics_slideout.lower(self.root)
 
-            steps = 8
-            diff = (target_h - curr_h) / steps
+        total_steps = 12
+        def _step_retract(step=0):
+            if step >= total_steps or not hasattr(self, "haptics_slideout") or not self.haptics_slideout or not self.haptics_slideout.winfo_exists():
+                if hasattr(self, "haptics_slideout") and self.haptics_slideout and self.haptics_slideout.winfo_exists():
+                    try:
+                        self.haptics_slideout.destroy()
+                    except Exception:
+                        pass
+                self.haptics_slideout = None
+                self.haptics_slideout_open = False
+                if hasattr(self, "btn_tuning_slideout"):
+                    self.btn_tuning_slideout.config(text="◀️ Tuning", fg=COLORS["accent_pink"], bg="#381f2f")
+                return
+            t = step / total_steps
+            ease = t ** 2
+            cur_x = int(start_x + (target_x - start_x) * ease)
+            self.haptics_slideout.geometry(f"{target_w}x{cc_h}+{cur_x}+{cc_y}")
+            self.root.after(12, _step_retract, step + 1)
 
-            def step(i, h_val):
-                if i < steps:
-                    new_h = int(h_val + diff)
-                    self.root.geometry(f"{curr_w}x{new_h}+{curr_x}+{curr_y}")
-                    self.root.after(14, lambda: step(i + 1, new_h))
-                else:
-                    self.root.geometry(f"{curr_w}x{target_h}+{curr_x}+{curr_y}")
-                    if on_done:
-                        on_done()
+        _step_retract()
 
-            step(0, curr_h)
-        except Exception:
-            if on_done:
-                on_done()
+    def _build_haptics_slideout_ui(self, win):
+        h_cfg = self.load_haptics_config()
+
+        card = tk.Frame(win, bg=COLORS["card"], highlightbackground=COLORS["border"], highlightthickness=1)
+        card.pack(fill="both", expand=True, padx=4, pady=4)
+
+        # Header
+        top_bar = tk.Frame(card, bg=COLORS["card"])
+        top_bar.pack(fill="x", padx=10, pady=(8, 4))
+
+        lbl_title = tk.Label(
+            top_bar, text="⚡ Gestolumina Tactile & Visualizer",
+            font=("Segoe UI", 9, "bold"), fg=COLORS["accent_pink"], bg=COLORS["card"]
+        )
+        lbl_title.pack(side="left")
+
+        self.lbl_tuning_status = tk.Label(
+            top_bar, text="Live Synced", font=("Segoe UI", 8),
+            fg=COLORS["text_muted"], bg=COLORS["card"]
+        )
+        self.lbl_tuning_status.pack(side="left", padx=8)
+
+        btn_close = tk.Button(
+            top_bar, text="✕", font=("Segoe UI", 9, "bold"),
+            bg=COLORS["card"], fg=COLORS["text_muted"], activebackground="#ff5555",
+            activeforeground="#ffffff", relief="flat", bd=0, padx=6, pady=0, cursor="hand2",
+            command=self._slide_in_haptics_tuning
+        )
+        btn_close.pack(side="right")
+
+        # Subtitle
+        lbl_sub = tk.Label(
+            card, text="WASAPI loopback multi-band transient synthesis & tactile DSP",
+            font=("Segoe UI", 7), fg=COLORS["text_secondary"], bg=COLORS["card"]
+        )
+        lbl_sub.pack(anchor="w", padx=10, pady=(0, 6))
+
+        # Visualizer Canvas Container
+        canvas_container = tk.Frame(card, bg="#101018", highlightbackground="#2a2b3d", highlightthickness=1)
+        canvas_container.pack(fill="x", padx=10, pady=(0, 8))
+
+        self.pwm_canvas = tk.Canvas(
+            canvas_container, height=80, bg="#101018", highlightthickness=0, bd=0
+        )
+        self.pwm_canvas.pack(fill="x", expand=True)
+
+        # Sliders Container
+        sliders_box = tk.Frame(card, bg="#181825", highlightbackground="#2a2b3d", highlightthickness=1)
+        sliders_box.pack(fill="x", padx=10, pady=(0, 8))
+
+        # Row 1: Master Gain
+        r1 = tk.Frame(sliders_box, bg="#181825")
+        r1.pack(fill="x", padx=8, pady=(6, 2))
+        tk.Label(r1, text="Master Gain:", font=("Segoe UI", 8), fg=COLORS["text_secondary"], bg="#181825", width=15, anchor="w").pack(side="left")
+        self.lbl_scale_val = tk.Label(r1, text=f"{h_cfg.get('amplitude_scale', 2.0):.1f}x", font=("Segoe UI", 8, "bold"), fg=COLORS["accent_pink"], bg="#181825", width=6, anchor="e")
+        self.lbl_scale_val.pack(side="right")
+        self.slider_scale = tk.Scale(
+            r1, from_=0.5, to=3.5, resolution=0.1, orient="horizontal",
+            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
+            activebackground=COLORS["accent_pink"], sliderlength=14, showvalue=0,
+            command=self._on_haptic_slider_change
+        )
+        self.slider_scale.set(h_cfg.get("amplitude_scale", 2.0))
+        self.slider_scale.pack(side="left", fill="x", expand=True, padx=4)
+
+        # Row 2: Base Kick Floor
+        r2 = tk.Frame(sliders_box, bg="#181825")
+        r2.pack(fill="x", padx=8, pady=2)
+        tk.Label(r2, text="Base Kick Floor:", font=("Segoe UI", 8), fg=COLORS["text_secondary"], bg="#181825", width=15, anchor="w").pack(side="left")
+        self.lbl_base_val = tk.Label(r2, text=f"{h_cfg.get('base_amplitude', 70)} PWM", font=("Segoe UI", 8, "bold"), fg=COLORS["accent_cyan"], bg="#181825", width=6, anchor="e")
+        self.lbl_base_val.pack(side="right")
+        self.slider_base = tk.Scale(
+            r2, from_=15, to=130, resolution=5, orient="horizontal",
+            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
+            activebackground=COLORS["accent_cyan"], sliderlength=14, showvalue=0,
+            command=self._on_haptic_slider_change
+        )
+        self.slider_base.set(h_cfg.get("base_amplitude", 70))
+        self.slider_base.pack(side="left", fill="x", expand=True, padx=4)
+
+        # Row 3: Sustained Hold
+        r3 = tk.Frame(sliders_box, bg="#181825")
+        r3.pack(fill="x", padx=8, pady=2)
+        tk.Label(r3, text="Sustained Hold:", font=("Segoe UI", 8), fg=COLORS["text_secondary"], bg="#181825", width=15, anchor="w").pack(side="left")
+        self.lbl_dur_val = tk.Label(r3, text=f"{h_cfg.get('punch_duration_ms', 90)} ms", font=("Segoe UI", 8, "bold"), fg=COLORS["accent_green"], bg="#181825", width=6, anchor="e")
+        self.lbl_dur_val.pack(side="right")
+        self.slider_dur = tk.Scale(
+            r3, from_=40, to=150, resolution=5, orient="horizontal",
+            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
+            activebackground=COLORS["accent_green"], sliderlength=14, showvalue=0,
+            command=self._on_haptic_slider_change
+        )
+        self.slider_dur.set(h_cfg.get("punch_duration_ms", 90))
+        self.slider_dur.pack(side="left", fill="x", expand=True, padx=4)
+
+        # Row 4: Trigger Sens
+        r4 = tk.Frame(sliders_box, bg="#181825")
+        r4.pack(fill="x", padx=8, pady=2)
+        tk.Label(r4, text="Trigger Sens:", font=("Segoe UI", 8), fg=COLORS["text_secondary"], bg="#181825", width=15, anchor="w").pack(side="left")
+        self.lbl_vel_val = tk.Label(r4, text=f"{h_cfg.get('min_velocity', 0.018):.3f}", font=("Segoe UI", 8, "bold"), fg=COLORS["accent_amber"], bg="#181825", width=6, anchor="e")
+        self.lbl_vel_val.pack(side="right")
+        self.slider_vel = tk.Scale(
+            r4, from_=0.010, to=0.080, resolution=0.005, orient="horizontal",
+            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
+            activebackground=COLORS["accent_amber"], sliderlength=14, showvalue=0,
+            command=self._on_haptic_slider_change
+        )
+        self.slider_vel.set(h_cfg.get("min_velocity", 0.018))
+        self.slider_vel.pack(side="left", fill="x", expand=True, padx=4)
+
+        # Row 5: Sub-Bass Cutoff
+        r5 = tk.Frame(sliders_box, bg="#181825")
+        r5.pack(fill="x", padx=8, pady=(2, 6))
+        tk.Label(r5, text="Sub-Bass Cutoff:", font=("Segoe UI", 8), fg=COLORS["text_secondary"], bg="#181825", width=15, anchor="w").pack(side="left")
+        self.lbl_sub_val = tk.Label(r5, text=f"{h_cfg.get('sub_bass_high_hz', 90)} Hz", font=("Segoe UI", 8, "bold"), fg=COLORS["accent_purple"], bg="#181825", width=6, anchor="e")
+        self.lbl_sub_val.pack(side="right")
+        self.slider_sub = tk.Scale(
+            r5, from_=50, to=150, resolution=5, orient="horizontal",
+            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
+            activebackground=COLORS["accent_purple"], sliderlength=14, showvalue=0,
+            command=self._on_haptic_slider_change
+        )
+        self.slider_sub.set(h_cfg.get("sub_bass_high_hz", 90))
+        self.slider_sub.pack(side="left", fill="x", expand=True, padx=4)
+
+        # Snare Hardware Primitives
+        r_snare = tk.Frame(card, bg=COLORS["card"])
+        r_snare.pack(fill="x", padx=10, pady=(0, 6))
+        self.var_snap_prim = tk.BooleanVar(value=h_cfg.get("enable_snap_primitives", True))
+        chk_snap = tk.Checkbutton(
+            r_snare, text="Crisp Hardware Primitives (TICK / CLICK for Snares)",
+            variable=self.var_snap_prim, font=("Segoe UI", 7), bg=COLORS["card"], fg=COLORS["text_secondary"],
+            selectcolor="#11111b", activebackground=COLORS["card"], activeforeground=COLORS["accent_cyan"],
+            bd=0, highlightthickness=0, command=self._on_haptic_slider_change
+        )
+        chk_snap.pack(anchor="w")
+
+        # Presets & Live Test Hit
+        r_presets = tk.Frame(card, bg=COLORS["card"])
+        r_presets.pack(fill="x", padx=10, pady=(0, 8))
+
+        btn_pre_bal = tk.Button(
+            r_presets, text="🎵 Balanced", font=("Segoe UI", 7),
+            bg="#232634", fg=COLORS["text_primary"], relief="flat", padx=6, pady=2, cursor="hand2",
+            command=lambda: self.apply_haptic_preset("balanced")
+        )
+        btn_pre_bal.pack(side="left", padx=(0, 4))
+
+        btn_pre_hvy = tk.Button(
+            r_presets, text="💥 Heavy Sub", font=("Segoe UI", 7),
+            bg="#232634", fg=COLORS["accent_pink"], relief="flat", padx=6, pady=2, cursor="hand2",
+            command=lambda: self.apply_haptic_preset("heavy")
+        )
+        btn_pre_hvy.pack(side="left", padx=(0, 4))
+
+        btn_pre_sub = tk.Button(
+            r_presets, text="⚡ Subtle", font=("Segoe UI", 7),
+            bg="#232634", fg=COLORS["accent_cyan"], relief="flat", padx=6, pady=2, cursor="hand2",
+            command=lambda: self.apply_haptic_preset("subtle")
+        )
+        btn_pre_sub.pack(side="left", padx=(0, 4))
+
+        btn_live_test = tk.Button(
+            r_presets, text="📳 Live Test Hit", font=("Segoe UI", 7, "bold"),
+            bg="#321f2f", fg=COLORS["accent_pink"], relief="flat", padx=8, pady=2, cursor="hand2",
+            command=self.trigger_live_tuned_haptic
+        )
+        btn_live_test.pack(side="right")
+
+        # Govee Reactive Sync Card
+        govee_box = tk.Frame(card, bg="#181825", highlightbackground="#2a2b3d", highlightthickness=1)
+        govee_box.pack(fill="x", padx=10, pady=(0, 4))
+
+        govee_row = tk.Frame(govee_box, bg="#181825")
+        govee_row.pack(fill="x", padx=8, pady=6)
+
+        govee_on = h_cfg.get("govee_sync", False)
+        g_text = "💡 Govee Sync: ON" if govee_on else "💡 Govee Sync: OFF"
+        g_fg = "#ffd740" if govee_on else COLORS["text_muted"]
+        g_bg = "#3d3319" if govee_on else "#232634"
+
+        self.btn_govee_sync = tk.Button(
+            govee_row, text=g_text, font=("Segoe UI", 7, "bold"),
+            bg=g_bg, fg=g_fg, relief="flat", padx=8, pady=2, cursor="hand2",
+            command=self.toggle_govee_sync
+        )
+        self.btn_govee_sync.pack(side="left")
+
+        tk.Label(
+            govee_row, text="Flow Plus light bars pulse with bass drops",
+            font=("Segoe UI", 7), fg=COLORS["text_secondary"], bg="#181825"
+        ).pack(side="left", padx=8)
 
     def _update_pwm_graph(self):
-        if not getattr(self, "spoiler_expanded", False) or not getattr(self, "graph_running", False):
+        if not getattr(self, "haptics_slideout_open", False) or not getattr(self, "graph_running", False):
             return
 
         # 1. Non-blocking drain of UDP socket
@@ -1260,11 +1528,11 @@ class DaemonCommandCenter:
         self.pwm_env_hist.append(pwm / 100.0)
 
         # 3. Canvas Rendering
-        if hasattr(self, "pwm_canvas"):
+        if hasattr(self, "pwm_canvas") and self.pwm_canvas.winfo_exists():
             w = self.pwm_canvas.winfo_width()
             h = self.pwm_canvas.winfo_height()
-            if w <= 10: w = 440
-            if h <= 10: h = 64
+            if w <= 10: w = 420
+            if h <= 10: h = 80
 
             self.pwm_canvas.delete("all")
 
@@ -1320,7 +1588,7 @@ class DaemonCommandCenter:
             )
 
         # 4. Schedule next frame (~33 FPS)
-        if self.spoiler_expanded and self.graph_running:
+        if getattr(self, "haptics_slideout_open", False) and self.graph_running:
             self.root.after(30, self._update_pwm_graph)
 
     def _on_haptic_slider_change(self, val=None):
@@ -1401,6 +1669,23 @@ class DaemonCommandCenter:
             a4 = max(10, int(peak_amp * 0.20))
             cmd = f"cmd vibrator_manager synced -f -B waveform -a -c 10 {a1} {punch_dur} {a2} 24 {a3} 12 {a4} 8 0"
             threading.Thread(target=lambda: self._run_adb_cmd(["shell", cmd]), daemon=True).start()
+        except Exception:
+            pass
+
+    def toggle_govee_sync(self):
+        try:
+            cfg = self.load_haptics_config()
+            new_state = not cfg.get("govee_sync", False)
+            cfg["govee_sync"] = new_state
+            self.save_haptics_config(cfg)
+            if hasattr(self, "btn_govee_sync"):
+                if new_state:
+                    self.btn_govee_sync.config(text="💡 Govee Sync: ON", fg="#ffd740", bg="#3d3319")
+                else:
+                    self.btn_govee_sync.config(text="💡 Govee Sync: OFF", fg=COLORS["text_muted"], bg="#232634")
+            if hasattr(self, "lbl_tuning_status"):
+                self.lbl_tuning_status.config(text=f"● Govee {'ON' if new_state else 'OFF'}", fg=COLORS["accent_amber"])
+                self.root.after(1200, lambda: self.lbl_tuning_status.config(text="Live Synced", fg=COLORS["text_muted"]))
         except Exception:
             pass
 
@@ -1621,165 +1906,13 @@ class DaemonCommandCenter:
         )
         btn_haptics_log.pack(side="left")
 
-        # Spoiler toggle button for tuning controls
-        self.btn_toggle_config = tk.Button(
-            haptics_btn_row, text="⚙️ Tuning ▼", font=("Segoe UI", 7, "bold"),
-            bg="#2e3450", fg=COLORS["accent_blue"], relief="flat", padx=6, pady=2, cursor="hand2",
-            command=self.toggle_haptics_spoiler
+        # Slide-out toggle button for tuning controls
+        self.btn_tuning_slideout = tk.Button(
+            haptics_btn_row, text="◀️ Tuning", font=("Segoe UI", 7, "bold"),
+            bg="#381f2f", fg=COLORS["accent_pink"], relief="flat", padx=6, pady=2, cursor="hand2",
+            command=self.toggle_haptics_slideout
         )
-        self.btn_toggle_config.pack(side="left", padx=(4, 0))
-
-        # --- Collapsible Spoiler Frame for Haptics Tuning ---
-        self.spoiler_expanded = False
-        self.spoiler_frame = tk.Frame(
-            haptics_body, bg="#181825", highlightbackground="#313244", highlightthickness=1
-        )
-
-        tuning_header = tk.Frame(self.spoiler_frame, bg="#181825")
-        tuning_header.pack(fill="x", padx=6, pady=(4, 2))
-
-        lbl_tun_title = tk.Label(
-            tuning_header, text="⚡ Gestolumina Tactile & PWM Visualizer",
-            font=("Segoe UI", 7, "bold"), fg=COLORS["accent_pink"], bg="#181825"
-        )
-        lbl_tun_title.pack(side="left")
-
-        self.lbl_tuning_status = tk.Label(
-            tuning_header, text="Live Synced", font=("Segoe UI", 7),
-            fg=COLORS["text_muted"], bg="#181825"
-        )
-        self.lbl_tuning_status.pack(side="right")
-
-        # Sleek Real-Time PWM & Audio Waveform Canvas Visualizer
-        canvas_container = tk.Frame(self.spoiler_frame, bg="#101018", highlightbackground="#2a2b3d", highlightthickness=1)
-        canvas_container.pack(fill="x", padx=6, pady=(1, 3))
-
-        self.pwm_canvas = tk.Canvas(
-            canvas_container, height=64, bg="#101018", highlightthickness=0, bd=0
-        )
-        self.pwm_canvas.pack(fill="x", expand=True)
-
-        sliders_grid = tk.Frame(self.spoiler_frame, bg="#181825")
-        sliders_grid.pack(fill="x", padx=6, pady=1)
-
-        # Row 1: Master Gain Boost
-        row1 = tk.Frame(sliders_grid, bg="#181825")
-        row1.pack(fill="x", pady=1)
-        tk.Label(row1, text="Master Gain:", font=("Segoe UI", 7), fg=COLORS["text_secondary"], bg="#181825", width=14, anchor="w").pack(side="left")
-        self.lbl_scale_val = tk.Label(row1, text=f"{h_cfg.get('amplitude_scale', 2.0):.1f}x", font=("Segoe UI", 7, "bold"), fg=COLORS["accent_pink"], bg="#181825", width=6, anchor="e")
-        self.lbl_scale_val.pack(side="right")
-        self.slider_scale = tk.Scale(
-            row1, from_=0.5, to=3.5, resolution=0.1, orient="horizontal",
-            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
-            activebackground=COLORS["accent_pink"], sliderlength=14, showvalue=0,
-            command=self._on_haptic_slider_change
-        )
-        self.slider_scale.set(h_cfg.get("amplitude_scale", 2.0))
-        self.slider_scale.pack(side="left", fill="x", expand=True, padx=4)
-
-        # Row 2: Base Floor Kick (Prevents faintness!)
-        row2 = tk.Frame(sliders_grid, bg="#181825")
-        row2.pack(fill="x", pady=1)
-        tk.Label(row2, text="Base Kick Floor:", font=("Segoe UI", 7), fg=COLORS["text_secondary"], bg="#181825", width=14, anchor="w").pack(side="left")
-        self.lbl_base_val = tk.Label(row2, text=f"{h_cfg.get('base_amplitude', 70)} PWM", font=("Segoe UI", 7, "bold"), fg=COLORS["accent_cyan"], bg="#181825", width=6, anchor="e")
-        self.lbl_base_val.pack(side="right")
-        self.slider_base = tk.Scale(
-            row2, from_=15, to=130, resolution=5, orient="horizontal",
-            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
-            activebackground=COLORS["accent_cyan"], sliderlength=14, showvalue=0,
-            command=self._on_haptic_slider_change
-        )
-        self.slider_base.set(h_cfg.get("base_amplitude", 70))
-        self.slider_base.pack(side="left", fill="x", expand=True, padx=4)
-
-        # Row 3: Sustained Punch Hold (Eliminates motor inertia faintness!)
-        row3 = tk.Frame(sliders_grid, bg="#181825")
-        row3.pack(fill="x", pady=1)
-        tk.Label(row3, text="Sustained Hold:", font=("Segoe UI", 7), fg=COLORS["text_secondary"], bg="#181825", width=14, anchor="w").pack(side="left")
-        self.lbl_dur_val = tk.Label(row3, text=f"{h_cfg.get('punch_duration_ms', 90)} ms", font=("Segoe UI", 7, "bold"), fg=COLORS["accent_green"], bg="#181825", width=6, anchor="e")
-        self.lbl_dur_val.pack(side="right")
-        self.slider_dur = tk.Scale(
-            row3, from_=40, to=150, resolution=5, orient="horizontal",
-            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
-            activebackground=COLORS["accent_green"], sliderlength=14, showvalue=0,
-            command=self._on_haptic_slider_change
-        )
-        self.slider_dur.set(h_cfg.get("punch_duration_ms", 90))
-        self.slider_dur.pack(side="left", fill="x", expand=True, padx=4)
-
-        # Row 4: Sensitivity (Threshold)
-        row4 = tk.Frame(sliders_grid, bg="#181825")
-        row4.pack(fill="x", pady=1)
-        tk.Label(row4, text="Trigger Sens:", font=("Segoe UI", 7), fg=COLORS["text_secondary"], bg="#181825", width=14, anchor="w").pack(side="left")
-        self.lbl_vel_val = tk.Label(row4, text=f"{h_cfg.get('min_velocity', 0.018):.3f}", font=("Segoe UI", 7, "bold"), fg=COLORS["accent_amber"], bg="#181825", width=6, anchor="e")
-        self.lbl_vel_val.pack(side="right")
-        self.slider_vel = tk.Scale(
-            row4, from_=0.010, to=0.080, resolution=0.005, orient="horizontal",
-            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
-            activebackground=COLORS["accent_amber"], sliderlength=14, showvalue=0,
-            command=self._on_haptic_slider_change
-        )
-        self.slider_vel.set(h_cfg.get("min_velocity", 0.018))
-        self.slider_vel.pack(side="left", fill="x", expand=True, padx=4)
-
-        # Row 5: Sub-Bass Cutoff
-        row5 = tk.Frame(sliders_grid, bg="#181825")
-        row5.pack(fill="x", pady=1)
-        tk.Label(row5, text="Sub-Bass Cutoff:", font=("Segoe UI", 7), fg=COLORS["text_secondary"], bg="#181825", width=14, anchor="w").pack(side="left")
-        self.lbl_sub_val = tk.Label(row5, text=f"{h_cfg.get('sub_bass_high_hz', 90)} Hz", font=("Segoe UI", 7, "bold"), fg=COLORS["accent_purple"], bg="#181825", width=6, anchor="e")
-        self.lbl_sub_val.pack(side="right")
-        self.slider_sub = tk.Scale(
-            row5, from_=50, to=150, resolution=5, orient="horizontal",
-            bg="#181825", fg="#181825", troughcolor="#11111b", highlightthickness=0, bd=0,
-            activebackground=COLORS["accent_purple"], sliderlength=14, showvalue=0,
-            command=self._on_haptic_slider_change
-        )
-        self.slider_sub.set(h_cfg.get("sub_bass_high_hz", 90))
-        self.slider_sub.pack(side="left", fill="x", expand=True, padx=4)
-
-        # Row 6: Snare Checkbox
-        row6 = tk.Frame(self.spoiler_frame, bg="#181825")
-        row6.pack(fill="x", padx=6, pady=2)
-        self.var_snap_prim = tk.BooleanVar(value=h_cfg.get("enable_snap_primitives", True))
-        chk_snap = tk.Checkbutton(
-            row6, text="Crisp Hardware Primitives (TICK / CLICK for Snares)",
-            variable=self.var_snap_prim, font=("Segoe UI", 7), bg="#181825", fg=COLORS["text_secondary"],
-            selectcolor="#11111b", activebackground="#181825", activeforeground=COLORS["accent_cyan"],
-            bd=0, highlightthickness=0, command=self._on_haptic_slider_change
-        )
-        chk_snap.pack(anchor="w")
-
-        # Row 7: Presets & Live Test
-        row7 = tk.Frame(self.spoiler_frame, bg="#181825")
-        row7.pack(fill="x", padx=6, pady=(3, 4))
-
-        btn_pre_bal = tk.Button(
-            row7, text="🎵 Balanced", font=("Segoe UI", 7),
-            bg="#232634", fg=COLORS["text_primary"], relief="flat", padx=4, pady=1, cursor="hand2",
-            command=lambda: self.apply_haptic_preset("balanced")
-        )
-        btn_pre_bal.pack(side="left", padx=(0, 3))
-
-        btn_pre_hvy = tk.Button(
-            row7, text="💥 Heavy Sub", font=("Segoe UI", 7),
-            bg="#232634", fg=COLORS["accent_pink"], relief="flat", padx=4, pady=1, cursor="hand2",
-            command=lambda: self.apply_haptic_preset("heavy")
-        )
-        btn_pre_hvy.pack(side="left", padx=(0, 3))
-
-        btn_pre_sub = tk.Button(
-            row7, text="⚡ Subtle", font=("Segoe UI", 7),
-            bg="#232634", fg=COLORS["accent_cyan"], relief="flat", padx=4, pady=1, cursor="hand2",
-            command=lambda: self.apply_haptic_preset("subtle")
-        )
-        btn_pre_sub.pack(side="left", padx=(0, 4))
-
-        btn_live_test = tk.Button(
-            row7, text="📳 Live Test Hit", font=("Segoe UI", 7, "bold"),
-            bg="#321f2f", fg=COLORS["accent_pink"], relief="flat", padx=6, pady=1, cursor="hand2",
-            command=self.trigger_live_tuned_haptic
-        )
-        btn_live_test.pack(side="right")
+        self.btn_tuning_slideout.pack(side="left", padx=(4, 0))
 
         # CARD 6: LLM Token Tracker
         self.card_token = self._create_card(cards_container, "🧮 LLM Token Tracker (AntiGravity & Cursor)")

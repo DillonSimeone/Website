@@ -450,7 +450,7 @@ function buildEsptoolFlashArgs(resolved, chip, port, flashTargets) {
   args.push('--chip', chip);
   if (port) args.push('--port', port);
   args.push('--baud', '921600');
-  args.push('write-flash', '--no-progress');
+  args.push('write_flash', '--no-progress');
   if (Array.isArray(flashTargets)) {
     for (const item of flashTargets) {
       args.push(item.offset, item.path);
@@ -882,7 +882,17 @@ app.get('/api/ports', (req, res) => {
       output = execSync(`"${PIO_PATH}" device list --json`, { encoding: 'utf8' });
     }
     const ports = JSON.parse(output);
-    res.json(ports);
+    const unique = [];
+    const seen = new Set();
+    if (Array.isArray(ports)) {
+      for (const p of ports) {
+        if (p && p.port && !seen.has(p.port)) {
+          seen.add(p.port);
+          unique.push(p);
+        }
+      }
+    }
+    res.json(unique);
   } catch (err) {
     res.status(500).json({ error: 'Failed to scan ports', details: err.message });
   }
