@@ -1293,7 +1293,7 @@ const MASTER_LOOP_PHRASES = [
   {
     phraseIndex: 7,
     bars: [13, 14],
-    lyric: "Love your neighbor, near and far— / This is who we are!",
+    lyric: "Love your neighbor, near and far— / And that's who we are...",
     signHint: "Hoot sustains on beat 1 for 4 beats! Clap on all 4 beats!",
     aslWebpUrl: "",
     measures: [
@@ -1488,7 +1488,7 @@ function getActiveScoreData() {
           phraseId = "WARM-UP";
           isWarmup = true;
         } else {
-          lyricText = "“Love your neighbor, near and far— / This is who we are!”";
+          lyricText = "“And that's who we are...”";
           hintText = "First vocal entrance! Signers cue audience into the full song";
           phraseId = "WARM-UP FINALE";
           isWarmup = false;
@@ -1605,7 +1605,7 @@ function getActiveScoreData() {
         phraseId = "WARM-UP";
         isWarmup = true;
       } else if (isWarmupMode && i === 13) {
-        lyricText = "“Love your neighbor, near and far— / This is who we are!”";
+        lyricText = "“And that's who we are...”";
         hintText = "First vocal entrance! Signers cue audience into the full song";
         phraseId = "WARM-UP FINALE";
         isWarmup = false;
@@ -2013,6 +2013,18 @@ function updateScorePlayhead() {
 
   // 2. Looping Check (triggers ONLY when elapsed reaches the end of the full score)
   if (elapsed >= totalScoreDuration) {
+    if (isWarmupMode) {
+      // Warm-up run completed through Bar 14 ("And that's who we are...")!
+      // Transition immediately to normal captioning mode
+      isWarmupMode = false;
+      if (btnScoreWarmup) {
+        btnScoreWarmup.classList.remove('active');
+        btnScoreWarmup.textContent = 'WARM-UP: OFF';
+      }
+      renderScoreLanes();
+      showToast('🎶 WARM-UP COMPLETE — NORMAL CAPTIONING ACTIVE');
+    }
+
     if (isScoreLooping) {
       scoreStartTime = timeSec;
       scorePausedElapsed = 0;
@@ -2030,6 +2042,7 @@ function updateScorePlayhead() {
       if (scorePlayhead) scorePlayhead.style.left = '170px';
       const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
       if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
+      updateCaptionCard(0, 0);
       return;
     }
   }
@@ -2149,6 +2162,10 @@ function applyZoom(newZoom) {
 
 function initScore() {
   renderSessionPills();
+
+  if (btnScoreWarmup) {
+    btnScoreWarmup.classList.toggle('active', isWarmupMode);
+  }
 
   if (btnMusicalScore) {
     btnMusicalScore.addEventListener('click', openScoreWindow);

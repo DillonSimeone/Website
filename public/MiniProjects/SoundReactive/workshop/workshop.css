@@ -1616,6 +1616,12 @@ html, body {
   box-shadow: 0 0 15px rgba(226, 183, 20, 0.5);
 }
 
+.lyric-phrase-block.warmup-block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  color: var(--text-muted);
+}
+
 .lyric-phrase-label {
   font-family: 'Special Elite', 'Courier Prime', monospace;
   font-size: 0.72rem;
