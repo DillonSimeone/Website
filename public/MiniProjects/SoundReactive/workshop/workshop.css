@@ -55,6 +55,8 @@ html, body {
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   position: relative;
 }
 
@@ -67,7 +69,7 @@ html, body {
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
   display: grid;
-  grid-template-columns: 280px 1fr 340px;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   padding: 0 16px;
   gap: 16px;
@@ -88,6 +90,38 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.nav-back-link {
+  color: #ff3366;
+  text-decoration: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: rgba(255, 51, 102, 0.12);
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 51, 102, 0.4);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-back-link:hover {
+  background: #ff3366;
+  color: #000;
+}
+
+.fps-telemetry-chip {
+  background: rgba(10, 10, 20, 0.85);
+  border: 1px solid #333348;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 3px;
+  color: #00ff88;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  font-family: var(--font-mono);
 }
 
 .brand-tag {
@@ -240,7 +274,8 @@ html, body {
    CENTER STAGE: LIGHT PILLARS & CYMATICS SHADER
    ------------------------------------------------------------- */
 .stage-container {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   grid-template-columns: 200px 1fr 200px;
   position: relative;
@@ -368,6 +403,13 @@ html, body {
   width: 100%;
   height: 100%;
   display: block;
+  position: relative;
+}
+
+#shader-canvas-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }
 
 /* -------------------------------------------------------------
@@ -375,6 +417,7 @@ html, body {
    ------------------------------------------------------------- */
 .bottom-dock {
   height: 72px;
+  flex-shrink: 0;
   background: rgba(10, 11, 16, 0.94);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--border-color);
@@ -1667,4 +1710,97 @@ html, body {
   border-radius: 2px;
   letter-spacing: 0.5px;
 }
+
+/* =========================================================================
+   15. RESPONSIVE LAYOUT (TABLETS, MOBILE & NARROW SCREENS)
+   ========================================================================= */
+
+@media (max-width: 960px) {
+  .top-hud {
+    grid-template-columns: auto 1fr auto;
+    padding: 0 10px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-hud {
+    height: auto;
+    min-height: 56px;
+    grid-template-columns: 1fr;
+    padding: 6px 10px;
+    gap: 6px;
+    overflow-x: auto;
+  }
+
+  /* Shrink pillar columns so the center shader stage gets maximum space */
+  .stage-container {
+    grid-template-columns: 74px 1fr 74px;
+  }
+
+  .pillar-section {
+    padding: 8px 4px;
+  }
+
+  .pillar-prompt {
+    font-size: 0.58rem;
+    padding: 3px 2px;
+    letter-spacing: 0.2px;
+    line-height: 1.1;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .pillar-binding-tag {
+    font-size: 0.48rem;
+    padding: 1px 2px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bottom-dock {
+    height: 64px;
+    padding: 0 10px;
+    overflow-x: auto;
+  }
+
+  .score-overlay-content {
+    width: 98vw;
+    height: 94vh;
+    padding: 10px 8px 14px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* On ultra-compact phones, compact the pillars to 56px so the center stage has maximum room */
+  .stage-container {
+    grid-template-columns: 56px 1fr 56px;
+  }
+
+  .pillar-prompt {
+    font-size: 0.5rem;
+    padding: 2px 2px;
+    letter-spacing: 0;
+  }
+
+  .pillar-binding-tag {
+    display: none;
+  }
+
+  .bottom-dock {
+    height: 58px;
+    padding: 0 6px;
+    gap: 8px;
+  }
+
+  .metro-title-group {
+    display: none;
+  }
+
+  .pendulum-track {
+    width: 90px;
+  }
+}
+
 

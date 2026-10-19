@@ -796,7 +796,57 @@ section {
 .grid-item li,
 .artwork li,
 #work section>div li {
-    margin: 1rem;
+}
+
+/* Progressive Loading Indicator */
+.progressive-load-indicator {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 1.5rem 1rem;
+    margin: 1.5rem auto;
+    width: 100%;
+    max-width: 400px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.95rem;
+    color: #4b5563;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: opacity 0.3s ease;
+}
+
+body.dark-mode .progressive-load-indicator {
+    color: var(--neon-cyan, #00f0ff);
+    background: rgba(0, 240, 255, 0.04);
+    border-color: rgba(0, 240, 255, 0.25);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.05);
+}
+
+.progressive-load-indicator.is-hidden {
+    display: none !important;
+}
+
+.progressive-load-indicator .load-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: progressivePulse 1.2s infinite ease-in-out;
+}
+
+@keyframes progressivePulse {
+    0%, 100% {
+        transform: scale(0.6);
+        opacity: 0.4;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
 }
 
 /*=======================================================

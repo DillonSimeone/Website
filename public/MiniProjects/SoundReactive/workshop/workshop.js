@@ -131,6 +131,29 @@ const toastContainer = document.getElementById('toast-container');
 const startModal = document.getElementById('start-modal');
 const modalBtnMic = document.getElementById('modal-btn-mic');
 const modalBtnDemo = document.getElementById('modal-btn-demo');
+const fpsDisplay = document.getElementById('fps-display');
+const btnQuality = document.getElementById('btn-quality');
+
+// Performance & Quality Management
+let currentQuality = 'balanced'; // 'eco', 'balanced', 'high'
+let frameCount = 0;
+let lastFpsUpdate = performance.now();
+
+function getQualityPixelRatio() {
+  if (currentQuality === 'eco') return 0.75;
+  if (currentQuality === 'high') return Math.min(window.devicePixelRatio || 1, 1.5);
+  return Math.min(window.devicePixelRatio || 1, 1.0);
+}
+
+function applyQuality(quality) {
+  currentQuality = quality;
+  if (renderer) {
+    resizeThree();
+  }
+  if (btnQuality) {
+    btnQuality.textContent = `PERF: ${quality.toUpperCase()} [P]`;
+  }
+}
 
 /* =========================================================================
    3. AUDIO ENGINE & ACOUSTIC CLASSIFIER
@@ -426,8 +449,13 @@ function initThreeCymatics() {
   scene = new THREE.Scene();
   camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
+  // Optimized for laptops: antialias: false eliminates 4x MSAA bandwidth overhead on fullscreen quad
+  renderer = new THREE.WebGLRenderer({
+    antialias: false,
+    alpha: true,
+    powerPreference: 'high-performance'
+  });
+  applyQuality(currentQuality);
   shaderCanvasContainer.appendChild(renderer.domElement);
 
   uniforms = {
@@ -511,8 +539,13 @@ function initThreeCymatics() {
     }
 
     void main() {
-      vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
-      uv *= 2.3;
+      vec2 center = 0.5 * u_resolution.xy;
+      float minDim = min(u_resolution.x, u_resolution.y);
+      float aspect = u_resolution.x / u_resolution.y;
+
+      // In tall portrait (mobile/narrow screens), scale pattern so it takes up the center space
+      float scaleFactor = (aspect < 0.7) ? 1.55 : (aspect < 1.0 ? 1.85 : 2.3);
+      vec2 uv = (gl_FragCoord.xy - center) / minDim * scaleFactor;
 
       // Organic subtle breathing (smoothly interpolated, no teleporting zoom)
       float breath = 1.0 + (u_vocal * 0.12 + u_drum * 0.15 + u_subBass * 0.1) * u_bassPunch;
@@ -585,9 +618,10 @@ function initThreeCymatics() {
         }
       }
 
-      // Circular boundary vignette
-      finalCol *= smoothstep(1.35, 0.75, r);
-
+      // Adaptive boundary vignette (preserves portrait screen coverage without abrupt cutoff)
+      float yAspectFactor = max(1.0, u_resolution.y / u_resolution.x * 0.62);
+      float edgeDist = length(uv / vec2(1.0, yAspectFactor));
+      finalCol *= smoothstep(1.45, 0.75, edgeDist);
       gl_FragColor = vec4(finalCol, 1.0);
     }
   `;
@@ -603,17 +637,29 @@ function initThreeCymatics() {
   scene.add(mesh);
 
   resizeThree();
+  requestAnimationFrame(resizeThree);
 }
 
 function resizeThree() {
-  if (!renderer) return;
+  if (!renderer || !shaderCanvasContainer) return;
   const rect = shaderCanvasContainer.getBoundingClientRect();
-  renderer.setSize(rect.width, rect.height);
+  if (rect.width === 0 || rect.height === 0) return;
+  const dpr = getQualityPixelRatio();
+  renderer.setPixelRatio(dpr);
+  renderer.setSize(rect.width, rect.height, false);
   if (uniforms.u_resolution) {
-    uniforms.u_resolution.value.set(rect.width, rect.height);
+    // Critical: gl_FragCoord is in drawing buffer pixels
+    uniforms.u_resolution.value.set(renderer.domElement.width, renderer.domElement.height);
   }
+  resizePillarCanvases();
 }
 window.addEventListener('resize', resizeThree);
+if (typeof ResizeObserver !== 'undefined' && shaderCanvasContainer) {
+  const ro = new ResizeObserver(() => {
+    resizeThree();
+  });
+  ro.observe(shaderCanvasContainer);
+}
 
 /* =========================================================================
    7. HIGH-PRECISION BPM METRONOME (60 - 120 BPM, DEFAULT 80)
@@ -1040,8 +1086,18 @@ window.addEventListener('keydown', (e) => {
   } else if (e.code === 'Space') {
     e.preventDefault();
     handleTapTempo();
+  } else if (e.key === 'p' || e.key === 'P') {
+    const nextQ = currentQuality === 'balanced' ? 'eco' : currentQuality === 'eco' ? 'high' : 'balanced';
+    applyQuality(nextQ);
   }
 });
+
+if (btnQuality) {
+  btnQuality.addEventListener('click', () => {
+    const nextQ = currentQuality === 'balanced' ? 'eco' : currentQuality === 'eco' ? 'high' : 'balanced';
+    applyQuality(nextQ);
+  });
+}
 
 /* =========================================================================
    11. TOP CONTROLS & FILE UPLOADS
@@ -1090,6 +1146,19 @@ function animate(now) {
 
   const dt = (now - prevTime) * 0.001;
   prevTime = now;
+
+  // FPS Telemetry Update
+  frameCount++;
+  const nowTime = performance.now();
+  if (nowTime - lastFpsUpdate >= 500) {
+    const fps = Math.round((frameCount * 1000) / (nowTime - lastFpsUpdate));
+    if (fpsDisplay) {
+      fpsDisplay.textContent = `FPS: ${fps}`;
+      fpsDisplay.style.color = fps >= 50 ? '#00ff88' : fps >= 30 ? '#ffaa00' : '#ff0055';
+    }
+    frameCount = 0;
+    lastFpsUpdate = nowTime;
+  }
 
   // 1. Update Audio Engine
   const telemetry = audioEngine.update();
@@ -2031,6 +2100,18 @@ function updateScorePlayhead() {
       lastTriggeredStep = -1;
       const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
       if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
+
+      // FIRST PASS ON TRACK 1 / LOOP COMPLETE: Auto-raise warm-up flag!
+      if (isWarmupMode) {
+        isWarmupMode = false;
+        if (btnScoreWarmup) {
+          btnScoreWarmup.classList.remove('active');
+          btnScoreWarmup.textContent = 'WARM-UP: COMPLETED';
+        }
+        renderScoreLanes();
+        updateCaptionCard(0, 0);
+        showToast('🎉 FIRST PASS COMPLETE // CAPTIONING ENABLED');
+      }
       return;
     } else {
       isScorePlaying = false;
@@ -2042,6 +2123,17 @@ function updateScorePlayhead() {
       if (scorePlayhead) scorePlayhead.style.left = '170px';
       const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
       if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
+
+      // Non-looping pass also completes warm-up
+      if (isWarmupMode) {
+        isWarmupMode = false;
+        if (btnScoreWarmup) {
+          btnScoreWarmup.classList.remove('active');
+          btnScoreWarmup.textContent = 'WARM-UP: COMPLETED';
+        }
+        renderScoreLanes();
+        showToast('🎉 FIRST PASS COMPLETE // CAPTIONING ENABLED');
+      }
       updateCaptionCard(0, 0);
       return;
     }
@@ -2065,6 +2157,17 @@ function updateScorePlayhead() {
       break;
     }
     accumulatedTime += mDuration;
+  }
+
+  // In Full Session mode (50 bars), auto-raise warm-up flag when advancing past Bar 14 into Bar 15!
+  if (currentScoreMode === 'full' && isWarmupMode && currentMeasureIdx >= 14) {
+    isWarmupMode = false;
+    if (btnScoreWarmup) {
+      btnScoreWarmup.classList.remove('active');
+      btnScoreWarmup.textContent = 'WARM-UP: COMPLETED';
+    }
+    renderScoreLanes();
+    showToast('🎉 FIRST SET COMPLETE // CAPTIONING ENABLED');
   }
 
   const beatInBar = Math.floor(beatInMeasureFloat);
@@ -2199,7 +2302,7 @@ function initScore() {
       btnScoreWarmup.textContent = `WARM-UP: ${isWarmupMode ? 'AUTO' : 'OFF'}`;
       renderScoreLanes();
       updateCaptionCard(0, 0);
-      showToast(`WARM-UP: ${isWarmupMode ? 'ENABLED (NO WORDS UNTIL BAR 14)' : 'OFF (ALL LYRICS SHOWN)'}`);
+      showToast(`WARM-UP: ${isWarmupMode ? 'ARMED FOR PASS 1 (NO WORDS UNTIL BAR 14)' : 'OFF (ALL LYRICS SHOWN)'}`);
     });
   }
 
@@ -2228,6 +2331,15 @@ function initScore() {
       if (scorePlayhead) scorePlayhead.style.left = '170px';
       const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
       if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
+
+      // Re-arm warm-up mode for Loop and Full modes
+      if (currentScoreMode === 'loop' || currentScoreMode === 'full') {
+        isWarmupMode = true;
+        if (btnScoreWarmup) {
+          btnScoreWarmup.classList.add('active');
+          btnScoreWarmup.textContent = 'WARM-UP: AUTO';
+        }
+      }
 
       const title = getActiveScoreData().title;
       showToast(`🎼 SCORE: ${title}`);
@@ -2301,6 +2413,13 @@ function openScoreWindow() {
   scorePausedElapsed = 0;
   scoreStartTime = 0;
   lastTriggeredStep = -1;
+
+  // Arm warm-up mode for pass 1
+  isWarmupMode = true;
+  if (btnScoreWarmup) {
+    btnScoreWarmup.classList.add('active');
+    btnScoreWarmup.textContent = 'WARM-UP: AUTO';
+  }
 
   if (btnScorePlay) {
     btnScorePlay.textContent = 'PLAY';

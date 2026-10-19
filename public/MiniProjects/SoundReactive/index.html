@@ -49,12 +49,30 @@
   </style>
 </head>
 <body>
+  <!-- File Protocol CORS & Audio Security Warning Banner -->
+  <div id="file-protocol-warning" style="display:none; background:#ff0055; color:#ffffff; padding:14px 20px; font-family:'Courier Prime', monospace; font-size:0.85rem; font-weight:bold; letter-spacing:0.5px; border-bottom:2px solid #ffffff; text-align:center; z-index:99999; position:sticky; top:0; box-shadow:0 4px 20px rgba(255,0,85,0.6);">
+    ⚠️ LOCAL SERVER REQUIRED: Direct file:// access blocks ES Modules and Microphone capture in modern browsers due to CORS security policies. Double-click <code>start-server.bat</code> or run <code>npm start</code> to launch locally at <code>http://localhost:8080</code>.
+  </div>
+  <script>
+    if (window.location.protocol === 'file:') {
+      document.getElementById('file-protocol-warning').style.display = 'block';
+    }
+  </script>
+
   <!-- Gritty Newspaper Halftone Grid background -->
   <div class="halftone-screen"></div>
 
   <div class="noir-container">
     <header class="noir-header">
-      <a href="../../../index.html" class="nav-back">/// RETURN_TO_PORTFOLIO</a>
+      <a href="../../../index.html" class="nav-back" id="nav-back-link">/// RETURN_TO_PORTFOLIO</a>
+      <script>
+        // Prevent broken link if running standalone local server in SoundReactive directory
+        const backLink = document.getElementById('nav-back-link');
+        if (backLink && window.location.pathname.endsWith('/index.html') && !window.location.pathname.includes('/public/MiniProjects/SoundReactive/')) {
+          backLink.href = '#';
+          backLink.onclick = (e) => { e.preventDefault(); alert("Running in SoundReactive standalone local mode."); };
+        }
+      </script>
       <h1 class="noir-title">SOUND_REACTIVE_ARTS</h1>
       <div class="noir-metadata">
         <p>CASE FILE ID: #SR-9082 // STATUS: DEAF DJ LIVE READY</p>
@@ -201,6 +219,7 @@
 
     <footer class="noir-footer">
       <p>SYS.LOC: public/MiniProjects/SoundReactive/ // ANTIGRAVITY CODESET 2026</p>
+      <p style="margin-top:6px; font-size:0.75rem; color:#888;">LOCAL EXECUTION: <code>start-server.bat</code> or <code>npm start</code> (http://localhost:8080)</p>
     </footer>
   </div>
 </body>
