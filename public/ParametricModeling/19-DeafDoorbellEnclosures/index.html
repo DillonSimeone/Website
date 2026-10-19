@@ -42,14 +42,15 @@
             <div class="sidebar-section">
                 <div class="section-title">1. Hardware Node Preset</div>
                 <div class="preset-grid">
-                    <button class="preset-btn active" data-preset="master_all">Master Complete</button>
-                    <button class="preset-btn" data-preset="master_base">Master Base</button>
-                    <button class="preset-btn" data-preset="master_lid">Master Lid</button>
-                    <button class="preset-btn" data-preset="follower_all">Follower Complete</button>
+                    <button class="preset-btn active" data-preset="follower_all">Follower Complete</button>
                     <button class="preset-btn" data-preset="follower_base">Follower Base</button>
                     <button class="preset-btn" data-preset="follower_lid">Follower Lid</button>
                     <button class="preset-btn" data-preset="follower_grid">Diffuser 8x8 Grid</button>
                     <button class="preset-btn" data-preset="follower_stand">Desktop Stand</button>
+                    <button class="preset-btn" data-preset="master_all">Master Complete</button>
+                    <button class="preset-btn" data-preset="master_base">Master Base</button>
+                    <button class="preset-btn" data-preset="master_lid">Master Lid</button>
+                    <button class="preset-btn" data-preset="all_plate" style="grid-column: span 2; border-color: #00ff88; color: #00ff88;">Full Build Plate</button>
                 </div>
             </div>
 
@@ -107,12 +108,8 @@
             <div class="sidebar-section">
                 <div class="section-title">3. Export Production STLs</div>
                 <div class="export-btn-group">
-                    <button class="btn-export" data-export="master_base">
-                        <span>Master Base STL</span>
-                        <span>&darr;</span>
-                    </button>
-                    <button class="btn-export" data-export="master_lid">
-                        <span>Master Clamp Lid STL</span>
+                    <button class="btn-export all" data-export="all_plate">
+                        <span>⚡ Download All .STL (Single Plate)</span>
                         <span>&darr;</span>
                     </button>
                     <button class="btn-export pink" data-export="follower_base">
@@ -129,6 +126,14 @@
                     </button>
                     <button class="btn-export pink" data-export="follower_stand">
                         <span>Follower Desk Stand STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export" data-export="master_base">
+                        <span>Master Base STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export" data-export="master_lid">
+                        <span>Master Clamp Lid STL</span>
                         <span>&darr;</span>
                     </button>
                 </div>

@@ -7,7 +7,7 @@ export const context = {
     camera: null,
     renderer: null,
     controls: null,
-    activePreset: 'master_all', // 'master_all', 'master_base', 'master_lid', 'follower_all', 'follower_base', 'follower_lid', 'follower_grid', 'follower_stand'
+    activePreset: 'follower_all', // 'follower_all' default, 'master_all', 'master_base', 'master_lid', 'follower_base', 'follower_lid', 'follower_grid', 'follower_stand', 'all_plate'
 };
 
 export const params = {

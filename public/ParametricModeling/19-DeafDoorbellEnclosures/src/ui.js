@@ -97,7 +97,61 @@ export function rebuildActiveGeometry() {
             edgeColor: 0x3d2000,
             position: new THREE.Vector3(0, 0, 0)
         });
+    } else if (context.activePreset === 'all_plate') {
+        // Complete 3D Print Plate: all 6 parts laid out flat on the print bed
+        const stand = buildFollowerStand(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(stand),
+            material: matStand,
+            edgeColor: 0x1e0a3d,
+            position: new THREE.Vector3(-54.0, 0, 0)
+        });
+        stand.delete();
+
+        const fBase = buildFollowerBase(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(fBase),
+            material: matBase,
+            edgeColor: 0x002233,
+            position: new THREE.Vector3(48.0, 5.0, 9.0)
+        });
+        fBase.delete();
+
+        const fLid = buildFollowerLid(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(fLid),
+            material: matLid,
+            edgeColor: 0x330011,
+            position: new THREE.Vector3(48.0, -80.0, 2.1)
+        });
+        fLid.delete();
+
+        const fGrid = buildFollowerGrid(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(fGrid),
+            material: matGrid,
+            edgeColor: 0x3d2000,
+            position: new THREE.Vector3(-54.0, -96.0, 2.25)
+        });
         fGrid.delete();
+
+        const mBase = buildMasterBase(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(mBase),
+            material: matBase,
+            edgeColor: 0x002233,
+            position: new THREE.Vector3(48.0, 105.0, 11.0)
+        });
+        mBase.delete();
+
+        const mLid = buildMasterLid(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(mLid),
+            material: matLid,
+            edgeColor: 0x330011,
+            position: new THREE.Vector3(-54.0, 88.0, 2.25)
+        });
+        mLid.delete();
     } else {
         // Follower Node Rendering
         if (context.activePreset === 'follower_all') {

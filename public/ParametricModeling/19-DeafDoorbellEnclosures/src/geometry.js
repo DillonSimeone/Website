@@ -371,6 +371,12 @@ export function buildFollowerStand(M, p) {
     const frontSlot = M.cube([34.0, 25.0, 42.0], true).translate([0, -15.0, 16.0 + 20.0]);
     stand = stand.subtract(frontSlot);
 
+    // 6b. Rear Vertical Cable Pathway Slot (Drop-In Cable Slide)
+    // Cuts open the rear tower wall from Z = 11.0mm all the way up through top rim at Z = 53.0mm
+    // Allows assembled follower with connected USB-C cable to slide down from top with zero cable threading
+    const rearWireSlot = M.cube([10.0, 16.0, 44.0], true).translate([0, 14.0, 32.0]);
+    stand = stand.subtract(rearWireSlot);
+
     // 7. SOLID MONOLITHIC RECTANGULAR CABLE WINDER WITH SIDE NOTCHES (Zero Fragility!)
     // Eliminates fragile thin pillars; replaces them with a single solid monolithic rectangular block
     // featuring 45° self-supporting side notches for winding the USB-C cable around securely.
@@ -397,4 +403,38 @@ export function buildFollowerStand(M, p) {
     stand = stand.add(winderBlock);
 
     return stand;
+}
+
+// -------------------------------------------------------------------------
+// 6. ALL-IN-ONE BUILD PLATE (All 6 Parts Arrayed Flat on Bed at Z = 0)
+// -------------------------------------------------------------------------
+export function buildFullPlate(M, p) {
+    // 1. Follower Desk Stand (Bottom rests at Z = 0, size 100 x 120 x 52 mm)
+    const stand = buildFollowerStand(M, p).translate([-54.0, 0, 0]);
+
+    // 2. Follower Base (Flat on backplate at Z = 0, size 76 x 123 x 18 mm)
+    const fBase = buildFollowerBase(M, p).translate([48.0, 5.0, 9.0]);
+
+    // 3. Follower Clamp Lid (Inverted flat cosmetic top on bed at Z = 0, size 29.4 x 31.2 x 4.2 mm)
+    const fLid = buildFollowerLid(M, p).rotate([180, 0, 0]).translate([48.0, -80.0, 2.1]);
+
+    // 4. Follower 8x8 Diffuser Grid (Flat on bed at Z = 0, size 65.4 x 65.4 x 4.5 mm)
+    const fGrid = buildFollowerGrid(M, p).translate([-54.0, -96.0, 2.25]);
+
+    // 5. Master Base (Flat on backplate at Z = 0, size 56 x 67 x 22 mm)
+    const mBase = buildMasterBase(M, p).translate([48.0, 105.0, 11.0]);
+
+    // 6. Master Clamp Lid (Inverted flat cosmetic top on bed at Z = 0, size 56 x 48 x 5.5 mm)
+    const mLid = buildMasterLid(M, p).rotate([180, 0, 0]).translate([-54.0, 88.0, 2.25]);
+
+    let plate = stand.add(fBase).add(fLid).add(fGrid).add(mBase).add(mLid);
+
+    stand.delete();
+    fBase.delete();
+    fLid.delete();
+    fGrid.delete();
+    mBase.delete();
+    mLid.delete();
+
+    return plate;
 }

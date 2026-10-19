@@ -239,3 +239,20 @@ input[type="range"] {
     color: #fff;
     box-shadow: 0 0 16px rgba(255, 0, 110, 0.4);
 }
+
+.btn-export.all {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 243, 255, 0.15));
+    border-color: #00ff88;
+    color: #00ff88;
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.25);
+    font-size: 0.8rem;
+    padding: 13px 16px;
+    margin-bottom: 4px;
+}
+
+.btn-export.all:hover {
+    background: #00ff88;
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.65);
+    transform: translateY(-1px);
+}

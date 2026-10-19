@@ -6,7 +6,8 @@ import {
     buildFollowerBase,
     buildFollowerLid,
     buildFollowerGrid,
-    buildFollowerStand
+    buildFollowerStand,
+    buildFullPlate
 } from './geometry.js';
 
 export function exportManifoldToBinarySTL(manifoldGeom, filename) {
@@ -97,6 +98,10 @@ export function triggerExport(componentName) {
         case 'follower_stand':
             geom = buildFollowerStand(M, params);
             filename = `Follower_Desk_Stand.stl`;
+            break;
+        case 'all_plate':
+            geom = buildFullPlate(M, params);
+            filename = `DeafDoorbell_Complete_Print_Plate.stl`;
             break;
     }
 
