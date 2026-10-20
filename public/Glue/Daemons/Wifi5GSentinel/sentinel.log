@@ -92,3 +92,31 @@
 [2026-10-19 06:51:05] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Dolphin, Freq: 2437 MHz, Rx: 6 Mbps, Score: 100
 [2026-10-19 06:51:05] Executing auto-nudge (Wi-Fi cycle via ADB)...
 [2026-10-19 06:51:12] SUCCESS: Reconnected to 5 GHz (5580 MHz, 6 Mbps).
+[2026-10-19 15:41:18] === Phone 5GHz Sentinel started ===
+[2026-10-19 15:41:18] Using ADB at: F:\Github\Website\public\Glue\Daemons\USBTethering\platform-tools\adb.exe
+[2026-10-19 15:42:15] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Dolphin, Freq: 2437 MHz, Rx: 648 Mbps, Score: 100
+[2026-10-19 15:42:15] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-10-19 15:42:22] SUCCESS: Reconnected to 5 GHz (5580 MHz, 6 Mbps).
+[2026-10-19 18:51:19] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Dolphin, Freq: 2437 MHz, Rx: 864 Mbps, Score: 100
+[2026-10-19 18:51:19] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-10-19 18:51:27] SUCCESS: Reconnected to 5 GHz (5580 MHz, 6 Mbps).
+[2026-10-19 18:52:39] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Dolphin, Freq: 2437 MHz, Rx: 6 Mbps, Score: 100
+[2026-10-19 18:52:39] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-10-19 18:52:46] SUCCESS: Reconnected to 5 GHz (5580 MHz, 6 Mbps).
+[2026-10-19 19:03:15] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Dolphin, Freq: 2437 MHz, Rx: 6 Mbps, Score: 100
+[2026-10-19 19:03:15] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-10-19 19:03:22] SUCCESS: Reconnected to 5 GHz (5580 MHz, 6 Mbps).
+[2026-10-19 19:10:49] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Dolphin, Freq: 2437 MHz, Rx: 6 Mbps, Score: 100
+[2026-10-19 19:10:49] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-10-19 19:10:57] WARNING: Auto-nudge failed to restore 5 GHz. Currently still on 0 MHz.
+[2026-10-19 19:11:45] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Dolphin, Freq: 2437 MHz, Rx: 6 Mbps, Score: 100
+[2026-10-19 19:11:45] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-10-19 19:11:52] SUCCESS: Reconnected to 5 GHz (5580 MHz, 6 Mbps).
+[2026-10-19 19:12:41] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Dolphin, Freq: 2437 MHz, Rx: 6 Mbps, Score: 100
+[2026-10-19 19:12:41] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-10-19 19:12:48] WARNING: Auto-nudge failed to restore 5 GHz. Currently still on 2437 MHz.
+[2026-10-19 19:13:36] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Dolphin, Freq: 2437 MHz, Rx: 1 Mbps, Score: 100
+[2026-10-19 19:13:36] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-10-19 19:13:43] SUCCESS: Reconnected to 5 GHz (5580 MHz, 6 Mbps).
+[2026-10-20 11:24:39] === Phone 5GHz Sentinel started ===
+[2026-10-20 11:24:39] Using ADB at: F:\Github\Website\public\Glue\Daemons\USBTethering\platform-tools\adb.exe

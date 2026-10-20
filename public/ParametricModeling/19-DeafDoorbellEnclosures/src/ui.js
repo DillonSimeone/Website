@@ -109,11 +109,12 @@ export function rebuildActiveGeometry() {
         stand.delete();
 
         const fBase = buildFollowerBase(M, params);
+        const baseH = params.followerBaseThickness || 12.0;
         items.push({
             geometry: manifoldToThreeGeometry(fBase),
             material: matBase,
             edgeColor: 0x002233,
-            position: new THREE.Vector3(48.0, 5.0, 9.0)
+            position: new THREE.Vector3(48.0, 5.0, baseH / 2)
         });
         fBase.delete();
 
@@ -122,7 +123,7 @@ export function rebuildActiveGeometry() {
             geometry: manifoldToThreeGeometry(fLid),
             material: matLid,
             edgeColor: 0x330011,
-            position: new THREE.Vector3(48.0, -80.0, 2.1)
+            position: new THREE.Vector3(48.0, -80.0, 1.5)
         });
         fLid.delete();
 
@@ -149,7 +150,7 @@ export function rebuildActiveGeometry() {
             geometry: manifoldToThreeGeometry(mLid),
             material: matLid,
             edgeColor: 0x330011,
-            position: new THREE.Vector3(-54.0, 88.0, 2.25)
+            position: new THREE.Vector3(-54.0, 88.0, 1.5)
         });
         mLid.delete();
     } else {
@@ -167,15 +168,15 @@ export function rebuildActiveGeometry() {
             fStand.delete();
 
             // Follower Base slides vertically into cradle pocket (zero clipping)
-            // Shelf sits at Z = 16.0mm, base half-height is 52.0mm -> center is Z = 68.0mm
+            // Shelf sits at Z = 12.0mm, base half-height is 52.0mm -> center is Z = 64.0mm, cradle at Y = 3.0mm
             const fBase = buildFollowerBase(M, params);
             const baseGeom = manifoldToThreeGeometry(fBase);
-            const liftZ = 68.0 + explodeZ * 2.0;
+            const liftZ = 64.0 + explodeZ * 2.0;
             items.push({
                 geometry: baseGeom,
                 material: matBase,
                 edgeColor: 0x002233,
-                position: new THREE.Vector3(0, 0, liftZ),
+                position: new THREE.Vector3(0, 3.0, liftZ),
                 rotation: new THREE.Euler(Math.PI / 2, 0, 0)
             });
             fBase.delete();
@@ -183,13 +184,14 @@ export function rebuildActiveGeometry() {
             // Follower Lid clamps over bottom ESP32 bay
             const fLid = buildFollowerLid(M, params);
             const lidGeom = manifoldToThreeGeometry(fLid);
-            const lidY = -18.0 / 2 - 4.2 / 2 - explodeZ;
-            const lidZ = liftZ - 32.0; // Aligned with espY = -32.0
+            const baseH = params.followerBaseThickness || 12.0;
+            const lidY = -baseH / 2 - 2.0 / 2 - explodeZ;
+            const lidZ = liftZ - 32.0; // Aligned with lid center Y = -32.0 and clamping zone
             items.push({
                 geometry: lidGeom,
                 material: matLid,
                 edgeColor: 0x330011,
-                position: new THREE.Vector3(0, lidY, lidZ),
+                position: new THREE.Vector3(0, 3.0 + lidY, lidZ),
                 rotation: new THREE.Euler(Math.PI / 2, 0, 0)
             });
             fLid.delete();
@@ -210,11 +212,12 @@ export function rebuildActiveGeometry() {
             if (context.activePreset === 'follower_lid') {
                 const fLid = buildFollowerLid(M, params);
                 const geom = manifoldToThreeGeometry(fLid);
+                const baseH = params.followerBaseThickness || 12.0;
                 items.push({
                     geometry: geom,
                     material: matLid,
                     edgeColor: 0x330011,
-                    position: new THREE.Vector3(0, -32.0, 18.0 / 2 + 4.2 / 2 + explodeZ)
+                    position: new THREE.Vector3(0, -32.0, baseH / 2 + 1.0 + explodeZ)
                 });
                 fLid.delete();
             }

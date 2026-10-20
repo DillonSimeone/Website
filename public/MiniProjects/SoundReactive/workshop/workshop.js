@@ -1261,8 +1261,12 @@ const btnScoreSynth = document.getElementById('btn-score-synth');
 const btnScoreCountIn = document.getElementById('btn-score-countin');
 const scoreTabBtns = document.querySelectorAll('.score-tab-btn');
 const sessionPillsRack = document.getElementById('session-pills-rack');
+const sessionBarLabel = document.getElementById('session-bar-label');
 const scoreMeasureRuler = document.getElementById('score-measure-ruler');
 const scoreLanesContainer = document.getElementById('score-lanes-container');
+const scoreStaircaseContainer = document.getElementById('score-staircase-container');
+const staircaseOrderControls = document.getElementById('staircase-order-controls');
+const btnToggleStaircaseOrder = document.getElementById('btn-toggle-staircase-order');
 const scorePlayhead = document.getElementById('score-playhead');
 const scoreMeasureVal = document.getElementById('score-measure-val');
 const scoreBeatVal = document.getElementById('score-beat-val');
@@ -1296,78 +1300,99 @@ const MASTER_LOOP_PHRASES = [
   {
     phraseIndex: 1,
     bars: [1, 2],
-    lyric: "This is our world, bright and wide,",
-    signHint: "Singers sing & Signers sign phrase across the 2-bar window",
+    lyric: "Our big world is open wide,",
+    barASigns: "OUR WORLD BIG",
+    barBSigns: "NOW OPEN WIDE",
+    aslGloss: "OUR WORLD BIG, NOW OPEN WIDE",
+    signHint: "ASL: OUR WORLD BIG, NOW OPEN WIDE (Bar A: OUR WORLD BIG • Bar B: NOW OPEN WIDE)",
     aslWebpUrl: "",
     measures: [
-      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }, // Bar 1
-      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }  // Bar 2
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }, // Bar 1 (Bar A)
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }  // Bar 2 (Bar B)
     ]
   },
   {
     phraseIndex: 2,
     bars: [3, 4],
-    lyric: "Every hand has something kind.",
-    signHint: "Clap on beats 2 & 4 adds rhythmic momentum",
+    lyric: "Hands give help and hearts are kind.",
+    barASigns: "TWO-HANDS GIVE HELP",
+    barBSigns: "SHOW HEART KIND",
+    aslGloss: "TWO-HANDS GIVE HELP, SHOW HEART KIND",
+    signHint: "ASL: TWO-HANDS GIVE HELP, SHOW HEART KIND (Bar A: TWO-HANDS GIVE HELP • Bar B: SHOW HEART KIND)",
     aslWebpUrl: "",
     measures: [
-      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }, // Bar 3
-      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }  // Bar 4
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }, // Bar 3 (Bar A)
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }  // Bar 4 (Bar B)
     ]
   },
   {
     phraseIndex: 3,
     bars: [5, 6],
-    lyric: "When you fall, I’ll help you rise,",
-    signHint: "Singers & Signers lift energy into the upcoming Hoot cue",
+    lyric: "If you fall, we stand up strong,",
+    barASigns: "IF YOU-FALL DOWN",
+    barBSigns: "I-HELP STAND STRONG",
+    aslGloss: "IF YOU-FALL DOWN, I-HELP STAND STRONG",
+    signHint: "ASL: IF YOU-FALL DOWN, I-HELP STAND STRONG (Bar A: IF YOU-FALL DOWN • Bar B: I-HELP STAND STRONG)",
     aslWebpUrl: "",
     measures: [
-      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }, // Bar 5
-      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }  // Bar 6
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }, // Bar 5 (Bar A)
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }  // Bar 6 (Bar B)
     ]
   },
   {
     phraseIndex: 4,
     bars: [7, 8],
-    lyric: "When I’m lost, you’re by my side.",
-    signHint: "Hoot sustains on beat 1 of Bar 7 for 2 beats! Clap on beats 2 & 4",
+    lyric: "Walking together, right side by side.",
+    barASigns: "WE WALK TOGETHER",
+    barBSigns: "STAY SIDE-BY-SIDE HERE",
+    aslGloss: "WE WALK TOGETHER, STAY SIDE-BY-SIDE HERE",
+    signHint: "ASL: WE WALK TOGETHER, STAY SIDE-BY-SIDE HERE (Hoot sustains on beat 1 of Bar 7)",
     aslWebpUrl: "",
     measures: [
-      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: { startBeat: 0, durationBeats: 2, label: "HOOT (2 BEATS)" } }, // Bar 7
-      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null } // Bar 8
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: { startBeat: 0, durationBeats: 2, label: "HOOT (2 BEATS)" } }, // Bar 7 (Bar A)
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null } // Bar 8 (Bar B)
     ]
   },
   {
     phraseIndex: 5,
     bars: [9, 10],
-    lyric: "Different voices, one big song,",
-    signHint: "Singers sing & Signers sign phrase across the 2-bar window",
+    lyric: "Feel the drum beat, share one heart,",
+    barASigns: "FEEL DRUM VIBRATE",
+    barBSigns: "SHARE ONE HEARTBEAT",
+    aslGloss: "FEEL DRUM VIBRATE, SHARE ONE HEARTBEAT",
+    signHint: "ASL: FEEL DRUM VIBRATE, SHARE ONE HEARTBEAT (Bar A: FEEL DRUM VIBRATE • Bar B: SHARE ONE HEARTBEAT)",
     aslWebpUrl: "",
     measures: [
-      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }, // Bar 9
-      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }  // Bar 10
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }, // Bar 9 (Bar A)
+      { bass: [0, 2], snare: [1, 3], clap: [3], hoot: null }  // Bar 10 (Bar B)
     ]
   },
   {
     phraseIndex: 6,
     bars: [11, 12],
-    lyric: "Every neighbor can belong.",
-    signHint: "Clap on beats 2 & 4 building toward the grand finale phrase",
+    lyric: "Everyone equal, all welcome here.",
+    barASigns: "ALL PEOPLE EQUAL",
+    barBSigns: "ALL WELCOME HERE",
+    aslGloss: "ALL PEOPLE EQUAL, ALL WELCOME HERE",
+    signHint: "ASL: ALL PEOPLE EQUAL, ALL WELCOME HERE (Clap beats 2 & 4 building toward finale)",
     aslWebpUrl: "",
     measures: [
-      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }, // Bar 11
-      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }  // Bar 12
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }, // Bar 11 (Bar A)
+      { bass: [0, 2], snare: [1, 3], clap: [1, 3], hoot: null }  // Bar 12 (Bar B)
     ]
   },
   {
     phraseIndex: 7,
     bars: [13, 14],
-    lyric: "Love your neighbor, near and far— / And that's who we are...",
-    signHint: "Hoot sustains on beat 1 for 4 beats! Clap on all 4 beats!",
+    lyric: "Love your neighbor, we stand as one!",
+    barASigns: "LOVE YOUR NEIGHBOR",
+    barBSigns: "WE STAND TOGETHER",
+    aslGloss: "LOVE YOUR NEIGHBOR, WE STAND TOGETHER",
+    signHint: "ASL: LOVE YOUR NEIGHBOR, WE STAND TOGETHER (Hoot sustains on beat 1 for 4 beats! Clap all 4 beats!)",
     aslWebpUrl: "",
     measures: [
-      { bass: [0, 2], snare: [1, 3], clap: [0, 1, 2, 3], hoot: { startBeat: 0, durationBeats: 4, label: "TOOT (4 BEATS)" } }, // Bar 13
-      { bass: [0, 2], snare: [1, 3], clap: [0, 1, 2, 3], hoot: null } // Bar 14
+      { bass: [0, 2], snare: [1, 3], clap: [0, 1, 2, 3], hoot: { startBeat: 0, durationBeats: 4, label: "TOOT (4 BEATS)" } }, // Bar 13 (Bar A)
+      { bass: [0, 2], snare: [1, 3], clap: [0, 1, 2, 3], hoot: null } // Bar 14 (Bar B)
     ]
   }
 ];
@@ -1388,6 +1413,7 @@ let isScoreLooping = true;
 let isScorePlaying = false;    // NEVER auto-play on open! User clicks PLAY
 let currentScoreZoom = 1.0;    // Score zoom scale
 let isWarmupMode = true;       // Audience warm-up: no words until Bar 14
+let staircaseAscending = true; // true: S1 at bottom, S14 at top (matching user sketch)
 let isScoreWindowOpen = false;
 let isSynthGuideEnabled = true;
 let isCountInEnabled = true;
@@ -1544,7 +1570,11 @@ function getActiveScoreData() {
       const phrase = MASTER_LOOP_PHRASES[phraseIdx];
       const mData = phrase.measures[measureInPhrase];
 
+      const isBarA = measureInPhrase === 0;
+      const activeBarSigns = isBarA ? phrase.barASigns : phrase.barBSigns;
       let lyricText = phrase.lyric;
+      let barSigns = activeBarSigns;
+      let aslGloss = phrase.aslGloss;
       let hintText = phrase.signHint;
       let phraseId = phrase.phraseIndex;
       let isWarmup = false;
@@ -1554,11 +1584,15 @@ function getActiveScoreData() {
         if (i < 13) {
           lyricText = "(Instrumental Warm-Up)";
           hintText = "Ensemble warm-up — building pulse and rhythm with the audience";
+          barSigns = "";
+          aslGloss = "";
           phraseId = "WARM-UP";
           isWarmup = true;
         } else {
-          lyricText = "“And that's who we are...”";
-          hintText = "First vocal entrance! Signers cue audience into the full song";
+          lyricText = "“Love your neighbor, we stand as one!”";
+          hintText = "First vocal entrance! Signers cue audience: WE STAND TOGETHER";
+          barSigns = phrase.barBSigns;
+          aslGloss = phrase.aslGloss;
           phraseId = "WARM-UP FINALE";
           isWarmup = false;
         }
@@ -1569,6 +1603,9 @@ function getActiveScoreData() {
         masterBar: canonicalMasterBar,
         phraseIndex: phraseId,
         lyric: lyricText,
+        aslGloss: aslGloss,
+        barSigns: barSigns,
+        barLabel: isBarA ? "Bar A" : "Bar B",
         signHint: hintText,
         aslWebpUrl: isWarmup ? "" : phrase.aslWebpUrl,
         measureInPhrase: measureInPhrase,
@@ -1591,17 +1628,23 @@ function getActiveScoreData() {
 
   if (currentScoreMode === 'lift') {
     // The Lift (Bars 41-45): Tempo rises 80 -> 90 BPM
+    // Bars 41-42: Bar A (ALL PEOPLE JOIN), Bars 43-45: Bar B (CONNECT ONE WORLD held through Bar 45)
     const measures = [];
     for (let i = 0; i < 5; i++) {
       const barNum = 41 + i;
       const prog = i / 4;
       const bpm = 80 + prog * 10;
+      const isBarA = (i < 2);
+      const activeBarSigns = isBarA ? "ALL PEOPLE JOIN" : "CONNECT ONE WORLD";
       measures.push({
         displayLabel: `BAR ${barNum}`,
         masterBar: barNum,
         phraseIndex: 'LIFT',
-        lyric: "“This is who we are!” (SUSTAINED)",
-        signHint: "Signers: sign final lyric phrase slowly & clearly, holding through Bar 45",
+        lyric: "All people join, one connected world!",
+        aslGloss: "ALL PEOPLE JOIN, CONNECT ONE WORLD",
+        barSigns: activeBarSigns,
+        barLabel: isBarA ? "Bar A" : "Bar B",
+        signHint: isBarA ? "Signers: ALL PEOPLE JOIN (Bars 41–42)" : "Signers: CONNECT ONE WORLD (Bars 43–45) — hold lifted through Bar 45 (80→90 BPM)",
         aslWebpUrl: "",
         bpm: bpm,
         isWarmup: false,
@@ -1622,17 +1665,23 @@ function getActiveScoreData() {
 
   if (currentScoreMode === 'spiral') {
     // Spiral Out (Bars 46-50): Tempo rises 90 -> 100 BPM
+    // Bars 46-47: Bar A (HEARTBEAT GROW STRONG), Bars 48-50: Bar B (SHOUT CELEBRATE NOW in final bars)
     const measures = [];
     for (let i = 0; i < 5; i++) {
       const barNum = 46 + i;
       const prog = i / 4;
       const bpm = 90 + prog * 10;
+      const isBarA = (i < 2);
+      const activeBarSigns = isBarA ? "HEARTBEAT GROW STRONG" : "SHOUT CELEBRATE NOW";
       measures.push({
         displayLabel: `BAR ${barNum}`,
         masterBar: barNum,
         phraseIndex: 'SPIRAL',
-        lyric: "“AHHH...” (OSCILLATING WASH)",
-        signHint: "Signers: hold final sign (TOGETHER/LOVE) lifted, slowly open outward on final beat",
+        lyric: '(Sustain "Ahhh" while signers build to visual applause)',
+        aslGloss: "HEARTBEAT GROW STRONG, SHOUT CELEBRATE NOW",
+        barSigns: activeBarSigns,
+        barLabel: isBarA ? "Bar A" : "Bar B",
+        signHint: isBarA ? "Signers: HEARTBEAT GROW STRONG (Bars 46–47)" : "Signers: SHOUT CELEBRATE NOW (Bars 48–50) — build to visual applause on Bar 50!",
         aslWebpUrl: "",
         bpm: bpm,
         isWarmup: false,
@@ -1662,7 +1711,10 @@ function getActiveScoreData() {
       const phrase = MASTER_LOOP_PHRASES[phraseIdx];
       const mData = phrase.measures[measureInPhrase];
 
+      const isBarA = measureInPhrase === 0;
       let lyricText = phrase.lyric;
+      let barSigns = isBarA ? phrase.barASigns : phrase.barBSigns;
+      let aslGloss = phrase.aslGloss;
       let hintText = phrase.signHint;
       let phraseId = phrase.phraseIndex;
       let isWarmup = false;
@@ -1671,19 +1723,27 @@ function getActiveScoreData() {
       if (isWarmupMode && i < 13) {
         lyricText = "(Instrumental Warm-Up)";
         hintText = "Audience & ensemble warm-up — building pulse and percussion";
+        barSigns = "";
+        aslGloss = "";
         phraseId = "WARM-UP";
         isWarmup = true;
       } else if (isWarmupMode && i === 13) {
-        lyricText = "“And that's who we are...”";
-        hintText = "First vocal entrance! Signers cue audience into the full song";
+        lyricText = "“Love your neighbor, we stand as one!”";
+        hintText = "First vocal entrance! Signers cue audience: WE STAND TOGETHER";
+        barSigns = phrase.barBSigns;
+        aslGloss = phrase.aslGloss;
         phraseId = "WARM-UP FINALE";
         isWarmup = false;
       } else {
         // Normal captioning (Bars 15-40, or Bars 1-40 when warm-up disabled)
         const activeBar = isWarmupMode ? (((i - 14 + selectedSession - 1) % 14) + 1) : canonicalMasterBar;
         const activePhraseIdx = Math.floor((activeBar - 1) / 2);
+        const activeMeasureInPhrase = (activeBar - 1) % 2;
         const activePhrase = MASTER_LOOP_PHRASES[activePhraseIdx];
+        const activeIsBarA = activeMeasureInPhrase === 0;
         lyricText = activePhrase.lyric;
+        barSigns = activeIsBarA ? activePhrase.barASigns : activePhrase.barBSigns;
+        aslGloss = activePhrase.aslGloss;
         hintText = activePhrase.signHint;
         phraseId = activePhrase.phraseIndex;
         isWarmup = false;
@@ -1694,6 +1754,9 @@ function getActiveScoreData() {
         masterBar: canonicalMasterBar,
         phraseIndex: phraseId,
         lyric: lyricText,
+        aslGloss: aslGloss,
+        barSigns: barSigns,
+        barLabel: isBarA ? "Bar A" : "Bar B",
         signHint: hintText,
         aslWebpUrl: isWarmup ? "" : phrase.aslWebpUrl,
         measureInPhrase: measureInPhrase,
@@ -1705,16 +1768,21 @@ function getActiveScoreData() {
         hoot: mData.hoot
       });
     }
-    // 41-45: The Lift
+    // 41-45: The Lift (Tempo rises 80 -> 90 BPM; Bars 41-42 Bar A, Bars 43-45 Bar B)
     for (let i = 0; i < 5; i++) {
       const barNum = 41 + i;
       const prog = i / 4;
+      const isBarA = (i < 2);
+      const activeBarSigns = isBarA ? "ALL PEOPLE JOIN" : "CONNECT ONE WORLD";
       measures.push({
         displayLabel: `BAR ${barNum}`,
         masterBar: barNum,
         phraseIndex: 'LIFT',
-        lyric: "“This is who we are!” (SUSTAINED)",
-        signHint: "Hold sign through Bar 45. Accelerating 80 -> 90 BPM",
+        lyric: "All people join, one connected world!",
+        aslGloss: "ALL PEOPLE JOIN, CONNECT ONE WORLD",
+        barSigns: activeBarSigns,
+        barLabel: isBarA ? "Bar A" : "Bar B",
+        signHint: isBarA ? "Signers: ALL PEOPLE JOIN (Bars 41–42)" : "Signers: CONNECT ONE WORLD (Bars 43–45) — hold lifted through Bar 45 (80→90 BPM)",
         aslWebpUrl: "",
         bpm: 80 + prog * 10,
         isWarmup: false,
@@ -1724,16 +1792,21 @@ function getActiveScoreData() {
         hoot: (barNum === 41 || barNum === 43) ? { startBeat: 0, durationBeats: 2, label: "HOOT (2 BEATS)" } : null
       });
     }
-    // 46-50: Spiral Out
+    // 46-50: Spiral Out (Tempo rises 90 -> 100 BPM; Bars 46-47 Bar A, Bars 48-50 Bar B in last bars!)
     for (let i = 0; i < 5; i++) {
       const barNum = 46 + i;
       const prog = i / 4;
+      const isBarA = (i < 2);
+      const activeBarSigns = isBarA ? "HEARTBEAT GROW STRONG" : "SHOUT CELEBRATE NOW";
       measures.push({
         displayLabel: `BAR ${barNum}`,
         masterBar: barNum,
         phraseIndex: 'SPIRAL',
-        lyric: "“AHHH...” (OSCILLATING WASH)",
-        signHint: "Hold sign lifted, open hands outward on beat 4 of Bar 50. Silence follows!",
+        lyric: '(Sustain "Ahhh" while signers build to visual applause)',
+        aslGloss: "HEARTBEAT GROW STRONG, SHOUT CELEBRATE NOW",
+        barSigns: activeBarSigns,
+        barLabel: isBarA ? "Bar A" : "Bar B",
+        signHint: isBarA ? "Signers: HEARTBEAT GROW STRONG (Bars 46–47)" : "Signers: SHOUT CELEBRATE NOW (Bars 48–50) — build to visual applause on Bar 50!",
         aslWebpUrl: "",
         bpm: 90 + prog * 10,
         isWarmup: false,
@@ -1748,6 +1821,100 @@ function getActiveScoreData() {
       title: `FULL 50-BAR SESSION (SESSION ${selectedSession} OFFSET)`,
       totalMeasures: 50,
       tempoMode: 'full',
+      baseBpm: 80,
+      measures: measures
+    };
+  }
+
+  if (currentScoreMode === 'overlay') {
+    // 14-Session Spiraling Staircase Overlay (Bars 1 to 64 // ~3:00 total performance)
+    const measures = [];
+    const totalBars = 64;
+
+    for (let t = 0; t < totalBars; t++) {
+      const barNum = t + 1;
+      let bpm = 80;
+      let phraseLabel = 'ROLLING LOOP';
+      let lyricLine = '“Love your neighbor, near and far”';
+
+      if (barNum <= 40) {
+        bpm = 80;
+        phraseLabel = `BARS 1–40 // ROLLING LOOP (80 BPM)`;
+      } else if (barNum <= 50) {
+        const prog = (barNum - 41) / 9;
+        bpm = 80 + prog * 10; // Ramps 80 -> 90 BPM
+        phraseLabel = `BARS 41–50 // THE LIFT (80→90 BPM)`;
+        lyricLine = '“All people join, one connected world!”';
+      } else {
+        const prog = (barNum - 51) / 13;
+        bpm = 90 + Math.min(1.0, prog) * 10; // Ramps 90 -> 100 BPM
+        phraseLabel = `BARS 51–64 // SCHEFFER SPIRAL (90→100 BPM)`;
+        lyricLine = '(Sustain "Ahhh" while signers build to visual applause)';
+      }
+
+      // Check which sessions are playing and aggregate their rhythms
+      const bassBeats = new Set();
+      const snareBeats = new Set();
+      const clapBeats = new Set();
+      let hootObj = null;
+      let activeSessionsCount = 0;
+
+      for (let s = 1; s <= 14; s++) {
+        if (barNum >= s && barNum < s + 50) {
+          activeSessionsCount++;
+          const relBar = barNum - s + 1; // 1 to 50
+          if (relBar <= 40) {
+            const masterBar = ((barNum - 1) % 14) + 1;
+            const phraseIdx = Math.floor((masterBar - 1) / 2);
+            const mInPhrase = (masterBar - 1) % 2;
+            const p = MASTER_LOOP_PHRASES[phraseIdx];
+            const mD = p.measures[mInPhrase];
+            mD.bass.forEach(b => bassBeats.add(b));
+            mD.snare.forEach(b => snareBeats.add(b));
+            mD.clap.forEach(b => clapBeats.add(b));
+            if (mD.hoot) hootObj = mD.hoot;
+          } else if (relBar <= 45) {
+            [0, 1, 2, 3].forEach(b => bassBeats.add(b));
+            [0.5, 1.5, 2.5, 3.5].forEach(b => snareBeats.add(b));
+            [1, 3].forEach(b => clapBeats.add(b));
+            if (relBar === 41 || relBar === 43) {
+              hootObj = { startBeat: 0, durationBeats: 2, label: "HOOT (2 BEATS)" };
+            }
+          } else {
+            [0, 1, 2, 3].forEach(b => bassBeats.add(b));
+            [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].forEach(b => snareBeats.add(b));
+            [0, 1, 2, 3].forEach(b => clapBeats.add(b));
+            if (relBar === 46) {
+              hootObj = { startBeat: 0, durationBeats: 20, label: "SUSTAIN WASH" };
+            }
+          }
+        }
+      }
+
+      measures.push({
+        displayLabel: `BAR ${barNum}`,
+        masterBar: barNum,
+        phraseIndex: 'OVERLAY',
+        lyric: `${activeSessionsCount} SESSIONS ACTIVE • ${lyricLine}`,
+        aslGloss: "ALL SESSIONS INTERLOCKING SPIRAL",
+        barSigns: "",
+        barLabel: `Timeline Bar ${barNum}`,
+        signHint: `Timeline Bar ${barNum} // ${activeSessionsCount} active session tracks`,
+        aslWebpUrl: "",
+        bpm: bpm,
+        isWarmup: false,
+        activeSessionsCount: activeSessionsCount,
+        bass: Array.from(bassBeats).sort((a,b) => a-b),
+        snare: Array.from(snareBeats).sort((a,b) => a-b),
+        clap: Array.from(clapBeats).sort((a,b) => a-b),
+        hoot: hootObj
+      });
+    }
+
+    return {
+      title: "14-SESSION SPIRAL OVERLAY (64 BARS // ~3 MIN FINAL PERFORMANCE)",
+      totalMeasures: totalBars,
+      tempoMode: 'overlay',
       baseBpm: 80,
       measures: measures
     };
@@ -1781,6 +1948,199 @@ function renderSessionPills() {
   }
 }
 
+/* --- 13.4b Dynamic Score Visuals & Interactive Seek --- */
+
+function updateScoreTempoVisuals(bpm) {
+  const scoreWindow = document.querySelector('.score-window');
+  if (!scoreWindow) return;
+
+  if (bpm <= 80) {
+    scoreWindow.style.backgroundColor = 'rgba(12, 14, 22, 0.97)';
+    scoreWindow.style.borderColor = 'var(--border-color)';
+    return;
+  }
+
+  if (bpm <= 90) {
+    // 80 -> 90 BPM: Shift from dark space navy (12, 14, 22) to deep cosmic violet (26, 12, 42)
+    const t = (bpm - 80) / 10;
+    const r = Math.round(12 + (26 - 12) * t);
+    const g = Math.round(14 + (12 - 14) * t);
+    const b = Math.round(22 + (42 - 22) * t);
+    scoreWindow.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.97)`;
+    scoreWindow.style.borderColor = `rgba(180, 80, 255, ${0.25 + t * 0.35})`;
+  } else {
+    // 90 -> 100 BPM: Shift from deep cosmic violet (26, 12, 42) to deep glowing ember crimson (48, 12, 24)
+    const t = Math.min(1.0, (bpm - 90) / 10);
+    const r = Math.round(26 + (48 - 26) * t);
+    const g = Math.round(12 + (12 - 12) * t);
+    const b = Math.round(42 + (24 - 42) * t);
+    scoreWindow.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.97)`;
+    scoreWindow.style.borderColor = `rgba(255, 60, 100, ${0.6 + t * 0.4})`;
+  }
+}
+
+function seekToMeasure(mIdx) {
+  const scoreData = getActiveScoreData();
+  if (!scoreData || mIdx < 0 || mIdx >= scoreData.totalMeasures) return;
+
+  let accTime = 0;
+  for (let i = 0; i < mIdx; i++) {
+    const mBpm = scoreData.measures[i].bpm || scoreData.baseBpm || 80;
+    accTime += (60.0 / mBpm) * 4;
+  }
+
+  scorePausedElapsed = accTime;
+  const now = audioEngine.ctx ? audioEngine.ctx.currentTime : performance.now() * 0.001;
+  scoreStartTime = now - accTime;
+  lastTriggeredStep = -1;
+
+  updateScorePlayhead();
+}
+
+function renderStaircaseOverlay() {
+  if (!scoreStaircaseContainer) return;
+  scoreStaircaseContainer.innerHTML = '';
+
+  const totalBars = 64;
+  const sessionList = [];
+  if (staircaseAscending) {
+    // S1 at bottom, S14 at top (matching user whiteboard sketch!)
+    for (let s = 14; s >= 1; s--) sessionList.push(s);
+  } else {
+    // S1 at top, S14 at bottom (standard DAW cascade)
+    for (let s = 1; s <= 14; s++) sessionList.push(s);
+  }
+
+  sessionList.forEach(s => {
+    const track = document.createElement('div');
+    track.className = 'staircase-track';
+    track.dataset.session = s;
+
+    // Sticky track header on left
+    const header = document.createElement('div');
+    header.className = 'staircase-track-header';
+    const hue = Math.round((s - 1) * (360 / 14));
+    const sessionColor = `hsl(${hue}, 90%, 55%)`;
+
+    header.innerHTML = `
+      <div class="staircase-track-badge" style="background:${sessionColor};">S${s}</div>
+      <div class="staircase-track-info">
+        <span class="staircase-track-title">SESSION ${s}</span>
+        <span class="staircase-track-sub">Starts at Bar ${s}</span>
+      </div>
+    `;
+    track.appendChild(header);
+
+    // Track Body with 64 measure cells
+    const body = document.createElement('div');
+    body.className = 'staircase-track-body';
+
+    for (let t = 1; t <= totalBars; t++) {
+      const cell = document.createElement('div');
+      cell.className = 'staircase-bar-cell';
+      cell.dataset.measureIndex = t - 1;
+      cell.dataset.session = s;
+
+      if (t < s) {
+        // Pre-entrance staircase step
+        cell.classList.add('offset-step');
+        cell.title = `Session ${s}: Silent count-in // Starts at Bar ${s}`;
+        cell.innerHTML = `
+          <div class="staircase-bar-left">
+            <span class="staircase-bar-num" style="opacity:0.35;">M${t}</span>
+          </div>
+        `;
+      } else if (t >= s && t < s + 50) {
+        const relBar = t - s + 1; // 1 to 50
+        if (relBar <= 40) {
+          // Rolling loop
+          cell.classList.add('active-loop-bar');
+          const masterBar = ((t - 1) % 14) + 1;
+          const phraseIdx = Math.floor((masterBar - 1) / 2);
+          const p = MASTER_LOOP_PHRASES[phraseIdx];
+          const mInPhrase = (masterBar - 1) % 2;
+          const barSigns = mInPhrase === 0 ? p.barASigns : p.barBSigns;
+          cell.title = `Session ${s} (Bar ${relBar}/50) • M${masterBar}: ${barSigns}`;
+
+          let rightBadge = '';
+          if (masterBar === 7) {
+            rightBadge = `<span class="staircase-hoot-badge">HOOT 2b</span>`;
+          } else if (masterBar === 13) {
+            rightBadge = `<span class="staircase-hoot-badge">TOOT 4b</span>`;
+          }
+
+          cell.innerHTML = `
+            <div class="staircase-bar-left">
+              <span class="staircase-bar-num">M${masterBar}</span>
+              <span class="staircase-bar-sign-preview">${barSigns}</span>
+            </div>
+            <div class="staircase-bar-right">
+              ${rightBadge}
+              <div class="staircase-dots-row">
+                <span class="staircase-dot dot-bass"></span>
+                <span class="staircase-dot dot-snare"></span>
+              </div>
+            </div>
+          `;
+        } else if (relBar <= 45) {
+          // The Lift (Bars 41-45)
+          cell.classList.add('active-lift-bar');
+          const liftBar = relBar;
+          const isBarA = (relBar - 41) < 2;
+          const signs = isBarA ? "ALL PEOPLE JOIN" : "CONNECT ONE WORLD";
+          cell.title = `Session ${s}: THE LIFT (Bar ${liftBar}) • ${signs} (80→90 BPM)`;
+          cell.innerHTML = `
+            <div class="staircase-bar-left">
+              <span class="staircase-bar-num" style="color:#ffaa00;">B${liftBar}</span>
+              <span class="staircase-bar-sign-preview">${signs}</span>
+            </div>
+            <div class="staircase-bar-right">
+              <span class="staircase-lift-badge">LIFT</span>
+            </div>
+          `;
+        } else {
+          // Spiral Out (Bars 46-50)
+          cell.classList.add('active-spiral-bar');
+          const spiralBar = relBar;
+          const isBarA = (relBar - 46) < 2;
+          const signs = isBarA ? "HEARTBEAT GROW STRONG" : "SHOUT CELEBRATE NOW";
+          cell.title = `Session ${s}: SPIRAL OUT (Bar ${spiralBar}) • ${signs} (90→100 BPM)`;
+          cell.innerHTML = `
+            <div class="staircase-bar-left">
+              <span class="staircase-bar-num" style="color:#ff3388;">B${spiralBar}</span>
+              <span class="staircase-bar-sign-preview">${signs}</span>
+            </div>
+            <div class="staircase-bar-right">
+              <span class="staircase-spiral-badge">SPIRAL</span>
+            </div>
+          `;
+        }
+      } else if (t === s + 50) {
+        // Cutoff chord into silence
+        cell.classList.add('cutoff-bar');
+        cell.title = `Session ${s}: Final Cutoff Chord & Silence`;
+        cell.innerHTML = `
+          <span class="staircase-cutoff-badge">CUTOFF</span>
+        `;
+      } else {
+        // Post-cutoff silence
+        cell.classList.add('offset-step');
+        cell.title = `Session ${s}: Finished`;
+      }
+
+      cell.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        seekToMeasure(t - 1);
+      });
+
+      body.appendChild(cell);
+    }
+
+    track.appendChild(body);
+    scoreStaircaseContainer.appendChild(track);
+  });
+}
+
 function renderScoreMeasureRuler() {
   if (!scoreMeasureRuler) return;
   scoreMeasureRuler.innerHTML = '';
@@ -1802,11 +2162,31 @@ function renderScoreMeasureRuler() {
         <div class="ruler-beat-tick">4</div>
       </div>
     `;
+    block.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      seekToMeasure(idx);
+    });
     scoreMeasureRuler.appendChild(block);
   });
 }
 
 function renderScoreLanes() {
+  if (currentScoreMode === 'overlay') {
+    if (scoreLanesContainer) scoreLanesContainer.style.display = 'none';
+    if (scoreStaircaseContainer) scoreStaircaseContainer.style.display = 'flex';
+    if (sessionBarLabel) sessionBarLabel.style.display = 'none';
+    if (sessionPillsRack) sessionPillsRack.style.display = 'none';
+    if (staircaseOrderControls) staircaseOrderControls.style.display = 'flex';
+    renderStaircaseOverlay();
+    return;
+  }
+
+  if (scoreLanesContainer) scoreLanesContainer.style.display = 'flex';
+  if (scoreStaircaseContainer) scoreStaircaseContainer.style.display = 'none';
+  if (sessionBarLabel) sessionBarLabel.style.display = 'flex';
+  if (sessionPillsRack) sessionPillsRack.style.display = 'flex';
+  if (staircaseOrderControls) staircaseOrderControls.style.display = 'none';
+
   if (!scoreLanesContainer) return;
   scoreLanesContainer.innerHTML = '';
 
@@ -1839,31 +2219,41 @@ function renderScoreLanes() {
       measure.dataset.measureIndex = mIdx;
 
       if (cfg.id === 'lyrics') {
-        // Lyrics Lane: show warm-up, 2-bar or section block
+        // Lyrics Lane: show warm-up or 1-bar ASL Column Block (NO English words in the timeline)
         if (m.isWarmup) {
           if (mIdx === 0) {
             const block = document.createElement('div');
             block.className = 'lyric-phrase-block warmup-block';
+            block.dataset.measureStart = 0;
+            block.dataset.measureEnd = 12;
             block.style.width = 'calc(var(--measure-width, 160px) * 13 - 6px)';
-            block.innerHTML = `<span class="lyric-phrase-label" style="opacity:0.8;">(Instrumental Warm-Up // Bars 1–13)</span>`;
+            block.innerHTML = `<span class="warmup-label" style="opacity:0.85;">(Instrumental Warm-Up // Bars 1–13 • Building Pulse with Ensemble)</span>`;
             measure.appendChild(block);
           }
-        } else if (m.phraseIndex === 'WARM-UP FINALE') {
+        } else {
+          // Individual 1-bar ASL Column Block (one per measure)
           const block = document.createElement('div');
-          block.className = 'lyric-phrase-block active';
+          block.className = 'lyric-phrase-block asl-column-block';
+          block.dataset.measureStart = mIdx;
+          block.dataset.measureEnd = mIdx;
           block.style.width = 'calc(var(--measure-width, 160px) - 6px)';
-          block.innerHTML = `<span class="lyric-phrase-label">${m.lyric}</span>`;
+          block.title = `${m.barLabel || ''}: ${m.barSigns || ''}`;
+
+          const signsStr = m.barSigns || (m.phraseIndex === 'WARM-UP FINALE' ? 'WE STAND TOGETHER' : '');
+          const words = signsStr ? signsStr.trim().split(/\s+/) : [];
+          const wordsHtml = words.map(w => `<span class="asl-col-word">${w}</span>`).join('');
+
+          const barTag = m.phraseIndex === 'WARM-UP FINALE' ? 'BAR 14' : (m.barLabel || `BAR ${mIdx + 1}`);
+
+          block.innerHTML = `
+            <div class="asl-col-header">
+              <span class="asl-bar-tag">${barTag}</span>
+            </div>
+            <div class="asl-col-stack">
+              ${wordsHtml}
+            </div>
+          `;
           measure.appendChild(block);
-        } else if (mIdx % 2 === 0 || currentScoreMode === 'lift' || currentScoreMode === 'spiral') {
-          const isSustainMode = currentScoreMode === 'lift' || currentScoreMode === 'spiral';
-          if (!isSustainMode || mIdx === 0) {
-            const block = document.createElement('div');
-            block.className = `lyric-phrase-block ${isSustainMode ? 'active' : ''}`;
-            const spanBars = isSustainMode ? scoreData.totalMeasures : 2;
-            block.style.width = `calc(var(--measure-width, 160px) * ${spanBars} - 6px)`;
-            block.innerHTML = `<span class="lyric-phrase-label">${m.lyric}</span>`;
-            measure.appendChild(block);
-          }
         }
       } else {
         // Rhythm / Hoot Lane
@@ -1960,10 +2350,11 @@ function updateCaptionCard(measureIndex, beatInBar, beatProgress = 0) {
   const currentMeasure = scoreData.measures[measureIndex];
 
   if (captionPhraseBadge) {
+    const barTag = currentMeasure.barLabel ? ` • ${currentMeasure.barLabel}` : '';
     if (typeof currentMeasure.phraseIndex === 'number') {
-      captionPhraseBadge.textContent = `PHRASE ${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}`;
+      captionPhraseBadge.textContent = `PHRASE ${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}${barTag}`;
     } else {
-      captionPhraseBadge.textContent = `${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}`;
+      captionPhraseBadge.textContent = `${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}${barTag}`;
     }
   }
 
@@ -1972,11 +2363,17 @@ function updateCaptionCard(measureIndex, beatInBar, beatProgress = 0) {
   }
 
   if (captionLyricText) {
-    captionLyricText.textContent = currentMeasure.lyric;
+    const txt = currentMeasure.lyric;
+    if (txt.startsWith('(') || txt.startsWith('“') || txt.startsWith('"')) {
+      captionLyricText.textContent = txt;
+    } else {
+      captionLyricText.textContent = `“${txt}”`;
+    }
   }
 
   if (captionSignHint) {
-    captionSignHint.textContent = currentMeasure.signHint;
+    captionSignHint.textContent = '';
+    captionSignHint.style.display = 'none';
   }
 
   // Calculate 2-bar phrase progress (0% -> 100%)
@@ -1990,6 +2387,15 @@ function updateCaptionCard(measureIndex, beatInBar, beatProgress = 0) {
     }
     phraseProgressBar.style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
   }
+
+  // Highlight active lyric phrase block in score lane
+  document.querySelectorAll('.lyric-phrase-block').forEach(b => {
+    const start = parseInt(b.dataset.measureStart, 10);
+    const end = parseInt(b.dataset.measureEnd, 10);
+    if (!isNaN(start) && !isNaN(end)) {
+      b.classList.toggle('active', measureIndex >= start && measureIndex <= end);
+    }
+  });
 
   // ASL WebP Media Slot
   if (aslVideoAsset && aslPlaceholder) {
@@ -2080,42 +2486,34 @@ function updateScorePlayhead() {
     totalScoreDuration += (60.0 / mBpm) * 4;
   }
 
-  // 2. Looping Check (triggers ONLY when elapsed reaches the end of the full score)
+  // 2. Looping Check (triggers when elapsed reaches the end of the full score)
   if (elapsed >= totalScoreDuration) {
-    if (isWarmupMode) {
-      // Warm-up run completed through Bar 14 ("And that's who we are...")!
-      // Transition immediately to normal captioning mode
+    const wasWarmupActive = isWarmupMode;
+    if (wasWarmupActive) {
+      // Warm-up run completed through Bar 14!
+      // Disable warm-up mode automatically so all subsequent loops display full lyrics & ASL signs
       isWarmupMode = false;
       if (btnScoreWarmup) {
         btnScoreWarmup.classList.remove('active');
         btnScoreWarmup.textContent = 'WARM-UP: OFF';
       }
       renderScoreLanes();
-      showToast('🎶 WARM-UP COMPLETE — NORMAL CAPTIONING ACTIVE');
+      showToast('🎉 FIRST PASS COMPLETE // WARM-UP DISABLED & CAPTIONS ACTIVE');
     }
 
     if (isScoreLooping) {
       scoreStartTime = timeSec;
       scorePausedElapsed = 0;
       lastTriggeredStep = -1;
+      updateScoreTempoVisuals(80);
       const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
       if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
-
-      // FIRST PASS ON TRACK 1 / LOOP COMPLETE: Auto-raise warm-up flag!
-      if (isWarmupMode) {
-        isWarmupMode = false;
-        if (btnScoreWarmup) {
-          btnScoreWarmup.classList.remove('active');
-          btnScoreWarmup.textContent = 'WARM-UP: COMPLETED';
-        }
-        renderScoreLanes();
-        updateCaptionCard(0, 0);
-        showToast('🎉 FIRST PASS COMPLETE // CAPTIONING ENABLED');
-      }
+      updateCaptionCard(0, 0);
       return;
     } else {
       isScorePlaying = false;
       scorePausedElapsed = 0;
+      updateScoreTempoVisuals(80);
       if (btnScorePlay) {
         btnScorePlay.textContent = 'PLAY';
         btnScorePlay.classList.remove('active');
@@ -2123,17 +2521,6 @@ function updateScorePlayhead() {
       if (scorePlayhead) scorePlayhead.style.left = '170px';
       const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
       if (scoreGridWrapper) scoreGridWrapper.scrollLeft = 0;
-
-      // Non-looping pass also completes warm-up
-      if (isWarmupMode) {
-        isWarmupMode = false;
-        if (btnScoreWarmup) {
-          btnScoreWarmup.classList.remove('active');
-          btnScoreWarmup.textContent = 'WARM-UP: COMPLETED';
-        }
-        renderScoreLanes();
-        showToast('🎉 FIRST PASS COMPLETE // CAPTIONING ENABLED');
-      }
       updateCaptionCard(0, 0);
       return;
     }
@@ -2178,6 +2565,19 @@ function updateScorePlayhead() {
   if (scoreMeasureVal) scoreMeasureVal.textContent = `BAR ${currentMeasureIdx + 1} / ${scoreData.totalMeasures}`;
   if (scoreBeatVal) scoreBeatVal.textContent = `BEAT ${beatInBar + 1}`;
   if (scoreBpmVal) scoreBpmVal.textContent = `${Math.round(currentMeasureBpm)} BPM`;
+
+  // Dynamic Background Color Shift keyed to BPM
+  updateScoreTempoVisuals(currentMeasureBpm);
+
+  // Highlight active cells across all 14 tracks in Staircase Overlay mode
+  if (currentScoreMode === 'overlay') {
+    document.querySelectorAll('.staircase-bar-cell.current-playing').forEach(c => c.classList.remove('current-playing'));
+    document.querySelectorAll(`.staircase-bar-cell[data-measure-index="${currentMeasureIdx}"]`).forEach(c => {
+      if (!c.classList.contains('offset-step')) {
+        c.classList.add('current-playing');
+      }
+    });
+  }
 
   // Update Caption & ASL Card
   updateCaptionCard(currentMeasureIdx, beatInBar, beatProgress);
@@ -2341,10 +2741,21 @@ function initScore() {
         }
       }
 
+      updateScoreTempoVisuals(80);
       const title = getActiveScoreData().title;
       showToast(`🎼 SCORE: ${title}`);
     });
   });
+
+  // Staircase Vertical Ordering Toggle (S1 at bottom like sketch <-> S1 at top)
+  if (btnToggleStaircaseOrder) {
+    btnToggleStaircaseOrder.addEventListener('click', () => {
+      staircaseAscending = !staircaseAscending;
+      btnToggleStaircaseOrder.textContent = staircaseAscending ? 'STAIRCASE: S1 AT BOTTOM ⇅' : 'STAIRCASE: S1 AT TOP ⇅';
+      renderStaircaseOverlay();
+      showToast(`STAIRCASE: ${staircaseAscending ? 'S1 AT BOTTOM (SKETCH ORDER)' : 'S1 AT TOP (DAW ORDER)'}`);
+    });
+  }
 
   // Loop Toggle
   if (btnScoreLoop) {
@@ -2453,6 +2864,7 @@ function closeScoreWindow() {
   isScoreWindowOpen = false;
   isScorePlaying = false;
   scorePausedElapsed = 0;
+  updateScoreTempoVisuals(80);
   if (btnScorePlay) {
     btnScorePlay.textContent = 'PLAY';
     btnScorePlay.classList.remove('active');

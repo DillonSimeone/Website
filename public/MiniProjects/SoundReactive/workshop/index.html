@@ -253,6 +253,7 @@
             <button class="score-tab-btn" data-mode="lift">THE LIFT (BARS 41–45)</button>
             <button class="score-tab-btn" data-mode="spiral">SPIRAL OUT (BARS 46–50)</button>
             <button class="score-tab-btn" data-mode="full">FULL SESSION (50 BARS / 2:30)</button>
+            <button class="score-tab-btn overlay-tab-btn" data-mode="overlay" id="btn-tab-overlay" title="14-Session Staircase Spiraling Overlay">🌪️ 14-SESSION SPIRAL OVERLAY</button>
           </div>
 
           <div class="score-controls">
@@ -272,32 +273,29 @@
         </div>
 
         <!-- Session 1–14 Offset Selector Bar -->
-        <div class="score-session-bar">
-          <div class="session-bar-label">
+        <div class="score-session-bar" id="score-session-bar">
+          <div class="session-bar-label" id="session-bar-label">
             <span class="sess-title">CLASSROOM SESSION OFFSET:</span>
             <span class="sess-desc">Each session starts 1 bar later to create the spiraling overlay</span>
           </div>
           <div id="session-pills-rack" class="session-pills-rack">
             <!-- 14 Session pills dynamically rendered -->
           </div>
+          <div id="staircase-order-controls" class="staircase-order-controls" style="display:none;">
+            <span class="staircase-summary-badge">🌪️ 14-SESSION STAIRCASE COMPOSITE // ~3 MINUTE FINAL PERFORMANCE (BARS 1–64)</span>
+            <button id="btn-toggle-staircase-order" class="hud-btn active" title="Toggle Ascending (Session 1 at bottom like sketch) or Descending">STAIRCASE: S1 AT BOTTOM ⇅</button>
+          </div>
         </div>
 
-        <!-- Synchronized Lyric & ASL Caption Media Box -->
+        <!-- Synchronized Lyric & Caption Media Box (Centered & Room-Readable) -->
         <div class="score-asl-caption-card">
-          <div class="asl-media-slot" id="asl-media-slot" title="Ready for ASL WebP loop animations">
-            <img id="asl-video-asset" class="asl-media-img" src="" alt="ASL Sign Animation" style="display:none;" />
-            <div id="asl-media-placeholder" class="asl-placeholder-box">
-              <span class="asl-hand-icon">🤟</span>
-              <span class="asl-slot-label">ASL VIDEO</span>
-            </div>
-          </div>
           <div class="caption-content">
             <div class="caption-header-row">
-              <span id="caption-phrase-badge" class="caption-phrase-badge">BARS 1–2 // PHRASE 1</span>
+              <span id="caption-phrase-badge" class="caption-phrase-badge">BARS 1–2 // PHRASE 1 • BAR A</span>
+              <span class="caption-dot">•</span>
               <span id="caption-tempo-badge" class="caption-tempo-badge">80 BPM</span>
             </div>
-            <div id="caption-lyric-text" class="caption-lyric-text">“This is our world, bright and wide,”</div>
-            <div id="caption-sign-hint" class="caption-sign-hint">Singers sing & Signers sign phrase across the 2-bar window</div>
+            <div id="caption-lyric-text" class="caption-lyric-text">“Our big world is open wide,”</div>
             <div class="phrase-progress-track">
               <div id="phrase-progress-bar" class="phrase-progress-bar"></div>
             </div>
@@ -331,6 +329,11 @@
           <!-- Synchronized Lanes (Bass, Snare, Clap, Hoot, Lyrics) -->
           <div id="score-lanes-container" class="score-lanes-container">
             <!-- Rendered dynamically by workshop.js -->
+          </div>
+
+          <!-- 14-Session Staircase Spiraling Overlay Container -->
+          <div id="score-staircase-container" class="score-staircase-container" style="display:none;">
+            <!-- Rendered dynamically by workshop.js when in overlay mode -->
           </div>
 
           <!-- Synchronized Sweeping Playhead Line -->

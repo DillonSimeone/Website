@@ -85,6 +85,22 @@ export default defineConfig({
     root: 'src',
     publicDir: resolve(__dirname, 'public'),
     base: '/',
+    server: {
+        host: true,
+        port: 5173,
+        watch: {
+            ignored: [
+                '**/.pio/**',
+                '**/node_modules/**',
+                '**/.venv/**',
+                '**/venv/**',
+                '**/.git/**',
+                '**/dist/**',
+                '**/.gradle/**',
+                '**/__pycache__/**',
+            ],
+        },
+    },
     build: {
         outDir: '../dist',
         emptyOutDir: true,

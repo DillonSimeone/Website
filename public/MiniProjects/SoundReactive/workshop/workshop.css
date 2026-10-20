@@ -943,6 +943,7 @@ html, body {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  transition: background-color 0.4s ease-out, border-color 0.4s ease-out;
 }
 
 /* 4-Beat Visual Count-In Overlay */
@@ -1162,17 +1163,21 @@ html, body {
 }
 
 /* Synchronized ASL & Caption Card */
+/* Synchronized Lyric & Caption Card - Centered High-Contrast Banner */
 .score-asl-caption-card {
-  margin: 8px 18px 4px 18px;
-  padding: 8px 14px;
-  background: rgba(16, 20, 32, 0.92);
-  border: 1px solid rgba(226, 183, 20, 0.35);
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
-  border-radius: 6px;
+  margin: 8px 18px 6px 18px;
+  padding: 12px 24px;
+  min-height: 115px;
+  background: rgba(10, 14, 24, 0.96);
+  border: 2px solid rgba(226, 183, 20, 0.6);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.8), inset 0 0 35px rgba(226, 183, 20, 0.08);
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  text-align: center;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .asl-media-slot {
@@ -1219,66 +1224,71 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-width: 0;
+  width: 100%;
 }
 
 .caption-header-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  gap: 12px;
+}
+
+.caption-dot {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.85rem;
 }
 
 .caption-phrase-badge {
-  font-size: 0.6rem;
-  font-weight: bold;
-  letter-spacing: 1px;
-  color: var(--accent-gold);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #ffd166;
+  text-transform: uppercase;
 }
 
 .caption-tempo-badge {
-  font-size: 0.6rem;
+  font-size: 0.8rem;
   font-family: var(--font-mono);
   color: #00e5ff;
-  font-weight: bold;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
 
 .caption-lyric-text {
   font-family: 'Special Elite', 'Courier Prime', monospace;
-  font-size: 1.15rem;
-  font-weight: bold;
+  font-size: clamp(1.8rem, 2.6vw, 2.7rem);
+  font-weight: 900;
   color: #ffffff;
-  letter-spacing: 0.6px;
-  line-height: 1.25;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
-}
-
-.caption-sign-hint {
-  font-size: 0.62rem;
-  color: #94a3b8;
-  font-style: italic;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.85), 0 0 35px rgba(255, 255, 255, 0.45);
+  width: 100%;
 }
 
 .phrase-progress-track {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
+  width: 65%;
+  max-width: 720px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
   overflow: hidden;
-  margin-top: 3px;
+  margin-top: 6px;
 }
 
 .phrase-progress-bar {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--accent-gold), #ff0055);
-  box-shadow: 0 0 8px rgba(226, 183, 20, 0.6);
+  background: linear-gradient(90deg, #ffd166, #ff0055);
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.8);
   transition: width 0.05s linear;
 }
 
@@ -1325,7 +1335,7 @@ html, body {
   flex-direction: column;
   padding: 8px 18px 14px 18px;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
   background: #08090e;
   scrollbar-width: thin;
   scrollbar-color: var(--accent-gold) rgba(6, 8, 14, 0.95);
@@ -1458,7 +1468,12 @@ html, body {
 .score-lane.lane-snare { border-color: rgba(255, 136, 0, 0.35); }
 .score-lane.lane-clap { border-color: rgba(255, 204, 0, 0.35); }
 .score-lane.lane-hoot { border-color: rgba(0, 210, 255, 0.35); }
-.score-lane.lane-lyrics { border-color: rgba(226, 183, 20, 0.4); background: rgba(226, 183, 20, 0.03); }
+.score-lane.lane-lyrics {
+  min-height: 110px;
+  height: 110px;
+  border-color: rgba(226, 183, 20, 0.6);
+  background: rgba(226, 183, 20, 0.05);
+}
 
 .lane-header {
   width: 170px;
@@ -1632,47 +1647,117 @@ html, body {
   box-shadow: 0 0 20px #00e5ff, 0 0 35px #ffffff;
 }
 
-/* 2-Bar Lyric Phrase Blocks in Score Lane */
+/* 1-Bar ASL Column Blocks in Score Lane - Maximum Room-Readable High-Contrast Display */
 .lyric-phrase-block {
   position: absolute;
-  top: 10%;
-  bottom: 10%;
-  border-radius: 4px;
-  background: rgba(226, 183, 20, 0.12);
-  border: 1px dashed rgba(226, 183, 20, 0.4);
+  top: 3px;
+  bottom: 3px;
+  left: 2px;
+  right: 2px;
+  border-radius: 6px;
+  background: rgba(14, 18, 28, 0.96);
+  border: 2px solid rgba(255, 209, 102, 0.55);
   display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  padding: 0 10px;
+  padding: 6px 4px;
   z-index: 2;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.12s ease;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .lyric-phrase-block:hover {
-  background: rgba(226, 183, 20, 0.22);
+  background: rgba(24, 30, 48, 0.98);
+  border-color: #ffd166;
+  box-shadow: 0 0 14px rgba(255, 209, 102, 0.4);
 }
 
+/* Active Highlight: Inverted Solid Radiant Gold Tile with Ink-Black Bold Letters */
 .lyric-phrase-block.active {
-  background: rgba(226, 183, 20, 0.35);
-  border-style: solid;
-  border-color: var(--accent-gold);
-  box-shadow: 0 0 15px rgba(226, 183, 20, 0.5);
+  background: linear-gradient(135deg, #fff275 0%, #ffd000 100%);
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 25px rgba(255, 208, 0, 0.95), 0 0 50px rgba(255, 208, 0, 0.6);
+  transform: scale(1.02);
 }
 
 .lyric-phrase-block.warmup-block {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border: 2px dashed rgba(255, 209, 102, 0.35);
   color: var(--text-muted);
+  justify-content: center;
+  align-items: center;
 }
 
-.lyric-phrase-label {
-  font-family: 'Special Elite', 'Courier Prime', monospace;
-  font-size: 0.72rem;
-  font-weight: bold;
-  color: #fff;
+.asl-col-header {
+  line-height: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.asl-col-header .asl-bar-tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #ffd166;
+  background: rgba(255, 209, 102, 0.18);
+  border: 1px solid rgba(255, 209, 102, 0.35);
+  padding: 1px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.lyric-phrase-block.active .asl-col-header .asl-bar-tag {
+  background: #000000;
+  color: #ffd000;
+  border-color: #000000;
+}
+
+.asl-col-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  flex: 1;
+}
+
+.asl-col-word {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.22rem;
+  font-weight: 950;
+  color: #ffe066;
+  letter-spacing: 0.8px;
+  line-height: 1.12;
+  text-align: center;
+  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+}
+
+.lyric-phrase-block.active .asl-col-word {
+  color: #000000;
+  text-shadow: none;
+}
+
+.warmup-label {
+  font-family: 'Special Elite', 'Courier Prime', monospace;
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 /* Synchronized Sweeping Playhead */
@@ -1804,3 +1889,297 @@ html, body {
 }
 
 
+
+
+/* =========================================================================
+   15. 14-SESSION STAIRCASE SPIRALING OVERLAY
+   ========================================================================= */
+
+.score-tab-btn.overlay-tab-btn {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(255, 215, 0, 0.2));
+  border-color: #00e5ff;
+  color: #00e5ff;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+.score-tab-btn.overlay-tab-btn:hover,
+.score-tab-btn.overlay-tab-btn.active {
+  background: linear-gradient(135deg, #00e5ff, #ffd700);
+  color: #000;
+  border-color: #ffd700;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.6);
+  text-shadow: none;
+}
+
+.staircase-order-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.staircase-summary-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #00e5ff;
+  letter-spacing: 0.8px;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: 4px;
+  padding: 4px 10px;
+}
+
+/* Staircase Tracks Container */
+.score-staircase-container {
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  min-width: 100%;
+  gap: 3px;
+  padding-bottom: 24px;
+  position: relative;
+  margin-top: 4px;
+}
+
+.staircase-track {
+  display: flex;
+  align-items: center;
+  height: 38px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.015);
+  border-radius: 3px;
+}
+
+.staircase-track-header {
+  width: 170px;
+  min-width: 170px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: rgba(14, 18, 28, 0.98);
+  border-right: 2px solid var(--border-color);
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.5);
+  font-family: 'JetBrains Mono', monospace;
+  box-sizing: border-box;
+}
+
+.staircase-track-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.staircase-track-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  line-height: 1.1;
+}
+
+.staircase-track-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.staircase-track-sub {
+  font-size: 0.52rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.staircase-track-body {
+  display: flex;
+  height: 100%;
+}
+
+.staircase-bar-cell {
+  width: var(--measure-width, 160px);
+  min-width: var(--measure-width, 160px);
+  height: 100%;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 2px 5px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+/* Empty staircase step offset */
+.staircase-bar-cell.offset-step {
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.015) 6px, transparent 6px, transparent 12px);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+  opacity: 0.45;
+  cursor: default;
+}
+
+.staircase-bar-cell.offset-step .staircase-bar-num {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.55rem;
+}
+
+/* Active Rolling Loop Bar */
+.staircase-bar-cell.active-loop-bar {
+  background: rgba(22, 28, 44, 0.7);
+  border: 1px solid rgba(255, 215, 0, 0.18);
+  border-radius: 3px;
+}
+
+.staircase-bar-cell.active-loop-bar:hover {
+  background: rgba(35, 45, 70, 0.85);
+  border-color: rgba(255, 215, 0, 0.45);
+}
+
+/* The Lift Bar */
+.staircase-bar-cell.active-lift-bar {
+  background: rgba(255, 140, 0, 0.18);
+  border: 1px solid rgba(255, 170, 0, 0.45);
+  border-radius: 3px;
+}
+
+.staircase-bar-cell.active-lift-bar:hover {
+  background: rgba(255, 140, 0, 0.32);
+}
+
+/* Spiral Out Bar */
+.staircase-bar-cell.active-spiral-bar {
+  background: rgba(255, 0, 100, 0.22);
+  border: 1px solid rgba(255, 50, 150, 0.55);
+  border-radius: 3px;
+}
+
+.staircase-bar-cell.active-spiral-bar:hover {
+  background: rgba(255, 0, 100, 0.38);
+}
+
+/* Final Cutoff / Silence Bar */
+.staircase-bar-cell.cutoff-bar {
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px dashed rgba(255, 50, 50, 0.45);
+  border-radius: 3px;
+}
+
+/* Cell being actively played */
+.staircase-bar-cell.current-playing {
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.7), inset 0 0 8px rgba(255, 215, 0, 0.3);
+  border-color: #ffd700 !important;
+  z-index: 4;
+}
+
+.staircase-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.staircase-bar-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+
+.staircase-bar-sign-preview {
+  font-size: 0.52rem;
+  color: #fff;
+  white-space: nowrap;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+}
+
+.staircase-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.staircase-hoot-badge {
+  background: #00d2ff;
+  color: #000;
+  font-weight: 800;
+  font-size: 0.56rem;
+  padding: 1px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 6px rgba(0, 210, 255, 0.6);
+  white-space: nowrap;
+}
+
+.staircase-lift-badge {
+  background: #ffaa00;
+  color: #000;
+  font-weight: 800;
+  font-size: 0.56rem;
+  padding: 1px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.staircase-spiral-badge {
+  background: #ff0077;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.56rem;
+  padding: 1px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 6px rgba(255, 0, 119, 0.6);
+  white-space: nowrap;
+}
+
+.staircase-cutoff-badge {
+  background: rgba(255, 50, 50, 0.25);
+  color: #ff5555;
+  border: 1px solid rgba(255, 50, 50, 0.6);
+  font-weight: 700;
+  font-size: 0.54rem;
+  padding: 1px 3px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.staircase-dots-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.staircase-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 5px;
+}
+
+.staircase-dot.dot-bass {
+  background: #ff3366;
+}
+
+.staircase-dot.dot-snare {
+  background: #ff8800;
+}
+
+.staircase-dot.dot-clap {
+  background: #ffcc00;
+}

@@ -19,13 +19,13 @@ export const params = {
     wallTabScrewDia: 4.2,     // Wall mounting screw diameter (#6 drywall screw / M4)
     wallTabCounterbore: 7.6,  // Wall mounting screw head recess
     cableJacketDia: 4.0,      // USB-C cable jacket outer diameter
-    cableBootWidth: 11.2,     // Molded USB-C boot width
-    cableBootThickness: 6.6,  // Molded USB-C boot thickness
-    cableBootLength: 16.0,    // Molded USB-C boot clamp length
+    cableBootWidth: 11.0,     // USB-C cable plug width: 11mm
+    cableBootThickness: 7.0,  // USB-C cable plug height/thickness: 7mm
+    cableBootLength: 20.0,    // USB-C cable plug length: 20mm
 
     // ESP32-C3 SuperMini Dimensions
     espWidth: 18.0,
-    espLength: 22.8,
+    espLength: 22.52,
     espPcbThick: 1.2,
     espUsbPortWidth: 9.0,
     espUsbPortHeight: 3.2,
@@ -40,6 +40,7 @@ export const params = {
     acousticHornDia: 4.5,     // Rear acoustic port diameter
 
     // Follower Node (8x8 WS2812B Matrix & Desk Stand)
+    followerBaseThickness: 12.0, // Slim, optimized base thickness (reduced from bulky 18mm)
     matrixWidth: 65.2,
     matrixLength: 65.2,
     matrixThick: 1.6,
