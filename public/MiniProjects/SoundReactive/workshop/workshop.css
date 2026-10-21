@@ -1078,6 +1078,40 @@ html, body {
   font-weight: bold;
 }
 
+.score-tab-btn[data-mode="lift"] {
+  border: 1px solid rgba(255, 60, 90, 0.45);
+  color: #ff758f;
+}
+
+.score-tab-btn[data-mode="lift"]:hover {
+  background: rgba(255, 60, 90, 0.18);
+  color: #fff;
+}
+
+.score-tab-btn[data-mode="lift"].active {
+  background: linear-gradient(135deg, #ff4d6d, #ff758f);
+  color: #fff;
+  border-color: #ff758f;
+  box-shadow: 0 0 14px rgba(255, 77, 109, 0.6);
+}
+
+.score-tab-btn[data-mode="spiral"] {
+  border: 1px solid rgba(255, 30, 60, 0.65);
+  color: #ff3355;
+}
+
+.score-tab-btn[data-mode="spiral"]:hover {
+  background: rgba(255, 30, 60, 0.25);
+  color: #fff;
+}
+
+.score-tab-btn[data-mode="spiral"].active {
+  background: linear-gradient(135deg, #d90429, #ef233c);
+  color: #fff;
+  border-color: #ff3355;
+  box-shadow: 0 0 16px rgba(239, 35, 60, 0.7);
+}
+
 .score-controls {
   display: flex;
   align-items: center;
@@ -1410,6 +1444,54 @@ html, body {
   border-right: 2px solid rgba(255, 255, 255, 0.25);
   position: relative;
   box-sizing: border-box;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+/* --- The Lift (Bars 41-45): 80 -> 90 BPM for 15s - Faint Red Graph Shading --- */
+.ruler-measure-block.tempo-lift {
+  background: linear-gradient(180deg, rgba(255, 60, 80, 0.22) 0%, rgba(255, 45, 65, 0.08) 100%);
+  border-right-color: rgba(255, 75, 95, 0.45);
+}
+
+.ruler-measure-block.tempo-lift .ruler-measure-label {
+  color: #ff758f;
+  text-shadow: 0 0 8px rgba(255, 60, 80, 0.6);
+}
+
+/* --- Spiral Out (Bars 46-50): 90 -> 100 BPM for last 15s - Redder Crimson Graph Shading --- */
+.ruler-measure-block.tempo-spiral {
+  background: linear-gradient(180deg, rgba(255, 25, 55, 0.38) 0%, rgba(255, 20, 45, 0.18) 100%);
+  border-right-color: rgba(255, 50, 75, 0.7);
+}
+
+.ruler-measure-block.tempo-spiral .ruler-measure-label {
+  color: #ff3355;
+  text-shadow: 0 0 10px rgba(255, 30, 60, 0.85);
+}
+
+.ruler-tempo-tag {
+  position: absolute;
+  top: 1px;
+  right: 4px;
+  font-size: 0.52rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.ruler-tempo-tag.lift {
+  color: #ff758f;
+  background: rgba(255, 60, 90, 0.22);
+  border: 1px solid rgba(255, 60, 90, 0.4);
+}
+
+.ruler-tempo-tag.spiral {
+  color: #ff3355;
+  background: rgba(255, 30, 60, 0.35);
+  border: 1px solid rgba(255, 30, 60, 0.65);
+  text-shadow: 0 0 6px rgba(255, 50, 80, 0.8);
 }
 
 .ruler-measure-label {
@@ -1539,8 +1621,35 @@ html, body {
   display: flex;
   border-right: 2px solid rgba(255, 255, 255, 0.18);
   position: relative;
-  overflow: hidden; /* Stops any child notes from pushing out */
+  overflow: hidden; /* Stops normal hit notes from overflowing */
   box-sizing: border-box;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+/* Allow multi-bar spans (sustained Hoot wash & multi-measure ASL phrases) to display without clipping */
+.score-lane.lane-lyrics .lane-measure,
+.score-lane.lane-hoot .lane-measure {
+  overflow: visible;
+}
+
+/* --- The Lift (Bars 41-45): 80 -> 90 BPM - Faint Red Measure Background --- */
+.lane-measure.tempo-lift {
+  background: rgba(255, 45, 75, 0.09);
+  border-right-color: rgba(255, 75, 95, 0.35);
+}
+
+.lane-measure.tempo-lift .lane-beat {
+  border-right-color: rgba(255, 60, 80, 0.1);
+}
+
+/* --- Spiral Out (Bars 46-50): 90 -> 100 BPM - Redder Crimson Measure Background --- */
+.lane-measure.tempo-spiral {
+  background: rgba(255, 25, 55, 0.22);
+  border-right-color: rgba(255, 50, 75, 0.55);
+}
+
+.lane-measure.tempo-spiral .lane-beat {
+  border-right-color: rgba(255, 30, 60, 0.18);
 }
 
 .lane-beat {
@@ -1743,9 +1852,92 @@ html, body {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
 }
 
-.lyric-phrase-block.active .asl-col-word {
-  color: #000000;
-  text-shadow: none;
+/* Ensure bright yellow ASL words by default across all block types */
+.lyric-phrase-block .asl-col-word,
+.lyric-phrase-block.tempo-lift-block .asl-col-word,
+.lyric-phrase-block.tempo-spiral-block .asl-col-word {
+  color: #ffe066;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+}
+
+/* Active Highlight: Inverted Solid Radiant Gold Tile with Ink-Black Bold Letters */
+.lyric-phrase-block.active,
+.lyric-phrase-block.tempo-lift-block.active,
+.lyric-phrase-block.tempo-spiral-block.active {
+  background: linear-gradient(135deg, #fff275 0%, #ffd000 100%) !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 0 25px rgba(255, 208, 0, 0.95), 0 0 50px rgba(255, 208, 0, 0.6) !important;
+  transform: scale(1.02);
+}
+
+.lyric-phrase-block.active .asl-col-word,
+.lyric-phrase-block.tempo-lift-block.active .asl-col-word,
+.lyric-phrase-block.tempo-spiral-block.active .asl-col-word {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+.lyric-phrase-block.active .asl-col-header .asl-bar-tag,
+.lyric-phrase-block.tempo-lift-block.active .asl-col-header .asl-bar-tag,
+.lyric-phrase-block.tempo-spiral-block.active .asl-col-header .asl-bar-tag {
+  background: #000000 !important;
+  color: #ffd000 !important;
+  border-color: #000000 !important;
+}
+
+/* Multi-bar Spanning ASL Blocks (Bars 41-42, 43-45, 46-47, 48-50) */
+.lyric-phrase-block.asl-span-block {
+  z-index: 4;
+}
+
+.lyric-phrase-block.asl-span-block .asl-col-stack {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.lyric-phrase-block.asl-span-block .asl-col-word {
+  font-size: 1.35rem;
+  letter-spacing: 1.2px;
+}
+
+/* Distinct Accent Styling for Lift & Spiral blocks in the score lane */
+.lyric-phrase-block.tempo-lift-block {
+  border-color: rgba(255, 75, 95, 0.7);
+  background: rgba(28, 14, 22, 0.96);
+  box-shadow: 0 0 12px rgba(255, 60, 90, 0.25);
+}
+
+.lyric-phrase-block.tempo-lift-block:hover {
+  background: rgba(42, 18, 28, 0.98);
+  border-color: #ff758f;
+  box-shadow: 0 0 16px rgba(255, 75, 95, 0.45);
+}
+
+.lyric-phrase-block.tempo-lift-block .asl-col-header .asl-bar-tag {
+  color: #ff758f;
+  background: rgba(255, 60, 90, 0.22);
+  border-color: rgba(255, 60, 90, 0.45);
+}
+
+.lyric-phrase-block.tempo-spiral-block {
+  border-color: rgba(255, 40, 70, 0.85);
+  background: rgba(36, 12, 18, 0.96);
+  box-shadow: 0 0 16px rgba(255, 30, 60, 0.35);
+}
+
+.lyric-phrase-block.tempo-spiral-block:hover {
+  background: rgba(54, 14, 24, 0.98);
+  border-color: #ff3355;
+  box-shadow: 0 0 20px rgba(255, 40, 70, 0.6);
+}
+
+.lyric-phrase-block.tempo-spiral-block .asl-col-header .asl-bar-tag {
+  color: #ff3355;
+  background: rgba(255, 30, 60, 0.32);
+  border-color: rgba(255, 30, 60, 0.65);
 }
 
 .warmup-label {
@@ -1932,16 +2124,57 @@ html, body {
   padding: 4px 10px;
 }
 
-/* Staircase Tracks Container */
+/* Disable top caption card in spiral overlay mode */
+.score-asl-caption-card.overlay-hidden {
+  display: none !important;
+}
+
+/* Spiral Overlay Canvas Viewport Fit (No scrollbars) */
+.score-grid-wrapper.overlay-canvas-mode {
+  overflow: hidden !important;
+  padding: 4px 10px 8px 10px !important;
+  min-height: 0 !important;
+  height: 100% !important;
+}
+
+/* Staircase Tracks Canvas Container */
 .score-staircase-container {
-  display: flex;
-  flex-direction: column;
-  width: max-content;
-  min-width: 100%;
-  gap: 3px;
-  padding-bottom: 24px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
   position: relative;
-  margin-top: 4px;
+  display: flex;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.staircase-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+  background: #080910;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.staircase-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(10, 14, 24, 0.97);
+  border: 1px solid var(--accent-gold);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.95);
+  z-index: 100;
+  white-space: nowrap;
+  transform: translate(-50%, -125%);
+  line-height: 1.35;
 }
 
 .staircase-track {

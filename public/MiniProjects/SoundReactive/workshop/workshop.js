@@ -1627,7 +1627,7 @@ function getActiveScoreData() {
   }
 
   if (currentScoreMode === 'lift') {
-    // The Lift (Bars 41-45): Tempo rises 80 -> 90 BPM
+    // The Lift (Bars 41-45): Tempo rises 80 -> 90 BPM for 15 seconds
     // Bars 41-42: Bar A (ALL PEOPLE JOIN), Bars 43-45: Bar B (CONNECT ONE WORLD held through Bar 45)
     const measures = [];
     for (let i = 0; i < 5; i++) {
@@ -1635,6 +1635,9 @@ function getActiveScoreData() {
       const prog = i / 4;
       const bpm = 80 + prog * 10;
       const isBarA = (i < 2);
+      const isSpanStart = (i === 0 || i === 2);
+      const spanBars = (i === 0) ? 2 : (i === 2 ? 3 : 0);
+      const barTag = (i === 0) ? "BARS 41–42 • BAR A" : (i === 2 ? "BARS 43–45 • BAR B (HELD)" : "");
       const activeBarSigns = isBarA ? "ALL PEOPLE JOIN" : "CONNECT ONE WORLD";
       measures.push({
         displayLabel: `BAR ${barNum}`,
@@ -1644,6 +1647,9 @@ function getActiveScoreData() {
         aslGloss: "ALL PEOPLE JOIN, CONNECT ONE WORLD",
         barSigns: activeBarSigns,
         barLabel: isBarA ? "Bar A" : "Bar B",
+        isSpanStart: isSpanStart,
+        spanBars: spanBars,
+        barTag: barTag,
         signHint: isBarA ? "Signers: ALL PEOPLE JOIN (Bars 41–42)" : "Signers: CONNECT ONE WORLD (Bars 43–45) — hold lifted through Bar 45 (80→90 BPM)",
         aslWebpUrl: "",
         bpm: bpm,
@@ -1655,7 +1661,7 @@ function getActiveScoreData() {
       });
     }
     return {
-      title: "THE LIFT // BARS 41–45 (80–90 BPM)",
+      title: "THE LIFT // BARS 41–45 (80–90 BPM / 15 SECONDS)",
       totalMeasures: 5,
       tempoMode: 'ramp',
       baseBpm: 80,
@@ -1664,7 +1670,7 @@ function getActiveScoreData() {
   }
 
   if (currentScoreMode === 'spiral') {
-    // Spiral Out (Bars 46-50): Tempo rises 90 -> 100 BPM
+    // Spiral Out (Bars 46-50): Tempo rises 90 -> 100 BPM for last 15 seconds
     // Bars 46-47: Bar A (HEARTBEAT GROW STRONG), Bars 48-50: Bar B (SHOUT CELEBRATE NOW in final bars)
     const measures = [];
     for (let i = 0; i < 5; i++) {
@@ -1672,6 +1678,9 @@ function getActiveScoreData() {
       const prog = i / 4;
       const bpm = 90 + prog * 10;
       const isBarA = (i < 2);
+      const isSpanStart = (i === 0 || i === 2);
+      const spanBars = (i === 0) ? 2 : (i === 2 ? 3 : 0);
+      const barTag = (i === 0) ? "BARS 46–47 • BAR A" : (i === 2 ? "BARS 48–50 • BAR B (APPLAUSE)" : "");
       const activeBarSigns = isBarA ? "HEARTBEAT GROW STRONG" : "SHOUT CELEBRATE NOW";
       measures.push({
         displayLabel: `BAR ${barNum}`,
@@ -1681,6 +1690,9 @@ function getActiveScoreData() {
         aslGloss: "HEARTBEAT GROW STRONG, SHOUT CELEBRATE NOW",
         barSigns: activeBarSigns,
         barLabel: isBarA ? "Bar A" : "Bar B",
+        isSpanStart: isSpanStart,
+        spanBars: spanBars,
+        barTag: barTag,
         signHint: isBarA ? "Signers: HEARTBEAT GROW STRONG (Bars 46–47)" : "Signers: SHOUT CELEBRATE NOW (Bars 48–50) — build to visual applause on Bar 50!",
         aslWebpUrl: "",
         bpm: bpm,
@@ -1692,7 +1704,7 @@ function getActiveScoreData() {
       });
     }
     return {
-      title: "SCHEFFER SPIRAL OUT // BARS 46–50 (90–100 BPM)",
+      title: "SCHEFFER SPIRAL OUT // BARS 46–50 (90–100 BPM / 15 SECONDS)",
       totalMeasures: 5,
       tempoMode: 'ramp',
       baseBpm: 90,
@@ -1768,11 +1780,14 @@ function getActiveScoreData() {
         hoot: mData.hoot
       });
     }
-    // 41-45: The Lift (Tempo rises 80 -> 90 BPM; Bars 41-42 Bar A, Bars 43-45 Bar B)
+    // 41-45: The Lift (Tempo rises 80 -> 90 BPM for 15s; Bars 41-42 Bar A, Bars 43-45 Bar B)
     for (let i = 0; i < 5; i++) {
       const barNum = 41 + i;
       const prog = i / 4;
       const isBarA = (i < 2);
+      const isSpanStart = (i === 0 || i === 2);
+      const spanBars = (i === 0) ? 2 : (i === 2 ? 3 : 0);
+      const barTag = (i === 0) ? "BARS 41–42 • BAR A" : (i === 2 ? "BARS 43–45 • BAR B (HELD)" : "");
       const activeBarSigns = isBarA ? "ALL PEOPLE JOIN" : "CONNECT ONE WORLD";
       measures.push({
         displayLabel: `BAR ${barNum}`,
@@ -1782,6 +1797,9 @@ function getActiveScoreData() {
         aslGloss: "ALL PEOPLE JOIN, CONNECT ONE WORLD",
         barSigns: activeBarSigns,
         barLabel: isBarA ? "Bar A" : "Bar B",
+        isSpanStart: isSpanStart,
+        spanBars: spanBars,
+        barTag: barTag,
         signHint: isBarA ? "Signers: ALL PEOPLE JOIN (Bars 41–42)" : "Signers: CONNECT ONE WORLD (Bars 43–45) — hold lifted through Bar 45 (80→90 BPM)",
         aslWebpUrl: "",
         bpm: 80 + prog * 10,
@@ -1792,11 +1810,14 @@ function getActiveScoreData() {
         hoot: (barNum === 41 || barNum === 43) ? { startBeat: 0, durationBeats: 2, label: "HOOT (2 BEATS)" } : null
       });
     }
-    // 46-50: Spiral Out (Tempo rises 90 -> 100 BPM; Bars 46-47 Bar A, Bars 48-50 Bar B in last bars!)
+    // 46-50: Spiral Out (Tempo rises 90 -> 100 BPM for last 15s; Bars 46-47 Bar A, Bars 48-50 Bar B in last bars!)
     for (let i = 0; i < 5; i++) {
       const barNum = 46 + i;
       const prog = i / 4;
       const isBarA = (i < 2);
+      const isSpanStart = (i === 0 || i === 2);
+      const spanBars = (i === 0) ? 2 : (i === 2 ? 3 : 0);
+      const barTag = (i === 0) ? "BARS 46–47 • BAR A" : (i === 2 ? "BARS 48–50 • BAR B (APPLAUSE)" : "");
       const activeBarSigns = isBarA ? "HEARTBEAT GROW STRONG" : "SHOUT CELEBRATE NOW";
       measures.push({
         displayLabel: `BAR ${barNum}`,
@@ -1806,6 +1827,9 @@ function getActiveScoreData() {
         aslGloss: "HEARTBEAT GROW STRONG, SHOUT CELEBRATE NOW",
         barSigns: activeBarSigns,
         barLabel: isBarA ? "Bar A" : "Bar B",
+        isSpanStart: isSpanStart,
+        spanBars: spanBars,
+        barTag: barTag,
         signHint: isBarA ? "Signers: HEARTBEAT GROW STRONG (Bars 46–47)" : "Signers: SHOUT CELEBRATE NOW (Bars 48–50) — build to visual applause on Bar 50!",
         aslWebpUrl: "",
         bpm: 90 + prog * 10,
@@ -1957,25 +1981,28 @@ function updateScoreTempoVisuals(bpm) {
   if (bpm <= 80) {
     scoreWindow.style.backgroundColor = 'rgba(12, 14, 22, 0.97)';
     scoreWindow.style.borderColor = 'var(--border-color)';
+    scoreWindow.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.85)';
     return;
   }
 
   if (bpm <= 90) {
-    // 80 -> 90 BPM: Shift from dark space navy (12, 14, 22) to deep cosmic violet (26, 12, 42)
+    // 80 -> 90 BPM (The Lift): Faint red ambient shift
     const t = (bpm - 80) / 10;
-    const r = Math.round(12 + (26 - 12) * t);
-    const g = Math.round(14 + (12 - 14) * t);
-    const b = Math.round(22 + (42 - 22) * t);
+    const r = Math.round(12 + (38 - 12) * t);
+    const g = Math.round(14 + (14 - 14) * t);
+    const b = Math.round(22 + (20 - 22) * t);
     scoreWindow.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.97)`;
-    scoreWindow.style.borderColor = `rgba(180, 80, 255, ${0.25 + t * 0.35})`;
+    scoreWindow.style.borderColor = `rgba(255, 60, 90, ${0.3 + t * 0.35})`;
+    scoreWindow.style.boxShadow = `0 20px 60px rgba(0, 0, 0, 0.85), 0 0 ${15 + t * 25}px rgba(255, 60, 90, ${0.2 + t * 0.25})`;
   } else {
-    // 90 -> 100 BPM: Shift from deep cosmic violet (26, 12, 42) to deep glowing ember crimson (48, 12, 24)
+    // 90 -> 100 BPM (Spiral Out): Redder, deeper glowing crimson shift
     const t = Math.min(1.0, (bpm - 90) / 10);
-    const r = Math.round(26 + (48 - 26) * t);
-    const g = Math.round(12 + (12 - 12) * t);
-    const b = Math.round(42 + (24 - 42) * t);
-    scoreWindow.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.97)`;
-    scoreWindow.style.borderColor = `rgba(255, 60, 100, ${0.6 + t * 0.4})`;
+    const r = Math.round(38 + (70 - 38) * t);
+    const g = Math.round(14 + (10 - 14) * t);
+    const b = Math.round(20 + (22 - 20) * t);
+    scoreWindow.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.98)`;
+    scoreWindow.style.borderColor = `rgba(255, 30, 60, ${0.65 + t * 0.35})`;
+    scoreWindow.style.boxShadow = `0 20px 60px rgba(0, 0, 0, 0.85), 0 0 ${35 + t * 45}px rgba(255, 30, 60, ${0.4 + t * 0.4})`;
   }
 }
 
@@ -1994,151 +2021,459 @@ function seekToMeasure(mIdx) {
   scoreStartTime = now - accTime;
   lastTriggeredStep = -1;
 
-  updateScorePlayhead();
+  if (currentScoreMode === 'overlay') {
+    drawStaircaseCanvas(mIdx, 0);
+  } else {
+    updateCaptionCard(mIdx, 0);
+    const measureBlocks = document.querySelectorAll('.ruler-measure-block');
+    const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
+    if (measureBlocks.length > mIdx && scoreGridWrapper && scorePlayhead) {
+      const targetBlock = measureBlocks[mIdx];
+      const blockRect = targetBlock.getBoundingClientRect();
+      const wrapperRect = scoreGridWrapper.getBoundingClientRect();
+      const playheadX = (blockRect.left - wrapperRect.left + scoreGridWrapper.scrollLeft);
+      scorePlayhead.style.left = `${playheadX}px`;
+    }
+  }
+
+  if (isScorePlaying) {
+    updateScorePlayhead();
+  }
+}
+
+/* --- 13.5 14-Session Spiraling Staircase Overlay (Viewport-Fit Canvas Engine) --- */
+
+let staircaseCanvas = document.getElementById('staircase-canvas');
+let staircaseTooltip = document.getElementById('staircase-tooltip');
+let isStaircaseEventsBound = false;
+let hoveredOverlayBar = -1;
+let hoveredOverlaySession = -1;
+let currentOverlayMeasureIdx = 0;
+let currentOverlayBeatFloat = 0;
+
+function initStaircaseCanvasEvents() {
+  if (isStaircaseEventsBound) return;
+  if (!staircaseCanvas) staircaseCanvas = document.getElementById('staircase-canvas');
+  if (!staircaseTooltip) staircaseTooltip = document.getElementById('staircase-tooltip');
+  if (!staircaseCanvas) return;
+  isStaircaseEventsBound = true;
+
+  staircaseCanvas.addEventListener('pointermove', (e) => {
+    if (currentScoreMode !== 'overlay') return;
+    const rect = staircaseCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const w = rect.width;
+    const h = rect.height;
+    const headerW = Math.max(88, Math.min(125, Math.floor(w * 0.085)));
+    const topRulerH = 28;
+    const gridW = w - headerW - 8;
+    const gridH = h - topRulerH - 4;
+    const barW = gridW / 64;
+    const rowH = gridH / 14;
+
+    if (x >= headerW && y >= topRulerH && x <= headerW + gridW && y <= topRulerH + gridH) {
+      const bar = Math.min(64, Math.max(1, Math.floor((x - headerW) / barW) + 1));
+      const row = Math.min(13, Math.max(0, Math.floor((y - topRulerH) / rowH)));
+      
+      const sessionList = [];
+      if (staircaseAscending) {
+        for (let s = 14; s >= 1; s--) sessionList.push(s);
+      } else {
+        for (let s = 1; s <= 14; s++) sessionList.push(s);
+      }
+      const s = sessionList[row];
+      hoveredOverlayBar = bar;
+      hoveredOverlaySession = s;
+
+      // Tooltip HTML content
+      const relBar = bar - s + 1;
+      let phaseHtml = '';
+      if (bar < s) {
+        phaseHtml = `<span style="color:#8892b0;">Pre-Entrance Silence (Enters at Bar ${s})</span>`;
+      } else if (relBar <= 40) {
+        const mBar = ((bar - 1) % 14) + 1;
+        const pIdx = Math.floor((mBar - 1) / 2);
+        const p = MASTER_LOOP_PHRASES[pIdx];
+        const signs = (mBar - 1) % 2 === 0 ? p.barASigns : p.barBSigns;
+        phaseHtml = `<b style="color:#ffd166;">Rolling Loop (Bar ${relBar}/50 • M${mBar})</b><br>ASL: <b style="color:#fff;">${signs}</b><br><span style="color:#a0aec0;font-size:0.65rem;">“${p.lyric}”</span>`;
+      } else if (relBar <= 45) {
+        const isA = (relBar - 41) < 2;
+        const signs = isA ? "ALL PEOPLE JOIN" : "CONNECT ONE WORLD";
+        phaseHtml = `<b style="color:#ff758f;">THE LIFT (80→90 BPM • Bar ${relBar}/50)</b><br>ASL: <b style="color:#fff;">${signs}</b>`;
+      } else if (relBar <= 50) {
+        const isA = (relBar - 46) < 2;
+        const signs = isA ? "HEARTBEAT GROW STRONG" : "SHOUT CELEBRATE NOW";
+        phaseHtml = `<b style="color:#ff3355;">SPIRAL OUT (90→100 BPM • Bar ${relBar}/50)</b><br>ASL: <b style="color:#fff;">${signs}</b>`;
+      } else if (relBar === 51) {
+        phaseHtml = `<b style="color:#ffd700;">FINAL CUTOFF CHORD & SILENCE</b>`;
+      } else {
+        phaseHtml = `<span style="color:#666;">Session Complete</span>`;
+      }
+
+      if (staircaseTooltip) {
+        const hue = Math.round((s - 1) * (360 / 14));
+        staircaseTooltip.innerHTML = `
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="background:hsl(${hue},90%,55%);color:#000;font-weight:bold;padding:1px 6px;border-radius:3px;">S${s}</span>
+            <b>Session ${s}</b> • <span>Timeline Bar ${bar} of 64</span>
+          </div>
+          ${phaseHtml}
+          <div style="margin-top:5px;font-size:0.62rem;color:#00e5ff;letter-spacing:0.4px;">Click to jump playhead here</div>
+        `;
+        staircaseTooltip.style.display = 'block';
+
+        const tipX = Math.max(130, Math.min(w - 140, x));
+        const tipY = Math.max(65, y - 10);
+        staircaseTooltip.style.left = `${tipX}px`;
+        staircaseTooltip.style.top = `${tipY}px`;
+      }
+
+      drawStaircaseCanvas();
+    } else {
+      if (staircaseTooltip) staircaseTooltip.style.display = 'none';
+      hoveredOverlayBar = -1;
+      hoveredOverlaySession = -1;
+      drawStaircaseCanvas();
+    }
+  });
+
+  staircaseCanvas.addEventListener('pointerleave', () => {
+    if (staircaseTooltip) staircaseTooltip.style.display = 'none';
+    hoveredOverlayBar = -1;
+    hoveredOverlaySession = -1;
+    drawStaircaseCanvas();
+  });
+
+  staircaseCanvas.addEventListener('pointerdown', (e) => {
+    if (currentScoreMode !== 'overlay') return;
+    const rect = staircaseCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const w = rect.width;
+    const headerW = Math.max(88, Math.min(125, Math.floor(w * 0.085)));
+    const gridW = w - headerW - 8;
+    const barW = gridW / 64;
+
+    if (x >= headerW) {
+      const barIdx = Math.min(63, Math.max(0, Math.floor((x - headerW) / barW)));
+      seekToMeasure(barIdx);
+      drawStaircaseCanvas();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (currentScoreMode === 'overlay') {
+      drawStaircaseCanvas();
+    }
+  });
 }
 
 function renderStaircaseOverlay() {
-  if (!scoreStaircaseContainer) return;
-  scoreStaircaseContainer.innerHTML = '';
+  if (!staircaseCanvas) staircaseCanvas = document.getElementById('staircase-canvas');
+  if (!staircaseTooltip) staircaseTooltip = document.getElementById('staircase-tooltip');
+  initStaircaseCanvasEvents();
+  drawStaircaseCanvas();
+}
 
-  const totalBars = 64;
+function drawRoundRect(ctx, x, y, w, h, r) {
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, w, h, r);
+  } else {
+    ctx.rect(x, y, w, h);
+  }
+}
+
+function drawStaircaseCanvas(currentMeasureIdx = currentOverlayMeasureIdx, beatInMeasureFloat = currentOverlayBeatFloat) {
+  currentOverlayMeasureIdx = currentMeasureIdx;
+  currentOverlayBeatFloat = beatInMeasureFloat;
+
+  if (!staircaseCanvas) staircaseCanvas = document.getElementById('staircase-canvas');
+  if (!staircaseCanvas || currentScoreMode !== 'overlay') return;
+  const ctx = staircaseCanvas.getContext('2d');
+  if (!ctx) return;
+
+  const parent = staircaseCanvas.parentElement;
+  if (!parent) return;
+  const rect = parent.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const displayW = Math.max(300, Math.floor(rect.width));
+  const displayH = Math.max(200, Math.floor(rect.height));
+
+  if (staircaseCanvas.width !== Math.floor(displayW * dpr) || staircaseCanvas.height !== Math.floor(displayH * dpr)) {
+    staircaseCanvas.width = Math.floor(displayW * dpr);
+    staircaseCanvas.height = Math.floor(displayH * dpr);
+  }
+
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const w = displayW;
+  const h = displayH;
+  const headerW = Math.max(88, Math.min(125, Math.floor(w * 0.085)));
+  const topRulerH = 28;
+  const bottomMargin = 4;
+  const gridW = w - headerW - 8;
+  const gridH = h - topRulerH - bottomMargin;
+  const barW = gridW / 64;
+  const rowH = gridH / 14;
+
+  // 1. Dark Slate Viewport Background
+  ctx.fillStyle = '#080911';
+  ctx.fillRect(0, 0, w, h);
+
+  // 2. Top Measure Ruler Background
+  ctx.fillStyle = '#0c0f1c';
+  ctx.fillRect(0, 0, w, topRulerH);
+
+  // Faint red tint for The Lift (Bars 41-45)
+  const liftX = headerW + 40 * barW;
+  const liftW = 5 * barW;
+  ctx.fillStyle = 'rgba(255, 60, 90, 0.22)';
+  ctx.fillRect(liftX, 0, liftW, topRulerH);
+
+  // Redder crimson tint for Spiral Out (Bars 46-50)
+  const spiralX = headerW + 45 * barW;
+  const spiralW = 5 * barW;
+  ctx.fillStyle = 'rgba(255, 25, 60, 0.42)';
+  ctx.fillRect(spiralX, 0, spiralW, topRulerH);
+
+  // Ruler Banners
+  ctx.font = 'bold 9px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#ff758f';
+  ctx.fillText('LIFT 80→90', liftX + liftW / 2, 2);
+  ctx.fillStyle = '#ff3355';
+  ctx.fillText('SPIRAL 90→100', spiralX + spiralW / 2, 2);
+
+  // Bottom border line for top ruler
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, topRulerH);
+  ctx.lineTo(w, topRulerH);
+  ctx.stroke();
+
+  // Draw Ruler Measure Numbers & Ticks
+  const activeTimelineBar = currentMeasureIdx + 1;
+  for (let t = 1; t <= 64; t++) {
+    const bx = headerW + (t - 1) * barW;
+
+    ctx.strokeStyle = (t === 41 || t === 46 || t === 51) ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.12)';
+    ctx.beginPath();
+    ctx.moveTo(bx, topRulerH - 7);
+    ctx.lineTo(bx, topRulerH);
+    ctx.stroke();
+
+    const shouldLabel = (t === 1 || t % 4 === 0 || t === 41 || t === 45 || t === 46 || t === 50 || t === 64);
+    if (shouldLabel) {
+      ctx.font = 'bold 8.5px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (t === activeTimelineBar) {
+        ctx.fillStyle = '#00e5ff';
+        ctx.fillText(t, bx + barW / 2, topRulerH - 12);
+      } else if (t >= 41 && t <= 45) {
+        ctx.fillStyle = '#ff758f';
+        ctx.fillText(t, bx + barW / 2, topRulerH - 12);
+      } else if (t >= 46 && t <= 50) {
+        ctx.fillStyle = '#ff3355';
+        ctx.fillText(t, bx + barW / 2, topRulerH - 12);
+      } else {
+        ctx.fillStyle = '#8892b0';
+        ctx.fillText(t, bx + barW / 2, topRulerH - 12);
+      }
+    }
+  }
+
+  // 3. Session Rows Matrix
   const sessionList = [];
   if (staircaseAscending) {
-    // S1 at bottom, S14 at top (matching user whiteboard sketch!)
     for (let s = 14; s >= 1; s--) sessionList.push(s);
   } else {
-    // S1 at top, S14 at bottom (standard DAW cascade)
     for (let s = 1; s <= 14; s++) sessionList.push(s);
   }
 
-  sessionList.forEach(s => {
-    const track = document.createElement('div');
-    track.className = 'staircase-track';
-    track.dataset.session = s;
-
-    // Sticky track header on left
-    const header = document.createElement('div');
-    header.className = 'staircase-track-header';
+  sessionList.forEach((s, rowIndex) => {
+    const ry = topRulerH + rowIndex * rowH;
     const hue = Math.round((s - 1) * (360 / 14));
-    const sessionColor = `hsl(${hue}, 90%, 55%)`;
 
-    header.innerHTML = `
-      <div class="staircase-track-badge" style="background:${sessionColor};">S${s}</div>
-      <div class="staircase-track-info">
-        <span class="staircase-track-title">SESSION ${s}</span>
-        <span class="staircase-track-sub">Starts at Bar ${s}</span>
-      </div>
-    `;
-    track.appendChild(header);
+    // Zebra striping for session row
+    ctx.fillStyle = rowIndex % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'rgba(0, 0, 0, 0.2)';
+    ctx.fillRect(0, ry, w, rowH);
 
-    // Track Body with 64 measure cells
-    const body = document.createElement('div');
-    body.className = 'staircase-track-body';
+    // Sticky Left Session Header
+    const badgeW = 26;
+    const badgeH = Math.min(18, Math.max(12, rowH - 6));
+    const badgeY = ry + (rowH - badgeH) / 2;
 
-    for (let t = 1; t <= totalBars; t++) {
-      const cell = document.createElement('div');
-      cell.className = 'staircase-bar-cell';
-      cell.dataset.measureIndex = t - 1;
-      cell.dataset.session = s;
+    ctx.fillStyle = `hsl(${hue}, 90%, 55%)`;
+    ctx.beginPath();
+    drawRoundRect(ctx, 6, badgeY, badgeW, badgeH, 3);
+    ctx.fill();
+
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`S${s}`, 6 + badgeW / 2, badgeY + badgeH / 2);
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = 'bold 8.5px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Bar ${s}`, 6 + badgeW + 6, ry + rowH / 2);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(headerW - 2, ry);
+    ctx.lineTo(headerW - 2, ry + rowH);
+    ctx.stroke();
+
+    // 64 Measure Cells for this Session
+    for (let t = 1; t <= 64; t++) {
+      const cx = headerW + (t - 1) * barW;
+      const cy = ry + 1;
+      const cw = Math.max(1, barW - 1.2);
+      const ch = Math.max(1, rowH - 2);
+
+      const relBar = t - s + 1;
 
       if (t < s) {
-        // Pre-entrance staircase step
-        cell.classList.add('offset-step');
-        cell.title = `Session ${s}: Silent count-in // Starts at Bar ${s}`;
-        cell.innerHTML = `
-          <div class="staircase-bar-left">
-            <span class="staircase-bar-num" style="opacity:0.35;">M${t}</span>
-          </div>
-        `;
-      } else if (t >= s && t < s + 50) {
-        const relBar = t - s + 1; // 1 to 50
-        if (relBar <= 40) {
-          // Rolling loop
-          cell.classList.add('active-loop-bar');
-          const masterBar = ((t - 1) % 14) + 1;
-          const phraseIdx = Math.floor((masterBar - 1) / 2);
-          const p = MASTER_LOOP_PHRASES[phraseIdx];
-          const mInPhrase = (masterBar - 1) % 2;
-          const barSigns = mInPhrase === 0 ? p.barASigns : p.barBSigns;
-          cell.title = `Session ${s} (Bar ${relBar}/50) • M${masterBar}: ${barSigns}`;
+        // Pre-entrance staircase step (silence)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+        ctx.fillRect(cx, cy, cw, ch);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+        ctx.strokeRect(cx, cy, cw, ch);
+      } else if (relBar <= 40) {
+        // Active Rolling Loop (40 bars)
+        const masterBar = ((t - 1) % 14) + 1;
+        ctx.fillStyle = `hsla(${hue}, 80%, 45%, 0.25)`;
+        ctx.fillRect(cx, cy, cw, ch);
+        ctx.strokeStyle = `hsla(${hue}, 85%, 60%, 0.5)`;
+        ctx.strokeRect(cx, cy, cw, ch);
 
-          let rightBadge = '';
-          if (masterBar === 7) {
-            rightBadge = `<span class="staircase-hoot-badge">HOOT 2b</span>`;
-          } else if (masterBar === 13) {
-            rightBadge = `<span class="staircase-hoot-badge">TOOT 4b</span>`;
-          }
-
-          cell.innerHTML = `
-            <div class="staircase-bar-left">
-              <span class="staircase-bar-num">M${masterBar}</span>
-              <span class="staircase-bar-sign-preview">${barSigns}</span>
-            </div>
-            <div class="staircase-bar-right">
-              ${rightBadge}
-              <div class="staircase-dots-row">
-                <span class="staircase-dot dot-bass"></span>
-                <span class="staircase-dot dot-snare"></span>
-              </div>
-            </div>
-          `;
-        } else if (relBar <= 45) {
-          // The Lift (Bars 41-45)
-          cell.classList.add('active-lift-bar');
-          const liftBar = relBar;
-          const isBarA = (relBar - 41) < 2;
-          const signs = isBarA ? "ALL PEOPLE JOIN" : "CONNECT ONE WORLD";
-          cell.title = `Session ${s}: THE LIFT (Bar ${liftBar}) • ${signs} (80→90 BPM)`;
-          cell.innerHTML = `
-            <div class="staircase-bar-left">
-              <span class="staircase-bar-num" style="color:#ffaa00;">B${liftBar}</span>
-              <span class="staircase-bar-sign-preview">${signs}</span>
-            </div>
-            <div class="staircase-bar-right">
-              <span class="staircase-lift-badge">LIFT</span>
-            </div>
-          `;
-        } else {
-          // Spiral Out (Bars 46-50)
-          cell.classList.add('active-spiral-bar');
-          const spiralBar = relBar;
-          const isBarA = (relBar - 46) < 2;
-          const signs = isBarA ? "HEARTBEAT GROW STRONG" : "SHOUT CELEBRATE NOW";
-          cell.title = `Session ${s}: SPIRAL OUT (Bar ${spiralBar}) • ${signs} (90→100 BPM)`;
-          cell.innerHTML = `
-            <div class="staircase-bar-left">
-              <span class="staircase-bar-num" style="color:#ff3388;">B${spiralBar}</span>
-              <span class="staircase-bar-sign-preview">${signs}</span>
-            </div>
-            <div class="staircase-bar-right">
-              <span class="staircase-spiral-badge">SPIRAL</span>
-            </div>
-          `;
+        if (masterBar === 7) {
+          ctx.fillStyle = '#00e5ff';
+          ctx.fillRect(cx + cw - 3, cy + 1, 2.5, 2.5);
+        } else if (masterBar === 13) {
+          ctx.fillStyle = '#ffd700';
+          ctx.fillRect(cx + cw - 3, cy + 1, 2.5, 2.5);
         }
-      } else if (t === s + 50) {
-        // Cutoff chord into silence
-        cell.classList.add('cutoff-bar');
-        cell.title = `Session ${s}: Final Cutoff Chord & Silence`;
-        cell.innerHTML = `
-          <span class="staircase-cutoff-badge">CUTOFF</span>
-        `;
+
+        if (cw >= 14 && ch >= 12) {
+          ctx.fillStyle = '#ffd166';
+          ctx.font = '8px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`M${masterBar}`, cx + cw / 2, cy + ch / 2);
+        }
+      } else if (relBar <= 45) {
+        // The Lift (Bars 41-45: 80 -> 90 BPM)
+        ctx.fillStyle = 'rgba(255, 60, 90, 0.42)';
+        ctx.fillRect(cx, cy, cw, ch);
+        ctx.strokeStyle = 'rgba(255, 80, 110, 0.8)';
+        ctx.strokeRect(cx, cy, cw, ch);
+
+        if (cw >= 14 && ch >= 12) {
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 7.5px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('LIFT', cx + cw / 2, cy + ch / 2);
+        }
+      } else if (relBar <= 50) {
+        // Spiral Out (Bars 46-50: 90 -> 100 BPM)
+        ctx.fillStyle = 'rgba(255, 25, 60, 0.65)';
+        ctx.fillRect(cx, cy, cw, ch);
+        ctx.strokeStyle = 'rgba(255, 50, 80, 0.95)';
+        ctx.strokeRect(cx, cy, cw, ch);
+
+        if (cw >= 14 && ch >= 12) {
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 7.5px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('SPRL', cx + cw / 2, cy + ch / 2);
+        }
+      } else if (relBar === 51) {
+        // Final Cutoff Chord
+        ctx.fillStyle = 'rgba(255, 204, 0, 0.9)';
+        ctx.fillRect(cx, cy, cw, ch);
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeRect(cx, cy, cw, ch);
+
+        if (cw >= 12 && ch >= 12) {
+          ctx.fillStyle = '#000';
+          ctx.font = 'bold 7.5px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('CUT', cx + cw / 2, cy + ch / 2);
+        }
       } else {
         // Post-cutoff silence
-        cell.classList.add('offset-step');
-        cell.title = `Session ${s}: Finished`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.01)';
+        ctx.fillRect(cx, cy, cw, ch);
       }
 
-      cell.addEventListener('pointerdown', (e) => {
-        e.stopPropagation();
-        seekToMeasure(t - 1);
-      });
-
-      body.appendChild(cell);
+      // Hovered Cell Glow
+      if (s === hoveredOverlaySession && t === hoveredOverlayBar) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 1, cy - 1, cw + 2, ch + 2);
+      }
     }
-
-    track.appendChild(body);
-    scoreStaircaseContainer.appendChild(track);
   });
+
+  // 4. Highlight Active Playing Bar Column
+  if (activeTimelineBar >= 1 && activeTimelineBar <= 64) {
+    const colX = headerW + (activeTimelineBar - 1) * barW;
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.12)';
+    ctx.fillRect(colX, topRulerH, barW, gridH);
+  }
+
+  // 5. Sweeping Laser Playhead Line
+  const playheadX = headerW + (currentMeasureIdx + (beatInMeasureFloat / 4)) * barW;
+  if (playheadX >= headerW && playheadX <= headerW + gridW) {
+    ctx.save();
+    ctx.shadowColor = '#00e5ff';
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = '#00e5ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(playheadX, 0);
+    ctx.lineTo(playheadX, h);
+    ctx.stroke();
+
+    const badgeText = `BAR ${activeTimelineBar}`;
+    ctx.font = 'bold 8.5px monospace';
+    const textW = ctx.measureText(badgeText).width + 8;
+    ctx.fillStyle = '#00e5ff';
+    ctx.beginPath();
+    drawRoundRect(ctx, playheadX - textW / 2, 2, textW, 14, 3);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(badgeText, playheadX, 9);
+    ctx.restore();
+  }
+
+  ctx.restore();
+
+  // 6. Telemetry Status Bar Update
+  let activeSessionsCount = 0;
+  for (let s = 1; s <= 14; s++) {
+    if (activeTimelineBar >= s && activeTimelineBar <= s + 50) {
+      activeSessionsCount++;
+    }
+  }
+  if (scoreMeasureVal) scoreMeasureVal.textContent = `TIMELINE BAR ${activeTimelineBar} / 64`;
+  if (scoreBeatVal) scoreBeatVal.textContent = `BEAT ${Math.floor(beatInMeasureFloat) + 1}`;
+  if (scoreTeleHintText) {
+    scoreTeleHintText.textContent = `🌪️ ${activeSessionsCount} SESSIONS PLAYING SIMULTANEOUSLY • CLICK ANYWHERE TO JUMP • HOVER FOR SESSION ASL DETAILS`;
+  }
 }
 
 function renderScoreMeasureRuler() {
@@ -2153,8 +2488,25 @@ function renderScoreMeasureRuler() {
     block.className = 'ruler-measure-block';
     block.dataset.measureIndex = idx;
 
+    const isLift = m.phraseIndex === 'LIFT';
+    const isSpiral = m.phraseIndex === 'SPIRAL';
+
+    if (isLift) {
+      block.classList.add('tempo-lift');
+    } else if (isSpiral) {
+      block.classList.add('tempo-spiral');
+    }
+
+    let tempoTag = '';
+    if (isLift) {
+      tempoTag = `<span class="ruler-tempo-tag lift">${Math.round(m.bpm)} BPM</span>`;
+    } else if (isSpiral) {
+      tempoTag = `<span class="ruler-tempo-tag spiral">${Math.round(m.bpm)} BPM</span>`;
+    }
+
     block.innerHTML = `
       <span class="ruler-measure-label">${m.displayLabel}</span>
+      ${tempoTag}
       <div class="ruler-beat-ticks">
         <div class="ruler-beat-tick">1</div>
         <div class="ruler-beat-tick">2</div>
@@ -2171,8 +2523,17 @@ function renderScoreMeasureRuler() {
 }
 
 function renderScoreLanes() {
+  const scoreAslCaptionCard = document.querySelector('.score-asl-caption-card');
+  const scoreZoomGroup = document.querySelector('.score-zoom-group');
+  const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
+
   if (currentScoreMode === 'overlay') {
+    if (scoreAslCaptionCard) scoreAslCaptionCard.classList.add('overlay-hidden');
+    if (scoreZoomGroup) scoreZoomGroup.style.display = 'none';
+    if (scoreGridWrapper) scoreGridWrapper.classList.add('overlay-canvas-mode');
+    if (scoreMeasureRuler) scoreMeasureRuler.style.display = 'none';
     if (scoreLanesContainer) scoreLanesContainer.style.display = 'none';
+    if (scorePlayhead) scorePlayhead.style.display = 'none';
     if (scoreStaircaseContainer) scoreStaircaseContainer.style.display = 'flex';
     if (sessionBarLabel) sessionBarLabel.style.display = 'none';
     if (sessionPillsRack) sessionPillsRack.style.display = 'none';
@@ -2181,7 +2542,12 @@ function renderScoreLanes() {
     return;
   }
 
+  if (scoreAslCaptionCard) scoreAslCaptionCard.classList.remove('overlay-hidden');
+  if (scoreZoomGroup) scoreZoomGroup.style.display = 'flex';
+  if (scoreGridWrapper) scoreGridWrapper.classList.remove('overlay-canvas-mode');
+  if (scoreMeasureRuler) scoreMeasureRuler.style.display = 'flex';
   if (scoreLanesContainer) scoreLanesContainer.style.display = 'flex';
+  if (scorePlayhead) scorePlayhead.style.display = 'block';
   if (scoreStaircaseContainer) scoreStaircaseContainer.style.display = 'none';
   if (sessionBarLabel) sessionBarLabel.style.display = 'flex';
   if (sessionPillsRack) sessionPillsRack.style.display = 'flex';
@@ -2218,8 +2584,15 @@ function renderScoreLanes() {
       measure.className = 'lane-measure';
       measure.dataset.measureIndex = mIdx;
 
+      // Add faint red / redder shading to graph measures
+      if (m.phraseIndex === 'LIFT') {
+        measure.classList.add('tempo-lift');
+      } else if (m.phraseIndex === 'SPIRAL') {
+        measure.classList.add('tempo-spiral');
+      }
+
       if (cfg.id === 'lyrics') {
-        // Lyrics Lane: show warm-up or 1-bar ASL Column Block (NO English words in the timeline)
+        // Lyrics Lane: show warm-up, multi-bar spanning blocks, or 1-bar ASL Column Block
         if (m.isWarmup) {
           if (mIdx === 0) {
             const block = document.createElement('div');
@@ -2230,8 +2603,54 @@ function renderScoreLanes() {
             block.innerHTML = `<span class="warmup-label" style="opacity:0.85;">(Instrumental Warm-Up // Bars 1–13 • Building Pulse with Ensemble)</span>`;
             measure.appendChild(block);
           }
+        } else if (m.phraseIndex === 'WARM-UP FINALE') {
+          // Bar 14 of Warm-Up pass
+          const block = document.createElement('div');
+          block.className = 'lyric-phrase-block asl-column-block';
+          block.dataset.measureStart = mIdx;
+          block.dataset.measureEnd = mIdx;
+          block.style.width = 'calc(var(--measure-width, 160px) - 6px)';
+          block.title = 'Bar 14: WE STAND TOGETHER';
+          block.innerHTML = `
+            <div class="asl-col-header">
+              <span class="asl-bar-tag">BAR 14</span>
+            </div>
+            <div class="asl-col-stack">
+              <span class="asl-col-word">WE</span>
+              <span class="asl-col-word">STAND</span>
+              <span class="asl-col-word">TOGETHER</span>
+            </div>
+          `;
+          measure.appendChild(block);
+        } else if (m.phraseIndex === 'LIFT' || m.phraseIndex === 'SPIRAL') {
+          // Multi-Bar The Lift (Bars 41-45) or Spiral Out (Bars 46-50)
+          // Renders ONE wide spanning block at the start of each phrase part (Bar A or Bar B)
+          if (m.isSpanStart) {
+            const block = document.createElement('div');
+            const spanClass = m.phraseIndex === 'LIFT' ? 'tempo-lift-block' : 'tempo-spiral-block';
+            block.className = `lyric-phrase-block asl-column-block asl-span-block ${spanClass}`;
+            const spanCount = m.spanBars || 1;
+            block.dataset.measureStart = mIdx;
+            block.dataset.measureEnd = mIdx + spanCount - 1;
+            block.style.width = `calc(var(--measure-width, 160px) * ${spanCount} - 6px)`;
+            block.title = `${m.barTag}: ${m.barSigns}`;
+
+            const signsStr = m.barSigns || '';
+            const words = signsStr ? signsStr.trim().split(/\s+/) : [];
+            const wordsHtml = words.map(w => `<span class="asl-col-word">${w}</span>`).join('');
+
+            block.innerHTML = `
+              <div class="asl-col-header">
+                <span class="asl-bar-tag">${m.barTag}</span>
+              </div>
+              <div class="asl-col-stack">
+                ${wordsHtml}
+              </div>
+            `;
+            measure.appendChild(block);
+          }
         } else {
-          // Individual 1-bar ASL Column Block (one per measure)
+          // Standard 1-Bar ASL Column Block (one per measure for Bars 1-40)
           const block = document.createElement('div');
           block.className = 'lyric-phrase-block asl-column-block';
           block.dataset.measureStart = mIdx;
@@ -2239,11 +2658,11 @@ function renderScoreLanes() {
           block.style.width = 'calc(var(--measure-width, 160px) - 6px)';
           block.title = `${m.barLabel || ''}: ${m.barSigns || ''}`;
 
-          const signsStr = m.barSigns || (m.phraseIndex === 'WARM-UP FINALE' ? 'WE STAND TOGETHER' : '');
+          const signsStr = m.barSigns || '';
           const words = signsStr ? signsStr.trim().split(/\s+/) : [];
           const wordsHtml = words.map(w => `<span class="asl-col-word">${w}</span>`).join('');
 
-          const barTag = m.phraseIndex === 'WARM-UP FINALE' ? 'BAR 14' : (m.barLabel || `BAR ${mIdx + 1}`);
+          const barTag = m.barLabel ? `${m.barLabel}` : `BAR ${mIdx + 1}`;
 
           block.innerHTML = `
             <div class="asl-col-header">
@@ -2351,10 +2770,15 @@ function updateCaptionCard(measureIndex, beatInBar, beatProgress = 0) {
 
   if (captionPhraseBadge) {
     const barTag = currentMeasure.barLabel ? ` • ${currentMeasure.barLabel}` : '';
-    if (typeof currentMeasure.phraseIndex === 'number') {
-      captionPhraseBadge.textContent = `PHRASE ${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}${barTag}`;
+    const signsPreview = currentMeasure.barSigns ? ` [${currentMeasure.barSigns}]` : '';
+    if (currentMeasure.phraseIndex === 'LIFT') {
+      captionPhraseBadge.textContent = `THE LIFT // ${currentMeasure.displayLabel}${barTag}${signsPreview}`;
+    } else if (currentMeasure.phraseIndex === 'SPIRAL') {
+      captionPhraseBadge.textContent = `SPIRAL OUT // ${currentMeasure.displayLabel}${barTag}${signsPreview}`;
+    } else if (typeof currentMeasure.phraseIndex === 'number') {
+      captionPhraseBadge.textContent = `PHRASE ${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}${barTag}${signsPreview}`;
     } else {
-      captionPhraseBadge.textContent = `${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}${barTag}`;
+      captionPhraseBadge.textContent = `${currentMeasure.phraseIndex} // ${currentMeasure.displayLabel}${barTag}${signsPreview}`;
     }
   }
 
@@ -2376,11 +2800,17 @@ function updateCaptionCard(measureIndex, beatInBar, beatProgress = 0) {
     captionSignHint.style.display = 'none';
   }
 
-  // Calculate 2-bar phrase progress (0% -> 100%)
+  // Calculate phrase progress (0% -> 100%)
   if (phraseProgressBar) {
     let progressPercent = 0;
     if (currentScoreMode === 'lift' || currentScoreMode === 'spiral') {
       progressPercent = ((measureIndex + (beatInBar + beatProgress) / 4) / scoreData.totalMeasures) * 100;
+    } else if (currentMeasure.phraseIndex === 'LIFT') {
+      const liftRel = measureIndex - 40;
+      progressPercent = ((liftRel + (beatInBar + beatProgress) / 4) / 5) * 100;
+    } else if (currentMeasure.phraseIndex === 'SPIRAL') {
+      const spiralRel = measureIndex - 45;
+      progressPercent = ((spiralRel + (beatInBar + beatProgress) / 4) / 5) * 100;
     } else {
       const measureInTwoBar = (currentMeasure.measureInPhrase || 0) % 2;
       progressPercent = ((measureInTwoBar * 4 + beatInBar + beatProgress) / 8) * 100;
@@ -2393,7 +2823,7 @@ function updateCaptionCard(measureIndex, beatInBar, beatProgress = 0) {
     const start = parseInt(b.dataset.measureStart, 10);
     const end = parseInt(b.dataset.measureEnd, 10);
     if (!isNaN(start) && !isNaN(end)) {
-      b.classList.toggle('active', measureIndex >= start && measureIndex <= end);
+      b.classList.toggle('active', isScorePlaying && measureIndex >= start && measureIndex <= end);
     }
   });
 
@@ -2569,37 +2999,31 @@ function updateScorePlayhead() {
   // Dynamic Background Color Shift keyed to BPM
   updateScoreTempoVisuals(currentMeasureBpm);
 
-  // Highlight active cells across all 14 tracks in Staircase Overlay mode
   if (currentScoreMode === 'overlay') {
-    document.querySelectorAll('.staircase-bar-cell.current-playing').forEach(c => c.classList.remove('current-playing'));
-    document.querySelectorAll(`.staircase-bar-cell[data-measure-index="${currentMeasureIdx}"]`).forEach(c => {
-      if (!c.classList.contains('offset-step')) {
-        c.classList.add('current-playing');
+    drawStaircaseCanvas(currentMeasureIdx, beatInMeasureFloat);
+  } else {
+    // Update Caption & ASL Card
+    updateCaptionCard(currentMeasureIdx, beatInBar, beatProgress);
+
+    // Align playhead smoothly across measure blocks
+    const measureBlocks = document.querySelectorAll('.ruler-measure-block');
+    const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
+    if (measureBlocks.length > currentMeasureIdx && scoreGridWrapper) {
+      const targetBlock = measureBlocks[currentMeasureIdx];
+      const blockRect = targetBlock.getBoundingClientRect();
+      const wrapperRect = scoreGridWrapper.getBoundingClientRect();
+
+      const measureFraction = beatInMeasureFloat / 4.0;
+      const playheadX = (blockRect.left - wrapperRect.left + scoreGridWrapper.scrollLeft) + (measureFraction * blockRect.width);
+      scorePlayhead.style.left = `${playheadX}px`;
+
+      // Continuous smooth camera tracking:
+      // Center the camera smoothly ahead of the playhead for a silky cinematic glide
+      const targetScroll = Math.max(0, playheadX - (scoreGridWrapper.clientWidth * 0.38));
+      const scrollDelta = targetScroll - scoreGridWrapper.scrollLeft;
+      if (Math.abs(scrollDelta) > 0.5) {
+        scoreGridWrapper.scrollLeft += scrollDelta * 0.15;
       }
-    });
-  }
-
-  // Update Caption & ASL Card
-  updateCaptionCard(currentMeasureIdx, beatInBar, beatProgress);
-
-  // Align playhead smoothly across measure blocks
-  const measureBlocks = document.querySelectorAll('.ruler-measure-block');
-  const scoreGridWrapper = document.querySelector('.score-grid-wrapper');
-  if (measureBlocks.length > currentMeasureIdx && scoreGridWrapper) {
-    const targetBlock = measureBlocks[currentMeasureIdx];
-    const blockRect = targetBlock.getBoundingClientRect();
-    const wrapperRect = scoreGridWrapper.getBoundingClientRect();
-
-    const measureFraction = beatInMeasureFloat / 4.0;
-    const playheadX = (blockRect.left - wrapperRect.left + scoreGridWrapper.scrollLeft) + (measureFraction * blockRect.width);
-    scorePlayhead.style.left = `${playheadX}px`;
-
-    // Continuous smooth camera tracking:
-    // Center the camera smoothly ahead of the playhead for a silky cinematic glide
-    const targetScroll = Math.max(0, playheadX - (scoreGridWrapper.clientWidth * 0.38));
-    const scrollDelta = targetScroll - scoreGridWrapper.scrollLeft;
-    if (Math.abs(scrollDelta) > 0.5) {
-      scoreGridWrapper.scrollLeft += scrollDelta * 0.15;
     }
   }
 
@@ -2752,7 +3176,7 @@ function initScore() {
     btnToggleStaircaseOrder.addEventListener('click', () => {
       staircaseAscending = !staircaseAscending;
       btnToggleStaircaseOrder.textContent = staircaseAscending ? 'STAIRCASE: S1 AT BOTTOM ⇅' : 'STAIRCASE: S1 AT TOP ⇅';
-      renderStaircaseOverlay();
+      drawStaircaseCanvas();
       showToast(`STAIRCASE: ${staircaseAscending ? 'S1 AT BOTTOM (SKETCH ORDER)' : 'S1 AT TOP (DAW ORDER)'}`);
     });
   }
