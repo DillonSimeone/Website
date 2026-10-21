@@ -1447,7 +1447,7 @@ html, body {
   transition: background 0.2s, border-color 0.2s;
 }
 
-/* --- The Lift (Bars 41-45): 80 -> 90 BPM for 15s - Faint Red Graph Shading --- */
+/* --- Accelerando (Bars 47-48): 80 -> 90 BPM for ~5s - Faint Red Graph Shading --- */
 .ruler-measure-block.tempo-lift {
   background: linear-gradient(180deg, rgba(255, 60, 80, 0.22) 0%, rgba(255, 45, 65, 0.08) 100%);
   border-right-color: rgba(255, 75, 95, 0.45);
@@ -1458,7 +1458,7 @@ html, body {
   text-shadow: 0 0 8px rgba(255, 60, 80, 0.6);
 }
 
-/* --- Spiral Out (Bars 46-50): 90 -> 100 BPM for last 15s - Redder Crimson Graph Shading --- */
+/* --- Final Spiral (Bars 49-50): 90 -> 100 BPM for last ~5s - Redder Crimson Graph Shading --- */
 .ruler-measure-block.tempo-spiral {
   background: linear-gradient(180deg, rgba(255, 25, 55, 0.38) 0%, rgba(255, 20, 45, 0.18) 100%);
   border-right-color: rgba(255, 50, 75, 0.7);
@@ -1632,7 +1632,7 @@ html, body {
   overflow: visible;
 }
 
-/* --- The Lift (Bars 41-45): 80 -> 90 BPM - Faint Red Measure Background --- */
+/* --- Accelerando (Bars 47-48): 80 -> 90 BPM (~5s) - Faint Red Measure Background --- */
 .lane-measure.tempo-lift {
   background: rgba(255, 45, 75, 0.09);
   border-right-color: rgba(255, 75, 95, 0.35);
@@ -1642,7 +1642,7 @@ html, body {
   border-right-color: rgba(255, 60, 80, 0.1);
 }
 
-/* --- Spiral Out (Bars 46-50): 90 -> 100 BPM - Redder Crimson Measure Background --- */
+/* --- Final Spiral (Bars 49-50): 90 -> 100 BPM (last ~5s) - Redder Crimson Measure Background --- */
 .lane-measure.tempo-spiral {
   background: rgba(255, 25, 55, 0.22);
   border-right-color: rgba(255, 50, 75, 0.55);

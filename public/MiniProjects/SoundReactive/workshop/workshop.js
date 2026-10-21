@@ -1627,13 +1627,11 @@ function getActiveScoreData() {
   }
 
   if (currentScoreMode === 'lift') {
-    // The Lift (Bars 41-45): Tempo rises 80 -> 90 BPM for 15 seconds
+    // The Lift (Bars 41-45): Steady 80 BPM building toward the final accelerando
     // Bars 41-42: Bar A (ALL PEOPLE JOIN), Bars 43-45: Bar B (CONNECT ONE WORLD held through Bar 45)
     const measures = [];
     for (let i = 0; i < 5; i++) {
       const barNum = 41 + i;
-      const prog = i / 4;
-      const bpm = 80 + prog * 10;
       const isBarA = (i < 2);
       const isSpanStart = (i === 0 || i === 2);
       const spanBars = (i === 0) ? 2 : (i === 2 ? 3 : 0);
@@ -1650,9 +1648,9 @@ function getActiveScoreData() {
         isSpanStart: isSpanStart,
         spanBars: spanBars,
         barTag: barTag,
-        signHint: isBarA ? "Signers: ALL PEOPLE JOIN (Bars 41–42)" : "Signers: CONNECT ONE WORLD (Bars 43–45) — hold lifted through Bar 45 (80→90 BPM)",
+        signHint: isBarA ? "Signers: ALL PEOPLE JOIN (Bars 41–42)" : "Signers: CONNECT ONE WORLD (Bars 43–45) — hold lifted through Bar 45 (80 BPM)",
         aslWebpUrl: "",
-        bpm: bpm,
+        bpm: 80,
         isWarmup: false,
         bass: [0, 1, 2, 3], // beats 1, 2, 3, 4
         snare: [0.5, 1.5, 2.5, 3.5], // the "and" of every beat
@@ -1661,22 +1659,23 @@ function getActiveScoreData() {
       });
     }
     return {
-      title: "THE LIFT // BARS 41–45 (80–90 BPM / 15 SECONDS)",
+      title: "THE LIFT // BARS 41–45 (80 BPM)",
       totalMeasures: 5,
-      tempoMode: 'ramp',
+      tempoMode: 'fixed',
       baseBpm: 80,
       measures: measures
     };
   }
 
   if (currentScoreMode === 'spiral') {
-    // Spiral Out (Bars 46-50): Tempo rises 90 -> 100 BPM for last 15 seconds
-    // Bars 46-47: Bar A (HEARTBEAT GROW STRONG), Bars 48-50: Bar B (SHOUT CELEBRATE NOW in final bars)
+    // Spiral Out (Bars 46-50): Final 10 seconds accelerando
+    // Bar 46 @ 80 BPM, Bars 47-48 @ 80->90 BPM (~5s), Bars 49-50 @ 90->100 BPM (last ~5s)
+    // Bars 46-47: Bar A (HEARTBEAT GROW STRONG), Bars 48-50: Bar B (SHOUT CELEBRATE NOW building to visual applause)
     const measures = [];
+    const bpms = [80, 85, 90, 95, 100];
     for (let i = 0; i < 5; i++) {
       const barNum = 46 + i;
-      const prog = i / 4;
-      const bpm = 90 + prog * 10;
+      const bpm = bpms[i];
       const isBarA = (i < 2);
       const isSpanStart = (i === 0 || i === 2);
       const spanBars = (i === 0) ? 2 : (i === 2 ? 3 : 0);
@@ -1693,7 +1692,7 @@ function getActiveScoreData() {
         isSpanStart: isSpanStart,
         spanBars: spanBars,
         barTag: barTag,
-        signHint: isBarA ? "Signers: HEARTBEAT GROW STRONG (Bars 46–47)" : "Signers: SHOUT CELEBRATE NOW (Bars 48–50) — build to visual applause on Bar 50!",
+        signHint: isBarA ? "Signers: HEARTBEAT GROW STRONG (Bars 46–47) — Bar 47 accelerates 80→90 BPM (~5s)" : "Signers: SHOUT CELEBRATE NOW (Bars 48–50) — building 90→100 BPM (last ~5s) to visual applause on Bar 50!",
         aslWebpUrl: "",
         bpm: bpm,
         isWarmup: false,
@@ -1704,10 +1703,10 @@ function getActiveScoreData() {
       });
     }
     return {
-      title: "SCHEFFER SPIRAL OUT // BARS 46–50 (90–100 BPM / 15 SECONDS)",
+      title: "SCHEFFER SPIRAL OUT // BARS 46–50 (FINAL 10S ACCELERANDO: 80→100 BPM)",
       totalMeasures: 5,
       tempoMode: 'ramp',
-      baseBpm: 90,
+      baseBpm: 80,
       measures: measures
     };
   }
@@ -1780,10 +1779,9 @@ function getActiveScoreData() {
         hoot: mData.hoot
       });
     }
-    // 41-45: The Lift (Tempo rises 80 -> 90 BPM for 15s; Bars 41-42 Bar A, Bars 43-45 Bar B)
+    // 41-45: The Lift (Bars 41-45: steady 80 BPM; Bars 41-42 Bar A, Bars 43-45 Bar B)
     for (let i = 0; i < 5; i++) {
       const barNum = 41 + i;
-      const prog = i / 4;
       const isBarA = (i < 2);
       const isSpanStart = (i === 0 || i === 2);
       const spanBars = (i === 0) ? 2 : (i === 2 ? 3 : 0);
@@ -1800,9 +1798,9 @@ function getActiveScoreData() {
         isSpanStart: isSpanStart,
         spanBars: spanBars,
         barTag: barTag,
-        signHint: isBarA ? "Signers: ALL PEOPLE JOIN (Bars 41–42)" : "Signers: CONNECT ONE WORLD (Bars 43–45) — hold lifted through Bar 45 (80→90 BPM)",
+        signHint: isBarA ? "Signers: ALL PEOPLE JOIN (Bars 41–42)" : "Signers: CONNECT ONE WORLD (Bars 43–45) — hold lifted through Bar 45 (80 BPM)",
         aslWebpUrl: "",
-        bpm: 80 + prog * 10,
+        bpm: 80,
         isWarmup: false,
         bass: [0, 1, 2, 3],
         snare: [0.5, 1.5, 2.5, 3.5],
@@ -1810,10 +1808,11 @@ function getActiveScoreData() {
         hoot: (barNum === 41 || barNum === 43) ? { startBeat: 0, durationBeats: 2, label: "HOOT (2 BEATS)" } : null
       });
     }
-    // 46-50: Spiral Out (Tempo rises 90 -> 100 BPM for last 15s; Bars 46-47 Bar A, Bars 48-50 Bar B in last bars!)
+    // 46-50: Spiral Out (Final 10s speed up: Bar 46 @ 80 BPM, Bars 47-48 @ 80->90 BPM for ~5s, Bars 49-50 @ 90->100 BPM for last ~5s)
+    const fullBpms = [80, 85, 90, 95, 100];
     for (let i = 0; i < 5; i++) {
       const barNum = 46 + i;
-      const prog = i / 4;
+      const bpm = fullBpms[i];
       const isBarA = (i < 2);
       const isSpanStart = (i === 0 || i === 2);
       const spanBars = (i === 0) ? 2 : (i === 2 ? 3 : 0);
@@ -1830,9 +1829,9 @@ function getActiveScoreData() {
         isSpanStart: isSpanStart,
         spanBars: spanBars,
         barTag: barTag,
-        signHint: isBarA ? "Signers: HEARTBEAT GROW STRONG (Bars 46–47)" : "Signers: SHOUT CELEBRATE NOW (Bars 48–50) — build to visual applause on Bar 50!",
+        signHint: isBarA ? "Signers: HEARTBEAT GROW STRONG (Bars 46–47) — Bar 47 accelerates 80→90 BPM (~5s)" : "Signers: SHOUT CELEBRATE NOW (Bars 48–50) — building 90→100 BPM (last ~5s) to visual applause on Bar 50!",
         aslWebpUrl: "",
-        bpm: 90 + prog * 10,
+        bpm: bpm,
         isWarmup: false,
         bass: [0, 1, 2, 3],
         snare: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5],
@@ -2098,16 +2097,21 @@ function initStaircaseCanvasEvents() {
         const p = MASTER_LOOP_PHRASES[pIdx];
         const signs = (mBar - 1) % 2 === 0 ? p.barASigns : p.barBSigns;
         phaseHtml = `<b style="color:#ffd166;">Rolling Loop (Bar ${relBar}/50 • M${mBar})</b><br>ASL: <b style="color:#fff;">${signs}</b><br><span style="color:#a0aec0;font-size:0.65rem;">“${p.lyric}”</span>`;
-      } else if (relBar <= 45) {
+      } else if (relBar <= 46) {
         const isA = (relBar - 41) < 2;
-        const signs = isA ? "ALL PEOPLE JOIN" : "CONNECT ONE WORLD";
-        phaseHtml = `<b style="color:#ff758f;">THE LIFT (80→90 BPM • Bar ${relBar}/50)</b><br>ASL: <b style="color:#fff;">${signs}</b>`;
+        const signs = relBar <= 42 ? "ALL PEOPLE JOIN" : (relBar <= 45 ? "CONNECT ONE WORLD" : "HEARTBEAT GROW STRONG");
+        const phraseTitle = relBar <= 45 ? "THE LIFT (Bars 41–45)" : "SPIRAL ENTRANCE (Bar 46)";
+        phaseHtml = `<b style="color:#60a5fa;">${phraseTitle} (80 BPM • Bar ${relBar}/50)</b><br>ASL: <b style="color:#fff;">${signs}</b>`;
+      } else if (relBar <= 48) {
+        const signs = relBar === 47 ? "HEARTBEAT GROW STRONG" : "SHOUT CELEBRATE NOW";
+        const curBpm = relBar === 47 ? 85 : 90;
+        phaseHtml = `<b style="color:#ff758f;">ACCELERANDO (80→90 BPM • ~5s • Bar ${relBar}/50 • ${curBpm} BPM)</b><br>ASL: <b style="color:#fff;">${signs}</b>`;
       } else if (relBar <= 50) {
-        const isA = (relBar - 46) < 2;
-        const signs = isA ? "HEARTBEAT GROW STRONG" : "SHOUT CELEBRATE NOW";
-        phaseHtml = `<b style="color:#ff3355;">SPIRAL OUT (90→100 BPM • Bar ${relBar}/50)</b><br>ASL: <b style="color:#fff;">${signs}</b>`;
+        const signs = "SHOUT CELEBRATE NOW";
+        const curBpm = relBar === 49 ? 95 : 100;
+        phaseHtml = `<b style="color:#ff3355;">FINAL SPIRAL (90→100 BPM • last ~5s • Bar ${relBar}/50 • ${curBpm} BPM)</b><br>ASL: <b style="color:#fff;">${signs}</b>`;
       } else if (relBar === 51) {
-        phaseHtml = `<b style="color:#ffd700;">FINAL CUTOFF CHORD & SILENCE</b>`;
+        phaseHtml = `<b style="color:#ffd700;">FINAL CUTOFF CHORD & APPLAUSE</b>`;
       } else {
         phaseHtml = `<span style="color:#666;">Session Complete</span>`;
       }
@@ -2226,26 +2230,26 @@ function drawStaircaseCanvas(currentMeasureIdx = currentOverlayMeasureIdx, beatI
   ctx.fillStyle = '#0c0f1c';
   ctx.fillRect(0, 0, w, topRulerH);
 
-  // Faint red tint for The Lift (Bars 41-45)
-  const liftX = headerW + 40 * barW;
-  const liftW = 5 * barW;
+  // Faint red tint for 80->90 BPM accelerando (~5 seconds, Bars 47-48)
+  const liftX = headerW + 46 * barW;
+  const liftW = 2 * barW;
   ctx.fillStyle = 'rgba(255, 60, 90, 0.22)';
   ctx.fillRect(liftX, 0, liftW, topRulerH);
 
-  // Redder crimson tint for Spiral Out (Bars 46-50)
-  const spiralX = headerW + 45 * barW;
-  const spiralW = 5 * barW;
+  // Redder crimson tint for 90->100 BPM final spiral (~5 seconds, Bars 49-50)
+  const spiralX = headerW + 48 * barW;
+  const spiralW = 2 * barW;
   ctx.fillStyle = 'rgba(255, 25, 60, 0.42)';
   ctx.fillRect(spiralX, 0, spiralW, topRulerH);
 
   // Ruler Banners
-  ctx.font = 'bold 9px monospace';
+  ctx.font = 'bold 8.5px monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillStyle = '#ff758f';
-  ctx.fillText('LIFT 80→90', liftX + liftW / 2, 2);
+  ctx.fillText('80→90 (5s)', liftX + liftW / 2, 2);
   ctx.fillStyle = '#ff3355';
-  ctx.fillText('SPIRAL 90→100', spiralX + spiralW / 2, 2);
+  ctx.fillText('90→100 (5s)', spiralX + spiralW / 2, 2);
 
   // Bottom border line for top ruler
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
@@ -2274,10 +2278,10 @@ function drawStaircaseCanvas(currentMeasureIdx = currentOverlayMeasureIdx, beatI
       if (t === activeTimelineBar) {
         ctx.fillStyle = '#00e5ff';
         ctx.fillText(t, bx + barW / 2, topRulerH - 12);
-      } else if (t >= 41 && t <= 45) {
+      } else if (t >= 47 && t <= 48) {
         ctx.fillStyle = '#ff758f';
         ctx.fillText(t, bx + barW / 2, topRulerH - 12);
-      } else if (t >= 46 && t <= 50) {
+      } else if (t >= 49 && t <= 50) {
         ctx.fillStyle = '#ff3355';
         ctx.fillText(t, bx + barW / 2, topRulerH - 12);
       } else {
@@ -2369,11 +2373,25 @@ function drawStaircaseCanvas(currentMeasureIdx = currentOverlayMeasureIdx, beatI
           ctx.textBaseline = 'middle';
           ctx.fillText(`M${masterBar}`, cx + cw / 2, cy + ch / 2);
         }
-      } else if (relBar <= 45) {
-        // The Lift (Bars 41-45: 80 -> 90 BPM)
-        ctx.fillStyle = 'rgba(255, 60, 90, 0.42)';
+      } else if (relBar <= 46) {
+        // The Lift & Entrance (Bars 41-46: steady 80 BPM)
+        ctx.fillStyle = `hsla(${hue}, 65%, 38%, 0.3)`;
         ctx.fillRect(cx, cy, cw, ch);
-        ctx.strokeStyle = 'rgba(255, 80, 110, 0.8)';
+        ctx.strokeStyle = `hsla(${hue}, 70%, 55%, 0.55)`;
+        ctx.strokeRect(cx, cy, cw, ch);
+
+        if (cw >= 14 && ch >= 12) {
+          ctx.fillStyle = '#cbd5e1';
+          ctx.font = 'bold 7px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(relBar <= 45 ? 'LIFT' : 'M46', cx + cw / 2, cy + ch / 2);
+        }
+      } else if (relBar <= 48) {
+        // Accelerando 80 -> 90 BPM (~5s: Bars 47-48)
+        ctx.fillStyle = 'rgba(255, 60, 90, 0.48)';
+        ctx.fillRect(cx, cy, cw, ch);
+        ctx.strokeStyle = 'rgba(255, 80, 110, 0.85)';
         ctx.strokeRect(cx, cy, cw, ch);
 
         if (cw >= 14 && ch >= 12) {
@@ -2381,11 +2399,11 @@ function drawStaircaseCanvas(currentMeasureIdx = currentOverlayMeasureIdx, beatI
           ctx.font = 'bold 7.5px monospace';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('LIFT', cx + cw / 2, cy + ch / 2);
+          ctx.fillText(relBar === 47 ? '85' : '90', cx + cw / 2, cy + ch / 2);
         }
       } else if (relBar <= 50) {
-        // Spiral Out (Bars 46-50: 90 -> 100 BPM)
-        ctx.fillStyle = 'rgba(255, 25, 60, 0.65)';
+        // Final Spiral 90 -> 100 BPM (last ~5s: Bars 49-50)
+        ctx.fillStyle = 'rgba(255, 25, 60, 0.72)';
         ctx.fillRect(cx, cy, cw, ch);
         ctx.strokeStyle = 'rgba(255, 50, 80, 0.95)';
         ctx.strokeRect(cx, cy, cw, ch);
@@ -2395,7 +2413,7 @@ function drawStaircaseCanvas(currentMeasureIdx = currentOverlayMeasureIdx, beatI
           ctx.font = 'bold 7.5px monospace';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('SPRL', cx + cw / 2, cy + ch / 2);
+          ctx.fillText(relBar === 49 ? '95' : '100', cx + cw / 2, cy + ch / 2);
         }
       } else if (relBar === 51) {
         // Final Cutoff Chord
@@ -2488,19 +2506,19 @@ function renderScoreMeasureRuler() {
     block.className = 'ruler-measure-block';
     block.dataset.measureIndex = idx;
 
-    const isLift = m.phraseIndex === 'LIFT';
-    const isSpiral = m.phraseIndex === 'SPIRAL';
+    const isLiftShade = (m.bpm > 80 && m.bpm <= 90);
+    const isSpiralShade = (m.bpm > 90);
 
-    if (isLift) {
+    if (isLiftShade) {
       block.classList.add('tempo-lift');
-    } else if (isSpiral) {
+    } else if (isSpiralShade) {
       block.classList.add('tempo-spiral');
     }
 
     let tempoTag = '';
-    if (isLift) {
+    if (isLiftShade) {
       tempoTag = `<span class="ruler-tempo-tag lift">${Math.round(m.bpm)} BPM</span>`;
-    } else if (isSpiral) {
+    } else if (isSpiralShade) {
       tempoTag = `<span class="ruler-tempo-tag spiral">${Math.round(m.bpm)} BPM</span>`;
     }
 
@@ -2584,10 +2602,10 @@ function renderScoreLanes() {
       measure.className = 'lane-measure';
       measure.dataset.measureIndex = mIdx;
 
-      // Add faint red / redder shading to graph measures
-      if (m.phraseIndex === 'LIFT') {
+      // Add faint red (80->90 BPM / ~5s) / redder (90->100 BPM / last ~5s) shading to graph measures
+      if (m.bpm > 80 && m.bpm <= 90) {
         measure.classList.add('tempo-lift');
-      } else if (m.phraseIndex === 'SPIRAL') {
+      } else if (m.bpm > 90) {
         measure.classList.add('tempo-spiral');
       }
 
