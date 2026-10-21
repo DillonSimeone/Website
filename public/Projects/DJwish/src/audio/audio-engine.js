@@ -15,6 +15,7 @@ export class AudioEngine {
     this.ctx = null;
     this.analyser = null;
     this.source = null;
+    this.micStream = null;
     this.isInitialized = false;
     this.isDemoPlaying = false;
     this.demoInterval = null;
@@ -82,6 +83,47 @@ export class AudioEngine {
     if (this.analyser) this.analyser.smoothingTimeConstant = v;
   }
 
+  async requestMicrophoneStream() {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!window.isSecureContext && !isLocalhost) {
+      const err = new Error('Microphone access requires HTTPS or localhost (insecure HTTP context).');
+      err.name = 'SecurityError';
+      throw err;
+    }
+
+    // 1. Modern navigator.mediaDevices.getUserMedia
+    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+      } catch (advancedErr) {
+        console.warn('[DJWish AudioEngine] Advanced audio constraints rejected, falling back to basic audio constraint', advancedErr);
+        return await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+    }
+
+    // 2. Legacy fallback
+    const legacyGUM = navigator.getUserMedia
+      || navigator.webkitGetUserMedia
+      || navigator.mozGetUserMedia
+      || navigator.msGetUserMedia;
+
+    if (legacyGUM) {
+      return new Promise((resolve, reject) => {
+        legacyGUM.call(navigator, { audio: true }, resolve, reject);
+      });
+    }
+
+    const err = new Error('Microphone API (getUserMedia) is not supported in this browser.');
+    err.name = 'NotSupportedError';
+    throw err;
+  }
+
   async init(mode = 'demo') {
     if (!this.ctx) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -89,7 +131,11 @@ export class AudioEngine {
     }
     
     if (this.ctx.state === 'suspended') {
-      await this.ctx.resume();
+      try {
+        await this.ctx.resume();
+      } catch (resumeErr) {
+        console.warn('[DJWish AudioEngine] AudioContext resume note:', resumeErr);
+      }
     }
 
     if (!this.analyser) {
@@ -102,17 +148,33 @@ export class AudioEngine {
 
     if (mode === 'mic') {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        const stream = await this.requestMicrophoneStream();
+        if (!stream || !stream.getAudioTracks().length) {
+          throw new Error('No active audio tracks detected on microphone.');
+        }
         this.stopDemoSynth();
-        if (this.source) this.source.disconnect();
+        if (this.micStream) {
+          try { this.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+        }
+        if (this.source) {
+          try { this.source.disconnect(); } catch (_) {}
+        }
+        this.micStream = stream;
+        stream.getTracks().forEach(track => {
+          track.addEventListener('ended', () => {
+            this.stopMic(true);
+            window.dispatchEvent(new CustomEvent('djwish:mic-ended'));
+          });
+        });
         this.source = this.ctx.createMediaStreamSource(stream);
         this.source.connect(this.analyser);
         this.isInitialized = true;
         this.telemetry.inputMode = 'mic';
         return { success: true, mode: 'mic' };
       } catch (err) {
-        console.warn('Microphone permission denied, falling back to procedural demo beat.', err);
-        return this.startDemoSynth();
+        console.error('[DJWish AudioEngine] Microphone initialization failed:', err);
+        this.startDemoSynth();
+        return { success: false, mode: 'demo', error: err };
       }
     } else {
       return this.startDemoSynth();
@@ -122,6 +184,14 @@ export class AudioEngine {
   startDemoSynth(preset = this.demoPreset) {
     if (!this.ctx) return;
     this.stopDemoSynth();
+    if (this.micStream) {
+      try { this.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+      this.micStream = null;
+    }
+    if (this.source) {
+      try { this.source.disconnect(); } catch (_) {}
+      this.source = null;
+    }
     this.demoPreset = preset;
     this.isDemoPlaying = true;
     this.telemetry.inputMode = 'demo';
@@ -187,6 +257,32 @@ export class AudioEngine {
       } catch (_) {}
       this.demoMasterGain = null;
     }
+  }
+
+  stopMic(fallbackToDemo = true) {
+    if (this.micStream) {
+      try {
+        this.micStream.getTracks().forEach(t => t.stop());
+      } catch (_) {}
+      this.micStream = null;
+    }
+    if (this.source) {
+      try {
+        this.source.disconnect();
+      } catch (_) {}
+      this.source = null;
+    }
+    if (this.telemetry.inputMode === 'mic') {
+      this.telemetry.inputMode = 'none';
+    }
+    if (fallbackToDemo) {
+      return this.startDemoSynth();
+    }
+    return { success: true, mode: 'none' };
+  }
+
+  isMicLive() {
+    return this.telemetry.inputMode === 'mic' && Boolean(this.micStream);
   }
 
   playKick(time, boost = 1.0) {
@@ -278,6 +374,10 @@ export class AudioEngine {
       reader.onload = async (e) => {
         try {
           this.stopDemoSynth();
+          if (this.micStream) {
+            try { this.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+            this.micStream = null;
+          }
           const arrayBuffer = e.target.result;
           const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
           
@@ -308,7 +408,7 @@ export class AudioEngine {
 
   getAverageEnergy(lowHz, highHz) {
     if (!this.analyser || !this.dataArray) return 0;
-    const nyquist = this.ctx.sampleRate / 2;
+    const nyquist = (this.ctx?.sampleRate || 44100) / 2;
     const binCount = this.analyser.frequencyBinCount;
     const lowBin = Math.max(0, Math.floor((lowHz / nyquist) * binCount));
     const highBin = Math.min(binCount - 1, Math.ceil((highHz / nyquist) * binCount));
@@ -324,7 +424,7 @@ export class AudioEngine {
   }
 
   update() {
-    if (!this.analyser || !this.dataArray) return this.telemetry;
+    if (!this.analyser || !this.dataArray || !this.timeDomainArray) return this.telemetry;
 
     this.analyser.getByteFrequencyData(this.dataArray);
     this.analyser.getByteTimeDomainData(this.timeDomainArray);
@@ -375,7 +475,7 @@ export class AudioEngine {
     let maxBinIdx = 0;
     let weightedSum = 0;
     let totalMag = 0;
-    const nyquist = this.ctx.sampleRate / 2;
+    const nyquist = (this.ctx?.sampleRate || 44100) / 2;
     const binCount = this.analyser.frequencyBinCount;
 
     for (let i = 0; i < binCount; i++) {
