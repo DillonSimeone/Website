@@ -1515,10 +1515,11 @@ body.dark-mode .gallery-thumbnail img {
     }
 
     .item.reveal {
-        transform: translateX(0) !important;
+        transform: none !important;
     }
 
     .item.reveal.is-entering {
+        transform: translateX(0) !important;
         z-index: 21;
     }
 
@@ -1640,6 +1641,10 @@ body.library-open .trianglify {
 /* =======================================================
                 Section Navigation (TOC)
 ========================================================= */
+
+.item:not(.reveal) .section-nav {
+    display: none !important;
+}
 
 .section-nav {
     position: fixed;
