@@ -417,6 +417,7 @@ PILLAR_CONFIGS.forEach(cfg => {
 
 let renderer, scene, camera, material, mesh;
 let uniforms = {};
+let isScoreWindowOpen = false; // When true, disables Three.js background shader rendering to maximize score FPS
 
 // Continuous temporal integrators (strictly continuous rotation & wave ripple motion)
 let accumulatedRotAngle = 0;
@@ -1168,13 +1169,13 @@ function animate(now) {
   soundCategoryDisplay.textContent = classification.name;
   soundCategoryDisplay.className = `detector-val ${classification.cssClass}`;
 
-  // 3. Minimeters Spectrum Draw
-  if (audioEngine.dataArray) {
+  // 3. Minimeters Spectrum Draw (Disabled when score is open to save CPU/GPU cycles)
+  if (!isScoreWindowOpen && audioEngine.dataArray) {
     drawMinimetersSpectrum(audioEngine.dataArray);
   }
 
-  // 4. Update Three.js Cymatics Shader Uniforms with Continuous Smooth State
-  if (uniforms && uniforms.u_time) {
+  // 4. Update Three.js Cymatics Shader Uniforms with Continuous Smooth State (Disabled when score is open to maximize FPS)
+  if (!isScoreWindowOpen && uniforms && uniforms.u_time) {
     uniforms.u_time.value = now * 0.001;
 
     // Continuous acoustic feature extractions (continuous float weights, not binary booleans!)
@@ -1414,7 +1415,6 @@ let isScorePlaying = false;    // NEVER auto-play on open! User clicks PLAY
 let currentScoreZoom = 1.0;    // Score zoom scale
 let isWarmupMode = true;       // Audience warm-up: no words until Bar 14
 let staircaseAscending = true; // true: S1 at bottom, S14 at top (matching user sketch)
-let isScoreWindowOpen = false;
 let isSynthGuideEnabled = true;
 let isCountInEnabled = true;
 let isCountingIn = false;
@@ -3243,6 +3243,9 @@ function openScoreWindow() {
   scoreOverlay.classList.add('open');
   isScoreWindowOpen = true;
 
+  // Disable background shader canvas to eliminate GPU load and maximize FPS
+  if (shaderCanvasContainer) shaderCanvasContainer.style.visibility = 'hidden';
+
   // Never auto-play on open! Conductor clicks PLAY when ready.
   isScorePlaying = false;
   scorePausedElapsed = 0;
@@ -3286,6 +3289,11 @@ function closeScoreWindow() {
   if (!scoreOverlay) return;
   scoreOverlay.classList.remove('open');
   isScoreWindowOpen = false;
+
+  // Restore background shader canvas and resume WebGL rendering
+  if (shaderCanvasContainer) shaderCanvasContainer.style.visibility = '';
+  resizeThree();
+
   isScorePlaying = false;
   scorePausedElapsed = 0;
   updateScoreTempoVisuals(80);
