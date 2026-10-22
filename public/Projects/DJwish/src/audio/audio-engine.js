@@ -16,6 +16,8 @@ export class AudioEngine {
     this.analyser = null;
     this.source = null;
     this.micStream = null;
+    this.demoBus = null;
+    this.demoMasterGain = null;
     this.isInitialized = false;
     this.isDemoPlaying = false;
     this.demoInterval = null;
@@ -83,6 +85,36 @@ export class AudioEngine {
     if (this.analyser) this.analyser.smoothingTimeConstant = v;
   }
 
+  resetTelemetry() {
+    this.smoothSubBass = 0.0;
+    this.smoothBass = 0.0;
+    this.smoothLowMid = 0.0;
+    this.smoothMid = 0.0;
+    this.smoothHighMid = 0.0;
+    this.smoothHigh = 0.0;
+    this.smoothAir = 0.0;
+    this.smoothEnergy = 0.0;
+    this.smoothCentroid = 180.0;
+    this.prevBass = 0.0;
+    this.prevMid = 0.0;
+    this.prevEnergy = 0.0;
+    if (this.dataArray) this.dataArray.fill(0);
+    if (this.timeDomainArray) this.timeDomainArray.fill(128);
+    this.telemetry.overallEnergy = 0.0;
+    this.telemetry.subBass = 0.0;
+    this.telemetry.bass = 0.0;
+    this.telemetry.lowMid = 0.0;
+    this.telemetry.mid = 0.0;
+    this.telemetry.highMid = 0.0;
+    this.telemetry.high = 0.0;
+    this.telemetry.air = 0.0;
+    this.telemetry.dominantFreq = 0;
+    this.telemetry.spectralCentroid = 180;
+    this.telemetry.isBeat = false;
+    this.telemetry.transientAttack = 0.0;
+    this.telemetry.isClipping = false;
+  }
+
   async requestMicrophoneStream() {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (!window.isSecureContext && !isLocalhost) {
@@ -91,19 +123,13 @@ export class AudioEngine {
       throw err;
     }
 
-    // 1. Modern navigator.mediaDevices.getUserMedia
+    // 1. Standard modern navigator.mediaDevices.getUserMedia
     if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
       try {
-        return await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false
-          }
-        });
-      } catch (advancedErr) {
-        console.warn('[DJWish AudioEngine] Advanced audio constraints rejected, falling back to basic audio constraint', advancedErr);
         return await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        console.warn('[DJWish AudioEngine] Standard audio constraint rejected', err);
+        throw err;
       }
     }
 
@@ -146,26 +172,50 @@ export class AudioEngine {
       this.timeDomainArray = new Uint8Array(this.analyser.fftSize);
     }
 
+    if (!this.demoBus) {
+      this.demoBus = this.ctx.createGain();
+      this.demoMasterGain = this.ctx.createGain();
+      this.demoMasterGain.gain.value = this._demoVolume;
+      this.demoBus.connect(this.demoMasterGain);
+      this.demoMasterGain.connect(this.ctx.destination);
+    }
+
     if (mode === 'mic') {
       try {
         const stream = await this.requestMicrophoneStream();
         if (!stream || !stream.getAudioTracks().length) {
           throw new Error('No active audio tracks detected on microphone.');
         }
+
+        // Stop and mute demo synth
         this.stopDemoSynth();
-        if (this.micStream) {
-          try { this.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
-        }
+
+        // Disconnect analyser from any lingering output (100% feedback loop immunity)
+        try { this.analyser.disconnect(); } catch (_) {}
+
         if (this.source) {
           try { this.source.disconnect(); } catch (_) {}
+          this.source = null;
+        }
+
+        if (this.micStream && this.micStream !== stream) {
+          try {
+            this.micStream.getTracks().forEach(t => {
+              t.onended = null;
+              t.stop();
+            });
+          } catch (_) {}
         }
         this.micStream = stream;
+
         stream.getTracks().forEach(track => {
-          track.addEventListener('ended', () => {
+          track.onended = () => {
             this.stopMic(true);
             window.dispatchEvent(new CustomEvent('djwish:mic-ended'));
-          });
+          };
         });
+
+        // Connect mic stream ONLY to the analyser (never to speakers!)
         this.source = this.ctx.createMediaStreamSource(stream);
         this.source.connect(this.analyser);
         this.isInitialized = true;
@@ -184,25 +234,26 @@ export class AudioEngine {
   startDemoSynth(preset = this.demoPreset) {
     if (!this.ctx) return;
     this.stopDemoSynth();
-    if (this.micStream) {
-      try { this.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
-      this.micStream = null;
-    }
     if (this.source) {
       try { this.source.disconnect(); } catch (_) {}
       this.source = null;
+    }
+    if (this.micStream) {
+      try {
+        this.micStream.getTracks().forEach(t => {
+          t.onended = null;
+          t.stop();
+        });
+      } catch (_) {}
+      this.micStream = null;
+    }
+    if (this.demoBus) {
+      try { this.demoBus.gain.setValueAtTime(1, this.ctx.currentTime); } catch (_) {}
     }
     this.demoPreset = preset;
     this.isDemoPlaying = true;
     this.telemetry.inputMode = 'demo';
     this.isInitialized = true;
-
-    // Audible demo audio bus with master safety limiter
-    const masterGain = this.ctx.createGain();
-    masterGain.gain.value = this._demoVolume;
-    this.analyser.connect(masterGain);
-    masterGain.connect(this.ctx.destination);
-    this.demoMasterGain = masterGain;
 
     let step = 0;
     const tempoMs = (60 / 128) * 1000 / 4; // 128 BPM 16th notes
@@ -251,26 +302,35 @@ export class AudioEngine {
       clearInterval(this.demoInterval);
       this.demoInterval = null;
     }
-    if (this.demoMasterGain) {
-      try {
-        this.demoMasterGain.disconnect();
-      } catch (_) {}
-      this.demoMasterGain = null;
+    if (this.demoBus) {
+      try { this.demoBus.gain.setValueAtTime(0, this.ctx.currentTime); } catch (_) {}
+    }
+  }
+
+  routeSynthGain(gainNode) {
+    if (this.analyser) {
+      try { gainNode.connect(this.analyser); } catch (_) {}
+    }
+    if (this.demoBus && this.isDemoPlaying) {
+      try { gainNode.connect(this.demoBus); } catch (_) {}
     }
   }
 
   stopMic(fallbackToDemo = true) {
-    if (this.micStream) {
-      try {
-        this.micStream.getTracks().forEach(t => t.stop());
-      } catch (_) {}
-      this.micStream = null;
-    }
     if (this.source) {
       try {
         this.source.disconnect();
       } catch (_) {}
       this.source = null;
+    }
+    if (this.micStream) {
+      try {
+        this.micStream.getTracks().forEach(t => {
+          t.onended = null;
+          t.stop();
+        });
+      } catch (_) {}
+      this.micStream = null;
     }
     if (this.telemetry.inputMode === 'mic') {
       this.telemetry.inputMode = 'none';
@@ -293,7 +353,7 @@ export class AudioEngine {
     gain.gain.setValueAtTime(1.2 * this.gain * boost, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.32);
     osc.connect(gain);
-    gain.connect(this.analyser);
+    this.routeSynthGain(gain);
     osc.start(time);
     osc.stop(time + 0.35);
   }
@@ -306,7 +366,7 @@ export class AudioEngine {
     gain.gain.setValueAtTime(0.8 * this.gain, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.65);
     osc.connect(gain);
-    gain.connect(this.analyser);
+    this.routeSynthGain(gain);
     osc.start(time);
     osc.stop(time + 0.7);
   }
@@ -331,7 +391,7 @@ export class AudioEngine {
 
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(this.analyser);
+    this.routeSynthGain(gain);
     noise.start(time);
     noise.stop(time + 0.16);
   }
@@ -344,7 +404,7 @@ export class AudioEngine {
     gain.gain.setValueAtTime(0.35 * this.gain, time);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + dur);
     osc.connect(gain);
-    gain.connect(this.analyser);
+    this.routeSynthGain(gain);
     osc.start(time);
     osc.stop(time + dur);
   }
@@ -357,7 +417,7 @@ export class AudioEngine {
     gain.gain.setValueAtTime(0.24 * this.gain, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
     osc.connect(gain);
-    gain.connect(this.analyser);
+    this.routeSynthGain(gain);
     osc.start(time);
     osc.stop(time + 0.22);
   }
@@ -390,7 +450,12 @@ export class AudioEngine {
           bufferSource.buffer = audioBuffer;
           bufferSource.loop = true;
           bufferSource.connect(this.analyser);
-          this.analyser.connect(this.ctx.destination);
+          if (this.demoBus) {
+            try { this.demoBus.gain.setValueAtTime(1, this.ctx.currentTime); } catch (_) {}
+            bufferSource.connect(this.demoBus);
+          } else {
+            bufferSource.connect(this.ctx.destination);
+          }
           bufferSource.start(0);
           this.source = bufferSource;
           this.telemetry.inputMode = 'file';
@@ -409,25 +474,36 @@ export class AudioEngine {
   getAverageEnergy(lowHz, highHz) {
     if (!this.analyser || !this.dataArray) return 0;
     const nyquist = (this.ctx?.sampleRate || 44100) / 2;
+    if (nyquist <= 0) return 0;
     const binCount = this.analyser.frequencyBinCount;
-    const lowBin = Math.max(0, Math.floor((lowHz / nyquist) * binCount));
-    const highBin = Math.min(binCount - 1, Math.ceil((highHz / nyquist) * binCount));
+    if (binCount <= 0) return 0;
+    const lowBin = Math.max(0, Math.min(binCount - 1, Math.floor((lowHz / nyquist) * binCount)));
+    const highBin = Math.max(0, Math.min(binCount - 1, Math.ceil((highHz / nyquist) * binCount)));
 
-    if (lowBin >= highBin) return this.dataArray[lowBin] / 255;
+    if (lowBin >= highBin) {
+      const v = this.dataArray[lowBin] / 255;
+      return Number.isFinite(v) ? v : 0;
+    }
 
     let sum = 0;
     for (let i = lowBin; i <= highBin; i++) {
       sum += this.dataArray[i];
     }
     const avg = sum / (highBin - lowBin + 1) / 255;
-    return Math.max(0, (avg - this.noiseFloor) / (1.0 - this.noiseFloor)) * this.gain;
+    const denom = Math.max(0.01, 1.0 - this.noiseFloor);
+    const result = Math.max(0, (avg - this.noiseFloor) / denom) * this.gain;
+    return Number.isFinite(result) ? result : 0;
   }
 
   update() {
     if (!this.analyser || !this.dataArray || !this.timeDomainArray) return this.telemetry;
 
-    this.analyser.getByteFrequencyData(this.dataArray);
-    this.analyser.getByteTimeDomainData(this.timeDomainArray);
+    try {
+      this.analyser.getByteFrequencyData(this.dataArray);
+      this.analyser.getByteTimeDomainData(this.timeDomainArray);
+    } catch (_) {
+      return this.telemetry;
+    }
 
     // 1. Calculate 7 Discrete Raw Frequency Bands
     const rawSubBass = this.getAverageEnergy(20, 60);
@@ -439,7 +515,11 @@ export class AudioEngine {
     const rawAir = this.getAverageEnergy(12000, 20000);
 
     // Exponential smoothing
-    const lerp = (curr, target, factor) => curr + (target - curr) * factor;
+    const lerp = (curr, target, factor) => {
+      const c = Number.isFinite(curr) ? curr : 0;
+      const t = Number.isFinite(target) ? target : 0;
+      return c + (t - c) * factor;
+    };
     const factor = this.smoothFactor;
     this.smoothSubBass = lerp(this.smoothSubBass, rawSubBass, factor);
     this.smoothBass = lerp(this.smoothBass, rawBass, factor);
@@ -449,25 +529,29 @@ export class AudioEngine {
     this.smoothHigh = lerp(this.smoothHigh, rawHigh, factor);
     this.smoothAir = lerp(this.smoothAir, rawAir, factor);
 
-    const subBass = this.smoothSubBass;
-    const bass = this.smoothBass;
-    const lowMid = this.smoothLowMid;
-    const mid = this.smoothMid;
-    const highMid = this.smoothHighMid;
-    const high = this.smoothHigh;
-    const air = this.smoothAir;
+    const subBass = Number.isFinite(this.smoothSubBass) ? this.smoothSubBass : 0;
+    const bass = Number.isFinite(this.smoothBass) ? this.smoothBass : 0;
+    const lowMid = Number.isFinite(this.smoothLowMid) ? this.smoothLowMid : 0;
+    const mid = Number.isFinite(this.smoothMid) ? this.smoothMid : 0;
+    const highMid = Number.isFinite(this.smoothHighMid) ? this.smoothHighMid : 0;
+    const high = Number.isFinite(this.smoothHigh) ? this.smoothHigh : 0;
+    const air = Number.isFinite(this.smoothAir) ? this.smoothAir : 0;
 
     // Overall RMS energy
     let sumSquares = 0;
     let maxVal = 0;
-    for (let i = 0; i < this.timeDomainArray.length; i++) {
-      const val = (this.timeDomainArray[i] - 128) / 128;
-      sumSquares += val * val;
-      if (Math.abs(val) > maxVal) maxVal = Math.abs(val);
+    const len = this.timeDomainArray.length;
+    if (len > 0) {
+      for (let i = 0; i < len; i++) {
+        const val = (this.timeDomainArray[i] - 128) / 128;
+        sumSquares += val * val;
+        if (Math.abs(val) > maxVal) maxVal = Math.abs(val);
+      }
     }
-    const rawRms = Math.min(1.0, Math.sqrt(sumSquares / this.timeDomainArray.length) * this.gain * 1.8);
-    this.smoothEnergy = lerp(this.smoothEnergy, rawRms, 0.25);
-    const rms = this.smoothEnergy;
+    const rawRms = len > 0 ? Math.min(1.0, Math.sqrt(sumSquares / len) * this.gain * 1.8) : 0;
+    const safeRms = Number.isFinite(rawRms) ? rawRms : 0;
+    this.smoothEnergy = lerp(this.smoothEnergy, safeRms, 0.25);
+    const rms = Number.isFinite(this.smoothEnergy) ? this.smoothEnergy : 0;
     const isClipping = maxVal > 0.98;
 
     // 2. Dominant Frequency & Spectral Centroid
@@ -478,20 +562,23 @@ export class AudioEngine {
     const nyquist = (this.ctx?.sampleRate || 44100) / 2;
     const binCount = this.analyser.frequencyBinCount;
 
-    for (let i = 0; i < binCount; i++) {
-      const mag = this.dataArray[i];
-      const freq = (i / binCount) * nyquist;
-      weightedSum += freq * mag;
-      totalMag += mag;
-      if (mag > maxBinVal) {
-        maxBinVal = mag;
-        maxBinIdx = i;
+    if (binCount > 0 && nyquist > 0) {
+      for (let i = 0; i < binCount; i++) {
+        const mag = this.dataArray[i];
+        const freq = (i / binCount) * nyquist;
+        weightedSum += freq * mag;
+        totalMag += mag;
+        if (mag > maxBinVal) {
+          maxBinVal = mag;
+          maxBinIdx = i;
+        }
       }
     }
-    const dominantFreq = (maxBinIdx / binCount) * nyquist;
+    const dominantFreq = (binCount > 0 && nyquist > 0) ? (maxBinIdx / binCount) * nyquist : 0;
     const rawCentroid = totalMag > 0 ? weightedSum / totalMag : 200;
-    this.smoothCentroid = lerp(this.smoothCentroid, rawCentroid, 0.15);
-    const spectralCentroid = this.smoothCentroid;
+    const safeCentroid = Number.isFinite(rawCentroid) ? rawCentroid : 200;
+    this.smoothCentroid = lerp(this.smoothCentroid, safeCentroid, 0.15);
+    const spectralCentroid = Number.isFinite(this.smoothCentroid) ? this.smoothCentroid : 200;
 
     // 3. Transient & Beat Detection
     const now = performance.now();
@@ -506,15 +593,16 @@ export class AudioEngine {
     const transientAttack = Math.max(0, Math.max(bassDelta, midDelta) * 2.5);
     this.prevBass = rawBass;
     this.prevMid = rawMid;
-    this.prevEnergy = rawRms;
+    this.prevEnergy = safeRms;
 
     // 4. Color Spectrum Calculation (Crimson -> Violet)
     const logMin = Math.log10(30);
     const logMax = Math.log10(16000);
-    const logCentroid = Math.log10(Math.max(30, Math.min(16000, spectralCentroid)));
+    const clampedCentroid = Math.max(30, Math.min(16000, spectralCentroid));
+    const logCentroid = Math.log10(clampedCentroid);
     const t = Math.max(0, Math.min(1, (logCentroid - logMin) / (logMax - logMin)));
 
-    const hue = t * 0.85; 
+    const hue = Number.isFinite(t) ? t * 0.85 : 0; 
     const sat = 0.95;
     const light = 0.5 + Math.min(0.4, air * 0.5);
     const primaryRGB = this.hslToRgb(hue, sat, light);
@@ -534,7 +622,7 @@ export class AudioEngine {
     this.telemetry.dominantFreq = dominantFreq;
     this.telemetry.spectralCentroid = spectralCentroid;
     this.telemetry.isBeat = isBeat;
-    this.telemetry.transientAttack = Math.min(1.0, transientAttack);
+    this.telemetry.transientAttack = Math.min(1.0, Number.isFinite(transientAttack) ? transientAttack : 0);
     this.telemetry.isClipping = isClipping;
     this.telemetry.primaryColor = primaryRGB;
     this.telemetry.secondaryColor = secondaryRGB;

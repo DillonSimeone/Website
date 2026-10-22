@@ -251,17 +251,24 @@ class DJWishApp {
   }
 
   async toggleMicLive() {
-    const isCurrentlyLive = this.audio?.isMicLive();
-    if (isCurrentlyLive) {
-      this.audio.stopMic(true);
-      this.isAudioStarted = true;
-      this.updateMicUI(false);
-      this.setAudioButton(true, 'DEMO ACTIVE');
-      this.updateDeckStatus('DEMO ACTIVE');
-      return;
-    }
+    if (this.isTogglingMic) return;
+    this.isTogglingMic = true;
 
     try {
+      const isCurrentlyLive = this.audio?.isMicLive();
+      if (isCurrentlyLive) {
+        this.audio.stopMic(true);
+        this.audio.resetTelemetry();
+        this.sceneManager?.resetAudioTelemetry();
+        this.isAudioStarted = true;
+        this.updateMicUI(false);
+        this.setAudioButton(true, 'DEMO ACTIVE');
+        this.updateDeckStatus('DEMO ACTIVE');
+        return;
+      }
+
+      this.audio.resetTelemetry();
+      this.sceneManager?.resetAudioTelemetry();
       const res = await this.audio.init('mic');
       this.isAudioStarted = true;
       if (res && res.success && res.mode === 'mic') {
@@ -284,13 +291,15 @@ class DJWishApp {
         } else if (err?.message) {
           msg = err.message;
         }
-        console.error('[DJWish] Mic error:', msg, err);
-        alert(msg);
+        console.warn('[DJWish] Mic status:', msg, err);
+        this.updateDeckStatus(msg.slice(0, 32));
       }
     } catch (e) {
       console.error('[DJWish] Unexpected mic error:', e);
       this.updateMicUI(false);
-      alert('Microphone error: ' + (e.message || e));
+      this.updateDeckStatus('MIC ERROR');
+    } finally {
+      this.isTogglingMic = false;
     }
   }
 
@@ -558,27 +567,35 @@ class DJWishApp {
   }
 
   render(time) {
-    const dt = this.lastTime ? Math.min(0.1, (time - this.lastTime) / 1000) : 1 / 60;
-    this.lastTime = time;
+    try {
+      const dt = this.lastTime ? Math.min(0.1, (time - this.lastTime) / 1000) : 1 / 60;
+      this.lastTime = time;
 
-    const telemetry = this.audio.update();
-    if (this.isAudioStarted) this.haptics.update(telemetry);
+      const telemetry = this.audio ? this.audio.update() : null;
+      if (telemetry && this.isAudioStarted && this.haptics) {
+        this.haptics.update(telemetry);
+      }
 
-    this.sceneManager.update(dt, telemetry);
+      if (telemetry) {
+        this.sceneManager.update(dt, telemetry);
+      }
 
-    if (this.isStageMode) {
-      this.updateStageHud(dt, telemetry);
-    } else {
-      this.updateStreetHud();
-    }
+      if (this.isStageMode) {
+        if (telemetry) this.updateStageHud(dt, telemetry);
+      } else {
+        this.updateStreetHud();
+      }
 
-    if (this.showFps) this.updateFps(dt);
+      if (this.showFps) this.updateFps(dt);
 
-    if (this.bootVeil) {
-      this.bootVeil.classList.add('gone');
-      const veil = this.bootVeil;
-      this.bootVeil = null;
-      setTimeout(() => veil.remove(), 1000);
+      if (this.bootVeil) {
+        this.bootVeil.classList.add('gone');
+        const veil = this.bootVeil;
+        this.bootVeil = null;
+        setTimeout(() => veil.remove(), 1000);
+      }
+    } catch (err) {
+      console.error('[DJWish] Render loop error:', err);
     }
   }
 }

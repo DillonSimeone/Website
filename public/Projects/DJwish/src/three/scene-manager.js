@@ -282,9 +282,10 @@ export class SceneManager {
   /** Writes a log-binned spectrum (R) and a zero-crossing-triggered waveform (G) into AUDIO_TEX. */
   updateAudioTexture(dt) {
     const audio = this.audioSource;
-    if (!audio || !audio.dataArray || !audio.ctx) return;
+    if (!audio || !audio.dataArray || !audio.timeDomainArray || !audio.ctx) return;
     const freq = audio.dataArray;
     const wave = audio.timeDomainArray;
+    if (!wave || wave.length < 2) return;
     const W = AUDIO_TEX_WIDTH;
 
     if (!this.specBins) {
@@ -321,6 +322,28 @@ export class SceneManager {
       data[i * 4 + 1] = wave[Math.min(wave.length - 1, trigger + i * step)];
     }
     AUDIO_TEX.needsUpdate = true;
+  }
+
+  resetAudioTelemetry() {
+    this.bandPeak.fill(0.3);
+    this.bandFloor.fill(0);
+    this.bandRaw.fill(0);
+    this.spectrum.fill(0);
+    this.vuLevel = 0;
+    this.vuPeak = 0;
+    this.vuPeakHold = 0;
+    const data = AUDIO_TEX.image.data;
+    for (let i = 0; i < AUDIO_TEX_WIDTH; i++) {
+      data[i * 4] = 0;
+      data[i * 4 + 1] = 128;
+    }
+    AUDIO_TEX.needsUpdate = true;
+    SHARED.uActive.value = 0;
+    SHARED.uEnergy.value = 0;
+    SHARED.uBass.value = 0;
+    SHARED.uMid.value = 0;
+    SHARED.uHigh.value = 0;
+    SHARED.uBeat.value = 0;
   }
 
   update(dt, telemetry) {
