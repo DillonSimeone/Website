@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Scanner X-618-B (Ford Pines Edition) v6.0</title>
+
+    <!-- System Dependencies -->
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+
+    <link rel="stylesheet" href="styles3v.css">
+
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "./javascript/v2/three.module.js",
+            "three/addons/": "./javascript/v2/",
+            "mind-ar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+          }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="scanner-ui">
+        <div class="header-tray">
+            <div class="corner-stamp">UNIT ID: X-618-B // REF: FORD P.</div>
+            <div class="corner-stamp">WARNING: SCANNER MAY ATTRACT UNWANTED ATTENTION</div>
+        </div>
+
+        <div class="workspace">
+            <div class="screen-assembly">
+                <div id="fp-tag" class="tape-label">PROPERTY OF F.P.</div>
+                <div id="serial-tag" class="tape-label">S/N: 06182012-G</div>
+
+                <div class="crt-frame" id="crt-screen">
+                    <div id="ar-container"></div>
+                    <canvas id="wave-canvas"></canvas>
+                    <div id="anomaly-overlay">ANOMALY DETECTED</div>
+                    <div id="anomaly-dimmer"></div>
+                    <div class="scanline"></div>
+                    <div class="flicker"></div>
+
+                    <div id="dev-console">
+                        <!-- Ported from appV2.js buildDev -->
+                    </div>
+
+                    <!-- Reward Layer (Replaces Puzzle) -->
+                    <div id="video-layer"
+                        style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, calc(-50% + 10px)); width:90%; max-width:500px; height:375px; background:#050a05; border-radius:12px; z-index:2001; box-shadow: 0 0 100px #000; overflow: hidden;">
+                        <iframe id="video-reward" src="gnomeVomit.html"
+                            style="width:100%; height:100%; border:none; pointer-events: none; display: block;"></iframe>
+                        <div id="reward-border-overlay"
+                            style="position:absolute; inset:0; border:12px solid #00ff41; border-radius:12px; pointer-events:none; z-index:10; box-sizing: border-box;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="knob-assembly">
+                    <div class="knob" id="knob-1"></div>
+                    <div class="knob-label">Gain</div>
+                </div>
+                <div class="knob-assembly">
+                    <div class="knob" id="knob-2"></div>
+                    <div class="knob-label">Freq</div>
+                </div>
+                <div class="knob-assembly">
+                    <div class="knob" id="knob-3"></div>
+                    <div class="knob-label">Phase</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="cp-col">
+                <button id="toggle-scan-btn" class="btn-gf">Engage Scanner</button>
+            </div>
+
+            <div class="cp-col cp-center">
+                <svg class="six-fingered-hand" id="dev-toggle" viewBox="0 0 100 100">
+                    <path
+                        d="M50 95c-15 0-25-10-25-20V45c0-2 1-4 3-4s3 2 3 4v15c0 1 1 2 2 2s2-1 2-2V25c0-2 1-4 3-4s3 2 3 4v30c0 1 1 2 2 2s2-1 2-2V15c0-2 1-4 3-4s3 2 3 4v40c0 1 1 2 2 2s2-1 2-2V10c0-2 1-4 3-4s3 2 3 4v45c0 1 1 2 2 2s2-1 2-2V20c0-2 1-4 3-4s3 2 3 4v40c0 1 1 2 2 2s2-1 2-2V45c0-2 1-4 3-4s3 2 3 4v30c0 10-10 20-25 20z" />
+                </svg>
+            </div>
+
+            <div class="cp-col cp-right">
+                <button id="wipe-cache-btn" class="btn-gf">Wipe Cache</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Failure Alert Overlay -->
+    <div id="failure-overlay" class="hidden">
+        <div class="alert-box">
+            <div class="alert-header">⚠️ SYSTEM INTERFERENCE DETECTED</div>
+            <div class="alert-body">
+                <p>The scanner's AR modules have been blocked by this device or browser.</p>
+                <p id="error-details" class="glitch-text"></p>
+                <div class="alert-advice">
+                    <p><strong>REMEDY:</strong> Try using <strong>Chrome</strong> or ensure Camera permissions are granted.</p>
+                </div>
+            </div>
+            <button id="close-failure-btn" class="btn-gf">Acknowledge</button>
+        </div>
+    </div>
+
+    <script src="javascript/telemetry.js"></script>
+    <script src="javascript/v2/developerDebug.js"></script>
+    <script type="module" src="javascript/v2/appV3.js"></script>
+</body>
+
+</html>

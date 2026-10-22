@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametric PCB Studio - 3D Hardware CAD Suite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="scanline"></div>
+
+    <div class="container">
+        <header>
+            <h1>Parametric PCB Studio</h1>
+            <div class="subtitle">Code-Driven Electronic CAD Engine • 3D Routed Hardware Catalog</div>
+        </header>
+
+        <div class="grid">
+            <!-- Project 00: Turnkey Starter PCB Template -->
+            <div class="card" style="border-color: rgba(0, 240, 255, 0.4); --neon-blue: #00f0ff;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00f0ff; box-shadow: 0 0 15px #00f0ff;">⚡</div>
+                        00: Turnkey Starter Template
+                    </div>
+                    <div class="spec-tags">
+                        <span class="tag" style="color: #00f0ff; border-color: #00f0ff; background: rgba(0, 240, 255, 0.1);">MODULAR BASE</span>
+                        <span class="tag" style="color: #00f0ff; border-color: #00f0ff; background: rgba(0, 240, 255, 0.1);">ESP32-C3 SUPERMINI</span>
+                        <span class="tag" style="color: #00f0ff; border-color: #00f0ff; background: rgba(0, 240, 255, 0.1);">40×40mm STARTER</span>
+                    </div>
+                </div>
+
+                <!-- 3D Rotating CAD Viewport -->
+                <div class="card-viewport-wrapper">
+                    <div class="card-viewport" id="viewport-00" data-stl="./00-starterPCB/00_starter_routed.stl" data-color="#00f0ff">
+                        <div class="cad-loading">LOADING 3D MESH...</div>
+                    </div>
+                    <span class="cad-hint">DRAG TO ORBIT</span>
+                </div>
+
+                <p class="card-purpose">
+                    <strong>Purpose:</strong> Canonical reference architecture and turnkey project template. Combines ESP32-C3 SuperMini footprint, 0603 power filtering, status LED, 4-pin auxiliary IO breakout, decoupled silkscreen scaling, live hover netlist tooltips, and instant manufacturing exports.
+                </p>
+
+                <!-- Pricing Breakdown -->
+                <div class="price-breakdown-box">
+                    <div class="price-header">
+                        <span>Cost Breakdown</span>
+                        <span style="color: #00f0ff;">Starter Kit</span>
+                    </div>
+                    <table class="price-table">
+                        <tbody>
+                            <tr>
+                                <td>Bare PCB Fab (5 boards)</td>
+                                <td class="cost">$2.00 ($0.40/ea)</td>
+                            </tr>
+                            <tr>
+                                <td>AliExpress SuperMini + Passives</td>
+                                <td class="cost">~$1.20</td>
+                            </tr>
+                            <tr>
+                                <td>Factory SMT Assembly</td>
+                                <td class="cost">$0.00 (Carrier DIY)</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total Unit Cost</td>
+                                <td class="cost" style="color: #00f0ff;">~$1.60 / board</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Bar & File Downloads -->
+                <div class="card-actions-toolbar">
+                    <a href="./00-starterPCB/index.html" class="btn-launch" style="color: #00f0ff; border-color: #00f0ff;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                    <div class="btn-download-group">
+                        <a href="./00-starterPCB/00_starter_Gerbers.zip" download class="btn-dl" title="Download Production Gerber ZIP">⚡ Gerbers.zip</a>
+                        <a href="./00-starterPCB/00_starter_routed.stl" download class="btn-dl" title="Download 3D Routed STL Model">📦 STL Model</a>
+                        <a href="./00-starterPCB/00_starter_BOM.csv" download class="btn-dl" title="Download Bill of Materials CSV">📄 BOM</a>
+                        <a href="./00-starterPCB/00_starter_CPL.csv" download class="btn-dl" title="Download Pick-and-Place CSV">📍 CPL</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project 01: V6 LED Strip -->
+            <div class="card" style="border-color: rgba(0, 243, 255, 0.3); --neon-blue: #00f3ff;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00f3ff; box-shadow: 0 0 15px #00f3ff;">💡</div>
+                        01: V6 LED Strip Generator
+                    </div>
+                    <div class="spec-tags">
+                        <span class="tag" style="color: #00f3ff; border-color: #00f3ff; background: rgba(0, 243, 255, 0.1);">WS2812B-3535</span>
+                        <span class="tag" style="color: #00f3ff; border-color: #00f3ff; background: rgba(0, 243, 255, 0.1);">PARAMETRIC LENGTH</span>
+                        <span class="tag" style="color: #00f3ff; border-color: #00f3ff; background: rgba(0, 243, 255, 0.1);">MOUSEBITE PANEL</span>
+                    </div>
+                </div>
+
+                <!-- 3D Rotating CAD Viewport -->
+                <div class="card-viewport-wrapper">
+                    <div class="card-viewport" id="viewport-01" data-stl="./01-V6Led/01_v6led_routed.stl" data-color="#00f3ff">
+                        <div class="cad-loading">LOADING 3D MESH...</div>
+                    </div>
+                    <span class="cad-hint">DRAG TO ORBIT</span>
+                </div>
+
+                <p class="card-purpose">
+                    <strong>Purpose:</strong> A fully programmatic addressable LED strip generator. Dynamically set length, LED density, pitch, and breakaway mousebite panel arrays. Implements multi-layer via crossovers on bottom copper to prevent power rail shorts.
+                </p>
+
+                <!-- Pricing Breakdown -->
+                <div class="price-breakdown-box">
+                    <div class="price-header">
+                        <span>Cost Breakdown</span>
+                        <span style="color: #00f3ff;">Hobby Strip</span>
+                    </div>
+                    <table class="price-table">
+                        <tbody>
+                            <tr>
+                                <td>Bare PCB Fabrication (5 boards)</td>
+                                <td class="cost">$2.00 ($0.40/ea)</td>
+                            </tr>
+                            <tr>
+                                <td>WS2812B-3535 LEDs (~6-10 LEDs)</td>
+                                <td class="cost">~$0.60</td>
+                            </tr>
+                            <tr>
+                                <td>Factory SMT Assembly</td>
+                                <td class="cost">$0.00 (DIY Solder)</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total Unit Cost</td>
+                                <td class="cost">~$1.00 / strip</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Bar & File Downloads -->
+                <div class="card-actions-toolbar">
+                    <a href="./01-V6Led/index.html" class="btn-launch" style="color: #00f3ff; border-color: #00f3ff;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                    <div class="btn-download-group">
+                        <a href="./01-V6Led/01_v6led_Gerbers.zip" download class="btn-dl" title="Download Production Gerber ZIP">⚡ Gerbers.zip</a>
+                        <a href="./01-V6Led/01_v6led_routed.stl" download class="btn-dl" title="Download 3D Routed STL Model">📦 STL Model</a>
+                        <a href="./01-V6Led/01_v6led_BOM.csv" download class="btn-dl" title="Download Bill of Materials CSV">📄 BOM</a>
+                        <a href="./01-V6Led/01_v6led_CPL.csv" download class="btn-dl" title="Download Pick-and-Place CSV">📍 CPL</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project 02: Audio Motion Reactive Baton Carrier -->
+            <div class="card" style="border-color: rgba(168, 85, 247, 0.3); --neon-blue: #a855f7;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #a855f7; box-shadow: 0 0 15px #a855f7;">🪄</div>
+                        02: Audio & Motion Baton Carrier
+                    </div>
+                    <div class="spec-tags">
+                        <span class="tag" style="color: #a855f7; border-color: #a855f7; background: rgba(168, 85, 247, 0.1);">ESP32-C3 SUPERMINI</span>
+                        <span class="tag" style="color: #a855f7; border-color: #a855f7; background: rgba(168, 85, 247, 0.1);">MPU6050/6500 IMU</span>
+                        <span class="tag" style="color: #a855f7; border-color: #a855f7; background: rgba(168, 85, 247, 0.1);">22×100mm BATON FOOTPRINT</span>
+                    </div>
+                </div>
+
+                <!-- 3D Rotating CAD Viewport -->
+                <div class="card-viewport-wrapper">
+                    <div class="card-viewport" id="viewport-02" data-stl="./02-audioMotionReactiveLedHapticPCB/02_audioMotionBaton_routed.stl" data-color="#a855f7">
+                        <div class="cad-loading">LOADING 3D MESH...</div>
+                    </div>
+                    <span class="cad-hint">DRAG TO ORBIT</span>
+                </div>
+
+                <p class="card-purpose">
+                    <strong>Purpose:</strong> Baton form factor (22×100mm) carrier PCB for flow wands, visual batons, and sound-reactive props. Shares the exact same circuit and BOM as 03. JLCPCB factory-assembles all SMD passives, MOSFETs, LiPo charger, and flyback diodes for just $0.84/board ($42 for 50 pcs). Just drop in $1 AliExpress dev modules.
+                </p>
+
+                <!-- Pricing Breakdown -->
+                <div class="price-breakdown-box">
+                    <div class="price-header">
+                        <span>Cost Breakdown</span>
+                        <span style="color: #a855f7;">50-Unit Production Run</span>
+                    </div>
+                    <table class="price-table">
+                        <tbody>
+                            <tr>
+                                <td>JLCPCB Bare PCB Fab (50 boards)</td>
+                                <td class="cost">~$14.00 ($0.28/ea)</td>
+                            </tr>
+                            <tr>
+                                <td>JLCPCB SMT Factory Assembly (50 boards)</td>
+                                <td class="cost">~$42.00 ($0.84/ea)</td>
+                            </tr>
+                            <tr>
+                                <td>Factory Pre-Assembled Carrier Subtotal</td>
+                                <td class="cost" style="color: #fff;">~$56.00 ($1.12/ea)</td>
+                            </tr>
+                            <tr>
+                                <td>AliExpress Dev Modules (SuperMini + MPU + Mic)</td>
+                                <td class="cost">~$2.50</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total Completed Baton Cost</td>
+                                <td class="cost" style="color: #a855f7;">~$3.62 / baton</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Bar & File Downloads -->
+                <div class="card-actions-toolbar">
+                    <a href="./02-audioMotionReactiveLedHapticPCB/index.html" class="btn-launch" style="color: #a855f7; border-color: #a855f7;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                    <div class="btn-download-group">
+                        <a href="./02-audioMotionReactiveLedHapticPCB/02_audioMotionBaton_Gerbers.zip" download class="btn-dl" title="Download Production Gerber ZIP">⚡ Gerbers.zip</a>
+                        <a href="./02-audioMotionReactiveLedHapticPCB/02_audioMotionBaton_routed.stl" download class="btn-dl" title="Download 3D Routed STL Model">📦 STL Model</a>
+                        <a href="./02-audioMotionReactiveLedHapticPCB/02_audioMotionBaton_BOM.csv" download class="btn-dl" title="Download Bill of Materials CSV">📄 BOM</a>
+                        <a href="./02-audioMotionReactiveLedHapticPCB/02_audioMotionBaton_CPL.csv" download class="btn-dl" title="Download Pick-and-Place CSV">📍 CPL</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project 03: Compact Dense Square Reactive Controller -->
+            <div class="card" style="border-color: rgba(57, 255, 20, 0.3); --neon-blue: #39ff14;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #39ff14; box-shadow: 0 0 15px #39ff14;">🟩</div>
+                        03: Compact Square Controller
+                    </div>
+                    <div class="spec-tags">
+                        <span class="tag" style="color: #39ff14; border-color: #39ff14; background: rgba(57, 255, 20, 0.1);">ESP32-C3 SUPERMINI</span>
+                        <span class="tag" style="color: #39ff14; border-color: #39ff14; background: rgba(57, 255, 20, 0.1);">MPU6050/6500 IMU</span>
+                        <span class="tag" style="color: #39ff14; border-color: #39ff14; background: rgba(57, 255, 20, 0.1);">38×38mm SQUARE FOOTPRINT</span>
+                    </div>
+                </div>
+
+                <!-- 3D Rotating CAD Viewport -->
+                <div class="card-viewport-wrapper">
+                    <div class="card-viewport" id="viewport-03" data-stl="./03-compactAudioMotionSquarePCB/03_compactSquare_routed.stl" data-color="#39ff14">
+                        <div class="cad-loading">LOADING 3D MESH...</div>
+                    </div>
+                    <span class="cad-hint">DRAG TO ORBIT</span>
+                </div>
+
+                <p class="card-purpose">
+                    <strong>Purpose:</strong> Ultra-dense 38×38mm square carrier PCB for cubes, robotics, wearable badges, and compact fixtures. Shares the exact same circuit and BOM as 02 in a dense square footprint with back-to-back 3D stacking and 31×31mm M3 bolt pattern. JLCPCB factory-assembles all SMD parts for $0.83/board ($41.66 for 50 pcs SMT + $13.80 bare PCBs). Just drop in $1 AliExpress dev modules.
+                </p>
+
+                <!-- Pricing Breakdown -->
+                <div class="price-breakdown-box">
+                    <div class="price-header">
+                        <span>Cost Breakdown</span>
+                        <span style="color: #39ff14;">50-Unit Production Run (Real JLCPCB Invoice)</span>
+                    </div>
+                    <table class="price-table">
+                        <tbody>
+                            <tr>
+                                <td>JLCPCB Bare PCB Fab (50 pcs)</td>
+                                <td class="cost">$13.80 ($0.28/ea)</td>
+                            </tr>
+                            <tr>
+                                <td>JLCPCB SMT Factory Assembly (50 pcs)</td>
+                                <td class="cost">$41.66 ($0.83/ea)</td>
+                            </tr>
+                            <tr>
+                                <td>Factory Pre-Assembled Carrier Subtotal</td>
+                                <td class="cost" style="color: #fff;">$55.46 ($1.11/ea)</td>
+                            </tr>
+                            <tr>
+                                <td>AliExpress Dev Modules (SuperMini + MPU + Mic)</td>
+                                <td class="cost">~$2.50</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total Complete Controller Cost</td>
+                                <td class="cost" style="color: #39ff14;">~$3.61 / board</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Bar & File Downloads -->
+                <div class="card-actions-toolbar">
+                    <a href="./03-compactAudioMotionSquarePCB/index.html" class="btn-launch" style="color: #39ff14; border-color: #39ff14;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                    <div class="btn-download-group">
+                        <a href="./03-compactAudioMotionSquarePCB/03_compactSquare_Gerbers.zip" download class="btn-dl" title="Download Production Gerber ZIP">⚡ Gerbers.zip</a>
+                        <a href="./03-compactAudioMotionSquarePCB/03_compactSquare_routed.stl" download class="btn-dl" title="Download 3D Routed STL Model">📦 STL Model</a>
+                        <a href="./03-compactAudioMotionSquarePCB/03_compactSquare_BOM.csv" download class="btn-dl" title="Download Bill of Materials CSV">📄 BOM</a>
+                        <a href="./03-compactAudioMotionSquarePCB/03_compactSquare_CPL.csv" download class="btn-dl" title="Download Pick-and-Place CSV">📍 CPL</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project 04: All-in-One Turnkey SMD Baton PCB -->
+            <div class="card" style="border-color: rgba(0, 240, 255, 0.4); --neon-blue: #00f0ff;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #00f0ff; box-shadow: 0 0 15px #00f0ff;">⚡</div>
+                        04: All-in-One Turnkey SMD Baton
+                    </div>
+                    <div class="spec-tags">
+                        <span class="tag" style="color: #00f0ff; border-color: #00f0ff; background: rgba(0, 240, 255, 0.1);">100% FACTORY ASSEMBLED</span>
+                        <span class="tag" style="color: #00f0ff; border-color: #00f0ff; background: rgba(0, 240, 255, 0.1);">ESP32-C3-WROOM</span>
+                        <span class="tag" style="color: #00f0ff; border-color: #00f0ff; background: rgba(0, 240, 255, 0.1);">LSM6DS3 IMU</span>
+                        <span class="tag" style="color: #00f0ff; border-color: #00f0ff; background: rgba(0, 240, 255, 0.1);">ZERO SOLDERING</span>
+                    </div>
+                </div>
+
+                <!-- 3D Rotating CAD Viewport -->
+                <div class="card-viewport-wrapper">
+                    <div class="card-viewport" id="viewport-04" data-stl="./04-smdAudioMotionBatonPCB/04_smdAudioMotionBaton_routed.stl" data-color="#00f0ff">
+                        <div class="cad-loading">LOADING 3D MESH...</div>
+                    </div>
+                    <span class="cad-hint">DRAG TO ORBIT</span>
+                </div>
+
+                <p class="card-purpose">
+                    <strong>Purpose:</strong> 100% factory-assembled turnkey baton controller (22×110mm). Solder-mounts an ESP32-C3-WROOM-02-N4 module directly with onboard ST LSM6DS3TR-C 6-axis IMU, WillSemi WMM7037AT2 MEMS mic, USB-C CDC/JTAG flashing, ME6211 LDO, TP4054 charger, LED gate, and haptic PWM driver. Zero soldering required.
+                </p>
+
+                <!-- Pricing Breakdown -->
+                <div class="price-breakdown-box">
+                    <div class="price-header">
+                        <span>Cost Breakdown</span>
+                        <span style="color: #00f0ff;">Turnkey JLCPCB SMT</span>
+                    </div>
+                    <table class="price-table">
+                        <tbody>
+                            <tr>
+                                <td>Bare PCB Fabrication (5–10 boards)</td>
+                                <td class="cost">$2.00</td>
+                            </tr>
+                            <tr>
+                                <td>100% SMT Components (33 parts)</td>
+                                <td class="cost">$5.52 / board</td>
+                            </tr>
+                            <tr>
+                                <td>Standard PCBA Base ($24) + 7 Feeders ($21)</td>
+                                <td class="cost">$46.50 fixed setup</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total Unit Cost @ 10 qty</td>
+                                <td class="cost" style="color: #00f0ff;">~$10.28 / board</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Bar & File Downloads -->
+                <div class="card-actions-toolbar">
+                    <a href="./04-smdAudioMotionBatonPCB/index.html" class="btn-launch" style="color: #00f0ff; border-color: #00f0ff;">
+                        Open Studio
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                    <div class="btn-download-group">
+                        <a href="./04-smdAudioMotionBatonPCB/04_smdAudioMotionBaton_Gerbers.zip" download class="btn-dl" title="Download Production Gerber ZIP">⚡ Gerbers.zip</a>
+                        <a href="./04-smdAudioMotionBatonPCB/04_smdAudioMotionBaton_routed.stl" download class="btn-dl" title="Download 3D Routed STL Model">📦 STL Model</a>
+                        <a href="./04-smdAudioMotionBatonPCB/04_smdAudioMotionBaton_BOM.csv" download class="btn-dl" title="Download Bill of Materials CSV">📄 BOM</a>
+                        <a href="./04-smdAudioMotionBatonPCB/04_smdAudioMotionBaton_CPL.csv" download class="btn-dl" title="Download Pick-and-Place CSV">📍 CPL</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="secondary-section">
+            <div class="secondary-title">Core Library & Templates</div>
+            <div class="secondary-grid">
+                <a href="./00-starterPCB/index.html" class="s-card" style="border-color: rgba(0, 240, 255, 0.4);">
+                    <span class="s-card-title">⚡ 00: Turnkey Starter PCB Template</span>
+                    <span class="s-card-tag" style="color: var(--neon-cyan, #00f0ff);">Modular Base • 3D/2D Visualizers • Instant Exports</span>
+                </a>
+                <a href="./00-commonParts/" class="s-card">
+                    <span class="s-card-title">Common Footprints & Components</span>
+                    <span class="s-card-tag">tscircuit components</span>
+                </a>
+                <a href="./shared/" class="s-card">
+                    <span class="s-card-title">Single Source of Truth (shared/)</span>
+                    <span class="s-card-tag">Footprints • DRC • Gerber & STL Exporter</span>
+                </a>
+                <a href="./ideas.md" class="s-card" style="border-color: rgba(255, 0, 128, 0.4);">
+                    <span class="s-card-title" style="color: #ff007f;">🚀 Hardware Roadmap & Ideas (ideas.md)</span>
+                    <span class="s-card-tag" style="color: #ff77b4;">9 Next-Gen PCBs Mapped to ESP32Codes Firmware</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 10 FPS 3D Rotating CAD Card Engine -->
+    <script type="module" src="./card-visualizer.js"></script>
+</body>
+</html>

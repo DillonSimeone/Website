@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro Log & Text Analyzer (Win95 Edition)</title>
+  <!-- Google Fonts: Share Tech Mono, MS Sans Serif fallbacks are styled in CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Desktop Icons -->
+  <div class="desktop">
+    
+    <div class="desktop-icon" id="icon-contacts" onclick="toggleWindow('win-contacts')">
+      <div class="icon-wrapper">
+        <i data-lucide="users"></i>
+      </div>
+      <div class="icon-label">Network Directory</div>
+    </div>
+
+    <div class="desktop-icon" id="icon-analyzer" onclick="toggleWindow('win-analyzer')">
+      <div class="icon-wrapper">
+        <i data-lucide="file-search-2"></i>
+      </div>
+      <div class="icon-label">Log Analyzer</div>
+    </div>
+
+    <div class="desktop-icon" id="icon-notepad" onclick="toggleWindow('win-notepad')">
+      <div class="icon-wrapper">
+        <i data-lucide="file-text"></i>
+      </div>
+      <div class="icon-label">Retro Notepad</div>
+    </div>
+
+    <div class="desktop-icon" id="icon-about" onclick="toggleWindow('win-about')">
+      <div class="icon-wrapper">
+        <i data-lucide="info"></i>
+      </div>
+      <div class="icon-label">System About</div>
+    </div>
+
+    <!-- WINDOW 1: Network Contact Directory -->
+    <div class="window" id="win-contacts" style="top: 50px; left: 80px; width: 360px; z-index: 10;">
+      <div class="title-bar" onmousedown="dragStart(event, 'win-contacts')">
+        <div class="title-bar-text">
+          <i data-lucide="users" class="window-mini-icon"></i> Network Directory
+        </div>
+        <div class="title-bar-controls">
+          <button aria-label="Minimize" onclick="minimizeWindow('win-contacts')"></button>
+          <button aria-label="Maximize" disabled></button>
+          <button aria-label="Close" onclick="closeWindow('win-contacts')"></button>
+        </div>
+      </div>
+      
+      <!-- Menu Bar -->
+      <div class="menu-bar">
+        <div class="menu-item">
+          <span>File</span>
+          <div class="dropdown-menu">
+            <div class="dropdown-item" onclick="setContactsState(false)">Disconnect / Offline</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" onclick="closeWindow('win-contacts')">Exit</div>
+          </div>
+        </div>
+        <div class="menu-item">
+          <span>Help</span>
+          <div class="dropdown-menu">
+            <div class="dropdown-item" onclick="toggleWindow('win-about')">About System</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Window Content -->
+      <div class="window-body">
+        <div class="status-panel inset-field">
+          <div class="status-row">
+            <span class="label">Mainframe Node:</span>
+            <span class="value" id="oauth-config-status">Online Mainframe</span>
+          </div>
+          <div class="status-row">
+            <span class="label">Sync Status:</span>
+            <span class="value" id="oauth-auth-status">Offline</span>
+          </div>
+        </div>
+
+        <div id="contacts-login-pane" class="auth-action-pane">
+          <p class="description-text">Sync with the local secure mainframe to query network directory records.</p>
+          <button id="btn-oauth-connect" class="retro-btn btn-block">
+            <i data-lucide="terminal"></i>
+            <span>Sync Mainframe Directory</span>
+          </button>
+        </div>
+
+        <div id="contacts-list-pane" class="contacts-display-pane hidden">
+          <div class="list-header">System Directories:</div>
+          <div class="inset-field scrollable-list" style="height: 250px;">
+            <div id="contacts-list" class="retro-list">
+              <!-- Dynamically populated -->
+            </div>
+            <div id="contacts-loading" class="list-placeholder hidden">
+              <div class="spinner-retro"></div>
+              <span>Syncing secure record banks...</span>
+            </div>
+            <div id="contacts-empty" class="list-placeholder hidden">
+              <span>No directory records retrieved.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="status-bar">
+        <p class="status-bar-field" id="contacts-status-field">Mainframe Link Offline</p>
+      </div>
+    </div>
+
+
+    <!-- WINDOW 2: Log & Text Analyzer -->
+    <div class="window" id="win-analyzer" style="top: 80px; left: 380px; width: 750px; z-index: 9;">
+      <div class="title-bar" onmousedown="dragStart(event, 'win-analyzer')">
+        <div class="title-bar-text">
+          <i data-lucide="file-search-2" class="window-mini-icon"></i> Retro Log & Text Analyzer
+        </div>
+        <div class="title-bar-controls">
+          <button aria-label="Minimize" onclick="minimizeWindow('win-analyzer')"></button>
+          <button aria-label="Maximize" disabled></button>
+          <button aria-label="Close" onclick="closeWindow('win-analyzer')"></button>
+        </div>
+      </div>
+
+      <!-- Menu Bar -->
+      <div class="menu-bar">
+        <div class="menu-item">
+          <span>File</span>
+          <div class="dropdown-menu">
+            <div class="dropdown-item" onclick="exportAllThreads()">Export All Logs (.txt)</div>
+            <div class="dropdown-item" onclick="resetDatabase()">Reset to Fictional Samples</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" onclick="closeWindow('win-analyzer')">Exit</div>
+          </div>
+        </div>
+        <div class="menu-item">
+          <span>Help</span>
+          <div class="dropdown-menu">
+            <div class="dropdown-item" onclick="alert('Retro Log & Text Analyzer v1.1\nDesigned for offline log diagnostics and file validation.')">About</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Window Content -->
+      <div class="window-body" style="display: flex; flex-direction: column; height: 480px;">
+        
+        <!-- Top File Upload / Drag-drop Zone -->
+        <div class="parser-setup-bar">
+          <div class="file-uploader-wrapper" style="display: flex; align-items: center; width: 100%; gap: 10px;">
+            <label class="retro-btn" for="file-uploader" style="flex-shrink: 0; min-width: 160px; margin: 0;">
+              <i data-lucide="upload"></i> Load Log File (.txt, .json)
+            </label>
+            <input type="file" id="file-uploader" accept=".txt,.json" style="display: none;">
+            <div id="drag-drop-zone" class="drag-drop-zone inset-field" style="flex: 1; padding: 4px 10px; display: flex; align-items: center; justify-content: center; height: 26px; font-style: italic; color: #555; font-size: 10px; cursor: pointer;">
+              or Drag & Drop log files here
+            </div>
+          </div>
+        </div>
+
+        <div class="analyzer-grid" style="flex: 1; min-height: 0; display: grid; grid-template-columns: 240px 1fr; gap: 8px; margin-top: 8px;">
+          
+          <!-- Column 1: Log Threads -->
+          <div class="thread-pane" style="display: flex; flex-direction: column; min-height: 0;">
+            <div class="pane-header">Loaded Logs:</div>
+            <div class="inset-field scrollable-list" style="flex: 1;">
+              <div id="thread-list" class="retro-list">
+                <!-- Threads lists populated dynamically -->
+              </div>
+              <div id="threads-empty" class="list-placeholder hidden">
+                <span>No logs loaded. Drop or upload a text file above.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: Log Viewer -->
+          <div class="transcript-pane" style="display: flex; flex-direction: column; min-height: 0;">
+            
+            <div class="active-convo-header" id="active-convo-header">
+              <span class="active-title" id="active-convo-name">No Conversation Selected</span>
+              <span class="active-phone" id="active-convo-phone"></span>
+              <div class="actions">
+                <button id="btn-export-single" class="retro-btn small-btn" disabled>Export Log</button>
+              </div>
+            </div>
+
+            <!-- Search Highlight Bar -->
+            <div class="search-filter-bar inset-field">
+              <i data-lucide="search" class="filter-search-icon"></i>
+              <input type="text" id="text-highlight-search" placeholder="Type to search and highlight text entries..." disabled>
+              <span id="search-matches-count" class="matches-badge hidden">0 matches</span>
+            </div>
+
+            <div class="inset-field messages-scroll-pane" id="messages-container" style="flex: 1; background: #fff; color: #000; overflow-y: auto; padding: 10px; font-family: monospace;">
+              <!-- Messages logs injected dynamically -->
+              <div class="chat-placeholder" id="chat-placeholder">
+                <i data-lucide="terminal" style="width: 48px; height: 48px; color: #808080; margin-bottom: 10px;"></i>
+                <p style="font-weight: bold;">Log Diagnostic Viewer</p>
+                <p style="font-size: 0.8rem; color: #555; max-width: 320px; text-align: center; line-height: 1.4; margin-top: 5px;">
+                  Select a log thread on the left to read details, highlight matches, or load a custom log file using the drop zone above.
+                </p>
+              </div>
+            </div>
+            
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="status-bar">
+        <p class="status-bar-field" id="analyzer-status-field">Database: Ready</p>
+        <p class="status-bar-field" id="analyzer-count-field" style="width: 180px;">0 logs parsed</p>
+      </div>
+
+    </div>
+
+
+    <!-- WINDOW 3: Retro Notepad -->
+    <div class="window" id="win-notepad" style="top: 150px; left: 180px; width: 480px; height: 350px; z-index: 8; display: none;">
+      <div class="title-bar" onmousedown="dragStart(event, 'win-notepad')">
+        <div class="title-bar-text">
+          <i data-lucide="file-text" class="window-mini-icon"></i> Notepad - Notes.txt
+        </div>
+        <div class="title-bar-controls">
+          <button aria-label="Minimize" onclick="minimizeWindow('win-notepad')"></button>
+          <button aria-label="Maximize" disabled></button>
+          <button aria-label="Close" onclick="closeWindow('win-notepad')"></button>
+        </div>
+      </div>
+      
+      <!-- Menu Bar -->
+      <div class="menu-bar">
+        <div class="menu-item">
+          <span>File</span>
+          <div class="dropdown-menu">
+            <div class="dropdown-item" onclick="notepadAction('new')">New</div>
+            <div class="dropdown-item" onclick="notepadAction('save')">Save...</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" onclick="closeWindow('win-notepad')">Exit</div>
+          </div>
+        </div>
+        <div class="menu-item">
+          <span>Edit</span>
+          <div class="dropdown-menu">
+            <div class="dropdown-item" onclick="notepadAction('clear')">Clear All</div>
+            <div class="dropdown-item" onclick="notepadAction('time')">Time/Date</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Window Content -->
+      <div class="window-body" style="flex: 1; padding: 2px;">
+        <textarea id="notepad-content" class="inset-field notepad-textarea" placeholder="Type notes here... File -> Save will download notes to your computer."></textarea>
+      </div>
+
+      <div class="status-bar">
+        <p class="status-bar-field">Line: 1, Col: 1</p>
+        <p class="status-bar-field" style="width: 100px;">Windows ANSI</p>
+      </div>
+    </div>
+
+
+    <!-- WINDOW 4: About Dialog -->
+    <div class="window" id="win-about" style="top: 180px; left: 320px; width: 340px; z-index: 12; display: none;">
+      <div class="title-bar" onmousedown="dragStart(event, 'win-about')">
+        <div class="title-bar-text">
+          <i data-lucide="info" class="window-mini-icon"></i> About System Tools
+        </div>
+        <div class="title-bar-controls">
+          <button aria-label="Minimize" disabled></button>
+          <button aria-label="Maximize" disabled></button>
+          <button aria-label="Close" onclick="closeWindow('win-about')"></button>
+        </div>
+      </div>
+
+      <!-- Window Content -->
+      <div class="window-body" style="padding: 15px; display: flex; flex-direction: row; gap: 15px; align-items: flex-start;">
+        <div style="background: var(--w-shadow-dark); color: #fff; padding: 8px; border-radius: 4px;">
+          <i data-lucide="monitor" style="width: 32px; height: 32px;"></i>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+          <h2 style="font-size: 13px; font-weight: bold; margin-bottom: 2px;">Retro System Tools</h2>
+          <p class="description-text" style="margin-bottom: 2px;">Version 1.2 (Client-Side Edition)</p>
+          <p class="description-text" style="margin-bottom: 10px;">Copyright &copy; 2026 Retro Systems Corp.</p>
+          
+          <div class="dropdown-divider"></div>
+          
+          <p class="description-text" style="font-weight: bold;">System Info:</p>
+          <p class="description-text">Memory Allocation: 640KB RAM</p>
+          <p class="description-text">Architecture: Client-Side HTML/JS/CSS</p>
+          
+          <button class="retro-btn" onclick="closeWindow('win-about')" style="width: 70px; align-self: flex-end; margin-top: 10px;">OK</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Windows 95/98 Taskbar -->
+  <footer class="taskbar">
+    
+    <!-- Start Button -->
+    <button class="start-button" id="start-btn">
+      <div class="start-btn-content">
+        <i data-lucide="shield" class="start-icon" style="color: #000080;"></i>
+        <span>Start</span>
+      </div>
+    </button>
+
+    <!-- Start Menu -->
+    <div class="start-menu hidden" id="start-menu-popup">
+      <div class="start-menu-sidebar">
+        <div class="sidebar-text">Retro Tools</div>
+      </div>
+      <div class="start-menu-items">
+        <div class="start-menu-item" onclick="toggleWindow('win-analyzer')">
+          <i data-lucide="file-search-2"></i>
+          <span>Log Analyzer</span>
+        </div>
+        <div class="start-menu-item" onclick="toggleWindow('win-contacts')">
+          <i data-lucide="users"></i>
+          <span>Network Directory</span>
+        </div>
+        <div class="start-menu-item" onclick="toggleWindow('win-notepad')">
+          <i data-lucide="file-text"></i>
+          <span>Retro Notepad</span>
+        </div>
+        <div class="menu-divider"></div>
+        <div class="start-menu-item" onclick="resetDatabase()">
+          <i data-lucide="refresh-cw"></i>
+          <span>Reset Samples</span>
+        </div>
+        <div class="start-menu-item" onclick="toggleWindow('win-about')">
+          <i data-lucide="info"></i>
+          <span>About System</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Tasks Items -->
+    <div class="task-buttons">
+      <button class="task-button active" id="task-win-contacts" onclick="toggleWindow('win-contacts')">
+        <i data-lucide="users"></i>
+        <span>Network Directory</span>
+      </button>
+      <button class="task-button active" id="task-win-analyzer" onclick="toggleWindow('win-analyzer')">
+        <i data-lucide="file-search-2"></i>
+        <span>Log Analyzer</span>
+      </button>
+      <button class="task-button hidden" id="task-win-notepad" onclick="toggleWindow('win-notepad')">
+        <i data-lucide="file-text"></i>
+        <span>Notepad</span>
+      </button>
+      <button class="task-button hidden" id="task-win-about" onclick="toggleWindow('win-about')">
+        <i data-lucide="info"></i>
+        <span>About</span>
+      </button>
+    </div>
+
+    <!-- System Tray Clock -->
+    <div class="system-tray">
+      <div class="tray-icons">
+        <i data-lucide="shield-check" id="tray-shield" title="System initialized" style="color: #008000; width: 14px; height: 14px;"></i>
+      </div>
+      <div class="tray-clock" id="tray-time">12:00 PM</div>
+    </div>
+
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

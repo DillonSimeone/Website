@@ -1,0 +1,32 @@
+{
+  "name": "parametricpcb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node shared/audit-footprints.mjs && node shared/check-overlays.mjs 04 && node shared/audit-netlist.mjs 04",
+    "audit-footprints": "node shared/audit-footprints.mjs",
+    "check-overlays": "node shared/check-overlays.mjs",
+    "audit-netlist": "node shared/audit-netlist.mjs",
+    "audit-traces": "node shared/audit-traces.mjs 03",
+    "fetch-footprint": "node shared/fetch-easyeda-footprint.mjs",
+    "check-supply": "node shared/check-jlc-supply.mjs",
+    "test:browser": "node shared/test-headless.mjs 04",
+    "export-all": "node shared/export-stl.mjs --all",
+    "export-stl": "node shared/export-stl.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@tscircuit/core": "^0.0.1361",
+    "circuit-json-to-gerber": "^0.0.78",
+    "circuit-json-to-kicad": "^0.0.230",
+    "esbuild": "^0.28.1",
+    "jszip": "^3.10.2",
+    "polygon-clipping": "^0.15.7",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  }
+}

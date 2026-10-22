@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Cochlear Emulator & Haptic Mapper — Universal Music Design</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="page-container">
+        <!-- HEADER -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="badge">UMD Research Sandbox</div>
+                <h1>Cochlear Emulator & Haptic Mapper</h1>
+                <p class="subtitle">Real-time Greenwood filterbank, envelope extractor, sine/noise vocoder simulation, and declarative cross-modal mapping console.</p>
+            </div>
+            <div class="header-actions">
+                <a href="../Haxel/index.html" class="btn secondary">Back to Haxel</a>
+                <a href="#docs" class="btn">View Specs</a>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT GRID -->
+        <div class="dashboard-grid">
+            
+            <!-- LEFT PANEL: CONTROLS & CI CONFIG -->
+            <section class="panel panel-config">
+                <div class="panel-header">
+                    <h2>Audio & Filterbank Settings</h2>
+                </div>
+                
+                <div class="panel-body">
+                    <!-- AUDIO INPUT SECTION -->
+                    <div class="section-group">
+                        <h3>1. Audio Source</h3>
+                        
+                        <div class="control-row">
+                            <label for="audioSource">Input Type</label>
+                            <select id="audioSource">
+                                <option value="synth">Procedural Beat Synth</option>
+                                <option value="mic">Live Microphone Input</option>
+                                <option value="file">Local Audio File</option>
+                            </select>
+                        </div>
+
+                        <div class="control-row file-upload-row" id="fileUploadRow" style="display: none;">
+                            <label for="audioFile">Upload File</label>
+                            <input type="file" id="audioFile" accept="audio/*">
+                        </div>
+
+                        <div class="control-row">
+                            <label for="inputGain">Input Gain</label>
+                            <input type="range" id="inputGain" min="0" max="30" value="10">
+                            <span class="val" id="inputGainVal">1.0x</span>
+                        </div>
+                    </div>
+
+                    <!-- COCHLEAR FILTERBANK PARAMETERS -->
+                    <div class="section-group">
+                        <h3>2. Cochlear Configuration</h3>
+                        
+                        <div class="control-row">
+                            <label for="channelCount">Electrodes / Bands</label>
+                            <select id="channelCount">
+                                <option value="4">4 Channels</option>
+                                <option value="8" selected>8 Channels</option>
+                                <option value="12">12 Channels</option>
+                                <option value="16">16 Channels</option>
+                                <option value="22">22 Channels</option>
+                            </select>
+                        </div>
+
+                        <div class="control-row">
+                            <label for="greenwoodMin">Min Freq (Apex)</label>
+                            <input type="range" id="greenwoodMin" min="20" max="500" value="150">
+                            <span class="val" id="greenwoodMinVal">150 Hz</span>
+                        </div>
+
+                        <div class="control-row">
+                            <label for="greenwoodMax">Max Freq (Base)</label>
+                            <input type="range" id="greenwoodMax" min="2000" max="18000" value="8000" step="100">
+                            <span class="val" id="greenwoodMaxVal">8000 Hz</span>
+                        </div>
+
+                        <div class="control-row">
+                            <label for="envelopeCutoff">Envelope Cutoff</label>
+                            <input type="range" id="envelopeCutoff" min="10" max="300" value="50">
+                            <span class="val" id="envelopeCutoffVal">50 Hz</span>
+                        </div>
+                    </div>
+
+                    <!-- SIMULATED AUDIO VOCODER -->
+                    <div class="section-group">
+                        <h3>3. Vocoder Simulation</h3>
+                        
+                        <div class="control-row">
+                            <label for="vocoderType">Carrier Type</label>
+                            <select id="vocoderType">
+                                <option value="sine">Sine Wave Vocoder</option>
+                                <option value="noise">Noise Band Vocoder</option>
+                                <option value="bypass">Original Audio (Normal Bypass)</option>
+                                <option value="none">Muted (Haptics Only)</option>
+                            </select>
+                        </div>
+
+                        <div class="control-row">
+                            <label for="vocoderVolume">Simulated Vol</label>
+                            <input type="range" id="vocoderVolume" min="0" max="100" value="50">
+                            <span class="val" id="vocoderVolumeVal">50%</span>
+                        </div>
+                    </div>
+
+                    <div class="control-actions">
+                        <button class="btn primary" id="startAudioBtn">Start Processing</button>
+                        <button class="btn danger" id="stopAudioBtn" disabled>Stop</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MIDDLE PANEL: HOXEL SCRIPT EDITOR -->
+            <section class="panel panel-script">
+                <div class="panel-header">
+                    <h2>Hoxel Mapping Console</h2>
+                </div>
+                
+                <div class="panel-body flex-column">
+                    <p class="panel-desc">Write real-time mapping scripts in Javascript to route cochlear envelope channels to tactile actuators. Evaluated at 60 FPS.</p>
+                    
+                    <div class="script-presets-row">
+                        <label for="scriptPreset">Load Preset:</label>
+                        <select id="scriptPreset">
+                            <option value="direct">Direct Multi-Channel Map</option>
+                            <option value="bassRumble">Low-Freq Core Rumble</option>
+                            <option value="crossInterlocking">Overlapping Interlocking Waves</option>
+                            <option value="highFrequencyTap">High-Frequency Click/Tap</option>
+                            <option value="custom">Blank Canvas</option>
+                        </select>
+                    </div>
+
+                    <!-- CODE EDITOR INTERFACE -->
+                    <div class="code-editor-container">
+                        <div class="code-editor-gutter" id="editorGutter">
+                            <span>1</span>
+                        </div>
+                        <textarea id="scriptText" spellcheck="false" class="code-textarea">// Inputs:
+//   envelopes[] : real-time envelope array (0.0 to 1.0)
+//   numChannels : number of bands configured
+//   t           : elapsed time in seconds
+// Output:
+//   actuators[] : haptic intensities (0.0 to 1.0)
+
+// Direct map: channel 0 (bass) to actuator 0, channel 4 (mid) to actuator 1,
+// and high frequencies to actuator 2
+actuators[0] = envelopes[0] * 1.5;
+actuators[1] = envelopes[Math.floor(numChannels / 2)] * 1.2;
+actuators[2] = envelopes[numChannels - 1] > 0.45 ? 1.0 : 0.0;
+</textarea>
+                    </div>
+
+                    <div class="editor-footer">
+                        <span class="status-indicator status-ok" id="scriptStatusIndicator">✓ Compiles OK</span>
+                    </div>
+
+                    <!-- SCRIPT LOG/CONSOLE -->
+                    <div class="error-console" id="errorConsole">
+                        <div class="console-line system-msg">Console ready. Scripts will compile and apply automatically on input.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: GRAPHICAL TELEMETRY & VIRTUAL ACTUATORS -->
+            <section class="panel panel-telemetry">
+                <div class="panel-header">
+                    <h2>Tactile Actuator Telemetry</h2>
+                </div>
+                
+                <div class="panel-body flex-column">
+                    <!-- CHANNEL FREQUENCIES FEED -->
+                    <div class="freq-band-list" id="freqBandList">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
+                    <!-- WAVEFORM OSCILLOSCOPE -->
+                    <div class="telemetry-chassis">
+                        <div class="canvas-header">
+                            <span>Cochlear Envelopes & Haptic Outputs</span>
+                            <span class="fps-badge" id="telemetryFps">60 FPS</span>
+                        </div>
+                        <div class="viewport-container">
+                            <canvas id="telemetryCanvas" width="450" height="240"></canvas>
+                        </div>
+                    </div>
+
+
+
+                    <!-- HAPTIC INTEGRATION CONTROLS -->
+                    <div class="integration-settings">
+                        <label class="toggle-control">
+                            <input type="checkbox" id="vibrateToggle" checked>
+                            <span>Enable Smartphone Haptics (Vibrate API)</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- DOCUMENTATION SECTION -->
+        <section class="doc-card" id="docs" style="margin-top: 40px;">
+            <h2>Understanding the Cochlear Emulator</h2>
+            <div class="doc-grid">
+                <div>
+                    <h3>1. Greenwood Cochlear Mapping</h3>
+                    <p>Greenwood's function describes the relationship between the frequency of an incoming sound and the position of the corresponding hair cells inside the human cochlea. The formula is:</p>
+                    <pre>F = A * (10^(a * x) - k)</pre>
+                    <p>For human ears, we use the values <code>A = 165.4</code>, <code>a = 2.1</code>, and <code>k = 0.85</code>, where <code>x</code> represents the position from apex (highest sensitivity to low frequencies, <code>x = 0</code>) to base (highest sensitivity to high frequencies, <code>x = 1</code>).</p>
+                    <p>This emulator calculates $N$ bands spaced logarithmically along the cochlear partition using Greenwood's mapping, then creates a bank of filters to isolate the respective bands, simulating a multi-electrode cochlear implant array.</p>
+                </div>
+                <div>
+                    <h3>2. Cross-Modal Haptic Scripting</h3>
+                    <p>For Deaf and Hard-of-Hearing musicians, we map auditory filters to distinct haptic touch points. However, a static linear map is rarely sufficient to capture the dynamics of complex music.</p>
+                    <p>The <strong>Hoxel Scripting Panel</strong> allows you to design custom mathematical translation rules. You can use time-varying functions (e.g. <code>Math.sin(t * frequency)</code>) or conditional logic (e.g. <code>envelopes[i] > threshold</code>) to trigger custom rhythms, clicks, sweeps, or motor accelerations dynamically.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="main-footer">
+            <p>UMD Cochlear Emulator &copy; 2026. Made Possible by Dillon Simeone and the Antigravity Swarm.</p>
+        </footer>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="scripts.js"></script>
+</body>
+
+</html>

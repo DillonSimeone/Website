@@ -1,0 +1,6 @@
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 seconds"
+</IfModule>
+
+Header set Cache-Control no-cache

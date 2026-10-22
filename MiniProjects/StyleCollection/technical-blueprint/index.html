@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technical Blueprint Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="blueprint-grid-bg"></div>
+
+  <div class="blueprint-container">
+    <header class="blueprint-header">
+      <a href="../index.html" class="nav-back">SYS: HUB_RETURN</a>
+      <h1 class="blueprint-title">CAD_BLUEPRINT</h1>
+      <p class="blueprint-subtitle">SPECIFICATIONS DECK // WIREFRAMES & DIMENSIONS</p>
+    </header>
+
+    <main class="blueprint-grid">
+      <!-- Spec Box -->
+      <section class="blueprint-card spec-box">
+        <div class="card-crosshair top-left">+</div>
+        <div class="card-crosshair top-right">+</div>
+        <h2>01 // SPECIFICATIONS</h2>
+        <div class="divider"></div>
+        <p>A style designed to replicate technical drafts and engineering documents. It uses high-contrast cyan lines on dark blue backgrounds matching grid coordinates.</p>
+      </section>
+
+      <!-- Interactive Dimension card -->
+      <section class="blueprint-card interactive-box">
+        <div class="card-crosshair top-left">+</div>
+        <div class="card-crosshair top-right">+</div>
+        <h2>02 // DIMENSION_SCALE</h2>
+        <p>Drag the slider below to scale the wireframe box. The dimension labels will recalculate in real-time.</p>
+        
+        <div class="slider-row">
+          <input type="range" class="cad-slider" id="scale-slider" min="50" max="150" value="100">
+        </div>
+
+        <div class="cad-viewport">
+          <div class="cad-wireframe-box" id="wire-box">
+            <span class="dim-label dim-w" id="dim-w-label">w: 100px</span>
+            <span class="dim-label dim-h" id="dim-h-label">h: 100px</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Geometry details -->
+      <section class="blueprint-card legend-box">
+        <div class="card-crosshair top-left">+</div>
+        <div class="card-crosshair top-right">+</div>
+        <h2>03 // SYSTEM_LEGEND</h2>
+        <div class="divider"></div>
+        <p>COORDINATES: X: 382 // Y: 110</p>
+        <p>DRAWING UNIT: MIL (0.001 IN)</p>
+        <p>GRID SIZE: 15 X 15 SEC</p>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

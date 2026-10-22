@@ -1,0 +1,15 @@
+{
+  "version": {
+    "license": "MIT"
+  },
+  "categories": {
+    "firefox": ["photos-music-videos"]
+  },
+  "summary": {
+    "en-US": "Hover a link or image, press Ctrl+Shift, and get a floating QR code you can copy as an image."
+  },
+  "requires_payment": false,
+  "homepage": {
+    "en-US": "https://dillonsimeone.com/MiniProjects/QRCodeHover/index.html"
+  }
+}

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCAD — Common Parts Library</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="scanline"></div>
+
+    <canvas id="gl-canvas"></canvas>
+
+    <div class="container">
+        <header>
+            <a href="../" class="nav-back">← DASHBOARD</a>
+            <h1>ForgeCAD Common Parts</h1>
+            <div class="subtitle">Reusable Parametric CAD Components</div>
+        </header>
+
+        <div class="cards-grid">
+            <!-- 1. 18650 Battery Holder -->
+            <div class="card" id="part-18650">
+                <div class="card-header">
+                    <div class="card-title">
+                        18650 Battery Holder
+                        <span class="card-tag">Power</span>
+                    </div>
+                    <p class="card-desc">Standard single-cell holder featuring contact wire slots, flexible battery locking ears, and routing grooves.</p>
+                </div>
+                <div class="preview-container">
+                    <div class="viewport-placeholder"></div>
+                    <div class="measure-hud">
+                        <div class="measure-line"><span class="measure-name">Inner Dia:</span><span class="measure-val" id="hud-batD">18.6mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Inner Len:</span><span class="measure-val" id="hud-batL">66.0mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Wall Thick:</span><span class="measure-val" id="hud-wall">3.0mm</span></div>
+                    </div>
+                </div>
+                <div class="params-panel">
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Battery Diameter</span><span class="param-value" id="val-batD">18.6 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="batD" min="16" max="22" step="0.1" value="18.6">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Battery Length</span><span class="param-value" id="val-batL">66.0 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="batL" min="64" max="78" step="0.5" value="66.0">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Wall Thickness</span><span class="param-value" id="val-wall">3.0 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="wall" min="1.5" max="6" step="0.1" value="3.0">
+                    </div>
+                </div>
+                <button class="export-btn" id="export-18650">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download STL
+                </button>
+            </div>
+
+            <!-- 2. ESP32 DevKit Cradle -->
+            <div class="card" id="part-esp32">
+                <div class="card-header">
+                    <div class="card-title">
+                        ESP32 DevKit Cradle
+                        <span class="card-tag">Core</span>
+                    </div>
+                    <p class="card-desc">Robust mounting tray with snap-fit side grips and side mounting flanges for standard development boards.</p>
+                </div>
+                <div class="preview-container">
+                    <div class="viewport-placeholder"></div>
+                    <div class="measure-hud">
+                        <div class="measure-line"><span class="measure-name">Inner Width:</span><span class="measure-val" id="hud-boardW">28.5mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Inner Length:</span><span class="measure-val" id="hud-boardL">52.5mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Wall Height:</span><span class="measure-val" id="hud-wallH">7.5mm</span></div>
+                    </div>
+                </div>
+                <div class="params-panel">
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Board Width</span><span class="param-value" id="val-boardW">28.5 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="boardW" min="24" max="35" step="0.1" value="28.5">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Board Length</span><span class="param-value" id="val-boardL">52.5 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="boardL" min="40" max="70" step="0.5" value="52.5">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Wall Height</span><span class="param-value" id="val-wallH">7.5 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="wallH" min="5.0" max="12" step="0.5" value="7.5">
+                    </div>
+                </div>
+                <button class="export-btn" id="export-esp32">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download STL
+                </button>
+            </div>
+
+            <!-- 3. TP4056 USB-C Charger Cradle -->
+            <div class="card" id="part-tp4056">
+                <div class="card-header">
+                    <div class="card-title">
+                        TP4056 Charger Slot
+                        <span class="card-tag">Charger</span>
+                    </div>
+                    <p class="card-desc">USB-C charging module retention slot with specific connector clearances and side locks.</p>
+                </div>
+                <div class="preview-container">
+                    <div class="viewport-placeholder"></div>
+                    <div class="measure-hud">
+                        <div class="measure-line"><span class="measure-name">Slot Width:</span><span class="measure-val" id="hud-w">17.5mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Slot Length:</span><span class="measure-val" id="hud-l">28.5mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Thickness:</span><span class="measure-val" id="hud-wall">2.0mm</span></div>
+                    </div>
+                </div>
+                <div class="params-panel">
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Slot Width</span><span class="param-value" id="val-w">17.5 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="w" min="15.0" max="22.0" step="0.1" value="17.5">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Slot Length</span><span class="param-value" id="val-l">28.5 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="l" min="24.0" max="35.0" step="0.5" value="28.5">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Wall Thickness</span><span class="param-value" id="val-wall">2.0 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="wall" min="1.0" max="4.0" step="0.1" value="2.0">
+                    </div>
+                </div>
+                <button class="export-btn" id="export-tp4056">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download STL
+                </button>
+            </div>
+
+            <!-- 4. L298N Mini Driver Mount -->
+            <div class="card" id="part-l298n">
+                <div class="card-header">
+                    <div class="card-title">
+                        L298N Mini Driver Mount
+                        <span class="card-tag">Driver</span>
+                    </div>
+                    <p class="card-desc">Slide-in rail enclosure for L298N dual H-bridge motor driver breakout boards with dual screw eyes.</p>
+                </div>
+                <div class="preview-container">
+                    <div class="viewport-placeholder"></div>
+                    <div class="measure-hud">
+                        <div class="measure-line"><span class="measure-name">Rail Width:</span><span class="measure-val" id="hud-w">24.5mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Rail Length:</span><span class="measure-val" id="hud-l">22.5mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Base thick:</span><span class="measure-val" id="hud-baseT">2.5mm</span></div>
+                    </div>
+                </div>
+                <div class="params-panel">
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Board Width</span><span class="param-value" id="val-w">24.5 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="w" min="20.0" max="30.0" step="0.1" value="24.5">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Board Length</span><span class="param-value" id="val-l">22.5 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="l" min="18.0" max="28.0" step="0.5" value="22.5">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Base Thickness</span><span class="param-value" id="val-baseT">2.5 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="baseT" min="1.5" max="5.0" step="0.5" value="2.5">
+                    </div>
+                </div>
+                <button class="export-btn" id="export-l298n">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download STL
+                </button>
+            </div>
+
+            <!-- 5. Haptic Motor Holder -->
+            <div class="card" id="part-motor">
+                <div class="card-header">
+                    <div class="card-title">
+                        Haptic Motor Holder
+                        <span class="card-tag">Haptics</span>
+                    </div>
+                    <p class="card-desc">Semi-cylindrical vibration motor collar with dual compression tabs and M3 bolt holes (Pulse style).</p>
+                </div>
+                <div class="preview-container">
+                    <div class="viewport-placeholder"></div>
+                    <div class="measure-hud">
+                        <div class="measure-line"><span class="measure-name">Inner Rad:</span><span class="measure-val" id="hud-innerR">8.0mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Clamp Len:</span><span class="measure-val" id="hud-clampL">15.0mm</span></div>
+                        <div class="measure-line"><span class="measure-name">Screw Dia:</span><span class="measure-val" id="hud-screwD">3.2mm</span></div>
+                    </div>
+                </div>
+                <div class="params-panel">
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Clamp Inner Radius</span><span class="param-value" id="val-innerR">8.0 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="innerR" min="6.0" max="15.0" step="0.2" value="8.0">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Clamp Length</span><span class="param-value" id="val-clampL">15.0 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="clampL" min="8.0" max="30.0" step="0.5" value="15.0">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Screw Hole Dia</span><span class="param-value" id="val-screwD">3.2 mm</span></div>
+                        <input type="range" class="param-slider" data-prop="screwD" min="2.0" max="5.0" step="0.2" value="3.2">
+                    </div>
+                </div>
+                <button class="export-btn" id="export-motor">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download STL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-dot"></div>
+        <span>FORGECAD ENGINE • ACTIVE</span>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>

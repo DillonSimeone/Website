@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "head": {
+    "generator": "circuit-json-to-kicad",
+    "generator_version": "0.0.1",
+    "project_name": "03_compactSquareLedHapticPCB",
+    "created": "2026-10-09T14:43:11.682Z",
+    "modified": "2026-10-09T14:43:11.682Z"
+  },
+  "meta": {
+    "version": 1
+  },
+  "text_variables": {},
+  "libraries": {
+    "pinned_symbol_libs": [],
+    "pinned_footprint_libs": []
+  },
+  "boards": [],
+  "cvpcb": {
+    "meta": {
+      "version": 0
+    }
+  },
+  "erc": {
+    "meta": {
+      "version": 0
+    },
+    "erc_exclusions": []
+  },
+  "net_settings": {
+    "meta": {
+      "version": 1
+    },
+    "last_net_id": 0,
+    "classes": [
+      {
+        "name": "Default",
+        "track_width": 0.15,
+        "via_diameter": 0.45,
+        "via_drill": 0.2,
+        "clearance": 0.1
+      }
+    ]
+  },
+  "pcbnew": {
+    "page_layout_descr_file": "",
+    "last_paths": {}
+  },
+  "schematic": {
+    "meta": {
+      "version": 1
+    },
+    "page_layout_descr_file": "",
+    "last_opened_files": [
+      "03_compactSquareLedHapticPCB.kicad_sch"
+    ]
+  },
+  "board": {
+    "meta": {
+      "version": 1
+    },
+    "design_settings": {
+      "rules": {
+        "min_via_annular_width": 0.125,
+        "min_hole_clearance": 0.1,
+        "min_via_diameter": 0.45,
+        "min_track_width": 0.15,
+        "min_through_hole_diameter": 0.2
+      }
+    },
+    "last_opened_board": "03_compactSquareLedHapticPCB.kicad_pcb"
+  },
+  "sheets": [
+    [
+      "5c0f58f9-a93e-42bc-84e5-a6edaeca988b",
+      "Root"
+    ]
+  ]
+}

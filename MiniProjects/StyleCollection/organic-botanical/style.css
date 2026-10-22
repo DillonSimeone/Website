@@ -1,0 +1,169 @@
+:root {
+  --bg-color: #efebe4;
+  --card-bg: #f8f6f0;
+  --text-dark: #2d382e;
+  --text-muted: #5a665b;
+  --sage-accent: #5f6d5b;
+  --clay-accent: #c88a6d;
+  
+  --font-serif: 'Lora', serif;
+  --font-sans: 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-dark);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+/* Grainy Paper overlay */
+.grain-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.045;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.botanical-container {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.botanical-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: var(--sage-accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid var(--sage-accent);
+  padding: 6px 16px;
+  border-radius: 30px;
+  margin-bottom: 20px;
+  transition: all 0.2s;
+}
+
+.nav-back:hover {
+  background: var(--sage-accent);
+  color: var(--card-bg);
+}
+
+.botanical-title {
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  font-weight: 400;
+  color: var(--sage-accent);
+  margin: 0 0 10px 0;
+}
+
+.botanical-subtitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.botanical-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 35px;
+}
+
+.organic-card {
+  background: var(--card-bg);
+  padding: 40px;
+  box-shadow: 0 10px 30px rgba(95, 109, 91, 0.06);
+  border: 1px solid rgba(95, 109, 91, 0.08);
+  transition: border-radius 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.3s;
+}
+
+.organic-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Fluid Blob Profiles */
+.shape-blob-1 {
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+}
+
+.shape-blob-2 {
+  border-radius: 40% 60% 70% 30% / 50% 60% 40% 50%;
+  background: #fdfdfb;
+}
+
+.shape-blob-3 {
+  border-radius: 50% 50% 30% 70% / 40% 40% 60% 60%;
+  background: #f6efe8;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.organic-card h2 {
+  font-family: var(--font-serif);
+  color: var(--sage-accent);
+  font-size: 1.45rem;
+  margin-top: 0;
+}
+
+.organic-card p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.organic-card p.poetic {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--clay-accent);
+}
+
+.organic-card cite {
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-style: normal;
+}
+
+.botanical-btn {
+  background: var(--clay-accent);
+  border: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 12px 24px;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(200, 138, 109, 0.2);
+  transition: all 0.2s;
+  margin-top: 15px;
+}
+
+.botanical-btn:hover {
+  background: #b5795c;
+  box-shadow: 0 6px 15px rgba(200, 138, 109, 0.35);
+}
+
+.botanical-btn:active {
+  transform: translateY(1px);
+}

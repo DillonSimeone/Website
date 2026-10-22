@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Follower Studio | DeafDoorbell</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Pure neutral dark palette - zero blue tints */
+            --bg-base: #0c0c0c;
+            --bg-surface: #151515;
+            --bg-card: #1c1c1c;
+            --bg-card-hover: #242424;
+            --bg-card-active: #2a2a2a;
+            
+            --border-subtle: #292929;
+            --border-hover: #404040;
+            --border-active: #707070;
+            
+            --text-main: #f2f2f2;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            
+            --btn-radius: 8px;
+            --card-radius: 12px;
+            
+            /* Dynamic simulation color variables */
+            --sim-color: #00e5ff;
+            --sim-rgb: 0, 229, 255;
+            --sim-brightness: 0.7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 16px 24px;
+        }
+
+        /* Minimal Header */
+        .app-header {
+            width: 100%;
+            max-width: 1040px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 12px;
+        }
+
+        .nav-back-link {
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: var(--btn-radius);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.15s ease;
+        }
+
+        .nav-back-link:hover {
+            color: var(--text-main);
+            border-color: var(--border-hover);
+            background: var(--bg-card);
+        }
+
+        .header-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: var(--text-main);
+        }
+
+        .header-spacer {
+            width: 58px;
+        }
+
+        /* Responsive Studio Layout: Stretches to Equal Height on PC/Tablet */
+        .studio-layout {
+            width: 100%;
+            max-width: 1040px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        @media (min-width: 768px) {
+            .studio-layout {
+                display: grid;
+                grid-template-columns: 1fr 1.15fr;
+                gap: 16px;
+                align-items: stretch;
+            }
+        }
+
+        /* Left Column: Equal Height Simulator & Trigger */
+        .preview-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100%;
+        }
+
+        /* Neutral Ambient Simulator Stage */
+        .simulator-stage {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            background: #111111;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--card-radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 768px) {
+            .simulator-stage {
+                flex: 1;
+                min-height: 350px;
+                height: auto;
+            }
+        }
+
+        /* Ambient Glow Layer - pure neutral black when off, pure light color when on */
+        .room-ambient-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.05s linear;
+            background: radial-gradient(circle at 50% 48%, rgba(var(--sim-rgb), calc(var(--sim-brightness) * 0.75)) 0%, rgba(var(--sim-rgb), calc(var(--sim-brightness) * 0.3)) 42%, rgba(var(--sim-rgb), calc(var(--sim-brightness) * 0.09)) 68%, transparent 88%);
+            z-index: 1;
+        }
+
+        .room-ground-line {
+            position: absolute;
+            bottom: 48px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #202020;
+            z-index: 2;
+        }
+
+        .room-ground-surface {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: #0d0d0d;
+            border-top: 1px solid #1a1a1a;
+            z-index: 2;
+        }
+
+        .room-reflection-glow {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 360px;
+            height: 46px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(var(--sim-rgb), calc(var(--sim-brightness) * 0.5)) 0%, transparent 75%);
+            opacity: 0;
+            transition: opacity 0.05s linear;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* 3D-Printed Desktop Follower Enclosure Mockup (Prominently Sized) */
+        .enclosure-wrapper {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translateY(6px);
+        }
+
+        .enclosure-body {
+            width: 160px;
+            height: 160px;
+            background: #181818;
+            border: 2px solid #282828;
+            border-radius: 14px;
+            padding: 8px;
+            box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: width 0.2s ease, height 0.2s ease;
+        }
+
+        @media (min-width: 768px) {
+            .enclosure-body {
+                width: 240px;
+                height: 240px;
+                padding: 12px;
+                border-radius: 18px;
+            }
+        }
+
+        .diffuser-plate {
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            border-radius: 8px;
+            border: 1px solid #1e1e1e;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 3px;
+            padding: 4px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        @media (min-width: 768px) {
+            .diffuser-plate {
+                gap: 4.5px;
+                padding: 6px;
+                border-radius: 10px;
+            }
+        }
+
+        .matrix-led-cell {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 1;
+            border-radius: 2px;
+            background: #070707;
+            position: relative;
+            transition: background 0.02s linear, box-shadow 0.02s linear;
+        }
+
+        @media (min-width: 768px) {
+            .matrix-led-cell {
+                border-radius: 3px;
+            }
+        }
+
+        .enclosure-stand {
+            width: 90px;
+            height: 10px;
+            background: #121212;
+            border-radius: 0 0 4px 4px;
+            border: 1px solid #202020;
+            border-top: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+            margin-top: -1px;
+        }
+
+        @media (min-width: 768px) {
+            .enclosure-stand {
+                width: 140px;
+                height: 14px;
+                border-radius: 0 0 6px 6px;
+            }
+        }
+
+        /* Action Bar (Trigger Button & Continuous Toggle) */
+        .action-bar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+        }
+
+        .btn-trigger {
+            background: var(--text-main);
+            color: #000000;
+            border: none;
+            border-radius: var(--btn-radius);
+            height: 44px;
+            padding: 0 16px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .btn-trigger:hover {
+            background: #ffffff;
+            box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-trigger:active {
+            transform: scale(0.98);
+        }
+
+        .btn-trigger.is-ringing {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        .btn-continuous {
+            background: var(--bg-surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--btn-radius);
+            height: 44px;
+            padding: 0 14px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .btn-continuous:hover {
+            background: var(--bg-card);
+            border-color: var(--border-hover);
+        }
+
+        .btn-continuous.active {
+            background: var(--bg-card-active);
+            border-color: var(--border-active);
+            color: var(--text-main);
+        }
+
+        .status-dot-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #404040;
+            transition: background 0.2s ease;
+        }
+
+        .btn-continuous.active .status-dot-indicator {
+            background: #22c55e;
+            box-shadow: 0 0 6px #22c55e;
+        }
+
+        /* Right Column: Controls, Patterns, Colors, Export */
+        .controls-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--card-radius);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .panel-heading {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        /* Pattern Selector Grid */
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        @media (min-width: 480px) and (max-width: 767px) {
+            .patterns-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (min-width: 900px) {
+            .patterns-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .pattern-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--btn-radius);
+            padding: 8px 10px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            user-select: none;
+        }
+
+        .pattern-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+        }
+
+        .pattern-btn.active {
+            background: var(--bg-card-active);
+            border-color: var(--text-main);
+        }
+
+        .pattern-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .pattern-subtext {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            line-height: 1.25;
+        }
+
+        /* Sliders & Duration Rows */
+        .adjustments-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .adjustments-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        .control-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.75rem;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #252525;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #f2f2f2;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            background: #f2f2f2;
+            cursor: pointer;
+        }
+
+        /* Duration Segment Pills */
+        .duration-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .duration-pill {
+            flex: 1;
+            padding: 6px 2px;
+            text-align: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .duration-pill:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .duration-pill.active {
+            background: var(--bg-card-active);
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+
+        /* Color Selection Bar */
+        .colors-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+            position: relative;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .swatch.active {
+            border-color: #ffffff;
+            transform: scale(1.12);
+        }
+
+        .swatch.party-swatch {
+            background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+        }
+
+        .custom-color-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .custom-color-wrap input[type="color"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            cursor: pointer;
+        }
+
+        .custom-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--sim-color);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        /* Export Bar */
+        .export-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding-top: 4px;
+        }
+
+        .summary-inline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-export {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--btn-radius);
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .btn-export:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            color: var(--text-main);
+        }
+
+        /* Minimal Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #242424;
+            color: #ffffff;
+            border: 1px solid #404040;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+            transition: transform 0.25s ease, opacity 0.25s ease;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .toast.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Minimal Header -->
+    <header class="app-header">
+        <a href="index.html" class="nav-back-link">Back</a>
+        <h1 class="header-title">Follower Studio</h1>
+        <div class="header-spacer"></div>
+    </header>
+
+    <!-- Main Two-Column Layout -->
+    <main class="studio-layout">
+
+        <!-- Column 1: Physical Preview & Primary Trigger -->
+        <section class="preview-column">
+            <div class="simulator-stage">
+                <!-- Neutral Ambient Room Reflection Layer -->
+                <div class="room-ambient-layer" id="roomAmbientLayer"></div>
+
+                <!-- Neutral Ground / Surface -->
+                <div class="room-ground-line"></div>
+                <div class="room-ground-surface"></div>
+                <div class="room-reflection-glow" id="roomReflectionGlow"></div>
+
+                <!-- 3D-Printed Desktop Follower Enclosure -->
+                <div class="enclosure-wrapper">
+                    <div class="enclosure-body">
+                        <div class="diffuser-plate" id="matrixGrid">
+                            <!-- 64 LEDs generated dynamically -->
+                        </div>
+                    </div>
+                    <div class="enclosure-stand"></div>
+                </div>
+            </div>
+
+            <!-- Action Bar: Trigger & Continuous Toggle -->
+            <div class="action-bar">
+                <button class="btn-trigger" id="triggerChimeBtn">Test Doorbell Trigger</button>
+                <button class="btn-continuous" id="continuousToggleBtn">
+                    <span class="status-dot-indicator"></span>
+                    <span>Continuous</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Column 2: Patterns, Sliders, Colors, Export -->
+        <section class="controls-column">
+
+            <!-- Pattern Selector Panel -->
+            <div class="section-panel">
+                <span class="panel-heading">Pattern Selector</span>
+                <div class="patterns-grid">
+                    <div class="pattern-btn active" data-pattern="breathe">
+                        <span class="pattern-title">Slow Breathe</span>
+                        <span class="pattern-subtext">Sine fade in/out</span>
+                    </div>
+                    <div class="pattern-btn" data-pattern="ripple">
+                        <span class="pattern-title">Expanding Ripple</span>
+                        <span class="pattern-subtext">Concentric rings</span>
+                    </div>
+                    <div class="pattern-btn" data-pattern="crawl">
+                        <span class="pattern-title">Snaking Crawl</span>
+                        <span class="pattern-subtext">Serpentine wave</span>
+                    </div>
+                    <div class="pattern-btn" data-pattern="bounce">
+                        <span class="pattern-title">Bouncing Bar</span>
+                        <span class="pattern-subtext">Oscillating beam</span>
+                    </div>
+                    <div class="pattern-btn" data-pattern="soft_beacon">
+                        <span class="pattern-title">Soft Beacon</span>
+                        <span class="pattern-subtext">Smooth pulse</span>
+                    </div>
+                    <div class="pattern-btn" data-pattern="strobe">
+                        <span class="pattern-title">Classic Strobe</span>
+                        <span class="pattern-subtext">100ms on/off</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brightness & Speed Sliders -->
+            <div class="section-panel">
+                <span class="panel-heading">Parameters</span>
+                <div class="adjustments-grid">
+                    <div class="control-item">
+                        <div class="control-label-row">
+                            <span>Brightness</span>
+                            <span class="control-val" id="brightnessVal">70%</span>
+                        </div>
+                        <input type="range" id="brightnessRange" min="10" max="100" step="5" value="70">
+                    </div>
+                    <div class="control-item">
+                        <div class="control-label-row">
+                            <span>Speed</span>
+                            <span class="control-val" id="speedVal">1.0x</span>
+                        </div>
+                        <input type="range" id="speedRange" min="0.4" max="2.4" step="0.1" value="1.0">
+                    </div>
+                </div>
+
+                <div class="control-item" style="margin-top: 4px;">
+                    <div class="control-label-row">
+                        <span>Alert Duration</span>
+                        <span class="control-val" id="durationVal">3.0s</span>
+                    </div>
+                    <div class="duration-row" id="durationRow">
+                        <div class="duration-pill" data-seconds="1.5">1.5s</div>
+                        <div class="duration-pill active" data-seconds="3.0">3.0s</div>
+                        <div class="duration-pill" data-seconds="5.0">5.0s</div>
+                        <div class="duration-pill" data-seconds="8.0">8.0s</div>
+                        <div class="duration-pill" data-seconds="10.0">10s</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Color Palette Panel -->
+            <div class="section-panel">
+                <span class="panel-heading">Color</span>
+                <div class="colors-row">
+                    <button class="swatch" data-color="#ff9e1b" style="background:#ff9e1b;" title="Amber"></button>
+                    <button class="swatch active" data-color="#00e5ff" style="background:#00e5ff;" title="Cyan"></button>
+                    <button class="swatch" data-color="#fff2e0" style="background:#fff2e0;" title="Warm White"></button>
+                    <button class="swatch" data-color="#ff2a7a" style="background:#ff2a7a;" title="Rose"></button>
+                    <button class="swatch" data-color="#10e77f" style="background:#10e77f;" title="Emerald"></button>
+                    <button class="swatch" data-color="#a855f7" style="background:#a855f7;" title="Violet"></button>
+                    <button class="swatch party-swatch" id="partyColorBtn" title="Rainbow Spectrum"></button>
+                    <label class="custom-color-wrap">
+                        <span class="custom-dot" id="customDot"></span>
+                        <span>Custom</span>
+                        <input type="color" id="nativeColorPicker" value="#00e5ff">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Export / Save Bar -->
+            <div class="section-panel" style="padding: 10px 14px;">
+                <div class="export-bar">
+                    <span class="summary-inline" id="summaryInline">Slow Breathe • 70% • 1.0x • 3.0s • #00E5FF</span>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-export" id="copySettingsBtn">Copy Settings</button>
+                        <button class="btn-export" id="shareLinkBtn">Copy Link</button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Floating Toast -->
+    <div class="toast" id="appToast">Copied to clipboard</div>
+
+    <!-- Engine Script -->
+    <script>
+        // State
+        const state = {
+            pattern: 'breathe',
+            brightness: 70,
+            speed: 1.0,
+            duration: 3.0,
+            color: '#00e5ff',
+            rgb: [0, 229, 255],
+            isParty: false,
+            isContinuous: false,
+            isTriggerActive: false,
+            triggerStartTime: 0
+        };
+
+        function hexToRgb(hex) {
+            let h = hex.replace('#', '');
+            if (h.length === 3) h = h.split('').map(c => c + c).join('');
+            const num = parseInt(h, 16);
+            return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+        }
+
+        function hsvToRgb(h, s, v) {
+            let r, g, b;
+            let i = Math.floor(h * 6);
+            let f = h * 6 - i;
+            let p = v * (1 - s);
+            let q = v * (1 - f * s);
+            let t = v * (1 - (1 - f) * s);
+            switch (i % 6) {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                case 5: r = v; g = p; b = q; break;
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        // Elements
+        const matrixGrid = document.getElementById('matrixGrid');
+        const roomAmbientLayer = document.getElementById('roomAmbientLayer');
+        const roomReflectionGlow = document.getElementById('roomReflectionGlow');
+        const triggerChimeBtn = document.getElementById('triggerChimeBtn');
+        const continuousToggleBtn = document.getElementById('continuousToggleBtn');
+
+        const brightnessRange = document.getElementById('brightnessRange');
+        const brightnessVal = document.getElementById('brightnessVal');
+        const speedRange = document.getElementById('speedRange');
+        const speedVal = document.getElementById('speedVal');
+        const durationRow = document.getElementById('durationRow');
+        const durationVal = document.getElementById('durationVal');
+
+        const nativeColorPicker = document.getElementById('nativeColorPicker');
+        const customDot = document.getElementById('customDot');
+        const partyColorBtn = document.getElementById('partyColorBtn');
+        const swatches = document.querySelectorAll('.swatch');
+        const patternBtns = document.querySelectorAll('.pattern-btn');
+        const summaryInline = document.getElementById('summaryInline');
+        const copySettingsBtn = document.getElementById('copySettingsBtn');
+        const shareLinkBtn = document.getElementById('shareLinkBtn');
+        const appToast = document.getElementById('appToast');
+
+        // Create 64 LED cells
+        const ledCells = [];
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'matrix-led-cell';
+                matrixGrid.appendChild(cell);
+                ledCells.push({ el: cell, x, y });
+            }
+        }
+
+        let toastTimer = null;
+        function showToast(text) {
+            appToast.innerText = text;
+            appToast.classList.add('visible');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => appToast.classList.remove('visible'), 2000);
+        }
+
+        const patternNames = {
+            breathe: 'Slow Breathe',
+            ripple: 'Expanding Ripple',
+            crawl: 'Snaking Crawl',
+            bounce: 'Bouncing Bar',
+            soft_beacon: 'Soft Beacon',
+            strobe: 'Classic Strobe'
+        };
+
+        function updateTheme() {
+            const briFactor = state.brightness / 100;
+            document.documentElement.style.setProperty('--sim-color', state.color);
+            document.documentElement.style.setProperty('--sim-rgb', state.rgb.join(', '));
+            document.documentElement.style.setProperty('--sim-brightness', briFactor);
+            if (customDot) customDot.style.background = state.color;
+
+            const colorLabel = state.isParty ? 'Rainbow' : state.color.toUpperCase();
+            summaryInline.innerText = `${patternNames[state.pattern]} • ${state.brightness}% • ${state.speed.toFixed(1)}x • ${state.duration.toFixed(1)}s • ${colorLabel}`;
+        }
+
+        // Mathematical Pattern Functions
+        function computePixelIntensity(pattern, x, y, timeSec, speed) {
+            const t = timeSec * speed;
+            let val = 0.0;
+
+            switch (pattern) {
+                case 'breathe': {
+                    const raw = Math.sin(t * Math.PI * 1.5);
+                    val = Math.pow((raw + 1) / 2, 1.8);
+                    break;
+                }
+                case 'ripple': {
+                    const dx = x - 3.5;
+                    const dy = y - 3.5;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const wave = Math.cos((dist * 1.5) - (t * 5.5));
+                    val = Math.pow(Math.max(0, wave), 2.2);
+                    break;
+                }
+                case 'crawl': {
+                    const serpentine = (y % 2 === 0) ? (y * 8 + x) : (y * 8 + (7 - x));
+                    const comet = (t * 28.0) % 64;
+                    const diff = (comet - serpentine + 64) % 64;
+                    val = diff < 14 ? Math.pow(1 - (diff / 14), 2.0) : 0.0;
+                    break;
+                }
+                case 'bounce': {
+                    const barY = 3.5 + 3.2 * Math.sin(t * Math.PI * 1.8);
+                    const distY = Math.abs(y - barY);
+                    val = Math.exp(-Math.pow(distY, 2) / 1.5);
+                    break;
+                }
+                case 'soft_beacon': {
+                    const cycle = (t * 1.6) % 1.0;
+                    if (cycle < 0.25) {
+                        val = Math.sin((cycle / 0.25) * (Math.PI / 2));
+                    } else {
+                        val = Math.cos(((cycle - 0.25) / 0.75) * (Math.PI / 2));
+                    }
+                    val = Math.pow(Math.max(0, val), 1.5);
+                    break;
+                }
+                case 'strobe': {
+                    const cycleMs = (timeSec * 1000) % 200;
+                    val = cycleMs < 100 ? 1.0 : 0.0;
+                    break;
+                }
+                default:
+                    val = 1.0;
+            }
+
+            return Math.min(1.0, Math.max(0.0, val));
+        }
+
+        // Render Frame Loop
+        function render(now) {
+            const timeSec = now / 1000;
+            let active = false;
+
+            if (state.isContinuous) {
+                active = true;
+            } else if (state.isTriggerActive) {
+                const elapsed = (now - state.triggerStartTime) / 1000;
+                if (elapsed < state.duration) {
+                    active = true;
+                    const rem = Math.max(0, state.duration - elapsed);
+                    triggerChimeBtn.innerText = `Ringing (${rem.toFixed(1)}s)`;
+                } else {
+                    state.isTriggerActive = false;
+                    triggerChimeBtn.classList.remove('is-ringing');
+                    triggerChimeBtn.innerText = 'Test Doorbell Trigger';
+                }
+            }
+
+            let curR = state.rgb[0];
+            let curG = state.rgb[1];
+            let curB = state.rgb[2];
+
+            if (state.isParty && active) {
+                const partyHue = (timeSec * 0.35 * state.speed) % 1.0;
+                const rgb = hsvToRgb(partyHue, 0.95, 1.0);
+                curR = rgb[0];
+                curG = rgb[1];
+                curB = rgb[2];
+                document.documentElement.style.setProperty('--sim-rgb', `${curR}, ${curG}, ${curB}`);
+            }
+
+            const briScale = state.brightness / 100;
+            let lumSum = 0;
+
+            if (active) {
+                for (let i = 0; i < 64; i++) {
+                    const cell = ledCells[i];
+                    const intensity = computePixelIntensity(state.pattern, cell.x, cell.y, timeSec, state.speed);
+                    const effBri = intensity * briScale;
+                    lumSum += effBri;
+
+                    if (effBri > 0.02) {
+                        const r = Math.round(curR * effBri);
+                        const g = Math.round(curG * effBri);
+                        const b = Math.round(curB * effBri);
+                        cell.el.style.background = `rgb(${r}, ${g}, ${b})`;
+                        const glowRadius = Math.round(10 * effBri);
+                        cell.el.style.boxShadow = `0 0 ${glowRadius}px rgba(${curR}, ${curG}, ${curB}, ${effBri * 0.85})`;
+                    } else {
+                        cell.el.style.background = '#070707';
+                        cell.el.style.boxShadow = 'none';
+                    }
+                }
+
+                const avgLum = lumSum / 64;
+                roomAmbientLayer.style.opacity = Math.min(1.0, avgLum * 1.35);
+                roomReflectionGlow.style.opacity = Math.min(1.0, avgLum * 1.1);
+
+            } else {
+                for (let i = 0; i < 64; i++) {
+                    ledCells[i].el.style.background = '#070707';
+                    ledCells[i].el.style.boxShadow = 'none';
+                }
+                roomAmbientLayer.style.opacity = '0';
+                roomReflectionGlow.style.opacity = '0';
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        requestAnimationFrame(render);
+
+        // Event Listeners
+        triggerChimeBtn.addEventListener('click', () => {
+            state.isTriggerActive = true;
+            state.triggerStartTime = performance.now();
+            triggerChimeBtn.classList.add('is-ringing');
+        });
+
+        continuousToggleBtn.addEventListener('click', () => {
+            state.isContinuous = !state.isContinuous;
+            continuousToggleBtn.classList.toggle('active', state.isContinuous);
+        });
+
+        patternBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                patternBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.pattern = btn.getAttribute('data-pattern');
+                updateTheme();
+            });
+        });
+
+        brightnessRange.addEventListener('input', (e) => {
+            state.brightness = parseInt(e.target.value);
+            brightnessVal.innerText = `${state.brightness}%`;
+            updateTheme();
+        });
+
+        speedRange.addEventListener('input', (e) => {
+            state.speed = parseFloat(e.target.value);
+            speedVal.innerText = `${state.speed.toFixed(1)}x`;
+            updateTheme();
+        });
+
+        durationRow.querySelectorAll('.duration-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                durationRow.querySelectorAll('.duration-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                state.duration = parseFloat(pill.getAttribute('data-seconds'));
+                durationVal.innerText = `${state.duration.toFixed(1)}s`;
+                updateTheme();
+            });
+        });
+
+        swatches.forEach(s => {
+            s.addEventListener('click', () => {
+                if (s.id === 'partyColorBtn') {
+                    state.isParty = true;
+                    swatches.forEach(b => b.classList.remove('active'));
+                    s.classList.add('active');
+                } else {
+                    state.isParty = false;
+                    const c = s.getAttribute('data-color');
+                    state.color = c;
+                    state.rgb = hexToRgb(c);
+                    nativeColorPicker.value = c;
+                    swatches.forEach(b => b.classList.remove('active'));
+                    s.classList.add('active');
+                }
+                updateTheme();
+            });
+        });
+
+        nativeColorPicker.addEventListener('input', (e) => {
+            state.isParty = false;
+            state.color = e.target.value;
+            state.rgb = hexToRgb(e.target.value);
+            swatches.forEach(b => b.classList.remove('active'));
+            updateTheme();
+        });
+
+        copySettingsBtn.addEventListener('click', () => {
+            const txt = `Pattern: ${patternNames[state.pattern]}
+Brightness: ${state.brightness}%
+Speed: ${state.speed.toFixed(1)}x
+Duration: ${state.duration.toFixed(1)}s
+Color: ${state.isParty ? 'Rainbow Spectrum' : state.color.toUpperCase()}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(txt).then(() => showToast('Settings copied'));
+            } else {
+                fallbackCopy(txt);
+            }
+        });
+
+        shareLinkBtn.addEventListener('click', () => {
+            const p = new URLSearchParams();
+            p.set('p', state.pattern);
+            p.set('b', state.brightness);
+            p.set('s', state.speed.toFixed(1));
+            p.set('d', state.duration.toFixed(1));
+            p.set('c', state.color.replace('#', ''));
+            p.set('party', state.isParty ? '1' : '0');
+            const url = `${window.location.origin}${window.location.pathname}#${p.toString()}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => showToast('Link copied'));
+            } else {
+                fallbackCopy(url);
+            }
+            window.location.hash = p.toString();
+        });
+
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('Copied to clipboard');
+        }
+
+        // Restore from URL Hash
+        function initFromHash() {
+            if (!window.location.hash || window.location.hash.length < 2) return;
+            try {
+                const p = new URLSearchParams(window.location.hash.substring(1));
+                if (p.has('p')) state.pattern = p.get('p');
+                if (p.has('b')) state.brightness = parseInt(p.get('b'), 10);
+                if (p.has('s')) state.speed = parseFloat(p.get('s'));
+                if (p.has('d')) state.duration = parseFloat(p.get('d'));
+                if (p.has('c')) {
+                    state.color = '#' + p.get('c');
+                    state.rgb = hexToRgb(state.color);
+                }
+                if (p.has('party')) state.isParty = p.get('party') === '1';
+
+                patternBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-pattern') === state.pattern));
+                brightnessRange.value = state.brightness;
+                brightnessVal.innerText = `${state.brightness}%`;
+                speedRange.value = state.speed;
+                speedVal.innerText = `${state.speed.toFixed(1)}x`;
+                durationRow.querySelectorAll('.duration-pill').forEach(pill => {
+                    pill.classList.toggle('active', parseFloat(pill.getAttribute('data-seconds')) === state.duration);
+                });
+                durationVal.innerText = `${state.duration.toFixed(1)}s`;
+                swatches.forEach(b => {
+                    if (state.isParty) b.classList.toggle('active', b.id === 'partyColorBtn');
+                    else b.classList.toggle('active', b.getAttribute('data-color') === state.color);
+                });
+                nativeColorPicker.value = state.color;
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+
+        updateTheme();
+        initFromHash();
+    </script>
+</body>
+</html>

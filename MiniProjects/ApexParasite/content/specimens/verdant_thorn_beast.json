@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 2,
+  "id": "verdant_thorn_beast",
+  "displayName": "Verdant Thorn Beast",
+  "kind": "beast",
+  "template": "quadruped",
+  "art": {
+    "body": null,
+    "size": [1024, 640],
+    "keying": "none"
+  },
+  "patch": {
+    "foreleg_l": { "name": "Left Scythe Arm", "rarity": "rare", "pulseCost": 4, "presencePct": 85 },
+    "foreleg_r": { "name": "Right Scythe Arm", "rarity": "rare", "pulseCost": 4, "presencePct": 85 },
+    "head": { "name": "Briar Maw", "rarity": "uncommon", "presencePct": 90 },
+    "eyes": { "name": "Amber Ocelli", "rarity": "uncommon", "presencePct": 55, "yield": { "min": 1, "max": 3 } },
+    "hide": { "name": "Mossy Bark Carapace", "rarity": "common", "presencePct": 75 },
+    "heart": { "name": "Bramble Core", "rarity": "epic", "pulseCost": 18, "presencePct": 95, "loot": "vascular_root_core" }
+  },
+  "remove": ["liver", "lungs"],
+  "add": [
+    {
+      "id": "thorn_mantle",
+      "name": "Briar Mantle",
+      "kind": "trait",
+      "slotType": "carapace",
+      "region": "thorax",
+      "anchor": [460, 200],
+      "hitShape": { "type": "ellipse", "rx": 36, "ry": 20 },
+      "rarity": "rare",
+      "presencePct": 45,
+      "pulseCost": 6,
+      "loot": "thorn_mantle_gland"
+    },
+    {
+      "id": "venom_gland",
+      "name": "Acidic Bile Sac",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "thorax",
+      "anchor": [240, 280],
+      "hitShape": { "type": "ellipse", "rx": 20, "ry": 15 },
+      "rarity": "rare",
+      "presencePct": 40,
+      "tags": ["fragile"],
+      "pulseCost": 5,
+      "loot": "bile_sac_thorax"
+    },
+    {
+      "id": "spines",
+      "name": "Barbed Briar Spines",
+      "kind": "part",
+      "slotType": "carapace",
+      "region": "thorax",
+      "anchor": [560, 220],
+      "hitShape": { "type": "ellipse", "rx": 28, "ry": 18 },
+      "rarity": "common",
+      "presencePct": 75,
+      "yield": { "min": 2, "max": 4 },
+      "pulseCost": 2
+    },
+    {
+      "id": "chlorophyll_nodule",
+      "name": "Photosynthetic Heartwood",
+      "kind": "trait",
+      "slotType": "organ",
+      "region": "abdomen",
+      "anchor": [660, 310],
+      "hitShape": { "type": "ellipse", "rx": 22, "ry": 16 },
+      "rarity": "epic",
+      "presencePct": 20,
+      "pulseCost": 6
+    }
+  ],
+  "loose": [],
+  "severable": [
+    { "id": "foreleg_l", "slotId": "foreleg_l" }
+  ],
+  "baseVitals": {
+    "pulse": 100
+  },
+  "feast": {
+    "baseCalories": 16,
+    "calories": 40,
+    "biomassExp": 5
+  }
+}

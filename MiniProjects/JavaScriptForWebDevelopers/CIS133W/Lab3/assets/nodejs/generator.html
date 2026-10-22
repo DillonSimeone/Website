@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Onion Generator</title>
+</head>
+
+<body style="background: #111; color: #eee; font-family: sans-serif;">
+  <canvas id="c" width="200" height="200"></canvas>
+
+  <!-- hook shared onionEngine directly (DRY!) -->
+  <script src="../javascript/onionEngine.js"></script>
+  <script>
+    function renderOnion(config) {
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // draw procedural onion using the shared OnionEngine
+      window.OnionEngine.drawProceduralOnion(ctx, w, h, config);
+
+      return canvas.toDataURL('image/webp', 0.92);
+    }
+    window.renderOnion = renderOnion;
+
+    // Headless batch runner hook for generate-images.js
+    if (new URLSearchParams(window.location.search).get('batch') === '1') {
+      (async function runBatch() {
+        const res = await fetch('/configs');
+        const configs = await res.json();
+        const results = {};
+        for (const key of Object.keys(configs)) {
+          results[key] = renderOnion(configs[key]);
+        }
+        await fetch('/save-images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(results)
+        });
+      })();
+    }
+  </script>
+</body>
+
+</html>

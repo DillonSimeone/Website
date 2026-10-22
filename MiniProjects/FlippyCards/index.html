@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+                .card{  
+        position:relative;
+        width:321px;
+        height:208px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        transform-style:preserve-3d;
+        -webkit-transition: transform 1.5s; /* Safari and Chrome */
+ transition: transform 1.5s;
+        }
+
+        .card:hover {
+  -ms-transform: rotateY(-180deg); /* IE 9 */
+  -webkit-transform: rotateY(-180deg); /* Safari Chrome */
+  transform: rotateY(-180deg);
+}
+
+        .front{
+        position: absolute;
+        height:100%;
+        width:100%;
+        background-color: #CC3333;
+        backface-visibility: hidden;
+
+        color: #fff;
+        text-align: center;
+        line-height: 208px;
+        font-family: Helvetica;
+        }
+
+        .back{
+        position: absolute;
+        height:100%;
+        width:100%;
+        background-color: #999999;
+        backface-visibility: hidden;
+        
+        color: #fff;
+        text-align: center;
+        line-height: 208px;
+        font-family: Helvetica;
+        
+
+        /* rotating the back face of the card */
+        -ms-transform: rotateY(-180deg); /* IE 9 */
+        -webkit-transform: rotateY(-180deg); /* Safari */
+        transform: rotateY(-180deg);
+        }
+
+        .card-wrapper {
+  perspective:800px;
+  
+}
+    </style>
+</head>
+
+<body>
+        <div class="card-wrapper"> 
+    <div class="card">
+        <!-- front of the card-->
+        <div class="front">
+            COME ON, HOVER OVER!
+        </div>
+
+        <!-- back of the card-->
+        <div class="back">
+            CARD FLIPPED.
+        </div>
+    </div>
+    </div>
+</body>
+
+</html>
