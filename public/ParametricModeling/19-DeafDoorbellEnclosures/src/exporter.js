@@ -5,6 +5,7 @@ import {
     buildMasterLid,
     buildFollowerBase,
     buildFollowerLid,
+    buildFollowerPetgLid,
     buildFollowerGrid,
     buildFollowerStand,
     buildFullPlate
@@ -90,6 +91,10 @@ export function triggerExport(componentName) {
         case 'follower_lid':
             geom = buildFollowerLid(M, params);
             filename = `Follower_Enclosure_Clamp_Lid.stl`;
+            break;
+        case 'follower_petg':
+            geom = buildFollowerPetgLid(M, params);
+            filename = `Follower_PETG_Full_Cover.stl`;
             break;
         case 'follower_grid':
             geom = buildFollowerGrid(M, params);

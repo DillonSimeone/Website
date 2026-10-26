@@ -319,6 +319,131 @@ export function buildFollowerLid(M, p) {
 }
 
 // -------------------------------------------------------------------------
+// 4b. FOLLOWER NODE: Full-Body Transparent PETG Cover Lid
+//     Spans from top wall-tab screws (Y = +56.5) down to bottom wall-tab screws (Y = -56.5),
+//     mates over the sides of the Follower shell, rises +5mm over the 8x8 matrix for light
+//     diffusion, clamps the ESP32-C3 in place, and matches the middle M3 screws (Y = -21.0).
+// -------------------------------------------------------------------------
+export function buildFollowerPetgLid(M, p) {
+    const cl = p.printClearance;
+    const bodyW = 76.0;
+    const bodyL = 104.0;
+    const bodyH = p.followerBaseThickness || 12.0; // Base spans Z = -6.0 to +6.0
+    const wall = 2.0;                             // 2.0mm transparent PETG shell thickness
+
+    const skirtBottomZ = -bodyH / 2 + 4.5;        // Z = -1.5mm (flush with top surface of mounting tabs)
+    const deckInnerZ = bodyH / 2 + 0.15;          // Z = +6.15mm (mates directly over Z = +6.0mm front face)
+    const deckOuterZ = deckInnerZ + wall;         // Z = +8.15mm
+
+    const innerW = bodyW + cl * 2;                // 76.70mm
+    const innerL = bodyL + cl * 2;                // 104.70mm
+    const outerW = innerW + wall * 2;             // 80.70mm (wraps left & right flanks)
+    const outerL = innerL + wall * 2;             // 108.70mm (creeps down top & bottom walls)
+
+    // 1. Main Wrap-Around Shell Cap (Z = -1.5mm to +8.15mm)
+    const shellH = deckOuterZ - skirtBottomZ;
+    let cover = M.cube([outerW, outerL, shellH], true)
+        .translate([0, 0, (skirtBottomZ + deckOuterZ) / 2]);
+
+    // 2. Stepped-Down Top & Bottom Tab Clamping Flanges (Y = ±56.5mm, Z = -1.5mm to +1.5mm)
+    const tabW = bodyW - 12.0; // 64.0mm wide matching base tabs
+    const tabFlangeH = 3.0;
+    const tabSpanL = 10.5;     // Extends from Y = ±51.0mm out to Y = ±61.5mm
+    const topFlange = M.cube([tabW, tabSpanL, tabFlangeH], true)
+        .translate([0, 56.25, skirtBottomZ + tabFlangeH / 2]);
+    const botFlange = M.cube([tabW, tabSpanL, tabFlangeH], true)
+        .translate([0, -56.25, skirtBottomZ + tabFlangeH / 2]);
+    cover = cover.add(topFlange).add(botFlange);
+
+    // 3. Raised +5.0mm Optical Diffuser Hood over 8x8 Matrix (Centered at X = 0, Y = +16.0mm)
+    const matSize = p.matrixWidth + cl * 2;       // 65.90mm inner matrix opening
+    const diffuserRise = 5.0;                     // 5.0mm diffusion air gap above 8x8 matrix
+    const hoodInnerZ = deckInnerZ + diffuserRise; // Z = +11.15mm inner ceiling
+    const hoodOuterZ = hoodInnerZ + wall;         // Z = +13.15mm outer top face
+    const hoodOuterSize = matSize + wall * 2;     // 69.90mm outer hood width/length
+    const hoodH = hoodOuterZ - deckInnerZ;
+
+    const matrixHoodOuter = M.cube([hoodOuterSize, hoodOuterSize, hoodH], true)
+        .translate([0, 16.0, (deckInnerZ + hoodOuterZ) / 2]);
+    cover = cover.add(matrixHoodOuter);
+
+    // Subtract inner Follower Base body recess so skirts & end walls mate closely around the 76x104mm shell
+    const baseRecessH = deckInnerZ - skirtBottomZ + 2.0;
+    const baseRecess = M.cube([innerW, innerL, baseRecessH], true)
+        .translate([0, 0, deckInnerZ - baseRecessH / 2]);
+    cover = cover.subtract(baseRecess);
+
+    // Subtract inner +5.0mm diffuser chamber over the 8x8 matrix
+    const hoodCavH = hoodInnerZ - skirtBottomZ + 2.0;
+    const matrixHoodInner = M.cube([matSize, matSize, hoodCavH], true)
+        .translate([0, 16.0, hoodInnerZ - hoodCavH / 2]);
+    cover = cover.subtract(matrixHoodInner);
+
+    // 4. Downward ESP32-C3 SuperMini Clamping Studs (Holds ESP32 PCB firmly on its Z = +2.0mm shelf)
+    const espL = 22.52 + cl * 2;
+    const espW = 18.0 + cl * 2;
+    const espX = 36.0 - espL / 2; // 24.39mm
+    const espY = -34.5;
+    const studW = 2.2;
+    const studH = 2.75; // Reaches from Z = +6.15mm down to Z = +3.40mm right over the 1.2mm PCB
+    const studZ = deckInnerZ - studH / 2;
+    for (let dx of [-espL / 2 + studW / 2 + 0.2, espL / 2 - studW / 2 - 0.2]) {
+        for (let dy of [-espW / 2 + studW / 2 + 0.2, espW / 2 - studW / 2 - 0.2]) {
+            cover = cover.add(
+                M.cube([studW, studW, studH], true).translate([espX + dx, espY + dy, studZ])
+            );
+        }
+    }
+
+    // Internal cable hold-down rib over left cable bay (keeps USB-C loop tucked inside)
+    const cableHoldRib = M.cube([16.0, 3.6, 1.5], true)
+        .translate([-11.0, -34.0, deckInnerZ - 0.75]);
+    cover = cover.add(cableHoldRib);
+
+    // 5. Tactile Button & Status LED Access Ports over ESP32-C3
+    const bootHole = M.cylinder(20.0, 1.3, 1.3, 20, true).translate([15.2, -32.0, deckInnerZ]);
+    const resetHole = M.cylinder(20.0, 1.3, 1.3, 20, true).translate([15.2, -37.0, deckInnerZ]);
+    const ledHole = M.cylinder(20.0, 1.2, 1.2, 16, true).translate([17.28, -31.0, deckInnerZ]);
+    cover = cover.subtract(bootHole).subtract(resetHole).subtract(ledHole);
+
+    // 6. Center Bottom USB-C Cable Exit Tunnel & Notch (12.0mm wide at X = 0)
+    // Open notch through the stepped-down bottom tab flange + tunnel arch under the front deck
+    const cableTabCut = M.cube([12.4, 12.0, 10.0], true)
+        .translate([0, -58.0, skirtBottomZ + 3.0]);
+    const cableArchTunnel = M.cube([12.0, 16.0, deckInnerZ - skirtBottomZ + 1.0], true)
+        .translate([0, -52.0, (deckInnerZ + skirtBottomZ - 1.0) / 2]);
+    cover = cover.subtract(cableTabCut).subtract(cableArchTunnel);
+
+    // 7. Matching Screw Holes:
+    //    - 2x Middle M3 Screws at X = ±31.0mm, Y = -21.0mm (unchanged M3 locations)
+    //    - 2x Top Tab Screws at X = ±24.0mm, Y = +56.5mm
+    //    - 2x Bottom Tab Screws at X = ±24.0mm, Y = -56.5mm
+    const m3PassDia = 3.4;
+    const m3HeadDia = p.screwHeadDia + 0.4; // 6.2mm counterbore clears matrix hood corner cleanly
+    for (let x of [-31.0, 31.0]) {
+        const pass = M.cylinder(30.0, m3PassDia / 2, m3PassDia / 2, 24, true)
+            .translate([x, -21.0, 5.0]);
+        const head = M.cylinder(10.0, m3HeadDia / 2, m3HeadDia / 2, 24, true)
+            .translate([x, -21.0, deckOuterZ - 0.8 + 5.0]);
+        cover = cover.subtract(pass).subtract(head);
+    }
+
+    const tabScrewDia = p.wallTabScrewDia;
+    const tabCbDia = p.wallTabCounterbore;
+    for (let y of [56.5, -56.5]) {
+        for (let x of [-24.0, 24.0]) {
+            const pass = M.cylinder(20.0, tabScrewDia / 2, tabScrewDia / 2, 24, true)
+                .translate([x, y, skirtBottomZ]);
+            const cb = M.cylinder(1.4, tabCbDia / 2, tabCbDia / 2, 24, true)
+                .translate([x, y, skirtBottomZ + tabFlangeH - 0.6]);
+            cover = cover.subtract(pass).subtract(cb);
+        }
+    }
+
+    return cover;
+}
+
+// -------------------------------------------------------------------------
 // 5. FOLLOWER NODE: 8x8 Optical Isolation Baffle Grid
 // -------------------------------------------------------------------------
 export function buildFollowerGrid(M, p) {
@@ -348,7 +473,7 @@ export function buildFollowerStand(M, p) {
     const baseW = 96.0;   // Overall stance width
     const baseL = 105.0;  // Length from front toe to rear tips
     const deckThick = 4.5;
-    const cradleW = 77.0; // Inner pocket width for Follower (76.0mm wide)
+    const cradleW = 81.5; // Inner pocket width for Follower + PETG Cover (80.7mm wide)
     const shelfZ = 12.0;  // Positive bottom shelf height (prevents dropping through!)
     const cradleH = 34.0; // 34.0mm tall cradle cheeks
     const baseH = p.followerBaseThickness || 12.0;
@@ -387,11 +512,11 @@ export function buildFollowerStand(M, p) {
     // 2. Docking Cradle at the front (Y = -5 to +15)
     const cradleBody = M.cube([87.0, 22.0, cradleH], true).translate([0, 3.0, cradleH / 2]);
 
-    // Pocket for Follower base (77.0mm wide x 14.0mm thick, shelf at Z = 12.0mm)
-    const pocket = M.cube([cradleW, 14.0, 30.0], true).translate([0, 3.5, shelfZ + 15.0]);
+    // Pocket for Follower base + PETG cover (81.5mm wide x 16.4mm thick, rear wall at Y = +10.5, shelf at Z = 12.0mm)
+    const pocket = M.cube([cradleW, 16.4, 30.0], true).translate([0, 2.3, shelfZ + 15.0]);
 
-    // Tab slot below shelf: receives the 64mm wide bottom mounting tab (Z = 2.5 to 12.0mm on solid floor)
-    const tabSlot = M.cube([65.0, 6.0, shelfZ - 2.5 + 0.1], true).translate([0, 7.0, (shelfZ + 2.5) / 2]);
+    // Tab slot below shelf: receives the 64mm wide bottom mounting tab + PETG tab flange (Z = 2.5 to 12.0mm on solid floor)
+    const tabSlot = M.cube([65.0, 8.6, shelfZ - 2.5 + 0.1], true).translate([0, 5.7, (shelfZ + 2.5) / 2]);
 
     // Center wire drop slot: 14mm wide conduit cutting out the back
     const wireSlot = M.cube([14.0, 30.0, cradleH + 5.0], true).translate([0, 10.0, cradleH / 2]);
@@ -477,8 +602,11 @@ export function buildFullPlate(M, p) {
     // 6. Follower Cover Lid (Inverted flat at Z = 0, size 74 x 30.0 x 2.0 mm, Y: -155.0 to -125.0)
     const fLid = buildFollowerLid(M, p).rotate([180, 0, 0]).translate([55.0, -140.0, 1.0]);
 
-    let plate = stand.add(fBase).add(fLid).add(fGrid).add(mBase).add(mLid);
-    [stand, fBase, fLid, fGrid, mBase, mLid].forEach(m => m.delete());
+    // 7. Follower Full-Body PETG Cover (Flat on perimeter rim at Z = 0, size 80.7 x 123 x 14.65 mm)
+    const fPetg = buildFollowerPetgLid(M, p).translate([155.0, 38.5, 1.5]);
+
+    let plate = stand.add(fBase).add(fLid).add(fPetg).add(fGrid).add(mBase).add(mLid);
+    [stand, fBase, fLid, fPetg, fGrid, mBase, mLid].forEach(m => m.delete());
     return plate;
 }
 

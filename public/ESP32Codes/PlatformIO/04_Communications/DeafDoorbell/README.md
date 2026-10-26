@@ -1,87 +1,69 @@
 # DeafDoorbell
 
-**A visual doorbell alert system for deaf individuals, powered by ESP-NOW.**
+**A low-latency visual & tactile doorbell alert system for deaf individuals, powered by ESP-NOW on the ESP32-C3.**
 
-When your door chime rings, a microphone-equipped ESP32-C3 hears it and instantly alerts every LED-strip-equipped ESP32-C3 in your home to flash brightly.
-
----
-
-## Quick Start
-
-### Master (next to the door chime)
-
-**Wiring:**
-
-| Component      | GPIO | Notes                   |
-|----------------|------|-------------------------|
-| INMP411 SD     | 0    | I2S data                |
-| INMP411 SCK    | 1    | I2S clock               |
-| INMP411 L/R    | 2    | Drive LOW (left channel) |
-| INMP411 WS     | 3    | I2S word select         |
-| INMP411 GND    | 4    | Optional soft ground    |
-| Onboard LED    | 8    | Audio level feedback    |
-
-**Setup:**
-1. Connect the INMP411 mic as shown above.
-2. Flash `Master/` firmware via `upload.bat`.
-3. Connect your phone to WiFi network **"DeafDoorbell-Master"**.
-4. The captive portal opens automatically. Adjust:
-   - **Threshold** — Set high enough that only the chime triggers it.
-   - **Flash Duration** — How long Followers flash (500ms–10s).
-   - **Cooldown** — Minimum time between re-triggers.
-   - **Color** — Pick the LED flash color.
-
-### Follower (anywhere in your home)
-
-**Wiring:**
-
-| Component      | GPIO | Notes                         |
-|----------------|------|-------------------------------|
-| WS2812B Data   | 2    | LED strip data line           |
-| Vibration Motor| 3    | Via transistor/MOSFET to GND  |
-| Onboard LED    | 8    | Heartbeat indicator           |
-
-**Setup:**
-1. Connect LED strip and (optionally) vibration motor.
-2. Flash `Follower/` firmware via `upload.bat`.
-3. Power on. That's it — it auto-listens for Master broadcasts.
-
-### Adding More Followers
-Just flash more ESP32-C3 boards with the Follower firmware and power them on. No pairing needed — ESP-NOW broadcast reaches all units on the same WiFi channel.
+When your door chime rings, a microphone-equipped **Leader** ESP32-C3 detects the acoustic signature in ~10ms and broadcasts an ESP-NOW alert to every **Follower** ESP32-C3 in your home—flashing an 8×8 WS2812B LED matrix and buzzing a vibration motor with near-zero delay.
 
 ---
 
-## How It Works
+## Hardware & Wiring
 
-```
-Door Chime Rings
-       |
-  [Master ESP32-C3]
-  INMP411 mic hears it
-  RMS exceeds threshold
-       |
-  ESP-NOW Broadcast
-  (FF:FF:FF:FF:FF:FF)
-  Includes: duration + RGB color
-       |
-  +---------+---------+
-  |         |         |
-[Follower] [Follower] [Follower]
- Flash LEDs  Flash LEDs  Flash LEDs
- Buzz Motor  Buzz Motor  Buzz Motor
+### Leader (mounted next to the door chime)
+
+| Component          | ESP32-C3 GPIO | Notes                              |
+|--------------------|---------------|------------------------------------|
+| MAX4466 `OUT`      | `GPIO 3`      | Analog ADC input (`ADC1_CH3`)      |
+| MAX4466 `GND`      | `GPIO 4`      | Soft ground (driven `LOW`) or `GND`|
+| MAX4466 `VCC`      | `3.3V`        | Clean 3.3V supply                  |
+| Onboard Status LED | `GPIO 8`      | Live audio level / alert indicator |
+
+### Follower (placed anywhere in your home)
+
+| Component          | ESP32-C3 GPIO | Notes                              |
+|--------------------|---------------|------------------------------------|
+| WS2812B `DIN`      | `GPIO 5`      | 8×8 LED matrix (64 LEDs default)   |
+| Vibration Motor    | `GPIO 3`      | Via transistor/MOSFET to GND       |
+| Onboard Status LED | `GPIO 8`      | Heartbeat / alert indicator        |
+| Boot Button        | `GPIO 9`      | Hold 3s to reset pairing           |
+
+---
+
+## Project Architecture
+
+```text
+DeafDoorbell/
+├── shared/
+│   └── DoorbellProtocol.h       # Single source of truth for ESP-NOW packet structs
+├── Leader/
+│   ├── platformio.ini           # Builds with -I../shared
+│   ├── compile_bin.bat          # Compiles Leader/firmware.bin for Web OTA
+│   ├── upload.bat               # USB-C build, flash & monitor
+│   └── src/
+│       ├── main.cpp             # High-level setup() and loop() orchestrator
+│       ├── Config.h             # Pins, constants, NVS settings & paired peers
+│       ├── AudioEngine.h        # Single-pass MAX4466 ADC + IIR DC blocker + 3-chunk leaky debounce
+│       ├── EspNowManager.h      # Zero-stall broadcast bursts & pairing state machine
+│       ├── TelemetryLog.h       # 24h audio buckets, trigger history & ESP-NOW sniffer logs
+│       ├── WebPortal.h          # Batched zero-heap HTTP handlers & OTA endpoints
+│       ├── PortalHtml.h         # Studio control portal UI
+│       ├── LogHtml.h            # Live audio & telemetry dashboard UI
+│       └── UpdateHtml.h         # Web OTA upload UI (/update)
+└── Follower/
+    ├── platformio.ini           # Builds with -I../shared & FastLED
+    ├── compile_bin.bat          # Compiles Follower/firmware.bin
+    ├── upload.bat               # USB-C build, flash & monitor
+    └── src/
+        ├── main.cpp             # Non-blocking ESP-NOW RX, mesh relay & state loop
+        ├── FollowerConfig.h     # Pins, NVS storage & anti-storm deduplication cache
+        └── Animations.h         # Phase-aligned 60 FPS FastLED matrix patterns
 ```
 
 ---
 
-## Adjusting LED Count
+## Low-Latency Engineering on ESP32-C3
 
-In `Follower/src/main.cpp`, change:
-```cpp
-#define LED_COUNT  60   // Your strip length
-```
-
-## Troubleshooting
-
-- **No flash on Follower?** — Check that Master and Follower are on the same WiFi channel (default: channel 1). The Master's AP forces channel 1.
-- **False triggers?** — Raise the threshold via the captive portal. Position the mic as close to the chime as possible.
-- **Weak signal?** — ESP-NOW range is ~200m line-of-sight. Through walls it's typically 30-50m. Add a Follower as a relay if needed.
+1. **Modem Sleep Disabled (`WIFI_PS_NONE`):** Both Leader and Follower disable ESP32-C3 Wi-Fi power saving so Follower radios stay continuously awake on Channel 1 (~1ms RX wake time instead of 50–150ms DTIM lag).
+2. **Single-Pass ADC + 3-Chunk (~9.6ms) Leaky Debounce:** The Leader filters DC offset inline during the 64-sample (`~3.2ms`) ADC window and triggers after 3 chunks (`~9.6ms`), tolerating up to 1 brief acoustic dip while rejecting `<6ms` pops/clicks.
+3. **Pure Broadcast Alert Bursts:** Alerts are transmitted as a 4-packet broadcast burst (`FF:FF:FF:FF:FF:FF` spaced 12ms apart) so offline Followers never stall the ESP32-C3 Wi-Fi TX queue with 802.11 unicast MAC ACK retries.
+4. **0ms Haptic + Immediate Frame 0 LED Render:** Followers assert `MOTOR_PIN` immediately inside `onDataRecv()` and render Frame 0 on the very next `loop()` tick with phase-aligned patterns that start at 100% peak brightness.
+5. **Mid-Trigger Network Gate & Batched HTTP:** If chunk 1 of a chime crosses the threshold, HTTP processing is deferred for 6.4ms until the 3-chunk verification finishes and Packet 1 is on the air.

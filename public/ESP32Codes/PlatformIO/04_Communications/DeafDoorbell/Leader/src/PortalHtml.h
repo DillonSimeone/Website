@@ -519,9 +519,9 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
 
       <div class="action-bar">
         <button class="btn-trigger" id="triggerChimeBtn">Test Doorbell Trigger</button>
-        <button class="btn-continuous" id="continuousToggleBtn">
+        <button class="btn-continuous active" id="continuousToggleBtn">
           <span class="status-dot-indicator"></span>
-          <span>Continuous</span>
+          <span>Live Preview</span>
         </button>
       </div>
     </section>
@@ -629,10 +629,17 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
     <div class="section-panel">
       <div class="control-label-row">
         <span class="panel-heading" style="margin:0;">Trigger Threshold (Sensitivity)</span>
-        <span class="control-val" id="threshVal">2500 MAD</span>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span class="control-val" id="liveMicVal" style="color:var(--accent);">Mic: 0 MAD</span>
+          <span class="control-val" id="threshVal">Thresh: 2500 MAD</span>
+        </div>
       </div>
-      <div style="font-size:0.75rem; color:var(--text-muted);">Audio intensity required from microphone to trigger alert chimes</div>
-      <input type="range" id="threshRange" min="200" max="30000" step="100" value="2500" style="margin-top:6px;">
+      <div style="font-size:0.75rem; color:var(--text-muted);">Live microphone level vs. trigger threshold (drag slider above ambient noise, below chime peak)</div>
+      <div style="position:relative; height:14px; background:#141820; border:1px solid var(--border-subtle); border-radius:7px; overflow:hidden; margin-top:4px;">
+        <div id="liveMicBar" style="height:100%; width:0%; background:linear-gradient(90deg, #00e5ff 0%, #a855f7 65%, #ff007f 100%); transition:width 0.08s linear; border-radius:7px;"></div>
+        <div id="liveThreshMarker" style="position:absolute; top:0; bottom:0; width:3px; left:8.3%; background:#eab308; box-shadow:0 0 8px #eab308; z-index:2;"></div>
+      </div>
+      <input type="range" id="threshRange" min="200" max="30000" step="100" value="2500" style="margin-top:4px;">
     </div>
 
     <!-- House Network & Trigger Areas -->
@@ -722,7 +729,7 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       color: '#00e5ff',
       rgb: [0, 229, 255],
       isParty: false,
-      isContinuous: false,
+      isContinuous: true,
       isTriggerActive: false,
       triggerStartTime: 0
     };
@@ -782,64 +789,72 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
     }
 
     function updateTheme() {
-      const briFactor = state.brightness / 100;
+      const briFactor = 0.35 + 0.65 * (state.brightness / 100);
       document.documentElement.style.setProperty('--sim-color', state.color);
       document.documentElement.style.setProperty('--sim-rgb', state.rgb.join(', '));
       document.documentElement.style.setProperty('--sim-brightness', briFactor);
       if (customDot) customDot.style.background = state.color;
-      const colorLabel = state.isParty ? 'Rainbow' : state.color.toUpperCase();
-      summaryInline.innerText = `${patternNames[state.pattern] || state.pattern} &bull; ${state.brightness}% &bull; ${state.speed.toFixed(1)}x &bull; ${state.duration.toFixed(1)}s &bull; ${colorLabel}`;
+      const colorLabel = state.isParty ? 'Rainbow Spectrum' : state.color.toUpperCase();
+      summaryInline.innerText = `${patternNames[state.pattern] || state.pattern} \u2022 ${state.brightness}% \u2022 ${state.speed.toFixed(1)}x \u2022 ${state.duration.toFixed(1)}s \u2022 ${colorLabel}`;
     }
 
-    // Pattern simulation function
-    function computePixelIntensity(pattern, x, y, timeSec, speed) {
+    // Pattern simulation & spatial hue offset function (matches Follower Animations.h)
+    function computePixelSample(pattern, x, y, timeSec, speed) {
       const t = timeSec * speed;
+      const dx = x - 3.5;
+      const dy = y - 3.5;
+      const dist = Math.sqrt(dx * dx + dy * dy);
       let val = 0.0;
+      let hueOffset = 0.0;
+
       switch (pattern) {
         case 'breathe': {
-          const raw = Math.sin(t * Math.PI * 1.5);
+          const raw = Math.cos(t * Math.PI * 1.5);
           val = Math.pow((raw + 1) / 2, 1.8);
+          hueOffset = (dist * 14) / 255;
           break;
         }
         case 'ripple': {
-          const dx = x - 3.5;
-          const dy = y - 3.5;
-          const dist = Math.sqrt(dx * dx + dy * dy);
           const wave = Math.cos((dist * 1.5) - (t * 5.5));
           val = Math.pow(Math.max(0, wave), 2.2);
+          hueOffset = -(dist * 28) / 255;
           break;
         }
         case 'crawl': {
           const serpentine = (y % 2 === 0) ? (y * 8 + x) : (y * 8 + (7 - x));
-          const comet = (t * 28.0) % 64;
+          const comet = (t * 28.0 + 14.0) % 64;
           const diff = (comet - serpentine + 64) % 64;
           val = diff < 14 ? Math.pow(1 - (diff / 14), 2.0) : 0.0;
+          hueOffset = -(diff * 12) / 255;
           break;
         }
         case 'bounce': {
           const barY = 3.5 + 3.2 * Math.sin(t * Math.PI * 1.8);
           const distY = Math.abs(y - barY);
           val = Math.exp(-Math.pow(distY, 2) / 1.5);
+          hueOffset = (x * 16 + y * 10) / 255;
           break;
         }
         case 'soft_beacon': {
-          const cycle = (t * 1.6) % 1.0;
+          const cycle = (t * 1.6 + 0.25) % 1.0;
           val = (cycle < 0.25) ? Math.sin((cycle / 0.25) * (Math.PI / 2)) : Math.cos(((cycle - 0.25) / 0.75) * (Math.PI / 2));
           val = Math.pow(Math.max(0, val), 1.5);
+          hueOffset = (dist * 16) / 255;
           break;
         }
         case 'strobe': {
           const cycleMs = (timeSec * 1000) % 200;
           val = cycleMs < 100 ? 1.0 : 0.0;
+          hueOffset = ((Math.floor((timeSec * 1000) / 200) * 73) + (x + y) * 6) / 255;
           break;
         }
         default:
           val = 1.0;
       }
-      return Math.min(1.0, Math.max(0.0, val));
+      return { val: Math.min(1.0, Math.max(0.0, val)), hueOffset };
     }
 
-    // Render loop
+    // High-brightness HDR LED Matrix Render Loop
     function render(now) {
       const timeSec = now / 1000;
       let active = false;
@@ -859,47 +874,55 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         }
       }
 
-      let curR = state.rgb[0];
-      let curG = state.rgb[1];
-      let curB = state.rgb[2];
-
+      const basePartyHue = (timeSec * 0.55 * state.speed) % 1.0;
       if (state.isParty && active) {
-        const partyHue = (timeSec * 0.35 * state.speed) % 1.0;
-        const rgb = hsvToRgb(partyHue, 0.95, 1.0);
-        curR = rgb[0];
-        curG = rgb[1];
-        curB = rgb[2];
-        document.documentElement.style.setProperty('--sim-rgb', `${curR}, ${curG}, ${curB}`);
+        const ambRgb = hsvToRgb(basePartyHue, 0.95, 1.0);
+        document.documentElement.style.setProperty('--sim-rgb', `${ambRgb[0]}, ${ambRgb[1]}, ${ambRgb[2]}`);
       }
 
-      const briScale = state.brightness / 100;
+      const briScale = 0.25 + 0.75 * (state.brightness / 100);
       let lumSum = 0;
 
       if (active) {
         for (let i = 0; i < 64; i++) {
           const cell = ledCells[i];
-          const intensity = computePixelIntensity(state.pattern, cell.x, cell.y, timeSec, state.speed);
-          const effBri = intensity * briScale;
+          const sample = computePixelSample(state.pattern, cell.x, cell.y, timeSec, state.speed);
+          const effBri = sample.val * briScale;
           lumSum += effBri;
 
-          if (effBri > 0.02) {
-            const r = Math.round(curR * effBri);
-            const g = Math.round(curG * effBri);
-            const b = Math.round(curB * effBri);
-            cell.el.style.background = `rgb(${r}, ${g}, ${b})`;
-            const glow = Math.round(10 * effBri);
-            cell.el.style.boxShadow = `0 0 ${glow}px rgba(${curR}, ${curG}, ${curB}, ${effBri * 0.85})`;
+          if (effBri > 0.015) {
+            let pR = state.rgb[0], pG = state.rgb[1], pB = state.rgb[2];
+            if (state.isParty) {
+              const pixHue = ((basePartyHue + sample.hueOffset) % 1.0 + 1.0) % 1.0;
+              const pRgb = hsvToRgb(pixHue, 0.94, 1.0);
+              pR = pRgb[0]; pG = pRgb[1]; pB = pRgb[2];
+            }
+
+            // Perceptual gamma lift + white-hot LED emitter core
+            const displayBri = Math.pow(effBri, 0.52);
+            const r = Math.min(255, Math.round(pR * displayBri));
+            const g = Math.min(255, Math.round(pG * displayBri));
+            const b = Math.min(255, Math.round(pB * displayBri));
+
+            const hotCore = Math.pow(displayBri, 1.45) * 0.68;
+            const cR = Math.min(255, Math.round(r + (255 - r) * hotCore));
+            const cG = Math.min(255, Math.round(g + (255 - g) * hotCore));
+            const cB = Math.min(255, Math.round(b + (255 - b) * hotCore));
+
+            cell.el.style.background = `radial-gradient(circle at 50% 50%, rgb(${cR}, ${cG}, ${cB}) 0%, rgb(${r}, ${g}, ${b}) 70%)`;
+            const glow = Math.round(6 + 16 * displayBri);
+            cell.el.style.boxShadow = `0 0 ${glow}px rgba(${pR}, ${pG}, ${pB}, ${Math.min(1.0, displayBri * 0.95)}), inset 0 0 4px rgba(255, 255, 255, ${displayBri * 0.45})`;
           } else {
-            cell.el.style.background = '#070707';
+            cell.el.style.background = '#090909';
             cell.el.style.boxShadow = 'none';
           }
         }
-        const avgLum = lumSum / 64;
-        roomAmbientLayer.style.opacity = Math.min(1.0, avgLum * 1.35);
-        roomReflectionGlow.style.opacity = Math.min(1.0, avgLum * 1.1);
+        const avgLum = Math.pow(lumSum / 64, 0.65);
+        roomAmbientLayer.style.opacity = Math.min(1.0, avgLum * 1.55);
+        roomReflectionGlow.style.opacity = Math.min(1.0, avgLum * 1.35);
       } else {
         for (let i = 0; i < 64; i++) {
-          ledCells[i].el.style.background = '#070707';
+          ledCells[i].el.style.background = '#090909';
           ledCells[i].el.style.boxShadow = 'none';
         }
         roomAmbientLayer.style.opacity = '0';
@@ -1021,11 +1044,23 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       triggerAutoSave(false);
     });
 
-    // Threshold Range
+    // Threshold Range & Live Mic Meter
     const threshRange = document.getElementById('threshRange');
     const threshVal = document.getElementById('threshVal');
+    const liveMicBar = document.getElementById('liveMicBar');
+    const liveMicVal = document.getElementById('liveMicVal');
+    const liveThreshMarker = document.getElementById('liveThreshMarker');
+
+    function updateThreshMarker(val) {
+      if (liveThreshMarker) {
+        const pct = Math.min(100, Math.max(0, (val / 30000) * 100));
+        liveThreshMarker.style.left = pct + '%';
+      }
+    }
+
     threshRange.addEventListener('input', (e) => {
-      threshVal.innerText = `${e.target.value} MAD`;
+      threshVal.innerText = `Thresh: ${e.target.value} MAD`;
+      updateThreshMarker(parseInt(e.target.value));
       triggerAutoSave(false);
     });
 
@@ -1169,7 +1204,8 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           });
           if (d.threshold !== undefined) {
             threshRange.value = d.threshold;
-            threshVal.innerText = `${d.threshold} MAD`;
+            threshVal.innerText = `Thresh: ${d.threshold} MAD`;
+            updateThreshMarker(d.threshold);
           }
           if (d.netId !== undefined) {
             netIdInput.value = d.netId;
@@ -1179,6 +1215,16 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           }
           updateTheme();
           initialized = true;
+        }
+
+        // Update inline live microphone bar on Studio page
+        if (d.mad !== undefined) {
+          const madVal = Math.round(d.mad);
+          if (liveMicVal) liveMicVal.innerText = `Mic: ${madVal} MAD`;
+          if (liveMicBar) {
+            const pct = Math.min(100, (d.mad / 30000) * 100);
+            liveMicBar.style.width = pct + '%';
+          }
         }
 
         // Live alert triggered by microphone
@@ -1195,8 +1241,9 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         if (d.followers !== undefined) {
           renderFollowersList(d.followers);
         }
-      }).catch(() => {});
-      setTimeout(pollData, 150);
+      }).catch(() => {}).finally(() => {
+        setTimeout(pollData, 200);
+      });
     }
 
     updateTheme();

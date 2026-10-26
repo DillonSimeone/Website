@@ -1,28 +1,24 @@
-# Follower
+# DeafDoorbell — Follower Node
 
-A microcontroller project built using PlatformIO.
+ESP-NOW visual & haptic receiver node with store-and-forward mesh repeating and 8×8 WS2812B matrix animations.
 
-## ️ Project Specifications
+## Hardware Specifications
 
-- **Board:** `esp32-c3-devkitm-1`
+- **Board:** `esp32-c3-devkitm-1` (ESP32-C3 SuperMini)
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
-- **Dependencies:**
- - `fastled/FastLED @ ^3.6.0`
+- **Dependencies:** `fastled/FastLED @ ^3.6.0`
 
 ## Pin Configuration
 
-| Signal Name | GPIO Pin |
-| :--- | :--- |
-| `LED_PIN` | `4` |
-| `MOTOR_PIN` | `3` |
-| `ONBOARD_LED` | `8` |
+| Signal Name   | GPIO Pin | Notes                                      |
+| :------------ | :------- | :----------------------------------------- |
+| `LED_PIN`     | `5`      | WS2812B 8×8 matrix data line (64 LEDs)     |
+| `MOTOR_PIN`   | `3`      | Vibration motor driver output              |
+| `ONBOARD_LED` | `8`      | Inverted status/heartbeat LED              |
+| `BOOT_PIN`    | `9`      | Hold 3 seconds to reset pairing to discovery|
 
-## Build & Upload Instructions
+## Build & Upload
 
-This project is configured for **PlatformIO**.
-
-1. Install the [PlatformIO IDE](https://platformio.org/) extension in VS Code.
-2. Open this directory in VS Code.
-3. Use the PlatformIO toolbar to **Build** (checkmark icon) and **Upload** (arrow icon) the code to your board.
-4. Alternatively, run the local `upload.bat` script to build, upload, and launch the serial monitor automatically.
+- **USB Flash & Monitor:** Run `upload.bat`
+- **Build Binary Only:** Run `compile_bin.bat`

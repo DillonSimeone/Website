@@ -7,6 +7,7 @@ import {
     buildMasterLid,
     buildFollowerBase,
     buildFollowerLid,
+    buildFollowerPetgLid,
     buildFollowerGrid,
     buildFollowerStand
 } from './geometry.js';
@@ -45,6 +46,15 @@ export function rebuildActiveGeometry() {
         color: 0xf59e0b, // Technical Amber
         roughness: 0.35,
         metalness: 0.1,
+        wireframe: params.wireframe
+    });
+
+    const matPetg = new THREE.MeshStandardMaterial({
+        color: 0x88f2ff, // Translucent Clear PETG Tint
+        roughness: 0.15,
+        metalness: 0.08,
+        transparent: true,
+        opacity: 0.52,
         wireframe: params.wireframe
     });
 
@@ -153,6 +163,15 @@ export function rebuildActiveGeometry() {
             position: new THREE.Vector3(-54.0, 88.0, 1.5)
         });
         mLid.delete();
+
+        const fPetg = buildFollowerPetgLid(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(fPetg),
+            material: matPetg,
+            edgeColor: 0x004455,
+            position: new THREE.Vector3(145.0, 5.0, 1.5)
+        });
+        fPetg.delete();
     } else {
         // Follower Node Rendering
         if (context.activePreset === 'follower_all') {
@@ -181,20 +200,29 @@ export function rebuildActiveGeometry() {
             });
             fBase.delete();
 
-            // Follower Lid clamps over bottom ESP32 bay
-            const fLid = buildFollowerLid(M, params);
-            const lidGeom = manifoldToThreeGeometry(fLid);
-            const baseH = params.followerBaseThickness || 12.0;
-            const lidY = -baseH / 2 - 2.0 / 2 - explodeZ;
-            const lidZ = liftZ - 32.0; // Aligned with lid center Y = -32.0 and clamping zone
+            // 8x8 Diffuser Grid seated inside Follower Base matrix pocket (Y = +16.0mm in base frame)
+            const fGrid = buildFollowerGrid(M, params);
+            const gridGeom = manifoldToThreeGeometry(fGrid);
             items.push({
-                geometry: lidGeom,
-                material: matLid,
-                edgeColor: 0x330011,
-                position: new THREE.Vector3(0, 3.0 + lidY, lidZ),
+                geometry: gridGeom,
+                material: matGrid,
+                edgeColor: 0x3d2000,
+                position: new THREE.Vector3(0, 3.0 - 3.75 - explodeZ * 0.5, liftZ + 16.0),
                 rotation: new THREE.Euler(Math.PI / 2, 0, 0)
             });
-            fLid.delete();
+            fGrid.delete();
+
+            // Full-Body Transparent PETG Cover Lid wraps Follower from top tab screws to bottom tab screws
+            const fPetg = buildFollowerPetgLid(M, params);
+            const petgGeom = manifoldToThreeGeometry(fPetg);
+            items.push({
+                geometry: petgGeom,
+                material: matPetg,
+                edgeColor: 0x004455,
+                position: new THREE.Vector3(0, 3.0 - explodeZ * 1.2, liftZ),
+                rotation: new THREE.Euler(Math.PI / 2, 0, 0)
+            });
+            fPetg.delete();
         } else {
             // Flat Base view for Wall Mounting inspection
             if (context.activePreset === 'follower_base') {
@@ -207,6 +235,18 @@ export function rebuildActiveGeometry() {
                     position: new THREE.Vector3(0, 0, 0)
                 });
                 fBase.delete();
+            }
+
+            if (context.activePreset === 'follower_petg') {
+                const fPetg = buildFollowerPetgLid(M, params);
+                const geom = manifoldToThreeGeometry(fPetg);
+                items.push({
+                    geometry: geom,
+                    material: matPetg,
+                    edgeColor: 0x004455,
+                    position: new THREE.Vector3(0, 0, 0)
+                });
+                fPetg.delete();
             }
 
             if (context.activePreset === 'follower_lid') {

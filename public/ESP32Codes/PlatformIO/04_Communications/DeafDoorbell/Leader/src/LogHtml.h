@@ -598,8 +598,9 @@ const char LOG_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           fetchTriggerLog();
           if (graphView === '24h') fetch24hHistory();
         }
-      }).catch(() => {});
-      setTimeout(pollData, 120);
+      }).catch(() => {}).finally(() => {
+        setTimeout(pollData, 180);
+      });
     }
 
     fetchEspNowLog();

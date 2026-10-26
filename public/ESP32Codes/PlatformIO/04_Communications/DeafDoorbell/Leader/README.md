@@ -1,26 +1,22 @@
-# Leader
+# DeafDoorbell — Leader Node
 
-A microcontroller project built using PlatformIO.
+Master acoustic detector, ESP-NOW broadcast transmitter, and captive portal studio for the DeafDoorbell system.
 
-## ️ Project Specifications
+## Hardware Specifications
 
-- **Board:** `esp32-c3-devkitm-1`
+- **Board:** `esp32-c3-devkitm-1` (ESP32-C3 SuperMini)
 - **Platform:** `espressif32@6.6.0`
 - **Framework:** `arduino`
 
 ## Pin Configuration
 
-| Signal Name | GPIO Pin |
-| :--- | :--- |
-| `I2S_SCK` | `1` |
-| `LED_PIN` | `8` |
-| `BURST_INTERVAL_MS` | `200` |
+| Signal Name       | GPIO Pin | Notes                                    |
+| :---------------- | :------- | :--------------------------------------- |
+| `MIC_ANALOG_PIN`  | `3`      | MAX4466 `OUT` (`ADC1_CH3`)               |
+| `MIC_GND_PIN`     | `4`      | Soft ground driven `LOW` for MAX4466 GND |
+| `ONBOARD_LED_PIN` | `8`      | Inverted PWM audio/alert feedback LED    |
 
-## Build & Upload Instructions
+## Build & Upload
 
-This project is configured for **PlatformIO**.
-
-1. Install the [PlatformIO IDE](https://platformio.org/) extension in VS Code.
-2. Open this directory in VS Code.
-3. Use the PlatformIO toolbar to **Build** (checkmark icon) and **Upload** (arrow icon) the code to your board.
-4. Alternatively, run the local `upload.bat` script to build, upload, and launch the serial monitor automatically.
+- **USB Flash & Monitor:** Run `upload.bat`
+- **Build `.bin` for Web OTA (`http://192.168.4.1/update`):** Run `compile_bin.bat`

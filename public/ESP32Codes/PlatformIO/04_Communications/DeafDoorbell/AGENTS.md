@@ -1,23 +1,17 @@
 # DeafDoorbell — ESP-NOW Visual Doorbell Alert System
 
 ## Overview
-An accessibility project for deaf individuals. A **Master** ESP32-C3 with an INMP411 I2S microphone sits next to a door chime. When the chime sounds and exceeds a configurable audio threshold, the Master broadcasts an ESP-NOW message to all **Follower** ESP32-C3 units in the area, which flash LED strips and buzz vibration motors to provide a visual/tactile alert.
+An accessibility project for deaf individuals. A **Leader** ESP32-C3 with a MAX4466 analog electret microphone sits next to a door chime. When the chime sounds and exceeds a configurable audio threshold (~10ms detection window), the Leader broadcasts an ESP-NOW alert to all **Follower** ESP32-C3 units in the area, which immediately flash 8×8 WS2812B LED matrices and buzz vibration motors to provide a visual and tactile alert.
 
 ## Architecture
-*   **Master Node:** INMP411 mic → I2S audio → RMS threshold detection → ESP-NOW broadcast. Hosts a captive portal for live audio monitoring, threshold tuning, flash duration, cooldown, and color selection.
-*   **Follower Nodes:** Receive ESP-NOW broadcast → Flash WS2812B LED strip in the chosen color → Activate vibration motor. Unlimited followers can be deployed — the only limits are power and ESP-NOW range (~200m line-of-sight).
+* **Shared Protocol (`shared/DoorbellProtocol.h`):** Single source of truth included by both `Leader` and `Follower` via `-I../shared` build flags.
+* **Leader Node (`Leader/src/`):** Modularized into `Config.h`, `AudioEngine.h`, `EspNowManager.h`, `TelemetryLog.h`, `WebPortal.h`, and `main.cpp`. Uses single-pass MAX4466 ADC capture + IIR DC-blocking filter (`~3.2ms/chunk`), fast 3-chunk (`~9.6ms`) leaky debounce, `WIFI_PS_NONE`, and pure broadcast 4-packet bursts (`FF:FF:FF:FF:FF:FF`).
+* **Follower Nodes (`Follower/src/`):** Modularized into `FollowerConfig.h`, `Animations.h`, and `main.cpp`. Runs on Channel 1 with `WIFI_PS_NONE`, asserts `MOTOR_PIN` at 0ms inside `onDataRecv()`, renders phase-aligned Frame 0 immediately in `loop()`, and relays mesh packets with TTL hop limiting.
 
 ## Hardware
-*   **Board:** ESP32-C3 SuperMini (both Master and Follower)
-*   **Microphone:** INMP411 (Master only)
-*   **LEDs:** WS2812B strip (Follower only, default 60 LEDs)
-*   **Motor:** Small vibration motor via transistor/MOSFET (Follower only)
-
-## Key Features
-*   **Zero-pairing deployment:** ESP-NOW broadcast to `FF:FF:FF:FF:FF:FF` — Followers just need power.
-*   **Captive Portal:** Connect to "DeafDoorbell-Master" WiFi to configure all settings from a phone.
-*   **Color Wheel:** Choose the flash color from the portal — it's transmitted with each alert.
-*   **NVS Persistence:** All settings survive power cycles.
-*   **Audio-reactive LED:** Master's onboard LED reflects live audio level for positioning feedback.
-*   **Cooldown:** Prevents spam from sustained chimes.
-*   **Animation cancellation:** New alerts interrupt in-progress flashes.
+* **Board:** ESP32-C3 SuperMini (both Leader and Follower)
+* **Microphone:** MAX4466 analog mic on `GPIO 3` (`ADC1_CH3`), soft GND on `GPIO 4` (Leader only)
+* **LEDs:** WS2812B 8×8 matrix (`64` LEDs) on `GPIO 5` (Follower only)
+* **Motor:** Small vibration motor via transistor/MOSFET on `GPIO 3` (Follower only)
+* **Status LED:** Onboard LED on `GPIO 8` (inverted logic)
+* **Boot Button:** `GPIO 9` (Hold 3s on Follower to re-enter pairing mode)
