@@ -35,8 +35,8 @@
     <div id="settings-layer"></div>
 
     <header id="street-header">
-      <a href="../../index.html" class="nav-back-portfolio">/// RETURN_TO_PORTFOLIO</a>
       <div class="header-actions">
+        <button id="btn-header-mic" class="intro-btn hud-mic-btn untoggled" title="Toggle Live Mic Mode">MIC INPUT</button>
         <button class="intro-btn btn-settings" title="Settings disc [S]">SETTINGS [S]</button>
         <button id="btn-replay-intro" class="intro-btn" title="Replay the cinematic intro">REPLAY INTRO</button>
         <button id="btn-launch-stage-header" class="intro-btn hot" title="Launch the live stage rig [SPACE]">LIVE RIG [SPACE]</button>
@@ -69,6 +69,7 @@
           <option value="4">4 STREET VU</option>
           <option value="5">5 SEARCHLIGHTS</option>
         </select>
+        <button id="btn-stage-mic" class="hud-btn hud-mic-btn untoggled" title="Toggle Live Mic Mode">MIC INPUT</button>
         <div class="telemetry-readout">
           <span class="tele-bpm">BPM <strong id="hud-bpm">128</strong></span>
           <span class="tele-dom">DOM <strong id="hud-dom-freq" class="num-hz">45 Hz</strong></span>
@@ -82,6 +83,7 @@
         <div class="quick-hotkeys">
           <span>[SPACE] Audio</span>
           <span>[1-5] Scenes</span>
+          <span>[L] Mic</span>
           <span>[C] Keystoning</span>
           <span>[M] MIDI</span>
           <span>[V] Haptics</span>
@@ -93,6 +95,7 @@
         <div class="stage-actions">
           <button id="btn-stage-map" class="hud-btn" title="Toggle 4-Point Stage Keystoning [C]">STAGE MAP <kbd>C</kbd></button>
           <button id="btn-stage-midi" class="hud-btn" title="Toggle Web MIDI Controller [M]">MIDI <kbd>M</kbd></button>
+          <button id="btn-stage-mic-bottom" class="hud-btn hud-mic-btn untoggled" title="Toggle Live Mic Mode">MIC INPUT</button>
           <button id="btn-stage-fullscreen" class="hud-btn" title="Toggle Fullscreen Mode [F]">FULLSCREEN <kbd>F</kbd></button>
           <button id="btn-exit-stage" class="hud-btn primary" title="Return to Artist Portal [ESC]">EXIT <kbd>ESC</kbd></button>
         </div>
@@ -154,7 +157,6 @@
         <a href="https://natehergert.com/" target="_blank" rel="noopener noreferrer" class="portal-link">OFFICIAL WEBSITE (natehergert.com)</a>
         <button id="btn-test-haptics" class="portal-link">TEST MOBILE HAPTICS</button>
       </div>
-      <a href="../../index.html" class="portal-link back">/// RETURN TO PORTFOLIO</a>
     </article>
   </div>
 

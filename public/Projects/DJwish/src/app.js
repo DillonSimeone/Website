@@ -43,6 +43,10 @@ class DJWishApp {
     this.hudClipWarning = document.getElementById('hud-clip-warning');
     this.deckStatusTag = document.getElementById('deck-input-status');
     this.btnToggleAudio = document.getElementById('btn-toggle-audio');
+    this.btnStageMic = document.getElementById('btn-stage-mic');
+    this.btnStageMicBottom = document.getElementById('btn-stage-mic-bottom');
+    this.btnHeaderMic = document.getElementById('btn-header-mic');
+    this.btnToggleMic = document.getElementById('btn-toggle-mic');
 
     this.fpsFromUrl = new URLSearchParams(window.location.search).has('fps');
     this.showFps = this.fpsFromUrl;
@@ -53,6 +57,7 @@ class DJWishApp {
   }
 
   async init() {
+    this.updateMicUI(false);
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     await waitForFonts();
 
@@ -228,6 +233,76 @@ class DJWishApp {
 
   /* ---------------- UI events ---------------- */
 
+  updateMicUI(isLive) {
+    const micButtons = [
+      this.btnStageMic,
+      this.btnStageMicBottom,
+      this.btnHeaderMic,
+      this.btnToggleMic
+    ].filter(Boolean);
+
+    micButtons.forEach(btn => {
+      btn.classList.toggle('active', isLive);
+      btn.classList.toggle('toggled', isLive);
+      btn.classList.toggle('untoggled', !isLive);
+      btn.setAttribute('aria-pressed', isLive ? 'true' : 'false');
+      btn.setAttribute('title', isLive ? 'Live Mic Input ACTIVE (Click to toggle off)' : 'Toggle Mic Input (Live Mode)');
+    });
+  }
+
+  async toggleMicLive() {
+    if (this.isTogglingMic) return;
+    this.isTogglingMic = true;
+
+    try {
+      const isCurrentlyLive = this.audio?.isMicLive();
+      if (isCurrentlyLive) {
+        this.audio.stopMic(true);
+        this.audio.resetTelemetry();
+        this.sceneManager?.resetAudioTelemetry();
+        this.isAudioStarted = true;
+        this.updateMicUI(false);
+        this.setAudioButton(true, 'DEMO ACTIVE');
+        this.updateDeckStatus('DEMO ACTIVE');
+        return;
+      }
+
+      this.audio.resetTelemetry();
+      this.sceneManager?.resetAudioTelemetry();
+      const res = await this.audio.init('mic');
+      this.isAudioStarted = true;
+      if (res && res.success && res.mode === 'mic') {
+        this.updateMicUI(true);
+        this.setAudioButton(true, 'AUDIO LIVE');
+        this.updateDeckStatus('MIC LIVE');
+      } else {
+        this.updateMicUI(false);
+        this.setAudioButton(true, 'DEMO ACTIVE');
+        this.updateDeckStatus('MIC DENIED');
+        const err = res?.error;
+        let msg = 'Unable to access microphone.';
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (!window.isSecureContext && !isLocalhost) {
+          msg = 'Microphone access requires HTTPS or localhost. Browsers block microphone requests over insecure HTTP.';
+        } else if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+          msg = 'Microphone permission was blocked. Please click the site settings / lock icon in your address bar and allow Microphone access, then try again.';
+        } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError') {
+          msg = 'No microphone device was detected on your system.';
+        } else if (err?.message) {
+          msg = err.message;
+        }
+        console.warn('[DJWish] Mic status:', msg, err);
+        this.updateDeckStatus(msg.slice(0, 32));
+      }
+    } catch (e) {
+      console.error('[DJWish] Unexpected mic error:', e);
+      this.updateMicUI(false);
+      this.updateDeckStatus('MIC ERROR');
+    } finally {
+      this.isTogglingMic = false;
+    }
+  }
+
   async ensureAudio() {
     if (this.isAudioStarted) return;
     await this.audio.init('demo');
@@ -247,24 +322,33 @@ class DJWishApp {
     document.getElementById('btn-launch-stage-header')?.addEventListener('click', launch);
     document.getElementById('btn-exit-stage')?.addEventListener('click', () => this.exitStageMode());
 
+    const onToggleMic = async () => {
+      await this.toggleMicLive();
+    };
+    this.btnStageMic?.addEventListener('click', onToggleMic);
+    this.btnStageMicBottom?.addEventListener('click', onToggleMic);
+    this.btnHeaderMic?.addEventListener('click', onToggleMic);
+    this.btnToggleMic?.addEventListener('click', onToggleMic);
+
+    window.addEventListener('djwish:mic-ended', () => {
+      this.updateMicUI(false);
+      this.updateDeckStatus('DEMO ACTIVE');
+    });
+
     this.btnToggleAudio?.addEventListener('click', async () => {
       if (!this.isAudioStarted) {
         await this.ensureAudio();
         this.updateDeckStatus('DEMO ACTIVE');
       } else {
         this.audio.stopDemoSynth();
+        if (this.audio.isMicLive()) {
+          this.audio.stopMic(false);
+          this.updateMicUI(false);
+        }
         this.isAudioStarted = false;
         this.setAudioButton(false, 'START AUDIO');
         this.updateDeckStatus('PAUSED');
       }
-    });
-
-    document.getElementById('btn-toggle-mic')?.addEventListener('click', async (e) => {
-      const res = await this.audio.init('mic');
-      this.isAudioStarted = true;
-      e.currentTarget.classList.toggle('active', res.mode === 'mic');
-      this.setAudioButton(true, 'AUDIO LIVE');
-      this.updateDeckStatus(res.mode === 'mic' ? 'MIC LIVE' : 'DEMO FALLBACK');
     });
 
     const trackBtns = document.querySelectorAll('.track-btn');
@@ -275,6 +359,7 @@ class DJWishApp {
         const preset = btn.dataset.preset;
         await this.ensureAudio();
         this.audio.startDemoSynth(preset);
+        this.updateMicUI(false);
         this.updateDeckStatus(`PRESET: ${preset.toUpperCase()}`);
       });
     });
@@ -294,6 +379,7 @@ class DJWishApp {
         try {
           await this.audio.loadFile(file);
           this.isAudioStarted = true;
+          this.updateMicUI(false);
           this.updateDeckStatus(`FILE: ${file.name.slice(0, 16)}`);
           this.setAudioButton(true, 'PAUSE AUDIO');
         } catch (err) {
@@ -377,6 +463,7 @@ class DJWishApp {
       }
 
       if (e.key >= '1' && e.key <= String(STAGE_SCENES.length - 1)) this.switchScene(parseInt(e.key, 10));
+      else if (e.key === 'l' || e.key === 'L') this.toggleMicLive();
       else if (e.key === 'f' || e.key === 'F') this.toggleFullscreen();
       else if (e.key === 'v' || e.key === 'V') {
         this.settings.set('haptics', !this.settings.get('haptics'));
@@ -480,27 +567,35 @@ class DJWishApp {
   }
 
   render(time) {
-    const dt = this.lastTime ? Math.min(0.1, (time - this.lastTime) / 1000) : 1 / 60;
-    this.lastTime = time;
+    try {
+      const dt = this.lastTime ? Math.min(0.1, (time - this.lastTime) / 1000) : 1 / 60;
+      this.lastTime = time;
 
-    const telemetry = this.audio.update();
-    if (this.isAudioStarted) this.haptics.update(telemetry);
+      const telemetry = this.audio ? this.audio.update() : null;
+      if (telemetry && this.isAudioStarted && this.haptics) {
+        this.haptics.update(telemetry);
+      }
 
-    this.sceneManager.update(dt, telemetry);
+      if (telemetry) {
+        this.sceneManager.update(dt, telemetry);
+      }
 
-    if (this.isStageMode) {
-      this.updateStageHud(dt, telemetry);
-    } else {
-      this.updateStreetHud();
-    }
+      if (this.isStageMode) {
+        if (telemetry) this.updateStageHud(dt, telemetry);
+      } else {
+        this.updateStreetHud();
+      }
 
-    if (this.showFps) this.updateFps(dt);
+      if (this.showFps) this.updateFps(dt);
 
-    if (this.bootVeil) {
-      this.bootVeil.classList.add('gone');
-      const veil = this.bootVeil;
-      this.bootVeil = null;
-      setTimeout(() => veil.remove(), 1000);
+      if (this.bootVeil) {
+        this.bootVeil.classList.add('gone');
+        const veil = this.bootVeil;
+        this.bootVeil = null;
+        setTimeout(() => veil.remove(), 1000);
+      }
+    } catch (err) {
+      console.error('[DJWish] Render loop error:', err);
     }
   }
 }

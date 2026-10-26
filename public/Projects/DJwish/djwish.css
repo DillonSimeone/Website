@@ -157,7 +157,7 @@ button {
   right: 0;
   z-index: 50;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: 18px 24px;
   pointer-events: none;
@@ -171,22 +171,7 @@ button {
 .header-actions {
   display: flex;
   gap: 10px;
-}
-
-.nav-back-portfolio {
-  color: var(--neon-cyan);
-  font-family: var(--font-tech);
-  font-size: 0.8rem;
-  letter-spacing: 1.5px;
-  text-decoration: none;
-  border-bottom: 1px dashed var(--neon-cyan);
-  background: rgba(5, 3, 10, 0.55);
-  padding: 4px 6px;
-}
-
-.nav-back-portfolio:hover {
-  color: #fff;
-  border-bottom-style: solid;
+  pointer-events: auto;
 }
 
 .intro-btn {
@@ -740,6 +725,72 @@ body.settings-open #djwish-vr-button {
   color: #fff;
 }
 
+/* ==========================================================================
+   MIC INPUT TOGGLE BUTTONS (Live Mode)
+   Toggled (Active) = Green, Untoggled = Red
+   ========================================================================== */
+.hud-mic-btn,
+.intro-btn.hud-mic-btn,
+.control-btn.hud-mic-btn {
+  background-color: #d50000 !important;
+  border: 1px solid #ff1744 !important;
+  color: #ffffff !important;
+  font-family: var(--font-tech);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 8px rgba(213, 0, 0, 0.45);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  pointer-events: auto;
+}
+
+.hud-mic-btn:hover,
+.intro-btn.hud-mic-btn:hover,
+.control-btn.hud-mic-btn:hover {
+  background-color: #ff1744 !important;
+  border-color: #ff5252 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(255, 23, 68, 0.65);
+}
+
+.hud-mic-btn.active,
+.hud-mic-btn.toggled,
+.intro-btn.hud-mic-btn.active,
+.intro-btn.hud-mic-btn.toggled,
+.control-btn.hud-mic-btn.active,
+.control-btn.hud-mic-btn.toggled {
+  background-color: #00c853 !important;
+  border-color: #00e676 !important;
+  color: #051a0b !important;
+  text-shadow: none;
+  box-shadow: 0 0 12px rgba(0, 230, 118, 0.6) !important;
+}
+
+.hud-mic-btn.active:hover,
+.hud-mic-btn.toggled:hover,
+.intro-btn.hud-mic-btn.active:hover,
+.intro-btn.hud-mic-btn.toggled:hover,
+.control-btn.hud-mic-btn.active:hover,
+.control-btn.hud-mic-btn.toggled:hover {
+  background-color: #00e676 !important;
+  border-color: #69f0ae !important;
+  color: #000000 !important;
+  box-shadow: 0 0 16px rgba(0, 255, 102, 0.8) !important;
+}
+
+.stage-top-bar .hud-mic-btn {
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+#btn-stage-mic-bottom {
+  display: none;
+}
+
 .quick-hotkeys {
   font-family: var(--font-tech);
   font-size: 0.75rem;
@@ -1180,14 +1231,30 @@ body.settings-open #djwish-vr-button {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   #street-header {
-    padding: 12px;
+    padding: 10px 12px;
+    justify-content: flex-end;
+  }
+  .header-actions {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .header-actions .intro-btn {
+    padding: 6px 10px;
+    font-size: 0.68rem;
   }
   .intro-btn.btn-settings {
     font-size: 0;
   }
   .intro-btn.btn-settings::after {
     content: 'SETTINGS';
-    font-size: 0.72rem;
+    font-size: 0.68rem;
+  }
+  #btn-launch-stage-header {
+    font-size: 0;
+  }
+  #btn-launch-stage-header::after {
+    content: 'LIVE RIG';
+    font-size: 0.68rem;
   }
   .hud-gear {
     margin-left: 4px;
@@ -1252,16 +1319,42 @@ body.settings-open #djwish-vr-button {
   .hud-btn kbd {
     display: none;
   }
-  #btn-stage-map,
-  #btn-stage-midi {
+  #btn-stage-map {
     font-size: 0;
   }
   #btn-stage-map::after { content: 'MAP'; font-size: 0.66rem; }
-  #btn-stage-midi::after { content: 'MIDI'; font-size: 0.66rem; }
+  #btn-stage-midi {
+    display: none !important;
+  }
+  #btn-stage-mic-bottom {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.66rem;
+    font-weight: bold;
+    padding: 7px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   #btn-stage-fullscreen { font-size: 0; }
   #btn-stage-fullscreen::after { content: 'FULL'; font-size: 0.66rem; }
   .quick-hotkeys {
     display: none;
+  }
+  .stage-top-bar .hud-mic-btn {
+    padding: 3px 6px;
+    font-size: 0.64rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stage-top-bar #btn-stage-mic {
+    font-size: 0;
+  }
+  .stage-top-bar #btn-stage-mic::after {
+    content: 'MIC';
+    font-size: 0.62rem;
   }
 }
 

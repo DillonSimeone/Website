@@ -144,6 +144,10 @@ function initLibraryHold(toggle) {
  */
 function enterLibrary({ state = null, direct = false } = {}) {
     if (libraryOpen || !libraryAllowed()) return;
+
+    // Restore all cards into the live DOM so library.js/books.js sees all books
+    restoreAllCards();
+
     libraryOpen = true;
     libraryHasBackEntry = !direct;
 
@@ -179,6 +183,7 @@ function closeLibrary() {
     libraryOpen = false;
     if (libraryModule) libraryModule.exit();
     document.body.classList.remove('library-open', 'library-entering');
+    initProgressiveCardLoading();
 }
 
 function leaveLibrary() {
@@ -505,11 +510,15 @@ const INITIAL_BATCH_SIZE = 8;
 const SCROLL_BATCH_SIZE = 6;
 const MAX_RETAIN_INACTIVE = 16;
 
+let _progressiveInitialized = false;
+
 /**
  * Initializes progressive card loading across heavy sections.
  * Runs after dynamic nav generation so all titles and anchor IDs exist.
  */
 function initProgressiveCardLoading() {
+    if (_progressiveInitialized) return;
+    _progressiveInitialized = true;
     _progressiveConfigs.forEach(cfg => {
         const container = cfg.getContainer();
         if (!container) return;
@@ -522,11 +531,13 @@ function initProgressiveCardLoading() {
         if (cfg.id === 'hobby') {
             // For hobby, retain the first 8 .artwork cards.
             // Any sibling elements following the 8th card (remaining cards + headers) are detached in order.
+            // Never detach .library-only portal cards.
             const pivot = cards[INITIAL_BATCH_SIZE - 1];
             let next = pivot.nextElementSibling;
             while (next && !next.classList.contains('site-footer')) {
                 const toRemove = next;
                 next = next.nextElementSibling;
+                if (toRemove.classList.contains('library-only')) continue;
                 _cardPools[cfg.id].push(toRemove);
                 toRemove.remove();
             }
@@ -703,6 +714,7 @@ function trimInactiveSection(sectionId, maxRetain = MAX_RETAIN_INACTIVE) {
         while (next && next !== indicator && !next.classList.contains('site-footer')) {
             const toRemove = next;
             next = next.nextElementSibling;
+            if (toRemove.classList.contains('library-only')) continue;
             trimmed.push(toRemove);
             toRemove.remove();
         }
@@ -723,6 +735,43 @@ function trimInactiveSection(sectionId, maxRetain = MAX_RETAIN_INACTIVE) {
         }
     }
 }
+
+/**
+ * Restores all pooled cards across all sections back into the DOM.
+ * Essential for the Secret Library which queries the live DOM to construct 3D books.
+ */
+function restoreAllCards() {
+    _progressiveConfigs.forEach(cfg => {
+        const pool = _cardPools[cfg.id];
+        if (!pool || pool.length === 0) return;
+
+        const container = cfg.getContainer();
+        const indicator = document.getElementById(`progressive-sentinel-${cfg.id}`);
+        if (!container) return;
+
+        const fragment = document.createDocumentFragment();
+        while (pool.length > 0) {
+            fragment.appendChild(pool.shift());
+        }
+
+        if (indicator && indicator.parentElement === container) {
+            container.insertBefore(fragment, indicator);
+        } else {
+            container.appendChild(fragment);
+        }
+
+        if (indicator) {
+            indicator.classList.add('is-hidden');
+        }
+
+        if (_sentinelObservers[cfg.id]) {
+            _sentinelObservers[cfg.id].disconnect();
+        }
+
+        onCardsAppended(cfg.id);
+    });
+}
+window.restoreAllCards = restoreAllCards;
 
 /**
  * Checks if the page was opened with an anchor hash and expands up to that card.
@@ -761,7 +810,6 @@ function setUp() {
 
     generateDynamicNavs();
     injectFooters();
-    initProgressiveCardLoading();
 
     if (page === 'library' || page === 'labyrinth') {
         reveal('elevatorPitch', 'LandingPage', 0, true);
@@ -770,13 +818,17 @@ function setUp() {
             enterLibrary({ direct: true });
         } else {
             history.replaceState({ previousPage: 'elevatorPitch', previousButton: 'LandingPage' }, '', window.location.pathname);
+            initProgressiveCardLoading();
         }
-    } else if (page) {
-        const targetBtn = document.querySelector(`#${page}`);
-        if (targetBtn) targetBtn.click();
     } else {
-        ensureGalleries('elevatorPitch');
-        resetSectionChrome('elevatorPitch');
+        initProgressiveCardLoading();
+        if (page) {
+            const targetBtn = document.querySelector(`#${page}`);
+            if (targetBtn) targetBtn.click();
+        } else {
+            ensureGalleries('elevatorPitch');
+            resetSectionChrome('elevatorPitch');
+        }
     }
 
     // Gallery initialization is now deferred — see reveal() function.
