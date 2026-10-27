@@ -1,0 +1,44 @@
+/* feedback.css */
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    padding: 2em;
+}
+
+main {
+    background: #fff;
+    max-width: 600px;
+    margin: auto;
+    padding: 2em;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+form div {
+    margin-bottom: 1em;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.3em;
+    font-weight: bold;
+}
+
+input[type="text"], textarea, select {
+    width: 100%;
+    padding: 0.5em;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+.messages {
+    background-color: #fdd;
+    border: 1px solid #f99;
+    padding: 1em 2em;
+    margin-bottom: 1em;
+    border-radius: 4px;
+}
+
+.messages li {
+    color: #900;
+}

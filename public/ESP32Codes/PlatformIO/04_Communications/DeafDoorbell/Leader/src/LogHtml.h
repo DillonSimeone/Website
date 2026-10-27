@@ -184,23 +184,65 @@ const char LOG_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       </div>
       <div style="display: flex; justify-content: space-between; font-size: 0.75em; color: var(--text-dim); margin-top: 6px;">
         <span id="graphXLabel">X: Real-Time Audio (Last 60s)</span>
-        <span>Y: MAD Level | Gold Line: Threshold</span>
+        <span>Pink Dot: Triggered | Gold Ring: Sub-Debounce / Cooldown</span>
       </div>
     </div>
 
-    <!-- Live Audio Level Bar -->
+    <!-- Live Audio Level Bar & Debounce Tuning -->
     <div class="card" id="liveCard">
       <div class="card-title">
         <span>Live Instant Audio (MAD)</span>
-        <span class="val-display" id="rmsVal">0</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span class="badge badge-ok" id="cooldownBadge">READY</span>
+          <span class="val-display" id="rmsVal">0</span>
+        </div>
       </div>
       <div class="bar-wrap">
         <div class="bar-fill" id="bar"></div>
         <div class="bar-thresh" id="threshLine"></div>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 0.75em; color: var(--text-dim);">
-        <span>Silence</span>
-        <span>Peak / Chime</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75em; color: var(--text-dim); margin-top: 8px; gap: 8px; flex-wrap: wrap;">
+        <span>Debounce Sensitivity (Chunks required above threshold):</span>
+        <select id="debounceSelect" onchange="updateDebounce(this.value)" style="background:#1c1c1c; color:#fff; border:1px solid #404040; border-radius:6px; padding:4px 8px; font-size:1em;">
+          <option value="1">1 Chunk (3.2ms Instant - Table Taps &amp; Knocks)</option>
+          <option value="2" selected>2 Chunks (6.4ms Fast - Default)</option>
+          <option value="3">3 Chunks (9.6ms Standard Chime)</option>
+          <option value="5">5 Chunks (16ms Strict Sustained)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Acoustic Diagnostic Flight Recorder -->
+    <div class="card" id="diagCard">
+      <div class="card-title">
+        <span>Acoustic Diagnostic Flight Recorder</span>
+        <span class="badge badge-info" id="diagCountBadge">0 Events</span>
+      </div>
+      <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 8px;">
+        Captures every threshold crossing &amp; near-miss with a 3.2ms/chunk oscilloscope trace explaining why it triggered or was rejected.
+      </div>
+      <div class="log-table-wrap" style="max-height: 240px;">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Decision</th>
+              <th>Chunks</th>
+              <th>Peak / Thresh</th>
+              <th>3.2ms Chunk Trace (Oscilloscope)</th>
+            </tr>
+          </thead>
+          <tbody id="diagLogBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No acoustic events recorded yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:8px; flex-wrap:wrap;">
+        <div style="display:flex; gap:6px;">
+          <button class="btn-test btn-sm" onclick="fetchDiagLog()">Refresh</button>
+          <a href="/diagnostics.csv" download="deafdoorbell_diagnostics.csv" class="btn-test btn-sm" style="text-decoration:none; background:#00e5ff; color:#000; font-weight:700;">Download CSV Log</a>
+        </div>
+        <button class="btn-test btn-sm" onclick="clearDiagLog()">Clear Recorder</button>
       </div>
     </div>
 
@@ -389,17 +431,26 @@ const char LOG_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         ctx.stroke();
 
         for (let i = 0; i < pointCount; i++) {
-          if (historyBuffer[i].triggered || historyBuffer[i].mad >= historyBuffer[i].threshold) {
+          if (historyBuffer[i].triggered) {
             const x = pLeft + (i * stepX);
             const yRatio = Math.min(1.0, historyBuffer[i].mad / maxMad);
             const y = h - pBottom - (plotH * yRatio);
             ctx.beginPath();
-            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.arc(x, y, 5.5, 0, Math.PI * 2);
             ctx.fillStyle = '#ff007f';
             ctx.shadowColor = '#ff007f';
             ctx.shadowBlur = 12;
             ctx.fill();
             ctx.shadowBlur = 0;
+          } else if (historyBuffer[i].mad >= historyBuffer[i].threshold) {
+            const x = pLeft + (i * stepX);
+            const yRatio = Math.min(1.0, historyBuffer[i].mad / maxMad);
+            const y = h - pBottom - (plotH * yRatio);
+            ctx.beginPath();
+            ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+            ctx.strokeStyle = '#eab308';
+            ctx.lineWidth = 2;
+            ctx.stroke();
           }
         }
       } else {
@@ -560,11 +611,82 @@ const char LOG_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       fetch('/espnow/clear').then(() => fetchEspNowLog());
     }
 
+    let lastDiagTotal = -1;
+    let debounceInitialized = false;
+
+    function updateDebounce(val) {
+      fetch('/set?debounce=' + encodeURIComponent(val)).catch(() => {});
+    }
+
+    function fetchDiagLog() {
+      fetch('/diagnostics').then(r => r.json()).then(d => {
+        const total = d.total || 0;
+        lastDiagTotal = total;
+        document.getElementById('diagCountBadge').innerText = total + ' Events';
+        if (d.debounce !== undefined && !debounceInitialized) {
+          document.getElementById('debounceSelect').value = d.debounce;
+          debounceInitialized = true;
+        }
+        const tbody = document.getElementById('diagLogBody');
+        if (!d.events || d.events.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No acoustic events recorded yet</td></tr>';
+          return;
+        }
+        let html = '';
+        d.events.forEach(e => {
+          let badgeClass = 'badge-info';
+          let label = e.type;
+          if (e.type === 'TRIGGERED') {
+            badgeClass = 'badge-party';
+            label = 'TRIGGERED';
+          } else if (e.type === 'TOO_SHORT') {
+            badgeClass = 'badge-warn';
+            label = 'TOO SHORT (' + e.durMs + 'ms)';
+          } else if (e.type === 'IN_COOLDOWN') {
+            badgeClass = 'badge-warn';
+            label = 'COOLDOWN (' + (e.coolMs / 1000).toFixed(1) + 's left)';
+          } else if (e.type === 'NEAR_MISS') {
+            badgeClass = 'badge-info';
+            label = 'NEAR MISS (' + Math.round((e.peak / Math.max(1, e.thresh)) * 100) + '%)';
+          }
+          const traceHtml = (e.trace || []).map(v => v >= e.thresh ? `<strong style="color:#ff007f;">${v}</strong>` : `${v}`).join(' &rarr; ');
+          html += `<tr>
+            <td>${formatAge(e.ageSec)}</td>
+            <td><span class="badge ${badgeClass}">${label}</span></td>
+            <td><strong>${e.above}/${e.req}</strong></td>
+            <td><strong>${e.peak}</strong> <span style="color:var(--text-dim);">/ ${e.thresh}</span></td>
+            <td style="font-family:monospace; font-size:0.85em;">${traceHtml}</td>
+          </tr>`;
+        });
+        tbody.innerHTML = html;
+      }).catch(() => {});
+    }
+
+    function clearDiagLog() {
+      fetch('/diagnostics/clear').then(() => fetchDiagLog());
+    }
+
     function pollData() {
       fetch('/data').then(r => r.json()).then(d => {
         const madVal = Math.round(d.mad);
         document.getElementById('rmsVal').innerText = madVal;
         document.getElementById('graphCurrentMad').innerText = 'MAD: ' + madVal;
+
+        if (d.debounce !== undefined && !debounceInitialized) {
+          document.getElementById('debounceSelect').value = d.debounce;
+          debounceInitialized = true;
+        }
+
+        const coolBadge = document.getElementById('cooldownBadge');
+        if (coolBadge) {
+          if (d.cooldownMs && d.cooldownMs > 0) {
+            coolBadge.className = 'badge badge-warn';
+            coolBadge.innerText = 'COOLDOWN ' + (d.cooldownMs / 1000).toFixed(1) + 's';
+          } else {
+            coolBadge.className = 'badge badge-ok';
+            coolBadge.innerText = 'READY';
+          }
+        }
 
         if (d.threshold !== undefined) {
           currentThreshold = d.threshold;
@@ -592,10 +714,15 @@ const char LOG_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           document.getElementById('espUnknown').innerText = d.espUnknown;
         }
 
+        if (d.diagTotal !== undefined && d.diagTotal !== lastDiagTotal) {
+          fetchDiagLog();
+        }
+
         if (d.triggered) {
           document.getElementById('liveCard').classList.add('triggered-flash');
           setTimeout(() => document.getElementById('liveCard').classList.remove('triggered-flash'), 400);
           fetchTriggerLog();
+          fetchDiagLog();
           if (graphView === '24h') fetch24hHistory();
         }
       }).catch(() => {}).finally(() => {
@@ -605,6 +732,7 @@ const char LOG_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
 
     fetchEspNowLog();
     fetchTriggerLog();
+    fetchDiagLog();
     pollData();
   </script>
 </body>

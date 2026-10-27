@@ -34,6 +34,64 @@ inline int triggerLogHead = 0;
 inline int triggerLogCount = 0;
 inline uint32_t totalTriggerCount = 0;
 
+// ===== ACOUSTIC DIAGNOSTIC FLIGHT RECORDER (Captures Triggers, Rejections & Cooldown Blocks) =====
+enum DiagEventType : uint8_t {
+    DIAG_TRIGGERED        = 0, // Passed debounce and fired ESP-NOW alert
+    DIAG_REJECTED_SHORT   = 1, // Crossed threshold, but dropped below before reaching debounceChunks
+    DIAG_BLOCKED_COOLDOWN = 2, // Crossed threshold while previous alert was still active/cooling down
+    DIAG_NEAR_MISS        = 3  // Peaked between 80% and 99% of threshold without crossing
+};
+
+#define MAX_DIAG_LOGS     40
+#define DIAG_TRACE_CHUNKS 12
+struct DiagEventEntry {
+    uint32_t timestampMs;
+    uint8_t  eventType;                  // DiagEventType
+    uint8_t  chunksAbove;                // Chunks that exceeded threshold
+    uint8_t  requiredChunks;             // debounceChunks setting at that moment
+    uint8_t  traceCount;                 // Number of valid chunks in trace[]
+    uint16_t peakMad;                    // Highest 3.2ms chunk MAD during event
+    uint16_t threshold;                  // Active threshold
+    uint16_t durationMs;                 // Total duration of acoustic event in ms
+    uint16_t cooldownRemMs;              // Remaining cooldown ms (if DIAG_BLOCKED_COOLDOWN)
+    uint16_t trace[DIAG_TRACE_CHUNKS];   // High-speed 3.2ms chunk-by-chunk oscilloscope trace
+};
+inline DiagEventEntry diagLog[MAX_DIAG_LOGS];
+inline int diagLogHead = 0;
+inline int diagLogCount = 0;
+inline uint32_t totalDiagEvents = 0;
+
+inline const char* diagTypeToStr(uint8_t type) {
+    switch (type) {
+        case DIAG_TRIGGERED:        return "TRIGGERED";
+        case DIAG_REJECTED_SHORT:   return "TOO_SHORT";
+        case DIAG_BLOCKED_COOLDOWN: return "IN_COOLDOWN";
+        case DIAG_NEAR_MISS:        return "NEAR_MISS";
+        default:                    return "UNKNOWN";
+    }
+}
+
+inline void recordDiagEvent(uint8_t type, uint16_t peakMad, uint8_t chunksAbove, uint8_t reqChunks,
+                            uint16_t durMs, uint16_t cooldownRemMs, const uint16_t* traceBuf, uint8_t traceLen) {
+    DiagEventEntry &e = diagLog[diagLogHead];
+    e.timestampMs    = millis();
+    e.eventType      = type;
+    e.chunksAbove    = chunksAbove;
+    e.requiredChunks = reqChunks;
+    e.traceCount     = min((uint8_t)DIAG_TRACE_CHUNKS, traceLen);
+    e.peakMad        = peakMad;
+    e.threshold      = (uint16_t)min(65535, threshold);
+    e.durationMs     = durMs;
+    e.cooldownRemMs  = cooldownRemMs;
+    for (int i = 0; i < DIAG_TRACE_CHUNKS; i++) {
+        e.trace[i] = (i < e.traceCount && traceBuf) ? traceBuf[i] : 0;
+    }
+
+    diagLogHead = (diagLogHead + 1) % MAX_DIAG_LOGS;
+    if (diagLogCount < MAX_DIAG_LOGS) diagLogCount++;
+    totalDiagEvents++;
+}
+
 // ===== 24-HOUR AUDIO HISTORY (1-Minute Buckets = 1440 Points) =====
 #define HISTORY_24H_POINTS 1440
 struct HistoryEntry {

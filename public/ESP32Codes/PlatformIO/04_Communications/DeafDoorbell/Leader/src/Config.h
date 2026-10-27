@@ -28,10 +28,9 @@
 #define SAMPLE_DELAY_US   25      // 25us delay + ~25us ADC conversion = ~50us/sample (~20kHz)
 #define ANALOG_MAD_SCALE  8.0f    // Scales 12-bit ADC MAD to match UI threshold range
 #define MAX_PLAUSIBLE_MAD 65000.0f
-#define MIN_COOLDOWN_MS   10000   // Minimum 10s between alerts (prevents noise-storm rapid-fire)
+#define MIN_COOLDOWN_MS   500     // Cooldown matches alert duration (no hidden 10s lockout!)
 #define WARMUP_MS         2500    // Startup settling guard (ms)
-#define MIN_TRIGGER_CHUNKS 3      // 3 chunks (~9.6ms) for fast chime detection
-#define MAX_ALLOWED_DIPS   1      // Leaky debounce: tolerates 1 brief dip without resetting
+#define MAX_ALLOWED_DIPS  2       // Leaky debounce: tolerates 2 brief dips without resetting
 
 // ===== WIFI & NETWORK CONFIGURATION =====
 static const char* AP_SSID       = "LeeDoorBell";
@@ -55,6 +54,7 @@ inline uint16_t networkId        = 0xA48F; // House Network Key
 inline uint8_t  leaderId         = 1;      // Door Zone (1=Front Door, 2=Back Door...)
 inline uint8_t  patternId        = PATTERN_BREATHE;
 inline uint8_t  speedX10         = 10;     // 10 = 1.0x
+inline uint8_t  debounceChunks   = 2;      // Default 2 chunks (~6.4ms) for fast chime & knock response
 inline uint32_t alertSeqCounter  = 100;    // Sequence counter for deduplication
 
 // Deferred NVS save state (prevents flash wear during slider dragging)
@@ -140,8 +140,9 @@ inline void loadSettings() {
     micGain     = prefs.getFloat("gain", 1.5f);
     networkId   = prefs.getUShort("netId", 0);
     leaderId    = prefs.getUChar("leaderId", 1);
-    patternId   = prefs.getUChar("pattern", PATTERN_BREATHE);
-    speedX10    = prefs.getUChar("speedX10", 10);
+    patternId      = prefs.getUChar("pattern", PATTERN_BREATHE);
+    speedX10       = prefs.getUChar("speedX10", 10);
+    debounceChunks = constrain(prefs.getUChar("debounce", 2), 1, 8);
 
     if (networkId == 0) {
         networkId = (uint16_t)random(0x1000, 0xFFFF);
@@ -164,6 +165,7 @@ inline void saveSettings() {
     prefs.putUChar("leaderId", leaderId);
     prefs.putUChar("pattern", patternId);
     prefs.putUChar("speedX10", speedX10);
+    prefs.putUChar("debounce", debounceChunks);
     prefs.end();
     settingsSavePending = false;
     DEBUG_PRINTF("Committed settings to NVS: thresh=%d dur=%d bright=%d party=%d pat=%d spd=%d net=0x%04X zone=%d\n",

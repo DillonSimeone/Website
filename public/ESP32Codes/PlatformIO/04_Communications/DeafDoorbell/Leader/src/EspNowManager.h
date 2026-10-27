@@ -13,6 +13,13 @@ inline bool uiTriggered = false;
 inline float lastTriggerMAD = 0.0f;
 inline volatile bool nvsSaveFollowersPending = false;
 
+#ifdef LEGACY_FOLLOWER_SUPPORT
+inline LegacyDoorbellMsg activeLegacyMsg;
+inline unsigned long legacyAlertEndMs = 0;
+inline unsigned long nextLegacyPartyShiftMs = 0;
+inline uint16_t legacyPartyHue = 0;
+#endif
+
 inline void addOrUpdateFollowerPeer(const uint8_t *mac) {
     if (!mac) return;
     esp_now_peer_info_t peerInfo = {};
@@ -98,7 +105,12 @@ inline void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len)
             uint8_t ver = (len >= (int)sizeof(PairBeaconPacket)) ? ((const PairBeaconPacket*)data)->firmwareVer : PROTOCOL_VERSION;
             recordFollowerInMemory(mac, ver);
         }
-    } else {
+    }
+    else if (len >= (int)sizeof(LegacyDoorbellMsg) && data != NULL && data[0] == 0x01) {
+        entry.isDoorbell = true;
+        validDoorbellPackets++;
+    }
+    else {
         unknownPackets++;
     }
 
@@ -132,10 +144,14 @@ inline void setupESPNow() {
 
 // ============================================================
 //  Zero-Stall Broadcast Alert Engine
-//  Uses pure broadcast (FF:FF:FF:FF:FF:FF) so offline followers
-//  never stall the ESP32-C3 Wi-Fi TX queue with 802.11 MAC retries.
+//  - In standard mode: sends 19-byte v3 DoorbellPacket (0xDB magic)
+//  - In leader-legacy mode: beams 6-byte LegacyDoorbellMsg (0x01)
+//    on open broadcast first, plus v3 DoorbellPacket for dual support
 // ============================================================
 inline void sendAlertPacketNow() {
+#ifdef LEGACY_FOLLOWER_SUPPORT
+    esp_now_send(ESPNOW_BROADCAST_MAC, (uint8_t*)&activeLegacyMsg, sizeof(activeLegacyMsg));
+#endif
     esp_now_send(ESPNOW_BROADCAST_MAC, (uint8_t*)&activeAlertPacket, sizeof(activeAlertPacket));
 }
 
@@ -162,16 +178,32 @@ inline void triggerAlert(bool isTest = false) {
         b = colorB;
     }
 
-    // Send unscaled RGB seed/color; Follower applies global brightness once via FastLED.setBrightness()
+    // v3 Followers apply brightness via FastLED.setBrightness()
     activeAlertPacket.r = r;
     activeAlertPacket.g = g;
     activeAlertPacket.b = b;
+
+    unsigned long now = millis();
+
+#ifdef LEGACY_FOLLOWER_SUPPORT
+    // Old Followers use fixed LED_BRIGHTNESS=255 and expect brightness pre-scaled into RGB
+    float bScale = constrain(brightness, 10, 100) / 100.0f;
+    activeLegacyMsg.msgType    = 0x01;
+    activeLegacyMsg.durationMs = (uint16_t)duration;
+    activeLegacyMsg.r          = (uint8_t)(r * bScale);
+    activeLegacyMsg.g          = (uint8_t)(g * bScale);
+    activeLegacyMsg.b          = (uint8_t)(b * bScale);
+
+    // If Party Mode is enabled, step legacy Follower hues every 1025ms (just past their 1000ms cooldown)
+    legacyAlertEndMs = now + (unsigned long)duration;
+    legacyPartyHue   = (uint16_t)random(0, 360);
+    nextLegacyPartyShiftMs = partyMode ? (now + 1025) : 0;
+#endif
 
     // Immediately fire burst packet 1 BEFORE logging or serial print (0 latency!)
     sendAlertPacketNow();
 
     // Schedule 3 follow-up broadcast packets spaced 12ms apart
-    unsigned long now = millis();
     burstPacketsRemaining = 3;
     nextBurstPacketMs = now + 12;
     unsigned long cooldownLen = max((unsigned long)duration, (unsigned long)MIN_COOLDOWN_MS);
@@ -194,6 +226,27 @@ inline void serviceEspNow(unsigned long now) {
         burstPacketsRemaining--;
         nextBurstPacketMs = now + 12;
     }
+
+#ifdef LEGACY_FOLLOWER_SUPPORT
+    // Dynamic rainbow color stepping for legacy Followers during an active Party Mode alert
+    if (partyMode && nextLegacyPartyShiftMs != 0 && now >= nextLegacyPartyShiftMs) {
+        if (now + 250 < legacyAlertEndMs) {
+            legacyPartyHue = (legacyPartyHue + 85) % 360;
+            uint8_t pr = 0, pg = 0, pb = 0;
+            hsvToRgb(legacyPartyHue, 255, 255, pr, pg, pb);
+            float bScale = constrain(brightness, 10, 100) / 100.0f;
+            activeLegacyMsg.msgType    = 0x01;
+            activeLegacyMsg.durationMs = (uint16_t)(legacyAlertEndMs - now);
+            activeLegacyMsg.r          = (uint8_t)(pr * bScale);
+            activeLegacyMsg.g          = (uint8_t)(pg * bScale);
+            activeLegacyMsg.b          = (uint8_t)(pb * bScale);
+            esp_now_send(ESPNOW_BROADCAST_MAC, (uint8_t*)&activeLegacyMsg, sizeof(activeLegacyMsg));
+            nextLegacyPartyShiftMs = now + 1025;
+        } else {
+            nextLegacyPartyShiftMs = 0;
+        }
+    }
+#endif
 
     if (nvsSaveFollowersPending) {
         nvsSaveFollowersPending = false;

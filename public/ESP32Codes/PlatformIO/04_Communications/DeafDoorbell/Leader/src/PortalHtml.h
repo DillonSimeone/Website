@@ -640,6 +640,15 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         <div id="liveThreshMarker" style="position:absolute; top:0; bottom:0; width:3px; left:8.3%; background:#eab308; box-shadow:0 0 8px #eab308; z-index:2;"></div>
       </div>
       <input type="range" id="threshRange" min="200" max="30000" step="100" value="2500" style="margin-top:4px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; gap:8px; flex-wrap:wrap;">
+        <span style="font-size:0.75rem; color:var(--text-secondary);">Debounce Window (Sustained Chunks Required):</span>
+        <select id="debounceSelect" onchange="triggerAutoSave(true)" style="padding:5px 10px; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; color:#fff; font-size:0.8rem;">
+          <option value="1">1 Chunk (3.2ms Instant - Taps &amp; Knocks)</option>
+          <option value="2" selected>2 Chunks (6.4ms Fast - Default)</option>
+          <option value="3">3 Chunks (9.6ms Standard Chime)</option>
+          <option value="5">5 Chunks (16ms Strict Sustained)</option>
+        </select>
+      </div>
     </div>
 
     <!-- House Network & Trigger Areas -->
@@ -956,8 +965,10 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       const net = netEl ? netEl.value : 'A48F';
       const zoneEl = document.getElementById('leaderZoneSelect');
       const zone = zoneEl ? zoneEl.value : 1;
+      const debEl = document.getElementById('debounceSelect');
+      const deb = debEl ? debEl.value : 2;
 
-      fetch(`/set?threshold=${thresh}&bright=${bri}&duration=${durMs}&party=${party}&color=${col}&pattern=${patId}&speed=${spd}&netId=${net}&leaderId=${zone}`)
+      fetch(`/set?threshold=${thresh}&debounce=${deb}&bright=${bri}&duration=${durMs}&party=${party}&color=${col}&pattern=${patId}&speed=${spd}&netId=${net}&leaderId=${zone}`)
         .catch(() => {});
     }
 
@@ -1206,6 +1217,10 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
             threshRange.value = d.threshold;
             threshVal.innerText = `Thresh: ${d.threshold} MAD`;
             updateThreshMarker(d.threshold);
+          }
+          if (d.debounce !== undefined) {
+            const debEl = document.getElementById('debounceSelect');
+            if (debEl) debEl.value = d.debounce;
           }
           if (d.netId !== undefined) {
             netIdInput.value = d.netId;

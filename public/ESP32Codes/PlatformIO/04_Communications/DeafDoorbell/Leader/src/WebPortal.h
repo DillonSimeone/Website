@@ -39,13 +39,16 @@ inline void handleData() {
     unsigned long now = millis();
     bool activePair = pairingModeActive && (now < pairingExpiresMs);
     uint32_t pairSec = activePair ? ((pairingExpiresMs - now) / 1000) : 0;
+    uint32_t cooldownRemMs = (now < alertCooldownUntilMs) ? (alertCooldownUntilMs - now) : 0;
 
     char jsonBuf[1536];
     int offset = snprintf(jsonBuf, sizeof(jsonBuf),
-        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"pattern\":%d,\"speed\":%.1f,\"netId\":\"%04X\",\"leaderId\":%d,\"pairing\":%s,\"pairSec\":%u,\"pairedCount\":%d,\"triggered\":%s,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u,\"followers\":[",
+        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"debounce\":%u,\"cooldownMs\":%u,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"pattern\":%d,\"speed\":%.1f,\"netId\":\"%04X\",\"leaderId\":%d,\"pairing\":%s,\"pairSec\":%u,\"pairedCount\":%d,\"triggered\":%s,\"diagTotal\":%u,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u,\"followers\":[",
         reportedMad,
         levelLP,
         threshold,
+        debounceChunks,
+        cooldownRemMs,
         duration,
         brightness,
         partyMode ? "true" : "false",
@@ -58,6 +61,7 @@ inline void handleData() {
         pairSec,
         pairedFollowerCount,
         uiTriggered ? "true" : "false",
+        totalDiagEvents,
         totalEspNowPackets,
         validDoorbellPackets,
         unknownPackets
@@ -200,15 +204,113 @@ inline void handleClearEspNowLog() {
     server.send(200, "text/plain", "OK");
 }
 
+// Acoustic Diagnostic Flight Recorder JSON endpoint (batched)
+inline void handleDiagnostics() {
+    unsigned long now = millis();
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "application/json", "");
+
+    char batchBuf[1024];
+    int offset = snprintf(batchBuf, sizeof(batchBuf),
+                          "{\"total\":%u,\"debounce\":%u,\"events\":[",
+                          totalDiagEvents, debounceChunks);
+
+    for (int i = 0; i < diagLogCount; i++) {
+        int idx = (diagLogHead - 1 - i + MAX_DIAG_LOGS) % MAX_DIAG_LOGS;
+        DiagEventEntry &e = diagLog[idx];
+        uint32_t ageSec = (now >= e.timestampMs) ? ((now - e.timestampMs) / 1000) : 0;
+
+        char traceStr[128] = {0};
+        int tOff = 0;
+        for (int c = 0; c < e.traceCount; c++) {
+            tOff += snprintf(traceStr + tOff, sizeof(traceStr) - tOff, "%s%u", (c > 0) ? "," : "", e.trace[c]);
+        }
+
+        offset += snprintf(batchBuf + offset, sizeof(batchBuf) - offset,
+                           "%s{\"ageSec\":%u,\"ms\":%u,\"type\":\"%s\",\"peak\":%u,\"thresh\":%u,\"above\":%u,\"req\":%u,\"durMs\":%u,\"coolMs\":%u,\"trace\":[%s]}",
+                           (i > 0) ? "," : "",
+                           ageSec,
+                           e.timestampMs,
+                           diagTypeToStr(e.eventType),
+                           e.peakMad,
+                           e.threshold,
+                           e.chunksAbove,
+                           e.requiredChunks,
+                           e.durationMs,
+                           e.cooldownRemMs,
+                           traceStr);
+        if (offset > 780) {
+            server.sendContent(batchBuf);
+            offset = 0;
+        }
+    }
+
+    snprintf(batchBuf + offset, sizeof(batchBuf) - offset, "]}");
+    server.sendContent(batchBuf);
+}
+
+// Downloadable CSV export of Acoustic Flight Recorder + Trigger History
+inline void handleDiagnosticsCsv() {
+    unsigned long now = millis();
+    server.sendHeader("Content-Disposition", "attachment; filename=\"deafdoorbell_diagnostics.csv\"");
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "text/csv", "");
+
+    char batchBuf[1024];
+    int offset = snprintf(batchBuf, sizeof(batchBuf),
+        "Event_Index,Age_Sec,Uptime_Ms,Decision,Peak_MAD,Threshold_MAD,Chunks_Above,Required_Chunks,Duration_Ms,Cooldown_Rem_Ms,Chunk_Trace_3.2ms\r\n");
+
+    for (int i = 0; i < diagLogCount; i++) {
+        int idx = (diagLogHead - 1 - i + MAX_DIAG_LOGS) % MAX_DIAG_LOGS;
+        DiagEventEntry &e = diagLog[idx];
+        uint32_t ageSec = (now >= e.timestampMs) ? ((now - e.timestampMs) / 1000) : 0;
+
+        char traceStr[128] = {0};
+        int tOff = 0;
+        for (int c = 0; c < e.traceCount; c++) {
+            tOff += snprintf(traceStr + tOff, sizeof(traceStr) - tOff, "%s%u", (c > 0) ? " -> " : "", e.trace[c]);
+        }
+
+        offset += snprintf(batchBuf + offset, sizeof(batchBuf) - offset,
+                           "%d,%u,%u,%s,%u,%u,%u,%u,%u,%u,\"%s\"\r\n",
+                           i + 1,
+                           ageSec,
+                           e.timestampMs,
+                           diagTypeToStr(e.eventType),
+                           e.peakMad,
+                           e.threshold,
+                           e.chunksAbove,
+                           e.requiredChunks,
+                           e.durationMs,
+                           e.cooldownRemMs,
+                           traceStr);
+        if (offset > 780) {
+            server.sendContent(batchBuf);
+            offset = 0;
+        }
+    }
+    if (offset > 0) {
+        server.sendContent(batchBuf);
+    }
+}
+
+inline void handleClearDiagnostics() {
+    diagLogHead = 0;
+    diagLogCount = 0;
+    totalDiagEvents = 0;
+    server.send(200, "text/plain", "OK");
+}
+
 inline void handleSet() {
     if (server.hasArg("threshold")) threshold  = server.arg("threshold").toInt();
     if (server.hasArg("duration"))  duration   = server.arg("duration").toInt();
     if (server.hasArg("bright"))    brightness = server.arg("bright").toInt();
     if (server.hasArg("party"))     partyMode  = server.arg("party") == "1";
     if (server.hasArg("color"))     parseHexColor(server.arg("color"));
-    if (server.hasArg("pattern"))   patternId  = (uint8_t)server.arg("pattern").toInt();
-    if (server.hasArg("speed"))     speedX10   = (uint8_t)constrain((int)(server.arg("speed").toFloat() * 10), 4, 30);
-    if (server.hasArg("leaderId"))  leaderId   = (uint8_t)constrain(server.arg("leaderId").toInt(), 1, 8);
+    if (server.hasArg("pattern"))   patternId      = (uint8_t)server.arg("pattern").toInt();
+    if (server.hasArg("speed"))     speedX10       = (uint8_t)constrain((int)(server.arg("speed").toFloat() * 10), 4, 30);
+    if (server.hasArg("debounce"))  debounceChunks = (uint8_t)constrain(server.arg("debounce").toInt(), 1, 8);
+    if (server.hasArg("leaderId"))  leaderId       = (uint8_t)constrain(server.arg("leaderId").toInt(), 1, 8);
     if (server.hasArg("netId")) {
         String nStr = server.arg("netId");
         if (nStr.startsWith("0x") || nStr.startsWith("0X")) nStr = nStr.substring(2);
@@ -343,6 +445,9 @@ inline void setupNetworking() {
     server.on("/triggers/clear", handleClearTriggers);
     server.on("/espnow", handleEspNowLog);
     server.on("/espnow/clear", handleClearEspNowLog);
+    server.on("/diagnostics", handleDiagnostics);
+    server.on("/diagnostics.csv", handleDiagnosticsCsv);
+    server.on("/diagnostics/clear", handleClearDiagnostics);
     server.on("/set", handleSet);
     server.on("/test", handleTest);
     server.on("/update", HTTP_GET, handleUpdatePage);

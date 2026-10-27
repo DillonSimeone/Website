@@ -319,52 +319,128 @@ export function buildFollowerLid(M, p) {
 }
 
 // -------------------------------------------------------------------------
-// 4b. FOLLOWER NODE: Full-Body Transparent PETG Cover Lid
+// 4b. FOLLOWER NODE: Full-Body Transparent PETG Cover Lid (All-Ramped Printable Geometry)
 //     Spans from top wall-tab screws (Y = +56.5) down to bottom wall-tab screws (Y = -56.5),
-//     mates over the sides of the Follower shell, rises +5mm over the 8x8 matrix for light
-//     diffusion, clamps the ESP32-C3 in place, and matches the middle M3 screws (Y = -21.0).
+//     uses smooth angled ramps instead of 90° steps, wraps the sides of the Follower shell,
+//     ramps +5mm up over the 8x8 matrix for light diffusion, clamps the ESP32-C3 with
+//     45° pyramidal wedges, and matches the middle M3 screws (Y = -21.0).
 // -------------------------------------------------------------------------
 export function buildFollowerPetgLid(M, p) {
     const cl = p.printClearance;
     const bodyW = 76.0;
     const bodyL = 104.0;
     const bodyH = p.followerBaseThickness || 12.0; // Base spans Z = -6.0 to +6.0
-    const wall = 2.0;                             // 2.0mm transparent PETG shell thickness
+    const wall = 1.2;                             // Slim 1.2mm transparent PETG window thickness
+    const sideWall = 1.6;                         // Solid 1.6mm perimeter skirt wall (4 nozzle widths, zero thin-wall gaps!)
 
     const skirtBottomZ = -bodyH / 2 + 4.5;        // Z = -1.5mm (flush with top surface of mounting tabs)
     const deckInnerZ = bodyH / 2 + 0.15;          // Z = +6.15mm (mates directly over Z = +6.0mm front face)
-    const deckOuterZ = deckInnerZ + wall;         // Z = +8.15mm
+    const deckOuterZ = deckInnerZ + wall;         // Z = +7.35mm
 
     const innerW = bodyW + cl * 2;                // 76.70mm
     const innerL = bodyL + cl * 2;                // 104.70mm
-    const outerW = innerW + wall * 2;             // 80.70mm (wraps left & right flanks)
-    const outerL = innerL + wall * 2;             // 108.70mm (creeps down top & bottom walls)
+    const outerW = innerW + sideWall * 2;         // 79.90mm (wraps left & right flanks with full 1.6mm wall)
+    const outerL = innerL + sideWall * 2;         // 107.90mm (wraps top & bottom walls with full 1.6mm wall)
 
-    // 1. Main Wrap-Around Shell Cap (Z = -1.5mm to +8.15mm)
-    const shellH = deckOuterZ - skirtBottomZ;
-    let cover = M.cube([outerW, outerL, shellH], true)
-        .translate([0, 0, (skirtBottomZ + deckOuterZ) / 2]);
+    // Helper: 4-sided rectangular frustum (ramped pyramid box with sloped walls on all 4 sides)
+    // Uses uniform XY taper ratio so both X and Y scale cleanly from bottom to top.
+    function makeRectFrustum(wBot, lBot, wTop, lTop, h) {
+        const rBot = wBot * Math.SQRT1_2;
+        const rTop = wTop * Math.SQRT1_2;
+        let frustum = M.cylinder(h, rBot, rTop, 4, true).rotate([0, 0, 45]);
+        const sy = lBot / wBot;
+        if (Math.abs(sy - 1.0) > 1e-3) {
+            frustum = frustum.scale([1, sy, 1]);
+        }
+        return frustum;
+    }
 
-    // 2. Stepped-Down Top & Bottom Tab Clamping Flanges (Y = ±56.5mm, Z = -1.5mm to +1.5mm)
-    const tabW = bodyW - 12.0; // 64.0mm wide matching base tabs
-    const tabFlangeH = 3.0;
-    const tabSpanL = 10.5;     // Extends from Y = ±51.0mm out to Y = ±61.5mm
-    const topFlange = M.cube([tabW, tabSpanL, tabFlangeH], true)
-        .translate([0, 56.25, skirtBottomZ + tabFlangeH / 2]);
-    const botFlange = M.cube([tabW, tabSpanL, tabFlangeH], true)
-        .translate([0, -56.25, skirtBottomZ + tabFlangeH / 2]);
-    cover = cover.add(topFlange).add(botFlange);
+    // 1. Lower Vertical Wrap-Around Skirt Cap (Z = -1.50mm to +6.00mm)
+    //    Reaches Z = +6.00mm so the wall stays a full 1.60mm thick right up to the top of baseRecess (+6.15mm)
+    //    before both the inner and outer walls taper inward together in parallel (zero thin-wall layer skipping!).
+    const skirtTopZ = 6.00;
+    const lowerSkirtH = skirtTopZ - skirtBottomZ; // 7.50mm vertical skirt
+    let cover = M.cube([outerW, outerL, lowerSkirtH], true)
+        .translate([0, 0, (skirtBottomZ + skirtTopZ) / 2]);
 
-    // 3. Raised +5.0mm Optical Diffuser Hood over 8x8 Matrix (Centered at X = 0, Y = +16.0mm)
-    const matSize = p.matrixWidth + cl * 2;       // 65.90mm inner matrix opening
-    const diffuserRise = 5.0;                     // 5.0mm diffusion air gap above 8x8 matrix
-    const hoodInnerZ = deckInnerZ + diffuserRise; // Z = +11.15mm inner ceiling
-    const hoodOuterZ = hoodInnerZ + wall;         // Z = +13.15mm outer top face
-    const hoodOuterSize = matSize + wall * 2;     // 69.90mm outer hood width/length
-    const hoodH = hoodOuterZ - deckInnerZ;
+    // Helper: Asymmetric 4-sided frustum connecting any bottom Y-range [yMinBot, yMaxBot] (width wBot at zBot)
+    // to any top Y-range [yMinTop, yMaxTop] (width wTop at zTop) via exact 3D convex hull.
+    function makeAsymFrustum(wBot, yMinBot, yMaxBot, wTop, yMinTop, yMaxTop, zBot, zTop) {
+        const eps = 0.04;
+        const lBot = yMaxBot - yMinBot;
+        const yMidBot = (yMinBot + yMaxBot) / 2;
+        const lTop = yMaxTop - yMinTop;
+        const yMidTop = (yMinTop + yMaxTop) / 2;
+        if (typeof M.hull === 'function') {
+            const botSlab = M.cube([wBot, lBot, eps], true).translate([0, yMidBot, zBot + eps / 2]);
+            const topSlab = M.cube([wTop, lTop, eps], true).translate([0, yMidTop, zTop - eps / 2]);
+            const hullSolid = M.hull([botSlab, topSlab]);
+            botSlab.delete();
+            topSlab.delete();
+            return hullSolid;
+        }
+        const h = zTop - zBot;
+        return M.cube([wBot, lBot, h], true).translate([0, yMidBot, (zBot + zTop) / 2]);
+    }
 
-    const matrixHoodOuter = M.cube([hoodOuterSize, hoodOuterSize, hoodH], true)
-        .translate([0, 16.0, (deckInnerZ + hoodOuterZ) / 2]);
+    const diffuserRise = 4.2;                     // 4.2mm diffusion air gap above 8x8 matrix
+    const hoodInnerZ = deckInnerZ + diffuserRise; // Z = +10.35mm inner ceiling
+    const hoodOuterZ = hoodInnerZ + wall;         // Z = +11.55mm outer top face (1.2mm thin window!)
+    const outerHoodBaseZ = skirtTopZ - 0.20;      // Z = +5.80mm (overlaps 0.20mm into lower vertical skirt)
+
+    // 2. Full-Width Ramped Top & Bottom Tab Clamping Aprons + Corner Reinforcing Fins
+    //    - Keeps full 64.0mm width (X = ±32.0mm) all the way from Z = +0.40mm up to the Z = +11.55mm build plate
+    //      so the outer tab corners have zero 90° overhang steps!
+    //    - Adds dedicated 4.0mm-wide corner buttress fins along the outer edges (X = ±28.0 to ±32.0mm)
+    //      and inner cable-slot edges that anchor directly to the Z = +11.55mm build plate at 35° from vertical!
+    const tabW = bodyW - 12.0;        // 64.0mm wide matching base tabs (X = -32.0 to +32.0mm)
+    const tabTotalL = 123.0;          // Spans Y = -61.50mm to +61.50mm
+    const tabBaseTopZ = 0.60;         // Slim 2.10mm thickness at the outer tip of the tabs
+    const tabBaseH = tabBaseTopZ - skirtBottomZ;
+
+    const tabBasePlate = M.cube([tabW, tabTotalL, tabBaseH], true)
+        .translate([0, 0, skirtBottomZ + tabBaseH / 2]);
+    cover = cover.add(tabBasePlate);
+
+    const tabRampFrustum = makeAsymFrustum(
+        tabW, -61.50, 61.50, // Full 64.0mm width at Z = +0.40mm (supports entire tab corner to corner!)
+        tabW, -51.15, 51.15, // Full 64.0mm width at Z = +11.55mm (meets build plate plateau flush!)
+        tabBaseTopZ - 0.20, hoodOuterZ
+    );
+    cover = cover.add(tabRampFrustum);
+
+    // Outer Edge Reinforcing Fins at X = ±30.0mm (width 4.0mm, spanning X = ±28.0 to ±32.0mm outside the screw holes)
+    const finW = 4.0;
+    for (let sx of [-1, 1]) {
+        const edgeFin = makeAsymFrustum(
+            finW, -61.50, 61.50, // Reaches all the way to the outer tab corners (Y = ±61.50mm)
+            finW, -53.50, 53.50, // Anchors on the Z = +11.55mm build plate out to Y = ±53.50mm (35.6° steep fin!)
+            tabBaseTopZ - 0.20, hoodOuterZ
+        ).translate([sx * (tabW / 2 - finW / 2), 0, 0]);
+        cover = cover.add(edgeFin);
+    }
+
+    // Inner Bottom-Tab Reinforcing Fins next to the 12mm USB-C slot (X = ±7.8mm, width 3.2mm)
+    const innerFinW = 3.2;
+    for (let sx of [-1, 1]) {
+        const innerFin = makeAsymFrustum(
+            innerFinW, -61.50, -50.00,
+            innerFinW, -53.50, -50.00,
+            tabBaseTopZ - 0.20, hoodOuterZ
+        ).translate([sx * (6.2 + innerFinW / 2), 0, 0]);
+        cover = cover.add(innerFin);
+    }
+
+    // 3. Parallel-Walled Sloped Upper Shell + Diffuser Hood (Z = +5.80mm to +11.55mm)
+    //    - Both outer and inner frustums start tapering at Z = +5.80mm, maintaining a constant 1.60mm
+    //      horizontal wall thickness at every single Z layer (zero thin-wall pinch!).
+    //    - 26.0° overhang angle from vertical on all 4 edges for 100% support-free face-down printing!
+
+    const matrixHoodOuter = makeAsymFrustum(
+        outerW, -53.95, 53.95, // Base at Z = +5.80mm (79.90mm x 107.90mm, flush with vertical skirt!)
+        74.30, -51.15, 51.15,  // Full-length top plateau at Z = +11.55mm (26.0° slope on all 4 edges!)
+        outerHoodBaseZ, hoodOuterZ
+    );
     cover = cover.add(matrixHoodOuter);
 
     // Subtract inner Follower Base body recess so skirts & end walls mate closely around the 76x104mm shell
@@ -373,70 +449,102 @@ export function buildFollowerPetgLid(M, p) {
         .translate([0, 0, deckInnerZ - baseRecessH / 2]);
     cover = cover.subtract(baseRecess);
 
-    // Subtract inner +5.0mm diffuser chamber over the 8x8 matrix
-    const hoodCavH = hoodInnerZ - skirtBottomZ + 2.0;
-    const matrixHoodInner = M.cube([matSize, matSize, hoodCavH], true)
-        .translate([0, 16.0, hoodInnerZ - hoodCavH / 2]);
+    // Hollow out the upper chamber starting at Z = +6.00mm in parallel with matrixHoodOuter
+    // Maintains a full >=1.60mm wall thickness across the Z = +6.15mm transition!
+    const innerRampBaseZ = deckInnerZ - 0.15; // Z = +6.00mm
+    const matrixHoodInner = makeAsymFrustum(
+        innerW, -52.35, 52.35, // 76.70mm x 104.70mm at Z = +6.00mm (1.60mm inside outer wall!)
+        70.70, -49.35, 49.35,  // 70.70mm x 98.70mm at Z = +10.35mm (1.80mm inside outer sloped wall!)
+        innerRampBaseZ, hoodInnerZ
+    );
     cover = cover.subtract(matrixHoodInner);
 
-    // 4. Downward ESP32-C3 SuperMini Clamping Studs (Holds ESP32 PCB firmly on its Z = +2.0mm shelf)
+    // Solid M3 Screw Bosses at X = ±31.0mm, Y = -21.0mm (reaches from Z = +6.15mm base seat up into Z = +10.35mm ceiling)
+    const m3BossBottomZ = deckInnerZ;     // Z = +6.15mm (rests flat on Follower Base M3 bosses)
+    const m3BossTopZ = hoodInnerZ + 0.30; // Z = +10.65mm (fuses into 1.2mm ceiling)
+    const m3BossH = m3BossTopZ - m3BossBottomZ;
+    for (let x of [-31.0, 31.0]) {
+        const m3Boss = M.cylinder(m3BossH, 4.2, 4.4, 24, true)
+            .translate([x, -21.0, (m3BossBottomZ + m3BossTopZ) / 2]);
+        cover = cover.add(m3Boss);
+    }
+
+    // 4. Steep Self-Supporting ESP32-C3 Clamping Pillars (Positioned at X = +24.8mm & +34.4mm, completely clear of the button window!)
     const espL = 22.52 + cl * 2;
     const espW = 18.0 + cl * 2;
     const espX = 36.0 - espL / 2; // 24.39mm
     const espY = -34.5;
-    const studW = 2.2;
-    const studH = 2.75; // Reaches from Z = +6.15mm down to Z = +3.40mm right over the 1.2mm PCB
-    const studZ = deckInnerZ - studH / 2;
-    for (let dx of [-espL / 2 + studW / 2 + 0.2, espL / 2 - studW / 2 - 0.2]) {
-        for (let dy of [-espW / 2 + studW / 2 + 0.2, espW / 2 - studW / 2 - 0.2]) {
-            cover = cover.add(
-                M.cube([studW, studW, studH], true).translate([espX + dx, espY + dy, studZ])
-            );
+    const studTipW = 2.2;
+    const studBottomZ = 3.40;             // Sits right over the 1.2mm ESP32 PCB on its Z = +2.0mm shelf
+    const studTopZ = hoodInnerZ + 0.30;   // Z = +10.65mm (fuses into ceiling)
+    const studH = studTopZ - studBottomZ;
+    const studBaseW = 3.6;
+    for (let px of [24.8, 34.4]) {
+        for (let dy of [-espW / 2 + studTipW / 2 + 0.4, espW / 2 - studTipW / 2 - 0.4]) {
+            const wedge = makeRectFrustum(studTipW, studTipW, studBaseW, studBaseW, studH)
+                .translate([px, espY + dy, (studBottomZ + studTopZ) / 2]);
+            cover = cover.add(wedge);
         }
     }
 
-    // Internal cable hold-down rib over left cable bay (keeps USB-C loop tucked inside)
-    const cableHoldRib = M.cube([16.0, 3.6, 1.5], true)
-        .translate([-11.0, -34.0, deckInnerZ - 0.75]);
-    cover = cover.add(cableHoldRib);
+    // Slim Self-Supporting Cable Hold-Down Fin over left cable bay (reaches from Z = +10.65mm ceiling down to Z = +4.65mm)
+    const ribBottomZ = deckInnerZ - 1.5; // Z = +4.65mm
+    const ribTopZ = hoodInnerZ + 0.30;   // Z = +10.65mm
+    const ribH = ribTopZ - ribBottomZ;
+    const cableHoldWedge = makeRectFrustum(12.0, 2.4, 15.0, 4.2, ribH)
+        .translate([-11.0, -34.0, (ribBottomZ + ribTopZ) / 2]);
+    cover = cover.add(cableHoldWedge);
 
-    // 5. Tactile Button & Status LED Access Ports over ESP32-C3
-    const bootHole = M.cylinder(20.0, 1.3, 1.3, 20, true).translate([15.2, -32.0, deckInnerZ]);
-    const resetHole = M.cylinder(20.0, 1.3, 1.3, 20, true).translate([15.2, -37.0, deckInnerZ]);
-    const ledHole = M.cylinder(20.0, 1.2, 1.2, 16, true).translate([17.28, -31.0, deckInnerZ]);
-    cover = cover.subtract(bootHole).subtract(resetHole).subtract(ledHole);
+    // 5. Clean Rectangular Cutout Window over ESP32-C3 (Exposes BOOT Button, RESET Button, Red LED & Blue LED!)
+    //    Spans X = +13.8mm to +22.8mm, Y = -40.3mm to -28.7mm (completely clear of all 4 clamping pillars!).
+    const espWindow = M.cube([9.0, 11.6, 20.0], true)
+        .translate([18.3, espY, hoodOuterZ]);
+    cover = cover.subtract(espWindow);
 
-    // 6. Center Bottom USB-C Cable Exit Tunnel & Notch (12.0mm wide at X = 0)
-    // Open notch through the stepped-down bottom tab flange + tunnel arch under the front deck
-    const cableTabCut = M.cube([12.4, 12.0, 10.0], true)
-        .translate([0, -58.0, skirtBottomZ + 3.0]);
-    const cableArchTunnel = M.cube([12.0, 16.0, deckInnerZ - skirtBottomZ + 1.0], true)
-        .translate([0, -52.0, (deckInnerZ + skirtBottomZ - 1.0) / 2]);
-    cover = cover.subtract(cableTabCut).subtract(cableArchTunnel);
+    // 6. Center Bottom USB-C Cable Exit Tunnel with 45° Gabled Arch Roof (Leaves solid bridge at Z = +5.6..+8.15mm!)
+    const cableTabCut = M.cube([12.4, 9.0, 12.0], true)
+        .translate([0, -58.85, skirtBottomZ + 4.0]);
+    const archW = 12.0;
+    const archWallH = 3.2; // Side walls from Z = -1.5mm to Z = +1.7mm, then 45° peak up to Z = +5.3mm
+    const cableRectTunnel = M.cube([archW, 14.0, archWallH + 1.0], true)
+        .translate([0, -53.5, skirtBottomZ + (archWallH - 1.0) / 2]);
+    const gableSide = archW * Math.SQRT1_2;
+    const cableGableRoof = M.cube([gableSide, 14.0, gableSide], true)
+        .rotate([0, 45, 0])
+        .translate([0, -53.5, skirtBottomZ + archWallH - 2.4]);
+    cover = cover.subtract(cableTabCut).subtract(cableRectTunnel).subtract(cableGableRoof);
 
-    // 7. Matching Screw Holes:
+    // 7. Matching Screw Holes (with Face-Down Self-Supporting Conical Counterbore Seats!):
     //    - 2x Middle M3 Screws at X = ±31.0mm, Y = -21.0mm (unchanged M3 locations)
     //    - 2x Top Tab Screws at X = ±24.0mm, Y = +56.5mm
     //    - 2x Bottom Tab Screws at X = ±24.0mm, Y = -56.5mm
     const m3PassDia = 3.4;
-    const m3HeadDia = p.screwHeadDia + 0.4; // 6.2mm counterbore clears matrix hood corner cleanly
+    const m3HeadDia = p.screwHeadDia;
+    const m3ConeH = (m3HeadDia - m3PassDia) * 1.25; // <22° overhang cone when printed face-down!
+    const m3SeatZ = deckInnerZ + 1.2;               // Z = +7.35mm
     for (let x of [-31.0, 31.0]) {
         const pass = M.cylinder(30.0, m3PassDia / 2, m3PassDia / 2, 24, true)
             .translate([x, -21.0, 5.0]);
-        const head = M.cylinder(10.0, m3HeadDia / 2, m3HeadDia / 2, 24, true)
-            .translate([x, -21.0, deckOuterZ - 0.8 + 5.0]);
-        cover = cover.subtract(pass).subtract(head);
+        const cone = M.cylinder(m3ConeH, m3PassDia / 2, m3HeadDia / 2, 24, true)
+            .translate([x, -21.0, m3SeatZ + m3ConeH / 2]);
+        const head = M.cylinder(12.0, m3HeadDia / 2, m3HeadDia / 2, 24, true)
+            .translate([x, -21.0, m3SeatZ + m3ConeH + 6.0 - 0.05]);
+        cover = cover.subtract(pass).subtract(cone).subtract(head);
     }
 
     const tabScrewDia = p.wallTabScrewDia;
     const tabCbDia = p.wallTabCounterbore;
+    const tabConeH = (tabCbDia - tabScrewDia) * 0.85; // <30° overhang cone when printed face-down!
+    const tabSeatZ = skirtBottomZ + 1.2;              // Z = -0.30mm (1.2mm clamping seat)
     for (let y of [56.5, -56.5]) {
         for (let x of [-24.0, 24.0]) {
             const pass = M.cylinder(20.0, tabScrewDia / 2, tabScrewDia / 2, 24, true)
                 .translate([x, y, skirtBottomZ]);
-            const cb = M.cylinder(1.4, tabCbDia / 2, tabCbDia / 2, 24, true)
-                .translate([x, y, skirtBottomZ + tabFlangeH - 0.6]);
-            cover = cover.subtract(pass).subtract(cb);
+            const cone = M.cylinder(tabConeH, tabScrewDia / 2, tabCbDia / 2, 24, true)
+                .translate([x, y, tabSeatZ + tabConeH / 2]);
+            const cb = M.cylinder(12.0, tabCbDia / 2, tabCbDia / 2, 24, true)
+                .translate([x, y, tabSeatZ + tabConeH + 6.0 - 0.05]);
+            cover = cover.subtract(pass).subtract(cone).subtract(cb);
         }
     }
 

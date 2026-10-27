@@ -57,3 +57,12 @@ typedef struct {
     uint8_t  leaderId;      // Leader ID / Trigger Area
     uint8_t  triggerArea;   // Assigned Trigger Area for follower (0 = All Areas)
 } __attribute__((packed)) PairOfferPacket;
+
+// Legacy v1/v2 6-byte open-channel broadcast packet (pre-pairing / pre-0xDB magic header)
+typedef struct {
+    uint8_t  msgType;       // 0x01 = DOORBELL_ALERT
+    uint16_t durationMs;    // Flash duration in ms
+    uint8_t  r;             // LED color - Red (brightness pre-scaled)
+    uint8_t  g;             // LED color - Green (brightness pre-scaled)
+    uint8_t  b;             // LED color - Blue (brightness pre-scaled)
+} __attribute__((packed)) LegacyDoorbellMsg;
