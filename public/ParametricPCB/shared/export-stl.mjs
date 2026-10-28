@@ -167,7 +167,7 @@ export function exportCircuitToStlBuffer(circuitJson, options = {}) {
 /**
  * Project Configurations and Batch Pipeline
  */
-const PROJECT_CONFIGS = [
+export const PROJECT_CONFIGS = [
   {
     id: "00",
     name: "00-starterPCB",
@@ -250,16 +250,20 @@ export async function exportProjectArtifacts(cfg) {
     fs.mkdirSync(outDir, { recursive: true });
   }
 
+  const writtenFiles = [];
+
   // 1. Generate & Save Binary STL
+  const boardItem = circuitJson.find(i => i.type === "pcb_board");
   console.log(`Meshing 3D PCB solid geometry...`);
   const stlBuffer = exportCircuitToStlBuffer(circuitJson, {
-    boardWidth: cfg.compileArgs.boardWidth,
-    boardHeight: cfg.compileArgs.boardLength || cfg.compileArgs.boardHeight
+    boardWidth: boardItem?.width || cfg.compileArgs.boardWidth,
+    boardHeight: boardItem?.height || cfg.compileArgs.boardLength || cfg.compileArgs.boardHeight
   });
 
   const stlFilename = `${cfg.filePrefix}_routed.stl`;
   const stlPath = path.join(outDir, stlFilename);
   fs.writeFileSync(stlPath, stlBuffer);
+  writtenFiles.push(stlFilename);
   console.log(`✔ Saved 3D STL: ${stlFilename} (${(stlBuffer.length / 1024).toFixed(1)} KB)`);
 
   // 2. Extract & Save BOM + CPL + Gerbers
@@ -268,14 +272,16 @@ export async function exportProjectArtifacts(cfg) {
     try {
       arts = await mod.generateManufacturingArtifacts(circuit, cfg.compileArgs);
       if (arts.bomCsv) {
-        const bomPath = path.join(outDir, `${cfg.filePrefix}_BOM.csv`);
-        fs.writeFileSync(bomPath, arts.bomCsv, "utf8");
-        console.log(`✔ Saved BOM CSV: ${cfg.filePrefix}_BOM.csv`);
+        const bomName = `${cfg.filePrefix}_BOM.csv`;
+        fs.writeFileSync(path.join(outDir, bomName), arts.bomCsv, "utf8");
+        writtenFiles.push(bomName);
+        console.log(`✔ Saved BOM CSV: ${bomName}`);
       }
       if (arts.pnpCsv) {
-        const pnpPath = path.join(outDir, `${cfg.filePrefix}_CPL.csv`);
-        fs.writeFileSync(pnpPath, arts.pnpCsv, "utf8");
-        console.log(`✔ Saved CPL/PNP CSV: ${cfg.filePrefix}_CPL.csv`);
+        const pnpName = `${cfg.filePrefix}_CPL.csv`;
+        fs.writeFileSync(path.join(outDir, pnpName), arts.pnpCsv, "utf8");
+        writtenFiles.push(pnpName);
+        console.log(`✔ Saved CPL/PNP CSV: ${pnpName}`);
       }
     } catch (err) {
       console.warn(`[Artifact Warning]:`, err.message);
@@ -285,12 +291,16 @@ export async function exportProjectArtifacts(cfg) {
       const bom = mod.generateBOM(circuitJson);
       const pnp = mod.generatePNP(circuitJson);
       if (bom) {
-        fs.writeFileSync(path.join(outDir, `${cfg.filePrefix}_BOM.csv`), bom, "utf8");
-        console.log(`✔ Saved BOM CSV: ${cfg.filePrefix}_BOM.csv`);
+        const bomName = `${cfg.filePrefix}_BOM.csv`;
+        fs.writeFileSync(path.join(outDir, bomName), bom, "utf8");
+        writtenFiles.push(bomName);
+        console.log(`✔ Saved BOM CSV: ${bomName}`);
       }
       if (pnp) {
-        fs.writeFileSync(path.join(outDir, `${cfg.filePrefix}_CPL.csv`), pnp, "utf8");
-        console.log(`✔ Saved CPL/PNP CSV: ${cfg.filePrefix}_CPL.csv`);
+        const pnpName = `${cfg.filePrefix}_CPL.csv`;
+        fs.writeFileSync(path.join(outDir, pnpName), pnp, "utf8");
+        writtenFiles.push(pnpName);
+        console.log(`✔ Saved CPL/PNP CSV: ${pnpName}`);
       }
     } catch (err) {
       console.warn(`[Artifact Warning]:`, err.message);
@@ -301,7 +311,9 @@ export async function exportProjectArtifacts(cfg) {
   try {
     let gerberBuf = null;
     if (arts?.gerberZipBlob) {
-      gerberBuf = Buffer.from(arts.gerberZipBlob);
+      gerberBuf = Buffer.isBuffer(arts.gerberZipBlob)
+        ? arts.gerberZipBlob
+        : Buffer.from(await arts.gerberZipBlob.arrayBuffer());
     } else {
       const { createGerberZipBlob } = await import("./export-utils.js");
       gerberBuf = await createGerberZipBlob(circuitJson, {
@@ -314,13 +326,14 @@ export async function exportProjectArtifacts(cfg) {
       const gerberFilename = `${cfg.filePrefix}_Gerbers.zip`;
       const gerberPath = path.join(outDir, gerberFilename);
       fs.writeFileSync(gerberPath, Buffer.from(gerberBuf));
+      writtenFiles.push(gerberFilename);
       console.log(`✔ Saved Gerber ZIP: ${gerberFilename} (${(gerberBuf.length / 1024).toFixed(1)} KB)`);
     }
   } catch (gErr) {
     console.warn(`[Gerber Export Warning]:`, gErr.message);
   }
 
-  return { stlPath, stlSize: stlBuffer.length };
+  return { stlPath, stlSize: stlBuffer.length, writtenFiles, drc: arts?.drc || null };
 }
 
 // CLI Execution Entry Point

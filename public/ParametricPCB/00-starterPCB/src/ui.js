@@ -8,6 +8,10 @@ import { createThreePcbViewer } from "../../shared/three-pcb-viewer.js";
 import { setupInteractiveSvg } from "../../shared/svg-viewer.js";
 import { generatePcbSvgMarkup } from "../../shared/svg-pcb-renderer.js";
 import { downloadFile } from "../../shared/export-utils.js";
+import { mountStudioEditButton } from "../../shared/studio-link.js";
+
+// Inject "✏️ Edit in PCB Studio" button automatically on localhost
+mountStudioEditButton("00");
 
 // DOM References
 const container3D = document.getElementById("canvas-3d-container");
@@ -61,6 +65,12 @@ if (inputSilkScale && labelSilkScale) {
     if (pcbViewer3D) {
       pcbViewer3D.updateSilkscreenDecals(currentSilkScale);
     }
+    document.querySelectorAll("#svg-silkscreen-pins text").forEach(textEl => {
+      const baseFs = parseFloat(textEl.getAttribute("data-base-size"));
+      if (Number.isFinite(baseFs)) {
+        textEl.setAttribute("font-size", (baseFs * currentSilkScale).toFixed(2));
+      }
+    });
   });
 }
 

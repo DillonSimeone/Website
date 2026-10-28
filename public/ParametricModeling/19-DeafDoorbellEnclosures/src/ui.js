@@ -77,7 +77,7 @@ export function rebuildActiveGeometry() {
         if (context.activePreset === 'master_all' || context.activePreset === 'master_lid') {
             const mLid = buildMasterLid(M, params);
             const geom = manifoldToThreeGeometry(mLid);
-            const zPos = 22.0 / 2 + 4.5 / 2 + explodeZ;
+            const zPos = 23.5 / 2 + 2.8 / 2 + explodeZ;
             items.push({
                 geometry: geom,
                 material: matLid,
@@ -151,7 +151,7 @@ export function rebuildActiveGeometry() {
             geometry: manifoldToThreeGeometry(mBase),
             material: matBase,
             edgeColor: 0x002233,
-            position: new THREE.Vector3(48.0, 105.0, 11.0)
+            position: new THREE.Vector3(48.0, 105.0, 23.5 / 2)
         });
         mBase.delete();
 
@@ -160,7 +160,7 @@ export function rebuildActiveGeometry() {
             geometry: manifoldToThreeGeometry(mLid),
             material: matLid,
             edgeColor: 0x330011,
-            position: new THREE.Vector3(-54.0, 88.0, 1.5)
+            position: new THREE.Vector3(-54.0, 88.0, 1.4)
         });
         mLid.delete();
 

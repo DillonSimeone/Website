@@ -75,7 +75,12 @@
 
 ---
 
-## 4. Silkscreen, Vector QR & Decoupled Rendering
-- **Silkscreen Scale**: Decoupled 2048px canvas decal update (`drawSilkscreenDecal()`) executes in < 2ms without re-compiling tscircuit AST.
+## 4. Declarative Silkscreen & PCB Studio Workbench
+- **Single Source of Truth**: Component placement and all silkscreen text/graphics are defined declaratively in [`src/layout.json`](src/layout.json).
+- **Legibility Guarantee**: All silkscreen text has been enlarged to $\ge 0.80\,\text{mm}$ (up to $1.20\,\text{mm}$ for pinout labels and polarity markers). The previous unreadable $0.42\,\text{mm}$ font and pad overlaps have been completely eliminated.
+- **Tethered Polarity**: Diodes (`D_PWR`, `D_HAP`) include cathode U-bars and `+`/`-` markings; ICs (`U_CHG`, `U_MCU`, `U_IMU`) feature explicit Pin-1 dots that rotate and move with components.
 - **Bottom Silkscreen Vector QR Code**: Links to `https://dillonsimeone.com/?reason=compactAudioMotionSquarePCB`.
-- **Japanese Seigaiha Ripples**: Semicircular concentric wave arches fill open perimeter spaces.
+- **Interactive Co-Design Studio**:
+  - Launch via `npm run studio` or `LaunchStudio.bat` from `public/ParametricPCB/`.
+  - Accessible in browser at `http://localhost:3457/editor.html?project=03`.
+  - Provides drag-and-drop silkscreen/component positioning, web-dev font presets (`8px`, `10px`, `12px`), 1:1 physical size inspection, real-time JLCPCB DRC, and 1-click fabrication package generation.

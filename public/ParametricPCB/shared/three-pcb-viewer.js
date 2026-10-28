@@ -114,7 +114,8 @@ export function createThreePcbViewer(container, options = {}) {
       const x = item.anchor_position ? item.anchor_position.x : 0;
       const y = item.anchor_position ? item.anchor_position.y : 0;
       const baseFsz = item.font_size || 0.8;
-      const fszPx = Math.max(12, Math.round(baseFsz * pxPerMm * scaleFactor));
+      // Match true Gerber cap-height ratio (~0.75-0.85 of font_size) without artificially inflating micro-fonts
+      const fszPx = Math.max(4, Math.round(baseFsz * 0.92 * pxPerMm * scaleFactor));
 
       ctx.font = `bold ${fszPx}px "Courier New", monospace`;
 
@@ -150,8 +151,17 @@ export function createThreePcbViewer(container, options = {}) {
 
     for (const p of silkPaths) {
       const route = p.route || [];
-      if (route.length < 2) continue;
+      if (route.length < 1) continue;
       const sw = Math.max(2, Math.round((p.stroke_width || 0.2) * pxPerMm));
+      if (p.is_dot || (route.length === 2 && Math.hypot(route[1].x - route[0].x, route[1].y - route[0].y) < 0.02)) {
+        const cx = tx((route[0].x + (route[1]?.x ?? route[0].x)) / 2);
+        const cy = ty((route[0].y + (route[1]?.y ?? route[0].y)) / 2);
+        ctx.beginPath();
+        ctx.arc(cx, cy, sw / 2, 0, Math.PI * 2);
+        ctx.fill();
+        continue;
+      }
+      if (route.length < 2) continue;
       ctx.lineWidth = sw;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";

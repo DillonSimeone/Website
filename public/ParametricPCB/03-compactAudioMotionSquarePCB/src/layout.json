@@ -1,0 +1,1067 @@
+{
+  "version": 1,
+  "board": {
+    "width": 38,
+    "length": 38
+  },
+  "components": {
+    "H_TL": {
+      "footprint": "MountingHoleM3",
+      "x": -15.5,
+      "y": 15.5,
+      "rotation": 0,
+      "layer": "top",
+      "holeDiameter": 3.2,
+      "outerDiameter": 4.8,
+      "markers": {}
+    },
+    "H_TR": {
+      "footprint": "MountingHoleM3",
+      "x": 15.5,
+      "y": 15.5,
+      "rotation": 0,
+      "layer": "top",
+      "holeDiameter": 3.2,
+      "outerDiameter": 4.8,
+      "markers": {}
+    },
+    "H_BL": {
+      "footprint": "MountingHoleM3",
+      "x": -15.5,
+      "y": -15.5,
+      "rotation": 0,
+      "layer": "top",
+      "holeDiameter": 3.2,
+      "outerDiameter": 4.8,
+      "markers": {}
+    },
+    "H_BR": {
+      "footprint": "MountingHoleM3",
+      "x": 15.5,
+      "y": -15.5,
+      "rotation": 0,
+      "layer": "top",
+      "holeDiameter": 3.2,
+      "outerDiameter": 4.8,
+      "markers": {}
+    },
+    "U_MCU": {
+      "footprint": "ESP32C3_SuperMini",
+      "x": -2.5,
+      "y": 1.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "U_MCU",
+          "visible": false
+        },
+        "pin1Dot": {
+          "dx": -1.45,
+          "dy": -1.56,
+          "visible": true
+        }
+      }
+    },
+    "U_IMU": {
+      "footprint": "UniversalIMU_8Pin",
+      "x": 9.0,
+      "y": 1.5,
+      "rotation": 0,
+      "layer": "bottom",
+      "markers": {
+        "ref": {
+          "text": "MPU-6050",
+          "dx": -1.8,
+          "dy": 0.6,
+          "fontSize": 1.0,
+          "layer": "bottom",
+          "visible": true
+        },
+        "pin1Dot": {
+          "dx": 0.0,
+          "dy": 0.0,
+          "layer": "bottom",
+          "visible": true
+        }
+      }
+    },
+    "J_LED": {
+      "footprint": "LEDOutputHeader",
+      "x": 0.0,
+      "y": 15.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "LED1 G6",
+          "dx": 0.0,
+          "dy": 4.15,
+          "fontSize": 0.95,
+          "visible": true
+        }
+      }
+    },
+    "J_LED2": {
+      "footprint": "LEDOutputHeader",
+      "x": 15.5,
+      "y": 6.5,
+      "rotation": 90,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "LED2 (G20)",
+          "dx": 0.0,
+          "dy": 4.15,
+          "fontSize": 1.0,
+          "rotation": 90,
+          "visible": true
+        }
+      }
+    },
+    "J_LED3": {
+      "footprint": "LEDOutputHeader",
+      "x": -15.5,
+      "y": 6.5,
+      "rotation": 90,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "LED3 (G21)",
+          "dx": 0.0,
+          "dy": 0.05,
+          "fontSize": 1.0,
+          "rotation": 90,
+          "visible": true
+        }
+      }
+    },
+    "J_HAP_L": {
+      "footprint": "HapticMotorOutput",
+      "x": -15.5,
+      "y": -2.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "HAP_L",
+          "dx": -0.15,
+          "dy": 0.0,
+          "fontSize": 1.0,
+          "rotation": 90,
+          "visible": true
+        },
+        "plus": {
+          "dx": 0.1,
+          "dy": 0.0,
+          "fontSize": 1.0,
+          "visible": true
+        },
+        "minus": {
+          "dx": 0.1,
+          "dy": 0.0,
+          "fontSize": 1.0,
+          "visible": true
+        }
+      }
+    },
+    "J_HAP_R": {
+      "footprint": "HapticMotorOutput",
+      "x": 15.5,
+      "y": -2.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "HAP_R",
+          "dx": 4.05,
+          "dy": 0.0,
+          "fontSize": 1.0,
+          "rotation": 90,
+          "visible": true
+        },
+        "plus": {
+          "dx": -3.4,
+          "dy": 0.0,
+          "fontSize": 1.0,
+          "visible": true
+        },
+        "minus": {
+          "dx": -3.4,
+          "dy": 0.0,
+          "fontSize": 1.0,
+          "visible": true
+        }
+      }
+    },
+    "J_MIC_MAX": {
+      "footprint": "MAX4466_Header",
+      "x": -8.5,
+      "y": -13.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "MAX4466",
+          "dx": 0.0,
+          "dy": 0.1,
+          "fontSize": 0.95,
+          "visible": true
+        }
+      }
+    },
+    "J_MIC_INMP": {
+      "footprint": "INMP441_DualRow_Header",
+      "x": 7.0,
+      "y": -11.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "I2S MIC",
+          "dx": 0.0,
+          "dy": -1.5,
+          "fontSize": 0.9,
+          "rotation": 90,
+          "visible": true
+        }
+      }
+    },
+    "SW_EXT": {
+      "footprint": "ExternalSwitchPads",
+      "x": 14.8,
+      "y": -10.0,
+      "rotation": 90,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "PWR_SW",
+          "dx": 0.0,
+          "dy": -0.8,
+          "fontSize": 0.95,
+          "rotation": 90,
+          "visible": true
+        }
+      }
+    },
+    "J_BAT": {
+      "footprint": "BatteryPads",
+      "x": -2.0,
+      "y": -16.0,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "1S LIPO",
+          "dx": 0.55,
+          "dy": 0.35,
+          "fontSize": 0.85,
+          "visible": true
+        },
+        "plus": {
+          "dx": 1.95,
+          "dy": -2.05,
+          "fontSize": 1.1,
+          "visible": true
+        },
+        "minus": {
+          "dx": -1.95,
+          "dy": -2.05,
+          "fontSize": 1.1,
+          "visible": true
+        }
+      }
+    },
+    "U_CHG": {
+      "footprint": "SOT23_5_Charger",
+      "x": -7.5,
+      "y": 14.6,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "U_CHG",
+          "dx": 2.3,
+          "dy": -2.35,
+          "fontSize": 0.8,
+          "rotation": 90,
+          "visible": true
+        },
+        "pin1Dot": {
+          "visible": true
+        }
+      }
+    },
+    "R_PROG": {
+      "footprint": "Resistor0603",
+      "x": -10.2,
+      "y": 14.6,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "R_PRG",
+          "dx": -0.8,
+          "dy": -3.15,
+          "fontSize": 0.8,
+          "visible": true
+        }
+      }
+    },
+    "C_VIN": {
+      "footprint": "Capacitor0603",
+      "x": -7.5,
+      "y": 17.1,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "C_VIN",
+          "dx": 0.0,
+          "dy": 0.02,
+          "fontSize": 0.8,
+          "visible": true
+        }
+      }
+    },
+    "C_BAT": {
+      "footprint": "Capacitor0603",
+      "x": -7.5,
+      "y": 11.8,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "C_BAT",
+          "dx": 0.0,
+          "dy": -2.35,
+          "fontSize": 0.8,
+          "visible": true
+        }
+      }
+    },
+    "Q_PWR": {
+      "footprint": "SOT23_PMOSFET",
+      "x": 5.2,
+      "y": 13.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "Q_PWR",
+          "dx": -1.8,
+          "dy": 0.0,
+          "fontSize": 0.8,
+          "visible": true
+        },
+        "pin1Dot": {
+          "visible": true
+        }
+      }
+    },
+    "D_PWR": {
+      "footprint": "DiodeSOD123",
+      "x": 9.8,
+      "y": 13.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "D_PWR",
+          "dx": 0.0,
+          "dy": 1.65,
+          "fontSize": 0.8,
+          "visible": true
+        },
+        "minus": {
+          "dx": 0.0,
+          "dy": 2.95,
+          "fontSize": 1.0,
+          "visible": true
+        },
+        "plus": {
+          "dx": 0.0,
+          "dy": 2.95,
+          "fontSize": 1.0,
+          "visible": true
+        },
+        "polarityBar": {
+          "visible": true
+        }
+      }
+    },
+    "R_PWR": {
+      "footprint": "Resistor0603",
+      "x": 5.2,
+      "y": 16.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "R_PWR",
+          "dx": 0.6,
+          "dy": 0.35,
+          "fontSize": 0.8,
+          "visible": true
+        }
+      }
+    },
+    "Q_FET": {
+      "footprint": "SOT23_MOSFET",
+      "x": -15.5,
+      "y": -7.0,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "Q_FET",
+          "dx": -2.35,
+          "dy": 2.05,
+          "fontSize": 0.8,
+          "rotation": 90,
+          "visible": true
+        },
+        "pin1Dot": {
+          "visible": true
+        }
+      }
+    },
+    "R_GATE": {
+      "footprint": "Resistor0603",
+      "x": -15.5,
+      "y": -10.0,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "R_G",
+          "dx": -2.35,
+          "dy": -1.15,
+          "fontSize": 0.8,
+          "rotation": 90,
+          "visible": true
+        }
+      }
+    },
+    "D_HAP": {
+      "footprint": "DiodeSOD123",
+      "x": 15.5,
+      "y": -6.0,
+      "rotation": 180,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "D_HAP",
+          "dx": 3.5,
+          "dy": -1.45,
+          "fontSize": 0.8,
+          "rotation": 90,
+          "visible": true
+        },
+        "minus": {
+          "dx": 0.0,
+          "dy": -0.05,
+          "fontSize": 1.0,
+          "visible": true
+        },
+        "plus": {
+          "dx": 0.0,
+          "dy": -0.05,
+          "fontSize": 1.0,
+          "visible": true
+        },
+        "polarityBar": {
+          "visible": true
+        }
+      }
+    },
+    "Q_LED_PWR": {
+      "footprint": "SOT23_PMOSFET",
+      "x": -4.5,
+      "y": -7.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "Q_LP",
+          "dx": 0.0,
+          "dy": -0.15,
+          "fontSize": 0.8,
+          "visible": true
+        },
+        "pin1Dot": {
+          "visible": true
+        }
+      }
+    },
+    "Q_LED_EN": {
+      "footprint": "SOT23_MOSFET",
+      "x": 0.0,
+      "y": -7.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "Q_LE",
+          "dx": 0.0,
+          "dy": -0.15,
+          "fontSize": 0.8,
+          "visible": true
+        },
+        "pin1Dot": {
+          "visible": true
+        }
+      }
+    },
+    "R_LED_PU": {
+      "footprint": "Resistor0603",
+      "x": -4.5,
+      "y": -4.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "R_PU",
+          "dx": 0.0,
+          "dy": 0.1,
+          "fontSize": 0.8,
+          "visible": true
+        }
+      }
+    },
+    "R_LED_GATE": {
+      "footprint": "Resistor0603",
+      "x": 0.0,
+      "y": -4.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "R_LG",
+          "dx": 0.0,
+          "dy": 0.1,
+          "fontSize": 0.8,
+          "visible": true
+        }
+      }
+    }
+  },
+  "silkscreen": [
+    {
+      "id": "st_title_1",
+      "type": "text",
+      "text": "03 SQUARE",
+      "x": -2.5,
+      "y": 7.8,
+      "layer": "top",
+      "fontSize": 1.15,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_title_2",
+      "type": "text",
+      "text": "AUDIO/MOTION",
+      "x": -2.5,
+      "y": 6.1,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_author_t",
+      "type": "text",
+      "text": "D. SIMEONE",
+      "x": -2.5,
+      "y": -1.8,
+      "layer": "top",
+      "fontSize": 0.85,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_led1_p1",
+      "type": "text",
+      "text": "+",
+      "x": -2.54,
+      "y": 13.7,
+      "layer": "top",
+      "fontSize": 1.0,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_led1_p2",
+      "type": "text",
+      "text": "D",
+      "x": 0.0,
+      "y": 13.7,
+      "layer": "top",
+      "fontSize": 1.0,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_led1_p3",
+      "type": "text",
+      "text": "-",
+      "x": 2.54,
+      "y": 13.7,
+      "layer": "top",
+      "fontSize": 1.0,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_led3_p1",
+      "type": "text",
+      "text": "+",
+      "x": -13.7,
+      "y": 3.96,
+      "layer": "top",
+      "fontSize": 0.95,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_led3_p2",
+      "type": "text",
+      "text": "D",
+      "x": -13.7,
+      "y": 6.5,
+      "layer": "top",
+      "fontSize": 0.95,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_led3_p3",
+      "type": "text",
+      "text": "-",
+      "x": -13.7,
+      "y": 9.04,
+      "layer": "top",
+      "fontSize": 0.95,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_led2_p1",
+      "type": "text",
+      "text": "+",
+      "x": 13.7,
+      "y": 3.96,
+      "layer": "top",
+      "fontSize": 0.95,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_led2_p2",
+      "type": "text",
+      "text": "D",
+      "x": 13.7,
+      "y": 6.5,
+      "layer": "top",
+      "fontSize": 0.95,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_led2_p3",
+      "type": "text",
+      "text": "-",
+      "x": 13.7,
+      "y": 9.04,
+      "layer": "top",
+      "fontSize": 0.95,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_max_p1",
+      "type": "text",
+      "text": "3V",
+      "x": -11.04,
+      "y": -15.35,
+      "layer": "top",
+      "fontSize": 0.85,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_max_p2",
+      "type": "text",
+      "text": "G",
+      "x": -8.5,
+      "y": -15.35,
+      "layer": "top",
+      "fontSize": 0.85,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_max_p3",
+      "type": "text",
+      "text": "AO",
+      "x": -6.25,
+      "y": -15.35,
+      "layer": "top",
+      "fontSize": 0.85,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_l_0",
+      "type": "text",
+      "text": "5V",
+      "x": -10.1,
+      "y": 10.39,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_l_1",
+      "type": "text",
+      "text": "GND",
+      "x": -10.1,
+      "y": 7.85,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_l_2",
+      "type": "text",
+      "text": "3V3",
+      "x": -10.1,
+      "y": 5.31,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_l_3",
+      "type": "text",
+      "text": "IO0",
+      "x": -10.1,
+      "y": 2.77,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_l_4",
+      "type": "text",
+      "text": "IO1",
+      "x": -10.1,
+      "y": 0.23,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_l_5",
+      "type": "text",
+      "text": "IO2",
+      "x": -10.1,
+      "y": -2.31,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_l_6",
+      "type": "text",
+      "text": "IO3",
+      "x": -10.1,
+      "y": -4.85,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_l_7",
+      "type": "text",
+      "text": "IO4",
+      "x": -10.1,
+      "y": -7.39,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_r_0",
+      "type": "text",
+      "text": "IO5",
+      "x": 5.1,
+      "y": 10.39,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_left",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_r_1",
+      "type": "text",
+      "text": "IO6",
+      "x": 5.1,
+      "y": 7.85,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_left",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_r_2",
+      "type": "text",
+      "text": "IO7",
+      "x": 5.1,
+      "y": 5.31,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_left",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_r_3",
+      "type": "text",
+      "text": "IO8",
+      "x": 5.1,
+      "y": 2.77,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_left",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_r_4",
+      "type": "text",
+      "text": "IO9",
+      "x": 5.1,
+      "y": 0.23,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_left",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_r_5",
+      "type": "text",
+      "text": "10",
+      "x": 5.1,
+      "y": -2.31,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_left",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_r_6",
+      "type": "text",
+      "text": "RX",
+      "x": 5.1,
+      "y": -4.85,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_left",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_c3_r_7",
+      "type": "text",
+      "text": "TX",
+      "x": 5.1,
+      "y": -7.39,
+      "layer": "top",
+      "fontSize": 0.9,
+      "align": "center_left",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_p_0",
+      "type": "text",
+      "text": "VCC",
+      "x": 10.35,
+      "y": 10.39,
+      "layer": "bottom",
+      "fontSize": 0.95,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_p_1",
+      "type": "text",
+      "text": "GND",
+      "x": 10.35,
+      "y": 7.85,
+      "layer": "bottom",
+      "fontSize": 0.95,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_p_2",
+      "type": "text",
+      "text": "SCL",
+      "x": 10.35,
+      "y": 5.31,
+      "layer": "bottom",
+      "fontSize": 0.95,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_p_3",
+      "type": "text",
+      "text": "SDA",
+      "x": 10.35,
+      "y": 2.77,
+      "layer": "bottom",
+      "fontSize": 0.95,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_p_4",
+      "type": "text",
+      "text": "XDA",
+      "x": 10.35,
+      "y": 0.23,
+      "layer": "bottom",
+      "fontSize": 0.95,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_p_5",
+      "type": "text",
+      "text": "XCL",
+      "x": 10.35,
+      "y": -2.31,
+      "layer": "bottom",
+      "fontSize": 0.95,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_p_6",
+      "type": "text",
+      "text": "AD0",
+      "x": 10.35,
+      "y": -4.85,
+      "layer": "bottom",
+      "fontSize": 0.95,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_p_7",
+      "type": "text",
+      "text": "INT",
+      "x": 10.35,
+      "y": -7.39,
+      "layer": "bottom",
+      "fontSize": 0.95,
+      "align": "center_right",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_warn1",
+      "type": "text",
+      "text": "FLUSH CUT PINS",
+      "x": -2.5,
+      "y": 8.6,
+      "layer": "bottom",
+      "fontSize": 0.85,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_imu_warn2",
+      "type": "text",
+      "text": "UNDER IMU BODY",
+      "x": -2.5,
+      "y": 7.1,
+      "layer": "bottom",
+      "fontSize": 0.85,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_url_b",
+      "type": "text",
+      "text": "dillonsimeone.com",
+      "x": -2.5,
+      "y": -6.2,
+      "layer": "bottom",
+      "fontSize": 0.85,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_author_b",
+      "type": "text",
+      "text": "03 SQUARE",
+      "x": -3.2,
+      "y": -8.2,
+      "layer": "bottom",
+      "fontSize": 0.95,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    }
+  ]
+}

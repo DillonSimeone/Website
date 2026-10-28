@@ -243,16 +243,25 @@ export function generatePcbSvgMarkup(circuitJson, options = {}) {
   }).join("\n");
 
   // 4. Silkscreen Vector Paths & Outlines
+  const renderSilkPath = (p, color = "#ffffff") => {
+    const route = p.route || [];
+    if (route.length < 1) return "";
+    const idAttr = p.editor_id ? ` data-silk-id="${p.editor_id}"` : "";
+    const sw = Math.max(1.0, (p.stroke_width || 0.15) * scale);
+    if (p.is_dot || (route.length === 2 && Math.hypot(route[1].x - route[0].x, route[1].y - route[0].y) < 0.02)) {
+      const mx = cx + ((route[0].x + (route[1]?.x ?? route[0].x)) / 2) * scale;
+      const my = cy - ((route[0].y + (route[1]?.y ?? route[0].y)) / 2) * scale;
+      return `<circle${idAttr} cx="${mx.toFixed(2)}" cy="${my.toFixed(2)}" r="${(sw / 2).toFixed(2)}" fill="${color}" opacity="0.95" />`;
+    }
+    if (route.length < 2) return "";
+    const pts = route.map(pt => `${(cx + pt.x * scale).toFixed(2)},${(cy - pt.y * scale).toFixed(2)}`).join(" ");
+    return `<polyline${idAttr} points="${pts}" fill="none" stroke="${color}" stroke-width="${sw.toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" opacity="0.92" />`;
+  };
+
   const silkPaths = circuitJson.filter(item => item.type === "pcb_silkscreen_path" && (item.layer === "top" || !item.layer));
   const silkLinesSvg = `
     <g id="svg-silkscreen-paths">
-      ${silkPaths.map(p => {
-        const route = p.route || [];
-        if (route.length < 2) return "";
-        const pts = route.map(pt => `${(cx + pt.x * scale).toFixed(2)},${(cy - pt.y * scale).toFixed(2)}`).join(" ");
-        const sw = Math.max(1.0, (p.stroke_width || 0.15) * scale);
-        return `<polyline points="${pts}" fill="none" stroke="#ffffff" stroke-width="${sw.toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
-      }).join("\n")}
+      ${silkPaths.map(p => renderSilkPath(p, "#ffffff")).join("\n")}
     </g>
   `;
 
@@ -273,8 +282,9 @@ export function generatePcbSvgMarkup(circuitJson, options = {}) {
 
         const rot = item.ccw_rotation || 0;
         const rotAttr = rot !== 0 ? ` transform="rotate(${-rot}, ${svgX.toFixed(2)}, ${svgY.toFixed(2)})"` : "";
+        const idAttr = item.editor_id ? ` data-silk-id="${item.editor_id}"` : "";
 
-        return `<text data-base-size="${baseFs.toFixed(2)}" x="${svgX.toFixed(2)}" y="${svgY.toFixed(2)}"${rotAttr} fill="#ffffff" font-family="monospace" font-size="${(baseFs * silkScale).toFixed(2)}" font-weight="bold" text-anchor="${textAnchor}" dominant-baseline="central">${item.text}</text>`;
+        return `<text${idAttr} data-base-size="${baseFs.toFixed(2)}" x="${svgX.toFixed(2)}" y="${svgY.toFixed(2)}"${rotAttr} fill="#ffffff" font-family="monospace" font-size="${(baseFs * silkScale).toFixed(2)}" font-weight="bold" text-anchor="${textAnchor}" dominant-baseline="central">${item.text}</text>`;
       }).join("\n")}
     </g>
   `;

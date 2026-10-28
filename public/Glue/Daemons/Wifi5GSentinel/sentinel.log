@@ -272,3 +272,5 @@
 [2026-10-27 05:00:22] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: LeeDoorBell, Freq: 2412 MHz, Rx: 26 Mbps, Score: 100
 [2026-10-27 05:00:23] Executing auto-nudge (Wi-Fi cycle via ADB)...
 [2026-10-27 05:00:30] WARNING: Auto-nudge failed to restore 5 GHz. Currently still on 0 MHz.
+[2026-10-27 14:20:12] === Phone 5GHz Sentinel started ===
+[2026-10-27 14:20:12] Using ADB at: F:\Github\Website\public\Glue\Daemons\USBTethering\platform-tools\adb.exe

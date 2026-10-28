@@ -1507,15 +1507,18 @@ body.dark-mode .gallery-thumbnail img {
  * Direction alternates each visit (see slideFromRight in indexScript.js).
  */
 @media (min-width: 1025px) {
-    .item.reveal,
     .item.park-left,
-    .item.park-right {
+    .item.park-right,
+    .item.reveal.is-entering {
         left: 0 !important;
         transition: transform 0.4s ease;
     }
 
     .item.reveal {
+        left: 0 !important;
         transform: none !important;
+        transition: none !important;
+        will-change: auto !important;
     }
 
     .item.reveal.is-entering {
@@ -1671,8 +1674,9 @@ body.library-open .trianglify {
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
 }
 
-.section-nav:hover {
-    transform: translateX(0);
+.section-nav:hover,
+.section-nav.active {
+    transform: translateX(0) !important;
     background: rgba(255, 255, 255, 0.96);
     box-shadow: -8px 12px 32px rgba(0, 0, 0, 0.15);
 }

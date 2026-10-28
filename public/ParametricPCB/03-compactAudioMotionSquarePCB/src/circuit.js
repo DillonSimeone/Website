@@ -1,18 +1,24 @@
 import { Circuit, React } from "../../00-commonParts/tscircuit-core.js";
-import { 
-  createGerberZipBlob, 
-  createBomCsv, 
-  createCplCsv 
+import {
+  createGerberZipBlob,
+  createBomCsv
 } from "../../shared/export-utils.js";
-import { 
-  ESP32C3_SuperMini, 
-  UniversalIMU_8Pin, 
+import {
+  loadLayoutJson,
+  getComponentProps,
+  emitLayoutSilkscreen,
+  tagCircuitJsonSilkscreenIds,
+  createSyncedCplCsv
+} from "../../shared/layout-loader.js";
+import {
+  ESP32C3_SuperMini,
+  UniversalIMU_8Pin,
   MAX4466_Header,
-  INMP441_DualRow_Header, 
-  SOT23_MOSFET, 
-  SOT23_5_Charger, 
-  BatteryPads, 
-  ExternalSwitchPads, 
+  INMP441_DualRow_Header,
+  SOT23_MOSFET,
+  SOT23_5_Charger,
+  BatteryPads,
+  ExternalSwitchPads,
   LEDOutputHeader,
   HapticMotorOutput,
   Resistor0603,
@@ -23,42 +29,77 @@ import {
 import { boardProps, normalizeRouting } from "./pcb-rules.js";
 import { runManufacturingDrc } from "./drc.js";
 
+const QR_MATRIX_33 = [
+  "111111100010010111111010101111111",
+  "100000101100010100101000101000001",
+  "101110100101011001111010101011101",
+  "101110101110111111010011001011101",
+  "101110100100010011111101101011101",
+  "100000101101100111000110001000001",
+  "111111101010101010101010101111111",
+  "000000000111001100101111000000000",
+  "111110111101011100001011110101010",
+  "110011010010100010011101101000111",
+  "110110100010010101101100001011010",
+  "010111001000101100111110010100100",
+  "111110101110101001010011110011000",
+  "011101011000001110111111001000011",
+  "100011110001100100001000011110010",
+  "001101011111000110001111010010100",
+  "110110100011001101010011110110010",
+  "101111000000100010101001001001011",
+  "010100100000010110101010010011010",
+  "000000011000101110011111110010100",
+  "100111111110101101010010110110010",
+  "110100011100000010111001001001011",
+  "100011110111110101101010111101010",
+  "100100011001000110000101011011100",
+  "101111110111000001010001111110001",
+  "000000001010110110011010100011101",
+  "111111101000011110000111101010110",
+  "100000100100110110101110100011110",
+  "101110101110101101000010111110000",
+  "101110101010000011111101110110000",
+  "101110101111100100101101101001110",
+  "100000101001001010001110011101100",
+  "111111101111000110001011101010010"
+];
+
 /**
  * Programmatically builds the Compact Dense Square Audio & Motion Reactive Controller PCB (03).
+ * Physical component coordinates, tethered JLCPCB polarity markers, and >= 0.80mm legible silkscreen
+ * are driven by declarative `src/layout.json`.
  */
 export async function compileCircuit(params = {}) {
-  const { 
-    boardWidth = 38, 
-    boardLength = 38, 
-    routing = {}, 
+  const layout = params.layout || await loadLayoutJson(import.meta.url, "./layout.json");
+  const {
+    boardWidth = layout?.board?.width || 38,
+    boardLength = layout?.board?.length || 38,
+    routing = {},
     skipRouting = true,
-    silkScale = 1.0 
+    silkScale = 1.0
   } = params;
 
-  const R = normalizeRouting(routing);
+  normalizeRouting(routing);
   const PWR = "0.22mm";
   const SIG = "0.16mm";
 
-  console.log(`[Circuit 03 Profiling] new Circuit() ...`);
-  const t0 = performance.now();
   const circuit = new Circuit({
     platform: {
       routingDisabled: skipRouting
     }
   });
+  circuit.__layout = layout;
 
   const children = [];
-
   const halfL = boardLength / 2;
   const halfW = boardWidth / 2;
 
   // ============================================================
-  // 0. M3 CORNER MOUNTING HOLES (3.2mm Clearance Drill, 4.8mm Annular Ring Pad)
-  // Standard 31mm x 31mm bolt pattern on 38mm x 38mm board
+  // 0. M3 CORNER MOUNTING HOLES (Driven by layout.json)
   // ============================================================
   const mountX = halfW - 3.5;
   const mountY = halfL - 3.5;
-
   const cornerHoles = [
     { key: "H_TL", name: "H_TL", x: -mountX, y: mountY },
     { key: "H_TR", name: "H_TR", x: mountX, y: mountY },
@@ -67,433 +108,102 @@ export async function compileCircuit(params = {}) {
   ];
 
   cornerHoles.forEach(h => {
+    const p = getComponentProps(layout, h.name, { x: h.x, y: h.y, key: h.key });
+    const holeDia = p.entry.holeDiameter || 3.2;
+    const outerDia = p.entry.outerDiameter || 4.8;
     children.push(React.createElement("platedhole", {
       key: h.key,
       name: h.name,
       portHints: [h.name],
-      pcbX: `${h.x.toFixed(2)}mm`,
-      pcbY: `${h.y.toFixed(2)}mm`,
-      holeDiameter: "3.2mm",
-      outerDiameter: "4.8mm",
+      pcbX: `${p.x.toFixed(2)}mm`,
+      pcbY: `${p.y.toFixed(2)}mm`,
+      holeDiameter: `${holeDia}mm`,
+      outerDiameter: `${outerDia}mm`,
       shape: "circle"
     }));
   });
 
   // ============================================================
-  // 1. TOP LAYER: ESP32-C3 SUPERMINI MCU (16 Pins)
-  // Slightly offset in X (x = -2.5mm) to align USB-C and leave room for backside IMU header
+  // 1-7. MODULES & PERIPHERAL HEADERS (Driven by layout.json)
   // ============================================================
-  const mcuX = -2.5;
-  const mcuY = 1.5;
-  children.push(React.createElement(ESP32C3_SuperMini, {
-    name: "U_MCU",
-    key: "u_mcu",
-    pcbX: `${mcuX.toFixed(2)}mm`,
-    pcbY: `${mcuY.toFixed(2)}mm`
-  }));
+  children.push(React.createElement(ESP32C3_SuperMini, getComponentProps(layout, "U_MCU", { x: -2.5, y: 1.5, key: "u_mcu" }).pcbProps));
+  children.push(React.createElement(UniversalIMU_8Pin, getComponentProps(layout, "U_IMU", { x: 9.0, y: 1.5, key: "u_imu" }).pcbProps));
 
-  // ============================================================
-  // 2. BACKSIDE (BOTTOM LAYER): UNIVERSAL IMU (MPU-6050 / MPU-6500)
-  // 8-pin vertical header at x = +9.0mm on bottom layer.
-  // The 15.6mm GY-521 body folds to the left across the bottom, directly underneath the ESP32!
-  // ============================================================
-  const imuX = 9.0;
-  const imuY = 1.5;
-  children.push(React.createElement(UniversalIMU_8Pin, {
-    name: "U_IMU",
-    key: "u_imu",
-    pcbX: `${imuX.toFixed(2)}mm`,
-    pcbY: `${imuY.toFixed(2)}mm`
-  }));
+  children.push(React.createElement(LEDOutputHeader, getComponentProps(layout, "J_LED", { x: 0.0, y: halfL - 3.5, key: "j_led" }).pcbProps));
+  children.push(React.createElement(LEDOutputHeader, getComponentProps(layout, "J_LED2", { x: halfW - 3.5, y: 6.5, rotation: 90, key: "j_led2" }).pcbProps));
+  children.push(React.createElement(LEDOutputHeader, getComponentProps(layout, "J_LED3", { x: -(halfW - 3.5), y: 6.5, rotation: 90, key: "j_led3" }).pcbProps));
 
-  // ============================================================
-  // 3. ADDRESSABLE LED OUTPUT HEADERS (3 INDEPENDENT CHANNELS)
-  // J_LED (Main, GPIO 6) at top perimeter
-  // J_LED2 (Aux, GPIO 20 / RX) at right perimeter
-  // J_LED3 (Aux, GPIO 21 / TX) at left perimeter
-  // ============================================================
-  // ============================================================
-  // 3. ADDRESSABLE LED OUTPUT HEADERS (3 INDEPENDENT CHANNELS)
-  // J_LED (Main, GPIO 6) centered at top perimeter (x = 0.0mm, y = 15.5mm)
-  // J_LED2 (Aux, GPIO 20 / RX) at right perimeter
-  // J_LED3 (Aux, GPIO 21 / TX) at left perimeter
-  // ============================================================
-  children.push(React.createElement(LEDOutputHeader, {
-    name: "J_LED",
-    key: "j_led",
-    pcbX: "0.0mm",
-    pcbY: `${(halfL - 3.5).toFixed(2)}mm`
-  }));
+  children.push(React.createElement(HapticMotorOutput, getComponentProps(layout, "J_HAP_L", { x: -(halfW - 3.5), y: -2.5, key: "j_hap_l" }).pcbProps));
+  children.push(React.createElement(HapticMotorOutput, getComponentProps(layout, "J_HAP_R", { x: halfW - 3.5, y: -2.5, key: "j_hap_r" }).pcbProps));
 
-  children.push(React.createElement(LEDOutputHeader, {
-    name: "J_LED2",
-    key: "j_led2",
-    pcbX: `${(halfW - 3.5).toFixed(2)}mm`,
-    pcbY: "6.5mm",
-    pcbRotation: 90
-  }));
+  children.push(React.createElement(MAX4466_Header, getComponentProps(layout, "J_MIC_MAX", { x: -8.5, y: -13.5, key: "j_mic_max" }).pcbProps));
+  children.push(React.createElement(INMP441_DualRow_Header, getComponentProps(layout, "J_MIC_INMP", { x: 7.0, y: -11.5, key: "j_mic_inmp" }).pcbProps));
 
-  children.push(React.createElement(LEDOutputHeader, {
-    name: "J_LED3",
-    key: "j_led3",
-    pcbX: `-${(halfW - 3.5).toFixed(2)}mm`,
-    pcbY: "6.5mm",
-    pcbRotation: 90
-  }));
-
-  // ============================================================
-  // 4. HAPTIC VIBRATION MOTOR OUTPUTS (LEFT & RIGHT)
-  // ============================================================
-  children.push(React.createElement(HapticMotorOutput, {
-    name: "J_HAP_L",
-    key: "j_hap_l",
-    pcbX: `-${(halfW - 3.5).toFixed(2)}mm`,
-    pcbY: "-2.5mm"
-  }));
-
-  children.push(React.createElement(HapticMotorOutput, {
-    name: "J_HAP_R",
-    key: "j_hap_r",
-    pcbX: `${(halfW - 3.5).toFixed(2)}mm`,
-    pcbY: "-2.5mm"
-  }));
-
-  // ============================================================
-  // 5. MICROPHONE HEADERS: MAX4466 (ANALOG) & INMP441 (DIGITAL I2S)
-  // ============================================================
-  children.push(React.createElement(MAX4466_Header, {
-    name: "J_MIC_MAX",
-    key: "j_mic_max",
-    pcbX: "-8.5mm",
-    pcbY: "-13.5mm"
-  }));
-
-  children.push(React.createElement(INMP441_DualRow_Header, {
-    name: "J_MIC_INMP",
-    key: "j_mic_inmp",
-    pcbX: "7.0mm",
-    pcbY: "-11.5mm"
-  }));
-
-  // ============================================================
-  // 6. EXTERNAL POWER SWITCH HEADER
-  // ============================================================
-  children.push(React.createElement(ExternalSwitchPads, {
-    name: "SW_EXT",
-    key: "sw_ext",
-    pcbX: "14.8mm",
-    pcbY: "-10.0mm",
-    pcbRotation: 90
-  }));
-
-  // ============================================================
-  // 7. BATTERY DUAL SOLDER PADS (VBAT+, GND)
-  // Dual-mount heavy pads for direct wire soldering or 2.54mm pin headers
-  // ============================================================
-  children.push(React.createElement(BatteryPads, {
-    name: "J_BAT",
-    key: "j_bat",
-    pcbX: "-2.0mm",
-    pcbY: "-16.0mm"
-  }));
+  children.push(React.createElement(ExternalSwitchPads, getComponentProps(layout, "SW_EXT", { x: 14.8, y: -10.0, rotation: 90, key: "sw_ext" }).pcbProps));
+  children.push(React.createElement(BatteryPads, getComponentProps(layout, "J_BAT", { x: -2.0, y: -16.0, key: "j_bat" }).pcbProps));
 
   // ============================================================
   // 8. FACTORY-ASSEMBLED TURNKEY SMT COMPONENTS (14 PARTS)
   // ============================================================
-  // 8a. LiPo Charger IC & Passives (MCP73831, R_PROG, C_VIN, C_BAT)
-  children.push(React.createElement(SOT23_5_Charger, {
-    name: "U_CHG",
-    key: "u_chg",
-    pcbX: "-7.5mm",
-    pcbY: "14.6mm"
-  }));
+  children.push(React.createElement(SOT23_5_Charger, getComponentProps(layout, "U_CHG", { x: -7.5, y: 14.6, key: "u_chg" }).pcbProps));
+  children.push(React.createElement(Resistor0603, getComponentProps(layout, "R_PROG", { x: -10.2, y: 14.6, key: "r_prog" }).pcbProps));
+  children.push(React.createElement(Capacitor0603, getComponentProps(layout, "C_VIN", { x: -7.5, y: 17.1, key: "c_vin" }).pcbProps));
+  children.push(React.createElement(Capacitor0603, getComponentProps(layout, "C_BAT", { x: -7.5, y: 11.8, key: "c_bat" }).pcbProps));
 
-  children.push(React.createElement(Resistor0603, {
-    name: "R_PROG",
-    key: "r_prog",
-    pcbX: "-10.2mm",
-    pcbY: "14.6mm"
-  }));
+  children.push(React.createElement(SOT23_PMOSFET, getComponentProps(layout, "Q_PWR", { x: 5.2, y: 13.5, key: "q_pwr" }).pcbProps));
+  children.push(React.createElement(DiodeSOD123, getComponentProps(layout, "D_PWR", { x: 9.8, y: 13.5, key: "d_pwr" }).pcbProps));
+  children.push(React.createElement(Resistor0603, getComponentProps(layout, "R_PWR", { x: 5.2, y: 16.5, key: "r_pwr" }).pcbProps));
 
-  children.push(React.createElement(Capacitor0603, {
-    name: "C_VIN",
-    key: "c_vin",
-    pcbX: "-7.5mm",
-    pcbY: "17.1mm"
-  }));
+  children.push(React.createElement(SOT23_MOSFET, getComponentProps(layout, "Q_FET", { x: -(halfW - 3.5), y: -7.0, key: "q_fet" }).pcbProps));
+  children.push(React.createElement(Resistor0603, getComponentProps(layout, "R_GATE", { x: -(halfW - 3.5), y: -10.0, key: "r_gate" }).pcbProps));
+  children.push(React.createElement(DiodeSOD123, getComponentProps(layout, "D_HAP", { x: halfW - 3.5, y: -6.0, rotation: 180, key: "d_hap" }).pcbProps));
 
-  children.push(React.createElement(Capacitor0603, {
-    name: "C_BAT",
-    key: "c_bat",
-    pcbX: "-7.5mm",
-    pcbY: "11.8mm"
-  }));
-
-  // 8b. Auto Power-Path Management (AO3401A P-MOS, B5819W Schottky, 100k Resistor)
-  children.push(React.createElement(SOT23_PMOSFET, {
-    name: "Q_PWR",
-    key: "q_pwr",
-    pcbX: "5.2mm",
-    pcbY: "13.5mm"
-  }));
-
-  children.push(React.createElement(DiodeSOD123, {
-    name: "D_PWR",
-    key: "d_pwr",
-    pcbX: "9.8mm",
-    pcbY: "13.5mm"
-  }));
-
-  children.push(React.createElement(Resistor0603, {
-    name: "R_PWR",
-    key: "r_pwr",
-    pcbX: "5.2mm",
-    pcbY: "16.5mm"
-  }));
-
-  // 8c. Haptic Inductive Driver & Flyback Clamp (AO3400A N-MOS, 10k Gate Pull-Down, B5819W Diode)
-  // Rotated 180° so Cathode is on VSYS and Anode is on Drain (preventing dead shorts)
-  children.push(React.createElement(SOT23_MOSFET, {
-    name: "Q_FET",
-    key: "q_fet",
-    pcbX: `-${(halfW - 3.5).toFixed(2)}mm`,
-    pcbY: "-7.0mm"
-  }));
-
-  children.push(React.createElement(Resistor0603, {
-    name: "R_GATE",
-    key: "r_gate",
-    pcbX: `-${(halfW - 3.5).toFixed(2)}mm`,
-    pcbY: "-10.0mm"
-  }));
-
-  children.push(React.createElement(DiodeSOD123, {
-    name: "D_HAP",
-    key: "d_hap",
-    pcbX: `${(halfW - 3.5).toFixed(2)}mm`,
-    pcbY: "-6.0mm",
-    pcbRotation: 180
-  }));
-
-  // 8d. High-Side LED Power Isolation (AO3401A P-MOS, AO3400A Pre-Driver, 100k Pull-Up, 10k Pull-Down)
-  // Spaced with 4.5mm center-to-center distance, ensuring >1.6mm body clearance between MOSFETs
-  children.push(React.createElement(SOT23_PMOSFET, {
-    name: "Q_LED_PWR",
-    key: "q_led_pwr",
-    pcbX: "-4.5mm",
-    pcbY: "-7.5mm"
-  }));
-
-  children.push(React.createElement(SOT23_MOSFET, {
-    name: "Q_LED_EN",
-    key: "q_led_en",
-    pcbX: "0.0mm",
-    pcbY: "-7.5mm"
-  }));
-
-  children.push(React.createElement(Resistor0603, {
-    name: "R_LED_PU",
-    key: "r_led_pu",
-    pcbX: "-4.5mm",
-    pcbY: "-4.5mm"
-  }));
-
-  children.push(React.createElement(Resistor0603, {
-    name: "R_LED_GATE",
-    key: "r_led_gate",
-    pcbX: "0.0mm",
-    pcbY: "-4.5mm"
-  }));
+  children.push(React.createElement(SOT23_PMOSFET, getComponentProps(layout, "Q_LED_PWR", { x: -4.5, y: -7.5, key: "q_led_pwr" }).pcbProps));
+  children.push(React.createElement(SOT23_MOSFET, getComponentProps(layout, "Q_LED_EN", { x: 0.0, y: -7.5, key: "q_led_en" }).pcbProps));
+  children.push(React.createElement(Resistor0603, getComponentProps(layout, "R_LED_PU", { x: -4.5, y: -4.5, key: "r_led_pu" }).pcbProps));
+  children.push(React.createElement(Resistor0603, getComponentProps(layout, "R_LED_GATE", { x: 0.0, y: -4.5, key: "r_led_gate" }).pcbProps));
 
   // ============================================================
-  // 9. SILKSCREEN TEXT LABELS (TOP & BOTTOM LAYERS)
+  // 9. SILKSCREEN & TETHERED POLARITY MARKERS (Driven by layout.json)
   // ============================================================
-  const makeSilk = (key, text, x, y, layer = "top", fontSize = 0.75, align = "center", rot = 0) => {
-    const props = {
-      key,
-      text,
-      layer,
-      fontSize: `${(fontSize * silkScale).toFixed(2)}mm`,
-      anchorAlignment: align,
-      pcbX: `${x.toFixed(2)}mm`,
-      pcbY: `${y.toFixed(2)}mm`
-    };
-    if (rot !== 0) props.pcbRotation = rot;
-    return React.createElement("silkscreentext", props);
-  };
-
-  const addSilkBoth = (id, text, x, y, fs = 0.75, align = "center", rot = 0) => {
-    children.push(makeSilk(`${id}_t`, text, x, y, "top", fs, align, rot));
-    children.push(makeSilk(`${id}_b`, text, x, y, "bottom", fs, align, rot));
-  };
-
-  // Top Board Identity
-  children.push(makeSilk("st_title_1", "03 COMPACT AUDIO/MOTION", 0, halfL - 1.2, "top", 0.65, "center"));
-  children.push(makeSilk("st_title_2", "REACTIVE CONTROLLER", 0, halfL - 2.2, "top", 0.55, "center"));
-  children.push(makeSilk("st_author_t", "By Dillon Simeone", 0, -halfL + 1.2, "top", 0.65, "center"));
-
-  // Top Main LED Header (WS2812B)
-  // Pin labels placed south of pads (y = 13.9mm) to prevent collision with top title text
-  addSilkBoth("st_led_name", "WS2812B (G6)", 0, 12.6, 0.55, "center");
-  children.push(makeSilk("st_led_p1", "+5V", -2.54, 13.9, "top", 0.48, "center"));
-  children.push(makeSilk("st_led_p2", "D", 0.0, 13.9, "top", 0.48, "center"));
-  children.push(makeSilk("st_led_p3", "GND", 2.54, 13.9, "top", 0.48, "center"));
-
-  // Left Edge Headers (Rotated 90° parallel to edge, zero pin collision)
-  addSilkBoth("st_led3", "LED3 (G21)", -17.5, 6.5, 0.60, "center", 90);
-  addSilkBoth("st_hap_l", "HAP_L", -17.5, -2.5, 0.60, "center", 90);
-
-  // Right Edge Headers (Rotated 90° parallel to edge, zero pin collision)
-  addSilkBoth("st_led2", "LED2 (G20)", 17.5, 6.5, 0.60, "center", 90);
-  addSilkBoth("st_hap_r", "HAP_R", 17.5, -2.5, 0.60, "center", 90);
-  addSilkBoth("st_sw", "POWER SW", 17.5, -10.0, 0.60, "center", 90);
-
-  // Bottom Edge Connectors
-  addSilkBoth("st_bat_name", "1S LiPo (3.7V)", -2.0, -14.2, 0.60, "center");
-  children.push(makeSilk("st_bat_p1", "+", -3.8, -17.6, "top", 0.60, "center"));
-  children.push(makeSilk("st_bat_p2", "-", -0.2, -17.6, "top", 0.60, "center"));
-
-  // MAX4466 Analog Mic
-  addSilkBoth("st_max_name", "MAX4466 (G0)", -8.5, -11.6, 0.60, "center");
-  children.push(makeSilk("st_max_p1", "VCC", -11.04, -15.2, "top", 0.45, "center"));
-  children.push(makeSilk("st_max_p2", "GND", -8.50, -15.2, "top", 0.45, "center"));
-  children.push(makeSilk("st_max_p3", "OUT", -5.96, -15.2, "top", 0.45, "center"));
-
-  addSilkBoth("st_inmp_name", "INMP441 (I2S)", 7.0, -8.8, 0.60, "center");
-
-  // ============================================================
-  // ALL 14 FACTORY-ASSEMBLED SMT COMPONENTS (LABELED WITH DESIGNATORS & VALUES)
-  // ============================================================
-  // Charger Group (Top-Left)
-  children.push(makeSilk("lbl_chg", "U_CHG", -7.5, 15.9, "top", 0.55, "center"));
-  children.push(makeSilk("lbl_rprog", "R_PROG 2k", -10.2, 13.4, "top", 0.50, "center"));
-  children.push(makeSilk("lbl_cvin", "C_VIN 4.7u", -10.2, 17.1, "top", 0.50, "center"));
-  children.push(makeSilk("lbl_cbat", "C_BAT 4.7u", -10.2, 11.8, "top", 0.50, "center"));
-
-  // Auto Power-Path Group (Top-Right)
-  // lbl_rpwr placed south of R_PWR (y = 15.1mm) to eliminate title overlay
-  children.push(makeSilk("lbl_qpwr", "Q_PWR", 5.2, 11.7, "top", 0.55, "center"));
-  children.push(makeSilk("lbl_rpwr", "R_PWR 100k", 5.2, 15.1, "top", 0.50, "center"));
-  children.push(makeSilk("lbl_dpwr", "D_PWR", 9.8, 11.7, "top", 0.50, "center"));
-
-  // Haptic MOSFET Driver & Flyback Clamp
-  children.push(makeSilk("lbl_qfet", "Q_FET", -17.5, -7.0, "top", 0.50, "center", 90));
-  children.push(makeSilk("lbl_rgate", "R_GATE 10k", -17.5, -10.0, "top", 0.45, "center", 90));
-  children.push(makeSilk("lbl_dhap", "D_HAP", 17.5, -6.0, "top", 0.45, "center", 90));
-
-  // High-Side LED Isolation Switch Cluster (Center-Bottom)
-  children.push(makeSilk("lbl_qledpwr", "Q_LED_PWR", -4.5, -9.0, "top", 0.50, "center"));
-  children.push(makeSilk("lbl_rledpu", "R_PU 100k", -4.5, -3.3, "top", 0.45, "center"));
-  children.push(makeSilk("lbl_qleden", "Q_LED_EN", 0.0, -9.0, "top", 0.50, "center"));
-  children.push(makeSilk("lbl_rledgate", "R_GATE 10k", 0.0, -3.3, "top", 0.45, "center"));
-
-  // ESP32 Pin Labels (Top Silkscreen inside body margin)
-  const c3LeftPins = ["5V", "GND", "3V3", "IO0", "IO1", "IO2", "IO3", "IO4"];
-  const c3RightPins = ["IO5", "IO6", "IO7", "IO8", "IO9", "IO10", "RX", "TX"];
-  for (let i = 0; i < 8; i++) {
-    const yPos = mcuY + (3.5 - i) * 2.54;
-    children.push(makeSilk(`st_c3_l_${i}`, c3LeftPins[i], mcuX - 7.0, yPos, "top", 0.60, "center_right"));
-    children.push(makeSilk(`st_c3_r_${i}`, c3RightPins[i], mcuX + 7.0, yPos, "top", 0.60, "center_left"));
-  }
-
-  // Serious Swamp-Core Easter Egg: Shrek Long-Range Optical Programming Cavity
-  const shrekStory = [
-    "DEEP WITHIN THE SWAMP,",
-    "SHREK EXTENDED HIS LONG,",
-    "CRANIALLY-MOUNTED STALKS",
-    "HIGH ABOVE THE MIRE.",
-    "WITH SUB-MICRON SIGHT,",
-    "COHERENT OPTICAL PULSES",
-    "FLASHED THE ESP32 FIRMWARE",
-    "FROM AN IMMENSE DISTANCE.",
-    "SILENT. METHODICAL.",
-    "SWAMP-CORE RTOS v1.0"
-  ];
-  shrekStory.forEach((line, idx) => {
-    children.push(makeSilk(`st_shrek_${idx}`, line, -2.5, 6.2 - idx * 0.85, "top", 0.42, "center"));
-  });
-
-  // Universal IMU Pin Labels (Bottom Silkscreen)
-  const imuPins = ["VCC", "GND", "SCL", "SDA", "XDA", "XCL", "AD0", "INT"];
-  children.push(makeSilk("st_imu_title", "MPU-6050 / GY-521", imuX, imuY + 10.5, "bottom", 0.75, "center"));
-  for (let i = 0; i < 8; i++) {
-    const yPos = imuY + (3.5 - i) * 2.54;
-    children.push(makeSilk(`st_imu_p_${i}`, imuPins[i], imuX + 2.4, yPos, "bottom", 0.60, "center_left"));
-  }
-
-  // Backside IMU Header Tail Insulation Caution
-  children.push(makeSilk("st_imu_warn1", "INSULATE / FLUSH CUT", 0, 8.5, "bottom", 0.55, "center"));
-  children.push(makeSilk("st_imu_warn2", "PINS UNDER IMU MODULE", 0, 7.3, "bottom", 0.48, "center"));
-
-  // Bottom Silkscreen Attribution & Vector QR Code
-  children.push(makeSilk("st_author_b", "By Dillon Simeone", 0, -halfL + 1.2, "bottom", 0.75, "center"));
-  children.push(makeSilk("st_url_b", "dillonsimeone.com", 0, -6.5, "bottom", 0.75, "center"));
+  const silkMeta = emitLayoutSilkscreen(React, layout, { silkScale });
+  children.push(...silkMeta.elements);
 
   // ============================================================
   // 10. VECTOR QR CODE ON BOTTOM SILKSCREEN
-  // Links to https://dillonsimeone.com/?reason=compactAudioMotionSquarePCB
+  // Centered in backside cavity at (-2.5, 0.8) with full clearance from U_MCU pins
   // ============================================================
-  const QR_MATRIX_33 = [
-    "111111100010010111111010101111111",
-    "100000101100010100101000101000001",
-    "101110100101011001111010101011101",
-    "101110101110111111010011001011101",
-    "101110100100010011111101101011101",
-    "100000101101100111000110001000001",
-    "111111101010101010101010101111111",
-    "000000000111001100101111000000000",
-    "111110111101011100001011110101010",
-    "110011010010100010011101101000111",
-    "110110100010010101101100001011010",
-    "010111001000101100111110010100100",
-    "111110101110101001010011110011000",
-    "011101011000001110111111001000011",
-    "100011110001100100001000011110010",
-    "001101011111000110001111010010100",
-    "110110100011001101010011110110010",
-    "101111000000100010101001001001011",
-    "010100100000010110101010010011010",
-    "000000011000101110011111110010100",
-    "100111111110101101010010110110010",
-    "110100011100000010111001001001011",
-    "100011110111110101101010111101010",
-    "100100011001000110000101011011100",
-    "101111110111000001010001111110001",
-    "000000001010110110011010100011101",
-    "111111101000011110000111101010110",
-    "100000100100110110101110100011110",
-    "101110101110101101000010111110000",
-    "101110101010000011111101110110000",
-    "101110101111100100101101101001110",
-    "100000101001001010001110011101100",
-    "111111101111000110001011101010010"
-  ];
-  const qrModSize = 0.28; // mm per module -> 33 * 0.28 = 9.24mm wide
-  const qrCenterX = 0;
-  const qrCenterY = 0;
+  const qrModSize = 0.28; // 33 * 0.28 = 9.24mm square
+  const qrCenterX = layout?.qr?.x ?? -2.5;
+  const qrCenterY = layout?.qr?.y ?? 0.8;
   const N_QR = 33;
   const halfN = (N_QR - 1) / 2;
 
   let qrPathIdx = 0;
-  for (let r = 0; r < N_QR; r++) {
-    const y = +(qrCenterY + (halfN - r) * qrModSize).toFixed(3);
-    const rowStr = QR_MATRIX_33[r];
-    let c = 0;
-    while (c < N_QR) {
-      if (rowStr[c] === '1') {
-        const startC = c;
-        while (c < N_QR && rowStr[c] === '1') c++;
-        const endC = c - 1;
-        const x1 = +(qrCenterX + (startC - halfN) * qrModSize).toFixed(3);
-        const x2 = +(qrCenterX + (endC - halfN) * qrModSize).toFixed(3);
-        children.push(React.createElement("silkscreenpath", {
-          key: `qr_p_${qrPathIdx++}`,
-          layer: "bottom",
-          route: [{ x: x1, y: y }, { x: x2, y: y }],
-          strokeWidth: `${qrModSize}mm`
-        }));
-      } else {
-        c++;
+  const qrIds = [];
+  if (layout?.qr?.visible !== false) {
+    for (let r = 0; r < N_QR; r++) {
+      const y = +(qrCenterY + (halfN - r) * qrModSize).toFixed(3);
+      const rowStr = QR_MATRIX_33[r];
+      let c = 0;
+      while (c < N_QR) {
+        if (rowStr[c] === "1") {
+          const startC = c;
+          while (c < N_QR && rowStr[c] === "1") c++;
+          const endC = c - 1;
+          const x1 = +(qrCenterX + (startC - halfN) * qrModSize).toFixed(3);
+          const x2 = +(qrCenterX + (endC - halfN) * qrModSize).toFixed(3);
+          const qId = `qr_p_${qrPathIdx++}`;
+          qrIds.push(qId);
+          children.push(React.createElement("silkscreenpath", {
+            key: qId,
+            layer: "bottom",
+            route: [{ x: x1, y }, { x: x2, y }],
+            strokeWidth: `${qrModSize}mm`
+          }));
+        } else {
+          c++;
+        }
       }
     }
   }
@@ -501,88 +211,96 @@ export async function compileCircuit(params = {}) {
   // ============================================================
   // 11. RAT'S NEST LOGICAL NETS & TRACE ROUTING
   // ============================================================
+  const addTrace = (from, to, key, net, width) => {
+    children.push(React.createElement("trace", {
+      from,
+      to,
+      key,
+      name: `${net}__${key}`,
+      width
+    }));
+  };
+
   // IMU I2C & Interrupt
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin7", to: ".U_IMU > .pin3", key: "tr_scl", name: "NET_I2C_SCL", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin6", to: ".U_IMU > .pin4", key: "tr_sda", name: "NET_I2C_SDA", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin9", to: ".U_IMU > .pin8", key: "tr_imu_int", name: "NET_IMU_INT", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin3", to: ".U_IMU > .pin1", key: "tr_imu_vcc", name: "NET_3V3", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".U_IMU > .pin2", key: "tr_imu_gnd", name: "NET_GND", width: PWR }));
+  addTrace(".U_MCU > .pin7", ".U_IMU > .pin3", "tr_scl", "NET_I2C_SCL", SIG);
+  addTrace(".U_MCU > .pin6", ".U_IMU > .pin4", "tr_sda", "NET_I2C_SDA", SIG);
+  addTrace(".U_MCU > .pin9", ".U_IMU > .pin8", "tr_imu_int", "NET_IMU_INT", SIG);
+  addTrace(".U_MCU > .pin3", ".U_IMU > .pin1", "tr_imu_vcc", "NET_3V3", PWR);
+  addTrace(".U_MCU > .pin2", ".U_IMU > .pin2", "tr_imu_gnd", "NET_GND", PWR);
 
-    // Addressable LEDs (Main GPIO 6, Aux 2 GPIO 20, Aux 3 GPIO 21)
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin10", to: ".J_LED > .pin2", key: "tr_led_dat", name: "NET_LED_DATA", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin15", to: ".J_LED2 > .pin2", key: "tr_led2_dat", name: "NET_LED2_DATA", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin16", to: ".J_LED3 > .pin2", key: "tr_led3_dat", name: "NET_LED3_DATA", width: SIG }));
+  // Addressable LEDs (Main GPIO 6, Aux 2 GPIO 20, Aux 3 GPIO 21)
+  addTrace(".U_MCU > .pin10", ".J_LED > .pin2", "tr_led_dat", "NET_LED_DATA", SIG);
+  addTrace(".U_MCU > .pin15", ".J_LED2 > .pin2", "tr_led2_dat", "NET_LED2_DATA", SIG);
+  addTrace(".U_MCU > .pin16", ".J_LED3 > .pin2", "tr_led3_dat", "NET_LED3_DATA", SIG);
 
-    // High-Side LED Power Rail (Q_LED_PWR Drain -> LED Headers Pin 1)
-    children.push(React.createElement("trace", { from: ".Q_LED_PWR > .pin3", to: ".J_LED > .pin1", key: "tr_led_pwr_1", name: "NET_5V_SW", width: PWR }));
-    children.push(React.createElement("trace", { from: ".Q_LED_PWR > .pin3", to: ".J_LED2 > .pin1", key: "tr_led_pwr_2", name: "NET_5V_SW", width: PWR }));
-    children.push(React.createElement("trace", { from: ".Q_LED_PWR > .pin3", to: ".J_LED3 > .pin1", key: "tr_led_pwr_3", name: "NET_5V_SW", width: PWR }));
+  // High-Side LED Power Rail (Q_LED_PWR Drain -> LED Headers Pin 1)
+  addTrace(".Q_LED_PWR > .pin3", ".J_LED > .pin1", "tr_led_pwr_1", "NET_5V_SW", PWR);
+  addTrace(".Q_LED_PWR > .pin3", ".J_LED2 > .pin1", "tr_led_pwr_2", "NET_5V_SW", PWR);
+  addTrace(".Q_LED_PWR > .pin3", ".J_LED3 > .pin1", "tr_led_pwr_3", "NET_5V_SW", PWR);
 
-    // LED Ground Return Rails (J_LED Headers Pin 3 -> System GND)
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".J_LED > .pin3", key: "tr_led_gnd_1", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".J_LED2 > .pin3", key: "tr_led_gnd_2", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".J_LED3 > .pin3", key: "tr_led_gnd_3", name: "NET_GND", width: PWR }));
+  // LED Ground Return Rails (J_LED Headers Pin 3 -> System GND)
+  addTrace(".U_MCU > .pin2", ".J_LED > .pin3", "tr_led_gnd_1", "NET_GND", PWR);
+  addTrace(".U_MCU > .pin2", ".J_LED2 > .pin3", "tr_led_gnd_2", "NET_GND", PWR);
+  addTrace(".U_MCU > .pin2", ".J_LED3 > .pin3", "tr_led_gnd_3", "NET_GND", PWR);
 
-    // High-Side LED Switch Control (GPIO 10 -> Q_LED_EN Gate via R_LED_GATE)
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin14", to: ".Q_LED_EN > .pin1", key: "tr_led_en_gate", name: "NET_LED_PWR_EN", width: SIG }));
-    children.push(React.createElement("trace", { from: ".Q_LED_EN > .pin1", to: ".R_LED_GATE > .pin1", key: "tr_led_rgate", name: "NET_LED_PWR_EN", width: SIG }));
-    children.push(React.createElement("trace", { from: ".R_LED_GATE > .pin2", to: ".U_MCU > .pin2", key: "tr_led_rgate_gnd", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".Q_LED_EN > .pin2", to: ".U_MCU > .pin2", key: "tr_led_en_src", name: "NET_GND", width: PWR }));
+  // High-Side LED Switch Control (GPIO 10 -> Q_LED_EN Gate via R_LED_GATE)
+  addTrace(".U_MCU > .pin14", ".Q_LED_EN > .pin1", "tr_led_en_gate", "NET_LED_PWR_EN", SIG);
+  addTrace(".Q_LED_EN > .pin1", ".R_LED_GATE > .pin1", "tr_led_rgate", "NET_LED_PWR_EN", SIG);
+  addTrace(".R_LED_GATE > .pin2", ".U_MCU > .pin2", "tr_led_rgate_gnd", "NET_GND", PWR);
+  addTrace(".Q_LED_EN > .pin2", ".U_MCU > .pin2", "tr_led_en_src", "NET_GND", PWR);
 
-    // Q_LED_EN Drain pulls Q_LED_PWR Gate LOW to turn on LEDs
-    children.push(React.createElement("trace", { from: ".Q_LED_EN > .pin3", to: ".Q_LED_PWR > .pin1", key: "tr_led_pmos_gate", name: "NET_LED_GATE_CTRL", width: SIG }));
-    children.push(React.createElement("trace", { from: ".Q_LED_PWR > .pin1", to: ".R_LED_PU > .pin1", key: "tr_led_rpu_gate", name: "NET_LED_GATE_CTRL", width: SIG }));
-    children.push(React.createElement("trace", { from: ".R_LED_PU > .pin2", to: ".Q_LED_PWR > .pin2", key: "tr_led_rpu_src", name: "NET_VSYS", width: PWR }));
+  // Q_LED_EN Drain pulls Q_LED_PWR Gate LOW to turn on LEDs
+  addTrace(".Q_LED_EN > .pin3", ".Q_LED_PWR > .pin1", "tr_led_pmos_gate", "NET_LED_GATE_CTRL", SIG);
+  addTrace(".Q_LED_PWR > .pin1", ".R_LED_PU > .pin1", "tr_led_rpu_gate", "NET_LED_GATE_CTRL", SIG);
+  addTrace(".R_LED_PU > .pin2", ".Q_LED_PWR > .pin2", "tr_led_rpu_src", "NET_VSYS", PWR);
 
-    // Haptic Driver (GPIO 7 PWM -> Q_FET Gate)
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin11", to: ".Q_FET > .pin1", key: "tr_hap_pwm", name: "NET_HAPTIC_PWM", width: SIG }));
-    children.push(React.createElement("trace", { from: ".Q_FET > .pin1", to: ".R_GATE > .pin1", key: "tr_r_gate_pin1", name: "NET_HAPTIC_PWM", width: SIG }));
-    children.push(React.createElement("trace", { from: ".R_GATE > .pin2", to: ".U_MCU > .pin2", key: "tr_r_gate_pin2", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".Q_FET > .pin2", to: ".U_MCU > .pin2", key: "tr_fet_src_gnd", name: "NET_GND", width: PWR }));
+  // Haptic Driver (GPIO 7 PWM -> Q_FET Gate)
+  addTrace(".U_MCU > .pin11", ".Q_FET > .pin1", "tr_hap_pwm", "NET_HAPTIC_PWM", SIG);
+  addTrace(".Q_FET > .pin1", ".R_GATE > .pin1", "tr_r_gate_pin1", "NET_HAPTIC_PWM", SIG);
+  addTrace(".R_GATE > .pin2", ".U_MCU > .pin2", "tr_r_gate_pin2", "NET_GND", PWR);
+  addTrace(".Q_FET > .pin2", ".U_MCU > .pin2", "tr_fet_src_gnd", "NET_GND", PWR);
 
-    // Q_FET Drain to Haptic Outputs (Pin 2: MTR_NEG) and Flyback Diode Anode (Pin 2)
-    children.push(React.createElement("trace", { from: ".Q_FET > .pin3", to: ".J_HAP_L > .pin2", key: "tr_fet_drain_hap_l", name: "NET_HAP_DRIVE", width: PWR }));
-    children.push(React.createElement("trace", { from: ".Q_FET > .pin3", to: ".J_HAP_R > .pin2", key: "tr_fet_drain_hap_r", name: "NET_HAP_DRIVE", width: PWR }));
-    children.push(React.createElement("trace", { from: ".Q_FET > .pin3", to: ".D_HAP > .pin2", key: "tr_fet_drain_diode", name: "NET_HAP_DRIVE", width: PWR }));
+  // Q_FET Drain to Haptic Outputs (Pin 2: MTR_NEG) and Flyback Diode Anode (Pin 2)
+  addTrace(".Q_FET > .pin3", ".J_HAP_L > .pin2", "tr_fet_drain_hap_l", "NET_HAP_DRIVE", PWR);
+  addTrace(".Q_FET > .pin3", ".J_HAP_R > .pin2", "tr_fet_drain_hap_r", "NET_HAP_DRIVE", PWR);
+  addTrace(".Q_FET > .pin3", ".D_HAP > .pin2", "tr_fet_drain_diode", "NET_HAP_DRIVE", PWR);
 
-    // Inductive Flyback Diode Cathode (Pin 1) clamped to VSYS rail
-    children.push(React.createElement("trace", { from: ".D_HAP > .pin1", to: ".J_HAP_L > .pin1", key: "tr_diode_cath_hap_l", name: "NET_VSYS", width: PWR }));
-    children.push(React.createElement("trace", { from: ".D_HAP > .pin1", to: ".J_HAP_R > .pin1", key: "tr_diode_cath_hap_r", name: "NET_VSYS", width: PWR }));
+  // Inductive Flyback Diode Cathode (Pin 1) clamped to VSYS rail
+  addTrace(".D_HAP > .pin1", ".J_HAP_L > .pin1", "tr_diode_cath_hap_l", "NET_VSYS", PWR);
+  addTrace(".D_HAP > .pin1", ".J_HAP_R > .pin1", "tr_diode_cath_hap_r", "NET_VSYS", PWR);
 
-    // Microphones
-    // MAX4466 Analog Mic (GPIO 0 ADC1_CH0 -> OUT pin3)
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin4", to: ".J_MIC_MAX > .pin3", key: "tr_mic_adc", name: "NET_MIC_ADC", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin3", to: ".J_MIC_MAX > .pin1", key: "tr_mic_3v3", name: "NET_3V3", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".J_MIC_MAX > .pin2", key: "tr_mic_gnd", name: "NET_GND", width: PWR }));
+  // Microphones
+  addTrace(".U_MCU > .pin4", ".J_MIC_MAX > .pin3", "tr_mic_adc", "NET_MIC_ADC", SIG);
+  addTrace(".U_MCU > .pin3", ".J_MIC_MAX > .pin1", "tr_mic_3v3", "NET_3V3", PWR);
+  addTrace(".U_MCU > .pin2", ".J_MIC_MAX > .pin2", "tr_mic_gnd", "NET_GND", PWR);
 
-    // INMP441 Digital I2S Mic (GPIO 1: WS, GPIO 4: SCK, GPIO 8: SD)
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin5", to: ".J_MIC_INMP > .pin2", key: "tr_i2s_ws", name: "NET_I2S_WS", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin8", to: ".J_MIC_INMP > .pin1", key: "tr_i2s_sck", name: "NET_I2S_SCK", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin12", to: ".J_MIC_INMP > .pin4", key: "tr_i2s_sd", name: "NET_MIC_SD", width: SIG }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin3", to: ".J_MIC_INMP > .pin5", key: "tr_i2s_vcc", name: "NET_3V3", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".J_MIC_INMP > .pin6", key: "tr_i2s_gnd", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".J_MIC_INMP > .pin6", to: ".J_MIC_INMP > .pin3", key: "tr_i2s_lr_gnd", name: "NET_GND", width: SIG }));
+  addTrace(".U_MCU > .pin5", ".J_MIC_INMP > .pin2", "tr_i2s_ws", "NET_I2S_WS", SIG);
+  addTrace(".U_MCU > .pin8", ".J_MIC_INMP > .pin1", "tr_i2s_sck", "NET_I2S_SCK", SIG);
+  addTrace(".U_MCU > .pin12", ".J_MIC_INMP > .pin4", "tr_i2s_sd", "NET_MIC_SD", SIG);
+  addTrace(".U_MCU > .pin3", ".J_MIC_INMP > .pin5", "tr_i2s_vcc", "NET_3V3", PWR);
+  addTrace(".U_MCU > .pin2", ".J_MIC_INMP > .pin6", "tr_i2s_gnd", "NET_GND", PWR);
+  addTrace(".J_MIC_INMP > .pin6", ".J_MIC_INMP > .pin3", "tr_i2s_lr_gnd", "NET_GND", SIG);
 
-    // LiPo Charger Subsystem
-    children.push(React.createElement("trace", { from: ".U_MCU > .pin1", to: ".U_CHG > .pin4", key: "tr_chg_vin", name: "NET_VBUS", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_CHG > .pin4", to: ".C_VIN > .pin1", key: "tr_cvin_pos", name: "NET_VBUS", width: PWR }));
-    children.push(React.createElement("trace", { from: ".C_VIN > .pin2", to: ".U_CHG > .pin2", key: "tr_cvin_gnd", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_CHG > .pin5", to: ".R_PROG > .pin1", key: "tr_prog_r", name: "NET_CHG_PROG", width: SIG }));
-    children.push(React.createElement("trace", { from: ".R_PROG > .pin2", to: ".U_CHG > .pin2", key: "tr_prog_gnd", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_CHG > .pin3", to: ".C_BAT > .pin1", key: "tr_cbat_pos", name: "NET_VBAT", width: PWR }));
-    children.push(React.createElement("trace", { from: ".C_BAT > .pin2", to: ".U_CHG > .pin2", key: "tr_cbat_gnd", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_CHG > .pin3", to: ".J_BAT > .pin1", key: "tr_vbat_trace", name: "NET_VBAT", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_CHG > .pin2", to: ".J_BAT > .pin2", key: "tr_gnd_trace", name: "NET_GND", width: PWR }));
+  // LiPo Charger Subsystem
+  addTrace(".U_MCU > .pin1", ".U_CHG > .pin4", "tr_chg_vin", "NET_VBUS", PWR);
+  addTrace(".U_CHG > .pin4", ".C_VIN > .pin1", "tr_cvin_pos", "NET_VBUS", PWR);
+  addTrace(".C_VIN > .pin2", ".U_CHG > .pin2", "tr_cvin_gnd", "NET_GND", PWR);
+  addTrace(".U_CHG > .pin5", ".R_PROG > .pin1", "tr_prog_r", "NET_CHG_PROG", SIG);
+  addTrace(".R_PROG > .pin2", ".U_CHG > .pin2", "tr_prog_gnd", "NET_GND", PWR);
+  addTrace(".U_CHG > .pin3", ".C_BAT > .pin1", "tr_cbat_pos", "NET_VBAT", PWR);
+  addTrace(".C_BAT > .pin2", ".U_CHG > .pin2", "tr_cbat_gnd", "NET_GND", PWR);
+  addTrace(".U_CHG > .pin3", ".J_BAT > .pin1", "tr_vbat_trace", "NET_VBAT", PWR);
+  addTrace(".U_CHG > .pin2", ".J_BAT > .pin2", "tr_gnd_trace", "NET_GND", PWR);
 
-    // Power Path & External Switch
-    children.push(React.createElement("trace", { from: ".J_BAT > .pin1", to: ".SW_EXT > .pin1", key: "tr_sw_in", name: "NET_VBAT", width: PWR }));
-    children.push(React.createElement("trace", { from: ".SW_EXT > .pin2", to: ".Q_PWR > .pin3", key: "tr_pwr_pmos_d", name: "NET_VBAT_SW", width: PWR }));
-    children.push(React.createElement("trace", { from: ".Q_PWR > .pin2", to: ".D_HAP > .pin1", key: "tr_pwr_pmos_s", name: "NET_VSYS", width: PWR }));
-    children.push(React.createElement("trace", { from: ".U_CHG > .pin4", to: ".D_PWR > .pin2", key: "tr_d_pwr_a", name: "NET_VBUS", width: PWR }));
-    children.push(React.createElement("trace", { from: ".D_PWR > .pin1", to: ".Q_PWR > .pin2", key: "tr_d_pwr_k", name: "NET_VSYS", width: PWR }));
-    children.push(React.createElement("trace", { from: ".Q_PWR > .pin1", to: ".R_PWR > .pin1", key: "tr_r_pwr_g", name: "NET_VBUS", width: SIG }));
-    children.push(React.createElement("trace", { from: ".R_PWR > .pin2", to: ".U_CHG > .pin2", key: "tr_r_pwr_gnd", name: "NET_GND", width: PWR }));
-    children.push(React.createElement("trace", { from: ".D_PWR > .pin2", to: ".Q_PWR > .pin1", key: "tr_pwr_gate_vbus", name: "NET_VBUS", width: SIG }));
+  // Power Path & External Switch
+  addTrace(".J_BAT > .pin1", ".SW_EXT > .pin1", "tr_sw_in", "NET_VBAT", PWR);
+  addTrace(".SW_EXT > .pin2", ".Q_PWR > .pin3", "tr_pwr_pmos_d", "NET_VBAT_SW", PWR);
+  addTrace(".Q_PWR > .pin2", ".D_HAP > .pin1", "tr_pwr_pmos_s", "NET_VSYS", PWR);
+  addTrace(".U_CHG > .pin4", ".D_PWR > .pin2", "tr_d_pwr_a", "NET_VBUS", PWR);
+  addTrace(".D_PWR > .pin1", ".Q_PWR > .pin2", "tr_d_pwr_k", "NET_VSYS", PWR);
+  addTrace(".Q_PWR > .pin1", ".R_PWR > .pin1", "tr_r_pwr_g", "NET_VBUS", SIG);
+  addTrace(".R_PWR > .pin2", ".U_CHG > .pin2", "tr_r_pwr_gnd", "NET_GND", PWR);
+  addTrace(".D_PWR > .pin2", ".Q_PWR > .pin1", "tr_pwr_gate_vbus", "NET_VBUS", SIG);
 
   const boardConfig = boardProps(boardWidth, boardLength, routing, { skipRouting });
   const boardElement = React.createElement("board", {
@@ -592,17 +310,13 @@ export async function compileCircuit(params = {}) {
   }, ...children);
 
   circuit.add(boardElement);
-  console.log(`[Circuit 03 Profiling] circuit.add() finished in ${(performance.now() - t0).toFixed(1)}ms`);
 
-  const tRender = performance.now();
   try {
     await circuit.renderUntilSettled();
-    console.log(`[Circuit 03 Profiling] renderUntilSettled() took ${(performance.now() - tRender).toFixed(1)}ms`);
   } catch (err) {
-    console.warn(`[Circuit 03 Warning] renderUntilSettled encountered non-fatal autorouting notice:`, err?.message || err);
+    console.warn("[Circuit 03 Warning] renderUntilSettled encountered non-fatal autorouting notice:", err?.message || err);
   }
 
-  // Trace Boundary Guard: Clamp all trace routes strictly within board outline and populate x/y for through_pad
   const margin = 0.5;
   const maxBoardX = halfW - margin;
   const minBoardX = -halfW + margin;
@@ -610,13 +324,26 @@ export async function compileCircuit(params = {}) {
   const minBoardY = -halfL + margin;
 
   const circuitJson = circuit.getCircuitJson();
+  tagCircuitJsonSilkscreenIds(circuitJson, silkMeta);
+  const allPaths = circuitJson.filter(e => e.type === "pcb_silkscreen_path");
+  qrIds.forEach((qId, idx) => {
+    const p = allPaths[silkMeta.pathMeta.length + idx];
+    if (p) p.editor_id = qId;
+  });
+
   circuitJson.forEach(item => {
     if (item.type === "pcb_via") {
       if (typeof item.hole_diameter !== "number" || item.hole_diameter < 0.20) item.hole_diameter = 0.20;
       if (typeof item.outer_diameter !== "number" || item.outer_diameter < 0.45) item.outer_diameter = 0.45;
     }
     if (item.type === "pcb_trace" && Array.isArray(item.route)) {
+      if (typeof item.width === "number" && item.width < 0.15) {
+        item.width = 0.20;
+      }
       item.route.forEach(pt => {
+        if (typeof pt.width === "number" && pt.width < 0.15) {
+          pt.width = 0.20;
+        }
         if (typeof pt.x !== "number") {
           if (pt.start && typeof pt.start.x === "number") pt.x = pt.start.x;
           else if (pt.end && typeof pt.end.x === "number") pt.x = pt.end.x;
@@ -639,11 +366,13 @@ export async function compileCircuit(params = {}) {
 }
 
 /**
- * Builds Gerber, Excellon drill files, and BOM/PNP assembly exports.
+ * Builds Gerber, Excellon drill files, and 1-to-1 BOM/CPL exports synchronized directly from layout.json.
  */
 export async function generateManufacturingArtifacts(circuit, boardParams = {}) {
   let circuitJson = circuit.getCircuitJson();
+  const layout = boardParams.layout || circuit.__layout || await loadLayoutJson(import.meta.url, "./layout.json");
   const silkScale = boardParams.silkScale || 1.0;
+
   if (silkScale !== 1.0) {
     circuitJson = circuitJson.map(item => {
       if (item.type === "pcb_silkscreen_text" && typeof item.font_size === "number") {
@@ -652,12 +381,15 @@ export async function generateManufacturingArtifacts(circuit, boardParams = {}) 
       return item;
     });
   }
-  const drc = runManufacturingDrc(circuitJson);
+
+  const drc = runManufacturingDrc(circuitJson, boardParams.routing, {
+    boardWidth: boardParams.boardWidth || layout?.board?.width || 38,
+    boardHeight: boardParams.boardLength || layout?.board?.length || 38,
+    layout,
+    auditSilkscreen: true
+  });
 
   let gerberZipBlob = null;
-  let bomCsv = "";
-  let pnpCsv = "";
-
   try {
     gerberZipBlob = await createGerberZipBlob(circuitJson, {
       projectName: "03_compactSquareLedHapticPCB",
@@ -676,55 +408,31 @@ export async function generateManufacturingArtifacts(circuit, boardParams = {}) 
   }
 
   // 1-to-1 BOM & CPL Parity: Exactly 14 factory-assembled SMT parts
-  // Comments use standard concise electrical values (10k, 100k, 4.7uF) for 1-click JLCPCB replacement searching
+  // SOT-23 MOSFETs (AO3400A/AO3401A) have jlcRotOffset = 270 per SKILL.md Section 3.2
   const smtComponents = [
-    { designator: "U_CHG", comment: "TP4054", footprint: "SOT-23-5", lcsc: "C382138", qty: 1 },
-    { designator: "Q_FET", comment: "AO3400A", footprint: "SOT-23", lcsc: "C20917", qty: 1 },
-    { designator: "Q_PWR", comment: "AO3401A", footprint: "SOT-23", lcsc: "C15127", qty: 1 },
-    { designator: "D_PWR", comment: "B5819W", footprint: "SOD-123", lcsc: "C8598", qty: 1 },
-    { designator: "D_HAP", comment: "B5819W", footprint: "SOD-123", lcsc: "C8598", qty: 1 },
-    { designator: "R_PROG", comment: "2k", footprint: "0603", lcsc: "C22975", qty: 1 },
-    { designator: "R_GATE", comment: "10k", footprint: "0603", lcsc: "C25804", qty: 1 },
-    { designator: "R_PWR", comment: "100k", footprint: "0603", lcsc: "C25803", qty: 1 },
-    { designator: "C_VIN", comment: "4.7uF", footprint: "0603", lcsc: "C19666", qty: 1 },
-    { designator: "C_BAT", comment: "4.7uF", footprint: "0603", lcsc: "C19666", qty: 1 },
-    { designator: "Q_LED_PWR", comment: "AO3401A", footprint: "SOT-23", lcsc: "C15127", qty: 1 },
-    { designator: "R_LED_PU", comment: "100k", footprint: "0603", lcsc: "C25803", qty: 1 },
-    { designator: "Q_LED_EN", comment: "AO3400A", footprint: "SOT-23", lcsc: "C20917", qty: 1 },
-    { designator: "R_LED_GATE", comment: "10k", footprint: "0603", lcsc: "C25804", qty: 1 }
+    { designator: "U_CHG", comment: "TP4054", footprint: "SOT-23-5", lcsc: "C382138", qty: 1, jlcRotOffset: 0 },
+    { designator: "Q_FET", comment: "AO3400A", footprint: "SOT-23", lcsc: "C20917", qty: 1, jlcRotOffset: 270 },
+    { designator: "Q_PWR", comment: "AO3401A", footprint: "SOT-23", lcsc: "C15127", qty: 1, jlcRotOffset: 270 },
+    { designator: "D_PWR", comment: "B5819W", footprint: "SOD-123", lcsc: "C8598", qty: 1, jlcRotOffset: 0 },
+    { designator: "D_HAP", comment: "B5819W", footprint: "SOD-123", lcsc: "C8598", qty: 1, jlcRotOffset: 0 },
+    { designator: "R_PROG", comment: "2k", footprint: "0603", lcsc: "C22975", qty: 1, jlcRotOffset: 0 },
+    { designator: "R_GATE", comment: "10k", footprint: "0603", lcsc: "C25804", qty: 1, jlcRotOffset: 0 },
+    { designator: "R_PWR", comment: "100k", footprint: "0603", lcsc: "C25803", qty: 1, jlcRotOffset: 0 },
+    { designator: "C_VIN", comment: "4.7uF", footprint: "0603", lcsc: "C19666", qty: 1, jlcRotOffset: 0 },
+    { designator: "C_BAT", comment: "4.7uF", footprint: "0603", lcsc: "C19666", qty: 1, jlcRotOffset: 0 },
+    { designator: "Q_LED_PWR", comment: "AO3401A", footprint: "SOT-23", lcsc: "C15127", qty: 1, jlcRotOffset: 270 },
+    { designator: "R_LED_PU", comment: "100k", footprint: "0603", lcsc: "C25803", qty: 1, jlcRotOffset: 0 },
+    { designator: "Q_LED_EN", comment: "AO3400A", footprint: "SOT-23", lcsc: "C20917", qty: 1, jlcRotOffset: 270 },
+    { designator: "R_LED_GATE", comment: "10k", footprint: "0603", lcsc: "C25804", qty: 1, jlcRotOffset: 0 }
   ];
 
-  bomCsv = "Designator,Comment,Footprint,LCSC Part #,Quantity\n" +
-    smtComponents.map(c => `"${c.designator}","${c.comment}","${c.footprint}","${c.lcsc}",${c.qty}`).join("\n");
-
-  const cplRows = [];
-  cplRows.push("Designator,Mid X,Mid Y,Layer,Rotation");
-  const bWidth = boardParams.boardWidth || 38;
-  const smtPosMap = {
-    U_CHG: { x: -7.5, y: 14.6, rot: 0, layer: "Top" },
-    R_PROG: { x: -10.2, y: 14.6, rot: 0, layer: "Top" },
-    C_VIN: { x: -7.5, y: 17.1, rot: 0, layer: "Top" },
-    C_BAT: { x: -7.5, y: 11.8, rot: 0, layer: "Top" },
-    Q_PWR: { x: 5.2, y: 13.5, rot: 270, layer: "Top" },
-    D_PWR: { x: 9.8, y: 13.5, rot: 0, layer: "Top" },
-    R_PWR: { x: 5.2, y: 16.5, rot: 0, layer: "Top" },
-    Q_FET: { x: -(bWidth / 2 - 3.5), y: -7.0, rot: 270, layer: "Top" },
-    R_GATE: { x: -(bWidth / 2 - 3.5), y: -10.0, rot: 0, layer: "Top" },
-    D_HAP: { x: (bWidth / 2 - 3.5), y: -6.0, rot: 180, layer: "Top" },
-    Q_LED_PWR: { x: -4.5, y: -7.5, rot: 270, layer: "Top" },
-    Q_LED_EN: { x: 0.0, y: -7.5, rot: 270, layer: "Top" },
-    R_LED_PU: { x: -4.5, y: -4.5, rot: 0, layer: "Top" },
-    R_LED_GATE: { x: 0.0, y: -4.5, rot: 0, layer: "Top" }
-  };
-
-  smtComponents.forEach(c => {
-    const pos = smtPosMap[c.designator] || { x: 0, y: 0, rot: 0, layer: "Top" };
-    cplRows.push(`"${c.designator}","${pos.x.toFixed(2)}mm","${pos.y.toFixed(2)}mm","${pos.layer}",${pos.rot}`);
-  });
-  pnpCsv = cplRows.join("\n");
+  const bomCsv = createBomCsv(smtComponents);
+  const pnpCsv = createSyncedCplCsv(layout, smtComponents);
 
   return {
     drc,
+    circuitJson,
+    layout,
     gerberZipBlob,
     easyEdaZipBlob,
     bomCsv,

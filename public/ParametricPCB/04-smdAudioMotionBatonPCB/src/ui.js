@@ -8,6 +8,9 @@ import { createThreePcbViewer } from "../../shared/three-pcb-viewer.js";
 import { setupInteractiveSvg } from "../../shared/svg-viewer.js";
 import { generatePcbSvgMarkup } from "../../shared/svg-pcb-renderer.js";
 import { downloadFile } from "../../shared/export-utils.js";
+import { mountStudioEditButton } from "../../shared/studio-link.js";
+
+mountStudioEditButton("04");
 
 // DOM References
 const container3D = document.getElementById("canvas-3d-container");

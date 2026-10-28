@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "board": {
+    "width": 40,
+    "length": 40
+  },
+  "components": {
+    "H1": {
+      "footprint": "MountingHoleM3",
+      "x": -16.5,
+      "y": 16.5,
+      "rotation": 0,
+      "layer": "top",
+      "holeDiameter": 3.2,
+      "outerDiameter": 5.0,
+      "markers": {}
+    },
+    "H2": {
+      "footprint": "MountingHoleM3",
+      "x": 16.5,
+      "y": 16.5,
+      "rotation": 0,
+      "layer": "top",
+      "holeDiameter": 3.2,
+      "outerDiameter": 5.0,
+      "markers": {}
+    },
+    "H3": {
+      "footprint": "MountingHoleM3",
+      "x": -16.5,
+      "y": -16.5,
+      "rotation": 0,
+      "layer": "top",
+      "holeDiameter": 3.2,
+      "outerDiameter": 5.0,
+      "markers": {}
+    },
+    "H4": {
+      "footprint": "MountingHoleM3",
+      "x": 16.5,
+      "y": -16.5,
+      "rotation": 0,
+      "layer": "top",
+      "holeDiameter": 3.2,
+      "outerDiameter": 5.0,
+      "markers": {}
+    },
+    "U_MCU": {
+      "footprint": "ESP32C3_SuperMini",
+      "x": 0.0,
+      "y": 2.0,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "U_MCU ESP32-C3",
+          "dx": 0.0,
+          "dy": -10.6,
+          "fontSize": 1.0,
+          "visible": true
+        },
+        "pin1Dot": {
+          "visible": true
+        }
+      }
+    },
+    "C_VBUS": {
+      "footprint": "Capacitor0603",
+      "x": -7.5,
+      "y": -11.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "C_VBUS",
+          "dx": 0.0,
+          "dy": 0.25,
+          "fontSize": 0.8,
+          "visible": true
+        }
+      }
+    },
+    "D_LED": {
+      "footprint": "Led0603",
+      "x": 7.5,
+      "y": -11.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "D_LED",
+          "dx": 0.0,
+          "dy": 0.15,
+          "fontSize": 0.8,
+          "visible": true
+        },
+        "minus": {
+          "dx": 0.0,
+          "dy": 0.0,
+          "fontSize": 1.0,
+          "visible": true
+        },
+        "plus": {
+          "dx": 0.0,
+          "dy": 0.0,
+          "fontSize": 1.0,
+          "visible": true
+        },
+        "polarityBar": {
+          "visible": true
+        }
+      }
+    },
+    "R_LED": {
+      "footprint": "Resistor0603",
+      "x": 7.5,
+      "y": -15.2,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "R_LED",
+          "dx": 0.0,
+          "dy": -2.45,
+          "fontSize": 0.8,
+          "visible": true
+        }
+      }
+    },
+    "J_AUX": {
+      "footprint": "Header4Pin",
+      "x": 0.0,
+      "y": -16.5,
+      "rotation": 0,
+      "layer": "top",
+      "markers": {
+        "ref": {
+          "text": "J_AUX",
+          "dx": 0.0,
+          "dy": 2.35,
+          "fontSize": 1.0,
+          "visible": true
+        }
+      }
+    }
+  },
+  "silkscreen": [
+    {
+      "id": "st_title",
+      "type": "text",
+      "text": "00 STARTER PCB",
+      "x": 0.0,
+      "y": 17.6,
+      "layer": "top",
+      "fontSize": 1.5,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_subtitle",
+      "type": "text",
+      "text": "MODULAR TEMPLATE",
+      "x": 0.0,
+      "y": 15.2,
+      "layer": "top",
+      "fontSize": 1.0,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_aux_p1",
+      "type": "text",
+      "text": "5V",
+      "x": -3.81,
+      "y": -14.4,
+      "layer": "top",
+      "fontSize": 1.0,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_aux_p2",
+      "type": "text",
+      "text": "IO0",
+      "x": -1.27,
+      "y": -14.4,
+      "layer": "top",
+      "fontSize": 1.0,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_aux_p3",
+      "type": "text",
+      "text": "IO1",
+      "x": 1.27,
+      "y": -14.4,
+      "layer": "top",
+      "fontSize": 1.0,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    },
+    {
+      "id": "st_aux_p4",
+      "type": "text",
+      "text": "GND",
+      "x": 3.81,
+      "y": -14.4,
+      "layer": "top",
+      "fontSize": 1.0,
+      "align": "center",
+      "rotation": 0,
+      "visible": true
+    }
+  ]
+}

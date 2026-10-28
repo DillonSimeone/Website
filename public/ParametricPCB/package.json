@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node shared/audit-footprints.mjs && node shared/check-overlays.mjs 04 && node shared/audit-netlist.mjs 04",
+    "studio": "node shared/studio-server.mjs",
+    "test": "node shared/audit-footprints.mjs && node shared/audit-silkscreen.mjs 00 && node shared/audit-silkscreen.mjs 03 && node shared/check-overlays.mjs 03 && node shared/audit-netlist.mjs 03 && node shared/check-overlays.mjs 04 && node shared/audit-netlist.mjs 04",
+    "audit-silkscreen": "node shared/audit-silkscreen.mjs",
     "audit-footprints": "node shared/audit-footprints.mjs",
     "check-overlays": "node shared/check-overlays.mjs",
     "audit-netlist": "node shared/audit-netlist.mjs",
@@ -24,6 +26,7 @@
     "circuit-json-to-gerber": "^0.0.78",
     "circuit-json-to-kicad": "^0.0.230",
     "esbuild": "^0.28.1",
+    "express": "^5.3.0",
     "jszip": "^3.10.2",
     "polygon-clipping": "^0.15.7",
     "react": "19.2.7",

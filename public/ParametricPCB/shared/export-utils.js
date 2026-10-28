@@ -60,6 +60,23 @@ export async function createGerberZipBlob(circuitJson, options = {}) {
   const { projectName = "PCB", prefix = projectName, format } = options;
 
   const gerberCommands = convertSoupToGerberCommands(circuitJson);
+  // Enforce JLCPCB 0.15mm (6 mil) minimum silkscreen stroke aperture so 0.8mm-1.1mm text prints bright & crisp
+  for (const silkLayer of ["F_SilkScreen", "B_SilkScreen"]) {
+    const cmds = gerberCommands[silkLayer];
+    if (Array.isArray(cmds)) {
+      for (const cmd of cmds) {
+        if (
+          cmd.command_code === "ADD" &&
+          cmd.standard_template_code === "C" &&
+          typeof cmd.diameter === "number" &&
+          cmd.diameter > 0.01 &&
+          cmd.diameter < 0.15
+        ) {
+          cmd.diameter = 0.15;
+        }
+      }
+    }
+  }
   const layers = stringifyGerberCommandLayers(gerberCommands);
   const drillCommands = convertSoupToExcellonDrillCommands({ circuitJson, is_plated: true });
   const drill = stringifyExcellonDrill(drillCommands);

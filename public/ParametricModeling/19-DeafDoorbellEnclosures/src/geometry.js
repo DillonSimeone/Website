@@ -39,160 +39,205 @@ function makeMountingTab(M, width, length, thick, screwDia, cbDia, dualHoles = f
 }
 
 // -------------------------------------------------------------------------
-// 1. MASTER NODE: Base Chassis (Monolithic Rectangle, 4 M3 Screws, Flipped Mic to Right)
+// 1. MASTER (LEADER) NODE: Compact Vertical Inline Base Chassis
+//    - Houses stacked ESP32-C3 + MAX4466 block (20mm W x 24mm L x 21mm H)
+//      with MAX4466 mic facing DOWN toward floor and ESP32 PCB at top of pocket.
+//    - Inline internal cavity below ESP32 for the full 20mm USB-C plug head,
+//      followed by a serpentine S-curve strain-relief channel exiting the bottom.
 // -------------------------------------------------------------------------
 export function buildMasterBase(M, p) {
     const cl = p.printClearance;
-    const bodyW = 56.0; // 56mm monolithic rectangle (ESP32 on left + MAX4466 on right)
-    const bodyL = 48.0; // 48mm monolithic rectangle
-    const bodyH = 22.0; // 22mm chassis depth
+    const bodyW = 38.0; // Compact 38mm width (down from 56mm side-by-side layout!)
+    const bodyL = 62.0; // 62mm inline length (24mm stacked block + 22mm USB-C plug + strain relief)
+    const bodyH = 23.5; // 23.5mm height (21.2mm pocket depth + 2.3mm acoustic floor)
     const tabL = 10.0;
     const tabThick = 4.5;
 
     let base = M.cube([bodyW, bodyL, bodyH], true);
 
-    // External Top and Bottom Mounting Tabs (Drywall screw ears) with solid continuous plates
-    const tabW = 52.0;
-    const topTab = makeMountingTab(M, tabW, tabL, tabThick, p.wallTabScrewDia, p.wallTabCounterbore, true, 35.0)
+    // External Top and Bottom Mounting Tabs (Drywall screw ears, holes at X = ±13.0mm)
+    const tabW = 34.0;
+    const topTab = makeMountingTab(M, tabW, tabL, tabThick, p.wallTabScrewDia, p.wallTabCounterbore, true, 26.0)
         .translate([0, bodyL / 2 + tabL / 2 - 0.5, -bodyH / 2 + tabThick / 2]);
-    const botTab = makeMountingTab(M, tabW, tabL, tabThick, p.wallTabScrewDia, p.wallTabCounterbore, true, 35.0)
+    const botTab = makeMountingTab(M, tabW, tabL, tabThick, p.wallTabScrewDia, p.wallTabCounterbore, true, 26.0)
         .translate([0, -bodyL / 2 - tabL / 2 + 0.5, -bodyH / 2 + tabThick / 2]);
     base = base.add(topTab).add(botTab);
 
-    // ESP32-C3 SuperMini Cavity Architecture (Placed at X = -9.0mm on the LEFT)
-    // Orientation: PCB ON BOTTOM (sitting flat on floor), USB-C AND BUTTONS ON TOP!
-    const espX = -9.0;
-    const cavL = p.espLength + cl * 2; // 23.22mm
-    const cavW = p.espWidth + cl * 2;  // 18.7mm
-    const cavY = -2.7;
+    // 1. Stacked ESP32-C3 + MAX4466 Block Pocket (20mm x 24mm x 21mm + clearance)
+    //    - Centered at X = 0, Y = +14.65mm (spans Y = +2.30mm to +27.00mm, leaving 4.0mm top wall)
+    //    - Depth = 21.20mm from top rim (Z = +11.75mm down to floor at Z = -9.45mm)
+    //    - Mic faces DOWN against the Z = -9.45mm floor; ESP32 PCB sits at top with USB-C facing -Y!
+    const blockW = 20.0 + cl * 2; // 20.70mm
+    const blockL = 24.0 + cl * 2; // 24.70mm
+    const blockH = 21.20;         // 21.0mm block height + 0.20mm clearance
+    const blockY = 14.65;         // Spans Y = +2.30mm to +27.00mm
+    const blockPocket = M.cube([blockW, blockL, blockH + 0.1], true)
+        .translate([0, blockY, bodyH / 2 - blockH / 2 + 0.05]);
 
-    // 1. ESP32 PCB Seating Shelf: exactly 4.0mm deep from top rim (Z = +11.0 down to +7.0mm)
-    const shelfH = 4.0;
-    const upperPocket = M.cube([cavW, cavL, shelfH + 0.1], true)
-        .translate([espX, cavY, bodyH / 2 - shelfH / 2 + 0.05]);
+    // 2. Floor Acoustic Horn + 6-Hole Hex Sound Array (Directly under downward-facing MAX4466 mic)
+    //    Ensures unobstructed sound capture anywhere under the 20x24mm block!
+    const hornDia = p.acousticHornDia || 4.5;
+    const micCenterHole = M.cylinder(bodyH + 2, hornDia / 2, hornDia / 2, 24, true)
+        .translate([0, blockY, 0]);
+    const micHornCone = M.cylinder(2.4, (hornDia + 4.0) / 2, hornDia / 2, 24, true)
+        .translate([0, blockY, -bodyH / 2 + 1.2]);
 
-    // 2. Central Pin/Header Solder Clearance Well under ESP32: deep 16.0mm well (Z = -9.0mm)
-    const lowerPocket = M.cube([14.5, 19.0, 16.0], true)
-        .translate([espX, cavY, bodyH / 2 - shelfH - 8.0 + 0.05]);
+    // Rear Bottom Acoustic Sound Channels (1.6mm deep grooves from bottom face out to left/right edges
+    // so sound reaches the bottom acoustic port even when screwed flat against drywall!)
+    const rearSoundCrossSlot = M.cube([bodyW + 2.0, 8.0, 1.6], true)
+        .translate([0, blockY, -bodyH / 2 + 0.8]);
 
-    // 3. Large Hollow Bay for MAX4466 (Expanded to 26x34x20mm for maximum weight reduction)
-    const hollowW = 26.0;
-    const hollowL = 34.0;
-    const hollowH = 20.0;
-    const hollowX = 12.5; // Spans X = -0.5 to X = +25.5mm
-    const rightHollowBay = M.cube([hollowW, hollowL, hollowH], true)
-        .translate([hollowX, 0, bodyH / 2 - hollowH / 2 + 0.1]);
+    // 3. Internal USB-C Plug Head Bay (Directly below ESP32 at Y = -19.70mm to +2.30mm)
+    //    Houses the full 11mm W x 7mm H x 20mm L USB-C plug head inside the enclosure!
+    const plugBayW = 13.0;
+    const plugBayL = 22.5; // Spans Y = -19.70mm to +2.80mm (overlaps 0.5mm into ESP32 pocket)
+    const plugBayH = 9.0;  // 9.0mm deep from top rim (clears 7mm plug head + lid channel)
+    const plugBayY = -8.45;
+    const usbPlugBay = M.cube([plugBayW, plugBayL, plugBayH + 0.1], true)
+        .translate([0, plugBayY, bodyH / 2 - plugBayH / 2 + 0.05]);
 
-    // 4. Backside Acoustic Port Hole directly under MAX4466 electret microphone capsule (on the RIGHT)
-    const micCapsuleX = 13.5;
-    const micCapsuleY = -7.0;
-    const micAcousticHole = M.cylinder(bodyH + 2, (p.acousticHornDia || 4.5) / 2, (p.acousticHornDia || 4.5) / 2, 24, true)
-        .translate([micCapsuleX, micCapsuleY, 0]);
-    const acousticCone = M.cylinder(3.0, ((p.acousticHornDia || 4.5) + 3.0) / 2, (p.acousticHornDia || 4.5) / 2, 24, true)
-        .translate([micCapsuleX, micCapsuleY, -bodyH / 2 + 3.0]);
+    // Weight-saving hollow under the USB-C plug bay (leaves a 2.5mm shelf supporting the USB-C plug)
+    const underPlugHollow = M.cube([16.0, 18.0, 9.0], true)
+        .translate([0, -8.5, -2.5]);
 
-    // 5. USB-C Cable Head Port (12mm W x 5.2mm D, fitting 11x7x20mm cable head)
-    const cableY_start = cavY + cavL / 2 - 0.5;
-    const cableY_end = bodyL / 2 + 0.5;
-    const cableL = cableY_end - cableY_start;
-    const cableY_mid = (cableY_start + cableY_end) / 2;
-    const cableSlotH = 5.2;
-    const cableSlot = M.cube([12.0, cableL, cableSlotH], true)
-        .translate([espX, cableY_mid, bodyH / 2 - cableSlotH / 2 + 0.1]);
+    // 4. Serpentine S-Curve USB-C Cable Strain-Relief Bay (Y = -31.0mm to -18.5mm)
+    //    Weaves the 4.0mm USB-C cable around 3 staggered rounded grippers before exiting the bottom!
+    const srBayW = 11.0;
+    const srBayL = 13.5; // Spans Y = -31.5mm to -18.0mm
+    const srBayH = 7.5;  // 7.5mm deep from top rim
+    const srBayY = -24.75;
+    const srBay = M.cube([srBayW, srBayL, srBayH + 0.1], true)
+        .translate([0, srBayY, bodyH / 2 - srBayH / 2 + 0.05]);
 
-    // 6. Exactly Four Corner M3 Screw Holes at X = ±24.0mm, Y = ±19.5mm
+    // Center Bottom Cable Exit Slot through bottom wall and mounting tab (5.0mm wide for 4.0mm cable jacket)
+    const cableExitW = (p.cableJacketDia || 4.0) + 1.0; // 5.0mm
+    const cableExitSlot = M.cube([cableExitW, 14.0, srBayH + 0.1], true)
+        .translate([0, -35.0, bodyH / 2 - srBayH / 2 + 0.05]);
+    // Full-depth notch through the protruding bottom mounting tab (Y = -31.0 to -41.0mm)
+    const tabCableNotch = M.cube([cableExitW + 1.0, 12.0, bodyH + 2.0], true)
+        .translate([0, -36.5, 0]);
+
+    // 5. Four Corner M3 Screw Holes at X = ±15.0mm, Y = ±26.5mm
     const sDia = p.screwHoleDia;
-    const s1 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([-bodyW / 2 + 4.0, bodyL / 2 - 4.5, 0]);
-    const s2 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([bodyW / 2 - 4.0, bodyL / 2 - 4.5, 0]);
-    const s3 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([-bodyW / 2 + 4.0, -bodyL / 2 + 4.5, 0]);
-    const s4 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([bodyW / 2 - 4.0, -bodyL / 2 + 4.5, 0]);
+    const sx = bodyW / 2 - 4.0; // 15.0mm
+    const sy = bodyL / 2 - 4.5; // 26.5mm
+    const s1 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([-sx, sy, 0]);
+    const s2 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([sx, sy, 0]);
+    const s3 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([-sx, -sy, 0]);
+    const s4 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([sx, -sy, 0]);
 
     base = base
-        .subtract(upperPocket)
-        .subtract(lowerPocket)
-        .subtract(rightHollowBay)
-        .subtract(micAcousticHole)
-        .subtract(acousticCone)
-        .subtract(cableSlot)
+        .subtract(blockPocket)
+        .subtract(micCenterHole)
+        .subtract(micHornCone)
+        .subtract(rearSoundCrossSlot)
+        .subtract(usbPlugBay)
+        .subtract(underPlugHollow)
+        .subtract(srBay)
+        .subtract(cableExitSlot)
+        .subtract(tabCableNotch)
         .subtract(s1).subtract(s2).subtract(s3).subtract(s4);
 
-    // 7. Cool Pass-Through Hex Acoustic/Sound Vents in Right Chamber Floor
-    for (let y of [-10.0, 0, 10.0]) {
-        for (let dx of [-6.0, 6.0]) base = base.subtract(M.cylinder(30.0, 2.5, 2.5, 6, true).translate([hollowX + dx, y, 0]));
+    // Add 3 Staggered Serpentine Strain-Relief Gripper Pillars inside srBay
+    // Forces the 4mm USB-C cable into a gentle S-curve that locks against pull-out forces!
+    const postR = 2.4;
+    const postZ = bodyH / 2 - srBayH / 2;
+    const srPost1 = M.cylinder(srBayH, postR, postR, 20, true).translate([-3.1, -20.5, postZ]);
+    const srPost2 = M.cylinder(srBayH, postR, postR, 20, true).translate([3.1, -24.5, postZ]);
+    const srPost3 = M.cylinder(srBayH, postR, postR, 20, true).translate([-3.1, -28.5, postZ]);
+    base = base.add(srPost1).add(srPost2).add(srPost3);
+
+    // 6. Six-Hole Hex Acoustic Array in Pocket Floor around Central Horn
+    for (let dy of [-6.5, 6.5]) {
+        for (let dx of [-5.5, 0, 5.5]) {
+            base = base.subtract(
+                M.cylinder(bodyH + 2, 2.0, 2.0, 6, true).translate([dx, blockY + dy, 0])
+            );
+        }
     }
 
-    // 8. Cool Pass-Through Airflow/Heat Slots in Floor under ESP32
+    // 7. Support-Free 45° Diamond Side Acoustic Vents feeding directly into the lower MAX4466 chamber
     for (let dy of [-6.0, 0, 6.0]) {
-        base = base.subtract(M.cube([9.0, 2.4, 30.0], true).translate([espX, cavY + dy, 0]));
+        base = base.subtract(M.cube([10.0, 3.2, 3.2], true).rotate([45, 0, 0]).translate([-bodyW / 2, blockY + dy, -5.5]));
+        base = base.subtract(M.cube([10.0, 3.2, 3.2], true).rotate([45, 0, 0]).translate([bodyW / 2, blockY + dy, -5.5]));
     }
 
-    // 9. Cool 45° Diamond Side Vents on Left & Right Flanks (100% Support-Free)
-    for (let y of [-7.0, 0, 7.0]) {
-        base = base.subtract(M.cube([10.0, 3.5, 3.5], true).rotate([45, 0, 0]).translate([-bodyW / 2, y, 2.0]));
-        base = base.subtract(M.cube([10.0, 3.5, 3.5], true).rotate([45, 0, 0]).translate([bodyW / 2, y, 2.0]));
-    }
-
-    // 10. Outer 45° Bottom Bevels along Lower Flank Edges (Saves Solid Corners)
-    base = base.subtract(M.cube([6.0, bodyL + 10, 6.0], true).rotate([0, 45, 0]).translate([-bodyW / 2, 0, -bodyH / 2]))
-               .subtract(M.cube([6.0, bodyL + 10, 6.0], true).rotate([0, 45, 0]).translate([bodyW / 2, 0, -bodyH / 2]));
+    // 8. Outer 45° Bottom Flank Bevels
+    base = base.subtract(M.cube([5.0, bodyL + 10, 5.0], true).rotate([0, 45, 0]).translate([-bodyW / 2, 0, -bodyH / 2]))
+               .subtract(M.cube([5.0, bodyL + 10, 5.0], true).rotate([0, 45, 0]).translate([bodyW / 2, 0, -bodyH / 2]));
 
     return base;
 }
 
 // -------------------------------------------------------------------------
-// 2. MASTER NODE: Monolithic Clamping Lid (Slim 3.0mm Thickness)
+// 2. MASTER (LEADER) NODE: Compact Clamping Lid (38 x 62 x 2.8mm)
+//    - Clamps the 20x24x21mm ESP32+MAX4466 block and locks the USB-C cable
+//      into the serpentine strain-relief channel.
+//    - Features a clean rectangular cutout window exposing BOOT, RESET,
+//      Blue LED & Red LED on top of the ESP32-C3.
 // -------------------------------------------------------------------------
 export function buildMasterLid(M, p) {
-    const bodyW = 56.0;
-    const bodyL = 48.0;
-    const lidH = 3.0; // Slim 3.0mm thickness (drastically cuts print time)
+    const bodyW = 38.0;
+    const bodyL = 62.0;
+    const lidH = 2.8;
     const cl = p.printClearance;
-    const espX = -9.0;
-    const cavL = p.espLength + cl * 2;
-    const cavW = p.espWidth + cl * 2;
-    const cavY = -2.7;
+    const blockW = 20.0 + cl * 2;
+    const blockL = 24.0 + cl * 2;
+    const blockY = 14.65;
 
     let lid = M.cube([bodyW, bodyL, lidH], true);
 
-    // 4 Downward Corner Clamping Studs for ESP32 PCB
-    const studW = 2.0;
-    const studH = 1.0;
-    const cs1 = M.cube([studW, studW, studH], true).translate([espX - cavW / 2 + studW / 2, cavY + cavL / 2 - studW / 2, -lidH / 2 - studH / 2]);
-    const cs2 = M.cube([studW, studW, studH], true).translate([espX + cavW / 2 - studW / 2, cavY + cavL / 2 - studW / 2, -lidH / 2 - studH / 2]);
-    const cs3 = M.cube([studW, studW, studH], true).translate([espX - cavW / 2 + studW / 2, cavY - cavL / 2 + studW / 2, -lidH / 2 - studH / 2]);
-    const cs4 = M.cube([studW, studW, studH], true).translate([espX + cavW / 2 - studW / 2, cavY - cavL / 2 + studW / 2, -lidH / 2 - studH / 2]);
-    lid = lid.add(cs1).add(cs2).add(cs3).add(cs4);
+    // 1. Four Corner Clamping Pads for the 20x24x21mm ESP32+MAX4466 Block
+    const studW = 2.4;
+    const studH = 0.6;
+    for (let dx of [-blockW / 2 + studW / 2 + 0.2, blockW / 2 - studW / 2 - 0.2]) {
+        for (let dy of [-blockL / 2 + studW / 2 + 0.2, blockL / 2 - studW / 2 - 0.2]) {
+            const stud = M.cube([studW, studW, studH], true)
+                .translate([dx, blockY + dy, -lidH / 2 - studH / 2]);
+            lid = lid.add(stud);
+        }
+    }
 
-    // Upper Cable Channel (12.0mm W x 1.6mm D into lid, clears 7mm cable with base)
-    const cableClampPocket = M.cube([12.0, 26.0, 1.6], true)
-        .translate([espX, 21.0, -lidH / 2 + 0.8]);
+    // 2. Strain-Relief Cable Hold-Down Bar (Presses down into serpentine bay at Y = -30.0 to -19.0mm
+    //    so the 4.0mm USB-C cable stays locked between the S-curve posts)
+    const srHoldBar = M.cube([3.2, 11.0, 1.8], true)
+        .translate([0, -24.5, -lidH / 2 - 0.9]);
+    lid = lid.add(srHoldBar);
 
-    // Tactile Button Access Ports (BOOT at X=-11.5mm, RESET at X=-6.5mm on TOP of PCB)
-    const bootHole = M.cylinder(lidH + 4, 1.3, 1.3, 20, true).translate([espX - 2.5, cavY + 2.42, 0]);
-    const resetHole = M.cylinder(lidH + 4, 1.3, 1.3, 20, true).translate([espX + 2.5, cavY + 2.42, 0]);
+    // 3. Upper USB-C Plug Relief Channel (13.0mm W x 1.0mm D over plug bay at Y = -19.0 to +2.5mm)
+    const plugRelief = M.cube([13.0, 21.5, 1.0], true)
+        .translate([0, -8.25, -lidH / 2 + 0.5]);
 
-    // Status LED Optical Port
-    const ledHole = M.cylinder(lidH + 4, 1.2, 1.2, 16, true).translate([espX - 3.5, cavY, 0]);
+    // 4. Clean Rectangular Cutout Window over ESP32-C3 (Exposes BOOT, RESET, Blue LED & Red LED!)
+    //    Located near the -Y (USB-C) end of the 20x24mm ESP32 block (Y = +4.0mm to +13.0mm).
+    const espWindow = M.cube([11.6, 9.0, lidH + 4.0], true)
+        .translate([0, 8.5, 0]);
 
-    // Exactly Four M3 Counterbored Through-Holes at X = ±24.0mm, Y = ±19.5mm
+    // 5. Front Acoustic & Thermal Vent Slots over upper half of ESP32/MAX4466 chamber
+    for (let y of [17.0, 20.5, 24.0]) {
+        const vent = M.cube([12.0, 1.8, lidH + 4.0], true).translate([0, y, 0]);
+        lid = lid.subtract(vent);
+    }
+
+    // 6. Four M3 Counterbored Through-Holes at X = ±15.0mm, Y = ±26.5mm
     const sDia = 3.4;
     const hDia = p.screwHeadDia;
+    const sx = bodyW / 2 - 4.0; // 15.0mm
+    const sy = bodyL / 2 - 4.5; // 26.5mm
     const makeScrew = (x, y) => {
         const pass = M.cylinder(lidH + 4, sDia / 2, sDia / 2, 24, true).translate([x, y, 0]);
-        const head = M.cylinder(1.6, hDia / 2, hDia / 2, 24, true).translate([x, y, lidH / 2 - 0.8]);
+        const head = M.cylinder(1.5, hDia / 2, hDia / 2, 24, true).translate([x, y, lidH / 2 - 0.75]);
         return pass.add(head);
     };
 
-    const s1 = makeScrew(-bodyW / 2 + 4.0, bodyL / 2 - 4.5);
-    const s2 = makeScrew(bodyW / 2 - 4.0, bodyL / 2 - 4.5);
-    const s3 = makeScrew(-bodyW / 2 + 4.0, -bodyL / 2 + 4.5);
-    const s4 = makeScrew(bodyW / 2 - 4.0, -bodyL / 2 + 4.5);
+    const s1 = makeScrew(-sx, sy);
+    const s2 = makeScrew(sx, sy);
+    const s3 = makeScrew(-sx, -sy);
+    const s4 = makeScrew(sx, -sy);
 
     return lid
-        .subtract(cableClampPocket)
-        .subtract(bootHole)
-        .subtract(resetHole)
-        .subtract(ledHole)
+        .subtract(plugRelief)
+        .subtract(espWindow)
         .subtract(s1).subtract(s2).subtract(s3).subtract(s4);
 }
 
@@ -363,24 +408,32 @@ export function buildFollowerPetgLid(M, p) {
     let cover = M.cube([outerW, outerL, lowerSkirtH], true)
         .translate([0, 0, (skirtBottomZ + skirtTopZ) / 2]);
 
-    // Helper: Asymmetric 4-sided frustum connecting any bottom Y-range [yMinBot, yMaxBot] (width wBot at zBot)
-    // to any top Y-range [yMinTop, yMaxTop] (width wTop at zTop) via exact 3D convex hull.
-    function makeAsymFrustum(wBot, yMinBot, yMaxBot, wTop, yMinTop, yMaxTop, zBot, zTop) {
+    // Helper: General 3D frustum connecting any bottom rectangle [xMinBot..xMaxBot, yMinBot..yMaxBot] at zBot
+    // to any top rectangle [xMinTop..xMaxTop, yMinTop..yMaxTop] at zTop via exact 3D convex hull.
+    function makeXYFrustum(xMinBot, xMaxBot, yMinBot, yMaxBot, xMinTop, xMaxTop, yMinTop, yMaxTop, zBot, zTop) {
         const eps = 0.04;
+        const wBot = xMaxBot - xMinBot;
+        const xMidBot = (xMinBot + xMaxBot) / 2;
         const lBot = yMaxBot - yMinBot;
         const yMidBot = (yMinBot + yMaxBot) / 2;
+        const wTop = xMaxTop - xMinTop;
+        const xMidTop = (xMinTop + xMaxTop) / 2;
         const lTop = yMaxTop - yMinTop;
         const yMidTop = (yMinTop + yMaxTop) / 2;
         if (typeof M.hull === 'function') {
-            const botSlab = M.cube([wBot, lBot, eps], true).translate([0, yMidBot, zBot + eps / 2]);
-            const topSlab = M.cube([wTop, lTop, eps], true).translate([0, yMidTop, zTop - eps / 2]);
+            const botSlab = M.cube([wBot, lBot, eps], true).translate([xMidBot, yMidBot, zBot + eps / 2]);
+            const topSlab = M.cube([wTop, lTop, eps], true).translate([xMidTop, yMidTop, zTop - eps / 2]);
             const hullSolid = M.hull([botSlab, topSlab]);
             botSlab.delete();
             topSlab.delete();
             return hullSolid;
         }
         const h = zTop - zBot;
-        return M.cube([wBot, lBot, h], true).translate([0, yMidBot, (zBot + zTop) / 2]);
+        return M.cube([wBot, lBot, h], true).translate([xMidBot, yMidBot, (zBot + zTop) / 2]);
+    }
+
+    function makeAsymFrustum(wBot, yMinBot, yMaxBot, wTop, yMinTop, yMaxTop, zBot, zTop) {
+        return makeXYFrustum(-wBot / 2, wBot / 2, yMinBot, yMaxBot, -wTop / 2, wTop / 2, yMinTop, yMaxTop, zBot, zTop);
     }
 
     const diffuserRise = 4.2;                     // 4.2mm diffusion air gap above 8x8 matrix
@@ -388,47 +441,63 @@ export function buildFollowerPetgLid(M, p) {
     const hoodOuterZ = hoodInnerZ + wall;         // Z = +11.55mm outer top face (1.2mm thin window!)
     const outerHoodBaseZ = skirtTopZ - 0.20;      // Z = +5.80mm (overlaps 0.20mm into lower vertical skirt)
 
-    // 2. Full-Width Ramped Top & Bottom Tab Clamping Aprons + Corner Reinforcing Fins
-    //    - Keeps full 64.0mm width (X = ±32.0mm) all the way from Z = +0.40mm up to the Z = +11.55mm build plate
-    //      so the outer tab corners have zero 90° overhang steps!
-    //    - Adds dedicated 4.0mm-wide corner buttress fins along the outer edges (X = ±28.0 to ±32.0mm)
-    //      and inner cable-slot edges that anchor directly to the Z = +11.55mm build plate at 35° from vertical!
+    // 2. Bed-Touching Drywall Tab Fins ("Straight out to the bed, then down across the screw sides")
+    //    - Both the outer fins (X = ±28.4..±32.0mm) and inner fins (X = ±6.2..±16.0mm on bottom,
+    //      X = -16.0..+16.0mm on top) touch the Z = +11.55mm build plate all the way out to Y = ±61.50mm!
+    //    - From those flat-on-bed fin crests, the walls slope inward in X across both sides of the
+    //      X = ±24.0mm drywall screw counterbores down to the Z = +0.60mm clamping plate!
     const tabW = bodyW - 12.0;        // 64.0mm wide matching base tabs (X = -32.0 to +32.0mm)
     const tabTotalL = 123.0;          // Spans Y = -61.50mm to +61.50mm
-    const tabBaseTopZ = 0.60;         // Slim 2.10mm thickness at the outer tip of the tabs
+    const tabBaseTopZ = 0.60;         // 2.10mm clamping plate thickness around the drywall screw seats
     const tabBaseH = tabBaseTopZ - skirtBottomZ;
 
     const tabBasePlate = M.cube([tabW, tabTotalL, tabBaseH], true)
         .translate([0, 0, skirtBottomZ + tabBaseH / 2]);
     cover = cover.add(tabBasePlate);
 
-    const tabRampFrustum = makeAsymFrustum(
-        tabW, -61.50, 61.50, // Full 64.0mm width at Z = +0.40mm (supports entire tab corner to corner!)
-        tabW, -51.15, 51.15, // Full 64.0mm width at Z = +11.55mm (meets build plate plateau flush!)
+    // Back-of-tab Y-ramp behind the screw holes (ramps from Y = ±51.15mm on bed to Y = ±57.50mm at Z = +0.40mm)
+    const tabBackRamp = makeAsymFrustum(
+        tabW, -57.50, 57.50,
+        tabW, -51.15, 51.15,
         tabBaseTopZ - 0.20, hoodOuterZ
     );
-    cover = cover.add(tabRampFrustum);
+    cover = cover.add(tabBackRamp);
 
-    // Outer Edge Reinforcing Fins at X = ±30.0mm (width 4.0mm, spanning X = ±28.0 to ±32.0mm outside the screw holes)
-    const finW = 4.0;
+    // Outer Edge Fins: Go STRAIGHT OUT on the print bed (Z = +11.55mm) all the way to Y = ±61.50mm
+    // along X = ±28.4..±32.0mm, then ramp DOWN ACROSS THE SCREW SIDES in X to X = ±22.5mm at Z = +0.40mm!
     for (let sx of [-1, 1]) {
-        const edgeFin = makeAsymFrustum(
-            finW, -61.50, 61.50, // Reaches all the way to the outer tab corners (Y = ±61.50mm)
-            finW, -53.50, 53.50, // Anchors on the Z = +11.55mm build plate out to Y = ±53.50mm (35.6° steep fin!)
+        const xOut = sx * 32.0;
+        const xBedIn = sx * 28.4; // 3.6mm flat footprint on the bed outside the X = ±24.0mm screw counterbore
+        const xBaseIn = sx * 22.0; // Slopes across the screw side down to X = ±22.0mm at the clamping plate
+        const outerFin = makeXYFrustum(
+            Math.min(xOut, xBaseIn), Math.max(xOut, xBaseIn), -61.50, 61.50,
+            Math.min(xOut, xBedIn), Math.max(xOut, xBedIn), -61.50, 61.50,
             tabBaseTopZ - 0.20, hoodOuterZ
-        ).translate([sx * (tabW / 2 - finW / 2), 0, 0]);
-        cover = cover.add(edgeFin);
+        );
+        cover = cover.add(outerFin);
     }
 
-    // Inner Bottom-Tab Reinforcing Fins next to the 12mm USB-C slot (X = ±7.8mm, width 3.2mm)
-    const innerFinW = 3.2;
+    // Top-Tab Center Fin: Goes STRAIGHT OUT on the print bed (Z = +11.55mm) to Y = +61.50mm
+    // across X = -16.0..+16.0mm, then ramps DOWN ACROSS THE INNER SCREW SIDES in X to X = ±22.5mm!
+    const topCenterFin = makeXYFrustum(
+        -22.5, 22.5, 50.00, 61.50,
+        -16.0, 16.0, 50.00, 61.50,
+        tabBaseTopZ - 0.20, hoodOuterZ
+    );
+    cover = cover.add(topCenterFin);
+
+    // Bottom-Tab Inner Fins (flanking the 12.4mm USB-C slot): Go STRAIGHT OUT on the print bed (Z = +11.55mm)
+    // to Y = -61.50mm across X = ±6.2..±16.0mm, then ramp DOWN ACROSS THE INNER SCREW SIDES in X to X = ±22.5mm!
     for (let sx of [-1, 1]) {
-        const innerFin = makeAsymFrustum(
-            innerFinW, -61.50, -50.00,
-            innerFinW, -53.50, -50.00,
+        const xSlot = sx * 6.2;
+        const xBedOut = sx * 16.0;
+        const xBaseOut = sx * 22.5;
+        const botInnerFin = makeXYFrustum(
+            Math.min(xSlot, xBaseOut), Math.max(xSlot, xBaseOut), -61.50, -50.00,
+            Math.min(xSlot, xBedOut), Math.max(xSlot, xBedOut), -61.50, -50.00,
             tabBaseTopZ - 0.20, hoodOuterZ
-        ).translate([sx * (6.2 + innerFinW / 2), 0, 0]);
-        cover = cover.add(innerFin);
+        );
+        cover = cover.add(botInnerFin);
     }
 
     // 3. Parallel-Walled Sloped Upper Shell + Diffuser Hood (Z = +5.80mm to +11.55mm)
@@ -464,12 +533,14 @@ export function buildFollowerPetgLid(M, p) {
     const m3BossTopZ = hoodInnerZ + 0.30; // Z = +10.65mm (fuses into 1.2mm ceiling)
     const m3BossH = m3BossTopZ - m3BossBottomZ;
     for (let x of [-31.0, 31.0]) {
-        const m3Boss = M.cylinder(m3BossH, 4.2, 4.4, 24, true)
+        const m3Boss = M.cylinder(m3BossH, 4.4, 4.6, 24, true)
             .translate([x, -21.0, (m3BossBottomZ + m3BossTopZ) / 2]);
         cover = cover.add(m3Boss);
     }
 
-    // 4. Steep Self-Supporting ESP32-C3 Clamping Pillars (Positioned at X = +24.8mm & +34.4mm, completely clear of the button window!)
+    // 4. Steep Self-Supporting ESP32-C3 Clamping Pillars
+    //    Moved to X = +27.5mm & +34.2mm so there is a full 2.9mm solid margin from the X = +22.8mm edge
+    //    of the rectangular button window (eliminates thin-wall merging/stringing at the window corners!).
     const espL = 22.52 + cl * 2;
     const espW = 18.0 + cl * 2;
     const espX = 36.0 - espL / 2; // 24.39mm
@@ -478,8 +549,8 @@ export function buildFollowerPetgLid(M, p) {
     const studBottomZ = 3.40;             // Sits right over the 1.2mm ESP32 PCB on its Z = +2.0mm shelf
     const studTopZ = hoodInnerZ + 0.30;   // Z = +10.65mm (fuses into ceiling)
     const studH = studTopZ - studBottomZ;
-    const studBaseW = 3.6;
-    for (let px of [24.8, 34.4]) {
+    const studBaseW = 3.4;
+    for (let px of [27.5, 34.2]) {
         for (let dy of [-espW / 2 + studTipW / 2 + 0.4, espW / 2 - studTipW / 2 - 0.4]) {
             const wedge = makeRectFrustum(studTipW, studTipW, studBaseW, studBaseW, studH)
                 .translate([px, espY + dy, (studBottomZ + studTopZ) / 2]);
@@ -496,7 +567,7 @@ export function buildFollowerPetgLid(M, p) {
     cover = cover.add(cableHoldWedge);
 
     // 5. Clean Rectangular Cutout Window over ESP32-C3 (Exposes BOOT Button, RESET Button, Red LED & Blue LED!)
-    //    Spans X = +13.8mm to +22.8mm, Y = -40.3mm to -28.7mm (completely clear of all 4 clamping pillars!).
+    //    Spans X = +13.8mm to +22.8mm, Y = -40.3mm to -28.7mm (2.9mm clear of all clamping pillars!).
     const espWindow = M.cube([9.0, 11.6, 20.0], true)
         .translate([18.3, espY, hoodOuterZ]);
     cover = cover.subtract(espWindow);
@@ -514,37 +585,43 @@ export function buildFollowerPetgLid(M, p) {
         .translate([0, -53.5, skirtBottomZ + archWallH - 2.4]);
     cover = cover.subtract(cableTabCut).subtract(cableRectTunnel).subtract(cableGableRoof);
 
-    // 7. Matching Screw Holes (with Face-Down Self-Supporting Conical Counterbore Seats!):
-    //    - 2x Middle M3 Screws at X = ±31.0mm, Y = -21.0mm (unchanged M3 locations)
-    //    - 2x Top Tab Screws at X = ±24.0mm, Y = +56.5mm
-    //    - 2x Bottom Tab Screws at X = ±24.0mm, Y = -56.5mm
+    // 7. Matching Screw Holes with 2-Stage Sequential Straight-Line Bridge Counterbores!
+    //    When printed face-down (Z = +11.55mm on bed), instead of printing a circular ring in mid-air,
+    //    each counterbore transitions via 2 straight-line bridge layers (slot -> square -> circle)
+    //    so zero filament strings across the screw holes!
     const m3PassDia = 3.4;
-    const m3HeadDia = p.screwHeadDia;
-    const m3ConeH = (m3HeadDia - m3PassDia) * 1.25; // <22° overhang cone when printed face-down!
-    const m3SeatZ = deckInnerZ + 1.2;               // Z = +7.35mm
+    const m3HeadDia = p.screwHeadDia; // 5.8mm
+    const m3BridgeZ = deckInnerZ + 1.8; // Z = +7.95mm (leaves 1.8mm solid M3 clamping boss below counterbore)
     for (let x of [-31.0, 31.0]) {
         const pass = M.cylinder(30.0, m3PassDia / 2, m3PassDia / 2, 24, true)
             .translate([x, -21.0, 5.0]);
-        const cone = M.cylinder(m3ConeH, m3PassDia / 2, m3HeadDia / 2, 24, true)
-            .translate([x, -21.0, m3SeatZ + m3ConeH / 2]);
-        const head = M.cylinder(12.0, m3HeadDia / 2, m3HeadDia / 2, 24, true)
-            .translate([x, -21.0, m3SeatZ + m3ConeH + 6.0 - 0.05]);
-        cover = cover.subtract(pass).subtract(cone).subtract(head);
+        const head = M.cylinder(10.0, m3HeadDia / 2, m3HeadDia / 2, 24, true)
+            .translate([x, -21.0, m3BridgeZ + 5.0]);
+        // Stage 1 bridge (2 layers = 0.4mm): straight parallel bridge chords along Y
+        const bridgeSlot = M.cube([m3PassDia, m3HeadDia, 0.44], true)
+            .translate([x, -21.0, m3BridgeZ - 0.20]);
+        // Stage 2 bridge (2 layers = 0.4mm): perpendicular straight bridge chords forming square
+        const bridgeSq = M.cube([m3PassDia, m3PassDia, 0.44], true)
+            .translate([x, -21.0, m3BridgeZ - 0.60]);
+        cover = cover.subtract(pass).subtract(head).subtract(bridgeSlot).subtract(bridgeSq);
     }
 
-    const tabScrewDia = p.wallTabScrewDia;
-    const tabCbDia = p.wallTabCounterbore;
-    const tabConeH = (tabCbDia - tabScrewDia) * 0.85; // <30° overhang cone when printed face-down!
-    const tabSeatZ = skirtBottomZ + 1.2;              // Z = -0.30mm (1.2mm clamping seat)
+    const tabScrewDia = p.wallTabScrewDia; // 4.2mm
+    const tabCbDia = p.wallTabCounterbore; // 7.6mm
+    const tabSeatZ = skirtBottomZ + 1.4;   // Z = -0.10mm (1.4mm solid clamping seat)
     for (let y of [56.5, -56.5]) {
         for (let x of [-24.0, 24.0]) {
-            const pass = M.cylinder(20.0, tabScrewDia / 2, tabScrewDia / 2, 24, true)
-                .translate([x, y, skirtBottomZ]);
-            const cone = M.cylinder(tabConeH, tabScrewDia / 2, tabCbDia / 2, 24, true)
-                .translate([x, y, tabSeatZ + tabConeH / 2]);
-            const cb = M.cylinder(12.0, tabCbDia / 2, tabCbDia / 2, 24, true)
-                .translate([x, y, tabSeatZ + tabConeH + 6.0 - 0.05]);
-            cover = cover.subtract(pass).subtract(cone).subtract(cb);
+            const pass = M.cylinder(24.0, tabScrewDia / 2, tabScrewDia / 2, 24, true)
+                .translate([x, y, 2.0]);
+            const cb = M.cylinder(20.0, tabCbDia / 2, tabCbDia / 2, 24, true)
+                .translate([x, y, tabSeatZ + 10.0]);
+            // Stage 1 sequential straight-line bridge slot across counterbore
+            const bridgeSlot = M.cube([tabScrewDia, tabCbDia, 0.44], true)
+                .translate([x, y, tabSeatZ - 0.20]);
+            // Stage 2 perpendicular bridge square
+            const bridgeSq = M.cube([tabScrewDia, tabScrewDia, 0.44], true)
+                .translate([x, y, tabSeatZ - 0.60]);
+            cover = cover.subtract(pass).subtract(cb).subtract(bridgeSlot).subtract(bridgeSq);
         }
     }
 
@@ -623,8 +700,8 @@ export function buildFollowerStand(M, p) {
     // Pocket for Follower base + PETG cover (81.5mm wide x 16.4mm thick, rear wall at Y = +10.5, shelf at Z = 12.0mm)
     const pocket = M.cube([cradleW, 16.4, 30.0], true).translate([0, 2.3, shelfZ + 15.0]);
 
-    // Tab slot below shelf: receives the 64mm wide bottom mounting tab + PETG tab flange (Z = 2.5 to 12.0mm on solid floor)
-    const tabSlot = M.cube([65.0, 8.6, shelfZ - 2.5 + 0.1], true).translate([0, 5.7, (shelfZ + 2.5) / 2]);
+    // Tab slot below shelf: receives the 64mm wide bottom mounting tab + full-height PETG tab fins (Z = 2.5 to 12.0mm on solid floor)
+    const tabSlot = M.cube([65.0, 16.4, shelfZ - 2.5 + 0.1], true).translate([0, 2.3, (shelfZ + 2.5) / 2]);
 
     // Center wire drop slot: 14mm wide conduit cutting out the back
     const wireSlot = M.cube([14.0, 30.0, cradleH + 5.0], true).translate([0, 10.0, cradleH / 2]);
@@ -697,15 +774,15 @@ export function buildFullPlate(M, p) {
     // 2. Follower 8x8 Diffuser Grid (Flat at Z = 0, size 65.4 x 65.4 x 4.5 mm, Y: -92.7 to -27.3)
     const fGrid = buildFollowerGrid(M, p).translate([-60.0, -60.0, 2.25]);
 
-    // 3. Master Clamp Lid (Inverted flat at Z = 0, size 56 x 48 x 3.0 mm, Y: -159 to -111)
-    const mLid = buildMasterLid(M, p).rotate([180, 0, 0]).translate([-60.0, -135.0, 1.5]);
+    // 3. Master Clamp Lid (Inverted flat at Z = 0, size 38 x 62 x 2.8 mm)
+    const mLid = buildMasterLid(M, p).rotate([180, 0, 0]).translate([-60.0, -135.0, 1.4]);
 
     // Right Column:
     // 4. Follower Base (Flat at Z = 0, size 76 x 123 x 12 mm, Y: -23 to 100)
     const fBase = buildFollowerBase(M, p).translate([55.0, 38.5, baseH / 2]);
 
-    // 5. Master Base (Flat at Z = 0, size 56 x 67 x 22 mm, Y: -105.5 to -38.5)
-    const mBase = buildMasterBase(M, p).translate([55.0, -72.0, 11.0]);
+    // 5. Master Base (Flat at Z = 0, size 38 x 81 x 23.5 mm)
+    const mBase = buildMasterBase(M, p).translate([55.0, -72.0, 23.5 / 2]);
 
     // 6. Follower Cover Lid (Inverted flat at Z = 0, size 74 x 30.0 x 2.0 mm, Y: -155.0 to -125.0)
     const fLid = buildFollowerLid(M, p).rotate([180, 0, 0]).translate([55.0, -140.0, 1.0]);

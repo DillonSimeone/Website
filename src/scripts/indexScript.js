@@ -273,6 +273,7 @@ function slidePages(outgoing, incoming, fromRight) {
         transitionFinished = true;
 
         incoming.classList.remove('is-entering');
+        incoming.style.transform = '';
         if (outgoing.className !== 'item hide' && !outgoing.classList.contains('reveal')) {
             snapClass(outgoing, 'item hide');
         }

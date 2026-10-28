@@ -7,6 +7,7 @@
  */
 
 import { normalizeRouting } from "./pcb-rules.js";
+import { runSilkscreenDrc } from "./silkscreen-drc.js";
 
 function drcItem(text, refs) {
   return { text, refs: refs.filter(Boolean) };
@@ -61,7 +62,7 @@ function traceRefs(trace) {
 /**
  * Client-side advisory DRC against JLCPCB 2-layer standard rules.
  */
-export function runManufacturingDrc(circuitJson, routing) {
+export function runManufacturingDrc(circuitJson, routing, options = {}) {
   const errors = [];
   const warnings = [];
   const r = normalizeRouting(routing);
@@ -204,9 +205,20 @@ export function runManufacturingDrc(circuitJson, routing) {
     });
   };
 
+  const silkscreen = runSilkscreenDrc(circuitJson, options);
+  for (const sErr of silkscreen.errors) {
+    errors.push(drcItem(sErr.text, sErr.id ? [{ kind: "silkscreen", id: sErr.id }] : []));
+  }
+  if (options?.auditSilkscreen) {
+    for (const sWarn of silkscreen.warnings) {
+      warnings.push(drcItem(sWarn.text, sWarn.id ? [{ kind: "silkscreen", id: sWarn.id }] : []));
+    }
+  }
+
   return {
     ok: errors.length === 0,
     errors: dedupeItems(errors),
-    warnings: dedupeItems(warnings)
+    warnings: dedupeItems(warnings),
+    silkscreen
   };
 }

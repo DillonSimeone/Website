@@ -275,4 +275,41 @@ Audited Features:
    - For **1–20 boards**: Carrier PCBs (Projects 00, 02, 03) are unbeatable at **~$2.70 – $3.50 per baton** with $2 bare PCBs and $1 AliExpress dev boards.
    - For **30–50+ boards**: All-SMD PCBs (Project 04) reach the scale sweet spot at **~$7.00 / board fully assembled**, eliminating hand soldering entirely.
 
+---
+
+## 11. Interactive PCB Studio Workbench & Declarative Layout Architecture
+
+Dedicated browser-based CAD co-design studio (`editor.html`) powered by local Express server (`shared/studio-server.mjs`) to eliminate tedious chat token burns when positioning silkscreen, polarity markers, and components:
+
+### Launch Commands
+```bash
+# Launch local Express studio server and open default browser at PCB 03
+npm run studio
+# Or double click:
+LaunchStudio.bat
+
+# Run standalone silkscreen & polarity DRC audit
+npm run audit-silkscreen
+node shared/audit-silkscreen.mjs 03
+node shared/audit-silkscreen.mjs 00
+```
+
+### Core Features & Architecture
+1. **Declarative `src/layout.json` Sidecars**:
+   - Single source of truth for component coordinates `(x, y, rotation)` and silkscreen elements.
+   - Shared by both static browser showcase pages (`fetch`) and Express disk read/writes (`node:fs`).
+2. **60 FPS Decoupled Dragging & Rotation**:
+   - Dragging silkscreen labels, polarity markers, or components updates coordinates and runs SAT OBB collision detection in < 1.5ms without AST recompilation.
+   - Copper pads and component courtyards move live during drag; traces dim to indicate stale state until clicking **🔀 Route**.
+3. **Tethered Polarity & Pin-1 Markers**:
+   - Diodes, LEDs, and ICs automatically emit cathode U-bars, `+`/`-`, and Pin-1 dots that rotate and move with the parent component while supporting per-marker local `(dx, dy, rotation, fontSize, visible)` offsets.
+4. **Web-Dev Font Size Presets & Physical 1:1 Scale**:
+   - Clickable presets mapped to hand-held reading distances: `JLC Min` ($0.80\,\text{mm}$), `8px Tiny` ($1.00\,\text{mm}$), `10px Small` ($1.20\,\text{mm}$), `12px Body` ($1.50\,\text{mm}$), `16px Head` ($2.00\,\text{mm}$), and `24px Hero` ($3.00\,\text{mm}$).
+   - Real-world 1:1 screen zoom with credit-card calibration modal ($85.6\,\text{mm}$ standard ID card) to test naked-eye legibility before ordering boards.
+5. **Point-to-Point Caliper Ruler**:
+   - Magnetic snap to pad centers, pad edges, drill holes, and board corners showing distance, $\Delta X$, $\Delta Y$, and angle.
+6. **1-Click Fab Package Publishing**:
+   - Hit `Ctrl+S` to write `src/layout.json` to disk in < 10ms.
+   - Click **📦 Publish Fab** to automatically compile layout, run DRC, and output updated `_Gerbers.zip`, `_BOM.csv`, `_CPL.csv`, and `_routed.stl` directly into the project folder.
+
 

@@ -1,160 +1,112 @@
 import { Circuit, React } from "../../00-commonParts/tscircuit-core.js";
-import { 
-  createGerberZipBlob, 
-  createBomCsv, 
-  createCplCsv 
+import {
+  createGerberZipBlob,
+  createBomCsv
 } from "../../shared/export-utils.js";
-import { 
-  ESP32C3_SuperMini, 
-  Resistor0603, 
-  Capacitor0603, 
-  Led0603, 
-  Header4Pin 
+import {
+  loadLayoutJson,
+  getComponentProps,
+  emitLayoutSilkscreen,
+  tagCircuitJsonSilkscreenIds,
+  createSyncedCplCsv
+} from "../../shared/layout-loader.js";
+import {
+  ESP32C3_SuperMini,
+  Resistor0603,
+  Capacitor0603,
+  Led0603,
+  Header4Pin
 } from "./footprints.js";
 import { boardProps, normalizeRouting } from "./pcb-rules.js";
 import { runManufacturingDrc } from "./drc.js";
 
 /**
- * Programmatically builds the Turnkey Starter PCB (00).
- * Conforms 100% to JLCPCB SMT 2-layer design & manufacturing rules.
+ * Programmatically builds the Turnkey Starter PCB (00) driven by declarative `src/layout.json`.
+ * Conforms 100% to JLCPCB SMT 2-layer design, >= 0.80mm silkscreen legibility, and polarity DFM rules.
  */
 export async function compileCircuit(params = {}) {
-  const { 
-    boardWidth = 40, 
-    boardLength = 40, 
+  const layout = params.layout || await loadLayoutJson(import.meta.url, "./layout.json");
+  const {
+    boardWidth = layout?.board?.width || 40,
+    boardLength = layout?.board?.length || 40,
     routing = {},
     skipRouting = true,
-    silkScale = 1.0 
+    silkScale = 1.0
   } = params;
 
   const R = normalizeRouting(routing);
   const PWR = `${R.powerTraceWidth}mm`;
   const SIG = `${R.nominalTraceWidth}mm`;
 
-  const t0 = performance.now();
   const circuit = new Circuit({
     platform: {
       routingDisabled: skipRouting
     }
   });
+  circuit.__layout = layout;
 
   const children = [];
   const halfL = boardLength / 2;
   const halfW = boardWidth / 2;
 
   // ============================================================
-  // 0. M3 CORNER MOUNTING HOLES (3.2mm Clearance Drill, 5.0mm Pad)
-  // 3.5mm from board edges to leave robust copper clearance
+  // 0. M3 CORNER MOUNTING HOLES (Driven by layout.json)
   // ============================================================
   const mountX = halfW - 3.5;
   const mountY = halfL - 3.5;
-  const cornerHoles = [
+  const defaultHoles = [
     { key: "hole_tl", name: "H1", x: -mountX, y: mountY },
     { key: "hole_tr", name: "H2", x: mountX, y: mountY },
     { key: "hole_bl", name: "H3", x: -mountX, y: -mountY },
     { key: "hole_br", name: "H4", x: mountX, y: -mountY }
   ];
 
-  cornerHoles.forEach(h => {
+  defaultHoles.forEach(h => {
+    const p = getComponentProps(layout, h.name, { x: h.x, y: h.y, key: h.key });
+    const holeDia = p.entry.holeDiameter || 3.2;
+    const outerDia = p.entry.outerDiameter || 5.0;
     children.push(React.createElement("platedhole", {
       key: h.key,
       name: h.name,
       portHints: [h.name],
-      pcbX: `${h.x.toFixed(2)}mm`,
-      pcbY: `${h.y.toFixed(2)}mm`,
-      holeDiameter: "3.2mm",
-      outerDiameter: "5.0mm",
+      pcbX: `${p.x.toFixed(2)}mm`,
+      pcbY: `${p.y.toFixed(2)}mm`,
+      holeDiameter: `${holeDia}mm`,
+      outerDiameter: `${outerDia}mm`,
       shape: "circle"
     }));
   });
 
   // ============================================================
-  // 1. ESP32-C3 SUPERMINI MCU SOCKET (Centered)
+  // 1. COMPONENTS (Driven by layout.json)
   // ============================================================
-  children.push(React.createElement(ESP32C3_SuperMini, {
-    name: "U_MCU",
-    key: "u_mcu",
-    pcbX: "0mm",
-    pcbY: "2.0mm"
-  }));
-
-  // ============================================================
-  // 2. POWER INDICATION & FILTERING PASSIVES (0603 SMT)
-  // ============================================================
-  // C_VBUS: 10uF 0603 Decoupling Capacitor
-  children.push(React.createElement(Capacitor0603, {
-    name: "C_VBUS",
-    key: "c_vbus",
-    pcbX: "-7.0mm",
-    pcbY: "-12.0mm"
-  }));
-
-  // D_PWR_LED: 0603 Green Power LED
-  children.push(React.createElement(Led0603, {
-    name: "D_LED",
-    key: "d_led",
-    pcbX: "7.0mm",
-    pcbY: "-12.0mm"
-  }));
-
-  // R_LED: 1kΩ 0603 Current Limiting Resistor
-  children.push(React.createElement(Resistor0603, {
-    name: "R_LED",
-    key: "r_led",
-    pcbX: "7.0mm",
-    pcbY: "-15.0mm"
-  }));
+  children.push(React.createElement(ESP32C3_SuperMini, getComponentProps(layout, "U_MCU", { x: 0, y: 2.0, key: "u_mcu" }).pcbProps));
+  children.push(React.createElement(Capacitor0603, getComponentProps(layout, "C_VBUS", { x: -7.5, y: -11.5, key: "c_vbus" }).pcbProps));
+  children.push(React.createElement(Led0603, getComponentProps(layout, "D_LED", { x: 7.5, y: -11.5, key: "d_led" }).pcbProps));
+  children.push(React.createElement(Resistor0603, getComponentProps(layout, "R_LED", { x: 7.5, y: -15.2, key: "r_led" }).pcbProps));
+  children.push(React.createElement(Header4Pin, getComponentProps(layout, "J_AUX", { x: 0, y: -(halfL - 3.5), key: "j_aux" }).pcbProps));
 
   // ============================================================
-  // 3. AUXILIARY 4-PIN PERIPHERAL HEADER (Bottom Perimeter)
+  // 2. SILKSCREEN & TETHERED POLARITY MARKERS (Driven by layout.json)
   // ============================================================
-  children.push(React.createElement(Header4Pin, {
-    name: "J_AUX",
-    key: "j_aux",
-    pcbX: "0mm",
-    pcbY: `-${(halfL - 3.5).toFixed(2)}mm`
-  }));
+  const silkMeta = emitLayoutSilkscreen(React, layout, { silkScale });
+  children.push(...silkMeta.elements);
 
   // ============================================================
-  // 4. SILKSCREEN TEXT LABELS
+  // 3. RAT'S NEST LOGICAL TRACE NETS
   // ============================================================
-  const makeSilk = (key, text, x, y, layer = "top", fontSize = 0.75, align = "center") => {
-    return React.createElement("silkscreentext", {
-      key,
-      text,
-      layer,
-      fontSize: `${(fontSize * silkScale).toFixed(2)}mm`,
-      anchorAlignment: align,
-      pcbX: `${x.toFixed(2)}mm`,
-      pcbY: `${y.toFixed(2)}mm`
-    });
-  };
+  children.push(React.createElement("trace", { from: ".U_MCU > .pin1", to: ".C_VBUS > .pin1", key: "tr_pwr_c", name: "NET_5V__tr_pwr_c", width: PWR }));
+  children.push(React.createElement("trace", { from: ".C_VBUS > .pin1", to: ".J_AUX > .pin1", key: "tr_pwr_aux", name: "NET_5V__tr_pwr_aux", width: PWR }));
+  children.push(React.createElement("trace", { from: ".J_AUX > .pin1", to: ".D_LED > .pin2", key: "tr_pwr_led", name: "NET_5V__tr_pwr_led", width: SIG }));
 
-  children.push(makeSilk("st_title", "00 STARTER PCB", 0, halfL - 1.5, "top", 0.75, "center"));
-  children.push(makeSilk("st_subtitle", "MODULAR TEMPLATE", 0, halfL - 2.6, "top", 0.55, "center"));
-  children.push(makeSilk("st_aux", "5V  IO0  IO1  GND", 0, -halfL + 6.0, "top", 0.50, "center"));
-  children.push(makeSilk("st_c_vbus", "C_VBUS 10u", -7.0, -10.5, "top", 0.45, "center"));
-  children.push(makeSilk("st_led", "PWR LED", 7.0, -10.5, "top", 0.45, "center"));
+  children.push(React.createElement("trace", { from: ".D_LED > .pin1", to: ".R_LED > .pin1", key: "tr_led_res", name: "NET_LED_SERIES__tr_led_res", width: SIG }));
+  children.push(React.createElement("trace", { from: ".R_LED > .pin2", to: ".J_AUX > .pin4", key: "tr_res_gnd", name: "NET_GND__tr_res_gnd", width: PWR }));
 
-  // ============================================================
-  // 5. RAT'S NEST LOGICAL TRACE NETS
-  // ============================================================
-  // 5V Power Rail (U_MCU Pin 1 -> C_VBUS Pin 1, D_LED Anode, J_AUX Pin 1)
-  children.push(React.createElement("trace", { from: ".U_MCU > .pin1", to: ".C_VBUS > .pin1", key: "tr_pwr_c", name: "NET_5V", width: PWR }));
-  children.push(React.createElement("trace", { from: ".C_VBUS > .pin1", to: ".J_AUX > .pin1", key: "tr_pwr_aux", name: "NET_5V", width: PWR }));
-  children.push(React.createElement("trace", { from: ".J_AUX > .pin1", to: ".D_LED > .pin2", key: "tr_pwr_led", name: "NET_5V", width: SIG }));
+  children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".C_VBUS > .pin2", key: "tr_gnd_mcu", name: "NET_GND__tr_gnd_mcu", width: PWR }));
+  children.push(React.createElement("trace", { from: ".C_VBUS > .pin2", to: ".J_AUX > .pin4", key: "tr_gnd_aux", name: "NET_GND__tr_gnd_aux", width: PWR }));
 
-  // LED Resistor to GND
-  children.push(React.createElement("trace", { from: ".D_LED > .pin1", to: ".R_LED > .pin1", key: "tr_led_res", name: "NET_LED_SERIES", width: SIG }));
-  children.push(React.createElement("trace", { from: ".R_LED > .pin2", to: ".J_AUX > .pin4", key: "tr_res_gnd", name: "NET_GND", width: PWR }));
-
-  // GND Rail
-  children.push(React.createElement("trace", { from: ".U_MCU > .pin2", to: ".C_VBUS > .pin2", key: "tr_gnd_mcu", name: "NET_GND", width: PWR }));
-  children.push(React.createElement("trace", { from: ".C_VBUS > .pin2", to: ".J_AUX > .pin4", key: "tr_gnd_aux", name: "NET_GND", width: PWR }));
-
-  // GPIO Signals (IO0 -> Pin 2, IO1 -> Pin 3)
-  children.push(React.createElement("trace", { from: ".U_MCU > .pin4", to: ".J_AUX > .pin2", key: "tr_sig_io0", name: "NET_IO0", width: SIG }));
-  children.push(React.createElement("trace", { from: ".U_MCU > .pin5", to: ".J_AUX > .pin3", key: "tr_sig_io1", name: "NET_IO1", width: SIG }));
+  children.push(React.createElement("trace", { from: ".U_MCU > .pin4", to: ".J_AUX > .pin2", key: "tr_sig_io0", name: "NET_IO0__tr_sig_io0", width: SIG }));
+  children.push(React.createElement("trace", { from: ".U_MCU > .pin5", to: ".J_AUX > .pin3", key: "tr_sig_io1", name: "NET_IO1__tr_sig_io1", width: SIG }));
 
   const boardPropsObj = boardProps(boardWidth, boardLength, routing, { skipRouting });
   const boardElement = React.createElement("board", {
@@ -173,7 +125,6 @@ export async function compileCircuit(params = {}) {
     console.warn("[Starter PCB] Render settling notice:", err?.message || err);
   }
 
-  // Trace Boundary Clamping Guard
   const margin = 0.5;
   const maxBoardX = halfW - margin;
   const minBoardX = -halfW + margin;
@@ -181,6 +132,8 @@ export async function compileCircuit(params = {}) {
   const minBoardY = -halfL + margin;
 
   const circuitJson = circuit.getCircuitJson();
+  tagCircuitJsonSilkscreenIds(circuitJson, silkMeta);
+
   circuitJson.forEach(item => {
     if (item.type === "pcb_trace" && Array.isArray(item.route)) {
       if (typeof item.width === "number" && item.width < 0.15) {
@@ -209,10 +162,11 @@ export async function compileCircuit(params = {}) {
 }
 
 /**
- * Builds Gerber ZIP, BOM CSV, and CPL PNP exports using shared export utilities.
+ * Builds Gerber ZIP, BOM CSV, and 100%-synchronized CPL PNP exports directly from layout.json.
  */
 export async function generateManufacturingArtifacts(circuit, boardParams = {}) {
   let circuitJson = circuit.getCircuitJson();
+  const layout = boardParams.layout || circuit.__layout || await loadLayoutJson(import.meta.url, "./layout.json");
   const silkScale = boardParams.silkScale || 1.0;
 
   if (silkScale !== 1.0) {
@@ -224,7 +178,6 @@ export async function generateManufacturingArtifacts(circuit, boardParams = {}) 
     });
   }
 
-  // 1. Gerber ZIP Package
   let gerberZipBlob = null;
   try {
     gerberZipBlob = await createGerberZipBlob(circuitJson, {
@@ -235,30 +188,27 @@ export async function generateManufacturingArtifacts(circuit, boardParams = {}) 
     console.warn("[Gerber Packaging Warning]:", err);
   }
 
-  // 2. BOM CSV (LCSC Basic parts)
   const smtComponents = [
-    { designator: "C_VBUS", comment: "10uF", footprint: "0603", lcsc: "C19666", qty: 1 },
-    { designator: "D_LED", comment: "Green LED", footprint: "0603", lcsc: "C72043", qty: 1 },
-    { designator: "R_LED", comment: "1k", footprint: "0603", lcsc: "C21190", qty: 1 }
+    { designator: "C_VBUS", comment: "10uF", footprint: "0603", lcsc: "C19666", qty: 1, jlcRotOffset: 0 },
+    { designator: "D_LED", comment: "Green LED", footprint: "0603", lcsc: "C72043", qty: 1, jlcRotOffset: 0 },
+    { designator: "R_LED", comment: "1k", footprint: "0603", lcsc: "C21190", qty: 1, jlcRotOffset: 0 }
   ];
   const bomCsv = createBomCsv(smtComponents);
+  const pnpCsv = createSyncedCplCsv(layout, smtComponents);
 
-  // 3. CPL / PNP CSV
-  const cplComponents = [
-    { designator: "C_VBUS", x: -7.0, y: -12.0, layer: "Top", rot: 0 },
-    { designator: "D_LED", x: 7.0, y: -12.0, layer: "Top", rot: 0 },
-    { designator: "R_LED", x: 7.0, y: -15.0, layer: "Top", rot: 0 }
-  ];
-  const pnpCsv = createCplCsv(cplComponents);
-
-  // 4. Advisory JLCPCB Manufacturing DRC
-  const drc = runManufacturingDrc(circuitJson, boardParams.routing);
+  const drc = runManufacturingDrc(circuitJson, boardParams.routing, {
+    boardWidth: boardParams.boardWidth || layout?.board?.width || 40,
+    boardHeight: boardParams.boardLength || layout?.board?.length || 40,
+    layout,
+    auditSilkscreen: true
+  });
 
   return {
     gerberZipBlob,
     bomCsv,
     pnpCsv,
     circuitJson,
+    layout,
     drc
   };
 }
