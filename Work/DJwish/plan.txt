@@ -1,0 +1,128 @@
+# DJwish // Neon Street & Live Stage Rig for DJ Deaf Wish
+### Dedicated to Nate Hergert (DJ Deaf Wish) — [natehergert.com](https://natehergert.com/)
+
+---
+
+## 1. Concept
+One continuous Three.js world, faithful to the archival logo (`assets/images/dj_deaf_wish_logo_original.png`):
+
+- A 460 m smooth-faced gold brick pyramid sits 1.5 km away at the end of a neon city street,
+  rotated 45 degrees so two faces read like the logo (left face lit, right face in shade).
+- A violet laser sheet fans from the apex up into a sky-scale (~985 m) slanted "DJ DEAF WISH"
+  whose baseline sits exactly on the fan's far edge, like the artwork.
+- The visitor lands in a rain-slick street canyon. The bio and technical rider are spray-painted
+  murals on the walls; the audio station and live-rig links are real HTML paste-ups on plywood
+  street hoardings. Scrolling walks the camera backward down the street, pyramid always looming.
+
+Scale is the point: 1 unit = 1 m, camera eye height ~2 m, streetlights / signs / windows give
+the size reference.
+
+```
+street mouth (z=+280) -> neon canyon (to z=-170) -> plaza with processional lights -> pyramid (z=-1500)
+```
+
+---
+
+## 2. Experience Flow
+1. **Intro (14 s, skip with SPACE / click / wheel / scroll)** - Catmull-Rom spline flight:
+   foot of the pyramid looking up the brick face -> tilt and climb to the apex while the laser
+   sheet ignites outward -> the sky logo -> long ~1.3 km pull-back, descending into the street.
+2. **Scroll rig (5 stops, 600vh scroll track)**
+   | Stop | Content | Where |
+   |---|---|---|
+   | 0 `#street` | Title mural + pyramid hero shot | right facade near the street end |
+   | 1 `#agency` | "Deaf Sonic Agency" bio mural | left firewall behind a 60 m low-rise gap |
+   | 2 `#rider` | "Technical Rider" mural | right firewall behind a 60 m low-rise gap |
+   | 3 `#audio` | Live audio station (HTML) | left sidewalk hoarding |
+   | 4 `#links` | Launch live rig, natehergert.com, haptics test | right sidewalk hoarding |
+   Section dots, arrow / PageUp / PageDown keys and URL hashes jump between stops. Narrow screens
+   turn the camera toward the content (`focusYaw`), wide screens frame content + pyramid.
+3. **Live Stage mode (SPACE)** - the sky logo fades and the pyramid draws the visuals itself
+   (`sky-show.js`, all GPU, fed by the audio texture):
+   - [1] SKY SPECTRUM: 48 laser-outlined spectrum bars in the sky, each wired to the apex by a beam.
+   - [2] SKY SCOPE: triggered oscilloscope ribbon in the sky with beams from the apex.
+   - [3] HYPER TUNNEL: laser rings stream out of the apex and down the street (floor + walls);
+     the camera pulls all the way back above the street mouth.
+   - [4] STREET VU: the streetlights are a volume meter. Silence = all off; they light one by one
+     from the pyramid end toward the camera as the volume rises (red near the pyramid, rotating to
+     purple at the street mouth), with a white peak-hold lamp. The pyramid fills up from its base
+     in step with them.
+   - [5] SEARCHLIGHTS: six band-coloured searchlights sweep from the capstone; each pyramid face
+     pulses its own band and the edges strobe on the beat.
+   Each scene also drives a brick-face animation on the pyramid (pyramid.js `PYRAMID_FX`):
+   band courses (1), beat rings climbing the faces (2), pulses pouring from the apex (3),
+   VU fill (4), face split (5). Scenes are configured in `STAGE_SCENES` (world.js).
+   Keystoning [C], MIDI [M], haptics [V], fullscreen [F].
+4. **Settings disc ([S], SETTINGS button, gear in the live rig bar)** - the camera flies to the
+   capstone, which flares, and a vinyl record rises spinning out of it on a light beam and settles on
+   section A. Six sections sit 60 degrees apart on the record (A AUDIO, B COLOUR, C LIGHT,
+   D PYRAMID, E CITY, F CAMERA). Clicking another section, the hub arrows or Left/Right spins the
+   record until that section is level at the top. Values save to localStorage
+   (`djwish.settings.v1`); RESET ALL (click twice) restores the defaults. ESC / CLOSE sinks the
+   disc back into the capstone and returns to the previous street stop or live rig scene.
+   The schema (labels, ranges, defaults) is `SETTINGS_SCHEMA` in `src/settings/settings-store.js`;
+   `applySetting` in app.js maps each key onto the engine.
+
+## 2b. Sound-Reactive Colour Convention
+Low frequencies are red; the colour follows frequency around the wheel up to purple at the top
+(`hueColor` / `bandColor` in `AUDIO_PARS`, `HUE_MAX = 0.78`). `uHue` is the energy-weighted band
+position, `uBands[7]` are adaptively normalised 0..1 band levels, `uActive` fades everything back
+to the idle brand palette when the audio stops. Reactive surfaces: laser fan (live spectrum),
+capstone + apex glow, pyramid edges, logo halo, street VU-meter buildings, equaliser neon strips,
+shop fronts, street reflections, mural paint, signs.
+
+---
+
+## 3. File Map
+```
+public/Projects/DJwish/
+├── index.html                 # Fixed canvas stack, scroll track, HTML panels, sr-only text copy
+├── djwish.css                 # Street HUD, paste-up panels, stage HUD, projection mapper
+├── src/
+│   ├── app.js                 # Boot (font wait), scroll rig, hotkeys, stage mode, frame loop
+│   ├── three/
+│   │   ├── world.js           # ALL layout constants: street, pyramid, fan, murals, hoardings,
+│   │   │                      # scroll stops, intro path, shared shader uniforms
+│   │   ├── scene-manager.js   # Renderer, fog, lights, bloom tiers, per-frame update
+│   │   ├── quality.js         # Adaptive pixel ratio + bloom tiers (?quality=high|low)
+│   │   ├── camera-director.js # Intro spline, scroll stops, stage shot, transitions
+│   │   ├── pyramid.js         # Brick-textured pyramid, haze, capstone, apex glow
+│   │   ├── lasers.js          # Shader laser sheet (live spectrum) + edge beams
+│   │   ├── sky-show.js        # Live rig: sky spectrum, sky scope, street tunnel
+│   │   ├── logo-mesh.js       # Sky logo + halo, parented to the fan
+│   │   ├── starfield.js       # Sky dome, twinkling stars, cross sparkles (follows camera)
+│   │   ├── city.js            # Instanced canyon + skyline, wet street, lamps, signs, plaza lights
+│   │   ├── murals.js          # Spray-paint murals baked to canvas textures once
+│   │   ├── css3d-panels.js    # CSS3DRenderer hoarding panels with stop-based fade
+│   │   └── glow.js            # Instanced additive glow billboards
+│   ├── settings/
+│   │   ├── settings-store.js  # Settings schema, defaults, localStorage persistence
+│   │   └── settings-disc.js   # CSS3D vinyl settings menu, rise/spin/sink animation, lift beam
+│   ├── audio/                 # 7-band AudioEngine, HapticEngine
+│   ├── stage/                 # ProjectionMapper, MidiController
+│   └── data/artist-profile.js # Bio / rider text used by the murals
+└── assets/images/dj_deaf_wish_logo_original.png
+```
+
+To move things, edit `world.js` only: murals, hoardings, camera stops and the intro path all read
+from it, and the city reserves building footprints (`RESERVED`) for the mural walls.
+
+---
+
+## 4. Performance Budget (target 60 fps mid GPU, 120 where available)
+- ~25 draw calls, 2 lights (moon directional + hemisphere). Buildings, skyline, lamps, glows and
+  sparkles are each a single InstancedMesh; signs and neon strips are merged geometry.
+- All audio reactivity runs through shared shader uniforms (`SHARED` in world.js), updated once per
+  frame. No per-frame geometry rebuilds, no per-frame allocations.
+- Textures (bricks, murals, signs, logo) are painted once at boot; no shadowBlur anywhere.
+- QualityManager tiers: dpr 1.5 + bloom -> 1.25 -> 1.0 -> no bloom -> 0.85 -> 0.75, stepping on a
+  90-frame rolling average. Bloom (UnrealBloomPass, threshold 1.0 so only HDR neon/lasers bloom)
+  plus a grain/vignette pass run only on the high tiers. Touch devices start without bloom.
+- Render loop pauses on `visibilitychange`. CSS3D only renders while a panel is visible.
+- Append `?fps` to the URL for an on-screen FPS / tier readout.
+
+---
+
+## 5. Accessibility
+The mural text is baked into textures, so `index.html` carries an sr-only copy of the title,
+bio and rider. Keep it in sync with `src/data/artist-profile.js`.

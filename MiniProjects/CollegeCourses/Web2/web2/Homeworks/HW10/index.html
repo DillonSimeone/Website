@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8' />
+	<title>JavaScript Fun</title>
+	<style type='text/css'>
+		.palette 
+        {
+			float: left;
+			height: 50px;
+			width: 100px;
+            display: flex;
+            flex-direction: row;
+		}
+	</style>
+	<script type='text/javascript'>
+	</script>
+</head>
+<body>
+	<div id='palette-div' style='border:2px solid white; float:left;'></div>
+	<div id='color-div' style='clear:both; position:relative; left:0;'>&nbsp;</div>
+	
+	
+	<script type='text/javascript'>
+		var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'black', 'white'];
+		
+		var palette = document.getElementById('palette-div');
+        var TextmovingLeft = document.getElementById('color-div');
+        TextmovingLeft.innerHTML = '255, 255, 255';
+        
+        var counter = 0;
+        
+        for(var i = 0; i < 8; i++)
+        {
+            var elem = document.createElement("div"); //Creates a new div
+                elem.className = "palette"; //Sets div's class
+                elem.style.backgroundColor = colors[i]; //Sets background color using rgb values.
+                elem.style.display = 'inline'; //Sets display to inline.
+                elem.style.cursor = "pointer";
+                elem.setAttribute("onclick","setBgColor(this);"); //Sets onclick to "Background(this)" returns the elem to the function.
+                palette.appendChild(elem); //Adds a new div to palette div.
+        }
+		
+		function setBgColor( clickedDiv ) 
+        {
+            document.body.style.backgroundColor = clickedDiv.style.backgroundColor;
+            
+            if(clickedDiv.style.backgroundColor == 'red')
+            {
+                TextmovingLeft.innerHTML = '255, 0, 0';
+            }
+            else if(clickedDiv.style.backgroundColor == 'orange')
+            {
+                TextmovingLeft.innerHTML = '255, 165, 0';
+            }
+            else if(clickedDiv.style.backgroundColor == 'yellow')
+            {
+                TextmovingLeft.innerHTML = '255, 255, 0';
+            }
+            else if(clickedDiv.style.backgroundColor == 'green')
+            {
+                TextmovingLeft.innerHTML = '0, 255, 0';
+            }
+            else if(clickedDiv.style.backgroundColor == 'blue')
+            {
+                TextmovingLeft.innerHTML = '0, 0, 255';
+            }
+            else if(clickedDiv.style.backgroundColor == 'violet')
+            {
+                TextmovingLeft.innerHTML = '238, 130, 238';
+            }
+            else if(clickedDiv.style.backgroundColor == 'green')
+            {
+                TextmovingLeft.innerHTML = '0, 0, 0';
+            }
+            else
+            {
+                TextmovingLeft.innerHTML = '255, 255, 255';
+            }
+            
+            TextmovingLeft.style.paddingLeft = parseInt(counter) + 'px';
+            counter += 10;
+            
+			
+			// 9. Now, just for fun, move 'color-div' 10px to the right, every time a 
+			//		colored div is clicked.
+		}
+		//-->
+		//]]>
+	</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+body
+{
+    background-color: white;
+    color: darkgrey;
+}
+header
+{
+    background-color: #000033;
+    color: white;
+}
+nav
+{
+    background-color:skyblue;
+}
+h1
+{
+    margin-bottom: 0;
+}
+h2
+{
+    color:mediumblue;
+}
+dt
+{
+    color:darkblue;
+}
+.resort
+{
+    color: #5C7FA3;
+}

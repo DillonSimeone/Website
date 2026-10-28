@@ -1,0 +1,33 @@
+; Engine configuration file.
+
+config_version=5
+
+[application]
+
+config/name="3D Model Racing"
+config/description="Race any imported 3D model. The shape is the car."
+run/main_scene="res://scenes/main_menu.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+GameState="*res://scripts/game_state.gd"
+MeshPrep="*res://scripts/mesh_prep.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[physics]
+
+common/physics_ticks_per_second=60
+3d/physics_engine="DEFAULT"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.06, 0.06, 0.08, 1)

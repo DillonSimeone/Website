@@ -1,0 +1,46 @@
+subsystem,ref,description,mfr,mfr_pn,lcsc_pn,qty_per_unit,unit_cost_usd,verify,notes
+PFD,U1,MCU nRF52840 BLE 5 SoC QFN73,Nordic,nRF52840-QIAA-R,C190794,1,4.85,verify-before-order,sealed-can section
+PFD,U2,Sub-GHz transceiver 868/915 MHz LoRa-compat,Silicon Labs,Si4463-B1B-FM,C?????,1,3.20,verify-before-order,LoRa-compat FSK
+PFD,U3,GNSS L1 receiver module,u-blox,MAX-M10S-00B,C2980768,1,11.40,verify-before-order,low-power 25 mA
+PFD,U4,6-axis IMU,Bosch,BMI270,C914119,1,2.85,verify-before-order,gait + submersion
+PFD,U5,3-axis magnetometer,Bosch,BMM350,C?????,1,1.95,verify-before-order,bearing for homing
+PFD,U6,Depth/pressure 30 bar IPX8-grade,TE Connectivity,MS5837-30BA,C?????,1,17.80,verify-before-order,salt-rated gel pkg
+PFD,U7,Haptic driver LRA closed-loop,TI,DRV2605LDGS,C92482,2,2.10,verify-before-order,I2C two-addr
+PFD,U8,Coulomb counter,Analog Devices,LTC4150CMS,C?????,1,4.60,verify-before-order,battery gauging
+PFD,U9,Iso supply LDO 3.3 V 300 mA,TI,TPS7A2033,C?????,1,0.85,verify-before-order,low-noise rail
+PFD,U10,AIS-SART OEM transceiver module type-approved class M,Weatherdock / Em-Trak / ACR OEM,EASYRESCUE-M-OEM,N/A,1,185.00,verify-before-order,includes DSC ch.70; per-unit royalty incl.
+PFD,B1,Li-SOCl2 primary 3.6 V 19 Ah D-cell,Tadiran,TL-5930/F,N/A,1,18.40,verify-before-order,6-month service
+PFD,B2,Li-MnO2 primary AIS-SART pack 96 h @ -20 C,SAFT,LO34SX-pack,N/A,1,42.00,verify-before-order,type-approval-rated only
+PFD,M1,LRA 10 mm coin 200 Hz,Vybronics,VLV101040A,C?????,4,1.35,verify-before-order,N/E/S/W chest panel
+PFD,M2,Piezo buzzer 95 dB IP68,CUI,CSS-1308P,C?????,1,3.20,verify-before-order,SOS audible
+PFD,L1,RGB LED 5 mm waterproof potted,Kingbright,WP154A4SUREQBFZGW,C?????,1,0.45,verify-before-order,distress visual
+PFD,J1,USB-C waterproof receptacle under cap,Amphenol,DX07S016JJ1R1500,C?????,1,4.10,verify-before-order,service only
+PFD,J2,u.FL coax SMD x3 (LoRa/AIS/GNSS),Hirose,U.FL-R-SMT-1,C40674,3,0.55,verify-before-order,
+PFD,A1,LoRa antenna helical 868/915,Linx,ANT-868-CW-HW-SMA,N/A,1,3.80,verify-before-order,
+PFD,A2,AIS antenna 162 MHz tuned helical,Pulse Electronics,W3527,N/A,1,9.20,verify-before-order,type-approval set
+PFD,A3,GNSS active patch L1,Taoglas,AGGBP.SMD.25,C?????,1,4.40,verify-before-order,
+PFD,MECH1,Housing PA12 GF glass-filled ultrasonic-weld,custom,WD-PFD-HSG-A,N/A,1,12.50,verify-before-order,IPX8/5m
+PFD,MECH2,Hydrostatic release Hammar-style 0.4 m trip,Hammar,H20-OEM,N/A,1,28.00,verify-before-order,SART float
+PFD,MECH3,316L stainless PFD D-ring clip,custom,WD-CLIP-316,N/A,1,5.80,verify-before-order,
+PFD,PCB,4-layer ENEPIG salt-fog rated 60x40 mm,JLCPCB / Sierra,WD-PFD-PCB,N/A,1,8.40,verify-before-order,ASTM B117 96 h
+MAST,U20,SoM Jetson Orin Nano 8 GB module,NVIDIA,900-13767-0030-000,N/A,1,499.00,verify-before-order,lock lifecycle
+MAST,U21,Carrier board GMSL2 + GigE,custom,WD-MAST-CARRIER,N/A,1,140.00,verify-before-order,marine conformal
+MAST,U22,RGB image sensor 4K 1/2.8,Sony,IMX715-AAQR,C?????,1,38.00,verify-before-order,M12 f/1.4
+MAST,U23,Thermal core 320x256 9 Hz,FLIR/Teledyne,Boson-320-9mm-24,N/A,1,1850.00,verify-before-order,ITAR-exempt 9Hz variant
+MAST,U24,LoRa concentrator,Semtech,SX1302,C?????,1,12.80,verify-before-order,or 2nd Si4463
+MAST,U25,NMEA 2000 isolated CAN xcvr,TI,ISO1042BDWVR,C?????,1,3.60,verify-before-order,
+MAST,U26,1000BASE-T1 PHY,Microchip,LAN8770,C?????,1,4.80,verify-before-order,single-pair marine
+MAST,U27,Surge protection array LoRa Tx,Bourns,CDSOT23-SM712,C?????,2,0.55,verify-before-order,
+MAST,U28,GDT 24 V vessel bus,Bourns,2038-23-SM-RPLF,C?????,1,1.85,verify-before-order,
+MAST,U29,Iso DC/DC 24V->19V 30 W,Recom,RP30-Z series,C?????,1,42.00,verify-before-order,vessel-isolated
+MAST,U30,Iso DC/DC 24V->5V 10 W heater + 3.3V logic,Recom,REC10-2405SRWZ,C?????,1,18.50,verify-before-order,
+MAST,MECH20,IP67 housing 316L stainless bracket marine,custom,WD-MAST-HSG,N/A,1,165.00,verify-before-order,Zn sacrificial anode
+MAST,MECH21,Germanium thermal window AR + hydrophobic,Thorlabs/Edmund,Ge-25mm-AR,N/A,1,85.00,verify-before-order,heated
+MAST,MECH22,Heater pad 8 W silicone,Omega,SRFG-208/10,N/A,1,14.00,verify-before-order,anti-icing
+MAST,PCB,8-layer ENEPIG carrier,custom,WD-MAST-PCB,N/A,1,38.00,verify-before-order,
+BRIDGE,T1,Marine Android tablet IP67 10 in,Winmate / Topcon class,M101P-rugged,N/A,1,720.00,verify-before-order,
+BRIDGE,T2,N2K bridge dongle vessel-side,Actisense,NGT-1,N/A,1,210.00,verify-before-order,or built-in to mast
+BRIDGE,SW,Bridge app + firmware suite (amortised),custom,WD-SW-1y,N/A,1,45.00,verify-before-order,per-unit s/w amort
+CERT,REG1,Type-approval amortised AIS-SART class M (per 500 units),DNV/ABS-led,WD-TYPEAPP-AMORT,N/A,1,120.00,verify-before-order,$60k program / 500 u
+CERT,REG2,Salt-fog + IPX8 + EMC marine cert amortised,TUV / Intertek,WD-MARINE-AMORT,N/A,1,35.00,verify-before-order,
+ASSY,L1,SMT + waterproof assembly + ultrasonic weld + test,CM,WD-CM-ASSY,N/A,1,42.00,verify-before-order,includes hipot + IPX8 leak

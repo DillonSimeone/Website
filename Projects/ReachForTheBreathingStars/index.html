@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flesh-Architect</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+    "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<aside id="palette">
+  <h1>FLESH<span>-ARCHITECT</span></h1>
+  <div class="group-title">Tools</div>
+  <div id="tools"></div>
+  <div class="group-title">Hypertrophy / Fuse Axis</div>
+  <div class="row">
+    <label><input type="radio" name="axis" value="thicken" checked> Thicken (force)</label>
+    <label><input type="radio" name="axis" value="lengthen"> Lengthen (reach)</label>
+  </div>
+  <label class="row"><input type="checkbox" id="fuseToggle" checked> Fuse muscle-on-muscle (instead of new node)</label>
+  <div class="small">Shift+click with Hypertrophy tool shrinks.</div>
+  <div class="group-title">Organs</div>
+  <div id="organs"></div>
+  <div class="group-title">Arena</div>
+  <button id="btnHarvest" class="action">▶ Test Actuation / Harvest</button>
+  <button id="btnPrey" class="action secondary">Respawn Prey</button>
+  <button id="btnReset" class="action danger">Reset Creature</button>
+</aside>
+
+<aside id="telemetry">
+  <h2>TELEMETRY</h2>
+  <div class="stat"><span>Total Mass</span><b id="tMass">0</b></div>
+  <div class="stat"><span>Core Blood Pressure</span><b id="tPress">100</b></div>
+  <div class="stat"><span>Lowest Distal Supply</span><b id="tDistal">–</b></div>
+  <div class="stat"><span>Metabolic Burn</span><b id="tCal">0</b></div>
+  <div class="stat"><span>Peak Joint Torque</span><b id="tTorque">0</b></div>
+  <div class="stat"><span>Worst Joint Load</span><b id="tLoad">0%</b></div>
+  <div class="stat"><span>Max Nerve Latency</span><b id="tLat">0 ms</b></div>
+  <div class="stat"><span>Biomass Harvested</span><b id="tScore">0</b></div>
+  <div class="group-title">Warnings</div>
+  <div id="warnings" class="list"></div>
+  <div class="group-title">Harvest Diagnostics</div>
+  <div id="harvest" class="list"></div>
+  <div class="group-title">Event Log</div>
+  <div id="log" class="list"></div>
+</aside>
+
+<div id="hint">Select an organ, then click any flesh surface to grow it. Drag = orbit, wheel = zoom.</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset to QR Code Panel; Firefox Extension</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="page">
+        <header class="hero">
+            <p class="eyebrow">Firefox Extension</p>
+            <h1>Asset to QR Code Panel</h1>
+            <p class="lead">
+                Hover a link or image, press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>, and get an instant QR code at your cursor.
+                Click to copy the PNG; no CDN, no per-page downloads.
+            </p>
+        </header>
+
+        <section class="card">
+            <h2>How it works</h2>
+            <ol>
+                <li>Move your mouse over a hyperlink or image (or any empty spot to encode the current page).</li>
+                <li>Press <strong>Ctrl+Shift</strong>.</li>
+                <li>A floating panel renders a QR code using a bundled copy of <code>qrcodejs</code>.</li>
+                <li>Click the panel to copy the image, or let it auto-dismiss after 3 seconds.</li>
+            </ol>
+        </section>
+
+        <section class="card">
+            <h2>Install from source</h2>
+            <pre><code>cd MiniProjects/QRCodeHover
+npm install
+npm run build</code></pre>
+            <p>Load temporarily via <code>about:debugging</code>, or run <code>npm run run</code> for a dev session.</p>
+            <ul class="links">
+                <li><a href="README.md">README</a></li>
+                <li><a href="manifest.json">manifest.json</a></li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>

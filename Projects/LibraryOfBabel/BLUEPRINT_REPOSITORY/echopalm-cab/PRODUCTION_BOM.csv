@@ -1,0 +1,40 @@
+ref_des,part_description,manufacturer,mfg_part_number,lcsc_part_number,jlcpcb_part_number,qty_per_unit,unit_price_usd_qty1k,source_notes
+U1,76-81GHz FMCW Automotive Radar SoC 4TX/3RX AEC-Q100,Texas Instruments,AWR1843BOOST,C2688741,C2688741,1,28.00,training-data reference (verify)
+U2,Dual-core Xtensa LX7 MCU 240MHz 512KB SRAM Wi-Fi/BT 7x7mm,Espressif Systems,ESP32-S3-WROOM-1-N8R8,C2913202,C2913202,1,3.20,training-data reference (verify)
+U3,CAN FD Transceiver AEC-Q100 Grade 1 3.3V/5V SOIC-8,NXP Semiconductors,TJA1051T/3,C126583,C126583,1,1.85,training-data reference (verify)
+U4,Haptic Driver I2C LRA/ERM 8-bit effect library QFN-10,Texas Instruments,DRV2605LYZFR,C126498,C126498,2,1.42,training-data reference (verify)
+U5,Synchronous Buck Converter 36V 1.5A 1MHz SOT-23-6,Texas Instruments,LMR36015XDDFR,C2761108,C2761108,1,1.10,training-data reference (verify)
+U6,LDO Regulator 3.3V 500mA AEC-Q100 SOT-23-5,Texas Instruments,TLV75801PDBVR,C116008,C116008,2,0.48,training-data reference (verify)
+U7,6-Axis IMU Accel+Gyro 8kHz ODR SPI/I2C LGA-14,TDK InvenSense,ICM-42688-P,C2884838,C2884838,1,3.10,training-data reference (verify)
+U8,3.3V 256Mbit NOR Flash SPI QFN-8 AEC-Q100,Winbond,W25Q256JVEIQ,C97521,C97521,1,2.20,best-guess (verify)
+U9,5V 500mA LDO for CAN rail SOT-89-3,Diodes Inc,AP7361C-50E-13,C120015,C120015,1,0.28,training-data reference (verify)
+U10,I2C GPIO Expander 8-bit 400kHz SOIC-16,NXP Semiconductors,PCAL6408AHKX,C191023,C191023,1,0.62,best-guess (verify)
+Q1,N-Ch MOSFET 30V 5A AEC-Q101 SOT-23,Vishay,Si2318CDS-T1-GE3,C128384,C128384,2,0.22,training-data reference (verify)
+Q2,P-Ch MOSFET 20V 3A Load Switch SOT-23,Diodes Inc,DMP3013SVT-7,C142011,C142011,1,0.19,best-guess (verify)
+D1,TVS Diode Unidirectional 28V DO-214AA (12V bus),Vishay,SMAJ28A-E3/61,C114734,C114734,1,0.18,training-data reference (verify)
+D2,TVS Diode Unidirectional 58V DO-214AA (24V bus),Vishay,SMAJ58A-E3/61,C114756,C114756,1,0.19,training-data reference (verify)
+D3,Schottky Diode 40V 1A DO-214AC reverse-polarity,ON Semi,SS1P4L-M3/86A,C122768,C122768,1,0.12,training-data reference (verify)
+L1,Common-Mode Choke 90 Ohm@100MHz 2A SMD 2012,TDK,ACM2012-900-2P-T002,C86793,C86793,1,0.55,training-data reference (verify)
+L2,Power Inductor 4.7uH 2A 50mOhm Shielded 4x4mm,TDK,SLF10145T-4R7M2R2-PF,C394083,C394083,1,0.38,training-data reference (verify)
+C1,MLCC 100uF 25V X5R 1210 bulk input decoupling,Murata,GRM32EC61E107ME20L,C255839,C255839,4,0.42,training-data reference (verify)
+C2,MLCC 10uF 10V X5R 0805 rail decoupling,Murata,GRM21BR61A106KE18L,C96446,C96446,10,0.08,training-data reference (verify)
+C3,MLCC 100nF 50V X7R 0402 bypass,Yageo,CC0402KRX7R9BB104,C100080,C100080,20,0.01,training-data reference (verify)
+C4,Electrolytic 220uF 25V 105C automotive grade,Nichicon,UUD1E221MNL1GS,C108328,C108328,2,0.35,best-guess (verify)
+R1,Resistor 4k7 1% 0402 thin film,Yageo,RC0402FR-074K7L,C106245,C106245,6,0.01,training-data reference (verify)
+R2,Resistor 10k 1% 0402 thin film,Yageo,RC0402FR-0710KL,C98220,C98220,8,0.01,training-data reference (verify)
+R3,Resistor 100R 1% 0402 current limit,Yageo,RC0402FR-07100RL,C105872,C105872,4,0.01,training-data reference (verify)
+J1,Deutsch DT 4-pin CAN+Power connector automotive IP67,Deutsch,DT04-4P-CE01,N/A,N/A,1,3.80,not available LCSC — verify Deutsch distributor
+J2,2-pin JST PH 2mm seatback ERM harness,JST,B2B-PH-K-S(LF)(SN),C131337,C131337,1,0.15,training-data reference (verify)
+J3,4-pin JST PH 2mm steering wheel LRA harness,JST,B4B-PH-K-S(LF)(SN),C131342,C131342,1,0.18,training-data reference (verify)
+J4,USB-C 2.0 debug/OTA port SMT mid-mount,Korean Hroparts,TYPE-C-31-M-12,C165948,C165948,1,0.28,training-data reference (verify)
+J5,10-pin FPC connector 0.5mm pitch ZIF for radar antenna board,Molex,503480-1000,C225478,C225478,1,0.55,best-guess (verify)
+M1,ERM Motor 10mm 3V 85mA centrifugal seatback,Vybronics,VC1030B002F,N/A,N/A,1,2.40,not available LCSC — verify Vybronics distributor
+M2,LRA 10mm 3V 1G 175Hz steering-wheel ring (x4),Precision Microdrives,308-100,N/A,N/A,4,3.20,not available LCSC — verify Precision Microdrives
+LED1,RGB LED 0805 status indicator,Wurth,150080RS75000,C72040,C72040,1,0.12,training-data reference (verify)
+Y1,40MHz TCXO ±1ppm ESP32 clock ref 3225,TXC Corp,7M40070012,C494860,C494860,1,1.20,best-guess (verify)
+F1,Resettable fuse 1.1A hold 2A trip 1812 automotive,Bourns,MF-MSMF110/24X-2,C129017,C129017,1,0.28,training-data reference (verify)
+PCB,4-layer PCB 100x80mm ENIG -40/+85C IPC Class 3 rating,JLCPCB,custom,N/A,N/A,1,4.20,JLCPCB 4-layer quote estimate — verify
+ENCL,ABS+GF injection-molded headliner shell 180x120x22mm,Custom Molder,custom,N/A,N/A,1,6.50,tooling amortized at 5k units — verify
+MECH,M2 silicone standoffs Shore 40A vibe isolation x4,Custom/catalog,N/A,C290411,C290411,4,0.08,best-guess (verify)
+MISC,Thermal interface pad 1.5W/mK 50x50x1mm,Bergquist,GP1500S5050-1.0-AC,N/A,N/A,1,0.85,best-guess (verify)
+PROG,ESP32-S3 firmware programming and test jig (amortized),Internal,N/A,N/A,N/A,1,0.50,test cost per unit at 1k — estimate

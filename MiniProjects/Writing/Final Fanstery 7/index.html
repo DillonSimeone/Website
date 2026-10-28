@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Materia Overunity: Sephiroth's Research Logs</title>
+    <meta name="description" content="An interactive research log documenting Sephiroth's discovery of the infinite Mako loop in Nibelheim. Powered by WebGL shaders and interactive Materia simulations.">
+    
+    <!-- Google Fonts: Elegant headers (Playfair), clean text (Inter), code-like data (Space Mono), tech headings (Outfit) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Overlay scanning/grid line for the tech log overlay -->
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="glow-radial" aria-hidden="true"></div>
+
+    <div class="app-container">
+        
+        <!-- Header area -->
+        <header class="header">
+            <div class="header-left">
+                <span class="eyebrow">Shinra Log // Project Overunity</span>
+                <h1 class="main-title">Materia Resonance</h1>
+            </div>
+            <div class="header-right">
+                <div class="system-status">
+                    <span class="status-indicator active"></span>
+                    <span class="status-text font-mono">FEEDBACK LOOP: SUSTAINED</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace: Split screen on desktop -->
+        <main class="workspace">
+            
+            <!-- Left Panel: Info and controls (Mobile: Collapsed, WebGL in background) -->
+            <section class="panel-left">
+                <div class="visualizer-card glass-panel">
+                    <div class="panel-header">
+                        <span class="font-mono text-dim text-sm">3D MODEL: LATTICE CORE</span>
+                        <div class="panel-header-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                    
+                    <!-- WebGL Canvas wrapper -->
+                    <div class="canvas-wrapper">
+                        <canvas id="canvas3d" aria-hidden="true"></canvas>
+                    </div>
+                    
+
+                    <!-- HUD scientific indicators -->
+                    <div class="hud-stats font-mono">
+                        <div class="hud-stat-item">
+                            <span class="hud-label">INPUT</span>
+                            <span class="hud-value text-accent-blue" id="hud-input">12.0 J</span>
+                        </div>
+                        <div class="hud-stat-item">
+                            <span class="hud-label">OUTPUT</span>
+                            <span class="hud-value text-accent-green" id="hud-output">18.7 kW</span>
+                        </div>
+                        <div class="hud-stat-item">
+                            <span class="hud-label">COEFF</span>
+                            <span class="hud-value text-accent-green" id="hud-coeff">1558.3%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-card glass-panel font-mono">
+                    <div class="panel-header">
+                        <span class="text-dim text-sm">THERMODYNAMICS VIOLATION SUMMARY</span>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <span class="metric-label">1ST LAW</span>
+                            <span class="metric-status text-error">BYPASSED</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">2ND LAW</span>
+                            <span class="metric-status text-error">VIOLATED</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">MAKO DRAIN</span>
+                            <span class="metric-status text-ok">NIL</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Reader Card -->
+            <section class="panel-right glass-panel">
+                
+                <!-- Tab Navigation (Tabs representing 0.md to 3.md) -->
+                <nav class="tab-navigation font-mono" role="tablist" aria-label="Story Chapters">
+                    <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="reader-content" data-chapter="0" id="tab-0">
+                        <span class="tab-num">00</span>
+                        <span class="tab-title">Genesis</span>
+                    </button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="reader-content" data-chapter="1" id="tab-1">
+                        <span class="tab-num">01</span>
+                        <span class="tab-title">Divergence</span>
+                    </button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="reader-content" data-chapter="2" id="tab-2">
+                        <span class="tab-num">02</span>
+                        <span class="tab-title">Labyrinth</span>
+                    </button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="reader-content" data-chapter="3" id="tab-3">
+                        <span class="tab-num">03</span>
+                        <span class="tab-title">Grace</span>
+                    </button>
+                </nav>
+
+                <!-- Reader viewport -->
+                <div class="reader-viewport">
+                    <div class="reader-scrollbar-track"></div>
+                    <article class="reader-content markdown-body" id="reader-content" role="tabpanel" aria-labelledby="tab-0" tabindex="0">
+                        <!-- Content injected dynamically via script.js -->
+                        <div class="content-loader">
+                            <div class="spinner"></div>
+                            <span class="font-mono text-dim text-sm mt-3">Accessing database logs...</span>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Reading controls: Text Resizer / Dark Mode / Focus Mode -->
+                <div class="reader-footer">
+                    <div class="reader-controls font-mono">
+                        <button id="btn-focus" class="ctrl-btn" title="Focus Mode (Hide UI)">
+                            <span class="icon">👁</span> <span class="lbl">Focus Mode</span>
+                        </button>
+                        <div class="text-resizer">
+                            <button id="btn-dec-font" class="ctrl-btn" title="Decrease font size">A-</button>
+                            <span class="font-size-indicator text-xs text-dim">100%</span>
+                            <button id="btn-inc-font" class="ctrl-btn" title="Increase font size">A+</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+    <!-- Footer (outside app-container for natural document flow) -->
+    <footer class="footer font-mono text-xs text-dim">
+        <div class="footer-left">
+            <span>Subject: Sephiroth [SOLDIER Class 1st]</span>
+            <span class="footer-sep">|</span>
+            <span>Loc: Mt. Nibel Subterranean Reactor</span>
+        </div>
+    </footer>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Custom Script -->
+    <script type="module" src="main.js"></script>
+</body>
+</html>

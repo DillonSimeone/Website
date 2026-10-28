@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parametric PCB & Silkscreen Studio Workbench</title>
+  <link rel="stylesheet" href="./shared/editor.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <div class="studio-shell">
+    <!-- TOP COMMAND RIBBON -->
+    <header class="studio-topbar">
+      <div class="topbar-group brand-group">
+        <a id="link-showcase" href="./03-compactAudioMotionSquarePCB/index.html" class="btn-ghost" title="Open Showcase Viewer">‹ Showcase</a>
+        <div class="studio-title">
+          <span class="studio-logo">✏️</span>
+          <span>PCB Studio</span>
+        </div>
+        <select id="select-project" class="studio-select" title="Switch Active PCB Project">
+          <option value="03">03: Compact Square (38×38mm)</option>
+          <option value="00">00: Starter Template (40×40mm)</option>
+          <option value="02">02: Baton Carrier (20×120mm)</option>
+          <option value="04">04: All-SMD Baton (22×110mm)</option>
+        </select>
+        <span id="server-status-pill" class="status-pill status-checking" title="Express Studio disk server connection">Checking server…</span>
+      </div>
+
+      <!-- INTERACTION TOOLS -->
+      <div class="topbar-group tool-segmented" role="toolbar" aria-label="CAD Tools">
+        <button class="tool-btn active" data-tool="select" title="Select, Drag, Rotate & Resize (Shortcut: V)">🖱 Select <kbd>V</kbd></button>
+        <button class="tool-btn" data-tool="measure" title="Point-to-Point Caliper Ruler with Pad Snap (Shortcut: M)">📏 Ruler <kbd>M</kbd></button>
+        <button class="tool-btn" data-tool="pan" title="Pan Canvas (Shortcut: Space + Drag or Middle Mouse)">✋ Pan</button>
+      </div>
+
+      <!-- STAMP PALETTE -->
+      <div class="topbar-group stamp-bar" role="toolbar" aria-label="Silkscreen Stamp Palette">
+        <span class="group-caption">Stamp:</span>
+        <button class="stamp-btn" data-stamp="text" title="Add Freeform Silkscreen Text Label">+ Text</button>
+        <button class="stamp-btn" data-stamp="plus" title="Stamp '+' Polarity Marker (1.2mm)">➕</button>
+        <button class="stamp-btn" data-stamp="minus" title="Stamp '-' Polarity Marker (1.2mm)">➖</button>
+        <button class="stamp-btn" data-stamp="dot" title="Stamp Solid Gerber Pin-1 Dot (0.45mm)">● Dot</button>
+        <button class="stamp-btn" data-stamp="cathode" title="Stamp Diode Cathode U-Bracket">|[ Bar</button>
+        <button class="stamp-btn" data-stamp="box" title="Stamp Courtyard / Outline Box">▢ Box</button>
+        <button class="stamp-btn" data-stamp="line" title="Stamp Divider Line">╱ Line</button>
+      </div>
+
+      <!-- GRID SNAP & VIEW CONTROLS -->
+      <div class="topbar-group view-bar">
+        <label class="inline-field" title="Magnetic Grid Snap (Hold Alt while dragging to bypass)">
+          <span>Snap</span>
+          <select id="select-snap" class="studio-select compact">
+            <option value="0">Off</option>
+            <option value="0.1" selected>0.1 mm</option>
+            <option value="0.25">0.25 mm</option>
+            <option value="0.5">0.5 mm</option>
+            <option value="1.27">1.27 mm (50mil)</option>
+            <option value="2.54">2.54 mm (0.1")</option>
+          </select>
+        </label>
+        <button id="btn-zoom-fit" class="btn-ghost" title="Fit Board in Viewport (Shortcut: F)">Fit</button>
+        <button id="btn-zoom-physical" class="btn-accent-outline" title="Zoom to Exact 1:1 Real-World Physical Millimeter Size! Check readability with your naked eye.">🔍 1:1 Real Size</button>
+        <button id="btn-calibrate-ppi" class="btn-ghost icon-only" title="Calibrate Monitor PPI for Exact 1:1 Physical Size">💳</button>
+        <button id="btn-flip-board" class="btn-ghost" title="Flip Board Horizontally (Bottom-Up View so bottom silkscreen reads left-to-right)">🔄 Flip Bottom</button>
+        <button id="btn-toggle-3d" class="btn-ghost" title="Toggle Live 3D Split Preview">🧊 3D Split</button>
+      </div>
+
+      <!-- HISTORY & SAVE / PUBLISH -->
+      <div class="topbar-group action-bar">
+        <button id="btn-undo" class="btn-ghost icon-only" title="Undo (Ctrl+Z)" disabled>↶</button>
+        <button id="btn-redo" class="btn-ghost icon-only" title="Redo (Ctrl+Y)" disabled>↷</button>
+        <button id="btn-route-traces" class="btn-route" title="Run 2-Layer Trace Autorouter on Current Placement">🔀 Route</button>
+        <button id="btn-save-layout" class="btn-primary" title="Save src/layout.json to Disk (Ctrl+S)">💾 Save <span id="dirty-indicator" hidden>*</span></button>
+        <button id="btn-publish-fab" class="btn-publish" title="Save + Compile + Audit DRC + Export Gerbers.zip, BOM.csv, CPL.csv & Routed.stl">📦 Publish Fab</button>
+      </div>
+    </header>
+
+    <!-- 1:1 PHYSICAL MONITOR CALIBRATION MODAL -->
+    <div id="ppi-modal" class="modal-backdrop" hidden>
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>💳 Calibrate 1:1 Physical Screen Size</h3>
+          <button id="btn-close-ppi" class="btn-ghost icon-only">✕</button>
+        </div>
+        <p class="modal-desc">
+          Hold a standard credit card / ID card (<strong>85.60 mm</strong> wide) or millimeter ruler against your screen and adjust the slider until the cyan bar matches its exact physical width.
+        </p>
+        <div class="calibration-bar-wrap">
+          <div id="calibration-card-bar" class="calibration-card-bar">
+            <span>Standard Card Width = 85.60 mm (3.370 in)</span>
+          </div>
+        </div>
+        <div class="calibration-controls">
+          <label for="input-ppi-slider">Monitor Density:</label>
+          <input type="range" id="input-ppi-slider" min="65" max="240" step="0.5" value="96">
+          <input type="number" id="input-ppi-number" min="65" max="240" step="0.5" value="96" class="studio-input narrow">
+          <span>PPI</span>
+        </div>
+        <div class="modal-actions">
+          <button id="btn-reset-ppi" class="btn-ghost">Reset (96 PPI)</button>
+          <button id="btn-apply-ppi" class="btn-primary">Save & Zoom 1:1</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN 3-COLUMN WORKBENCH -->
+    <div class="studio-main">
+      <!-- LEFT SIDEBAR: LAYERS, DRC TRIAGE & OBJECT TREE -->
+      <aside class="studio-leftbar">
+        <!-- Legacy Project Bootstrap Callout -->
+        <div id="bootstrap-banner" class="bootstrap-banner" hidden>
+          <div class="bootstrap-title">⚡ No <code>src/layout.json</code> Yet</div>
+          <p>This legacy board still uses inline coordinates in <code>circuit.js</code>. Bootstrap a declarative <code>layout.json</code> sidecar from its compiled components & silkscreen in 1 click:</p>
+          <button id="btn-bootstrap-layout" class="btn-primary full-width">✨ Bootstrap layout.json</button>
+        </div>
+
+        <!-- Layer Visibility & Active Stamp Side -->
+        <section class="panel-block">
+          <div class="panel-heading">
+            <h4>Layers & Overlays</h4>
+            <div class="active-side-toggle" title="Default layer for newly stamped labels">
+              <span>Stamp on:</span>
+              <button id="btn-side-top" class="mini-pill active" data-side="top">Top</button>
+              <button id="btn-side-bottom" class="mini-pill" data-side="bottom">Bot</button>
+            </div>
+          </div>
+          <div class="layer-toggles">
+            <label class="layer-row"><input type="checkbox" data-layer="topSilk" checked><span class="swatch swatch-top-silk"></span>Top Silkscreen</label>
+            <label class="layer-row"><input type="checkbox" data-layer="bottomSilk" checked><span class="swatch swatch-bot-silk"></span>Bottom Silkscreen</label>
+            <label class="layer-row"><input type="checkbox" data-layer="pads" checked><span class="swatch swatch-pad"></span>Copper Pads & Drills</label>
+            <label class="layer-row"><input type="checkbox" data-layer="topCopper" checked><span class="swatch swatch-top-cu"></span>Top Traces</label>
+            <label class="layer-row"><input type="checkbox" data-layer="bottomCopper" checked><span class="swatch swatch-bot-cu"></span>Bottom Traces</label>
+            <label class="layer-row"><input type="checkbox" data-layer="courtyards" checked><span class="swatch swatch-courtyard"></span>Component Courtyards</label>
+            <label class="layer-row"><input type="checkbox" data-layer="textBoxes" checked><span class="swatch swatch-obb"></span>Gerber Text Boxes & DRC</label>
+          </div>
+        </section>
+
+        <!-- Live JLCPCB Silkscreen & Polarity DRC -->
+        <section class="panel-block drc-panel">
+          <div class="panel-heading">
+            <h4>JLCPCB Silkscreen DRC</h4>
+            <button id="btn-autofix-fonts" class="mini-action-btn" title="Automatically raise all silkscreen text smaller than 0.80mm up to JLCPCB's 0.80mm minimum">Fix &lt;0.8mm</button>
+          </div>
+          <div id="drc-summary-badge" class="drc-badge pass">✔ 0 Violations</div>
+          <div id="drc-violation-list" class="drc-list"></div>
+        </section>
+
+        <!-- Object Explorer Tree -->
+        <section class="panel-block explorer-panel">
+          <div class="panel-heading">
+            <h4>Board Objects</h4>
+            <span id="object-count-label" class="muted-count">0 items</span>
+          </div>
+          <input type="search" id="input-object-search" class="studio-input full-width" placeholder="Filter U_CHG, D_HAP, LED1, + ...">
+          <div class="explorer-tabs">
+            <button class="exp-tab active" data-exptab="all">All</button>
+            <button class="exp-tab" data-exptab="components">Components</button>
+            <button class="exp-tab" data-exptab="silkscreen">Silkscreen</button>
+          </div>
+          <div id="object-tree-list" class="object-tree-list"></div>
+        </section>
+      </aside>
+
+      <!-- CENTER CAD VIEWPORT (+ OPTIONAL 3D SPLIT) -->
+      <main id="center-stage" class="studio-stage">
+        <div class="cad-pane">
+          <canvas id="ruler-top" class="ruler-top"></canvas>
+          <canvas id="ruler-left" class="ruler-left"></canvas>
+          <div class="ruler-corner" title="Origin (0, 0) at Board Center">mm</div>
+
+          <div id="cad-canvas-wrap" class="cad-canvas-wrap" tabindex="0">
+            <svg id="cad-svg" class="cad-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+            <!-- Floating Caliper Clear Button -->
+            <button id="btn-clear-rulers" class="floating-clear-rulers" hidden>✕ Clear Measurements</button>
+
+            <!-- Floating Toast Banner -->
+            <div id="studio-toast" class="studio-toast" hidden></div>
+
+            <!-- Compile Spinner Pill -->
+            <div id="compile-pill" class="compile-pill" hidden>⚡ Compiling PCB…</div>
+          </div>
+
+          <!-- Bottom CAD Telemetry Status Bar -->
+          <footer class="cad-statusbar">
+            <div class="status-cell">Cursor: <strong id="status-cursor">X: 0.00, Y: 0.00 mm</strong></div>
+            <div class="status-cell">Zoom: <strong id="status-zoom">100%</strong></div>
+            <div class="status-cell">View: <strong id="status-view-side">Top-Down</strong></div>
+            <div class="status-cell" id="status-hover-info">Hover any pad, component, or silkscreen label</div>
+          </footer>
+        </div>
+
+        <!-- LIVE 3D SPLIT PREVIEW PANE -->
+        <div id="preview-3d-pane" class="preview-3d-pane" hidden>
+          <div class="pane-3d-header">
+            <span>🧊 Live 3D Silkscreen & Substrate Preview</span>
+            <button id="btn-close-3d" class="btn-ghost icon-only" title="Hide 3D Split">✕</button>
+          </div>
+          <div id="studio-3d-container" class="studio-3d-container"></div>
+        </div>
+      </main>
+
+      <!-- RIGHT SIDEBAR: CONTEXTUAL PROPERTY INSPECTOR -->
+      <aside class="studio-rightbar">
+        <div id="inspector-root" class="inspector-root"></div>
+      </aside>
+    </div>
+  </div>
+
+  <script type="module" src="./shared/editor-app.js"></script>
+</body>
+</html>

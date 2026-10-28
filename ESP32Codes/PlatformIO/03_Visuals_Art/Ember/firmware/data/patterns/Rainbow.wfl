@@ -1,0 +1,3 @@
+// Classic rainbow sweep using the new time() builtin.
+h = i/n + time(8);
+hsv(h, 1, 1);

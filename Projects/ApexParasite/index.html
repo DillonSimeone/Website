@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Parasite: Chimera Odyssey</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=JetBrains+Mono:wght@400;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body class="apex-body">
+  <!-- Start Menu Screen (The Awakening) -->
+  <div id="start-menu-overlay" class="start-menu-overlay">
+    <canvas id="start-menu-canvas" class="start-menu-canvas"></canvas>
+    
+    <div class="start-menu-content">
+      <!-- Brand / Title Banner -->
+      <div class="start-header">
+        <div class="start-badge">PRIMORDIAL PROTOCOL // PROTO-CHIMERA AWAKENING</div>
+        <h1 class="start-title">APEX PARASITE</h1>
+        <div class="start-subtitle">CHIMERA ODYSSEY</div>
+        <p class="start-tagline">“BURROW INTO FRESH FLESH. ASSEMBLE DIVINITY.”</p>
+      </div>
+
+      <!-- Centerpiece: Stylized Worm Core '@' with pulsating bio-rings -->
+      <div class="start-centerpiece">
+        <div class="worm-core-vessel" id="worm-core-vessel">
+          <div class="worm-pulse-ring ring-1"></div>
+          <div class="worm-pulse-ring ring-2"></div>
+          <div class="worm-pulse-ring ring-3"></div>
+          <div class="worm-glyph">@</div>
+        </div>
+        <div class="worm-status-caption">
+          <span class="status-pulse-dot"></span>
+          <span class="status-text">WORM CORE CONSCIOUSNESS: PRIMED FOR INFESTATION</span>
+        </div>
+      </div>
+
+      <!-- Angular Persona 5 Slash Ribbon Action Buttons -->
+      <div class="start-menu-actions">
+        <button class="start-p5-btn start-btn-primary" id="btn-start-game">
+          <span class="btn-icon">🪱</span>
+          <div class="btn-col">
+            <span class="btn-text">INITIATE HOST INFESTATION</span>
+            <span class="btn-sub">Burrow into human vagrant vessel & awaken</span>
+          </div>
+        </button>
+
+        <button class="start-p5-btn" id="btn-open-sanctuary">
+          <span class="btn-icon">🧬</span>
+          <div class="btn-col">
+            <span class="btn-text">BIO-ESSENCE SANCTUARY</span>
+            <span class="btn-sub">Primordial genetic memories & permanent adaptations</span>
+          </div>
+        </button>
+
+        <button class="start-p5-btn" id="btn-open-codex">
+          <span class="btn-icon">📖</span>
+          <div class="btn-col">
+            <span class="btn-text">CODEX & MUTATION RECORDS</span>
+            <span class="btn-sub">Anatomical taxonomy, prey bestiary & systems</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="start-footer-telemetry">
+        <span>V1.0.0 ROGUELITE ARCHITECTURE</span>
+        <span>•</span>
+        <span>RECURSIVE NODE CHIMERA ENGINE</span>
+        <span>•</span>
+        <button id="btn-start-audio" class="start-audio-btn">🔊 AUDIO: ACTIVE</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="game-container" class="game-container">
+    <!-- Top Tactical Status Bar (Persona 5 High-Contrast Slash Strip) -->
+    <header class="tactical-top-bar">
+      <!-- Vessel Identity & Concealment Disguise -->
+      <div class="vessel-badge-group">
+        <div class="vessel-avatar">@</div>
+        <div class="vessel-info">
+          <div class="vessel-title-row">
+            <span class="vessel-name" id="vessel-name">Human Vagrant</span>
+            <span class="vessel-lvl" id="vessel-lvl">LVL 1</span>
+          </div>
+          <div class="concealment-tag-wrap">
+            <span class="concealment-pill" id="concealment-pill" title="Concealment Rating: Below 30% triggers town alarm!">
+              <span class="lbl">DISGUISE:</span>
+              <strong id="conceal-val">100%</strong>
+              <span class="disguise-status" id="disguise-status">[WANDERER]</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Core Vitals Bars (Calories, Blood, Biomass) -->
+      <div class="core-vitals-strip">
+        <!-- Calories -->
+        <div class="vital-metric cal-metric">
+          <div class="vital-label-row">
+            <span>CALORIES</span>
+            <span id="cal-text">120/120</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill cal-fill" id="cal-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Blood (Host Health) -->
+        <div class="vital-metric blood-metric">
+          <div class="vital-label-row">
+            <span>BLOOD VOLUME</span>
+            <span id="blood-text">100/100</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill blood-fill" id="blood-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Biomass EXP -->
+        <div class="vital-metric biomass-metric">
+          <div class="vital-label-row">
+            <span>BIOMASS EXP</span>
+            <span id="biomass-text">0/100</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill biomass-fill" id="biomass-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location & Depravity Telemetry -->
+      <div class="location-telemetry">
+        <div class="tele-box loc-box">
+          <span class="tele-lbl">ZONE</span>
+          <span class="tele-val" id="loc-name">Oakhaven City</span>
+        </div>
+        <div class="tele-box depravity-box" title="Global Depravity: Accelerates world mutations and hunter champions">
+          <span class="tele-lbl">DEPRAVITY</span>
+          <span class="tele-val text-red" id="depravity-val">0</span>
+        </div>
+      </div>
+
+      <!-- Navigation & Action Buttons -->
+      <div class="top-nav-buttons">
+        <button id="btn-open-assembly" class="hud-btn p5-btn" title="Open Chimera Node Assembly [Tab / C]">
+          🧬 CHIMERA RIG
+        </button>
+        <button id="btn-open-crucible" class="hud-btn p5-btn" title="Open Refrain Alchemy Crucible">
+          ⚗️ CRUCIBLE
+        </button>
+        <button id="btn-open-skills" class="hud-btn p5-btn" title="View Discovered Skills [K]">
+          📜 SKILLS
+        </button>
+        <button id="btn-audio-toggle" class="hud-btn p5-btn" title="Mute/Unmute Audio [M]">
+          🔊 AUDIO
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Viewport: Multi-Plane 2.5D Parallax Canvas Stage -->
+    <main class="viewport-stage-container">
+      <canvas id="parallax-canvas" class="parallax-canvas"></canvas>
+
+      <!-- Overlay: Atmospheric Location Ribbon (Persona 5 Bold Angular Menu) -->
+      <div class="p5-action-ribbon-container" id="action-ribbon-container">
+        <div class="location-header-card">
+          <h1 class="location-title" id="stage-loc-title">FRONTIER SETTLEMENT: OAKHAVEN</h1>
+          <p class="location-tagline" id="stage-loc-tagline">Gas-lit cobblestones, stone cathedral spires, and vigilant town watch.</p>
+        </div>
+
+        <div class="p5-action-buttons-stack" id="location-actions-stack">
+          <!-- Dynamically populated based on active location (City, Forest, Camp) -->
+        </div>
+      </div>
+
+      <!-- Overlay: Combat Stage HUD (Seamless, fades onto forest stage) -->
+      <!-- Overlay: Combat Stage HUD (Direct Anatomical Hover Targeting) -->
+      <div class="combat-stage-overlay hidden" id="combat-stage-overlay">
+        <!-- Top Status: Target Specimen Overview -->
+        <div class="combat-top-telemetry">
+          <div class="target-name-badge">
+            <span class="threat-icon">⚠️</span>
+            <span class="target-name" id="enemy-name">Verdant Thorn-Beast</span>
+            <span class="target-sub" id="enemy-sub-tag">[Primeval Fauna • Tier 1]</span>
+          </div>
+          <div class="target-vital-track">
+            <span class="lbl">HOST BLOOD:</span>
+            <strong id="enemy-blood-val">100%</strong>
+            <div class="enemy-blood-meter">
+              <div class="enemy-blood-fill" id="enemy-blood-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Left: Player Weapon Limbs Selector -->
+        <div class="combat-player-panel">
+          <div class="panel-header">CHIMERA ARSENAL</div>
+          <div class="combat-active-weapons" id="combat-active-weapons">
+            <!-- Dynamically populated active attack limbs -->
+          </div>
+          <div class="combat-prompt-hint">
+            Direct your strike: Hover and click any limb on the beast!
+          </div>
+        </div>
+
+        <!-- Stage Center-Right: Interactive Anatomical Creature Viewport -->
+        <div class="stage-creature-viewport" id="stage-creature-viewport">
+          <div class="creature-figure-wrapper" id="creature-figure-wrapper">
+            <!-- Transparent Modular Specimen Sprite Canvas -->
+            <canvas id="creature-sprite-canvas" class="creature-sprite-canvas" width="440" height="420"></canvas>
+
+            <!-- Anatomical Direct Hover SVG Overlay -->
+            <svg id="creature-target-svg" class="creature-target-svg" viewBox="0 0 440 420">
+              <!-- Shadow beneath creature feet -->
+              <ellipse cx="220" cy="380" rx="140" ry="24" fill="rgba(0,0,0,0.7)" />
+
+              <!-- Locomotion Pods / Legs (Back & Front) -->
+              <g class="creature-limb-group" data-limb="legs">
+                <path class="limb-hitbox" d="M 160 250 L 110 380 L 155 380 L 185 270 Z" />
+                <path class="limb-hitbox" d="M 280 250 L 330 380 L 285 380 L 255 270 Z" />
+                <path class="limb-hitbox" d="M 190 260 L 170 385 L 205 385 L 215 270 Z" />
+                <path class="limb-hitbox" d="M 250 260 L 270 385 L 235 385 L 225 270 Z" />
+              </g>
+
+              <!-- Thoracic Mantle / Armored Chest -->
+              <g class="creature-limb-group" data-limb="thorax">
+                <path class="limb-hitbox" d="M 165 140 Q 220 120 275 140 L 290 260 Q 220 290 150 260 Z" />
+              </g>
+
+              <!-- Left Razor Scythe Arm -->
+              <g class="creature-limb-group" data-limb="weapon_l">
+                <path class="limb-hitbox" d="M 165 150 Q 75 110 40 180 Q 20 260 65 340 Q 80 280 110 220 Q 145 180 165 160 Z" />
+              </g>
+
+              <!-- Right Razor Scythe Arm -->
+              <g class="creature-limb-group" data-limb="weapon_r">
+                <path class="limb-hitbox" d="M 275 150 Q 365 110 400 180 Q 420 260 375 340 Q 360 280 330 220 Q 295 180 275 160 Z" />
+              </g>
+
+              <!-- Head / Sensory Crest / Venom Antlers -->
+              <g class="creature-limb-group" data-limb="head">
+                <!-- Skull -->
+                <ellipse class="limb-hitbox" cx="220" cy="95" rx="40" ry="45" />
+                <!-- Left Antler -->
+                <path class="limb-hitbox antler-path" d="M 195 75 Q 140 30 110 45 Q 135 75 185 85 Z" />
+                <!-- Right Antler -->
+                <path class="limb-hitbox antler-path" d="M 245 75 Q 300 30 330 45 Q 305 75 255 85 Z" />
+              </g>
+            </svg>
+          </div>
+
+          <!-- Floating Combat Hover Reticle -->
+          <div class="combat-hover-reticle hidden" id="combat-hover-reticle">
+            <div class="reticle-header">
+              <span class="reticle-target-name" id="reticle-name">LEFT RAZOR SCYTHE</span>
+              <span class="reticle-status-badge" id="reticle-status">[READY]</span>
+            </div>
+            <div class="reticle-stats-grid">
+              <div class="reticle-stat"><span>HIT CHANCE:</span> <strong id="reticle-hit">82%</strong></div>
+              <div class="reticle-stat"><span>EST. DAMAGE:</span> <strong id="reticle-dmg">16-22 Dmg</strong></div>
+              <div class="reticle-stat"><span>ARMOR DEFLECT:</span> <strong id="reticle-armor">2</strong></div>
+              <div class="reticle-stat"><span>TRAIT:</span> <strong id="reticle-trait" class="text-gold">Severable</strong></div>
+            </div>
+            <div class="reticle-click-prompt">CLICK TO STRIKE THIS LIMB</div>
+          </div>
+
+          <!-- Dynamic Floating Damage Numbers Layer -->
+          <div class="combat-damage-layer" id="combat-damage-layer"></div>
+        </div>
+      </div>
+
+      <!-- Overlay: Post-Combat Surgical Field (Radial Floating Callout Tags) -->
+      <div class="surgical-field-overlay hidden" id="surgical-field-overlay">
+        <div class="surgical-radial-stage">
+          <!-- Top Surgical Telemetry Bar -->
+          <div class="surgery-top-bar">
+            <div class="specimen-identity">
+              <h2 id="surgery-specimen-title">VERDANT THORN-BEAST (LIVING SPECIMEN)</h2>
+              <span class="surgery-subtitle">Specimen is sedated in hemorrhagic shock. Extract organs before pulse arrests.</span>
+            </div>
+            <div class="vital-pulse-card" id="vital-pulse-card">
+              <div class="pulse-title-row">
+                <span class="pulse-lbl">SPECIMEN VITAL PULSE:</span>
+                <strong class="pulse-val" id="vital-pulse-val">75%</strong>
+              </div>
+              <div class="pulse-track">
+                <div class="pulse-bar" id="vital-pulse-bar" style="width: 75%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Central Specimen Anatomy View with Radial Callouts -->
+          <div class="radial-anatomy-container">
+            <!-- Center Prone Specimen Silhouette -->
+            <div class="radial-center-specimen" id="radial-center-specimen">
+              <div class="corpse-blood-pool"></div>
+              <svg class="corpse-silhouette-svg" viewBox="0 0 300 180">
+                <ellipse cx="150" cy="110" rx="90" ry="40" fill="#08140c" stroke="#4ade80" stroke-width="2" />
+                <circle cx="80" cy="100" r="28" fill="#0c1f14" stroke="#4ade80" stroke-width="2" />
+                <path d="M 80 80 Q 40 50 30 70" stroke="#38bdf8" stroke-width="3" fill="none" />
+                <path d="M 190 120 Q 240 150 270 130" stroke="#38bdf8" stroke-width="3" fill="none" />
+                <circle cx="80" cy="98" r="4" fill="#ef4444" />
+              </svg>
+            </div>
+
+            <!-- SVG Radial Connecting Pointer Lines -->
+            <svg class="radial-lines-svg" id="radial-lines-svg" viewBox="0 0 900 520"></svg>
+
+            <!-- Radial Floating Callout Tags Container -->
+            <div class="radial-callouts-layer" id="radial-callouts-layer">
+              <!-- Dynamically populated radial cards fanning out around the beast -->
+            </div>
+          </div>
+
+          <!-- Surgery Actions Footer -->
+          <div class="surgery-actions-footer">
+            <button id="btn-dissolve-corpse" class="hud-btn p5-btn-danger">
+              ☣️ DISSOLVE WITH ACID MIASMA (DESTROY EVIDENCE)
+            </button>
+            <button id="btn-close-surgery" class="hud-btn p5-btn-gold">
+              DONE SURGERY (PACK CARRIER SAC)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skill Discovery Notification Banner -->
+      <div class="skill-awakened-banner hidden" id="skill-awakened-banner">
+        <div class="awakened-content">
+          <span class="sparkle">✨</span>
+          <div class="awakened-text">
+            <h3>SKILL AWAKENED</h3>
+            <p id="awakened-skill-name">SURGICAL EXTRACTION (RANK 1)</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Telemetry Strip -->
+    <footer class="bottom-telemetry-strip">
+      <div class="telemetry-log-stream" id="log-stream"></div>
+      <div class="telemetry-hint">
+        Click options to act • Every step burns calories proportional to your mass • Watch Concealment!
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal 1: Chimera Node-Socket Assembly Rig -->
+  <div id="assembly-modal" class="p5-modal-backdrop hidden">
+    <div class="p5-modal-panel p5-wide-panel">
+      <div class="p5-modal-header">
+        <h2>RECURSIVE CHIMERA ASSEMBLY RIG</h2>
+        <span class="modal-sub">Attach limbs to sockets without hardcoded limits. Chaining forearms expands reach. Torsos multiply sockets.</span>
+        <button class="p5-modal-close" id="btn-close-assembly">&times; CLOSE [ESC]</button>
+      </div>
+
+      <div class="assembly-layout-grid">
+        <!-- Left: Interactive Node Tree Canvas / List -->
+        <div class="assembly-tree-col">
+          <div class="col-title">BIOLOGICAL NODE TREE (MASS: <span id="chimera-mass-val">0</span> KG)</div>
+          <div class="tree-nodes-container" id="tree-nodes-container">
+            <!-- Recursive Tree of attached organs -->
+          </div>
+        </div>
+
+        <!-- Right: Carrier Sac Inventory & Socket Selector -->
+        <div class="assembly-sac-col">
+          <div class="col-title">CARRIER SAC (<span id="sac-count">0</span> HARVESTED ORGANS)</div>
+          <div class="carrier-sac-grid" id="carrier-sac-grid">
+            <!-- Inventory items ready to attach or inspect -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Telemetry Summary Bar -->
+      <div class="assembly-stats-summary" id="assembly-stats-summary">
+        <!-- Dynamic Total Stats Readout -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Refrain Bio-Crucible (Alchemy Synthesis) -->
+  <div id="crucible-modal" class="p5-modal-backdrop hidden">
+    <div class="p5-modal-panel">
+      <div class="p5-modal-header">
+        <h2>BIO-ALCHEMICAL CRUCIBLE (ALCHEMY SYNTHESIS)</h2>
+        <span class="modal-sub">Sacrifice up to 8 fodder organs to permanently reinforce and transfer traits onto a base organ.</span>
+        <button class="p5-modal-close" id="btn-close-crucible">&times; CLOSE [ESC]</button>
+      </div>
+
+      <div class="crucible-body">
+        <div class="crucible-base-card" id="crucible-base-card">
+          <span class="lbl">BASE ORGAN (TO REINFORCE):</span>
+          <div class="selected-base-display" id="selected-base-display">Click any organ in your sac to set as Base</div>
+        </div>
+
+        <div class="crucible-fodder-shelf">
+          <span class="lbl">SACRIFICIAL FODDER (SELECT UP TO 8 TO CONSUME):</span>
+          <div class="fodder-slots-row" id="fodder-slots-row">
+            <!-- 8 Fodder Slots -->
+          </div>
+        </div>
+
+        <div class="crucible-forecast-box" id="crucible-forecast-box">
+          Select base organ and sacrificial fodder to preview synthesis outcome...
+        </div>
+
+        <div class="crucible-action-row">
+          <span class="slurry-balance">BIO-SLURRY: <strong id="slurry-val">80</strong></span>
+          <button id="btn-execute-synthesis" class="hud-btn p5-btn-gold" disabled>
+            EXECUTE ALCHEMY SYNTHESIS
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Discovered Skills Sheet -->
+  <div id="skills-modal" class="p5-modal-backdrop hidden">
+    <div class="p5-modal-panel">
+      <div class="p5-modal-header">
+        <h2>DISCOVERED SKILLS & DCSS CROSS-TRAINING</h2>
+        <span class="modal-sub">Skills awaken naturally through action. Training one skill automatically advances linked cross-training webs.</span>
+        <button class="p5-modal-close" id="btn-close-skills">&times; CLOSE [ESC]</button>
+      </div>
+      <div class="skills-grid" id="skills-grid">
+        <!-- Awakened Skills List -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Level-Up 3-Boon Selector -->
+  <div id="levelup-modal" class="p5-modal-backdrop hidden">
+    <div class="p5-modal-panel p5-levelup-card">
+      <h2 class="levelup-title">BIOMASS ACCUMULATED — MUTATIONAL SELECTION</h2>
+      <p class="levelup-desc">Choose one genetic adaptation to permanently alter your chimera's physiology:</p>
+      <div class="boons-row" id="boons-row">
+        <!-- 3 Persona 5 styled boon cards -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Bio-Essence Sanctuary (Start Menu Meta Progression) -->
+  <div id="start-sanctuary-modal" class="p5-modal-backdrop hidden">
+    <div class="p5-modal-panel p5-wide-panel">
+      <div class="p5-modal-header">
+        <h2>BIO-ESSENCE SANCTUARY (PRIMORDIAL GENETICS)</h2>
+        <span class="modal-sub">Permanent evolutionary adaptations preserved across generations of host collapse.</span>
+        <button class="p5-modal-close" id="btn-close-sanctuary">&times; CLOSE [ESC]</button>
+      </div>
+      <div class="sanctuary-summary-row">
+        <span class="sanctuary-slurry-badge">
+          PRIMORDIAL BIO-SLURRY: <strong id="sanctuary-slurry-val">150</strong>
+        </span>
+        <span class="sanctuary-note">Slurry is harvested from live specimens and persists across runs.</span>
+      </div>
+      <div class="sanctuary-upgrades-list" id="sanctuary-upgrades-list">
+        <!-- Rendered by StartMenu -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Codex & Mutation Records -->
+  <div id="start-codex-modal" class="p5-modal-backdrop hidden">
+    <div class="p5-modal-panel p5-wide-panel">
+      <div class="p5-modal-header">
+        <h2>CHIMERIC CODEX & ANATOMICAL TAXONOMY</h2>
+        <span class="modal-sub">Discovered biological taxonomies, organ socketing rules, bestiary, and combat mechanics.</span>
+        <button class="p5-modal-close" id="btn-close-codex">&times; CLOSE [ESC]</button>
+      </div>
+      <div class="codex-nav-tabs">
+        <button class="codex-tab-btn active" data-target="taxonomy">ORGAN TAXONOMY & SOCKETS</button>
+        <button class="codex-tab-btn" data-target="bestiary">BESTIARY & HOST SPECIMENS</button>
+        <button class="codex-tab-btn" data-target="mechanics">PHYSIOLOGY & COMBAT RULES</button>
+      </div>
+      <div class="codex-content-body">
+        <div id="codex-sec-taxonomy" class="codex-section">
+          <div class="codex-card-grid">
+            <div class="codex-item">
+              <span class="item-tag tag-vital">VITAL CORE // CRANIAL HEAD</span>
+              <h4>Craniomorphic Sensor Nexus</h4>
+              <p>Hosts normal brains. For human prey, head destruction is instantly fatal. For the player's Worm, decapitation only strips sensory bonuses—the headless body fights on via worm reflex!</p>
+            </div>
+            <div class="codex-item">
+              <span class="item-tag tag-frame">STRUCTURAL FRAME // TORSO</span>
+              <h4>Poly-Socketed Biomechanical Torso</h4>
+              <p>The foundational organ chassis. Each torso contains 4 branching sockets. Torsos can be recursively grafted onto other torsos to construct centipede titans or multi-armed monstrosities.</p>
+            </div>
+            <div class="codex-item">
+              <span class="item-tag tag-appendage">APPENDAGE // CHAINABLE LIMBS</span>
+              <h4>Limb Segment & Tendon Joint</h4>
+              <p>Limbs (forearms, tentacle stalks) can be chained sequentially without artificial limits: Forearm ➔ Forearm ➔ Scythe Claw. Increases attack reach, weapon sockets, and motor complexity.</p>
+            </div>
+            <div class="codex-item">
+              <span class="item-tag tag-weapon">BIO-WEAPON // OFFENSIVE ORGANS</span>
+              <h4>Pyro-Chitin Stingers & Serrated Claws</h4>
+              <p>Natural and scavenged weaponry. Weapon attacks determine severance efficiency, bleed application, and damage types: Slicing, Crushing, Piercing, and Fire.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="codex-sec-bestiary" class="codex-section hidden">
+          <div class="codex-card-grid">
+            <div class="codex-item">
+              <span class="item-tag tag-prey">BASELINE VESSEL</span>
+              <h4>Human Vagrant (Initial Host)</h4>
+              <p>Fragile, warm-blooded vessel. Enables 100% Civilian Concealment in settlements. Easy to conceal beneath cloth wrappings until aggressive mutations cause alarm.</p>
+            </div>
+            <div class="codex-item">
+              <span class="item-tag tag-beast">PRIMEVAL FAUNA</span>
+              <h4>Verdant Thorn-Beast</h4>
+              <p>Heavily armored quadruped stalking the primeval canopy. Possesses dual venomous antler-stingers and thoracic bile reserves. High-value harvest target.</p>
+            </div>
+            <div class="codex-item">
+              <span class="item-tag tag-human">HOSTILE HUMANS</span>
+              <h4>Frontier Poacher & Town Watch</h4>
+              <p>Human hunters armed with crossbows and steel blades. High agility; drops linen bandages, steel knives, and human sensory tissue when felled.</p>
+            </div>
+            <div class="codex-item">
+              <span class="item-tag tag-champion">WORLD NEMESIS</span>
+              <h4>Cathedral Inquisitor (Puritan Champion)</h4>
+              <p>Elite human champions deployed when town Depravity rises or host Concealment collapses. Wields holy pyre blades and blessed plate armor.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="codex-sec-mechanics" class="codex-section hidden">
+          <div class="codex-card-grid">
+            <div class="codex-item">
+              <span class="item-tag tag-rule">METABOLISM FORMULA</span>
+              <h4>Weight, Terrain & Weather Calorie Drain</h4>
+              <p>Every step and exploration action drains calories: <code>Cost = BaseCost × (TotalMass × 0.12) × WeatherMod</code>. Heavy chimeras require frequent feasting to prevent tissue starvation.</p>
+            </div>
+            <div class="codex-item">
+              <span class="item-tag tag-rule">DCSS MASTERY</span>
+              <h4>Emergent Hidden Skills & Cross-Training</h4>
+              <p>Skills stay hidden until awakened through action. Training one skill conveys 40% experience into paired cross-training webs (e.g. Slashing ⇄ Piercing, Crushing ⇄ Shielding).</p>
+            </div>
+            <div class="codex-item">
+              <span class="item-tag tag-rule">IVAN ANATOMY</span>
+              <h4>Discrete Limb Severance & Blood Pooling</h4>
+              <p>Attacks target specific enemy body parts. Damaged limbs sever and drop to the dirt. Arterial bleeding produces expanding crimson blood pools on the forest floor.</p>
+            </div>
+            <div class="codex-item">
+              <span class="item-tag tag-rule">RIMWORLD TRIAGE</span>
+              <h4>Live Specimen Sedation & Surgical Extraction</h4>
+              <p>Dropping an enemy's blood below 20% induces hemorrhagic shock. The camera smoothly zooms down to the body in the blood pool for precision organ extraction before vital pulse flatlines.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Game Over (Vessel Collapse) -->
+  <div id="game-over-modal" class="p5-modal-backdrop hidden">
+    <div class="p5-modal-panel p5-gameover-card">
+      <div class="gameover-skull">💀</div>
+      <h1 class="gameover-title">VESSEL COLLAPSED</h1>
+      <p class="gameover-subtitle">The host body succumbed to lethal trauma, but the ancient Worm slips deep into subterranean burrows.</p>
+      
+      <div class="gameover-stats-summary" id="gameover-stats-summary">
+        <div class="go-stat"><span>BIOMASS PRESERVED:</span> <strong id="go-biomass">0</strong></div>
+        <div class="go-stat"><span>DEPRAVITY RATING:</span> <strong id="go-depravity">0</strong></div>
+        <div class="go-stat"><span>CHIMERA MASS:</span> <strong id="go-mass">0 KG</strong></div>
+      </div>
+
+      <div class="gameover-actions">
+        <button class="hud-btn p5-btn-danger" id="btn-gameover-restart">
+          🪱 REAWAKEN WORM CORE (START MENU)
+        </button>
+        <button class="hud-btn p5-btn-gold" id="btn-gameover-sanctuary">
+          🧬 VISIT BIO-ESSENCE SANCTUARY
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Oakhaven Flesh-Market & Outfitter -->
+  <div id="market-modal" class="p5-modal-backdrop hidden">
+    <div class="p5-modal-panel p5-wide-panel">
+      <div class="p5-modal-header">
+        <h2>OAKHAVEN COBBLESTONE FLESH-MARKET</h2>
+        <span class="modal-sub">Buy medical supplies, linen cloaks, and weapons. Sell harvested organs to the shady apothecary.</span>
+        <button class="p5-modal-close" id="btn-close-market">&times; CLOSE [ESC]</button>
+      </div>
+
+      <div class="market-balance-bar">
+        <span>CURRENT FUNDS: <strong id="market-shillings-val">60</strong> SHILLINGS</span>
+        <span>CARRIER SAC: <strong id="market-sac-val">2</strong> ORGANS</span>
+      </div>
+
+      <div class="market-content-grid">
+        <div class="market-buy-col">
+          <div class="col-title">APOTHECARY & HUNTER SUPPLIES (BUY)</div>
+          <div class="market-items-list" id="market-items-list">
+            <!-- Dynamic shop wares -->
+          </div>
+        </div>
+        <div class="market-sell-col">
+          <div class="col-title">HARVESTED SPECIMENS (SELL FOR CASH)</div>
+          <div class="market-sell-list" id="market-sell-list">
+            <!-- Dynamic player sac items to sell -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: The Boar & Antler Tavern -->
+  <div id="tavern-modal" class="p5-modal-backdrop hidden">
+    <div class="p5-modal-panel p5-wide-panel">
+      <div class="p5-modal-header">
+        <h2>THE BOAR & ANTLER TAVERN</h2>
+        <span class="modal-sub">Flickering hearthfire, rowdy beast-trackers, and blood bounty contracts.</span>
+        <button class="p5-modal-close" id="btn-close-tavern">&times; CLOSE [ESC]</button>
+      </div>
+
+      <div class="tavern-grid">
+        <div class="tavern-bounties-col">
+          <div class="col-title">HUNTER GUILD BOUNTY BOARD</div>
+          <div class="bounties-list" id="tavern-bounties-list">
+            <!-- Dynamic Bounties -->
+          </div>
+        </div>
+
+        <div class="tavern-hearth-col">
+          <div class="col-title">HEARTHFIRE & RUMORS</div>
+          <div class="tavern-stew-card">
+            <h4>Venison & Root Stew</h4>
+            <p>A thick, steaming bowl of spiced meat stew. Restores human digestion and eases tissue starvation.</p>
+            <button id="btn-buy-stew" class="hud-btn p5-btn-gold">BUY STEW (8 SHILLINGS • +50 CAL)</button>
+          </div>
+
+          <div class="tavern-rumor-box">
+            <div class="rumor-author">Old Poacher Garrett whispers:</div>
+            <p class="rumor-text" id="tavern-rumor-text">"The Thorn-Beast's Scythe limbs are brittle at the elbow joint. Cleave the scythes first to disarm its highest damage attacks!"</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Path of Exile Tooltip -->
+  <div id="poe-tooltip" class="poe-tooltip hidden"></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

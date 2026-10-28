@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smartphone Haptics</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .project-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .project-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            display: block;
+        }
+
+        .project-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+        }
+
+        .project-card h2 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-color);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .project-card p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        .main-desc {
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .glass-container {
+            max-width: 600px;
+            /* Slightly wider for the list */
+            padding-top: 2rem;
+            padding-bottom: 3rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="glass-container">
+        <h1>Smartphone Haptics</h1>
+        <p class="main-desc">
+            Exploring various ways to control smartphone haptic feedback using web technologies.
+            This project makes haptics much more accessible by leveraging the Web Vibration API
+            in conjunction with different sensor inputs.
+        </p>
+
+        <div class="project-list">
+            <a href="base/index.html" class="project-card">
+                <h2>Base Haptics</h2>
+                <p>The foundational page demonstrating basic Web Vibration API usage through direct button interactions,
+                    custom patterns, and presets.</p>
+            </a>
+
+            <a href="gesture/index.html" class="project-card">
+                <h2>Gesture Haptics</h2>
+                <p>Translates motion sensor (MPU) readings into haptic feedback, allowing users to "feel" their device's
+                    movement.</p>
+            </a>
+
+            <a href="mic/index.html" class="project-card">
+                <h2>Microphone Haptics</h2>
+                <p>Converts real-time microphone input levels into haptic feedback, making the device vibrate in
+                    response to sound.</p>
+            </a>
+
+            <a href="camera/index.html" class="project-card">
+                <h2>Camera Haptics</h2>
+                <p>Processes visual input from the smartphone camera to generate haptic feedback based on average
+                    brightness or motion detection.</p>
+            </a>
+
+            <a href="websocket/index.html" class="project-card">
+                <h2>Remote Haptics</h2>
+                <p>Enables remote control of haptic feedback between devices using PeerJS (WebRTC), allowing a Host to
+                    trigger vibrations on multiple Clients.</p>
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

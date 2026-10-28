@@ -1,0 +1,324 @@
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "F:\Github\Website\public\Glue\Daemons\TokenTracker\popup_ui.py", line 272, in _on_mousewheel
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  File "C:\Users\DoctorNightmares\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1967, in yview_scroll
+    self.tk.call(self._w, 'yview', 'scroll', number, what)
+_tkinter.TclError: invalid command name ".!toplevel2.!canvas"

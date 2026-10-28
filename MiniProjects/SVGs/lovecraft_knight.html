@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Knight's Vow</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87CEEB;
+            /* Peaceful sky */
+            transition: background-color 2s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        body.lovecraftian {
+            background-color: #0b0514;
+            /* Dark, eerie sky */
+        }
+
+        svg {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+
+        /* Group transitions */
+        .peaceful-element {
+            transition: opacity 2s ease, transform 2s ease;
+            opacity: 1;
+        }
+
+        .lovecraftian .peaceful-element {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .lovecraftian-element {
+            transition: opacity 2s ease, transform 2s ease;
+            opacity: 0;
+        }
+
+        .lovecraftian .lovecraftian-element {
+            opacity: 1;
+        }
+
+        /* Knight elements that change but stay visible */
+        .lovecraftian .knight-armor {
+            fill: #2a2a2a;
+            /* Darker, tarnished armor */
+            stroke: #444;
+            transition: fill 2s ease, stroke 2s ease;
+        }
+
+        .knight-armor {
+            fill: #d8d8d8;
+            /* Bright armor */
+            stroke: #fff;
+            stroke-width: 1.5;
+            transition: fill 2s ease, stroke 2s ease;
+        }
+
+        .lovecraftian .cape {
+            fill: #3a000a;
+            /* Tattered, dark red */
+            transition: fill 2s ease;
+            animation: rustle-heavy 2s infinite alternate ease-in-out;
+        }
+
+        .cape {
+            fill: #b22222;
+            /* Crimson */
+            transition: fill 2s ease;
+            transform-origin: 50% 50%;
+            animation: rustle 3s infinite alternate ease-in-out;
+        }
+
+        .feather {
+            transform-origin: 0 100%;
+            animation: rustle-fast 1s infinite alternate ease-in-out;
+        }
+
+        .lovecraftian .feather-love {
+            animation: rustle-slow 2s infinite alternate ease-in-out;
+        }
+
+        @keyframes rustle {
+            0% {
+                transform: rotate(-2deg);
+            }
+
+            100% {
+                transform: rotate(2deg);
+            }
+        }
+
+        @keyframes rustle-heavy {
+            0% {
+                transform: rotate(-1deg) scale(0.98);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: rotate(1deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes rustle-fast {
+            0% {
+                transform: skewX(-5deg) rotate(-2deg);
+            }
+
+            100% {
+                transform: skewX(5deg) rotate(2deg);
+            }
+        }
+
+        @keyframes rustle-slow {
+            0% {
+                transform: rotate(-1deg);
+            }
+
+            100% {
+                transform: rotate(3deg);
+            }
+        }
+
+        /* Tentacles */
+        .tentacle {
+            transform-origin: bottom center;
+            animation: sway 5s infinite alternate ease-in-out;
+        }
+
+        .tentacle-fast {
+            transform-origin: bottom center;
+            animation: sway 3s infinite alternate ease-in-out;
+        }
+
+        @keyframes sway {
+            0% {
+                transform: rotate(-5deg);
+            }
+
+            100% {
+                transform: rotate(5deg);
+            }
+        }
+
+        /* Eyes */
+        .lovecraftian-eye {
+            animation: blink 4s infinite;
+            transform-origin: center;
+        }
+
+        @keyframes blink {
+
+            0%,
+            90%,
+            100% {
+                transform: scaleY(1);
+            }
+
+            95% {
+                transform: scaleY(0.1);
+            }
+        }
+
+        /* Stars */
+        .star {
+            animation: twinkle 3s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0.2;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+    </style>
+</head>
+
+<body id="scene">
+    <svg viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" id="svg-scene">
+        <defs>
+            <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#87CEEB" />
+                <stop offset="60%" stop-color="#b0e0e6" />
+                <stop offset="100%" stop-color="#faddd5" />
+            </linearGradient>
+
+            <linearGradient id="evilSkyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0b0514" />
+                <stop offset="50%" stop-color="#2a0033" />
+                <stop offset="100%" stop-color="#6a002a" />
+            </linearGradient>
+
+            <filter id="glow">
+                <feGaussianBlur stdDeviation="8" result="coloredBlur" />
+                <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+
+            <filter id="subtle-glow">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+        </defs>
+
+        <!-- Background Skies -->
+        <rect width="1000" height="600" fill="url(#skyGrad)" class="peaceful-element" />
+        <rect width="1000" height="600" fill="url(#evilSkyGrad)" class="lovecraftian-element" />
+
+        <!-- Celestial Bodies -->
+        <!-- Peaceful Sun and Clouds -->
+        <g class="peaceful-element">
+            <circle cx="500" cy="180" r="45" fill="#FFD700" filter="url(#subtle-glow)" />
+            <circle cx="500" cy="180" r="40" fill="#FFFBEa" />
+
+            <!-- Unique Clouds -->
+            <path d="M 150 180 Q 180 140 230 150 Q 280 120 330 160 Q 380 160 380 190 L 150 190 Z" fill="#ffffff"
+                opacity="0.9" filter="url(#subtle-glow)" />
+            <path d="M 650 160 Q 690 120 740 140 Q 790 110 830 150 Q 880 160 850 190 L 640 190 Z" fill="#ffffff"
+                opacity="0.7" />
+            <path d="M 850 130 Q 880 100 930 110 Q 980 90 990 140 L 830 140 Z" fill="#ffffff" opacity="0.5" />
+        </g>
+
+        <!-- Lovecraftian Void/Eye -->
+        <g class="lovecraftian-element" transform="translate(500, 150)">
+            <!-- Outer portal rings -->
+            <circle r="150" fill="none" stroke="#ff00aa" stroke-width="2" opacity="0.2" filter="url(#glow)" />
+            <circle r="110" fill="none" stroke="#ff0055" stroke-width="4" opacity="0.4" filter="url(#glow)" />
+
+            <!-- Accretion disk / energy -->
+            <path d="M-220,0 Q0,-70 220,0 Q0,70 -220,0" fill="none" stroke="#8a2be2" stroke-width="3" opacity="0.6"
+                filter="url(#glow)" />
+            <path d="M-150,30 Q0,-50 150,-30 Q0,100 -150,30" fill="none" stroke="#ff0055" stroke-width="2"
+                opacity="0.5" />
+
+            <!-- Inner Eye -->
+            <path d="M-80,0 Q0,-40 80,0 Q0,40 -80,0" fill="#050011" />
+            <ellipse cx="0" cy="0" rx="35" ry="50" fill="#ff0055" class="lovecraftian-eye" filter="url(#glow)" />
+            <ellipse cx="0" cy="0" rx="8" ry="40" fill="#000" class="lovecraftian-eye" />
+
+            <!-- Small stars / floating geometry -->
+            <circle cx="-250" cy="-100" r="2" fill="#ff00aa" class="star" style="animation-delay: 0s;" />
+            <circle cx="200" cy="-120" r="3" fill="#8a2be2" class="star" style="animation-delay: 1s;" />
+            <circle cx="300" cy="100" r="1.5" fill="#ff0055" class="star" style="animation-delay: 2s;" />
+            <circle cx="-150" cy="150" r="2.5" fill="#ffffff" opacity="0.5" class="star"
+                style="animation-delay: 0.5s;" />
+        </g>
+
+        <!-- Background Mountains/Forests -->
+        <!-- Peaceful -->
+        <g class="peaceful-element">
+            <!-- Distant Mountains (Behind forest) -->
+            <path d="M-100,380 L150,220 L320,350 L480,250 L650,320 L800,200 L1100,380 Z" fill="#a4b8c4" />
+            <!-- Mid Mountains -->
+            <path d="M-50,420 L200,280 L400,390 L600,260 L850,380 L1050,250 L1100,420 Z" fill="#8ca5b3" />
+
+            <!-- Forests (Layered hills) -->
+            <path d="M-50,450 Q 80,410 250,430 T 550,390 T 850,430 T 1100,400 L1100,600 L0,600 Z" fill="#3b7a57" />
+            <path d="M-50,480 Q 150,450 350,470 T 700,430 T 1100,460 L1100,600 L0,600 Z" fill="#2e6b3f" />
+            <!-- Foreground trees silhouette layer for texture -->
+            <path d="M250,470 l5,-10 l5,10 l10,-15 l5,15 l15,-20 l10,20 l15,-10 l5,10" fill="#2e6b3f" />
+            <path d="M600,430 l8,-12 l8,12 l12,-18 l8,18 l18,-25 l12,25 l18,-15 l8,15" fill="#2e6b3f" />
+
+            <!-- Kingdom Castle -->
+            <g transform="translate(450, 310) scale(0.8)">
+                <!-- Back walls -->
+                <rect x="0" y="40" width="160" height="60" fill="#e0e0e0" />
+                <rect x="10" y="35" width="140" height="5" fill="#cfcfcf" />
+
+                <!-- Back Towers -->
+                <rect x="-10" y="10" width="30" height="90" fill="#e0e0e0" />
+                <polygon points="-15,10 5,-20 25,10" fill="#cc4444" />
+
+                <rect x="140" y="10" width="30" height="90" fill="#e0e0e0" />
+                <polygon points="135,10 155,-20 175,10" fill="#cc4444" />
+
+                <!-- Main Keep (Center) -->
+                <rect x="40" y="-10" width="80" height="110" fill="#f0f0f0" />
+                <polygon points="35,-10 80,-50 125,-10" fill="#cc4444" />
+                <polygon points="80,-50 125,-10 80,-10" fill="#b33b3b" /> <!-- Roof shading -->
+
+                <!-- Keep details -->
+                <rect x="70" y="60" width="20" height="40" fill="#5c4033" rx="10" ry="10" /> <!-- Gate -->
+                <!-- Windows -->
+                <rect x="65" y="10" width="10" height="15" fill="#ffd700" rx="5" ry="5" />
+                <rect x="85" y="10" width="10" height="15" fill="#ffd700" rx="5" ry="5" />
+                <rect x="50" y="40" width="8" height="12" fill="#ffd700" rx="4" ry="4" />
+                <rect x="102" y="40" width="8" height="12" fill="#ffd700" rx="4" ry="4" />
+
+                <rect x="0" y="30" width="10" height="20" fill="#ffd700" rx="5" ry="5" />
+                <rect x="150" y="30" width="10" height="20" fill="#ffd700" rx="5" ry="5" />
+            </g>
+        </g>
+
+        <!-- Lovecraftian Dimensions -->
+        <g class="lovecraftian-element">
+            <!-- Jagged unnatural terrain -->
+            <path d="M-100,400 L150,150 L250,380 L400,80 L550,430 L750,40 L880,350 L1100,100 L1100,600 L-100,600 Z"
+                fill="#0f091a" />
+            <path d="M-50,480 L200,250 L320,450 L480,180 L620,480 L850,150 L950,450 L1100,280 L1100,600 L-50,600 Z"
+                fill="#1b1029" />
+            <path d="M-50,520 Q 200,450 350,500 T 750,440 T 1100,500 L1100,600 L-50,600 Z" fill="#241433" />
+
+            <!-- Ruined Kingdom / Cyclopean Architecture -->
+            <g transform="translate(450, 310) scale(0.8)">
+                <!-- Twisted black monoliths -->
+                <polygon points="-20,100 20,-20 40,100" fill="#050505" />
+                <polygon points="10,100 60,-60 80,100" fill="#080808" />
+                <polygon points="60,100 130,-10 160,100" fill="#000000" />
+                <polygon points="110,100 160,-40 180,100" fill="#0a0a0a" />
+
+                <!-- Floating shards with glowing runes -->
+                <polygon points="20,-50 35,-90 45,-40" fill="#150020" />
+                <path d="M25,-60 L35,-70 L30,-50" stroke="#ff0055" fill="none" class="lovecraftian-eye"
+                    filter="url(#glow)" />
+
+                <polygon points="140,-30 155,-70 165,-20" fill="#100015" />
+
+                <polygon points="70,-100 85,-140 100,-90" fill="#ff0055" opacity="0.6" filter="url(#glow)" />
+            </g>
+
+            <!-- Giant Tentacles looming from the horizon -->
+            <path class="tentacle" d="M150,600 Q200,350 80,150 Q40,50 110,20 Q160,80 130,200 Q250,400 220,600 Z"
+                fill="#110515" />
+            <path class="tentacle-fast"
+                d="M300,600 Q280,380 350,220 Q400,120 340,80 Q320,140 380,220 Q300,420 330,600 Z" fill="#220033"
+                opacity="0.8" />
+            <path class="tentacle" d="M850,600 Q750,250 900,100 Q980,20 870,-20 Q850,60 920,130 Q800,320 930,600 Z"
+                fill="#150520" style="animation-delay: -2s;" />
+            <path class="tentacle-fast"
+                d="M700,600 Q680,450 780,300 Q840,200 750,150 Q730,220 810,300 Q720,480 750,600 Z" fill="#1a0026"
+                opacity="0.7" style="animation-delay: -1s;" />
+        </g>
+
+        <!-- The Cliff (Foreground) -->
+        <!-- Cliff base layer -->
+        <path d="M-100,600 L150,550 L350,530 L600,540 L850,560 L1100,580 L1100,600 Z" fill="#4B5320"
+            class="peaceful-element" />
+        <path d="M-100,600 L150,550 L350,530 L600,540 L850,560 L1100,580 L1100,600 Z" fill="#111"
+            class="lovecraftian-element" />
+
+        <!-- Cliff Promontory where Knight stands -->
+        <path d="M150,600 L300,560 L450,550 L550,555 L650,570 L800,600 Z" fill="#5c4033" class="peaceful-element" />
+        <path d="M150,600 L300,560 L450,550 L550,555 L650,570 L800,600 Z" fill="#080808" class="lovecraftian-element" />
+
+        <!-- Grass top of promontory -->
+        <path d="M250,600 L350,560 L450,550 L550,555 L650,575 L700,600 Z" fill="#3A5F0B" class="peaceful-element" />
+        <!-- Sharp rocky top in lovecraft mode -->
+        <path d="M250,600 L350,560 L450,550 L550,555 L650,575 L700,600 Z" fill="#151515" class="lovecraftian-element"
+            stroke="#222" stroke-width="2" />
+
+        <!-- The Knight 
+             Scaled up hugely to take up ~20% of view height. Back facing, standing on the grass top.
+             Center anchor point. -->
+        <g id="knight" transform="translate(500, 560) scale(4)">
+
+            <!-- Cape -->
+            <path d="M-12,-35 Q-20,0 -25,10 Q0,15 25,10 Q20,0 12,-35 Z" class="cape" />
+
+            <!-- Sword on back -->
+            <!-- Blade -->
+            <rect x="0" y="-30" width="6" height="40" fill="#a0a0a0" class="peaceful-element" transform="rotate(-30)" />
+            <rect x="0" y="-30" width="6" height="40" fill="#222" stroke="#444" stroke-width="0.5"
+                class="lovecraftian-element" transform="rotate(-30)" />
+            <path d="M0,10 L3,14 L6,10 Z" fill="#a0a0a0" class="peaceful-element" transform="rotate(-30)" />
+            <path d="M0,10 L3,14 L6,10 Z" fill="#222" class="lovecraftian-element" transform="rotate(-30)" />
+
+            <!-- Sword Hilt -->
+            <rect x="-6" y="-32" width="18" height="2" fill="#d4af37" class="peaceful-element"
+                transform="rotate(-30)" />
+            <rect x="-6" y="-32" width="18" height="2" fill="#2a0000" class="lovecraftian-element"
+                transform="rotate(-30)" />
+            <rect x="1" y="-45" width="4" height="13" fill="#5c4033" class="peaceful-element" transform="rotate(-30)" />
+            <rect x="1" y="-45" width="4" height="13" fill="#111" class="lovecraftian-element"
+                transform="rotate(-30)" />
+            <circle cx="3" cy="-45" r="2" fill="#d4af37" class="peaceful-element" transform="rotate(-30)" />
+            <circle cx="3" cy="-45" r="2" fill="#ff0055" class="lovecraftian-element" transform="rotate(-30)" />
+
+            <!-- Torso / Back Plate -->
+            <path d="M-13,-35 Q0,-42 13,-35 L15,-15 Q0,-5 -15,-15 Z" class="knight-armor" />
+            <path d="M-10,-20 L-6,0 Q0,5 6,0 L10,-20 Z" class="knight-armor" />
+
+            <!-- Left Shoulder & Arm -->
+            <path d="M-12,-38 C-22,-38 -20,-25 -18,-20" fill="none" class="knight-armor" stroke-width="5"
+                stroke-linecap="round" />
+            <path d="M-18,-20 C-18,-10 -22,-5 -22,0" fill="none" class="knight-armor" stroke-width="4"
+                stroke-linecap="round" />
+
+            <!-- Right Shoulder & Arm -->
+            <path d="M12,-38 C22,-38 20,-25 18,-20" fill="none" class="knight-armor" stroke-width="5"
+                stroke-linecap="round" />
+            <path d="M18,-20 C18,-10 22,-5 22,0" fill="none" class="knight-armor" stroke-width="4"
+                stroke-linecap="round" />
+
+            <!-- Helmet (View from behind) -->
+            <path d="M-9,-45 C-10,-55 10,-55 9,-45 L10,-33 Q0,-27 -10,-33 Z" class="knight-armor" />
+            <!-- Neck guard / articulation -->
+            <path d="M-8,-34 Q0,-29 8,-34 M-8,-37 Q0,-32 8,-37" stroke="#888" stroke-width="0.5" fill="none"
+                class="peaceful-element" />
+            <path d="M-8,-34 Q0,-29 8,-34 M-8,-37 Q0,-32 8,-37" stroke="#333" stroke-width="0.5" fill="none"
+                class="lovecraftian-element" />
+
+            <!-- Helmet Ridge (Center line on back of skull) -->
+            <path d="M0,-51 L0,-30" stroke="#888" stroke-width="1" class="peaceful-element" />
+            <path d="M0,-51 L0,-30" stroke="#222" stroke-width="1" class="lovecraftian-element" />
+
+            <!-- Plume / Feathers connected tightly to the top of the helm -->
+            <g transform="translate(0, -51)">
+                <!-- Majestic Feathers -->
+                <path d="M0,0 Q-15,-10 -25,-5 Q-15,0 0,0" fill="#ffffff" class="feather peaceful-element"
+                    opacity="0.9" />
+                <path d="M0,0 Q-10,-15 -20,-12 Q-10,-5 0,0" fill="#e6e6fa" class="feather peaceful-element"
+                    style="animation-delay: -0.5s; opacity: 0.7;" />
+                <path d="M0,0 Q-5,-18 -12,-18 Q-5,-8 0,0" fill="#f0ffff" class="feather peaceful-element"
+                    style="animation-delay: -0.2s; opacity: 0.6;" />
+
+                <!-- Worn, tattered lovecraftian tendril/feathers -->
+                <path d="M0,0 Q-10,-5 -18,2" fill="none" stroke="#222" stroke-width="1"
+                    class="feather-love lovecraftian-element" />
+                <path d="M0,0 Q-5,-10 -12,-8" fill="none" stroke="#111" stroke-width="0.8"
+                    class="feather-love lovecraftian-element" style="animation-delay: -0.5s;" />
+                <path d="M0,0 Q2,-12 -2,-15" fill="none" stroke="#333" stroke-width="0.5"
+                    class="feather-love lovecraftian-element" style="animation-delay: -0.8s;" />
+            </g>
+        </g>
+
+        <!-- Fore-foreground framing / silhouettes -->
+        <path d="M-50,650 Q80,450 150,650 Z" fill="#2e382e" class="peaceful-element" />
+        <path d="M850,650 Q920,450 1050,650 Z" fill="#2e382e" class="peaceful-element" />
+
+        <path d="M-50,650 Q80,450 150,650 Z" fill="#030105" class="lovecraftian-element" />
+        <path d="M850,650 Q920,450 1050,650 Z" fill="#030105" class="lovecraftian-element" />
+
+        <!-- Overlay Text instruction -->
+        <!-- Only visible initially, maybe fades out -->
+        <g id="instruction-text" style="pointer-events: none;">
+            <!-- Outer Glow -->
+            <text x="500" y="80" font-family="sans-serif" font-size="20" fill="#000" text-anchor="middle"
+                font-weight="bold" letter-spacing="2" opacity="0.6" stroke="#000" stroke-width="4">Click the
+                screen</text>
+            <text x="500" y="80" font-family="sans-serif" font-size="20" fill="#fff" text-anchor="middle"
+                font-weight="bold" letter-spacing="2" opacity="0.9">Click the screen</text>
+        </g>
+    </svg>
+
+    <script>
+        const scene = document.body;
+        const instructionText = document.getElementById('instruction-text');
+
+        scene.addEventListener('click', () => {
+            scene.classList.toggle('lovecraftian');
+
+            // Fade out the instruction text after the first click
+            if (instructionText) {
+                instructionText.style.transition = "opacity 1s ease";
+                instructionText.style.opacity = "0";
+                setTimeout(() => {
+                    if (instructionText && instructionText.parentNode) {
+                        instructionText.parentNode.removeChild(instructionText);
+                    }
+                }, 1000);
+            }
+
+            // Adding a visual shudder to the knight on transition
+            const knight = document.getElementById('knight');
+            knight.style.transition = "transform 0.05s";
+
+            // Quick shudder
+            let jiggles = 0;
+            const jiggleInt = setInterval(() => {
+                const shiftX = (Math.random() - 0.5) * 2; // scaled down shudder for bigger knight
+                const shiftY = (Math.random() - 0.5) * 2;
+                knight.setAttribute('transform', `translate(${500 + shiftX}, ${560 + shiftY}) scale(4)`);
+                jiggles++;
+
+                if (jiggles > 6) {
+                    clearInterval(jiggleInt);
+                    knight.style.transition = "transform 2s ease";
+                    knight.setAttribute('transform', `translate(500, 560) scale(4)`);
+                }
+            }, 50);
+        });
+    </script>
+</body>
+
+</html>

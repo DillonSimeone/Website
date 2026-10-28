@@ -1,0 +1,4 @@
+// 2D Perlin plasma — showcases the new perlin2D builtin.
+x = i/n;
+p = perlin2D(x*4 + t*0.3, t*0.2);
+hsv(p + time(20), 1, 1);

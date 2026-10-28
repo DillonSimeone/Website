@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thresholds — Departures Across Cultures</title>
+  <meta name="description" content="An ambient audiovisual exploration of cultural motifs and sensory metaphors of departure and dying.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Visual Stage: High-Res Poster Image & Looping/Transitioning Video -->
+    <div class="visual-stage" id="visual-stage">
+      <img id="stage-image" class="stage-media stage-image visible" alt="Visual representation of departure scene" />
+      <video id="stage-video" class="stage-media stage-video" playsinline muted preload="auto"></video>
+      <div class="fade-curtain" id="fade-curtain" aria-hidden="true"></div>
+      <div class="vignette-overlay" aria-hidden="true"></div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-title">THRESHOLDS</span>
+        <span class="brand-subtitle">Passages Across Cultures</span>
+      </div>
+      <div class="top-actions">
+        <button id="btn-audio" class="pill-btn audio-btn" title="Toggle Ambient Soundscape (M)">
+          <svg class="icon icon-sound-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>
+          <svg class="icon icon-sound-on hidden" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+          <span class="audio-label">Sound Off</span>
+        </button>
+
+        <button id="btn-drawer-toggle" class="pill-btn drawer-toggle-btn" title="View all scenes">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+          <span class="drawer-counter" id="drawer-counter">1 / 12</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Lower-Left Cinema Plaque -->
+    <main class="narrative-wrapper" id="narrative-wrapper">
+      <div class="narrative-card" id="narrative-card">
+        <div class="scene-culture" id="scene-culture">CULTURE / TRADITION</div>
+        <h1 class="scene-title" id="scene-title">Scene Title</h1>
+        <p class="scene-prose" id="scene-prose">Evocative sensory description of the transition.</p>
+        <div class="scene-sensory-meta" id="scene-meta">
+          <span class="meta-tag" id="meta-element">Element</span>
+          <span class="meta-tag" id="meta-motif">Motif</span>
+          <span class="meta-tag" id="meta-media-badge">Poster Plate</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Interactive Control Deck -->
+    <footer class="bottom-deck">
+      <div class="deck-controls">
+        <button id="btn-prev" class="control-btn" title="Previous Scene (Left Arrow)" aria-label="Previous scene">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <button id="btn-play-pause" class="control-btn play-pause-btn" title="Pause / Resume Loop (Space)" aria-label="Play or pause">
+          <svg class="icon icon-pause" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+          <svg class="icon icon-play hidden" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </button>
+
+        <button id="btn-next" class="control-btn" title="Next Scene (Right Arrow)" aria-label="Next scene">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+
+        <div class="timer-track" title="Scene progression timer">
+          <div class="timer-fill" id="timer-fill"></div>
+        </div>
+
+        <button id="btn-zen" class="control-btn zen-btn" title="Toggle Minimal Meditation View (H)" aria-label="Toggle text visibility">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+
+        <button id="btn-fullscreen" class="control-btn fullscreen-btn" title="Toggle Fullscreen (F)" aria-label="Toggle fullscreen">
+          <svg class="icon-fs-enter" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        </button>
+      </div>
+    </footer>
+
+    <!-- Side Drawer: All Scenes Catalog -->
+    <aside class="scenes-drawer" id="scenes-drawer" aria-hidden="true">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <h2>Passages & Vignettes</h2>
+          <p>Explore cultural depictions of the departure</p>
+        </div>
+        <button id="btn-drawer-close" class="drawer-close-btn" title="Close drawer">&times;</button>
+      </div>
+      <div class="drawer-list" id="drawer-list">
+        <!-- Injected via JavaScript -->
+      </div>
+    </aside>
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+
+    <!-- Audio Prompt Banner -->
+    <div class="audio-prompt-banner" id="audio-prompt-banner">
+      <div class="prompt-content">
+        <div class="prompt-icon">✧</div>
+        <div class="prompt-text">
+          <strong>Sensory Soundscape Available</strong>
+          <span>Procedural ambient drones, wind currents, and acoustic cues for each passage.</span>
+        </div>
+        <button id="btn-enable-audio-banner" class="btn-prompt-act">Enable Sound</button>
+        <button id="btn-dismiss-audio-banner" class="btn-prompt-dismiss">&times;</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="scenes.js"></script>
+  <script src="audio.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

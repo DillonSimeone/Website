@@ -1,0 +1,2814 @@
+[
+  {
+    "id": "02_audio_haptics_audiosanitytest_esp32c3",
+    "name": "audioSanityTest",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/audioSanityTest_esp32c3.bin",
+    "fileSize": 420880,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-speed audio DSP capture pipeline sampling analog or digital MEMS microphones (INMP441 / MAX4466) with real-time sound-pressure level envelope tracking and reactive threshold triggers.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "BUTTON 1"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "BAT VOLT"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "LCD RES"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "LCD CS"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "LCD DC"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "LCD WR"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "LCD RD"
+      },
+      {
+        "pin": "GPIO 14",
+        "role": "BUTTON 2"
+      },
+      {
+        "pin": "GPIO 15",
+        "role": "POWER ON"
+      },
+      {
+        "pin": "GPIO 16",
+        "role": "TOUCH INT"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "I2S SD / IIC SCL"
+      },
+      {
+        "pin": "GPIO 18",
+        "role": "I2S WS / IIC SDA"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "I2S SCK / TOUCH RES"
+      },
+      {
+        "pin": "GPIO 38",
+        "role": "LCD BL"
+      },
+      {
+        "pin": "GPIO 39",
+        "role": "LCD D0"
+      },
+      {
+        "pin": "GPIO 40",
+        "role": "LCD D1"
+      },
+      {
+        "pin": "GPIO 41",
+        "role": "LCD D2"
+      },
+      {
+        "pin": "GPIO 42",
+        "role": "LCD D3"
+      },
+      {
+        "pin": "GPIO 45",
+        "role": "LCD D4"
+      },
+      {
+        "pin": "GPIO 46",
+        "role": "LCD D5"
+      },
+      {
+        "pin": "GPIO 47",
+        "role": "LCD D6"
+      },
+      {
+        "pin": "GPIO 48",
+        "role": "LCD D7"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/audioSanityTest",
+    "lastModified": "2026-10-28T13:23:28.098Z"
+  },
+  {
+    "id": "02_audio_haptics_bluetoothmic_esp32",
+    "name": "blueToothMic",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32",
+    "chip": "esp32",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/blueToothMic_esp32.bin",
+    "fileSize": 760208,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Audio Haptics) featuring I2S digital audio pipeline, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "SCK"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "SD"
+      },
+      {
+        "pin": "GPIO 15",
+        "role": "WS"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/blueToothMic",
+    "lastModified": "2026-10-28T17:25:03.667Z"
+  },
+  {
+    "id": "02_audio_haptics_ch32v003haptics_genericch32v003f4p6",
+    "name": "CH32V003Haptics",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "genericCH32V003F4P6",
+    "chip": "ch32v003",
+    "board": "genericCH32V003F4P6",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/CH32V003Haptics_genericCH32V003F4P6.bin",
+    "fileSize": 3012,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Sub-dime WCH CH32V003 RISC-V microcontroller tactile feedback engine. Synthesizes variable-frequency ERM/LRA vibration waveforms via timer PWM with ramped attack and decay curves.",
+    "pinout": [
+      {
+        "pin": "GPIO 3",
+        "role": "LED VOLUME GATE"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/CH32V003Haptics",
+    "lastModified": "2026-07-18T16:48:49.207Z"
+  },
+  {
+    "id": "02_audio_haptics_ch32v003thermalhaptics_genericch32v003f4p6",
+    "name": "CH32V003ThermalHaptics",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "genericCH32V003F4P6",
+    "chip": "ch32v003",
+    "board": "genericCH32V003F4P6",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/CH32V003ThermalHaptics_genericCH32V003F4P6.bin",
+    "fileSize": 864,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded CH32V003 microcontroller engineering project (Audio Haptics) featuring tactile haptic PWM driver. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 1",
+        "role": "PD1 / SWIO Debug & Flashing"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "PC4 / PWM Haptic Output"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/CH32V003ThermalHaptics",
+    "lastModified": "2026-10-28T17:15:50.302Z"
+  },
+  {
+    "id": "02_audio_haptics_esp32hapticcontrol_inmp441_esp32c3",
+    "name": "ESP32HapticControl_INMP441",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/ESP32HapticControl_INMP441_esp32c3.bin",
+    "fileSize": 853040,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Audio Haptics) featuring FastLED RGB lighting, I2S digital audio pipeline, tactile haptic PWM driver, WiFi connectivity, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 1",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "MOTOR PIN REV"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "NOODLE LED"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "MOTOR PIN FWD"
+      },
+      {
+        "pin": "GPIO 10",
+        "role": "I2S WS"
+      },
+      {
+        "pin": "GPIO 20",
+        "role": "I2S SCK"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "I2S SD"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/ESP32HapticControl_INMP441",
+    "lastModified": "2026-10-28T14:04:07.007Z"
+  },
+  {
+    "id": "02_audio_haptics_esp32i2smic_esp32c3",
+    "name": "ESP32I2SMic",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/ESP32I2SMic_esp32c3.bin",
+    "fileSize": 438368,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-speed audio DSP capture pipeline sampling analog or digital MEMS microphones (INMP441 / MAX4466) with real-time sound-pressure level envelope tracking and reactive threshold triggers.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "MIC SEL"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "I2S SCK"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 15",
+        "role": "I2S WS"
+      },
+      {
+        "pin": "GPIO 16",
+        "role": "I2S SD"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/ESP32I2SMic",
+    "lastModified": "2026-10-28T14:06:39.034Z"
+  },
+  {
+    "id": "02_audio_haptics_hapticssoundreactive_esp32c3",
+    "name": "hapticsSoundReactive",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/hapticsSoundReactive_esp32c3.bin",
+    "fileSize": 281584,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Audio Haptics) featuring I2S digital audio pipeline. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "General IO (OUTPUT)"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "General IO (OUTPUT)"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/hapticsSoundReactive",
+    "lastModified": "2026-10-28T15:23:47.224Z"
+  },
+  {
+    "id": "02_audio_haptics_haxel___firmware_c3wifi",
+    "name": "Haxel / firmware",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "c3WIFI",
+    "chip": "esp32c3",
+    "board": "esp32",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/Haxel___firmware_c3WIFI.bin",
+    "fileSize": 1157600,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Full-spectrum embedded telemetry engine featuring real-time wireless broadcast, ESP-NOW node clustering, audio spectrum analysis, and dynamic parameter tuning.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "HAXEL FEATURE LED / HAXEL FEATURE OLED"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "KLEDPWMBITS"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/Haxel/firmware",
+    "lastModified": "2026-10-28T17:29:49.191Z"
+  },
+  {
+    "id": "02_audio_haptics_inmp411sanitytest___autodetect_esp32c3",
+    "name": "INMP411sanitytest / autoDetect",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/INMP411sanitytest___autoDetect_esp32c3.bin",
+    "fileSize": 290640,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Audio Haptics) featuring I2S digital audio pipeline, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "LED PWM CHAN"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "SOFTGROUNDPIN"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "LED / LED PWM RES"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/INMP411sanitytest/autoDetect",
+    "lastModified": "2026-10-28T13:34:32.862Z"
+  },
+  {
+    "id": "02_audio_haptics_inmp411sanitytest___hardcoded_esp32c3",
+    "name": "INMP411sanitytest / hardcoded",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/INMP411sanitytest___hardcoded_esp32c3.bin",
+    "fileSize": 276896,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Audio Haptics) featuring I2S digital audio pipeline. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "I2S SD"
+      },
+      {
+        "pin": "GPIO 1",
+        "role": "I2S SCK"
+      },
+      {
+        "pin": "GPIO 2",
+        "role": "I2S LR"
+      },
+      {
+        "pin": "GPIO 3",
+        "role": "I2S WS"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/INMP411sanitytest/hardcoded",
+    "lastModified": "2026-10-28T13:34:48.799Z"
+  },
+  {
+    "id": "02_audio_haptics_max4466micmotorcontrol_esp32c3",
+    "name": "Max4466MicMotorControl",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/Max4466MicMotorControl_esp32c3.bin",
+    "fileSize": 275728,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-speed audio DSP capture pipeline sampling analog or digital MEMS microphones (INMP441 / MAX4466) with real-time sound-pressure level envelope tracking and reactive threshold triggers.",
+    "pinout": [
+      {
+        "pin": "GPIO 1",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 2",
+        "role": "MIC"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MOTOR"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/Max4466MicMotorControl",
+    "lastModified": "2026-10-28T15:25:36.848Z"
+  },
+  {
+    "id": "02_audio_haptics_max4466micsanitytest_esp32c3",
+    "name": "Max4466MicSanityTest",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/Max4466MicSanityTest_esp32c3.bin",
+    "fileSize": 259648,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-speed audio DSP capture pipeline sampling analog or digital MEMS microphones (INMP441 / MAX4466) with real-time sound-pressure level envelope tracking and reactive threshold triggers.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "MIC"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/Max4466MicSanityTest",
+    "lastModified": "2026-10-28T13:36:54.275Z"
+  },
+  {
+    "id": "02_audio_haptics_picomic_esp32c3",
+    "name": "PicoMic",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "pico",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/PicoMic_esp32c3.bin",
+    "fileSize": 238544,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded RP2040 microcontroller engineering project (Audio Haptics) featuring FastLED RGB lighting. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/PicoMic",
+    "lastModified": "2026-10-28T17:15:34.274Z"
+  },
+  {
+    "id": "02_audio_haptics_wirelesshaptic___esp32_audiohaptic_follower_drv2605l_esp32c3",
+    "name": "WirelessHaptic / ESP32_AudioHaptic_Follower_DRV2605L",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/WirelessHaptic___ESP32_AudioHaptic_Follower_DRV2605L_esp32c3.bin",
+    "fileSize": 748496,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Wireless haptic receiver node responding to low-latency ESP-NOW trigger packets. Drives tactile actuators via direct high-current PWM or I2C DRV2605L waveform synthesis.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "ONBOARD LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/WirelessHaptic/ESP32_AudioHaptic_Follower_DRV2605L",
+    "lastModified": "2026-06-13T18:10:02.017Z"
+  },
+  {
+    "id": "02_audio_haptics_wirelesshaptic___esp32_audiohaptic_follower_simple_esp32c3",
+    "name": "WirelessHaptic / ESP32_AudioHaptic_Follower_Simple",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/WirelessHaptic___ESP32_AudioHaptic_Follower_Simple_esp32c3.bin",
+    "fileSize": 728368,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Wireless haptic receiver node responding to low-latency ESP-NOW trigger packets. Drives tactile actuators via direct high-current PWM or I2C DRV2605L waveform synthesis.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "MOTOR PIN FWD"
+      },
+      {
+        "pin": "GPIO 1",
+        "role": "MOTOR PIN REV / MOTOR CH FWD"
+      },
+      {
+        "pin": "GPIO 2",
+        "role": "MOTOR CH REV"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "ONBOARD LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/WirelessHaptic/ESP32_AudioHaptic_Follower_Simple",
+    "lastModified": "2026-06-13T18:09:40.497Z"
+  },
+  {
+    "id": "02_audio_haptics_wirelesshaptic___esp32_audiohaptic_leader_esp32c3",
+    "name": "WirelessHaptic / ESP32_AudioHaptic_Leader",
+    "category": "Audio Haptics",
+    "rawCategory": "02_Audio_Haptics",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/02_Audio_Haptics/WirelessHaptic___ESP32_AudioHaptic_Leader_esp32c3.bin",
+    "fileSize": 896688,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Wireless haptic receiver node responding to low-latency ESP-NOW trigger packets. Drives tactile actuators via direct high-current PWM or I2C DRV2605L waveform synthesis.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "I2S SD"
+      },
+      {
+        "pin": "GPIO 1",
+        "role": "I2S SCK"
+      },
+      {
+        "pin": "GPIO 2",
+        "role": "I2S LR"
+      },
+      {
+        "pin": "GPIO 3",
+        "role": "I2S WS"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MIC GND"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "ONBOARD LED"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "BOOT BUTTON"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/02_Audio_Haptics/WirelessHaptic/ESP32_AudioHaptic_Leader",
+    "lastModified": "2026-10-28T16:10:18.401Z"
+  },
+  {
+    "id": "07_cameras_esp32cameras___esp32s3_esp32-s3-devkitc-1",
+    "name": "ESP32Cameras / ESP32S3",
+    "category": "Cameras",
+    "rawCategory": "07_Cameras",
+    "env": "esp32-s3-devkitc-1",
+    "chip": "esp32s3",
+    "board": "esp32-s3-devkitc-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/07_Cameras/ESP32Cameras___ESP32S3_esp32-s3-devkitc-1.bin",
+    "fileSize": 885904,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32S3 microcontroller engineering project (Cameras) featuring FastLED RGB lighting, I2C sensor integration, MPU 6-axis motion tracking, WiFi connectivity, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 14",
+        "role": "LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/07_Cameras/ESP32Cameras/ESP32S3",
+    "lastModified": "2026-10-28T16:48:11.773Z"
+  },
+  {
+    "id": "07_cameras_esp32cameras___freenoveesp32wroverdev_freenove_esp32_wrover",
+    "name": "ESP32Cameras / FreeNoveESP32WroverDev",
+    "category": "Cameras",
+    "rawCategory": "07_Cameras",
+    "env": "freenove_esp32_wrover",
+    "chip": "esp32",
+    "board": "esp-wrover-kit",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/07_Cameras/ESP32Cameras___FreeNoveESP32WroverDev_freenove_esp32_wrover.bin",
+    "fileSize": 891248,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Cameras) featuring I2C sensor integration, WiFi connectivity, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "Onboard Status LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/07_Cameras/ESP32Cameras/FreeNoveESP32WroverDev",
+    "lastModified": "2026-10-28T16:50:24.936Z"
+  },
+  {
+    "id": "06_clocks_deafclock_esp32c3",
+    "name": "DeafClock",
+    "category": "Clocks",
+    "rawCategory": "06_Clocks",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/06_Clocks/DeafClock_esp32c3.bin",
+    "fileSize": 269968,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-contrast RTC-driven tactile and visual alarm clock providing programmable silent vibration wake-up alerts and LED progress indicators.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "LED1"
+      },
+      {
+        "pin": "GPIO 1",
+        "role": "LED2 / General IO (OUTPUT)"
+      },
+      {
+        "pin": "GPIO 2",
+        "role": "LED3"
+      },
+      {
+        "pin": "GPIO 3",
+        "role": "LED4"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "LED5"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "LED6"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "LED7"
+      },
+      {
+        "pin": "GPIO 10",
+        "role": "LED8"
+      },
+      {
+        "pin": "GPIO 11",
+        "role": "LED1"
+      },
+      {
+        "pin": "GPIO 12",
+        "role": "LED2"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "LED3"
+      },
+      {
+        "pin": "GPIO 16",
+        "role": "LED9 TO 12"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "LED7"
+      },
+      {
+        "pin": "GPIO 18",
+        "role": "LED6"
+      },
+      {
+        "pin": "GPIO 20",
+        "role": "LED9 TO 12"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "LED8"
+      },
+      {
+        "pin": "GPIO 43",
+        "role": "LED4"
+      },
+      {
+        "pin": "GPIO 44",
+        "role": "LED5"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/06_Clocks/DeafClock",
+    "lastModified": "2026-10-28T16:43:08.036Z"
+  },
+  {
+    "id": "06_clocks_pcbclock_esp32c3",
+    "name": "PCBClock",
+    "category": "Clocks",
+    "rawCategory": "06_Clocks",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/06_Clocks/PCBClock_esp32c3.bin",
+    "fileSize": 3191888,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-contrast RTC-driven tactile and visual alarm clock providing programmable silent vibration wake-up alerts and LED progress indicators.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "General IO (INPUT_PULLUP)"
+      },
+      {
+        "pin": "GPIO 14",
+        "role": "General IO (INPUT_PULLUP)"
+      },
+      {
+        "pin": "GPIO 15",
+        "role": "General IO (OUTPUT)"
+      },
+      {
+        "pin": "GPIO 38",
+        "role": "MicroPython Signal IO"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/06_Clocks/PCBClock",
+    "lastModified": "2026-10-28T16:45:30.590Z"
+  },
+  {
+    "id": "04_communications_deafdoorbell___follower_esp32c3",
+    "name": "DeafDoorbell / Follower",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/DeafDoorbell___Follower_esp32c3.bin",
+    "fileSize": 754672,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-reliability accessibility signaling system for Deaf and Hard-of-Hearing households. Broadcasts instant low-latency doorbell trigger events over an encrypted ESP-NOW mesh to multiple remote room receivers with synchronized vibration bursts and visual alerts.",
+    "pinout": [
+      {
+        "pin": "GPIO 3",
+        "role": "MOTOR"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "ONBOARD LED"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "BOOT"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/DeafDoorbell/Follower",
+    "lastModified": "2026-10-26T10:37:27.062Z"
+  },
+  {
+    "id": "04_communications_deafdoorbell___leader_esp32c3",
+    "name": "DeafDoorbell / Leader",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/DeafDoorbell___Leader_esp32c3.bin",
+    "fileSize": 976784,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-reliability accessibility signaling system for Deaf and Hard-of-Hearing households. Broadcasts instant low-latency doorbell trigger events over an encrypted ESP-NOW mesh to multiple remote room receivers with synchronized vibration bursts and visual alerts.",
+    "pinout": [
+      {
+        "pin": "GPIO 3",
+        "role": "MIC ANALOG"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MIC GND"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "ONBOARD LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/DeafDoorbell/Leader",
+    "lastModified": "2026-10-27T12:20:36.111Z"
+  },
+  {
+    "id": "04_communications_deafdoorbell___leader_leader-legacy",
+    "name": "DeafDoorbell / Leader",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "leader-legacy",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/DeafDoorbell___Leader_leader-legacy.bin",
+    "fileSize": 977392,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-reliability accessibility signaling system for Deaf and Hard-of-Hearing households. Broadcasts instant low-latency doorbell trigger events over an encrypted ESP-NOW mesh to multiple remote room receivers with synchronized vibration bursts and visual alerts.",
+    "pinout": [
+      {
+        "pin": "GPIO 3",
+        "role": "MIC ANALOG"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MIC GND"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "ONBOARD LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/DeafDoorbell/Leader",
+    "lastModified": "2026-10-27T12:20:47.187Z"
+  },
+  {
+    "id": "04_communications_deafdoorbell___leader_firmware_legacy.bin",
+    "name": "DeafDoorbell / Leader (firmware_legacy)",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32c3",
+    "chip": "esp32",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/DeafDoorbell___Leader_firmware_legacy.bin",
+    "fileSize": 977392,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-reliability accessibility signaling system for Deaf and Hard-of-Hearing households. Broadcasts instant low-latency doorbell trigger events over an encrypted ESP-NOW mesh to multiple remote room receivers with synchronized vibration bursts and visual alerts.",
+    "pinout": [
+      {
+        "pin": "GPIO 3",
+        "role": "MIC ANALOG"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MIC GND"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "ONBOARD LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/DeafDoorbell/Leader",
+    "lastModified": "2026-10-27T12:20:47.187Z"
+  },
+  {
+    "id": "04_communications_esp32now___pcc_capstone_course_2025___esp32seriesreadernodejs___serialmagic_esp32c3",
+    "name": "ESP32NOW / PCC_Capstone_Course_2025 / ESP32SeriesReaderNodeJS / SerialMagic",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/ESP32NOW___PCC_Capstone_Course_2025___ESP32SeriesReaderNodeJS___SerialMagic_esp32c3.bin",
+    "fileSize": 754112,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Communications) featuring FastLED RGB lighting, low-latency ESP-NOW mesh, WiFi connectivity, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "LEDPIN"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "DATAPIN"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "DATAPIN"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/ESP32NOW/PCC_Capstone_Course_2025/ESP32SeriesReaderNodeJS/SerialMagic",
+    "lastModified": "2026-10-28T16:31:44.678Z"
+  },
+  {
+    "id": "04_communications_esp32now___pcc_capstone_course_2025___rfidreaderesp32now_esp32c3",
+    "name": "ESP32NOW / PCC_Capstone_Course_2025 / RFIDreaderESP32NOW",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/ESP32NOW___PCC_Capstone_Course_2025___RFIDreaderESP32NOW_esp32c3.bin",
+    "fileSize": 761440,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Communications) featuring FastLED RGB lighting, low-latency ESP-NOW mesh, WiFi connectivity. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "DATA"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "RST"
+      },
+      {
+        "pin": "GPIO 19",
+        "role": "SS"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/ESP32NOW/PCC_Capstone_Course_2025/RFIDreaderESP32NOW",
+    "lastModified": "2026-10-28T15:49:10.586Z"
+  },
+  {
+    "id": "04_communications_esp32now___robotcontroller_esp32c3",
+    "name": "ESP32NOW / RobotController",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/ESP32NOW___RobotController_esp32c3.bin",
+    "fileSize": 845824,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Communications) featuring low-latency ESP-NOW mesh, tactile haptic PWM driver, WiFi connectivity, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "Onboard Status LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/ESP32NOW/RobotController",
+    "lastModified": "2026-10-28T15:50:59.076Z"
+  },
+  {
+    "id": "04_communications_esp32now___sender_esp32c3",
+    "name": "ESP32NOW / Sender",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/ESP32NOW___Sender_esp32c3.bin",
+    "fileSize": 711872,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Communications) featuring low-latency ESP-NOW mesh, WiFi connectivity. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "PIEZOPIN"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/ESP32NOW/Sender",
+    "lastModified": "2026-10-28T15:51:59.026Z"
+  },
+  {
+    "id": "04_communications_esp32now___sender_doitesp32_esp32c3",
+    "name": "ESP32NOW / Sender_DOITESP32",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/ESP32NOW___Sender_DOITESP32_esp32c3.bin",
+    "fileSize": 711872,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Communications) featuring low-latency ESP-NOW mesh, WiFi connectivity. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "PIEZOPIN"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/ESP32NOW/Sender_DOITESP32",
+    "lastModified": "2026-10-28T15:52:59.044Z"
+  },
+  {
+    "id": "04_communications_esp32websitecontrolledpwm_esp32c3",
+    "name": "ESP32WebsiteControlledPWM",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/ESP32WebsiteControlledPWM_esp32c3.bin",
+    "fileSize": 816368,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Communications) featuring WiFi connectivity, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "Onboard Blue Status LED (Active Low)"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "Boot Button (Pull-Up)"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/ESP32WebsiteControlledPWM",
+    "lastModified": "2026-10-28T15:54:05.316Z"
+  },
+  {
+    "id": "04_communications_signalforwarder_esp32-c3",
+    "name": "SignalForwarder",
+    "category": "Communications",
+    "rawCategory": "04_Communications",
+    "env": "esp32-c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/04_Communications/SignalForwarder_esp32-c3.bin",
+    "fileSize": 657376,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Sub-millisecond ESP-NOW to Serial/WebSocket bridge repeater. Captures incoming wireless sensor and tactile telemetry packets over the 2.4GHz RF spectrum and streams them directly into host PC software.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "Onboard Blue Status LED (Active Low)"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "Boot Button (Pull-Up)"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/04_Communications/SignalForwarder",
+    "lastModified": "2026-07-28T21:21:31.033Z"
+  },
+  {
+    "id": "08_hardware_specific_cogworksminiesp32c3_esp32c3",
+    "name": "CogworksMiniESP32C3",
+    "category": "Hardware Specific",
+    "rawCategory": "08_Hardware_Specific",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/08_Hardware_Specific/CogworksMiniESP32C3_esp32c3.bin",
+    "fileSize": 833760,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Hardware Specific) featuring FastLED RGB lighting, I2S digital audio pipeline, tactile haptic PWM driver, WiFi connectivity. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 1",
+        "role": "I2S SD"
+      },
+      {
+        "pin": "GPIO 2",
+        "role": "I2S SCK"
+      },
+      {
+        "pin": "GPIO 3",
+        "role": "MIC SEL"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "I2S WS"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/08_Hardware_Specific/CogworksMiniESP32C3",
+    "lastModified": "2026-10-28T16:02:13.334Z"
+  },
+  {
+    "id": "08_hardware_specific_esp32-2432s028r___esp32now_esp32c3",
+    "name": "ESP32-2432S028R / ESP32NOW",
+    "category": "Hardware Specific",
+    "rawCategory": "08_Hardware_Specific",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/08_Hardware_Specific/ESP32-2432S028R___ESP32NOW_esp32c3.bin",
+    "fileSize": 745808,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Hardware Specific) featuring low-latency ESP-NOW mesh, WiFi connectivity. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "Onboard Status LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/08_Hardware_Specific/ESP32-2432S028R/ESP32NOW",
+    "lastModified": "2026-10-28T16:03:45.094Z"
+  },
+  {
+    "id": "08_hardware_specific_esp32c6_esp32c3",
+    "name": "ESP32C6",
+    "category": "Hardware Specific",
+    "rawCategory": "08_Hardware_Specific",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c6-devkitc-1",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/08_Hardware_Specific/ESP32C6_esp32c3.bin",
+    "fileSize": 288192,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C6 microcontroller engineering project (Hardware Specific) featuring I2C sensor integration, MPU 6-axis motion tracking, OLED graphical display. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "ECHO"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "TRIGGER"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "LED PIN2"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/08_Hardware_Specific/ESP32C6",
+    "lastModified": "2026-10-28T16:58:24.523Z"
+  },
+  {
+    "id": "08_hardware_specific_humandetector_esp32c3",
+    "name": "HumanDetector",
+    "category": "Hardware Specific",
+    "rawCategory": "08_Hardware_Specific",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c6-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/08_Hardware_Specific/HumanDetector_esp32c3.bin",
+    "fileSize": 314736,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C6 microcontroller engineering project (Hardware Specific) featuring I2C sensor integration, Bluetooth Low Energy (BLE), OLED graphical display. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 19",
+        "role": "SDA"
+      },
+      {
+        "pin": "GPIO 20",
+        "role": "SCL"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "US TRIG"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "US ECHO"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/08_Hardware_Specific/HumanDetector",
+    "lastModified": "2026-10-28T16:05:24.053Z"
+  },
+  {
+    "id": "08_hardware_specific_mircocontroller2pcb2025winter_esp32c3",
+    "name": "Mircocontroller2PCB2025Winter",
+    "category": "Hardware Specific",
+    "rawCategory": "08_Hardware_Specific",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/08_Hardware_Specific/Mircocontroller2PCB2025Winter_esp32c3.bin",
+    "fileSize": 309664,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Hardware Specific) featuring FastLED RGB lighting, I2C sensor integration, I2S digital audio pipeline, tactile haptic PWM driver, OLED graphical display. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "WS"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "LR"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "MOTOR2B"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "MOTOR2A"
+      },
+      {
+        "pin": "GPIO 16",
+        "role": "MOTOR1B"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "MOTOR1A"
+      },
+      {
+        "pin": "GPIO 19",
+        "role": "SDA"
+      },
+      {
+        "pin": "GPIO 20",
+        "role": "SCL"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "SD"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "SCK"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/08_Hardware_Specific/Mircocontroller2PCB2025Winter",
+    "lastModified": "2026-10-28T16:06:45.189Z"
+  },
+  {
+    "id": "08_hardware_specific_mpu6050toledpixels_esp32c3",
+    "name": "MPU6050toLEDPixels",
+    "category": "Hardware Specific",
+    "rawCategory": "08_Hardware_Specific",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/08_Hardware_Specific/MPU6050toLEDPixels_esp32c3.bin",
+    "fileSize": 289680,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Hardware Specific) featuring FastLED RGB lighting, I2C sensor integration, MPU 6-axis motion tracking, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "SCL"
+      },
+      {
+        "pin": "GPIO 1",
+        "role": "SDA"
+      },
+      {
+        "pin": "GPIO 2",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "INT"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/08_Hardware_Specific/MPU6050toLEDPixels",
+    "lastModified": "2026-10-28T16:08:11.533Z"
+  },
+  {
+    "id": "micropython_esp32_generic_c3-20251209-v1.27.0.bin",
+    "name": "MicroPython Official (ESP32_GENERIC_C3-20251209-v1.27.0)",
+    "category": "MicroPython",
+    "rawCategory": "MicroPython",
+    "env": "firmware",
+    "chip": "esp32c3",
+    "board": "esp32-c3",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/MicroPython/ESP32_GENERIC_C3-20251209-v1.27.0.bin",
+    "fileSize": 1724720,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Official MicroPython firmware binary for ESP32-C3 RISC-V with integrated REPL shell, full hardware drivers, and filesystem support.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "Default Status LED (Active Low)"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "Bootloader / User Button"
+      },
+      {
+        "pin": "GPIO 20",
+        "role": "Native USB D- (CDC Serial)"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "Native USB D+ (CDC Serial)"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/MicroPython/",
+    "lastModified": "2025-12-16T05:21:22.789Z"
+  },
+  {
+    "id": "05_robotics_vehicles_cameradronewheels_esp32dev",
+    "name": "cameraDroneWheels",
+    "category": "Robotics Vehicles",
+    "rawCategory": "05_Robotics_Vehicles",
+    "env": "esp32dev",
+    "chip": "esp32",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/05_Robotics_Vehicles/cameraDroneWheels_esp32dev.bin",
+    "fileSize": 843904,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Robotics motor controller and vehicle telemetry firmware handling dual motor drivers, wireless steering packets, and obstacle avoidance sensors.",
+    "pinout": [
+      {
+        "pin": "GPIO 12",
+        "role": "MOTOR FRONT LEFT"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "MOTOR FRONT RIGHT"
+      },
+      {
+        "pin": "GPIO 14",
+        "role": "MOTOR BACK LEFT"
+      },
+      {
+        "pin": "GPIO 15",
+        "role": "MOTOR BACK RIGHT"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/05_Robotics_Vehicles/cameraDroneWheels",
+    "lastModified": "2026-10-28T16:33:53.625Z"
+  },
+  {
+    "id": "05_robotics_vehicles_dataglove___mainglove_esp32c3",
+    "name": "DataGlove / MainGlove",
+    "category": "Robotics Vehicles",
+    "rawCategory": "05_Robotics_Vehicles",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/05_Robotics_Vehicles/DataGlove___MainGlove_esp32c3.bin",
+    "fileSize": 256336,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Wearable sensor glove tracking finger articulation through flex sensors and IMU orientation, streaming spatial gesture data over ESP-NOW.",
+    "pinout": [
+      {
+        "pin": "GPIO 5",
+        "role": "MOTOR1"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "MOTOR4"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "MOTOR3"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "MOTOR2"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/05_Robotics_Vehicles/DataGlove/MainGlove",
+    "lastModified": "2026-10-28T15:55:54.528Z"
+  },
+  {
+    "id": "05_robotics_vehicles_dataglove___receiver_esp32c3",
+    "name": "DataGlove / Receiver",
+    "category": "Robotics Vehicles",
+    "rawCategory": "05_Robotics_Vehicles",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/05_Robotics_Vehicles/DataGlove___Receiver_esp32c3.bin",
+    "fileSize": 715088,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Wearable sensor glove tracking finger articulation through flex sensors and IMU orientation, streaming spatial gesture data over ESP-NOW.",
+    "pinout": [
+      {
+        "pin": "GPIO 3",
+        "role": "MOTOR1"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MOTOR2"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "MOTOR3 / MOTOR1"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "MOTOR4"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "MOTOR4"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "MOTOR3"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "MOTOR2"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/05_Robotics_Vehicles/DataGlove/Receiver",
+    "lastModified": "2026-10-28T16:35:36.923Z"
+  },
+  {
+    "id": "05_robotics_vehicles_dataglove___sender_esp32c3",
+    "name": "DataGlove / Sender",
+    "category": "Robotics Vehicles",
+    "rawCategory": "05_Robotics_Vehicles",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/05_Robotics_Vehicles/DataGlove___Sender_esp32c3.bin",
+    "fileSize": 720080,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Wearable sensor glove tracking finger articulation through flex sensors and IMU orientation, streaming spatial gesture data over ESP-NOW.",
+    "pinout": [
+      {
+        "pin": "GPIO 5",
+        "role": "MOTOR1"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "MOTOR4"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "MOTOR3"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "MOTOR2"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/05_Robotics_Vehicles/DataGlove/Sender",
+    "lastModified": "2026-10-28T15:57:21.523Z"
+  },
+  {
+    "id": "05_robotics_vehicles_finalproject_esp32c3",
+    "name": "finalProject",
+    "category": "Robotics Vehicles",
+    "rawCategory": "05_Robotics_Vehicles",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/05_Robotics_Vehicles/finalProject_esp32c3.bin",
+    "fileSize": 825824,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Robotics motor controller and vehicle telemetry firmware handling dual motor drivers, wireless steering packets, and obstacle avoidance sensors.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "MOTOR FR A"
+      },
+      {
+        "pin": "GPIO 3",
+        "role": "MOTOR FR B"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MOTOR FL B"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "MOTOR FL A"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "MOTOR BL B"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "MOTOR BR A"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "DATA"
+      },
+      {
+        "pin": "GPIO 10",
+        "role": "MOTOR BR B"
+      },
+      {
+        "pin": "GPIO 15",
+        "role": "MOTOR BL A"
+      },
+      {
+        "pin": "GPIO 16",
+        "role": "TX"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "RX"
+      },
+      {
+        "pin": "GPIO 20",
+        "role": "TRIGPIN"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "ECHOPIN / TRIGPIN"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "ECHOPIN"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "MOTOR BR B"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/05_Robotics_Vehicles/finalProject",
+    "lastModified": "2026-10-28T16:39:10.167Z"
+  },
+  {
+    "id": "05_robotics_vehicles_ratvehicle_esp32c3",
+    "name": "RatVehicle",
+    "category": "Robotics Vehicles",
+    "rawCategory": "05_Robotics_Vehicles",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/05_Robotics_Vehicles/RatVehicle_esp32c3.bin",
+    "fileSize": 259312,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Robotics motor controller and vehicle telemetry firmware handling dual motor drivers, wireless steering packets, and obstacle avoidance sensors.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "FORWARDINPUTPIN"
+      },
+      {
+        "pin": "GPIO 1",
+        "role": "LEFTINPUTPIN"
+      },
+      {
+        "pin": "GPIO 2",
+        "role": "RIGHTINPUTPIN"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "MOTOR1"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "MOTOR2"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "MOTOR3 / MOTOR1"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "MOTOR4 / MOTOR2"
+      },
+      {
+        "pin": "GPIO 10",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 11",
+        "role": "MOTOR4"
+      },
+      {
+        "pin": "GPIO 12",
+        "role": "MOTOR3"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/05_Robotics_Vehicles/RatVehicle",
+    "lastModified": "2026-10-28T16:41:44.169Z"
+  },
+  {
+    "id": "01_starters_tests_blinktest_esp32c3",
+    "name": "BlinkTest",
+    "category": "Starters Tests",
+    "rawCategory": "01_Starters_Tests",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/01_Starters_Tests/BlinkTest_esp32c3.bin",
+    "fileSize": 253264,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Fundamental hardware diagnostic verifying microcontroller bootloader integrity, clock initialization, and active-low status LED oscillation.",
+    "pinout": [
+      {
+        "pin": "GPIO 3",
+        "role": "DATA"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "CLOCK"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/01_Starters_Tests/BlinkTest",
+    "lastModified": "2026-06-21T18:18:58.381Z"
+  },
+  {
+    "id": "01_starters_tests_blinktest_esp32dev",
+    "name": "BlinkTest",
+    "category": "Starters Tests",
+    "rawCategory": "01_Starters_Tests",
+    "env": "esp32dev",
+    "chip": "esp32",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/01_Starters_Tests/BlinkTest_esp32dev.bin",
+    "fileSize": 267696,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Fundamental hardware diagnostic verifying microcontroller bootloader integrity, clock initialization, and active-low status LED oscillation.",
+    "pinout": [
+      {
+        "pin": "GPIO 3",
+        "role": "DATA"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "CLOCK"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/01_Starters_Tests/BlinkTest",
+    "lastModified": "2026-06-21T18:18:01.038Z"
+  },
+  {
+    "id": "01_starters_tests_ch32v003sanitytest_genericch32v003f4p6",
+    "name": "CH32V003SanityTest",
+    "category": "Starters Tests",
+    "rawCategory": "01_Starters_Tests",
+    "env": "genericCH32V003F4P6",
+    "chip": "ch32v003",
+    "board": "genericCH32V003F4P6",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/01_Starters_Tests/CH32V003SanityTest_genericCH32V003F4P6.bin",
+    "fileSize": 500,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Bare-metal CH32V003 RISC-V sanity check executing direct register toggles and SWIO flashing validation.",
+    "pinout": [
+      {
+        "pin": "GPIO 1",
+        "role": "PD1 / SWIO Debug & Flashing"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "PC4 / PWM Haptic Output"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/01_Starters_Tests/CH32V003SanityTest",
+    "lastModified": "2026-07-18T16:00:26.872Z"
+  },
+  {
+    "id": "01_starters_tests_esp32c3starter___micropython_firmware.bin",
+    "name": "ESP32C3Starter / micropython",
+    "category": "Starters Tests",
+    "rawCategory": "01_Starters_Tests",
+    "env": "esp32c3_supermini_micropython",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1 ; A common generic ESP32-C3 board definition",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/01_Starters_Tests/ESP32C3Starter___micropython_firmware.bin",
+    "fileSize": 1724720,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Starters Tests) featuring WiFi connectivity. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "MicroPython Signal IO"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/01_Starters_Tests/ESP32C3Starter/micropython",
+    "lastModified": "2025-12-16T05:21:22.789Z"
+  },
+  {
+    "id": "01_starters_tests_esp32c3starter___micropython_esp32_generic_c3-20251209-v1.27.0.bin",
+    "name": "ESP32C3Starter / micropython (ESP32_GENERIC_C3-20251209-v1.27.0)",
+    "category": "Starters Tests",
+    "rawCategory": "01_Starters_Tests",
+    "env": "esp32c3_supermini_micropython",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1 ; A common generic ESP32-C3 board definition",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/01_Starters_Tests/ESP32C3Starter___micropython_ESP32_GENERIC_C3-20251209-v1.27.0.bin",
+    "fileSize": 1724720,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Starters Tests) featuring WiFi connectivity. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "MicroPython Signal IO"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/01_Starters_Tests/ESP32C3Starter/micropython",
+    "lastModified": "2025-12-16T05:21:22.789Z"
+  },
+  {
+    "id": "01_starters_tests_esp32c3starter___src___blink_test_esp32c3",
+    "name": "ESP32C3Starter / src / Blink_Test",
+    "category": "Starters Tests",
+    "rawCategory": "01_Starters_Tests",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/01_Starters_Tests/ESP32C3Starter___src___Blink_Test_esp32c3.bin",
+    "fileSize": 255184,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Starters Tests) featuring Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "LEDPIN"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/01_Starters_Tests/ESP32C3Starter/src/Blink_Test",
+    "lastModified": "2026-06-21T18:20:48.059Z"
+  },
+  {
+    "id": "01_starters_tests_oledsanitytest_pico",
+    "name": "OLEDSanityTest",
+    "category": "Starters Tests",
+    "rawCategory": "01_Starters_Tests",
+    "env": "pico",
+    "chip": "rp2040",
+    "board": "pico",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/01_Starters_Tests/OLEDSanityTest_pico.bin",
+    "fileSize": 90580,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded RP2040 microcontroller engineering project (Starters Tests) featuring I2C sensor integration, Bluetooth Low Energy (BLE), OLED graphical display. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 25",
+        "role": "Onboard Status LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/01_Starters_Tests/OLEDSanityTest",
+    "lastModified": "2026-07-23T21:18:09.007Z"
+  },
+  {
+    "id": "01_starters_tests_pwmstatuslight_esp32c3",
+    "name": "PWMStatusLight",
+    "category": "Starters Tests",
+    "rawCategory": "01_Starters_Tests",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/01_Starters_Tests/PWMStatusLight_esp32c3.bin",
+    "fileSize": 248976,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Hardware LEDC PWM breathing light driver utilizing logarithmic gamma-correction curves for natural, flicker-free optical transitions.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/01_Starters_Tests/PWMStatusLight",
+    "lastModified": "2026-06-21T17:09:27.301Z"
+  },
+  {
+    "id": "01_starters_tests_xymotorledstrip_esp32-c3-devkitm-1",
+    "name": "xYmotorLedStrip",
+    "category": "Starters Tests",
+    "rawCategory": "01_Starters_Tests",
+    "env": "esp32-c3-devkitm-1",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/01_Starters_Tests/xYmotorLedStrip_esp32-c3-devkitm-1.bin",
+    "fileSize": 267040,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Synchronized dual-axis mechanical motion and addressable LED chase system. Translates motor positions into real-time linear lighting cues.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "LED DATA"
+      },
+      {
+        "pin": "GPIO 1",
+        "role": "MOTOR PWM / MicroPython Signal IO"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/01_Starters_Tests/xYmotorLedStrip",
+    "lastModified": "2026-06-21T17:31:33.240Z"
+  },
+  {
+    "id": "09_ultrasonic_ultrasonichapticdisplay_pico",
+    "name": "UltrasonicHapticDisplay",
+    "category": "ultraSonic",
+    "rawCategory": "09_ultraSonic",
+    "env": "pico",
+    "chip": "rp2040",
+    "board": "pico",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/09_ultraSonic/UltrasonicHapticDisplay_pico.bin",
+    "fileSize": 96760,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Mid-air tactile transducer array synthesizer. Modulates 40kHz acoustic radiation pressure wavefronts to project touch sensations onto bare human skin without wearable contact.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "SDA"
+      },
+      {
+        "pin": "GPIO 1",
+        "role": "SCL"
+      },
+      {
+        "pin": "GPIO 15",
+        "role": "PWM"
+      },
+      {
+        "pin": "GPIO 26",
+        "role": "POT CARRIER"
+      },
+      {
+        "pin": "GPIO 27",
+        "role": "POT MOD"
+      },
+      {
+        "pin": "GPIO 28",
+        "role": "POT DRIVE"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/09_ultraSonic/UltrasonicHapticDisplay",
+    "lastModified": "2026-07-25T14:46:42.353Z"
+  },
+  {
+    "id": "03_visuals_art_arduino_gfx_demo_esp32s3",
+    "name": "arduino_gfx_demo",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32s3",
+    "chip": "esp32s3",
+    "board": "esp32-s3-devkitc-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/arduino_gfx_demo_esp32s3.bin",
+    "fileSize": 428768,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32S3 microcontroller engineering project (Visuals Art) featuring WiFi connectivity. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "BUTTON 1"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "BAT VOLT"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "LCD RES"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "LCD CS"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "LCD DC"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "LCD WR"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "LCD RD"
+      },
+      {
+        "pin": "GPIO 14",
+        "role": "BUTTON 2"
+      },
+      {
+        "pin": "GPIO 15",
+        "role": "POWER ON"
+      },
+      {
+        "pin": "GPIO 16",
+        "role": "TOUCH INT"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "IIC SCL"
+      },
+      {
+        "pin": "GPIO 18",
+        "role": "IIC SDA"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "TOUCH RES"
+      },
+      {
+        "pin": "GPIO 38",
+        "role": "LCD BL"
+      },
+      {
+        "pin": "GPIO 39",
+        "role": "LCD D0"
+      },
+      {
+        "pin": "GPIO 40",
+        "role": "LCD D1"
+      },
+      {
+        "pin": "GPIO 41",
+        "role": "LCD D2"
+      },
+      {
+        "pin": "GPIO 42",
+        "role": "LCD D3"
+      },
+      {
+        "pin": "GPIO 45",
+        "role": "LCD D4"
+      },
+      {
+        "pin": "GPIO 46",
+        "role": "LCD D5"
+      },
+      {
+        "pin": "GPIO 47",
+        "role": "LCD D6"
+      },
+      {
+        "pin": "GPIO 48",
+        "role": "LCD D7"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/arduino_gfx_demo",
+    "lastModified": "2026-10-28T16:56:44.617Z"
+  },
+  {
+    "id": "03_visuals_art_blendingfastled_esp32c3",
+    "name": "blendingFastLed",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/blendingFastLed_esp32c3.bin",
+    "fileSize": 265152,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art) featuring FastLED RGB lighting, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 6",
+        "role": "DATA"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "CLK"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/blendingFastLed",
+    "lastModified": "2026-10-28T14:42:05.207Z"
+  },
+  {
+    "id": "03_visuals_art_carriebrainbadge_esp32-c3-devkitm-1",
+    "name": "CarrieBrainBadge",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32-c3-devkitm-1",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/CarrieBrainBadge_esp32-c3-devkitm-1.bin",
+    "fileSize": 388912,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Wearable bio-aesthetic conference badge powered by ESP32-C3. Simulates neural synaptic firing patterns across WS2812B RGB pixels with synchronized tactile heartbeat pulses.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "LED DATA"
+      },
+      {
+        "pin": "GPIO 1",
+        "role": "MOTOR PWM"
+      },
+      {
+        "pin": "GPIO 2",
+        "role": "MPU SCL"
+      },
+      {
+        "pin": "GPIO 3",
+        "role": "MPU SDA"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "General IO (INPUT_PULLUP)"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/CarrieBrainBadge",
+    "lastModified": "2026-05-02T03:47:13.052Z"
+  },
+  {
+    "id": "03_visuals_art_cymaspace___cymaspacestarfft_esp32c3",
+    "name": "CymaSpace / cymaSpaceStarFFT",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/CymaSpace___cymaSpaceStarFFT_esp32c3.bin",
+    "fileSize": 297920,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art) featuring MPU 6-axis motion tracking, I2S digital audio pipeline, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "PRINTRAWMICDATA"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MIC WS"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "MIC SEL"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "MIC DO"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "MIC SCK"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/CymaSpace/cymaSpaceStarFFT",
+    "lastModified": "2026-10-28T15:36:48.591Z"
+  },
+  {
+    "id": "03_visuals_art_cymaspace___cymaspacestarfftaudiolux_esp32c3",
+    "name": "CymaSpace / cymaSpaceStarFFTAudioLux",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/CymaSpace___cymaSpaceStarFFTAudioLux_esp32c3.bin",
+    "fileSize": 308992,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art) featuring FastLED RGB lighting, I2C sensor integration, MPU 6-axis motion tracking, I2S digital audio pipeline, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "PRINT RAW MIC DATA"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MIC WS"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "MIC SEL"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "MIC DO"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "MIC SCK"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/CymaSpace/cymaSpaceStarFFTAudioLux",
+    "lastModified": "2026-10-28T16:12:14.047Z"
+  },
+  {
+    "id": "03_visuals_art_cymaspace___cymaspacestarfftprototype2_esp32c3",
+    "name": "CymaSpace / cymaSpaceStarFFTPrototype2",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/CymaSpace___cymaSpaceStarFFTPrototype2_esp32c3.bin",
+    "fileSize": 296480,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art) featuring FastLED RGB lighting, I2S digital audio pipeline, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "PRINT RAW MIC DATA"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MIC WS"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "MIC SEL"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "DATA / LED"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "CLOCK"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "MIC DO"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "MIC SCK"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/CymaSpace/cymaSpaceStarFFTPrototype2",
+    "lastModified": "2026-10-28T16:14:09.431Z"
+  },
+  {
+    "id": "03_visuals_art_cymaspace___cymaspacestarfftprototype3_esp32c3",
+    "name": "CymaSpace / cymaSpaceStarFFTPrototype3",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/CymaSpace___cymaSpaceStarFFTPrototype3_esp32c3.bin",
+    "fileSize": 296528,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art) featuring FastLED RGB lighting, I2S digital audio pipeline, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "PRINT RAW MIC DATA"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "MIC WS"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "MIC SEL"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "DATA / LED"
+      },
+      {
+        "pin": "GPIO 13",
+        "role": "CLOCK"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "MIC DO"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "MIC SCK"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/CymaSpace/cymaSpaceStarFFTPrototype3",
+    "lastModified": "2026-10-28T16:15:27.134Z"
+  },
+  {
+    "id": "03_visuals_art_ember___firmware_esp32c3",
+    "name": "Ember / firmware",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/Ember___firmware_esp32c3.bin",
+    "fileSize": 980048,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Modular bytecode virtual machine and dynamic runtime for ESP32. Executes compiled sensory choreography scripts, controls multi-channel lighting, and reports live performance telemetry.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "Onboard Blue Status LED (Active Low)"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "Boot Button (Pull-Up)"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/Ember/firmware",
+    "lastModified": "2026-08-28T12:19:12.004Z"
+  },
+  {
+    "id": "03_visuals_art_fuelrodsredesign_esp32c3",
+    "name": "FuelRodsRedesign",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/FuelRodsRedesign_esp32c3.bin",
+    "fileSize": 756592,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art) featuring FastLED RGB lighting, I2C sensor integration, WiFi connectivity, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "SDA"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "SCL"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "DATA"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "SDA"
+      },
+      {
+        "pin": "GPIO 22",
+        "role": "SCL"
+      },
+      {
+        "pin": "GPIO 23",
+        "role": "DATA"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/FuelRodsRedesign",
+    "lastModified": "2026-10-28T16:18:59.665Z"
+  },
+  {
+    "id": "03_visuals_art_imagescroll_esp32c3",
+    "name": "ImageScroll",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/ImageScroll_esp32c3.bin",
+    "fileSize": 657472,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "Onboard Status LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/ImageScroll",
+    "lastModified": "2026-10-28T15:39:46.821Z"
+  },
+  {
+    "id": "03_visuals_art_ledbrace_esp32c3",
+    "name": "ledbrace",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/ledbrace_esp32c3.bin",
+    "fileSize": 293056,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art) featuring I2C sensor integration, MPU 6-axis motion tracking, I2S digital audio pipeline, tactile haptic PWM driver, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "I2S WS"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "MOTOR1"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "I2S SCK"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 16",
+        "role": "I2S SD"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "I2S SEL"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "MOTOR2"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/ledbrace",
+    "lastModified": "2026-10-28T16:23:11.712Z"
+  },
+  {
+    "id": "03_visuals_art_lightbaton___reactivefollowerlightmotion_esp32c3",
+    "name": "LightBaton / reactiveFollowerLightMotion",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/LightBaton___reactiveFollowerLightMotion_esp32c3.bin",
+    "fileSize": 723536,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-speed expressive performance baton combining high-rate 6-axis IMU spatial gesture tracking, 76-pixel addressable LED motion sweeps, and low-latency ESP-NOW wireless broadcast synchronization.",
+    "pinout": [
+      {
+        "pin": "GPIO 6",
+        "role": "LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/LightBaton/reactiveFollowerLightMotion",
+    "lastModified": "2026-08-28T11:23:44.247Z"
+  },
+  {
+    "id": "03_visuals_art_lightbaton___reactivehandlelightmotion_esp32c3_mpu6050",
+    "name": "LightBaton / reactiveHandleLightMotion",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3_mpu6050",
+    "chip": "esp32c3",
+    "board": "esp32",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/LightBaton___reactiveHandleLightMotion_esp32c3_mpu6050.bin",
+    "fileSize": 1506144,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-speed expressive performance baton combining high-rate 6-axis IMU spatial gesture tracking, 76-pixel addressable LED motion sweeps, and low-latency ESP-NOW wireless broadcast synchronization.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "SDA"
+      },
+      {
+        "pin": "GPIO 3",
+        "role": "SCL"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "GND"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "INT"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "MOTOR"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/LightBaton/reactiveHandleLightMotion",
+    "lastModified": "2026-08-28T08:29:27.059Z"
+  },
+  {
+    "id": "03_visuals_art_lightbaton___reactivehandlelightmotion_esp32c3_mpu6500",
+    "name": "LightBaton / reactiveHandleLightMotion",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3_mpu6500",
+    "chip": "esp32c3",
+    "board": "esp32",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/LightBaton___reactiveHandleLightMotion_esp32c3_mpu6500.bin",
+    "fileSize": 1506544,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "High-speed expressive performance baton combining high-rate 6-axis IMU spatial gesture tracking, 76-pixel addressable LED motion sweeps, and low-latency ESP-NOW wireless broadcast synchronization.",
+    "pinout": [
+      {
+        "pin": "GPIO 2",
+        "role": "SDA"
+      },
+      {
+        "pin": "GPIO 3",
+        "role": "SCL"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "GND"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "INT"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "MOTOR"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/LightBaton/reactiveHandleLightMotion",
+    "lastModified": "2026-08-28T12:10:32.930Z"
+  },
+  {
+    "id": "03_visuals_art_max7219_bullshit_esp32c3",
+    "name": "MAX7219_Bullshit",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/MAX7219_Bullshit_esp32c3.bin",
+    "fileSize": 836128,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Visuals Art) featuring MPU 6-axis motion tracking, WiFi connectivity, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "CLK"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "CS"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "DATA"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/MAX7219_Bullshit",
+    "lastModified": "2026-10-28T15:42:16.558Z"
+  },
+  {
+    "id": "03_visuals_art_midiledbrace_esp32c3",
+    "name": "MidiLedBrace",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/MidiLedBrace_esp32c3.bin",
+    "fileSize": 1075712,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art) featuring I2C sensor integration, MPU 6-axis motion tracking, I2S digital audio pipeline, tactile haptic PWM driver, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "SCL INDEX / SCL TIME / SCL PLOT"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "I2S WS"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "MOTOR1"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "I2S SCK"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "LED"
+      },
+      {
+        "pin": "GPIO 16",
+        "role": "I2S SD"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "I2S SEL"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "MOTOR2"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/MidiLedBrace",
+    "lastModified": "2026-10-28T16:26:33.660Z"
+  },
+  {
+    "id": "03_visuals_art_oledteststriptest_esp32c3",
+    "name": "oledTestStripTest",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/oledTestStripTest_esp32c3.bin",
+    "fileSize": 289328,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art) featuring I2C sensor integration, MPU 6-axis motion tracking, Bluetooth Low Energy (BLE), OLED graphical display. Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 4",
+        "role": "ECHO"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "TRIGGER"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "LED"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/oledTestStripTest",
+    "lastModified": "2026-10-28T16:29:09.021Z"
+  },
+  {
+    "id": "03_visuals_art_tft_rainbow_esp32c3",
+    "name": "TFT_Rainbow",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32dev",
+    "baudRate": 115200,
+    "flashOffset": "0x10000",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/TFT_Rainbow_esp32c3.bin",
+    "fileSize": 308080,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32 microcontroller engineering project (Visuals Art). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 0",
+        "role": "BUTTON 1"
+      },
+      {
+        "pin": "GPIO 4",
+        "role": "BAT VOLT"
+      },
+      {
+        "pin": "GPIO 5",
+        "role": "LCD RES"
+      },
+      {
+        "pin": "GPIO 6",
+        "role": "LCD CS"
+      },
+      {
+        "pin": "GPIO 7",
+        "role": "LCD DC"
+      },
+      {
+        "pin": "GPIO 8",
+        "role": "LCD WR"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "LCD RD"
+      },
+      {
+        "pin": "GPIO 14",
+        "role": "BUTTON 2"
+      },
+      {
+        "pin": "GPIO 15",
+        "role": "POWER ON"
+      },
+      {
+        "pin": "GPIO 16",
+        "role": "TOUCH INT"
+      },
+      {
+        "pin": "GPIO 17",
+        "role": "IIC SCL"
+      },
+      {
+        "pin": "GPIO 18",
+        "role": "IIC SDA"
+      },
+      {
+        "pin": "GPIO 21",
+        "role": "TOUCH RES"
+      },
+      {
+        "pin": "GPIO 38",
+        "role": "LCD BL"
+      },
+      {
+        "pin": "GPIO 39",
+        "role": "LCD D0"
+      },
+      {
+        "pin": "GPIO 40",
+        "role": "LCD D1"
+      },
+      {
+        "pin": "GPIO 41",
+        "role": "LCD D2"
+      },
+      {
+        "pin": "GPIO 42",
+        "role": "LCD D3"
+      },
+      {
+        "pin": "GPIO 45",
+        "role": "LCD D4"
+      },
+      {
+        "pin": "GPIO 46",
+        "role": "LCD D5"
+      },
+      {
+        "pin": "GPIO 47",
+        "role": "LCD D6"
+      },
+      {
+        "pin": "GPIO 48",
+        "role": "LCD D7"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/TFT_Rainbow",
+    "lastModified": "2026-10-28T15:44:53.224Z"
+  },
+  {
+    "id": "03_visuals_art_webfastled_esp32c3",
+    "name": "WebFastLed",
+    "category": "Visuals Art",
+    "rawCategory": "03_Visuals_Art",
+    "env": "esp32c3",
+    "chip": "esp32c3",
+    "board": "esp32-c3-devkitm-1",
+    "baudRate": 115200,
+    "flashOffset": "0x0",
+    "binPath": "/ESP32Codes/static-firmware/03_Visuals_Art/WebFastLed_esp32c3.bin",
+    "fileSize": 920480,
+    "hasBinary": true,
+    "status": "Ready to Flash",
+    "description": "Embedded ESP32C3 microcontroller engineering project (Visuals Art) featuring FastLED RGB lighting, WiFi connectivity, Bluetooth Low Energy (BLE). Engineered for low-latency sensory interaction and robust hardware execution.",
+    "pinout": [
+      {
+        "pin": "GPIO 8",
+        "role": "Onboard Blue Status LED (Active Low)"
+      },
+      {
+        "pin": "GPIO 9",
+        "role": "Boot Button (Pull-Up)"
+      }
+    ],
+    "sourcePath": "/ESP32Codes/PlatformIO/03_Visuals_Art/WebFastLed",
+    "lastModified": "2026-10-28T15:46:52.191Z"
+  }
+]
