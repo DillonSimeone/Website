@@ -7311,6 +7311,248 @@
                                                                ]
                                               },
                                               {
+                                                  "name":  "static-firmware",
+                                                  "path":  "/public/ESP32Codes/static-firmware",
+                                                  "type":  "dir",
+                                                  "size":  0,
+                                                  "depth":  2,
+                                                  "ext":  "",
+                                                  "children":  [
+                                                                   {
+                                                                       "name":  "01_Starters_Tests",
+                                                                       "path":  "/public/ESP32Codes/static-firmware/01_Starters_Tests",
+                                                                       "type":  "dir",
+                                                                       "size":  0,
+                                                                       "depth":  3,
+                                                                       "ext":  "",
+                                                                       "children":  [
+                                                                                        {
+                                                                                            "name":  "BlinkTest_esp32c3.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/01_Starters_Tests/BlinkTest_esp32c3.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  253264,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "BlinkTest_esp32dev.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/01_Starters_Tests/BlinkTest_esp32dev.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  267696,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "CH32V003SanityTest_genericCH32V003F4P6.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/01_Starters_Tests/CH32V003SanityTest_genericCH32V003F4P6.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  500,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "ESP32C3Starter__micropython__ESP32_GENERIC_C3-20251209-v1.27.0.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/01_Starters_Tests/ESP32C3Starter__micropython__ESP32_GENERIC_C3-20251209-v1.27.0.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  1724720,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "OLEDSanityTest_pico.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/01_Starters_Tests/OLEDSanityTest_pico.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  90580,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "PWMStatusLight_esp32c3.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/01_Starters_Tests/PWMStatusLight_esp32c3.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  248976,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "xYmotorLedStrip_esp32-c3-devkitm-1.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/01_Starters_Tests/xYmotorLedStrip_esp32-c3-devkitm-1.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  267040,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        }
+                                                                                    ]
+                                                                   },
+                                                                   {
+                                                                       "name":  "02_Audio_Haptics",
+                                                                       "path":  "/public/ESP32Codes/static-firmware/02_Audio_Haptics",
+                                                                       "type":  "dir",
+                                                                       "size":  0,
+                                                                       "depth":  3,
+                                                                       "ext":  "",
+                                                                       "children":  [
+                                                                                        {
+                                                                                            "name":  "CH32V003Haptics_genericCH32V003F4P6.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/02_Audio_Haptics/CH32V003Haptics_genericCH32V003F4P6.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  3012,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "WirelessHaptic__ESP32_AudioHaptic_Follower_DRV2605L__esp32c3.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/02_Audio_Haptics/WirelessHaptic__ESP32_AudioHaptic_Follower_DRV2605L__esp32c3.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  748496,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "WirelessHaptic__ESP32_AudioHaptic_Follower_Simple__esp32c3.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/02_Audio_Haptics/WirelessHaptic__ESP32_AudioHaptic_Follower_Simple__esp32c3.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  728368,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        }
+                                                                                    ]
+                                                                   },
+                                                                   {
+                                                                       "name":  "03_Visuals_Art",
+                                                                       "path":  "/public/ESP32Codes/static-firmware/03_Visuals_Art",
+                                                                       "type":  "dir",
+                                                                       "size":  0,
+                                                                       "depth":  3,
+                                                                       "ext":  "",
+                                                                       "children":  [
+                                                                                        {
+                                                                                            "name":  "CarrieBrainBadge_esp32-c3-devkitm-1.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/03_Visuals_Art/CarrieBrainBadge_esp32-c3-devkitm-1.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  388912,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "Ember__firmware__esp32c3.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/03_Visuals_Art/Ember__firmware__esp32c3.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  980048,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "LightBaton__reactiveFollowerLightMotion__esp32c3.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/03_Visuals_Art/LightBaton__reactiveFollowerLightMotion__esp32c3.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  723536,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "LightBaton__reactiveHandleLightMotion__esp32c3_mpu6050.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/03_Visuals_Art/LightBaton__reactiveHandleLightMotion__esp32c3_mpu6050.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  1506144,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "LightBaton__reactiveHandleLightMotion__esp32c3_mpu6500.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/03_Visuals_Art/LightBaton__reactiveHandleLightMotion__esp32c3_mpu6500.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  1506544,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        }
+                                                                                    ]
+                                                                   },
+                                                                   {
+                                                                       "name":  "04_Communications",
+                                                                       "path":  "/public/ESP32Codes/static-firmware/04_Communications",
+                                                                       "type":  "dir",
+                                                                       "size":  0,
+                                                                       "depth":  3,
+                                                                       "ext":  "",
+                                                                       "children":  [
+                                                                                        {
+                                                                                            "name":  "DeafDoorbell__Follower__esp32c3.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/04_Communications/DeafDoorbell__Follower__esp32c3.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  754672,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "DeafDoorbell__Leader__esp32c3.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/04_Communications/DeafDoorbell__Leader__esp32c3.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  976784,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "DeafDoorbell__Leader__firmware_legacy.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/04_Communications/DeafDoorbell__Leader__firmware_legacy.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  977392,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "DeafDoorbell__Leader__leader-legacy.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/04_Communications/DeafDoorbell__Leader__leader-legacy.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  977392,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        },
+                                                                                        {
+                                                                                            "name":  "SignalForwarder_esp32-c3.bin",
+                                                                                            "path":  "/public/ESP32Codes/static-firmware/04_Communications/SignalForwarder_esp32-c3.bin",
+                                                                                            "type":  "file",
+                                                                                            "size":  657376,
+                                                                                            "depth":  4,
+                                                                                            "ext":  ".bin"
+                                                                                        }
+                                                                                    ]
+                                                                   },
+                                                                   {
+                                                                       "name":  "09_ultraSonic",
+                                                                       "path":  "/public/ESP32Codes/static-firmware/09_ultraSonic",
+                                                                       "type":  "dir",
+                                                                       "size":  0,
+                                                                       "depth":  3,
+                                                                       "ext":  "",
+                                                                       "children":  {
+                                                                                        "name":  "UltrasonicHapticDisplay_pico.bin",
+                                                                                        "path":  "/public/ESP32Codes/static-firmware/09_ultraSonic/UltrasonicHapticDisplay_pico.bin",
+                                                                                        "type":  "file",
+                                                                                        "size":  96760,
+                                                                                        "depth":  4,
+                                                                                        "ext":  ".bin"
+                                                                                    }
+                                                                   },
+                                                                   {
+                                                                       "name":  "MicroPython",
+                                                                       "path":  "/public/ESP32Codes/static-firmware/MicroPython",
+                                                                       "type":  "dir",
+                                                                       "size":  0,
+                                                                       "depth":  3,
+                                                                       "ext":  "",
+                                                                       "children":  {
+                                                                                        "name":  "ESP32_GENERIC_C3-20251209-v1.27.0.bin",
+                                                                                        "path":  "/public/ESP32Codes/static-firmware/MicroPython/ESP32_GENERIC_C3-20251209-v1.27.0.bin",
+                                                                                        "type":  "file",
+                                                                                        "size":  1724720,
+                                                                                        "depth":  4,
+                                                                                        "ext":  ".bin"
+                                                                                    }
+                                                                   }
+                                                               ]
+                                              },
+                                              {
                                                   "name":  "_tooling",
                                                   "path":  "/public/ESP32Codes/_tooling",
                                                   "type":  "dir",
@@ -7427,6 +7669,14 @@
                                                                                     ]
                                                                    },
                                                                    {
+                                                                       "name":  "esptool-js.js",
+                                                                       "path":  "/public/ESP32Codes/_tooling/esptool-js.js",
+                                                                       "type":  "file",
+                                                                       "size":  178644,
+                                                                       "depth":  3,
+                                                                       "ext":  ".js"
+                                                                   },
+                                                                   {
                                                                        "name":  "generate-readmes.js",
                                                                        "path":  "/public/ESP32Codes/_tooling/generate-readmes.js",
                                                                        "type":  "file",
@@ -7441,6 +7691,14 @@
                                                                        "size":  716949,
                                                                        "depth":  3,
                                                                        "ext":  ".zip"
+                                                                   },
+                                                                   {
+                                                                       "name":  "update-static-uploader.js",
+                                                                       "path":  "/public/ESP32Codes/_tooling/update-static-uploader.js",
+                                                                       "type":  "file",
+                                                                       "size":  13747,
+                                                                       "depth":  3,
+                                                                       "ext":  ".js"
                                                                    }
                                                                ]
                                               },
@@ -7459,6 +7717,14 @@
                                                   "size":  51,
                                                   "depth":  2,
                                                   "ext":  ".md"
+                                              },
+                                              {
+                                                  "name":  "firmware-manifest.json",
+                                                  "path":  "/public/ESP32Codes/firmware-manifest.json",
+                                                  "type":  "file",
+                                                  "size":  13525,
+                                                  "depth":  2,
+                                                  "ext":  ".json"
                                               },
                                               {
                                                   "name":  "GEMINI.md",
@@ -7720,7 +7986,7 @@
                                                                                             "name":  "haptics.log",
                                                                                             "path":  "/public/Glue/Daemons/AudioHaptics/haptics.log",
                                                                                             "type":  "file",
-                                                                                            "size":  201396,
+                                                                                            "size":  202020,
                                                                                             "depth":  4,
                                                                                             "ext":  ".log"
                                                                                         },
@@ -7794,7 +8060,7 @@
                                                                                             "name":  "energy.log",
                                                                                             "path":  "/public/Glue/Daemons/EnergyDaemon/energy.log",
                                                                                             "type":  "file",
-                                                                                            "size":  230813,
+                                                                                            "size":  234468,
                                                                                             "depth":  4,
                                                                                             "ext":  ".log"
                                                                                         },
@@ -7834,7 +8100,7 @@
                                                                                             "name":  "stdout.log",
                                                                                             "path":  "/public/Glue/Daemons/EnergyDaemon/stdout.log",
                                                                                             "type":  "file",
-                                                                                            "size":  230813,
+                                                                                            "size":  234468,
                                                                                             "depth":  4,
                                                                                             "ext":  ".log"
                                                                                         },
@@ -8139,7 +8405,7 @@
                                                                                             "name":  "cache.json",
                                                                                             "path":  "/public/Glue/Daemons/TokenTracker/cache.json",
                                                                                             "type":  "file",
-                                                                                            "size":  23407266,
+                                                                                            "size":  23570506,
                                                                                             "depth":  4,
                                                                                             "ext":  ".json"
                                                                                         },
@@ -8299,7 +8565,7 @@
                                                                                             "name":  "token_tracker.log",
                                                                                             "path":  "/public/Glue/Daemons/TokenTracker/token_tracker.log",
                                                                                             "type":  "file",
-                                                                                            "size":  2424369,
+                                                                                            "size":  2426551,
                                                                                             "depth":  4,
                                                                                             "ext":  ".log"
                                                                                         },
@@ -73523,6 +73789,14 @@
                                                   "ext":  ".js"
                                               },
                                               {
+                                                  "name":  "esp32WebUploader.js",
+                                                  "path":  "/src/scripts/esp32WebUploader.js",
+                                                  "type":  "file",
+                                                  "size":  17544,
+                                                  "depth":  2,
+                                                  "ext":  ".js"
+                                              },
+                                              {
                                                   "name":  "folderZip.js",
                                                   "path":  "/src/scripts/folderZip.js",
                                                   "type":  "file",
@@ -73534,7 +73808,7 @@
                                                   "name":  "indexScript.js",
                                                   "path":  "/src/scripts/indexScript.js",
                                                   "type":  "file",
-                                                  "size":  52008,
+                                                  "size":  52118,
                                                   "depth":  2,
                                                   "ext":  ".js"
                                               },
@@ -73559,7 +73833,7 @@
                                               "name":  "style.css",
                                               "path":  "/src/styles/style.css",
                                               "type":  "file",
-                                              "size":  67220,
+                                              "size":  76445,
                                               "depth":  2,
                                               "ext":  ".css"
                                           }
@@ -73577,7 +73851,7 @@
                              "name":  "index.html",
                              "path":  "/src/index.html",
                              "type":  "file",
-                             "size":  23097,
+                             "size":  30454,
                              "depth":  1,
                              "ext":  ".html"
                          }
@@ -73737,6 +74011,14 @@
                                                                ]
                                               },
                                               {
+                                                  "name":  "audit-pages.js",
+                                                  "path":  "/tools/lighthouse/audit-pages.js",
+                                                  "type":  "file",
+                                                  "size":  12191,
+                                                  "depth":  2,
+                                                  "ext":  ".js"
+                                              },
+                                              {
                                                   "name":  "run.js",
                                                   "path":  "/tools/lighthouse/run.js",
                                                   "type":  "file",
@@ -73877,6 +74159,14 @@
         "ext":  ".md"
     },
     {
+        "name":  "Run-Lighthouse-Audit.bat",
+        "path":  "/Run-Lighthouse-Audit.bat",
+        "type":  "file",
+        "size":  509,
+        "depth":  0,
+        "ext":  ".bat"
+    },
+    {
         "name":  "ScanUniverse.bat",
         "path":  "/ScanUniverse.bat",
         "type":  "file",
@@ -73907,6 +74197,14 @@
         "size":  134,
         "depth":  0,
         "ext":  ".sh"
+    },
+    {
+        "name":  "Update-WebUploader.bat",
+        "path":  "/Update-WebUploader.bat",
+        "type":  "file",
+        "size":  538,
+        "depth":  0,
+        "ext":  ".bat"
     },
     {
         "name":  "vite.config.js",

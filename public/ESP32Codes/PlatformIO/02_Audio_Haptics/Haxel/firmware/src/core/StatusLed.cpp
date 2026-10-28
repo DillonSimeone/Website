@@ -13,7 +13,12 @@ bool StatusLed::begin(uint8_t pin, uint8_t ledcChannel) {
     channel_ = ledcChannel;
 
     // Arduino-ESP32 3.x API: attach pin directly
+    #if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+    ledcSetup(channel_, kLedPwmHz, kLedPwmBits);
+    ledcAttachPin(pin_, channel_);
+#else
     ledcAttach(pin_, kLedPwmHz, kLedPwmBits);
+#endif
 
     mode_ = Mode::OFF;
     setDuty_(0.0f);
@@ -90,7 +95,11 @@ void StatusLed::setDuty_(float duty01) {
     if (duty01 < 0.0f) duty01 = 0.0f;
     if (duty01 > 1.0f) duty01 = 1.0f;
     uint32_t val = (uint32_t)(duty01 * ((1 << kLedPwmBits) - 1));
+    #if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+    ledcWrite(channel_, val);
+#else
     ledcWrite(pin_, val);
+#endif
 }
 
 } // namespace haxel

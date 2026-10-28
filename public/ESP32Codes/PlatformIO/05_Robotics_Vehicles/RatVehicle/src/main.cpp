@@ -1,8 +1,24 @@
 #include <Arduino.h>
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(ESP32)
+#define forwardInputPin 0
+#define leftInputPin 1
+#define rightInputPin 2
+#define EN_LEFT 3
+#define EN_RIGHT 4
+#define motor1 5
+#define motor2 6
+#define motor3 7
+#define motor4 8
+#define LED 10
+#define threshold 2
+#define RAT_C3_PINS
+#else
 #define forwardInputPin A0
+#endif
+#ifndef RAT_C3_PINS
 #define leftInputPin A1
 #define rightInputPin A2
-#define threshold 2 // What the wires reads out as when not being touched.
+
 
 #define EN_LEFT 6
 #define EN_RIGHT 9
@@ -12,6 +28,11 @@
 #define motor4 11
 
 #define LED 13
+#endif
+
+void flashLed(int times);
+int checkInputs();
+uint8_t readCapacitivePin(int pinToMeasure);
 
 #define debug true
 #define debugSpeed 1000 //How many milisecond between steps?
@@ -136,6 +157,10 @@ void move(int mode){
 
 // Outputs between 0 - 12. 0 is no power, 12 is ALL OF THE POWER! 4-5 seems to be what happens when I'm touching the wires.
 uint8_t readCapacitivePin(int pinToMeasure) {
+#if defined(ESP32) || defined(CONFIG_IDF_TARGET_ESP32C3)
+  int val = analogRead(pinToMeasure);
+  return (val > 100) ? 5 : 0;
+#else
   // Variables used to translate from Arduino to AVR pin naming
   volatile uint8_t* port;
   volatile uint8_t* ddr;
@@ -192,5 +217,6 @@ uint8_t readCapacitivePin(int pinToMeasure) {
   *port &= ~(bitmask);
   *ddr  |= bitmask;
   return cycles;
+#endif
 }
 

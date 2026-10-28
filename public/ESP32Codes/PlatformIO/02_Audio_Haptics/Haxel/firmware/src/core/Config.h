@@ -23,6 +23,8 @@ struct KnobConfig {
     bool   enabled = false;
     int8_t pin     = -1;
     String param   = "none";  // speed | intensity | gain | pattern param id | none
+    KnobConfig() = default;
+    KnobConfig(bool e, int8_t p, const String& pr) : enabled(e), pin(p), param(pr) {}
 };
 
 struct OledConfig {

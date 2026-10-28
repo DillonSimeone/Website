@@ -3,10 +3,24 @@
 #include <WiFi.h>
 
 // Define the motor pins
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#define motor1 3
+#define motor2 4
+#define motor3 5
+#define motor4 6
+#define MOTOR_C3_PINS
+#else
 #define motor1 5
+#endif
+#ifndef MOTOR_C3_PINS
 #define motor2 23
+#endif
+#ifndef MOTOR_C3_PINS
 #define motor3 22
+#endif
+#ifndef MOTOR_C3_PINS
 #define motor4 21
+#endif
 
 // Structure to receive data
 typedef struct struct_message {
@@ -29,7 +43,11 @@ const unsigned long motorRunTime = 100; // Motor run time in milliseconds
 // Function prototypes
 void runMotor(int motorPin, unsigned long &motorStopTime);
 void stopMotor(int motorPin, unsigned long &motorStopTime);
+#if defined(ESP_IDF_VERSION) && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 void OnDataRecv(const esp_now_recv_info *info, const uint8_t *data, int len);
+#else
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len);
+#endif
 
 void setup() {
   // Initialize the motor pins as output
@@ -73,7 +91,11 @@ void loop() {
 }
 
 // Callback function when data is received
+#if defined(ESP_IDF_VERSION) && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 void OnDataRecv(const esp_now_recv_info *info, const uint8_t *data, int len) {
+#else
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
+#endif
   // Copy the received data into the incomingData structure
   memcpy(&incomingData, data, sizeof(incomingData));
 

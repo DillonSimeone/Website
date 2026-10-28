@@ -233,23 +233,22 @@ body.dark-mode .item {
     color: var(--text-primary);
 }
 
-body.dark-mode .item h1,
-body.dark-mode .item h2 {
+body.dark-mode .item h1 {
     font-family: 'Orbitron', sans-serif;
     color: var(--neon-cyan);
     position: relative;
-}
-
-body.dark-mode .item h1 {
     text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
 }
 
 body.dark-mode .item h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--neon-cyan);
+    position: relative;
     text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
 }
 
-body.dark-mode .item h1::before,
-body.dark-mode .item h2::before {
+/* Only primary H1 section titles receive the cyberpunk // prefix */
+body.dark-mode .item h1::before {
     content: '// ';
     color: var(--neon-magenta);
     font-family: 'Share Tech Mono', monospace;
@@ -260,20 +259,8 @@ body.dark-mode .item h2::before {
     white-space: nowrap;
 }
 
-/* Card titles: float purple slashes cleanly outside the card container */
-body.dark-mode .grid-item,
-body.dark-mode .artwork,
-body.dark-mode #work section>div,
 body.dark-mode .hobby-hero {
     overflow: visible;
-}
-
-body.dark-mode .grid-item h2::before,
-body.dark-mode .artwork h2::before,
-body.dark-mode #work section>div h2::before {
-    left: 0;
-    transform: translateX(calc(-100% - 24px));
-    padding-right: 0.2ch;
 }
 
 body.dark-mode .hobby-hero h1::before {
@@ -1553,10 +1540,6 @@ body.dark-mode .gallery-thumbnail img {
     }
 
     body.dark-mode .item h1::before,
-    body.dark-mode .item h2::before,
-    body.dark-mode .grid-item h2::before,
-    body.dark-mode .artwork h2::before,
-    body.dark-mode #work section>div h2::before,
     body.dark-mode .hobby-hero h1::before {
         position: static !important;
         transform: none !important;
@@ -2873,4 +2856,497 @@ body.dark-mode .pricing-options-summary {
 
 .card-tab-panel.active {
     display: block;
+}
+
+
+/*=======================================================
+            ESP32 In-Browser Web Serial Uploader
+=========================================================*/
+.esp32-web-uploader-console {
+    width: 100%;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: clamp(20px, 3vw, 32px);
+    margin: 15px 0 45px 0;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(12px);
+    transition: var(--theme-transition);
+    overflow: visible;
+}
+
+.flasher-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 18px;
+}
+
+.flasher-title-group h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+    letter-spacing: 0.5px;
+    margin: 0 0 6px 0;
+    line-height: 1.2;
+}
+
+.flasher-subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(0.85rem, 1.05vw, 0.95rem);
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.flasher-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.flasher-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    font-weight: 600;
+}
+
+.flasher-badge.ready {
+    background: rgba(0, 255, 102, 0.12);
+    border: 1px solid var(--neon-green, #10b981);
+    color: var(--neon-green, #047857);
+}
+
+.flasher-badge.unsupported {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+
+.flasher-badge.studio-active {
+    background: rgba(0, 240, 255, 0.12);
+    border: 1px solid var(--neon-cyan, #0284c7);
+}
+
+.flasher-badge.studio-active a {
+    color: var(--neon-cyan, #0284c7);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.flasher-badge.studio-active a:hover {
+    text-decoration: underline;
+}
+
+.flasher-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: stretch;
+}
+
+@media only screen and (max-width: 900px) {
+    .flasher-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+.flasher-controls-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.flasher-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 6px;
+    gap: 8px;
+}
+
+.flasher-tab-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.flasher-tab-btn.active {
+    color: var(--neon-cyan, #0d47a1);
+    border-bottom-color: var(--neon-cyan, #0d47a1);
+}
+
+.flasher-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.flasher-field label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.flasher-select,
+.flasher-input {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.92rem;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s ease;
+    width: 100%;
+}
+
+.flasher-select:focus,
+.flasher-input:focus {
+    border-color: var(--neon-cyan, #0d47a1);
+}
+
+.firmware-details-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.86rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.firmware-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.detail-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.chip-tag {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--neon-cyan, #0284c7);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+.firmware-detail-desc {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.firmware-pinout-box {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pinout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.pinout-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--neon-cyan, #0284c7);
+    letter-spacing: 0.5px;
+}
+
+.pinout-count {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+.firmware-pin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.firmware-pin-table th {
+    text-align: left;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--neon-green, #00ff88);
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.firmware-pin-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    vertical-align: middle;
+}
+
+.firmware-pin-table tr:last-child td {
+    border-bottom: none;
+}
+
+.firmware-pin-table td.pin-code {
+    font-weight: 700;
+    color: var(--neon-magenta, #ff007f);
+    white-space: nowrap;
+    width: 28%;
+}
+
+.firmware-pin-table td.pin-role {
+    color: var(--text-primary, #ffffff);
+}
+
+.custom-dropzone {
+    border: 2px dashed var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+}
+
+.custom-dropzone:hover,
+.custom-dropzone.dragover {
+    border-color: var(--neon-cyan, #0d47a1);
+    background: rgba(0, 240, 255, 0.05);
+}
+
+.custom-dropzone p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.file-browse-link {
+    color: var(--neon-cyan, #0d47a1);
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.custom-file-info {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--neon-green, #047857);
+    background: rgba(0, 255, 102, 0.08);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 6px;
+}
+
+.flasher-custom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.flasher-connection-row {
+    display: flex;
+    gap: 12px;
+}
+
+.flasher-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.flasher-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.86rem;
+    letter-spacing: 0.5px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.flasher-btn.primary {
+    background: #0d47a1;
+    color: #ffffff;
+    border-color: #0d47a1;
+    box-shadow: 0 2px 10px rgba(13, 71, 161, 0.3);
+}
+
+.flasher-btn.primary:hover {
+    background: #1565c0;
+    box-shadow: 0 4px 18px rgba(13, 71, 161, 0.5);
+    transform: translateY(-1px);
+}
+
+body.dark-mode .flasher-btn.primary {
+    background: rgba(0, 240, 255, 0.15);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+}
+
+body.dark-mode .flasher-btn.primary:hover {
+    background: var(--neon-cyan);
+    color: #050508;
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.7);
+}
+
+.flasher-btn.secondary {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.flasher-btn.secondary:hover {
+    border-color: var(--neon-cyan, #0d47a1);
+    color: var(--neon-cyan, #0d47a1);
+}
+
+.flasher-btn.outline {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.flasher-btn.outline:hover {
+    color: var(--text-primary);
+}
+
+/* Hardware Console / Terminal Column */
+.flasher-terminal-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.terminal-card {
+    background: #08080f;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 320px;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.terminal-bar {
+    background: #11111e;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.terminal-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.terminal-dots .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.terminal-dots .dot.red { background: #ef4444; }
+.terminal-dots .dot.yellow { background: #f59e0b; }
+.terminal-dots .dot.green { background: #10b981; }
+
+.terminal-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: #8888aa;
+    letter-spacing: 0.5px;
+}
+
+.terminal-clear-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #aaaaaa;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.terminal-clear-btn:hover {
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+.flash-progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.flash-progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan, #0d47a1), var(--neon-green, #10b981));
+    transition: width 0.15s ease;
+}
+
+.flash-stats-bar {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    padding: 6px 14px;
+    background: rgba(0, 0, 0, 0.4);
+    color: #00ffcc;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.terminal-log {
+    flex: 1;
+    margin: 0;
+    padding: 12px 14px;
+    font-family: 'Share Tech Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #38bdf8;
+    background: #08080f;
+    overflow-y: auto;
+    max-height: 300px;
+    white-space: pre-wrap;
+    word-break: break-all;
 }

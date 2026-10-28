@@ -15,6 +15,24 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, 5 /* RST */, 0 /* rotation */, true /
 
 int32_t w, h, n, n1, cx, cy, cx1, cy1, cn, cn1;
 uint8_t tsa, tsb, tsc, ds;
+
+void serialOut(const __FlashStringHelper *item, int32_t v, uint32_t d, bool clear);
+void printnice(const __FlashStringHelper *item, long int v);
+int32_t testFillScreen();
+int32_t testText();
+int32_t testPixels();
+int32_t testLines();
+int32_t testFastLines();
+int32_t testFilledRects();
+int32_t testRects();
+int32_t testFilledCircles(uint8_t radius);
+int32_t testCircles(uint8_t radius);
+int32_t testFillArcs();
+int32_t testArcs();
+int32_t testFilledTriangles();
+int32_t testTriangles();
+int32_t testFilledRoundRects();
+int32_t testRoundRects();
 void setup()
 {
     pinMode(PIN_POWER_ON, OUTPUT);

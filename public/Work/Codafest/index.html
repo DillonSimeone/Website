@@ -15,7 +15,7 @@
 </head>
 <body>
 
-    <div class="deco-wrapper">
+    <main class="deco-wrapper">
         <!-- Header -->
         <header>
             <div class="deco-badge">Codafest Interactive Overview</div>
@@ -108,7 +108,7 @@
                             <span class="toggle-subtext">Expands visual mapping coverage</span>
                         </label>
                         <span class="toggle-price">+$400</span>
-                        <input type="checkbox" id="chk-extra-proj" class="toggle-checkbox" onchange="updateSummary()">
+                        <input type="checkbox" id="chk-extra-proj" aria-label="Extra Projection Mapping (+2 Nodes)" class="toggle-checkbox" onchange="updateSummary()">
                     </div>
 
                     <div class="toggle-option" id="opt-battery-wled" onclick="toggleAddon('battery-wled')">
@@ -117,7 +117,7 @@
                             <span class="toggle-subtext">Wireless perimeter ambient lighting</span>
                         </label>
                         <span class="toggle-price">+$200</span>
-                        <input type="checkbox" id="chk-battery-wled" class="toggle-checkbox" onchange="updateSummary()">
+                        <input type="checkbox" id="chk-battery-wled" aria-label="Portable Battery WLED Stands" class="toggle-checkbox" onchange="updateSummary()">
                     </div>
                 </div>
 

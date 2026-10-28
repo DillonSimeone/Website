@@ -47,7 +47,14 @@ MyLD2410 sensor(sensorSerial);
 #define MOTOR_BL_A 15
 #define MOTOR_BL_B 6
 #define MOTOR_BR_A 7
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#define MOTOR_BR_B 10
+#define trigPin  20
+#define echoPin  21
+#define C3_FINAL_PINS
+#else
 #define MOTOR_BR_B 23
+#endif
 
 
 unsigned long lastCommandTime = 0;
@@ -55,8 +62,10 @@ const unsigned long motorTimeout = 1000; // Stop motors after 1 second of inacti
 
 
 // Ultrasonic Sensor Pins
+#ifndef C3_FINAL_PINS
 #define trigPin  21
 #define echoPin  22
+#endif
 long cm = 0;
 
 
@@ -153,6 +162,14 @@ const char* webpage = R"rawliteral(
 </html>
 )rawliteral";
 
+
+void stopMotors();
+void motorDrive(String direction);
+void up();
+void down();
+void left();
+void right();
+unsigned int measureDistance();
 
 void setup() {
   Serial.begin(115200);

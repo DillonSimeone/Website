@@ -9,7 +9,24 @@
 // most microphones will probably default to left channel but you may need to tie the L/R pin low
 #define I2S_MIC_CHANNEL I2S_CHANNEL_FMT_ONLY_LEFT
 
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#define I2S_MIC_SERIAL_CLOCK GPIO_NUM_4
+#define I2S_MIC_LEFT_RIGHT_CLOCK GPIO_NUM_5
+#define I2S_MIC_SERIAL_DATA GPIO_NUM_6
+#define led1 0
+#define led2 1
+#define led3 2
+#define led4 3
+#define led5 7
+#define led6 8
+#define led7 9
+#define led8 10
+#define led9_to_12 20
+#define DEAF_C3_PINS
+#else
 #define I2S_MIC_SERIAL_CLOCK GPIO_NUM_14 //sck
+#endif
+#ifndef DEAF_C3_PINS
 #define I2S_MIC_LEFT_RIGHT_CLOCK GPIO_NUM_15 //ws
 #define I2S_MIC_SERIAL_DATA GPIO_NUM_32 //sd
 
@@ -22,6 +39,7 @@
 #define led7 17
 #define led8 21
 #define led9_to_12 16
+#endif
 const int ledPins[] = {led1, led2, led3, led4, led5, led6, led7, led8, led9_to_12};
 
 // don't mess around with this

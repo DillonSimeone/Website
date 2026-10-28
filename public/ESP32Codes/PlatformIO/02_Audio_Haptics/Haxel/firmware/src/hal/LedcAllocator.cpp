@@ -1,6 +1,20 @@
 #include "LedcAllocator.h"
 #include <Arduino.h>
 
+#if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+static inline bool ledcAttach(uint8_t pin, uint32_t hz, uint8_t bits) {
+    static int chCounter = 0;
+    int ch = (chCounter++) % 16;
+    ledcSetup(ch, hz, bits);
+    ledcAttachPin(pin, ch);
+    return true;
+}
+static inline void ledcDetach(uint8_t pin) {
+    ledcDetachPin(pin);
+}
+#endif
+
+
 namespace haxel::hal {
 
 LedcAllocator& LedcAllocator::instance() {
@@ -20,7 +34,11 @@ int8_t LedcAllocator::allocate(int8_t pin, uint32_t hz, uint8_t bits) {
             if (ledcAttach((uint8_t)pin, hz, bits)) {
                 slots_[i].pin = pin;
                 slots_[i].bits = bits;
+                #if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+                ledcWrite(i, 0);
+#else
                 ledcWrite((uint8_t)pin, 0);
+#endif
                 return i;
             } else {
                 log_e("LEDC: ledcAttach failed for pin %d", pin);

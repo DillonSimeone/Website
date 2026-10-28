@@ -386,6 +386,103 @@
                 </div>
             </aside>
             <section>
+                <div class="esp32-web-uploader-console" id="esp32WebUploader">
+                    <div class="flasher-header">
+                        <div class="flasher-title-group">
+                            <h2>Web Serial Hardware Flasher</h2>
+                            <p class="flasher-subtitle">Direct Browser-to-Microcontroller USB Firmware Flasher &amp; Live Serial Monitor</p>
+                        </div>
+                        <div class="flasher-badges">
+                            <span class="flasher-badge studio-active" id="localStudioBadge" style="display:none;" title="Local Compiler Studio Active">
+                                <a href="http://localhost:3567" target="_blank" rel="noopener noreferrer">Local Studio Active ↗</a>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flasher-body">
+                        <!-- Left: Controls & Configuration -->
+                        <div class="flasher-controls-col">
+                            <div class="flasher-tabs">
+                                <button type="button" class="flasher-tab-btn active" id="tabCatalog">Firmware Catalog</button>
+                                <button type="button" class="flasher-tab-btn" id="tabCustom">Custom .BIN Upload</button>
+                            </div>
+
+                            <!-- Catalog View -->
+                            <div class="flasher-view" id="catalogView">
+                                <div class="flasher-field">
+                                    <label for="flasherProjectSelect">SELECT PRECOMPILED FIRMWARE</label>
+                                    <select id="flasherProjectSelect" class="flasher-select">
+                                        <option value="">Loading firmware catalog...</option>
+                                    </select>
+                                </div>
+                                <div class="firmware-details-card" id="firmwareDetails" style="display: none;"></div>
+                            </div>
+
+                            <!-- Custom View -->
+                            <div class="flasher-view" id="customView" style="display: none;">
+                                <div class="custom-dropzone" id="customBinDropzone">
+                                    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    <p>Drop your compiled <strong>.bin</strong> file here, or <label for="customBinFile" class="file-browse-link">browse</label></p>
+                                    <input type="file" id="customBinFile" accept=".bin" style="display:none;">
+                                </div>
+                                <div id="customFileInfo" class="custom-file-info" style="display:none;"></div>
+                                <div class="flasher-custom-grid">
+                                    <div class="flasher-field">
+                                        <label for="customChipSelect">TARGET ARCHITECTURE</label>
+                                        <select id="customChipSelect" class="flasher-select">
+                                            <option value="esp32c3">ESP32-C3 (RISC-V)</option>
+                                            <option value="esp32s3">ESP32-S3 (Dual-Core Xtensa)</option>
+                                            <option value="esp32">Standard ESP32 (Xtensa LX6)</option>
+                                        </select>
+                                    </div>
+                                    <div class="flasher-field">
+                                        <label for="customFlashOffset">FLASH ADDRESS</label>
+                                        <input type="text" id="customFlashOffset" class="flasher-input" value="0x0" placeholder="0x0 or 0x10000">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Connection Parameters -->
+                            <div class="flasher-connection-row">
+                                <div class="flasher-field flex-1">
+                                    <label for="flasherBaudSelect">FLASH / MONITOR BAUD</label>
+                                    <select id="flasherBaudSelect" class="flasher-select">
+                                        <option value="115200" selected>115200 bps (Standard)</option>
+                                        <option value="460800">460800 bps (Fast Flash)</option>
+                                        <option value="921600">921600 bps (Ultra Fast)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flasher-actions">
+                                <button type="button" class="flasher-btn primary" id="btnConnectFlash">Connect &amp; Flash Device</button>
+                                <button type="button" class="flasher-btn secondary" id="btnToggleMonitor">📟 Open Serial Monitor</button>
+                                <button type="button" class="flasher-btn outline" id="btnResetChip" title="Send RTS/DTR reboot pulse">🔄 Reset Chip</button>
+                            </div>
+                        </div>
+
+                        <!-- Right: Terminal & Progress -->
+                        <div class="flasher-terminal-col">
+                            <div class="terminal-card">
+                                <div class="terminal-bar">
+                                    <span class="terminal-title">HARDWARE CONSOLE // SERIAL I/O</span>
+                                    <button type="button" class="terminal-clear-btn" id="btnClearTerminal">Clear</button>
+                                </div>
+                                <div class="flash-progress-track">
+                                    <div class="flash-progress-fill" id="flashProgress"></div>
+                                </div>
+                                <div class="flash-stats-bar" id="flashStats">Awaiting USB device connection...</div>
+                                <pre class="terminal-log" id="flasherLog">[System] Web Serial Flasher initialized.
+Plug in an ESP32 or ESP32-C3 via USB, select firmware, and click "Connect &amp; Flash".</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <h1>ESP32 / Embedded Tech</h1>
                 <h2>Microcontrollers, IoT projects, and tiny computers doing big things.</h2>
                 <div class="grid">

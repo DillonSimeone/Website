@@ -32,6 +32,11 @@ int finger1HallwaySensorPreviousState = LOW;
 unsigned long finger1HallwaySensorlastDebounceTime = 0;
 unsigned long debounceDelay = 50;
 
+void colorWipe(uint32_t color, int wait);
+void theaterChase(uint32_t color, int wait);
+void rainbow(int wait);
+void theaterChaseRainbow(int wait);
+
 void setup() {
   // Initialize I2C communication as master
   Wire.begin();

@@ -6,7 +6,11 @@
 // === CONFIG ===
 bool isMaster = true;       // Set true for master, false for follower
 const int ledPin = 2;       // Onboard blue LED
-const int dataPin = 13;     // LED strip data pin
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+const int dataPin = 6;
+#else
+const int dataPin = 13;
+#endif     // LED strip data pin
 const int ledCount = 60;    // Number of LEDs on the strip
 int rainbowSpeed = 10;      // Lower = faster animation
 float glitchness = 0.5;     // 0.0 to 1.0, how intense the glitch is
@@ -38,7 +42,7 @@ uint8_t followerMACs[][6] = {
   {0x5C, 0x01, 0x3B, 0x9D, 0x43, 0xA8}, // Follower (7)
   {0xEC, 0x64, 0xC9, 0x5D, 0xC0, 0xF8}, // Follower (8)
   {0xF4, 0x65, 0x0B, 0x40, 0x8D, 0xE4}, // Follower (9)
-  {0xF0, 0xF5, 0xBD, 0x07, 0x82, 0xF8}  // RFID Reader 1
+  {0xF0, 0xF5, 0xBD, 0x07, 0x82, 0xF8}, // RFID Reader 1
   {0x2C, 0xBC, 0xBB, 0x4D, 0x7E, 0x9C},
   {0x08, 0xA6, 0xF7, 0xB0, 0x77, 0x84},
   {0x08, 0xA6, 0xF7, 0xB0, 0x7B, 0xCC}
@@ -105,14 +109,19 @@ void triggerAnimation(void (*fx)(), unsigned long duration) {
 }
 
 // === ESP-NOW CALLBACK ===
+#if defined(ESP_IDF_VERSION) && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 void onDataRecv(const esp_now_recv_info_t *recvInfo, const uint8_t *data, int len) {
+  const uint8_t *mac_addr = recvInfo->src_addr;
+#else
+void onDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
+#endif
   if (!isMaster && len >= 1 && data[0] == 42) {
     triggerLED();
     triggerAnimation(glitchAnimation, glitchDuration);
   } else if (isMaster && len > 0) {
     Serial.print("[ESP-NOW] From: ");
     for (int i = 0; i < 6; i++) {
-      Serial.printf("%02X", recvInfo->src_addr[i]);
+      Serial.printf("%02X", mac_addr[i]);
       if (i < 5) Serial.print(":");
     }
     Serial.print(" | Message: ");

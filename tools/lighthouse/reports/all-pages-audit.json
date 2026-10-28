@@ -1,0 +1,271 @@
+{
+  "auditResults": [
+    {
+      "name": "Portfolio: Home (Bio)",
+      "url": "http://localhost:5173/?page=Home",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Shop",
+      "url": "http://localhost:5173/?page=Shop",
+      "perf": 97,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Past Work",
+      "url": "http://localhost:5173/?page=PastWork",
+      "perf": 98,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Projects",
+      "url": "http://localhost:5173/?page=Projects",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 100,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Embedded (ESP32)",
+      "url": "http://localhost:5173/?page=Embedded",
+      "perf": 95,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Hobby",
+      "url": "http://localhost:5173/?page=Hobby",
+      "perf": 98,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Project: Universe Hub",
+      "url": "http://localhost:5173/Projects/Universe/index.html",
+      "perf": 70,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Project: Parametric PCB",
+      "url": "http://localhost:5173/Projects/ParametricPCB/index.html",
+      "perf": 95,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Project: Sound Reactive Stage",
+      "url": "http://localhost:5173/Projects/SoundReactive/index.html",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Work: Codafest Production",
+      "url": "http://localhost:5173/Work/Codafest/index.html",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Work: DJ Deaf Wish",
+      "url": "http://localhost:5173/Work/DJwish/index.html",
+      "perf": 67,
+      "a11y": 100,
+      "bp": 77,
+      "seo": 100,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Work: Universal Music Design",
+      "url": "http://localhost:5173/Work/UniversalMusicDesign/index.html",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    }
+  ],
+  "nonPerfectPages": [
+    {
+      "name": "Portfolio: Home (Bio)",
+      "url": "http://localhost:5173/?page=Home",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Shop",
+      "url": "http://localhost:5173/?page=Shop",
+      "perf": 97,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Past Work",
+      "url": "http://localhost:5173/?page=PastWork",
+      "perf": 98,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Projects",
+      "url": "http://localhost:5173/?page=Projects",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 100,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Embedded (ESP32)",
+      "url": "http://localhost:5173/?page=Embedded",
+      "perf": 95,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Portfolio: Hobby",
+      "url": "http://localhost:5173/?page=Hobby",
+      "perf": 98,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Project: Universe Hub",
+      "url": "http://localhost:5173/Projects/Universe/index.html",
+      "perf": 70,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Project: Parametric PCB",
+      "url": "http://localhost:5173/Projects/ParametricPCB/index.html",
+      "perf": 95,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Project: Sound Reactive Stage",
+      "url": "http://localhost:5173/Projects/SoundReactive/index.html",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Work: Codafest Production",
+      "url": "http://localhost:5173/Work/Codafest/index.html",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Work: DJ Deaf Wish",
+      "url": "http://localhost:5173/Work/DJwish/index.html",
+      "perf": 67,
+      "a11y": 100,
+      "bp": 77,
+      "seo": 100,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    },
+    {
+      "name": "Work: Universal Music Design",
+      "url": "http://localhost:5173/Work/UniversalMusicDesign/index.html",
+      "perf": 100,
+      "a11y": 100,
+      "bp": 96,
+      "seo": 91,
+      "is100All": false,
+      "contrastPassed": true,
+      "contrastFailingCount": 0
+    }
+  ],
+  "colorContrastIssues": []
+}

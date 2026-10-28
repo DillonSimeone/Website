@@ -1,8 +1,8 @@
 # Website Dead Link Audit Report
 
-**Generated**: 10/27/2026, 10:36:08 PM  
+**Generated**: 10/28/2026, 5:43:55 AM  
 **Target Server**: `http://localhost:5173`  
-**Duration**: 0.7 seconds  
+**Duration**: 8.6 seconds  
 
 ## Summary
 

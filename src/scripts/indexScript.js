@@ -1,3 +1,4 @@
+import { initEsp32WebUploader } from './esp32WebUploader.js';
 /*=======================================================
                 Theme Management
 =========================================================*/
@@ -62,6 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
     });
+
+    initEsp32WebUploader();
 });
 
 /*=======================================================

@@ -10,26 +10,44 @@ float solveThreshold_mW   = 500.0;
 // Power drop (mW) above baseline to register UNSOLVED
 float restoreThreshold_mW = 10.0;
 
-// ——— EWi-Fi & MQTT Settings ——— Econst char* ssid        = "Command-Module";
+// Wi-Fi & MQTT Settings
+const char* ssid        = "Command-Module";
 const char* password    = "cym4spac3";
 const char* mqtt_server = "192.168.4.1";
 
-// ——— EI²C Wattmeter ——— E#define SDA_PIN 21
+// I2C Wattmeter
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#define SDA_PIN 4
+#define SCL_PIN 5
+#define PIN_C3_OVERRIDE
+#else
+#define SDA_PIN 21
+#endif
+#ifndef PIN_C3_OVERRIDE
 #define SCL_PIN 22
+#endif
 DFRobot_INA219_IIC ina219(&Wire, INA219_I2C_ADDRESS4);
 
-// ——— ELED Strip ——— E#define DATA_PIN 23
+// LED Strip
+#ifdef PIN_C3_OVERRIDE
+#define DATA_PIN 6
+#else
+#define DATA_PIN 23
+#endif
 #define NUM_LEDS 3
 CRGB leds[NUM_LEDS];
 
-// ——— EConnection Attempt Limits ——— Econst int MAX_WIFI_TRIES = 3;
+// Connection Attempt Limits
+const int MAX_WIFI_TRIES = 3;
 const int MAX_MQTT_TRIES = 3;
 
-// ——— EState & Mode Flags ——— Ebool solved       = false;
+// State & Mode Flags
+bool solved       = false;
 bool skipMode     = false;
 bool wifiEnabled  = true;
 
-// ——— EBaseline Power ——— Efloat baselinePower_mW;
+// Baseline Power
+float baselinePower_mW;
 
 WiFiClient   espClient;
 PubSubClient mqttClient(espClient);
