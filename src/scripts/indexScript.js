@@ -80,15 +80,16 @@ let slideToken = 0;
 /* First navigation enters from the right; each visit after that flips. */
 let slideFromRight = true;
 
+
 function usesStackedFade() {
     return stackedFadeQuery.matches;
 }
 
 function snapClass(el, className) {
-    el.style.transition = 'none';
+    el.style.setProperty('transition', 'none', 'important');
     el.className = className;
     void el.offsetWidth;
-    el.style.transition = '';
+    el.style.removeProperty('transition');
 }
 
 window.addEventListener('popstate', (e) => {
@@ -107,7 +108,7 @@ window.addEventListener('popstate', (e) => {
                 Secret Library (?page=library)
 =========================================================*/
 
-const LIBRARY_URL = '/Library/library.js';
+const LIBRARY_URL = '/Projects/Library/library.js';
 const LIBRARY_HOLD_MS = 800;
 let libraryModule = null;
 let libraryOpen = false;
@@ -824,7 +825,21 @@ function setUp() {
     } else {
         initProgressiveCardLoading();
         if (page) {
-            const targetBtn = document.querySelector(`#${page}`);
+            const aliasMap = {
+                'pastwork': 'PastWork',
+                'work': 'PastWork',
+                'miniprojects': 'Projects',
+                'projects': 'Projects',
+                'store': 'Shop',
+                'shop': 'Shop',
+                'embedded': 'ESP32',
+                'esp32': 'ESP32',
+                'home': 'LandingPage',
+                'landingpage': 'LandingPage',
+                'hobby': 'Hobby'
+            };
+            const btnId = aliasMap[page.toLowerCase()] || page;
+            const targetBtn = document.querySelector(`#${btnId}`);
             if (targetBtn) targetBtn.click();
         } else {
             ensureGalleries('elevatorPitch');

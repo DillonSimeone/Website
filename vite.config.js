@@ -125,6 +125,7 @@ export default defineConfig({
                     laserCards: getCards('laser'),
                     printingCards: getCards('3dprinting'),
                     workCards: getCards('work'),
+                    majorProjectCards: getCards('major-projects'),
                     miniProjectCards: getCards('mini-projects'),
                     esp32Cards: getCards('esp32'),
                     shopCards: getCards('shop', true),

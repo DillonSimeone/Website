@@ -1,14 +1,66 @@
-<div class="grid-item">
-    <h2>ThreeJs</h2>
+<div class="grid-item project">
+    <h2>ThreeJs &amp; WebGL 3D Interactive Lab</h2>
     <p>
-        I became very interested in ThreeJS when I discovered that the library had support for VR gears.
-        I thought, why not make a personal world instead of a personal website, like in those weird
-        japan animes? This "Hello World" experiment with ThreeJs showed me that the learning curve with
-        this library is very gentle. It's easy to do anything with ThreeJS, just read the documentions!
-        It's very well documented, and there's PLENTY examples to reverse-engineer for whatever you
-        need!
+        A showcase of WebGL experiments exploring persistent 3D worlds, procedural physics simulations, spatial computing, and webcam volumetric reconstruction powered by Three.js.
     </p>
-    <ul>
-        <li><a href="./MiniProjects/ThreeJs/index.html">First ThreeJs doodle</a></li>
-    </ul>
+
+    <div class="card-tab-container">
+        <div class="card-tabs-nav">
+            <button type="button" class="card-tab-btn active" data-tab="tab-games-worlds">3D Games &amp; Worlds</button>
+            <button type="button" class="card-tab-btn" data-tab="tab-spatial-physics">Spatial Physics</button>
+            <button type="button" class="card-tab-btn" data-tab="tab-webcam-volumetric">Webcam &amp; Volumetric</button>
+            <button type="button" class="card-tab-btn" data-tab="tab-three-intro">Early ThreeJs Doodle</button>
+        </div>
+
+        <div id="tab-games-worlds" class="card-tab-panel active">
+            <p>
+                <strong>3D Model Racing &amp; Grass Study Lab:</strong> A browser-based racing engine in Three.js (ESM) supporting custom 3D model imports (STL, OBJ, GLB), procedural ribbon tracks with rolling hills, AI competitors, day/night atmospheric lighting, and drifting physics. Powered by an instanced GLSL triangle meadow grass shader (Peter Adams Ghibli technique) featuring dynamic wind turbulence and real-time wheel trample physics.
+            </p>
+            <ul>
+                <li><a href="./Projects/3DModelRacing/three.js/index.html">Play 3D Model Racing</a></li>
+                <li><a href="./Projects/3DModelRacing/grassStudy/index.html">Launch Grass Study Lab</a></li>
+            </ul>
+            <p>
+                <strong>The Backrooms: Deconstructive Roguelite:</strong> An infinite 3D first-person procedural survival game set across canonical Backrooms strata, built with modern Three.js (ESM) and Web Audio API synthesis. In this reality, the liminal labyrinth is an entirely harvestable, destructible resource grid.
+            </p>
+            <ul>
+                <li><a href="./Projects/Backrooms/index.html">Play The Backrooms Roguelite</a></li>
+            </ul>
+        </div>
+
+        <div id="tab-spatial-physics" class="card-tab-panel">
+            <p>
+                <strong>Flesh-Architect (Reach for the Breathing Stars):</strong> An interactive 3D physics sculpture and creature simulation combining Three.js and Cannon-es rigid body dynamics. Explores organic kinetic geometry, reactive tension, and tactile procedural entity choreography directly in WebGL.
+            </p>
+            <ul>
+                <li><a href="./Projects/ReachForTheBreathingStars/index.html">Launch 3D Physics Simulation</a></li>
+            </ul>
+        </div>
+
+        <div id="tab-webcam-volumetric" class="card-tab-panel">
+            <p>
+                <strong>Hands to STL:</strong> Captures hand poses from a webcam in real-time via MediaPipe and converts them directly into 3D printable STL files in Three.js. Supports solid bone structures, winding ribbons, crystalline formations, and organic metaballs.
+            </p>
+            <ul>
+                <li><a href="./MiniProjects/HandsToSTL/hand_pose_capture.html">Launch Full Hands to STL Studio</a></li>
+                <li><a href="./MiniProjects/HandsToSTL/hand_pose_capture_lowPoly.html">Low-Poly Mesh Generator</a></li>
+                <li><a href="./MiniProjects/HandsToSTL/hand_pose_capture_Mesh.html">Mesh Surface Generator</a></li>
+            </ul>
+            <p>
+                <strong>3D Gaussian Splat Rotary Scanner:</strong> Real-time low-resolution Gaussian splats generated from MediaPipe face and hand landmarking. Splat point clouds are positioned around a virtual 3D turntable in 3-second capture loops, dissolving back into powder on tap or Spacebar hit.
+            </p>
+            <ul>
+                <li><a href="./MiniProjects/Gaussian%20Splat/index.html">Launch Rotary Scanner Demo</a></li>
+            </ul>
+        </div>
+
+        <div id="tab-three-intro" class="card-tab-panel">
+            <p>
+                My initial "Hello World" Three.js experiment showing foundational setup of scene, camera, ambient lighting, and interactive geometries in the browser.
+            </p>
+            <ul>
+                <li><a href="./MiniProjects/ThreeJs/index.html">First ThreeJs Doodle</a></li>
+            </ul>
+        </div>
+    </div>
 </div>

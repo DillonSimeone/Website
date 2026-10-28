@@ -2,7 +2,7 @@
 # This script scans the website repository to generate a 3D universe data map and a sitemap.xml for SEO.
 
 $root = $PSScriptRoot
-$jsonPath = Join-Path $root "public\MiniProjects\Universe\universe-data.json"
+$jsonPath = Join-Path $root "public\Projects\Universe\universe-data.json"
 $sitemapPath = Join-Path $root "public\sitemap.xml"
 $baseUrl = "https://dillonsimeone.com" 
 

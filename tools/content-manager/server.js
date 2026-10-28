@@ -12,6 +12,7 @@ const TEMPLATES = {
     laser: 'hobby',
     '3dprinting': 'hobby',
     work: 'work',
+    'major-projects': 'grid',
     'mini-projects': 'grid',
     esp32: 'grid',
     shop: 'shop'

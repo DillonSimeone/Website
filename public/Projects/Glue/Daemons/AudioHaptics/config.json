@@ -1,0 +1,15 @@
+{
+  "enabled": false,
+  "amplitude_scale": 2.0,
+  "base_amplitude": 70,
+  "punch_duration_ms": 90,
+  "noise_floor": 0.01,
+  "min_velocity": 0.02,
+  "enable_snap_primitives": true,
+  "sub_bass_low_hz": 30,
+  "sub_bass_high_hz": 90,
+  "mid_punch_high_hz": 220,
+  "snap_high_hz": 1200,
+  "mode": "gestolumina_pwm",
+  "govee_sync": false
+}

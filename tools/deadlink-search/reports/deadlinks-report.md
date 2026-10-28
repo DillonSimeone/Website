@@ -1,16 +1,16 @@
 # Website Dead Link Audit Report
 
-**Generated**: 10/14/2026, 4:01:00 PM  
+**Generated**: 10/27/2026, 10:36:08 PM  
 **Target Server**: `http://localhost:5173`  
-**Duration**: 32.4 seconds  
+**Duration**: 0.7 seconds  
 
 ## Summary
 
 | Metric | Count |
 |---|---|
-| HTML Pages Crawled | 276 |
-| Internal Assets Verified | 617 |
-| Anchor Fragments (#) Checked | 87 |
+| HTML Pages Crawled | 279 |
+| Internal Assets Verified | 637 |
+| Anchor Fragments (#) Checked | 88 |
 | **Broken Internal Links** | **0** |
 | **Broken Anchors** | **0** |
 

@@ -29,6 +29,7 @@ The website is a modular SPA powered by **Vite** and **Handlebars**. Content is 
 * `laser/` -> `{{laserCards}}`
 * `3dprinting/` -> `{{printingCards}}`
 * `work/` -> `{{workCards}}`
+* `major-projects/` -> `{{majorProjectCards}}`
 * `mini-projects/` -> `{{miniProjectCards}}`
 * `esp32/` -> `{{esp32Cards}}`
 * `shop/` -> `{{shopCards}}`
@@ -42,8 +43,8 @@ The website is a modular SPA powered by **Vite** and **Handlebars**. Content is 
 ---
 
 ## 3b. Labyrinth Editor (Isolated Work)
-* The Dimensional Labyrinth (`public/Labyrinth/`) has an isolated editor at `/Labyrinth/editor.html` on the dev server. It renders one style, shape, room, scene or critter from URL settings and live-reloads on save.
-* When the user pastes an editor link, read only the files its "Files for this view" panel lists. Workflow and file map: `public/Labyrinth/AGENTS.md` section 0.
+* The Dimensional Labyrinth (`public/Projects/Labyrinth/`) has an isolated editor at `/Projects/Labyrinth/editor.html` on the dev server. It renders one style, shape, room, scene or critter from URL settings and live-reloads on save.
+* When the user pastes an editor link, read only the files its "Files for this view" panel lists. Workflow and file map: `public/Projects/Labyrinth/AGENTS.md` section 0.
 
 ---
 
@@ -61,26 +62,17 @@ The website is a modular SPA powered by **Vite** and **Handlebars**. Content is 
 
 ---
 
-## 3d. Apex Parasite: Chimera Odyssey (`public/MiniProjects/ApexParasite/`)
-* **Project Directory**: `public/MiniProjects/ApexParasite/`
-* **Codex & Master Architectural Plan**: `public/MiniProjects/ApexParasite/gameDev/APEX_PARASITE_REDESIGN_PLAN.md`
-* **Agent Documentation**: `public/MiniProjects/ApexParasite/AGENTS.md`
-* **Stack & Architecture**:
-  * 2.5D multi-plane spring-physics parallax canvas with dynamically keyed modular dark-fantasy art assets (`assets/`, `src/assets.js`).
-  * Procedural Web Audio synthesis (`src/audio.js`).
-  * Recursive node-socket organ chimera tree (`src/chimera.js`), mental bandwidth, discrete limb combat targeting (`src/combat.js`), live specimen surgical triage (`src/surgery.js`), DCSS cross-training (`src/skills.js`), and Persona 5 high-contrast bio-cyberpunk UI.
-
-## 3e. Parametric PCB Suite (`public/ParametricPCB/`)
-* **Project Directory**: `public/ParametricPCB/`
-* **Master Engineering Skill**: [`public/ParametricPCB/SKILL.md`](file:///f:/Github/Website/public/ParametricPCB/SKILL.md) (Covers tscircuit architecture, JLCPCB SMT manufacturing rules, BOM/CPL parity, SOT-23 rotation tables, flyback diode polarity rules, trace width clamping, and laser test-fit protocols).
+## 3d. Parametric PCB Suite (`public/Projects/ParametricPCB/`)
+* **Project Directory**: `public/Projects/ParametricPCB/`
+* **Master Engineering Skill**: [`public/Projects/ParametricPCB/SKILL.md`](file:///f:/Github/Website/public/Projects/ParametricPCB/SKILL.md) (Covers tscircuit architecture, JLCPCB SMT manufacturing rules, BOM/CPL parity, SOT-23 rotation tables, flyback diode polarity rules, trace width clamping, and laser test-fit protocols).
 * **Subprojects**:
-  - `public/ParametricPCB/00-starterPCB/`: Turnkey Starter Template with 3D/2D visualizers, live trace & pad hover tooltips, real-time JLCPCB manufacturing DRC, Architecture/Pinout schematic panel, component callouts, decoupled silkscreen scaling, and instant exports powered by `shared/`.
-  - `public/ParametricPCB/01-V6Led/`: Parametric 6-LED strip configurator with mousebite panelization.
-  - `public/ParametricPCB/02-audioMotionReactiveLedHapticPCB/`: Turnkey Baton Carrier PCB with ESP32-C3 SuperMini, MPU6050/6500 IMU, INMP441/MAX4466 microphones, AO3400A/AO3401A power and haptic drivers, high-side LED isolation, dual-side silkscreen mirroring, vector QR code, M3 mounting holes, and 600 DPI laser test fits. Reference: [`public/ParametricPCB/02-audioMotionReactiveLedHapticPCB/AGENTS.md`](file:///f:/Github/Website/public/ParametricPCB/02-audioMotionReactiveLedHapticPCB/AGENTS.md).
-  - `public/ParametricPCB/03-compactAudioMotionSquarePCB/`: Compact Dense Square Reactive Controller PCB (38×38mm) with back-to-back 3D stacking (ESP32 on top, MPU on backside), 3× addressable LED outputs, dual haptic PWM drivers, dual microphones, LiPo charger with auto power-path, and standard 31×31mm M3 bolt pattern. Reference: [`public/ParametricPCB/03-compactAudioMotionSquarePCB/AGENTS.md`](file:///f:/Github/Website/public/ParametricPCB/03-compactAudioMotionSquarePCB/AGENTS.md).
-  - `public/ParametricPCB/04-smdAudioMotionBatonPCB/`: All-in-One Turnkey SMD Baton Controller PCB (22×110mm). Eliminates socketed dev boards with a directly soldered ESP32-C3-WROOM-02-N4 module, onboard LSM6DS3TR-C 6-axis IMU, WMM7037AT2 analog MEMS microphone, USB Type-C native CDC/JTAG flashing, ME6211 3.3V LDO, TP4054 LiPo charger with auto power-path, high-side LED power gate, and haptic PWM driver. 100% factory assembled by JLCPCB SMT in a single order. Reference: [`public/ParametricPCB/04-smdAudioMotionBatonPCB/AGENTS.md`](file:///f:/Github/Website/public/ParametricPCB/04-smdAudioMotionBatonPCB/AGENTS.md).
+  - `public/Projects/ParametricPCB/00-starterPCB/`: Turnkey Starter Template with 3D/2D visualizers, live trace & pad hover tooltips, real-time JLCPCB manufacturing DRC, Architecture/Pinout schematic panel, component callouts, decoupled silkscreen scaling, and instant exports powered by `shared/`.
+  - `public/Projects/ParametricPCB/01-V6Led/`: Parametric 6-LED strip configurator with mousebite panelization.
+  - `public/Projects/ParametricPCB/02-audioMotionReactiveLedHapticPCB/`: Turnkey Baton Carrier PCB with ESP32-C3 SuperMini, MPU6050/6500 IMU, INMP441/MAX4466 microphones, AO3400A/AO3401A power and haptic drivers, high-side LED isolation, dual-side silkscreen mirroring, vector QR code, M3 mounting holes, and 600 DPI laser test fits. Reference: [`public/Projects/ParametricPCB/02-audioMotionReactiveLedHapticPCB/AGENTS.md`](file:///f:/Github/Website/public/Projects/ParametricPCB/02-audioMotionReactiveLedHapticPCB/AGENTS.md).
+  - `public/Projects/ParametricPCB/03-compactAudioMotionSquarePCB/`: Compact Dense Square Reactive Controller PCB (38×38mm) with back-to-back 3D stacking (ESP32 on top, MPU on backside), 3× addressable LED outputs, dual haptic PWM drivers, dual microphones, LiPo charger with auto power-path, and standard 31×31mm M3 bolt pattern. Reference: [`public/Projects/ParametricPCB/03-compactAudioMotionSquarePCB/AGENTS.md`](file:///f:/Github/Website/public/Projects/ParametricPCB/03-compactAudioMotionSquarePCB/AGENTS.md).
+  - `public/Projects/ParametricPCB/04-smdAudioMotionBatonPCB/`: All-in-One Turnkey SMD Baton Controller PCB (22×110mm). Eliminates socketed dev boards with a directly soldered ESP32-C3-WROOM-02-N4 module, onboard LSM6DS3TR-C 6-axis IMU, WMM7037AT2 analog MEMS microphone, USB Type-C native CDC/JTAG flashing, ME6211 3.3V LDO, TP4054 LiPo charger with auto power-path, high-side LED power gate, and haptic PWM driver. 100% factory assembled by JLCPCB SMT in a single order. Reference: [`public/Projects/ParametricPCB/04-smdAudioMotionBatonPCB/AGENTS.md`](file:///f:/Github/Website/public/Projects/ParametricPCB/04-smdAudioMotionBatonPCB/AGENTS.md).
 * **Agent Guidelines**:
-  - Confine work strictly to `public/ParametricPCB/`.
+  - Confine work strictly to `public/Projects/ParametricPCB/`.
   - When editing circuits or exports, always maintain strict 1-to-1 BOM/CPL parity, verify diode/MOSFET orientations against `SKILL.md`, and execute `npm test` and `npm run check-supply`.
 
 ---
