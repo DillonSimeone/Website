@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Manual | DeafDoorbell Smart Visual Alert System</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07070b;
+            --surface: #0e0e17;
+            --card-bg: rgba(18, 18, 30, 0.78);
+            --card-border: rgba(0, 243, 255, 0.18);
+            --card-hover: rgba(28, 28, 46, 0.88);
+            --cyan: #00f3ff;
+            --cyan-glow: rgba(0, 243, 255, 0.35);
+            --pink: #ff006e;
+            --pink-glow: rgba(255, 0, 110, 0.35);
+            --orange: #ff9d00;
+            --orange-glow: rgba(255, 157, 0, 0.35);
+            --green: #00ff88;
+            --green-glow: rgba(0, 255, 136, 0.35);
+            --text: #f0f3f8;
+            --text-secondary: #9aa4b2;
+            --text-muted: #606d80;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --code-bg: #090a10;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.65;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle Cyber Scanline Overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 26, 0) 50%, rgba(0, 0, 0, 0.28) 50%), 
+                        linear-gradient(90deg, rgba(0, 243, 255, 0.02), rgba(0, 0, 0, 0.01), rgba(255, 0, 110, 0.02));
+            background-size: 100% 4px, 4px 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.3;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+        }
+
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        a {
+            color: var(--cyan);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        a:hover {
+            color: #fff;
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        /* Top Sticky Cyber Navigation Bar */
+        .cyber-nav {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            background: rgba(7, 7, 11, 0.94);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .nav-brand .badge-tag {
+            background: rgba(0, 243, 255, 0.15);
+            color: var(--cyan);
+            border: 1px solid var(--cyan);
+            font-size: 0.65rem;
+            padding: 2px 7px;
+            border-radius: 4px;
+            letter-spacing: 1px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .nav-link {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #fff;
+            border-color: var(--card-border);
+            background: rgba(0, 243, 255, 0.08);
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.2);
+        }
+        .nav-link.accent-btn {
+            background: var(--cyan);
+            color: #000;
+            border-color: var(--cyan);
+            font-weight: 700;
+        }
+        .nav-link.accent-btn:hover {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 0 15px var(--cyan);
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+            padding: 30px 20px 80px;
+        }
+
+        /* Header Hero Banner */
+        .manual-hero {
+            background: linear-gradient(135deg, rgba(20, 20, 38, 0.85) 0%, rgba(10, 10, 18, 0.95) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 36px 30px;
+            margin-bottom: 35px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 243, 255, 0.15);
+        }
+        .manual-hero::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--cyan-glow) 0%, rgba(0,0,0,0) 70%);
+            opacity: 0.25;
+            pointer-events: none;
+        }
+        .manual-hero h1 {
+            font-size: 2.1rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ffffff 0%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .manual-hero p {
+            color: var(--text-secondary);
+            font-size: 1.02rem;
+            max-width: 760px;
+            margin-bottom: 22px;
+        }
+
+        /* Quick-Jump Table of Contents Pills */
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .toc-pill {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+        .toc-pill:hover {
+            border-color: var(--cyan);
+            color: #fff;
+            background: rgba(0, 243, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(0, 243, 255, 0.15);
+        }
+        .toc-pill .num {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            color: var(--cyan);
+            font-weight: 700;
+        }
+
+        /* Manual Content Cards */
+        .manual-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 30px 26px;
+            margin-bottom: 28px;
+            transition: border-color 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+        .manual-section:hover {
+            border-color: var(--card-border);
+        }
+        .section-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .section-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-badge {
+            background: rgba(0, 243, 255, 0.12);
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.82rem;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--cyan);
+        }
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: #fff;
+        }
+
+        /* Callout Boxes */
+        .callout {
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 0.9rem;
+            line-height: 1.55;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .callout-icon {
+            font-size: 1.25rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .callout-info {
+            background: rgba(0, 243, 255, 0.08);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #d1f4ff;
+        }
+        .callout-warn {
+            background: rgba(255, 157, 0, 0.08);
+            border: 1px solid rgba(255, 157, 0, 0.35);
+            color: #ffe6c2;
+        }
+        .callout-success {
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #d2ffe5;
+        }
+
+        /* Step-by-Step Sequences */
+        .step-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 18px 0;
+        }
+        .step-item {
+            display: flex;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 16px 18px;
+            transition: all 0.2s ease;
+        }
+        .step-item:hover {
+            border-color: var(--card-border);
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateX(3px);
+        }
+        .step-num {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px rgba(0, 243, 255, 0.25);
+        }
+        .step-body h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+        .step-body p {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+
+        /* Data Tables */
+        .table-responsive {
+            overflow-x: auto;
+            margin: 18px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(9, 10, 16, 0.8);
+        }
+        table.cyber-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.86rem;
+            text-align: left;
+        }
+        table.cyber-table th, table.cyber-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        table.cyber-table th {
+            background: rgba(18, 18, 30, 0.9);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.78rem;
+            color: var(--cyan);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        table.cyber-table tr:hover td {
+            background: rgba(0, 243, 255, 0.03);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+        .badge-cyan { background: rgba(0, 243, 255, 0.15); color: var(--cyan); border: 1px solid var(--cyan); }
+        .badge-green { background: rgba(0, 255, 136, 0.15); color: var(--green); border: 1px solid var(--green); }
+        .badge-orange { background: rgba(255, 157, 0, 0.15); color: var(--orange); border: 1px solid var(--orange); }
+        .badge-pink { background: rgba(255, 0, 110, 0.15); color: var(--pink); border: 1px solid var(--pink); }
+
+        /* Feature Cards (Govee Style) */
+        .feature-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin: 18px 0;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 18px;
+            transition: all 0.2s ease;
+        }
+        .feature-card:hover {
+            border-color: var(--card-border);
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateY(-2px);
+        }
+        .feature-card h4 {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .feature-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* INTERACTIVE WIDGET 1: 8x8 LED Matrix Animation Player */
+        .sim-container {
+            background: #090a10;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 22px;
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .sim-container { grid-template-columns: 1fr; }
+        }
+        .matrix-display-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 26px);
+            grid-template-rows: repeat(8, 26px);
+            gap: 4px;
+            background: #040507;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #1a1e28;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 0, 0, 0.9);
+        }
+        .led-dot {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #11141c;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.06s ease, box-shadow 0.06s ease;
+        }
+        .sim-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .sim-ctrl-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .sim-label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pattern-btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .pattern-tab {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .pattern-tab:hover {
+            color: #fff;
+            border-color: var(--cyan);
+        }
+        .pattern-tab.active {
+            background: rgba(0, 243, 255, 0.18);
+            border-color: var(--cyan);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+        }
+
+        /* INTERACTIVE WIDGET 2: 3-Second Button Simulator */
+        .btn-hold-simulator {
+            background: #090a10;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 22px;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .hold-interactive-stage {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex-wrap: wrap;
+        }
+        .virtual-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #2a2e3d 0%, #12141c 100%);
+            border: 3px solid #3d4559;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: 0.82rem;
+            color: #9aa4b2;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: all 0.1s ease;
+        }
+        .virtual-btn:active, .virtual-btn.pressing {
+            transform: translateY(3px) scale(0.96);
+            border-color: var(--cyan);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 20px var(--cyan);
+        }
+        .hold-meter-wrap {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .hold-progress-bar {
+            width: 100%;
+            height: 14px;
+            background: #141724;
+            border-radius: 7px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+        }
+        .hold-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--cyan) 0%, var(--pink) 100%);
+            transition: width 0.05s linear;
+        }
+        .hold-led-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+        }
+        .status-bulb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #202433;
+            border: 2px solid #333a50;
+            transition: all 0.1s ease;
+        }
+        .status-bulb.glow-blue {
+            background: #0088ff;
+            box-shadow: 0 0 15px #0088ff, 0 0 30px #00a2ff;
+        }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            align-items: center;
+            background: rgba(9, 10, 16, 0.9);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 22px;
+            margin: 18px 0;
+        }
+        @media (max-width: 768px) {
+            .arch-diagram { grid-template-columns: 1fr; text-align: center; }
+        }
+        .arch-node {
+            background: rgba(20, 20, 35, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .arch-node h4 {
+            font-size: 0.9rem;
+            color: var(--cyan);
+            margin-bottom: 4px;
+        }
+        .arch-node p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+        .arch-bus {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--pink);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            padding: 0 8px;
+        }
+
+        /* FAQ Items */
+        .faq-item {
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 16px 0;
+        }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-q {
+            font-size: 0.98rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .faq-q::before {
+            content: "Q";
+            font-family: 'Orbitron', sans-serif;
+            color: var(--cyan);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .faq-a {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            line-height: 1.55;
+            padding-left: 24px;
+        }
+
+        /* Dedicated Tech Appendix Divider */
+        .tech-appendix-card {
+            border: 1px solid rgba(255, 0, 110, 0.35);
+            background: rgba(18, 12, 24, 0.75);
+            margin-top: 40px;
+        }
+        .tech-disclaimer {
+            background: rgba(255, 0, 110, 0.1);
+            border: 1px dashed var(--pink);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: #ffc2db;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Footer */
+        .manual-footer {
+            margin-top: 50px;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 24px;
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Navigation Bar -->
+    <nav class="cyber-nav">
+        <div class="nav-brand">
+            <span>DEAFDOORBELL</span>
+            <span class="badge-tag">USER MANUAL</span>
+        </div>
+        <div class="nav-links">
+            <a href="#quickstart" class="nav-link">Quick Start</a>
+            <a href="#status" class="nav-link">Lights Guide</a>
+            <a href="#portal" class="nav-link">Settings &amp; Colors</a>
+            <a href="#pairing" class="nav-link">Pairing</a>
+            <a href="#zoning" class="nav-link">Multiple Doors</a>
+            <a href="#reset" class="nav-link">Reset</a>
+            <a href="#faq" class="nav-link">Troubleshooting</a>
+            <a href="#technical" class="nav-link" style="color:var(--pink);">Tech Corner</a>
+            <a href="index.html" class="nav-link">&larr; Main Site</a>
+            <a href="demo.html" class="nav-link accent-btn">Studio Demo</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Welcome Banner -->
+        <header class="manual-hero">
+            <h1>DeafDoorbell User Manual</h1>
+            <p>Welcome to DeafDoorbell. Enjoy instant peace of mind with bright, colorful visual alerts whenever someone rings your doorbell. Follow this friendly guide to set up your system, pick your favorite light patterns, and customize your home.</p>
+            
+            <div class="toc-grid">
+                <a href="#quickstart" class="toc-pill">
+                    <span class="num">01</span>
+                    <span>3-Minute Quick Start</span>
+                </a>
+                <a href="#status" class="toc-pill">
+                    <span class="num">02</span>
+                    <span>What the Lights Mean</span>
+                </a>
+                <a href="#portal" class="toc-pill">
+                    <span class="num">03</span>
+                    <span>Settings &amp; Light Colors</span>
+                </a>
+                <a href="#pairing" class="toc-pill">
+                    <span class="num">04</span>
+                    <span>Easy Pairing Guide</span>
+                </a>
+                <a href="#zoning" class="toc-pill">
+                    <span class="num">05</span>
+                    <span>Using Multiple Doorbells</span>
+                </a>
+                <a href="#reset" class="toc-pill">
+                    <span class="num">06</span>
+                    <span>Resetting to Factory Settings</span>
+                </a>
+                <a href="#faq" class="toc-pill">
+                    <span class="num">07</span>
+                    <span>Common Questions &amp; Fixes</span>
+                </a>
+                <a href="#technical" class="toc-pill" style="border-color:rgba(255,0,110,0.3);">
+                    <span class="num" style="color:var(--pink);">08</span>
+                    <span style="color:#ffc2db;">Tech Appendix (For Makers)</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- ============================================================
+             CHAPTER 1: 3-MINUTE QUICK START
+             ============================================================ -->
+        <section id="quickstart" class="manual-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-badge">01</span>
+                    <h2>Quick Start: Ready in 3 Minutes</h2>
+                </div>
+                <span class="badge badge-green">Plug &amp; Play</span>
+            </div>
+
+            <p style="color:var(--text-secondary); margin-bottom:16px;">
+                Your system comes with two types of devices: the <strong>Doorbell Sensor (Leader)</strong> that listens near your existing chime, and one or more <strong>Light Displays (Followers)</strong> that light up around your house.
+            </p>
+
+            <ul class="step-list">
+                <li class="step-item">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <h4>Plug in the Devices</h4>
+                        <p>Plug the <strong>Doorbell Sensor</strong> into USB power near your doorbell chime box. Plug your <strong>Light Displays</strong> into standard USB power in the rooms where you want alerts (such as the living room, kitchen, or office).</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <h4>Connect with Your Smartphone or Computer</h4>
+                        <p>Open Wi-Fi settings on your smartphone or computer and connect to the Doorbell Sensor's network:</p>
+                        <div style="background:var(--code-bg); padding:10px 14px; border-radius:6px; border:1px solid var(--border-subtle); display:flex; gap:20px; flex-wrap:wrap; margin:8px 0;">
+                            <div><strong style="color:var(--text-muted); font-size:0.75rem;">NETWORK NAME (SSID):</strong><br><code style="color:var(--cyan); font-weight:700;">DoorbellDetectorSystem</code></div>
+                            <div><strong style="color:var(--text-muted); font-size:0.75rem;">PASSWORD:</strong><br><code style="color:var(--pink); font-weight:700;">shrek1234!</code></div>
+                        </div>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <h4>Open the Control Page</h4>
+                        <p>Open any web browser and go to <code style="color:var(--cyan);">http://192.168.4.1</code> (or <code style="color:var(--cyan);">http://deafdoorbell.local</code>). The control page will open automatically without needing home internet access.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">4</div>
+                    <div class="step-body">
+                        <h4>Try a Test Flash</h4>
+                        <p>Click the big blue button labeled <strong>"Test Flash"</strong>. Your Light Displays will immediately light up across the room with zero noticeable delay.</p>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="callout callout-success">
+                <div class="callout-icon">&#10004;</div>
+                <div>
+                    <strong>Ready to go:</strong> Your units are ready right out of the box. Simply ring your doorbell to test the sound pickup!
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             CHAPTER 2: WHAT THE LIGHTS MEAN
+             ============================================================ -->
+        <section id="status" class="manual-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-badge">02</span>
+                    <h2>What the Lights Mean</h2>
+                </div>
+                <span class="badge badge-cyan">Visual Signals</span>
+            </div>
+
+            <p style="color:var(--text-secondary); margin-bottom:16px;">
+                Both the Doorbell Sensor and Light Displays use simple light signals to let you know what is happening:
+            </p>
+
+            <div class="table-responsive">
+                <table class="cyber-table">
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Light Pattern</th>
+                            <th>What It Means</th>
+                            <th>What to Do</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-pink">Light Display</span></td>
+                            <td><strong style="color:var(--cyan);">Bright Animated Pattern</strong></td>
+                            <td><strong>Doorbell Chime Detected!</strong> Someone is ringing your doorbell.</td>
+                            <td>Check the door.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-pink">Light Display</span></td>
+                            <td><strong style="color:var(--orange);">Orange Concentric Rings</strong></td>
+                            <td><strong>Looking for Doorbell Sensor</strong> (In Pairing Mode).</td>
+                            <td>Click "Open Pairing Mode" on the control page to link it.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-pink">Light Display</span></td>
+                            <td><strong style="color:var(--green);">Single Green Flash</strong></td>
+                            <td><strong>Successfully Linked!</strong> Device is paired and saved.</td>
+                            <td>No action needed. Ready to use.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-cyan">Doorbell Sensor</span></td>
+                            <td><strong style="color:#00a2ff;">Small Blue Light: Dim/Breathing</strong></td>
+                            <td><strong>Listening Normally.</strong> Ready for door chimes.</td>
+                            <td>Normal idle status.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-cyan">Doorbell Sensor</span></td>
+                            <td><strong style="color:#fff;">Small Blue Light: Solid Bright</strong></td>
+                            <td><strong>Sound Detected!</strong> Sending alert to your lights.</td>
+                            <td>Chime confirmed.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-cyan">Doorbell Sensor</span></td>
+                            <td><strong style="color:var(--pink);">Small Blue Light: 10 Rapid Blinks</strong></td>
+                            <td><strong>Wi-Fi Reset Confirmed.</strong> Restored default name/password.</td>
+                            <td>Reconnect to <code>DoorbellDetectorSystem</code>.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             CHAPTER 3: SETTINGS & LIGHT COLORS
+             ============================================================ -->
+        <section id="portal" class="manual-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-badge">03</span>
+                    <h2>Customizing Your Lights &amp; Settings</h2>
+                </div>
+                <span class="badge badge-cyan">Easy Controls</span>
+            </div>
+
+            <p style="color:var(--text-secondary); margin-bottom:16px;">
+                When connected to the sensor's Wi-Fi network, open <code style="color:var(--cyan);">http://192.168.4.1</code> to personalize your lights just like your favorite smart home products:
+            </p>
+
+            <div class="feature-cards-grid">
+                <div class="feature-card">
+                    <h4>Adjusting Sensitivity</h4>
+                    <p>Use the <strong>Sound Sensitivity</strong> slider to match your chime volume. If you have a soft chime, slide it to make it more sensitive. If you want to make sure loud talking or TV noise is ignored, slide it higher.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Light Patterns &amp; Colors</h4>
+                    <p>Pick from 6 smooth animations (such as gentle Breathe, expanding Ripple, or high-visibility Strobe). Turn on <strong>Party Mode</strong> for a dynamic rainbow spectrum, or pick your favorite custom solid color.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Change Wi-Fi Name &amp; Password</h4>
+                    <p>Easily customize the network name and password under the <strong>Wi-Fi Hotspot</strong> card. Enter your new details, click Save, and reconnect your phone or computer once the device restarts.</p>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE MATRIX SIMULATOR WIDGET -->
+            <div class="sim-container">
+                <div class="matrix-display-wrap">
+                    <span class="sim-label" style="color:var(--cyan);">Interactive Light Preview</span>
+                    <div class="matrix-grid" id="simMatrixGrid">
+                        <!-- 64 LEDs generated dynamically by JS -->
+                    </div>
+                    <span id="simPatternLabel" style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">PATTERN: BREATHE</span>
+                </div>
+                
+                <div class="sim-controls">
+                    <div class="sim-ctrl-group">
+                        <span class="sim-label">Choose an Animation Style</span>
+                        <div class="pattern-btn-row">
+                            <button class="pattern-tab active" onclick="setSimPattern(0, 'BREATHE')">Breathe</button>
+                            <button class="pattern-tab" onclick="setSimPattern(1, 'RIPPLE')">Ripple</button>
+                            <button class="pattern-tab" onclick="setSimPattern(2, 'CRAWL')">Crawl</button>
+                            <button class="pattern-tab" onclick="setSimPattern(3, 'BOUNCE')">Bounce</button>
+                            <button class="pattern-tab" onclick="setSimPattern(4, 'BEACON')">Soft Beacon</button>
+                            <button class="pattern-tab" onclick="setSimPattern(5, 'STROBE')">Strobe</button>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="sim-ctrl-group">
+                            <span class="sim-label">Color Mode</span>
+                            <div style="display:flex; gap:8px;">
+                                <button id="simPartyBtn" class="pattern-tab active" onclick="toggleSimParty()">Party Rainbow: ON</button>
+                            </div>
+                        </div>
+                        <div class="sim-ctrl-group">
+                            <span class="sim-label">Speed</span>
+                            <input type="range" id="simSpeedSlider" min="0.4" max="2.5" step="0.1" value="1.0" style="width:100%;" oninput="updateSimSpeed(this.value)">
+                        </div>
+                    </div>
+
+                    <div class="callout callout-info" style="margin:0; padding:10px 14px; font-size:0.8rem;">
+                        &#9432; The lights turn on with full instant brightness the moment your chime sounds, ensuring you never miss a visitor.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             CHAPTER 4: EASY PAIRING GUIDE
+             ============================================================ -->
+        <section id="pairing" class="manual-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-badge">04</span>
+                    <h2>Easy Pairing Guide</h2>
+                </div>
+                <span class="badge badge-orange">Quick Setup</span>
+            </div>
+
+            <p style="color:var(--text-secondary); margin-bottom:14px;">
+                Pairing locks your Light Displays to your own Doorbell Sensor using a private house key. This ensures that even if your next-door neighbor also uses DeafDoorbell, their doorbell will never trigger your lights.
+            </p>
+
+            <ul class="step-list">
+                <li class="step-item">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <h4>Put the Light Display in Pairing Mode</h4>
+                        <p>Locate the <strong>small black button nearest to the USB power cable</strong> at the bottom of the Light Display unit. Press and hold it down for <strong>3 seconds</strong> until the lights start gently pulsing in <strong>orange concentric rings</strong>.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <h4>Click Open Pairing on Your Phone or Computer</h4>
+                        <p>Open the control page (<code style="color:var(--cyan);">http://192.168.4.1</code>), scroll down to the <strong>Follower Pairing</strong> card, and click the green button: <strong>"Open Pairing Mode (60s)"</strong>.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <h4>Done! Watch for the Green Flash</h4>
+                        <p>The units will automatically find each other within two seconds. The Light Display will flash <strong>solid green for 1 second</strong> to let you know it is securely saved.</p>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="callout callout-success">
+                <div class="callout-icon">&#10004;</div>
+                <div>
+                    <strong>Permanent Memory:</strong> Once paired, the devices remember each other forever, even if unplugged or during power outages.
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             CHAPTER 5: USING MULTIPLE DOORBELLS
+             ============================================================ -->
+        <section id="zoning" class="manual-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-badge">05</span>
+                    <h2>Using Multiple Doorbells (Multi-Door Setup)</h2>
+                </div>
+                <span class="badge badge-pink">Multi-Zone</span>
+            </div>
+
+            <div class="faq-item" style="border:none; padding:0 0 16px;">
+                <div class="faq-q" style="font-size:1.05rem; color:var(--cyan);">
+                    Can a light display connect to more than one doorbell sensor?
+                </div>
+                <div class="faq-a" style="font-size:0.92rem; color:#fff;">
+                    <strong>YES! A Light Display can easily respond to multiple Doorbell Sensors.</strong><br>
+                    If your home has a front door and a back door (or side gate), you can place a sensor at each chime.
+                </div>
+            </div>
+
+            <div class="arch-diagram">
+                <div class="arch-node">
+                    <h4>Front Door Sensor</h4>
+                    <p>House Code: <code style="color:var(--cyan);">Shared</code><br>Zone: <strong style="color:#fff;">Area 1 (Front Door)</strong></p>
+                </div>
+                <div class="arch-bus">
+                    <span>WIRELESS LINK</span>
+                    <span>&harr; &harr; &harr;</span>
+                    <span style="font-size:0.65rem; color:var(--text-muted);">ALL LIGHTS HEAR BOTH</span>
+                </div>
+                <div class="arch-node">
+                    <h4>Back Door Sensor</h4>
+                    <p>House Code: <code style="color:var(--cyan);">Shared</code><br>Zone: <strong style="color:#fff;">Area 2 (Back Door)</strong></p>
+                </div>
+            </div>
+
+            <h3 style="font-size:0.95rem; margin:20px 0 10px; color:#fff;">How to Set Up Multiple Doors:</h3>
+            <ol style="padding-left:18px; color:var(--text-secondary); display:flex; flex-direction:column; gap:10px; font-size:0.88rem;">
+                <li>
+                    <strong>Share the Same House Code:</strong> Connect to your Front Door Sensor's control page and copy its 4-character <strong>House Key</strong>. Connect to your Back Door Sensor and type in the exact same House Key.
+                </li>
+                <li>
+                    <strong>Assign Each Door a Zone:</strong> Set your front door to <strong>Area 1 (Front Door)</strong> and your back door to <strong>Area 2 (Back Door)</strong>.
+                </li>
+                <li>
+                    <strong>Pick Which Lights React:</strong> In your control page, you can choose:
+                    <ul style="margin-top:6px; padding-left:18px;">
+                        <li><strong style="color:#fff;">All Trigger Areas (Default):</strong> The light flashes whenever <em>either</em> door rings.</li>
+                        <li><strong style="color:var(--cyan);">Front Door Only:</strong> The light will only flash when visitors arrive at the front door.</li>
+                        <li><strong style="color:var(--pink);">Back Door Only:</strong> Perfect for a light display in the kitchen or back patio.</li>
+                    </ul>
+                </li>
+            </ol>
+        </section>
+
+        <!-- ============================================================
+             CHAPTER 6: RESETTING TO FACTORY SETTINGS
+             ============================================================ -->
+        <section id="reset" class="manual-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-badge">06</span>
+                    <h2>Resetting to Factory Settings</h2>
+                </div>
+                <span class="badge badge-cyan">Physical Button</span>
+            </div>
+
+            <p style="color:var(--text-secondary); margin-bottom:16px;">
+                If you ever forget a custom Wi-Fi password or want to start fresh, you can perform a quick reset using the physical button on the unit.
+            </p>
+
+            <!-- INTERACTIVE BUTTON-HOLD SIMULATOR -->
+            <div class="btn-hold-simulator">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="sim-label" style="color:var(--cyan);">Interactive 3-Second Button Practice</span>
+                    <span id="holdActionType" class="badge badge-cyan">Practice Mode</span>
+                </div>
+                <p style="font-size:0.85rem; color:var(--text-secondary);">
+                    Press and <strong>hold down</strong> the virtual button below for 3 seconds to see how the physical reset timing feels:
+                </p>
+
+                <div class="hold-interactive-stage">
+                    <div id="virtualBootBtn" class="virtual-btn">HOLD</div>
+                    
+                    <div class="hold-meter-wrap">
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                            <span>HOLD TIME:</span>
+                            <span id="holdTimeCounter">0.0s / 3.0s</span>
+                        </div>
+                        <div class="hold-progress-bar">
+                            <div id="holdProgressFill" class="hold-progress-fill"></div>
+                        </div>
+                        <div class="hold-led-status">
+                            <div id="statusLedBulb" class="status-bulb"></div>
+                            <span id="statusLedText" style="color:var(--text-muted); font-size:0.8rem;">Light Idle (Off)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:18px;">
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:10px; padding:18px;">
+                    <h3 style="color:var(--cyan); font-size:0.95rem; margin-bottom:8px;">Resetting Wi-Fi on the Doorbell Sensor</h3>
+                    <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:10px;">
+                        Find the <strong>small black button nearest to the USB power cable</strong> on the Doorbell Sensor and hold it down for <strong>3 seconds</strong>:
+                    </p>
+                    <ul style="padding-left:16px; font-size:0.84rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:6px;">
+                        <li>The small blue light flashes rapidly <strong>10 times</strong>.</li>
+                        <li>Wi-Fi name resets to: <code style="color:var(--cyan);">DoorbellDetectorSystem</code></li>
+                        <li>Wi-Fi password resets to: <code style="color:var(--pink);">shrek1234!</code></li>
+                        <li><strong style="color:var(--green);">Safe Reset:</strong> Your sound sensitivity calibrations and paired lights are kept safe and are not erased.</li>
+                    </ul>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:10px; padding:18px;">
+                    <h3 style="color:var(--pink); font-size:0.95rem; margin-bottom:8px;">Unpairing a Light Display</h3>
+                    <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:10px;">
+                        Find the <strong>small black button nearest to the USB power cable</strong> on the Light Display and hold it down for <strong>3 seconds</strong>:
+                    </p>
+                    <ul style="padding-left:16px; font-size:0.84rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:6px;">
+                        <li>The light unlinks from your previous sensor.</li>
+                        <li>The lights begin gently pulsing in <strong>orange concentric rings</strong>.</li>
+                        <li>Ready to be paired to a new doorbell sensor.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             CHAPTER 7: TROUBLESHOOTING & FAQ
+             ============================================================ -->
+        <section id="faq" class="manual-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-badge">07</span>
+                    <h2>Common Questions &amp; Troubleshooting</h2>
+                </div>
+                <span class="badge badge-cyan">Help Center</span>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">My lights do not flash when someone rings the doorbell.</div>
+                <div class="faq-a">
+                    Check the Doorbell Sensor placement. Make sure it is close to your chime box. If your chime is quiet, open the control page (<code style="color:var(--cyan);">http://192.168.4.1</code>) and adjust the <strong>Sound Sensitivity</strong> slider slightly so it picks up softer sounds.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">The lights flash on loud talking, dogs barking, or TV noise.</div>
+                <div class="faq-a">
+                    Open the control page and slightly raise the <strong>Sound Sensitivity</strong> slider. Doorbell chimes have a sharp, resonant strike, whereas voices and television audio are lower in volume. Moving the slider just a little higher easily filters out everyday room chatter.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">I forgot my custom Wi-Fi password.</div>
+                <div class="faq-a">
+                    Hold the small black button nearest the USB power cable on the Doorbell Sensor for 3 seconds. The blue light will blink 10 times, restoring the Wi-Fi name to <code style="color:var(--cyan);">DoorbellDetectorSystem</code> and password to <code style="color:var(--pink);">shrek1234!</code>.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">A Light Display is glowing with orange rings and won't flash.</div>
+                <div class="faq-a">
+                    The orange rings mean the light is in Pairing Mode waiting for a sensor. Connect to your Doorbell Sensor's control page (<code style="color:var(--cyan);">http://192.168.4.1</code>), scroll to the Follower Pairing section, and click <strong>"Open Pairing Mode (60s)"</strong>. The light will flash green and be ready.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">Does this need home internet or a cloud subscription?</div>
+                <div class="faq-a">
+                    No! DeafDoorbell is 100% private and subscription-free. It uses direct, instantaneous local wireless signals between units that work seamlessly without an internet connection.
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             CHAPTER 8: TECHNICAL APPENDIX (FOR CURIOUS MAKERS)
+             ============================================================ -->
+        <section id="technical" class="manual-section tech-appendix-card">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-badge" style="color:var(--pink); border-color:var(--pink);">08</span>
+                    <h2>Technical Appendix</h2>
+                </div>
+                <span class="badge badge-pink">For Makers &amp; Engineers</span>
+            </div>
+
+            <div class="tech-disclaimer">
+                <span>&#9888;</span>
+                <span><strong>Developer Note:</strong> This section is just for curious tech enthusiasts, hobbyists, and developers. You do not need any of this technical information for everyday setup or operation!</span>
+            </div>
+
+            <h3 style="font-size:0.95rem; margin-bottom:10px; color:var(--cyan);">Hardware Architecture &amp; GPIO Pinouts</h3>
+            <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:12px;">
+                Both nodes are built on the ESP32-C3 SuperMini (RISC-V single-core 160MHz) running Arduino ESP-IDF with zero modem sleep (<code style="color:var(--cyan);">WIFI_PS_NONE</code>) on Wi-Fi Channel 1:
+            </p>
+            
+            <div class="table-responsive">
+                <table class="cyber-table">
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Pin / Interface</th>
+                            <th>Connected Component</th>
+                            <th>Technical Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-cyan">Doorbell Sensor</span></td>
+                            <td>GPIO 3 (ADC1_CH3)</td>
+                            <td>MAX4466 Analog Mic Output</td>
+                            <td>Continuous 64-sample chunking at ~20kHz sample rate.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-cyan">Doorbell Sensor</span></td>
+                            <td>GPIO 4</td>
+                            <td>Soft Ground for Mic</td>
+                            <td>Driven solid LOW to provide ultra-clean ground reference.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-cyan">Doorbell Sensor</span></td>
+                            <td>GPIO 8</td>
+                            <td>Onboard Status Blue LED</td>
+                            <td>Inverted PWM channel tracking real-time sound levels.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-cyan">Doorbell Sensor</span></td>
+                            <td>GPIO 9</td>
+                            <td>Onboard BOOT Button</td>
+                            <td>Active LOW with internal pullup; 3s hold restores Wi-Fi defaults.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-pink">Light Display</span></td>
+                            <td>GPIO 5</td>
+                            <td>WS2812B 8x8 LED Matrix</td>
+                            <td>High-speed non-blocking FastLED bitbang data stream.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-pink">Light Display</span></td>
+                            <td>GPIO 9</td>
+                            <td>Onboard BOOT Button</td>
+                            <td>Active LOW; 3s hold unbinds NVS network key to re-enter pairing.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="font-size:0.95rem; margin:22px 0 10px; color:var(--cyan);">Acoustic Detection Algorithm (MAD &amp; Debounce)</h3>
+            <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:10px;">
+                Rather than basic peak-to-peak amplitude which easily triggers on ambient noise, the firmware calculates the <strong>Median Absolute Deviation (MAD)</strong> over single-pass 64-sample chunks (~3.2ms window) combined with a software IIR DC-blocking filter:
+            </p>
+            <div style="background:var(--code-bg); padding:12px; border-radius:6px; border:1px solid var(--border-subtle); font-size:0.82rem; color:var(--text-secondary); margin-bottom:12px;">
+                <code>outSample = inSample - lastInput + (0.95f * lastOutput);</code><br>
+                <code>madLevel = (sumOfAbsoluteDifferences / 64) * ANALOG_MAD_SCALE;</code>
+            </div>
+            <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:12px;">
+                A multi-chunk leaky integrator debounces the audio across consecutive windows (default 2 chunks = ~6.4ms) to distinguish instant chime resonance from brief contact clicks.
+            </p>
+
+            <h3 style="font-size:0.95rem; margin:22px 0 10px; color:var(--cyan);">Task Watchdog Timer (WDT) &amp; Self-Healing</h3>
+            <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:12px;">
+                To guarantee 24/7 uptime without freezing, the Doorbell Sensor initializes the ESP32 hardware Task Watchdog Timer with a 5-second panic timeout (<code style="color:var(--cyan);">esp_task_wdt_init(5, true)</code>). The timer is fed each cycle. If an unexpected radio driver lockup ever stalls execution, the chip automatically resets within 5 seconds and records the reset reason.
+            </p>
+
+            <h3 style="font-size:0.95rem; margin:22px 0 10px; color:var(--cyan);">Flight Recorder &amp; Diagnostics CSV</h3>
+            <p style="font-size:0.86rem; color:var(--text-secondary);">
+                Every acoustic event is logged in a rolling in-memory flight recorder. Developers can inspect live telemetry at <a href="/log.html" target="_blank">/log.html</a> or export detailed millisecond oscilloscope traces via <a href="/diagnostics.csv">deafdoorbell_diagnostics.csv</a>.
+            </p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="manual-footer">
+            <p>DeafDoorbell Smart Visual Alert System &bull; Designed for open accessibility, calm awareness, and reliable home safety.</p>
+        </footer>
+
+    </div>
+
+    <!-- ============================================================
+         INTERACTIVE SIMULATION JAVASCRIPT
+         ============================================================ -->
+    <script>
+        // --- 1. 8x8 LED Matrix Canvas Simulator ---
+        const matrixGrid = document.getElementById('simMatrixGrid');
+        const simLeds = [];
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                const dot = document.createElement('div');
+                dot.className = 'led-dot';
+                matrixGrid.appendChild(dot);
+                simLeds.push({ el: dot, x, y });
+            }
+        }
+
+        let simPattern = 0;
+        let simPatternName = 'BREATHE';
+        let simParty = true;
+        let simSpeed = 1.0;
+        let simStartTime = performance.now();
+
+        function setSimPattern(id, name) {
+            simPattern = id;
+            simPatternName = name;
+            document.getElementById('simPatternLabel').innerText = 'PATTERN: ' + name;
+            document.querySelectorAll('.pattern-tab').forEach((tab, idx) => {
+                if (idx < 6) tab.classList.toggle('active', idx === id);
+            });
+        }
+
+        function toggleSimParty() {
+            simParty = !simParty;
+            const btn = document.getElementById('simPartyBtn');
+            btn.innerText = simParty ? 'Party Rainbow: ON' : 'Party Rainbow: OFF (Cyan)';
+            btn.classList.toggle('active', simParty);
+        }
+
+        function updateSimSpeed(val) {
+            simSpeed = parseFloat(val);
+        }
+
+        function hsvToRgb(h, s, v) {
+            let r, g, b, i = Math.floor(h * 6), f = h * 6 - i;
+            let p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+            switch (i % 6) {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                case 5: r = v; g = p; b = q; break;
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        function renderSimFrame() {
+            const nowSec = (performance.now() - simStartTime) / 1000.0;
+            const t = nowSec * simSpeed;
+
+            simLeds.forEach(cell => {
+                const dx = cell.x - 3.5;
+                const dy = cell.y - 3.5;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                let val = 0.0;
+                let hueOffset = 0.0;
+
+                switch (simPattern) {
+                    case 0: // BREATHE
+                        val = Math.pow((Math.cos(t * Math.PI * 1.5) + 1) / 2, 1.8);
+                        hueOffset = (dist * 14) / 255;
+                        break;
+                    case 1: // RIPPLE
+                        val = Math.pow(Math.max(0, Math.cos((dist * 1.5) - (t * 5.5))), 2.2);
+                        hueOffset = -(dist * 28) / 255;
+                        break;
+                    case 2: // CRAWL
+                        const serpentine = (cell.y % 2 === 0) ? (cell.y * 8 + cell.x) : (cell.y * 8 + (7 - cell.x));
+                        const comet = (t * 28.0 + 14.0) % 64;
+                        const diff = (comet - serpentine + 64) % 64;
+                        val = diff < 14 ? Math.pow(1 - (diff / 14), 2.0) : 0.0;
+                        hueOffset = -(diff * 12) / 255;
+                        break;
+                    case 3: // BOUNCE
+                        const barY = 3.5 + 3.2 * Math.sin(t * Math.PI * 1.8);
+                        val = Math.exp(-Math.pow(Math.abs(cell.y - barY), 2) / 1.5);
+                        hueOffset = (cell.x * 16 + cell.y * 10) / 255;
+                        break;
+                    case 4: // BEACON
+                        const cycle = (t * 1.6 + 0.25) % 1.0;
+                        val = (cycle < 0.25) ? Math.sin((cycle / 0.25) * (Math.PI / 2)) : Math.cos(((cycle - 0.25) / 0.75) * (Math.PI / 2));
+                        val = Math.pow(Math.max(0, val), 1.5);
+                        hueOffset = (t * 0.3) % 1.0;
+                        break;
+                    case 5: // STROBE
+                        val = ((Math.floor(t * 10) % 2) === 0) ? 1.0 : 0.0;
+                        hueOffset = 0.0;
+                        break;
+                }
+
+                let r, g, b;
+                if (simParty) {
+                    const h = (t * 0.2 + hueOffset + 1.0) % 1.0;
+                    [r, g, b] = hsvToRgb(h, 0.95, val);
+                } else {
+                    r = Math.round(0 * val);
+                    g = Math.round(243 * val);
+                    b = Math.round(255 * val);
+                }
+
+                if (val > 0.04) {
+                    cell.el.style.background = `rgb(${r},${g},${b})`;
+                    cell.el.style.boxShadow = `0 0 ${Math.round(val * 10)}px rgba(${r},${g},${b}, 0.8)`;
+                } else {
+                    cell.el.style.background = '#11141c';
+                    cell.el.style.boxShadow = 'none';
+                }
+            });
+
+            requestAnimationFrame(renderSimFrame);
+        }
+        renderSimFrame();
+
+        // --- 2. 3-Second Button Hold Simulator ---
+        const virtualBootBtn = document.getElementById('virtualBootBtn');
+        const holdProgressFill = document.getElementById('holdProgressFill');
+        const holdTimeCounter = document.getElementById('holdTimeCounter');
+        const statusLedBulb = document.getElementById('statusLedBulb');
+        const statusLedText = document.getElementById('statusLedText');
+
+        let holdTimer = null;
+        let holdStartTime = 0;
+        let isHolding = false;
+        let resetCompleted = false;
+
+        function startHold(e) {
+            if (e) e.preventDefault();
+            if (isHolding) return;
+            isHolding = true;
+            resetCompleted = false;
+            holdStartTime = performance.now();
+            virtualBootBtn.classList.add('pressing');
+            statusLedBulb.className = 'status-bulb glow-blue';
+            statusLedText.innerText = 'Holding button...';
+            statusLedText.style.color = '#00f3ff';
+
+            clearInterval(holdTimer);
+            holdTimer = setInterval(updateHoldProgress, 30);
+        }
+
+        function endHold(e) {
+            if (!isHolding) return;
+            isHolding = false;
+            virtualBootBtn.classList.remove('pressing');
+            clearInterval(holdTimer);
+
+            if (!resetCompleted) {
+                holdProgressFill.style.width = '0%';
+                holdTimeCounter.innerText = '0.0s / 3.0s';
+                statusLedBulb.className = 'status-bulb';
+                statusLedText.innerText = 'Released early. No reset triggered.';
+                statusLedText.style.color = 'var(--text-muted)';
+            }
+        }
+
+        function updateHoldProgress() {
+            if (!isHolding) return;
+            const elapsed = (performance.now() - holdStartTime) / 1000.0;
+            const pct = Math.min(100, (elapsed / 3.0) * 100);
+            holdProgressFill.style.width = pct + '%';
+            holdTimeCounter.innerText = elapsed.toFixed(1) + 's / 3.0s';
+
+            if (elapsed >= 3.0 && !resetCompleted) {
+                resetCompleted = true;
+                triggerResetFeedback();
+            }
+        }
+
+        function triggerResetFeedback() {
+            clearInterval(holdTimer);
+            statusLedText.innerText = '3-Second mark reached! Resetting...';
+            statusLedText.style.color = '#ff006e';
+
+            // Rapid 10-blink LED sequence
+            let blinks = 0;
+            const blinkInterval = setInterval(() => {
+                blinks++;
+                if (blinks % 2 === 1) {
+                    statusLedBulb.className = 'status-bulb glow-blue';
+                } else {
+                    statusLedBulb.className = 'status-bulb';
+                }
+                if (blinks >= 20) {
+                    clearInterval(blinkInterval);
+                    statusLedBulb.className = 'status-bulb glow-blue';
+                    statusLedText.innerHTML = '<strong style="color:#00ff88;">&#10004; Reset Complete!</strong> Wi-Fi restored to DoorbellDetectorSystem / shrek1234!';
+                }
+            }, 60);
+        }
+
+        virtualBootBtn.addEventListener('mousedown', startHold);
+        window.addEventListener('mouseup', endHold);
+        virtualBootBtn.addEventListener('touchstart', startHold);
+        window.addEventListener('touchend', endHold);
+    </script>
+</body>
+</html>

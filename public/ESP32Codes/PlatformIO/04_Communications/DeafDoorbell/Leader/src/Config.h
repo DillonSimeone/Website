@@ -21,7 +21,9 @@
 #define MIC_ANALOG_PIN    3   // MAX4466 OUT (ADC1_CH3)
 #define MIC_GND_PIN       4   // Soft ground for mic (driven LOW)
 #define ONBOARD_LED_PIN   8   // Onboard LED (inverted: 0=MAX, 255=OFF)
+#define BOOT_PIN          9   // Onboard Boot button (active LOW, GPIO 9)
 #define LED_CHANNEL       0
+#define BOOT_HOLD_TIME_MS 3000 // 3-second hold to reset Wi-Fi credentials
 
 // ===== LOW-LATENCY AUDIO & SAMPLING SETTINGS =====
 #define CHUNK_SIZE        64      // 64 samples per audio chunk (~3.2ms window)
@@ -33,9 +35,12 @@
 #define MAX_ALLOWED_DIPS  2       // Leaky debounce: tolerates 2 brief dips without resetting
 
 // ===== WIFI & NETWORK CONFIGURATION =====
-static const char* AP_SSID       = "LeeDoorBell";
-static const char* AP_PASS       = "shrek1234!";
-static const char* HOSTNAME_MDNS = "deafdoorbell";
+static const char* DEFAULT_AP_SSID = "DoorbellDetectorSystem";
+static const char* DEFAULT_AP_PASS = "shrek1234!";
+static const char* HOSTNAME_MDNS   = "deafdoorbell";
+
+inline String apSsid = DEFAULT_AP_SSID;
+inline String apPass = DEFAULT_AP_PASS;
 
 // ===== CONFIGURABLE STATE (NVS-backed) =====
 inline Preferences prefs;
@@ -144,6 +149,11 @@ inline void loadSettings() {
     speedX10       = prefs.getUChar("speedX10", 10);
     debounceChunks = constrain(prefs.getUChar("debounce", 2), 1, 8);
 
+    apSsid = prefs.getString("ap_ssid", DEFAULT_AP_SSID);
+    apPass = prefs.getString("ap_pass", DEFAULT_AP_PASS);
+    if (apSsid.length() == 0) apSsid = DEFAULT_AP_SSID;
+    if (apPass.length() < 8)  apPass = DEFAULT_AP_PASS;
+
     if (networkId == 0) {
         networkId = (uint16_t)random(0x1000, 0xFFFF);
         prefs.putUShort("netId", networkId);
@@ -166,10 +176,22 @@ inline void saveSettings() {
     prefs.putUChar("pattern", patternId);
     prefs.putUChar("speedX10", speedX10);
     prefs.putUChar("debounce", debounceChunks);
+    prefs.putString("ap_ssid", apSsid);
+    prefs.putString("ap_pass", apPass);
     prefs.end();
     settingsSavePending = false;
-    DEBUG_PRINTF("Committed settings to NVS: thresh=%d dur=%d bright=%d party=%d pat=%d spd=%d net=0x%04X zone=%d\n",
-                 threshold, duration, brightness, partyMode ? 1 : 0, patternId, speedX10, networkId, leaderId);
+    DEBUG_PRINTF("Committed settings to NVS: thresh=%d dur=%d bright=%d party=%d pat=%d spd=%d net=0x%04X zone=%d ssid=%s\n",
+                 threshold, duration, brightness, partyMode ? 1 : 0, patternId, speedX10, networkId, leaderId, apSsid.c_str());
+}
+
+inline void resetWifiCredentials() {
+    prefs.begin("doorbell", false);
+    prefs.remove("ap_ssid");
+    prefs.remove("ap_pass");
+    prefs.end();
+    apSsid = DEFAULT_AP_SSID;
+    apPass = DEFAULT_AP_PASS;
+    DEBUG_PRINTLN("Wi-Fi credentials reset to defaults in NVS!");
 }
 
 inline void markSettingsDirty() {

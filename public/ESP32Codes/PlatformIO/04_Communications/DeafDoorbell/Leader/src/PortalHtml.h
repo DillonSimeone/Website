@@ -705,12 +705,37 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- Wi-Fi Hotspot Settings -->
+    <div class="section-panel" id="wifiCard">
+      <span class="panel-heading">Wi-Fi Hotspot Configuration</span>
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
+        Configure the SoftAP network broadcast by this Leader unit. Connecting phones and laptops will use these credentials.
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div>
+          <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:3px;">Hotspot SSID (Network Name, max 32 chars):</label>
+          <input type="text" id="apSsidInput" maxlength="32" placeholder="DoorbellDetectorSystem" style="width:100%; padding:8px 12px; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; color:#fff; font-size:0.88rem; font-weight:600;">
+        </div>
+        <div>
+          <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:3px;">Hotspot Password (WPA2, min 8 chars):</label>
+          <input type="text" id="apPassInput" maxlength="64" placeholder="shrek1234!" style="width:100%; padding:8px 12px; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; color:var(--accent); font-family:monospace; font-size:0.88rem;">
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin-top:2px;">
+          <button class="btn-trigger" style="background:#1f6feb; color:#fff; font-size:0.82rem; height:36px; padding:0 18px; width:auto;" onclick="saveWifiCredentials()">Save &amp; Restart Wi-Fi</button>
+          <span id="wifiSaveStatus" style="font-size:0.75rem; color:var(--text-muted);"></span>
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-muted); background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:6px; border:1px solid var(--border-subtle); margin-top:4px; line-height:1.4;">
+          &#9432; <strong>Factory Reset:</strong> Press and hold the onboard <strong>BOOT button (GPIO 9)</strong> for 3 seconds to reset Wi-Fi credentials back to <code>DoorbellDetectorSystem</code> / <code>shrek1234!</code> without wiping trigger thresholds or paired followers.
+        </div>
+      </div>
+    </div>
+
     <!-- Device Information / Update -->
     <div class="section-panel" id="networkCard">
       <span class="panel-heading">Device Information / Update</span>
       <div class="net-info">
         <div><strong>Telemetry &amp; Diagnostics:</strong> <a href="/log.html">View Audio &amp; RF Telemetry (/log.html) &rarr;</a></div>
-        <div><strong>WiFi SSID:</strong> <span style="color:#fff; font-weight:bold;">LeeDoorBell</span> (Pass: <code style="color:var(--accent);">shrek1234!</code>)</div>
+        <div><strong>Active Hotspot:</strong> <span id="currentSsidDisplay" style="color:#fff; font-weight:bold;">DoorbellDetectorSystem</span></div>
         <div><strong>Local IP:</strong> 192.168.4.1</div>
         <div><strong>mDNS URL:</strong> <a id="mdnsLink" href="http://deafdoorbell.local" target="_blank">http://deafdoorbell.local</a></div>
         <div><strong>Firmware Update:</strong> <a href="/update" target="_blank">Web Firmware Update (/update)</a></div>
@@ -1085,6 +1110,35 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       triggerAutoSave(true);
     }
 
+    // Wi-Fi Hotspot Credential Management
+    function saveWifiCredentials() {
+      const ssid = document.getElementById('apSsidInput').value.trim();
+      const pass = document.getElementById('apPassInput').value.trim();
+      const status = document.getElementById('wifiSaveStatus');
+      if (!ssid) {
+        alert('SSID cannot be empty!');
+        return;
+      }
+      if (pass.length < 8) {
+        alert('Password must be at least 8 characters long!');
+        return;
+      }
+      if (!confirm(`Change Wi-Fi Hotspot to "${ssid}"?\n\nThe Leader will save this to NVS and reboot immediately.\nYou must reconnect your device to "${ssid}".`)) {
+        return;
+      }
+      status.innerText = 'Saving and restarting...';
+      status.style.color = '#e3b341';
+      fetch(`/set?ap_ssid=${encodeURIComponent(ssid)}&ap_pass=${encodeURIComponent(pass)}`)
+        .then(() => {
+          status.innerText = 'Rebooting into new Wi-Fi... Reconnect to ' + ssid;
+          status.style.color = '#3fb950';
+        })
+        .catch(() => {
+          status.innerText = 'Rebooting into new Wi-Fi... Reconnect to ' + ssid;
+          status.style.color = '#3fb950';
+        });
+    }
+
     // Follower Area & Pairing Helpers
     function updateFollowerArea(mac, area) {
       fetch('/setFollowerArea?mac=' + encodeURIComponent(mac) + '&area=' + area).catch(() => {});
@@ -1227,6 +1281,12 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           }
           if (d.leaderId !== undefined) {
             document.getElementById('leaderZoneSelect').value = d.leaderId;
+          }
+          if (d.ssid !== undefined) {
+            const ssidInput = document.getElementById('apSsidInput');
+            if (ssidInput && !ssidInput.value) ssidInput.value = d.ssid;
+            const ssidDisplay = document.getElementById('currentSsidDisplay');
+            if (ssidDisplay) ssidDisplay.innerText = d.ssid;
           }
           updateTheme();
           initialized = true;

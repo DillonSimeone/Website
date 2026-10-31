@@ -77,6 +77,21 @@ The website is a modular SPA powered by **Vite** and **Handlebars**. Content is 
 
 ---
 
+## 3e. The Haptic Petting Zoo (`public/Projects/HapticPettingZoo/`)
+* **Project Directory**: `public/Projects/HapticPettingZoo/`
+* **Master Skill**: [`.agents/skills/haptic-petting-zoo/SKILL.md`](file:///f:/Github/Website/.agents/skills/haptic-petting-zoo/SKILL.md)
+* **Local Operations Guide**: [`public/Projects/HapticPettingZoo/AGENTS.md`](file:///f:/Github/Website/public/Projects/HapticPettingZoo/AGENTS.md)
+* **Subagent Roles**:
+  - `zoo-press`: Writes Dispatch newspaper editions, press releases, ASL transcripts, and festival outreach proposals (e.g. Corvallis Kaleidoscope / PRAx). Invariant: never use `ad` in IDs or classes to prevent adblock triggers.
+  - `zoo-planning`: Maintains `ledger/ledger-data.json`, tracks Exhibit B direct costs cap ($91,200), logs billable hours via value-based milestone progress (no public $/hr rates), manages sole proprietor cash-basis tax pacing, and monitors 11/11 bulk hardware orders.
+  - `zoo-prototype`: Develops ESP32-S3 lid camera spatial tracking with VL53L1X ToF failover, 5V coin vibration MOSFET PWM critter nodes, and prepares the Dec 12 CymaSpace prototype reveal.
+* **Strict Rules**:
+  - Confine work strictly to `public/Projects/HapticPettingZoo/`.
+  - Do NOT link `ledger/ledger.html` from the public Dispatch navigation; keep it as a standalone transparency portal.
+  - Maintain complete parity between `ledger.html` and `ledger-data.json`.
+
+---
+
 ## 4. Development Guidelines
 * **DO NOT run `npm run build`**: Production builds are handled solely by the user.
 * **Card Format**: Cards in `src/content/mini-projects/` use `<div class="grid-item"><h2>Title</h2><p>... </p><ul>...</ul></div>`.

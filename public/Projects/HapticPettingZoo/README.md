@@ -32,6 +32,30 @@ All high-resolution photography, workshop imagery, schematics, and press assets 
 
 ---
 
+## 🤖 Antigravity AI Subagents Quick Reference
+
+You can spawn specialized AI subagents in this workspace at any time to assist with specific project streams:
+
+* **`zoo-press` (News Releases & Communications)**:
+  * Drafts *The Portland Tactile Dispatch* articles in `index.html`.
+  * Writes press releases, venue host booking packages, and festival outreach proposals (e.g., Corvallis Kaleidoscope / PRAx).
+  * Enforces adblock immunity (never uses `ad` classes/IDs).
+  * *Example Prompt:* `Spawn zoo-press to draft our next Dispatch edition covering the Dec 12 CymaSpace reveal.`
+
+* **`zoo-planning` (Grant Administrator & Tax Strategist)**:
+  * Maintains `ledger/ledger-data.json` and updates `ledger/ledger.html`.
+  * Tracks Exhibit B direct costs cap ($91,200), logs billable hours via milestone progress (no public $/hr rates).
+  * Manages cash-basis sole proprietorship tax pacing and 11/11 bulk hardware orders.
+  * *Example Prompt:* `Spawn zoo-planning to review my 2026 year-end tax pacing and log 5 hours for today's R&D.`
+
+* **`zoo-prototype` (Hardware & Systems Engineer)**:
+  * Develops ESP32-S3 lid camera spatial computer vision (3 proximity zones).
+  * Integrates VL53L1X ToF failover sensors and 5V coin vibration MOSFET PWM drivers.
+  * Manages component verification for the Dec 12 CymaSpace prototype reveal and WDT STEM kits.
+  * *Example Prompt:* `Spawn zoo-prototype to write the overhead hand-tracking script and test pinouts.`
+
+---
+
 ## 🔗 Links & Resources
 
 * 🌐 **Live Web Gazette & Tour Guide**: [dillonsimeone.com/Projects/HapticPettingZoo/index.html](https://dillonsimeone.com/Projects/HapticPettingZoo/index.html)

@@ -17,6 +17,8 @@
 inline DNSServer dnsServer;
 inline WebServer server(80);
 static const byte DNS_PORT = 53;
+inline bool wifiRestartPending = false;
+inline unsigned long wifiRestartAtMs = 0;
 
 // ============================================================
 //  Web Server Handlers (Batched Zero-Heap Buffer Optimization)
@@ -43,7 +45,7 @@ inline void handleData() {
 
     char jsonBuf[1536];
     int offset = snprintf(jsonBuf, sizeof(jsonBuf),
-        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"debounce\":%u,\"cooldownMs\":%u,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"pattern\":%d,\"speed\":%.1f,\"netId\":\"%04X\",\"leaderId\":%d,\"pairing\":%s,\"pairSec\":%u,\"pairedCount\":%d,\"triggered\":%s,\"diagTotal\":%u,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u,\"followers\":[",
+        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"debounce\":%u,\"cooldownMs\":%u,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"pattern\":%d,\"speed\":%.1f,\"netId\":\"%04X\",\"leaderId\":%d,\"pairing\":%s,\"pairSec\":%u,\"pairedCount\":%d,\"triggered\":%s,\"diagTotal\":%u,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"ssid\":\"%s\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u,\"followers\":[",
         reportedMad,
         levelLP,
         threshold,
@@ -62,6 +64,7 @@ inline void handleData() {
         pairedFollowerCount,
         uiTriggered ? "true" : "false",
         totalDiagEvents,
+        apSsid.c_str(),
         totalEspNowPackets,
         validDoorbellPackets,
         unknownPackets
@@ -318,7 +321,32 @@ inline void handleSet() {
         if (parsedNet != 0) networkId = parsedNet;
     }
 
-    markSettingsDirty();
+    bool wifiChanged = false;
+    if (server.hasArg("ap_ssid")) {
+        String s = server.arg("ap_ssid");
+        s.trim();
+        if (s.length() > 0 && s.length() <= 32) {
+            apSsid = s;
+            wifiChanged = true;
+        }
+    }
+    if (server.hasArg("ap_pass")) {
+        String p = server.arg("ap_pass");
+        p.trim();
+        if (p.length() >= 8 && p.length() <= 64) {
+            apPass = p;
+            wifiChanged = true;
+        }
+    }
+
+    if (wifiChanged) {
+        saveSettings();
+        wifiRestartPending = true;
+        wifiRestartAtMs = millis() + 600;
+        DEBUG_PRINTF("Wi-Fi credentials updated: SSID='%s', rebooting...\n", apSsid.c_str());
+    } else {
+        markSettingsDirty();
+    }
     server.send(200, "text/plain", "OK");
 }
 
@@ -429,7 +457,7 @@ inline void setupNetworking() {
 
     IPAddress apIP(192, 168, 4, 1);
     IPAddress netMsk(255, 255, 255, 0);
-    WiFi.softAP(AP_SSID, AP_PASS, 1);
+    WiFi.softAP(apSsid.c_str(), apPass.c_str(), 1);
     WiFi.softAPConfig(apIP, apIP, netMsk);
     esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
     dnsServer.start(DNS_PORT, "*", apIP);
@@ -482,6 +510,9 @@ inline void setupNetworking() {
 }
 
 inline void serviceNetworking(unsigned long now) {
+    if (wifiRestartPending && now >= wifiRestartAtMs) {
+        ESP.restart();
+    }
     static unsigned long lastNetHandle = 0;
     // Never interrupt an active 3-chunk (~9.6ms) chime confirmation window with HTTP work
     if (!isAudioMidTrigger() && (now - lastNetHandle >= 20)) {

@@ -1,0 +1,354 @@
+{
+  "metadata": {
+    "project_title": "The Haptic Petting Zoo: Tactile Sound & Open Kinetic Hardware",
+    "lead_artist_and_pi": "Dillon Simeone",
+    "fiscal_sponsor": "PDX Hackerspace (Control+H)",
+    "grantor": "Oregon Community Foundation (OCF) Creative Heights",
+    "total_grant_award": 96000.00,
+    "fiscal_sponsor_fee_rate": 0.05,
+    "fiscal_sponsor_fee_amount": 4800.00,
+    "direct_project_cap": 91200.00,
+    "disbursement_current_in_hand": 20000.00,
+    "current_calendar_year": 2026,
+    "tax_status": "Sole Proprietorship / Cash-Basis Schedule C (Form 1040)",
+    "last_updated": "2026-10-30T23:15:00-07:00",
+    "notes": "Direct Project costs capped at $91,200.00 under Exhibit B. Managed via cash-basis accounting to optimize sole proprietor tax liability across 2026 and 2027."
+  },
+  "disbursements": [
+    {
+      "milestone_number": 1,
+      "title": "Execution of Agreement & Delivery of Form W-9",
+      "target_date": "2026-09-11",
+      "amount": 20000.00,
+      "status": "received",
+      "received_date": "2026-09-15",
+      "conditions": "Signed Fiscal Sponsorship & Exhibit B contract, delivery of W-9 to Sponsor.",
+      "notes": "Working capital in hand for initial tooling, Q4 2026 R&D, and 11/11 bulk hardware procurement."
+    },
+    {
+      "milestone_number": 2,
+      "title": "Completion of Prototyping Phase",
+      "target_date": "2027-01-31",
+      "amount": 20000.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "Validation of core multi-sensory transit prototype (Dec 12 CymaSpace reveal), firmware architecture, and enclosure feasibility.",
+      "notes": "Targeted for January 2027 to shelter 2026 income and avoid unnecessary 2026 SE/income tax liability."
+    },
+    {
+      "milestone_number": 3,
+      "title": "Fabrication Midpoint & OCF Midpoint Interview",
+      "target_date": "2027-04-30",
+      "amount": 20000.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "50% hardware assembly completed at Control+H, OCF mid-term progress interview.",
+      "notes": "Unlocks primary maker stipends and batch component assembly."
+    },
+    {
+      "milestone_number": 4,
+      "title": "Final Assembly & Calibration Complete",
+      "target_date": "2027-06-30",
+      "amount": 15000.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "All 10 interactive touring stations fabricated, wired, calibrated, and field-tested.",
+      "notes": "Final integration of Pelican Air transit hardware."
+    },
+    {
+      "milestone_number": 5,
+      "title": "Public Exhibition Debut",
+      "target_date": "2027-08-31",
+      "amount": 12000.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "Formal public touring premiere in Oregon with community partners.",
+      "notes": "Kickoff of 2-year statewide tour."
+    },
+    {
+      "milestone_number": 6,
+      "title": "Phase 1 Fabrication Accounting Delivered to Sponsor",
+      "target_date": "2027-10-31",
+      "amount": 4200.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "Comprehensive manufacturing receipts, BOM reconciliation, and financial report submitted to Sponsor.",
+      "notes": "Final closeout of Phase 1 build budget."
+    }
+  ],
+  "budget_categories": [
+    {
+      "line_number": 1,
+      "name": "Artist Fees & Project Direction",
+      "scope": "Lead Artist & Principal Investigator (Dillon Simeone)",
+      "allocated": 35000.00,
+      "committed_value": 4160.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 35000.00,
+      "progress_percent": 11.9,
+      "notes": "Tracked via value-based milestone progress without public $/hr rates. Grantee paces personal draws to manage tax brackets."
+    },
+    {
+      "line_number": 2,
+      "name": "Production & Fabricator Stipends",
+      "scope": "Stipends for technicians, fabricators, soft-goods & accessibility specialists (Note 1)",
+      "allocated": 18000.00,
+      "committed_value": 0.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 18000.00,
+      "progress_percent": 0.0,
+      "notes": "Covers maker stipends and sponsored memberships at Control+H. Will ramp heavily in Milestones 2 and 3."
+    },
+    {
+      "line_number": 3,
+      "name": "Materials, Actuators & Components",
+      "scope": "Custom PCBs, solenoids, Peltiers, vibration motors, microcontrollers, drivers",
+      "allocated": 16500.00,
+      "committed_value": 1450.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 15050.00,
+      "progress_percent": 8.8,
+      "notes": "11/11 AliExpress bulk order allocates ~$1,450 for ESP32-S3s, ESP32-C3s, ToF sensors, and coin motors."
+    },
+    {
+      "line_number": 4,
+      "name": "Tour Equipment & Transit Cases",
+      "scope": "Ruggedized cases (Pelican/Apache equivalents) & custom internal CNC frames",
+      "allocated": 6500.00,
+      "committed_value": 420.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 6080.00,
+      "progress_percent": 6.5,
+      "notes": "Initial procurement for 3-5 prototype transit cases (costing lower than expected due to commercial sales)."
+    },
+    {
+      "line_number": 5,
+      "name": "Tour Logistics, Travel & Shipping",
+      "scope": "2-year Oregon transit, venue support, and commercial liability insurance (Note 2)",
+      "allocated": 7700.00,
+      "committed_value": 0.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 7700.00,
+      "progress_percent": 0.0,
+      "notes": "Includes the $200 unallocated surplus roll-in from Memo."
+    },
+    {
+      "line_number": 6,
+      "name": "Media, Video & ASL Production",
+      "scope": "High-speed macro capture, Deaf-led media, and accessible ASL documentation",
+      "allocated": 4500.00,
+      "committed_value": 0.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 4500.00,
+      "progress_percent": 0.0,
+      "notes": "Scheduled for video documentation leading up to exhibition debut."
+    },
+    {
+      "line_number": 7,
+      "name": "Hardware Maintenance Reserve",
+      "scope": "Field repairs, spares, and wear replacement stock across 2-year tour",
+      "allocated": 3000.00,
+      "committed_value": 0.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 3000.00,
+      "progress_percent": 0.0,
+      "notes": "Held in reserve for replacement tactile transducers during regional tour."
+    }
+  ],
+  "activities_log": [
+    {
+      "id": "ACT-001",
+      "date": "2026-09-11",
+      "phase": "Milestone 1",
+      "category": "Grant Administration & Legal",
+      "title": "Fiscal Sponsorship & Exhibit B Budget Finalization",
+      "description": "Reviewed and executed Fiscal Sponsorship Agreement with Jonathan Hannis (PDX Hackerspace). Finalized Exhibit B Direct Costs budget ($91,200 cap), drafted Grantee Review Memo, resolved $200 surplus to Line 5, and submitted W-9.",
+      "hours": 8.0,
+      "target_milestone": 1,
+      "burn_credit_usd": 640.00
+    },
+    {
+      "id": "ACT-002",
+      "date": "2026-09-24",
+      "phase": "Milestone 1",
+      "category": "Sponsor & Funder Alignment",
+      "title": "OCF Strategic Check-in & Tour Roadmapping",
+      "description": "One-on-one strategic meeting with Oregon Community Foundation program officers. Presented project teleprompter roadmap, confirmed 2026–2028 touring vision, and discussed rural venue accessibility criteria.",
+      "hours": 1.5,
+      "target_milestone": 1,
+      "burn_credit_usd": 120.00
+    },
+    {
+      "id": "ACT-003",
+      "date": "2026-10-02",
+      "phase": "Milestone 1",
+      "category": "Community Outreach & Curatorial",
+      "title": "Corvallis Kaleidoscope & PRAx Partnership Proposal",
+      "description": "Drafted and submitted formal Deaf-led science festival proposal with Susan Anderson (CymaSpace) to Corvallis Kaleidoscope & Graand Kinetic Challenge. Proposed 'Torque, Resonance & Light' kinetic gear train + tactile frequency station and festival-wide AV accessibility audit.",
+      "hours": 6.5,
+      "target_milestone": 1,
+      "burn_credit_usd": 520.00
+    },
+    {
+      "id": "ACT-004",
+      "date": "2026-10-14",
+      "phase": "Milestone 1",
+      "category": "STEAM Education & Grants",
+      "title": "World Deaf Timberfest (WDT) 100-Kid STEM Workshop Scoping",
+      "description": "Conducted program negotiations with WDT administrators. Secured initial $1,000 budget (with $1,000 secondary funding pending) to lead a hands-on tactile STEM workshop for 100 Deaf youth. Structured curriculum around HAXEL tactile motor nodes to generate matching cost-share synergy with NEA grant.",
+      "hours": 5.0,
+      "target_milestone": 1,
+      "burn_credit_usd": 400.00
+    },
+    {
+      "id": "ACT-005",
+      "date": "2026-10-22",
+      "phase": "Milestone 1",
+      "category": "Public Engagement & Web Systems",
+      "title": "The Portland Tactile Dispatch Web Portal Engineering",
+      "description": "Engineered standalone, mobile-responsive broadsheet news-gazette portal (public/Projects/HapticPettingZoo/index.html). Integrated interactive canvas frequency synthesizer (5Hz–300Hz mechanoreceptor mapping), Crowd Supply Teardown 2026 video showcase, and Control+H maker onboarding.",
+      "hours": 16.0,
+      "target_milestone": 1,
+      "burn_credit_usd": 1280.00
+    },
+    {
+      "id": "ACT-006",
+      "date": "2026-10-30",
+      "phase": "Milestone 1 / 2 Prep",
+      "category": "Hardware R&D & Procurement",
+      "title": "Dec 12 CymaSpace Prototype Design & 11/11 Bulk BOM Scoping",
+      "description": "Coordinated Dec 12, 2026 prototype reveal date with CymaSpace. Architected Pelican case lid computer vision tracking (ESP32-S3-CAM + VL53L1X ToF distance sensing for 3 proximity zones) modulating 5V coin vibrator critter nodes. Developed comprehensive 11/11 AliExpress bulk procurement strategy.",
+      "hours": 15.0,
+      "target_milestone": 2,
+      "burn_credit_usd": 1200.00
+    }
+  ],
+  "procurement_pipeline": {
+    "target_event": "11/11 Global Shopping Festival (AliExpress & Direct Vendors)",
+    "target_spend_budget": 1870.00,
+    "source_disbursement": "Milestone 1 ($20,000 in hand)",
+    "items": [
+      {
+        "item_id": "PROC-01",
+        "description": "ESP32-S3-CAM Dev Boards (N16R8 / OV2640 / Ext Antenna)",
+        "quantity": 15,
+        "est_unit_cost": 6.80,
+        "est_total_cost": 102.00,
+        "budget_line": 3,
+        "intended_use": "Overhead lid spatial computer vision & interactive station DSP controllers"
+      },
+      {
+        "item_id": "PROC-02",
+        "description": "ESP32-C3 SuperMini RISC-V Microcontrollers",
+        "quantity": 120,
+        "est_unit_cost": 1.95,
+        "est_total_cost": 234.00,
+        "budget_line": 3,
+        "intended_use": "100-kid WDT STEM tactile workshop kits + satellite critter node breakouts"
+      },
+      {
+        "item_id": "PROC-03",
+        "description": "5V Coin Vibration Motors (ERM 1027/1030 Flat Pancake)",
+        "quantity": 300,
+        "est_unit_cost": 0.48,
+        "est_total_cost": 144.00,
+        "budget_line": 3,
+        "intended_use": "3x motors per WDT STEM kit + Dec 12 CymaSpace prototype critters"
+      },
+      {
+        "item_id": "PROC-04",
+        "description": "VL53L1X Time-of-Flight (ToF) Distance Sensors (400cm range)",
+        "quantity": 20,
+        "est_unit_cost": 3.10,
+        "est_total_cost": 62.00,
+        "budget_line": 3,
+        "intended_use": "Touch/proximity failover sensors for variable ambient venue lighting"
+      },
+      {
+        "item_id": "PROC-05",
+        "description": "AO3400A Dual/Quad N-MOSFET PWM Driver Breakout Modules",
+        "quantity": 50,
+        "est_unit_cost": 0.90,
+        "est_total_cost": 45.00,
+        "budget_line": 3,
+        "intended_use": "Low-side PWM switching for 5V coin motors and solenoids"
+      },
+      {
+        "item_id": "PROC-06",
+        "description": "Tactile Bass Exciters & Bone Conduction Transducers (4Ω 25W)",
+        "quantity": 10,
+        "est_unit_cost": 18.50,
+        "est_total_cost": 185.00,
+        "budget_line": 3,
+        "intended_use": "Deep acoustic resonance surfaces and tactile bench installations"
+      },
+      {
+        "item_id": "PROC-07",
+        "description": "Thermoelectric Peltier Modules (TEC1-12706) & Dual H-Bridges",
+        "quantity": 10,
+        "est_unit_cost": 7.20,
+        "est_total_cost": 72.00,
+        "budget_line": 3,
+        "intended_use": "Dynamic thermal skin sensations (hot/cold tactile modulation)"
+      },
+      {
+        "item_id": "PROC-08",
+        "description": "5V/12V Push-Pull Solenoids & High-Transient Tappers",
+        "quantity": 12,
+        "est_unit_cost": 4.80,
+        "est_total_cost": 57.60,
+        "budget_line": 3,
+        "intended_use": "Sharp mechanical recoil and percussive tactile feedback"
+      },
+      {
+        "item_id": "PROC-09",
+        "description": "Heavy-Duty Waterproof Weatherproof Transit Cases (Pelican/Apache equiv)",
+        "quantity": 4,
+        "est_unit_cost": 85.00,
+        "est_total_cost": 340.00,
+        "budget_line": 4,
+        "intended_use": "Rugged touring enclosures for Dec 12 prototype and initial 3 stations"
+      },
+      {
+        "item_id": "PROC-10",
+        "description": "USB-C PD Decoy Trigger Boards (5V/9V/12V) + JST-XH Connectors & Wiring",
+        "quantity": 60,
+        "est_unit_cost": 1.20,
+        "est_total_cost": 72.00,
+        "budget_line": 3,
+        "intended_use": "Clean universal power delivery from standard USB-C battery packs"
+      },
+      {
+        "item_id": "PROC-11",
+        "description": "Neodymium Mounting Magnets, Silicone Dampers & Quick-Release Hardware",
+        "quantity": 1,
+        "est_unit_cost": 95.00,
+        "est_total_cost": 95.00,
+        "budget_line": 4,
+        "intended_use": "Modular tactile plate mounting and vibration isolation"
+      }
+    ]
+  },
+  "external_matching_pipelines": [
+    {
+      "program": "World Deaf Timberfest (WDT) 2027",
+      "focus": "100-Kid Deaf Youth Tactile STEM Workshop",
+      "direct_funding_committed": 1000.00,
+      "potential_additional": 1000.00,
+      "synergy": "Direct deployment of Haptic Zoo STEM mini-kits, generating real-world usability data and youth mentorship."
+    },
+    {
+      "program": "National Endowment for the Arts (NEA) Arts Education",
+      "focus": "K-12 DHH STEAM Curriculum with Columbia Regional Inclusive Services",
+      "grant_request": 100000.00,
+      "matching_funds_committed": 120665.00,
+      "synergy": "OCF hardware R&D and HAXEL firmware serve as eligible matching cost-share funds for federal STEAM education."
+    },
+    {
+      "program": "Corvallis Kaleidoscope / PRAx / Graand Kinetic Challenge",
+      "focus": "Torque, Resonance & Light Kinetic Gear Train & Statewide AV Accessibility Audit",
+      "status": "In Committee Review (Stacey / GKC & Heather)",
+      "synergy": "High-profile campus science festival showcase highlighting Deaf-led kinetic and tactile engineering."
+    }
+  ]
+}

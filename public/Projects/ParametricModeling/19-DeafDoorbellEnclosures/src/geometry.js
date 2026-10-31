@@ -138,14 +138,13 @@ export function buildMasterBase(M, p) {
         .subtract(tabCableNotch)
         .subtract(s1).subtract(s2).subtract(s3).subtract(s4);
 
-    // Add 3 Staggered Serpentine Strain-Relief Gripper Pillars inside srBay
-    // Forces the 4mm USB-C cable into a gentle S-curve that locks against pull-out forces!
-    const postR = 2.4;
+    // Add 2 Halved Serpentine Strain-Relief Gripper Pillars inside srBay (Top pillar removed for plug clearance!)
+    // Halved radius (postR = 1.2mm) allows the USB-C cable to seat easily without crowding the plug head
+    const postR = 1.2;
     const postZ = bodyH / 2 - srBayH / 2;
-    const srPost1 = M.cylinder(srBayH, postR, postR, 20, true).translate([-3.1, -20.5, postZ]);
-    const srPost2 = M.cylinder(srBayH, postR, postR, 20, true).translate([3.1, -24.5, postZ]);
-    const srPost3 = M.cylinder(srBayH, postR, postR, 20, true).translate([-3.1, -28.5, postZ]);
-    base = base.add(srPost1).add(srPost2).add(srPost3);
+    const srPost1 = M.cylinder(srBayH, postR, postR, 20, true).translate([2.6, -24.5, postZ]);
+    const srPost2 = M.cylinder(srBayH, postR, postR, 20, true).translate([-2.6, -28.5, postZ]);
+    base = base.add(srPost1).add(srPost2);
 
     // 6. Six-Hole Hex Acoustic Array in Pocket Floor around Central Horn
     for (let dy of [-6.5, 6.5]) {
@@ -198,10 +197,10 @@ export function buildMasterLid(M, p) {
         }
     }
 
-    // 2. Strain-Relief Cable Hold-Down Bar (Presses down into serpentine bay at Y = -30.0 to -19.0mm
-    //    so the 4.0mm USB-C cable stays locked between the S-curve posts)
-    const srHoldBar = M.cube([3.2, 11.0, 1.8], true)
-        .translate([0, -24.5, -lidH / 2 - 0.9]);
+    // 2. Strain-Relief Cable Hold-Down Bar (Presses gently between the 2 remaining posts at Y = -29.5 to -23.5mm
+    //    keeping the USB-C cable seated while leaving Y > -23.0mm 100% open for the plug head)
+    const srHoldBar = M.cube([2.4, 6.0, 1.2], true)
+        .translate([0, -26.5, -lidH / 2 - 0.6]);
     lid = lid.add(srHoldBar);
 
     // 3. Upper USB-C Plug Relief Channel (13.0mm W x 1.0mm D over plug bay at Y = -19.0 to +2.5mm)
@@ -658,8 +657,8 @@ export function buildFollowerStand(M, p) {
     const baseW = 96.0;   // Overall stance width
     const baseL = 105.0;  // Length from front toe to rear tips
     const deckThick = 4.5;
-    const cradleW = 81.5; // Inner pocket width for Follower + PETG Cover (80.7mm wide)
-    const shelfZ = 12.0;  // Positive bottom shelf height (prevents dropping through!)
+    const cradleW = 80.8; // Snug 80.8mm inner width (PETG cover is 79.9mm, crisp 0.45mm clearance per side!)
+    const shelfZ = 10.0;  // Shelf at Z = 10.0mm (mates flush with PETG cover bottom skirt at Z = 10.05mm!)
     const cradleH = 34.0; // 34.0mm tall cradle cheeks
     const baseH = p.followerBaseThickness || 12.0;
 
@@ -694,30 +693,32 @@ export function buildFollowerStand(M, p) {
         .translate([36.0, -15.0, 0]);
     base = base.add(triL).add(triR);
 
-    // 2. Docking Cradle at the front (Y = -5 to +15)
-    const cradleBody = M.cube([87.0, 22.0, cradleH], true).translate([0, 3.0, cradleH / 2]);
+    // 2. Docking Cradle at the front (Snug 88mm wide x 23mm deep, centered at Y = 0.0)
+    const cradleBody = M.cube([88.0, 23.0, cradleH], true).translate([0, 0.0, cradleH / 2]);
 
-    // Pocket for Follower base + PETG cover (81.5mm wide x 16.4mm thick, rear wall at Y = +10.5, shelf at Z = 12.0mm)
-    const pocket = M.cube([cradleW, 16.4, 30.0], true).translate([0, 2.3, shelfZ + 15.0]);
+    // Pocket for Follower base + PETG cover (80.8mm wide x 18.6mm deep, Y: -9.05 to +9.55, shelf at Z = 10.0mm)
+    // Follower + Cover spans Y = -8.55 to +9.0, giving precise 0.5mm clearance with zero side or front gaps!
+    const pocket = M.cube([cradleW, 18.6, 32.0], true).translate([0, 0.25, shelfZ + 16.0]);
 
-    // Tab slot below shelf: receives the 64mm wide bottom mounting tab + full-height PETG tab fins (Z = 2.5 to 12.0mm on solid floor)
-    const tabSlot = M.cube([65.0, 16.4, shelfZ - 2.5 + 0.1], true).translate([0, 2.3, (shelfZ + 2.5) / 2]);
+    // Tab slot below shelf: receives the 64mm wide bottom mounting tab + PETG tab fins (Z = 2.0 to 10.0mm)
+    // Sized 64.8mm wide (X = ±32.4mm) leaving solid 8.0mm-wide support shoulders from X = ±32.4 to ±40.4mm!
+    const tabSlot = M.cube([64.8, 18.8, shelfZ - 2.0 + 0.1], true).translate([0, 0.25, (shelfZ + 2.0) / 2]);
 
     // Center wire drop slot: 14mm wide conduit cutting out the back
-    const wireSlot = M.cube([14.0, 30.0, cradleH + 5.0], true).translate([0, 10.0, cradleH / 2]);
+    const wireSlot = M.cube([14.0, 30.0, cradleH + 5.0], true).translate([0, 8.0, cradleH / 2]);
 
     // Half-space buttress slice: cuts all material above 45° slope (zero overhangs, zero floating slivers!)
     const buttressSlice = M.cube([200.0, 200.0, 200.0], true)
         .rotate([45, 0, 0])
         .translate([0, 88.71, 88.71]);
 
-    // Front Lid Clearance Window: 36.0mm wide opening completely clearing Follower lid and M3 screws
-    const lidWindow = M.cube([36.0, 30.0, cradleH + 10.0], true)
-        .translate([0, -10.0, cradleH / 2]);
+    // Front Lid Clearance Window: 64.8mm wide opening completely clearing front face between retaining lips
+    const lidWindow = M.cube([64.8, 20.0, cradleH + 10.0], true)
+        .translate([0, -8.0, cradleH / 2]);
 
-    // Front Retaining Lip on shoulders: 5mm tall lip above shelf at Z = 17mm
+    // Front Retaining Lip on shoulders: 6mm tall lip (Z = 10 to 16mm) at X = ±32.4..±40.4mm, holding front flush
     const shoulderLipCut = M.cube([95.0, 20.0, cradleH], true)
-        .translate([0, -13.4, 17.0 + cradleH / 2]);
+        .translate([0, -14.0, 16.0 + cradleH / 2]);
 
     let cradle = cradleBody
         .subtract(pocket)
@@ -727,38 +728,7 @@ export function buildFollowerStand(M, p) {
         .subtract(lidWindow)
         .subtract(shoulderLipCut);
 
-    let stand = base.add(cradle);
-
-    // 3. SHOE-LACING HOOKS ROTATED 180° (Facing OUTWARD to catch winding cable!)
-    function makeLaceHook(x, y) {
-        const postW = 8.0;
-        const postL = 10.0;
-        const postH = 14.0;
-        let hook = M.cube([postW, postL, postH], true).translate([0, 0, postH / 2]);
-
-        // ROTATED 180°: 45° self-supporting undercut on OUTER face (facing away from center X=0)
-        const outerSide = x > 0 ? 1 : -1;
-        const vCut = M.cube([6.0, postL + 2.0, 6.0], true)
-            .rotate([0, 45, 0])
-            .translate([outerSide * postW / 2, 0, 8.0]);
-        hook = hook.subtract(vCut);
-
-        // 45° top chamfer on INNER face
-        const topChamfer = M.cube([6.0, postL + 2.0, 6.0], true)
-            .rotate([0, 45, 0])
-            .translate([-outerSide * (postW / 2 + 1.0), 0, postH]);
-        hook = hook.subtract(topChamfer);
-
-        return hook.translate([x, y, 0]);
-    }
-
-    const hookYPositions = [26.0, 46.0, 66.0];
-    const hookX = 39.0;
-    hookYPositions.forEach(y => {
-        stand = stand.add(makeLaceHook(-hookX, y)).add(makeLaceHook(hookX, y));
-    });
-
-    return stand;
+    return base.add(cradle);
 }
 
 // -------------------------------------------------------------------------

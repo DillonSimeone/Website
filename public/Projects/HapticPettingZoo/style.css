@@ -598,21 +598,21 @@ body {
   color: var(--ink-black);
 }
 
-.woodcut-ad {
+.woodcut-colophon {
   border: 3px double var(--ink-black);
   padding: 12px;
   text-align: center;
   background-color: #faf5e6;
 }
 
-.woodcut-ad h5 {
+.woodcut-colophon h5 {
   font-family: var(--font-headline);
   font-size: 1.1rem;
   letter-spacing: 2px;
   margin-bottom: 4px;
 }
 
-.woodcut-ad p {
+.woodcut-colophon p {
   font-size: 0.8rem;
   font-style: italic;
 }
