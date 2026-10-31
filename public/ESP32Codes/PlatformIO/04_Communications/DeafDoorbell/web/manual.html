@@ -1336,61 +1336,89 @@
         </section>
 
         <!-- ============================================================
-             CHAPTER 5: USING MULTIPLE DOORBELLS
+             CHAPTER 5: USING MULTIPLE DOORBELLS (PAIR ONCE, COLOR-CODE YOUR DOORS)
              ============================================================ -->
         <section id="zoning" class="manual-section">
             <div class="section-header">
                 <div class="section-title-wrap">
                     <span class="section-badge">05</span>
-                    <h2>Using Multiple Doorbells (Multi-Door Setup)</h2>
+                    <h2>Using Multiple Doorbells (Pair Once &amp; Color-Code)</h2>
                 </div>
-                <span class="badge badge-pink">Multi-Zone</span>
+                <span class="badge badge-pink">Multi-Door Setup</span>
             </div>
 
+            <!-- Big Clarity Question & Answer -->
             <div class="faq-item" style="border:none; padding:0 0 16px;">
                 <div class="faq-q" style="font-size:1.05rem; color:var(--cyan);">
                     Can a light display connect to more than one doorbell sensor?
                 </div>
                 <div class="faq-a" style="font-size:0.92rem; color:#fff;">
-                    <strong>YES! A Light Display can easily respond to multiple Doorbell Sensors.</strong><br>
-                    If your home has a front door and a back door (or side gate), you can place a sensor at each chime.
+                    <strong>YES! In fact, you only need to pair your lights once!</strong><br>
+                    You never have to pair your lights a second time for a second doorbell. Here is the secret to how it works:
+                </div>
+            </div>
+
+            <!-- The Core Discovery Callout -->
+            <div class="callout callout-info" style="margin:14px 0;">
+                <div class="callout-icon">&#9432;</div>
+                <div>
+                    <strong>How Alerts Actually Work Over the Air:</strong><br>
+                    When you pair a Light Display, you are simply saving your home's 4-character <strong>House Key</strong> (for example, <code>A48F</code>) into its permanent memory.
+                    <br><br>
+                    When someone presses your doorbell, the sensor doesn't need to look up individual light addresses. It simply blasts a wireless alert into the air stamped with your House Key. <strong>Every single light in your home that shares that House Key will hear it and flash instantly at the exact same millisecond!</strong>
+                    <br><br>
+                    Because of this, as long as both Doorbell Sensors are set to the same House Key, all your lights automatically react to both doors without any extra pairing!
+                </div>
+            </div>
+
+            <!-- Color-Coding Your Doors -->
+            <h3 style="font-size:0.95rem; margin:22px 0 10px; color:#fff;">Color-Code Your Doors (Know Instantly Which Door is Ringing)</h3>
+            <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:14px;">
+                Instead of complicated zone menus, you can give each door its own distinct personality and color in its control page:
+            </p>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin-bottom:18px;">
+                <div style="background:rgba(0, 243, 255, 0.05); border:1px solid rgba(0, 243, 255, 0.3); border-radius:10px; padding:16px;">
+                    <h4 style="color:var(--cyan); margin-bottom:6px; font-size:0.9rem;">Front Door: Cyan</h4>
+                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
+                        In your Front Door sensor settings, choose <strong>Cyan</strong> with the gentle <strong>Breathe</strong> animation. When a guest arrives at the front door, your whole house glows with soothing Cyan waves.
+                    </p>
+                </div>
+
+                <div style="background:rgba(255, 157, 0, 0.05); border:1px solid rgba(255, 157, 0, 0.3); border-radius:10px; padding:16px;">
+                    <h4 style="color:var(--orange); margin-bottom:6px; font-size:0.9rem;">Back Door: Amber</h4>
+                    <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
+                        In your Back Door sensor settings, choose <strong>Amber</strong> with the energetic <strong>Bouncing Bar</strong> animation. When a delivery arrives at the patio, your whole house glows warm Amber.
+                    </p>
                 </div>
             </div>
 
             <div class="arch-diagram">
                 <div class="arch-node">
                     <h4>Front Door Sensor</h4>
-                    <p>House Code: <code style="color:var(--cyan);">Shared</code><br>Zone: <strong style="color:#fff;">Area 1 (Front Door)</strong></p>
+                    <p>House Key: <code style="color:var(--cyan);">A48F</code><br>Color: <strong style="color:var(--cyan);">Cyan Breathe</strong></p>
                 </div>
                 <div class="arch-bus">
-                    <span>WIRELESS LINK</span>
+                    <span>WIRELESS MESH</span>
                     <span>&harr; &harr; &harr;</span>
-                    <span style="font-size:0.65rem; color:var(--text-muted);">ALL LIGHTS HEAR BOTH</span>
+                    <span style="font-size:0.65rem; color:var(--text-muted);">ALL LIGHTS REACT TO BOTH</span>
                 </div>
                 <div class="arch-node">
                     <h4>Back Door Sensor</h4>
-                    <p>House Code: <code style="color:var(--cyan);">Shared</code><br>Zone: <strong style="color:#fff;">Area 2 (Back Door)</strong></p>
+                    <p>House Key: <code style="color:var(--cyan);">A48F</code><br>Color: <strong style="color:var(--orange);">Amber Bounce</strong></p>
                 </div>
             </div>
 
-            <h3 style="font-size:0.95rem; margin:20px 0 10px; color:#fff;">How to Set Up Multiple Doors:</h3>
+            <h3 style="font-size:0.95rem; margin:22px 0 10px; color:#fff;">Easy 3-Step Setup for Two Doors:</h3>
             <ol style="padding-left:18px; color:var(--text-secondary); display:flex; flex-direction:column; gap:10px; font-size:0.88rem;">
                 <li>
-                    <strong>Set Distinct Wi-Fi Hotspots:</strong> Power up your front door sensor first and rename its hotspot to <code>Doorbell_FrontDoor</code> under the Wi-Fi card. Then power up your back door sensor and rename its hotspot to <code>Doorbell_BackDoor</code>. Now you can easily connect to either door's settings page anytime.
+                    <strong>Set Up the Front Door:</strong> Plug in your Front Door sensor first. In its control page, set its color to <strong>Cyan</strong> and rename its hotspot to <code>Doorbell_FrontDoor</code>. Copy its 4-character <strong>House Key</strong> (such as <code>A48F</code>).
                 </li>
                 <li>
-                    <strong>Share the Same House Code:</strong> In your Front Door Sensor's control page, copy its 4-character <strong>House Key</strong> (for example, <code>A48F</code>). Open your Back Door Sensor's control page and type in the exact same House Key so all sensors speak the same language.
+                    <strong>Set Up the Back Door:</strong> Plug in your Back Door sensor. Open its control page, paste in the exact same 4-character <strong>House Key</strong>, pick a different color (such as <strong>Amber</strong>), and rename its hotspot to <code>Doorbell_BackDoor</code>.
                 </li>
                 <li>
-                    <strong>Assign Each Door a Zone:</strong> Set your front door sensor to <strong>Area 1 (Front Door)</strong> and your back door sensor to <strong>Area 2 (Back Door)</strong>.
-                </li>
-                <li>
-                    <strong>Pick Which Lights React:</strong> In your control page follower table, you can choose:
-                    <ul style="margin-top:6px; padding-left:18px;">
-                        <li><strong style="color:#fff;">All Trigger Areas (Default):</strong> The light flashes whenever <em>either</em> door rings.</li>
-                        <li><strong style="color:var(--cyan);">Front Door Only:</strong> The light will only flash when visitors arrive at the front door.</li>
-                        <li><strong style="color:var(--pink);">Back Door Only:</strong> Perfect for a light display in the kitchen, back patio, or garage.</li>
-                    </ul>
+                    <strong>Pair Your Lights Once:</strong> Pair your Light Displays to either sensor using the standard 3-second button hold. You are done! Both door sensors will now trigger all the lights in your home with their own unique colors.
                 </li>
             </ol>
         </section>
