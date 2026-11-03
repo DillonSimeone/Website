@@ -141,7 +141,7 @@
 
 			for ( const name in attributes ) {
 
-				const mergedAttribute = this.mergeBufferAttributes( attributes[ name ] );
+				const mergedAttribute = BufferGeometryUtils.mergeBufferAttributes( attributes[ name ] );
 
 				if ( ! mergedAttribute ) {
 
@@ -172,7 +172,7 @@
 
 					}
 
-					const mergedMorphAttribute = this.mergeBufferAttributes( morphAttributesToMerge );
+					const mergedMorphAttribute = BufferGeometryUtils.mergeBufferAttributes( morphAttributesToMerge );
 
 					if ( ! mergedMorphAttribute ) {
 
