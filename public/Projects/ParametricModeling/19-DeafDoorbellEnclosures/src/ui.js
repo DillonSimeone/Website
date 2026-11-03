@@ -5,6 +5,8 @@ import {
     manifoldToThreeGeometry,
     buildMasterBase,
     buildMasterLid,
+    buildRepeaterBase,
+    buildRepeaterLid,
     buildFollowerBase,
     buildFollowerLid,
     buildFollowerPetgLid,
@@ -85,6 +87,32 @@ export function rebuildActiveGeometry() {
                 position: new THREE.Vector3(0, 0, zPos)
             });
             mLid.delete();
+        }
+    } else if (context.activePreset.startsWith('repeater')) {
+        // Repeater Node Rendering (Ultra-Slim 10.5mm Depth)
+        if (context.activePreset === 'repeater_all' || context.activePreset === 'repeater_base') {
+            const rBase = buildRepeaterBase(M, params);
+            const geom = manifoldToThreeGeometry(rBase);
+            items.push({
+                geometry: geom,
+                material: matBase,
+                edgeColor: 0x002233,
+                position: new THREE.Vector3(0, 0, 0)
+            });
+            rBase.delete();
+        }
+
+        if (context.activePreset === 'repeater_all' || context.activePreset === 'repeater_lid') {
+            const rLid = buildRepeaterLid(M, params);
+            const geom = manifoldToThreeGeometry(rLid);
+            const zPos = 10.5 / 2 + 2.4 / 2 + explodeZ;
+            items.push({
+                geometry: geom,
+                material: matLid,
+                edgeColor: 0x330011,
+                position: new THREE.Vector3(0, 0, zPos)
+            });
+            rLid.delete();
         }
     } else if (context.activePreset === 'follower_stand') {
         // Standalone Outrigger Stand with Ship Cleat View

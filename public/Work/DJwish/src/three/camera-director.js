@@ -27,7 +27,7 @@ export class CameraDirector {
     this.camera = camera;
     this.mode = 'intro';
     this.introTime = 0;
-    this.introDuration = 14;
+    this.introDuration = 8; // Shortened from 14s for fast 30s booker onboarding
     this.ignite = 0;
     this.scroll = 0;
     this.scrollTarget = 0;
@@ -36,11 +36,13 @@ export class CameraDirector {
     this.transitionDuration = 1.6;
     this.stageShot = 'stage';
     this.parallax = 1;
-    this.scrollEase = 3.5;
+    this.scrollEase = 3.8;
     this.modeBeforeSettings = 'street';
     this.settingsDisc = null;
     this.stageClock = 0;
     this.onIntroComplete = null;
+    this.onIntroApproach = null;
+    this.introApproachTriggered = false;
 
     this.pos = new THREE.Vector3();
     this.tgt = new THREE.Vector3();
@@ -91,6 +93,7 @@ export class CameraDirector {
   startIntro() {
     this.mode = 'intro';
     this.introTime = 0;
+    this.introApproachTriggered = false;
     this.ignite = 0;
     this.scroll = this.scrollTarget = 0;
   }
@@ -113,7 +116,7 @@ export class CameraDirector {
     if (this.mode === 'intro') this.skipIntro(true);
     this.mode = 'stage';
     this.stageShot = shot;
-    this.beginTransition(shot === 'stage' ? 1.6 : 3.2);
+    this.beginTransition(shot === 'stage' ? 2.5 : 3.2);
   }
 
   setStageShot(shot) {
@@ -126,7 +129,7 @@ export class CameraDirector {
 
   exitStage() {
     this.mode = 'street';
-    this.beginTransition(this.stageShot === 'stage' ? 1.6 : 2.6);
+    this.beginTransition(this.stageShot === 'stage' ? 2.0 : 2.6);
   }
 
   /** Fly to the pyramid tip and frame the settings disc (provides getCameraPose). */
@@ -156,22 +159,108 @@ export class CameraDirector {
     const n = STOPS.length;
     const s = this.scroll * (n - 1);
     const i = Math.min(n - 2, Math.floor(s));
-    const k = smoothstep(0.1, 0.9, s - i);
+    const k = smoothstep(0.08, 0.92, s - i);
     const a = STOPS[i];
     const b = STOPS[i + 1];
 
-    // Narrow screens can't fit content + pyramid, so they turn toward the content.
+    // Narrow screens turn directly toward content so it takes up full screen
     const wide = clamp01((this.aspect - 0.6) / 1.0);
     const yawA = lerp(a.focusYaw, a.yaw, wide);
     const yawB = lerp(b.focusYaw, b.yaw, wide);
 
-    outPos.set(lerp(a.pos[0], b.pos[0], k), lerp(a.pos[1], b.pos[1], k), lerp(a.pos[2], b.pos[2], k));
+    let posX = lerp(a.pos[0], b.pos[0], k);
+    let posY = lerp(a.pos[1], b.pos[1], k);
+    let posZ = lerp(a.pos[2], b.pos[2], k);
+    let yaw = lerp(yawA, yawB, k);
+    let pitch = lerp(a.pitch, b.pitch, k);
+
+    if (i === 0) {
+      // 1/8 (Bio at x=-36, z=-44) -> 2/8 (CodaFest at x=-32, z=-85, y=112):
+      // Swing out to open street centerline (x ~ 0) to clear the bio firewall before ascending
+      const midArch = Math.sin(k * Math.PI);
+      posX += midArch * 26;
+      posY = lerp(a.pos[1], b.pos[1], easeInOutCubic(k));
+    } else if (i === 1) {
+      // 2/8 (CodaFest West face) -> 3/8 (WDT North face):
+      // Outward orbital arc around the elevator building's northwest corner (x=18, z=-166)
+      const orbitArch = Math.sin(k * Math.PI);
+      posX -= orbitArch * 34; // sweep far to the west into open plaza
+      posZ -= orbitArch * 22; // round the corner safely
+      posY += orbitArch * 4;
+    } else if (i === 2) {
+      // 3/8 (WDT North face at [31, 108, -200]) -> 4/8 (Confluence East face at [82, 108, -140]):
+      // Outward orbital arc around the elevator building's northeast corner (x=44, z=-166)
+      const orbitArch = Math.sin(k * Math.PI);
+      posX = lerp(a.pos[0], b.pos[0], k) + orbitArch * 14;
+      posZ = lerp(a.pos[2], b.pos[2], k) - orbitArch * 24;
+      posY += orbitArch * 3;
+      yaw = lerp(yawA, 270, k); // Smooth continuous turn from 178 deg to 270 deg
+    } else if (i === 3) {
+      // 4/8 (Confluence East face at [82, 108, -140]) -> 5/8 (ADA South face at [31, 108, -68]):
+      // Outward orbital arc around the elevator building's southeast corner (x=44, z=-114)
+      const orbitArch = Math.sin(k * Math.PI);
+      posX = lerp(a.pos[0], b.pos[0], k) + orbitArch * 14;
+      posZ = lerp(a.pos[2], b.pos[2], k) + orbitArch * 24;
+      posY += orbitArch * 3;
+      let rotYaw = lerp(270, 360, k);
+      if (rotYaw >= 360) rotYaw -= 360;
+      yaw = rotYaw; // Smooth continuous turn from 270 deg to 360/0 deg
+    } else if (i === 4) {
+      // 5/8 (ADA South face at y=108, z=-68) -> 6/8 (Technical Rider at y=6.5, z=105):
+      // Somersault backflip launch over 120m elevator skyscraper:
+      // Vault up to 166m altitude (clearing 123m roof cap by 43m),
+      // steep dive-bomb pitch (-65 deg) directly over the rooftop capstone & neon cylinders,
+      // then swoop down the open street avenue into 6/8 Technical Rider.
+
+      if (k < 0.20) {
+        const t = smoothstep(0, 0.20, k);
+        posY = lerp(a.pos[1], 166, t);
+      } else if (k < 0.35) {
+        const t = smoothstep(0.20, 0.35, k);
+        posY = lerp(166, 152, t);
+      } else {
+        const t = clamp01((k - 0.35) / 0.65);
+        const easeOut = 1 - Math.pow(1 - t, 2.2);
+        posY = lerp(152, b.pos[1], easeOut);
+      }
+
+      const backArch = Math.sin(Math.min(1, k / 0.35) * Math.PI);
+      posZ = lerp(a.pos[2], b.pos[2], smoothstep(0.15, 1.0, k)) - backArch * 28;
+      posX = lerp(a.pos[0], b.pos[0], smoothstep(0, 0.40, k));
+
+      if (k < 0.12) {
+        const t = smoothstep(0, 0.12, k);
+        pitch = lerp(a.pitch, 14, t);
+      } else if (k < 0.30) {
+        const t = smoothstep(0.12, 0.30, k);
+        pitch = lerp(14, -65, t);
+      } else {
+        const t = smoothstep(0.30, 1.0, k);
+        pitch = lerp(-65, b.pitch, t);
+      }
+
+      yaw = lerp(a.yaw, b.yaw, smoothstep(0.25, 1.0, k));
+    } else {
+      // Street-level stops (6/8 Rider, 7/8 Audio, 8/8 Live Rig): ease toward street centerline x=0 during glide
+      const midArch = Math.sin(k * Math.PI);
+      posX = lerp(posX, 0, midArch * 0.4);
+    }
+
+    // On mobile / narrow screens, step back slightly so windows fill the screen comfortably
+    const mobileOffset = this.aspect < 1.0 ? (1.0 - this.aspect) * 3.5 : 0;
+
+    outPos.set(posX, posY, posZ);
     outPos.x += this.mouse.x * 0.35;
     outPos.y += this.mouse.y * 0.2;
 
-    const yaw = lerp(yawA, yawB, k) + this.mouse.x * 2.0;
-    const pitch = lerp(a.pitch, b.pitch, k) + this.mouse.y * 1.2;
-    outTgt.copy(outPos).addScaledVector(directionFromAngles(yaw, pitch, this.dir), LOOK_DISTANCE);
+    yaw += this.mouse.x * 2.0;
+    pitch += this.mouse.y * 1.2;
+
+    directionFromAngles(yaw, pitch, this.dir);
+    if (mobileOffset > 0) {
+      outPos.addScaledVector(this.dir, -mobileOffset);
+    }
+    outTgt.copy(outPos).addScaledVector(this.dir, LOOK_DISTANCE);
   }
 
   stagePose(outPos, outTgt, t) {
@@ -213,6 +302,12 @@ export class CameraDirector {
       this.tgtCurve.getPoint(e, this.tgt);
       this.ignite = smoothstep(0.12, 0.4, t);
       this.apply();
+
+      if (t >= 0.90 && !this.introApproachTriggered) {
+        this.introApproachTriggered = true;
+        if (this.onIntroApproach) this.onIntroApproach();
+      }
+
       if (t >= 1) {
         this.mode = 'street';
         this.beginTransition();

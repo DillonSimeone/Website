@@ -241,6 +241,177 @@ export function buildMasterLid(M, p) {
 }
 
 // -------------------------------------------------------------------------
+// 2b. REPEATER NODE: Ultra-Slim Inline Base Chassis (10.5mm Depth)
+//     - Designed for naked ESP32-C3 SuperMini signal repeater (no microphone).
+//     - More than 55% thinner than Master (10.5mm vs 23.5mm), with tailored
+//       PCB seating shelf, solder clearance well, inline USB-C plug bay,
+//       2-post serpentine strain relief, and top/bottom drywall mounting ears.
+// -------------------------------------------------------------------------
+export function buildRepeaterBase(M, p) {
+    const cl = p.printClearance;
+    const bodyW = 38.0; // Compact 38mm width matching Master box
+    const bodyL = 62.0; // 62mm inline length
+    const bodyH = 10.5; // Ultra-slim 10.5mm depth (no mic needed!)
+    const tabL = 10.0;
+    const tabThick = 4.5;
+
+    let base = M.cube([bodyW, bodyL, bodyH], true);
+
+    // External Top and Bottom Mounting Tabs (Drywall screw ears, holes at X = ±13.0mm)
+    const tabW = 34.0;
+    const topTab = makeMountingTab(M, tabW, tabL, tabThick, p.wallTabScrewDia, p.wallTabCounterbore, true, 26.0)
+        .translate([0, bodyL / 2 + tabL / 2 - 0.5, -bodyH / 2 + tabThick / 2]);
+    const botTab = makeMountingTab(M, tabW, tabL, tabThick, p.wallTabScrewDia, p.wallTabCounterbore, true, 26.0)
+        .translate([0, -bodyL / 2 - tabL / 2 + 0.5, -bodyH / 2 + tabThick / 2]);
+    base = base.add(topTab).add(botTab);
+
+    // 1. ESP32-C3 SuperMini Pocket (Tailored for naked module, no bulky mic)
+    //    Positioned at X = 0, Y = +14.65mm (spans Y = +3.0mm to +26.3mm)
+    const espX = 0;
+    const espY = 14.65;
+    const cavW = (p.espWidth || 18.0) + cl * 2;   // 18.70mm
+    const cavL = (p.espLength || 22.52) + cl * 2; // 23.22mm
+    const shelfH = 4.2; // 4.2mm deep shelf from top rim (Z = +5.25mm down to +1.05mm)
+    const upperPocket = M.cube([cavW, cavL, shelfH + 0.1], true)
+        .translate([espX, espY, bodyH / 2 - shelfH / 2 + 0.05]);
+
+    // Central Pin/Header Solder Clearance Well under ESP32 (leaves a solid 2.1mm perimeter shelf)
+    const wellW = 14.5;
+    const wellL = 19.0;
+    const wellH = 2.4; // Extends Z = +1.05mm down to -1.35mm
+    const lowerPocket = M.cube([wellW, wellL, wellH + 0.1], true)
+        .translate([espX, espY, bodyH / 2 - shelfH - wellH / 2 + 0.05]);
+
+    // 2. Internal USB-C Plug Head Bay (Y = -19.70mm to +3.0mm)
+    //    Houses the full 11x7x20mm USB-C cable head inside the enclosure!
+    const plugBayW = 13.0;
+    const plugBayL = 22.7;
+    const plugBayH = 6.6; // 6.6mm depth from top rim (clears 7mm boot with 0.8mm lid relief)
+    const plugBayY = -8.35;
+    const usbPlugBay = M.cube([plugBayW, plugBayL, plugBayH + 0.1], true)
+        .translate([0, plugBayY, bodyH / 2 - plugBayH / 2 + 0.05]);
+
+    // 3. Serpentine S-Curve USB-C Cable Strain-Relief Bay (Y = -31.5mm to -18.5mm)
+    const srBayW = 11.0;
+    const srBayL = 13.5;
+    const srBayH = 5.5; // 5.5mm deep from top rim
+    const srBayY = -24.75;
+    const srBay = M.cube([srBayW, srBayL, srBayH + 0.1], true)
+        .translate([0, srBayY, bodyH / 2 - srBayH / 2 + 0.05]);
+
+    // Center Bottom Cable Exit Slot (5.0mm wide for 4.0mm cable jacket)
+    const cableExitW = (p.cableJacketDia || 4.0) + 1.0;
+    const cableExitSlot = M.cube([cableExitW, 14.0, srBayH + 0.1], true)
+        .translate([0, -35.0, bodyH / 2 - srBayH / 2 + 0.05]);
+    const tabCableNotch = M.cube([cableExitW + 1.0, 12.0, bodyH + 2.0], true)
+        .translate([0, -36.5, 0]);
+
+    // 4. Four Corner M3 Screw Holes at X = ±15.0mm, Y = ±26.5mm
+    const sDia = p.screwHoleDia;
+    const sx = bodyW / 2 - 4.0; // 15.0mm
+    const sy = bodyL / 2 - 4.5; // 26.5mm
+    const s1 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([-sx, sy, 0]);
+    const s2 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([sx, sy, 0]);
+    const s3 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([-sx, -sy, 0]);
+    const s4 = M.cylinder(bodyH + 2, sDia / 2, sDia / 2, 20, true).translate([sx, -sy, 0]);
+
+    base = base
+        .subtract(upperPocket)
+        .subtract(lowerPocket)
+        .subtract(usbPlugBay)
+        .subtract(srBay)
+        .subtract(cableExitSlot)
+        .subtract(tabCableNotch)
+        .subtract(s1).subtract(s2).subtract(s3).subtract(s4);
+
+    // 5. Add 2 Halved Serpentine Strain-Relief Gripper Pillars (postR = 1.2mm)
+    const postR = 1.2;
+    const postZ = bodyH / 2 - srBayH / 2;
+    const srPost1 = M.cylinder(srBayH, postR, postR, 20, true).translate([2.6, -24.5, postZ]);
+    const srPost2 = M.cylinder(srBayH, postR, postR, 20, true).translate([-2.6, -28.5, postZ]);
+    base = base.add(srPost1).add(srPost2);
+
+    // 6. Passive Thermal / Airflow Slots in Floor directly under ESP32
+    for (let dy of [-5.0, 0, 5.0]) {
+        base = base.subtract(M.cube([8.0, 2.2, bodyH + 2.0], true).translate([espX, espY + dy, 0]));
+    }
+
+    // 7. Outer 45° Bottom Flank Bevels (Sleek chamfered look)
+    base = base.subtract(M.cube([4.0, bodyL + 10, 4.0], true).rotate([0, 45, 0]).translate([-bodyW / 2, 0, -bodyH / 2]))
+               .subtract(M.cube([4.0, bodyL + 10, 4.0], true).rotate([0, 45, 0]).translate([bodyW / 2, 0, -bodyH / 2]));
+
+    return base;
+}
+
+// -------------------------------------------------------------------------
+// 2c. REPEATER NODE: Ultra-Slim Clamping Lid (38 x 62 x 2.4mm)
+//     - Clamps ESP32-C3 PCB flush, holds USB-C cable in serpentine track,
+//       features rectangular window for BOOT/RESET/LEDs and 3 cooling slots.
+// -------------------------------------------------------------------------
+export function buildRepeaterLid(M, p) {
+    const bodyW = 38.0;
+    const bodyL = 62.0;
+    const lidH = 2.4;
+    const cl = p.printClearance;
+    const espY = 14.65;
+    const cavW = (p.espWidth || 18.0) + cl * 2;
+    const cavL = (p.espLength || 22.52) + cl * 2;
+
+    let lid = M.cube([bodyW, bodyL, lidH], true);
+
+    // 1. Four Corner Clamping Studs for the ESP32-C3 PCB
+    const studW = 2.0;
+    const studH = 0.6;
+    for (let dx of [-cavW / 2 + studW / 2, cavW / 2 - studW / 2]) {
+        for (let dy of [-cavL / 2 + studW / 2 + 0.2, cavL / 2 - studW / 2 - 0.2]) {
+            const stud = M.cube([studW, studW, studH], true)
+                .translate([dx, espY + dy, -lidH / 2 - studH / 2]);
+            lid = lid.add(stud);
+        }
+    }
+
+    // 2. Strain-Relief Cable Hold-Down Bar (Presses between the 2 S-curve posts)
+    const srHoldBar = M.cube([2.4, 6.0, 1.0], true)
+        .translate([0, -26.5, -lidH / 2 - 0.5]);
+    lid = lid.add(srHoldBar);
+
+    // 3. Upper USB-C Plug Relief Channel (13.0mm W x 0.8mm D over plug bay)
+    const plugRelief = M.cube([13.0, 21.5, 0.8], true)
+        .translate([0, -8.25, -lidH / 2 + 0.4]);
+
+    // 4. Clean Rectangular Cutout Window over ESP32-C3 (Exposes BOOT, RESET, Blue LED & Red LED)
+    const espWindow = M.cube([11.6, 9.0, lidH + 4.0], true)
+        .translate([0, 8.5, 0]);
+
+    // 5. Front Cooling Vent Slots over upper half of ESP32
+    for (let y of [17.0, 20.5, 24.0]) {
+        const vent = M.cube([12.0, 1.8, lidH + 4.0], true).translate([0, y, 0]);
+        lid = lid.subtract(vent);
+    }
+
+    // 6. Four M3 Counterbored Through-Holes at X = ±15.0mm, Y = ±26.5mm
+    const sDia = 3.4;
+    const hDia = p.screwHeadDia;
+    const sx = bodyW / 2 - 4.0; // 15.0mm
+    const sy = bodyL / 2 - 4.5; // 26.5mm
+    const makeScrew = (x, y) => {
+        const pass = M.cylinder(lidH + 4, sDia / 2, sDia / 2, 24, true).translate([x, y, 0]);
+        const head = M.cylinder(1.4, hDia / 2, hDia / 2, 24, true).translate([x, y, lidH / 2 - 0.7]);
+        return pass.add(head);
+    };
+
+    const s1 = makeScrew(-sx, sy);
+    const s2 = makeScrew(sx, sy);
+    const s3 = makeScrew(-sx, -sy);
+    const s4 = makeScrew(sx, -sy);
+
+    return lid
+        .subtract(plugRelief)
+        .subtract(espWindow)
+        .subtract(s1).subtract(s2).subtract(s3).subtract(s4);
+}
+
+// -------------------------------------------------------------------------
 // 3. FOLLOWER NODE: Base Chassis (PCB on Bottom, USB-C on Top, Zero Pane)
 // -------------------------------------------------------------------------
 export function buildFollowerBase(M, p) {

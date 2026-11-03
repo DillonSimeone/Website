@@ -5,6 +5,10 @@ import { AudioEngine } from './audio/audio-engine.js';
 import { HapticEngine } from './audio/haptic-engine.js';
 import { ProjectionMapper } from './stage/projection-mapper.js';
 import { MidiController } from './stage/midi-controller.js';
+import { HeroOverlay } from './ui/hero.js';
+import { GigCardController } from './ui/gig-card.js';
+import { VideoModal } from './ui/video-modal.js';
+import { getBookingMailto } from './data/gigs.js';
 
 const FONT_FACES = [
   '400 100px "Permanent Marker"',
@@ -47,6 +51,13 @@ class DJWishApp {
     this.btnStageMicBottom = document.getElementById('btn-stage-mic-bottom');
     this.btnHeaderMic = document.getElementById('btn-header-mic');
     this.btnToggleMic = document.getElementById('btn-toggle-mic');
+    this.btnPillPrev = document.getElementById('btn-pill-prev');
+    this.btnPillNext = document.getElementById('btn-pill-next');
+    this.pillPageTitle = document.getElementById('pill-page-title');
+    this.currentPage = 0;
+    this.isPageLocked = false;
+    this.touchStartY = 0;
+    this.touchStartX = 0;
 
     this.fpsFromUrl = new URLSearchParams(window.location.search).has('fps');
     this.showFps = this.fpsFromUrl;
@@ -70,7 +81,18 @@ class DJWishApp {
     this.midi = new MidiController();
     this.midi.init();
 
-    this.director.onIntroComplete = () => document.body.classList.remove('intro-playing');
+    this.director.onIntroApproach = () => {
+      if (this.hero && !this.hero.isDismissed) {
+        this.hero.dismiss(false);
+      }
+    };
+
+    this.director.onIntroComplete = () => {
+      document.body.classList.remove('intro-playing');
+      if (this.hero && !this.hero.isDismissed) {
+        this.hero.dismiss(false);
+      }
+    };
 
     this.settings.applyAll((k, v) => this.applySetting(k, v));
     this.settings.onChange((k, v) => this.applySetting(k, v));
@@ -82,13 +104,54 @@ class DJWishApp {
     this.bindScroll();
     this.bindMidiEvents();
 
+    // In-app video player overlay
+    this.videoModal = new VideoModal();
+
+    // Past gigs floating card controller with 1-click rotation, video playback & fast-track
+    this.gigCard = new GigCardController({
+      onSelectGig: (pageIndex) => this.goToPage(pageIndex),
+      onFastTrack: () => this.goToPage(5),
+      onPlayVideo: (v) => this.videoModal.open(v)
+    });
+
+    // Top navigation YouTube showings button
+    document.getElementById('btn-header-videos')?.addEventListener('click', () => {
+      this.videoModal.open({
+        videoId: 'Qm_eln3aJEA',
+        title: 'Nate & Shawn — Collaborative Music Video',
+        desc: 'Electronic production with Shawn Trail (hearing collaborator). Explore all DJ showings on Nate\'s YouTube channel.',
+        url: 'https://www.youtube.com/watch?v=Qm_eln3aJEA'
+      });
+    });
+
+    // Connect dedicated background video to gig tower billboard
+    const towerVideo = document.getElementById('tower-video');
+    if (towerVideo) {
+      this.sceneManager.setGigVideo(towerVideo);
+    }
+
+    // Instant 30-second booker hero overlay
+    this.hero = new HeroOverlay({
+      onDismiss: () => {
+        this.director.skipIntro(false);
+        this.goToPage(0);
+      }
+    });
+
+    // Populate booking mailto links
+    const bookingUrl = getBookingMailto();
+    const btnHeaderBook = document.getElementById('btn-header-book');
+    if (btnHeaderBook) btnHeaderBook.href = bookingUrl;
+    const btnPanelBook = document.getElementById('panel-btn-book');
+    if (btnPanelBook) btnPanelBook.href = bookingUrl;
+
     const hashStop = STOPS.findIndex(s => `#${s.id}` === window.location.hash);
     if (hashStop > 0) {
-      this.scrollToStop(hashStop, 'instant');
-      this.director.setScrollProgress(this.getScrollProgress());
+      this.goToPage(hashStop, 'instant');
       this.director.skipIntro(true);
     } else {
       window.scrollTo(0, 0);
+      this.updateNavButtons();
       if (!this.settings.get('playIntro')) this.director.skipIntro(true);
     }
 
@@ -208,6 +271,61 @@ class DJWishApp {
     return Math.round(this.getScrollProgress() * (STOPS.length - 1));
   }
 
+  goToPage(index, behavior = 'instant') {
+    if (this.isStageMode || this.settingsOpen) return;
+
+    const prev = this.currentPage;
+    const target = Math.max(0, Math.min(STOPS.length - 1, index));
+    this.currentPage = target;
+    this.skipIntroIfPlaying();
+    if (this.hero && !this.hero.isDismissed) this.hero.dismiss(false);
+
+    // Somersault vault between Stop 4 (ADA South) and Stop 5 (Rider): doubled transition time (~3.6s duration)
+    const isSomersault = (prev === 4 && target === 5) || (prev === 5 && target === 4);
+    if (isSomersault) {
+      this.director.scrollEase = 1.3; // Doubled transition time (~3.6s duration)
+    } else {
+      this.director.scrollEase = 3.8;
+    }
+
+    // Zero debounce lockout (0ms) as requested
+    this.isPageLocked = false;
+
+    // Suppress scroll-event feedback loop so window scroll doesn't fight goToPage
+    this.isProgrammaticScroll = true;
+    this.scrollToStop(target, 'instant');
+    setTimeout(() => { this.isProgrammaticScroll = false; }, 80);
+
+    this.director.setScrollProgress(target / (STOPS.length - 1));
+    this.updateNavButtons();
+    this.updateGigCard();
+  }
+
+  updateNavButtons() {
+    if (this.btnPillPrev) this.btnPillPrev.disabled = (this.currentPage <= 0);
+    if (this.btnPillNext) this.btnPillNext.disabled = (this.currentPage >= STOPS.length - 1);
+    if (this.pillPageTitle) {
+      const stop = STOPS[this.currentPage];
+      const label = stop?.pageTitle || stop?.label || `Page ${this.currentPage + 1}`;
+      this.pillPageTitle.textContent = `${label} (${this.currentPage + 1}/${STOPS.length})`;
+    }
+  }
+
+  updateGigCard() {
+    if (!this.gigCard) return;
+    if (this.currentPage === 1) {
+      this.gigCard.showGig('codafest');
+    } else if (this.currentPage === 2) {
+      this.gigCard.showGig('wdt');
+    } else if (this.currentPage === 3) {
+      this.gigCard.showGig('confluence');
+    } else if (this.currentPage === 4) {
+      this.gigCard.showGig('ada');
+    } else {
+      this.gigCard.hide();
+    }
+  }
+
   skipIntroIfPlaying() {
     if (this.director.isPlayingIntro) this.director.skipIntro();
   }
@@ -215,18 +333,70 @@ class DJWishApp {
   bindScroll() {
     window.addEventListener('scroll', () => {
       if (this.isStageMode || this.settingsOpen) return;
-      this.director.setScrollProgress(this.getScrollProgress());
+      if (this.isProgrammaticScroll) return; // Prevent smooth scroll loop from overriding currentPage!
+      const progress = this.getScrollProgress();
+      this.director.setScrollProgress(progress);
+      const stop = Math.round(progress * (STOPS.length - 1));
+      if (stop !== this.currentPage) {
+        this.currentPage = stop;
+        this.updateNavButtons();
+        this.updateGigCard();
+      }
       if (window.scrollY > 4) this.skipIntroIfPlaying();
     }, { passive: true });
 
-    window.addEventListener('wheel', () => this.skipIntroIfPlaying(), { passive: true });
-    window.addEventListener('touchmove', () => this.skipIntroIfPlaying(), { passive: true });
+    window.addEventListener('wheel', (e) => {
+      if (this.isStageMode || this.settingsOpen) return;
+      if (this.hero && !this.hero.isDismissed) {
+        this.hero.dismiss();
+        return;
+      }
+      if (Math.abs(e.deltaY) < 18) return;
+
+      if (e.deltaY > 0) {
+        this.goToPage(this.currentPage + 1);
+      } else {
+        this.goToPage(this.currentPage - 1);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) {
+        this.touchStartY = e.touches[0].clientY;
+        this.touchStartX = e.touches[0].clientX;
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', (e) => {
+      if (this.isStageMode || this.settingsOpen) return;
+      if (!e.changedTouches || !e.changedTouches[0]) return;
+      if (e.target && e.target.closest('#gig-floating-card, #video-modal, #gig-lightbox, #settings-disc, #street-header, #bottom-nav-pill')) return;
+      const dy = this.touchStartY - e.changedTouches[0].clientY;
+      const dx = this.touchStartX - e.changedTouches[0].clientX;
+
+      if (this.hero && !this.hero.isDismissed) {
+        if (Math.abs(dy) > 30) this.hero.dismiss();
+        return;
+      }
+
+      if (Math.abs(dy) > 40 || Math.abs(dx) > 50) {
+        if (dy > 40 || dx > 50) {
+          this.goToPage(this.currentPage + 1);
+        } else {
+          this.goToPage(this.currentPage - 1);
+        }
+      }
+    }, { passive: true });
+
     this.threeContainer.addEventListener('pointerdown', () => this.skipIntroIfPlaying());
+
+    this.btnPillPrev?.addEventListener('click', () => this.goToPage(this.currentPage - 1));
+    this.btnPillNext?.addEventListener('click', () => this.goToPage(this.currentPage + 1));
 
     this.dots.forEach(dot => {
       dot.addEventListener('click', () => {
         this.skipIntroIfPlaying();
-        this.scrollToStop(parseInt(dot.dataset.stop, 10));
+        this.goToPage(parseInt(dot.dataset.stop, 10));
       });
     });
   }
@@ -393,8 +563,21 @@ class DJWishApp {
 
     document.getElementById('btn-replay-intro')?.addEventListener('click', () => {
       window.scrollTo(0, 0);
+      this.currentPage = 0;
+      this.gigCard?.hide();
+      this.updateNavButtons();
       this.director.startIntro();
       document.body.classList.add('intro-playing');
+
+      // Recreate hero overlay popup during replay
+      const oldHero = document.getElementById('hero-overlay');
+      if (oldHero) oldHero.remove();
+      this.hero = new HeroOverlay({
+        onDismiss: () => {
+          this.director.skipIntro(false);
+          this.goToPage(0);
+        }
+      });
     });
 
     const btnTestHaptics = document.getElementById('btn-test-haptics');
@@ -452,13 +635,12 @@ class DJWishApp {
       }
 
       if (!this.isStageMode) {
-        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'ArrowRight') {
           e.preventDefault();
-          this.skipIntroIfPlaying();
-          this.scrollToStop(this.currentStop() + 1);
-        } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+          this.goToPage(this.currentPage + 1);
+        } else if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'ArrowLeft') {
           e.preventDefault();
-          this.scrollToStop(this.currentStop() - 1);
+          this.goToPage(this.currentPage - 1);
         }
       }
 
@@ -490,6 +672,7 @@ class DJWishApp {
   enterStageMode() {
     if (this.isStageMode) return;
     this.isStageMode = true;
+    this.gigCard?.hide();
     document.body.classList.add('stage-mode');
     document.body.classList.remove('intro-playing');
     this.stageHud.classList.add('active');
@@ -506,7 +689,8 @@ class DJWishApp {
     document.body.classList.remove('stage-mode');
     this.stageHud.classList.remove('active');
     this.sceneManager.setStageMode(false);
-    this.director.setScrollProgress(this.getScrollProgress());
+    this.goToPage(this.currentPage);
+    this.updateGigCard();
   }
 
   switchScene(sceneIndex) {

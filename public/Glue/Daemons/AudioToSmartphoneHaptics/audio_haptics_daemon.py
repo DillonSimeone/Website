@@ -170,6 +170,7 @@ class GestoluminaAudioHapticsDaemon:
         self.current_peak_amp = 0
         self.current_envelope_end = 0.0
         self.total_envelope_ms = 0
+        self.continuous_pwm = 0.0
         self.last_hit_triggered = False
 
         # Audio stream variables
@@ -199,7 +200,7 @@ class GestoluminaAudioHapticsDaemon:
         if os.path.exists(CONFIG_FILE):
             try:
                 self.last_config_mtime = os.path.getmtime(CONFIG_FILE)
-                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                with open(CONFIG_FILE, "r", encoding="utf-8-sig") as f:
                     data = json.load(f)
                     self.config.update(data)
             except Exception:
@@ -283,7 +284,7 @@ class GestoluminaAudioHapticsDaemon:
             return f"cmd vibrator_manager synced -f -B primitives {prim_id} {prim_scale}\n", dur, peak_amp
 
         # S-curve velocity to peak amplitude with generous base floor
-        v_eff = min(1.0, max(0.05, (v ** 0.75) * (scale / 1.6)))
+        v_eff = min(1.0, max(0.05, v ** 0.85))
         peak_amp = int(min(255, max(base_amp, base_amp + (255 - base_amp) * v_eff)))
 
         if peak_amp < 110:
@@ -376,11 +377,12 @@ class GestoluminaAudioHapticsDaemon:
             govee_sync = bool(self.config.get("govee_sync", False))
             hit_this_frame = False
 
+            scale = float(self.config.get("amplitude_scale", 2.0))
+
             # Trigger condition: sudden upward surge above ambient floor (evaluates when either haptics or Govee sync is enabled)
             if (is_enabled or govee_sync) and now >= self.cooldown_until and velocity > min_vel and bass_energy > (1.15 * self.bass_slow_ema):
-                scale = self.config.get("amplitude_scale", 2.0)
-                norm_v = min(1.0, max(0.0, (velocity - min_vel) / (0.75 - min_vel)))
-                v_curved = min(1.0, max(0.05, (norm_v ** 0.85) * scale))
+                norm_v = min(1.0, max(0.0, (velocity - min_vel) / max(0.02, 0.55 - min_vel)))
+                v_curved = min(1.0, max(0.05, (norm_v ** 0.85) * (scale / 2.0)))
 
                 is_snap = (
                     self.config.get("enable_snap_primitives", True)
@@ -405,12 +407,29 @@ class GestoluminaAudioHapticsDaemon:
                 # Set anti-collision cooldown to exact envelope length + safety padding (16ms)
                 self.cooldown_until = now + (duration_ms + 16) / 1000.0
 
-            # Calculate dynamic active PWM duty cycle (0 - 100%)
+            # Calculate dynamic continuous PWM duty cycle (0 - 100%)
+            # 1. Continuous acoustic envelope tracking (maps bass & speech energy into continuous curves)
+            energy_ratio = min(1.0, max(0.0, bass_energy / max(0.012, headroom * 0.90)))
+            raw_target_pwm = (energy_ratio ** 0.85) * (scale / 2.0) * 100.0
+            raw_target_pwm = min(100.0, max(0.0, raw_target_pwm))
+
+            # Dual-rate continuous curve smoothing (fast attack ~25ms to rise with phonemes/beats, musical release ~85ms)
+            if raw_target_pwm > self.continuous_pwm:
+                self.continuous_pwm = 0.50 * raw_target_pwm + 0.50 * self.continuous_pwm
+            else:
+                self.continuous_pwm = 0.12 * raw_target_pwm + 0.88 * self.continuous_pwm
+
+            # 2. Transient hit accent layer
+            hit_pwm = 0.0
             if now < self.current_envelope_end and self.total_envelope_ms > 0:
                 rem = max(0.0, (self.current_envelope_end - now) / (self.total_envelope_ms / 1000.0))
-                active_pwm = int((self.current_peak_amp / 255.0) * 100 * (rem ** 0.5))
-            else:
-                active_pwm = 0
+                # Smooth cosine decay curve: prevents harsh dropoffs
+                decay_shape = 0.5 * (1.0 + np.cos((1.0 - rem) * np.pi))
+                hit_pwm = (self.current_peak_amp / 255.0) * 100.0 * decay_shape
+
+            # Combined duty cycle: continuous curve seamlessly elevated by hit transients
+            active_pwm = int(min(100.0, max(self.continuous_pwm, hit_pwm)))
+            displayed_peak = max(int(active_pwm * 2.55), self.current_peak_amp if now < self.current_envelope_end else 0)
 
             # Localhost UDP Telemetry Stream (35-40 FPS)
             if now - self.last_telemetry_time >= 0.025:
@@ -424,7 +443,7 @@ class GestoluminaAudioHapticsDaemon:
                         "vel": round(velocity, 4),
                         "pwm": active_pwm,
                         "hit": hit_this_frame,
-                        "peak": self.current_peak_amp if active_pwm > 0 else 0,
+                        "peak": displayed_peak if active_pwm > 0 else 0,
                         "enabled": is_enabled,
                     }).encode("utf-8")
                     self.udp_sock.sendto(payload, self.udp_target)

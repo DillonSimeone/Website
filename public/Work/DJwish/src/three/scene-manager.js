@@ -17,6 +17,7 @@ import { City } from './city.js';
 import { Murals } from './murals.js';
 import { WallPanels } from './css3d-panels.js';
 import { CameraDirector } from './camera-director.js';
+import { GigTower } from './gig-tower.js';
 
 const GrainVignetteShader = {
   uniforms: {
@@ -97,6 +98,7 @@ export class SceneManager {
     this.lasers = new LaserFan(this.scene);
     this.logo = new LogoMesh(this.lasers.group);
     this.city = new City(this.scene, maxAniso);
+    this.gigTower = new GigTower(this.scene, maxAniso);
     this.murals = new Murals(this.scene, maxAniso);
     this.panels = new WallPanels(css3dContainer, this.scene);
     this.skyShow = new SkyShow(this.scene, this.lasers.group);
@@ -137,6 +139,10 @@ export class SceneManager {
 
   setAudioSource(audio) {
     this.audioSource = audio;
+  }
+
+  setGigVideo(videoEl) {
+    this.gigTower.setVideoElement(videoEl);
   }
 
   baseFov(aspect = this.camera.aspect) {
@@ -361,6 +367,9 @@ export class SceneManager {
     this.logo.update(dt, director.ignite, this.stageMode);
     this.skyShow.update(dt);
     this.city.update();
+    const currentStop = Math.round(director.stopFloat);
+    this.gigTower.setPage(this.stageMode ? 0 : currentStop);
+    this.gigTower.update(dt, telemetry, this.stageMode);
 
     this.quality.sample(dt * 1000);
 

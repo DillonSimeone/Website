@@ -82,7 +82,7 @@ export async function initEsp32WebUploader() {
             customView.style.display = 'block';
             if (btnConnectFlash) {
                 btnConnectFlash.disabled = false;
-                btnConnectFlash.textContent = 'Flash Custom Binary';
+                btnConnectFlash.textContent = '⚡ Flash Custom .bin';
             }
         });
     }
@@ -214,11 +214,11 @@ export async function initEsp32WebUploader() {
             if (!hasWebSerial) return;
             if (isMonitoring) {
                 await stopMonitor(log);
-                btnToggleMonitor.textContent = '📟 Open Serial Monitor';
+                btnToggleMonitor.textContent = '📟 Monitor';
             } else {
                 const started = await startMonitor(log);
                 if (started) {
-                    btnToggleMonitor.textContent = '⏹ Stop Serial Monitor';
+                    btnToggleMonitor.textContent = '⏹ Stop';
                 }
             }
         });
@@ -274,6 +274,7 @@ function updateFirmwareDetails(item) {
 
     let pinoutHtml = '';
     if (item.pinout && item.pinout.length > 0) {
+        const isScrollable = item.pinout.length > 4;
         const rows = item.pinout.map(p => `
             <tr>
                 <td class="pin-code font-mono">${p.pin}</td>
@@ -285,19 +286,21 @@ function updateFirmwareDetails(item) {
             <div class="firmware-pinout-box">
                 <div class="pinout-header">
                     <span class="pinout-title">HARDWARE PINOUT / GPIO MAP</span>
-                    <span class="pinout-count">${item.pinout.length} assigned</span>
+                    <span class="pinout-count">${item.pinout.length} assigned${isScrollable ? ' · Scroll ↕' : ''}</span>
                 </div>
-                <table class="firmware-pin-table">
-                    <thead>
-                        <tr>
-                            <th>Pin</th>
-                            <th>Hardware Role / Component</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows}
-                    </tbody>
-                </table>
+                <div class="firmware-pin-table-scroll">
+                    <table class="firmware-pin-table">
+                        <thead>
+                            <tr>
+                                <th>Pin</th>
+                                <th>Hardware Role / Component</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         `;
     }
@@ -313,7 +316,7 @@ function updateFirmwareDetails(item) {
         `;
         if (flashBtn) {
             flashBtn.disabled = false;
-            flashBtn.textContent = 'Connect & Flash Device';
+            flashBtn.textContent = '⚡ Connect & Flash';
         }
     } else {
         detailsContainer.innerHTML = `
@@ -323,15 +326,15 @@ function updateFirmwareDetails(item) {
             </div>
             <div class="firmware-detail-desc">
                 ${item.description}
-                <div style="margin-top: 8px; padding: 8px; background: rgba(0, 240, 255, 0.08); border-left: 3px solid var(--neon-cyan, #00f0ff); font-size: 0.85rem;">
-                    💡 <em>This project does not yet have a precompiled binary on disk. Run compileAllESP32.bat to build it, or switch to 'Custom .BIN Upload' to flash a pre-built binary.</em>
+                <div style="margin-top: 6px; padding: 6px; background: rgba(0, 240, 255, 0.08); border-left: 3px solid var(--neon-cyan, #00f0ff); font-size: 0.8rem;">
+                    💡 <em>Source code only. Compile via PlatformIO / Local Studio to flash.</em>
                 </div>
             </div>
             ${pinoutHtml}
         `;
         if (flashBtn) {
             flashBtn.disabled = true;
-            flashBtn.textContent = 'Source Code Only (Compile to Flash)';
+            flashBtn.textContent = 'Source Only (Compile First)';
         }
     }
 

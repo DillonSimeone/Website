@@ -3,6 +3,8 @@ import { context, params } from './state.js';
 import {
     buildMasterBase,
     buildMasterLid,
+    buildRepeaterBase,
+    buildRepeaterLid,
     buildFollowerBase,
     buildFollowerLid,
     buildFollowerPetgLid,
@@ -83,6 +85,14 @@ export function triggerExport(componentName) {
         case 'master_lid':
             geom = buildMasterLid(M, params);
             filename = `Master_Enclosure_Clamp_Lid.stl`;
+            break;
+        case 'repeater_base':
+            geom = buildRepeaterBase(M, params);
+            filename = `Repeater_Enclosure_Base.stl`;
+            break;
+        case 'repeater_lid':
+            geom = buildRepeaterLid(M, params);
+            filename = `Repeater_Enclosure_Clamp_Lid.stl`;
             break;
         case 'follower_base':
             geom = buildFollowerBase(M, params);

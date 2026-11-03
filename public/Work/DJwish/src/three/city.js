@@ -373,7 +373,7 @@ export class City {
     }
 
     this.streetBuildings = list;
-    const instances = list.map(b => ({
+    const instances = list.filter(b => b.id !== 'title').map(b => ({
       x: b.side * (STREET.half + b.depth / 2),
       z: (b.z0 + b.z1) / 2,
       sx: b.depth,

@@ -44,41 +44,52 @@ export const MURALS = {
 
 // Freestanding plywood hoardings on the sidewalk carrying the live HTML panels.
 export const HOARDINGS = {
-  audio: { elementId: 'panel-audio', stop: 3, x: -12, z: 150, rotY: 0.35, width: 5.2, pxWidth: 480, pxHeight: 560, bottom: 0.5, title: 'AUDIO STATION', color: '#00f0ff' },
-  links: { elementId: 'panel-links', stop: 4, x: 12, z: 214, rotY: -0.35, width: 6.4, pxWidth: 700, pxHeight: 480, bottom: 0.6, title: 'LIVE RIG', color: '#ff0055' }
+  audio: { elementId: 'panel-audio', stop: 6, x: -12, z: 150, rotY: 0.35, width: 5.2, pxWidth: 480, pxHeight: 560, bottom: 0.5, title: 'AUDIO STATION', color: '#00f0ff' },
+  links: { elementId: 'panel-links', stop: 7, x: 12, z: 214, rotY: -0.35, width: 7.2, pxWidth: 740, pxHeight: 690, bottom: 0.5, title: 'LIVE RIG', color: '#ff0055' }
 };
 
 /**
- * Scroll stops. yaw/pitch in degrees (yaw > 0 turns right). `focusYaw` is the
- * direction of the stop's content, used on narrow screens where the wide
- * composition (content + pyramid) cannot fit.
+ * Page-based stops along the street & 4-sided gig tower orbit.
+ * 8 discrete stops:
+ * 0: Who: DJ Deaf Wish / Deaf Sonic Agency bio mural
+ * 1: Gigs: CodaFest 2026 (Tower West Face - Dance Night Headline)
+ * 2: Gigs: World Deaf Timberfest (Tower North Face - Outdoor Resident DJ)
+ * 3: Studio: Confluence Sound Lab (Tower East Face - $97k OCF & Haptics)
+ * 4: Civic: ADA Anniversary Showcase (Tower South Face - Accessible Civic Stage)
+ * 5: Technical Rider mural
+ * 6: Audio Station interactive hoarding
+ * 7: Book Nate & Live Stage Rig hoarding
  */
 export const STOPS = [
-  { id: 'street', label: 'DJ DEAF WISH', pos: [-4, 2.2, -100], yaw: 0.5, pitch: 14, focusYaw: 0.5 },
-  { id: 'agency', label: 'DEAF SONIC AGENCY', pos: [-11, 6, -8], yaw: -17, pitch: 12, focusYaw: -22 },
-  { id: 'rider', label: 'TECHNICAL RIDER', pos: [11, 6, 102], yaw: 17, pitch: 12, focusYaw: 23 },
-  { id: 'audio', label: 'AUDIO STATION', pos: [-6.4, 3.2, 157], yaw: -22, pitch: 8, focusYaw: -38 },
-  { id: 'links', label: 'LIVE RIG + LINKS', pos: [7.3, 3.2, 221.5], yaw: 18, pitch: 8, focusYaw: 32 }
+  { id: 'agency', label: 'DEAF SONIC AGENCY', pageTitle: 'Who: DJ Deaf Wish', pos: [-36, 21, -44], yaw: -2, pitch: 0, focusYaw: -2 },
+  { id: 'codafest', label: 'CODAFEST 2026', pageTitle: 'Gigs: CodaFest', pos: [-32, 112, -85], yaw: 32, pitch: -2, focusYaw: 30 },
+  { id: 'wdt', label: 'DEAF TIMBERFEST', pageTitle: 'Gigs: Timberfest', pos: [31, 108, -200], yaw: 178, pitch: -3, focusYaw: 178 },
+  { id: 'confluence', label: 'CONFLUENCE LAB', pageTitle: 'Studio: Confluence', pos: [82, 108, -140], yaw: -90, pitch: -2, focusYaw: -90 },
+  { id: 'ada', label: 'ADA SHOWCASE', pageTitle: 'Civic: ADA Fest', pos: [31, 108, -68], yaw: 0, pitch: -2, focusYaw: 0 },
+  { id: 'rider', label: 'TECHNICAL RIDER', pageTitle: 'Technical Rider', pos: [10, 6.5, 105], yaw: 20, pitch: 11, focusYaw: 24 },
+  { id: 'audio', label: 'AUDIO STATION', pageTitle: 'Audio Station', pos: [-6.4, 3.2, 157], yaw: -22, pitch: 8, focusYaw: -38 },
+  { id: 'links', label: 'BOOK NATE & RIG', pageTitle: 'Book Nate & Live Rig', pos: [7.3, 3.2, 221.5], yaw: 18, pitch: 8, focusYaw: 32 }
 ];
 
-// Intro flight: foot of the pyramid -> apex + lasers -> logo -> long pull-back into the street.
-// The final point is replaced at runtime by the first scroll stop.
+// Intro flight: foot of the pyramid -> apex + lasers -> logo -> long pull-back into the street centerline -> slide left to mural.
 export const INTRO_PATH = {
   pos: [
     [-233, 3, -1267],
     [-215, 70, -1190],
     [-120, 260, -1020],
     [-30, 330, -620],
-    [-6, 80, -230],
-    [0, 0, 0]
+    [-4, 70, -210],
+    [0, 16, -44],
+    [-36, 21, -44]
   ],
   target: [
     [-117, 207, -1383],
     [0, 460, -1500],
     [-166, 696, -1414],
     [-60, 520, -1500],
-    [0, 330, -1500],
-    [0, 0, 0]
+    [0, 50, -1500],
+    [-10, 18, -100],
+    [-38, 21, -70]
   ]
 };
 

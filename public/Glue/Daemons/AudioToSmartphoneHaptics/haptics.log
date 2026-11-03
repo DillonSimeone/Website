@@ -3024,3 +3024,953 @@
 [2026-10-31 09:03:51] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0240, Baseline: 0.0067
 [2026-10-31 09:06:03] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0177, Baseline: 0.0041
 [2026-10-31 09:16:21] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0566, Baseline: 0.0121
+[2026-10-31 16:24:11] ============================================================
+[2026-10-31 16:24:11] Audio to Haptic Daemon (Gestolumina PWM Engine) starting...
+[2026-10-31 16:24:11] ============================================================
+[2026-10-31 16:24:11] Default Windows Audio Endpoint: ASUS VS228 (NVIDIA High Definition Audio)
+[2026-10-31 16:24:11] Selected Loopback Capture Device: ASUS VS228 (NVIDIA High Definition Audio) [Loopback]
+[2026-10-31 16:24:11] Gestolumina PWM Haptic Engine active. Dynamic range: 0% to 100% duty cycle.
+[2026-10-31 16:24:12] [GoveeSync] Successfully initialized Govee bridge. Discovered 0 device(s): 
+[2026-10-31 16:27:24] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.4229, Baseline: 0.0133
+[2026-10-31 16:30:44] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0350, Baseline: 0.0087
+[2026-10-31 16:34:38] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0733, Baseline: 0.0223
+[2026-10-31 17:43:58] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 17:48:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0566, Baseline: 0.0109
+[2026-10-31 18:02:26] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0560, Baseline: 0.0139
+[2026-10-31 18:05:22] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0578, Baseline: 0.0109
+[2026-10-31 18:07:50] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0487, Baseline: 0.0135
+[2026-10-31 18:14:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0333, Baseline: 0.0090
+[2026-10-31 18:16:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0170, Baseline: 0.0047
+[2026-10-31 18:24:16] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0201, Baseline: 0.0042
+[2026-10-31 19:12:31] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0201, Baseline: 0.0040
+[2026-10-31 19:18:19] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0158, Baseline: 0.0018
+[2026-10-31 19:29:19] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0565, Baseline: 0.0115
+[2026-10-31 19:34:17] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0123, Baseline: 0.0001
+[2026-10-31 19:55:22] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0578, Baseline: 0.0109
+[2026-10-31 20:06:06] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0561, Baseline: 0.0139
+[2026-10-31 20:08:53] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0562, Baseline: 0.0147
+[2026-10-31 20:14:09] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0565, Baseline: 0.0150
+[2026-10-31 20:16:33] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0566, Baseline: 0.0153
+[2026-10-31 20:19:22] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0563, Baseline: 0.0152
+[2026-10-31 20:23:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0561, Baseline: 0.0149
+[2026-10-31 20:28:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0157, Baseline: 0.0032
+[2026-10-31 20:43:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 20:45:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 20:47:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 20:49:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 20:51:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 20:53:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 20:55:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 20:57:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 20:59:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:01:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:03:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:05:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:07:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:09:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:11:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:13:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:15:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:17:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:19:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:21:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:23:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:25:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:27:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:29:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:31:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:33:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:35:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:37:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:39:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:41:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:43:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0689, Baseline: 0.0370
+[2026-10-31 21:45:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0622, Baseline: 0.0290
+[2026-10-31 21:47:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0626, Baseline: 0.0213
+[2026-10-31 21:49:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0600, Baseline: 0.0243
+[2026-10-31 21:51:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 21:53:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0331, Baseline: 0.0093
+[2026-10-31 21:55:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0605, Baseline: 0.0282
+[2026-10-31 21:57:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0576, Baseline: 0.0229
+[2026-10-31 21:59:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0686, Baseline: 0.0460
+[2026-10-31 22:01:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0457, Baseline: 0.0149
+[2026-10-31 22:03:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0563, Baseline: 0.0261
+[2026-10-31 22:05:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:07:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:09:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0555, Baseline: 0.0254
+[2026-10-31 22:11:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0590, Baseline: 0.0312
+[2026-10-31 22:13:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0010
+[2026-10-31 22:15:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:17:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:19:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:21:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0490, Baseline: 0.0117
+[2026-10-31 22:23:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:25:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:27:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0153, Baseline: 0.0043
+[2026-10-31 22:29:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0623, Baseline: 0.0344
+[2026-10-31 22:31:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0329, Baseline: 0.0103
+[2026-10-31 22:33:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:35:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0536, Baseline: 0.0196
+[2026-10-31 22:37:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0120, Baseline: 0.0040
+[2026-10-31 22:39:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:41:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0700, Baseline: 0.0444
+[2026-10-31 22:43:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:45:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0155, Baseline: 0.0052
+[2026-10-31 22:47:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:49:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:51:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:53:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:55:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:57:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 22:59:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:01:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:03:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:05:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:07:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0361, Baseline: 0.0139
+[2026-10-31 23:09:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:11:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:13:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:15:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0334, Baseline: 0.0109
+[2026-10-31 23:17:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0649, Baseline: 0.0318
+[2026-10-31 23:19:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0236, Baseline: 0.0079
+[2026-10-31 23:21:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:23:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0623, Baseline: 0.0305
+[2026-10-31 23:25:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0625, Baseline: 0.0399
+[2026-10-31 23:27:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0212, Baseline: 0.0072
+[2026-10-31 23:29:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0320, Baseline: 0.0109
+[2026-10-31 23:31:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:33:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0548, Baseline: 0.0214
+[2026-10-31 23:35:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0609, Baseline: 0.0307
+[2026-10-31 23:37:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:39:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:41:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0432, Baseline: 0.0149
+[2026-10-31 23:43:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:45:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0672, Baseline: 0.0389
+[2026-10-31 23:47:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0665, Baseline: 0.0420
+[2026-10-31 23:49:11] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0571, Baseline: 0.0236
+[2026-10-31 23:51:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0606, Baseline: 0.0333
+[2026-10-31 23:53:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0564, Baseline: 0.0253
+[2026-10-31 23:55:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-10-31 23:57:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0714, Baseline: 0.0474
+[2026-10-31 23:59:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:01:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:03:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:05:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:07:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:09:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:11:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:13:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:15:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:17:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:19:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:21:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:23:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:25:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:27:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:29:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:31:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:33:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:35:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:37:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:39:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:41:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:43:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:45:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:47:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:49:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0221, Baseline: 0.0074
+[2026-11-01 00:51:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:53:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:55:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:57:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 00:59:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:01:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:03:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:05:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:07:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:09:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:11:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:13:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:15:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:17:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:19:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.2368, Baseline: 0.0947
+[2026-11-01 01:21:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.2504, Baseline: 0.0649
+[2026-11-01 01:23:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:25:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:27:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:29:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:31:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:33:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:35:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:37:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:39:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:41:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:43:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:45:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:47:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:49:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:51:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:53:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:55:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:57:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:59:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:01:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:03:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:05:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:07:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:09:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:11:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:13:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:15:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:17:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:19:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:21:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:23:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:25:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:27:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:29:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:31:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:33:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:35:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:37:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:39:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:41:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:43:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:45:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:47:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:49:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:51:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:53:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:55:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:57:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 01:59:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:01:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:03:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:05:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:07:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:09:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:11:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:13:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:15:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:17:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:19:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:21:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:23:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:25:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:27:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:29:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:31:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0212, Baseline: 0.0043
+[2026-11-01 02:33:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:35:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:37:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:39:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:41:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:43:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:45:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:47:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:49:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:51:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:53:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:55:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:57:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 02:59:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:01:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:03:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:05:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:07:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:09:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:11:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:13:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:15:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0129, Baseline: 0.0009
+[2026-11-01 03:17:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:19:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:21:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:23:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:25:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0282, Baseline: 0.0036
+[2026-11-01 03:27:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:29:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:31:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:33:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:35:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:37:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:39:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:41:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:43:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:45:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:47:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:49:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:51:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:53:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:55:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:57:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 03:59:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:01:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:03:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:05:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:07:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:09:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:11:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:13:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:15:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:17:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:19:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:21:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:23:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:25:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:27:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:29:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:31:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:33:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:35:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:37:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:39:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:41:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:43:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:45:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:47:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:49:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:51:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:53:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:55:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:57:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 04:59:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:01:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:03:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:05:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:07:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:09:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:11:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:13:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:15:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:17:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:19:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:21:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:23:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:25:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:27:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:29:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0522, Baseline: 0.0113
+[2026-11-01 05:31:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:33:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:35:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:37:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:39:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:41:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:43:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:45:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:47:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:49:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:51:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:53:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:55:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:57:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 05:59:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:01:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:03:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:05:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:07:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:09:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:11:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:13:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:15:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:17:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:19:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:21:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:23:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:25:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:27:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:29:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:31:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:33:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:35:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:37:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:39:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:41:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:43:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:45:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:47:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:49:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:51:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:53:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:55:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:57:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 06:59:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:01:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:03:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:05:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:07:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:09:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:12:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:14:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:16:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:18:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:20:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:22:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:24:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:26:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:28:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:30:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:32:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:34:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:36:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:38:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:40:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:42:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 07:44:07] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 14:16:55] ============================================================
+[2026-11-01 14:16:55] Audio to Haptic Daemon (Gestolumina PWM Engine) starting...
+[2026-11-01 14:16:55] ============================================================
+[2026-11-01 14:16:55] Default Windows Audio Endpoint: ASUS VS228 (NVIDIA High Definition Audio)
+[2026-11-01 14:16:55] Selected Loopback Capture Device: ASUS VS228 (NVIDIA High Definition Audio) [Loopback]
+[2026-11-01 14:16:55] Gestolumina PWM Haptic Engine active. Dynamic range: 0% to 100% duty cycle.
+[2026-11-01 14:16:56] Another instance of audio_haptics_daemon is already running. Exiting.
+[2026-11-01 14:17:02] [GoveeSync] Successfully initialized Govee bridge. Discovered 2 device(s): Dillon Room (Cloud), Dillon Room 2 (Cloud)
+[2026-11-01 15:01:14] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.4229, Baseline: 0.0133
+[2026-11-01 15:03:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 15:05:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0008
+[2026-11-01 15:11:02] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 15:27:09] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 15:36:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0693, Baseline: 0.0147
+[2026-11-01 15:39:10] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0345, Baseline: 0.0060
+[2026-11-01 15:43:47] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0172, Baseline: 0.0031
+[2026-11-01 15:47:52] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0159, Baseline: 0.0019
+[2026-11-01 15:59:37] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0158, Baseline: 0.0018
+[2026-11-01 16:01:51] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0157, Baseline: 0.0018
+[2026-11-01 16:07:41] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0159, Baseline: 0.0018
+[2026-11-01 16:17:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0562, Baseline: 0.0114
+[2026-11-01 16:20:16] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0158, Baseline: 0.0028
+[2026-11-01 16:24:58] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0159, Baseline: 0.0018
+[2026-11-01 16:27:03] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0158, Baseline: 0.0018
+[2026-11-01 16:34:05] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0460, Baseline: 0.0021
+[2026-11-01 17:07:12] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0563, Baseline: 0.0116
+[2026-11-01 17:13:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0575, Baseline: 0.0148
+[2026-11-01 17:33:50] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0561, Baseline: 0.0149
+[2026-11-01 17:44:38] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0562, Baseline: 0.0150
+[2026-11-01 18:06:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0384, Baseline: 0.0098
+[2026-11-01 18:27:55] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0235, Baseline: 0.0066
+[2026-11-01 18:31:05] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0488, Baseline: 0.0135
+[2026-11-01 18:35:39] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0243, Baseline: 0.0056
+[2026-11-01 18:41:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0158, Baseline: 0.0030
+[2026-11-01 18:43:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1231, Baseline: 0.0379
+[2026-11-01 18:45:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0482, Baseline: 0.0183
+[2026-11-01 18:47:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0376, Baseline: 0.0130
+[2026-11-01 18:49:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0694, Baseline: 0.0234
+[2026-11-01 18:51:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1396, Baseline: 0.0569
+[2026-11-01 18:53:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0271, Baseline: 0.0087
+[2026-11-01 18:55:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0516, Baseline: 0.0188
+[2026-11-01 18:57:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0542, Baseline: 0.0150
+[2026-11-01 18:59:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0667, Baseline: 0.0225
+[2026-11-01 19:01:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0656, Baseline: 0.0233
+[2026-11-01 19:03:59] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1073, Baseline: 0.0358
+[2026-11-01 19:09:54] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0367, Baseline: 0.0103
+[2026-11-01 19:12:05] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0388, Baseline: 0.0088
+[2026-11-01 19:14:05] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0846, Baseline: 0.0301
+[2026-11-01 19:19:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1060, Baseline: 0.0325
+[2026-11-01 19:29:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0742, Baseline: 0.0196
+[2026-11-01 19:31:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:33:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:35:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:37:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:39:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:41:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:43:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:45:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:47:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:49:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:51:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:53:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:55:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:57:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 19:59:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:01:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:03:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:05:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:07:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:09:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:11:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:13:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:15:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:17:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:19:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:21:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:23:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:25:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:27:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:29:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:31:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:33:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:35:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:37:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:39:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:41:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:43:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:45:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:47:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:49:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:51:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:53:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:55:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:57:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 20:59:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:01:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:03:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:05:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:07:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:09:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:11:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:13:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:15:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:17:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:19:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:21:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:23:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:25:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:27:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:29:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:31:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:33:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:35:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:37:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:39:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:41:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:43:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:45:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:47:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:49:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:51:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:53:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:55:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:57:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 21:59:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:01:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:03:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:05:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:07:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:09:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:11:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:13:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:15:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:17:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:19:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:21:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:23:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:25:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:27:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:29:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:31:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:33:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:35:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:37:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:39:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:41:35] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 22:55:36] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-01 23:28:01] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0562, Baseline: 0.0109
+[2026-11-01 23:30:25] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0639, Baseline: 0.0170
+[2026-11-01 23:32:45] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0565, Baseline: 0.0116
+[2026-11-02 00:08:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0566, Baseline: 0.0141
+[2026-11-02 00:17:26] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0561, Baseline: 0.0151
+[2026-11-02 00:21:09] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0578, Baseline: 0.0151
+[2026-11-02 00:31:19] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0573, Baseline: 0.0150
+[2026-11-02 00:37:26] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0566, Baseline: 0.0149
+[2026-11-02 00:44:55] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0560, Baseline: 0.0149
+[2026-11-02 00:46:55] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 00:48:55] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 00:50:55] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 00:52:55] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 00:54:55] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 00:56:55] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 00:58:55] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:00:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:02:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:04:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:06:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:08:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:10:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:12:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:14:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:16:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:18:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:20:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:22:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:24:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:26:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:28:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:30:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:32:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:34:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:36:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:38:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:40:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:42:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:44:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:46:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:48:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:50:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:52:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:54:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:56:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 01:58:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:00:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0001
+[2026-11-02 02:02:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0419, Baseline: 0.0140
+[2026-11-02 02:04:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0756, Baseline: 0.0324
+[2026-11-02 02:06:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0758, Baseline: 0.0289
+[2026-11-02 02:08:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:10:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:12:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:14:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1874, Baseline: 0.0620
+[2026-11-02 02:16:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:18:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1420, Baseline: 0.0474
+[2026-11-02 02:20:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:22:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:24:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0437, Baseline: 0.0121
+[2026-11-02 02:26:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0628, Baseline: 0.0009
+[2026-11-02 02:28:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0617, Baseline: 0.0207
+[2026-11-02 02:30:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1177, Baseline: 0.0498
+[2026-11-02 02:32:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0665, Baseline: 0.0245
+[2026-11-02 02:34:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:36:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0399, Baseline: 0.0133
+[2026-11-02 02:38:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:40:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0012
+[2026-11-02 02:42:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0002
+[2026-11-02 02:44:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:46:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:48:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:50:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:52:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1171, Baseline: 0.0111
+[2026-11-02 02:54:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:56:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 02:58:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:00:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0535, Baseline: 0.0101
+[2026-11-02 03:02:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1602, Baseline: 0.0415
+[2026-11-02 03:04:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:06:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:08:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:10:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:12:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:14:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:16:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:18:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:20:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:22:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0288, Baseline: 0.0037
+[2026-11-02 03:24:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:26:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:28:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:30:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:32:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:34:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:36:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:38:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:40:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0368, Baseline: 0.0092
+[2026-11-02 03:42:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:44:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:46:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:48:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:50:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:52:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:54:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:56:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 03:58:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:00:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:02:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:04:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:06:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:08:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:10:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:12:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:14:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:16:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:18:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:20:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:22:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:24:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:26:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:28:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:30:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:32:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:34:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:36:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:38:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:40:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:42:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:44:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:46:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:48:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:50:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:52:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:54:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 04:56:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1030, Baseline: 0.0402
+[2026-11-02 04:58:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:00:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:02:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:04:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:06:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:08:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:10:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:12:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:14:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:16:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:18:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:20:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:22:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:24:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:26:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:28:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:30:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:32:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:34:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:36:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:38:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:40:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:42:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:44:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:46:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:48:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:50:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:52:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:54:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0031
+[2026-11-02 05:56:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 05:58:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 06:00:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 06:02:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 06:07:20] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 06:14:42] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0250, Baseline: 0.0083
+[2026-11-02 06:20:22] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0109, Baseline: 0.0033
+[2026-11-02 06:25:30] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0561, Baseline: 0.0147
+[2026-11-02 06:32:14] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0281, Baseline: 0.0060
+[2026-11-02 06:34:14] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 06:36:23] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1338, Baseline: 0.0011
+[2026-11-02 06:51:42] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1418, Baseline: 0.0098
+[2026-11-02 07:08:21] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0710, Baseline: 0.0044
+[2026-11-02 07:12:24] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0519, Baseline: 0.0144
+[2026-11-02 07:15:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0259, Baseline: 0.0059
+[2026-11-02 07:33:34] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0566, Baseline: 0.0158
+[2026-11-02 07:37:13] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 07:41:01] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0174, Baseline: 0.0037
+[2026-11-02 07:47:44] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0141, Baseline: 0.0020
+[2026-11-02 07:53:47] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0756, Baseline: 0.0168
+[2026-11-02 08:08:15] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0568, Baseline: 0.0154
+[2026-11-02 08:22:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0561, Baseline: 0.0150
+[2026-11-02 08:24:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 08:26:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 08:28:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 08:30:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 08:32:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 08:34:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 08:36:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 14:07:35] Another instance of audio_haptics_daemon is already running. Exiting.
+[2026-11-02 14:07:36] ============================================================
+[2026-11-02 14:07:36] Audio to Haptic Daemon (Gestolumina PWM Engine) starting...
+[2026-11-02 14:07:36] ============================================================
+[2026-11-02 14:07:36] Default Windows Audio Endpoint: ASUS VS228 (NVIDIA High Definition Audio)
+[2026-11-02 14:07:36] Selected Loopback Capture Device: ASUS VS228 (NVIDIA High Definition Audio) [Loopback]
+[2026-11-02 14:07:36] Gestolumina PWM Haptic Engine active. Dynamic range: 0% to 100% duty cycle.
+[2026-11-02 14:07:41] [GoveeSync] Successfully initialized Govee bridge. Discovered 2 device(s): Dillon Room (Cloud), Dillon Room 2 (Cloud)
+[2026-11-02 14:33:42] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1878, Baseline: 0.0141
+[2026-11-02 14:39:50] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0829, Baseline: 0.0148
+[2026-11-02 14:58:20] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0573, Baseline: 0.0149
+[2026-11-02 15:02:44] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0591, Baseline: 0.0100
+[2026-11-02 15:06:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0482, Baseline: 0.0127
+[2026-11-02 15:09:09] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0446, Baseline: 0.0119
+[2026-11-02 15:29:05] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0178, Baseline: 0.0054
+[2026-11-02 15:37:06] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 15:40:05] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0566, Baseline: 0.0109
+[2026-11-02 15:55:10] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 16:13:06] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0560, Baseline: 0.0109
+[2026-11-02 16:16:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0565, Baseline: 0.0139
+[2026-11-02 16:18:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0868, Baseline: 0.0396
+[2026-11-02 16:20:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1198, Baseline: 0.0435
+[2026-11-02 16:22:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1066, Baseline: 0.0460
+[2026-11-02 16:24:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1331, Baseline: 0.0487
+[2026-11-02 16:26:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0895, Baseline: 0.0326
+[2026-11-02 16:28:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0954, Baseline: 0.0382
+[2026-11-02 16:30:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 16:32:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1012, Baseline: 0.0379
+[2026-11-02 16:34:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1450, Baseline: 0.0484
+[2026-11-02 16:36:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1352, Baseline: 0.0656
+[2026-11-02 16:38:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1453, Baseline: 0.0681
+[2026-11-02 16:40:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 16:42:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0429, Baseline: 0.0011
+[2026-11-02 16:44:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0944, Baseline: 0.0320
+[2026-11-02 16:46:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1142, Baseline: 0.0457
+[2026-11-02 16:48:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0682, Baseline: 0.0201
+[2026-11-02 16:50:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1072, Baseline: 0.0404
+[2026-11-02 16:52:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1271, Baseline: 0.0566
+[2026-11-02 16:54:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0001
+[2026-11-02 16:56:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0459, Baseline: 0.0137
+[2026-11-02 16:58:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1614, Baseline: 0.0563
+[2026-11-02 17:00:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:02:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.2417, Baseline: 0.0466
+[2026-11-02 17:04:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1468, Baseline: 0.0632
+[2026-11-02 17:06:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1421, Baseline: 0.0566
+[2026-11-02 17:08:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:10:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1272, Baseline: 0.0452
+[2026-11-02 17:12:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1154, Baseline: 0.0504
+[2026-11-02 17:14:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0965, Baseline: 0.0379
+[2026-11-02 17:16:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1151, Baseline: 0.0517
+[2026-11-02 17:18:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1217, Baseline: 0.0458
+[2026-11-02 17:20:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0900, Baseline: 0.0302
+[2026-11-02 17:22:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.2509, Baseline: 0.0382
+[2026-11-02 17:24:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1180, Baseline: 0.0496
+[2026-11-02 17:26:56] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1163, Baseline: 0.0452
+[2026-11-02 17:28:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1425, Baseline: 0.0481
+[2026-11-02 17:30:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1092, Baseline: 0.0396
+[2026-11-02 17:32:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1203, Baseline: 0.0416
+[2026-11-02 17:34:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1549, Baseline: 0.0548
+[2026-11-02 17:36:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1445, Baseline: 0.0673
+[2026-11-02 17:38:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0001
+[2026-11-02 17:40:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:42:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:44:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:46:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:48:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:50:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:52:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:54:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:56:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 17:58:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:00:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:02:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:04:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:06:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:08:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:10:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:12:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:14:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:16:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:18:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:20:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:22:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:24:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:26:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:28:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:30:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:32:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:34:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:36:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:38:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:40:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:42:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:44:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:46:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:48:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:50:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:52:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:54:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:56:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 18:58:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 19:00:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 19:02:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 19:04:43] Another instance of audio_haptics_daemon is already running. Exiting.
+[2026-11-02 19:04:43] Another instance of audio_haptics_daemon is already running. Exiting.
+[2026-11-02 19:04:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0003
+[2026-11-02 19:06:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 19:08:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1155, Baseline: 0.0408
+[2026-11-02 19:10:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1716, Baseline: 0.0396
+[2026-11-02 19:12:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1221, Baseline: 0.0453
+[2026-11-02 19:14:57] AudioHaptics active: 0 haptic hits delivered. Headroom: 0.1535, Baseline: 0.0514
+[2026-11-02 19:15:11] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=False
+[2026-11-02 19:15:34] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=False
+[2026-11-02 19:15:57] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=True
+[2026-11-02 19:16:57] AudioHaptics active: 263 haptic hits delivered. Headroom: 0.1029, Baseline: 0.0427
+[2026-11-02 19:18:57] AudioHaptics active: 699 haptic hits delivered. Headroom: 0.0881, Baseline: 0.0344
+[2026-11-02 19:20:57] AudioHaptics active: 709 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 19:22:57] AudioHaptics active: 837 haptic hits delivered. Headroom: 0.1050, Baseline: 0.0450
+[2026-11-02 19:24:57] AudioHaptics active: 1271 haptic hits delivered. Headroom: 0.1107, Baseline: 0.0392
+[2026-11-02 19:26:57] AudioHaptics active: 1740 haptic hits delivered. Headroom: 0.1181, Baseline: 0.0121
+[2026-11-02 19:37:07] ============================================================
+[2026-11-02 19:37:07] Audio to Haptic Daemon (Gestolumina PWM Engine) starting...
+[2026-11-02 19:37:07] ============================================================
+[2026-11-02 19:37:07] Default Windows Audio Endpoint: ASUS VS228 (NVIDIA High Definition Audio)
+[2026-11-02 19:37:07] Selected Loopback Capture Device: ASUS VS228 (NVIDIA High Definition Audio) [Loopback]
+[2026-11-02 19:37:07] Gestolumina PWM Haptic Engine active. Dynamic range: 0% to 100% duty cycle.
+[2026-11-02 19:38:50] ============================================================
+[2026-11-02 19:38:50] Audio to Haptic Daemon (Gestolumina PWM Engine) starting...
+[2026-11-02 19:38:50] ============================================================
+[2026-11-02 19:38:50] Default Windows Audio Endpoint: ASUS VS228 (NVIDIA High Definition Audio)
+[2026-11-02 19:38:50] Selected Loopback Capture Device: ASUS VS228 (NVIDIA High Definition Audio) [Loopback]
+[2026-11-02 19:38:50] Gestolumina PWM Haptic Engine active. Dynamic range: 0% to 100% duty cycle.
+[2026-11-02 19:38:53] [GoveeSync] Successfully initialized Govee bridge. Discovered 2 device(s): Dillon Room (Cloud), Dillon Room 2 (Cloud)
+[2026-11-02 19:39:45] ============================================================
+[2026-11-02 19:39:45] Audio to Haptic Daemon (Gestolumina PWM Engine) starting...
+[2026-11-02 19:39:45] ============================================================
+[2026-11-02 19:39:45] Default Windows Audio Endpoint: ASUS VS228 (NVIDIA High Definition Audio)
+[2026-11-02 19:39:45] Selected Loopback Capture Device: ASUS VS228 (NVIDIA High Definition Audio) [Loopback]
+[2026-11-02 19:39:45] Gestolumina PWM Haptic Engine active. Dynamic range: 0% to 100% duty cycle.
+[2026-11-02 19:39:47] [GoveeSync] Successfully initialized Govee bridge. Discovered 2 device(s): Dillon Room (Cloud), Dillon Room 2 (Cloud)
+[2026-11-02 19:40:09] ============================================================
+[2026-11-02 19:40:09] Audio to Haptic Daemon (Gestolumina PWM Engine) starting...
+[2026-11-02 19:40:09] ============================================================
+[2026-11-02 19:40:09] Default Windows Audio Endpoint: ASUS VS228 (NVIDIA High Definition Audio)
+[2026-11-02 19:40:09] Selected Loopback Capture Device: ASUS VS228 (NVIDIA High Definition Audio) [Loopback]
+[2026-11-02 19:40:09] Gestolumina PWM Haptic Engine active. Dynamic range: 0% to 100% duty cycle.
+[2026-11-02 19:40:12] [GoveeSync] Successfully initialized Govee bridge. Discovered 2 device(s): Dillon Room (Cloud), Dillon Room 2 (Cloud)
+[2026-11-02 19:41:20] Another instance of audio_haptics_daemon is already running. Exiting.
+[2026-11-02 19:42:09] AudioHaptics active: 416 haptic hits delivered. Headroom: 0.0612, Baseline: 0.0149
+[2026-11-02 19:44:09] AudioHaptics active: 612 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 19:44:46] Config updated dynamically: Scale=2.8x, BaseAmp=95, PunchDur=110ms, Enabled=True
+[2026-11-02 19:44:49] Config updated dynamically: Scale=1.6x, BaseAmp=55, PunchDur=70ms, Enabled=True
+[2026-11-02 19:44:51] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=True
+[2026-11-02 19:45:06] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=True
+[2026-11-02 19:45:08] Config updated dynamically: Scale=2.0x, BaseAmp=25, PunchDur=90ms, Enabled=True
+[2026-11-02 19:45:10] Config updated dynamically: Scale=2.0x, BaseAmp=25, PunchDur=90ms, Enabled=True
+[2026-11-02 19:45:13] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=90ms, Enabled=True
+[2026-11-02 19:45:15] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=85ms, Enabled=True
+[2026-11-02 19:45:18] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=45ms, Enabled=True
+[2026-11-02 19:45:22] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=45ms, Enabled=True
+[2026-11-02 19:45:23] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=45ms, Enabled=True
+[2026-11-02 19:45:26] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=45ms, Enabled=True
+[2026-11-02 19:45:27] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=45ms, Enabled=True
+[2026-11-02 19:45:38] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=45ms, Enabled=True
+[2026-11-02 19:45:39] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=45ms, Enabled=True
+[2026-11-02 19:45:42] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=45ms, Enabled=True
+[2026-11-02 19:45:42] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=45ms, Enabled=True
+[2026-11-02 19:45:43] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=40ms, Enabled=True
+[2026-11-02 19:45:43] Config updated dynamically: Scale=3.4x, BaseAmp=25, PunchDur=40ms, Enabled=True
+[2026-11-02 19:45:44] Config updated dynamically: Scale=3.4x, BaseAmp=20, PunchDur=40ms, Enabled=True
+[2026-11-02 19:45:44] Config updated dynamically: Scale=3.4x, BaseAmp=15, PunchDur=40ms, Enabled=True
+[2026-11-02 19:45:47] Config updated dynamically: Scale=3.0x, BaseAmp=15, PunchDur=40ms, Enabled=True
+[2026-11-02 19:45:48] Config updated dynamically: Scale=1.6x, BaseAmp=15, PunchDur=40ms, Enabled=True
+[2026-11-02 19:45:50] Config updated dynamically: Scale=2.0x, BaseAmp=15, PunchDur=40ms, Enabled=True
+[2026-11-02 19:45:50] Config updated dynamically: Scale=2.0x, BaseAmp=15, PunchDur=40ms, Enabled=True
+[2026-11-02 19:46:09] AudioHaptics active: 992 haptic hits delivered. Headroom: 0.1657, Baseline: 0.0612
+[2026-11-02 19:48:09] AudioHaptics active: 1531 haptic hits delivered. Headroom: 0.1422, Baseline: 0.0496
+[2026-11-02 19:50:09] AudioHaptics active: 2078 haptic hits delivered. Headroom: 0.1914, Baseline: 0.0837
+[2026-11-02 19:52:09] AudioHaptics active: 2608 haptic hits delivered. Headroom: 0.1764, Baseline: 0.0581
+[2026-11-02 19:52:53] ============================================================
+[2026-11-02 19:52:53] Audio to Haptic Daemon (Gestolumina PWM Engine) starting...
+[2026-11-02 19:52:53] ============================================================
+[2026-11-02 19:52:53] Default Windows Audio Endpoint: ASUS VS228 (NVIDIA High Definition Audio)
+[2026-11-02 19:52:53] Selected Loopback Capture Device: ASUS VS228 (NVIDIA High Definition Audio) [Loopback]
+[2026-11-02 19:52:53] Gestolumina PWM Haptic Engine active. Dynamic range: 0% to 100% duty cycle.
+[2026-11-02 19:52:55] [GoveeSync] Successfully initialized Govee bridge. Discovered 2 device(s): Dillon Room (Cloud), Dillon Room 2 (Cloud)
+[2026-11-02 19:54:53] AudioHaptics active: 15 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 19:55:57] Config updated dynamically: Scale=2.0x, BaseAmp=15, PunchDur=40ms, Enabled=False
+[2026-11-02 19:56:00] ============================================================
+[2026-11-02 19:56:00] Audio to Haptic Daemon (Gestolumina PWM Engine) starting...
+[2026-11-02 19:56:00] ============================================================
+[2026-11-02 19:56:00] Default Windows Audio Endpoint: ASUS VS228 (NVIDIA High Definition Audio)
+[2026-11-02 19:56:00] Selected Loopback Capture Device: ASUS VS228 (NVIDIA High Definition Audio) [Loopback]
+[2026-11-02 19:56:00] Gestolumina PWM Haptic Engine active. Dynamic range: 0% to 100% duty cycle.
+[2026-11-02 19:56:00] Another instance of audio_haptics_daemon is already running. Exiting.
+[2026-11-02 19:56:01] [GoveeSync] Successfully initialized Govee bridge. Discovered 2 device(s): Dillon Room (Cloud), Dillon Room 2 (Cloud)
+[2026-11-02 19:58:00] AudioHaptics active: 636 haptic hits delivered. Headroom: 0.2402, Baseline: 0.0750
+[2026-11-02 19:58:28] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=True
+[2026-11-02 19:58:31] Config updated dynamically: Scale=2.8x, BaseAmp=95, PunchDur=110ms, Enabled=True
+[2026-11-02 19:58:32] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=True
+[2026-11-02 19:58:39] Config updated dynamically: Scale=2.8x, BaseAmp=95, PunchDur=110ms, Enabled=True
+[2026-11-02 19:58:42] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=True
+[2026-11-02 19:58:44] Config updated dynamically: Scale=2.8x, BaseAmp=95, PunchDur=110ms, Enabled=True
+[2026-11-02 19:58:44] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=True
+[2026-11-02 19:58:45] Config updated dynamically: Scale=2.8x, BaseAmp=95, PunchDur=110ms, Enabled=True
+[2026-11-02 19:58:45] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=True
+[2026-11-02 19:58:46] Config updated dynamically: Scale=2.8x, BaseAmp=95, PunchDur=110ms, Enabled=True
+[2026-11-02 19:58:46] Config updated dynamically: Scale=2.0x, BaseAmp=70, PunchDur=90ms, Enabled=True
+[2026-11-02 19:58:47] Config updated dynamically: Scale=2.8x, BaseAmp=95, PunchDur=110ms, Enabled=True
+[2026-11-02 20:00:00] AudioHaptics active: 929 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 20:02:00] AudioHaptics active: 930 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 20:04:00] AudioHaptics active: 931 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 20:06:00] AudioHaptics active: 931 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 20:08:00] AudioHaptics active: 933 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 20:10:00] AudioHaptics active: 963 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0000
+[2026-11-02 20:12:00] AudioHaptics active: 968 haptic hits delivered. Headroom: 0.0453, Baseline: 0.0042
+[2026-11-02 20:14:00] AudioHaptics active: 1166 haptic hits delivered. Headroom: 0.1025, Baseline: 0.0109
+[2026-11-02 20:16:00] AudioHaptics active: 1328 haptic hits delivered. Headroom: 0.0100, Baseline: 0.0008
+[2026-11-02 20:18:00] AudioHaptics active: 1603 haptic hits delivered. Headroom: 0.0695, Baseline: 0.0138

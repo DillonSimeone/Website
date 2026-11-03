@@ -92,6 +92,17 @@ The website is a modular SPA powered by **Vite** and **Handlebars**. Content is 
 
 ---
 
+## 3f. Novel & Ebook Publishing (`public/MiniProjects/Writing/Deaf/`)
+* **Project Directory**: `public/MiniProjects/Writing/Deaf/`
+* **Local Operations Guide**: [`public/MiniProjects/Writing/Deaf/AGENTS.md`](public/MiniProjects/Writing/Deaf/AGENTS.md)
+* **Invariants**:
+  - `build/` is the sole source of truth for ebook and PDF outputs; `tools/` is strictly for scripts and CLI utilities.
+  - Zero em dashes (`—`) across chapter prose.
+  - No developmental beat outlines under chapter headings in book builds or web reader headers.
+  - Preserve inner tag formatting and spacing during HTML-to-EPUB/PDF compilations.
+
+---
+
 ## 4. Development Guidelines
 * **DO NOT run `npm run build`**: Production builds are handled solely by the user.
 * **Card Format**: Cards in `src/content/mini-projects/` use `<div class="grid-item"><h2>Title</h2><p>... </p><ul>...</ul></div>`.

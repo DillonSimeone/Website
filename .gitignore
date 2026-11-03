@@ -63,6 +63,16 @@ GitHubActions.md
 public/ParametricModeling/.vscode/settings.json
 public/ESP32Codes/_tooling/uploader/catalog.log
 
+# Secrets & Environment variables
+.env
+.env.*
+*.env
+
+# Local binaries and tooling
+tools/
+*.exe
+*.zip
+
 # Agent MD files (local only)
 **/task.md
 **/walkthrough.md

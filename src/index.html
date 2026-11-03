@@ -393,6 +393,7 @@
                             <p class="flasher-subtitle">Direct Browser-to-Microcontroller USB Firmware Flasher &amp; Live Serial Monitor</p>
                         </div>
                         <div class="flasher-badges">
+                            <span class="flasher-badge ready" id="webSerialBadge">Web Serial Ready</span>
                             <span class="flasher-badge studio-active" id="localStudioBadge" style="display:none;" title="Local Compiler Studio Active">
                                 <a href="http://localhost:3567" target="_blank" rel="noopener noreferrer">Local Studio Active ↗</a>
                             </span>
@@ -446,22 +447,18 @@
                                 </div>
                             </div>
 
-                            <!-- Connection Parameters -->
-                            <div class="flasher-connection-row">
-                                <div class="flasher-field flex-1">
-                                    <label for="flasherBaudSelect">FLASH / MONITOR BAUD</label>
-                                    <select id="flasherBaudSelect" class="flasher-select">
-                                        <option value="115200" selected>115200 bps (Standard)</option>
-                                        <option value="460800">460800 bps (Fast Flash)</option>
-                                        <option value="921600">921600 bps (Ultra Fast)</option>
+                            <!-- Connection Parameters & Actions -->
+                            <div class="flasher-actions-row">
+                                <div class="flasher-baud-group">
+                                    <select id="flasherBaudSelect" class="flasher-select flasher-baud-select" title="Flash / Monitor Baud Rate">
+                                        <option value="115200" selected>115200 Baud</option>
+                                        <option value="460800">460800 Baud</option>
+                                        <option value="921600">921600 Baud</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            <div class="flasher-actions">
-                                <button type="button" class="flasher-btn primary" id="btnConnectFlash">Connect &amp; Flash Device</button>
-                                <button type="button" class="flasher-btn secondary" id="btnToggleMonitor">📟 Open Serial Monitor</button>
-                                <button type="button" class="flasher-btn outline" id="btnResetChip" title="Send RTS/DTR reboot pulse">🔄 Reset Chip</button>
+                                <button type="button" class="flasher-btn primary" id="btnConnectFlash">⚡ Connect &amp; Flash</button>
+                                <button type="button" class="flasher-btn secondary" id="btnToggleMonitor" title="Open live serial monitor">📟 Monitor</button>
+                                <button type="button" class="flasher-btn outline" id="btnResetChip" title="Send RTS/DTR reboot pulse">🔄 Reset</button>
                             </div>
                         </div>
 

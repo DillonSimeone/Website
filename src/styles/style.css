@@ -2859,6 +2859,7 @@ body.dark-mode .pricing-options-summary {
 }
 
 
+
 /*=======================================================
             ESP32 In-Browser Web Serial Uploader
 =========================================================*/
@@ -2866,10 +2867,10 @@ body.dark-mode .pricing-options-summary {
     width: 100%;
     background: var(--bg-glass);
     border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: clamp(20px, 3vw, 32px);
-    margin: 15px 0 45px 0;
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 8px 0 24px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(12px);
     transition: var(--theme-transition);
     overflow: visible;
@@ -2878,41 +2879,41 @@ body.dark-mode .pricing-options-summary {
 .flasher-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: 8px;
+    margin-bottom: 8px;
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 18px;
+    padding-bottom: 6px;
 }
 
 .flasher-title-group h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(1.4rem, 2.2vw, 1.9rem);
-    letter-spacing: 0.5px;
-    margin: 0 0 6px 0;
+    font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+    letter-spacing: 0.4px;
+    margin: 0;
     line-height: 1.2;
 }
 
 .flasher-subtitle {
     font-family: 'Share Tech Mono', monospace;
-    font-size: clamp(0.85rem, 1.05vw, 0.95rem);
+    font-size: 0.74rem;
     color: var(--text-secondary);
-    margin: 0;
+    margin: 2px 0 0 0;
 }
 
 .flasher-badges {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     flex-wrap: wrap;
 }
 
 .flasher-badge {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.78rem;
-    padding: 5px 12px;
-    border-radius: 20px;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 12px;
     letter-spacing: 0.3px;
     font-weight: 600;
 }
@@ -2946,41 +2947,35 @@ body.dark-mode .pricing-options-summary {
 
 .flasher-body {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 14px;
     align-items: stretch;
-}
-
-@media only screen and (max-width: 900px) {
-    .flasher-body {
-        grid-template-columns: 1fr;
-    }
 }
 
 .flasher-controls-col {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
 }
 
 .flasher-tabs {
     display: flex;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 6px;
-    gap: 8px;
+    margin-bottom: 2px;
+    gap: 6px;
 }
 
 .flasher-tab-btn {
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.76rem;
     font-weight: 700;
-    padding: 8px 16px;
+    padding: 4px 10px;
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
 }
 
 .flasher-tab-btn.active {
@@ -2991,23 +2986,23 @@ body.dark-mode .pricing-options-summary {
 .flasher-field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
 }
 
 .flasher-field label {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.78rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
     font-weight: 600;
 }
 
 .flasher-select,
 .flasher-input {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.92rem;
-    padding: 10px 14px;
-    border-radius: 8px;
+    font-size: 0.8rem;
+    padding: 5px 8px;
+    border-radius: 6px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -3024,92 +3019,134 @@ body.dark-mode .pricing-options-summary {
 .firmware-details-card {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 14px;
+    border-radius: 6px;
+    padding: 8px 10px;
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.86rem;
+    font-size: 0.78rem;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .firmware-detail-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .detail-label {
     color: var(--text-secondary);
-    font-size: 0.8rem;
+    font-size: 0.74rem;
 }
 
 .chip-tag {
     background: rgba(0, 240, 255, 0.15);
     color: var(--neon-cyan, #0284c7);
-    padding: 2px 8px;
+    padding: 1px 6px;
     border-radius: 4px;
     font-weight: 700;
-    font-size: 0.82rem;
+    font-size: 0.74rem;
 }
 
 .firmware-detail-desc {
-    margin-top: 6px;
-    padding-top: 8px;
+    margin-top: 2px;
+    padding-top: 3px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     color: var(--text-secondary);
-    line-height: 1.45;
+    font-size: 0.74rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .firmware-pinout-box {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .pinout-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .pinout-title {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--neon-cyan, #0284c7);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
 }
 
 .pinout-count {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: var(--text-secondary);
+}
+
+.firmware-pin-table-scroll {
+    max-height: 110px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.35) rgba(0, 0, 0, 0.2);
+}
+
+.firmware-pin-table-scroll::-webkit-scrollbar {
+    width: 5px;
+}
+
+.firmware-pin-table-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 3px;
+}
+
+.firmware-pin-table-scroll::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.35);
+    border-radius: 3px;
+}
+
+.firmware-pin-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.7);
 }
 
 .firmware-pin-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.8rem;
-    background: rgba(0, 0, 0, 0.25);
-    border-radius: 6px;
-    overflow: hidden;
+    font-size: 0.74rem;
+    margin: 0;
 }
 
 .firmware-pin-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     text-align: left;
-    padding: 6px 10px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 3px 6px;
+    background: #0d0e18;
     color: var(--neon-green, #00ff88);
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.68rem;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .firmware-pin-table td {
-    padding: 6px 10px;
+    padding: 3px 6px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     vertical-align: middle;
+    line-height: 1.25;
+    transition: background 0.15s ease;
+}
+
+.firmware-pin-table tr:hover td {
+    background: rgba(0, 240, 255, 0.06);
 }
 
 .firmware-pin-table tr:last-child td {
@@ -3127,17 +3164,33 @@ body.dark-mode .pricing-options-summary {
     color: var(--text-primary, #ffffff);
 }
 
+body:not(.dark-mode) .firmware-pin-table th {
+    background: #f1f5f9;
+    color: #047857;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+body:not(.dark-mode) .firmware-pin-table-scroll {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+body:not(.dark-mode) .firmware-pin-table tr:hover td {
+    background: rgba(13, 71, 161, 0.06);
+}
+
 .custom-dropzone {
     border: 2px dashed var(--border-color);
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 8px;
+    padding: 10px 14px;
     text-align: center;
     cursor: pointer;
     background: rgba(255, 255, 255, 0.02);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
     transition: all 0.25s ease;
 }
 
@@ -3149,7 +3202,7 @@ body.dark-mode .pricing-options-summary {
 
 .custom-dropzone p {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     margin: 0;
     color: var(--text-secondary);
 }
@@ -3163,55 +3216,64 @@ body.dark-mode .pricing-options-summary {
 
 .custom-file-info {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: var(--neon-green, #047857);
     background: rgba(0, 255, 102, 0.08);
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-top: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-top: 4px;
 }
 
 .flasher-custom-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 6px;
 }
 
-.flasher-connection-row {
+/* Actions & Baud Toolbar */
+.flasher-actions-row {
     display: flex;
-    gap: 12px;
-}
-
-.flasher-actions {
-    display: flex;
-    gap: 10px;
+    align-items: center;
+    gap: 6px;
     flex-wrap: wrap;
-    margin-top: 8px;
+    margin-top: 6px;
+}
+
+.flasher-baud-group {
+    flex: 0 0 115px;
+}
+
+.flasher-baud-select {
+    font-size: 0.76rem;
+    padding: 5px 6px;
 }
 
 .flasher-btn {
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
-    font-size: 0.86rem;
-    letter-spacing: 0.5px;
-    padding: 10px 18px;
-    border-radius: 6px;
-    border: 2px solid transparent;
+    font-size: 0.74rem;
+    letter-spacing: 0.3px;
+    padding: 6px 12px;
+    border-radius: 5px;
+    border: 1px solid transparent;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    line-height: 1.2;
 }
 
 .flasher-btn.primary {
     background: #0d47a1;
     color: #ffffff;
     border-color: #0d47a1;
-    box-shadow: 0 2px 10px rgba(13, 71, 161, 0.3);
+    box-shadow: 0 2px 8px rgba(13, 71, 161, 0.3);
+    flex: 1 1 auto;
 }
 
 .flasher-btn.primary:hover {
     background: #1565c0;
-    box-shadow: 0 4px 18px rgba(13, 71, 161, 0.5);
+    box-shadow: 0 3px 14px rgba(13, 71, 161, 0.5);
     transform: translateY(-1px);
 }
 
@@ -3219,13 +3281,13 @@ body.dark-mode .flasher-btn.primary {
     background: rgba(0, 240, 255, 0.15);
     border-color: var(--neon-cyan);
     color: var(--neon-cyan);
-    box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
 }
 
 body.dark-mode .flasher-btn.primary:hover {
     background: var(--neon-cyan);
     color: #050508;
-    box-shadow: 0 0 24px rgba(0, 240, 255, 0.7);
+    box-shadow: 0 0 18px rgba(0, 240, 255, 0.6);
 }
 
 .flasher-btn.secondary {
@@ -3247,6 +3309,7 @@ body.dark-mode .flasher-btn.primary:hover {
 
 .flasher-btn.outline:hover {
     color: var(--text-primary);
+    border-color: var(--text-primary);
 }
 
 /* Hardware Console / Terminal Column */
@@ -3258,18 +3321,18 @@ body.dark-mode .flasher-btn.primary:hover {
 .terminal-card {
     background: #08080f;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 8px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 320px;
+    min-height: 160px;
     box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
 }
 
 .terminal-bar {
     background: #11111e;
-    padding: 8px 14px;
+    padding: 4px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3278,12 +3341,12 @@ body.dark-mode .flasher-btn.primary:hover {
 
 .terminal-dots {
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 
 .terminal-dots .dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
 }
 
@@ -3293,19 +3356,19 @@ body.dark-mode .flasher-btn.primary:hover {
 
 .terminal-title {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.75rem;
+    font-size: 0.68rem;
     color: #8888aa;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
 }
 
 .terminal-clear-btn {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: #aaaaaa;
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 1px 6px;
+    border-radius: 3px;
     cursor: pointer;
 }
 
@@ -3316,7 +3379,7 @@ body.dark-mode .flasher-btn.primary:hover {
 
 .flash-progress-track {
     width: 100%;
-    height: 4px;
+    height: 3px;
     background: rgba(255, 255, 255, 0.05);
 }
 
@@ -3329,8 +3392,8 @@ body.dark-mode .flasher-btn.primary:hover {
 
 .flash-stats-bar {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.78rem;
-    padding: 6px 14px;
+    font-size: 0.7rem;
+    padding: 3px 10px;
     background: rgba(0, 0, 0, 0.4);
     color: #00ffcc;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -3339,14 +3402,149 @@ body.dark-mode .flasher-btn.primary:hover {
 .terminal-log {
     flex: 1;
     margin: 0;
-    padding: 12px 14px;
+    padding: 6px 10px;
     font-family: 'Share Tech Mono', 'Fira Code', monospace;
-    font-size: 0.82rem;
-    line-height: 1.5;
+    font-size: 0.74rem;
+    line-height: 1.35;
     color: #38bdf8;
     background: #08080f;
     overflow-y: auto;
-    max-height: 300px;
+    min-height: 100px;
+    max-height: 200px;
     white-space: pre-wrap;
     word-break: break-all;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.35) rgba(0, 0, 0, 0.3);
+}
+
+.terminal-log::-webkit-scrollbar {
+    width: 5px;
+}
+
+.terminal-log::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+}
+
+.terminal-log::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.35);
+    border-radius: 3px;
+}
+
+.terminal-log::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.7);
+}
+
+/* Responsive / Mobile Styling */
+@media only screen and (max-width: 860px) {
+    .esp32-web-uploader-console {
+        padding: 10px 12px;
+        margin: 8px 0 18px 0;
+        border-radius: 10px;
+    }
+
+    .flasher-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-bottom: 6px;
+        padding-bottom: 6px;
+    }
+
+    .flasher-title-group h2 {
+        font-size: 1.05rem;
+    }
+
+    .flasher-subtitle {
+        font-size: 0.7rem;
+    }
+
+    .flasher-badges {
+        gap: 6px;
+    }
+
+    .flasher-badge {
+        font-size: 0.66rem;
+        padding: 2px 7px;
+    }
+
+    .flasher-body {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .flasher-actions-row {
+        display: grid;
+        grid-template-columns: 115px 1fr 1fr;
+        gap: 6px;
+    }
+
+    .flasher-actions-row #btnConnectFlash {
+        grid-column: 1 / -1;
+        width: 100%;
+        order: -1;
+    }
+
+    .flasher-actions-row .flasher-baud-group {
+        grid-column: 1 / 2;
+    }
+
+    .flasher-actions-row #btnToggleMonitor {
+        grid-column: 2 / 3;
+    }
+
+    .flasher-actions-row #btnResetChip {
+        grid-column: 3 / 4;
+    }
+
+    .firmware-pin-table-scroll {
+        max-height: 95px;
+    }
+
+    .terminal-card {
+        min-height: 130px;
+    }
+
+    .terminal-log {
+        min-height: 80px;
+        max-height: 130px;
+        font-size: 0.7rem;
+        padding: 5px 8px;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .flasher-actions-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .flasher-actions-row .flasher-baud-group {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .flasher-actions-row #btnConnectFlash {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .flasher-actions-row #btnToggleMonitor {
+        grid-column: 1 / 2;
+        width: 100%;
+    }
+
+    .flasher-actions-row #btnResetChip {
+        grid-column: 2 / 3;
+        width: 100%;
+    }
+
+    .firmware-pin-table th,
+    .firmware-pin-table td {
+        padding: 2px 4px;
+        font-size: 0.66rem;
+    }
+
+    .firmware-pin-table td.pin-code {
+        width: 34%;
+    }
 }
