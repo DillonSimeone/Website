@@ -4,3 +4,13 @@
 **/*.pid
 *.zip
 crash.log
+
+# Explicitly track portable release binaries (overrides root .gitignore *.exe rule)
+!daemon-command-center/daemon-command-center.exe
+!taskbar-sentinel/taskbar-sentinel.exe
+!audio-to-smartphone-haptics/audio-to-smartphone-haptics.exe
+!wifi-sentinel/wifi-sentinel.exe
+!usb-tether/usb-tether.exe
+!energy-daemon/energy-daemon.exe
+!platform-tools/*.exe
+!platform-tools/*.dll

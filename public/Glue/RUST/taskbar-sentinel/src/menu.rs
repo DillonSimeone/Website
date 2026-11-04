@@ -1,12 +1,18 @@
 use std::os::windows::ffi::OsStrExt;
-use windows_sys::Win32::Foundation::HWND;
+use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
+use windows_sys::Win32::Graphics::Gdi::{GetStockObject, DEFAULT_GUI_FONT};
+use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows_sys::Win32::System::Registry::{
     RegCloseKey, RegCreateKeyW, RegDeleteValueW, RegOpenKeyExW, RegQueryValueExW,
     RegSetValueExW, HKEY, HKEY_CURRENT_USER, KEY_READ, KEY_WRITE, REG_SZ,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    AppendMenuW, CreatePopupMenu, DestroyMenu, GetCursorPos, SetForegroundWindow, TrackPopupMenu,
-    MF_CHECKED, MF_POPUP, MF_SEPARATOR, MF_STRING, MF_UNCHECKED, TPM_BOTTOMALIGN, TPM_RIGHTBUTTON,
+    AppendMenuW, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyMenu, DestroyWindow,
+    GetCursorPos, GetWindowTextW, RegisterClassW, SendMessageW, SetForegroundWindow, ShowWindow,
+    TrackPopupMenu, CW_USEDEFAULT, HMENU, MF_CHECKED, MF_POPUP, MF_SEPARATOR, MF_STRING,
+    MF_UNCHECKED, SW_SHOW, TPM_BOTTOMALIGN, TPM_RIGHTBUTTON, WM_CLOSE, WM_COMMAND, WM_CREATE,
+    WM_SETFONT, WNDCLASSW, WS_BORDER, WS_CAPTION, WS_CHILD, WS_OVERLAPPED, WS_SYSMENU, WS_TABSTOP,
+    WS_VISIBLE,
 };
 
 pub const IDM_TASKMGR: usize = 101;
@@ -23,6 +29,10 @@ pub const IDM_RATE_CUSTOM: usize = 206;
 const RUN_KEY: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\Run\0";
 const APP_NAME: &str = "TaskbarSentinel\0";
 const SETTINGS_KEY: &str = "Software\\TaskbarSentinel\0";
+
+const IDC_RATE_EDIT: usize = 301;
+const IDC_RATE_OK: usize = 302;
+static mut EDIT_HWND: HWND = std::ptr::null_mut();
 
 pub fn get_kwh_rate() -> f32 {
     let subkey: Vec<u16> = SETTINGS_KEY.encode_utf16().collect();
@@ -144,21 +154,140 @@ pub fn toggle_startup() -> bool {
     }
 }
 
-pub fn prompt_custom_rate() {
-    let current = get_kwh_rate();
-    let script = format!(
-        "[void][System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic'); \
-        $r = [Microsoft.VisualBasic.Interaction]::InputBox('Enter electricity rate in $/kWh (e.g. 0.18):', 'Taskbar Sentinel Electricity Rate', '{:.2}'); \
-        if ($r -match '\\d+\\.?\\d*') {{ \
-            $val = $r -replace '[^\\d.]',''; \
-            Set-ItemProperty -Path 'HKCU:\\Software\\TaskbarSentinel' -Name 'KwhRate' -Value $val -Force \
-        }}",
-        current
-    );
+unsafe extern "system" fn rate_dlg_proc(
+    hwnd: HWND,
+    msg: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    match msg {
+        WM_CREATE => {
+            let font = GetStockObject(DEFAULT_GUI_FONT);
+            let h_inst = GetModuleHandleW(std::ptr::null());
 
-    let _ = std::process::Command::new("powershell")
-        .args(["-WindowStyle", "Hidden", "-Command", &script])
-        .spawn();
+            let lbl_cls: Vec<u16> = "STATIC\0".encode_utf16().collect();
+            let lbl_txt: Vec<u16> = "Electricity rate ($/kWh):\0".encode_utf16().collect();
+            let lbl = CreateWindowExW(
+                0,
+                lbl_cls.as_ptr(),
+                lbl_txt.as_ptr(),
+                WS_CHILD | WS_VISIBLE,
+                14,
+                16,
+                180,
+                20,
+                hwnd,
+                std::ptr::null_mut(),
+                h_inst,
+                std::ptr::null(),
+            );
+            SendMessageW(lbl, WM_SETFONT, font as WPARAM, 1);
+
+            let edit_cls: Vec<u16> = "EDIT\0".encode_utf16().collect();
+            let curr_txt: Vec<u16> = format!("{:.2}\0", get_kwh_rate()).encode_utf16().collect();
+            let edit = CreateWindowExW(
+                0,
+                edit_cls.as_ptr(),
+                curr_txt.as_ptr(),
+                WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP,
+                14,
+                40,
+                120,
+                24,
+                hwnd,
+                IDC_RATE_EDIT as HMENU,
+                h_inst,
+                std::ptr::null(),
+            );
+            SendMessageW(edit, WM_SETFONT, font as WPARAM, 1);
+            EDIT_HWND = edit;
+
+            let btn_cls: Vec<u16> = "BUTTON\0".encode_utf16().collect();
+            let btn_txt: Vec<u16> = "Save\0".encode_utf16().collect();
+            let btn = CreateWindowExW(
+                0,
+                btn_cls.as_ptr(),
+                btn_txt.as_ptr(),
+                WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                144,
+                40,
+                70,
+                24,
+                hwnd,
+                IDC_RATE_OK as HMENU,
+                h_inst,
+                std::ptr::null(),
+            );
+            SendMessageW(btn, WM_SETFONT, font as WPARAM, 1);
+            0
+        }
+        WM_COMMAND => {
+            let id = wparam & 0xFFFF;
+            if id == IDC_RATE_OK {
+                if !EDIT_HWND.is_null() {
+                    let mut buf = [0u16; 32];
+                    let len = GetWindowTextW(EDIT_HWND, buf.as_mut_ptr(), buf.len() as i32);
+                    if len > 0 {
+                        let s = String::from_utf16_lossy(&buf[..len as usize]);
+                        if let Ok(val) = s.trim().parse::<f32>() {
+                            if val > 0.0 && val < 10.0 {
+                                set_kwh_rate(val);
+                            }
+                        }
+                    }
+                }
+                DestroyWindow(hwnd);
+                return 0;
+            }
+            DefWindowProcW(hwnd, msg, wparam, lparam)
+        }
+        WM_CLOSE => {
+            DestroyWindow(hwnd);
+            0
+        }
+        _ => DefWindowProcW(hwnd, msg, wparam, lparam),
+    }
+}
+
+pub fn prompt_custom_rate() {
+    unsafe {
+        let cls_name: Vec<u16> = "TaskbarSentinelRateDlg\0".encode_utf16().collect();
+        let title: Vec<u16> = "Set Electricity Rate\0".encode_utf16().collect();
+        let h_inst = GetModuleHandleW(std::ptr::null());
+
+        let wc = WNDCLASSW {
+            style: 0,
+            lpfnWndProc: Some(rate_dlg_proc),
+            cbClsExtra: 0,
+            cbWndExtra: 0,
+            hInstance: h_inst,
+            hIcon: std::ptr::null_mut(),
+            hCursor: std::ptr::null_mut(),
+            hbrBackground: (5 + 1) as _,
+            lpszMenuName: std::ptr::null(),
+            lpszClassName: cls_name.as_ptr(),
+        };
+        RegisterClassW(&wc);
+
+        let hwnd = CreateWindowExW(
+            0,
+            cls_name.as_ptr(),
+            title.as_ptr(),
+            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
+            CW_USEDEFAULT,
+            CW_USEDEFAULT,
+            245,
+            115,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            h_inst,
+            std::ptr::null(),
+        );
+        if !hwnd.is_null() {
+            ShowWindow(hwnd, SW_SHOW);
+            SetForegroundWindow(hwnd);
+        }
+    }
 }
 
 pub fn show_context_menu(hwnd: HWND) {
