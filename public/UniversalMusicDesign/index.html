@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Music Design (UMD) - Research &amp; Engineering Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1e293b;
+      --primary-accent: #0f766e;
+      --accent-light: #f0fdfa;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --bg-alt: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text-main);
+      background-color: #f1f5f9;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 44px 48px;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    .header {
+      border-bottom: 2px solid var(--primary-accent);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-light);
+      color: var(--primary-accent);
+      border: 1px solid #ccfbf1;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--primary-accent);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .intro {
+      font-size: 14.5px;
+      color: var(--text-muted);
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 32px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .item-card {
+      background: var(--bg-alt);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 18px 20px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .item-card:hover {
+      border-color: var(--primary-accent);
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.08);
+    }
+
+    .item-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .item-card h3 a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .item-card h3 a:hover {
+      color: var(--primary-accent);
+      text-decoration: underline;
+    }
+
+    .item-card p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .item-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 12.5px;
+    }
+
+    .item-links a {
+      color: var(--primary-accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .item-links a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 36px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-color);
+      font-size: 12.5px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div class="header">
+    <span class="badge">NEA Project: 25-014 NEA &bull; App #1949260-38</span>
+    <h1>Universal Music Design (UMD)</h1>
+    <div class="subtitle">Research, Engineering, and Public Documentation Hub</div>
+    <p class="intro">
+      Welcome to the central online workspace for project leadership, grant administrators (CymaSpace / Cascade Pacific), and research collaborators. This portal hosts public research papers, community workshop transcripts, and haptic engineering tools.
+    </p>
+  </div>
+
+  <h2 class="section-title">Educational Research Articles</h2>
+  <div class="card-grid">
+    <div class="item-card">
+      <h3><a href="article.html">Tactile Music Perception, Cochlear Implants, and Universal Multisensory Design</a></h3>
+      <p>
+        Authored by Dillon Simeone (Deaf Lead Design Engineer). An educational exploration of the lived deaf musical experience, why cochlear implant speech processing filters compromise musical timbre, and how skin vibrotactile transducers provide an intuitive physical bypass.
+      </p>
+      <div class="item-links">
+        <a href="article.html">Read Article Online &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Community Workshops &amp; Event Transcripts</h2>
+  <div class="card-grid">
+    <div class="item-card">
+      <h3>Portland State University (PSU) Cochlear Implant Event &amp; Workshop</h3>
+      <p>
+        Recorded on Saturday, October 10, 2026. A 50-minute public presentation and interactive workshop demonstrating Woojer haptic vests, torso sound localization, and low-cost tactile interfaces to CI users and community participants.
+      </p>
+      <div class="item-links">
+        <a href="DillonPSUCochlearWorkshop.txt" target="_blank">Full Speech Transcript (TXT) &rarr;</a>
+        <a href="DillonPSUCochlearWorkshop.srt" target="_blank">SubRip Captions (SRT) &rarr;</a>
+        <a href="DillonPSUCochlearWorkshop.vtt" target="_blank">WebVTT Captions (VTT) &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Haptic Engineering &amp; Software Tools</h2>
+  <div class="card-grid">
+    <div class="item-card">
+      <h3><a href="https://dillonsimeone.com/Glue/index.html">Rust Audio-to-Smartphone Haptics Daemon</a></h3>
+      <p>
+        High-performance Windows-to-Android tactile feedback daemon written in Rust. Captures direct system audio loopback via WASAPI, processes sound through real-time Biquad Butterworth filters, and streams native vibration commands directly over USB ADB with zero acoustic feedback.
+      </p>
+      <div class="item-links">
+        <a href="https://dillonsimeone.com/Glue/index.html">View Rust Daemon at Glue Portal &rarr;</a>
+      </div>
+    </div>
+
+    <div class="item-card">
+      <h3><a href="https://dillonsimeone.com/Projects/SplatStudio/index.html">WebXR 3D Gaussian Splat Studio (Confluence Studio 2.0)</a></h3>
+      <p>
+        Photorealistic 3D Gaussian Splat model of Sean Wolfe's synthesizer studio in Portland, deployed for immersive WebXR remote collaboration and virtual instrument spatialization.
+      </p>
+      <div class="item-links">
+        <a href="https://dillonsimeone.com/Projects/SplatStudio/index.html">Explore 3D Splat Studio &rarr;</a>
+      </div>
+    </div>
+
+    <div class="item-card">
+      <h3><a href="https://dillonsimeone.com/ParametricModeling/06-SythKnobs/studioKnobs/">ACCESS KNOBS Studio Batch (OpenSCAD &amp; STL)</a></h3>
+      <p>
+        Custom 3D-printable tactile knobs and sliders engineered for synthesizer controls (Elektron, Eurorack, Intellijel, Make Noise, Mutable Instruments, ARP). Designed for high tactile grip and non-destructive fit.
+      </p>
+      <div class="item-links">
+        <a href="https://dillonsimeone.com/ParametricModeling/06-SythKnobs/studioKnobs/">Browse 3D Printable Knobs &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Video Documentation &amp; Practice Rehearsals</h2>
+  <div class="card-grid">
+    <div class="item-card">
+      <h3>Studio Confluence Practice Recordings</h3>
+      <p>
+        Archived audio and video recordings of UMD collaborative rehearsals, #deafjazz album pre-production tracking, and haptic testing sessions uploaded to YouTube.
+      </p>
+      <div class="item-links">
+        <a href="https://www.youtube.com/@studio_confluence/videos" target="_blank">Watch Practice Videos on YouTube &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2026 Universal Music Design. Lead Design Engineer: Dillon Simeone &bull; Project Director: Shawn Trail, PhD</p>
+  </div>
+
+</div>
+
+</body>
+</html>

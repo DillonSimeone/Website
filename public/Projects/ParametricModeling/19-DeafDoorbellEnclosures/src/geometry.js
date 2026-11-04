@@ -218,26 +218,28 @@ export function buildMasterLid(M, p) {
         lid = lid.subtract(vent);
     }
 
-    // 6. Four M3 Counterbored Through-Holes at X = ±15.0mm, Y = ±26.5mm
-    const sDia = 3.4;
-    const hDia = p.screwHeadDia;
+    // 6. Four Clean M3 Through-Holes with Counterbores at X = ±15.0mm, Y = ±26.5mm
+    // Subtract through-pass hole and head recess SEPARATELY (never pass.add(head))
+    // to guarantee 100% open through-holes that never fill in solid or create non-manifold errors!
+    const m3HoleDia = 3.5; // 3.5mm standard M3 3D-print clearance pass hole
+    const m3HeadDia = p.screwHeadDia || 5.8;
+    const cbDepth = 1.2;   // 1.2mm deep recess for M3 screw head (leaves 1.6mm solid clamping deck)
     const sx = bodyW / 2 - 4.0; // 15.0mm
     const sy = bodyL / 2 - 4.5; // 26.5mm
-    const makeScrew = (x, y) => {
-        const pass = M.cylinder(lidH + 4, sDia / 2, sDia / 2, 24, true).translate([x, y, 0]);
-        const head = M.cylinder(1.5, hDia / 2, hDia / 2, 24, true).translate([x, y, lidH / 2 - 0.75]);
-        return pass.add(head);
-    };
 
-    const s1 = makeScrew(-sx, sy);
-    const s2 = makeScrew(sx, sy);
-    const s3 = makeScrew(-sx, -sy);
-    const s4 = makeScrew(sx, -sy);
+    lid = lid.subtract(plugRelief).subtract(espWindow);
 
-    return lid
-        .subtract(plugRelief)
-        .subtract(espWindow)
-        .subtract(s1).subtract(s2).subtract(s3).subtract(s4);
+    for (let [x, y] of [[-sx, sy], [sx, sy], [-sx, -sy], [sx, -sy]]) {
+        // Tall through-cylinder that extends 5mm past both faces (100% guaranteed open through-hole!)
+        const pass = M.cylinder(lidH + 10.0, m3HoleDia / 2, m3HoleDia / 2, 32, true)
+            .translate([x, y, 0]);
+        // Top counterbore recess for M3 screw head
+        const cb = M.cylinder(cbDepth + 0.1, m3HeadDia / 2, m3HeadDia / 2, 32, true)
+            .translate([x, y, lidH / 2 - cbDepth / 2 + 0.05]);
+        lid = lid.subtract(pass).subtract(cb);
+    }
+
+    return lid;
 }
 
 // -------------------------------------------------------------------------
@@ -389,26 +391,26 @@ export function buildRepeaterLid(M, p) {
         lid = lid.subtract(vent);
     }
 
-    // 6. Four M3 Counterbored Through-Holes at X = ±15.0mm, Y = ±26.5mm
-    const sDia = 3.4;
-    const hDia = p.screwHeadDia;
+    // 6. Four Clean M3 Through-Holes with Counterbores at X = ±15.0mm, Y = ±26.5mm
+    // Subtract through-pass hole and head recess SEPARATELY (never pass.add(head))
+    // to guarantee 100% open through-holes that never fill in solid or create non-manifold errors!
+    const m3HoleDia = 3.5; // 3.5mm standard M3 3D-print clearance pass hole
+    const m3HeadDia = p.screwHeadDia || 5.8;
+    const cbDepth = 1.0;   // 1.0mm deep recess in 2.4mm lid (leaves 1.4mm solid clamping deck)
     const sx = bodyW / 2 - 4.0; // 15.0mm
     const sy = bodyL / 2 - 4.5; // 26.5mm
-    const makeScrew = (x, y) => {
-        const pass = M.cylinder(lidH + 4, sDia / 2, sDia / 2, 24, true).translate([x, y, 0]);
-        const head = M.cylinder(1.4, hDia / 2, hDia / 2, 24, true).translate([x, y, lidH / 2 - 0.7]);
-        return pass.add(head);
-    };
 
-    const s1 = makeScrew(-sx, sy);
-    const s2 = makeScrew(sx, sy);
-    const s3 = makeScrew(-sx, -sy);
-    const s4 = makeScrew(sx, -sy);
+    lid = lid.subtract(plugRelief).subtract(espWindow);
 
-    return lid
-        .subtract(plugRelief)
-        .subtract(espWindow)
-        .subtract(s1).subtract(s2).subtract(s3).subtract(s4);
+    for (let [x, y] of [[-sx, sy], [sx, sy], [-sx, -sy], [sx, -sy]]) {
+        const pass = M.cylinder(lidH + 10.0, m3HoleDia / 2, m3HoleDia / 2, 32, true)
+            .translate([x, y, 0]);
+        const cb = M.cylinder(cbDepth + 0.1, m3HeadDia / 2, m3HeadDia / 2, 32, true)
+            .translate([x, y, lidH / 2 - cbDepth / 2 + 0.05]);
+        lid = lid.subtract(pass).subtract(cb);
+    }
+
+    return lid;
 }
 
 // -------------------------------------------------------------------------
@@ -514,23 +516,26 @@ export function buildFollowerLid(M, p) {
     const resetHole = M.cylinder(lidH + 4, 1.3, 1.3, 20, true).translate([15.2, -5.0, 0]);
     const ledHole = M.cylinder(lidH + 4, 1.2, 1.2, 16, true).translate([17.28, 1.0, 0]);
 
-    // 2x M3 Screws in top corners (X = ±31.0, global Y = -21.0 -> local Y = +11.0)
-    const sDia = 3.4;
-    const hDia = p.screwHeadDia;
-    const makeScrew = (x, y) => {
-        const pass = M.cylinder(lidH + 4, sDia / 2, sDia / 2, 24, true).translate([x, y, 0]);
-        const head = M.cylinder(1.2, hDia / 2, hDia / 2, 24, true).translate([x, y, lidH / 2 - 0.6]);
-        return pass.add(head);
-    };
-
-    const s1 = makeScrew(31.0, 11.0);
-    const s2 = makeScrew(-31.0, 11.0);
-
-    return lid
+    lid = lid
         .subtract(bootHole)
         .subtract(resetHole)
-        .subtract(ledHole)
-        .subtract(s1).subtract(s2);
+        .subtract(ledHole);
+
+    // 2x Clean M3 Through-Holes with Counterbores in top corners (X = ±31.0, global Y = -21.0 -> local Y = +11.0)
+    // Subtract through-pass hole and head recess SEPARATELY (never pass.add(head))
+    // to guarantee 100% open through-holes that never fill in solid or create non-manifold errors!
+    const m3HoleDia = 3.5; // 3.5mm standard M3 3D-print clearance pass hole
+    const m3HeadDia = p.screwHeadDia || 5.8;
+    const cbDepth = 0.8;   // 0.8mm deep recess in 2.0mm lid (leaves 1.2mm solid clamping deck)
+    for (let x of [-31.0, 31.0]) {
+        const pass = M.cylinder(lidH + 10.0, m3HoleDia / 2, m3HoleDia / 2, 32, true)
+            .translate([x, 11.0, 0]);
+        const cb = M.cylinder(cbDepth + 0.1, m3HeadDia / 2, m3HeadDia / 2, 32, true)
+            .translate([x, 11.0, lidH / 2 - cbDepth / 2 + 0.05]);
+        lid = lid.subtract(pass).subtract(cb);
+    }
+
+    return lid;
 }
 
 // -------------------------------------------------------------------------
@@ -759,8 +764,8 @@ export function buildFollowerPetgLid(M, p) {
     //    When printed face-down (Z = +11.55mm on bed), instead of printing a circular ring in mid-air,
     //    each counterbore transitions via 2 straight-line bridge layers (slot -> square -> circle)
     //    so zero filament strings across the screw holes!
-    const m3PassDia = 3.4;
-    const m3HeadDia = p.screwHeadDia; // 5.8mm
+    const m3PassDia = 3.5; // 3.5mm standard M3 clearance pass hole
+    const m3HeadDia = p.screwHeadDia || 5.8; // 5.8mm
     const m3BridgeZ = deckInnerZ + 1.8; // Z = +7.95mm (leaves 1.8mm solid M3 clamping boss below counterbore)
     for (let x of [-31.0, 31.0]) {
         const pass = M.cylinder(30.0, m3PassDia / 2, m3PassDia / 2, 24, true)

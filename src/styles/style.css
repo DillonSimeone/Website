@@ -2740,6 +2740,64 @@ body.dark-mode .commission-step-card {
     transform: translateY(-2px);
 }
 
+.commission-button.book-btn {
+    background: linear-gradient(135deg, #d4af5f 0%, #b8860b 100%);
+    color: #0c0e12 !important;
+    font-weight: 800;
+    box-shadow: 0 0 18px rgba(212, 175, 95, 0.45);
+    border: 1px solid #d4af5f;
+}
+
+.commission-button.book-btn:hover {
+    background: #fef3c7;
+    color: #0c0e12 !important;
+    box-shadow: 0 0 28px rgba(212, 175, 95, 0.8);
+    transform: translateY(-2px);
+}
+
+/* Enforce dark-mode text colors for ALL commission buttons over global .item a rule */
+body.dark-mode .item a.commission-button.highlight-button {
+    color: #000000 !important;
+}
+body.dark-mode .item a.commission-button.book-btn {
+    color: #0c0e12 !important;
+}
+body.dark-mode .item a.commission-button.brain-btn {
+    color: #000000 !important;
+}
+body.dark-mode .item a.commission-button.baton-btn {
+    color: #0f172a !important;
+}
+body.dark-mode .item a.commission-button.asl-btn {
+    color: #ffffff !important;
+}
+body.dark-mode .item a.commission-button.gelu-btn {
+    color: #ffffff !important;
+}
+body.dark-mode .item a.commission-button.pulse-btn {
+    color: #ffffff !important;
+}
+body.dark-mode .item a.commission-button.hypercube-btn {
+    color: #ffffff !important;
+}
+
+/* Ensure clean contrast for bold elements in pricing and captions */
+body.dark-mode .pricing-options-summary b,
+body.dark-mode .pricing-options-summary strong {
+    color: #f1f5f9;
+    font-family: inherit;
+    letter-spacing: normal;
+    font-weight: 700;
+}
+
+body.dark-mode .shop-photo-card .photo-caption b,
+body.dark-mode .shop-photo-card .photo-caption strong {
+    color: #f1f5f9;
+    font-family: inherit;
+    letter-spacing: normal;
+    font-weight: 700;
+}
+
 /* Featured shop item tweaks */
 .shop-featured-item {
     border: 2px solid rgba(0, 240, 255, 0.4) !important;
