@@ -291,3 +291,9 @@
 [2026-11-02 14:07:27] Using ADB at: F:\Github\Website\public\Glue\Daemons\USBTethering\platform-tools\adb.exe
 [2026-11-02 18:05:40] === Phone 5GHz Sentinel started ===
 [2026-11-02 18:05:40] Using ADB at: F:\Github\Website\public\Glue\Daemons\USBTethering\platform-tools\adb.exe
+[2026-11-04 01:01:03] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: DoorbellDetectorSystem, Freq: 2412 MHz, Rx: 39 Mbps, Score: 100
+[2026-11-04 01:01:03] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-11-04 01:01:11] SUCCESS: Reconnected to 5 GHz (5580 MHz, 6 Mbps).
+[2026-11-04 01:54:20] ALERT: Phone drifted to 2.4 GHz or degraded! SSID: Lee Fire Alert System, Freq: 2412 MHz, Rx: 65 Mbps, Score: 100
+[2026-11-04 01:54:20] Executing auto-nudge (Wi-Fi cycle via ADB)...
+[2026-11-04 01:54:27] SUCCESS: Reconnected to 5 GHz (5580 MHz, 6 Mbps).

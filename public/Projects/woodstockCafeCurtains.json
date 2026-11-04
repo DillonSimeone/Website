@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "name": "Woodstock Cafe Curtains",
+  "updated": "2026-11-04T11:00:00Z",
+  "on": true,
+  "bri": 128,
+  "transition": 7,
+  "seg": [
+    {
+      "id": 0,
+      "start": 0,
+      "stop": 10000,
+      "fx": 2,
+      "sx": 135,
+      "ix": 128,
+      "col": [
+        [255, 85, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+      ]
+    }
+  ]
+}

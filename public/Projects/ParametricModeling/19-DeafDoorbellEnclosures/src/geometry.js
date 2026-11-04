@@ -941,4 +941,79 @@ export function buildFullPlate(M, p) {
     return plate;
 }
 
+// -------------------------------------------------------------------------
+// 8. TRANSPARENT PETG ESP32 WINDOW PLUG (Friction-Fit Pop-Out Accent Insert)
+//    - Fits snugly into the rectangular lid cutout window.
+//    - variant = 'master' (11.6 x 9.0mm, fits Master & Repeater lids)
+//    - variant = 'follower' (9.0 x 11.6mm, fits Follower full PETG cover)
+//    - Features:
+//      1. 0.8mm textured top retaining flange (prevents drop-through into enclosure).
+//      2. 1.8mm friction-fit plug body with 0.12mm precision fit clearance.
+//      3. 45° bottom lead-in chamfer for effortless push-in insertion.
+//      4. Dual thumbnail pry-out scoops on the flange rim for instant removal.
+//      5. Optical 1.8mm center pinhole for LED light piping / emergency poke-out.
+// -------------------------------------------------------------------------
+export function buildEspWindowPlug(M, p, variant = 'master') {
+    const isFollower = variant === 'follower';
+    const winW = isFollower ? 9.0 : 11.6;
+    const winL = isFollower ? 11.6 : 9.0;
+
+    const fitCl = p.plugClearance !== undefined ? p.plugClearance : 0.12;
+    const bodyW = winW - fitCl * 2;
+    const bodyL = winL - fitCl * 2;
+    const bodyH = 1.8; // 1.8mm insertion depth into lid
+
+    const lipH = 0.8; // 0.8mm sleek top retaining flange (4 layers at 0.2mm)
+    const lipOverhang = 0.9; // 0.9mm perimeter lip overhang
+    const lipW = winW + lipOverhang * 2;
+    const lipL = winL + lipOverhang * 2;
+
+    // Flange (Bed-facing flat rim at Z = 0 to lipH)
+    let lip = M.cube([lipW, lipL, lipH], true).translate([0, 0, lipH / 2]);
+
+    // Body (Z = lipH to lipH + bodyH)
+    let body = M.cube([bodyW, bodyL, bodyH], true).translate([0, 0, lipH + bodyH / 2]);
+
+    // 45° Lead-in chamfer around the insertion rim at top of body
+    const ch = 0.45;
+    const topZ = lipH + bodyH;
+    const bevX1 = M.cube([bodyW + 4.0, ch * 2, ch * 2], true).rotate([45, 0, 0]).translate([0, bodyL / 2, topZ]);
+    const bevX2 = M.cube([bodyW + 4.0, ch * 2, ch * 2], true).rotate([45, 0, 0]).translate([0, -bodyL / 2, topZ]);
+    const bevY1 = M.cube([ch * 2, bodyL + 4.0, ch * 2], true).rotate([0, 45, 0]).translate([bodyW / 2, 0, topZ]);
+    const bevY2 = M.cube([ch * 2, bodyL + 4.0, ch * 2], true).rotate([0, 45, 0]).translate([-bodyW / 2, 0, topZ]);
+    body = body.subtract(bevX1).subtract(bevX2).subtract(bevY1).subtract(bevY2);
+    [bevX1, bevX2, bevY1, bevY2].forEach(m => m.delete());
+
+    let plug = lip.add(body);
+    lip.delete();
+    body.delete();
+
+    // Dual Thumbnail / Pry Scoops on the outer edges of the flange
+    // Positioned along the longer edge for easy thumb/fingernail access
+    const notchR = 2.4;
+    if (!isFollower) {
+        // Horizontal plug: notches on left and right (X = ±lipW / 2)
+        const n1 = M.cylinder(lipH + 2.0, notchR, notchR, 24, true).translate([-lipW / 2 + 0.35, 0, lipH / 2]);
+        const n2 = M.cylinder(lipH + 2.0, notchR, notchR, 24, true).translate([lipW / 2 - 0.35, 0, lipH / 2]);
+        plug = plug.subtract(n1).subtract(n2);
+        n1.delete();
+        n2.delete();
+    } else {
+        // Vertical plug: notches on top and bottom (Y = ±lipL / 2)
+        const n1 = M.cylinder(lipH + 2.0, notchR, notchR, 24, true).translate([0, -lipL / 2 + 0.35, lipH / 2]);
+        const n2 = M.cylinder(lipH + 2.0, notchR, notchR, 24, true).translate([0, lipL / 2 - 0.35, lipH / 2]);
+        plug = plug.subtract(n1).subtract(n2);
+        n1.delete();
+        n2.delete();
+    }
+
+    // Optical Center Pinhole (1.8mm diameter through-hole)
+    // Lets status LEDs shine through and allows paperclip / push-out removal
+    const pinHole = M.cylinder(lipH + bodyH + 4.0, 0.9, 0.9, 24, true).translate([0, 0, (lipH + bodyH) / 2]);
+    plug = plug.subtract(pinHole);
+    pinHole.delete();
+
+    return plug;
+}
+
 

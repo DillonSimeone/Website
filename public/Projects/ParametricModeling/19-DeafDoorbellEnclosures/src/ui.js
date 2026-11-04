@@ -11,7 +11,8 @@ import {
     buildFollowerLid,
     buildFollowerPetgLid,
     buildFollowerGrid,
-    buildFollowerStand
+    buildFollowerStand,
+    buildEspWindowPlug
 } from './geometry.js';
 import { updateSceneMesh } from './viewport.js';
 import { triggerExport } from './exporter.js';
@@ -88,6 +89,20 @@ export function rebuildActiveGeometry() {
             });
             mLid.delete();
         }
+
+        if (context.activePreset === 'master_all') {
+            const mPlug = buildEspWindowPlug(M, params, 'master');
+            const plugGeom = manifoldToThreeGeometry(mPlug);
+            const zPlug = 23.5 / 2 + 2.8 + explodeZ * 1.5;
+            items.push({
+                geometry: plugGeom,
+                material: matPetg,
+                edgeColor: 0x00ffff,
+                position: new THREE.Vector3(0, 8.5, zPlug),
+                rotation: new THREE.Euler(Math.PI, 0, 0)
+            });
+            mPlug.delete();
+        }
     } else if (context.activePreset.startsWith('repeater')) {
         // Repeater Node Rendering (Ultra-Slim 10.5mm Depth)
         if (context.activePreset === 'repeater_all' || context.activePreset === 'repeater_base') {
@@ -114,6 +129,32 @@ export function rebuildActiveGeometry() {
             });
             rLid.delete();
         }
+
+        if (context.activePreset === 'repeater_all') {
+            const rPlug = buildEspWindowPlug(M, params, 'master');
+            const plugGeom = manifoldToThreeGeometry(rPlug);
+            const zPlug = 10.5 / 2 + 2.4 + explodeZ * 1.5;
+            items.push({
+                geometry: plugGeom,
+                material: matPetg,
+                edgeColor: 0x00ffff,
+                position: new THREE.Vector3(0, 8.5, zPlug),
+                rotation: new THREE.Euler(Math.PI, 0, 0)
+            });
+            rPlug.delete();
+        }
+    } else if (context.activePreset.startsWith('plug_')) {
+        // Standalone Transparent PETG Friction-Fit Window Plugs
+        const isFollower = context.activePreset === 'plug_follower';
+        const plug = buildEspWindowPlug(M, params, isFollower ? 'follower' : 'master');
+        const geom = manifoldToThreeGeometry(plug);
+        items.push({
+            geometry: geom,
+            material: matPetg,
+            edgeColor: 0x00ffff,
+            position: new THREE.Vector3(0, 0, 0)
+        });
+        plug.delete();
     } else if (context.activePreset === 'follower_stand') {
         // Standalone Outrigger Stand with Ship Cleat View
         const fStand = buildFollowerStand(M, params);
@@ -320,6 +361,7 @@ export function initUI() {
 
     bindSlider('input-wallThickness', 'wallThickness', 'val-wallThickness');
     bindSlider('input-printClearance', 'printClearance', 'val-printClearance');
+    bindSlider('input-plugClearance', 'plugClearance', 'val-plugClearance');
     bindSlider('input-screwHoleDia', 'screwHoleDia', 'val-screwHoleDia');
     bindSlider('input-cableJacketDia', 'cableJacketDia', 'val-cableJacketDia');
     bindSlider('input-explodedView', 'explodedView', 'val-explodedView');

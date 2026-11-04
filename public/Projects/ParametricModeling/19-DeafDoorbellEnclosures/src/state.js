@@ -7,13 +7,14 @@ export const context = {
     camera: null,
     renderer: null,
     controls: null,
-    activePreset: 'follower_all', // 'follower_all' default, 'master_all', 'master_base', 'master_lid', 'repeater_all', 'repeater_base', 'repeater_lid', 'follower_base', 'follower_lid', 'follower_grid', 'follower_stand', 'all_plate'
+    activePreset: 'follower_all', // 'follower_all' default, 'master_all', 'master_base', 'master_lid', 'repeater_all', 'repeater_base', 'repeater_lid', 'follower_base', 'follower_lid', 'follower_grid', 'follower_stand', 'plug_master', 'plug_follower', 'all_plate'
 };
 
 export const params = {
     // Shell & Fabrication Tolerances
     wallThickness: 2.2,       // Shell wall thickness in mm
     printClearance: 0.35,     // XY fit clearance for PCB and components
+    plugClearance: 0.12,      // XY fit clearance per side for friction-fit transparent PETG window plug
     screwHoleDia: 3.2,        // M3 lid clamp screw pass hole / pilot (2.8 tap / 3.2 pass)
     screwHeadDia: 5.8,        // M3 counterbore head diameter
     wallTabScrewDia: 4.2,     // Wall mounting screw diameter (#6 drywall screw / M4)

@@ -1,0 +1,9 @@
+body {
+    font-family: sans-serif;
+    padding: 2em;
+    background-color: #f9f9f9;
+}
+label, input, button, p {
+    display: block;
+    margin: 1em 0;
+}

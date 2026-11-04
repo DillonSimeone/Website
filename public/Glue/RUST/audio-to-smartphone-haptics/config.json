@@ -1,15 +1,15 @@
 {
-    "enabled":  true,
-    "amplitude_scale":  2.8,
-    "base_amplitude":  90,
-    "punch_duration_ms":  110,
-    "noise_floor":  0.01,
-    "min_velocity":  0.015,
-    "enable_snap_primitives":  true,
-    "sub_bass_low_hz":  30,
-    "sub_bass_high_hz":  110,
-    "mid_punch_high_hz":  220,
-    "snap_high_hz":  1200,
-    "mode":  "gestolumina_pwm",
-    "govee_sync":  false
+  "enabled": true,
+  "amplitude_scale": 2.8,
+  "base_amplitude": 90,
+  "punch_duration_ms": 110,
+  "noise_floor": 0.01,
+  "min_velocity": 0.015,
+  "enable_snap_primitives": true,
+  "sub_bass_low_hz": 30,
+  "sub_bass_high_hz": 110,
+  "mid_punch_high_hz": 220,
+  "snap_high_hz": 1200,
+  "mode": "gestolumina_pwm",
+  "govee_sync": false
 }

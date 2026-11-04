@@ -10,6 +10,7 @@ import {
     buildFollowerPetgLid,
     buildFollowerGrid,
     buildFollowerStand,
+    buildEspWindowPlug,
     buildFullPlate
 } from './geometry.js';
 
@@ -113,6 +114,14 @@ export function triggerExport(componentName) {
         case 'follower_stand':
             geom = buildFollowerStand(M, params);
             filename = `Follower_Desk_Stand.stl`;
+            break;
+        case 'master_plug':
+            geom = buildEspWindowPlug(M, params, 'master');
+            filename = `Master_Repeater_Window_Plug.stl`;
+            break;
+        case 'follower_plug':
+            geom = buildEspWindowPlug(M, params, 'follower');
+            filename = `Follower_Window_Plug.stl`;
             break;
         case 'all_plate':
             geom = buildFullPlate(M, params);

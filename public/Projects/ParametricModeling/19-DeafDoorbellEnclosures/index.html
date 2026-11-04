@@ -54,6 +54,8 @@
                     <button class="preset-btn" data-preset="repeater_all">Repeater Complete</button>
                     <button class="preset-btn" data-preset="repeater_base">Repeater Base</button>
                     <button class="preset-btn" data-preset="repeater_lid">Repeater Lid</button>
+                    <button class="preset-btn" data-preset="plug_master" style="border-color: #00ffff; color: #00ffff;">Window Plug (Master/Repeater)</button>
+                    <button class="preset-btn" data-preset="plug_follower" style="border-color: #00ffff; color: #00ffff;">Window Plug (Follower)</button>
                     <button class="preset-btn" data-preset="all_plate" style="border-color: #00ff88; color: #00ff88;">Full Build Plate</button>
                 </div>
             </div>
@@ -76,6 +78,14 @@
                         <span class="control-val"><span id="val-printClearance">0.35</span> mm</span>
                     </div>
                     <input type="range" id="input-printClearance" min="0.15" max="0.6" step="0.05" value="0.35">
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Window Plug Fit Clearance</span>
+                        <span class="control-val"><span id="val-plugClearance">0.12</span> mm</span>
+                    </div>
+                    <input type="range" id="input-plugClearance" min="0.05" max="0.25" step="0.01" value="0.12">
                 </div>
 
                 <div class="control-row">
@@ -150,6 +160,14 @@
                     </button>
                     <button class="btn-export pink" data-export="repeater_lid">
                         <span>Repeater Clamp Lid STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export" data-export="master_plug" style="border-color: #00ffff; background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.05));">
+                        <span>⚡ Master/Repeater Window Plug STL (PETG)</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export" data-export="follower_plug" style="border-color: #00ffff; background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.05));">
+                        <span>⚡ Follower Window Plug STL (PETG)</span>
                         <span>&darr;</span>
                     </button>
                 </div>

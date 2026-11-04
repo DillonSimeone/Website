@@ -1,0 +1,51 @@
+body {
+    background: lightcyan;
+}
+
+th {
+    text-align: right;
+}
+
+td {
+    text-align: right;
+}
+
+button {
+    background-color: darkcyan;
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.thumbnail {
+    width: 40px;
+    height: 60px;
+}
+
+.searchRow {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    background-color: lightcyan;
+    padding: 5px;
+}
+
+
+.searchGrid {
+    display: inline-grid;
+    grid-auto-flow: row;
+    grid-template-columns: auto auto auto auto;
+    gap: 5px;
+    background-color: darkcyan;
+    padding: 5px;
+}
+
+.searchCell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    background-color: lightcyan;
+    border-radius: 5px;
+}
