@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engineering Report: Auracast Architecture for the Woojer Haptic Fleet - Universal Music Design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1e293b;
+      --primary-accent: #0f766e;
+      --accent-light: #f0fdfa;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --bg-alt: #f8fafc;
+      --highlight: #0d9488;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text-main);
+      background-color: #f1f5f9;
+      line-height: 1.65;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 48px 52px;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    .top-nav {
+      margin-bottom: 24px;
+    }
+
+    .top-nav a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary-accent);
+      font-weight: 600;
+      font-size: 13.5px;
+      text-decoration: none;
+      padding: 6px 12px;
+      background: var(--accent-light);
+      border: 1px solid #ccfbf1;
+      border-radius: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .top-nav a:hover {
+      background: #ccfbf1;
+      border-color: var(--primary-accent);
+    }
+
+    .header {
+      border-bottom: 2px solid var(--primary-accent);
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-light);
+      color: var(--primary-accent);
+      border: 1px solid #ccfbf1;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 29px;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--primary-accent);
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      background: var(--bg-alt);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .meta-grid strong {
+      color: var(--primary);
+    }
+
+    h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 36px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 22px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      margin-bottom: 14px;
+      font-size: 14.5px;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
+      font-size: 14.5px;
+      color: #334155;
+    }
+
+    .callout {
+      background: var(--accent-light);
+      border-left: 4px solid var(--primary-accent);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #0f172a;
+    }
+
+    .callout strong {
+      color: var(--primary-accent);
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 22px 0;
+      font-size: 13.5px;
+    }
+
+    .comparison-table th, .comparison-table td {
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    .comparison-table th {
+      background: var(--bg-alt);
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .comparison-table tr:hover {
+      background: #f8fafc;
+    }
+
+    .tag-pro {
+      color: #059669;
+      font-weight: 700;
+    }
+
+    .tag-con {
+      color: #dc2626;
+      font-weight: 700;
+    }
+
+    .diagram-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+
+    .footer {
+      margin-top: 44px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+      font-size: 12.5px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="top-nav">
+    <a href="index.html">&larr; Return to Universal Music Design Hub</a>
+  </div>
+
+  <div class="header">
+    <span class="badge">NEA Project: 25-014 NEA &bull; Category PSTUDY</span>
+    <h1>Auracast Broadcast Audio Architecture for the Woojer Haptic Fleet</h1>
+    <div class="subtitle">Technical Engineering Report on Overcoming Legacy RF Limitations via Bluetooth LE Audio and Low-Cost Hardware Sourcing</div>
+    
+    <div class="meta-grid">
+      <div><strong>Author:</strong> Dillon Simeone (Deaf Lead Design Engineer)</div>
+      <div><strong>Project Director:</strong> Shawn Trail, PhD</div>
+      <div><strong>Project Administration:</strong> Tracy Held (CymaSpace / Cascade Pacific)</div>
+      <div><strong>Hardware Scope:</strong> 60-Unit Woojer Vest Fleet Integration</div>
+    </div>
+  </div>
+
+  <h2>1. Executive Summary and Problem Statement</h2>
+  <p>
+    Universal Music Design (UMD) maintains an inventory of 60 Woojer haptic vibration vests. These wearable devices represent one of our primary tools for providing real-time, bodily tactile listening during collaborative rehearsals, deaf jazz ensemble performances, and public community workshops.
+  </p>
+  <p>
+    However, our previous wireless broadcast setup faced severe operational bottlenecks that made large-scale group sessions unreliable, noisy, and expensive to expand. This report documents the research, architecture, and hardware bench testing undertaken by Lead Design Engineer Dillon Simeone to transition the entire 60-vest fleet from legacy radio systems to the modern <strong>Auracast Bluetooth Low Energy (LE) Audio</strong> standard.
+  </p>
+
+  <div class="callout">
+    <strong>Key Project Takeaway:</strong> By sourcing pocket-sized Auracast receiver dongles on AliExpress for approximately $10 each, UMD can achieve synchronized, ultra-low-latency stereo broadcast to all 60 vests simultaneously, slashing fleet upgrade costs by over 80 percent and eliminating static radio interference completely.
+  </div>
+
+  <h2>2. Critical Limitations of Legacy Wireless Broadcast Systems</h2>
+  <p>
+    Prior to this research, our group rehearsals and workshop deployments relied on traditional analog radio frequency (RF) wireless transmitters and standard Bluetooth audio. Both architectures present fatal flaws for accessible multisensory music:
+  </p>
+
+  <h3>A. Legacy Analog FM/RF Transmitters (The 60-Vest Bottleneck)</h3>
+  <ul>
+    <li><strong>Radio Static and Cross-Talk:</strong> In concert venues, academic halls, and urban studio environments, analog FM signals pick up severe radio frequency interference, wall reflection static, and electromagnetic hum from stage lights and synthesizers.</li>
+    <li><strong>Mono-Only Limitation:</strong> Standard FM beltpack receivers provide only a single summed mono audio channel. This prevents deaf listeners from experiencing stereo panning, spatial room imaging, or directional separation across left and right chest actuators.</li>
+    <li><strong>Cabling Bulk and Maintenance:</strong> Distributing audio to multiple FM transmitters required bulky 3.5mm splitter trees, delicate external antennas, and constant battery replacements.</li>
+    <li><strong>High Replacement Cost:</strong> Replacing lost or broken commercial RF transmitters costs several hundred dollars per unit.</li>
+  </ul>
+
+  <h3>B. Classic Bluetooth Audio (A2DP / SBC / AAC)</h3>
+  <ul>
+    <li><strong>Strict Connection Limits:</strong> Classic Bluetooth is architected exclusively for one-to-one (or at most one-to-two) point-to-point connections. It cannot broadcast to a classroom or ensemble of 60 vests simultaneously.</li>
+    <li><strong>High Latency Timing Smear:</strong> Standard Bluetooth audio introduces between 150 and 250 milliseconds of transmission latency. For a deaf musician relying on physical vibrations to lock into a drummer's groove, a 200 ms delay completely destroys rhythm and makes synchronized playing impossible.</li>
+  </ul>
+
+  <h2>3. The Auracast Solution (Bluetooth LE Audio Broadcast)</h2>
+  <p>
+    Introduced as part of the Bluetooth 5.2 and 5.3 core specifications, <strong>Auracast broadcast audio</strong> fundamentally changes wireless audio topology by replacing point-to-point pairing with an open, connectionless broadcast stream.
+  </p>
+
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Specification / Parameter</th>
+        <th>Legacy Analog FM Systems</th>
+        <th>Classic Bluetooth (A2DP)</th>
+        <th>Auracast (Bluetooth LE Audio)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Simultaneous Receivers</strong></td>
+        <td>Multiple (degrades with range)</td>
+        <td><span class="tag-con">1 or 2 maximum</span></td>
+        <td><span class="tag-pro">Unlimited (60+ vests effortlessly)</span></td>
+      </tr>
+      <tr>
+        <td><strong>Transmission Latency</strong></td>
+        <td>Low (0 to 5 ms)</td>
+        <td><span class="tag-con">High (150 to 250 ms)</span></td>
+        <td><span class="tag-pro">Ultra-Low (10 to 20 ms via LC3)</span></td>
+      </tr>
+      <tr>
+        <td><strong>Audio Channel Separation</strong></td>
+        <td><span class="tag-con">Mono only</span></td>
+        <td>Stereo (point-to-point)</td>
+        <td><span class="tag-pro">Discrete True Stereo &amp; Multi-Stream</span></td>
+      </tr>
+      <tr>
+        <td><strong>Signal Quality &amp; Interference</strong></td>
+        <td><span class="tag-con">Static, hiss, RF crosstalk</span></td>
+        <td>Digital compression artifacts</td>
+        <td><span class="tag-pro">Crystal-clear digital LC3, zero hiss</span></td>
+      </tr>
+      <tr>
+        <td><strong>Receiver Hardware Cost</strong></td>
+        <td>$120 to $350 per receiver</td>
+        <td>$30 to $80 per receiver</td>
+        <td><span class="tag-pro">~$10 per receiver (AliExpress sourced)</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Key Technical Capabilities for UMD:</h3>
+  <ol>
+    <li>
+      <strong>Unlimited Concurrent Listeners:</strong> Auracast uses Broadcast Isochronous Streams (BIS). The master audio transmitter broadcasts packets into the air, and any number of receivers in the room can tune in simultaneously without establishing a handshake or consuming transmitter bandwidth. All 60 Woojer vests receive the exact same audio stream at the exact same instant.
+    </li>
+    <li>
+      <strong>Low Complexity Communication Codec (LC3):</strong> Auracast utilizes the LC3 codec, which delivers higher fidelity audio than legacy SBC at half the bitrate, while keeping broadcast latency between 10 and 20 milliseconds. This latency is imperceptible to the human body, allowing deaf musicians to feel transient drum strikes in real time.
+    </li>
+    <li>
+      <strong>True Stereo Torso Spatialization:</strong> Auracast transmits discrete left and right audio channels. By feeding stereo sound into the Woojer vest, wearers feel directional motion across their chest, giving cochlear implant recipients and deaf participants a spatial sense of where instruments are located on stage.
+    </li>
+  </ol>
+
+  <h2>4. Low-Cost Hardware Sourcing and Bench Testing Results</h2>
+  <p>
+    While high-end professional broadcast systems often cost thousands of dollars, Dillon identified and sourced compact, battery-powered Auracast receiver dongles directly on AliExpress for approximately $10 per unit.
+  </p>
+
+  <div class="diagram-box">
+[Master Audio Mixer / Synthesizer / DAW]
+                   │
+                   ▼ (Analog Stereo Line or USB-C)
+     [Auracast Master Transmitter]
+                   │
+      (((( 2.4 GHz Isochronous Broadcast ))))
+        │                │                │
+        ▼                ▼                ▼
+  [$10 Receiver 1] [$10 Receiver 2] ... [$10 Receiver 60]
+        │                │                │ (3.5mm Stereo Jack)
+        ▼                ▼                ▼
+ [Woojer Vest 1]  [Woojer Vest 2]  ... [Woojer Vest 60]
+  </div>
+
+  <h3>Bench Testing Observations:</h3>
+  <ul>
+    <li><strong>Sub-Bass Frequency Response:</strong> Bench tests verified that the ~$10 receivers cleanly reproduce sub-bass frequencies from 10 Hz to 250 Hz without low-end roll-off or digital high-pass filter cuts. This is critical for tactile transducers, which operate primarily in the 20 Hz to 120 Hz band.</li>
+    <li><strong>Clean Transducer Drive:</strong> When connected directly to the Woojer 3.5mm auxiliary input, the receiver's line-out signal provides ample gain (+0 dB) without clipping, distortion, or background hiss.</li>
+    <li><strong>Battery Life:</strong> The self-contained lithium-ion battery in each dongle delivers over 6 hours of continuous continuous listening, exceeding the duration of any standard rehearsal or community workshop.</li>
+    <li><strong>Interference Immunity:</strong> Testing within an active studio environment confirmed zero dropout or RF crosstalk, even when passing through studio walls and proximity to high-power Wi-Fi routers.</li>
+  </ul>
+
+  <h2>5. Next-Generation Custom Silicon (ESP32-S3 / ESP32-C6)</h2>
+  <p>
+    In addition to testing off-the-shelf receivers, Dillon coordinated with an engineering colleague visiting hardware markets in Shenzhen, China, to obtain bleeding-edge ESP32-S3 and ESP32-C6 microcontroller development boards supporting the Bluetooth LE Audio specification.
+  </p>
+  <p>
+    This research establishes an open hardware pathway for UMD to build dedicated, customized transmitters. By streaming digital audio directly over USB from a digital audio workstation (DAW) into an ESP32-S3, UMD can broadcast multi-channel tactile mixes without needing intermediate digital-to-analog converters.
+  </p>
+
+  <h2>6. Conclusion and Rollout Plan for UMD</h2>
+  <p>
+    The transition to Auracast solves one of Universal Music Design's most persistent logistical headaches. For an investment of roughly $600 in receivers (compared to $6,000 to $15,000 for commercial multi-user RF systems), UMD can outfit its entire 60-vest fleet with static-free, low-latency, stereo tactile audio.
+  </p>
+  <p>
+    This innovation will be rolled out across upcoming deaf jazz rehearsals, public school workshops, and live community performances, ensuring that every participant experiences the full physical power of music with perfect timing and clarity.
+  </p>
+
+  <div class="footer">
+    <p>&copy; 2026 Universal Music Design. Lead Design Engineer: Dillon Simeone &bull; Project Director: Shawn Trail, PhD</p>
+    <p style="margin-top: 6px;"><a href="index.html" style="color: var(--primary-accent); text-decoration: none;">Return to Universal Music Design Hub</a></p>
+  </div>
+
+</div>
+
+</body>
+</html>

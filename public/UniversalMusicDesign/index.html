@@ -153,6 +153,26 @@
       text-decoration: underline;
     }
 
+    .video-container {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 8px;
+      margin: 14px 0 16px 0;
+      background: #0f172a;
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
     .footer {
       margin-top: 36px;
       padding-top: 18px;
@@ -176,15 +196,15 @@
     </p>
   </div>
 
-  <h2 class="section-title">Educational Research Articles</h2>
+  <h2 class="section-title">Engineering Research Reports</h2>
   <div class="card-grid">
     <div class="item-card">
-      <h3><a href="article.html">Tactile Music Perception, Cochlear Implants, and Universal Multisensory Design</a></h3>
+      <h3><a href="auracast.html">Auracast Broadcast Audio Architecture for the Woojer Haptic Fleet</a></h3>
       <p>
-        Authored by Dillon Simeone (Deaf Lead Design Engineer). An educational exploration of the lived deaf musical experience, why cochlear implant speech processing filters compromise musical timbre, and how skin vibrotactile transducers provide an intuitive physical bypass.
+        Authored by Dillon Simeone (Deaf Lead Design Engineer). A comprehensive technical report detailing the transition of UMD's 60-unit Woojer vibration vest fleet from static-prone analog RF transmitters to ultra-low-latency Bluetooth LE Audio Auracast broadcast streams, utilizing ~$10 AliExpress receivers to slash fleet upgrade costs by over 80 percent.
       </p>
       <div class="item-links">
-        <a href="article.html">Read Article Online &rarr;</a>
+        <a href="auracast.html">Read Engineering Report Online &rarr;</a>
       </div>
     </div>
   </div>
@@ -196,7 +216,11 @@
       <p>
         Recorded on Saturday, October 10, 2026. A 50-minute public presentation and interactive workshop demonstrating Woojer haptic vests, torso sound localization, and low-cost tactile interfaces to CI users and community participants.
       </p>
+      <div class="video-container">
+        <iframe src="https://www.youtube-nocookie.com/embed/UlwK8N1KlXE" title="Dillon Simeone - Portland State University Cochlear Implant &amp; Haptics Workshop" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      </div>
       <div class="item-links">
+        <a href="https://youtu.be/UlwK8N1KlXE" target="_blank">Watch on YouTube &rarr;</a>
         <a href="DillonPSUCochlearWorkshop.txt" target="_blank">Full Speech Transcript (TXT) &rarr;</a>
         <a href="DillonPSUCochlearWorkshop.srt" target="_blank">SubRip Captions (SRT) &rarr;</a>
         <a href="DillonPSUCochlearWorkshop.vtt" target="_blank">WebVTT Captions (VTT) &rarr;</a>
@@ -233,19 +257,6 @@
       </p>
       <div class="item-links">
         <a href="https://dillonsimeone.com/ParametricModeling/06-SythKnobs/studioKnobs/">Browse 3D Printable Knobs &rarr;</a>
-      </div>
-    </div>
-  </div>
-
-  <h2 class="section-title">Video Documentation &amp; Practice Rehearsals</h2>
-  <div class="card-grid">
-    <div class="item-card">
-      <h3>Studio Confluence Practice Recordings</h3>
-      <p>
-        Archived audio and video recordings of UMD collaborative rehearsals, #deafjazz album pre-production tracking, and haptic testing sessions uploaded to YouTube.
-      </p>
-      <div class="item-links">
-        <a href="https://www.youtube.com/@studio_confluence/videos" target="_blank">Watch Practice Videos on YouTube &rarr;</a>
       </div>
     </div>
   </div>
