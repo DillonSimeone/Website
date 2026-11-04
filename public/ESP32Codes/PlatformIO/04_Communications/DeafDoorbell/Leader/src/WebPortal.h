@@ -6,6 +6,7 @@
 #include <ArduinoOTA.h>
 #include <Update.h>
 #include <esp_wifi.h>
+#include <esp_task_wdt.h>
 #include "Config.h"
 #include "TelemetryLog.h"
 #include "EspNowManager.h"
@@ -20,15 +21,83 @@ static const byte DNS_PORT = 53;
 inline bool wifiRestartPending = false;
 inline unsigned long wifiRestartAtMs = 0;
 
+inline int appendPairedFollowersJson(char *buf, size_t bufSize, int offset, unsigned long now) {
+    for (int i = 0; i < pairedFollowerCount; i++) {
+        if (offset < 0 || (size_t)offset >= bufSize) return offset;
+        char macStr[18];
+        snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+                 pairedFollowers[i].mac[0], pairedFollowers[i].mac[1], pairedFollowers[i].mac[2],
+                 pairedFollowers[i].mac[3], pairedFollowers[i].mac[4], pairedFollowers[i].mac[5]);
+        bool heard = pairedFollowers[i].lastSeenMs != 0;
+        uint32_t ageSec = heard ? (uint32_t)((now - pairedFollowers[i].lastSeenMs) / 1000UL)
+                                : (uint32_t)(now / 1000UL);
+        bool missing = ageSec >= (FOLLOWER_MISSING_MS / 1000UL);
+        size_t remain = bufSize - (size_t)offset;
+        int wrote = snprintf(buf + offset, remain,
+            "%s{\"mac\":\"%s\",\"ageSec\":%u,\"area\":%u,\"heard\":%s,\"missing\":%s,\"idMismatch\":%s}",
+            (i > 0) ? "," : "",
+            macStr,
+            ageSec,
+            pairedFollowers[i].triggerArea,
+            heard ? "true" : "false",
+            missing ? "true" : "false",
+            pairedFollowers[i].idMismatch ? "true" : "false");
+        if (wrote < 0 || (size_t)wrote >= remain) return offset;
+        offset += wrote;
+    }
+    return offset;
+}
+
+inline void serviceAudioDuringHttp() {
+    esp_task_wdt_reset();
+    sampleAndProcessAudio(millis());
+}
+
+inline void sendProgmemChunked(const char* contentType, const char* progmem) {
+    const size_t total = strlen_P(progmem);
+    const size_t CHUNK = 1024;
+    char buf[CHUNK];
+    size_t offset = 0;
+
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, contentType, "");
+    while (offset < total) {
+        size_t n = min(CHUNK, total - offset);
+        memcpy_P(buf, progmem + offset, n);
+        server.sendContent(buf, n);
+        serviceAudioDuringHttp();
+        offset += n;
+    }
+    server.sendContent("", 0);
+}
+
+inline void serviceRadioLock(unsigned long now) {
+    static unsigned long lastRadioLockMs = 0;
+    if (lastRadioLockMs != 0 && (now - lastRadioLockMs) < 30000UL) return;
+    lastRadioLockMs = now;
+
+    uint8_t primary = 1;
+    wifi_second_chan_t second = WIFI_SECOND_CHAN_NONE;
+    if (esp_wifi_get_channel(&primary, &second) == ESP_OK) {
+        if (primary != 1 || second != WIFI_SECOND_CHAN_NONE) {
+            esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
+        }
+    }
+    wifi_ps_type_t ps = WIFI_PS_NONE;
+    if (esp_wifi_get_ps(&ps) == ESP_OK && ps != WIFI_PS_NONE) {
+        esp_wifi_set_ps(WIFI_PS_NONE);
+    }
+}
+
 // ============================================================
 //  Web Server Handlers (Batched Zero-Heap Buffer Optimization)
 // ============================================================
 inline void handleRoot() {
-    server.send(200, "text/html; charset=utf-8", PORTAL_HTML);
+    sendProgmemChunked("text/html; charset=utf-8", PORTAL_HTML);
 }
 
 inline void handleLogPage() {
-    server.send(200, "text/html; charset=utf-8", LOG_HTML);
+    sendProgmemChunked("text/html; charset=utf-8", LOG_HTML);
 }
 
 inline void handleData() {
@@ -39,13 +108,13 @@ inline void handleData() {
     peakMADSincePoll = currentMAD;
 
     unsigned long now = millis();
-    bool activePair = pairingModeActive && (now < pairingExpiresMs);
-    uint32_t pairSec = activePair ? ((pairingExpiresMs - now) / 1000) : 0;
-    uint32_t cooldownRemMs = (now < alertCooldownUntilMs) ? (alertCooldownUntilMs - now) : 0;
+    bool activePair = isPairingActive(now);
+    uint32_t pairSec = pairingSecondsLeft(now);
+    uint32_t cooldownRemMs = leaderAlertRemainingMs(now);
 
-    char jsonBuf[1536];
+    static char jsonBuf[2560];
     int offset = snprintf(jsonBuf, sizeof(jsonBuf),
-        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"debounce\":%u,\"cooldownMs\":%u,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"pattern\":%d,\"speed\":%.1f,\"netId\":\"%04X\",\"leaderId\":%d,\"pairing\":%s,\"pairSec\":%u,\"pairedCount\":%d,\"triggered\":%s,\"diagTotal\":%u,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"ssid\":\"%s\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u,\"followers\":[",
+        "{\"mad\":%.1f,\"level\":%.1f,\"threshold\":%d,\"debounce\":%u,\"cooldownMs\":%u,\"duration\":%d,\"brightness\":%d,\"party\":%s,\"color\":\"%s\",\"pattern\":%d,\"speed\":%.1f,\"netId\":\"%04X\",\"leaderId\":%d,\"pairing\":%s,\"pairSec\":%u,\"pairedCount\":%d,\"triggered\":%s,\"diagTotal\":%u,\"micFault\":%s,\"nvsFault\":%s,\"wifiConnected\":false,\"rssi\":0,\"ip\":\"192.168.4.1\",\"ssid\":\"%s\",\"espTotal\":%u,\"espValid\":%u,\"espUnknown\":%u,\"followers\":[",
         reportedMad,
         levelLP,
         threshold,
@@ -64,23 +133,20 @@ inline void handleData() {
         pairedFollowerCount,
         uiTriggered ? "true" : "false",
         totalDiagEvents,
+        micFault ? "true" : "false",
+        nvsFault ? "true" : "false",
         apSsid.c_str(),
         totalEspNowPackets,
         validDoorbellPackets,
         unknownPackets
     );
 
-    for (int i = 0; i < pairedFollowerCount; i++) {
-        char macStr[18];
-        snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
-                 pairedFollowers[i].mac[0], pairedFollowers[i].mac[1], pairedFollowers[i].mac[2],
-                 pairedFollowers[i].mac[3], pairedFollowers[i].mac[4], pairedFollowers[i].mac[5]);
-        uint32_t ageSec = (now >= pairedFollowers[i].lastSeenMs) ? ((now - pairedFollowers[i].lastSeenMs) / 1000) : 0;
-        offset += snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset,
-            "%s{\"mac\":\"%s\",\"ageSec\":%u,\"area\":%u}",
-            (i > 0) ? "," : "", macStr, ageSec, pairedFollowers[i].triggerArea);
+    if (offset > 0 && (size_t)offset < sizeof(jsonBuf)) {
+        offset = appendPairedFollowersJson(jsonBuf, sizeof(jsonBuf), offset, now);
     }
-    snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset, "]}");
+    if (offset > 0 && (size_t)offset < sizeof(jsonBuf)) {
+        snprintf(jsonBuf + offset, sizeof(jsonBuf) - (size_t)offset, "]}");
+    }
     server.send(200, "application/json", jsonBuf);
     uiTriggered = false;
 }
@@ -104,17 +170,20 @@ inline void handleHistory() {
                            history24h[idx].triggers);
         if (offset > 920) {
             server.sendContent(batchBuf);
+            serviceAudioDuringHttp();
             offset = 0;
         }
     }
     snprintf(batchBuf + offset, sizeof(batchBuf) - offset, "]}");
     server.sendContent(batchBuf);
+    serviceAudioDuringHttp();
 }
 
 // Trigger history log streaming (batched)
 inline void handleTriggers() {
     unsigned long now = millis();
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "application/json", "");
 
     char batchBuf[1024];
     int offset = snprintf(batchBuf, sizeof(batchBuf), "{\"total\":%u,\"triggers\":[", totalTriggerCount);
@@ -137,13 +206,14 @@ inline void handleTriggers() {
                            t.isTest ? "true" : "false");
         if (offset > 860) {
             server.sendContent(batchBuf);
+            serviceAudioDuringHttp();
             offset = 0;
         }
     }
 
     snprintf(batchBuf + offset, sizeof(batchBuf) - offset, "]}");
-    server.send(200, "application/json", "");
     server.sendContent(batchBuf);
+    serviceAudioDuringHttp();
 }
 
 inline void handleClearTriggers() {
@@ -190,12 +260,14 @@ inline void handleEspNowLog() {
                            e.isDoorbell ? "true" : "false");
         if (offset > 800) {
             server.sendContent(batchBuf);
+            serviceAudioDuringHttp();
             offset = 0;
         }
     }
 
     snprintf(batchBuf + offset, sizeof(batchBuf) - offset, "]}");
     server.sendContent(batchBuf);
+    serviceAudioDuringHttp();
 }
 
 inline void handleClearEspNowLog() {
@@ -244,12 +316,14 @@ inline void handleDiagnostics() {
                            traceStr);
         if (offset > 780) {
             server.sendContent(batchBuf);
+            serviceAudioDuringHttp();
             offset = 0;
         }
     }
 
     snprintf(batchBuf + offset, sizeof(batchBuf) - offset, "]}");
     server.sendContent(batchBuf);
+    serviceAudioDuringHttp();
 }
 
 // Downloadable CSV export of Acoustic Flight Recorder + Trigger History
@@ -289,11 +363,13 @@ inline void handleDiagnosticsCsv() {
                            traceStr);
         if (offset > 780) {
             server.sendContent(batchBuf);
+            serviceAudioDuringHttp();
             offset = 0;
         }
     }
     if (offset > 0) {
         server.sendContent(batchBuf);
+        serviceAudioDuringHttp();
     }
 }
 
@@ -305,7 +381,7 @@ inline void handleClearDiagnostics() {
 }
 
 inline void handleSet() {
-    if (server.hasArg("threshold")) threshold  = server.arg("threshold").toInt();
+    if (server.hasArg("threshold")) threshold = clampThreshold(server.arg("threshold").toInt());
     if (server.hasArg("duration"))  duration   = server.arg("duration").toInt();
     if (server.hasArg("bright"))    brightness = server.arg("bright").toInt();
     if (server.hasArg("party"))     partyMode  = server.arg("party") == "1";
@@ -354,28 +430,24 @@ inline void handlePair() {
     if (server.hasArg("enable")) {
         bool en = server.arg("enable") == "1";
         pairingModeActive = en;
-        pairingExpiresMs = en ? (millis() + 60000) : 0;
+        if (en) pairingStartMs = millis();
     }
 
     unsigned long now = millis();
-    bool active = pairingModeActive && (now < pairingExpiresMs);
-    uint32_t secLeft = active ? ((pairingExpiresMs - now) / 1000) : 0;
+    bool active = isPairingActive(now);
+    uint32_t secLeft = pairingSecondsLeft(now);
 
-    char jsonBuf[1536];
+    static char jsonBuf[2560];
     int offset = snprintf(jsonBuf, sizeof(jsonBuf),
         "{\"active\":%s,\"secLeft\":%u,\"netId\":\"%04X\",\"count\":%d,\"followers\":[",
         active ? "true" : "false", secLeft, networkId, pairedFollowerCount);
 
-    for (int i = 0; i < pairedFollowerCount; i++) {
-        char macStr[18];
-        snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
-                 pairedFollowers[i].mac[0], pairedFollowers[i].mac[1], pairedFollowers[i].mac[2],
-                 pairedFollowers[i].mac[3], pairedFollowers[i].mac[4], pairedFollowers[i].mac[5]);
-        uint32_t ageSec = (now >= pairedFollowers[i].lastSeenMs) ? ((now - pairedFollowers[i].lastSeenMs) / 1000) : 0;
-        offset += snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset,
-            "%s{\"mac\":\"%s\",\"ageSec\":%u,\"area\":%u}", (i > 0) ? "," : "", macStr, ageSec, pairedFollowers[i].triggerArea);
+    if (offset > 0 && (size_t)offset < sizeof(jsonBuf)) {
+        offset = appendPairedFollowersJson(jsonBuf, sizeof(jsonBuf), offset, now);
     }
-    snprintf(jsonBuf + offset, sizeof(jsonBuf) - offset, "]}");
+    if (offset > 0 && (size_t)offset < sizeof(jsonBuf)) {
+        snprintf(jsonBuf + offset, sizeof(jsonBuf) - (size_t)offset, "]}");
+    }
     server.send(200, "application/json", jsonBuf);
 }
 
@@ -406,8 +478,9 @@ inline void handleSetFollowerArea() {
     }
     if (!found && pairedFollowerCount < MAX_PAIRED_FOLLOWERS) {
         memcpy(pairedFollowers[pairedFollowerCount].mac, targetMac, 6);
-        pairedFollowers[pairedFollowerCount].lastSeenMs = millis();
+        pairedFollowers[pairedFollowerCount].lastSeenMs = 0;
         pairedFollowers[pairedFollowerCount].firmwareVer = PROTOCOL_VERSION;
+        pairedFollowers[pairedFollowerCount].idMismatch = false;
         pairedFollowers[pairedFollowerCount].triggerArea = newArea;
         pairedFollowerCount++;
     }
@@ -423,8 +496,7 @@ inline void handleSetFollowerArea() {
     offer.leaderId = leaderId;
     offer.triggerArea = newArea;
 
-    esp_now_send(targetMac, (uint8_t*)&offer, sizeof(offer));
-    esp_now_send(ESPNOW_BROADCAST_MAC, (uint8_t*)&offer, sizeof(offer));
+    sendEspNow(ESPNOW_BROADCAST_MAC, (uint8_t*)&offer, sizeof(offer));
 
     server.send(200, "text/plain", "OK");
 }
@@ -435,7 +507,7 @@ inline void handleTest() {
 }
 
 inline void handleUpdatePage() {
-    server.send(200, "text/html", UPDATE_HTML);
+    sendProgmemChunked("text/html; charset=utf-8", UPDATE_HTML);
 }
 
 inline void handleNotFound() {
@@ -447,19 +519,24 @@ inline void handleNotFound() {
 //  Network & OTA Setup (SoftAP Dedicated on Channel 1, Zero Power-Save)
 // ============================================================
 inline void setupNetworking() {
-    WiFi.disconnect(true, true);
-    delay(100);
-
-    WiFi.mode(WIFI_AP_STA);
-
-    // Disable Wi-Fi modem sleep so ESP-NOW TX/RX is always instantaneous
-    esp_wifi_set_ps(WIFI_PS_NONE);
+    WiFi.persistent(false);
+    WiFi.mode(WIFI_AP);
 
     IPAddress apIP(192, 168, 4, 1);
     IPAddress netMsk(255, 255, 255, 0);
-    WiFi.softAP(apSsid.c_str(), apPass.c_str(), 1);
     WiFi.softAPConfig(apIP, apIP, netMsk);
-    esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
+    WiFi.softAP(apSsid.c_str(), apPass.c_str(), 1);
+    esp_wifi_set_ps(WIFI_PS_NONE);
+
+    uint8_t primary = 0;
+    wifi_second_chan_t second = WIFI_SECOND_CHAN_NONE;
+    if (esp_wifi_get_channel(&primary, &second) != ESP_OK || primary != 1 || second != WIFI_SECOND_CHAN_NONE) {
+        esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
+    }
+    wifi_ps_type_t ps = WIFI_PS_MIN_MODEM;
+    if (esp_wifi_get_ps(&ps) != ESP_OK || ps != WIFI_PS_NONE) {
+        esp_wifi_set_ps(WIFI_PS_NONE);
+    }
     dnsServer.start(DNS_PORT, "*", apIP);
 
     server.on("/", handleRoot);
@@ -510,7 +587,8 @@ inline void setupNetworking() {
 }
 
 inline void serviceNetworking(unsigned long now) {
-    if (wifiRestartPending && now >= wifiRestartAtMs) {
+    serviceRadioLock(now);
+    if (wifiRestartPending && (long)(now - wifiRestartAtMs) >= 0) {
         ESP.restart();
     }
     static unsigned long lastNetHandle = 0;

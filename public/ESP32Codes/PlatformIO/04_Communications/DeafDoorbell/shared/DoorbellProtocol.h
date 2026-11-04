@@ -11,7 +11,8 @@ enum MsgType : uint8_t {
     MSG_ALERT         = 0x01, // Doorbell alert trigger (broadcast & relayed)
     MSG_PAIR_BEACON   = 0x02, // Unpaired follower beacon ("Looking for leader")
     MSG_PAIR_OFFER    = 0x03, // Leader offer ("Here is our networkId")
-    MSG_PAIR_CONFIRM  = 0x04  // Follower ack ("Pairing saved to NVS")
+    MSG_PAIR_CONFIRM  = 0x04, // Follower ack ("Pairing saved to NVS")
+    MSG_HEARTBEAT     = 0x05  // Paired follower presence (no reply, no relay)
 };
 
 enum PatternId : uint8_t {
@@ -57,6 +58,15 @@ typedef struct {
     uint8_t  leaderId;      // Leader ID / Trigger Area
     uint8_t  triggerArea;   // Assigned Trigger Area for follower (0 = All Areas)
 } __attribute__((packed)) PairOfferPacket;
+
+// Paired follower presence. Leader updates last-seen in RAM and does not answer.
+typedef struct {
+    uint8_t  magic;         // 0xDB
+    uint8_t  msgType;       // MSG_HEARTBEAT (0x05)
+    uint16_t networkId;     // Follower's stored house id
+    uint8_t  followerMac[6];
+    uint8_t  firmwareVer;
+} __attribute__((packed)) HeartbeatPacket;
 
 // Legacy v1/v2 6-byte open-channel broadcast packet (pre-pairing / pre-0xDB magic header)
 typedef struct {

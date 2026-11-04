@@ -31,8 +31,13 @@
 #define ANALOG_MAD_SCALE  8.0f    // Scales 12-bit ADC MAD to match UI threshold range
 #define MAX_PLAUSIBLE_MAD 65000.0f
 #define MIN_COOLDOWN_MS   500     // Cooldown matches alert duration (no hidden 10s lockout!)
+#define ALERT_HOLD_AHEAD_MS 400   // Refresh a still-loud show this long before it ends
+#define ALERT_HOLD_LOUD_MS  300   // Recent loud chunks count as the same shout
 #define WARMUP_MS         2500    // Startup settling guard (ms)
 #define MAX_ALLOWED_DIPS  2       // Leaky debounce: tolerates 2 brief dips without resetting
+#define THRESHOLD_MIN     200     // Portal slider minimum
+#define THRESHOLD_MAX     30000   // Portal slider / graph maximum
+#define FOLLOWER_MISSING_MS 600000UL // Portal row flashes after 10 minutes unheard
 
 // ===== WIFI & NETWORK CONFIGURATION =====
 static const char* DEFAULT_AP_SSID = "DoorbellDetectorSystem";
@@ -61,6 +66,7 @@ inline uint8_t  patternId        = PATTERN_BREATHE;
 inline uint8_t  speedX10         = 10;     // 10 = 1.0x
 inline uint8_t  debounceChunks   = 2;      // Default 2 chunks (~6.4ms) for fast chime & knock response
 inline uint32_t alertSeqCounter  = 100;    // Sequence counter for deduplication
+inline bool     nvsFault         = false;  // Settings store failed to open or accept the house id
 
 // Deferred NVS save state (prevents flash wear during slider dragging)
 inline bool          settingsSavePending  = false;
@@ -69,16 +75,32 @@ inline unsigned long lastSettingsChangeMs = 0;
 // ===== PAIRED FOLLOWERS REGISTRY =====
 struct PairedFollower {
     uint8_t  mac[6];
-    uint32_t lastSeenMs;
+    uint32_t lastSeenMs;  // 0 = not heard since this boot (RAM only, not saved)
     uint8_t  firmwareVer;
     uint8_t  triggerArea; // 0 = All Areas, 1 = Area 1 (Front Door)...
+    bool     idMismatch;  // Heard a heartbeat whose house id does not match ours
 };
 #define MAX_PAIRED_FOLLOWERS 16
 inline PairedFollower pairedFollowers[MAX_PAIRED_FOLLOWERS];
 inline int pairedFollowerCount = 0;
 
 inline bool pairingModeActive = false;
-inline unsigned long pairingExpiresMs = 0;
+inline unsigned long pairingStartMs = 0;
+#define PAIRING_WINDOW_MS 60000UL
+
+inline bool isPairingActive(unsigned long now) {
+    if (!pairingModeActive) return false;
+    if ((unsigned long)(now - pairingStartMs) >= PAIRING_WINDOW_MS) {
+        pairingModeActive = false;
+        return false;
+    }
+    return true;
+}
+
+inline uint32_t pairingSecondsLeft(unsigned long now) {
+    if (!isPairingActive(now)) return 0;
+    return (uint32_t)((PAIRING_WINDOW_MS - (now - pairingStartMs)) / 1000UL);
+}
 
 // ============================================================
 //  Color Conversion Helpers
@@ -133,9 +155,18 @@ inline void colorToHexBuf(char* outBuf, size_t bufSize, uint8_t r, uint8_t g, ui
 // ============================================================
 //  NVS Settings & Paired Follower Persistence
 // ============================================================
+inline int clampThreshold(int value) {
+    return constrain(value, THRESHOLD_MIN, THRESHOLD_MAX);
+}
+
 inline void loadSettings() {
-    prefs.begin("doorbell", false);
-    threshold   = prefs.getInt("threshold", 2500);
+    nvsFault = false;
+    if (!prefs.begin("doorbell", false)) {
+        nvsFault = true;
+        threshold = clampThreshold(threshold);
+        return;
+    }
+    threshold   = clampThreshold(prefs.getInt("threshold", 2500));
     duration    = prefs.getInt("duration", 3000);
     brightness  = prefs.getInt("bright", 100);
     partyMode   = prefs.getBool("party", true);
@@ -143,7 +174,6 @@ inline void loadSettings() {
     colorG      = prefs.getUChar("colorG", 210);
     colorB      = prefs.getUChar("colorB", 255);
     micGain     = prefs.getFloat("gain", 1.5f);
-    networkId   = prefs.getUShort("netId", 0);
     leaderId    = prefs.getUChar("leaderId", 1);
     patternId      = prefs.getUChar("pattern", PATTERN_BREATHE);
     speedX10       = prefs.getUChar("speedX10", 10);
@@ -154,16 +184,32 @@ inline void loadSettings() {
     if (apSsid.length() == 0) apSsid = DEFAULT_AP_SSID;
     if (apPass.length() < 8)  apPass = DEFAULT_AP_PASS;
 
-    if (networkId == 0) {
-        networkId = (uint16_t)random(0x1000, 0xFFFF);
-        prefs.putUShort("netId", networkId);
+    if (!prefs.isKey("netId")) {
+        uint16_t minted = (uint16_t)random(0x1000, 0xFFFF);
+        size_t wrote = prefs.putUShort("netId", minted);
+        uint16_t readBack = prefs.getUShort("netId", 0);
+        if (wrote == 0 || readBack != minted) {
+            nvsFault = true;
+        } else {
+            networkId = minted;
+        }
+    } else {
+        uint16_t stored = prefs.getUShort("netId", 0);
+        if (stored == 0) {
+            nvsFault = true;
+        } else {
+            networkId = stored;
+        }
     }
     prefs.end();
 }
 
 inline void saveSettings() {
-    prefs.begin("doorbell", false);
-    prefs.putInt("threshold", threshold);
+    if (!prefs.begin("doorbell", false)) {
+        nvsFault = true;
+        return;
+    }
+    prefs.putInt("threshold", clampThreshold(threshold));
     prefs.putInt("duration", duration);
     prefs.putInt("bright", brightness);
     prefs.putBool("party", partyMode);
@@ -207,40 +253,46 @@ inline void serviceSettingsPersistence(unsigned long now) {
 
 inline void loadPairedFollowers() {
     Preferences pPrefs;
-    if (pPrefs.begin("db_peers", true)) {
-        pairedFollowerCount = pPrefs.getInt("count", 0);
-        if (pairedFollowerCount > MAX_PAIRED_FOLLOWERS) pairedFollowerCount = MAX_PAIRED_FOLLOWERS;
-        for (int i = 0; i < pairedFollowerCount; i++) {
-            char kMac[16], kVer[16], kArea[16];
-            snprintf(kMac, sizeof(kMac), "m%d", i);
-            snprintf(kVer, sizeof(kVer), "v%d", i);
-            snprintf(kArea, sizeof(kArea), "a%d", i);
-
-            pPrefs.getBytes(kMac, pairedFollowers[i].mac, 6);
-            pairedFollowers[i].firmwareVer = pPrefs.getUChar(kVer, PROTOCOL_VERSION);
-            pairedFollowers[i].triggerArea = pPrefs.getUChar(kArea, 0);
-            pairedFollowers[i].lastSeenMs = millis();
-        }
-        pPrefs.end();
-        DEBUG_PRINTF("Loaded %d paired followers from NVS\n", pairedFollowerCount);
+    if (!pPrefs.begin("db_peers", true)) {
+        nvsFault = true;
+        return;
     }
+    pairedFollowerCount = pPrefs.getInt("count", 0);
+    if (pairedFollowerCount > MAX_PAIRED_FOLLOWERS) pairedFollowerCount = MAX_PAIRED_FOLLOWERS;
+    if (pairedFollowerCount < 0) pairedFollowerCount = 0;
+    for (int i = 0; i < pairedFollowerCount; i++) {
+        char kMac[16], kVer[16], kArea[16];
+        snprintf(kMac, sizeof(kMac), "m%d", i);
+        snprintf(kVer, sizeof(kVer), "v%d", i);
+        snprintf(kArea, sizeof(kArea), "a%d", i);
+
+        pPrefs.getBytes(kMac, pairedFollowers[i].mac, 6);
+        pairedFollowers[i].firmwareVer = pPrefs.getUChar(kVer, PROTOCOL_VERSION);
+        pairedFollowers[i].triggerArea = pPrefs.getUChar(kArea, 0);
+        pairedFollowers[i].lastSeenMs = 0;
+        pairedFollowers[i].idMismatch = false;
+    }
+    pPrefs.end();
+    DEBUG_PRINTF("Loaded %d paired followers from NVS\n", pairedFollowerCount);
 }
 
 inline void savePairedFollowers() {
     Preferences pPrefs;
-    if (pPrefs.begin("db_peers", false)) {
-        pPrefs.putInt("count", pairedFollowerCount);
-        for (int i = 0; i < pairedFollowerCount; i++) {
-            char kMac[16], kVer[16], kArea[16];
-            snprintf(kMac, sizeof(kMac), "m%d", i);
-            snprintf(kVer, sizeof(kVer), "v%d", i);
-            snprintf(kArea, sizeof(kArea), "a%d", i);
-
-            pPrefs.putBytes(kMac, pairedFollowers[i].mac, 6);
-            pPrefs.putUChar(kVer, pairedFollowers[i].firmwareVer);
-            pPrefs.putUChar(kArea, pairedFollowers[i].triggerArea);
-        }
-        pPrefs.end();
-        DEBUG_PRINTF("Saved %d paired followers to NVS\n", pairedFollowerCount);
+    if (!pPrefs.begin("db_peers", false)) {
+        nvsFault = true;
+        return;
     }
+    pPrefs.putInt("count", pairedFollowerCount);
+    for (int i = 0; i < pairedFollowerCount; i++) {
+        char kMac[16], kVer[16], kArea[16];
+        snprintf(kMac, sizeof(kMac), "m%d", i);
+        snprintf(kVer, sizeof(kVer), "v%d", i);
+        snprintf(kArea, sizeof(kArea), "a%d", i);
+
+        pPrefs.putBytes(kMac, pairedFollowers[i].mac, 6);
+        pPrefs.putUChar(kVer, pairedFollowers[i].firmwareVer);
+        pPrefs.putUChar(kArea, pairedFollowers[i].triggerArea);
+    }
+    pPrefs.end();
+    DEBUG_PRINTF("Saved %d paired followers to NVS\n", pairedFollowerCount);
 }

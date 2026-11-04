@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <esp_system.h>
 #include <esp_task_wdt.h>
 #include "Config.h"
 #include "TelemetryLog.h"
@@ -59,6 +60,7 @@ void setup() {
 
     loadSettings();
     loadPairedFollowers();
+    alertSeqCounter = (esp_random() & 0x7FFFFFFFu) + 100u;
 
     setupLED();
     setupAudio();
@@ -99,7 +101,7 @@ void loop() {
     if (now - lastLogTime >= 250) {
         DEBUG_PRINTF("[MAD:%5.0f | LP:%5.0f | Thresh:%d]%s\n",
                      currentMAD, levelLP, threshold,
-                     (now < alertCooldownUntilMs) ? " >>> ALERT ACTIVE <<<" : "");
+                     isLeaderAlertActive(now) ? " >>> ALERT ACTIVE <<<" : "");
         lastLogTime = now;
     }
 }

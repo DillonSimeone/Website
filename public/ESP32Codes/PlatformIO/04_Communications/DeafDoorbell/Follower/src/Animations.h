@@ -17,10 +17,24 @@ static const CRGB ORANGE_SHADES[] = {
 #define NUM_ORANGE_SHADES (sizeof(ORANGE_SHADES) / sizeof(ORANGE_SHADES[0]))
 #define PAIRING_RIPPLE_PERIOD_MS 3000
 
+// One full color-wheel turn every 16 seconds at 1x. Strobe is the only stepped change.
+static const float PARTY_HUE_PER_SEC = 16.0f;
+
+inline float wrapPhase(float radians) {
+    float wrapped = fmodf(radians, TWO_PI);
+    return (wrapped < 0.0f) ? (wrapped + TWO_PI) : wrapped;
+}
+
+inline uint8_t partyHue(float t, float spatialHue) {
+    float hue = fmodf((t * PARTY_HUE_PER_SEC) + spatialHue, 256.0f);
+    if (hue < 0.0f) hue += 256.0f;
+    return partyStartHue + (uint8_t)hue;
+}
+
 // ============================================================
 //  FastLED Alert Animation Renderers
 //  - Phase-aligned so Frame 0 (t=0) produces an instant 100% flash
-//  - Built-in temporal + spatial rainbow hue engine for Party Mode
+//  - Party mode drifts hue. Angles stay wrapped so a long show cannot warp.
 // ============================================================
 inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
     static unsigned long lastAlertFrameMs = 0;
@@ -30,14 +44,11 @@ inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
     float elapsedSec = (float)(now - alertStartMs) / 1000.0f;
     float t = elapsedSec * currentSpeed;
 
-    // Continuous rainbow hue rotation when Party Mode is active
-    uint8_t baseHue = partyStartHue + (uint8_t)(t * 140.0f);
-
     switch (currentPattern) {
 
         // Pattern 0: Breathe (Starts at 100% peak brightness at t=0 via cosf)
         case PATTERN_BREATHE: {
-            float rawCos = cosf(t * 3.14159f * 1.5f);
+            float rawCos = cosf(wrapPhase(t * 3.14159f * 1.5f));
             float norm = (rawCos + 1.0f) * 0.5f;
             float intensity = powf(norm, 1.8f);
             uint8_t scale = (uint8_t)(intensity * 255.0f);
@@ -48,7 +59,7 @@ inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
                         float dx = (float)x - 3.5f;
                         float dy = (float)y - 3.5f;
                         float dist = sqrtf(dx * dx + dy * dy);
-                        CRGB c = CHSV(baseHue + (uint8_t)(dist * 14.0f), 240, 255);
+                        CRGB c = CHSV(partyHue(t, dist * 5.0f), 240, 255);
                         c.nscale8_video(scale);
                         leds[getMatrixIndex(x, y)] = c;
                     }
@@ -68,11 +79,11 @@ inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
                     float dx = (float)x - 3.5f;
                     float dy = (float)y - 3.5f;
                     float dist = sqrtf(dx * dx + dy * dy);
-                    float wave = cosf((dist * 1.5f) - (t * 5.5f));
+                    float wave = cosf(dist * 1.5f - wrapPhase(t * 5.5f));
                     if (wave < 0.0f) wave = 0.0f;
                     float intensity = powf(wave, 2.2f);
                     CRGB c = currentPartyMode
-                        ? CRGB(CHSV(baseHue - (uint8_t)(dist * 28.0f), 240, 255))
+                        ? CRGB(CHSV(partyHue(t, -(dist * 8.0f)), 240, 255))
                         : currentColor;
                     c.nscale8_video((uint8_t)(intensity * 255.0f));
                     leds[getMatrixIndex(x, y)] = c;
@@ -92,7 +103,7 @@ inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
                     if (diff < 14.0f) {
                         float intensity = powf(1.0f - (diff / 14.0f), 2.0f);
                         CRGB c = currentPartyMode
-                            ? CRGB(CHSV(baseHue - (uint8_t)(diff * 12.0f), 240, 255))
+                            ? CRGB(CHSV(partyHue(t, -(diff * 4.0f)), 240, 255))
                             : currentColor;
                         c.nscale8_video((uint8_t)(intensity * 255.0f));
                         leds[getMatrixIndex(x, y)] = c;
@@ -105,14 +116,14 @@ inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
         // Pattern 3: Bouncing Bar (Horizontal oscillating light beam)
         case PATTERN_BOUNCE: {
             fill_solid(leds, LED_COUNT, CRGB::Black);
-            float barY = 3.5f + 3.2f * sinf(t * 3.14159f * 1.8f);
+            float barY = 3.5f + 3.2f * sinf(wrapPhase(t * 3.14159f * 1.8f));
             for (int y = 0; y < 8; y++) {
                 float distY = fabsf((float)y - barY);
                 float intensity = expf(-powf(distY, 2.0f) / 1.5f);
                 uint8_t scale = (uint8_t)(intensity * 255.0f);
                 for (int x = 0; x < 8; x++) {
                     CRGB c = currentPartyMode
-                        ? CRGB(CHSV(baseHue + (x * 16) + (y * 10), 240, 255))
+                        ? CRGB(CHSV(partyHue(t, (x * 5.0f) + (y * 3.0f)), 240, 255))
                         : currentColor;
                     c.nscale8_video(scale);
                     leds[getMatrixIndex(x, y)] = c;
@@ -139,7 +150,7 @@ inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
                         float dx = (float)x - 3.5f;
                         float dy = (float)y - 3.5f;
                         float dist = sqrtf(dx * dx + dy * dy);
-                        CRGB c = CHSV(baseHue + (uint8_t)(dist * 16.0f), 240, 255);
+                        CRGB c = CHSV(partyHue(t, dist * 5.0f), 240, 255);
                         c.nscale8_video(scale);
                         leds[getMatrixIndex(x, y)] = c;
                     }
@@ -159,7 +170,7 @@ inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
             unsigned long cycleMs = elapsedMs % 200;
             if (cycleMs < 100) {
                 if (currentPartyMode) {
-                    uint8_t strobeHue = partyStartHue + (uint8_t)((elapsedMs / 200) * 73);
+                    uint8_t strobeHue = partyStartHue + (uint8_t)(((elapsedMs / 200) * 73u) & 0xFFu);
                     for (int y = 0; y < 8; y++) {
                         for (int x = 0; x < 8; x++) {
                             leds[getMatrixIndex(x, y)] = CHSV(strobeHue + ((x + y) * 6), 240, 255);
@@ -175,7 +186,7 @@ inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
         }
     }
 
-    FastLED.show();
+    showMatrix();
 }
 
 // ============================================================
@@ -183,6 +194,12 @@ inline void renderAlertFrame(unsigned long now, bool forceImmediate = false) {
 //  Executed in loop() rather than blocking the Wi-Fi callback
 // ============================================================
 inline void playPairConfirmation() {
+#ifdef REPEATER_ONLY
+    digitalWrite(ONBOARD_LED, LOW);
+    delay(200);
+    digitalWrite(ONBOARD_LED, HIGH);
+    return;
+#endif
     FastLED.setBrightness(100);
     const float cx = 3.5f;
     const float cy = 3.5f;
@@ -222,12 +239,12 @@ inline void playPairConfirmation() {
                 }
             }
         }
-        FastLED.show();
+        showMatrix();
         delay(16);
     }
 
     fill_solid(leds, LED_COUNT, CRGB::Black);
-    FastLED.show();
+    showMatrix();
 }
 
 // ============================================================
@@ -240,10 +257,18 @@ inline void servicePairingMode(unsigned long now) {
         beacon.msgType = MSG_PAIR_BEACON;
         memcpy(beacon.followerMac, myMac, 6);
         beacon.firmwareVer = PROTOCOL_VERSION;
-        esp_now_send(ESPNOW_BROADCAST_MAC, (uint8_t*)&beacon, sizeof(beacon));
+        sendEspNowBroadcast((uint8_t*)&beacon, sizeof(beacon));
         lastBeaconBroadcastMs = now;
         DEBUG_PRINTLN("Pair beacon broadcast sent...");
+#ifdef REPEATER_ONLY
+        static bool ledOn = false;
+        ledOn = !ledOn;
+        digitalWrite(ONBOARD_LED, ledOn ? LOW : HIGH);
+#endif
     }
+#ifdef REPEATER_ONLY
+    return;
+#endif
 
     if (now - lastPairingFrameMs < 20) return;
     lastPairingFrameMs = now;
@@ -296,5 +321,5 @@ inline void servicePairingMode(unsigned long now) {
         }
     }
 
-    FastLED.show();
+    showMatrix();
 }

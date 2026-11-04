@@ -478,6 +478,25 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     table.log-table th { background: #161b22; color: var(--text-muted); position: sticky; top: 0; font-weight: 600; }
+    @keyframes followerMissingPulse {
+      0%, 100% { background-color: rgba(218, 54, 51, 0.08); }
+      50% { background-color: rgba(218, 54, 51, 0.55); }
+    }
+    tr.follower-missing td {
+      animation: followerMissingPulse 3s ease-in-out infinite;
+    }
+    .missing-tag {
+      color: #ff7b72;
+      font-weight: 700;
+      margin-left: 6px;
+      font-size: 0.72rem;
+    }
+    .id-mismatch-tag {
+      color: #eab308;
+      font-weight: 700;
+      margin-left: 6px;
+      font-size: 0.72rem;
+    }
     .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-weight: 700; }
     .badge-ok { background: rgba(63,185,80,0.2); color: #3fb950; }
     
@@ -640,6 +659,7 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         <div id="liveThreshMarker" style="position:absolute; top:0; bottom:0; width:3px; left:8.3%; background:#eab308; box-shadow:0 0 8px #eab308; z-index:2;"></div>
       </div>
       <input type="range" id="threshRange" min="200" max="30000" step="100" value="2500" style="margin-top:4px;">
+      <div id="micFaultNote" style="display:none; margin-top:8px; font-size:0.75rem; color:#ff7b72; font-weight:600;">Mic fault: input is stuck high. This clears on its own when the level returns to range.</div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; gap:8px; flex-wrap:wrap;">
         <span style="font-size:0.75rem; color:var(--text-secondary);">Debounce Window (Sustained Chunks Required):</span>
         <select id="debounceSelect" onchange="triggerAutoSave(true)" style="padding:5px 10px; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; color:#fff; font-size:0.8rem;">
@@ -739,6 +759,7 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         <div><strong>Local IP:</strong> 192.168.4.1</div>
         <div><strong>mDNS URL:</strong> <a id="mdnsLink" href="http://deafdoorbell.local" target="_blank">http://deafdoorbell.local</a></div>
         <div><strong>Firmware Update:</strong> <a href="/update" target="_blank">Web Firmware Update (/update)</a></div>
+        <div id="nvsFaultNote" style="display:none; color:#ff7b72; font-weight:600;">NVS fault: the settings store did not open. The house id was left unchanged.</div>
       </div>
     </div>
 
@@ -845,13 +866,13 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         case 'breathe': {
           const raw = Math.cos(t * Math.PI * 1.5);
           val = Math.pow((raw + 1) / 2, 1.8);
-          hueOffset = (dist * 14) / 255;
+          hueOffset = (dist * 5) / 255;
           break;
         }
         case 'ripple': {
           const wave = Math.cos((dist * 1.5) - (t * 5.5));
           val = Math.pow(Math.max(0, wave), 2.2);
-          hueOffset = -(dist * 28) / 255;
+          hueOffset = -(dist * 8) / 255;
           break;
         }
         case 'crawl': {
@@ -859,21 +880,21 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           const comet = (t * 28.0 + 14.0) % 64;
           const diff = (comet - serpentine + 64) % 64;
           val = diff < 14 ? Math.pow(1 - (diff / 14), 2.0) : 0.0;
-          hueOffset = -(diff * 12) / 255;
+          hueOffset = -(diff * 4) / 255;
           break;
         }
         case 'bounce': {
           const barY = 3.5 + 3.2 * Math.sin(t * Math.PI * 1.8);
           const distY = Math.abs(y - barY);
           val = Math.exp(-Math.pow(distY, 2) / 1.5);
-          hueOffset = (x * 16 + y * 10) / 255;
+          hueOffset = (x * 5 + y * 3) / 255;
           break;
         }
         case 'soft_beacon': {
           const cycle = (t * 1.6 + 0.25) % 1.0;
           val = (cycle < 0.25) ? Math.sin((cycle / 0.25) * (Math.PI / 2)) : Math.cos(((cycle - 0.25) / 0.75) * (Math.PI / 2));
           val = Math.pow(Math.max(0, val), 1.5);
-          hueOffset = (dist * 16) / 255;
+          hueOffset = (dist * 5) / 255;
           break;
         }
         case 'strobe': {
@@ -908,7 +929,7 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         }
       }
 
-      const basePartyHue = (timeSec * 0.55 * state.speed) % 1.0;
+      const basePartyHue = (timeSec * (1 / 16) * state.speed) % 1.0;
       if (state.isParty && active) {
         const ambRgb = hsvToRgb(basePartyHue, 0.95, 1.0);
         document.documentElement.style.setProperty('--sim-rgb', `${ambRgb[0]}, ${ambRgb[1]}, ${ambRgb[2]}`);
@@ -1152,6 +1173,39 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       return hr + 'h ' + (min % 60) + 'm ago';
     }
 
+    function applyFollowerRowState(f) {
+      const cleanId = f.mac.replace(/:/g, '');
+      const row = document.getElementById('frow-' + cleanId);
+      if (row) row.classList.toggle('follower-missing', !!f.missing);
+      const ageEl = document.getElementById('age-' + cleanId);
+      if (ageEl) ageEl.innerText = f.heard ? formatAge(f.ageSec) : 'Not heard yet';
+      const missEl = document.getElementById('miss-' + cleanId);
+      if (missEl) missEl.textContent = f.missing ? '(Missing?)' : '';
+      const idEl = document.getElementById('idbad-' + cleanId);
+      if (idEl) idEl.textContent = f.idMismatch ? '(ID mismatch)' : '';
+    }
+
+    function followerRowHtml(f) {
+      const cleanId = f.mac.replace(/:/g, '');
+      const missClass = f.missing ? ' class="follower-missing"' : '';
+      const missText = f.missing ? '(Missing?)' : '';
+      const idText = f.idMismatch ? '(ID mismatch)' : '';
+      const ageText = f.heard ? formatAge(f.ageSec) : 'Not heard yet';
+      return `<tr id="frow-${cleanId}"${missClass}>
+          <td><code style="color:var(--accent); font-weight:700;">${f.mac}</code><span id="miss-${cleanId}" class="missing-tag">${missText}</span><span id="idbad-${cleanId}" class="id-mismatch-tag">${idText}</span></td>
+          <td>
+            <select class="follower-area-select" onchange="updateFollowerArea('${f.mac}', this.value)" style="padding:4px 8px; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; color:#fff; font-size:0.82rem;">
+              <option value="0"${f.area === 0 ? ' selected' : ''}>All Trigger Areas</option>
+              <option value="1"${f.area === 1 ? ' selected' : ''}>Area 1 - Front Door</option>
+              <option value="2"${f.area === 2 ? ' selected' : ''}>Area 2 - Back Door</option>
+              <option value="3"${f.area === 3 ? ' selected' : ''}>Area 3 - Side Gate</option>
+              <option value="4"${f.area === 4 ? ' selected' : ''}>Area 4 - Garage / Service</option>
+            </select>
+          </td>
+          <td><span id="age-${cleanId}" style="color:var(--text-muted); font-size:0.75rem;">${ageText}</span></td>
+        </tr>`;
+    }
+
     let lastFollowersJson = '';
     function renderFollowersList(followers) {
       if (!followers) return;
@@ -1166,42 +1220,15 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         return;
       }
 
-      if (document.activeElement && document.activeElement.classList.contains('follower-area-select')) {
-        followers.forEach(f => {
-          const ageEl = document.getElementById('age-' + f.mac.replace(/:/g, ''));
-          if (ageEl) ageEl.innerText = formatAge(f.ageSec);
-        });
-        return;
-      }
-
       const currentJson = JSON.stringify(followers.map(f => ({mac: f.mac, area: f.area})));
-      if (currentJson === lastFollowersJson) {
-        followers.forEach(f => {
-          const ageEl = document.getElementById('age-' + f.mac.replace(/:/g, ''));
-          if (ageEl) ageEl.innerText = formatAge(f.ageSec);
-        });
-        return;
+      const selectionOpen = document.activeElement && document.activeElement.classList.contains('follower-area-select');
+      if (!selectionOpen && currentJson !== lastFollowersJson) {
+        lastFollowersJson = currentJson;
+        let html = '';
+        followers.forEach(f => { html += followerRowHtml(f); });
+        tbody.innerHTML = html;
       }
-      lastFollowersJson = currentJson;
-
-      let html = '';
-      followers.forEach(f => {
-        const cleanId = f.mac.replace(/:/g, '');
-        html += `<tr>
-          <td><code style="color:var(--accent); font-weight:700;">${f.mac}</code></td>
-          <td>
-            <select class="follower-area-select" onchange="updateFollowerArea('${f.mac}', this.value)" style="padding:4px 8px; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; color:#fff; font-size:0.82rem;">
-              <option value="0"${f.area === 0 ? ' selected' : ''}>All Trigger Areas</option>
-              <option value="1"${f.area === 1 ? ' selected' : ''}>Area 1 - Front Door</option>
-              <option value="2"${f.area === 2 ? ' selected' : ''}>Area 2 - Back Door</option>
-              <option value="3"${f.area === 3 ? ' selected' : ''}>Area 3 - Side Gate</option>
-              <option value="4"${f.area === 4 ? ' selected' : ''}>Area 4 - Garage / Service</option>
-            </select>
-          </td>
-          <td><span id="age-${cleanId}" style="color:var(--text-muted); font-size:0.75rem;">${formatAge(f.ageSec)}</span></td>
-        </tr>`;
-      });
-      tbody.innerHTML = html;
+      followers.forEach(applyFollowerRowState);
     }
 
     let isPairingLocal = false;
@@ -1316,6 +1343,11 @@ const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         if (d.followers !== undefined) {
           renderFollowersList(d.followers);
         }
+
+        const micNote = document.getElementById('micFaultNote');
+        if (micNote) micNote.style.display = d.micFault ? 'block' : 'none';
+        const nvsNote = document.getElementById('nvsFaultNote');
+        if (nvsNote) nvsNote.style.display = d.nvsFault ? 'block' : 'none';
       }).catch(() => {}).finally(() => {
         setTimeout(pollData, 200);
       });

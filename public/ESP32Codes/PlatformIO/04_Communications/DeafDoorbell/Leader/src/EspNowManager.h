@@ -5,13 +5,19 @@
 #include "TelemetryLog.h"
 
 // ===== ALERT EXECUTION & BURST STATE =====
-inline unsigned long alertCooldownUntilMs = 0;
+inline bool leaderAlertActive = false;
+inline unsigned long leaderAlertStartMs = 0;
+inline unsigned long leaderAlertCooldownMs = 0;
 inline int burstPacketsRemaining = 0;
 inline unsigned long nextBurstPacketMs = 0;
 inline DoorbellPacket activeAlertPacket;
 inline bool uiTriggered = false;
 inline float lastTriggerMAD = 0.0f;
 inline volatile bool nvsSaveFollowersPending = false;
+inline bool espNowReady = false;
+inline unsigned long lastEspNowAttemptMs = 0;
+inline volatile bool pairOfferPending = false;
+inline PairOfferPacket latchedPairOffer;
 
 #ifdef LEGACY_FOLLOWER_SUPPORT
 inline LegacyDoorbellMsg activeLegacyMsg;
@@ -41,6 +47,7 @@ inline void recordFollowerInMemory(const uint8_t *mac, uint8_t ver = PROTOCOL_VE
         if (memcmp(pairedFollowers[i].mac, mac, 6) == 0) {
             pairedFollowers[i].lastSeenMs = millis();
             pairedFollowers[i].firmwareVer = ver;
+            pairedFollowers[i].idMismatch = false;
             nvsSaveFollowersPending = true;
             return;
         }
@@ -49,6 +56,7 @@ inline void recordFollowerInMemory(const uint8_t *mac, uint8_t ver = PROTOCOL_VE
         memcpy(pairedFollowers[pairedFollowerCount].mac, mac, 6);
         pairedFollowers[pairedFollowerCount].lastSeenMs = millis();
         pairedFollowers[pairedFollowerCount].firmwareVer = ver;
+        pairedFollowers[pairedFollowerCount].idMismatch = false;
         pairedFollowers[pairedFollowerCount].triggerArea = 0;
         pairedFollowerCount++;
         nvsSaveFollowersPending = true;
@@ -59,6 +67,20 @@ inline void recordFollowerInMemory(const uint8_t *mac, uint8_t ver = PROTOCOL_VE
 //  ESP-NOW Receive Callback (Fast & Non-Blocking)
 // ============================================================
 inline void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len) {
+    if (len >= (int)sizeof(HeartbeatPacket) && data != NULL && mac != NULL
+        && data[0] == DEAF_DOORBELL_MAGIC && data[1] == MSG_HEARTBEAT) {
+        const HeartbeatPacket *hb = (const HeartbeatPacket *)data;
+        for (int i = 0; i < pairedFollowerCount; i++) {
+            if (memcmp(pairedFollowers[i].mac, mac, 6) == 0) {
+                pairedFollowers[i].lastSeenMs = millis();
+                pairedFollowers[i].firmwareVer = hb->firmwareVer;
+                pairedFollowers[i].idMismatch = (hb->networkId != networkId);
+                break;
+            }
+        }
+        return;
+    }
+
     totalEspNowPackets++;
 
     EspNowLogEntry entry;
@@ -79,7 +101,7 @@ inline void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len)
             validDoorbellPackets++;
         }
         else if (msgType == MSG_PAIR_BEACON) {
-            if (pairingModeActive && millis() < pairingExpiresMs && mac) {
+            if (isPairingActive(millis()) && mac) {
                 uint8_t assignedArea = 0;
                 for (int i = 0; i < pairedFollowerCount; i++) {
                     if (memcmp(pairedFollowers[i].mac, mac, 6) == 0) {
@@ -95,10 +117,8 @@ inline void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len)
                 offer.networkId = networkId;
                 offer.leaderId = leaderId;
                 offer.triggerArea = assignedArea;
-
-                addOrUpdateFollowerPeer(mac);
-                esp_now_send(mac, (uint8_t*)&offer, sizeof(offer));
-                esp_now_send(ESPNOW_BROADCAST_MAC, (uint8_t*)&offer, sizeof(offer));
+                latchedPairOffer = offer;
+                pairOfferPending = true;
             }
         }
         else if (msgType == MSG_PAIR_CONFIRM) {
@@ -119,10 +139,11 @@ inline void onMasterEspNowRecv(const uint8_t *mac, const uint8_t *data, int len)
     if (espNowLogCount < MAX_ESPNOW_LOGS) espNowLogCount++;
 }
 
-inline void setupESPNow() {
+inline bool tryInitEspNow() {
     if (esp_now_init() != ESP_OK) {
+        espNowReady = false;
         DEBUG_PRINTLN("ESP-NOW init failed!");
-        return;
+        return false;
     }
 
     esp_now_register_recv_cb(esp_now_recv_cb_t(onMasterEspNowRecv));
@@ -133,13 +154,50 @@ inline void setupESPNow() {
     peerInfo.ifidx = WIFI_IF_AP;
     peerInfo.encrypt = false;
 
-    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-        DEBUG_PRINTLN("Failed to add broadcast peer");
+    if (!esp_now_is_peer_exist(ESPNOW_BROADCAST_MAC)) {
+        if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+            DEBUG_PRINTLN("Failed to add broadcast peer");
+        }
     }
 
     for (int i = 0; i < pairedFollowerCount; i++) {
         addOrUpdateFollowerPeer(pairedFollowers[i].mac);
     }
+    espNowReady = true;
+    return true;
+}
+
+inline void setupESPNow() {
+    tryInitEspNow();
+}
+
+inline bool isLeaderAlertActive(unsigned long now) {
+    if (!leaderAlertActive) return false;
+    if ((unsigned long)(now - leaderAlertStartMs) >= leaderAlertCooldownMs) {
+        leaderAlertActive = false;
+        return false;
+    }
+    return true;
+}
+
+inline uint32_t leaderAlertRemainingMs(unsigned long now) {
+    if (!isLeaderAlertActive(now)) return 0;
+    return (uint32_t)(leaderAlertCooldownMs - (now - leaderAlertStartMs));
+}
+
+inline esp_err_t sendEspNow(const uint8_t *mac, const uint8_t *data, size_t len) {
+    if (!espNowReady || mac == NULL || data == NULL || len == 0) {
+        return ESP_ERR_ESPNOW_NOT_INIT;
+    }
+    // A full TX queue drops this copy. It does not mean the radio is dead.
+    return esp_now_send(mac, data, len);
+}
+
+inline void serviceEspNowLink(unsigned long now) {
+    if (espNowReady) return;
+    if (lastEspNowAttemptMs != 0 && (now - lastEspNowAttemptMs) < 3000UL) return;
+    lastEspNowAttemptMs = now;
+    tryInitEspNow();
 }
 
 // ============================================================
@@ -150,9 +208,9 @@ inline void setupESPNow() {
 // ============================================================
 inline void sendAlertPacketNow() {
 #ifdef LEGACY_FOLLOWER_SUPPORT
-    esp_now_send(ESPNOW_BROADCAST_MAC, (uint8_t*)&activeLegacyMsg, sizeof(activeLegacyMsg));
+    sendEspNow(ESPNOW_BROADCAST_MAC, (uint8_t*)&activeLegacyMsg, sizeof(activeLegacyMsg));
 #endif
-    esp_now_send(ESPNOW_BROADCAST_MAC, (uint8_t*)&activeAlertPacket, sizeof(activeAlertPacket));
+    sendEspNow(ESPNOW_BROADCAST_MAC, (uint8_t*)&activeAlertPacket, sizeof(activeAlertPacket));
 }
 
 inline void triggerAlert(bool isTest = false) {
@@ -206,8 +264,10 @@ inline void triggerAlert(bool isTest = false) {
     // Schedule 3 follow-up broadcast packets spaced 12ms apart
     burstPacketsRemaining = 3;
     nextBurstPacketMs = now + 12;
-    unsigned long cooldownLen = max((unsigned long)duration, (unsigned long)MIN_COOLDOWN_MS);
-    alertCooldownUntilMs = now + cooldownLen;
+    // Cooldown stays equal to the visual duration so a second ring does not restart the animation.
+    leaderAlertStartMs = now;
+    leaderAlertCooldownMs = max((unsigned long)duration, (unsigned long)MIN_COOLDOWN_MS);
+    leaderAlertActive = true;
     uiTriggered = true;
 
     // Record to trigger history log after Packet 1 is already on the air
@@ -220,8 +280,30 @@ inline void triggerAlert(bool isTest = false) {
                  isTest ? 0.0f : lastTriggerMAD);
 }
 
+// Same shout is still going. Keep the color and let followers continue the
+// animation they already started instead of rolling a new party color.
+inline void extendActiveAlert() {
+    activeAlertPacket.brightness = (uint8_t)constrain(brightness, 10, 100);
+    activeAlertPacket.speedX10   = speedX10;
+    activeAlertPacket.durationMs = (uint16_t)max((unsigned long)duration, (unsigned long)MIN_COOLDOWN_MS);
+    activeAlertPacket.ttl        = 2;
+    alertSeqCounter++;
+    activeAlertPacket.seqId = alertSeqCounter;
+
+    sendAlertPacketNow();
+    burstPacketsRemaining = 1;
+    nextBurstPacketMs = millis() + 12;
+
+    unsigned long now = millis();
+    leaderAlertStartMs = now;
+    leaderAlertCooldownMs = activeAlertPacket.durationMs;
+    leaderAlertActive = true;
+}
+
 inline void serviceEspNow(unsigned long now) {
-    if (burstPacketsRemaining > 0 && now >= nextBurstPacketMs) {
+    if (!espNowReady) serviceEspNowLink(now);
+
+    if (burstPacketsRemaining > 0 && (long)(now - nextBurstPacketMs) >= 0) {
         sendAlertPacketNow();
         burstPacketsRemaining--;
         nextBurstPacketMs = now + 12;
@@ -229,7 +311,7 @@ inline void serviceEspNow(unsigned long now) {
 
 #ifdef LEGACY_FOLLOWER_SUPPORT
     // Dynamic rainbow color stepping for legacy Followers during an active Party Mode alert
-    if (partyMode && nextLegacyPartyShiftMs != 0 && now >= nextLegacyPartyShiftMs) {
+    if (partyMode && nextLegacyPartyShiftMs != 0 && (long)(now - nextLegacyPartyShiftMs) >= 0) {
         if (now + 250 < legacyAlertEndMs) {
             legacyPartyHue = (legacyPartyHue + 85) % 360;
             uint8_t pr = 0, pg = 0, pb = 0;
@@ -240,13 +322,21 @@ inline void serviceEspNow(unsigned long now) {
             activeLegacyMsg.r          = (uint8_t)(pr * bScale);
             activeLegacyMsg.g          = (uint8_t)(pg * bScale);
             activeLegacyMsg.b          = (uint8_t)(pb * bScale);
-            esp_now_send(ESPNOW_BROADCAST_MAC, (uint8_t*)&activeLegacyMsg, sizeof(activeLegacyMsg));
+            sendEspNow(ESPNOW_BROADCAST_MAC, (uint8_t*)&activeLegacyMsg, sizeof(activeLegacyMsg));
             nextLegacyPartyShiftMs = now + 1025;
         } else {
             nextLegacyPartyShiftMs = 0;
         }
     }
 #endif
+
+    if (pairOfferPending) {
+        PairOfferPacket offer;
+        memcpy(&offer, (const void *)&latchedPairOffer, sizeof(offer));
+        pairOfferPending = false;
+        addOrUpdateFollowerPeer(offer.targetMac);
+        sendEspNow(ESPNOW_BROADCAST_MAC, (uint8_t *)&offer, sizeof(offer));
+    }
 
     if (nvsSaveFollowersPending) {
         nvsSaveFollowersPending = false;

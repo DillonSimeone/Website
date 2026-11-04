@@ -7,6 +7,8 @@
 inline float currentMAD       = 0.0f;
 inline float peakMADSincePoll = 0.0f;
 inline float levelLP          = 0.0f;
+inline bool  micFault         = false; // Stuck-high ADC. Display only; trigger path is unchanged.
+inline bool  audioWarmupComplete = false;
 
 // DC-blocking IIR high-pass filter state (~80Hz cutoff at ~20kHz)
 inline float lastInputSample  = 2048.0f;
@@ -16,6 +18,7 @@ static const float DC_FILTER_R = 0.985f;
 // Fast leaky debounce state
 inline int chunksAbove     = 0;
 inline int consecutiveDips = 0;
+inline unsigned long lastLoudMs = 0;
 
 // High-speed Diagnostic Flight Recorder capture state
 inline bool          diagCaptureActive    = false;
@@ -81,6 +84,19 @@ inline void sampleAndProcessAudio(unsigned long now) {
     currentMAD = (madSum / (float)CHUNK_SIZE) * ANALOG_MAD_SCALE * micGain;
     uint16_t clampedMad = (uint16_t)min(65535.0f, currentMAD);
 
+    // A railed mic raises a portal flag after ~500ms and clears on the first normal chunk.
+    // Trigger evaluation below is intentionally unchanged.
+    {
+        static unsigned long micRailSinceMs = 0;
+        if (currentMAD > MAX_PLAUSIBLE_MAD) {
+            if (micRailSinceMs == 0) micRailSinceMs = now;
+            else if (now - micRailSinceMs >= 500) micFault = true;
+        } else {
+            micRailSinceMs = 0;
+            micFault = false;
+        }
+    }
+
     // Peak tracking for UI graph and 24-hour bucket
     if (currentMAD > peakMADSincePoll) {
         peakMADSincePoll = currentMAD;
@@ -92,11 +108,15 @@ inline void sampleAndProcessAudio(unsigned long now) {
     // Exponential smoothing envelope for LED feedback
     levelLP += motorSmooth * (currentMAD - levelLP);
 
-    bool alertActive = (now < alertCooldownUntilMs);
+    if (!audioWarmupComplete && now > WARMUP_MS) audioWarmupComplete = true;
+
+    bool alertActive = isLeaderAlertActive(now);
     uint8_t reqChunks = constrain(debounceChunks, 1, 8);
     float nearMissFloor = (float)threshold * 0.78f;
 
-    if (now > WARMUP_MS && currentMAD <= MAX_PLAUSIBLE_MAD) {
+    if (audioWarmupComplete && currentMAD <= MAX_PLAUSIBLE_MAD) {
+        if (currentMAD >= threshold) lastLoudMs = now;
+
         // 1. Track high-speed diagnostic trace whenever signal approaches/crosses threshold
         if (currentMAD >= nearMissFloor) {
             if (!diagCaptureActive) {
@@ -117,7 +137,7 @@ inline void sampleAndProcessAudio(unsigned long now) {
                 diagEventChunksAbove++;
                 if (alertActive && !diagHitCooldown) {
                     diagHitCooldown   = true;
-                    diagCooldownRemMs = (uint16_t)min(65535UL, alertCooldownUntilMs - now);
+                    diagCooldownRemMs = (uint16_t)min(65535UL, (unsigned long)leaderAlertRemainingMs(now));
                 }
             }
             diagQuietChunks = 0;
@@ -153,6 +173,12 @@ inline void sampleAndProcessAudio(unsigned long now) {
         } else {
             chunksAbove = 0;
             consecutiveDips = 0;
+            // The show is about to end and the mic is still hot. Push the same
+            // animation forward instead of starting a new color from frame 0.
+            if (lastLoudMs != 0 && (now - lastLoudMs) <= ALERT_HOLD_LOUD_MS &&
+                leaderAlertRemainingMs(now) <= ALERT_HOLD_AHEAD_MS) {
+                extendActiveAlert();
+            }
         }
 
         // 3. Finalize non-trigger diagnostic event once signal settles (or trace fills)
@@ -184,5 +210,5 @@ inline void sampleAndProcessAudio(unsigned long now) {
         diagCaptureActive = false;
     }
 
-    updateLED(levelLP, now < alertCooldownUntilMs);
+    updateLED(levelLP, isLeaderAlertActive(now));
 }

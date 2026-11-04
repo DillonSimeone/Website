@@ -2,6 +2,9 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include <Preferences.h>
+#include <esp_now.h>
+#include "hal/cpu_ll.h"
+#include "driver/dedic_gpio.h"
 #include "DoorbellProtocol.h"
 
 #define DEBUG_ENABLED
@@ -33,14 +36,87 @@ inline uint16_t myNetworkId   = 0;    // 0 = Unpaired / Discovery Mode
 inline uint8_t  myTriggerArea = 0;    // 0 = All Trigger Areas, 1 = Area 1 (Front Door)...
 inline bool     isPaired      = false;
 inline uint8_t  myMac[6]      = {0};
+inline bool     espNowReady   = false;
+inline unsigned long nextHeartbeatMs = 0;
+
+inline esp_err_t sendEspNowBroadcast(const uint8_t *data, size_t len) {
+    if (!espNowReady || data == NULL || len == 0) return ESP_ERR_ESPNOW_NOT_INIT;
+    return esp_now_send(ESPNOW_BROADCAST_MAC, data, len);
+}
 
 // ===== FASTLED HARDWARE BUFFER =====
 inline CRGB leds[LED_COUNT];
 
+// Clock the whole frame with interrupts off. The RMT driver refills from an
+// interrupt, and a WiFi interrupt makes it abandon the rest of the panel.
+// ESP32-C3 has no standard rdcycle counter. Reading it faults the CPU.
+inline bool matrixBlankPending = false;
+
+static inline uint8_t matrixScale(uint8_t value, uint8_t scale) {
+    return (uint8_t)(((uint16_t)value * scale) >> 8) + ((value && scale) ? 1 : 0);
+}
+
+// The bit loop lives in RAM. A flash stall stretches one pulse, and the panel
+// reads that as a green bit on the first or last pixel.
+void clockMatrixFrame(const uint8_t* data, int nbytes, uint32_t pinMask,
+                      uint32_t t0h, uint32_t t1h, uint32_t t0l, uint32_t t1l,
+                      uint32_t latchCycles);
+
+inline dedic_gpio_bundle_handle_t matrixBundle = nullptr;
+inline uint32_t matrixPinMask = 0;
+
+inline void ensureMatrixOutput() {
+    if (matrixBundle) return;
+    int pin = LED_PIN;
+    dedic_gpio_bundle_config_t cfg = {};
+    cfg.gpio_array = &pin;
+    cfg.array_size = 1;
+    cfg.flags.out_en = 1;
+    if (dedic_gpio_new_bundle(&cfg, &matrixBundle) == ESP_OK) {
+        dedic_gpio_get_out_mask(matrixBundle, &matrixPinMask);
+    }
+}
+
+inline void showMatrix() {
+    cpu_ll_enable_cycle_count();
+    ensureMatrixOutput();
+    if (matrixPinMask == 0) return;
+
+    uint8_t frame[LED_COUNT * 3];
+    uint8_t scale = FastLED.getBrightness();
+    bool dark = true;
+    for (int i = 0; i < LED_COUNT; i++) {
+        uint8_t g = matrixScale(leds[i].g, scale);
+        uint8_t r = matrixScale(leds[i].r, scale);
+        uint8_t b = matrixScale(leds[i].b, scale);
+        frame[i * 3]     = g;
+        frame[i * 3 + 1] = r;
+        frame[i * 3 + 2] = b;
+        if (g | r | b) dark = false;
+    }
+
+    const uint32_t hz = ESP.getCpuFreqMHz() * 1000000UL;
+    auto ticks = [hz](uint32_t ns) -> uint32_t {
+        return (uint32_t)((uint64_t)hz * ns / 1000000000UL);
+    };
+    // Low times are a little short on purpose. The loop between bits adds the rest.
+    const uint32_t t0h = ticks(400);
+    const uint32_t t1h = ticks(800);
+    const uint32_t t0l = ticks(700);
+    const uint32_t t1l = ticks(350);
+    const uint32_t latch = ticks(80000);
+
+    noInterrupts();
+    clockMatrixFrame(frame, LED_COUNT * 3, matrixPinMask, t0h, t1h, t0l, t1l, latch);
+    interrupts();
+    if (dark) matrixBlankPending = false;
+}
+
 // ===== ALERT ANIMATION STATE =====
 inline bool          isFlashing        = false;
 inline unsigned long alertStartMs      = 0;
-inline uint16_t      currentDuration   = 3000;
+inline unsigned long showEndedMs       = 0;
+inline uint32_t      currentDuration   = 3000;
 inline uint8_t       currentPattern    = PATTERN_BREATHE;
 inline uint8_t       currentBrightness = 80;
 inline float         currentSpeed      = 1.0f;
@@ -100,12 +176,12 @@ inline int dedupHead = 0;
 inline bool isDuplicateAlert(uint16_t netId, uint8_t leaderId, uint32_t seqId) {
     unsigned long now = millis();
     for (int i = 0; i < DEDUP_CACHE_SIZE; i++) {
-        if (dedupCache[i].networkId == netId &&
+        if (dedupCache[i].timestampMs != 0 &&
+            dedupCache[i].networkId == netId &&
             dedupCache[i].leaderId == leaderId &&
-            dedupCache[i].seqId == seqId) {
-            if (now - dedupCache[i].timestampMs < 15000) {
-                return true;
-            }
+            dedupCache[i].seqId == seqId &&
+            (now - dedupCache[i].timestampMs) < 15000) {
+            return true;
         }
     }
     return false;
