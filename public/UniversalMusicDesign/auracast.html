@@ -255,7 +255,7 @@
   </p>
 
   <div class="callout">
-    <strong>Key Project Takeaway:</strong> By sourcing pocket-sized Auracast receiver dongles on AliExpress for approximately $10 each, UMD can achieve synchronized, ultra-low-latency stereo broadcast to all 60 vests simultaneously, slashing fleet upgrade costs by over 80 percent and eliminating static radio interference completely.
+    <strong>Key Project Takeaway:</strong> By securing pocket-sized Auracast receiver units on AliExpress for approximately $10 each, UMD can achieve synchronized, ultra-low-latency stereo broadcast to all 60 vests simultaneously, eliminating analog radio static and replacing hard-to-source RF transmitters with a clean, modern solution.
   </div>
 
   <h2>2. Critical Limitations of Legacy Wireless Broadcast Systems</h2>
@@ -268,7 +268,7 @@
     <li><strong>Radio Static and Cross-Talk:</strong> In concert venues, academic halls, and urban studio environments, analog FM signals pick up severe radio frequency interference, wall reflection static, and electromagnetic hum from stage lights and synthesizers.</li>
     <li><strong>Mono-Only Limitation:</strong> Standard FM beltpack receivers provide only a single summed mono audio channel. This prevents deaf listeners from experiencing stereo panning, spatial room imaging, or directional separation across left and right chest actuators.</li>
     <li><strong>Cabling Bulk and Maintenance:</strong> Distributing audio to multiple FM transmitters required bulky 3.5mm splitter trees, delicate external antennas, and constant battery replacements.</li>
-    <li><strong>High Replacement Cost:</strong> Replacing lost or broken commercial RF transmitters costs several hundred dollars per unit.</li>
+    <li><strong>Difficult Sourcing and Maintenance:</strong> Replacement analog RF transmitters and beltpack receivers are difficult to source and maintain, making ongoing repairs and fleet expansion challenging.</li>
   </ul>
 
   <h3>B. Classic Bluetooth Audio (A2DP / SBC / AAC)</h3>
@@ -317,10 +317,10 @@
         <td><span class="tag-pro">Crystal-clear digital LC3, zero hiss</span></td>
       </tr>
       <tr>
-        <td><strong>Receiver Hardware Cost</strong></td>
-        <td>$120 to $350 per receiver</td>
-        <td>$30 to $80 per receiver</td>
-        <td><span class="tag-pro">~$10 per receiver (AliExpress sourced)</span></td>
+        <td><strong>Hardware Sourcing &amp; Availability</strong></td>
+        <td>Difficult to source, custom RF hardware</td>
+        <td>Common consumer standard (1-to-1)</td>
+        <td><span class="tag-pro">Accessible ~$10 AliExpress units</span></td>
       </tr>
     </tbody>
   </table>
@@ -340,7 +340,7 @@
 
   <h2>4. Low-Cost Hardware Sourcing and Bench Testing Results</h2>
   <p>
-    While high-end professional broadcast systems often cost thousands of dollars, Dillon identified and sourced compact, battery-powered Auracast receiver dongles directly on AliExpress for approximately $10 per unit.
+    Dillon identified, secured, and bench-tested compact, battery-powered Auracast receiver units sourced directly on AliExpress for approximately $10 each.
   </p>
 
   <div class="diagram-box">
@@ -362,21 +362,21 @@
   <ul>
     <li><strong>Sub-Bass Frequency Response:</strong> Bench tests verified that the ~$10 receivers cleanly reproduce sub-bass frequencies from 10 Hz to 250 Hz without low-end roll-off or digital high-pass filter cuts. This is critical for tactile transducers, which operate primarily in the 20 Hz to 120 Hz band.</li>
     <li><strong>Clean Transducer Drive:</strong> When connected directly to the Woojer 3.5mm auxiliary input, the receiver's line-out signal provides ample gain (+0 dB) without clipping, distortion, or background hiss.</li>
-    <li><strong>Battery Life:</strong> The self-contained lithium-ion battery in each dongle delivers over 6 hours of continuous continuous listening, exceeding the duration of any standard rehearsal or community workshop.</li>
+    <li><strong>Battery Life:</strong> The self-contained lithium-ion battery in each dongle delivers over 6 hours of continuous listening, exceeding the duration of any standard rehearsal or community workshop.</li>
     <li><strong>Interference Immunity:</strong> Testing within an active studio environment confirmed zero dropout or RF crosstalk, even when passing through studio walls and proximity to high-power Wi-Fi routers.</li>
   </ul>
 
-  <h2>5. Next-Generation Custom Silicon (ESP32-S3 / ESP32-C6)</h2>
+  <h2>5. Next-Generation Custom Silicon (ESP32-S31)</h2>
   <p>
-    In addition to testing off-the-shelf receivers, Dillon coordinated with an engineering colleague visiting hardware markets in Shenzhen, China, to obtain bleeding-edge ESP32-S3 and ESP32-C6 microcontroller development boards supporting the Bluetooth LE Audio specification.
+    In addition to testing off-the-shelf receivers, Dillon coordinated with an engineering colleague visiting hardware markets in Shenzhen, China, to obtain cutting-edge ESP32-S31 microcontroller units supporting the Bluetooth LE Audio Auracast broadcast specification.
   </p>
   <p>
-    This research establishes an open hardware pathway for UMD to build dedicated, customized transmitters. By streaming digital audio directly over USB from a digital audio workstation (DAW) into an ESP32-S3, UMD can broadcast multi-channel tactile mixes without needing intermediate digital-to-analog converters.
+    This research establishes an open hardware pathway for UMD to build dedicated, customized transmitters. By streaming digital audio directly over USB from a digital audio workstation (DAW) into an ESP32-S31, UMD can broadcast multi-channel tactile mixes without needing intermediate digital-to-analog converters.
   </p>
 
   <h2>6. Conclusion and Rollout Plan for UMD</h2>
   <p>
-    The transition to Auracast solves one of Universal Music Design's most persistent logistical headaches. For an investment of roughly $600 in receivers (compared to $6,000 to $15,000 for commercial multi-user RF systems), UMD can outfit its entire 60-vest fleet with static-free, low-latency, stereo tactile audio.
+    The transition to Auracast solves one of Universal Music Design's most persistent logistical hurdles. By pairing affordable ~$10 receiver units with future custom ESP32-S31 hardware, UMD can outfit its entire 60-vest fleet with static-free, low-latency, stereo tactile audio.
   </p>
   <p>
     This innovation will be rolled out across upcoming deaf jazz rehearsals, public school workshops, and live community performances, ensuring that every participant experiences the full physical power of music with perfect timing and clarity.

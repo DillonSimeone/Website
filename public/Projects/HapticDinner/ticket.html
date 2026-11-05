@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tickets &amp; Seat Reservations — Haptic Dinner Series</title>
+  <meta name="description" content="Hold your seat for Haptic Dinner Series on Dec 12 at CymaSpace. Ticket tiers: $45 Dinner, $35 Vest Rental, $80 Combined Experience. Purchase at the CymaSpace kiosk.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="site-nav" aria-label="Main Navigation">
+    <div class="site-nav-inner">
+      <a href="index.html" class="brand-wrap">
+        <span class="brand-badge"><span class="pulse-dot"></span> DEC 12 • CYMASPACE</span>
+        <span class="brand-title">Haptic Dinner Series</span>
+      </a>
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">Event Overview</a></li>
+        <li class="nav-item"><a href="ticket.html" class="active nav-btn-highlight">Tickets &amp; RSVP</a></li>
+        <li class="nav-item"><a href="flyer.html">Printable Flyer</a></li>
+        <li class="nav-item"><a href="setUp.html">Staff Guide</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <main class="page-container">
+
+    <div class="section-header">
+      <span class="section-tag">Dec 12, 2026 • 5:00 PM – 7:00 PM</span>
+      <h1 class="section-title">Ticketing &amp; Seat Reservations</h1>
+      <p class="section-subtitle">
+        Due to tactile equipment calibration and intimate dining seating, capacity is strictly limited to <strong>20 total attendees</strong>.
+      </p>
+      <div style="margin-top: 1rem;">
+        <span class="seat-counter-pill">
+          <span class="pulse-dot"></span>
+          <span class="dynamic-seat-count">Checking live capacity...</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Kiosk Notice Box -->
+    <div class="kiosk-callout">
+      <div class="kiosk-icon" style="font-size: 2rem; font-weight: 800; color: var(--amber-glow);">POS</div>
+      <div class="kiosk-text">
+        <h3>How Ticketing Works: CymaSpace Cafe Kiosk + Advance Seat Hold</h3>
+        <p>
+          CymaSpace processes ticket payments on-site at the cafe register kiosk. Because this event only seats 15–20 guests, <strong>please submit an advance reservation below</strong> to hold your seat. You will receive an immediate reservation code to present at the CymaSpace counter upon arrival.
+        </p>
+      </div>
+    </div>
+
+    <!-- Tiers Breakdown -->
+    <div class="pricing-grid">
+      <!-- Tier 1 -->
+      <div class="price-card">
+        <h3 class="card-title">Dinner Admission</h3>
+        <p class="card-subtitle">Culinary &amp; Music Showcase</p>
+        <div class="price-amount">$45<span>.00</span></div>
+        <ul class="price-features">
+          <li>Full multi-course dinner prepared by Chef Dre Grey</li>
+          <li>Access to live stage performance by DJwish (Nate Hergert)</li>
+          <li>Real-time sound-reactive lighting telemetry</li>
+          <li>Hands-on access to Haptic Petting Zoo prototypes</li>
+          <li>ASL interpretation and live captions</li>
+        </ul>
+      </div>
+
+      <!-- Tier 2 -->
+      <div class="price-card">
+        <h3 class="card-title">Haptic Vest Rental</h3>
+        <p class="card-subtitle">Sensory Torso Add-On</p>
+        <div class="price-amount">$35<span>.00</span></div>
+        <ul class="price-features">
+          <li>Dedicated individual RF-linked wearable tactile vest</li>
+          <li>Torso sub-bass and frequency resonance translation</li>
+          <li>Personalized fitting &amp; intensity adjustment by crew</li>
+          <li>Worn throughout the entire 2-hour event</li>
+        </ul>
+      </div>
+
+      <!-- Tier 3 (Featured) -->
+      <div class="price-card featured">
+        <span class="ribbon">Complete Experience</span>
+        <h3 class="card-title">Combined Experience</h3>
+        <p class="card-subtitle">Dinner + Wearable Vest</p>
+        <div class="price-amount" style="color:var(--amber-glow);">$80<span>.00</span></div>
+        <ul class="price-features">
+          <li><strong>Complete multi-course dinner admission ($45)</strong></li>
+          <li><strong>Individual wearable haptic vest rental ($35)</strong></li>
+          <li>Priority seating with prime sightlines to stage and visuals</li>
+          <li>Hands-on Haptic Petting Zoo tactile critter exploration</li>
+          <li>Full tactile immersion for the entire evening</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Interactive RSVP / Seat Hold Form -->
+    <section class="form-box">
+      <div class="section-header" style="margin-bottom: 2rem;">
+        <span class="section-tag">Advance Reservation</span>
+        <h2 class="section-title" style="font-size: 1.8rem;">Hold Your Seat in Advance</h2>
+        <p class="section-subtitle">Lock in your spot before the 20 seats fill up.</p>
+      </div>
+
+      <form id="rsvp-seat-form">
+        <!-- Anti-Spam Honeypot (Invisible to humans, catches automated bots) -->
+        <input type="text" id="rsvp-hp-check" name="website_hp_check" style="display:none !important;" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+        <!-- Name & Email -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rsvp-name" class="form-label">Full Name *</label>
+            <input type="text" id="rsvp-name" class="form-input" placeholder="e.g. Alex Rivera" required>
+          </div>
+          <div class="form-group">
+            <label for="rsvp-email" class="form-label">Email Address *</label>
+            <input type="email" id="rsvp-email" class="form-input" placeholder="e.g. alex@example.com" required>
+          </div>
+        </div>
+
+        <!-- Seats & Tier -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rsvp-seats" class="form-label">Number of Seats (Max 4)</label>
+            <select id="rsvp-seats" class="form-select">
+              <option value="1" selected>1 Seat</option>
+              <option value="2">2 Seats</option>
+              <option value="3">3 Seats</option>
+              <option value="4">4 Seats</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="rsvp-dietary" class="form-label">Dietary Preferences</label>
+            <select id="rsvp-dietary" class="form-select">
+              <option value="Omnivore" selected>Omnivore (Standard Dinner)</option>
+              <option value="Vegan">Vegan (Plant-Based)</option>
+              <option value="Vegetarian">Vegetarian</option>
+              <option value="Gluten-Free">Gluten-Free</option>
+              <option value="Vegan &amp; Gluten-Free">Vegan &amp; Gluten-Free</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tier Selection Radio -->
+        <div class="form-group">
+          <label class="form-label">Select Intended Ticket Tier *</label>
+          <div class="form-checkbox-group">
+            <label class="checkbox-label">
+              <input type="radio" name="ticket_tier" value="Combined Experience ($80)" checked>
+              <span><strong>Combined Experience ($80)</strong> — Dinner + Wearable Haptic Vest (Recommended)</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="radio" name="ticket_tier" value="Dinner Admission Only ($45)">
+              <span><strong>Dinner Admission Only ($45)</strong> — Multi-course dinner and performance access</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="radio" name="ticket_tier" value="Vest Rental Only ($35)">
+              <span><strong>Vest Rental Only ($35)</strong> — Individual RF haptic vest integration</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Accessibility Needs -->
+        <div class="form-group">
+          <label class="form-label">Accessibility Accommodations</label>
+          <div class="form-checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="rsvp-asl" checked>
+              <span>I or members of my party use <strong>American Sign Language (ASL)</strong></span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="rsvp-wheelchair">
+              <span>I or members of my party require <strong>step-free / wheelchair seating</strong></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Allergies & Notes -->
+        <div class="form-group">
+          <label for="rsvp-notes" class="form-label">Allergies or Additional Notes (Optional)</label>
+          <p class="form-hint">Please let Chef Dre Grey know if you have severe nut, soy, or dairy allergies.</p>
+          <textarea id="rsvp-notes" class="form-textarea" rows="3" placeholder="Specify any allergies, questions, or seating requests..."></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <div style="text-align: center; margin-top: 2rem;">
+          <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.05rem; padding: 0.95rem;">
+            Submit Advance Seat Reservation ↗
+          </button>
+          <p style="font-size:0.8rem; color:var(--text-dim); margin-top:0.75rem;">
+            * You will receive a reservation code to present at the CymaSpace counter upon arrival.
+          </p>
+        </div>
+      </form>
+    </section>
+
+    <!-- Confirmation Modal (Hidden by Default) -->
+    <div id="rsvp-confirmation-modal" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(7,8,15,0.85); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:1.5rem;">
+      <div style="background:var(--bg-card); border:2px solid var(--cyan-glow); border-radius:var(--radius-lg); padding:2.5rem; max-width:560px; width:100%; box-shadow:0 24px 64px rgba(0,0,0,0.8); text-align:center;">
+        <div class="section-tag" style="color:#34d399; font-size: 0.85rem;">Seat Hold Confirmed</div>
+        <h2 style="font-size:1.85rem; margin-bottom:1rem; color:#fff;">You are on the Guest List</h2>
+        <p style="color:#cbd5e1; font-size:0.95rem; margin-bottom:1.5rem;">
+          Your seat has been reserved. Please save or note your confirmation code below:
+        </p>
+
+        <!-- Code Box -->
+        <div style="background:rgba(0,229,255,0.1); border:1px dashed var(--cyan-glow); padding:1rem; border-radius:var(--radius-md); margin-bottom:1.5rem;">
+          <div style="font-size:0.8rem; text-transform:uppercase; color:var(--cyan-glow); letter-spacing:0.1em; font-weight:700;">Confirmation Code</div>
+          <div id="conf-code-val" style="font-family:var(--font-mono); font-size:2.25rem; font-weight:900; color:#fff; letter-spacing:0.05em;">HD-0000</div>
+        </div>
+
+        <!-- Details List -->
+        <div style="text-align:left; background:var(--bg-surface); padding:1rem 1.25rem; border-radius:var(--radius-sm); margin-bottom:1.5rem; font-size:0.9rem; line-height:1.7;">
+          <div><strong>Name:</strong> <span id="conf-name-val"></span></div>
+          <div><strong>Tier:</strong> <span id="conf-tier-val"></span></div>
+          <div><strong>Party:</strong> <span id="conf-seats-val"></span></div>
+          <div><strong>Dietary:</strong> <span id="conf-dietary-val"></span></div>
+          <div style="margin-top:0.5rem; color:var(--amber-glow); font-size:0.85rem;">
+            <em>Payment will be completed at the CymaSpace cafe kiosk when you arrive on Saturday, Dec 12.</em>
+          </div>
+        </div>
+
+        <button onclick="closeConfirmationModal()" class="btn btn-primary" style="width:100%;">Close Window</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="index.html">Event Overview</a>
+        <a href="flyer.html">Printable Flyer</a>
+        <a href="setUp.html">Staff Guide</a>
+        <a href="../../Work/DJwish/">DJwish (Nate Hergert)</a>
+        <a href="../HapticPettingZoo/">Haptic Petting Zoo</a>
+        <a href="https://cymaspace.org" target="_blank" rel="noopener noreferrer">CymaSpace</a>
+      </div>
+      <p class="footer-copy">
+        Haptic Dinner Series &copy; 2026 CymaSpace &amp; Universal Music Design.
+      </p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

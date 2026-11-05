@@ -3,7 +3,7 @@
     "wifi_sentinel": true,
     "usb_tether": true,
     "energy_daemon": true,
-    "audio_haptics": true
+    "audio_haptics": false
   },
   "auto_restart_crashed": true
 }

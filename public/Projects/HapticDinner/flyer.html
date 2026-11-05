@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Printable Flyer &amp; Share Cards — Haptic Dinner Series</title>
+  <meta name="description" content="Printable 8.5x11 flyer and digital social share cards for the Haptic Dinner Series on Dec 12 at CymaSpace.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="site-nav" aria-label="Main Navigation">
+    <div class="site-nav-inner">
+      <a href="index.html" class="brand-wrap">
+        <span class="brand-badge"><span class="pulse-dot"></span> DEC 12 • CYMASPACE</span>
+        <span class="brand-title">Haptic Dinner Series</span>
+      </a>
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">Event Overview</a></li>
+        <li class="nav-item"><a href="ticket.html" class="nav-btn-highlight">Tickets &amp; RSVP</a></li>
+        <li class="nav-item"><a href="flyer.html" class="active">Printable Flyer</a></li>
+        <li class="nav-item"><a href="setUp.html">Staff Guide</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="page-container">
+
+    <!-- View & Print Controls -->
+    <div class="flyer-view-controls no-print">
+      <button id="btn-view-poster" class="btn btn-secondary active">8.5×11 Event Poster</button>
+      <button id="btn-view-sharecard" class="btn btn-ghost">9:16 Social Story Card</button>
+      <button onclick="window.print()" class="btn btn-primary">Print Flyer (Ink-Friendly)</button>
+    </div>
+
+    <!-- 1. STANDARD 8.5x11 EVENT POSTER -->
+    <article id="flyer-poster-sheet" class="flyer-sheet">
+      <header class="flyer-header">
+        <div class="flyer-badge">CYMASPACE &times; UNIVERSAL MUSIC DESIGN PRESENT</div>
+        <h1 class="flyer-headline">HAPTIC DINNER SERIES</h1>
+        <div class="flyer-subline">A Multisensory Music, Tactile Art &amp; Dining Experience</div>
+        <div style="margin-top: 0.6rem; font-weight: 800; color: var(--amber-glow); font-size: 1.05rem;">
+          SATURDAY, DECEMBER 12, 2026 • 5:00 PM – 7:00 PM
+        </div>
+        <div style="font-size: 0.9rem; color: #cbd5e1; margin-top: 0.15rem;">
+          CYMASPACE • WOODSTOCK, PORTLAND, OREGON
+        </div>
+      </header>
+
+      <!-- Event Highlights Grid -->
+      <div class="event-highlights-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: var(--radius-sm);">
+          <h3 style="color: var(--cyan-glow); font-size: 1rem; margin-bottom: 0.25rem;">Live Electronic Headliner</h3>
+          <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.45;">
+            <strong>DJwish (Nate Hergert)</strong> performs a live sub-bass electronic set with sound-reactive visual projection, translating music into chest-rumbling tactile vibration.
+          </p>
+        </div>
+
+        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: var(--radius-sm);">
+          <h3 style="color: var(--amber-glow); font-size: 1rem; margin-bottom: 0.25rem;">Curated Multi-Course Dinner</h3>
+          <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.45;">
+            Curated dishes prepared by <strong>Chef Dre Grey</strong> (Woodstock Cafe Manager &amp; CymaSpace Board Member), featuring vegan, vegetarian, and gluten-free accommodations.
+          </p>
+        </div>
+
+        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: var(--radius-sm);">
+          <h3 style="color: #34d399; font-size: 1rem; margin-bottom: 0.25rem;">Wearable Vibrotactile Vests</h3>
+          <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.45;">
+            Individual RF-linked haptic vests translating performance sub-bass directly into physical torso sensation for guests throughout the event.
+          </p>
+        </div>
+
+        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: var(--radius-sm);">
+          <h3 style="color: #f472b6; font-size: 1rem; margin-bottom: 0.25rem;">Haptic Petting Zoo Debut</h3>
+          <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.45;">
+            First public hands-on reveal of prototype tactile animal critter nodes from Dillon Simeone's OCF Creative Heights project.
+          </p>
+        </div>
+      </div>
+
+      <!-- Accessibility Callout Banner -->
+      <div class="accessibility-banner" style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); padding: 0.75rem 1rem; border-radius: var(--radius-sm); text-align: center; margin-bottom: 1.25rem;">
+        <span style="font-weight: 700; color: #34d399; font-size: 0.9rem;">
+          Universal Accessibility: Dedicated ASL Interpreters • Live Captions • Step-Free Seating
+        </span>
+      </div>
+
+      <!-- Ticketing Summary -->
+      <div class="ticketing-summary" style="text-align: center; margin-bottom: 1.25rem;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.1em; font-weight: 700;">
+          Capacity Strictly Capped at 15–20 Guests
+        </div>
+        <div class="ticket-prices" style="font-size: 1.1rem; font-weight: 800; color: #fff; margin-top: 0.25rem;">
+          Dinner Admission: $45 &bull; Haptic Vest Rental: $35 &bull; Combined Experience: $80
+        </div>
+        <p style="font-size: 0.8rem; color: var(--amber-glow); margin-top: 0.2rem;">
+          Purchase in-person at the CymaSpace Cafe Kiosk • Advance online seat hold strongly recommended.
+        </p>
+      </div>
+
+      <!-- Scannable QR Codes Section -->
+      <div class="flyer-qr-section">
+        <div class="flyer-qr-card">
+          <div class="qr-image-wrap">
+            <img src="assets/qr_tickets.svg" alt="QR Code to reserve seat online" width="100" height="100">
+          </div>
+          <div class="qr-caption">Hold Your Seat Online</div>
+          <div class="qr-subcaption">Scan to hold 1 of 20 seats</div>
+        </div>
+
+        <div class="flyer-qr-card">
+          <div class="qr-image-wrap">
+            <img src="assets/qr_djwish.svg" alt="QR Code to explore DJwish portfolio" width="100" height="100">
+          </div>
+          <div class="qr-caption">Explore DJwish (Nate Hergert)</div>
+          <div class="qr-subcaption">Scan for music and videos</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 2. DIGITAL SHARE CARD (9:16 Social Story Mode) -->
+    <div id="flyer-sharecard-wrap" class="share-card-container">
+      <article class="share-card">
+        <div>
+          <div style="font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; color: var(--amber-glow); text-transform: uppercase; margin-bottom: 0.5rem;">
+            CYMASPACE &bull; DEC 12, 2026
+          </div>
+          <h2 style="font-size: 1.85rem; font-weight: 900; line-height: 1.1; color: #fff; margin-bottom: 0.5rem;">
+            HAPTIC DINNER SERIES
+          </h2>
+          <div style="font-size: 0.9rem; color: var(--cyan-glow); font-weight: 700; margin-bottom: 1.25rem;">
+            A Multisensory Music &amp; Dining Experience
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 1.5rem;">
+            <div><strong>DJwish (Nate Hergert):</strong> Live sub-bass electronic set</div>
+            <div><strong>Chef Dre Grey:</strong> Curated multi-course dinner</div>
+            <div><strong>Wearable Haptic Vests:</strong> Feel the sound</div>
+            <div><strong>Haptic Petting Zoo:</strong> Tactile prototype reveal</div>
+            <div><strong>Universal Access:</strong> ASL interpreted &amp; live captioned</div>
+          </div>
+        </div>
+
+        <!-- QR Box on Share Card -->
+        <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; text-align: center;">
+          <div class="qr-image-wrap" style="margin-bottom: 0.4rem;">
+            <img src="assets/qr_tickets.svg" alt="QR Code to reserve seat" width="100" height="100">
+          </div>
+          <div style="font-size: 0.75rem; font-weight: 800; color: var(--cyan-glow);">SCAN TO HOLD 1 OF 20 SEATS</div>
+          <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.2rem;">Tickets: $45 Dinner • $35 Vest • $80 Combined</div>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem; font-size: 0.75rem; color: var(--text-dim);">
+          Woodstock Cafe &bull; 5:00 PM – 7:00 PM &bull; CymaSpace.org
+        </div>
+      </article>
+    </div>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer no-print">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="index.html">Event Overview</a>
+        <a href="ticket.html">Tickets &amp; RSVP</a>
+        <a href="setUp.html">Staff Guide</a>
+        <a href="../../Work/DJwish/">DJwish (Nate Hergert)</a>
+        <a href="../HapticPettingZoo/">Haptic Petting Zoo</a>
+      </div>
+      <p class="footer-copy">
+        Haptic Dinner Series &copy; 2026 CymaSpace &amp; Universal Music Design.
+      </p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
