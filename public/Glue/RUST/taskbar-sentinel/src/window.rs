@@ -1,6 +1,6 @@
 use crate::menu::{
     self, IDM_EXIT, IDM_RATE_12, IDM_RATE_16, IDM_RATE_20, IDM_RATE_28, IDM_RATE_36,
-    IDM_RATE_CUSTOM, IDM_STARTUP, IDM_TASKMGR,
+    IDM_RATE_CUSTOM, IDM_STARTUP, IDM_TASKMGR, IDM_TOGGLE_ECO,
 };
 use crate::telemetry::{TelemetryCollector, TelemetrySnapshot};
 use std::mem::zeroed;
@@ -17,15 +17,15 @@ use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows_sys::Win32::UI::Shell::ShellExecuteW;
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetMessageW,
-    GetSystemMetrics, KillTimer, LoadCursorW, PostQuitMessage, RegisterClassW, SetCursor, SetTimer, SetWindowPos,
-    ShowWindow, SystemParametersInfoW, HWND_TOPMOST, IDC_ARROW, IDC_HAND, MSG, SM_CYSCREEN, SPI_GETWORKAREA,
-    SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW, SW_SHOWNORMAL, WM_COMMAND,
-    WM_CONTEXTMENU, WM_DESTROY, WM_LBUTTONUP, WM_PAINT, WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SETCURSOR, WM_TIMER,
-    WNDCLASSW, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_POPUP,
+    GetSystemMetrics, KillTimer, LoadCursorW, PostQuitMessage, RegisterClassW, SetCursor, SetTimer,
+    SetWindowPos, ShowWindow, SystemParametersInfoW, HWND_TOPMOST, IDC_ARROW, IDC_HAND, MSG,
+    SM_CYSCREEN, SPI_GETWORKAREA, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW,
+    SW_SHOWNORMAL, WM_COMMAND, WM_CONTEXTMENU, WM_DESTROY, WM_LBUTTONUP, WM_PAINT, WM_RBUTTONDOWN,
+    WM_RBUTTONUP, WM_SETCURSOR, WM_TIMER, WNDCLASSW, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_POPUP,
 };
 
 const TIMER_ID: usize = 1;
-const WIDTH: i32 = 340;
+const WIDTH: i32 = 394;
 const HEIGHT: i32 = 40;
 
 struct AppState {
@@ -164,17 +164,29 @@ unsafe extern "system" fn wndproc(
             1
         }
         WM_LBUTTONUP => {
-            // Launch Task Manager
-            let taskmgr: Vec<u16> = "taskmgr.exe\0".encode_utf16().collect();
-            let open: Vec<u16> = "open\0".encode_utf16().collect();
-            ShellExecuteW(
-                hwnd,
-                open.as_ptr(),
-                taskmgr.as_ptr(),
-                std::ptr::null(),
-                std::ptr::null(),
-                SW_SHOWNORMAL,
-            );
+            let x = (lparam & 0xFFFF) as i16 as i32;
+            // The ECO toggle button is at x: 338..390
+            if x >= 338 && x <= 390 {
+                let new_eco = crate::eco::toggle_eco_mode();
+                if let Ok(mut lock) = APP_STATE.lock() {
+                    if let Some(state) = lock.as_mut() {
+                        state.snapshot.is_eco = new_eco;
+                    }
+                }
+                InvalidateRect(hwnd, std::ptr::null(), 0);
+            } else {
+                // Clicking anywhere else launches Task Manager
+                let taskmgr: Vec<u16> = "taskmgr.exe\0".encode_utf16().collect();
+                let open: Vec<u16> = "open\0".encode_utf16().collect();
+                ShellExecuteW(
+                    hwnd,
+                    open.as_ptr(),
+                    taskmgr.as_ptr(),
+                    std::ptr::null(),
+                    std::ptr::null(),
+                    SW_SHOWNORMAL,
+                );
+            }
             0
         }
         WM_RBUTTONDOWN => {
@@ -204,6 +216,15 @@ unsafe extern "system" fn wndproc(
                         std::ptr::null(),
                         SW_SHOWNORMAL,
                     );
+                }
+                IDM_TOGGLE_ECO => {
+                    let new_eco = crate::eco::toggle_eco_mode();
+                    if let Ok(mut lock) = APP_STATE.lock() {
+                        if let Some(state) = lock.as_mut() {
+                            state.snapshot.is_eco = new_eco;
+                        }
+                    }
+                    InvalidateRect(hwnd, std::ptr::null(), 0);
                 }
                 IDM_STARTUP => {
                     menu::toggle_startup();
@@ -285,8 +306,12 @@ unsafe fn render_window(_hwnd: HWND, hdc: HDC) {
                 ram_total_gb: 0.0,
                 disk_mb_s: 0.0,
                 wall_watts: 0.0,
+                compute_watts: 0.0,
                 gpu_watts: 0.0,
                 monthly_cost: 0.0,
+                is_laptop: false,
+                is_charging: false,
+                is_eco: false,
             })
     } else {
         TelemetrySnapshot {
@@ -296,8 +321,12 @@ unsafe fn render_window(_hwnd: HWND, hdc: HDC) {
             ram_total_gb: 0.0,
             disk_mb_s: 0.0,
             wall_watts: 0.0,
+            compute_watts: 0.0,
             gpu_watts: 0.0,
             monthly_cost: 0.0,
+            is_laptop: false,
+            is_charging: false,
+            is_eco: false,
         }
     };
 
@@ -320,7 +349,11 @@ unsafe fn render_window(_hwnd: HWND, hdc: HDC) {
         "CPU",
         &format!("{}%", snapshot.cpu_pct),
         snapshot.cpu_pct.min(100) as f32 / 100.0,
-        rgb(79, 195, 247), // Cyan
+        if snapshot.is_eco {
+            rgb(0, 230, 118) // Green accent in Eco
+        } else {
+            rgb(79, 195, 247) // Cyan in Normal
+        },
     );
 
     draw_vertical_divider(mem_dc, 71);
@@ -366,19 +399,32 @@ unsafe fn render_window(_hwnd: HWND, hdc: HDC) {
     draw_vertical_divider(mem_dc, 205);
 
     // Section 4: PWR (left: 207..271)
-    let pwr_str = format!("{:.0}W", snapshot.wall_watts);
-    // Fill scaled to 250W full scale
-    let pwr_fill = (snapshot.wall_watts / 250.0).clamp(0.0, 1.0);
+    let displayed_watts = if snapshot.is_laptop {
+        snapshot.compute_watts
+    } else {
+        snapshot.wall_watts
+    };
+    let pwr_str = format!("{:.0}W", displayed_watts);
+    let pwr_max = if snapshot.is_laptop { 50.0 } else { 250.0 };
+    let pwr_fill = (displayed_watts / pwr_max).clamp(0.0, 1.0);
     draw_metric_cell(
         mem_dc,
         207,
         64,
         lbl_font,
         val_font,
-        "PWR",
+        if snapshot.is_laptop && snapshot.is_charging {
+            "PWR⚡"
+        } else {
+            "PWR"
+        },
         &pwr_str,
         pwr_fill,
-        rgb(255, 145, 0), // Flame Orange
+        if snapshot.is_eco {
+            rgb(0, 230, 118) // Emerald Green in Eco
+        } else {
+            rgb(255, 145, 0) // Flame Orange
+        },
     );
 
     draw_vertical_divider(mem_dc, 272);
@@ -389,7 +435,6 @@ unsafe fn render_window(_hwnd: HWND, hdc: HDC) {
     } else {
         format!("${:.1}/m", snapshot.monthly_cost)
     };
-    // Fill scaled to $30/mo full scale
     let cost_fill = (snapshot.monthly_cost / 30.0).clamp(0.0, 1.0);
     draw_metric_cell(
         mem_dc,
@@ -402,6 +447,11 @@ unsafe fn render_window(_hwnd: HWND, hdc: HDC) {
         cost_fill,
         rgb(0, 230, 118), // Emerald Green
     );
+
+    draw_vertical_divider(mem_dc, 336);
+
+    // Section 6: ECO Toggle Button (left: 340..388)
+    draw_eco_button(mem_dc, 340, 48, lbl_font, val_font, snapshot.is_eco);
 
     DeleteObject(lbl_font as HGDIOBJ);
     DeleteObject(val_font as HGDIOBJ);
@@ -491,6 +541,86 @@ unsafe fn draw_metric_cell(
         FillRect(dc, &fill_rect, accent_brush);
         DeleteObject(accent_brush as HGDIOBJ);
     }
+}
+
+unsafe fn draw_eco_button(
+    dc: HDC,
+    x: i32,
+    w: i32,
+    lbl_font: HFONT,
+    val_font: HFONT,
+    is_eco: bool,
+) {
+    let btn_x = x;
+    let btn_y = 5;
+    let btn_w = w;
+    let btn_h = 30;
+
+    // Background & Border
+    let (bg_color, border_color, text_color, val_str) = if is_eco {
+        (
+            rgb(16, 44, 28),     // Emerald dark tint
+            rgb(0, 230, 118),    // Neon green border
+            rgb(0, 230, 118),    // Neon green text
+            "ECO",
+        )
+    } else {
+        (
+            rgb(32, 32, 38),     // Subtle slate
+            rgb(56, 56, 66),     // Zinc border
+            rgb(156, 156, 168),  // Cool muted text
+            "NORM",
+        )
+    };
+
+    let btn_brush = CreateSolidBrush(bg_color);
+    let btn_pen = CreatePen(PS_SOLID as i32, 1, border_color);
+    let old_brush = SelectObject(dc, btn_brush as HGDIOBJ);
+    let old_pen = SelectObject(dc, btn_pen as HGDIOBJ);
+
+    RoundRect(dc, btn_x, btn_y, btn_x + btn_w, btn_y + btn_h, 10, 10);
+
+    SelectObject(dc, old_brush);
+    SelectObject(dc, old_pen);
+    DeleteObject(btn_brush as HGDIOBJ);
+    DeleteObject(btn_pen as HGDIOBJ);
+
+    // Top Label "MODE"
+    let old_font = SelectObject(dc, lbl_font as HGDIOBJ);
+    SetTextColor(dc, rgb(130, 130, 140));
+    let mut lbl_rect = RECT {
+        left: btn_x,
+        top: btn_y + 2,
+        right: btn_x + btn_w,
+        bottom: btn_y + 13,
+    };
+    let lbl_u16: Vec<u16> = "MODE\0".encode_utf16().collect();
+    DrawTextW(
+        dc,
+        lbl_u16.as_ptr(),
+        (lbl_u16.len() - 1) as i32,
+        &mut lbl_rect,
+        DT_CENTER | DT_SINGLELINE | DT_VCENTER,
+    );
+
+    // Value "ECO" / "NORM"
+    SelectObject(dc, val_font as HGDIOBJ);
+    SetTextColor(dc, text_color);
+    let mut val_rect = RECT {
+        left: btn_x,
+        top: btn_y + 13,
+        right: btn_x + btn_w,
+        bottom: btn_y + 26,
+    };
+    let val_u16: Vec<u16> = format!("{}\0", val_str).encode_utf16().collect();
+    DrawTextW(
+        dc,
+        val_u16.as_ptr(),
+        (val_u16.len() - 1) as i32,
+        &mut val_rect,
+        DT_CENTER | DT_SINGLELINE | DT_VCENTER,
+    );
+    SelectObject(dc, old_font);
 }
 
 unsafe fn draw_vertical_divider(dc: HDC, x: i32) {

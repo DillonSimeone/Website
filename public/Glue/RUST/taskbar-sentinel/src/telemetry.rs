@@ -1,3 +1,4 @@
+use crate::eco;
 use crate::menu::get_kwh_rate;
 use crate::power::PowerSampler;
 use std::mem::zeroed;
@@ -18,8 +19,12 @@ pub struct TelemetrySnapshot {
     pub ram_total_gb: f32,
     pub disk_mb_s: f32,
     pub wall_watts: f32,
+    pub compute_watts: f32,
     pub gpu_watts: f32,
     pub monthly_cost: f32,
+    pub is_laptop: bool,
+    pub is_charging: bool,
+    pub is_eco: bool,
 }
 
 pub struct TelemetryCollector {
@@ -139,7 +144,9 @@ impl TelemetryCollector {
         }
 
         // --- Wattage & Cost Estimation ---
-        let (wall_watts, gpu_watts) = self.power_sampler.sample_total_wall_watts(cpu_pct);
+        let is_eco = eco::is_eco_active();
+        let (wall_watts, compute_watts, gpu_watts, is_laptop, is_charging) =
+            self.power_sampler.sample_power_telemetry(cpu_pct, is_eco);
         let kwh_rate = get_kwh_rate();
         // Monthly cost = (Watts / 1000 kW) * ($ / kWh) * 24h * 30 days
         let monthly_cost = (wall_watts / 1000.0) * kwh_rate * 24.0 * 30.0;
@@ -151,8 +158,12 @@ impl TelemetryCollector {
             ram_total_gb,
             disk_mb_s,
             wall_watts,
+            compute_watts,
             gpu_watts,
             monthly_cost,
+            is_laptop,
+            is_charging,
+            is_eco,
         }
     }
 }

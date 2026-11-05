@@ -18,6 +18,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
 pub const IDM_TASKMGR: usize = 101;
 pub const IDM_STARTUP: usize = 102;
 pub const IDM_EXIT: usize = 103;
+pub const IDM_TOGGLE_ECO: usize = 104;
 
 pub const IDM_RATE_12: usize = 201;
 pub const IDM_RATE_16: usize = 202;
@@ -299,6 +300,17 @@ pub fn show_context_menu(hwnd: HWND) {
 
         let taskmgr_txt: Vec<u16> = "Open Task Manager\t(Left-Click)\0".encode_utf16().collect();
         AppendMenuW(menu, MF_STRING, IDM_TASKMGR, taskmgr_txt.as_ptr());
+
+        let eco_active = crate::eco::is_eco_active();
+        let eco_flag = if eco_active { MF_CHECKED } else { MF_UNCHECKED };
+        let eco_txt: Vec<u16> = if eco_active {
+            "⚡ Ultra Eco Mode (ACTIVE - Max Battery)\0"
+        } else {
+            "⚡ Ultra Eco Mode (OFF - Full Clocks)\0"
+        }
+        .encode_utf16()
+        .collect();
+        AppendMenuW(menu, MF_STRING | eco_flag, IDM_TOGGLE_ECO, eco_txt.as_ptr());
 
         AppendMenuW(menu, MF_SEPARATOR, 0, std::ptr::null());
 
