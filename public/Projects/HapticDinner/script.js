@@ -1,7 +1,7 @@
 /**
- * Haptic Dinner Series — Client Scripts
+ * Haptic Dinner Series: Client Scripts
  * Handles: Live Capacity Reading via Webhook, Secure Form Submission with Anti-Spam,
- * Mobile Staff Checklists, and Flyer View Toggles.
+ * and Flyer View Toggles.
  */
 
 // Deployed Google Apps Script Web App URL (handles both read & write securely)
@@ -11,7 +11,6 @@ const TOTAL_CAPACITY = 20;
 document.addEventListener('DOMContentLoaded', () => {
   initSeatCounter();
   initRsvpForm();
-  initStaffChecklist();
   initFlyerViews();
   initLiveRunOfShowHighlight();
 });
@@ -209,95 +208,7 @@ window.closeConfirmationModal = function() {
 };
 
 /* --------------------------------------------------------------------------
-   3. Staff Cheat Sheet Checklist (setUp.html)
-   -------------------------------------------------------------------------- */
-function initStaffChecklist() {
-  const taskCheckboxes = document.querySelectorAll('.task-item input[type="checkbox"]');
-  if (!taskCheckboxes.length) return;
-
-  let savedTasks = {};
-  try {
-    savedTasks = JSON.parse(localStorage.getItem('haptic_dinner_staff_tasks')) || {};
-  } catch (e) {
-    savedTasks = {};
-  }
-
-  taskCheckboxes.forEach((cb, idx) => {
-    const taskId = cb.id || `task_${idx}`;
-    if (savedTasks[taskId]) {
-      cb.checked = true;
-      cb.closest('.task-item')?.classList.add('checked');
-    }
-
-    cb.addEventListener('change', () => {
-      savedTasks[taskId] = cb.checked;
-      if (cb.checked) {
-        cb.closest('.task-item')?.classList.add('checked');
-      } else {
-        cb.closest('.task-item')?.classList.remove('checked');
-      }
-      try {
-        localStorage.setItem('haptic_dinner_staff_tasks', JSON.stringify(savedTasks));
-      } catch (e) {}
-      updateStaffProgress();
-    });
-  });
-
-  updateStaffProgress();
-
-  // Accordion toggle
-  const accordions = document.querySelectorAll('.accordion-toggle');
-  accordions.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const parent = btn.closest('.accordion-card');
-      parent.classList.toggle('open');
-    });
-  });
-
-  // Filter Buttons
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      filterBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const role = btn.dataset.role;
-      const cards = document.querySelectorAll('.accordion-card');
-
-      cards.forEach(card => {
-        if (role === 'all' || card.dataset.role === role) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    });
-  });
-}
-
-function updateStaffProgress() {
-  const total = document.querySelectorAll('.task-item input[type="checkbox"]').length;
-  const checked = document.querySelectorAll('.task-item input[type="checkbox"]:checked').length;
-  const progressText = document.getElementById('staff-progress-val');
-  if (progressText && total > 0) {
-    const pct = Math.round((checked / total) * 100);
-    progressText.textContent = `${checked} / ${total} tasks ready (${pct}%)`;
-  }
-}
-
-window.resetStaffChecklist = function() {
-  if (confirm('Reset all checked tasks back to uncompleted?')) {
-    localStorage.removeItem('haptic_dinner_staff_tasks');
-    document.querySelectorAll('.task-item input[type="checkbox"]').forEach(cb => {
-      cb.checked = false;
-      cb.closest('.task-item')?.classList.remove('checked');
-    });
-    updateStaffProgress();
-  }
-};
-
-/* --------------------------------------------------------------------------
-   4. Live Run of Show Active Phase Tracker
+   3. Live Run of Show Active Phase Tracker
    -------------------------------------------------------------------------- */
 function initLiveRunOfShowHighlight() {
   const rows = document.querySelectorAll('.timeline-row');

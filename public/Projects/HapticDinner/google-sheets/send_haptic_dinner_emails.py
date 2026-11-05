@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Haptic Dinner Series — Confirmation Email Dispatcher
+Haptic Dinner Series: Confirmation Email Dispatcher
 Reads the Google Sheet (hapticDinnerCymaSpaceDec12), finds reservations marked 'Pending',
 and sends an official CymaSpace confirmation email with their reservation code and details.
 
@@ -81,8 +81,8 @@ Please show this email or present your confirmation code ({code}) at check-in.
 FEATURING:
 • Live sub-bass electronic set by DJwish (Nate Hergert)
 • Sound-reactive visual environment & audio-haptic vest integration
-• Curated multi-course dinner by Chef Dre Grey
-• First public hands-on reveal of The Haptic Petting Zoo prototype animal critter nodes!
+• Curated multi-course dinner by Chef Andre Grey
+• First public hands-on preview of The Haptic Petting Zoo prototype hardware
 
 If you need to make changes or have questions, simply reply to this email.
 
@@ -126,7 +126,7 @@ https://cymaspace.org
       <ul style="font-size: 13px; padding-left: 20px; margin: 0 0 20px; color: #334155;">
         <li><strong>5:00 PM:</strong> Doors open, vest fitting &amp; sensory calibration</li>
         <li><strong>5:15 PM:</strong> Live sub-bass electronic performance by DJwish (Nate Hergert) &amp; reactive visuals</li>
-        <li><strong>6:00 PM:</strong> Multi-course dinner by Chef Dre Grey &amp; Haptic Petting Zoo hands-on social hour</li>
+        <li><strong>6:00 PM:</strong> Multi-course dinner by Chef Andre Grey &amp; Haptic Petting Zoo hands-on social hour</li>
         <li><strong>7:00 PM:</strong> Event concludes</li>
       </ul>
 

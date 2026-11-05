@@ -17749,3 +17749,11 @@ OSError: [Errno 22] Invalid argument: 'F:\\Github\\Website\\public\\Glue\\Daemon
 2026-11-05 10:16:29,855 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
 2026-11-05 10:16:31,845 [INFO] token_tracker: Saved 49306 entries to F:\Github\Website\public\Glue\Daemons\TokenTracker\cache.json
 2026-11-05 10:16:31,858 [INFO] token_tracker: Scan complete: 49306 entries in 2.1s
+2026-11-05 11:16:31,945 [INFO] token_tracker: Auto-refreshing data...
+2026-11-05 11:16:31,947 [INFO] token_tracker: Scanning all data sources...
+2026-11-05 11:16:31,987 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity\conversations (account: antigravity@1793905779)
+2026-11-05 11:16:31,993 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-backup\conversations (account: antigravity-backup@1779158214)
+2026-11-05 11:16:32,027 [INFO] data_sources: Discovered AntiGravity source: C:\Users\DoctorNightmares\.gemini\antigravity-ide\conversations (account: antigravity-ide@1793144228)
+2026-11-05 11:16:32,045 [INFO] data_sources: Discovered Cursor global source: C:\Users\DoctorNightmares\AppData\Roaming\Cursor\User\globalStorage\state.vscdb (account: dillon.simeone@pcc.edu)
+2026-11-05 11:16:33,919 [INFO] token_tracker: Saved 49493 entries to F:\Github\Website\public\Glue\Daemons\TokenTracker\cache.json
+2026-11-05 11:16:33,933 [INFO] token_tracker: Scan complete: 49493 entries in 2.0s
