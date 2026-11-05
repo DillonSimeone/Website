@@ -1,8 +1,8 @@
 {
   "toggles": {
-    "wifi_sentinel": true,
-    "usb_tether": true,
-    "energy_daemon": true,
+    "wifi_sentinel": false,
+    "usb_tether": false,
+    "energy_daemon": false,
     "audio_haptics": true
   },
   "auto_restart_crashed": true

@@ -4,7 +4,9 @@ mod adb;
 mod config;
 pub mod haptics_cfg;
 mod hud;
+pub mod presets_window;
 mod supervisor;
+pub mod test_mode_window;
 mod tray;
 pub mod tuning_window;
 
@@ -282,6 +284,7 @@ unsafe extern "system" fn tray_wndproc(
                             toggle_startup();
                         }
                         IDM_EXIT => {
+                            crate::test_mode_window::close_test_window();
                             crate::tuning_window::close_tuning_window();
                             if let Some(tray) = state.tray.as_mut() {
                                 tray.remove();
@@ -296,6 +299,7 @@ unsafe extern "system" fn tray_wndproc(
             0
         }
         WM_DESTROY => {
+            crate::test_mode_window::close_test_window();
             crate::tuning_window::close_tuning_window();
             PostQuitMessage(0);
             0

@@ -302,8 +302,9 @@ function parsePlatformioIni(iniContent, projectDir) {
 
     const flags = extractActiveFlags(resolveFlags(name));
     const labels = flags.map(f => FLAG_LABELS[f]).filter(Boolean);
+    const hasHaxelFlags = flags.some(f => f.startsWith('HAXEL_'));
     const hasWifi = flags.includes('HAXEL_WIFI') || flags.includes('HAXEL_FEATURE_MESH_MASTER');
-    const needsUploadFs = hasFs && hasWifi;
+    const needsUploadFs = hasHaxelFlags ? (hasFs && hasWifi) : hasFs;
     const envLibs = [...new Set(resolveLibDeps(name).filter(l => l && !l.includes('${')))];
     allLibs.push(...envLibs);
 

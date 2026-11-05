@@ -4,6 +4,7 @@ use std::net::UdpSocket;
 #[derive(Serialize, Clone, Debug)]
 pub struct TelemetryPacket {
     pub energy: f32,
+    pub audio_pct: u32,
     pub sub: f32,
     pub punch: f32,
     pub snap: f32,
@@ -12,6 +13,8 @@ pub struct TelemetryPacket {
     pub hit: bool,
     pub peak: u32,
     pub enabled: bool,
+    pub mic_mode: bool,
+    pub source: String,
 }
 
 pub struct TelemetryBroadcaster {
