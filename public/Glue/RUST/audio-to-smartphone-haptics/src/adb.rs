@@ -44,71 +44,40 @@ pub fn find_adb_path() -> PathBuf {
     PathBuf::from("adb.exe")
 }
 
-pub struct HapticEnvelope {
-    pub cmd: String,
-    pub duration_ms: u32,
-    pub peak_amp: u32,
+/// Pre-Haxel Default ("Audio Volume to PWM"): Continuous state-tracked hold (`1500ms` window refreshed smoothly)
+/// so the motor stays continuously ON while audio is present and updates amplitude in real time.
+pub fn build_continuous_hold_cmd(amp: u32) -> String {
+    let clamped = amp.clamp(1, 255);
+    format!(
+        "cmd vibrator_manager synced -f -B oneshot -a 1500 {}\n",
+        clamped
+    )
 }
 
-pub fn build_envelope(
-    v: f32,
-    is_snap: bool,
-    is_deep_sub: bool,
-    punch_dur: i32,
-    base_amp: i32,
-) -> HapticEnvelope {
-    if is_snap && v < 0.45 {
-        let prim_scale = (0.40 + v * 0.60).clamp(0.1, 1.0);
-        let prim_scale_str = format!("{:.2}", prim_scale);
-        let (prim_id, dur) = if v < 0.22 { (7, 26) } else { (1, 45) };
-        let peak_amp = (prim_scale * 255.0) as u32;
-        return HapticEnvelope {
-            cmd: format!("cmd vibrator_manager synced -f -B primitives {} {}\n", prim_id, prim_scale_str),
-            duration_ms: dur,
-            peak_amp,
-        };
-    }
+/// Haxel-style crisp micro-pulse (`navigator.vibrate(pulse_ms)` with 1..255 hardware amplitude scaling).
+/// Leaves a 12-18ms mechanical braking gap before the next pulse so the 155 Hz LRA never blurs into brown noise.
+pub fn build_haxel_pulse_cmd(amp: u32, pulse_ms: u32) -> String {
+    let clamped = amp.clamp(1, 255);
+    let dur = pulse_ms.clamp(18, 120);
+    format!(
+        "cmd vibrator_manager synced -f -B oneshot -a {} {}\n",
+        dur, clamped
+    )
+}
 
-    let v_eff = v.powf(0.85).clamp(0.05, 1.0);
-    let peak_amp = ((base_amp as f32 + (255.0 - base_amp as f32) * v_eff).clamp(base_amp as f32, 255.0)) as u32;
+/// Fires a closed-loop Android hardware primitive (`1`=CLICK, `2`=THUD, `3`=SPIN, `4`=QUICK_RISE,
+/// `6`=QUICK_FALL, `7`=TICK, `8`=LOW_TICK) with `0.10..1.00` scale.
+pub fn build_primitive_cmd(prim_id: u32, scale: f32) -> String {
+    let s = scale.clamp(0.12, 1.0);
+    format!(
+        "cmd vibrator_manager synced -f -B primitives -s {:.2} {}\n",
+        s, prim_id
+    )
+}
 
-    if peak_amp < 110 {
-        let hold_ms = 40.max((punch_dur as f32 * 0.55) as u32);
-        let a1 = 25.max((peak_amp as f32 * 0.55) as u32);
-        let a2 = peak_amp;
-        let a3 = 15.max((peak_amp as f32 * 0.35) as u32);
-        let dur = 8 + hold_ms + 18 + 8;
-        HapticEnvelope {
-            cmd: format!("cmd vibrator_manager synced -f -B waveform -a -c 8 {} {} {} 18 {} 8 0\n", a1, hold_ms, a2, a3),
-            duration_ms: dur,
-            peak_amp,
-        }
-    } else if peak_amp < 190 {
-        let hold_ms = 60.max(punch_dur as u32);
-        let a1 = 40.max((peak_amp as f32 * 0.55) as u32);
-        let a2 = peak_amp;
-        let a3 = 25.max((peak_amp as f32 * 0.42) as u32);
-        let a4 = 12.max((peak_amp as f32 * 0.22) as u32);
-        let dur = 10 + hold_ms + 24 + 14 + 8;
-        HapticEnvelope {
-            cmd: format!("cmd vibrator_manager synced -f -B waveform -a -c 10 {} {} {} 24 {} 14 {} 8 0\n", a1, hold_ms, a2, a3, a4),
-            duration_ms: dur,
-            peak_amp,
-        }
-    } else {
-        let mult = if is_deep_sub { 1.25 } else { 1.05 };
-        let hold_ms = 80.max((punch_dur as f32 * mult) as u32);
-        let a1 = (peak_amp as f32 * 0.60) as u32;
-        let a2 = peak_amp;
-        let a3 = (peak_amp as f32 * 0.50) as u32;
-        let a4 = (peak_amp as f32 * 0.28) as u32;
-        let dur = 12 + hold_ms + 28 + 18 + 8;
-        HapticEnvelope {
-            cmd: format!("cmd vibrator_manager synced -f -B waveform -a -c 12 {} {} {} 28 {} 18 {} 8 0\n", a1, hold_ms, a2, a3, a4),
-            duration_ms: dur,
-            peak_amp,
-        }
-    }
+/// Immediately stops the smartphone vibration motor (`navigator.vibrate(0)`).
+pub fn build_cancel_cmd() -> String {
+    "cmd vibrator_manager cancel\n".to_string()
 }
 
 pub struct PersistentAdbPipeline {

@@ -9,7 +9,7 @@ The high-performance, native Windows rewrite of the Glue daemon and telemetry su
 | Utility | Binary Path | RAM Footprint | Replaces | Key Role |
 | :--- | :--- | :--- | :--- | :--- |
 | **`daemon-command-center`** | `daemon-command-center\daemon-command-center.exe` | **~1.4 MB** | `command_center.py` (~40 MB) | System tray supervisor, dynamic badge, watchdog, and HUD. |
-| **`taskbar-sentinel`** | `taskbar-sentinel\taskbar-sentinel.exe` | **~25 MB** | MSN Weather WebView2 (~200 MB) | Live taskbar telemetry (CPU, RAM, DSK, Watts, $/mo rate). |
+| **`taskbar-sentinel`** | `taskbar-sentinel\taskbar-sentinel.exe` | **~25 MB** | MSN Weather WebView2 (~200 MB) | Live taskbar telemetry (CPU, RAM, DSK, Watts, $/mo rate) with laptop battery-aware power modeling and 1-click Ultra Eco Mode toggle. |
 | **`audio-to-smartphone-haptics`** | `audio-to-smartphone-haptics\audio-to-smartphone-haptics.exe` | **~11 MB** | `audio_haptics_daemon.py` (~102 MB) | Direct WASAPI loopback audio DSP, multi-band IIR filters & smartphone haptics. |
 | **`wifi-sentinel`** | `wifi-sentinel\wifi-sentinel.exe` | **~1.0 MB** | `Watch-PhoneWifi5G.ps1` (~65 MB) | Background 5 GHz lock & 2.4 GHz drift auto-nudge via ADB. |
 | **`usb-tether`** | `usb-tether\usb-tether.exe` | **~0.9 MB** | `auto_tether.py` (~14 MB) | Hardware USB detection, NCM/RNDIS auto-tethering & watchdog. |
@@ -34,8 +34,9 @@ The entire `RUST` directory is portable. You can copy this folder to any other c
 ## Interacting with the Ecosystem
 
 * **Taskbar Sentinel (Bottom-left of Taskbar)**:
-  * **Left-Click**: Instantly opens Windows Task Manager (`taskmgr.exe`).
-  * **Right-Click**: Opens custom native context menu to adjust electricity cost rates (`$/kWh`), toggle startup, or exit.
+  * **Left-Click (Metrics)**: Instantly opens Windows Task Manager (	askmgr.exe).
+  * **Left-Click (MODE Button)**: 1-click toggle between NORM (Full Clocks & Turbo Boost) and ECO (CPU capped to 65% max frequency, low-power C-states, minimal wattage).
+  * **Right-Click**: Opens custom native context menu to toggle Ultra Eco Mode, adjust electricity cost rates ($/kWh), toggle startup, or exit.
 * **Glue Command Center (System Tray)**:
   * **Tray Badge**:
     * 🟢 **Neon Green**: Phone connected, 5 GHz Wi-Fi locked, USB tether active.

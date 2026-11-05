@@ -99,6 +99,7 @@ pub fn toggle_hud(hwnd: HWND) {
     unsafe {
         if IsWindowVisible(hwnd) != 0 {
             ShowWindow(hwnd, SW_HIDE);
+            crate::test_mode_window::close_test_window();
             crate::tuning_window::close_tuning_window();
         } else {
             // Position near current work area bottom-right
@@ -154,11 +155,12 @@ unsafe extern "system" fn hud_wndproc(
             1
         }
         WM_KILLFOCUS => {
-            // If focus moved to our child/drawer window (tuning window), do NOT hide!
+            // If focus moved to our child/drawer windows (tuning, test mode, or presets), do NOT hide!
             let focus_hwnd = wparam as HWND;
-            let tuning_hwnd = crate::tuning_window::get_tuning_hwnd();
-            if focus_hwnd != tuning_hwnd {
+            if !crate::tuning_window::is_glue_popup_hwnd(focus_hwnd) {
                 ShowWindow(hwnd, SW_HIDE);
+                crate::test_mode_window::close_test_window();
+                crate::presets_window::close_presets_window();
                 crate::tuning_window::close_tuning_window();
             }
             0

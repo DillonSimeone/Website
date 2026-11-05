@@ -6,6 +6,8 @@ use std::path::{Path, PathBuf};
 pub struct HapticsConfig {
     #[serde(default = "default_true")]
     pub enabled: bool,
+    #[serde(default)]
+    pub mic_mode: bool,
     #[serde(default = "default_scale")]
     pub amplitude_scale: f32,
     #[serde(default = "default_base_amp")]
@@ -34,31 +36,32 @@ pub struct HapticsConfig {
 
 fn default_true() -> bool { true }
 fn default_scale() -> f32 { 2.0 }
-fn default_base_amp() -> i32 { 70 }
-fn default_punch_dur() -> i32 { 90 }
-fn default_noise_floor() -> f32 { 0.010 }
+fn default_base_amp() -> i32 { 55 }
+fn default_punch_dur() -> i32 { 85 }
+fn default_noise_floor() -> f32 { 0.008 }
 fn default_min_vel() -> f32 { 0.018 }
 fn default_sub_low() -> i32 { 30 }
-fn default_sub_high() -> i32 { 90 }
-fn default_punch_high() -> i32 { 220 }
-fn default_snap_high() -> i32 { 1200 }
-fn default_mode() -> String { "gestolumina_pwm".to_string() }
+fn default_sub_high() -> i32 { 95 }
+fn default_punch_high() -> i32 { 240 }
+fn default_snap_high() -> i32 { 1400 }
+fn default_mode() -> String { "VolumeToPwm".to_string() }
 
 impl Default for HapticsConfig {
     fn default() -> Self {
         Self {
             enabled: true,
+            mic_mode: false,
             amplitude_scale: 2.0,
-            base_amplitude: 70,
-            punch_duration_ms: 90,
-            noise_floor: 0.010,
+            base_amplitude: 55,
+            punch_duration_ms: 85,
+            noise_floor: 0.008,
             min_velocity: 0.018,
             enable_snap_primitives: true,
             sub_bass_low_hz: 30,
-            sub_bass_high_hz: 90,
-            mid_punch_high_hz: 220,
-            snap_high_hz: 1200,
-            mode: "gestolumina_pwm".to_string(),
+            sub_bass_high_hz: 95,
+            mid_punch_high_hz: 240,
+            snap_high_hz: 1400,
+            mode: "VolumeToPwm".to_string(),
             govee_sync: false,
         }
     }
