@@ -867,7 +867,7 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Flyer Styles & Digital Share Cards
+   Flyer Styles & Digital Share Cards (High-Impact Poster & Print)
    -------------------------------------------------------------------------- */
 .flyer-view-controls {
   display: flex;
@@ -879,11 +879,11 @@ body {
 }
 
 .flyer-sheet {
-  background: #0d0f1c;
+  background: #0b0d1a;
   border: 2px solid var(--cyan-glow);
   border-radius: var(--radius-md);
-  padding: 3rem 2.5rem;
-  max-width: 800px;
+  padding: 2.5rem;
+  max-width: 860px;
   margin: 0 auto 3rem;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 32px rgba(0, 229, 255, 0.15);
   position: relative;
@@ -892,17 +892,17 @@ body {
 .flyer-header {
   text-align: center;
   border-bottom: 2px solid var(--border-subtle);
-  padding-bottom: 1.5rem;
-  margin-bottom: 2rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .flyer-badge {
   font-size: 0.85rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   color: var(--amber-glow);
   text-transform: uppercase;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .flyer-headline {
@@ -911,23 +911,293 @@ body {
   letter-spacing: -0.03em;
   line-height: 1.1;
   color: #fff;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.4rem;
 }
 
 .flyer-subline {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   color: #cbd5e1;
 }
 
-.flyer-qr-section {
+.flyer-date-bar {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--amber-glow);
+  background: rgba(255, 183, 3, 0.08);
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 183, 3, 0.3);
+}
+
+/* UMD Team Spotlight */
+.flyer-spotlight-umd {
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(11, 13, 26, 0.95));
+  border: 1.5pt solid rgba(0, 229, 255, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.flyer-spotlight-umd .umd-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--cyan-glow);
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.flyer-spotlight-umd h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.35rem;
+}
+
+.flyer-spotlight-umd p {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.flyer-spotlight-umd .umd-team-line {
+  font-size: 0.82rem;
+  color: var(--amber-glow);
+  font-weight: 700;
+}
+.flyer-spotlight-djwish {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: 160px 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(21, 24, 42, 0.95), rgba(11, 13, 26, 0.95));
+  border: 2px solid var(--cyan-glow);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.15);
+}
+
+.spotlight-logo-wrap {
+  background: #000;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spotlight-logo-wrap img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.spotlight-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--cyan-glow);
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.spotlight-name {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 0.2rem;
+}
+
+.spotlight-tagline {
+  font-size: 0.85rem;
+  color: var(--amber-glow);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.spotlight-bio {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin-bottom: 0.5rem;
+}
+
+.spotlight-meta {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--cyan-glow);
+}
+
+/* Middle 3-Column Grid */
+.flyer-middle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.flyer-feature-box {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 1.5rem;
-  margin-top: 2rem;
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.flyer-feature-box .feature-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+
+.feature-zoo .feature-tag { color: #f472b6; }
+.feature-chef .feature-tag { color: var(--amber-glow); }
+.feature-vests .feature-tag { color: #34d399; }
+
+.flyer-feature-box h3 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.4rem;
+}
+
+.flyer-feature-box p {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+/* Schedule Strip */
+.flyer-schedule-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+  font-size: 0.825rem;
+  color: #cbd5e1;
+}
+
+.flyer-schedule-strip strong {
+  color: var(--cyan-glow);
+  display: block;
+  font-size: 0.85rem;
+}
+
+/* Accessibility Banner */
+.accessibility-banner {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin-bottom: 1.25rem;
+}
+
+.accessibility-banner strong {
+  color: #34d399;
+}
+
+/* Bottom Grid: Tickets + QRs */
+.flyer-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.flyer-tickets-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.ticket-cap-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.ticket-prices-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.price-pill {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.price-pill.highlight {
+  border-color: var(--amber-glow);
+  background: rgba(255, 183, 3, 0.08);
+}
+
+.tier-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.tier-cost {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  margin-top: 0.15rem;
+}
+
+.price-pill.highlight .tier-cost {
+  color: var(--amber-glow);
+}
+
+.kiosk-note {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  line-height: 1.35;
+  margin-top: 0.5rem;
+}
+
+.flyer-qr-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1rem 0.75rem;
 }
 
 .flyer-qr-card {
@@ -937,7 +1207,35 @@ body {
   align-items: center;
 }
 
-/* Digital Share Card (9:16 Instagram Story Mode) */
+.flyer-qr-card .qr-image-wrap {
+  background: #ffffff;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  margin-bottom: 0.4rem;
+}
+
+.flyer-qr-card .qr-image-wrap img,
+.flyer-qr-card .qr-image-wrap svg {
+  width: 90px;
+  height: 90px;
+  display: block;
+}
+
+.flyer-qr-card .qr-caption {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--cyan-glow);
+  line-height: 1.2;
+}
+
+.flyer-qr-card .qr-subcaption {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-top: 0.15rem;
+}
+
+/* Digital Share Card (9:16 Social Story Mode) */
 .share-card-container {
   display: none;
   justify-content: center;
@@ -1165,12 +1463,12 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Print Stylesheet (@media print) — Ink Saving 8.5x11
+   Print Stylesheet (@media print) — Full 8.5x11 Single Page Layout
    -------------------------------------------------------------------------- */
 @media print {
   @page {
     size: letter portrait;
-    margin: 0.25in;
+    margin: 0.25in 0.35in;
   }
   
   *, *::before, *::after {
@@ -1178,13 +1476,14 @@ body {
     color: #000000 !important;
     box-shadow: none !important;
     text-shadow: none !important;
-    border-color: #333333 !important;
+    border-color: #222222 !important;
   }
   
-  body {
+  html, body {
+    height: 100% !important;
     background: #ffffff !important;
     font-size: 9pt;
-    line-height: 1.25;
+    line-height: 1.3;
     padding: 0;
     margin: 0;
   }
@@ -1202,109 +1501,301 @@ body {
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100% !important;
+    height: 100% !important;
   }
   
   .flyer-sheet {
-    border: 1.5pt solid #000000 !important;
+    box-sizing: border-box !important;
+    border: 2.5pt solid #000000 !important;
     border-radius: 0 !important;
-    padding: 0.2in 0.25in !important;
+    padding: 0.28in 0.32in !important;
     box-shadow: none !important;
     max-width: 100% !important;
+    width: 100% !important;
+    height: 10.45in !important;
+    min-height: 10.45in !important;
+    max-height: 10.45in !important;
     margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
     page-break-inside: avoid !important;
     page-break-after: avoid !important;
     break-inside: avoid !important;
-    height: auto !important;
   }
   
   .flyer-header {
-    border-bottom: 1pt solid #000000 !important;
-    padding-bottom: 0.5rem !important;
-    margin-bottom: 0.6rem !important;
+    border-bottom: 2pt solid #000000 !important;
+    padding-bottom: 0.35rem !important;
+    margin-bottom: 0.4rem !important;
   }
   
   .flyer-headline {
     color: #000000 !important;
-    font-size: 18pt !important;
-    line-height: 1.1 !important;
-    margin-bottom: 0.2rem !important;
+    font-size: 27pt !important;
+    line-height: 1.05 !important;
+    margin-bottom: 0.15rem !important;
   }
   
   .flyer-badge {
     color: #000000 !important;
-    font-size: 8pt !important;
-    margin-bottom: 0.15rem !important;
+    font-size: 9pt !important;
+    letter-spacing: 0.15em !important;
+    margin-bottom: 0.1rem !important;
   }
   
   .flyer-subline {
-    color: #222222 !important;
-    font-size: 9.5pt !important;
+    color: #111111 !important;
+    font-size: 11pt !important;
   }
-  
-  .flyer-sheet .event-highlights-grid {
-    gap: 0.5rem !important;
-    margin-bottom: 0.6rem !important;
+
+  .flyer-date-bar {
+    border: 1.5pt solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10pt !important;
+    font-weight: 800 !important;
+    padding: 0.3rem 0.6rem !important;
+    margin-top: 0.4rem !important;
+    border-radius: 0 !important;
   }
-  
-  .flyer-sheet .event-highlights-grid > div {
-    padding: 0.5rem 0.6rem !important;
-    border: 1pt solid #444444 !important;
+
+  /* Spotlight on Nate / DJwish in Print */
+  .flyer-spotlight-djwish {
+    grid-template-columns: 130px 1fr !important;
+    border: 2pt solid #000000 !important;
+    background: #ffffff !important;
+    padding: 0.65rem 0.9rem !important;
+    margin-bottom: 0.4rem !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    gap: 1.1rem !important;
   }
-  
-  .flyer-sheet .event-highlights-grid h3 {
-    font-size: 9pt !important;
+
+  .spotlight-logo-wrap {
+    border: 1.5pt solid #000000 !important;
+    background: #ffffff !important;
+    padding: 0.4rem !important;
+  }
+
+  .spotlight-logo-wrap img {
+    width: 115px !important;
+    height: auto !important;
+    filter: none !important;
+  }
+
+  .spotlight-badge {
+    color: #000000 !important;
+    font-size: 8pt !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  .spotlight-name {
+    color: #000000 !important;
+    font-size: 16pt !important;
+    line-height: 1.1 !important;
     margin-bottom: 0.15rem !important;
   }
-  
-  .flyer-sheet .event-highlights-grid p {
-    font-size: 7.5pt !important;
-    line-height: 1.25 !important;
-  }
-  
-  .flyer-sheet .accessibility-banner {
-    padding: 0.4rem 0.6rem !important;
-    margin-bottom: 0.6rem !important;
-    border: 1pt solid #000000 !important;
-    font-size: 8pt !important;
-  }
-  
-  .flyer-sheet .ticketing-summary {
-    margin-bottom: 0.5rem !important;
-  }
-  
-  .flyer-sheet .ticketing-summary .ticket-prices {
-    font-size: 10pt !important;
-    margin-top: 0.15rem !important;
-  }
-  
-  .flyer-qr-section {
-    border: 1pt solid #000000 !important;
-    background: #ffffff !important;
-    padding: 0.4rem 0.5rem !important;
-    margin-top: 0.4rem !important;
-    gap: 1rem !important;
-  }
-  
-  .qr-image-wrap {
-    border: 1pt solid #000000 !important;
-    padding: 2px !important;
+
+  .spotlight-tagline {
+    color: #222222 !important;
+    font-size: 9.5pt !important;
     margin-bottom: 0.25rem !important;
   }
-  
-  .qr-image-wrap img, .qr-image-wrap svg {
-    width: 68px !important;
-    height: 68px !important;
+
+  .spotlight-bio {
+    color: #111111 !important;
+    font-size: 8.8pt !important;
+    line-height: 1.35 !important;
+    margin-bottom: 0.35rem !important;
   }
-  
-  .qr-caption {
-    font-size: 7.5pt !important;
+
+  .spotlight-meta {
     color: #000000 !important;
-    font-weight: bold !important;
+    font-size: 8pt !important;
+    font-weight: 800 !important;
   }
-  
-  .qr-subcaption {
-    font-size: 6.5pt !important;
-    color: #444444 !important;
+
+  /* UMD Team Spotlight in Print */
+  .flyer-spotlight-umd {
+    border: 2pt solid #000000 !important;
+    background: #ffffff !important;
+    padding: 0.6rem 0.9rem !important;
+    margin-bottom: 0.4rem !important;
+    border-radius: 0 !important;
+  }
+
+  .flyer-spotlight-umd .umd-badge {
+    color: #000000 !important;
+    font-size: 8pt !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.1em !important;
+    margin-bottom: 0.15rem !important;
+  }
+
+  .flyer-spotlight-umd h3 {
+    color: #000000 !important;
+    font-size: 12pt !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .flyer-spotlight-umd p {
+    color: #111111 !important;
+    font-size: 8.8pt !important;
+    line-height: 1.35 !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .flyer-spotlight-umd .umd-team-line {
+    color: #000000 !important;
+    font-size: 8.5pt !important;
+    font-weight: 800 !important;
+  }
+
+  /* 3-Col Middle Features in Print */
+  .flyer-middle-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.6rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .flyer-feature-box {
+    border: 1.5pt solid #000000 !important;
+    padding: 0.6rem 0.75rem !important;
+    border-radius: 0 !important;
+  }
+
+  .flyer-feature-box .feature-tag {
+    color: #000000 !important;
+    font-size: 7.5pt !important;
+    font-weight: 900 !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .flyer-feature-box h3 {
+    color: #000000 !important;
+    font-size: 10.5pt !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .flyer-feature-box p {
+    color: #222222 !important;
+    font-size: 8.4pt !important;
+    line-height: 1.32 !important;
+  }
+
+  /* Schedule Strip in Print */
+  .flyer-schedule-strip {
+    border: 1.5pt solid #000000 !important;
+    padding: 0.45rem 0.75rem !important;
+    margin-bottom: 0.4rem !important;
+    font-size: 8.5pt !important;
+    border-radius: 0 !important;
+  }
+
+  .flyer-schedule-strip strong {
+    color: #000000 !important;
+    font-size: 9.5pt !important;
+  }
+
+  /* Accessibility Banner in Print */
+  .accessibility-banner {
+    border: 1.5pt solid #000000 !important;
+    padding: 0.45rem 0.75rem !important;
+    margin-bottom: 0.4rem !important;
+    font-size: 8.5pt !important;
+    line-height: 1.35 !important;
+    border-radius: 0 !important;
+  }
+
+  .accessibility-banner strong {
+    color: #000000 !important;
+  }
+
+  /* Bottom Grid: Tickets + QRs in Print */
+  .flyer-bottom-grid {
+    grid-template-columns: 1fr 240px !important;
+    gap: 0.75rem !important;
+  }
+
+  .flyer-tickets-box {
+    border: 1.5pt solid #000000 !important;
+    padding: 0.6rem 0.8rem !important;
+    border-radius: 0 !important;
+  }
+
+  .ticket-cap-badge {
+    color: #000000 !important;
+    font-size: 8pt !important;
+    font-weight: 900 !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .ticket-prices-row {
+    gap: 0.5rem !important;
+    margin-bottom: 0.45rem !important;
+  }
+
+  .price-pill {
+    border: 1.5pt solid #000000 !important;
+    padding: 0.4rem 0.35rem !important;
+    border-radius: 0 !important;
+  }
+
+  .price-pill.highlight {
+    background: #f1f5f9 !important;
+    border-width: 2pt !important;
+  }
+
+  .tier-label {
+    font-size: 7.5pt !important;
+    color: #222222 !important;
+    font-weight: 700 !important;
+  }
+
+  .tier-cost {
+    font-size: 14pt !important;
+    color: #000000 !important;
+  }
+
+  .kiosk-note {
+    font-size: 8pt !important;
+    line-height: 1.3 !important;
+    color: #222222 !important;
+    margin-top: 0.35rem !important;
+  }
+
+  .flyer-qr-container {
+    border: 1.5pt solid #000000 !important;
+    background: #ffffff !important;
+    padding: 0.5rem 0.6rem !important;
+    gap: 0.6rem !important;
+    border-radius: 0 !important;
+  }
+
+  .flyer-qr-card .qr-image-wrap {
+    border: 1pt solid #000000 !important;
+    padding: 3px !important;
+    margin-bottom: 0.2rem !important;
+    border-radius: 0 !important;
+  }
+
+  .flyer-qr-card .qr-image-wrap img,
+  .flyer-qr-card .qr-image-wrap svg {
+    width: 78px !important;
+    height: 78px !important;
+  }
+
+  .flyer-qr-card .qr-caption {
+    font-size: 8pt !important;
+    color: #000000 !important;
+    font-weight: 900 !important;
+  }
+
+  .flyer-qr-card .qr-subcaption {
+    font-size: 6.8pt !important;
+    color: #333333 !important;
   }
 }
 

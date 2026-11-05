@@ -66,7 +66,7 @@ RESERVATION DETAILS:
 • Party Size: {seats} Seat(s)
 • Selected Tier: {tier}
 • Dietary Preference: {dietary}
-• ASL Accommodation: {asl}
+• ASL Requested: {asl}
 
 EVENT INFORMATION:
 • Date: Saturday, December 12, 2026
@@ -113,7 +113,7 @@ https://cymaspace.org
           <div><strong>Seats Held:</strong> {seats} Seat(s)</div>
           <div><strong>Ticket Tier:</strong> {tier}</div>
           <div><strong>Dietary:</strong> {dietary}</div>
-          <div><strong>ASL Interpreters:</strong> {asl}</div>
+          <div><strong>ASL Requested:</strong> {asl}</div>
         </div>
       </div>
 
@@ -192,7 +192,7 @@ def main():
                 with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
                     server.login(args.email, args.password)
                     server.sendmail(args.email, email, msg.as_string())
-                print(f"✓ Sent successfully to {email}")
+                print(f"[OK] Sent successfully to {email}")
 
     if pending_count == 0:
         print("All reservations have already been processed (0 pending).")

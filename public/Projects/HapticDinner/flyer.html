@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Printable Flyer &amp; Share Cards — Haptic Dinner Series</title>
-  <meta name="description" content="Printable 8.5x11 flyer and digital social share cards for the Haptic Dinner Series on Dec 12 at CymaSpace.">
+  <meta name="description" content="Printable 8.5x11 flyer and digital social share cards for the Haptic Dinner Series on Dec 12 at CymaSpace, featuring DJwish, Universal Music Design, and the Haptic Petting Zoo debut.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -35,87 +35,137 @@
       <button onclick="window.print()" class="btn btn-primary">Print Flyer (Ink-Friendly)</button>
     </div>
 
-    <!-- 1. STANDARD 8.5x11 EVENT POSTER -->
+    <!-- 1. FULL 8.5x11 EVENT POSTER -->
     <article id="flyer-poster-sheet" class="flyer-sheet">
+      <!-- Masthead -->
       <header class="flyer-header">
         <div class="flyer-badge">CYMASPACE &times; UNIVERSAL MUSIC DESIGN PRESENT</div>
         <h1 class="flyer-headline">HAPTIC DINNER SERIES</h1>
         <div class="flyer-subline">A Multisensory Music, Tactile Art &amp; Dining Experience</div>
-        <div style="margin-top: 0.6rem; font-weight: 800; color: var(--amber-glow); font-size: 1.05rem;">
-          SATURDAY, DECEMBER 12, 2026 • 5:00 PM – 7:00 PM
-        </div>
-        <div style="font-size: 0.9rem; color: #cbd5e1; margin-top: 0.15rem;">
-          CYMASPACE • WOODSTOCK, PORTLAND, OREGON
+        <div class="flyer-date-bar">
+          <span>SATURDAY, DECEMBER 12, 2026</span>
+          <span>•</span>
+          <span>5:00 PM – 7:00 PM</span>
+          <span>•</span>
+          <span>CYMASPACE • WOODSTOCK, PORTLAND, OR</span>
         </div>
       </header>
 
-      <!-- Event Highlights Grid -->
-      <div class="event-highlights-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
-        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: var(--radius-sm);">
-          <h3 style="color: var(--cyan-glow); font-size: 1rem; margin-bottom: 0.25rem;">Live Electronic Headliner</h3>
-          <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.45;">
-            <strong>DJwish (Nate Hergert)</strong> performs a live sub-bass electronic set with sound-reactive visual projection, translating music into chest-rumbling tactile vibration.
+      <!-- Headliner Spotlight: DJwish (Nate Hergert) -->
+      <section class="flyer-spotlight-djwish">
+        <div class="spotlight-logo-wrap">
+          <img src="assets/dj_deaf_wish_logo.png" alt="DJ Deaf Wish official logo">
+        </div>
+        <div class="spotlight-info">
+          <div class="spotlight-badge">FEATURED STAGE HEADLINER</div>
+          <h2 class="spotlight-name">DJwish (Nate Hergert)</h2>
+          <div class="spotlight-tagline">Deaf Sonic Agency // Sub-Bass Resonance &amp; Live Synthesis</div>
+          <p class="spotlight-bio">
+            Portland electronic musician and Deaf advocate <strong>Nate Hergert</strong> commands a live performance engineered for deep physical chest rumble and sensory immersion. Pairing low-frequency sub-bass modular synthesis with real-time sound-reactive visual telemetry, DJwish redefines electronic music into an intense tactile art form for Deaf and hearing audiences alike.
           </p>
+          <div class="spotlight-meta">
+            Live Sub-Bass Telemetry • Real-Time Vest Feed • Stage-to-Chest Vibration
+          </div>
         </div>
+      </section>
 
-        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: var(--radius-sm);">
-          <h3 style="color: var(--amber-glow); font-size: 1rem; margin-bottom: 0.25rem;">Curated Multi-Course Dinner</h3>
-          <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.45;">
-            Curated dishes prepared by <strong>Chef Dre Grey</strong> (Woodstock Cafe Manager &amp; CymaSpace Board Member), featuring vegan, vegetarian, and gluten-free accommodations.
-          </p>
-        </div>
-
-        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: var(--radius-sm);">
-          <h3 style="color: #34d399; font-size: 1rem; margin-bottom: 0.25rem;">Wearable Vibrotactile Vests</h3>
-          <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.45;">
-            Individual RF-linked haptic vests translating performance sub-bass directly into physical torso sensation for guests throughout the event.
-          </p>
-        </div>
-
-        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: var(--radius-sm);">
-          <h3 style="color: #f472b6; font-size: 1rem; margin-bottom: 0.25rem;">Haptic Petting Zoo Debut</h3>
-          <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.45;">
-            First public hands-on reveal of prototype tactile animal critter nodes from Dillon Simeone's OCF Creative Heights project.
-          </p>
-        </div>
-      </div>
-
-      <!-- Accessibility Callout Banner -->
-      <div class="accessibility-banner" style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); padding: 0.75rem 1rem; border-radius: var(--radius-sm); text-align: center; margin-bottom: 1.25rem;">
-        <span style="font-weight: 700; color: #34d399; font-size: 0.9rem;">
-          Universal Accessibility: Dedicated ASL Interpreters • Live Captions • Step-Free Seating
-        </span>
-      </div>
-
-      <!-- Ticketing Summary -->
-      <div class="ticketing-summary" style="text-align: center; margin-bottom: 1.25rem;">
-        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.1em; font-weight: 700;">
-          Capacity Strictly Capped at 15–20 Guests
-        </div>
-        <div class="ticket-prices" style="font-size: 1.1rem; font-weight: 800; color: #fff; margin-top: 0.25rem;">
-          Dinner Admission: $45 &bull; Haptic Vest Rental: $35 &bull; Combined Experience: $80
-        </div>
-        <p style="font-size: 0.8rem; color: var(--amber-glow); margin-top: 0.2rem;">
-          Purchase in-person at the CymaSpace Cafe Kiosk • Advance online seat hold strongly recommended.
+      <!-- Universal Music Design (UMD) Spotlight -->
+      <section class="flyer-spotlight-umd">
+        <div class="umd-badge">RESEARCH &amp; HARDWARE FRAMEWORK</div>
+        <h3>Universal Music Design (UMD) Tactile Ecosystem</h3>
+        <p>
+          Universal Music Design transforms acoustic sound into a universal language of light, gesture, and bodily tactile vibration. Originating from foundational research by Deaf engineers and researchers, UMD deploys a dedicated 60-unit wearable tactile vest fleet and real-time audio transmission systems to create visceral, shared sensory listening environments.
         </p>
-      </div>
+        <div class="umd-team-line">
+          Lead Design Engineer: Dillon Simeone &bull; Project Director: Shawn Trail, PhD
+        </div>
+      </section>
 
-      <!-- Scannable QR Codes Section -->
-      <div class="flyer-qr-section">
-        <div class="flyer-qr-card">
-          <div class="qr-image-wrap">
-            <img src="assets/qr_tickets.svg" alt="QR Code to reserve seat online" width="100" height="100">
-          </div>
-          <div class="qr-caption">Hold Your Seat Online</div>
-          <div class="qr-subcaption">Scan to hold 1 of 20 seats</div>
+      <!-- 3-Column Middle Feature Grid -->
+      <div class="flyer-middle-grid">
+        <!-- Col 1: The Haptic Petting Zoo Debut -->
+        <div class="flyer-feature-box feature-zoo">
+          <div class="feature-tag">SPECIAL DEBUT</div>
+          <h3>The Haptic Petting Zoo</h3>
+          <p>
+            First public hands-on reveal of prototype tactile animal critter nodes from Dillon Simeone’s $96,000 OCF Creative Heights project! Guests are invited to touch, hold, and feel biomimetic vibration purrs and heartbeats during dinner and social hour.
+          </p>
         </div>
 
-        <div class="flyer-qr-card">
-          <div class="qr-image-wrap">
-            <img src="assets/qr_djwish.svg" alt="QR Code to explore DJwish portfolio" width="100" height="100">
+        <!-- Col 2: Chef Dre Grey Dining -->
+        <div class="flyer-feature-box feature-chef">
+          <div class="feature-tag">CULINARY EXPERIENCE</div>
+          <h3>Chef Dre Grey</h3>
+          <p>
+            Curated multi-course dinner paired directly with the progression of sound and tactile art. Prepared by Woodstock Cafe Manager &amp; CymaSpace Board Member Chef Dre Grey, with dedicated vegan, vegetarian, and gluten-free accommodations.
+          </p>
+        </div>
+
+        <!-- Col 3: Wearable Vests & Immersion -->
+        <div class="flyer-feature-box feature-vests">
+          <div class="feature-tag">SENSORY HARDWARE</div>
+          <h3>Wearable Haptic Vests</h3>
+          <p>
+            15–20 individual RF-linked tactile vests translate live sub-bass frequencies directly into physical torso sensation. Experience sound as physical resonance across your chest and back throughout the entire 2-hour dinner.
+          </p>
+        </div>
+      </div>
+
+      <!-- Schedule Strip -->
+      <div class="flyer-schedule-strip">
+        <div class="schedule-col"><strong>5:00 PM</strong> Doors Open &amp; Vest Fitting</div>
+        <div class="schedule-col"><strong>5:15 PM</strong> DJwish Live Electronic Showcase</div>
+        <div class="schedule-col"><strong>6:00 PM</strong> Dinner &amp; Haptic Zoo Social Hour</div>
+        <div class="schedule-col"><strong>7:00 PM</strong> Event Concludes</div>
+      </div>
+
+      <!-- Accessibility Banner (No unconfirmed ASL) -->
+      <div class="accessibility-banner">
+        <strong>Universal Accessibility:</strong> Real-time live captions projected on display walls • Sound-reactive visual telemetry • Non-strobe sensory-safe light environment • Step-free wheelchair seating.
+      </div>
+
+      <!-- Bottom Grid: Tickets + QRs -->
+      <div class="flyer-bottom-grid">
+        <!-- Ticketing Box -->
+        <div class="flyer-tickets-box">
+          <div class="ticket-cap-badge">CAPACITY STRICTLY CAPPED AT 15–20 GUESTS</div>
+          <div class="ticket-prices-row">
+            <div class="price-pill">
+              <span class="tier-label">Dinner Admission</span>
+              <span class="tier-cost">$45</span>
+            </div>
+            <div class="price-pill">
+              <span class="tier-label">Haptic Vest Rental</span>
+              <span class="tier-cost">$35</span>
+            </div>
+            <div class="price-pill highlight">
+              <span class="tier-label">Combined Experience</span>
+              <span class="tier-cost">$80</span>
+            </div>
           </div>
-          <div class="qr-caption">Explore DJwish (Nate Hergert)</div>
-          <div class="qr-subcaption">Scan for music and videos</div>
+          <p class="kiosk-note">
+            <strong>Tickets purchased in-person at the CymaSpace Cafe Kiosk.</strong><br>
+            Advance online seat hold is required to guarantee equipment &amp; seating.
+          </p>
+        </div>
+
+        <!-- QR Codes Container -->
+        <div class="flyer-qr-container">
+          <div class="flyer-qr-card">
+            <div class="qr-image-wrap">
+              <img src="assets/qr_tickets.svg" alt="Scan to hold seat online">
+            </div>
+            <div class="qr-caption">Hold Your Seat Online</div>
+            <div class="qr-subcaption">Reserve 1 of 20 seats</div>
+          </div>
+
+          <div class="flyer-qr-card">
+            <div class="qr-image-wrap">
+              <img src="assets/qr_djwish.svg" alt="Scan to explore DJwish">
+            </div>
+            <div class="qr-caption">Explore DJwish</div>
+            <div class="qr-subcaption">Music &amp; video portfolio</div>
+          </div>
         </div>
       </div>
     </article>
@@ -124,32 +174,32 @@
     <div id="flyer-sharecard-wrap" class="share-card-container">
       <article class="share-card">
         <div>
-          <div style="font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; color: var(--amber-glow); text-transform: uppercase; margin-bottom: 0.5rem;">
-            CYMASPACE &bull; DEC 12, 2026
+          <div style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em; color: var(--amber-glow); text-transform: uppercase; margin-bottom: 0.4rem;">
+            CYMASPACE &times; UMD &bull; DEC 12, 2026
           </div>
-          <h2 style="font-size: 1.85rem; font-weight: 900; line-height: 1.1; color: #fff; margin-bottom: 0.5rem;">
+          <h2 style="font-size: 1.85rem; font-weight: 900; line-height: 1.1; color: #fff; margin-bottom: 0.4rem;">
             HAPTIC DINNER SERIES
           </h2>
-          <div style="font-size: 0.9rem; color: var(--cyan-glow); font-weight: 700; margin-bottom: 1.25rem;">
+          <div style="font-size: 0.95rem; color: var(--cyan-glow); font-weight: 700; margin-bottom: 1.25rem;">
             A Multisensory Music &amp; Dining Experience
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 1.5rem;">
-            <div><strong>DJwish (Nate Hergert):</strong> Live sub-bass electronic set</div>
-            <div><strong>Chef Dre Grey:</strong> Curated multi-course dinner</div>
-            <div><strong>Wearable Haptic Vests:</strong> Feel the sound</div>
-            <div><strong>Haptic Petting Zoo:</strong> Tactile prototype reveal</div>
-            <div><strong>Universal Access:</strong> ASL interpreted &amp; live captioned</div>
+          <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.875rem; color: #cbd5e1; margin-bottom: 1.5rem;">
+            <div><strong>DJwish (Nate Hergert):</strong> Headlining live sub-bass electronic set &amp; reactive visuals</div>
+            <div><strong>Universal Music Design:</strong> 60-unit tactile vest fleet &amp; bodily listening framework</div>
+            <div><strong>Chef Dre Grey:</strong> Curated multi-course dinner with vegan &amp; GF options</div>
+            <div><strong>The Haptic Petting Zoo:</strong> Hands-on tactile prototype reveal ($96,000 OCF grant)</div>
+            <div><strong>Universal Access:</strong> Live projected real-time captions &amp; sound telemetry</div>
           </div>
         </div>
 
         <!-- QR Box on Share Card -->
-        <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; text-align: center;">
-          <div class="qr-image-wrap" style="margin-bottom: 0.4rem;">
-            <img src="assets/qr_tickets.svg" alt="QR Code to reserve seat" width="100" height="100">
+        <div style="background: rgba(0,0,0,0.6); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; text-align: center;">
+          <div class="qr-image-wrap" style="background:#fff; padding:4px; display:inline-block; border-radius:4px; margin-bottom: 0.4rem;">
+            <img src="assets/qr_tickets.svg" alt="QR Code to reserve seat" width="105" height="105" style="display:block;">
           </div>
-          <div style="font-size: 0.75rem; font-weight: 800; color: var(--cyan-glow);">SCAN TO HOLD 1 OF 20 SEATS</div>
-          <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.2rem;">Tickets: $45 Dinner • $35 Vest • $80 Combined</div>
+          <div style="font-size: 0.8rem; font-weight: 800; color: var(--cyan-glow);">SCAN TO HOLD 1 OF 20 SEATS</div>
+          <div style="font-size: 0.72rem; color: #cbd5e1; margin-top: 0.2rem;">Tickets: $45 Dinner • $35 Vest • $80 Combined</div>
         </div>
 
         <div style="text-align: center; margin-top: 1rem; font-size: 0.75rem; color: var(--text-dim);">
