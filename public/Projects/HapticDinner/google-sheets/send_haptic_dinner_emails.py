@@ -72,7 +72,7 @@ EVENT INFORMATION:
 • Date: Saturday, December 12, 2026
 • Doors Open & Vest Fitting: 5:00 PM
 • Performance & Dinner: 5:15 PM – 7:00 PM
-• Venue: CymaSpace (Woodstock Cafe space), Portland, OR
+• Venue: CymaSpace (Woodstock Cafe), 4103 SE Woodstock Blvd, Portland, OR 97202
 
 HOW PAYMENT WORKS:
 Ticket payment is completed in-person at the CymaSpace cafe kiosk when you arrive.
@@ -87,8 +87,8 @@ FEATURING:
 If you need to make changes or have questions, simply reply to this email.
 
 Warm regards,
-CymaSpace & Universal Music Design
-https://cymaspace.org
+CymaSpace, Woodstock Cafe & Control+H
+https://cymaspace.github.io/Website/ | https://pdxhackerspace.org/
 """
 
     html_body = f"""<!DOCTYPE html>
@@ -96,7 +96,7 @@ https://cymaspace.org
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #1e293b; padding: 20px; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
     <div style="background: #0b0d1a; color: #ffffff; padding: 24px; text-align: center; border-bottom: 3px solid #00e5ff;">
-      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #ffb703; text-transform: uppercase; margin-bottom: 4px;">CYMASPACE &times; UNIVERSAL MUSIC DESIGN</div>
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #ffb703; text-transform: uppercase; margin-bottom: 4px;">CYMASPACE &bull; WOODSTOCK CAFE &bull; CONTROL+H</div>
       <h1 style="font-size: 22px; margin: 0; font-weight: 800;">Haptic Dinner Series</h1>
       <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Saturday, December 12, 2026 &bull; Portland, Oregon</div>
     </div>
@@ -131,13 +131,13 @@ https://cymaspace.org
       </ul>
 
       <p style="font-size: 13px; color: #64748b;">
-        Venue: CymaSpace (Woodstock Cafe), Portland, OR.<br>
+        Venue: CymaSpace (Woodstock Cafe), 4103 SE Woodstock Blvd, Portland, OR 97202.<br>
         Questions or dietary adjustments? Simply reply to this email.
       </p>
     </div>
 
     <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">
-      Haptic Dinner Series &copy; 2026 CymaSpace &bull; Accessible Multisensory Arts
+      Haptic Dinner Series &copy; 2026 CymaSpace, Woodstock Cafe &amp; Control+H
     </div>
   </div>
 </body>
