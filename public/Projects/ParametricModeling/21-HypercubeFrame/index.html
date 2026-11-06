@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>21 — WS2812B 8×8 LED Matrix Hypercube Frame v2.0 (Monocoque Zero-Overhang PETG)</title>
+    <meta name="description" content="Monocoque zero-overhang 3D-printable 6-sided cube skeleton for 65x65mm WS2812B-64 (8x8 RGB LED) panels with flat bed base plate, 5 faces of 45° triangle corners joined by 5mm continuous edge beams, and tilted corner pedestal stand.">
+
+    <!-- Browser Import Map for Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="title-wrap">
+            <span class="cad-badge">CAD-21 v2.0</span>
+            <h1>WS2812B-64 MONOCOQUE HYPERCUBE STUDIO (0.00g SUPPORTS)</h1>
+        </div>
+        <div class="status-badge" id="kernel-status-badge">
+            <div class="status-dot"></div>
+            <span>KERNEL: <span id="kernel-status">INITIALIZING...</span></span>
+        </div>
+    </header>
+
+    <main>
+        <div id="viewport-container"></div>
+
+        <aside class="sidebar">
+            <!-- Section 1: View Presets -->
+            <div class="sidebar-section">
+                <div class="section-title">1. Viewport Preset</div>
+                <div class="preset-grid">
+                    <button class="preset-btn active" data-preset="cube_only">Cube Frame (Bed)</button>
+                    <button class="preset-btn" data-preset="assembly_flat">Bed + 6× Panels</button>
+                    <button class="preset-btn" data-preset="assembly_stand">Tilted on Stand</button>
+                    <button class="preset-btn" data-preset="stand_only">Corner Stand Only</button>
+                    <button class="preset-btn" data-preset="print_plate" style="grid-column: span 2; border-color: #00ff88; color: #00ff88;">⚡ Full Bambu A1 Print Plate (Cube + Stand)</button>
+                </div>
+            </div>
+
+            <!-- Section 2: Parametric Dimensions & Tolerances -->
+            <div class="sidebar-section">
+                <div class="section-title">2. Monocoque &amp; PETG Parameters</div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Cube &amp; PCB Size (Flush)</span>
+                        <span class="control-val"><span id="val-pcbSize">65.00</span> mm</span>
+                    </div>
+                    <input type="range" id="input-pcbSize" min="64.5" max="66.0" step="0.05" value="65.0">
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Structural Frame Wall Thickness</span>
+                        <span class="control-val"><span id="val-wallThickness">5.00</span> mm</span>
+                    </div>
+                    <input type="range" id="input-wallThickness" min="4.0" max="6.5" step="0.1" value="5.0">
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>45° Diamond Cutout Half-Span</span>
+                        <span class="control-val"><span id="val-diamondHalfSpan">26.50</span> mm</span>
+                    </div>
+                    <input type="range" id="input-diamondHalfSpan" min="23.0" max="28.0" step="0.25" value="26.5">
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Bottom Bed Center Hole Dia</span>
+                        <span class="control-val"><span id="val-bottomHoleDia">40.00</span> mm</span>
+                    </div>
+                    <input type="range" id="input-bottomHoleDia" min="20.0" max="46.0" step="1.0" value="40.0">
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>M2 Corner Hole Pitch (6×8.125)</span>
+                        <span class="control-val"><span id="val-holeSpacing">48.75</span> mm</span>
+                    </div>
+                    <input type="range" id="input-holeSpacing" min="47.5" max="50.0" step="0.05" value="48.75">
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>M2 Self-Tapping Pilot Dia</span>
+                        <span class="control-val"><span id="val-m2HoleDia">1.75</span> mm</span>
+                    </div>
+                    <input type="range" id="input-m2HoleDia" min="1.50" max="2.40" step="0.05" value="1.75">
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Corner Vertex Wire Bore Dia</span>
+                        <span class="control-val"><span id="val-wireHoleDia">5.50</span> mm</span>
+                    </div>
+                    <input type="range" id="input-wireHoleDia" min="3.5" max="7.5" step="0.1" value="5.5">
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Exploded View Separation</span>
+                        <span class="control-val"><span id="val-explodedView">0.00</span></span>
+                    </div>
+                    <input type="range" id="input-explodedView" min="0.0" max="1.0" step="0.02" value="0.0">
+                </div>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" id="check-showGhostPcbs" checked>
+                    <span>Show 6× Ghost 8×8 WS2812B Panels</span>
+                </label>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" id="check-enableCornerWireBore" checked>
+                    <span>Enable Corner Vertex Wire Pass-Through</span>
+                </label>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" id="check-wireframe">
+                    <span>Show Wireframe Mesh Topology</span>
+                </label>
+            </div>
+
+            <!-- Section 3: STL Downloads -->
+            <div class="sidebar-section">
+                <div class="section-title">3. Export Production STLs (v2.0)</div>
+                <div class="export-btn-group">
+                    <button class="btn-export all" data-export="all_plate">
+                        <span>⚡ Download Full Bambu A1 Plate (.STL)</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export" data-export="cube_frame">
+                        <span>Hypercube Monocoque Frame v2 STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export pink" data-export="corner_stand">
+                        <span>Corner Wire-Channel Stand v2 STL</span>
+                        <span>&darr;</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 4: Hardware Reference -->
+            <div class="sidebar-section spec-box">
+                <div class="section-title">4. v2.0 Zero-Overhang Fixes</div>
+                <ul class="spec-list">
+                    <li><strong>Bottom (-Z) Bed Side:</strong> 100% flat square plate (no triangles, zero bed undercuts)</li>
+                    <li><strong>12 Cube Edges:</strong> Joined by solid 6.0 × 5.0 mm continuous structural beams</li>
+                    <li><strong>Interior Vault Roof:</strong> 48° diamond pyramid frustum (0.00 mm² flat ceiling!)</li>
+                    <li><strong>Corner Pad Reliefs:</strong> 52° octahedral dimples (zero support triggers)</li>
+                </ul>
+            </div>
+        </aside>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
