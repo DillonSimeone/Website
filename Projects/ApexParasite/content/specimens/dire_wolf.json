@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 2,
+  "id": "dire_wolf",
+  "displayName": "Dire Wolf Alpha",
+  "kind": "beast",
+  "template": "quadruped",
+  "art": {
+    "body": null,
+    "size": [1024, 640],
+    "keying": "none"
+  },
+  "patch": {
+    "heart": { "name": "Lupine Heart", "rarity": "epic", "pulseCost": 18, "presencePct": 95 },
+    "eyes": { "name": "Nightstalker Eyes", "rarity": "rare", "presencePct": 45, "yield": { "min": 1, "max": 2 }, "loot": "wolf_eye" },
+    "hide": { "name": "Thick Lupine Fur", "rarity": "common", "presencePct": 80, "loot": "wolf_pelt_core" }
+  },
+  "remove": ["liver"],
+  "add": [
+    {
+      "id": "canines",
+      "name": "Dire Wolf Canines",
+      "kind": "part",
+      "slotType": "head",
+      "region": "head",
+      "anchor": [140, 310],
+      "hitShape": { "type": "ellipse", "rx": 18, "ry": 14 },
+      "rarity": "uncommon",
+      "presencePct": 75,
+      "yield": { "min": 1, "max": 2 },
+      "pulseCost": 3,
+      "loot": "wolf_canine"
+    },
+    {
+      "id": "sinew",
+      "name": "Dire Spring Sinew",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "hindlegs",
+      "anchor": [760, 370],
+      "hitShape": { "type": "ellipse", "rx": 22, "ry": 15 },
+      "rarity": "uncommon",
+      "presencePct": 60,
+      "pulseCost": 4,
+      "loot": "beast_sinew"
+    },
+    {
+      "id": "alpha_gland",
+      "name": "Alpha Pheromone Gland",
+      "kind": "trait",
+      "slotType": "organ",
+      "region": "thorax",
+      "anchor": [380, 260],
+      "hitShape": { "type": "ellipse", "rx": 18, "ry": 14 },
+      "rarity": "epic",
+      "presencePct": 25,
+      "pulseCost": 10
+    }
+  ],
+  "loose": [],
+  "severable": [
+    { "id": "foreleg_l", "slotId": "foreleg_l" }
+  ],
+  "baseVitals": {
+    "pulse": 100
+  },
+  "feast": {
+    "baseCalories": 15,
+    "calories": 35,
+    "biomassExp": 4
+  }
+}

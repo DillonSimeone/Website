@@ -1,0 +1,141 @@
+{
+    "id": "negative-prompts",
+    "title": "Common Negatives",
+    "tags": [
+        {
+            "id": "lowres",
+            "label": "lowres",
+            "classes": []
+        },
+        {
+            "id": "bad_anatomy",
+            "label": "bad anatomy",
+            "classes": []
+        },
+        {
+            "id": "bad_hands",
+            "label": "bad hands",
+            "classes": []
+        },
+        {
+            "id": "text",
+            "label": "text",
+            "classes": []
+        },
+        {
+            "id": "error",
+            "label": "error",
+            "classes": []
+        },
+        {
+            "id": "missing_fingers",
+            "label": "missing fingers",
+            "classes": []
+        },
+        {
+            "id": "extra_digit",
+            "label": "extra digit",
+            "classes": []
+        },
+        {
+            "id": "fewer_digits",
+            "label": "fewer digits",
+            "classes": []
+        },
+        {
+            "id": "cropped",
+            "label": "cropped",
+            "classes": []
+        },
+        {
+            "id": "worst_quality",
+            "label": "worst quality",
+            "classes": []
+        },
+        {
+            "id": "low_quality",
+            "label": "low quality",
+            "classes": []
+        },
+        {
+            "id": "normal_quality",
+            "label": "normal quality",
+            "classes": []
+        },
+        {
+            "id": "jpeg_artifacts",
+            "label": "jpeg artifacts",
+            "classes": []
+        },
+        {
+            "id": "signature",
+            "label": "signature",
+            "classes": []
+        },
+        {
+            "id": "watermark",
+            "label": "watermark",
+            "classes": []
+        },
+        {
+            "id": "username",
+            "label": "username",
+            "classes": []
+        },
+        {
+            "id": "blurry",
+            "label": "blurry",
+            "classes": []
+        },
+        {
+            "id": "artist_name",
+            "label": "artist name",
+            "classes": []
+        },
+        {
+            "id": "ugly",
+            "label": "ugly",
+            "classes": []
+        },
+        {
+            "id": "deformed",
+            "label": "deformed",
+            "classes": []
+        },
+        {
+            "id": "mutated_hands",
+            "label": "mutated hands",
+            "classes": []
+        },
+        {
+            "id": "poorly_drawn_face",
+            "label": "poorly drawn face",
+            "classes": []
+        },
+        {
+            "id": "score_4",
+            "label": "score_4",
+            "classes": []
+        },
+        {
+            "id": "score_5",
+            "label": "score_5",
+            "classes": []
+        },
+        {
+            "id": "score_6",
+            "label": "score_6",
+            "classes": []
+        },
+        {
+            "id": "narrow",
+            "label": "narrow",
+            "classes": []
+        },
+        {
+            "id": "cramped",
+            "label": "cramped",
+            "classes": []
+        }
+    ]
+}

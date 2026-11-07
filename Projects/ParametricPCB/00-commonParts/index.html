@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametric PCB — Core Library & Footprints</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .module-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-top: 2rem;
+        }
+        .module-card {
+            background: rgba(13, 20, 36, 0.7);
+            border: 1px solid rgba(0, 243, 255, 0.25);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .module-name {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            color: #00f3ff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .module-desc {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+        .module-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(0, 243, 255, 0.1);
+            color: #00f3ff;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            width: fit-content;
+        }
+        .back-nav {
+            margin-bottom: 2rem;
+        }
+        .back-link {
+            color: #00f3ff;
+            text-decoration: none;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover {
+            color: #ffffff;
+            text-shadow: 0 0 10px #00f3ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanline"></div>
+
+    <div class="container">
+        <nav class="back-nav">
+            <a href="../index.html" class="back-link">
+                ← Back to Parametric PCB Studio
+            </a>
+        </nav>
+
+        <header>
+            <h1>Common Parts & EDA Engines</h1>
+            <div class="subtitle">Shared Core Compilers, Exporters & Component Footprints</div>
+        </header>
+
+        <div class="module-list">
+            <div class="module-card">
+                <div class="module-name">⚡ tscircuit-core.js</div>
+                <div class="module-desc">
+                    Local offline AST compiler, schematic generator, and rat's nest autorouter for browser-based declarative circuit design.
+                </div>
+                <span class="module-badge">Offline EDA Engine</span>
+            </div>
+
+            <div class="module-card">
+                <div class="module-name">🛠️ circuit-json-to-gerber.js</div>
+                <div class="module-desc">
+                    Gerber RS-274X copper layer exporter and Excellon NC drill generator for direct JLCPCB SMT manufacturing.
+                </div>
+                <span class="module-badge">CAM Generator</span>
+            </div>
+
+            <div class="module-card">
+                <div class="module-name">📐 circuit-json-to-kicad.js</div>
+                <div class="module-desc">
+                    Bi-directional exporter to standard KiCad PCB formats for desktop verification and advanced routing.
+                </div>
+                <span class="module-badge">KiCad Bridge</span>
+            </div>
+
+            <div class="module-card">
+                <div class="module-name">💡 Led / led.js</div>
+                <div class="module-desc">
+                    WS2812B-3535 / WS2812B-5050 addressable LED footprint models, solder mask geometries, and decoupling capacitor placements.
+                </div>
+                <span class="module-badge">Footprint Library</span>
+            </div>
+
+            <div class="module-card">
+                <div class="module-name">✍️ slogan.js & slogan-worker.js</div>
+                <div class="module-desc">
+                    High-contrast vector silkscreen and QR code generator for board branding, metadata, and BOM documentation.
+                </div>
+                <span class="module-badge">Silkscreen Typography</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

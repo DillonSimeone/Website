@@ -1,0 +1,280 @@
+:root {
+  --wood-color: #5c3e21; /* Walnut */
+  --metal-bg: linear-gradient(180deg, #323639 0%, #222527 100%);
+  --metal-highlight: #454a4f;
+  --display-green: #39ff14;
+  --led-red: #ff3333;
+  
+  --font-synth: 'Share Tech Mono', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #121314;
+  color: #a1a1aa;
+  font-family: var(--font-synth);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.synth-case {
+  display: flex;
+  width: 90%;
+  max-width: 800px;
+  height: 480px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Wood panels */
+.wood-panel {
+  width: 35px;
+  background: var(--wood-color);
+  background-image: linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.5) 100%);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  box-shadow: inset 1px 0 0 rgba(255,255,255,0.1), inset -1px 0 0 rgba(0,0,0,0.4);
+}
+
+.wood-left {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.wood-right {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+/* Metal deck console */
+.synth-deck {
+  flex-grow: 1;
+  background: var(--metal-bg);
+  border-top: 1px solid var(--metal-highlight);
+  box-shadow: inset 0 15px 30px rgba(0,0,0,0.4);
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.synth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #1a1c1e;
+  padding-bottom: 15px;
+}
+
+.hub-btn {
+  color: #fff;
+  text-decoration: none;
+  font-size: 11px;
+  border: 1px solid #444;
+  background: #111;
+  padding: 4px 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.hub-btn:hover {
+  background: #222;
+}
+
+.synth-logo {
+  font-size: 1.3rem;
+  font-weight: normal;
+  color: #fff;
+  letter-spacing: 2px;
+  margin: 0;
+}
+
+.led-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.led-bulb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #222;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
+}
+
+.led-red.active {
+  background-color: var(--led-red);
+  box-shadow: 0 0 8px var(--led-red), inset 0 1px 1px rgba(255,255,255,0.4);
+}
+
+.led-label {
+  font-size: 10px;
+  color: #888;
+}
+
+/* Controls Knobs & Faders */
+.synth-controls {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-grow: 1;
+  padding: 20px 0;
+}
+
+.control-station {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-station label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #aaa;
+}
+
+.knob-wrapper {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #151718;
+  border: 2px solid #111;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.synth-knob {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #454a4f 0%, #1c1d1f 100%);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+  position: relative;
+  cursor: grab;
+  transform: rotate(-135deg); /* -135deg to +135deg range */
+}
+
+.synth-knob:active {
+  cursor: grabbing;
+}
+
+.knob-pointer {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 14px;
+  background-color: #fff;
+  border-radius: 2px;
+}
+
+/* Volume Fader */
+.fader-track {
+  width: 20px;
+  height: 90px;
+  background: #111;
+  border-radius: 4px;
+  position: relative;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.fader-groove {
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 80px;
+  background-color: #000;
+}
+
+.fader-handle {
+  position: absolute;
+  left: 50%;
+  bottom: 60px; /* 0px to 68px range */
+  transform: translateX(-50%);
+  width: 32px;
+  height: 18px;
+  background: linear-gradient(180deg, #5c6267 0%, #222 100%);
+  border: 1px solid #111;
+  border-radius: 3px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  cursor: row-resize;
+}
+
+.fader-handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--led-red);
+  transform: translateY(-50%);
+}
+
+.value-readout {
+  background: #0d0e0f;
+  border: 1px solid #222;
+  color: var(--display-green);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* Keybed */
+.synth-keys {
+  display: flex;
+  height: 130px;
+  background-color: #000;
+  padding-top: 4px;
+  position: relative;
+  box-shadow: inset 0 8px 10px rgba(0,0,0,0.7);
+}
+
+.key {
+  cursor: pointer;
+}
+
+.key.white {
+  flex-grow: 1;
+  background: linear-gradient(180deg, #f0f0f0 0%, #ffffff 100%);
+  border: 1px solid #aaa;
+  border-bottom: 4px solid #ddd;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  z-index: 1;
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.key.white:active, .key.white.active {
+  background: #e0e0e0;
+  border-bottom: 1px solid #888;
+  height: 127px;
+}
+
+.key.black {
+  width: 24px;
+  height: 80px;
+  background: linear-gradient(180deg, #333 0%, #000 100%);
+  border: 1px solid #000;
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+  margin-left: -12px;
+  margin-right: -12px;
+  z-index: 2;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+}
+
+.key.black:active, .key.black.active {
+  background: #111;
+  height: 78px;
+}

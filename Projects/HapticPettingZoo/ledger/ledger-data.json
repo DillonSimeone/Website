@@ -1,0 +1,512 @@
+{
+  "metadata": {
+    "project_title": "The Haptic Petting Zoo: Tactile Sound & Open Kinetic Hardware",
+    "lead_artist_and_pi": "Dillon Simeone",
+    "fiscal_sponsor": "PDX Hackerspace (Control+H)",
+    "grantor": "Oregon Community Foundation (OCF) Creative Heights",
+    "total_grant_award": 96000.00,
+    "fiscal_sponsor_fee_rate": 0.05,
+    "fiscal_sponsor_fee_amount": 4800.00,
+    "direct_project_cap": 91200.00,
+    "disbursement_current_in_hand": 20000.00,
+    "actual_spent_to_date": 96.72,
+    "current_calendar_year": 2026,
+    "tax_status": "Sole Proprietorship / Cash-Basis Schedule C (Form 1040)",
+    "last_updated": "2026-11-06T18:20:00-08:00",
+    "notes": "Direct Project costs capped at $91,200.00 under Exhibit B. Split-receipt itemization active in purchases_log to strictly isolate eligible Haptic Zoo expenses from personal/other project items on shared vendor orders."
+  },
+  "disbursements": [
+    {
+      "milestone_number": 1,
+      "title": "Execution of Agreement & Delivery of Form W-9",
+      "target_date": "2026-09-11",
+      "amount": 20000.00,
+      "status": "received",
+      "received_date": "2026-09-15",
+      "conditions": "Signed Fiscal Sponsorship & Exhibit B contract, delivery of W-9 to Sponsor.",
+      "notes": "Working capital in hand for initial tooling, Q4 2026 R&D, prototype assembly, and 11/11 bulk hardware procurement."
+    },
+    {
+      "milestone_number": 2,
+      "title": "Completion of Prototyping Phase",
+      "target_date": "2027-01-31",
+      "amount": 20000.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "Validation of core multi-sensory transit prototype (Nov 14 Control+H preview & Dec 12 CymaSpace reveal), firmware architecture, and enclosure feasibility.",
+      "notes": "Targeted for January 2027 to shelter 2026 income and avoid unnecessary 2026 SE/income tax liability."
+    },
+    {
+      "milestone_number": 3,
+      "title": "Fabrication Midpoint & OCF Midpoint Interview",
+      "target_date": "2027-04-30",
+      "amount": 20000.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "50% hardware assembly completed at Control+H, OCF mid-term progress interview.",
+      "notes": "Unlocks primary maker stipends and batch component assembly."
+    },
+    {
+      "milestone_number": 4,
+      "title": "Final Assembly & Calibration Complete",
+      "target_date": "2027-06-30",
+      "amount": 15000.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "All 10 interactive touring stations fabricated, wired, calibrated, and field-tested.",
+      "notes": "Final integration of Pelican Air transit hardware."
+    },
+    {
+      "milestone_number": 5,
+      "title": "Public Exhibition Debut",
+      "target_date": "2027-08-31",
+      "amount": 12000.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "Formal public touring premiere in Oregon with community partners.",
+      "notes": "Kickoff of 2-year statewide tour."
+    },
+    {
+      "milestone_number": 6,
+      "title": "Phase 1 Fabrication Accounting Delivered to Sponsor",
+      "target_date": "2027-10-31",
+      "amount": 4200.00,
+      "status": "pending",
+      "received_date": null,
+      "conditions": "Comprehensive manufacturing receipts, BOM reconciliation, and financial report submitted to Sponsor.",
+      "notes": "Final closeout of Phase 1 build budget."
+    }
+  ],
+  "budget_categories": [
+    {
+      "line_number": 1,
+      "name": "Artist Fees & Project Direction",
+      "scope": "Lead Artist & Principal Investigator (Dillon Simeone)",
+      "allocated": 35000.00,
+      "committed_value": 4000.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 35000.00,
+      "progress_percent": 11.4,
+      "notes": "Tracked via value-based milestone progress (50.0 hrs logged across 8 weeks at ~6.2 hrs/wk during Q4 college wrap-up; no public $/hr rates). Strict separation maintained from NEA/CymaSpace billed hours."
+    },
+    {
+      "line_number": 2,
+      "name": "Production & Fabricator Stipends",
+      "scope": "Stipends for technicians, fabricators, soft-goods & accessibility specialists (Note 1)",
+      "allocated": 18000.00,
+      "committed_value": 0.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 18000.00,
+      "progress_percent": 0.0,
+      "notes": "Covers maker stipends and sponsored memberships at Control+H. Recruiting kicks off Saturday Nov 14 at the space."
+    },
+    {
+      "line_number": 3,
+      "name": "Materials, Actuators & Components",
+      "scope": "Custom PCBs, solenoids, Peltiers, vibration motors, microcontrollers, drivers, 3D filament & finishes",
+      "allocated": 16500.00,
+      "committed_value": 1525.83,
+      "actual_withdrawn": 68.83,
+      "remaining": 16431.17,
+      "progress_percent": 9.2,
+      "notes": "$68.83 actual spent (4x PLA Black filament, Rust-Oleum Iridescent Color Shift finish, Hosyond 2.8\" ESP32 Touch Display) + $1,457.00 reserved for 11/11 bulk order & JLCPCB PCBA."
+    },
+    {
+      "line_number": 4,
+      "name": "Tour Equipment & Transit Cases",
+      "scope": "Ruggedized cases (Pelican/Apache/MEIJIA equivalents) & custom internal CNC frames",
+      "allocated": 6500.00,
+      "committed_value": 447.89,
+      "actual_withdrawn": 27.89,
+      "remaining": 6472.11,
+      "progress_percent": 6.9,
+      "notes": "$27.89 actual spent (MEIJIA Waterproof Hard Case for Prototype #1) + $420.00 reserved for remaining transit cases and mounting hardware."
+    },
+    {
+      "line_number": 5,
+      "name": "Tour Logistics, Travel & Shipping",
+      "scope": "2-year Oregon transit, venue support, and commercial liability insurance (Note 2)",
+      "allocated": 7700.00,
+      "committed_value": 0.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 7700.00,
+      "progress_percent": 0.0,
+      "notes": "Includes the $200 unallocated surplus roll-in from Memo."
+    },
+    {
+      "line_number": 6,
+      "name": "Media, Video & ASL Production",
+      "scope": "High-speed macro capture, Deaf-led media, and accessible ASL documentation",
+      "allocated": 4500.00,
+      "committed_value": 0.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 4500.00,
+      "progress_percent": 0.0,
+      "notes": "Scheduled for video documentation leading up to exhibition debut."
+    },
+    {
+      "line_number": 7,
+      "name": "Hardware Maintenance Reserve",
+      "scope": "Field repairs, spares, and wear replacement stock across 2-year tour",
+      "allocated": 3000.00,
+      "committed_value": 0.00,
+      "actual_withdrawn": 0.00,
+      "remaining": 3000.00,
+      "progress_percent": 0.0,
+      "notes": "Held in reserve for replacement tactile transducers during regional tour."
+    }
+  ],
+  "purchases_log": [
+    {
+      "purchase_id": "EXP-001",
+      "order_date": "2026-11-02",
+      "vendor": "Amazon (iSANGHU)",
+      "order_number": "113-1851932-7557011",
+      "payment_method": "Charles Schwab Bank •••• 6868",
+      "item_description": "3D Printer Filament PLA Black 1.75mm for Bambu Lab AMS (High Toughness Functional Parts)",
+      "quantity": 4,
+      "unit_cost": 9.99,
+      "zoo_charged_amount": 39.96,
+      "receipt_grand_total": 52.84,
+      "excluded_personal_amount": 0.00,
+      "excluded_note": "Shared receipt with EXP-002 ($39.96 + $12.88 = $52.84 total).",
+      "budget_line": 3,
+      "status": "Delivered Nov 3, 2026",
+      "receipt_file": "./receipts/2026-11-02_amz_113-1851932-7557011_pla-paint.png",
+      "purpose": "Structural 3D printed critter shells, internal actuator mounts, and prototype deck brackets."
+    },
+    {
+      "purchase_id": "EXP-002",
+      "order_date": "2026-11-02",
+      "vendor": "Amazon.com",
+      "order_number": "113-1851932-7557011",
+      "payment_method": "Charles Schwab Bank •••• 6868",
+      "item_description": "Rust-Oleum Color Shift Iridescent Shimmer Spray Paint (Color Changing Finish, 11 Oz)",
+      "quantity": 1,
+      "unit_cost": 12.88,
+      "zoo_charged_amount": 12.88,
+      "receipt_grand_total": 52.84,
+      "excluded_personal_amount": 0.00,
+      "excluded_note": "Shared receipt with EXP-001 ($39.96 + $12.88 = $52.84 total).",
+      "budget_line": 3,
+      "status": "Delivered Nov 4, 2026",
+      "receipt_file": "./receipts/2026-11-02_amz_113-1851932-7557011_pla-paint.png",
+      "purpose": "Multi-angle iridescent visual finish over black PLA tactile critters for Prototype #1."
+    },
+    {
+      "purchase_id": "EXP-003",
+      "order_date": "2026-11-06",
+      "vendor": "Amazon (HONGXINBAORUI)",
+      "order_number": "113-1464764-0855402",
+      "payment_method": "Charles Schwab Bank •••• 6868",
+      "item_description": "Hosyond 2.8\" ESP32 Display Resistive Touch Screen with WiFi+BT, ILI9341 Driver 240x320 TFT LCD Module",
+      "quantity": 1,
+      "unit_cost": 15.99,
+      "zoo_charged_amount": 15.99,
+      "receipt_grand_total": 51.86,
+      "excluded_personal_amount": 7.98,
+      "excluded_note": "Excluded $7.98 woshilaoDS 1140 Pcs M1.4–M3 Tiny Screws kit (allocated to other projects). Zoo portion of receipt: $43.88.",
+      "budget_line": 3,
+      "status": "Arriving Nov 12–18, 2026",
+      "receipt_file": "./receipts/2026-11-06_amz_113-1464764-0855402_case-esp32.jpg",
+      "purpose": "Interactive visual telemetry & touch control screen for Haptic Petting Zoo station controller."
+    },
+    {
+      "purchase_id": "EXP-004",
+      "order_date": "2026-11-06",
+      "vendor": "Amazon (Meiqi)",
+      "order_number": "113-1464764-0855402",
+      "payment_method": "Charles Schwab Bank •••• 6868",
+      "item_description": "MEIJIA Portable All Weather Waterproof Protective Hard Case with Customizable Foam (11.65\"x8.35\"x3.78\", Green)",
+      "quantity": 1,
+      "unit_cost": 27.89,
+      "zoo_charged_amount": 27.89,
+      "receipt_grand_total": 51.86,
+      "excluded_personal_amount": 7.98,
+      "excluded_note": "Excluded $7.98 woshilaoDS 1140 Pcs M1.4–M3 Tiny Screws kit (allocated to other projects). Zoo portion of receipt: $43.88.",
+      "budget_line": 4,
+      "status": "Arriving Nov 12–18, 2026",
+      "receipt_file": "./receipts/2026-11-06_amz_113-1464764-0855402_case-esp32.jpg",
+      "purpose": "Ruggedized portable enclosure for Prototype #1 (Nov 14 Control+H recruitment demo & Dec 12 CymaSpace reveal)."
+    }
+  ],
+  "activities_log": [
+    {
+      "id": "ACT-001",
+      "date": "2026-09-09 to 09-11",
+      "phase": "Milestone 1",
+      "category": "Grant Administration & Legal",
+      "title": "Fiscal Sponsorship & Exhibit B Budget Finalization",
+      "description": "Reviewed and executed Fiscal Sponsorship Agreement with Jonathan Hannis (PDX Hackerspace / Control+H). Finalized Exhibit B Direct Costs budget ($91,200 cap), drafted Grantee Review Response Memo resolving the $200 unallocated line item to Line 5, and submitted Form W-9.",
+      "hours": 4.0,
+      "target_milestone": 1,
+      "burn_credit_usd": 320.00,
+      "links": [
+        { "label": "📄 Exhibit B Budget (PDF)", "url": "../PDXH_HapticPettingZoo_ProjectBudget_Exhibit_B.pdf" },
+        { "label": "📝 Grantee Review Memo", "url": "../Grantee_Review_Response_Memo.md" }
+      ]
+    },
+    {
+      "id": "ACT-002",
+      "date": "2026-09-24",
+      "phase": "Milestone 1",
+      "category": "Sponsor & Funder Alignment",
+      "title": "OCF Strategic Check-in & Teleprompter Roadmapping",
+      "description": "Prepared interactive OCF Check-in Teleprompter HUD and conducted one-on-one strategic alignment meeting with Chey at Oregon Community Foundation. Outlined Q4 2026 low-burn prototyping during college degree completion, Q1 2027 full fabrication ramp, and rural Oregon tour venue matchmaking.",
+      "hours": 1.5,
+      "target_milestone": 1,
+      "burn_credit_usd": 120.00,
+      "links": [
+        { "label": "🖥️ OCF Teleprompter Cheat Sheet", "url": "../ocf_meeting_notes.html" }
+      ]
+    },
+    {
+      "id": "ACT-003",
+      "date": "2026-10-01 to 10-02",
+      "phase": "Milestone 1",
+      "category": "Community Outreach & Curatorial",
+      "title": "Corvallis Kaleidoscope, PRAx & OSU Graand Kinetic Challenge Proposal",
+      "description": "Drafted and submitted Deaf-led science festival proposal with Susan Anderson (CymaSpace) to Corvallis Kaleidoscope & OSU Graand Kinetic Challenge (currently in committee review with Stacey & Heather). Proposed 'Torque, Resonance & Light' kinetic gear train + tactile frequency station.",
+      "hours": 3.0,
+      "target_milestone": 1,
+      "burn_credit_usd": 240.00,
+      "links": [
+        { "label": "📰 Festival Proposal Dispatch", "url": "../index.html" }
+      ]
+    },
+    {
+      "id": "ACT-004",
+      "date": "2026-10-12 to 10-14",
+      "phase": "Milestone 1",
+      "category": "STEAM Education & Grants",
+      "title": "World Deaf Timberfest (WDT) 100-Kid Solderless STEM Workshop Scoping",
+      "description": "Negotiated workshop scope with WDT organizers, securing initial $1,000 budget commitment to lead a hands-on tactile STEM workshop for 100 Deaf youth. Architected solderless plug-and-play kit assembly (eliminating hot soldering iron hazards while students sign in ASL).",
+      "hours": 5.0,
+      "target_milestone": 1,
+      "burn_credit_usd": 400.00,
+      "links": [
+        { "label": "🏕️ World Deaf Timberfest", "url": "https://www.wdtcamp.org/" }
+      ]
+    },
+    {
+      "id": "ACT-005",
+      "date": "2026-10-20 to 10-22",
+      "phase": "Milestone 1",
+      "category": "Public Engagement & Web Systems",
+      "title": "The Portland Tactile Dispatch Web Portal & Frequency Synthesizer",
+      "description": "Adapted modular codebase components into a standalone, mobile-responsive broadsheet news-gazette portal. Integrated interactive Web Audio canvas frequency synthesizer (5Hz–300Hz mechanoreceptor mapping), Teardown 2026 video showcase, and pre-filled mailto: onboarding for Control+H makers.",
+      "hours": 6.0,
+      "target_milestone": 1,
+      "burn_credit_usd": 480.00,
+      "links": [
+        { "label": "🗞️ Portland Tactile Dispatch", "url": "../index.html" }
+      ]
+    },
+    {
+      "id": "ACT-006",
+      "date": "2026-10-24 to 10-27",
+      "phase": "Milestone 2 Prep",
+      "category": "DSP Firmware & At-Home Haptics",
+      "title": "Glue Audio-to-Haptics PWM Synthesizer & Zero-Hardware Smartphone Zoo R&D",
+      "description": "Engineered real-time sub-bass transient detector, 155Hz LRA resonant hold math (90ms envelope + non-linear velocity S-curve), and 48123 UDP waveform telemetry HUD. Serves both as the core audio-to-haptic DSP testbed for the Haptic Zoo and an accessible 'Bring-Your-Own-Smartphone Mini-Haptic Zoo' so anyone can experience tactile sound physics at home without extra gear.",
+      "hours": 11.0,
+      "target_milestone": 2,
+      "burn_credit_usd": 880.00,
+      "links": [
+        { "label": "⚡ Glue Audio-Haptics & Daemon HUD", "url": "/Glue/index.html" }
+      ]
+    },
+    {
+      "id": "ACT-007",
+      "date": "2026-10-28 to 10-30",
+      "phase": "Milestone 2 Prep",
+      "category": "Hardware & PCB Engineering",
+      "title": "Parametric Tactile Controller PCB & Web Configurator (38x38mm Square PCBA)",
+      "description": "Designed and verified the 38x38mm Compact Audio-Motion Square PCB featuring dual AO3400A low-side MOSFET haptic PWM drivers, flyback protection, dual mics, and 3D/2D browser-based parametric configurator—enabling Control+H collaborators to customize and export turnkey JLCPCB SMT boards without hand-soldering tiny SOT-23 packages.",
+      "hours": 8.0,
+      "target_milestone": 2,
+      "burn_credit_usd": 640.00,
+      "links": [
+        { "label": "🎛️ 38x38mm Haptic PCB Configurator", "url": "/Projects/ParametricPCB/03-compactAudioMotionSquarePCB/index.html" }
+      ]
+    },
+    {
+      "id": "ACT-008",
+      "date": "2026-10-30 to 10-31",
+      "phase": "Milestone 2 Prep",
+      "category": "Hardware R&D & Procurement",
+      "title": "Pelican Lid Vision Architecture & 11/11 Bulk BOM Sourcing",
+      "description": "Architected overhead lid spatial tracking (ESP32-S3-CAM + VL53L1X ToF failover across 3 proximity zones) and sourced the 11/11 bulk hardware BOM for 100 solderless WDT youth kits and Dec 12 prototype critters.",
+      "hours": 4.0,
+      "target_milestone": 2,
+      "burn_credit_usd": 320.00,
+      "links": [
+        { "label": "🛍️ 11/11 BOM Pipeline", "url": "#tab-procurement" }
+      ]
+    },
+    {
+      "id": "ACT-009",
+      "date": "2026-11-01 to 11-04",
+      "phase": "Milestone 2 Prep",
+      "category": "Grants, Exhibitions & Outreach",
+      "title": "Hacker Initiative Grant ($2k), Teardown 2027, CES 2027 & Haptic Dinner Portal",
+      "description": "Submitted 'The Haptic Zoo Explorer' $2,000 grant application to The Hacker Initiative (~1.0 hr). Submitted Haptic Petting Zoo proposal to Crowd Supply Teardown 2027 ($210 pass secured), coordinated CES 2027 booth outreach, and built the Dec 12 CymaSpace Haptic Dinner reservation portal & flyer with Control+H cross-promotion (~3.5 hrs). Note: 15 hrs for HHF Magazine article & Creston Deaf classroom workshop are billed under NEA/CymaSpace and excluded here.",
+      "hours": 4.5,
+      "target_milestone": 2,
+      "burn_credit_usd": 360.00,
+      "links": [
+        { "label": "🎟️ Dec 12 Haptic Dinner Portal", "url": "/Projects/HapticDinner/ticket.html" },
+        { "label": "🛡️ The Hacker Initiative", "url": "https://hackerinitiative.org/" },
+        { "label": "📖 The Frequency Below (OCF Credit)", "url": "https://dillon-simeone.itch.io/the-frequency-below" }
+      ]
+    },
+    {
+      "id": "ACT-010",
+      "date": "2026-11-06",
+      "phase": "Milestone 2 Prep",
+      "category": "Prototype Assembly & Space Prep",
+      "title": "Prototype #1 3D Printing, Iridescent Finishing & Bench Verification",
+      "description": "Ordered MEIJIA waterproof enclosure and 2.8\" ESP32 touch display; received 4x spools of functional black PLA and Rust-Oleum iridescent color-shift spray finish. Verified 38x38mm Square PCBA traces on the bench and started printing/finishing Prototype #1 using existing lab hardware ahead of the Saturday Nov 14 Control+H showcase (carpooling from Philomath with Control+H President Jonathan Hannis).",
+      "hours": 3.0,
+      "target_milestone": 2,
+      "burn_credit_usd": 240.00,
+      "links": [
+        { "label": "🧾 View Amazon Receipts", "url": "#tab-purchases" }
+      ]
+    }
+  ],
+  "procurement_pipeline": {
+    "target_event": "11/11 Global Shopping Festival (AliExpress & JLCPCB SMT)",
+    "target_spend_budget": 1877.00,
+    "source_disbursement": "Milestone 1 ($20,000 in hand)",
+    "items": [
+      {
+        "item_id": "PROC-01",
+        "description": "ESP32-S3-CAM Dev Boards (N16R8 / OV2640 / Ext Antenna)",
+        "quantity": 15,
+        "est_unit_cost": 6.80,
+        "est_total_cost": 102.00,
+        "budget_line": 3,
+        "intended_use": "Overhead lid spatial computer vision & interactive station DSP controllers"
+      },
+      {
+        "item_id": "PROC-02",
+        "description": "ESP32-C3 SuperMini RISC-V Microcontrollers (Pre-Soldered Header Pins)",
+        "quantity": 120,
+        "est_unit_cost": 1.95,
+        "est_total_cost": 234.00,
+        "budget_line": 3,
+        "intended_use": "100-kid WDT 'Haptic Zoo Explorer' solderless STEM kits + satellite critter nodes"
+      },
+      {
+        "item_id": "PROC-03",
+        "description": "5V Coin Vibration Motors (ERM 1027/1030) w/ Pre-Crimped 2-Pin JST-PH 2.0mm Plugs",
+        "quantity": 300,
+        "est_unit_cost": 0.48,
+        "est_total_cost": 144.00,
+        "budget_line": 3,
+        "intended_use": "Plug-and-play motors (3x per WDT Deaf youth kit — zero soldering hazard) + Dec 12 prototype critters"
+      },
+      {
+        "item_id": "PROC-04",
+        "description": "VL53L1X Time-of-Flight (ToF) Distance Sensors (400cm range)",
+        "quantity": 20,
+        "est_unit_cost": 3.10,
+        "est_total_cost": 62.00,
+        "budget_line": 3,
+        "intended_use": "Touch/proximity failover sensors for variable ambient venue lighting"
+      },
+      {
+        "item_id": "PROC-05",
+        "description": "Solderless JST-PH 2.0mm & Dupont Pre-Crimped Wire Harnesses + Socket Headers + Turnkey SMT PCBA Drivers",
+        "quantity": 120,
+        "est_unit_cost": 0.85,
+        "est_total_cost": 102.00,
+        "budget_line": 3,
+        "intended_use": "Replaces loose SOT-23 AO3400A breakouts: uses factory-assembled JLCPCB SMT MOSFET driver boards (03-compactAudioMotionSquarePCB / Mini-Zoo Explorer PCBA) with plug-in JST/Dupont harnesses so Deaf students never handle hot soldering irons while signing"
+      },
+      {
+        "item_id": "PROC-06",
+        "description": "Tactile Bass Exciters & Bone Conduction Transducers (4Ω 25W)",
+        "quantity": 10,
+        "est_unit_cost": 18.50,
+        "est_total_cost": 185.00,
+        "budget_line": 3,
+        "intended_use": "Deep acoustic resonance surfaces and tactile bench installations"
+      },
+      {
+        "item_id": "PROC-07",
+        "description": "Thermoelectric Peltier Modules (TEC1-12706) & Dual H-Bridges",
+        "quantity": 10,
+        "est_unit_cost": 7.20,
+        "est_total_cost": 72.00,
+        "budget_line": 3,
+        "intended_use": "Dynamic thermal skin sensations (hot/cold tactile modulation)"
+      },
+      {
+        "item_id": "PROC-08",
+        "description": "5V/12V Push-Pull Solenoids & High-Transient Tappers",
+        "quantity": 12,
+        "est_unit_cost": 4.80,
+        "est_total_cost": 57.60,
+        "budget_line": 3,
+        "intended_use": "Sharp mechanical recoil and percussive tactile feedback"
+      },
+      {
+        "item_id": "PROC-09",
+        "description": "Heavy-Duty Waterproof Weatherproof Transit Cases (Pelican/Apache/MEIJIA equiv)",
+        "quantity": 4,
+        "est_unit_cost": 85.00,
+        "est_total_cost": 340.00,
+        "budget_line": 4,
+        "intended_use": "Rugged touring enclosures for Dec 12 prototype and initial 3 stations"
+      },
+      {
+        "item_id": "PROC-10",
+        "description": "USB-C PD Decoy Trigger Boards (5V/9V/12V) + Pre-Crimped JST-XH Power Leads",
+        "quantity": 60,
+        "est_unit_cost": 1.20,
+        "est_total_cost": 72.00,
+        "budget_line": 3,
+        "intended_use": "Clean universal power delivery from standard USB-C battery packs"
+      },
+      {
+        "item_id": "PROC-11",
+        "description": "Neodymium Mounting Magnets, Silicone Dampers & Quick-Release Hardware",
+        "quantity": 1,
+        "est_unit_cost": 95.00,
+        "est_total_cost": 95.00,
+        "budget_line": 4,
+        "intended_use": "Modular tactile plate mounting and vibration isolation"
+      }
+    ]
+  },
+  "external_matching_pipelines": [
+    {
+      "program": "World Deaf Timberfest (WDT) 2027 & The Hacker Initiative",
+      "focus": "'The Haptic Zoo Explorer' — 100-Kid Deaf Youth Solderless Tactile STEM Workshop",
+      "direct_funding_committed": 1000.00,
+      "potential_additional": 2000.00,
+      "synergy": "$1,000 WDT match secured + $2,000 application submitted to The Hacker Initiative (hackerinitiative.org). Miniaturizes Haptic Zoo research into solderless plug-and-play take-home kits so Deaf students can safely communicate in ASL without hot soldering irons."
+    },
+    {
+      "program": "National Endowment for the Arts (NEA) Arts Education & Hearing Health Foundation",
+      "focus": "K-12 DHH STEAM Curriculum, Creston Deaf Classroom Workshop & HHF National Magazine Feature",
+      "grant_request": 100000.00,
+      "matching_funds_committed": 120665.00,
+      "synergy": "OCF hardware R&D and HAXEL firmware serve as eligible matching cost-share funds. Amplified by nationwide print/web publication in Hearing Health Foundation Magazine (15 hrs billed via NEA) and live classroom testing at Creston School."
+    },
+    {
+      "program": "Corvallis Kaleidoscope / PRAx / Graand Kinetic Challenge",
+      "focus": "Torque, Resonance & Light Kinetic Gear Train & Statewide AV Accessibility Audit",
+      "status": "In Committee Review (Stacey / GKC & Heather)",
+      "synergy": "High-profile campus science festival showcase highlighting Deaf-led kinetic and tactile engineering."
+    },
+    {
+      "program": "Crowd Supply Teardown 2027, CES 2027 & CymaSpace Haptic Dinner (Dec 12)",
+      "focus": "National Hardware Conferences, Public Prototype Reveal & OCF Book Attribution ('The Frequency Below')",
+      "status": "Teardown 2027 Submitted ($210 Pass Secured) | Dec 12 Woodstock Cafe Live",
+      "synergy": "Dec 12 Haptic Dinner at CymaSpace serves as the live Milestone 2 field test for Prototype #1 (with Control+H cross-promotion), scaling toward CES 2027 booth outreach, Teardown 2027, and OCF credit in Dillon's debut novel 'The Frequency Below'."
+    }
+  ]
+}

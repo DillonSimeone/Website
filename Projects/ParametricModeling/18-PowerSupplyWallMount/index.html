@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>18 — ALITOVE 5V 60A PSU Wall Mount Bracket (Parametric CAD)</title>
+    <meta name="description"
+        content="Heavy-duty U-bracket with solid flat floor, front bridge, 6 side screw slots, and lightweight honeycomb lattice for ALITOVE 5V 60A 300W LED power supplies.">
+    
+    <!-- Browser Import Map for Three.js -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <!-- Google Fonts for Cyber Blueprint Aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="blueprint-border"></div>
+
+    <!-- Header Block -->
+    <header>
+        <div class="title-block">
+            <span class="drawing-number">CAD-18</span>
+            <div>
+                <h1>ALITOVE 5V 60A PSU U-BRACKET</h1>
+                <div class="tags-row" style="margin-top: 4px;">
+                    <span class="tag accent">300W S-300-5</span>
+                    <span class="tag">113×52mm CHASSIS</span>
+                    <span class="tag orange">HONEYCOMB SPEED LATTICE</span>
+                    <span class="tag">SOLID FLAT FLOOR</span>
+                    <span class="tag">FRONT BRIDGE</span>
+                    <span class="tag">6× SIDE SCREW SLOTS</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-status">
+            <div class="status-dot"></div>
+            <span>KERNEL: <span id="kernel-status">INITIALIZING...</span></span>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+        <!-- Left Panel: Parameter Controls -->
+        <aside class="panel">
+            <div class="panel-header">U-BRACKET DESIGN CONTROLS</div>
+            <div class="panel-content">
+                <!-- Group 1: PSU Dimensions -->
+                <div class="control-group">
+                    <div class="control-group-title">1. PSU Metal Brick Dimensions</div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">PSU Width Across (mm)</span>
+                            <span class="param-value"><span id="val-psuWidth">113.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-psuWidth" min="100.0" max="130.0" step="0.5" value="113.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">PSU Depth / Thickness (mm)</span>
+                            <span class="param-value"><span id="val-psuDepth">52.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-psuDepth" min="40.0" max="65.0" step="0.5" value="52.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Top Slide-In Kerf Clearance (mm)</span>
+                            <span class="param-value"><span id="val-clearance">1.2</span> mm</span>
+                        </div>
+                        <input type="range" id="input-clearance" min="0.4" max="2.5" step="0.1" value="1.2">
+                    </div>
+                </div>
+
+                <!-- Group 2: U-Bracket & Front Bridge -->
+                <div class="control-group">
+                    <div class="control-group-title lime">2. U-Bracket &amp; Front Bridge</div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Bracket Overall Height (mm)</span>
+                            <span class="param-value"><span id="val-bracketHeight">110.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-bracketHeight" min="70.0" max="150.0" step="2.0" value="110.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Front Bridge Band Height (mm)</span>
+                            <span class="param-value"><span id="val-bridgeHeight">35.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-bridgeHeight" min="20.0" max="60.0" step="2.0" value="35.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Bridge Vertical Elevation (mm)</span>
+                            <span class="param-value"><span id="val-bridgeElevation">25.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-bridgeElevation" min="10.0" max="50.0" step="1.0" value="25.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Flat Bottom Floor Thickness (mm)</span>
+                            <span class="param-value"><span id="val-floorThickness">5.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-floorThickness" min="3.0" max="8.0" step="0.5" value="5.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Side Flange Width (Drill Clearance) (mm)</span>
+                            <span class="param-value"><span id="val-flangeWidth">18.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-flangeWidth" min="14.0" max="28.0" step="1.0" value="18.0">
+                    </div>
+                </div>
+
+                <!-- Group 3: Honeycomb Lattice (Speed Optimization) -->
+                <div class="control-group">
+                    <div class="control-group-title orange">3. Honeycomb Lattice (Speed Up Print)</div>
+
+                    <div class="param-row">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.75rem; font-weight: bold; color: var(--bp-accent-orange);">
+                            <input type="checkbox" id="check-honeycomb" checked>
+                            Enable Honeycomb Cutouts (-42% Print Time)
+                        </label>
+                    </div>
+
+                    <div class="param-row" style="margin-top: 8px;">
+                        <div class="param-info">
+                            <span class="param-label">Hexagon Cell Radius (mm)</span>
+                            <span class="param-value"><span id="val-honeycombRadius">7.5</span> mm</span>
+                        </div>
+                        <input type="range" id="input-honeycombRadius" min="5.0" max="12.0" step="0.5" value="7.5">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Rib Web Thickness (mm)</span>
+                            <span class="param-value"><span id="val-honeycombRib">3.8</span> mm</span>
+                        </div>
+                        <input type="range" id="input-honeycombRib" min="2.8" max="6.0" step="0.2" value="3.8">
+                    </div>
+                </div>
+
+                <!-- Group 4: 6 Side Screw Slots -->
+                <div class="control-group">
+                    <div class="control-group-title lime">4. 6 Side Wall-Mounting Slots</div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Screw Slot Width (#8/M4) (mm)</span>
+                            <span class="param-value"><span id="val-screwSlotWidth">4.8</span> mm</span>
+                        </div>
+                        <input type="range" id="input-screwSlotWidth" min="3.5" max="6.5" step="0.1" value="4.8">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info">
+                            <span class="param-label">Screw Slot Vertical Travel (mm)</span>
+                            <span class="param-value"><span id="val-screwSlotLength">12.0</span> mm</span>
+                        </div>
+                        <input type="range" id="input-screwSlotLength" min="6.0" max="20.0" step="1.0" value="12.0">
+                    </div>
+                </div>
+
+                <!-- Group 5: Hardware Presets & View Controls -->
+                <div class="control-group">
+                    <div class="control-group-title">5. Presets &amp; Rendering</div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Hardware Presets</span></div>
+                        <div class="btn-grid">
+                            <button class="btn" id="btn-preset-alitove">ALITOVE 300W</button>
+                            <button class="btn" id="btn-preset-meanwell">Mean Well 350W</button>
+                            <button class="btn" id="btn-preset-speed">Speed Print</button>
+                            <button class="btn" id="btn-preset-solid">Solid (No Hex)</button>
+                        </div>
+                    </div>
+
+                    <div class="param-row" style="margin-top: 10px;">
+                        <div class="param-info"><span class="param-label">Render Mode</span></div>
+                        <div class="btn-grid">
+                            <button class="btn active" id="btn-render-mode">Neon Glass</button>
+                            <button class="btn" id="btn-blueprint-mode">Blueprint Wire</button>
+                        </div>
+                    </div>
+
+                    <div class="param-row" style="margin-top: 8px;">
+                        <div class="param-info">
+                            <span class="param-label">Material Opacity</span>
+                            <span class="param-value"><span id="val-opacity">92</span>%</span>
+                        </div>
+                        <input type="range" id="input-opacity" min="20" max="100" step="2" value="92">
+                    </div>
+
+                    <div style="display: flex; gap: 14px; margin-top: 10px; font-size: 0.72rem;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" id="check-showPSU" checked> Show PSU Mockup (Cables Up)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" id="check-showDimensions" checked> Leader Dimensions
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Group 6: Production STL Export -->
+                <div class="control-group">
+                    <div class="control-group-title lime">6. Production Slicer STL Export</div>
+                    <p style="font-size: 0.65rem; color: var(--bp-text-dim); margin-bottom: 10px; line-height: 1.4;">
+                        Export binary STL meshes ready for direct slicing in Bambu Studio, OrcaSlicer, or PrusaSlicer.
+                    </p>
+
+                    <button class="btn primary lime" id="btn-export-bracket" style="width: 100%; padding: 10px; font-weight: bold;">
+                        EXPORT U-BRACKET STL
+                    </button>
+
+                    <button class="btn" id="btn-export-psu" style="width: 100%; padding: 6px; margin-top: 8px; font-size: 0.68rem;">
+                        Export PSU Mockup STL (Reference)
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right: 3D Viewport Area -->
+        <div id="viewport-container">
+            <div id="canvas3d"></div>
+            <svg id="dimensions-overlay"></svg>
+
+            <!-- Real-time Stats Badge -->
+            <div class="overlay-stats">
+                <div><span>INTERNAL OPENING:</span> <span id="stat-internal">114.2 × 53.2 mm</span></div>
+                <div><span>TOTAL OUTER ENVELOPE:</span> <span id="stat-envelope">159.2 × 61.2 × 115.0 mm</span></div>
+                <div><span>SIDE WALL SLOTS:</span> <span id="stat-screw-pitch">6 Slots (3/side, 141.2mm span)</span></div>
+                <div><span>EST. PRINT WEIGHT:</span> <span id="stat-weight">~65g PETG (-42% time & plastic)</span></div>
+            </div>
+
+            <!-- Feature Pills -->
+            <div class="feature-badge-row">
+                <div class="feature-pill screws">
+                    <span style="font-size: 14px;">⬡</span> Honeycomb: -42% Print Time
+                </div>
+                <div class="feature-pill fan">
+                    <span style="font-size: 14px;">⏹</span> Solid Flat Floor
+                </div>
+                <div class="feature-pill relief">
+                    <span style="font-size: 14px;">⬆</span> Cables Face Upward
+                </div>
+                <div class="feature-pill screws">
+                    <span style="font-size: 14px;">🔩</span> 6 Side Wall Slots
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-left">
+            <span>FORGECAD STUDIO 2026</span>
+            <span>&bull;</span>
+            <span>WASM MANIFOLD CSG KERNEL</span>
+        </div>
+        <div>ALITOVE 5V 60A 300W S-300-5 HONEYCOMB U-BRACKET</div>
+        <div>v4.0.0</div>
+    </footer>
+
+    <!-- Main Module Script -->
+    <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+Designator,Mid X,Mid Y,Layer,Rotation
+U_CHG,-4.50,-42.00,Top,0
+R_PROG,-4.50,-37.50,Top,0
+C_VIN,-3.20,-46.00,Top,0
+C_BAT,-5.80,-46.00,Top,0
+Q_PWR,2.00,-38.50,Top,270
+D_PWR,6.40,-38.00,Top,0
+R_PWR,-1.50,-38.50,Top,0
+Q_FET,0.00,41.00,Top,270
+R_GATE,-3.20,41.00,Top,0
+D_HAP,5.00,41.00,Top,180
+Q_LED_PWR,-2.60,46.50,Top,270
+R_LED_PU,-5.80,46.50,Top,0
+Q_LED_EN,2.60,46.50,Top,270
+R_LED_GATE,5.80,46.50,Top,0

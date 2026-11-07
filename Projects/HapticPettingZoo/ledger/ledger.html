@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Haptic Petting Zoo | Project Ledger & Transparency Dashboard</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="./ledger.css">
+</head>
+<body>
+
+  <div class="ledger-wrapper">
+    
+    <!-- Top Header -->
+    <header class="header-bar">
+      <div class="header-title-group">
+        <h1>🐾 The Haptic Petting Zoo &bull; Project Ledger</h1>
+        <p>Fiscal Sponsorship & Direct Grant Execution Dashboard | PDX Hackerspace (Control+H) & Dillon Simeone</p>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-sponsor">🏛️ Fiscal Sponsor: Control+H</span>
+        <span class="badge badge-grant">🏆 OCF Creative Heights: $96,000</span>
+        <span class="badge badge-tax">📄 Exhibit B Direct Cap: $91,200</span>
+      </div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading-indicator" style="text-align: center; padding: 40px; color: var(--text-muted); font-family: var(--font-mono);">
+      ⏳ Loading ledger and financial telemetry...
+    </div>
+
+    <!-- Main Content Application -->
+    <div id="app-content" style="display: none;">
+      
+      <!-- Key Metric KPI Cards -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Current Cash In Hand</div>
+          <div class="kpi-value val-emerald" id="kpi-in-hand">$0.00</div>
+          <div class="kpi-sub">Milestone 1 Disbursed (Sept 2026)</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Lead Artist Milestone Progress</div>
+          <div class="kpi-value val-indigo" id="kpi-artist-progress">0%</div>
+          <div class="kpi-sub" id="kpi-artist-sub">$0 progress (0 hrs logged)</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Actual Spent (Receipts)</div>
+          <div class="kpi-value val-amber" id="kpi-actual-spent">$0.00</div>
+          <div class="kpi-sub" id="kpi-actual-sub">0 verified orders logged</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">11/11 Bulk BOM Target</div>
+          <div class="kpi-value val-amber" id="kpi-procurement-target">$0.00</div>
+          <div class="kpi-sub">ESP32-S3s, C3s, ToF & Actuators</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Next Milestone Target</div>
+          <div class="kpi-value val-cyan" id="kpi-next-milestone">2027-01-31</div>
+          <div class="kpi-sub" id="kpi-next-sub">Milestone 2 ($20,000 release)</div>
+        </div>
+      </section>
+
+      <!-- Navigation Tabs -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="tab-budget">📊 Executive Budget</button>
+        <button class="tab-btn" data-tab="tab-purchases">🧾 Receipts & Purchases</button>
+        <button class="tab-btn" data-tab="tab-disbursements">📜 Disbursements & Milestones</button>
+        <button class="tab-btn" data-tab="tab-activities">⏱️ Activities & Hours Log</button>
+        <button class="tab-btn" data-tab="tab-procurement">🛍️ 11/11 Bulk Procurement BOM</button>
+        <button class="tab-btn" data-tab="tab-synergies">🤝 External Grants & Synergy</button>
+        <button class="tab-btn" data-tab="tab-raw-json">🤖 Machine Data (JSON)</button>
+      </nav>
+
+      <!-- TAB 1: EXECUTIVE BUDGET -->
+      <div class="tab-content active" id="tab-budget">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h2>Exhibit B Direct Costs Budget Breakdown</h2>
+              <p>Official legal allocation under Fiscal Sponsorship Agreement capped at $91,200.00</p>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-emerald);">
+              Direct Cap: $91,200.00 | Sponsor Retained (5%): $4,800.00
+            </div>
+          </div>
+          
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Line</th>
+                  <th>Budget Line Item & Scope</th>
+                  <th>Allocated</th>
+                  <th>Actual Spent</th>
+                  <th>Committed / Planned</th>
+                  <th>Remaining</th>
+                  <th>Progress</th>
+                  <th>Notes & Policy</th>
+                </tr>
+              </thead>
+              <tbody id="budget-table-body"></tbody>
+              <tfoot>
+                <tr style="font-weight: 700; background: rgba(255,255,255,0.04);">
+                  <td>TOTAL</td>
+                  <td>Direct Project Costs Cap</td>
+                  <td class="num-cell" id="budget-total-allocated">$0.00</td>
+                  <td class="num-cell" id="budget-total-actual" style="color: var(--accent-amber);">$0.00</td>
+                  <td class="num-cell" id="budget-total-committed">$0.00</td>
+                  <td class="num-cell" id="budget-total-remaining">$0.00</td>
+                  <td>-</td>
+                  <td>Section 2 Legal Agreement Cap</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 1B: RECEIPTS & PURCHASES -->
+      <div class="tab-content" id="tab-purchases">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h2>Verified Receipts & Split-Order Expense Ledger</h2>
+              <p>Line-by-line tracking of actual hardware & supply expenditures, isolating Haptic Zoo charges from personal/other project items on shared vendor orders</p>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.88rem; color: var(--text-main);">
+              Zoo Charged Total: <strong id="purchases-total-zoo" style="color: var(--accent-emerald);">$0.00</strong> | 
+              Excluded (Other Projects): <strong id="purchases-total-excluded" style="color: var(--text-muted);">$0.00</strong>
+            </div>
+          </div>
+
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 75px;">ID</th>
+                  <th style="width: 95px;">Order Date</th>
+                  <th style="width: 155px;">Vendor & Order #</th>
+                  <th>Item Description & Prototype Purpose</th>
+                  <th style="width: 55px; text-align: right;">Qty</th>
+                  <th style="width: 85px; text-align: right;">Unit</th>
+                  <th style="width: 105px; text-align: right;">Zoo Charged</th>
+                  <th style="width: 80px;">Line</th>
+                  <th style="width: 135px;">Status / Receipt</th>
+                </tr>
+              </thead>
+              <tbody id="purchases-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: DISBURSEMENTS -->
+      <div class="tab-content" id="tab-disbursements">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h2>Disbursement Schedule & Milestone Release Gates</h2>
+              <p>Installments are conditioned upon milestone delivery for charitable purposes ($91,200.00 total)</p>
+            </div>
+          </div>
+          
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">Milestone</th>
+                  <th>Release Target & Charitable Conditions</th>
+                  <th>Target Date</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Pacing Strategy & Operational Notes</th>
+                </tr>
+              </thead>
+              <tbody id="disbursements-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: ACTIVITIES & HOURS LOG -->
+      <div class="tab-content" id="tab-activities">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h2>Lead Artist Effort & Billable Activities Log</h2>
+              <p>Documented hours tracking burn rate against Milestone 1 and the $35,000 Artist Fee allocation</p>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.88rem; color: var(--text-main);">
+              Total Logged: <strong id="activities-total-hours" style="color: var(--accent-cyan);">0.0 hrs</strong> | 
+              Milestone Value: <strong id="activities-total-burn" style="color: var(--accent-emerald);">$0.00</strong>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <input type="text" id="activity-search" class="search-input" placeholder="🔍 Search activities, categories, or descriptions...">
+          </div>
+
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 70px;">ID</th>
+                  <th style="width: 95px;">Date</th>
+                  <th style="width: 170px;">Category</th>
+                  <th>Activity Description & Context</th>
+                  <th style="width: 85px; text-align: right;">Hours</th>
+                  <th style="width: 75px; text-align: right;">Target</th>
+                  <th style="width: 110px; text-align: right;">Milestone Value</th>
+                </tr>
+              </thead>
+              <tbody id="activities-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: 11/11 PROCUREMENT BOM -->
+      <div class="tab-content" id="tab-procurement">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h2>11/11 Global Shopping Festival Bulk Hardware Procurement Plan</h2>
+              <p>Targeted bulk purchase of MCUs, sensors, transit cases, and actuators from Milestone 1 funds</p>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.88rem; color: var(--accent-amber);">
+              Total Est. Spend: <strong id="procurement-total-cost">$0.00</strong> | Liquid Cash Preserved: ~<strong>$18,130.00</strong>
+            </div>
+          </div>
+
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Item ID</th>
+                  <th>Description & Intended Station/Kit Purpose</th>
+                  <th style="width: 70px; text-align: right;">Qty</th>
+                  <th style="width: 90px; text-align: right;">Est. Unit</th>
+                  <th style="width: 105px; text-align: right;">Est. Total</th>
+                  <th style="width: 90px;">Budget Line</th>
+                </tr>
+              </thead>
+              <tbody id="procurement-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: EXTERNAL GRANTS & SYNERGIES -->
+      <div class="tab-content" id="tab-synergies">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h2>External Matching Grants & Parallel Opportunities</h2>
+              <p>Multiplier initiatives aligning community outreach, federal STEAM grants, and festival showcases</p>
+            </div>
+          </div>
+
+          <div id="external-synergies-container"></div>
+        </div>
+      </div>
+
+      <!-- TAB 6: MACHINE DATA (JSON) -->
+      <div class="tab-content" id="tab-raw-json">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h2>Machine-Readable Ledger State (`ledger-data.json`)</h2>
+              <p>Direct JSON data structure optimized for parsing, AI agent automated updates, and git versioning</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="action-btn" id="copy-json-btn">📋 Copy Raw JSON</button>
+              <button class="action-btn action-btn-secondary" id="download-json-btn">💾 Download JSON</button>
+            </div>
+          </div>
+
+          <pre class="json-viewer-box" id="json-display"></pre>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="./ledger.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "author": "Dillon Simeone",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-c3-devkitm-1",
+      "id": "esp",
+      "top": 40,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-mpu6050",
+      "id": "mpu",
+      "top": -120,
+      "left": 200,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-neopixel-strip",
+      "id": "led_main",
+      "top": -180,
+      "left": -120,
+      "attrs": { "length": "16" }
+    },
+    {
+      "type": "wokwi-neopixel-strip",
+      "id": "led_aux2",
+      "top": -20,
+      "left": 320,
+      "attrs": { "length": "8" }
+    },
+    {
+      "type": "wokwi-neopixel-strip",
+      "id": "led_aux3",
+      "top": -20,
+      "left": -300,
+      "attrs": { "length": "8" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "mic",
+      "top": 240,
+      "left": -140,
+      "attrs": { "label": "MAX4466 Mic (Audio Amplitude)" }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "haptic",
+      "top": 240,
+      "left": 140,
+      "attrs": { "hasVibe": "true", "label": "Haptic Motor (GPIO 7 PWM)" }
+    }
+  ],
+  "connections": [
+    [ "esp:GND.1", "mpu:GND", "black", [ "v0" ] ],
+    [ "esp:3V3.1", "mpu:VCC", "red", [ "v0" ] ],
+    [ "esp:2", "mpu:SDA", "blue", [ "v0" ] ],
+    [ "esp:3", "mpu:SCL", "yellow", [ "v0" ] ],
+
+    [ "esp:GND.1", "led_main:GND", "black", [ "v0" ] ],
+    [ "esp:5V", "led_main:VDD", "red", [ "v0" ] ],
+    [ "esp:6", "led_main:DIN", "green", [ "v0" ] ],
+
+    [ "esp:GND.1", "led_aux2:GND", "black", [ "v0" ] ],
+    [ "esp:5V", "led_aux2:VDD", "red", [ "v0" ] ],
+    [ "esp:20", "led_aux2:DIN", "magenta", [ "v0" ] ],
+
+    [ "esp:GND.1", "led_aux3:GND", "black", [ "v0" ] ],
+    [ "esp:5V", "led_aux3:VDD", "red", [ "v0" ] ],
+    [ "esp:21", "led_aux3:DIN", "orange", [ "v0" ] ],
+
+    [ "esp:GND.2", "mic:GND", "black", [ "v0" ] ],
+    [ "esp:3V3.2", "mic:VCC", "red", [ "v0" ] ],
+    [ "esp:0", "mic:SIG", "cyan", [ "v0" ] ],
+
+    [ "esp:GND.2", "haptic:2", "black", [ "v0" ] ],
+    [ "esp:7", "haptic:1", "purple", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}

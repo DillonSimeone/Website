@@ -1,0 +1,191 @@
+:root {
+  --teal: #008080;
+  --dark-teal: #004d4d;
+  --coral: #ff6f59;
+  --peach: #ffd3b6;
+  --cream: #fffdde;
+  --font-display: 'Righteous', cursive;
+  --font-body: 'Outfit', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--peach);
+  background-image: linear-gradient(135deg, var(--peach) 0%, #ffc1a0 100%);
+  font-family: var(--font-body);
+  color: var(--dark-teal);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Starburst background decorations */
+.starburst {
+  position: absolute;
+  color: var(--cream);
+  opacity: 0.45;
+  font-size: 8rem;
+  pointer-events: none;
+  user-select: none;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sb-1 { top: 10%; left: 8%; font-size: 10rem; }
+.sb-2 { bottom: 15%; right: 10%; font-size: 12rem; color: var(--coral); }
+.sb-3 { top: 30%; right: 20%; font-size: 7rem; color: var(--teal); }
+
+.googie-layout {
+  width: 90%;
+  max-width: 1000px;
+  position: relative;
+  z-index: 2;
+  padding: 40px 0;
+}
+
+/* Boomerang Header */
+.googie-header {
+  text-align: center;
+  margin-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.boomerang-badge {
+  background: var(--coral);
+  width: 150px;
+  height: 60px;
+  border-radius: 90px 10px 90px 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: rotate(-10deg);
+  border: 4px solid var(--dark-teal);
+  box-shadow: 6px 6px 0 var(--dark-teal);
+  margin-bottom: 25px;
+}
+
+.badge-year {
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+}
+
+.googie-title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  margin: 0;
+  color: var(--teal);
+  text-shadow: 4px 4px 0 var(--cream), 7px 7px 0 var(--dark-teal);
+  letter-spacing: 3px;
+  transform: skewX(-5deg);
+}
+
+.googie-tagline {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  margin-top: 15px;
+  color: var(--dark-teal);
+  border-top: 3px dashed var(--dark-teal);
+  border-bottom: 3px dashed var(--dark-teal);
+  padding: 6px 20px;
+}
+
+.back-link {
+  color: var(--dark-teal);
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: 20px;
+  border-bottom: 2px solid var(--dark-teal);
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--coral);
+  border-color: var(--coral);
+}
+
+/* Diner style cards */
+.googie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 40px;
+  margin-top: 20px;
+}
+
+.googie-card {
+  background: var(--cream);
+  padding: 40px 30px;
+  border: 4px solid var(--dark-teal);
+  box-shadow: 10px 10px 0 var(--dark-teal);
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.googie-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 14px 14px 0 var(--dark-teal);
+}
+
+.card-star {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 1.8rem;
+  color: var(--coral);
+}
+
+.googie-card h2 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  margin-top: 0;
+  color: var(--teal);
+  letter-spacing: 1px;
+}
+
+.googie-card p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Asymmetrical googie cards */
+.shape-kidney {
+  border-radius: 40px 120px 40px 120px / 40px 60px 40px 60px;
+}
+
+.shape-tilt {
+  transform: rotate(2deg);
+}
+.shape-tilt:hover {
+  transform: rotate(0deg) translate(-4px, -4px);
+}
+
+.shape-boomerang {
+  border-radius: 10px 80px 10px 80px;
+}
+
+/* Starburst Button */
+.googie-btn {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  background: var(--coral);
+  color: var(--cream);
+  border: 3px solid var(--dark-teal);
+  padding: 10px 24px;
+  border-radius: 40px 10px 40px 10px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--dark-teal);
+  transition: transform 0.1s, box-shadow 0.1s;
+  margin-top: 15px;
+}
+
+.googie-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--dark-teal);
+}

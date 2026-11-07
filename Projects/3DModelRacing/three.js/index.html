@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D Model Racing — High-Speed Three.js Circuit</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏎️</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Hardware-Accelerated Compositor Loading Screen (Decoupled from V8/WebGL main thread) -->
+    <div id="launch-compositor-overlay" style="display: none;">
+        <!-- Forward-Then-Backward Ping-Pong Canvas (Smooth 60fps GPU frame playback) -->
+        <canvas id="compositor-canvas" style="display: none;"></canvas>
+
+        <!-- Hardware-decoded looping video of the live recorded drive (smooth 60fps on GPU thread) -->
+        <video id="compositor-video-loop" autoplay loop muted playsinline style="display: none;"></video>
+
+        <!-- Looping animated background of the moving neon grid and retro sun (fallback) -->
+        <img id="compositor-bg-loop" src="assets/cyber_grid_loop.webp" alt="Cyber Grid Drive Loop" style="display: none;">
+
+        <!-- Vehicle snapshot container (anchored in chase-cam screen space) -->
+        <div id="compositor-vehicle-container" style="display: none;">
+            <img id="compositor-vehicle-img" alt="Player Hovercraft">
+        </div>
+
+        <!-- Holographic HUD above vehicle -->
+        <div id="compositor-loading-hud">
+            <div class="void-loader-box">
+                <div class="void-loader-header">
+                    <div><span class="void-pulse-dot"></span><span id="compositor-loader-title">WARP DRIVE CHARGING</span></div>
+                    <span id="compositor-loader-percent" style="color: #00f3ff;">0%</span>
+                </div>
+                <div class="void-progress-track">
+                    <div class="void-progress-fill" id="compositor-loader-bar"></div>
+                </div>
+                <div class="void-loader-task" id="compositor-loader-task">SYNCHRONIZING PROCEDURAL SECTOR...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Overlay Layer -->
+    <div class="ui-layer">
+
+        <!-- 1. START / MAIN MENU -->
+        <div id="menu-view">
+            <div class="menu-hero">
+                <h1 class="menu-title">3D MODEL RACING</h1>
+                <p class="menu-subtitle">Turn any 3D model (STL, OBJ, GLB) into a high-speed hover vehicle. Its physical volume and bounds dictate top speed, grip, mass, and escape velocity.</p>
+            </div>
+
+            <div class="menu-actions">
+                <button id="btn-arcade" class="btn-primary">
+                    ENDLESS DRIVE
+                    <span>Infinite Dynamic Road • Stunts, Drops & Loops</span>
+                </button>
+                <button id="btn-roguelite" class="btn-secondary">
+                    ROGUELITE RUN
+                    <span>Procedural Track • XP & 3-Choice Upgrades</span>
+                </button>
+            </div>
+
+            <div class="menu-footer">
+                <div><span>Controls:</span> WASD / Arrows to Drive • Shift to Boost • Space to Drift • R to Respawn</div>
+            </div>
+        </div>
+
+        <!-- 2. GARAGE & CUSTOMIZER -->
+        <div id="garage-view">
+            <!-- Left Customizer Panel -->
+            <div class="garage-sidebar ui-panel">
+                <div class="panel-title">
+                    <span>VEHICLE SPECS</span>
+                    <button id="garage-reset-facing-btn" class="pattern-btn" title="Reset Vehicle Facing to FRONT">RESET FACING</button>
+                </div>
+
+                <!-- Dropzone / File Upload -->
+                <div class="panel-section">
+                    <div class="panel-section-title">Import 3D Model</div>
+                    <label for="model-file-input">
+                        <div class="dropzone" id="model-dropzone">
+                            <div class="dropzone-icon">🏎️</div>
+                            <div class="dropzone-label">DROP STL / OBJ / GLB HERE</div>
+                            <div class="dropzone-sub">or click to browse local files</div>
+                        </div>
+                    </label>
+                    <input type="file" id="model-file-input" accept=".stl,.obj,.glb,.gltf">
+                    <div id="import-status">Default Formula Wedge Active</div>
+                </div>
+
+                <!-- Vehicle Physical Attributes -->
+                <div class="panel-section">
+                    <div class="panel-section-title">Physics Diagnostics</div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Top Speed</div>
+                            <div class="stat-value" id="stat-top-speed">120 km/h</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Acceleration</div>
+                            <div class="stat-value" id="stat-accel">28.5</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Grip / Turn</div>
+                            <div class="stat-value" id="stat-grip">6.8</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Mass</div>
+                            <div class="stat-value" id="stat-mass">1.20 t</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ascension Badge -->
+                <div id="stat-ascend-badge" class="ascend-indicator ready">★ ESCAPE VELOCITY READY</div>
+
+                <!-- Color Palette -->
+                <div class="panel-section">
+                    <div class="panel-section-title">Livery Color</div>
+                    <div class="palette" id="color-palette"></div>
+                </div>
+
+                <!-- Pattern Selector -->
+                <div class="panel-section">
+                    <div class="panel-section-title">Procedural Patterns</div>
+                    <div class="pattern-grid" id="pattern-grid"></div>
+                </div>
+            </div>
+
+            <!-- Center Drag Hint -->
+            <div class="garage-center-hint ui-panel">
+                <span>🖱️ Click & Drag to Rotate Yaw/Pitch • Shift+Drag to Roll</span>
+            </div>
+
+            <!-- Right Action Buttons -->
+            <div class="garage-right-actions">
+                <button id="garage-mode-btn" class="btn-garage-action btn-garage-sub">
+                    MODE: <strong id="garage-mode-label">ENDLESS DRIVE</strong>
+                </button>
+                <button id="garage-menu-btn" class="btn-garage-action btn-garage-sub">
+                    BACK TO MENU
+                </button>
+                <button id="garage-start-btn" class="btn-garage-action btn-garage-start">
+                    START RACE ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. IN-RACE HUD -->
+        <div id="race-hud">
+            <!-- Top Progress Bar & Distance Odometer -->
+            <div class="hud-top-progress">
+                <div class="progress-fill" id="hud-progress-fill"></div>
+                <div class="progress-player-pin" id="hud-progress-player"></div>
+                <div class="hud-dist-badge" id="hud-dist-val">0.00 KM</div>
+            </div>
+
+            <!-- Real-Time FPS Counter -->
+            <div class="hud-top-left ui-panel">
+                <div class="hud-label">FPS</div>
+                <div class="hud-val" id="hud-fps-val">60</div>
+            </div>
+
+            <div class="hud-top-right ui-panel">
+                <div class="hud-label">TIME</div>
+                <div class="hud-val" id="hud-time-val">00:00.00</div>
+            </div>
+
+            <!-- Ascension Notice -->
+            <div id="hud-ascend-badge" class="hud-badge ready">STAR VELOCITY READY!</div>
+
+            <!-- Speedometer & Boost -->
+            <div class="hud-bottom-left">
+                <div class="speedo-card ui-panel">
+                    <div class="speed-value" id="hud-speed-val">0</div>
+                    <div class="speed-unit" id="hud-speed-unit">KM/H</div>
+                </div>
+                <div class="boost-card ui-panel">
+                    <div class="boost-label">
+                        <span>BOOST (SHIFT)</span>
+                    </div>
+                    <div class="boost-track">
+                        <div class="boost-fill" id="hud-boost-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2D Minimap Canvas -->
+            <div class="hud-bottom-right ui-panel">
+                <canvas id="minimap-canvas" width="170" height="170"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 4. ROGUELITE UPGRADE MODAL -->
+    <div id="upgrade-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="font-size: 28px; font-weight: 900; color: #00f2fe;">LEVEL UP!</h2>
+            <p style="color: #94a3b8; font-size: 14px; margin-top: 6px;">Choose an enhancement for your hover vehicle:</p>
+            <div class="upgrade-cards" id="upgrade-cards"></div>
+        </div>
+    </div>
+
+    <!-- 5. RACE RESULTS / FINISH MODAL -->
+    <div id="finish-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 id="finish-title" class="finish-normal">RACE FINISHED!</h2>
+            <p id="finish-subtitle" style="color: #94a3b8; font-size: 15px; margin-top: 6px;"></p>
+
+            <div class="finish-stats" id="finish-stats"></div>
+
+            <div class="finish-actions">
+                <button id="finish-garage-btn" class="btn-secondary" style="padding: 14px 28px; font-size: 16px;">GARAGE</button>
+                <button id="finish-retry-btn" class="btn-primary" style="padding: 14px 28px; font-size: 16px;">RACE AGAIN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script Entry -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

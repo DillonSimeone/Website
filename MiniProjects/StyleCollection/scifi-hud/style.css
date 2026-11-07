@@ -1,0 +1,187 @@
+:root {
+  --bg-dark: #010a0c;
+  --hud-green: #00ff66;
+  --hud-green-dim: rgba(0, 255, 102, 0.3);
+  --hud-red: #ff3333;
+  
+  --font-hud: 'Share Tech Mono', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--hud-green);
+  font-family: var(--font-hud);
+  line-height: 1.5;
+  text-shadow: 0 0 4px rgba(0, 255, 102, 0.4);
+}
+
+.hud-container {
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.hud-header {
+  border-bottom: 2px solid var(--hud-green-dim);
+  padding-bottom: 25px;
+  margin-bottom: 40px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: #fff;
+  border: 1px solid var(--hud-green);
+  background: rgba(0, 255, 102, 0.05);
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 4px 12px;
+  letter-spacing: 1px;
+}
+
+.nav-back:hover {
+  background: var(--hud-green);
+  color: var(--bg-dark);
+}
+
+.hud-title {
+  font-size: clamp(2.3rem, 5vw, 3.8rem);
+  color: #fff;
+  margin: 20px 0 5px 0;
+  letter-spacing: 1px;
+}
+
+.hud-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.hud-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 30px;
+}
+
+/* Tactical HUD Cards */
+.hud-card {
+  background: rgba(1, 10, 12, 0.9);
+  border: 1px solid var(--hud-green-dim);
+  padding: 30px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+.hud-tag {
+  position: absolute;
+  top: 5px;
+  left: 8px;
+  font-size: 8px;
+  opacity: 0.6;
+}
+
+.hud-card h2 {
+  font-size: 1.25rem;
+  color: #fff;
+  margin-top: 5px;
+}
+
+.hud-card p {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--hud-green-dim);
+  margin-bottom: 15px;
+}
+
+.alert-banner {
+  border: 1px solid var(--hud-green);
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 15px;
+  background-color: rgba(0, 255, 102, 0.05);
+}
+
+.blinking {
+  animation: blink 1.2s step-end infinite;
+}
+
+@keyframes blink {
+  from, to { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.hud-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--hud-green);
+  color: var(--hud-green);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 10px;
+  margin-top: 15px;
+  cursor: pointer;
+  text-shadow: inherit;
+  transition: all 0.2s;
+}
+
+.hud-btn:hover {
+  background: var(--hud-green);
+  color: var(--bg-dark);
+}
+
+/* Circular Radar scope */
+.radar-viewport {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 25px;
+}
+
+.radar-scope {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 2px solid var(--hud-green);
+  background: 
+    radial-gradient(circle, transparent 30%, var(--hud-green-dim) 31%, transparent 32%, transparent 60%, var(--hud-green-dim) 61%, transparent 62%),
+    linear-gradient(rgba(0,255,102,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,102,0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 15px 15px, 15px 15px;
+  position: relative;
+  overflow: hidden;
+}
+
+.radar-sweep-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--hud-green), transparent);
+  transform-origin: left center;
+  transform: rotate(0deg);
+}
+
+.radar-target {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--hud-red);
+  position: absolute;
+  opacity: 0;
+  box-shadow: 0 0 6px var(--hud-red);
+  transition: opacity 0.5s;
+}
+
+.target-1 { top: 25px; left: 40px; }
+.target-2 { top: 80px; left: 90px; }
+.target-3 { top: 50px; left: 100px; }
+
+.radar-target.spotted {
+  opacity: 1;
+}

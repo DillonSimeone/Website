@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>JavaScript Website Tester</title>
+</head>
+<style>
+    body{
+        display: flex;
+        justify-content: center;
+        background-color: black;
+        font-size: 2em;
+        color: white;
+    }
+    div{
+      font-family:monospace; 
+        white-space:pre;
+    }
+    
+    span span{
+        display: inline-block;
+    }
+    
+            
+    @keyframes rainbow {
+      0% {color: #ff0000;
+        opacity: 0.01}
+      10% {color: #ff8000;}
+      20% {color: #ffff00;}
+      30% {color: #80ff00;}
+      40% {color: #00ff00;}
+      50% {color: #00ff80;}
+      60% {color: #00ffff;}
+      70% {color: #0080ff;}
+      80% {color: #0000ff;
+        opacity: 0.1}
+      90% {color: #8000ff;}
+      100% {color: #ff0080;
+        opacity: 0.9}
+    }
+</style>
+<body>
+    <p class="myP">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolore magni consequuntur tempore, facilis maiores magnam voluptatibus vel illo tempora rerum quia nesciunt fuga provident deleniti quibusdam exercitationem repellendus molestias laboriosam. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquid reiciendis incidunt debitis ratione et distinctio sed labore accusantium vitae. Nisi nulla doloremque culpa unde ratione commodi mollitia omnis distinctio veniam.</p>
+<script>
+    
+    let myP = document.getElementsByClassName("myP")[0];
+
+    let breakByLength = function (str,length) {
+      let newString = "";
+      for(let i = 0; i < str.length; i += length){
+        let string = str.substring (i, (i + length));
+        newString += "<div>" + string + "</div>";
+      }
+      return newString;
+    };
+
+    myP.innerHTML = breakByLength(myP.innerHTML,30);
+
+    let divs = document.getElementsByTagName("div");
+    for(i = 0; i < divs.length; i++){
+      let string = "";
+      for(j = 0; j < divs[i].innerHTML.length; j++){
+        string += '<span>' + divs[i].innerHTML.charAt(j) + '</span>';
+      }
+      divs[i].innerHTML = string;
+    };
+
+    //divs for y, spans for x
+    function rainbowText(){
+        let speed = 0.1; //Lower number, faster.
+        for(let i = 0; i < divs.length; i++){
+            let spans = divs[i].getElementsByTagName("span");
+            for(let j = 0; j < spans.length; j++){
+                    spans[j].style.animation = `rainbow ${(i*speed)+(j*speed)}s linear alternate`;
+            }
+            if(i === divs.length - 1){
+                setTimeout(function(){
+                    var elm = document.getElementsByClassName("myP")[0];
+                    var newone = elm.cloneNode(true);
+                    elm.parentNode.replaceChild(newone, elm);
+                    rainbowText();
+                }, ((i * speed) + (j* speed))*1100);
+            }
+        };
+    };
+    rainbowText();
+    
+    
+    
+    
+</script>
+</body>
+</html>

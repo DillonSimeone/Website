@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeafSpace Music Studio Specification & Audit</title>
+  <!-- Dublin Core Metadata for Academic Tracking -->
+  <meta name="DC.Title" content="DeafSpace & Music Production: Confluence Studio Critique"/>
+  <meta name="DC.Creator" content="Dillon Simeone"/>
+  <meta name="DC.Subject" content="Deaf Studies, Universal Design, Physical Computing, Haptics"/>
+  <meta name="DC.Description" content="An academic design engineering critique auditing the spatial, visual, and sensory barriers in the old Confluence Studio under Gallaudet DeafSpace principles."/>
+  <meta name="DC.Publishers" content="Universal Music Design"/>
+  <meta name="DC.Rights" content="Copyright Universal Music Design 2026"/>
+  <meta name="DC.Language" content="en"/>
+  <meta name="DC.Date.Created" content="2026-07-28"/>
+
+  <!-- Google Fonts: Lora for academic serif body, Share Tech Mono for code/labels -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+  <!-- External Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- External Javascript -->
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="academic-container">
+    <!-- Header Section -->
+    <header class="academic-header">
+      <div class="nav-row">
+        <a href="deafspace_critique_draft.md" class="nav-link">← VIEW DRAFT SPECIFICATION (.MD)</a>
+        <span class="pub-number">DOC. #25-014-NEA</span>
+      </div>
+      <h1 class="academic-title">DeafSpace &amp; Music Production: Confluence Studio Critique</h1>
+      <p class="author-info">Department of Universal Music Design, 2026. Prepared by Dillon Simeone, Lead Design Engineer.</p>
+    </header>
+
+    <!-- Layout Panel with Margin Notes Toggle -->
+    <div class="layout-panel">
+      <div style="font-family: var(--font-mono); font-size: 0.8rem; text-transform: uppercase;">
+        STATUS: <span class="status-signed">✓ Active Research Specifications</span>
+      </div>
+      <button class="tufte-btn" id="btn-toggle-sidenotes">HIDE MARGIN NOTES</button>
+    </div>
+
+    <!-- Main Content Grid -->
+    <main class="academic-content" id="academic-content">
+      <!-- Left Column: Academic Text & Interactive Diagrams -->
+      <article class="text-body">
+        
+        <h2>1. Introduction to the DeafSpace Concept</h2>
+        <p>
+          The built environment is overwhelmingly constructed around hearing norms and acoustic communication. For Deaf and Hard of Hearing (DHH) individuals, a space designed without visual and tactile accessibility creates constant physical and cognitive friction. To address these systemic barriers, architect Hansel Bauman, in collaboration with Gallaudet University, developed the **DeafSpace Design Guidelines**.
+        </p>
+        <p>
+          DeafSpace is a design framework that recognizes the unique ways DHH individuals inhabit space. By aligning architecture with visual and tactile sensory parameters, DeafSpace aims to create environments that facilitate natural communication, reduce visual strain, and support social well-being.
+        </p>
+
+        <h2>2. DeafSpace Primary Reference Materials &amp; Resources</h2>
+        <p>
+          For further research on the original guidelines, universal design integrations, and case studies, refer to the following catalog of authoritative publications and institutional links:
+        </p>
+        <ul>
+          <li><strong>Gallaudet University Official Site:</strong> <a href="https://www.gallaudet.edu/campus-design-and-planning/deafspace" target="_blank">Campus Design &amp; Planning: The DeafSpace Project</a>. Access Gallaudet's core project repository outlining the five principles and history of the guidelines.</li>
+          <li><strong>Rochester Institute of Technology (RIT) Guide:</strong> <a href="https://infoguides.rit.edu/deafspace" target="_blank">RIT InfoGuides: DeafSpace Directory</a>. A curated index of academic journals, books, databases, and theses related to Deaf architecture.</li>
+          <li><strong>Wired Magazine Feature:</strong> <a href="https://www.wired.com/2016/03/how-to-design-for-the-deaf-gallaudet-university/" target="_blank">How to Design for the Deaf: Gallaudet's Surprising Architecture</a>. An illustrated profile demonstrating how physical design impacts visual communication, lines of sight, and cognitive strain.</li>
+          <li><strong>ArchDaily Architectural Case Study:</strong> <a href="https://www.archdaily.com/782298/gallaudets-brilliant-surprising-architecture-for-the-deaf" target="_blank">Gallaudet's Brilliant, Surprising Architecture for the Deaf</a>. Detailed architectural analysis focusing on hallway dimensions, curves, door transparency, and light reflection.</li>
+          <li><strong>Ocula Magazine Feature:</strong> <a href="https://ocula.com/magazine/reports/gallaudet-university-a-deafspace-story/" target="_blank">Gallaudet University: A DeafSpace Story</a>. Exploration of sensory landscape projects and the integration of DeafSpace into outdoor and landscape architectural design.</li>
+          <li><strong>International Association for Universal Design (IAUD):</strong> <a href="https://www.ud-net.com/en/" target="_blank">IAUD Universal Design Awards Repository</a>. Historical reference for Gallaudet's award-winning design guidelines.</li>
+        </ul>
+        
+        <h2>3. Core Principles of DeafSpace</h2>
+        <p>
+          The DeafSpace framework categorizes environmental design into five distinct, overlapping principles:
+        </p>
+        <ul>
+          <li><strong>Space and Proximity:</strong> DHH signers require a wider physical distance between one another (typically 3 to 10 feet) to read hand gestures, facial expressions, and body language without restriction. Wide walkways and spacious rooms are essential.</li>
+          <li><strong>Sensory Reach:</strong> The visual and tactile reading of the environment (movement of shadows, feeling vibrations through floors, seeing through glass doors) helps DHH individuals orient themselves and maintain a sense of safety.</li>
+          <li><strong>Mobility and Proximity:</strong> Conversing while walking requires clear paths and soft, curved corners. This layout allows signers to look at each other and watch for obstacles alternately without colliding.</li>
+          <li><strong>Light and Color:</strong> Diffused, shadowless electric and natural lighting prevents eye fatigue. Wall colors should be solid, low-glare, and contrast with skin tones (such as matte blues and greens) to make signing hands stand out.</li>
+          <li><strong>Acoustics:</strong> Echoes, reverberations, and background equipment hums are highly distracting and sometimes physically painful for individuals using assistive devices (like hearing aids or cochlear implants). Sound-absorbing surfaces are required.</li>
+        </ul>
+
+        <h2>4. Confluence Studio Audit &amp; Critique</h2>
+        <p>
+          The following section details the specific spatial, auditory, and environmental barriers present in the old Confluence Studio space, analyzed under DeafSpace principles.
+        </p>
+
+        <div class="critique-section">
+          <!-- Item 1: Space & Proximity -->
+          <div class="critique-block">
+            <div class="critique-title">
+              <span>3.1 Overcrowding &amp; Equipment Density</span>
+              <span class="critique-badge">Space &amp; Proximity</span>
+            </div>
+            <div class="critique-grid">
+              <div class="critique-box barrier">
+                <strong>Observed Barrier</strong>
+                The old studio was narrow and packed with gear: DMX cables, a large analog mixer, corner Windows and central Apple computer workstations, and Shawn's large custom xylophone in the center. The density of gear forced signers to remain stationary to prevent damage, restricting natural signing.
+              </div>
+              <div class="critique-box solution">
+                <strong>DeafSpace Design Pattern</strong>
+                Recess and rack-mount gear along the perimeters. Maintain a wide, clear center corridor. Ensure that domestic items and pets are separated from active, high-traffic workspaces.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 2: Sightlines & Interactive Layout Switcher -->
+          <div class="critique-block">
+            <div class="critique-title">
+              <span>3.2 Workstation Orientation &amp; Sightlines</span>
+              <span class="critique-badge">Sensory Reach</span>
+            </div>
+            <div class="critique-grid">
+              <div class="critique-box barrier">
+                <strong>Observed Barrier</strong>
+                Tables and workstations were placed directly against the walls. Collaborators sat facing away from the center of the room, severing sightlines. During jams, visual cues were lost unless players stared at each other directly. Interjecting when Shawn was speaking was exhausting, requiring slow typing on a smartphone.
+              </div>
+              <div class="critique-box solution">
+                <strong>DeafSpace Design Pattern</strong>
+                Inward-facing, "U-shape" or circular workstation layouts to preserve visual fields. Dedicated wall-mounted typing screens connected to mechanical keyboards, allowing DHH users to project typed text immediately to the room.
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Layout Comparison (Tufte Style) -->
+          <div class="tufte-interactive">
+            <h4>Interactive Layout Comparison</h4>
+            <div class="tab-controls">
+              <button class="tufte-btn active" id="btn-layout-old">Old Studio (Tables Face Walls)</button>
+              <button class="tufte-btn" id="btn-layout-new">Proposed DeafSpace Layout (Inward-Facing)</button>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; font-style: italic;">
+              Toggle the layout configurations to see how orienting desks inward and clearing central paths opens up visual fields and communication zones.
+            </p>
+            <div class="layout-diagram">
+              <div id="studioMap" class="studio-map">
+                <!-- Grid rendered dynamically by app.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 3: Communication Infrastructure -->
+          <div class="critique-block" style="margin-top: 30px;">
+            <div class="critique-title">
+              <span>3.3 Communication &amp; Captioning Infrastructure</span>
+              <span class="critique-badge">Sensory Reach</span>
+            </div>
+            <div class="critique-grid">
+              <div class="critique-box barrier">
+                <strong>Observed Barrier</strong>
+                No permanent, 24/7 captioning system. I relied on an old Android phone with a dusty, low-quality omnidirectional microphone. This resulted in lag and text dropouts, forcing us to type back and forth in Notepad. Nate (cochlear implant user) carried an exhausting load trying to interpret.
+              </div>
+              <div class="critique-box solution">
+                <strong>DeafSpace Design Pattern</strong>
+                Permanent Samsung tablets mounted on adjustable wall-arms that can rest flat against the wall or pull out toward speakers. Pair with high-quality directional Blue Yeti microphones and 24/7 low-latency ASR (automated speech recognition) software.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 4: Light & Color -->
+          <div class="critique-block">
+            <div class="critique-title">
+              <span>3.4 spotlight Glare &amp; Contrast Failures</span>
+              <span class="critique-badge">Light &amp; Color</span>
+            </div>
+            <div class="critique-grid">
+              <div class="critique-box barrier">
+                <strong>Observed Barrier</strong>
+                Dim white spotlights on tracks left the room dark and full of shadows. High-contrast white/red walls and black foam panels created visual noise. For Myles, a DeafBlind guitarist, the lack of lighting was unsafe; navigating by touch exhausted him, and he stopped coming. Nate struggled to lip-read in shadows.
+              </div>
+              <div class="critique-box solution">
+                <strong>DeafSpace Design Pattern</strong>
+                Diffuse, high-lux indirect ceiling lights (sunlight equivalent) to eliminate shadows. Matte, low-reflection solid color backdrops (blues/greens) behind collaborators to emphasize hands and face shape contrast.
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Contrast Visualizer (Tufte Style) -->
+          <div class="tufte-interactive">
+            <h4>Visual Contrast &amp; Shadow Simulator</h4>
+            <div class="tab-controls">
+              <button id="toggleContrastBtn" class="tufte-btn">Switch to Proposed Lighting</button>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; font-style: italic;">
+              DHH communication relies heavily on shadow-free visual contrast. Compare the spotlight lighting of the old studio against diffuse lighting.
+            </p>
+            <div class="contrast-split">
+              <div id="viewOld" class="contrast-view view-old-light">
+                <div>
+                  <h5>Old Lighting: Track Spotlights</h5>
+                  <p class="view-desc">Dim overall space, harsh spotlight focus, dark backgrounds with red/black walls. High eye strain.</p>
+                </div>
+                <div class="signer-mockup">
+                  [Sign language: Low Contrast / Shadowed]
+                </div>
+              </div>
+              <div id="viewNew" class="contrast-view view-new-light" style="opacity: 0.3;">
+                <div>
+                  <h5>Proposed: Diffuse Sunlight-Lux</h5>
+                  <p class="view-desc">Even, soft illumination. Matte solid blue wall backdrop. High legibility, zero shadows.</p>
+                </div>
+                <div class="signer-mockup">
+                  [Sign Language: High Contrast / Clear]
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 5: Spatial Ownership & Shared Use -->
+          <div class="critique-block" style="margin-top: 30px;">
+            <div class="critique-title">
+              <span>3.5 Co-habitation &amp; Spatial Ownership</span>
+              <span class="critique-badge">Space &amp; Proximity</span>
+            </div>
+            <div class="critique-grid">
+              <div class="critique-box barrier">
+                <strong>Observed Barrier</strong>
+                The studio doubled as Shawn's living space and bedroom. Shawn is autistic and required extensive alone time to avoid overstimulation, which restricted access. I felt like a "guest in a home," which discouraged me from installing a sound-reactive LED frequency wall or keeping Minimeters visualizers running 24/7.
+              </div>
+              <div class="critique-box solution">
+                <strong>DeafSpace Design Pattern</strong>
+                Strict physical separation of living and working quarters. 24/7 access to workspaces. Permanent, wall-mounted secondary screens dedicated to visual feedback (spectrograms, Minimeters, FFT) that cannot be hidden by main DAW tasks.
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive LED Wall Visualizer (Tufte Style) -->
+          <div class="tufte-interactive">
+            <h4>Sound-Reactive LED Color Wall Proposal (FFT Simulation)</h4>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px; font-style: italic;">
+              Dillon's proposed color-to-frequency mapping: Bass frequencies translate to Red, midrange to Green, and treble/high frequencies to Violet/Purple.
+            </p>
+            <div class="visualizer-panel">
+              <div class="led-matrix-container" id="ledStrip">
+                <!-- LED nodes generated by js -->
+              </div>
+              <div class="controls-row">
+                <div class="slider-group">
+                  <label for="freqSlider">Simulate Frequency:</label>
+                  <input type="range" id="freqSlider" class="frequency-slider" min="20" max="2000" value="100">
+                  <div class="freq-display" id="freqVal">100 Hz</div>
+                </div>
+              </div>
+              <div class="visualizer-desc" id="visualizerDesc" style="margin-top: 10px;">
+                Frequency classification: <strong>Bass (Sub)</strong> - Activating Red LED array.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 6: Tactile Integration -->
+          <div class="critique-block">
+            <div class="critique-title">
+              <span>3.6 Tactile &amp; Vibrotactile Isolation</span>
+              <span class="critique-badge">Acoustics</span>
+            </div>
+            <div class="critique-grid">
+              <div class="critique-box barrier">
+                <strong>Observed Barrier</strong>
+                Solid concrete floors dampened all footsteps and stomp vibrations, preventing common tactile DHH attention-getting. No subwoofers were present because Shawn has hyper-sensitive hearing. Players had to wear Woojer haptic vests, which were heavy, sweat-inducing, and required complex setup before each session.
+              </div>
+              <div class="critique-box solution">
+                <strong>DeafSpace Design Pattern</strong>
+                Raised wooden hollow floors or floating performer platforms containing low-frequency tactile transducers (bass shakers). This allows DHH musicians to feel structural rhythms through their feet without projecting acoustic sound pressure.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2>5. Bibliography &amp; References</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; text-align: left;">
+          1. Bauman, H. (2014). <em>DeafSpace: An Architecture Toward a More Liveable and Sustainable World</em>. In Bauman, H-D. L. &amp; Murray, J. J. (Eds.), <em>Deaf Gain: Raising the Stakes for Human Diversity</em> (pp. 375-397). University of Minnesota Press.<br><br>
+          2. Gallaudet University. (2010). <em>DeafSpace Design Guidelines</em> (Working Draft). Campus Design and Planning Office.<br><br>
+          3. Rochester Institute of Technology. (2026). <em>Principles and Elements of DeafSpace</em>. InfoGuides at RIT. Retrieved from <a href="https://infoguides.rit.edu/deafspace" target="_blank">https://infoguides.rit.edu/deafspace</a>
+        </p>
+
+      </article>
+
+      <!-- Right Column: Margin Notes / Academic Annotations -->
+      <aside class="sidenotes-column" id="sidenotes-column">
+        <!-- Note 1 -->
+        <div class="sidenote" style="margin-top: 100px;">
+          <span class="sidenote-number">NOTE 01</span>
+          The DeafSpace Design Guidelines drawn up at Gallaudet won the International Association of Universal Design (IAUD) award.
+        </div>
+
+        <!-- Note 2 -->
+        <div class="sidenote" style="margin-top: 110px;">
+          <span class="sidenote-number">NOTE 02</span>
+          "DeafSpace" is a registered service mark of Gallaudet University. 
+        </div>
+
+        <!-- Note 3 -->
+        <div class="sidenote" style="margin-top: 350px;">
+          <span class="sidenote-number">NOTE 03</span>
+          Layout observation: Narrow spaces force DHH signers to remain stationary. Walking while signing requires a wider clearance radius (typically a 3.5ft circular envelope) to avoid collision hazards.
+        </div>
+
+        <!-- Note 4 -->
+        <div class="sidenote" style="margin-top: 150px;">
+          <span class="sidenote-number">NOTE 04</span>
+          Signer eye contact: In DeafSpace design, tables are arranged in a circular horseshoe or 'U' shape to guarantee continuous, unblocked line of sight for all participants.
+        </div>
+
+        <!-- Note 5 -->
+        <div class="sidenote" style="margin-top: 300px;">
+          <span class="sidenote-number">NOTE 05</span>
+          Acoustics note: Reverberations and echoes from hard concrete walls/floors are amplified by hearing aids and cochlear implants, causing fatigue and auditory masking.
+        </div>
+
+        <!-- Note 6 -->
+        <div class="sidenote" style="margin-top: 280px;">
+          <span class="sidenote-number">NOTE 06</span>
+          Autistic sensory load: Dr. Shawn's autism requires downtime. The blurred boundary between sleeping quarters and lab spaces restricted access and installation of visual cues.
+        </div>
+
+        <!-- Note 7 -->
+        <div class="sidenote" style="margin-top: 180px;">
+          <span class="sidenote-number">NOTE 07</span>
+          Haptic straps: Woojer straps require setup and cause sweating, showing the need for built-in floor transducers that transfer vibrations directly through the feet.
+        </div>
+
+        <!-- Note 8 -->
+        <div class="sidenote" style="margin-top: 100px;">
+          <span class="sidenote-number">NOTE 08</span>
+          WebXR Splatting: Tonight's photogrammetry scan of Confluence 2.0 will create a 3D WebXR environment to test spatial layouts virtually before physical building.
+        </div>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

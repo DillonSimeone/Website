@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>LightBaton — Web Bluetooth Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="page-container">
+        <header class="hero">
+            <div class="hero-content">
+                <div class="badge">Web Bluetooth · Motion Reactive</div>
+                <h1>LIGHT<br>BATON</h1>
+                <p class="subtitle">
+                    Tune motion-reactive haptic patterns on the LightBaton handle over BLE.
+                    ESP-NOW broadcasting to followers stays active while connected.
+                </p>
+                <div class="hero-actions">
+                    <button type="button" id="bleConnectBtnDoc" class="btn primary">CONNECT BLE</button>
+                    <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/03_Visuals_Art/LightBaton" target="_blank" class="btn">View Source</a>
+                </div>
+            </div>
+            <div class="hero-graphic">
+                <canvas id="motion-canvas" class="motion-preview" width="420" height="120"></canvas>
+            </div>
+        </header>
+
+        <main class="portal">
+            <div class="portal-header">
+                <div>
+                    <span class="portal-dot" id="dot"></span>
+                    <span id="connText">connect BLE</span>
+                </div>
+                <button type="button" id="bleConnectBtn" class="btn primary">CONNECT BLE</button>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="play">Play</button>
+                <button class="tab" data-tab="motion">Motion Bins</button>
+                <button class="tab" data-tab="device">Device</button>
+                <button class="tab" data-tab="log">Log</button>
+            </div>
+
+            <div class="portal-body" id="portal-body">
+                <section id="tab-play">
+                    <div class="panel">
+                        <h3>Master Pattern</h3>
+                        <div class="control-row">
+                            <label for="patternSelect">Pattern</label>
+                            <select id="patternSelect"></select>
+                        </div>
+                        <div class="control-row">
+                            <label for="intensityRange">Intensity</label>
+                            <input type="range" id="intensityRange" min="0" max="255" value="217">
+                            <span id="intensityVal">85%</span>
+                        </div>
+                        <div class="control-row">
+                            <label for="speedRange">Speed</label>
+                            <input type="range" id="speedRange" min="25" max="300" value="100">
+                            <span id="speedVal">1.0×</span>
+                        </div>
+                        <div class="control-row">
+                            <label for="floorRange">Startup floor</label>
+                            <input type="range" id="floorRange" min="0" max="80" value="15">
+                            <span id="floorVal">15%</span>
+                        </div>
+                        <div class="control-row">
+                            <label>Transport</label>
+                            <button type="button" id="playBtn" class="btn">STOP</button>
+                            <button type="button" id="muteBtn" class="btn">MUTE</button>
+                        </div>
+                        <p class="note">Motion-reactive patterns route X/Y speed bins to per-bin motor shapes (Haxel-style).</p>
+                    </div>
+                </section>
+
+                <section id="tab-motion" style="display:none">
+                    <div class="panel">
+                        <h3>Speed Bin Routing</h3>
+                        <p class="note">Bins 0–15 = X-axis speed bands · Bins 16–31 = Y-axis speed bands</p>
+                        <div class="control-row">
+                            <label for="numBinsSelect">Bin count</label>
+                            <select id="numBinsSelect">
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4" selected>4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                            </select>
+                        </div>
+                        <div id="routingMatrix"></div>
+                    </div>
+                    <div class="panel">
+                        <h3>Energy Integrator</h3>
+                        <div class="control-row">
+                            <label for="chargeRange">Charge rate</label>
+                            <input type="range" id="chargeRange" min="1" max="30" value="10">
+                            <span id="chargeVal">0.10</span>
+                        </div>
+                        <div class="control-row">
+                            <label for="decayRange">Decay rate</label>
+                            <input type="range" id="decayRange" min="10" max="120" value="60">
+                            <span id="decayVal">0.60</span>
+                        </div>
+                        <p class="note">Energy level still drives LEDs and ESP-NOW follower sync.</p>
+                    </div>
+                </section>
+
+                <section id="tab-device" style="display:none">
+                    <div class="panel">
+                        <h3>Device Identity</h3>
+                        <div class="control-row">
+                            <label for="deviceName">BLE name</label>
+                            <input type="text" id="deviceName" maxlength="20" placeholder="LightBaton" style="flex:1;padding:8px;border:2px solid #111;font-family:var(--mono)">
+                        </div>
+                        <button type="button" id="saveDeviceBtn" class="btn">Save &amp; Reconnect</button>
+                        <p class="note">Renaming requires reconnect. ESP-NOW is unaffected.</p>
+                    </div>
+                </section>
+
+                <section id="tab-log" style="display:none">
+                    <div class="panel">
+                        <h3>Serial Log</h3>
+                        <div id="serialLog" class="serial-log"></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="bluetooth.js"></script>
+</body>
+</html>

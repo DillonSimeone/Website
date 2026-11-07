@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <title id="doc-title">Curriculum Portal — Protected Repository</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- AUTHENTICATION / DECRYPTION GATEWAY -->
+    <div class="auth-overlay" id="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-icon-wrapper">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </div>
+            <div class="badge" style="margin-bottom: 8px;">Confidential Materials</div>
+            <h2>Curriculum Portal</h2>
+            <p class="auth-subtitle">These research materials and lesson plans are encrypted. Enter access passkey to decrypt.</p>
+            
+            <form class="auth-form" id="auth-form">
+                <div class="auth-input-wrapper">
+                    <input 
+                        type="password" 
+                        id="auth-input" 
+                        class="auth-input" 
+                        placeholder="Enter password..." 
+                        autocomplete="current-password" 
+                        required 
+                        autofocus
+                    >
+                </div>
+                <button type="submit" class="auth-submit-btn" id="auth-submit-btn">
+                    <span>Unlock &amp; Decrypt</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </form>
+            <div class="auth-error" id="auth-error">Incorrect password. Please try again.</div>
+            <p class="auth-hint">Case-insensitive • AES-256-GCM Decryption</p>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER (Rendered upon successful decryption) -->
+    <div class="app-container" id="app-container">
+        <!-- SIDEBAR INDEX -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-top-row">
+                    <div class="badge" id="org-badge">Curriculum Vault</div>
+                    <button class="lock-toggle-btn" id="lock-btn" title="Lock and clear decrypted session">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <span>Lock</span>
+                    </button>
+                </div>
+                <h1 id="app-title">SONIC AGENCY</h1>
+                <p class="subtitle" id="app-subtitle">STEAM Curriculum Catalog</p>
+            </div>
+
+            <!-- Dynamic Navigation populated after decryption -->
+            <nav class="nav-sections" id="nav-sections">
+                <!-- Navigation groups inserted dynamically -->
+            </nav>
+        </aside>
+
+        <!-- MONOGRAPH VIEWER CONTAINER -->
+        <main class="viewer-container">
+            <!-- MOBILE NAVIGATION BAR -->
+            <header class="mobile-header">
+                <button class="menu-btn" id="menu-btn" aria-label="Open Navigation">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="mobile-title" id="mobile-title">SONIC AGENCY</div>
+            </header>
+
+            <!-- CORE DOCUMENT READER WELL -->
+            <div class="reading-well">
+                <article class="page-content" id="document-content">
+                    <!-- Markdown content renders here dynamically -->
+                </article>
+            </div>
+
+            <!-- READER CONTROLS FOOTER -->
+            <div class="reader-footer">
+                <button class="btn" id="prev-btn" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    <span>Previous Section</span>
+                </button>
+                <div class="progress-indicator">
+                    <span>Active Section: </span>
+                    <strong id="section-badge">-- / --</strong>
+                </div>
+                <button class="btn" id="next-btn" disabled>
+                    <span>Next Section</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="scripts.js"></script>
+</body>
+
+</html>

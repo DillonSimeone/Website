@@ -1,0 +1,28 @@
+================================================================================
+LAB 5 SUBMISSION - D2L COMMENTS & QUESTION ANSWER
+Authors: Bill Jennings, Dillon Simeone
+Assignment: Lab 5 (Partner Programming - Data Structures)
+================================================================================
+
+QUESTION:
+Explain the difference between lists, tuples, and dictionaries. 
+Give an example of when you would use each data structure type in a program.
+
+ANSWER:
+1. Lists:
+- Definition: Ordered, mutable collections of items enclosed in square brackets []. Elements can be modified, appended, inserted, or removed after creation, and elements are indexed by integer positions starting at 0.
+- Example Use Case: A shopping cart or a dynamic inventory list (e.g., `cart = ["onion", "soil", "trowel"]`) where items are frequently added, reordered, or removed during program execution.
+
+2. Tuples:
+- Definition: Ordered, immutable collections of items enclosed in parentheses (). Once created, the elements cannot be modified, added, or removed. Like lists, they are indexed by integer positions. Because of their immutability, they are faster and protect fixed data from accidental changes.
+- Example Use Case: Fixed geographic coordinates or immutable catalog records (e.g., `location = (45.5152, -122.6784)` or `item = (101, "Red Onion", 4.50)`) where values represent a fixed record that should never change at runtime.
+
+3. Dictionaries:
+- Definition: Unordered (or insertion-ordered in modern Python), mutable collections of key-value pairs enclosed in curly braces {}. Data is accessed and updated via unique keys (such as strings or integer IDs) rather than numeric index positions.
+- Example Use Case: A database-like lookup table or entity registry (e.g., `onion_stock = {1: {"name": "Red Swamp", "pungency": 8, "layers": 7}}`) where you need fast, direct lookup, modification, or deletion of specific records using an ID or unique name.
+
+================================================================================
+PARTNER CONTRIBUTIONS:
+- Bill Jennings (Partner B): Developed breeder.py (breeding calculations, quality tier if-structures, and zero-division-protected averages); collaborated on main driver logic and testing.
+- Dillon Simeone (Partner A): Developed onions.py (stock dictionary management, CRUD operations, formatting); collaborated on menu UX and input validation.
+================================================================================

@@ -1,0 +1,38 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    text-align: center;
+    padding: 2rem;
+}
+
+.carousel {
+    position: relative;
+    display: inline-block;
+}
+
+button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(255,255,255,0.7);
+    border: 1px solid #ccc;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 24px;
+    z-index: 2;
+}
+
+#previous { left: 0; }
+#next { right: 0; }
+
+img {
+    width: 600px;
+    height: 400px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.fade-out {
+    opacity: 0;
+}

@@ -1,0 +1,13 @@
+{
+  "appId": "com.myt.capturehub",
+  "appName": "MYT Capture",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

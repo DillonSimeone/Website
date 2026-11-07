@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sci-Fi HUD Radar Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="hud-container">
+    <header class="hud-header">
+      <a href="../index.html" class="nav-back">SYS_NAV // RETURN</a>
+      <h1 class="hud-title">COCKPIT_HUD</h1>
+      <p class="hud-subtitle">TACTICAL RADAR DECK // THREAT REGISTER</p>
+    </header>
+
+    <main class="hud-grid">
+      <!-- Radar Sweep Panel -->
+      <section class="hud-card radar-card">
+        <span class="hud-tag">RADAR_SWEEP_V5</span>
+        <h2>RADAR SWEEPER</h2>
+        <p>The sweeper scanning reticle rotates continuously to trace coordinate anomalies.</p>
+        
+        <div class="radar-viewport">
+          <div class="radar-scope">
+            <div class="radar-sweep-line" id="sweep-line"></div>
+            <div class="radar-target target-1" id="t1"></div>
+            <div class="radar-target target-2" id="t2"></div>
+            <div class="radar-target target-3" id="t3"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- System Logs Panel -->
+      <section class="hud-card log-card">
+        <span class="hud-tag">DIAG_LOG</span>
+        <h2>DIAGNOSTICS</h2>
+        <div class="divider"></div>
+        <p>THREAT LEVEL: LOW</p>
+        <p>TARGET ACQUISITION: ACTIVE</p>
+        <p>GRID VECTOR: SECTOR 7G</p>
+        <div class="alert-banner blinking">SYSTEMS NOMINAL</div>
+      </section>
+
+      <!-- Settings Panel -->
+      <section class="hud-card ctrl-card">
+        <span class="hud-tag">CONFIG</span>
+        <h2>CONTROLS</h2>
+        <p>Adjust radar settings below:</p>
+        <button class="hud-btn" id="btn-ping">FORCE RADAR PING</button>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
