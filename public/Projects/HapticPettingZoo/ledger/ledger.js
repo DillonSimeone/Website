@@ -27,6 +27,7 @@ function initApp() {
 
   renderKPIs();
   renderBudgetCategories();
+  renderPurchasesLog();
   renderDisbursements();
   renderActivitiesLog();
   renderProcurement();
@@ -56,6 +57,18 @@ function renderKPIs() {
     artistProgressElem.textContent = `${artistCategory.progress_percent}%`;
     const totalHours = ledgerState.activities_log.reduce((acc, a) => acc + (a.hours || 0), 0);
     artistProgressSub.textContent = `$${artistCategory.committed_value.toLocaleString('en-US')} milestone progress (${totalHours} hrs logged)`;
+  }
+
+  // Actual Spent (Receipts)
+  const actualSpentElem = document.getElementById('kpi-actual-spent');
+  const actualSubElem = document.getElementById('kpi-actual-sub');
+  if (actualSpentElem && ledgerState.purchases_log) {
+    const totalSpent = ledgerState.purchases_log.reduce((sum, p) => sum + (p.zoo_charged_amount || 0), 0);
+    const uniqueOrders = new Set(ledgerState.purchases_log.map(p => p.order_number)).size;
+    actualSpentElem.textContent = `$${totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    if (actualSubElem) {
+      actualSubElem.textContent = `${ledgerState.purchases_log.length} items across ${uniqueOrders} orders`;
+    }
   }
 
   // 11/11 Procurement Planned
@@ -91,6 +104,7 @@ function renderBudgetCategories() {
         <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 2px;">${c.scope}</div>
       </td>
       <td class="num-cell">$${c.allocated.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+      <td class="num-cell" style="color: ${c.actual_withdrawn > 0 ? 'var(--accent-amber)' : 'var(--text-dim)'};">$${c.actual_withdrawn.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
       <td class="num-cell">$${c.committed_value.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
       <td class="num-cell">$${c.remaining.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
       <td>
@@ -105,12 +119,64 @@ function renderBudgetCategories() {
 
   // Update Summary row
   const totalAllocated = cats.reduce((sum, c) => sum + c.allocated, 0);
+  const totalActual = cats.reduce((sum, c) => sum + (c.actual_withdrawn || 0), 0);
   const totalCommitted = cats.reduce((sum, c) => sum + c.committed_value, 0);
   const totalRemaining = cats.reduce((sum, c) => sum + c.remaining, 0);
 
   document.getElementById('budget-total-allocated').textContent = `$${totalAllocated.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  const totalActualEl = document.getElementById('budget-total-actual');
+  if (totalActualEl) totalActualEl.textContent = `$${totalActual.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
   document.getElementById('budget-total-committed').textContent = `$${totalCommitted.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
   document.getElementById('budget-total-remaining').textContent = `$${totalRemaining.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+}
+
+// -------------------------------------------------------------
+// Render Verified Receipts & Purchases Log
+// -------------------------------------------------------------
+function renderPurchasesLog() {
+  const tbody = document.getElementById('purchases-table-body');
+  if (!tbody || !ledgerState.purchases_log) return;
+
+  const purchases = ledgerState.purchases_log;
+  tbody.innerHTML = purchases.map(p => `
+    <tr>
+      <td class="num-cell">${p.purchase_id}</td>
+      <td class="num-cell">${p.order_date}</td>
+      <td>
+        <strong>${p.vendor}</strong>
+        <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan); margin-top: 2px;">#${p.order_number}</div>
+        <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">${p.payment_method}</div>
+      </td>
+      <td>
+        <strong>${p.item_description}</strong>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">${p.purpose}</div>
+        ${p.excluded_personal_amount > 0 ? `<div style="font-size: 0.75rem; color: var(--accent-amber); margin-top: 4px;">✂️ Split Receipt Note: ${p.excluded_note}</div>` : `<div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 3px;">📄 ${p.excluded_note}</div>`}
+      </td>
+      <td class="num-cell" style="text-align: right;">${p.quantity}</td>
+      <td class="num-cell" style="text-align: right;">$${p.unit_cost.toFixed(2)}</td>
+      <td class="num-cell" style="text-align: right; color: var(--accent-emerald);">$${p.zoo_charged_amount.toFixed(2)}</td>
+      <td class="num-cell">Line #${p.budget_line}</td>
+      <td>
+        <div style="font-size: 0.78rem; color: var(--text-main); margin-bottom: 4px;">${p.status}</div>
+        ${p.receipt_file ? `<a href="${p.receipt_file}" target="_blank" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-indigo); text-decoration: none;">🖼️ View Receipt ↗</a>` : ''}
+      </td>
+    </tr>
+  `).join('');
+
+  const totalZoo = purchases.reduce((sum, p) => sum + p.zoo_charged_amount, 0);
+  // Compute unique excluded amounts per order number so shared receipts don't double-count excluded items
+  const excludedByOrder = {};
+  purchases.forEach(p => {
+    if (p.excluded_personal_amount > 0) {
+      excludedByOrder[p.order_number] = p.excluded_personal_amount;
+    }
+  });
+  const totalExcluded = Object.values(excludedByOrder).reduce((sum, v) => sum + v, 0);
+
+  const totalZooEl = document.getElementById('purchases-total-zoo');
+  const totalExclEl = document.getElementById('purchases-total-excluded');
+  if (totalZooEl) totalZooEl.textContent = `$${totalZoo.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  if (totalExclEl) totalExclEl.textContent = `$${totalExcluded.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 }
 
 // -------------------------------------------------------------
@@ -156,20 +222,30 @@ function renderActivitiesLog(filterText = '') {
     );
   }
 
-  tbody.innerHTML = activities.map(a => `
+  tbody.innerHTML = activities.map(a => {
+    const linksHtml = (a.links && a.links.length)
+      ? `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
+          ${a.links.map(l => {
+            const isTab = l.url.startsWith('#tab-');
+            return `<a href="${l.url}" ${isTab ? `onclick="event.preventDefault(); document.querySelector('[data-tab=\\'${l.url.slice(1)}\\']').click();"` : 'target="_blank"'} style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 5px; font-family: var(--font-mono); font-size: 0.74rem; font-weight: 600; background: rgba(99, 102, 241, 0.14); border: 1px solid rgba(99, 102, 241, 0.35); color: #a5b4fc; text-decoration: none;">${l.label} ${isTab ? '→' : '↗'}</a>`;
+          }).join('')}
+        </div>`
+      : '';
+    return `
     <tr>
       <td class="num-cell">${a.id}</td>
-      <td class="num-cell">${a.date}</td>
+      <td class="num-cell" style="font-size: 0.78rem;">${a.date}</td>
       <td><span class="badge badge-sponsor">${a.category}</span></td>
       <td>
         <strong>${a.title}</strong>
         <p style="font-size: 0.83rem; color: var(--text-muted); margin-top: 4px;">${a.description}</p>
+        ${linksHtml}
       </td>
       <td class="num-cell" style="text-align: right; color: var(--accent-cyan);">${a.hours.toFixed(1)} hrs</td>
       <td class="num-cell" style="text-align: right;">M${a.target_milestone}</td>
       <td class="num-cell" style="text-align: right; color: var(--accent-emerald);">$${a.burn_credit_usd.toFixed(2)}</td>
     </tr>
-  `).join('');
+  `}).join('');
 
   // Update total hours count
   const totalHours = activities.reduce((sum, a) => sum + a.hours, 0);

@@ -52,6 +52,12 @@
         </div>
 
         <div class="kpi-card">
+          <div class="kpi-label">Actual Spent (Receipts)</div>
+          <div class="kpi-value val-amber" id="kpi-actual-spent">$0.00</div>
+          <div class="kpi-sub" id="kpi-actual-sub">0 verified orders logged</div>
+        </div>
+
+        <div class="kpi-card">
           <div class="kpi-label">11/11 Bulk BOM Target</div>
           <div class="kpi-value val-amber" id="kpi-procurement-target">$0.00</div>
           <div class="kpi-sub">ESP32-S3s, C3s, ToF & Actuators</div>
@@ -67,6 +73,7 @@
       <!-- Navigation Tabs -->
       <nav class="tab-nav">
         <button class="tab-btn active" data-tab="tab-budget">📊 Executive Budget</button>
+        <button class="tab-btn" data-tab="tab-purchases">🧾 Receipts & Purchases</button>
         <button class="tab-btn" data-tab="tab-disbursements">📜 Disbursements & Milestones</button>
         <button class="tab-btn" data-tab="tab-activities">⏱️ Activities & Hours Log</button>
         <button class="tab-btn" data-tab="tab-procurement">🛍️ 11/11 Bulk Procurement BOM</button>
@@ -94,7 +101,8 @@
                   <th style="width: 50px;">Line</th>
                   <th>Budget Line Item & Scope</th>
                   <th>Allocated</th>
-                  <th>Committed / Progress</th>
+                  <th>Actual Spent</th>
+                  <th>Committed / Planned</th>
                   <th>Remaining</th>
                   <th>Progress</th>
                   <th>Notes & Policy</th>
@@ -106,12 +114,48 @@
                   <td>TOTAL</td>
                   <td>Direct Project Costs Cap</td>
                   <td class="num-cell" id="budget-total-allocated">$0.00</td>
+                  <td class="num-cell" id="budget-total-actual" style="color: var(--accent-amber);">$0.00</td>
                   <td class="num-cell" id="budget-total-committed">$0.00</td>
                   <td class="num-cell" id="budget-total-remaining">$0.00</td>
                   <td>-</td>
                   <td>Section 2 Legal Agreement Cap</td>
                 </tr>
               </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 1B: RECEIPTS & PURCHASES -->
+      <div class="tab-content" id="tab-purchases">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h2>Verified Receipts & Split-Order Expense Ledger</h2>
+              <p>Line-by-line tracking of actual hardware & supply expenditures, isolating Haptic Zoo charges from personal/other project items on shared vendor orders</p>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.88rem; color: var(--text-main);">
+              Zoo Charged Total: <strong id="purchases-total-zoo" style="color: var(--accent-emerald);">$0.00</strong> | 
+              Excluded (Other Projects): <strong id="purchases-total-excluded" style="color: var(--text-muted);">$0.00</strong>
+            </div>
+          </div>
+
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 75px;">ID</th>
+                  <th style="width: 95px;">Order Date</th>
+                  <th style="width: 155px;">Vendor & Order #</th>
+                  <th>Item Description & Prototype Purpose</th>
+                  <th style="width: 55px; text-align: right;">Qty</th>
+                  <th style="width: 85px; text-align: right;">Unit</th>
+                  <th style="width: 105px; text-align: right;">Zoo Charged</th>
+                  <th style="width: 80px;">Line</th>
+                  <th style="width: 135px;">Status / Receipt</th>
+                </tr>
+              </thead>
+              <tbody id="purchases-table-body"></tbody>
             </table>
           </div>
         </div>
