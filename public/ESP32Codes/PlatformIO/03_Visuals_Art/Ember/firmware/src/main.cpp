@@ -8,16 +8,20 @@
 #include <ESPAsyncWebServer.h>
 #include <AsyncWebSocket.h>
 #include <ESPmDNS.h>
+#include <ArduinoOTA.h>
+#include <Update.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <FastLED.h>
 #include <arduinoFFT.h>
 #include <driver/i2s.h>
+#include <driver/rmt.h>
+#include <soc/soc.h>
+#include <soc/rtc_cntl_reg.h>
 #include <atomic>
 #include <vector>
 #include <cstring>
 #include <cmath>
-#include <esp_now.h>
 #include <esp_wifi.h>
 
 // ─── Settings ────────────────────────────────────────────────────────────────
@@ -29,21 +33,51 @@
 //
 struct Settings {
     int   pixelPin    = 5;
+#ifdef EMBER_BATHROOM
+    int   pixelCount  = 100;
+#else
     int   pixelCount  = 30;
+#endif
     int   brightness  = 128;
+#ifdef EMBER_BATHROOM
+    char  hostname[32] = "ember-audio";
+#else
     char  hostname[32] = "ember";
+#endif
     char  wifiSSID[64] = "";
     char  wifiPass[64] = "";
-    char  apSSID[64] = "";
+#ifdef EMBER_BATHROOM
+    char  apSSID[64]   = "Ember-Audio";
+#else
+    char  apSSID[64]   = "";
+#endif
 
     // Audio
+#ifdef EMBER_BATHROOM
+    int   micSource   = 2;          // Default MAX4466 on bathroom build
+#else
     int   micSource   = 0;          // 0=off, 1=INMP441, 2=MAX4466
+#endif
     int   micBCLK     = 6;          // INMP441 SCK
     int   micWS       = 7;          // INMP441 WS  (LRCK)
     int   micData     = 5;          // INMP441 SD
     int   micADCPin   = 3;          // MAX4466 OUT → ADC1_CHx (must be GPIO 0-4)
-    float micGain     = 1.0f;       // Output multiplier on level/bands
+    int   micGndPin   = 4;          // Soft ground for MAX4466 (driven LOW when >= 0)
+    float micGain     = 1.5f;       // Output multiplier on level/bands/MAD
     float micSmoothing= 0.6f;       // EMA factor (0=no smoothing, 0.95=very smooth)
+
+    // Audio Gate & Bathroom Ambient Showcase
+#ifdef EMBER_BATHROOM
+    bool  audioGateEnabled = true;
+    int   gateThreshold    = 2500;  // Trigger threshold X in MAD units (200..30000)
+    bool  autoCycle        = true;  // Curated bathroom ambient showcase cycling
+    int   cycleSeconds     = 30;    // Configurable showcase interval
+#else
+    bool  audioGateEnabled = false;
+    int   gateThreshold    = 2500;
+    bool  autoCycle        = false;
+    int   cycleSeconds     = 30;
+#endif
 } settings;
 
 // ─── Globals ─────────────────────────────────────────────────────────────────
@@ -57,44 +91,75 @@ String          g_currentName = "Untitled";
 String          g_currentSource;
 String          g_lastError;
 
-// ─── ESP-NOW Motion Follower ─────────────────────────────────────────────────
-static volatile float g_motion = 0.0f;
-static SemaphoreHandle_t g_progMu = nullptr;
+// Audio Gate runtime state. Attack ~2s, release ~3.5s, held 400ms below the floor.
+static volatile bool  g_gateActive   = false;
+static volatile float g_gateLinear   = 0.0f; // 0.0 .. 1.0 linear progress
+static volatile float g_gateEnvelope = 0.0f; // Perceptual envelope (smootherstep + gamma)
+static uint32_t       g_gateQuietSince  = 0;
+static bool           g_gateQuietTiming = false;
+static bool           g_settingsDirty = false;
+static unsigned long  g_settingsChangedAtMs = 0;
 
-static void onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
-    if (len == sizeof(float)) {
-        float val;
-        memcpy(&val, incomingData, sizeof(float));
-        if (val < 0.0f) val = 0.0f;
-        if (val > 1.0f) val = 1.0f;
-        g_motion = val;
+// Curated Bathroom Ambient Showcase patterns
+struct ShowcasePattern {
+    const char* name;
+    const char* code;
+};
+
+static const ShowcasePattern kShowcasePatterns[] = {
+    {
+        "Shifting Rainbow",
+        "// Smooth shifting rainbow across strip.\n"
+        "h = i/n + time(8);\n"
+        "hsv(h, 1, 1);"
+    },
+    {
+        "Breathing Aurora",
+        "// Slow organic colour wash, breathes in brightness.\n"
+        "h = perlin1D(i*0.05 + t*0.1)*0.4 + 0.5;\n"
+        "b = wave(time(6));\n"
+        "hsv(h, 1, b*0.9 + 0.1);"
+    },
+    {
+        "Ocean Swell",
+        "x = i/n;\n"
+        "swell = perlin2D(x*2, t*0.4);\n"
+        "h = 0.5 + swell*0.1;\n"
+        "s = 1 - swell*0.3;\n"
+        "v = wave(x + t*0.1);\n"
+        "hsv(h, s, v);"
+    },
+    {
+        "Lava Lamp",
+        "x = i/n;\n"
+        "blob = perlin2D(x*2.5, t*0.5);\n"
+        "blob = smoothstep(0.45, 0.6, blob);\n"
+        "h = mix(0.02, 0.12, blob);\n"
+        "hsv(h, 1, blob*0.9 + 0.1);"
+    },
+    {
+        "Perlin Painter",
+        "// Slow drifting hue painted by 2D noise.\n"
+        "h = perlin2D(i*0.04, t*0.15);\n"
+        "s = 0.6 + perlin1D(i*0.1 + 100)*0.4;\n"
+        "hsv(h, s, 1);"
+    },
+    {
+        "Galaxy",
+        "// Deep blues and purples with bright stars.\n"
+        "star = pow(wave(t*0.7 + hash(i)*9), 8);\n"
+        "dust = perlin2D(i*0.1, t*0.2)*0.3;\n"
+        "h = 0.72 + dust*0.1;\n"
+        "v = star + dust*0.4;\n"
+        "hsv(h, 1 - star*0.3, v);"
     }
-}
+};
+static constexpr int kShowcaseCount = sizeof(kShowcasePatterns) / sizeof(kShowcasePatterns[0]);
+static int           g_showcaseIdx  = 0;
+static unsigned long g_lastCycleMs  = 0;
 
-static void initESPNow() {
-    if (esp_now_init() != ESP_OK) {
-        esp_now_deinit();
-        if (esp_now_init() != ESP_OK) {
-            Serial.println("espnow: init failed");
-            return;
-        }
-    }
-    esp_wifi_set_ps(WIFI_PS_NONE);
-    esp_now_register_recv_cb(onDataRecv);
-
-    // Broadcast peer on the current Wi-Fi channel (required for some senders).
-    uint8_t bcast[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    esp_now_peer_info_t peer = {};
-    memcpy(peer.peer_addr, bcast, 6);
-    peer.channel = 0; // 0 = follow current STA/AP channel
-    peer.encrypt = false;
-    peer.ifidx   = g_apMode ? WIFI_IF_AP : WIFI_IF_STA;
-    if (esp_now_is_peer_exist(bcast)) esp_now_del_peer(bcast);
-    esp_now_add_peer(&peer);
-
-    Serial.printf("espnow: listening on channel %d (%s mode)\n",
-                  WiFi.channel(), g_apMode ? "AP" : "STA");
-}
+static SemaphoreHandle_t g_progMu   = nullptr;
+static SemaphoreHandle_t g_rmtAdcMu = nullptr;
 
 // ─── Bytecode VM ─────────────────────────────────────────────────────────────
 //
@@ -116,6 +181,7 @@ enum : uint8_t {
     VAR_T, VAR_TIME,
     VAR_PI, VAR_TAU,
     VAR_MOTION,
+    VAR_GATE, VAR_FADE,
     VAR_RESERVED_END
 };
 
@@ -148,6 +214,7 @@ enum Fn : uint8_t {
     FN_VU, FN_PEAK, FN_PITCH, FN_BEAT, FN_BAND,
     FN_BASS, FN_MID, FN_TREBLE,
     FN_MOTION,
+    FN_GATE, FN_FADE, FN_MAD,
     FN__COUNT
 };
 
@@ -195,14 +262,14 @@ static const FnEntry kFnTable[] = {
     {"mid",        FN_MID,        0, 0},
     {"treble",     FN_TREBLE,     0, 0},
     {"motion",     FN_MOTION,     0, 0},
+    {"gate",       FN_GATE,       0, 0},
+    {"fade",       FN_FADE,       0, 0},
+    {"mad",        FN_MAD,        0, 0},
     {"vu",         FN_VU,         0, 0},   // overall RMS level
     {"peak",       FN_PEAK,       0, 0},   // peak level with slow decay
     {"pitch",      FN_PITCH,      0, 0},   // dominant freq normalized (0=low, 1=high)
     {"beat",       FN_BEAT,       0, 0},   // 1 on beat, decays toward 0
     {"band",       FN_BAND,       1, 1},   // band(n), n=0..7 (low..high)
-    {"bass",       FN_BASS,       0, 0},   // shortcut: avg of bands 0-1
-    {"mid",        FN_MID,        0, 0},   // shortcut: avg of bands 3-4
-    {"treble",     FN_TREBLE,     0, 0},   // shortcut: avg of bands 6-7
 };
 
 struct Program {
@@ -335,6 +402,8 @@ public:
         prog.varNames[VAR_PI]         = "PI";
         prog.varNames[VAR_TAU]        = "TAU";
         prog.varNames[VAR_MOTION]     = "motion";
+        prog.varNames[VAR_GATE]       = "gate";
+        prog.varNames[VAR_FADE]       = "fade";
     }
 
     void fail(const String& m) {
@@ -641,6 +710,7 @@ namespace audio {
     float peak();
     float pitch();
     float beat();
+    float mad();
     float band(int n);   // n clamped to 0..7
 }
 namespace vm {
@@ -705,7 +775,10 @@ static inline float callFn(uint8_t id, float* a, uint8_t argc) {
         case FN_BASS:   return (audio::band(0) + audio::band(1)) * 0.5f;
         case FN_MID:    return (audio::band(3) + audio::band(4)) * 0.5f;
         case FN_TREBLE: return (audio::band(6) + audio::band(7)) * 0.5f;
-        case FN_MOTION: return g_motion;
+        case FN_MOTION: return 0.0f; // ESP-NOW removed; slot kept so old patterns still compile
+        case FN_GATE:
+        case FN_FADE:   return settings.audioGateEnabled ? (float)g_gateEnvelope : 1.0f;
+        case FN_MAD:    return audio::mad() / 30000.0f;
     }
     return 0.0f;
 }
@@ -806,22 +879,17 @@ bool exec(const Program* p, float* vars, RunResult& out) {
 
 // ─── Audio module ────────────────────────────────────────────────────────────
 //
-// One FreeRTOS task at prio 3 owns the mic. It samples a window, runs an FFT,
-// extracts an RMS level, dominant pitch, and 8 logarithmic bands, and writes
-// them into `g_snap` (a plain struct guarded by `g_snapMu`).
-//
-// VM builtins (audio::vu/peak/pitch/beat/band) read `g_snap` under the mutex.
-// Readers are short and non-blocking; the mutex is uncontended in practice.
-//
-// Sample rate, FFT size, and band layout are compile-time constants — they
-// determine memory + CPU and aren't useful to expose to users.
+// One FreeRTOS task at prio 1 owns the mic. It samples a window, runs an FFT,
+// extracts an RMS level, dominant pitch, MAD (DeafDoorbell metric), and 8
+// logarithmic bands, and writes them into `g_snap` (guarded by `g_snapMu`).
 //
 namespace audio {
 
-constexpr int   SAMPLE_RATE  = 16000;
-constexpr int   FFT_N        = 256;
-constexpr int   BAND_COUNT   = 8;
-constexpr float DC_BLOCK     = 0.997f;   // HPF to kill DC offset from MAX4466
+constexpr int   SAMPLE_RATE      = 16000;
+constexpr int   FFT_N            = 256;
+constexpr int   BAND_COUNT       = 8;
+constexpr float DC_BLOCK         = 0.997f;   // HPF to kill DC offset from MAX4466
+constexpr float ANALOG_MAD_SCALE = 8.0f;     // Matches DeafDoorbell's 0..30000 MAD scale
 
 // Band edges as FFT bin indices. With 16 kHz / 256 = 62.5 Hz/bin, this gives:
 //   0: 62-187 Hz, 1: 187-375, 2: 375-687, 3: 687-1250,
@@ -830,10 +898,12 @@ static const uint8_t kBandEdge[BAND_COUNT + 1] =
     { 1, 3, 6, 11, 20, 38, 72, 120, 128 };
 
 struct Snap {
-    float vu    = 0.0f;
-    float peak  = 0.0f;
-    float pitch = 0.0f;
-    float beat  = 0.0f;
+    float vu      = 0.0f;
+    float peak    = 0.0f;
+    float pitch   = 0.0f;
+    float beat    = 0.0f;
+    float mad     = 0.0f;
+    float madPeak = 0.0f;
     float bands[BAND_COUNT] = {0};
 };
 
@@ -846,26 +916,19 @@ float vu()    { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.vu;    portEX
 float peak()  { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.peak;  portEXIT_CRITICAL(&g_snapMu); return v; }
 float pitch() { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.pitch; portEXIT_CRITICAL(&g_snapMu); return v; }
 float beat()  { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.beat;  portEXIT_CRITICAL(&g_snapMu); return v; }
+float mad()   { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.mad;   portEXIT_CRITICAL(&g_snapMu); return v; }
 float band(int n) {
     if (n < 0) n = 0; if (n >= BAND_COUNT) n = BAND_COUNT - 1;
     float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.bands[n]; portEXIT_CRITICAL(&g_snapMu); return v;
 }
 
-void getSnap(Snap& dst) {
+void getSnap(Snap& dst, bool resetMadPeak = false) {
     portENTER_CRITICAL(&g_snapMu);
     dst = g_snap;
+    if (resetMadPeak) g_snap.madPeak = g_snap.mad;
     portEXIT_CRITICAL(&g_snapMu);
 }
 
-// ── Mic source setup ──
-//
-// INMP441: I2S0 in RX master mode. The chip outputs 24 bits MSB-first in a
-// 32-bit slot — we read 32-bit samples and shift right by 8.
-//
-// MAX4466: ADC1 channel (GPIO 0-4 on C3). analogRead() in a tight loop is
-// fine for our 16 kHz target — measured ~25 µs/call on C3, well under the
-// 62.5 µs sample period.
-//
 static bool setupI2S() {
     i2s_config_t cfg = {};
     cfg.mode                 = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX);
@@ -894,44 +957,51 @@ static bool setupI2S() {
     return true;
 }
 
-// ESP32-C3 ADC1 channels are wired to GPIO 0–4. analogRead() takes the GPIO
-// directly so we just need to validate, not translate to a channel index.
 static bool isADC1Gpio(int gpio) { return gpio >= 0 && gpio <= 4; }
 
 // ── Sampling ──
 static int32_t i2sBuf[FFT_N];
 
-static bool sampleI2S(float* out, float& dcState) {
+static bool sampleI2S(float* out, float& dcState, float& rawMadOut) {
     size_t bytesRead = 0;
     if (i2s_read(I2S_NUM_0, i2sBuf, sizeof(i2sBuf), &bytesRead, pdMS_TO_TICKS(50)) != ESP_OK)
         return false;
     int n = bytesRead / sizeof(int32_t);
     if (n <= 0) return false;
-    // 24-bit data is in the upper 24 bits of the 32-bit slot.
+    float madSum = 0.0f;
     for (int i = 0; i < FFT_N; i++) {
         float s = (float)(i2sBuf[i % n] >> 8);   // -2^23..2^23
-        // DC-block (1st-order HPF).
         float x = s - dcState;
         dcState = dcState + (1.0f - DC_BLOCK) * x;
-        out[i] = x * (1.0f / 8388608.0f);        // → ~[-1, 1]
+        float norm = x * (1.0f / 8388608.0f);    // → ~[-1, 1]
+        out[i] = norm;
+        madSum += fabsf(norm) * 2048.0f;
     }
+    rawMadOut = (madSum / (float)FFT_N) * ANALOG_MAD_SCALE * settings.micGain;
     return true;
 }
 
-static bool sampleADC(float* out, float& dcState) {
-    // Target sample period (µs).
-    const uint32_t periodUs = 1000000 / SAMPLE_RATE;
-    uint32_t next = micros();
+static bool sampleADC(float* out, float& dcState, float& iirPrevIn, float& iirPrevOut, float& rawMadOut) {
+    float madSum = 0.0f;
     for (int i = 0; i < FFT_N; i++) {
-        // 12-bit ADC, 0..4095, mid ≈ 2048.
         int v = analogRead(settings.micADCPin);
-        float x = (float)v - dcState;
+        float inSample = (float)v;
+
+        // DeafDoorbell DC-blocking IIR high-pass filter (~80Hz cutoff at ~20kHz)
+        float iirOut = inSample - iirPrevIn + (0.985f * iirPrevOut);
+        iirPrevIn  = inSample;
+        iirPrevOut = iirOut;
+        madSum += fabsf(iirOut);
+
+        // Ember FFT normalized sample
+        float x = inSample - dcState;
         dcState = dcState + (1.0f - DC_BLOCK) * x;
         out[i] = x * (1.0f / 2048.0f);
-        next += periodUs;
-        int32_t wait = (int32_t)(next - micros());
-        if (wait > 0 && wait < (int32_t)periodUs * 4) delayMicroseconds(wait);
+
+        delayMicroseconds(25);
     }
+
+    rawMadOut = (madSum / (float)FFT_N) * ANALOG_MAD_SCALE * settings.micGain;
     return true;
 }
 
@@ -941,23 +1011,28 @@ static float vImag[FFT_N];
 static ArduinoFFT<float> g_fft(vReal, vImag, FFT_N, (float)SAMPLE_RATE);
 
 static void audioTask(void*) {
-    float dcState = 0.0f;
-    // Per-band EMA state for smoothing.
+    float dcState    = (settings.micSource == 2) ? (float)analogRead(settings.micADCPin) : 0.0f;
+    float iirPrevIn  = dcState;
+    float iirPrevOut = 0.0f;
     float bandsSmoothed[BAND_COUNT] = {0};
-    float vuSmoothed = 0.0f;
-    float peakLevel  = 0.0f;
-    float beatLevel  = 0.0f;
-    float prevVU     = 0.0f;
+    float vuSmoothed  = 0.0f;
+    float madSmoothed = 0.0f;
+    float peakLevel   = 0.0f;
+    float beatLevel   = 0.0f;
+    float prevVU      = 0.0f;
 
     g_audioRunning = true;
-    Serial.printf("audio: source=%d running\n", settings.micSource);
+    Serial.printf("audio: source=%d running (ADC=%d, softGND=%d)\n",
+                  settings.micSource, settings.micADCPin, settings.micGndPin);
 
     while (g_audioRunning) {
-        // Fill vReal with one window.
-        bool ok = false;
-        if (settings.micSource == 1)      ok = sampleI2S(vReal, dcState);
-        else if (settings.micSource == 2) ok = sampleADC(vReal, dcState);
+        bool  ok     = false;
+        float rawMad = 0.0f;
+        if (settings.micSource == 1)      ok = sampleI2S(vReal, dcState, rawMad);
+        else if (settings.micSource == 2) ok = sampleADC(vReal, dcState, iirPrevIn, iirPrevOut, rawMad);
         if (!ok) { vTaskDelay(pdMS_TO_TICKS(50)); continue; }
+
+        if (rawMad > 65000.0f) rawMad = 65000.0f;
 
         // FFT setup: imag = 0, then window/compute/magnitudes.
         memset(vImag, 0, sizeof(vImag));
@@ -965,8 +1040,6 @@ static void audioTask(void*) {
         g_fft.compute(FFTDirection::Forward);
         g_fft.complexToMagnitude();
 
-        // Bands: average magnitudes within each [edge, edge+1) range.
-        // Apply gain, log-shape so quiet sounds still register, smooth.
         float bandsNew[BAND_COUNT];
         float bandSum = 0;
         int   bandPeakIdx = 0;
@@ -976,9 +1049,7 @@ static void audioTask(void*) {
             float sum = 0;
             for (int k = a; k < z; k++) sum += vReal[k];
             float mag = sum / (float)(z - a);
-            // Log-shape: log(1 + mag*k) gives a perceptually-flat-ish response.
             float shaped = log1pf(mag * 0.02f) * settings.micGain;
-            // Soft-clip to 0..1.
             if (shaped < 0) shaped = 0;
             if (shaped > 1) shaped = 1;
             bandsNew[b] = shaped;
@@ -996,7 +1067,8 @@ static void audioTask(void*) {
         for (int b = 0; b < BAND_COUNT; b++) {
             bandsSmoothed[b] = bandsSmoothed[b] * a + bandsNew[b] * oneMinusA;
         }
-        vuSmoothed = vuSmoothed * a + vuNew * oneMinusA;
+        vuSmoothed  = vuSmoothed  * a + vuNew  * oneMinusA;
+        madSmoothed = madSmoothed * 0.45f + rawMad * 0.55f;
 
         // Peak with slow decay.
         if (vuSmoothed > peakLevel) peakLevel = vuSmoothed;
@@ -1014,11 +1086,16 @@ static void audioTask(void*) {
         g_snap.peak  = peakLevel;
         g_snap.pitch = pitchNew;
         g_snap.beat  = beatLevel;
+        g_snap.mad   = madSmoothed;
+        if (rawMad > g_snap.madPeak) g_snap.madPeak = rawMad;
         for (int b = 0; b < BAND_COUNT; b++) g_snap.bands[b] = bandsSmoothed[b];
         portEXIT_CRITICAL(&g_snapMu);
+
+        // CRITICAL on single-core ESP32-C3: yield to FreeRTOS scheduler so
+        // RenderTask (prio 2) and loop() can run without starvation!
+        vTaskDelay(pdMS_TO_TICKS(8));
     }
 
-    // Drain mic resources on exit.
     if (settings.micSource == 1) i2s_driver_uninstall(I2S_NUM_0);
 
     g_audioTaskHandle = nullptr;
@@ -1039,11 +1116,21 @@ static void start() {
             Serial.printf("audio: GPIO %d is not ADC1 (use 0-4)\n", settings.micADCPin);
             return;
         }
+        // Assert soft ground on micGndPin (e.g. GPIO 4) when valid and not colliding
+        if (settings.micGndPin >= 0 && settings.micGndPin <= 10 &&
+            settings.micGndPin != settings.pixelPin &&
+            settings.micGndPin != settings.micADCPin) {
+            pinMode(settings.micGndPin, OUTPUT);
+            digitalWrite(settings.micGndPin, LOW);
+            Serial.printf("audio: soft GND enabled on GPIO %d\n", settings.micGndPin);
+        }
+        pinMode(settings.micADCPin, INPUT);
         analogReadResolution(12);
         analogSetPinAttenuation(settings.micADCPin, ADC_11db);
     }
 
-    xTaskCreatePinnedToCore(audioTask, "audio", 6144, nullptr, 3, &g_audioTaskHandle, 0);
+    // Priority 1 so RenderTask (Priority 2) and AsyncTCP (Priority 3) preempt audio cleanly
+    xTaskCreatePinnedToCore(audioTask, "audio", 6144, nullptr, 1, &g_audioTaskHandle, 0);
 }
 
 } // namespace audio
@@ -1069,35 +1156,201 @@ static bool recompile(const String& source, String& errOut) {
     return true;
 }
 
+// ─── Native ESP-IDF RMT WS2812B Driver (ESP32-C3 safe) ──────────────────────
+static uint8_t* g_grbBuf     = nullptr;
+static bool     g_rmtInited  = false;
+
+static void IRAM_ATTR ws2812_rmt_adapter(const void* src, rmt_item32_t* dest,
+                                         size_t src_size, size_t wanted_num,
+                                         size_t* translated_size, size_t* item_num) {
+    if (src == nullptr || dest == nullptr) {
+        *translated_size = 0;
+        *item_num = 0;
+        return;
+    }
+    // 80MHz APB / clk_div 2 = 40MHz (25ns per tick)
+    // WS2812B: T0H=400ns (16), T0L=850ns (34); T1H=800ns (32), T1L=450ns (18)
+    const rmt_item32_t bit0 = {{{ 16, 1, 34, 0 }}};
+    const rmt_item32_t bit1 = {{{ 32, 1, 18, 0 }}};
+    size_t size = 0;
+    size_t num  = 0;
+    const uint8_t* psrc = (const uint8_t*)src;
+    rmt_item32_t* pdest = dest;
+    while (size < src_size && (num + 8) <= wanted_num) {
+        uint8_t b = *psrc++;
+        for (int i = 0; i < 8; i++) {
+            pdest->val = (b & 0x80) ? bit1.val : bit0.val;
+            pdest++;
+            b <<= 1;
+        }
+        num += 8;
+        size++;
+    }
+    *translated_size = size;
+    *item_num = num;
+}
+
+static bool g_stripIsBlack = false;
+
+static void showStrip(bool forceSend = false) {
+    if (!leds || !g_grbBuf || !g_rmtInited) return;
+    const int n = settings.pixelCount;
+    uint32_t scale = (uint32_t)constrain(settings.brightness, 0, 255);
+
+    uint32_t rawSum = 0;
+    for (int i = 0; i < n; i++) {
+        rawSum += (uint32_t)leds[i].r + (uint32_t)leds[i].g + (uint32_t)leds[i].b;
+    }
+
+    if (rawSum == 0) {
+        if (g_stripIsBlack && !forceSend) {
+            return; // Strip is already black; keep GPIO 5 silent so ADC has zero RMT noise
+        }
+        memset(g_grbBuf, 0, n * 3);
+        g_stripIsBlack = true;
+    } else {
+        g_stripIsBlack = false;
+        // Safe power cap for 100 pixels (~450mA USB budget) to prevent 5V rail brownouts
+        constexpr uint32_t kMaxChannelSum = 9000UL;
+        uint32_t scaledSum = (rawSum * scale) >> 8;
+        if (scaledSum > kMaxChannelSum && rawSum > 0) {
+            scale = (kMaxChannelSum << 8) / rawSum;
+        }
+
+        for (int i = 0; i < n; i++) {
+            g_grbBuf[i * 3 + 0] = (uint8_t)(((uint32_t)leds[i].g * scale) >> 8);
+            g_grbBuf[i * 3 + 1] = (uint8_t)(((uint32_t)leds[i].r * scale) >> 8);
+            g_grbBuf[i * 3 + 2] = (uint8_t)(((uint32_t)leds[i].b * scale) >> 8);
+        }
+    }
+
+    if (g_rmtAdcMu) xSemaphoreTake(g_rmtAdcMu, portMAX_DELAY);
+    rmt_write_sample(RMT_CHANNEL_0, g_grbBuf, n * 3, true);
+    delayMicroseconds(60);
+    if (g_rmtAdcMu) xSemaphoreGive(g_rmtAdcMu);
+}
+
+static void initFastLED() {
+    if (leds) { delete[] leds; leds = nullptr; }
+    if (g_grbBuf) { free(g_grbBuf); g_grbBuf = nullptr; }
+    leds = new CRGB[settings.pixelCount];
+    g_grbBuf = (uint8_t*)malloc(settings.pixelCount * 3);
+
+    rmt_config_t config = {};
+    config.rmt_mode = RMT_MODE_TX;
+    config.channel = RMT_CHANNEL_0;
+    config.gpio_num = (gpio_num_t)settings.pixelPin;
+    config.clk_div = 2; // 40MHz (25ns tick)
+    config.mem_block_num = 2; // Use both TX blocks (96 words) on ESP32-C3
+    config.tx_config.loop_en = false;
+    config.tx_config.carrier_en = false;
+    config.tx_config.idle_output_en = true;
+    config.tx_config.idle_level = RMT_IDLE_LEVEL_LOW;
+
+    if (rmt_config(&config) == ESP_OK &&
+        rmt_driver_install(RMT_CHANNEL_0, 0, 0) == ESP_OK &&
+        rmt_translator_init(RMT_CHANNEL_0, ws2812_rmt_adapter) == ESP_OK) {
+        g_rmtInited = true;
+    } else {
+        Serial.println("RMT WS2812B init failed");
+    }
+
+    fill_solid(leds, settings.pixelCount, CRGB::Black);
+    showStrip(true);
+}
+
+// Quintic smootherstep, then gamma 2.2 so WS2812 steps look even.
+static float shapeGateEnvelope(float lin) {
+    if (lin <= 0.0f) return 0.0f;
+    if (lin >= 1.0f) return 1.0f;
+    float shaped = lin * lin * lin * (lin * (lin * 6.0f - 15.0f) + 10.0f);
+    return powf(shaped, 2.2f);
+}
+
 // ─── LED render task ─────────────────────────────────────────────────────────
 static void renderTask(void*) {
-    const TickType_t period = pdMS_TO_TICKS(16);  // ~60 Hz target
+    const TickType_t period = pdMS_TO_TICKS(20);  // ~50 Hz target, yields cleanly
     TickType_t       last   = xTaskGetTickCount();
     uint32_t         frameCounter = 0;
     uint32_t         lastFpsTick  = millis();
+    uint32_t         lastFrameMs  = millis();
     float            vars[vm::MAX_VARS];
 
     for (;;) {
         vTaskDelayUntil(&last, period);
         if (!leds) continue;
 
+        uint32_t now = millis();
+        float dt = (now - lastFrameMs) * 0.001f;
+        if (dt < 0.0f) dt = 0.0f;
+        if (dt > 0.1f) dt = 0.1f;
+        lastFrameMs = now;
+
+        // ── Audio Gate Envelope (attack ~2s, release ~3.5s, 400ms quiet hold) ──
+        float env = 1.0f;
+        if (settings.audioGateEnabled && settings.micSource != 0) {
+            float curMad = audio::mad();
+            float threshX = (float)settings.gateThreshold;
+            float threshY = threshX * 0.85f; // Hysteresis floor Y = 85% of X
+
+            if (curMad >= threshX) {
+                g_gateActive = true;
+                g_gateQuietTiming = false;
+            } else if (curMad < threshY) {
+                if (g_gateActive) {
+                    if (!g_gateQuietTiming) {
+                        g_gateQuietTiming = true;
+                        g_gateQuietSince = now;
+                    } else if ((uint32_t)(now - g_gateQuietSince) >= 400) {
+                        g_gateActive = false;
+                        g_gateQuietTiming = false;
+                    }
+                }
+            } else {
+                // Between Y and X: keep the current state and don't start the release hold.
+                g_gateQuietTiming = false;
+            }
+
+            float lin = g_gateLinear;
+            if (g_gateActive) {
+                lin += dt * 0.5f; // +0.5/sec -> ~2.0 seconds for 0 -> 1
+                if (lin > 1.0f) lin = 1.0f;
+            } else {
+                lin -= dt * 0.28f; // -0.28/sec -> ~3.5 seconds for 1 -> 0
+                if (lin < 0.0f) lin = 0.0f;
+            }
+            g_gateLinear = lin;
+            env = shapeGateEnvelope(lin);
+            g_gateEnvelope = env;
+        } else {
+            g_gateActive      = true;
+            g_gateLinear      = 1.0f;
+            g_gateEnvelope    = 1.0f;
+            g_gateQuietTiming = false;
+            env               = 1.0f;
+        }
+
         if (g_progMu) xSemaphoreTake(g_progMu, portMAX_DELAY);
         vm::Program* p = g_program.load(std::memory_order_relaxed);
-        uint32_t now = millis();
         float t = now / 1000.0f;
         int n = settings.pixelCount;
 
-        // Initialise the reserved variable slots.
-        memset(vars, 0, sizeof(vars));
-        vars[vm::VAR_N]          = (float)n;
-        vars[vm::VAR_PIXELCOUNT] = (float)n;
-        vars[vm::VAR_T]          = t;
-        vars[vm::VAR_TIME]       = t;
-        vars[vm::VAR_PI]         = (float)M_PI;
-        vars[vm::VAR_TAU]        = (float)(2.0 * M_PI);
-        vars[vm::VAR_MOTION]     = g_motion;
+        // Fast-path when completely faded out: clear strip without running VM for 500 pixels
+        if (env <= 0.0005f) {
+            fill_solid(leds, n, CRGB::Black);
+        } else if (p) {
+            // Initialise the reserved variable slots.
+            memset(vars, 0, sizeof(vars));
+            vars[vm::VAR_N]          = (float)n;
+            vars[vm::VAR_PIXELCOUNT] = (float)n;
+            vars[vm::VAR_T]          = t;
+            vars[vm::VAR_TIME]       = t;
+            vars[vm::VAR_PI]         = (float)M_PI;
+            vars[vm::VAR_TAU]        = (float)(2.0 * M_PI);
+            vars[vm::VAR_MOTION]     = 0.0f;
+            vars[vm::VAR_GATE]       = env;
+            vars[vm::VAR_FADE]       = env;
 
-        if (p) {
             for (int i = 0; i < n; i++) {
                 vars[vm::VAR_I]     = (float)i;
                 vars[vm::VAR_INDEX] = (float)i;
@@ -1105,16 +1358,16 @@ static void renderTask(void*) {
                 if (vm::exec(p, vars, r)) {
                     if (r.useRGB) {
                         leds[i] = CRGB(
-                            (uint8_t)constrain(r.r * 255.0f, 0.0f, 255.0f),
-                            (uint8_t)constrain(r.g * 255.0f, 0.0f, 255.0f),
-                            (uint8_t)constrain(r.b * 255.0f, 0.0f, 255.0f));
+                            (uint8_t)constrain(r.r * env * 255.0f, 0.0f, 255.0f),
+                            (uint8_t)constrain(r.g * env * 255.0f, 0.0f, 255.0f),
+                            (uint8_t)constrain(r.b * env * 255.0f, 0.0f, 255.0f));
                     } else {
                         float hh = r.h - floorf(r.h);
                         if (hh < 0) hh += 1.0f;
                         leds[i] = CHSV(
                             (uint8_t)(hh * 255.0f),
                             (uint8_t)constrain(r.s * 255.0f, 0.0f, 255.0f),
-                            (uint8_t)constrain(r.v * 255.0f, 0.0f, 255.0f));
+                            (uint8_t)constrain(r.v * env * 255.0f, 0.0f, 255.0f));
                     }
                 } else {
                     leds[i] = CRGB::Black;
@@ -1125,48 +1378,16 @@ static void renderTask(void*) {
         }
         if (g_progMu) xSemaphoreGive(g_progMu);
 
-        FastLED.show();
+        showStrip();
 
         frameCounter++;
         if (now - lastFpsTick >= 1000) {
             g_fps = (float)frameCounter * 1000.0f / (now - lastFpsTick);
+            Serial.printf("stat: fps=%.1f mad=%.0f rawADC=%d env=%.2f\n", (float)g_fps, audio::mad(), analogRead(3), env);
             frameCounter = 0;
             lastFpsTick = now;
         }
     }
-}
-
-// ─── FastLED init ────────────────────────────────────────────────────────────
-//
-// FastLED's pin is a compile-time template parameter, so a runtime switch is
-// the standard way to support changing pins without recompiling. We dispatch
-// over the ESP32-C3's user-accessible GPIOs (0–10). Strapping pins (8, 9) and
-// USB-CDC pins (18, 19) are deliberately excluded from the UI dropdown but
-// remain selectable here for completeness.
-//
-// initFastLED is only safe to call ONCE per boot — re-adding controllers
-// leaks the previous pin. Changing pin or count requires a reboot (handled
-// by the WS "pin" / "count" actions).
-static void initFastLED() {
-    if (leds) { delete[] leds; leds = nullptr; }
-    leds = new CRGB[settings.pixelCount];
-    switch (settings.pixelPin) {
-        case 0:  FastLED.addLeds<WS2812B, 0,  GRB>(leds, settings.pixelCount); break;
-        case 1:  FastLED.addLeds<WS2812B, 1,  GRB>(leds, settings.pixelCount); break;
-        case 2:  FastLED.addLeds<WS2812B, 2,  GRB>(leds, settings.pixelCount); break;
-        case 3:  FastLED.addLeds<WS2812B, 3,  GRB>(leds, settings.pixelCount); break;
-        case 4:  FastLED.addLeds<WS2812B, 4,  GRB>(leds, settings.pixelCount); break;
-        case 5:  FastLED.addLeds<WS2812B, 5,  GRB>(leds, settings.pixelCount); break;
-        case 6:  FastLED.addLeds<WS2812B, 6,  GRB>(leds, settings.pixelCount); break;
-        case 7:  FastLED.addLeds<WS2812B, 7,  GRB>(leds, settings.pixelCount); break;
-        case 8:  FastLED.addLeds<WS2812B, 8,  GRB>(leds, settings.pixelCount); break;
-        case 9:  FastLED.addLeds<WS2812B, 9,  GRB>(leds, settings.pixelCount); break;
-        case 10: FastLED.addLeds<WS2812B, 10, GRB>(leds, settings.pixelCount); break;
-        default: FastLED.addLeds<WS2812B, 4,  GRB>(leds, settings.pixelCount); break;
-    }
-    FastLED.setBrightness(settings.brightness);
-    fill_solid(leds, settings.pixelCount, CRGB::Black);
-    FastLED.show();
 }
 
 // ─── Persistence ─────────────────────────────────────────────────────────────
@@ -1175,22 +1396,35 @@ static void loadSettings() {
     File f = LittleFS.open("/settings.json", "r");
     JsonDocument doc;
     if (deserializeJson(doc, f) == DeserializationError::Ok) {
-        settings.pixelPin   = doc["pin"]        | settings.pixelPin;
-        settings.pixelCount = doc["count"]      | settings.pixelCount;
-        settings.brightness = doc["brightness"] | settings.brightness;
+        settings.pixelPin         = doc["pin"]        | settings.pixelPin;
+        settings.pixelCount       = doc["count"]      | settings.pixelCount;
+        settings.brightness       = doc["brightness"] | settings.brightness;
         strlcpy(settings.hostname, doc["hostname"] | settings.hostname, sizeof(settings.hostname));
         strlcpy(settings.wifiSSID, doc["ssid"]     | settings.wifiSSID, sizeof(settings.wifiSSID));
         strlcpy(settings.wifiPass, doc["pass"]     | settings.wifiPass, sizeof(settings.wifiPass));
         strlcpy(settings.apSSID,   doc["apSSID"]   | settings.apSSID,   sizeof(settings.apSSID));
-        settings.micSource    = doc["micSrc"]    | settings.micSource;
-        settings.micBCLK      = doc["micBCLK"]   | settings.micBCLK;
-        settings.micWS        = doc["micWS"]     | settings.micWS;
-        settings.micData      = doc["micData"]   | settings.micData;
-        settings.micADCPin    = doc["micADC"]    | settings.micADCPin;
-        settings.micGain      = doc["micGain"]   | settings.micGain;
-        settings.micSmoothing = doc["micSmooth"] | settings.micSmoothing;
+        settings.micSource        = doc["micSrc"]     | settings.micSource;
+        settings.micBCLK          = doc["micBCLK"]    | settings.micBCLK;
+        settings.micWS            = doc["micWS"]      | settings.micWS;
+        settings.micData          = doc["micData"]    | settings.micData;
+        settings.micADCPin        = doc["micADC"]     | settings.micADCPin;
+        settings.micGndPin        = doc["micGnd"]     | settings.micGndPin;
+        settings.micGain          = doc["micGain"]    | settings.micGain;
+        settings.micSmoothing     = doc["micSmooth"]  | settings.micSmoothing;
+        settings.audioGateEnabled = doc["gateEn"]     | settings.audioGateEnabled;
+        settings.gateThreshold    = doc["gateThresh"] | settings.gateThreshold;
+        settings.autoCycle        = doc["autoCycle"]  | settings.autoCycle;
+        settings.cycleSeconds     = doc["cycleSec"]   | settings.cycleSeconds;
     }
     f.close();
+#ifdef EMBER_BATHROOM
+    // Enforce bathroom defaults: exactly 100 pixels, MAX4466 on GPIO 3, Soft GND on GPIO 4
+    settings.pixelPin   = 5;
+    settings.pixelCount = 100;
+    settings.micSource  = 2;
+    settings.micADCPin  = 3;
+    settings.micGndPin  = 4;
+#endif
 }
 
 static void saveSettings() {
@@ -1208,10 +1442,21 @@ static void saveSettings() {
     doc["micWS"]      = settings.micWS;
     doc["micData"]    = settings.micData;
     doc["micADC"]     = settings.micADCPin;
+    doc["micGnd"]     = settings.micGndPin;
     doc["micGain"]    = settings.micGain;
     doc["micSmooth"]  = settings.micSmoothing;
+    doc["gateEn"]     = settings.audioGateEnabled;
+    doc["gateThresh"] = settings.gateThreshold;
+    doc["autoCycle"]  = settings.autoCycle;
+    doc["cycleSec"]   = settings.cycleSeconds;
     serializeJson(doc, f);
     f.close();
+    g_settingsDirty = false;
+}
+
+static void markSettingsDirty() {
+    g_settingsDirty = true;
+    g_settingsChangedAtMs = millis();
 }
 
 static void loadPattern(const String& name) {
@@ -1274,26 +1519,36 @@ static String patternListJson() {
 }
 
 // ─── WebSocket handler ───────────────────────────────────────────────────────
+static void pushSensors(bool force = false);
+
 static void sendStatus(AsyncWebSocketClient* c, const String& err) {
     JsonDocument resp;
-    resp["type"]    = "status";
-    resp["name"]    = g_currentName;
-    resp["fps"]     = (float)g_fps;
-    resp["count"]    = settings.pixelCount;
-    resp["pin"]      = settings.pixelPin;
-    resp["bright"]   = settings.brightness;
-    resp["error"]    = err;
-    resp["micSrc"]   = settings.micSource;
-    resp["micBCLK"]  = settings.micBCLK;
-    resp["micWS"]    = settings.micWS;
-    resp["micData"]  = settings.micData;
-    resp["micADC"]   = settings.micADCPin;
-    resp["micGain"]  = settings.micGain;
-    resp["micSmooth"]= settings.micSmoothing;
-    resp["apSSID"]   = settings.apSSID;
-    resp["hostname"] = settings.hostname;
-    resp["wifiSSID"] = settings.wifiSSID;
-    resp["wifiPass"] = settings.wifiPass;
+    resp["type"]      = "status";
+    resp["name"]      = g_currentName;
+    resp["fps"]       = (float)g_fps;
+    resp["count"]     = settings.pixelCount;
+    resp["pin"]       = settings.pixelPin;
+    resp["bright"]    = settings.brightness;
+    resp["error"]     = err;
+    resp["micSrc"]    = settings.micSource;
+    resp["micBCLK"]   = settings.micBCLK;
+    resp["micWS"]     = settings.micWS;
+    resp["micData"]   = settings.micData;
+    resp["micADC"]    = settings.micADCPin;
+    resp["micGnd"]    = settings.micGndPin;
+    resp["micGain"]   = settings.micGain;
+    resp["micSmooth"] = settings.micSmoothing;
+    resp["gateEn"]    = settings.audioGateEnabled;
+    resp["gateThresh"]= settings.gateThreshold;
+    resp["autoCycle"] = settings.autoCycle;
+    resp["cycleSec"]  = settings.cycleSeconds;
+    resp["gate"]      = (float)g_gateEnvelope;
+    resp["gateActive"]= (bool)g_gateActive;
+    resp["mad"]       = (float)audio::mad();
+    resp["apSSID"]    = settings.apSSID;
+    resp["hostname"]  = settings.hostname;
+    resp["wifiSSID"]  = settings.wifiSSID;
+    resp["wifiPass"]  = settings.wifiPass;
     String out; serializeJson(resp, out);
     if (c) c->text(out); else ws.textAll(out);
 }
@@ -1302,6 +1557,14 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
                       AwsEventType type, void*, uint8_t* data, size_t len) {
     if (type == WS_EVT_CONNECT) {
         sendStatus(client, g_lastError);
+        // Also send current pattern code so the editor populates immediately
+        JsonDocument loaded;
+        loaded["type"]  = "loaded";
+        loaded["name"]  = g_currentName;
+        loaded["code"]  = g_currentSource;
+        loaded["error"] = g_lastError;
+        String out; serializeJson(loaded, out);
+        client->text(out);
         return;
     }
     if (type != WS_EVT_DATA) return;
@@ -1360,9 +1623,21 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         ws.textAll(String("{\"type\":\"patterns\",\"list\":") + patternListJson() + "}");
     }
     else if (action == "brightness") {
-        settings.brightness = doc["value"] | 128;
-        FastLED.setBrightness(settings.brightness);
-        saveSettings();
+        settings.brightness = constrain(doc["value"] | 128, 0, 255);
+        markSettingsDirty();
+        sendStatus(nullptr, g_lastError);
+    }
+    else if (action == "gateSet") {
+        if (doc["enabled"].is<bool>()) settings.audioGateEnabled = doc["enabled"].as<bool>();
+        if (doc["thresh"].is<int>())   settings.gateThreshold = constrain(doc["thresh"].as<int>(), 200, 30000);
+        if (doc["autoCycle"].is<bool>()) {
+            settings.autoCycle = doc["autoCycle"].as<bool>();
+            g_lastCycleMs = millis();
+        }
+        if (doc["cycleSec"].is<int>()) {
+            settings.cycleSeconds = constrain(doc["cycleSec"].as<int>(), 5, 600);
+        }
+        markSettingsDirty();
         sendStatus(nullptr, g_lastError);
     }
     else if (action == "count") {
@@ -1371,16 +1646,13 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         if (n != settings.pixelCount) {
             settings.pixelCount = n;
             saveSettings();
-            // Pixel-count changes need a reboot so FastLED rebuilds its
-            // controller list cleanly.
             client->text("{\"type\":\"reboot\"}");
             delay(150);
             ESP.restart();
         }
     }
     else if (action == "pin") {
-        int p = doc["value"] | 4;
-        // Allow only the GPIOs we have switch cases for.
+        int p = doc["value"] | 5;
         const int allowed[] = {0,1,2,3,4,5,6,7,8,9,10};
         bool ok = false;
         for (int a : allowed) if (a == p) { ok = true; break; }
@@ -1393,8 +1665,6 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         }
     }
     else if (action == "micSrc") {
-        // Setting the mic source means tearing down or installing I2S/ADC —
-        // safest to apply with a reboot, same pattern as pixelPin / pixelCount.
         int s = doc["value"] | 0;
         if (s >= 0 && s <= 2 && s != settings.micSource) {
             settings.micSource = s;
@@ -1405,12 +1675,12 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         }
     }
     else if (action == "micPins") {
-        // Atomic update of mic pin set + reboot.
         bool dirty = false;
         if (doc["bclk"].is<int>()) { settings.micBCLK   = doc["bclk"];  dirty = true; }
         if (doc["ws"]  .is<int>()) { settings.micWS     = doc["ws"];    dirty = true; }
         if (doc["data"].is<int>()) { settings.micData   = doc["data"];  dirty = true; }
         if (doc["adc"] .is<int>()) { settings.micADCPin = doc["adc"];   dirty = true; }
+        if (doc["gnd"] .is<int>()) { settings.micGndPin = doc["gnd"];   dirty = true; }
         if (dirty) {
             saveSettings();
             client->text("{\"type\":\"reboot\"}");
@@ -1421,20 +1691,20 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
     else if (action == "wifiSet") {
         if (doc["apSSID"].is<const char*>()) strlcpy(settings.apSSID, doc["apSSID"], sizeof(settings.apSSID));
         if (doc["hostname"].is<const char*>()) strlcpy(settings.hostname, doc["hostname"], sizeof(settings.hostname));
-        if (doc["wifiSSID"].is<const char*>()) strlcpy(settings.wifiSSID, doc["wifiSSID"], sizeof(settings.wifiSSID));
-        if (doc["wifiPass"].is<const char*>()) strlcpy(settings.wifiPass, doc["wifiPass"], sizeof(settings.wifiPass));
+        // Station join is not used. Drop any credentials a client still sends.
+        settings.wifiSSID[0] = '\0';
+        settings.wifiPass[0] = '\0';
         saveSettings();
         client->text("{\"type\":\"reboot\"}");
         delay(150);
         ESP.restart();
     }
     else if (action == "micGain") {
-        // Hot-applied — no reboot needed.
         float g = doc["value"] | 1.0f;
         if (g < 0.0f)  g = 0.0f;
         if (g > 10.0f) g = 10.0f;
         settings.micGain = g;
-        saveSettings();
+        markSettingsDirty();
         sendStatus(nullptr, g_lastError);
     }
     else if (action == "micSmooth") {
@@ -1442,15 +1712,82 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         if (s < 0.0f)  s = 0.0f;
         if (s > 0.95f) s = 0.95f;
         settings.micSmoothing = s;
-        saveSettings();
+        markSettingsDirty();
         sendStatus(nullptr, g_lastError);
     }
     else if (action == "ping") {
         sendStatus(client, g_lastError);
     }
+    else if (action == "poll") {
+        pushSensors(true);
+    }
 }
 
-// ─── Wi-Fi ───────────────────────────────────────────────────────────────────
+// ─── OTA Update Page HTML ────────────────────────────────────────────────────
+static const char UPDATE_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ember-Audio OTA Update</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { background: #0b0d12; color: #e6e9f2; font-family: -apple-system, "Segoe UI", system-ui, sans-serif; padding: 24px; display: flex; justify-content: center; }
+    .box { width: 100%; max-width: 420px; background: #141821; border: 1px solid #232938; border-radius: 12px; padding: 24px; }
+    h2 { margin: 0 0 12px; background: linear-gradient(135deg, #7c9cff, #ff6d9c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    input[type=file] { margin: 16px 0; width: 100%; color: #8893a8; }
+    button { background: linear-gradient(135deg, #7c9cff, #ff6d9c); color: #fff; font-weight: 600; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    #prg { width: 100%; height: 14px; background: #1a1f2b; border-radius: 7px; overflow: hidden; margin-top: 16px; display: none; border: 1px solid #232938; }
+    #bar { width: 0%; height: 100%; background: linear-gradient(90deg, #7c9cff, #46d39a); transition: width 0.1s; }
+    a { color: #7c9cff; text-decoration: none; font-size: 13px; display: inline-block; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <a href="/">&larr; Back to Ember Studio</a>
+    <h2>OTA Firmware Update</h2>
+    <p style="font-size:0.9em; color:#8893a8;">Select a compiled <code>firmware.bin</code> file to flash over Wi-Fi.</p>
+    <form method='POST' action='/update' enctype='multipart/form-data' id='uploadForm'>
+      <input type='file' name='update' id='fileInput' accept='.bin' required>
+      <button type='submit' id='subBtn'>Flash Firmware</button>
+    </form>
+    <div id="prg"><div id="bar"></div></div>
+    <p id="msg" style="margin-top:12px; font-size:0.85em; text-align:center; color:#8893a8;"></p>
+  </div>
+  <script>
+    const form = document.getElementById('uploadForm');
+    form.onsubmit = e => {
+      e.preventDefault();
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return;
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/update', true);
+      document.getElementById('prg').style.display = 'block';
+      document.getElementById('subBtn').disabled = true;
+      document.getElementById('msg').innerText = 'Uploading and flashing...';
+      xhr.upload.onprogress = ev => {
+        if (ev.lengthComputable) {
+          const pct = Math.round((ev.loaded / ev.total) * 100);
+          document.getElementById('bar').style.width = pct + '%';
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status == 200) {
+          document.getElementById('msg').innerText = 'Update successful! Rebooting ESP32...';
+          setTimeout(() => location.href = '/', 6000);
+        } else {
+          document.getElementById('msg').innerText = 'Update Failed: ' + xhr.responseText;
+          document.getElementById('subBtn').disabled = false;
+        }
+      };
+      const fd = new FormData();
+      fd.append('update', file);
+      xhr.send(fd);
+    };
+  </script>
+</body>
+</html>)rawliteral";
+
+// ─── Wi-Fi & OTA ─────────────────────────────────────────────────────────────
 static bool mdnsHostnameTaken(const char* name) {
     IPAddress addr = MDNS.queryHost(name, 2000);
     if (!addr) return false;
@@ -1474,15 +1811,67 @@ static void setupMDNS() {
     }
 
     if (MDNS.begin(settings.hostname)) {
+        MDNS.addService("http", "tcp", 80);
         Serial.printf("mDNS: %s.local\n", settings.hostname);
     } else {
         Serial.printf("mDNS: failed to start for %s\n", settings.hostname);
     }
+
+    ArduinoOTA.setHostname(settings.hostname);
+    ArduinoOTA.setPort(3232);
+    ArduinoOTA.begin();
+}
+
+// Channel 0 is rejected by esp_wifi_set_config on this core, so use the
+// driver's own soft-AP default (6) instead of the old forced channel 1.
+static bool startSoftApOnce(const char* ssid) {
+    const IPAddress ip(192, 168, 4, 1);
+    WiFi.persistent(false);
+    WiFi.mode(WIFI_OFF);
+    delay(100);
+    WiFi.mode(WIFI_AP);
+    delay(100);
+    WiFi.setSleep(false);
+    esp_wifi_set_ps(WIFI_PS_NONE);
+    WiFi.setTxPower(WIFI_POWER_19_5dBm);
+    WiFi.softAPConfig(ip, ip, IPAddress(255, 255, 255, 0));
+    return WiFi.softAP(ssid, "ember123", 6, 0, 4);
+}
+
+static bool bringUpAp(const char* ssid) {
+    bool apOk = startSoftApOnce(ssid);
+    if (!apOk) {
+        Serial.println("AP start failed, retrying");
+        apOk = startSoftApOnce(ssid);
+    }
+    dnsServer.start(53, "*", IPAddress(192, 168, 4, 1));
+    Serial.printf("AP up ssid=%s IP=%s ok=%d ch=%d\n",
+                  ssid,
+                  WiFi.softAPIP().toString().c_str(),
+                  (int)apOk,
+                  WiFi.channel());
+    return apOk;
 }
 
 static void setupWiFi() {
     g_apMode = false;
-    // Determine MAC-based default AP name if empty
+
+#ifdef EMBER_BATHROOM
+    bool credsDirty = false;
+    if (strcmp(settings.apSSID, "Ember-Audio") != 0) {
+        strlcpy(settings.apSSID, "Ember-Audio", sizeof(settings.apSSID));
+        credsDirty = true;
+    }
+    if (settings.wifiSSID[0] != '\0' || settings.wifiPass[0] != '\0') {
+        settings.wifiSSID[0] = '\0';
+        settings.wifiPass[0] = '\0';
+        credsDirty = true;
+    }
+    if (credsDirty) saveSettings();
+    g_apMode = true;
+    bringUpAp("Ember-Audio");
+    return;
+#else
     if (strlen(settings.apSSID) == 0) {
         uint8_t mac[6];
         WiFi.macAddress(mac);
@@ -1490,10 +1879,11 @@ static void setupWiFi() {
         saveSettings();
     }
 
-    if (strlen(settings.wifiSSID) > 0) {
+    if (strlen(settings.wifiSSID) > 0 && strcmp(settings.wifiSSID, "Home Wi-Fi") != 0) {
+        WiFi.persistent(false);
         WiFi.mode(WIFI_STA);
         WiFi.setHostname(settings.hostname);
-        
+
         Serial.printf("Connecting to %s (3 attempts max)...\n", settings.wifiSSID);
         for (int attempt = 1; attempt <= 3; attempt++) {
             Serial.printf("Attempt %d...\n", attempt);
@@ -1506,15 +1896,19 @@ static void setupWiFi() {
             }
         }
         Serial.println("Connection failed. Falling back to AP mode.");
-        WiFi.disconnect(true);
     }
     g_apMode = true;
-    WiFi.mode(WIFI_AP);
-    WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
-    WiFi.softAP(settings.apSSID, "ember123");
-    delay(100); // Give AP interface time to settle
-    dnsServer.start(53, "*", IPAddress(192, 168, 4, 1));
-    Serial.print("AP "); Serial.println(WiFi.softAPIP());
+    bringUpAp(settings.apSSID);
+#endif
+}
+
+static void sendPortalRedirect(AsyncWebServerRequest* request) {
+    AsyncWebServerResponse* response = request->beginResponse(302, "text/plain", "");
+    response->addHeader("Location", "http://192.168.4.1/");
+    response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response->addHeader("Pragma", "no-cache");
+    response->addHeader("Expires", "-1");
+    request->send(response);
 }
 
 class CaptiveRequestHandler : public AsyncWebHandler {
@@ -1528,40 +1922,64 @@ public:
         if (colonIndex != -1) {
             host = host.substring(0, colonIndex);
         }
-        if (host != "192.168.4.1" && host != "emberwearable1.local" && host != String(settings.hostname) + ".local") {
+        if (host != "192.168.4.1" && host != "ember-audio.local" && host != "emberwearable1.local" && host != String(settings.hostname) + ".local") {
             return true;
         }
         return false;
     }
 
     void handleRequest(AsyncWebServerRequest *request) override {
-        AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
-        response->addHeader("Location", "http://192.168.4.1/");
-        response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        response->addHeader("Pragma", "no-cache");
-        response->addHeader("Expires", "-1");
-        request->send(response);
+        sendPortalRedirect(request);
     }
 };
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 void setup() {
+    // Prevent brief 5V USB rail dips from 500-pixel strip transients from triggering brownout reset
+    REG_CLR_BIT(RTC_CNTL_BROWN_OUT_REG, RTC_CNTL_BROWN_OUT_RST_ENA);
+
     Serial.begin(115200);
     delay(300);
+    Serial.printf("Boot reset_reason=%d\n", (int)esp_reset_reason());
+
+    // Hardware setup: MAX4466 Soft GND on GPIO 4, ADC on GPIO 3
+    pinMode(4, OUTPUT);
+    digitalWrite(4, LOW);
+    pinMode(3, INPUT);
+    analogReadResolution(12);
+    analogSetPinAttenuation(3, ADC_11db);
+
+    g_progMu   = xSemaphoreCreateMutex();
+    g_rmtAdcMu = xSemaphoreCreateMutex();
+
+    // Ensure soft ground on GPIO 4 is asserted immediately on boot for MAX4466
+    if (settings.micGndPin >= 0 && settings.micGndPin <= 10) {
+        pinMode(settings.micGndPin, OUTPUT);
+        digitalWrite(settings.micGndPin, LOW);
+    }
 
     if (!LittleFS.begin(true)) Serial.println("LittleFS mount failed");
     if (!LittleFS.exists("/patterns")) LittleFS.mkdir("/patterns");
 
     loadSettings();
+
+#ifdef EMBER_BATHROOM
+    // Ensure Bathroom build defaults apply if an older default settings.json was present
+    if (settings.micSource == 0) {
+        settings.micSource = 2;
+        settings.micADCPin = 3;
+        settings.micGndPin = 4;
+    }
+#endif
+
     setupWiFi();
     setupMDNS();
 
     initFastLED();
 
-    g_progMu = xSemaphoreCreateMutex();
-
     // Load active pattern or fallback to default
     bool loadedActive = false;
+#ifndef EMBER_BATHROOM
     if (LittleFS.exists("/active.wfl")) {
         File f = LittleFS.open("/active.wfl", "r");
         if (f) {
@@ -1581,22 +1999,28 @@ void setup() {
             }
         }
     }
+#endif
 
     if (!loadedActive) {
-        const char* defaultSrc =
-            "h = i/n + t*0.2;\n"
-            "hsv(h, 1, 1)\n";
+        const char* defaultSrc = kShowcasePatterns[0].code;
         String err;
         recompile(defaultSrc, err);
         g_currentSource = defaultSrc;
-        g_currentName   = "Rainbow";
+        g_currentName   = kShowcasePatterns[0].name;
         g_lastError     = err;
     }
 
     ws.onEvent(onWsEvent);
     server.addHandler(&ws);
     if (g_apMode) {
-        server.addHandler(new CaptiveRequestHandler()); // Captive portal redirects (AP mode only)
+        server.addHandler(new CaptiveRequestHandler());
+        const char* probes[] = {
+            "/generate_204", "/gen_204", "/hotspot-detect.html",
+            "/ncsi.txt", "/connecttest.txt", "/fwlink"
+        };
+        for (const char* path : probes) {
+            server.on(path, HTTP_GET, [](AsyncWebServerRequest* r) { sendPortalRedirect(r); });
+        }
     }
 
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
@@ -1633,44 +2057,77 @@ void setup() {
         delay(200);
         ESP.restart();
     });
+    server.on("/update", HTTP_GET, [](AsyncWebServerRequest* r) {
+        r->send_P(200, "text/html", UPDATE_HTML);
+    });
+    server.on("/update", HTTP_POST,
+        [](AsyncWebServerRequest* r) {
+            bool ok = !Update.hasError();
+            AsyncWebServerResponse* resp = r->beginResponse(200, "text/plain", ok ? "OK" : "FAIL");
+            resp->addHeader("Connection", "close");
+            r->send(resp);
+            delay(250);
+            ESP.restart();
+        },
+        [](AsyncWebServerRequest* r, String filename, size_t index, uint8_t* data, size_t len, bool final) {
+            if (!index) {
+                Serial.printf("OTA Update Start: %s\n", filename.c_str());
+                if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+                    Update.printError(Serial);
+                }
+            }
+            if (!Update.hasError()) {
+                if (Update.write(data, len) != len) {
+                    Update.printError(Serial);
+                }
+            }
+            if (final) {
+                if (Update.end(true)) {
+                    Serial.printf("OTA Update Success: %uB\n", (unsigned)(index + len));
+                } else {
+                    Update.printError(Serial);
+                }
+            }
+        }
+    );
     server.onNotFound([](AsyncWebServerRequest* r) { r->redirect("/"); });
     server.begin();
 
-    // Render task: priority 2, pinned to the only core (0 on C3).
-    // AsyncTCP runs at priority 3 by default and therefore preempts us — which
-    // is exactly what we want for sub-millisecond WebSocket response.
-    xTaskCreatePinnedToCore(renderTask, "render", 4096, nullptr, 2, nullptr, 0);
+    xTaskCreatePinnedToCore(renderTask, "render", 6144, nullptr, 2, nullptr, 0);
 
-    // ESP-NOW: start listening for motion broadcasts
-    initESPNow();
-
-    // Audio: starts only if a mic source is configured.
     audio::start();
 
-    Serial.println("Ember ready");
+    g_lastCycleMs = millis();
+    Serial.printf("Ember-Audio ready (reset_reason=%d)\n", (int)esp_reset_reason());
+    Serial.flush();
 }
 
-// Broadcast sensor & motion data to all WS clients at ~20Hz.
+// Broadcast sensor, MAD, & audio gate data to all WS clients at ~6.6Hz (~150ms cadence).
+// Uses zero-copy ws.textAll() with compact integer representations to guarantee reliable delivery.
 static unsigned long g_lastSensorPush = 0;
-static void pushSensors() {
+static void pushSensors(bool force) {
     if (ws.count() == 0) return;
     unsigned long now = millis();
-    if (now - g_lastSensorPush < 50) return;
+    if (!force && (now - g_lastSensorPush < 150)) return;
     g_lastSensorPush = now;
 
     JsonDocument doc;
-    doc["type"]  = "sensors";
-    doc["motion"] = g_motion;
+    doc["type"]       = "sensors";
+    doc["fps"]        = (int)roundf(g_fps);
+    doc["gate"]       = roundf(g_gateEnvelope * 100.0f) / 100.0f;
+    doc["gateActive"] = (bool)g_gateActive;
 
     if (settings.micSource != 0) {
         audio::Snap s;
-        audio::getSnap(s);
-        doc["vu"]    = s.vu;
-        doc["peak"]  = s.peak;
-        doc["pitch"] = s.pitch;
-        doc["beat"]  = s.beat;
+        audio::getSnap(s, true);
+        doc["vu"]   = roundf(s.vu * 100.0f) / 100.0f;
+        doc["mad"]  = (int)roundf(audio::mad());
         JsonArray a = doc["bands"].to<JsonArray>();
-        for (int i = 0; i < audio::BAND_COUNT; i++) a.add(s.bands[i]);
+        for (int i = 0; i < audio::BAND_COUNT; i++) {
+            a.add((int)roundf(s.bands[i] * 100.0f));
+        }
+    } else {
+        doc["mad"] = 0;
     }
 
     String out;
@@ -1678,9 +2135,42 @@ static void pushSensors() {
     ws.textAll(out);
 }
 
+static void serviceAutoCycle(unsigned long now) {
+    if (!settings.autoCycle) return;
+    // Advance showcase pattern according to configured cycleSeconds
+    unsigned long interval = (unsigned long)max(5, settings.cycleSeconds) * 1000UL;
+    if (now - g_lastCycleMs >= interval) {
+        g_lastCycleMs = now;
+        g_showcaseIdx = (g_showcaseIdx + 1) % kShowcaseCount;
+        const auto& pat = kShowcasePatterns[g_showcaseIdx];
+        String err;
+        if (recompile(pat.code, err)) {
+            g_currentName   = pat.name;
+            g_currentSource = pat.code;
+            g_lastError     = "";
+            if (ws.count() > 0) {
+                JsonDocument resp;
+                resp["type"]  = "loaded";
+                resp["name"]  = g_currentName;
+                resp["code"]  = g_currentSource;
+                resp["error"] = "";
+                String out; serializeJson(resp, out);
+                ws.textAll(out);
+            }
+        }
+    }
+}
+
 void loop() {
+    unsigned long now = millis();
     dnsServer.processNextRequest();
+    ArduinoOTA.handle();
     ws.cleanupClients();
     pushSensors();
+    serviceAutoCycle(now);
+
+    if (g_settingsDirty && (now - g_settingsChangedAtMs >= 1200UL)) {
+        saveSettings();
+    }
     delay(20);
 }

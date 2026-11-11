@@ -9,11 +9,11 @@
     "fiscal_sponsor_fee_amount": 4800.00,
     "direct_project_cap": 91200.00,
     "disbursement_current_in_hand": 20000.00,
-    "actual_spent_to_date": 96.72,
+    "actual_spent_to_date": 982.42,
     "current_calendar_year": 2026,
     "tax_status": "Sole Proprietorship / Cash-Basis Schedule C (Form 1040)",
-    "last_updated": "2026-11-06T18:20:00-08:00",
-    "notes": "Direct Project costs capped at $91,200.00 under Exhibit B. Split-receipt itemization active in purchases_log to strictly isolate eligible Haptic Zoo expenses from personal/other project items on shared vendor orders."
+    "last_updated": "2026-11-10T08:15:00-08:00",
+    "notes": "Direct Project costs capped at $91,200.00 under Exhibit B. Split-receipt itemization active in purchases_log to strictly isolate eligible Haptic Zoo expenses from personal/other project items on shared vendor orders. Full 11/11 bulk hardware procurement executed across AliExpress (2 batches) and Mouser Electronics."
   },
   "disbursements": [
     {
@@ -105,22 +105,22 @@
       "name": "Materials, Actuators & Components",
       "scope": "Custom PCBs, solenoids, Peltiers, vibration motors, microcontrollers, drivers, 3D filament & finishes",
       "allocated": 16500.00,
-      "committed_value": 1525.83,
-      "actual_withdrawn": 68.83,
-      "remaining": 16431.17,
-      "progress_percent": 9.2,
-      "notes": "$68.83 actual spent (4x PLA Black filament, Rust-Oleum Iridescent Color Shift finish, Hosyond 2.8\" ESP32 Touch Display) + $1,457.00 reserved for 11/11 bulk order & JLCPCB PCBA."
+      "committed_value": 830.02,
+      "actual_withdrawn": 830.02,
+      "remaining": 15669.98,
+      "progress_percent": 5.0,
+      "notes": "$830.02 actual spent ($68.83 Amazon prototypes + $600.60 AliExpress bulk actuators/sensors + $160.59 Mouser 20x Pico 2 Ws). 100-kid WDT kit fleet, 64-zone ToF lid grids, 25W shakers, amps, and drivers fully procured."
     },
     {
       "line_number": 4,
       "name": "Tour Equipment & Transit Cases",
       "scope": "Ruggedized cases (Pelican/Apache/MEIJIA equivalents) & custom internal CNC frames",
       "allocated": 6500.00,
-      "committed_value": 447.89,
-      "actual_withdrawn": 27.89,
-      "remaining": 6472.11,
-      "progress_percent": 6.9,
-      "notes": "$27.89 actual spent (MEIJIA Waterproof Hard Case for Prototype #1) + $420.00 reserved for remaining transit cases and mounting hardware."
+      "committed_value": 152.40,
+      "actual_withdrawn": 152.40,
+      "remaining": 6347.60,
+      "progress_percent": 2.3,
+      "notes": "$152.40 actual spent ($27.89 Amazon MEIJIA prototype case + $124.51 AliExpress 5x modular waterproof cases: 3x 360x300x106mm and 2x 216x165x95mm)."
     },
     {
       "line_number": 5,
@@ -228,6 +228,78 @@
       "status": "Arriving Nov 12–18, 2026",
       "receipt_file": "./receipts/2026-11-06_amz_113-1464764-0855402_case-esp32.jpg",
       "purpose": "Ruggedized portable enclosure for Prototype #1 (Nov 14 Control+H recruitment demo & Dec 12 CymaSpace reveal)."
+    },
+    {
+      "purchase_id": "EXP-005",
+      "order_date": "2026-11-10",
+      "vendor": "Mouser Electronics",
+      "order_number": "41059658",
+      "payment_method": "Credit Card - Visa ending in 6868",
+      "item_description": "Raspberry Pi Pico 2 W Single Board Computers (RP2350 Dual-Core ARM Cortex-M33 / RISC-V Hazard3 with 2.4GHz Wi-Fi/BLE, Mfr # SC1633)",
+      "quantity": 20,
+      "unit_cost": 7.00,
+      "zoo_charged_amount": 160.59,
+      "receipt_grand_total": 160.59,
+      "excluded_personal_amount": 0.00,
+      "excluded_note": "100% eligible direct project cost: $140.00 merchandise + $9.39 UPS Ground shipping + $11.20 estimated tariff fee = $160.59 total.",
+      "budget_line": 3,
+      "status": "Order Placed / Ships from Mansfield, TX",
+      "receipt_file": "./receipts/2026-11-10_mouser_order_41059658.png",
+      "purpose": "Master station controller MCUs for multi-channel PIO haptic waveform synthesis and ToF spatial depth processing."
+    },
+    {
+      "purchase_id": "EXP-006",
+      "order_date": "2026-11-07",
+      "vendor": "AliExpress (Batch #1)",
+      "order_number": "ALI-1111-B1-HAPTIC",
+      "payment_method": "Charles Schwab Bank •••• 6868",
+      "item_description": "11/11 Bulk Actuators & Controllers Batch #1: 100x ESP32-C3 SuperMini ($216), 150x 5V PWM Vibration Modules ($72.06), 6x 25W Bass Shakers ($67.84), 30x Solenoids w/ Springs ($38.91), 6x XH-M567 TPA3116D2 Amps ($16.55), 5x DRV2605L ($14.31), 8x 5V Peltiers ($13.88), 25x Coin Motors ($7.90), 20x PAM8403 ($3.48), 20x Kapton Thermistors ($4.80)",
+      "quantity": 370,
+      "unit_cost": 1.23,
+      "zoo_charged_amount": 455.73,
+      "receipt_grand_total": 503.26,
+      "excluded_personal_amount": 47.53,
+      "excluded_note": "Excluded $19.28 for 25x MPU-6500 IMUs (#8216006601382475) and $28.25 for 100m 3-Pin LED wire (#8216006601462475) allocated to other projects. Post-coupon net zoo total: $455.73.",
+      "budget_line": 3,
+      "status": "Awaiting delivery",
+      "receipt_file": "./receipts/2026-11-10_ali_batch1_p1.jpg",
+      "purpose": "100-kid WDT 'Haptic Zoo Explorer' solderless STEM kits, 25W sub-bass bone conduction shakers, and prototype actuators."
+    },
+    {
+      "purchase_id": "EXP-007",
+      "order_date": "2026-11-10",
+      "vendor": "AliExpress (Batch #2)",
+      "order_number": "ALI-1111-B2-HAPTIC-ELECTRONICS",
+      "payment_method": "Charles Schwab Bank •••• 6868",
+      "item_description": "11/11 Bulk Sensors & Power Batch #2: 10x VL53L5CX V2 8x8 ToF Laser Depth Matrices ($63.41), 10x ZK-S4 80W 4A Step-Up Boost Converters ($50.54), 20x 5V Piezo Tap Sensors ($13.78), 6x GY-PCM5102 I2S 24-bit DACs ($12.38), 20x Aluminum Heatsinks with Thermal Tape ($4.76)",
+      "quantity": 66,
+      "unit_cost": 2.20,
+      "zoo_charged_amount": 144.87,
+      "receipt_grand_total": 144.87,
+      "excluded_personal_amount": 0.00,
+      "excluded_note": "Post-coupon verified net amount for all sensor & power conversion line items in Batch #2.",
+      "budget_line": 3,
+      "status": "Processing / Awaiting delivery",
+      "receipt_file": "./receipts/2026-11-10_ali_batch2_p1.jpg",
+      "purpose": "Overhead 64-zone 3D laser depth tracking grids, 24-bit pure sine sub-bass audio generation, and safe 15V boosted power rails."
+    },
+    {
+      "purchase_id": "EXP-008",
+      "order_date": "2026-11-10",
+      "vendor": "AliExpress (HOUSE LIVING Global Store)",
+      "order_number": "8215552026292475",
+      "payment_method": "Charles Schwab Bank •••• 6868",
+      "item_description": "Rugged Waterproof Hard Carrying Cases w/ Pre-Cut Pick-and-Pluck Foam: 3x Large Cases (360x300x106mm) and 2x Compact Handheld Cases (216x165x95mm)",
+      "quantity": 5,
+      "unit_cost": 24.90,
+      "zoo_charged_amount": 124.51,
+      "receipt_grand_total": 124.51,
+      "excluded_personal_amount": 0.00,
+      "excluded_note": "Post-coupon verified total: $124.51 for 5 modular weatherproof transit enclosures (brings touring station fleet to 6 cases total including Amazon MEIJIA).",
+      "budget_line": 4,
+      "status": "Processing / Awaiting delivery",
+      "receipt_file": "./receipts/2026-11-10_ali_cases_detail.png",
+      "purpose": "Heavy-duty waterproof transit enclosures and multi-critter habitat pods for statewide tour."
     }
   ],
   "activities_log": [
@@ -373,111 +445,126 @@
       "links": [
         { "label": "🧾 View Amazon Receipts", "url": "#tab-purchases" }
       ]
+    },
+    {
+      "id": "ACT-011",
+      "date": "2026-11-07 to 11-10",
+      "phase": "Milestone 2 Prep",
+      "category": "Hardware R&D & Procurement",
+      "title": "11/11 Bulk Procurement Execution & Mouser Station Controllers",
+      "description": "Executed full-scale bulk hardware procurement under Milestone 1 capital across AliExpress and Mouser Electronics ($961.83 direct Zoo spend, saving over $600 in promotional discounts). Procured 100x pre-soldered ESP32-C3 SuperMinis, 150x 5V PWM vibration motor/MOSFET modules, 20x Raspberry Pi Pico 2 W station controllers, 10x VL53L5CX 8x8 ToF 3D laser depth matrices, 6x 25W machined aluminum sub-bass shakers, 6x 50W TPA3116D2 amps, 6x 24-bit PCM5102 I2S DACs, 10x 80W ZK-S4 boost regulators, 8x 5V Peltiers, 20x film thermistors, 20x piezos, and 5x waterproof transit cases.",
+      "hours": 4.0,
+      "target_milestone": 2,
+      "burn_credit_usd": 320.00,
+      "links": [
+        { "label": "🧾 View Verified Receipts", "url": "#tab-purchases" }
+      ]
     }
   ],
   "procurement_pipeline": {
-    "target_event": "11/11 Global Shopping Festival (AliExpress & JLCPCB SMT)",
+    "target_event": "11/11 Global Shopping Festival (AliExpress & Mouser) — COMPLETED",
     "target_spend_budget": 1877.00,
+    "actual_spend_completed": 961.83,
     "source_disbursement": "Milestone 1 ($20,000 in hand)",
     "items": [
       {
         "item_id": "PROC-01",
-        "description": "ESP32-S3-CAM Dev Boards (N16R8 / OV2640 / Ext Antenna)",
-        "quantity": 15,
-        "est_unit_cost": 6.80,
-        "est_total_cost": 102.00,
+        "description": "Raspberry Pi Pico 2 W Single Board Computers (RP2350 / Wi-Fi)",
+        "quantity": 20,
+        "est_unit_cost": 7.00,
+        "est_total_cost": 140.00,
         "budget_line": 3,
-        "intended_use": "Overhead lid spatial computer vision & interactive station DSP controllers"
+        "intended_use": "Master station controller MCUs for multi-channel PIO haptic waveform synthesis (ORDERED via Mouser)"
       },
       {
         "item_id": "PROC-02",
         "description": "ESP32-C3 SuperMini RISC-V Microcontrollers (Pre-Soldered Header Pins)",
-        "quantity": 120,
-        "est_unit_cost": 1.95,
-        "est_total_cost": 234.00,
+        "quantity": 100,
+        "est_unit_cost": 2.16,
+        "est_total_cost": 216.00,
         "budget_line": 3,
-        "intended_use": "100-kid WDT 'Haptic Zoo Explorer' solderless STEM kits + satellite critter nodes"
+        "intended_use": "100-kid WDT 'Haptic Zoo Explorer' solderless STEM kits + satellite critter nodes (ORDERED)"
       },
       {
         "item_id": "PROC-03",
-        "description": "5V Coin Vibration Motors (ERM 1027/1030) w/ Pre-Crimped 2-Pin JST-PH 2.0mm Plugs",
-        "quantity": 300,
+        "description": "Black PCB 5V PWM Vibration Motor + MOSFET Driver Modules (Strain-Relieved)",
+        "quantity": 150,
         "est_unit_cost": 0.48,
-        "est_total_cost": 144.00,
+        "est_total_cost": 72.06,
         "budget_line": 3,
-        "intended_use": "Plug-and-play motors (3x per WDT Deaf youth kit — zero soldering hazard) + Dec 12 prototype critters"
+        "intended_use": "Plug-and-play tactile modules for 100-kid WDT kits and touring critter shells (ORDERED)"
       },
       {
         "item_id": "PROC-04",
-        "description": "VL53L1X Time-of-Flight (ToF) Distance Sensors (400cm range)",
-        "quantity": 20,
-        "est_unit_cost": 3.10,
-        "est_total_cost": 62.00,
+        "description": "VL53L5CX V2 Time-of-Flight 8x8 (64-Zone) Laser Depth Matrices",
+        "quantity": 10,
+        "est_unit_cost": 6.34,
+        "est_total_cost": 63.41,
         "budget_line": 3,
-        "intended_use": "Touch/proximity failover sensors for variable ambient venue lighting"
+        "intended_use": "Privacy-first overhead lid 3D spatial hand-tracking grids across touring cases (ORDERED)"
       },
       {
         "item_id": "PROC-05",
-        "description": "Solderless JST-PH 2.0mm & Dupont Pre-Crimped Wire Harnesses + Socket Headers + Turnkey SMT PCBA Drivers",
-        "quantity": 120,
-        "est_unit_cost": 0.85,
-        "est_total_cost": 102.00,
+        "description": "50mm 4Ω 25W Full-Range Machined Aluminum Bass Shakers / Exciters",
+        "quantity": 6,
+        "est_unit_cost": 11.31,
+        "est_total_cost": 67.84,
         "budget_line": 3,
-        "intended_use": "Replaces loose SOT-23 AO3400A breakouts: uses factory-assembled JLCPCB SMT MOSFET driver boards (03-compactAudioMotionSquarePCB / Mini-Zoo Explorer PCBA) with plug-in JST/Dupont harnesses so Deaf students never handle hot soldering irons while signing"
+        "intended_use": "Deep bone-conduction sub-bass acoustic tactile surfaces across flagship stations (ORDERED)"
       },
       {
         "item_id": "PROC-06",
-        "description": "Tactile Bass Exciters & Bone Conduction Transducers (4Ω 25W)",
-        "quantity": 10,
-        "est_unit_cost": 18.50,
-        "est_total_cost": 185.00,
+        "description": "XH-M567 TPA3116D2 Dual 50W Class-D Amplifiers w/ Treble/Bass Knobs",
+        "quantity": 6,
+        "est_unit_cost": 2.76,
+        "est_total_cost": 16.55,
         "budget_line": 3,
-        "intended_use": "Deep acoustic resonance surfaces and tactile bench installations"
+        "intended_use": "Dedicated cool-running 15V power amplifiers driving 25W bass shakers (ORDERED)"
       },
       {
         "item_id": "PROC-07",
-        "description": "Thermoelectric Peltier Modules (TEC1-12706) & Dual H-Bridges",
+        "description": "ZK-S4 80W 4A DC-DC Step-Up Boost Regulators w/ Heatsinks",
         "quantity": 10,
-        "est_unit_cost": 7.20,
-        "est_total_cost": 72.00,
+        "est_unit_cost": 5.05,
+        "est_total_cost": 50.54,
         "budget_line": 3,
-        "intended_use": "Dynamic thermal skin sensations (hot/cold tactile modulation)"
+        "intended_use": "Safe 15V boosted rails for bass shakers and thermal actuators from 5V silver bricks (ORDERED)"
       },
       {
         "item_id": "PROC-08",
-        "description": "5V/12V Push-Pull Solenoids & High-Transient Tappers",
-        "quantity": 12,
-        "est_unit_cost": 4.80,
-        "est_total_cost": 57.60,
+        "description": "5V-6V Frame Push-Pull Solenoids w/ Return Springs & M2 Taps",
+        "quantity": 30,
+        "est_unit_cost": 1.30,
+        "est_total_cost": 38.91,
         "budget_line": 3,
-        "intended_use": "Sharp mechanical recoil and percussive tactile feedback"
+        "intended_use": "Sharp mechanical recoil and percussive heartbeat feedback in animals (ORDERED)"
       },
       {
         "item_id": "PROC-09",
-        "description": "Heavy-Duty Waterproof Weatherproof Transit Cases (Pelican/Apache/MEIJIA equiv)",
-        "quantity": 4,
-        "est_unit_cost": 85.00,
-        "est_total_cost": 340.00,
+        "description": "Modular Rugged Waterproof Hard Transit Cases w/ Foam (Large + Compact)",
+        "quantity": 5,
+        "est_unit_cost": 24.90,
+        "est_total_cost": 124.51,
         "budget_line": 4,
-        "intended_use": "Rugged touring enclosures for Dec 12 prototype and initial 3 stations"
+        "intended_use": "3x Large (360x300x106mm) and 2x Compact (216x165x95mm) touring habitat pods (ORDERED)"
       },
       {
         "item_id": "PROC-10",
-        "description": "USB-C PD Decoy Trigger Boards (5V/9V/12V) + Pre-Crimped JST-XH Power Leads",
-        "quantity": 60,
-        "est_unit_cost": 1.20,
-        "est_total_cost": 72.00,
+        "description": "TEC1-04902 5V 2A 20x20mm Peltier Thermoelectric Modules & Heatsinks",
+        "quantity": 8,
+        "est_unit_cost": 2.33,
+        "est_total_cost": 18.64,
         "budget_line": 3,
-        "intended_use": "Clean universal power delivery from standard USB-C battery packs"
+        "intended_use": "Dynamic thermal skin sensations (warm and cold animals) driven directly from 5V (ORDERED)"
       },
       {
         "item_id": "PROC-11",
-        "description": "Neodymium Mounting Magnets, Silicone Dampers & Quick-Release Hardware",
-        "quantity": 1,
-        "est_unit_cost": 95.00,
-        "est_total_cost": 95.00,
-        "budget_line": 4,
-        "intended_use": "Modular tactile plate mounting and vibration isolation"
+        "description": "5V Piezo Tap Sensors, Flat Kapton Thermistors, DRV2605L & Coin Motors",
+        "quantity": 70,
+        "est_unit_cost": 0.57,
+        "est_total_cost": 40.23,
+        "budget_line": 3,
+        "intended_use": "Touch/pat sensing, closed-loop thermal safety monitoring, and peripheral vibration (ORDERED)"
       }
     ]
   },

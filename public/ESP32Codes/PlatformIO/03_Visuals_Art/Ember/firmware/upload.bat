@@ -4,7 +4,11 @@ setlocal enabledelayedexpansion
 :: Run from the firmware project directory (where platformio.ini lives)
 cd /d "%~dp0"
 
-:: Explorer double-clicks often miss Python / PlatformIO on PATH 窶・prepend common locations
+:: Default environment (override by passing env name as first arg, e.g. upload.bat esp32c3)
+set "PIO_ENV=bathroom"
+if not "%~1"=="" set "PIO_ENV=%~1"
+
+:: Explorer double-clicks often miss Python / PlatformIO on PATH -- prepend common locations
 set "PATH=%USERPROFILE%\.platformio\penv\Scripts;%LOCALAPPDATA%\Programs\Python\Python314\Scripts;%LOCALAPPDATA%\Programs\Python\Python310\Scripts;%LOCALAPPDATA%\Programs\Python\Python313\Scripts;%LOCALAPPDATA%\Programs\Python\Python312\Scripts;%LOCALAPPDATA%\Programs\Python\Python311\Scripts;%PATH%"
 
 :: Resolve PlatformIO CLI to a full path when possible
@@ -31,6 +35,7 @@ echo         ESP32-C3 AUTO-DETECTION UPLOADER
 echo ==================================================
 echo [i] Using: %PIO%
 echo [i] Project: %CD%
+echo [i] Environment: %PIO_ENV%
 
 :: Find all COM ports matching USB VID 303A (Espressif)
 set "PORTS="
@@ -46,9 +51,9 @@ if defined PORTS (
 if not defined PORTS (
     echo [WARN] No ESP32-C3 [VID:303A] detected via USB.
     echo [i] Attempting default auto-upload of firmware and filesystem...
-    call "%PIO%" run --target upload
+    call "%PIO%" run -e %PIO_ENV% --target upload
     if !ERRORLEVEL! equ 0 (
-        call "%PIO%" run --target uploadfs
+        call "%PIO%" run -e %PIO_ENV% --target uploadfs
         timeout /t 2 /nobreak >nul
         call "%PIO%" device monitor
     )
@@ -65,11 +70,11 @@ set "LAST_PORT="
 for %%p in (!PORTS!) do (
     echo.
     echo --------------------------------------------------
-    echo Uploading firmware and filesystem to %%p...
+    echo Uploading firmware and filesystem [%PIO_ENV%] to %%p...
     echo --------------------------------------------------
-    call "%PIO%" run --target upload --upload-port %%p
+    call "%PIO%" run -e %PIO_ENV% --target upload --upload-port %%p
     if !ERRORLEVEL! equ 0 (
-        call "%PIO%" run --target uploadfs --upload-port %%p
+        call "%PIO%" run -e %PIO_ENV% --target uploadfs --upload-port %%p
         if !ERRORLEVEL! equ 0 (
             set "SUCCESS_PORTS=!SUCCESS_PORTS! %%p"
             set "LAST_PORT=%%p"
