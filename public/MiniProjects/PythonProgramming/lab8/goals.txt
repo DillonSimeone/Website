@@ -1,0 +1,41 @@
+tner Lab 8 - Calculator
+
+Lab 8 is a partner programming assignment - you may complete it with another student from your study group.
+Purpose
+
+For Lab 8, you and your partner will collaborate on an app with a Graphical User Interface (GUI) that includes multiple simple calculators.
+
+After completing this assignment, you will be able to:
+
+    Collaborate on a program with another programmer
+    Layout a user interface in pygubu-designer
+    Create an App class, including a constructor that builds an interface in tkinter
+    Access user interface widgets from your Python code
+    Respond to events initiated by the user interacting with the UI
+    Create a simple calculator with a GUI
+    Integrate your calculator into a larger project
+
+Task
+
+Each team member should download the starter code from https://github.com/PCC-CIS-133Y/Lab8.git. The starter code includes a MainApp class defined in main.py, an AboutApp class defined in AboutApp.py, and a GramsToOuncesApp class defined in GramsToOuncesApp.py. When running the main.py script, it should open a GUI with two tabs, an About… tab and a Grams to Ounces tab. Clicking on each tab should cause the AboutApp interface or the GramsToOuncesApp interface to be displayed. The GramsToOuncesApp class implements a simple calculator that can be used to convert weight in grams to weight in ounces.
+
+To successfully complete the lab, you should perform the following steps:
+
+    First, open the Lab8 folder in PyCharm and run main.py. Then, after familiarizing yourself with the program, run AboutApp.py as a stand-alone program and run GramsToOuncesApp.py as a stand-alone program. Then, study the starter code in the Lab8 project.
+    Meet with your teammate (or exchange emails or discussion postings) and pick a pair of related apps. For example, one team member might write an app that converts miles to kilometers, and the other team member might write an app that converts kilometers to miles. Or, one team member might convert days, hours, minutes, and seconds into total seconds while the other team member converts a number of seconds into days, hours, minutes, and seconds. Decide which team member will work on which program. Your calculator must include at least one input and produce at least one output.
+    Implement your calculator using pygubu-designer, and using an understanding of the example code in GramsToOuncesApp.py. Your app should run as a simple stand-alone calculator, just like GramsToOuncesApp.py does. It should also include a get_top_frame method that returns the top frame of the GUI so that it can be plugged into a tab in MainApp. Make sure a comment at the top of the Python file clearly states which team member worked on which calculator.
+    For the next step, you will be collaborating with your team member. One person should be the “driver,” and the other should be the “navigator.” The navigator should send a copy of their calculator code (including the .ui file) to the driver. Then, the driver should attempt to merge both calculators into the MainApp while the navigator gives advice and helps work through problems. Zoom or Discord, along with screen sharing, work well for this.
+    Use pygubu-designer to edit the interface in the about.ui. Your new version of about.ui should clearly describe the calculators included in the app and the authors. Feel free to add additional labels to the interface if needed.
+    When you have completed the previous steps, the main.py script should open a GUI with three tabs. The first tab should be a customized About… tab that includes information about the app, and the remaining two tabs should include each of your simple calculators with descriptive tab names. Note: you do not need to include the GramsToOuncesApp code, ui, or tab in your final project. It’s merely there as an example that you can base your project on.
+    The driver should Zip up the project folder when it is complete and send a copy to the navigator. Then, both team members should upload the zip file to the Lab 8 assignment folder and answer the submission question as described under “Criteria for Success.”
+    In the comments box of your submission, answer the following question: Think about the partner programs you have worked on during this course. What were some things your partners did that helped you to learn or overcome obstacles?
+
+Criteria for Success
+
+    Run your program and test with different user input. Do your prompts explain what the user should enter?
+    Take a look at your user interface (UI) and user experience (UX). Did you provide a welcome message letting the user know what to expect? Is the UI nicely spaced with no typos? 
+    Please open and compare your work with the Lab 8 Rubric before submitting.
+    Remember to follow all Python Style Guide rules for CIS 133Y.
+    Include the required comment header with both student names and add comments throughout the code identifying which parts of the program each partner worked on.
+    Programs without comments will not be graded - you will be asked to resubmit them with comments before being graded.
+    Each student must submit the zip folder to the Lab 8 assignment in D2L and answer the submission question posted on the assignment in D2L.
